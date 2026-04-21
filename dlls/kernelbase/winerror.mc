@@ -1042,6 +1042,46 @@ SymbolicName=ERROR_MR_MID_NOT_FOUND
 Language=ENU
 Message 0x%1 not found in file %2.
 .
+MessageId=318
+SymbolicName=ERROR_SCOPE_NOT_FOUND
+Language=ENU
+Scope not found.
+.
+MessageId=319
+SymbolicName=ERROR_UNDEFINED_SCOPE
+Language=ENU
+The specified Central Access Policy is undefined.
+.
+MessageId=320
+SymbolicName=ERROR_INVALID_CAP
+Language=ENU
+Central Access Policy from Active Directory is invalid.
+.
+MessageId=321
+SymbolicName=ERROR_DEVICE_UNREACHABLE
+Language=ENU
+Device is unreachable.
+.
+MessageId=322
+SymbolicName=ERROR_DEVICE_NO_RESOURCES
+Language=ENU
+Target device has insufficient resources to complete the operation.
+.
+MessageId=323
+SymbolicName=ERROR_DATA_CHECKSUM_ERROR
+Language=ENU
+A data integrity checksum error occurred. Data in the file stream is corrupt.
+.
+MessageId=324
+SymbolicName=ERROR_INTERMIXED_KERNEL_EA_OPERATION
+Language=ENU
+Cannot modify both KERNEL and normal Extended Attributes in one operation.
+.
+MessageId=326
+SymbolicName=ERROR_FILE_LEVEL_TRIM_NOT_SUPPORTED
+Language=ENU
+Device does not support file-level TRIM.
+.
 MessageId=487
 SymbolicName=ERROR_INVALID_ADDRESS
 Language=ENU

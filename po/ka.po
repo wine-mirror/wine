@@ -4313,11 +4313,11 @@ msgstr "ფაილი ვერ მოიძებნა.\n"
 msgid "Path not found.\n"
 msgstr "ბილიკი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3895
 msgid "Too many open files.\n"
 msgstr "მეტისმეტად ბევრი გახსნილი ფაილი.\n"
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3880
 msgid "Access denied.\n"
 msgstr "წვდომა აკრძალულია.\n"
 
@@ -4561,7 +4561,7 @@ msgstr "სტრუქტურების რაოდენობა გა�
 msgid "Already assigned.\n"
 msgstr "უკვე მინიჭებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1830
 msgid "Invalid password.\n"
 msgstr "არასწორი პაროლი.\n"
 
@@ -5122,2298 +5122,2341 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "შეტყობინება 0x%1 ფაილში %2 აღმოჩენილი არაა.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
+#, fuzzy
+#| msgid "Sector not found.\n"
+msgid "Scope not found.\n"
+msgstr "სექტორი ვერ ვიპოვე.\n"
+
+#: dlls/kernelbase/winerror.mc:1055
+#, fuzzy
+#| msgid "The specified device handle is invalid."
+msgid "The specified Central Access Policy is undefined.\n"
+msgstr "მითითებული მოწყობილობის დამმუშავებელი არასწორია."
+
+#: dlls/kernelbase/winerror.mc:1060
+msgid "Central Access Policy from Active Directory is invalid.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1065
+#, fuzzy
+#| msgid "Host unreachable.\n"
+msgid "Device is unreachable.\n"
+msgstr "ჰოსტი მიუწვდომელია.\n"
+
+#: dlls/kernelbase/winerror.mc:1070
+msgid "Target device has insufficient resources to complete the operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1075
+msgid ""
+"A data integrity checksum error occurred. Data in the file stream is "
+"corrupt.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1080
+msgid ""
+"Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1085
+#, fuzzy
+#| msgid "Device does not exist.\n"
+msgid "Device does not support file-level TRIM.\n"
+msgstr "მოწყობილობა არ არსებობს.\n"
+
+#: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
 msgstr "არასწორი მისამართი.\n"
 
-#: dlls/kernelbase/winerror.mc:1055
+#: dlls/kernelbase/winerror.mc:1095
 msgid "Arithmetic overflow.\n"
 msgstr "არითმეტიკული გადავსება.\n"
 
-#: dlls/kernelbase/winerror.mc:1060
+#: dlls/kernelbase/winerror.mc:1100
 msgid "Pipe connected.\n"
 msgstr "ფაიფი მიერთებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1065
+#: dlls/kernelbase/winerror.mc:1105
 msgid "Pipe listening.\n"
 msgstr "ფაიფი უსმენს\n"
 
-#: dlls/kernelbase/winerror.mc:1070
+#: dlls/kernelbase/winerror.mc:1110
 msgid "Extended attribute access denied.\n"
 msgstr "გაფართოებული ატრიბუტის წვდომა აკრძალულია\n"
 
-#: dlls/kernelbase/winerror.mc:1075
+#: dlls/kernelbase/winerror.mc:1115
 msgid "I/O operation aborted.\n"
 msgstr "შეტანა/გამოტანის ოპერაცია გაუქმდა.\n"
 
-#: dlls/kernelbase/winerror.mc:1080
+#: dlls/kernelbase/winerror.mc:1120
 msgid "Overlapped I/O incomplete.\n"
 msgstr "გადაფარული შეტანა/გამოტანა დაუსრულებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1085
+#: dlls/kernelbase/winerror.mc:1125
 msgid "Overlapped I/O pending.\n"
 msgstr "გადაფარული შეტანა/გამოტანა დარჩენილია.\n"
 
-#: dlls/kernelbase/winerror.mc:1090
+#: dlls/kernelbase/winerror.mc:1130
 msgid "No access to memory location.\n"
 msgstr "მეხსიერების მოთხოვნილ მისამართთან წვდომა აკრძალულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1095
+#: dlls/kernelbase/winerror.mc:1135
 msgid "Swap error.\n"
 msgstr "სვოპის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1100
+#: dlls/kernelbase/winerror.mc:1140
 msgid "Stack overflow.\n"
 msgstr "სტეკის გადავსება.\n"
 
-#: dlls/kernelbase/winerror.mc:1105
+#: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid message.\n"
 msgstr "არასწორი შეტყობინება.\n"
 
-#: dlls/kernelbase/winerror.mc:1110
+#: dlls/kernelbase/winerror.mc:1150
 msgid "Cannot complete.\n"
 msgstr "დასრულების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1115
+#: dlls/kernelbase/winerror.mc:1155
 msgid "Invalid flags.\n"
 msgstr "არასწორი ალმები.\n"
 
-#: dlls/kernelbase/winerror.mc:1120
+#: dlls/kernelbase/winerror.mc:1160
 msgid "Unrecognized volume.\n"
 msgstr "უცნობი ტომი.\n"
 
-#: dlls/kernelbase/winerror.mc:1125
+#: dlls/kernelbase/winerror.mc:1165
 msgid "File invalid.\n"
 msgstr "ფაილი არასწორია.\n"
 
-#: dlls/kernelbase/winerror.mc:1130
+#: dlls/kernelbase/winerror.mc:1170
 msgid "Cannot run full-screen.\n"
 msgstr "მთელ ეკრანზე გაშვება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1135
+#: dlls/kernelbase/winerror.mc:1175
 msgid "Nonexistent token.\n"
 msgstr "არარსებული კოდი.\n"
 
-#: dlls/kernelbase/winerror.mc:1140
+#: dlls/kernelbase/winerror.mc:1180
 msgid "Registry corrupt.\n"
 msgstr "რეესტრი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1145
+#: dlls/kernelbase/winerror.mc:1185
 msgid "Invalid key.\n"
 msgstr "არასწორი გასაღები.\n"
 
-#: dlls/kernelbase/winerror.mc:1150
+#: dlls/kernelbase/winerror.mc:1190
 msgid "Can't open registry key.\n"
 msgstr "რეესტრის გასაღების გახსნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1155
+#: dlls/kernelbase/winerror.mc:1195
 msgid "Can't read registry key.\n"
 msgstr "რეესტრის გასაღების წაკითხვის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1160
+#: dlls/kernelbase/winerror.mc:1200
 msgid "Can't write registry key.\n"
 msgstr "რეესტრის გასაღების ჩაწერის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1165
+#: dlls/kernelbase/winerror.mc:1205
 msgid "Registry has been recovered.\n"
 msgstr "რეესტრი აღდგა.\n"
 
-#: dlls/kernelbase/winerror.mc:1170
+#: dlls/kernelbase/winerror.mc:1210
 msgid "Registry is corrupt.\n"
 msgstr "რეესტრი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1175
+#: dlls/kernelbase/winerror.mc:1215
 msgid "I/O to registry failed.\n"
 msgstr "რეესტრში შეტანა/გამოტანის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1180
+#: dlls/kernelbase/winerror.mc:1220
 msgid "Not registry file.\n"
 msgstr "რეესტრის ფაილი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1185
+#: dlls/kernelbase/winerror.mc:1225
 msgid "Key deleted.\n"
 msgstr "გასაღები წაიშალა.\n"
 
-#: dlls/kernelbase/winerror.mc:1190
+#: dlls/kernelbase/winerror.mc:1230
 msgid "No registry log space.\n"
 msgstr "რეესტრის ჟურნალისთვის ადგილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1195
+#: dlls/kernelbase/winerror.mc:1235
 msgid "Registry key has subkeys.\n"
 msgstr "რეესტრის გასაღებს ქვეგასაღებები გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:1200
+#: dlls/kernelbase/winerror.mc:1240
 msgid "Subkey must be volatile.\n"
 msgstr "ქვეგასაღები ცვალებადი არ უნდა იყოს.\n"
 
-#: dlls/kernelbase/winerror.mc:1205
+#: dlls/kernelbase/winerror.mc:1245
 msgid "Notify change request in progress.\n"
 msgstr "ცვლილების მოთხოვნის მიმდინარეობის გაფრთხილება.\n"
 
-#: dlls/kernelbase/winerror.mc:1210
+#: dlls/kernelbase/winerror.mc:1250
 msgid "Dependent services are running.\n"
 msgstr "დამოკიდებული სერვისები გაშვებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1215
+#: dlls/kernelbase/winerror.mc:1255
 msgid "Invalid service control.\n"
 msgstr "არასწორი სერვისის კონტროლი.\n"
 
-#: dlls/kernelbase/winerror.mc:1220
+#: dlls/kernelbase/winerror.mc:1260
 msgid "Service request timeout.\n"
 msgstr "სერვისის მოთხოვნის მოლოდინის ვადა ამოიწურა.\n"
 
-#: dlls/kernelbase/winerror.mc:1225
+#: dlls/kernelbase/winerror.mc:1265
 msgid "Cannot create service thread.\n"
 msgstr "სერვისის ნაკადის შექმნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1230
+#: dlls/kernelbase/winerror.mc:1270
 msgid "Service database locked.\n"
 msgstr "სერვისის ბაზა დაბლოკილია.\n"
 
-#: dlls/kernelbase/winerror.mc:1235
+#: dlls/kernelbase/winerror.mc:1275
 msgid "Service already running.\n"
 msgstr "სერვისი უკვე გაშვებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1240
+#: dlls/kernelbase/winerror.mc:1280
 msgid "Invalid service account.\n"
 msgstr "არასწორი სერვისის ანგარიში.\n"
 
-#: dlls/kernelbase/winerror.mc:1245
+#: dlls/kernelbase/winerror.mc:1285
 msgid "Service is disabled.\n"
 msgstr "სერვისი გამორთულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1250
+#: dlls/kernelbase/winerror.mc:1290
 msgid "Circular dependency.\n"
 msgstr "წრიული დამოკიდებულება.\n"
 
-#: dlls/kernelbase/winerror.mc:1255
+#: dlls/kernelbase/winerror.mc:1295
 msgid "Service does not exist.\n"
 msgstr "სერვისი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1260
+#: dlls/kernelbase/winerror.mc:1300
 msgid "Service cannot accept control message.\n"
 msgstr "სერვისს ამ საკონტროლო შეტყობინების მხარდაჭერა არ გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:1265
+#: dlls/kernelbase/winerror.mc:1305
 msgid "Service not active.\n"
 msgstr "სერვისი აქტიური არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1270
+#: dlls/kernelbase/winerror.mc:1310
 msgid "Service controller connect failed.\n"
 msgstr "სერვისი კონტროლერთან დაკავშირების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1275
+#: dlls/kernelbase/winerror.mc:1315
 msgid "Exception in service.\n"
 msgstr "გამონაკლისი სერვისში.\n"
 
-#: dlls/kernelbase/winerror.mc:1280
+#: dlls/kernelbase/winerror.mc:1320
 msgid "Database does not exist.\n"
 msgstr "ბაზა არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1285
+#: dlls/kernelbase/winerror.mc:1325
 msgid "Service-specific error.\n"
 msgstr "სერვისის-საკუთარი შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1290
+#: dlls/kernelbase/winerror.mc:1330
 msgid "Process aborted.\n"
 msgstr "პროცესი ავარიულად დასრულდა.\n"
 
-#: dlls/kernelbase/winerror.mc:1295
+#: dlls/kernelbase/winerror.mc:1335
 msgid "Service dependency failed.\n"
 msgstr "სერვისის დამოკიდებულების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1300
+#: dlls/kernelbase/winerror.mc:1340
 msgid "Service login failed.\n"
 msgstr "სერვისის მომხმარებლის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1305
+#: dlls/kernelbase/winerror.mc:1345
 msgid "Service start-hang.\n"
 msgstr "სერვისი გაშვებისას დაეკიდა.\n"
 
-#: dlls/kernelbase/winerror.mc:1310
+#: dlls/kernelbase/winerror.mc:1350
 msgid "Invalid service lock.\n"
 msgstr "არასწორი სერვისის ბლოკი.\n"
 
-#: dlls/kernelbase/winerror.mc:1315
+#: dlls/kernelbase/winerror.mc:1355
 msgid "Service marked for delete.\n"
 msgstr "წასაშლელად მონიშნული სერვისი.\n"
 
-#: dlls/kernelbase/winerror.mc:1320
+#: dlls/kernelbase/winerror.mc:1360
 msgid "Service exists.\n"
 msgstr "სერვისი არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1325
+#: dlls/kernelbase/winerror.mc:1365
 msgid "System running last-known-good config.\n"
 msgstr "სისტემა ბოლო-კარგი-კონფიგურაციითაა გაშვებული.\n"
 
-#: dlls/kernelbase/winerror.mc:1330
+#: dlls/kernelbase/winerror.mc:1370
 msgid "Service dependency deleted.\n"
 msgstr "სერვისის დამოკიდებულება წაიშალა.\n"
 
-#: dlls/kernelbase/winerror.mc:1335
+#: dlls/kernelbase/winerror.mc:1375
 msgid "Boot already accepted as last-good config.\n"
 msgstr "ჩატვირთვა უკვე დაიწყო, როგორც ბოლო-კარგი-კონფიგურაცია.\n"
 
-#: dlls/kernelbase/winerror.mc:1340
+#: dlls/kernelbase/winerror.mc:1380
 msgid "Service not started since last boot.\n"
 msgstr "ბოლო ჩატვირთვისას სერვისი არ გაეშვა.\n"
 
-#: dlls/kernelbase/winerror.mc:1345
+#: dlls/kernelbase/winerror.mc:1385
 msgid "Duplicate service name.\n"
 msgstr "დუბლირებული სერვისის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1350
+#: dlls/kernelbase/winerror.mc:1390
 msgid "Different service account.\n"
 msgstr "განსხვავებული სერვისის ანგარიში.\n"
 
-#: dlls/kernelbase/winerror.mc:1355
+#: dlls/kernelbase/winerror.mc:1395
 msgid "Driver failure cannot be detected.\n"
 msgstr "დრაივერის შეცდომის პოვნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1360
+#: dlls/kernelbase/winerror.mc:1400
 msgid "Process abort cannot be detected.\n"
 msgstr "პროცესის შეცდომის პოვნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1365
+#: dlls/kernelbase/winerror.mc:1405
 msgid "No recovery program for service.\n"
 msgstr "სერვისის აღდგენის პროგრამა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1370
+#: dlls/kernelbase/winerror.mc:1410
 msgid "Service not implemented by exe.\n"
 msgstr "სერვისი .exe ფაილის მიერ არაა მოწოდებული.\n"
 
-#: dlls/kernelbase/winerror.mc:1375
+#: dlls/kernelbase/winerror.mc:1415
 msgid "End of media.\n"
 msgstr "მედიის დასსრული.\n"
 
-#: dlls/kernelbase/winerror.mc:1380
+#: dlls/kernelbase/winerror.mc:1420
 msgid "Filemark detected.\n"
 msgstr "აღმოჩენილია ფაილის ნიშანი.\n"
 
-#: dlls/kernelbase/winerror.mc:1385
+#: dlls/kernelbase/winerror.mc:1425
 msgid "Beginning of media.\n"
 msgstr "მედიის დასაწყისი.\n"
 
-#: dlls/kernelbase/winerror.mc:1390
+#: dlls/kernelbase/winerror.mc:1430
 msgid "Setmark detected.\n"
 msgstr "აღმოჩენილია ფაილების სეტის ნიშანი.\n"
 
-#: dlls/kernelbase/winerror.mc:1395
+#: dlls/kernelbase/winerror.mc:1435
 msgid "No data detected.\n"
 msgstr "მონაცემების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:1400
+#: dlls/kernelbase/winerror.mc:1440
 msgid "Partition failure.\n"
 msgstr "დანაყოფის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1405
+#: dlls/kernelbase/winerror.mc:1445
 msgid "Invalid block length.\n"
 msgstr "არასწორი ბლოკის სიგრძე.\n"
 
-#: dlls/kernelbase/winerror.mc:1410
+#: dlls/kernelbase/winerror.mc:1450
 msgid "Device not partitioned.\n"
 msgstr "მოწყობილობა დაყოფილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1415
+#: dlls/kernelbase/winerror.mc:1455
 msgid "Unable to lock media.\n"
 msgstr "მედიის დაბლოკვის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1420
+#: dlls/kernelbase/winerror.mc:1460
 msgid "Unable to unload media.\n"
 msgstr "მედიის გამოტვირთვის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1425
+#: dlls/kernelbase/winerror.mc:1465
 msgid "Media changed.\n"
 msgstr "მედია შეიცვალა.\n"
 
-#: dlls/kernelbase/winerror.mc:1430
+#: dlls/kernelbase/winerror.mc:1470
 msgid "I/O bus reset.\n"
 msgstr "შეტანა/გამოტანის მატარებელი განულდა.\n"
 
-#: dlls/kernelbase/winerror.mc:1435
+#: dlls/kernelbase/winerror.mc:1475
 msgid "No media in drive.\n"
 msgstr "ამძრავში დისკი არ დევს.\n"
 
-#: dlls/kernelbase/winerror.mc:1440
+#: dlls/kernelbase/winerror.mc:1480
 msgid "No Unicode translation.\n"
 msgstr "უნიკოდის თარგმანის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:1445
+#: dlls/kernelbase/winerror.mc:1485
 msgid "DLL initialization failed.\n"
 msgstr "DLL-ის ინიციალიზაციის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1450
+#: dlls/kernelbase/winerror.mc:1490
 msgid "Shutdown in progress.\n"
 msgstr "მიმდინარეობს გამორთვა.\n"
 
-#: dlls/kernelbase/winerror.mc:1455
+#: dlls/kernelbase/winerror.mc:1495
 msgid "No shutdown in progress.\n"
 msgstr "გამორთვა არ მიმდინარეობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1460
+#: dlls/kernelbase/winerror.mc:1500
 msgid "I/O device error.\n"
 msgstr "შეტანა/გამოტანის მოწყობილობის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1465
+#: dlls/kernelbase/winerror.mc:1505
 msgid "No serial devices found.\n"
 msgstr "სერიული მოწყობილობა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1470
+#: dlls/kernelbase/winerror.mc:1510
 msgid "Shared IRQ busy.\n"
 msgstr "გაზიარებული IRQ დაკავებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1475
+#: dlls/kernelbase/winerror.mc:1515
 msgid "Serial I/O completed.\n"
 msgstr "სერიული I/O დასრულდა.\n"
 
-#: dlls/kernelbase/winerror.mc:1480
+#: dlls/kernelbase/winerror.mc:1520
 msgid "Serial I/O counter timeout.\n"
 msgstr "სერიული I/O-ის მთვლელის მოლოდინის ვადა ამოიწურა.\n"
 
-#: dlls/kernelbase/winerror.mc:1485
+#: dlls/kernelbase/winerror.mc:1525
 msgid "Floppy ID address mark not found.\n"
 msgstr "დისკეტის ID-ის მისამართის ნიშანი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1490
+#: dlls/kernelbase/winerror.mc:1530
 msgid "Floppy reports wrong cylinder.\n"
 msgstr "დისკეტამ ცილინდრების არასწორი რაოდენობა დააბრუნა.\n"
 
-#: dlls/kernelbase/winerror.mc:1495
+#: dlls/kernelbase/winerror.mc:1535
 msgid "Unknown floppy error.\n"
 msgstr "უცნობი დისკეტის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1500
+#: dlls/kernelbase/winerror.mc:1540
 msgid "Floppy registers inconsistent.\n"
 msgstr "დისკეტის რეგისტრები არამდგრადია.\n"
 
-#: dlls/kernelbase/winerror.mc:1505
+#: dlls/kernelbase/winerror.mc:1545
 msgid "Hard disk recalibrate failed.\n"
 msgstr "მყარი დისკის თავიდან კალიბრაციის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1510
+#: dlls/kernelbase/winerror.mc:1550
 msgid "Hard disk operation failed.\n"
 msgstr "მყარი დისკის ოპერაციის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1515
+#: dlls/kernelbase/winerror.mc:1555
 msgid "Hard disk reset failed.\n"
 msgstr "მყარ დისკის განულების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1520
+#: dlls/kernelbase/winerror.mc:1560
 msgid "End of tape media.\n"
 msgstr "მაგნიტური ლენტის ბოლო.\n"
 
-#: dlls/kernelbase/winerror.mc:1525
+#: dlls/kernelbase/winerror.mc:1565
 msgid "Not enough server memory.\n"
 msgstr "სერვერის მეხსიერება საკმარისი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1530
+#: dlls/kernelbase/winerror.mc:1570
 msgid "Possible deadlock.\n"
 msgstr "შესაძლო ურთიერთბლოკირება.\n"
 
-#: dlls/kernelbase/winerror.mc:1535
+#: dlls/kernelbase/winerror.mc:1575
 msgid "Incorrect alignment.\n"
 msgstr "არასწორი სწორება.\n"
 
-#: dlls/kernelbase/winerror.mc:1540
+#: dlls/kernelbase/winerror.mc:1580
 msgid "Set-power-state vetoed.\n"
 msgstr "კვების მდგომარეობის გადართვა აკრძალულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1545
+#: dlls/kernelbase/winerror.mc:1585
 msgid "Set-power-state failed.\n"
 msgstr "კვების მდგომარეობის გადართვის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1550
+#: dlls/kernelbase/winerror.mc:1590
 msgid "Too many links.\n"
 msgstr "მეტისმეტად ბევრი ბმული.\n"
 
-#: dlls/kernelbase/winerror.mc:1555
+#: dlls/kernelbase/winerror.mc:1595
 msgid "Newer Windows version needed.\n"
 msgstr "საჭიროებს Windows-ის უფრო ახალ ვერსიას.\n"
 
-#: dlls/kernelbase/winerror.mc:1560
+#: dlls/kernelbase/winerror.mc:1600
 msgid "Wrong operating system.\n"
 msgstr "არასწორი ოპერაციული სისტემა.\n"
 
-#: dlls/kernelbase/winerror.mc:1565
+#: dlls/kernelbase/winerror.mc:1605
 msgid "Single-instance application.\n"
 msgstr "ერთ-გაშვებულ-ასლიანი აპლიკაცია.\n"
 
-#: dlls/kernelbase/winerror.mc:1570
+#: dlls/kernelbase/winerror.mc:1610
 msgid "Real-mode application.\n"
 msgstr "რეალური-რეჟიმის აპლიკაცია\n"
 
-#: dlls/kernelbase/winerror.mc:1575
+#: dlls/kernelbase/winerror.mc:1615
 msgid "Invalid DLL.\n"
 msgstr "არასწორი DLL.\n"
 
-#: dlls/kernelbase/winerror.mc:1580
+#: dlls/kernelbase/winerror.mc:1620
 msgid "No associated application.\n"
 msgstr "ასოცირებული აპლიკაციის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:1585
+#: dlls/kernelbase/winerror.mc:1625
 msgid "DDE failure.\n"
 msgstr "DDE-ის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1590
+#: dlls/kernelbase/winerror.mc:1630
 msgid "DLL not found.\n"
 msgstr "DLL-ი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1595
+#: dlls/kernelbase/winerror.mc:1635
 msgid "Out of user handles.\n"
 msgstr "მომხმარებლების დამმუშავებლები გადავსებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1600
+#: dlls/kernelbase/winerror.mc:1640
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "შეტყობინება მხოლოდ სინქრონულ გამოძახებებში შეგიძლიათ, გამოიყენოთ.\n"
 
-#: dlls/kernelbase/winerror.mc:1605
+#: dlls/kernelbase/winerror.mc:1645
 msgid "The source element is empty.\n"
 msgstr "საწყისი ელემენტი ცარიელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1610
+#: dlls/kernelbase/winerror.mc:1650
 msgid "The destination element is full.\n"
 msgstr "სამიზნე ელემენტი სავსეა.\n"
 
-#: dlls/kernelbase/winerror.mc:1615
+#: dlls/kernelbase/winerror.mc:1655
 msgid "The element address is invalid.\n"
 msgstr "ელემენტის მისამართი არასწორია.\n"
 
-#: dlls/kernelbase/winerror.mc:1620
+#: dlls/kernelbase/winerror.mc:1660
 msgid "The magazine is not present.\n"
 msgstr "ჟურნალი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1625
+#: dlls/kernelbase/winerror.mc:1665
 msgid "The device needs reinitialization.\n"
 msgstr "მოწყობილობას თავიდან ინიციალიზაცია სჭირდება.\n"
 
-#: dlls/kernelbase/winerror.mc:1630
+#: dlls/kernelbase/winerror.mc:1670
 msgid "The device requires cleaning.\n"
 msgstr "მოწყობილობას გაწმენდა სჭირდება.\n"
 
-#: dlls/kernelbase/winerror.mc:1635
+#: dlls/kernelbase/winerror.mc:1675
 msgid "The device door is open.\n"
 msgstr "მოწყობილობის კარი ღიაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1640
+#: dlls/kernelbase/winerror.mc:1680
 msgid "The device is not connected.\n"
 msgstr "მოწყობილობა მიერთებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1645
+#: dlls/kernelbase/winerror.mc:1685
 msgid "Element not found.\n"
 msgstr "ელემენტი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1650
+#: dlls/kernelbase/winerror.mc:1690
 msgid "No match found.\n"
 msgstr "დამთხვევა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1655
+#: dlls/kernelbase/winerror.mc:1695
 msgid "Property set not found.\n"
 msgstr "თვისებების სეტი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1660
+#: dlls/kernelbase/winerror.mc:1700
 msgid "Point not found.\n"
 msgstr "წერტილი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1665
+#: dlls/kernelbase/winerror.mc:1705
 msgid "No running tracking service.\n"
 msgstr "ტრეკინგის სერვისი გაშვებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1670
+#: dlls/kernelbase/winerror.mc:1710
 msgid "No such volume ID.\n"
 msgstr "ასეთი ტომის ID ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1675
+#: dlls/kernelbase/winerror.mc:1715
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "ჩასანაცვლებელი ფაილის წაშლის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1680
+#: dlls/kernelbase/winerror.mc:1720
 msgid "Unable to move the replacement file into place.\n"
 msgstr "ჩასანაცვლებელი ფაილის მითითებულ ადგილას გადატანა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1685
+#: dlls/kernelbase/winerror.mc:1725
 msgid "Moving the replacement file failed.\n"
 msgstr "ჩასანაცვლებელი ფაილის გადატანის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1690
+#: dlls/kernelbase/winerror.mc:1730
 msgid "The journal is being deleted.\n"
 msgstr "მიმდინარეობს ჟურნალის წაშლა.\n"
 
-#: dlls/kernelbase/winerror.mc:1695
+#: dlls/kernelbase/winerror.mc:1735
 msgid "The journal is not active.\n"
 msgstr "ჟურნალი აქტიურ არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1700
+#: dlls/kernelbase/winerror.mc:1740
 msgid "Potential matching file found.\n"
 msgstr "აღმოჩენილია დიდი შანსით დამთხვევის ქონე ფაილი.\n"
 
-#: dlls/kernelbase/winerror.mc:1705
+#: dlls/kernelbase/winerror.mc:1745
 msgid "The journal entry was deleted.\n"
 msgstr "ჟურნალის ჩანაწერი წაიშალა.\n"
 
-#: dlls/kernelbase/winerror.mc:1710
+#: dlls/kernelbase/winerror.mc:1750
 msgid "Invalid device name.\n"
 msgstr "არასწორი მოწყობილობის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1715
+#: dlls/kernelbase/winerror.mc:1755
 msgid "Connection unavailable.\n"
 msgstr "მიერთება მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1720
+#: dlls/kernelbase/winerror.mc:1760
 msgid "Device already remembered.\n"
 msgstr "მოწყობილობა უკვე დამახსოვრებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1725
+#: dlls/kernelbase/winerror.mc:1765
 msgid "No network or bad path.\n"
 msgstr "ქსელის გარეშე ან არასწორი ბილიკი.\n"
 
-#: dlls/kernelbase/winerror.mc:1730
+#: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid network provider name.\n"
 msgstr "არასწორი ქსელის პროვაიდერის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1735
+#: dlls/kernelbase/winerror.mc:1775
 msgid "Cannot open network connection profile.\n"
 msgstr "ქსელის მიერთების პროფილის გახსნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1740
+#: dlls/kernelbase/winerror.mc:1780
 msgid "Corrupt network connection profile.\n"
 msgstr "ქსელის მიერთების პროფილი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1745
+#: dlls/kernelbase/winerror.mc:1785
 msgid "Not a container.\n"
 msgstr "კონტეინერს არ წარმოადგენს.\n"
 
-#: dlls/kernelbase/winerror.mc:1750
+#: dlls/kernelbase/winerror.mc:1790
 msgid "Extended error.\n"
 msgstr "გაფართოებული შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:1755
+#: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid group name.\n"
 msgstr "არასწორი ჯგუფის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1760
+#: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid computer name.\n"
 msgstr "არასწორი კომპიუტერის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1765
+#: dlls/kernelbase/winerror.mc:1805
 msgid "Invalid event name.\n"
 msgstr "არასწორი მოვლენის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1770
+#: dlls/kernelbase/winerror.mc:1810
 msgid "Invalid domain name.\n"
 msgstr "არასწორი დომენის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1775
+#: dlls/kernelbase/winerror.mc:1815
 msgid "Invalid service name.\n"
 msgstr "არასწორი სერვისის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1780
+#: dlls/kernelbase/winerror.mc:1820
 msgid "Invalid network name.\n"
 msgstr "არასწორი ქსელის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1785
+#: dlls/kernelbase/winerror.mc:1825
 msgid "Invalid share name.\n"
 msgstr "არასწორი გაზიარებულის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1795
+#: dlls/kernelbase/winerror.mc:1835
 msgid "Invalid message name.\n"
 msgstr "არასწორი შეტყობინების სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1800
+#: dlls/kernelbase/winerror.mc:1840
 msgid "Invalid message destination.\n"
 msgstr "არასწორი შეტყობინების დანიშნულება.\n"
 
-#: dlls/kernelbase/winerror.mc:1805
+#: dlls/kernelbase/winerror.mc:1845
 msgid "Session credential conflict.\n"
 msgstr "სესიის ავტორიზაციის დეტალების კონფლიქტი.\n"
 
-#: dlls/kernelbase/winerror.mc:1810
+#: dlls/kernelbase/winerror.mc:1850
 msgid "Remote session limit exceeded.\n"
 msgstr "გადაცილებულია დაშორებული სესიის ზღვარი.\n"
 
-#: dlls/kernelbase/winerror.mc:1815
+#: dlls/kernelbase/winerror.mc:1855
 msgid "Duplicate domain or workgroup name.\n"
 msgstr "დუბლირებული დომენის ან სამუშაო ჯგუფის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:1820
+#: dlls/kernelbase/winerror.mc:1860
 msgid "No network.\n"
 msgstr "ქსელის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:1825
+#: dlls/kernelbase/winerror.mc:1865
 msgid "Operation canceled by user.\n"
 msgstr "ოპერაცია გაუქმებულია მომხმარებლის მიერ.\n"
 
-#: dlls/kernelbase/winerror.mc:1830
+#: dlls/kernelbase/winerror.mc:1870
 msgid "File has a user-mapped section.\n"
 msgstr "ფაილს მომხმარებელზე-მიმაგრებული სექცია გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
+#: dlls/kernelbase/winerror.mc:1875 dlls/kernelbase/winerror.mc:3910
 msgid "Connection refused.\n"
 msgstr "დაკავშირება უარყოფილია.\n"
 
-#: dlls/kernelbase/winerror.mc:1840
+#: dlls/kernelbase/winerror.mc:1880
 msgid "Connection gracefully closed.\n"
 msgstr "შეერთება წარმატებით დაიხურა.\n"
 
-#: dlls/kernelbase/winerror.mc:1845
+#: dlls/kernelbase/winerror.mc:1885
 msgid "Address already associated with transport endpoint.\n"
 msgstr "მისამართი ტრანსპორტის ბოლო წერტილთან უკვე ასოცირებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1850
+#: dlls/kernelbase/winerror.mc:1890
 msgid "Address not associated with transport endpoint.\n"
 msgstr "მისამართი ტრანსპორტის ბოლო წერტილთან ასოცირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1855
+#: dlls/kernelbase/winerror.mc:1895
 msgid "Connection invalid.\n"
 msgstr "მიერთება არასწორია.\n"
 
-#: dlls/kernelbase/winerror.mc:1860
+#: dlls/kernelbase/winerror.mc:1900
 msgid "Connection is active.\n"
 msgstr "შეერთება აქტიურია.\n"
 
-#: dlls/kernelbase/winerror.mc:1865
+#: dlls/kernelbase/winerror.mc:1905
 msgid "Network unreachable.\n"
 msgstr "ქსელი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1870
+#: dlls/kernelbase/winerror.mc:1910
 msgid "Host unreachable.\n"
 msgstr "ჰოსტი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1875
+#: dlls/kernelbase/winerror.mc:1915
 msgid "Protocol unreachable.\n"
 msgstr "პროტოკოლი ხელმიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1880
+#: dlls/kernelbase/winerror.mc:1920
 msgid "Port unreachable.\n"
 msgstr "პორტი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:1885
+#: dlls/kernelbase/winerror.mc:1925
 msgid "Request aborted.\n"
 msgstr "მოთხოვნა შეწყვეტილია.\n"
 
-#: dlls/kernelbase/winerror.mc:1890
+#: dlls/kernelbase/winerror.mc:1930
 msgid "Connection aborted.\n"
 msgstr "მიერთება შეწყვეტილია.\n"
 
-#: dlls/kernelbase/winerror.mc:1895
+#: dlls/kernelbase/winerror.mc:1935
 msgid "Please retry operation.\n"
 msgstr "ოპერაცია თავიდან სცადეთ.\n"
 
-#: dlls/kernelbase/winerror.mc:1900
+#: dlls/kernelbase/winerror.mc:1940
 msgid "Connection count limit reached.\n"
 msgstr "მიღწეულია მიერთებების რაოდენობის ზღვარი.\n"
 
-#: dlls/kernelbase/winerror.mc:1905
+#: dlls/kernelbase/winerror.mc:1945
 msgid "Login time restriction.\n"
 msgstr "შესვლის დროის შეზღუდვა.\n"
 
-#: dlls/kernelbase/winerror.mc:1910
+#: dlls/kernelbase/winerror.mc:1950
 msgid "Login workstation restriction.\n"
 msgstr "სამუშაო მანქანაზე შესვლის შეზღუდვა.\n"
 
-#: dlls/kernelbase/winerror.mc:1915
+#: dlls/kernelbase/winerror.mc:1955
 msgid "Incorrect network address.\n"
 msgstr "არასწორი ქსელური მისამართი.\n"
 
-#: dlls/kernelbase/winerror.mc:1920
+#: dlls/kernelbase/winerror.mc:1960
 msgid "Service already registered.\n"
 msgstr "სერვისი უკვე რეგისტრირებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1925
+#: dlls/kernelbase/winerror.mc:1965
 msgid "Service not found.\n"
 msgstr "სერვისი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:1930
+#: dlls/kernelbase/winerror.mc:1970
 msgid "User not authenticated.\n"
 msgstr "მომხმარებელი ავთენტიფიცირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1935
+#: dlls/kernelbase/winerror.mc:1975
 msgid "User not logged on.\n"
 msgstr "მომხმარებელი შესული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1940
+#: dlls/kernelbase/winerror.mc:1980
 msgid "Continue work in progress.\n"
 msgstr "მიმდინარე სამუშაოს გაგრძელება.\n"
 
-#: dlls/kernelbase/winerror.mc:1945
+#: dlls/kernelbase/winerror.mc:1985
 msgid "Already initialized.\n"
 msgstr "უკვე ინიციალიზებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1950
+#: dlls/kernelbase/winerror.mc:1990
 msgid "No more local devices.\n"
 msgstr "მეტი ლოკალური დისკი აღმოჩენილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1955
+#: dlls/kernelbase/winerror.mc:1995
 msgid "The site does not exist.\n"
 msgstr "საიტი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1960
+#: dlls/kernelbase/winerror.mc:2000
 msgid "The domain controller already exists.\n"
 msgstr "დომენის კონტროლერი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:1965
+#: dlls/kernelbase/winerror.mc:2005
 msgid "Supported only when connected.\n"
 msgstr "მხარდაჭერილია მხოლოდ მაშინ, როცა მიერთებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:1970
+#: dlls/kernelbase/winerror.mc:2010
 msgid "Perform operation even when nothing changed.\n"
 msgstr "ოპერაციის შესრულება მაშინაც კი, როცა არაფერი შეცვლილა.\n"
 
-#: dlls/kernelbase/winerror.mc:1975
+#: dlls/kernelbase/winerror.mc:2015
 msgid "The user profile is invalid.\n"
 msgstr "მომხმარებლის პროფილი არასწორია.\n"
 
-#: dlls/kernelbase/winerror.mc:1980
+#: dlls/kernelbase/winerror.mc:2020
 msgid "Not supported on Small Business Server.\n"
 msgstr "მცირე ბიზნესის სერვერზე მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1985
+#: dlls/kernelbase/winerror.mc:2025
 msgid "Not all privileges assigned.\n"
 msgstr "ყველა უფლება მინიჭებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:1990
+#: dlls/kernelbase/winerror.mc:2030
 msgid "Some security IDs not mapped.\n"
 msgstr "ზოგიერთი უსაფრთხოების ID მიბმული არა.\n"
 
-#: dlls/kernelbase/winerror.mc:1995
+#: dlls/kernelbase/winerror.mc:2035
 msgid "No quotas for account.\n"
 msgstr "ანგარიშისთვის კვოტები არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2000
+#: dlls/kernelbase/winerror.mc:2040
 msgid "Local user session key.\n"
 msgstr "ლოკალური მომხმარებლის სესიის გასაღები.\n"
 
-#: dlls/kernelbase/winerror.mc:2005
+#: dlls/kernelbase/winerror.mc:2045
 msgid "Password too complex for LM.\n"
 msgstr "LM-ის პაროლი მეტისმეტად რთულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2010
+#: dlls/kernelbase/winerror.mc:2050
 msgid "Unknown revision.\n"
 msgstr "უცნობი რევიზია.\n"
 
-#: dlls/kernelbase/winerror.mc:2015
+#: dlls/kernelbase/winerror.mc:2055
 msgid "Incompatible revision levels.\n"
 msgstr "შეუთავსებელი რევიზიის დონეები.\n"
 
-#: dlls/kernelbase/winerror.mc:2020
+#: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid owner.\n"
 msgstr "არასწორი მფლობელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2025
+#: dlls/kernelbase/winerror.mc:2065
 msgid "Invalid primary group.\n"
 msgstr ""
 "არასწორი ძირითად ჯგუფი\n"
 ".\n"
 
-#: dlls/kernelbase/winerror.mc:2030
+#: dlls/kernelbase/winerror.mc:2070
 msgid "No impersonation token.\n"
 msgstr "განსახიერების კოდის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2035
+#: dlls/kernelbase/winerror.mc:2075
 msgid "Can't disable mandatory group.\n"
 msgstr "აუცილებელი ჯგუფის გათიშვა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2040
+#: dlls/kernelbase/winerror.mc:2080
 msgid "No logon servers available.\n"
 msgstr "შესვლის სერვერები ხელმისაწვდომი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2045
+#: dlls/kernelbase/winerror.mc:2085
 msgid "No such logon session.\n"
 msgstr "შევლის ასეთი სესია ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2050
+#: dlls/kernelbase/winerror.mc:2090
 msgid "No such privilege.\n"
 msgstr "ასეთი პრივილეგია ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2055
+#: dlls/kernelbase/winerror.mc:2095
 msgid "Privilege not held.\n"
 msgstr "კლიენტს პრივილეგია არ გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:2060
+#: dlls/kernelbase/winerror.mc:2100
 msgid "Invalid account name.\n"
 msgstr "არასწორი ანგარიშის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2065
+#: dlls/kernelbase/winerror.mc:2105
 msgid "User already exists.\n"
 msgstr "მოხმარებელი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2070
+#: dlls/kernelbase/winerror.mc:2110
 msgid "No such user.\n"
 msgstr "ასეთი მომხმარებელი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2075
+#: dlls/kernelbase/winerror.mc:2115
 msgid "Group already exists.\n"
 msgstr "ჯგუფი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2080
+#: dlls/kernelbase/winerror.mc:2120
 msgid "No such group.\n"
 msgstr "ასეთი ჯგუფი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2085
+#: dlls/kernelbase/winerror.mc:2125
 msgid "User already in group.\n"
 msgstr "მომხმარებელი ამ ჯგუფში უკვე იმყოფება.\n"
 
-#: dlls/kernelbase/winerror.mc:2090
+#: dlls/kernelbase/winerror.mc:2130
 msgid "User not in group.\n"
 msgstr "მომხმარებელი ჯგუფში არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2095
+#: dlls/kernelbase/winerror.mc:2135
 msgid "Can't delete last admin user.\n"
 msgstr "ადმინისტრატორის ბოლო ჯგუფს ვერ წაშლით.\n"
 
-#: dlls/kernelbase/winerror.mc:2100
+#: dlls/kernelbase/winerror.mc:2140
 msgid "Wrong password.\n"
 msgstr "არასწორი პაროლი.\n"
 
-#: dlls/kernelbase/winerror.mc:2105
+#: dlls/kernelbase/winerror.mc:2145
 msgid "Ill-formed password.\n"
 msgstr "ცუდი პაროლი.\n"
 
-#: dlls/kernelbase/winerror.mc:2110
+#: dlls/kernelbase/winerror.mc:2150
 msgid "Password restriction.\n"
 msgstr "პაროლის შეზღუდვა.\n"
 
-#: dlls/kernelbase/winerror.mc:2115
+#: dlls/kernelbase/winerror.mc:2155
 msgid "Logon failure.\n"
 msgstr "შესვლის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2120
+#: dlls/kernelbase/winerror.mc:2160
 msgid "Account restriction.\n"
 msgstr "ანგარიშის შეზღუდვა.\n"
 
-#: dlls/kernelbase/winerror.mc:2125
+#: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid logon hours.\n"
 msgstr "არასწორი შესვლის დრო.\n"
 
-#: dlls/kernelbase/winerror.mc:2130
+#: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid workstation.\n"
 msgstr "არასწორი სამუშაო მანქანა\n"
 
-#: dlls/kernelbase/winerror.mc:2135
+#: dlls/kernelbase/winerror.mc:2175
 msgid "Password expired.\n"
 msgstr "პაროლი ვადაგასულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2140
+#: dlls/kernelbase/winerror.mc:2180
 msgid "Account disabled.\n"
 msgstr "ანგარიში გათიშულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2145
+#: dlls/kernelbase/winerror.mc:2185
 msgid "No security ID mapped.\n"
 msgstr "უსაფრთხოების ID მიბმული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2150
+#: dlls/kernelbase/winerror.mc:2190
 msgid "Too many LUIDs requested.\n"
 msgstr "მოთხოვნილია მეტისმეტად ბევრი LUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2155
+#: dlls/kernelbase/winerror.mc:2195
 msgid "LUIDs exhausted.\n"
 msgstr "LUID-ები გადავსებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2160
+#: dlls/kernelbase/winerror.mc:2200
 msgid "Invalid sub authority.\n"
 msgstr "არასწორი ქვე-ავტორიტეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2165
+#: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid ACL.\n"
 msgstr "არასწორი ACL.\n"
 
-#: dlls/kernelbase/winerror.mc:2170
+#: dlls/kernelbase/winerror.mc:2210
 msgid "Invalid SID.\n"
 msgstr "არასწორი SID.\n"
 
-#: dlls/kernelbase/winerror.mc:2175
+#: dlls/kernelbase/winerror.mc:2215
 msgid "Invalid security descriptor.\n"
 msgstr "არასწორი უსაფრთხოების დესკრიპტორი.\n"
 
-#: dlls/kernelbase/winerror.mc:2180
+#: dlls/kernelbase/winerror.mc:2220
 msgid "Bad inherited ACL.\n"
 msgstr "არასწორი მემკვიდრეობითი ACL.\n"
 
-#: dlls/kernelbase/winerror.mc:2185
+#: dlls/kernelbase/winerror.mc:2225
 msgid "Server disabled.\n"
 msgstr "სერვერი გამორთულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2190
+#: dlls/kernelbase/winerror.mc:2230
 msgid "Server not disabled.\n"
 msgstr "სერვერი გამორთული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2195
+#: dlls/kernelbase/winerror.mc:2235
 msgid "Invalid ID authority.\n"
 msgstr "არასწორი ID-ის ავტორიტეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2200
+#: dlls/kernelbase/winerror.mc:2240
 msgid "Allotted space exceeded.\n"
 msgstr "დაუფლებული ადგილი გადავსებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2205
+#: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid group attributes.\n"
 msgstr "არასწორი ჯგუფის ატრიბუტები.\n"
 
-#: dlls/kernelbase/winerror.mc:2210
+#: dlls/kernelbase/winerror.mc:2250
 msgid "Bad impersonation level.\n"
 msgstr "არასწორი განსახიერების დონე,\n"
 
-#: dlls/kernelbase/winerror.mc:2215
+#: dlls/kernelbase/winerror.mc:2255
 msgid "Can't open anonymous security token.\n"
 msgstr "ანონიმური უსაფრთხოების კოდის გახსნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2220
+#: dlls/kernelbase/winerror.mc:2260
 msgid "Bad validation class.\n"
 msgstr "არასწორი გადამოწმების კლასი.\n"
 
-#: dlls/kernelbase/winerror.mc:2225
+#: dlls/kernelbase/winerror.mc:2265
 msgid "Bad token type.\n"
 msgstr "არასწორი კოდის ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:2230
+#: dlls/kernelbase/winerror.mc:2270
 msgid "No security on object.\n"
 msgstr "ობიექტის უსაფრთხოების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2235
+#: dlls/kernelbase/winerror.mc:2275
 msgid "Can't access domain information.\n"
 msgstr "დომენის ინფორმაციასთან წვდომა აკრძალულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2240
+#: dlls/kernelbase/winerror.mc:2280
 msgid "Invalid server state.\n"
 msgstr "არასწორი სერვერის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:2245
+#: dlls/kernelbase/winerror.mc:2285
 msgid "Invalid domain state.\n"
 msgstr "არასწორი დომენის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:2250
+#: dlls/kernelbase/winerror.mc:2290
 msgid "Invalid domain role.\n"
 msgstr "არასწორი დომენის როლი.\n"
 
-#: dlls/kernelbase/winerror.mc:2255
+#: dlls/kernelbase/winerror.mc:2295
 msgid "No such domain.\n"
 msgstr "ასეთი დომენი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2260
+#: dlls/kernelbase/winerror.mc:2300
 msgid "Domain already exists.\n"
 msgstr "დომენი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2265
+#: dlls/kernelbase/winerror.mc:2305
 msgid "Domain limit exceeded.\n"
 msgstr "დომენების ზღვარი გადაჭარბებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2270
+#: dlls/kernelbase/winerror.mc:2310
 msgid "Internal database corruption.\n"
 msgstr "შიდა ბაზა დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2275
+#: dlls/kernelbase/winerror.mc:2315
 msgid "Internal error.\n"
 msgstr "შიდა შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2280
+#: dlls/kernelbase/winerror.mc:2320
 msgid "Generic access types not mapped.\n"
 msgstr "ზოგადი წვდომის ტიპები მიბმული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2285
+#: dlls/kernelbase/winerror.mc:2325
 msgid "Bad descriptor format.\n"
 msgstr "არასწორი დესკრიპტორის ფორმატი.\n"
 
-#: dlls/kernelbase/winerror.mc:2290
+#: dlls/kernelbase/winerror.mc:2330
 msgid "Not a logon process.\n"
 msgstr "არ წარმოადგენს შესვლის პროცესს.\n"
 
-#: dlls/kernelbase/winerror.mc:2295
+#: dlls/kernelbase/winerror.mc:2335
 msgid "Logon session ID exists.\n"
 msgstr "შევლის სესიის ID არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2300
+#: dlls/kernelbase/winerror.mc:2340
 msgid "Unknown authentication package.\n"
 msgstr "უცნობი ავთენტიკაციის პაკეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2305
+#: dlls/kernelbase/winerror.mc:2345
 msgid "Bad logon session state.\n"
 msgstr "არასწორი შესვლის სესიის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:2310
+#: dlls/kernelbase/winerror.mc:2350
 msgid "Logon session ID collision.\n"
 msgstr "შესვლის სესიის ID დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2315
+#: dlls/kernelbase/winerror.mc:2355
 msgid "Invalid logon type.\n"
 msgstr "არასწორი შესვლის ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:2320
+#: dlls/kernelbase/winerror.mc:2360
 msgid "Cannot impersonate.\n"
 msgstr "განსახიერება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2325
+#: dlls/kernelbase/winerror.mc:2365
 msgid "Invalid transaction state.\n"
 msgstr "არასწორი ტრანზაქციის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:2330
+#: dlls/kernelbase/winerror.mc:2370
 msgid "Security DB commit failure.\n"
 msgstr "უსაფრთხოების ბაზაში ჩაწერის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2335
+#: dlls/kernelbase/winerror.mc:2375
 msgid "Account is built-in.\n"
 msgstr "ანგარიში ჩაშენებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2340
+#: dlls/kernelbase/winerror.mc:2380
 msgid "Group is built-in.\n"
 msgstr "ჯგუფი ჩაშენებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2345
+#: dlls/kernelbase/winerror.mc:2385
 msgid "User is built-in.\n"
 msgstr "მომხმარებელი ჩაშენებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2350
+#: dlls/kernelbase/winerror.mc:2390
 msgid "Group is primary for user.\n"
 msgstr "მომხმარებლისთვის ჯგუფი ძირითადია.\n"
 
-#: dlls/kernelbase/winerror.mc:2355
+#: dlls/kernelbase/winerror.mc:2395
 msgid "Token already in use.\n"
 msgstr "კოდი უკვე გამოიყენება.\n"
 
-#: dlls/kernelbase/winerror.mc:2360
+#: dlls/kernelbase/winerror.mc:2400
 msgid "No such local group.\n"
 msgstr "ასეთი ლოკალური ჯგუფი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2365
+#: dlls/kernelbase/winerror.mc:2405
 msgid "User not in local group.\n"
 msgstr "მომხმარებელი ლოკალური ჯგუფის წევრი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2370
+#: dlls/kernelbase/winerror.mc:2410
 msgid "User already in local group.\n"
 msgstr "მომხმარებელი ლოკალური ჯგუფის წევრს უკვე წარმოადგენს.\n"
 
-#: dlls/kernelbase/winerror.mc:2375
+#: dlls/kernelbase/winerror.mc:2415
 msgid "Local group already exists.\n"
 msgstr "ლოკალური ჯგუფი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
+#: dlls/kernelbase/winerror.mc:2420 dlls/kernelbase/winerror.mc:2445
 msgid "Logon type not granted.\n"
 msgstr "შესვლის ტიპი მინიჭებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2385
+#: dlls/kernelbase/winerror.mc:2425
 msgid "Too many secrets.\n"
 msgstr "მეტისმეტად ბევრი საიდუმლო.\n"
 
-#: dlls/kernelbase/winerror.mc:2390
+#: dlls/kernelbase/winerror.mc:2430
 msgid "Secret too long.\n"
 msgstr "საიდუმლო მეტისმეტად გრძელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2395
+#: dlls/kernelbase/winerror.mc:2435
 msgid "Internal security DB error.\n"
 msgstr "შიდა უსაფრთხოების ბაზის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2400
+#: dlls/kernelbase/winerror.mc:2440
 msgid "Too many context IDs.\n"
 msgstr "მეტისმეტად ბევრი კონტექსტის ID.\n"
 
-#: dlls/kernelbase/winerror.mc:2410
+#: dlls/kernelbase/winerror.mc:2450
 msgid "Cross-encrypted NT password required.\n"
 msgstr "მოთხოვნილია ჯვარედინად-დაშიფრული NT პაროლი.\n"
 
-#: dlls/kernelbase/winerror.mc:2415
+#: dlls/kernelbase/winerror.mc:2455
 msgid "No such member.\n"
 msgstr "ასეთი წევრი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2420
+#: dlls/kernelbase/winerror.mc:2460
 msgid "Invalid member.\n"
 msgstr "არასწორი წევრი.\n"
 
-#: dlls/kernelbase/winerror.mc:2425
+#: dlls/kernelbase/winerror.mc:2465
 msgid "Too many SIDs.\n"
 msgstr "მეტისმეტად ბევრი SID.\n"
 
-#: dlls/kernelbase/winerror.mc:2430
+#: dlls/kernelbase/winerror.mc:2470
 msgid "Cross-encrypted LM password required.\n"
 msgstr "მოთხოვნილია ჯვარედინად-დაშიფრული LM პაროლი.\n"
 
-#: dlls/kernelbase/winerror.mc:2435
+#: dlls/kernelbase/winerror.mc:2475
 msgid "No inheritable components.\n"
 msgstr "მემკვიდრეობით გადმოცემადი კომპონენტების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2440
+#: dlls/kernelbase/winerror.mc:2480
 msgid "File or directory corrupt.\n"
 msgstr "ფაილი ან საქაღალდე დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2445
+#: dlls/kernelbase/winerror.mc:2485
 msgid "Disk is corrupt.\n"
 msgstr "დისკი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2450
+#: dlls/kernelbase/winerror.mc:2490
 msgid "No user session key.\n"
 msgstr "მომხმარებლის სესიის გასაღების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2455
+#: dlls/kernelbase/winerror.mc:2495
 msgid "License quota exceeded.\n"
 msgstr "ლიცენზიის კვოტა გადაცილებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2460
+#: dlls/kernelbase/winerror.mc:2500
 msgid "Wrong target name.\n"
 msgstr "არასწორი სამიზნის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2465
+#: dlls/kernelbase/winerror.mc:2505
 msgid "Mutual authentication failed.\n"
 msgstr "ორმხრივი ავთენტიკაციის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2470
+#: dlls/kernelbase/winerror.mc:2510
 msgid "Time skew between client and server.\n"
 msgstr "დროის აცდენა კლიენტსა და სერვერს შორის.\n"
 
-#: dlls/kernelbase/winerror.mc:2475
+#: dlls/kernelbase/winerror.mc:2515
 msgid "Invalid window handle.\n"
 msgstr "არასწორი ფანჯრის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2480
+#: dlls/kernelbase/winerror.mc:2520
 msgid "Invalid menu handle.\n"
 msgstr "არასწორი მენიუს დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2485
+#: dlls/kernelbase/winerror.mc:2525
 msgid "Invalid cursor handle.\n"
 msgstr "არასწორი კურსორის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2490
+#: dlls/kernelbase/winerror.mc:2530
 msgid "Invalid accelerator table handle.\n"
 msgstr "არასწორი ამაჩქარებლის ცხრილის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2495
+#: dlls/kernelbase/winerror.mc:2535
 msgid "Invalid hook handle.\n"
 msgstr "არასწორი დამმუშავებლის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2500
+#: dlls/kernelbase/winerror.mc:2540
 msgid "Invalid DWP handle.\n"
 msgstr "არასწორი DWP-ი დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2505
+#: dlls/kernelbase/winerror.mc:2545
 msgid "Can't create top-level child window.\n"
 msgstr "ზედა დონის შვილი ფანჯრის შექმნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2510
+#: dlls/kernelbase/winerror.mc:2550
 msgid "Can't find window class.\n"
 msgstr "ფანჯრის კლასი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2515
+#: dlls/kernelbase/winerror.mc:2555
 msgid "Window owned by another thread.\n"
 msgstr "ფანჯრის მფლობელი სხვა ნაკადია.\n"
 
-#: dlls/kernelbase/winerror.mc:2520
+#: dlls/kernelbase/winerror.mc:2560
 msgid "Hotkey already registered.\n"
 msgstr "ღილაკის მალსახმობი უკვე რეგისტრირებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2525
+#: dlls/kernelbase/winerror.mc:2565
 msgid "Class already exists.\n"
 msgstr ""
 "კლასი უკვე არსებობს.\n"
 "\n"
 
-#: dlls/kernelbase/winerror.mc:2530
+#: dlls/kernelbase/winerror.mc:2570
 msgid "Class does not exist.\n"
 msgstr "კლასი არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2535
+#: dlls/kernelbase/winerror.mc:2575
 msgid "Class has open windows.\n"
 msgstr "კლასს ღია ფანჯრები გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
+#: dlls/kernelbase/winerror.mc:2580 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "არასწორი ინდექსი.\n"
 
-#: dlls/kernelbase/winerror.mc:2545
+#: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid icon handle.\n"
 msgstr "არასწორი ხატულის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2550
+#: dlls/kernelbase/winerror.mc:2590
 msgid "Private dialog index.\n"
 msgstr "პირადი ფანჯრის ინდექსი.\n"
 
-#: dlls/kernelbase/winerror.mc:2555
+#: dlls/kernelbase/winerror.mc:2595
 msgid "List box ID not found.\n"
 msgstr "ჩამოშლადი სიის ID ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2560
+#: dlls/kernelbase/winerror.mc:2600
 msgid "No wildcard characters.\n"
 msgstr "ვაილდკარდის ტიპის სიმბოლოების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2565
+#: dlls/kernelbase/winerror.mc:2605
 msgid "Clipboard not open.\n"
 msgstr "ბუფერი ღია არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2570
+#: dlls/kernelbase/winerror.mc:2610
 msgid "Hotkey not registered.\n"
 msgstr "ღილაკის მალსახმობი რეგისტრირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2575
+#: dlls/kernelbase/winerror.mc:2615
 msgid "Not a dialog window.\n"
 msgstr "დიალოგის ფანჯარას არ წარმოადგენს.\n"
 
-#: dlls/kernelbase/winerror.mc:2580
+#: dlls/kernelbase/winerror.mc:2620
 msgid "Control ID not found.\n"
 msgstr "საკონტროლო ID აღმოჩენილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2585
+#: dlls/kernelbase/winerror.mc:2625
 msgid "Invalid combo box message.\n"
 msgstr "არასწორი ჩამოშლადი სიის შეტყობინება.\n"
 
-#: dlls/kernelbase/winerror.mc:2590
+#: dlls/kernelbase/winerror.mc:2630
 msgid "Not a combo box window.\n"
 msgstr "ჩამოშლადი სიის ფანჯარას არ წარმოადგენს.\n"
 
-#: dlls/kernelbase/winerror.mc:2595
+#: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid edit height.\n"
 msgstr "არასწორი ჩასწორების სიმაღლე.\n"
 
-#: dlls/kernelbase/winerror.mc:2600
+#: dlls/kernelbase/winerror.mc:2640
 msgid "DC not found.\n"
 msgstr "DC ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2605
+#: dlls/kernelbase/winerror.mc:2645
 msgid "Invalid hook filter.\n"
 msgstr "არასწორი დამმუშავებლის ფილტრი.\n"
 
-#: dlls/kernelbase/winerror.mc:2610
+#: dlls/kernelbase/winerror.mc:2650
 msgid "Invalid filter procedure.\n"
 msgstr "არასწორი ფილტრის პროცედურა.\n"
 
-#: dlls/kernelbase/winerror.mc:2615
+#: dlls/kernelbase/winerror.mc:2655
 msgid "Hook procedure needs module handle.\n"
 msgstr "დამმუშავებლის პროცედურას მოდულის დამმუშავებელი ესაჭიროება.\n"
 
-#: dlls/kernelbase/winerror.mc:2620
+#: dlls/kernelbase/winerror.mc:2660
 msgid "Global-only hook procedure.\n"
 msgstr "მხოლოდ-გლობალური დამმუშავებლის პროცედურა.\n"
 
-#: dlls/kernelbase/winerror.mc:2625
+#: dlls/kernelbase/winerror.mc:2665
 msgid "Journal hook already set.\n"
 msgstr "ჟურნალის დამმუშავებელი უკვე დაყენებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2630
+#: dlls/kernelbase/winerror.mc:2670
 msgid "Hook procedure not installed.\n"
 msgstr "დამმუშავებლის პროცედურა დაყენებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2635
+#: dlls/kernelbase/winerror.mc:2675
 msgid "Invalid list box message.\n"
 msgstr "არასწორი ჩამოშლადი სიის შეტყობინება.\n"
 
-#: dlls/kernelbase/winerror.mc:2640
+#: dlls/kernelbase/winerror.mc:2680
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr "გაგზავნილია არასწორი LB_SETCOUNT.\n"
 
-#: dlls/kernelbase/winerror.mc:2645
+#: dlls/kernelbase/winerror.mc:2685
 msgid "No tab stops on this list box.\n"
 msgstr "სიის ელემენტს ტაბულაციის პოზიციები არ გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:2650
+#: dlls/kernelbase/winerror.mc:2690
 msgid "Can't destroy object owned by another thread.\n"
 msgstr "სხვა ნაკადის მფლობელობაში მყოფი ობიექტის განადგურება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:2655
+#: dlls/kernelbase/winerror.mc:2695
 msgid "Child window menus not allowed.\n"
 msgstr "შვილი ფანჯრის მენიუები დაშვებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2660
+#: dlls/kernelbase/winerror.mc:2700
 msgid "Window has no system menu.\n"
 msgstr "ფანჯარას სისტემური მენიუ არ გააჩნია\n"
 
-#: dlls/kernelbase/winerror.mc:2665
+#: dlls/kernelbase/winerror.mc:2705
 msgid "Invalid message box style.\n"
 msgstr "არასწორი შეტყობინების ფანჯრის სტილი.\n"
 
-#: dlls/kernelbase/winerror.mc:2670
+#: dlls/kernelbase/winerror.mc:2710
 msgid "Invalid SPI parameter.\n"
 msgstr "არასწორი SPI-ის პარამეტრი.\n"
 
-#: dlls/kernelbase/winerror.mc:2675
+#: dlls/kernelbase/winerror.mc:2715
 msgid "Screen already locked.\n"
 msgstr "ეკრანი უკვე დაბლოკილია.\n"
 
-#: dlls/kernelbase/winerror.mc:2680
+#: dlls/kernelbase/winerror.mc:2720
 msgid "Window handles have different parents.\n"
 msgstr "ფანჯრის დამმუშავებლებს სხვადასხვა მშობელი გააჩნიათ.\n"
 
-#: dlls/kernelbase/winerror.mc:2685
+#: dlls/kernelbase/winerror.mc:2725
 msgid "Not a child window.\n"
 msgstr "შვილის ფანჯარა არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2690
+#: dlls/kernelbase/winerror.mc:2730
 msgid "Invalid GW command.\n"
 msgstr "არასწორი GW-ის ბრძანება.\n"
 
-#: dlls/kernelbase/winerror.mc:2695
+#: dlls/kernelbase/winerror.mc:2735
 msgid "Invalid thread ID.\n"
 msgstr "არასწორი ნაკადის ID.\n"
 
-#: dlls/kernelbase/winerror.mc:2700
+#: dlls/kernelbase/winerror.mc:2740
 msgid "Not an MDI child window.\n"
 msgstr "არ წარმოადგენს MDI შვილ ფანჯარას.\n"
 
-#: dlls/kernelbase/winerror.mc:2705
+#: dlls/kernelbase/winerror.mc:2745
 msgid "Popup menu already active.\n"
 msgstr "მხტუნარას მენიუ უკვე აქტიურია.\n"
 
-#: dlls/kernelbase/winerror.mc:2710
+#: dlls/kernelbase/winerror.mc:2750
 msgid "No scrollbars.\n"
 msgstr "ჩოჩიების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2715
+#: dlls/kernelbase/winerror.mc:2755
 msgid "Invalid scrollbar range.\n"
 msgstr "არასწორი ჩოჩიის დიაპაზონი.\n"
 
-#: dlls/kernelbase/winerror.mc:2720
+#: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid ShowWin command.\n"
 msgstr "არასწორი ShowWin ბრძანება.\n"
 
-#: dlls/kernelbase/winerror.mc:2725
+#: dlls/kernelbase/winerror.mc:2765
 msgid "No system resources.\n"
 msgstr "სისტემური რესურსების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2730
+#: dlls/kernelbase/winerror.mc:2770
 msgid "No non-paged system resources.\n"
 msgstr "არ-დასვოპილი სისტემური რესურსები არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2735
+#: dlls/kernelbase/winerror.mc:2775
 msgid "No paged system resources.\n"
 msgstr "დასვოპილი სისტემური რესურსები არ არსბობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2740
+#: dlls/kernelbase/winerror.mc:2780
 msgid "No working set quota.\n"
 msgstr "სამუშაო ნაკრების კვოტის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2745
+#: dlls/kernelbase/winerror.mc:2785
 msgid "No page file quota.\n"
 msgstr "სვოპის ფაილის კვოტის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:2750
+#: dlls/kernelbase/winerror.mc:2790
 msgid "Exceeded commitment limit.\n"
 msgstr "გადაჭარბებულია ოპერაციების გადაცემის ზღვარი.\n"
 
-#: dlls/kernelbase/winerror.mc:2755
+#: dlls/kernelbase/winerror.mc:2795
 msgid "Menu item not found.\n"
 msgstr "მენიუს ელემენტი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2760
+#: dlls/kernelbase/winerror.mc:2800
 msgid "Invalid keyboard handle.\n"
 msgstr "არასწორი კლავიატურის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2765
+#: dlls/kernelbase/winerror.mc:2805
 msgid "Hook type not allowed.\n"
 msgstr "კაუჭის ტიპი დაშვებულიარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2770
+#: dlls/kernelbase/winerror.mc:2810
 msgid "Interactive window station required.\n"
 msgstr "აუცილებელია ინტერაქტიური ფანჯრის სადგური.\n"
 
-#: dlls/kernelbase/winerror.mc:2775
+#: dlls/kernelbase/winerror.mc:2815
 msgid "Timeout.\n"
 msgstr "ვადა ამოიწურა.\n"
 
-#: dlls/kernelbase/winerror.mc:2780
+#: dlls/kernelbase/winerror.mc:2820
 msgid "Invalid monitor handle.\n"
 msgstr "არასწორი მონიტორის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:2785
+#: dlls/kernelbase/winerror.mc:2825
 msgid "Event log file corrupt.\n"
 msgstr "მოვლენების ჟურნალის ფაილი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:2790
+#: dlls/kernelbase/winerror.mc:2830
 msgid "Event log can't start.\n"
 msgstr "მოვლენების ჟურნალი ვერ გაეშვა.\n"
 
-#: dlls/kernelbase/winerror.mc:2795
+#: dlls/kernelbase/winerror.mc:2835
 msgid "Event log file full.\n"
 msgstr ""
 "მოვლენების ჟურნალის ფაილი სავსეა.\n"
 "\n"
 
-#: dlls/kernelbase/winerror.mc:2800
+#: dlls/kernelbase/winerror.mc:2840
 msgid "Event log file changed.\n"
 msgstr ""
 "მოვლენების ჟურნალის ფაილი შეიცვალა.\n"
 "\n"
 
-#: dlls/kernelbase/winerror.mc:2805
+#: dlls/kernelbase/winerror.mc:2845
 msgid "Installer service failed.\n"
 msgstr "დაყენების სერვისი ავარიულად დასრულდა.\n"
 
-#: dlls/kernelbase/winerror.mc:2810
+#: dlls/kernelbase/winerror.mc:2850
 msgid "Installation aborted by user.\n"
 msgstr "დაყენება შეწყვეტილია მომხმარებლის მოთხოვნის გამო.\n"
 
-#: dlls/kernelbase/winerror.mc:2815
+#: dlls/kernelbase/winerror.mc:2855
 msgid "Installation failure.\n"
 msgstr "დაყენების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2820
+#: dlls/kernelbase/winerror.mc:2860
 msgid "Installation suspended.\n"
 msgstr "დაყენება შეჩერდა.\n"
 
-#: dlls/kernelbase/winerror.mc:2825
+#: dlls/kernelbase/winerror.mc:2865
 msgid "Unknown product.\n"
 msgstr "უცნობი პროდუქტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2830
+#: dlls/kernelbase/winerror.mc:2870
 msgid "Unknown feature.\n"
 msgstr "უცნობი ფუნქცია.\n"
 
-#: dlls/kernelbase/winerror.mc:2835
+#: dlls/kernelbase/winerror.mc:2875
 msgid "Unknown component.\n"
 msgstr "უცნობი კომპონენტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2840
+#: dlls/kernelbase/winerror.mc:2880
 msgid "Unknown property.\n"
 msgstr "უცნობი თვისება.\n"
 
-#: dlls/kernelbase/winerror.mc:2845
+#: dlls/kernelbase/winerror.mc:2885
 msgid "Invalid handle state.\n"
 msgstr "არასწორი დამმუშავებლის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:2850
+#: dlls/kernelbase/winerror.mc:2890
 msgid "Bad configuration.\n"
 msgstr "არასწორი კონფიგურაცია.\n"
 
-#: dlls/kernelbase/winerror.mc:2855
+#: dlls/kernelbase/winerror.mc:2895
 msgid "Index is missing.\n"
 msgstr "ინდექსი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:2860
+#: dlls/kernelbase/winerror.mc:2900
 msgid "Installation source is missing.\n"
 msgstr "დაყენების წყარო მითითებულიარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2865
+#: dlls/kernelbase/winerror.mc:2905
 msgid "Wrong installation package version.\n"
 msgstr "არასწორი დასაყენებელი პაკეტის ვერსია.\n"
 
-#: dlls/kernelbase/winerror.mc:2870
+#: dlls/kernelbase/winerror.mc:2910
 msgid "Product uninstalled.\n"
 msgstr "პროდუქტი წაიშალა.\n"
 
-#: dlls/kernelbase/winerror.mc:2875
+#: dlls/kernelbase/winerror.mc:2915
 msgid "Invalid query syntax.\n"
 msgstr "არასწორი მოთხოვნის სინტაქსი.\n"
 
-#: dlls/kernelbase/winerror.mc:2880
+#: dlls/kernelbase/winerror.mc:2920
 msgid "Invalid field.\n"
 msgstr "არასწორი ველი.\n"
 
-#: dlls/kernelbase/winerror.mc:2885
+#: dlls/kernelbase/winerror.mc:2925
 msgid "Device removed.\n"
 msgstr "მოწყობილობა წაშლილია.\n"
 
-#: dlls/kernelbase/winerror.mc:2890
+#: dlls/kernelbase/winerror.mc:2930
 msgid "Installation already running.\n"
 msgstr "დაყენება უკვე მიმდინარეობს.\n"
 
-#: dlls/kernelbase/winerror.mc:2895
+#: dlls/kernelbase/winerror.mc:2935
 msgid "Installation package failed to open.\n"
 msgstr "დასაყენებელი პაკეტის გახსნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2900
+#: dlls/kernelbase/winerror.mc:2940
 msgid "Installation package is invalid.\n"
 msgstr "დასაყენებელი პაკეტი არასწორია.\n"
 
-#: dlls/kernelbase/winerror.mc:2905
+#: dlls/kernelbase/winerror.mc:2945
 msgid "Installer user interface failed.\n"
 msgstr "დამყენებლის მომხმარებლის ინტერფეისის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2910
+#: dlls/kernelbase/winerror.mc:2950
 msgid "Failed to open installation log file.\n"
 msgstr "დაყენების ჟურნალის ფაილის გახსნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2915
+#: dlls/kernelbase/winerror.mc:2955
 msgid "Installation language not supported.\n"
 msgstr "დაყენების ენა მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2920
+#: dlls/kernelbase/winerror.mc:2960
 msgid "Installation transform failed to apply.\n"
 msgstr "დაყენების გარდაქმნის გადატარების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2925
+#: dlls/kernelbase/winerror.mc:2965
 msgid "Installation package rejected.\n"
 msgstr "დასაყენებელი პაკეტი უარყოფილია.\n"
 
-#: dlls/kernelbase/winerror.mc:2930
+#: dlls/kernelbase/winerror.mc:2970
 msgid "Function could not be called.\n"
 msgstr "ფუნქცის გამოძახების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2935
+#: dlls/kernelbase/winerror.mc:2975
 msgid "Function failed.\n"
 msgstr "ფუნქციის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2940
+#: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid table.\n"
 msgstr "არასწორი ცხრილი.\n"
 
-#: dlls/kernelbase/winerror.mc:2945
+#: dlls/kernelbase/winerror.mc:2985
 msgid "Data type mismatch.\n"
 msgstr "მონაცემების ტიპი არ ემთხვევა.\n"
 
-#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
+#: dlls/kernelbase/winerror.mc:2990 dlls/kernelbase/winerror.mc:3200
 msgid "Unsupported type.\n"
 msgstr "მხარდაუჭერელი ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:2955
+#: dlls/kernelbase/winerror.mc:2995
 msgid "Creation failed.\n"
 msgstr "შექმნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2960
+#: dlls/kernelbase/winerror.mc:3000
 msgid "Temporary directory not writable.\n"
 msgstr "დროებითი საქაღალდე ჩაწერადი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2965
+#: dlls/kernelbase/winerror.mc:3005
 msgid "Installation platform not supported.\n"
 msgstr "დასაყენებელი პლატფორმა მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2970
+#: dlls/kernelbase/winerror.mc:3010
 msgid "Installer not used.\n"
 msgstr ""
 "დამყენებელი არ გამოიყენება.\n"
 "\n"
 
-#: dlls/kernelbase/winerror.mc:2975
+#: dlls/kernelbase/winerror.mc:3015
 msgid "Failed to open the patch package.\n"
 msgstr "პაჩის პაკეტის გახსნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:2980
+#: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid patch package.\n"
 msgstr "არასწორი პაჩის პაკეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:2985
+#: dlls/kernelbase/winerror.mc:3025
 msgid "Unsupported patch package.\n"
 msgstr "პაჩის პაკეტი მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:2990
+#: dlls/kernelbase/winerror.mc:3030
 msgid "Another version is installed.\n"
 msgstr "დაყენებულია სხვა ვერსია.\n"
 
-#: dlls/kernelbase/winerror.mc:2995
+#: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid command line.\n"
 msgstr "არასწორი ბრძანებების სტრიქონი.\n"
 
-#: dlls/kernelbase/winerror.mc:3000
+#: dlls/kernelbase/winerror.mc:3040
 msgid "Remote installation not allowed.\n"
 msgstr "დაშორებული დაყენება მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3005
+#: dlls/kernelbase/winerror.mc:3045
 msgid "Reboot initiated after successful install.\n"
 msgstr "გადატვირთვა წარმატებული დაყენების შემდეგ.\n"
 
-#: dlls/kernelbase/winerror.mc:3010
+#: dlls/kernelbase/winerror.mc:3050
 msgid "Invalid string binding.\n"
 msgstr "არასწორი სტრიქონის მიბმა.\n"
 
-#: dlls/kernelbase/winerror.mc:3015
+#: dlls/kernelbase/winerror.mc:3055
 msgid "Wrong kind of binding.\n"
 msgstr "მიბმის არასწორი ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:3020
+#: dlls/kernelbase/winerror.mc:3060
 msgid "Invalid binding.\n"
 msgstr "არასწორი მიბმა.\n"
 
-#: dlls/kernelbase/winerror.mc:3025
+#: dlls/kernelbase/winerror.mc:3065
 msgid "RPC protocol sequence not supported.\n"
 msgstr "RPC პროტოკოლის მიმდევრობა მხარდაჭერილი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3030
+#: dlls/kernelbase/winerror.mc:3070
 msgid "Invalid RPC protocol sequence.\n"
 msgstr "არასწორი RPC პროტოკოლის მიმდევრობა.\n"
 
-#: dlls/kernelbase/winerror.mc:3035
+#: dlls/kernelbase/winerror.mc:3075
 msgid "Invalid string UUID.\n"
 msgstr "არასწორი სტრიქონის UUID.\n"
 
-#: dlls/kernelbase/winerror.mc:3040
+#: dlls/kernelbase/winerror.mc:3080
 msgid "Invalid endpoint format.\n"
 msgstr "არასწორი ბოლოწერტილის ფორმატი.\n"
 
-#: dlls/kernelbase/winerror.mc:3045
+#: dlls/kernelbase/winerror.mc:3085
 msgid "Invalid network address.\n"
 msgstr "არასწორი ქსელის მისამართი.\n"
 
-#: dlls/kernelbase/winerror.mc:3050
+#: dlls/kernelbase/winerror.mc:3090
 msgid "No endpoint found.\n"
 msgstr "ბოლოწერტილი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3055
+#: dlls/kernelbase/winerror.mc:3095
 msgid "Invalid timeout value.\n"
 msgstr "მოლოდინის დროის არასწორი მნიშვნელობა.\n"
 
-#: dlls/kernelbase/winerror.mc:3060
+#: dlls/kernelbase/winerror.mc:3100
 msgid "Object UUID not found.\n"
 msgstr "ობიექტის UUID ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3065
+#: dlls/kernelbase/winerror.mc:3105
 msgid "UUID already registered.\n"
 msgstr "UUID-ი უკვე რეგისტრირებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3070
+#: dlls/kernelbase/winerror.mc:3110
 msgid "UUID type already registered.\n"
 msgstr "UUID-ის ტიპი უკვე რეგისტრირებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3075
+#: dlls/kernelbase/winerror.mc:3115
 msgid "Server already listening.\n"
 msgstr "სერვერი უკვე უსმენს.\n"
 
-#: dlls/kernelbase/winerror.mc:3080
+#: dlls/kernelbase/winerror.mc:3120
 msgid "No protocol sequences registered.\n"
 msgstr "პროტოკოლის მიმდევრობები რეგისტრირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3085
+#: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server not listening.\n"
 msgstr "RPC სერვერი არ უსმენს.\n"
 
-#: dlls/kernelbase/winerror.mc:3090
+#: dlls/kernelbase/winerror.mc:3130
 msgid "Unknown manager type.\n"
 msgstr "უცნობი მმართელის ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:3095
+#: dlls/kernelbase/winerror.mc:3135
 msgid "Unknown interface.\n"
 msgstr "უცნობი ინტერფეისი.\n"
 
-#: dlls/kernelbase/winerror.mc:3100
+#: dlls/kernelbase/winerror.mc:3140
 msgid "No bindings.\n"
 msgstr "მიბმების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3105
+#: dlls/kernelbase/winerror.mc:3145
 msgid "No protocol sequences.\n"
 msgstr "პროტოკოლის მიმდევრობების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3110
+#: dlls/kernelbase/winerror.mc:3150
 msgid "Can't create endpoint.\n"
 msgstr "ბოლო წერტილის შექმნა შეუძლებელა.\n"
 
-#: dlls/kernelbase/winerror.mc:3115
+#: dlls/kernelbase/winerror.mc:3155
 msgid "Out of resources.\n"
 msgstr "არასაკმარისი რესურსები.\n"
 
-#: dlls/kernelbase/winerror.mc:3120
+#: dlls/kernelbase/winerror.mc:3160
 msgid "RPC server unavailable.\n"
 msgstr "RPC სერვერი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3125
+#: dlls/kernelbase/winerror.mc:3165
 msgid "RPC server too busy.\n"
 msgstr "RPC სერვერი ძალიან დატვირთულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3130
+#: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid network options.\n"
 msgstr "არასწორი ქსელის პარამეტრები.\n"
 
-#: dlls/kernelbase/winerror.mc:3135
+#: dlls/kernelbase/winerror.mc:3175
 msgid "No RPC call active.\n"
 msgstr "აქტიური RPC გამოძახებების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3140
+#: dlls/kernelbase/winerror.mc:3180
 msgid "RPC call failed.\n"
 msgstr "RPC გამოძახების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3145
+#: dlls/kernelbase/winerror.mc:3185
 msgid "RPC call failed and didn't execute.\n"
 msgstr "RPC გამოძახება ავარიულად დასრულდა და არ შესრულებულა.\n"
 
-#: dlls/kernelbase/winerror.mc:3150
+#: dlls/kernelbase/winerror.mc:3190
 msgid "RPC protocol error.\n"
 msgstr ""
 "RPC პროტოკოლის შეცდომა.\n"
 "\n"
 
-#: dlls/kernelbase/winerror.mc:3155
+#: dlls/kernelbase/winerror.mc:3195
 msgid "Unsupported transfer syntax.\n"
 msgstr "მხარდაუჭერელი მიმოცვლის სინტაქსი.\n"
 
-#: dlls/kernelbase/winerror.mc:3165
+#: dlls/kernelbase/winerror.mc:3205
 msgid "Invalid tag.\n"
 msgstr "არასწორი ჭდე.\n"
 
-#: dlls/kernelbase/winerror.mc:3170
+#: dlls/kernelbase/winerror.mc:3210
 msgid "Invalid array bounds.\n"
 msgstr "არასწორი მასივის საზღვრები.\n"
 
-#: dlls/kernelbase/winerror.mc:3175
+#: dlls/kernelbase/winerror.mc:3215
 msgid "No entry name.\n"
 msgstr "ჩანაწერის სახელის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3180
+#: dlls/kernelbase/winerror.mc:3220
 msgid "Invalid name syntax.\n"
 msgstr "სახელის არასწორი სინტაქსი.\n"
 
-#: dlls/kernelbase/winerror.mc:3185
+#: dlls/kernelbase/winerror.mc:3225
 msgid "Unsupported name syntax.\n"
 msgstr "მხარდაუჭერელი სახელის სინტაქსი.\n"
 
-#: dlls/kernelbase/winerror.mc:3190
+#: dlls/kernelbase/winerror.mc:3230
 msgid "No network address.\n"
 msgstr "ქსელის მისამართის გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3195
+#: dlls/kernelbase/winerror.mc:3235
 msgid "Duplicate endpoint.\n"
 msgstr "დუბლირებული ბოლოწერტილი.\n"
 
-#: dlls/kernelbase/winerror.mc:3200
+#: dlls/kernelbase/winerror.mc:3240
 msgid "Unknown authentication type.\n"
 msgstr "უცნობი ავთენტიკაციის ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:3205
+#: dlls/kernelbase/winerror.mc:3245
 msgid "Maximum calls too low.\n"
 msgstr "მაქსიმალური გამოძახებები ძალიან დაბალია.\n"
 
-#: dlls/kernelbase/winerror.mc:3210
+#: dlls/kernelbase/winerror.mc:3250
 msgid "String too long.\n"
 msgstr "სტრიქონი ძალიან გრძელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3215
+#: dlls/kernelbase/winerror.mc:3255
 msgid "Protocol sequence not found.\n"
 msgstr "პროტოკოლის მიმდევრობა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3220
+#: dlls/kernelbase/winerror.mc:3260
 msgid "Procedure number out of range.\n"
 msgstr "პროცედურის ნომერი დიაპაზონს გარეთაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3225
+#: dlls/kernelbase/winerror.mc:3265
 msgid "Binding has no authentication data.\n"
 msgstr "მიბმას ავთენტიკაციის დეტალები მითითებული არ აქვს.\n"
 
-#: dlls/kernelbase/winerror.mc:3230
+#: dlls/kernelbase/winerror.mc:3270
 msgid "Unknown authentication service.\n"
 msgstr "უცნობი ავთენტიკაციის სერვისი.\n"
 
-#: dlls/kernelbase/winerror.mc:3235
+#: dlls/kernelbase/winerror.mc:3275
 msgid "Unknown authentication level.\n"
 msgstr "უცნობი ავთენტიკაციის დონე.\n"
 
-#: dlls/kernelbase/winerror.mc:3240
+#: dlls/kernelbase/winerror.mc:3280
 msgid "Invalid authentication identity.\n"
 msgstr "უცნობი იდენტიფიკატორი.\n"
 
-#: dlls/kernelbase/winerror.mc:3245
+#: dlls/kernelbase/winerror.mc:3285
 msgid "Unknown authorization service.\n"
 msgstr "უცნობი ავტორიზაციის სერვისი.\n"
 
-#: dlls/kernelbase/winerror.mc:3250
+#: dlls/kernelbase/winerror.mc:3290
 msgid "Invalid entry.\n"
 msgstr "არასწორი ჩანაწერი.\n"
 
-#: dlls/kernelbase/winerror.mc:3255
+#: dlls/kernelbase/winerror.mc:3295
 msgid "Can't perform operation.\n"
 msgstr "ოპერაციის შესრულება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3260
+#: dlls/kernelbase/winerror.mc:3300
 msgid "Endpoints not registered.\n"
 msgstr "ბოლოწერტილები რეგისტრირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3265
+#: dlls/kernelbase/winerror.mc:3305
 msgid "Nothing to export.\n"
 msgstr "გასატანი არაფერია.\n"
 
-#: dlls/kernelbase/winerror.mc:3270
+#: dlls/kernelbase/winerror.mc:3310
 msgid "Incomplete name.\n"
 msgstr "დაუსრულებელი სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3275
+#: dlls/kernelbase/winerror.mc:3315
 msgid "Invalid version option.\n"
 msgstr "არასწორი ვერსიის პარამეტრი.\n"
 
-#: dlls/kernelbase/winerror.mc:3280
+#: dlls/kernelbase/winerror.mc:3320
 msgid "No more members.\n"
 msgstr "მეტი წევრი აღარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3285
+#: dlls/kernelbase/winerror.mc:3325
 msgid "Not all objects unexported.\n"
 msgstr "გატანა ყველა ობიექტისთვის არ გაუქმებულა.\n"
 
-#: dlls/kernelbase/winerror.mc:3290
+#: dlls/kernelbase/winerror.mc:3330
 msgid "Interface not found.\n"
 msgstr "ინტერფეისი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3295
+#: dlls/kernelbase/winerror.mc:3335
 msgid "Entry already exists.\n"
 msgstr "ჩანაწერი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:3300
+#: dlls/kernelbase/winerror.mc:3340
 msgid "Entry not found.\n"
 msgstr "ჩანაწერი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3305
+#: dlls/kernelbase/winerror.mc:3345
 msgid "Name service unavailable.\n"
 msgstr "სახელის სერვისი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3310
+#: dlls/kernelbase/winerror.mc:3350
 msgid "Invalid network address family.\n"
 msgstr "არასწორი ქსელის მისამართის ოჯახი.\n"
 
-#: dlls/kernelbase/winerror.mc:3315
+#: dlls/kernelbase/winerror.mc:3355
 msgid "Operation not supported.\n"
 msgstr "ოპერაცია მხარდაუჭერელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3320
+#: dlls/kernelbase/winerror.mc:3360
 msgid "No security context available.\n"
 msgstr "უსაფრთხოების კონტექსტი ხელმისაწვდომი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3325
+#: dlls/kernelbase/winerror.mc:3365
 msgid "RPCInternal error.\n"
 msgstr "RPC-ის შიდა შეცდომა\n"
 
-#: dlls/kernelbase/winerror.mc:3330
+#: dlls/kernelbase/winerror.mc:3370
 msgid "RPC divide-by-zero.\n"
 msgstr "RPC: ნულზე გაყოფა.\n"
 
-#: dlls/kernelbase/winerror.mc:3335
+#: dlls/kernelbase/winerror.mc:3375
 msgid "Address error.\n"
 msgstr "მისამართის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3340
+#: dlls/kernelbase/winerror.mc:3380
 msgid "Floating-point divide-by-zero.\n"
 msgstr "მცურავმძიმიანი რიცხვის ნულზე გაყოფის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3345
+#: dlls/kernelbase/winerror.mc:3385
 msgid "Floating-point underflow.\n"
 msgstr "მცურავმძიმიანი რიცხვის ვერშევსება.\n"
 
-#: dlls/kernelbase/winerror.mc:3350
+#: dlls/kernelbase/winerror.mc:3390
 msgid "Floating-point overflow.\n"
 msgstr "მცურავმძიმიანი რიცხვების გადავსება.\n"
 
-#: dlls/kernelbase/winerror.mc:3355
+#: dlls/kernelbase/winerror.mc:3395
 msgid "No more entries.\n"
 msgstr "მეტი ჩანაწერი აღარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3360
+#: dlls/kernelbase/winerror.mc:3400
 msgid "Character translation table open failed.\n"
 msgstr "სიმბოლოების გარდაქმნის ცხრილის გახსნის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3365
+#: dlls/kernelbase/winerror.mc:3405
 msgid "Character translation table file too small.\n"
 msgstr "სიმბოლოების გარდაქმნის ცხრილის ფაილი მეტისმეტად პატარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3370
+#: dlls/kernelbase/winerror.mc:3410
 msgid "Null context handle.\n"
 msgstr "ნულოვანი კონტექსტის დამუშავება.\n"
 
-#: dlls/kernelbase/winerror.mc:3375
+#: dlls/kernelbase/winerror.mc:3415
 msgid "Context handle damaged.\n"
 msgstr "კონტექსტის დამმუშავებელი დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3380
+#: dlls/kernelbase/winerror.mc:3420
 msgid "Binding handle mismatch.\n"
 msgstr "მიბმის დამმუშავებელი არ ემთხვევა.\n"
 
-#: dlls/kernelbase/winerror.mc:3385
+#: dlls/kernelbase/winerror.mc:3425
 msgid "Cannot get call handle.\n"
 msgstr "გამოძახების დამმუშავებლის მიღების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3390
+#: dlls/kernelbase/winerror.mc:3430
 msgid "Null reference pointer.\n"
 msgstr "ნულოვანი მითითების მაჩვენებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3395
+#: dlls/kernelbase/winerror.mc:3435
 msgid "Enumeration value out of range.\n"
 msgstr "ჩამონათვალის მნიშვნელობა დიაპაზონს გარეთაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3400
+#: dlls/kernelbase/winerror.mc:3440
 msgid "Byte count too small.\n"
 msgstr "ბაიტების რაოდენობა მეტისმეტად მცირეა.\n"
 
-#: dlls/kernelbase/winerror.mc:3405
+#: dlls/kernelbase/winerror.mc:3445
 msgid "Bad stub data.\n"
 msgstr "არასწორი ადგილმჭერის მონაცემები.\n"
 
-#: dlls/kernelbase/winerror.mc:3410
+#: dlls/kernelbase/winerror.mc:3450
 msgid "Invalid user buffer.\n"
 msgstr "არასწორი მომხმარებლის ბუფერი.\n"
 
-#: dlls/kernelbase/winerror.mc:3415
+#: dlls/kernelbase/winerror.mc:3455
 msgid "Unrecognized media.\n"
 msgstr "უცნობი მედია.\n"
 
-#: dlls/kernelbase/winerror.mc:3420
+#: dlls/kernelbase/winerror.mc:3460
 msgid "No trust secret.\n"
 msgstr "ნდობის საიდუმლოს გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3425
+#: dlls/kernelbase/winerror.mc:3465
 msgid "No trust SAM account.\n"
 msgstr ""
 "ნდობის SAM ანგარიშის გარეშე\n"
 ".\n"
 
-#: dlls/kernelbase/winerror.mc:3430
+#: dlls/kernelbase/winerror.mc:3470
 msgid "Trusted domain failure.\n"
 msgstr "სანდო დომენის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3435
+#: dlls/kernelbase/winerror.mc:3475
 msgid "Trusted relationship failure.\n"
 msgstr "სანდო ურთიერთობის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3440
+#: dlls/kernelbase/winerror.mc:3480
 msgid "Trust logon failure.\n"
 msgstr "სანდო შეცვლის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3445
+#: dlls/kernelbase/winerror.mc:3485
 msgid "RPC call already in progress.\n"
 msgstr "RPC-ის გამოძახება უკვე მიმდინარეობს.\n"
 
-#: dlls/kernelbase/winerror.mc:3450
+#: dlls/kernelbase/winerror.mc:3490
 msgid "NETLOGON is not started.\n"
 msgstr "სერვისი NETLOGON გაშვებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3455
+#: dlls/kernelbase/winerror.mc:3495
 msgid "Account expired.\n"
 msgstr "ანგარიშის ვადა გასულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3460
+#: dlls/kernelbase/winerror.mc:3500
 msgid "Redirector has open handles.\n"
 msgstr "გადამმისამართებელს ღია დამმუშავებლები გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:3465
+#: dlls/kernelbase/winerror.mc:3505
 msgid "Printer driver already installed.\n"
 msgstr "პრინტერის დრაივერი უკვე დაყენებულა.\n"
 
-#: dlls/kernelbase/winerror.mc:3470
+#: dlls/kernelbase/winerror.mc:3510
 msgid "Unknown port.\n"
 msgstr "უცნობი პორტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3475
+#: dlls/kernelbase/winerror.mc:3515
 msgid "Unknown printer driver.\n"
 msgstr "უცნობი პრინტერის დრაივერი.\n"
 
-#: dlls/kernelbase/winerror.mc:3480
+#: dlls/kernelbase/winerror.mc:3520
 msgid "Unknown print processor.\n"
 msgstr "უცნობი პრინტერის პროცესორი.\n"
 
-#: dlls/kernelbase/winerror.mc:3485
+#: dlls/kernelbase/winerror.mc:3525
 msgid "Invalid separator file.\n"
 msgstr "არასწორი გამყოფი ფაილი.\n"
 
-#: dlls/kernelbase/winerror.mc:3490
+#: dlls/kernelbase/winerror.mc:3530
 msgid "Invalid priority.\n"
 msgstr "არასწორი პრიორიტეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3495
+#: dlls/kernelbase/winerror.mc:3535
 msgid "Invalid printer name.\n"
 msgstr "არასწორი პრინტერის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3500
+#: dlls/kernelbase/winerror.mc:3540
 msgid "Printer already exists.\n"
 msgstr "პრინტერი უკვე არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:3505
+#: dlls/kernelbase/winerror.mc:3545
 msgid "Invalid printer command.\n"
 msgstr "არასწორი პრინტერის ბრძანება.\n"
 
-#: dlls/kernelbase/winerror.mc:3510
+#: dlls/kernelbase/winerror.mc:3550
 msgid "Invalid data type.\n"
 msgstr "არასწორი მონაცემების ტიპი.\n"
 
-#: dlls/kernelbase/winerror.mc:3515
+#: dlls/kernelbase/winerror.mc:3555
 msgid "Invalid environment.\n"
 msgstr "არასწორი გარემო.\n"
 
-#: dlls/kernelbase/winerror.mc:3520
+#: dlls/kernelbase/winerror.mc:3560
 msgid "No more bindings.\n"
 msgstr "მეტი მიბმა აღარაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3525
+#: dlls/kernelbase/winerror.mc:3565
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr "დომენთაშორისი სანდო ანგარიშით შესვლა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3530
+#: dlls/kernelbase/winerror.mc:3570
 msgid "Can't log on with workstation trust account.\n"
 msgstr "სამუშაო მანქანის სანდო ანგარიშით შესვლა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3535
+#: dlls/kernelbase/winerror.mc:3575
 msgid "Can't log on with server trust account.\n"
 msgstr "სერვერის სანდო ანგარიშის შესვლა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3540
+#: dlls/kernelbase/winerror.mc:3580
 msgid "Domain trust information inconsistent.\n"
 msgstr "დომენის ნდობის ინფორმაცია არამდგრადია.\n"
 
-#: dlls/kernelbase/winerror.mc:3545
+#: dlls/kernelbase/winerror.mc:3585
 msgid "Server has open handles.\n"
 msgstr "სერვერს ღია დამმუშავებლები გააჩნია.\n"
 
-#: dlls/kernelbase/winerror.mc:3550
+#: dlls/kernelbase/winerror.mc:3590
 msgid "Resource data not found.\n"
 msgstr "რესურსის მონაცემები ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3555
+#: dlls/kernelbase/winerror.mc:3595
 msgid "Resource type not found.\n"
 msgstr "რესურსის ტიპი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3560
+#: dlls/kernelbase/winerror.mc:3600
 msgid "Resource name not found.\n"
 msgstr "რესურსის სახელი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3565
+#: dlls/kernelbase/winerror.mc:3605
 msgid "Resource language not found.\n"
 msgstr "რესურსის ენა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3570
+#: dlls/kernelbase/winerror.mc:3610
 msgid "Not enough quota.\n"
 msgstr "კვოტა საკმარისი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3575
+#: dlls/kernelbase/winerror.mc:3615
 msgid "No interfaces.\n"
 msgstr "ინტერფეისების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3580
+#: dlls/kernelbase/winerror.mc:3620
 msgid "RPC call canceled.\n"
 msgstr "RPC-ის გამოძახება გაუქმდა.\n"
 
-#: dlls/kernelbase/winerror.mc:3585
+#: dlls/kernelbase/winerror.mc:3625
 msgid "Binding incomplete.\n"
 msgstr "მიბმა არასრულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3590
+#: dlls/kernelbase/winerror.mc:3630
 msgid "RPC comm failure.\n"
 msgstr "RPC ურთიერთობის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3595
+#: dlls/kernelbase/winerror.mc:3635
 msgid "Unsupported authorization level.\n"
 msgstr "მხარდაუჭერელი ავტორიზაციის დონე.\n"
 
-#: dlls/kernelbase/winerror.mc:3600
+#: dlls/kernelbase/winerror.mc:3640
 msgid "No principal name registered.\n"
 msgstr "პრინციპალის სახელი რეგისტრირებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3605
+#: dlls/kernelbase/winerror.mc:3645
 msgid "Not an RPC error.\n"
 msgstr "RPC შეცდომას არ წარმოადგენს.\n"
 
-#: dlls/kernelbase/winerror.mc:3610
+#: dlls/kernelbase/winerror.mc:3650
 msgid "UUID is local only.\n"
 msgstr "UUID-ი მხოლოდ ლოკალურია.\n"
 
-#: dlls/kernelbase/winerror.mc:3615
+#: dlls/kernelbase/winerror.mc:3655
 msgid "Security package error.\n"
 msgstr "უსაფრთხოების პაკეტის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3620
+#: dlls/kernelbase/winerror.mc:3660
 msgid "Thread not canceled.\n"
 msgstr "ნაკადი არ გაუქმებულა.\n"
 
-#: dlls/kernelbase/winerror.mc:3625
+#: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid handle operation.\n"
 msgstr "არასწორი დამმუშავებლის ოპერაცია.\n"
 
-#: dlls/kernelbase/winerror.mc:3630
+#: dlls/kernelbase/winerror.mc:3670
 msgid "Wrong serializing package version.\n"
 msgstr ""
 "არასწორი სერიალიზებული პაკეტის ვერსია\n"
 ".\n"
 
-#: dlls/kernelbase/winerror.mc:3635
+#: dlls/kernelbase/winerror.mc:3675
 msgid "Wrong stub version.\n"
 msgstr "არასწორი ადგილმჭერის ვერსია.\n"
 
-#: dlls/kernelbase/winerror.mc:3640
+#: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid pipe object.\n"
 msgstr "არასწორი ფაიფის ობიექტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3645
+#: dlls/kernelbase/winerror.mc:3685
 msgid "Wrong pipe order.\n"
 msgstr "არასწორი ფაიფის მიმდევრობა.\n"
 
-#: dlls/kernelbase/winerror.mc:3650
+#: dlls/kernelbase/winerror.mc:3690
 msgid "Wrong pipe version.\n"
 msgstr "არასწორი ფაიფის ვერსია.\n"
 
-#: dlls/kernelbase/winerror.mc:3655
+#: dlls/kernelbase/winerror.mc:3695
 msgid "Group member not found.\n"
 msgstr "ჯგუფის წევრი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3660
+#: dlls/kernelbase/winerror.mc:3700
 msgid "Can't create endpoint mapper DB.\n"
 msgstr "ბოლოწერტილის მიმბმელი ბაზის შექმნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3665
+#: dlls/kernelbase/winerror.mc:3705
 msgid "Invalid object.\n"
 msgstr "არასწორი ობიექტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3670
+#: dlls/kernelbase/winerror.mc:3710
 msgid "Invalid time.\n"
 msgstr "არასწორი დრო.\n"
 
-#: dlls/kernelbase/winerror.mc:3675
+#: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid form name.\n"
 msgstr "არასწორი ფორმის სახელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3680
+#: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid form size.\n"
 msgstr "არასწორი ფორმის ზომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3685
+#: dlls/kernelbase/winerror.mc:3725
 msgid "Already awaiting printer handle.\n"
 msgstr "პრინტერის დესკრიპტორს უკვე ველოდები.\n"
 
-#: dlls/kernelbase/winerror.mc:3690
+#: dlls/kernelbase/winerror.mc:3730
 msgid "Printer deleted.\n"
 msgstr "პრინტერი წაიშალა.\n"
 
-#: dlls/kernelbase/winerror.mc:3695
+#: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid printer state.\n"
 msgstr "არასწორი პრინტერის მდგომარეობა.\n"
 
-#: dlls/kernelbase/winerror.mc:3700
+#: dlls/kernelbase/winerror.mc:3740
 msgid "User must change password.\n"
 msgstr "მომხმარებელმა პაროლი უნდა შეცვალოს.\n"
 
-#: dlls/kernelbase/winerror.mc:3705
+#: dlls/kernelbase/winerror.mc:3745
 msgid "Domain controller not found.\n"
 msgstr "დომენის კონტროლერი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3710
+#: dlls/kernelbase/winerror.mc:3750
 msgid "Account locked out.\n"
 msgstr "ანგარიში დაბლოკილია.\n"
 
-#: dlls/kernelbase/winerror.mc:3715
+#: dlls/kernelbase/winerror.mc:3755
 msgid "Invalid pixel format.\n"
 msgstr "არასწორი პიქსელის ფორმატი.\n"
 
-#: dlls/kernelbase/winerror.mc:3720
+#: dlls/kernelbase/winerror.mc:3760
 msgid "Invalid driver.\n"
 msgstr "არასწორი დრაივერი.\n"
 
-#: dlls/kernelbase/winerror.mc:3725
+#: dlls/kernelbase/winerror.mc:3765
 msgid "Invalid object resolver set.\n"
 msgstr "არასწორი ობიექტის ამომხსნელის სეტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3730
+#: dlls/kernelbase/winerror.mc:3770
 msgid "Incomplete RPC send.\n"
 msgstr "RPC-ის გაგზავნა დაუსრულებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3735
+#: dlls/kernelbase/winerror.mc:3775
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "არასწორი ასინქრონული RPC-ის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3740
+#: dlls/kernelbase/winerror.mc:3780
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "არასწორი ასინქრონული RPC-ის გამოძახება.\n"
 
-#: dlls/kernelbase/winerror.mc:3745
+#: dlls/kernelbase/winerror.mc:3785
 msgid "RPC pipe closed.\n"
 msgstr "RPC-ის ფაიფი დაიხურა.\n"
 
-#: dlls/kernelbase/winerror.mc:3750
+#: dlls/kernelbase/winerror.mc:3790
 msgid "Discipline error on RPC pipe.\n"
 msgstr "RPC არხის მიმდევრობის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3795
 msgid "No data on RPC pipe.\n"
 msgstr "RPC ფაიფზე მონაცემების გარეშე.\n"
 
-#: dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:3800
 msgid "No site name available.\n"
 msgstr "საიტის სახელი მიუწვდომელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:3805
 msgid "The file cannot be accessed.\n"
 msgstr "ფაილთან წვდომა აკრძალულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3810
 msgid "The filename cannot be resolved.\n"
 msgstr "ფაილის სახელის ამოხსნა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:3815
 msgid "RPC entry type mismatch.\n"
 msgstr "RPC-ის ჩანაწერის ტიპი არ ემთხვევა.\n"
 
-#: dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:3820
 msgid "Not all objects could be exported.\n"
 msgstr "ყველა ობიექტის გატანა შეუძლებელი აღმოჩნდა.\n"
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3825
 msgid "The interface could not be exported.\n"
 msgstr "ინტერფეისის გატანა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:3830
 msgid "The profile could not be added.\n"
 msgstr "პროფილის დამატება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:3835
 msgid "The profile element could not be added.\n"
 msgstr "პროფილის ელემენტის დამატება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3840
 msgid "The profile element could not be removed.\n"
 msgstr "პროფილის ელემენტის წაშლა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3845
 msgid "The group element could not be added.\n"
 msgstr "ჯგუფის ელემენტის დამატება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3850
 msgid "The group element could not be removed.\n"
 msgstr "ჯგუფის ელემენტის წაშლა შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3815
+#: dlls/kernelbase/winerror.mc:3855
 msgid "The username could not be found.\n"
 msgstr "მომხმარებლის სახელი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3820
+#: dlls/kernelbase/winerror.mc:3860
 msgid "This network connection does not exist.\n"
 msgstr "ეს ქსელური შეერთება არ არსებობს.\n"
 
-#: dlls/kernelbase/winerror.mc:3825
+#: dlls/kernelbase/winerror.mc:3865
 #, fuzzy
 #| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
 msgstr "ფაილი ან საქაღალდე დაზიანებულია.\n"
 
-#: dlls/kernelbase/winerror.mc:3830
+#: dlls/kernelbase/winerror.mc:3870
 msgid "Call interrupted.\n"
 msgstr "გამოძახება შეწყდა.\n"
 
-#: dlls/kernelbase/winerror.mc:3835
+#: dlls/kernelbase/winerror.mc:3875
 msgid "Invalid file handle.\n"
 msgstr "არასწორი ფაილის დამმუშავებელი.\n"
 
-#: dlls/kernelbase/winerror.mc:3845
+#: dlls/kernelbase/winerror.mc:3885
 msgid "Invalid pointer address.\n"
 msgstr "არასწორი მაჩვენებლის მისამართი.\n"
 
-#: dlls/kernelbase/winerror.mc:3850
+#: dlls/kernelbase/winerror.mc:3890
 msgid "Invalid argument.\n"
 msgstr "არასწორი არგუმენტი.\n"
 
-#: dlls/kernelbase/winerror.mc:3860
+#: dlls/kernelbase/winerror.mc:3900
 msgid "Cannot assign requested address.\n"
 msgstr "მითითებული მისამართის მინიჭება შეუძლებელია.\n"
 
-#: dlls/kernelbase/winerror.mc:3865
+#: dlls/kernelbase/winerror.mc:3905
 msgid "Connection reset by peer.\n"
 msgstr "კავშირი გაწყვეტილია პარტნიორის მიერ.\n"
 
-#: dlls/kernelbase/winerror.mc:3875
+#: dlls/kernelbase/winerror.mc:3915
 msgid "Host not found.\n"
 msgstr "ჰოსტი ნაპოვნი არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3880
+#: dlls/kernelbase/winerror.mc:3920
 msgid "Nonauthoritative host not found.\n"
 msgstr "არაავტორიტეტული ჰოსტი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3885
+#: dlls/kernelbase/winerror.mc:3925
 msgid "Nonrecoverable error.\n"
 msgstr "აღუდგენელი შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3890
+#: dlls/kernelbase/winerror.mc:3930
 msgid "Name valid, no data record.\n"
 msgstr "სახელი სწორია, მონაცემების ჩანაწერი ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3911
+#: dlls/kernelbase/winerror.mc:3951
 msgid "Not implemented.\n"
 msgstr "განხორციელებული არაა.\n"
 
-#: dlls/kernelbase/winerror.mc:3932
+#: dlls/kernelbase/winerror.mc:3972
 msgid "Call failed.\n"
 msgstr "გამოძახების შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3897
+#: dlls/kernelbase/winerror.mc:3937
 #, fuzzy
 #| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
 msgstr "მედიის გამოტვირთვის შეცდომა.\n"
 
-#: dlls/kernelbase/winerror.mc:3904
+#: dlls/kernelbase/winerror.mc:3944
 msgid "No Signature found in file.\n"
 msgstr "ფაილში ხელმოწერა ვერ ვიპოვე.\n"
 
-#: dlls/kernelbase/winerror.mc:3918
+#: dlls/kernelbase/winerror.mc:3958
 msgid "Invalid call.\n"
 msgstr "არასწორი გამოძახება.\n"
 
-#: dlls/kernelbase/winerror.mc:3925
+#: dlls/kernelbase/winerror.mc:3965
 msgid "Resource is not currently available.\n"
 msgstr "რესურსი ამჟამად ხელმისაწვდომი არაა.\n"
 

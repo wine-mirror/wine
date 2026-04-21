@@ -4402,11 +4402,11 @@ msgstr "الملف غير موجود.\n"
 msgid "Path not found.\n"
 msgstr "المسار غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3895
 msgid "Too many open files.\n"
 msgstr "ملفات كثير للفتح.\n"
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3880
 msgid "Access denied.\n"
 msgstr "الوصول محظور.\n"
 
@@ -4650,7 +4650,7 @@ msgstr "لا يوجد بُنْيات.\n"
 msgid "Already assigned.\n"
 msgstr "تم تعيينه بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1830
 msgid "Invalid password.\n"
 msgstr "كلمة السر غير سليمة.\n"
 
@@ -5209,2310 +5209,2353 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "الرسالة 0x%1 غير موجودة في الملف %2.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
+#, fuzzy
+#| msgid "Sector not found.\n"
+msgid "Scope not found.\n"
+msgstr "القطاع غير موجود.\n"
+
+#: dlls/kernelbase/winerror.mc:1055
+#, fuzzy
+#| msgid "The specified device handle is invalid."
+msgid "The specified Central Access Policy is undefined.\n"
+msgstr "لاقط الجهاز المحدد غير سليم."
+
+#: dlls/kernelbase/winerror.mc:1060
+msgid "Central Access Policy from Active Directory is invalid.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1065
+#, fuzzy
+#| msgid "Host unreachable.\n"
+msgid "Device is unreachable.\n"
+msgstr "لا يمكن الوصول إلى المزود.\n"
+
+#: dlls/kernelbase/winerror.mc:1070
+msgid "Target device has insufficient resources to complete the operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1075
+msgid ""
+"A data integrity checksum error occurred. Data in the file stream is "
+"corrupt.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1080
+msgid ""
+"Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1085
+#, fuzzy
+#| msgid "Device does not exist.\n"
+msgid "Device does not support file-level TRIM.\n"
+msgstr "الجهاز غير موجود.\n"
+
+#: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
 msgstr "العنوان غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1055
+#: dlls/kernelbase/winerror.mc:1095
 msgid "Arithmetic overflow.\n"
 msgstr "تدفق أكثر من الطبيعي.\n"
 
-#: dlls/kernelbase/winerror.mc:1060
+#: dlls/kernelbase/winerror.mc:1100
 msgid "Pipe connected.\n"
 msgstr "الوصلة موصولة.\n"
 
-#: dlls/kernelbase/winerror.mc:1065
+#: dlls/kernelbase/winerror.mc:1105
 msgid "Pipe listening.\n"
 msgstr "الوصلة تتابع.\n"
 
-#: dlls/kernelbase/winerror.mc:1070
+#: dlls/kernelbase/winerror.mc:1110
 msgid "Extended attribute access denied.\n"
 msgstr "الوصول محظور للمقاطعة.\n"
 
-#: dlls/kernelbase/winerror.mc:1075
+#: dlls/kernelbase/winerror.mc:1115
 msgid "I/O operation aborted.\n"
 msgstr "العملية الرقمية أحبطت.\n"
 
-#: dlls/kernelbase/winerror.mc:1080
+#: dlls/kernelbase/winerror.mc:1120
 msgid "Overlapped I/O incomplete.\n"
 msgstr "التفوق الثنائي لم يكتمل .\n"
 
-#: dlls/kernelbase/winerror.mc:1085
+#: dlls/kernelbase/winerror.mc:1125
 msgid "Overlapped I/O pending.\n"
 msgstr "التفوق الثنائي قيد الانتظار .\n"
 
-#: dlls/kernelbase/winerror.mc:1090
+#: dlls/kernelbase/winerror.mc:1130
 msgid "No access to memory location.\n"
 msgstr "لا يمكن الوصول إلى موضع الذاكرة.\n"
 
-#: dlls/kernelbase/winerror.mc:1095
+#: dlls/kernelbase/winerror.mc:1135
 msgid "Swap error.\n"
 msgstr "خطأ في السواب.\n"
 
-#: dlls/kernelbase/winerror.mc:1100
+#: dlls/kernelbase/winerror.mc:1140
 msgid "Stack overflow.\n"
 msgstr "تدفق عالي في الكومة.\n"
 
-#: dlls/kernelbase/winerror.mc:1105
+#: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid message.\n"
 msgstr "رسالة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1110
+#: dlls/kernelbase/winerror.mc:1150
 msgid "Cannot complete.\n"
 msgstr "تعذر الإكمال.\n"
 
-#: dlls/kernelbase/winerror.mc:1115
+#: dlls/kernelbase/winerror.mc:1155
 msgid "Invalid flags.\n"
 msgstr "أعلام غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1120
+#: dlls/kernelbase/winerror.mc:1160
 msgid "Unrecognized volume.\n"
 msgstr "الحجم غير مضبوط.\n"
 
-#: dlls/kernelbase/winerror.mc:1125
+#: dlls/kernelbase/winerror.mc:1165
 msgid "File invalid.\n"
 msgstr "الملف غير سليم .\n"
 
-#: dlls/kernelbase/winerror.mc:1130
+#: dlls/kernelbase/winerror.mc:1170
 msgid "Cannot run full-screen.\n"
 msgstr "وضع ملء الشاشة لم يعمل.\n"
 
-#: dlls/kernelbase/winerror.mc:1135
+#: dlls/kernelbase/winerror.mc:1175
 msgid "Nonexistent token.\n"
 msgstr "انتقاء غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1140
+#: dlls/kernelbase/winerror.mc:1180
 msgid "Registry corrupt.\n"
 msgstr "خطأ في السجل.\n"
 
-#: dlls/kernelbase/winerror.mc:1145
+#: dlls/kernelbase/winerror.mc:1185
 msgid "Invalid key.\n"
 msgstr "مفتاح غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1150
+#: dlls/kernelbase/winerror.mc:1190
 msgid "Can't open registry key.\n"
 msgstr "لم يتمكن من فتح المفتاح السجلي.\n"
 
-#: dlls/kernelbase/winerror.mc:1155
+#: dlls/kernelbase/winerror.mc:1195
 msgid "Can't read registry key.\n"
 msgstr "لم يتمكن من قراءة المفتاح السجلي.\n"
 
-#: dlls/kernelbase/winerror.mc:1160
+#: dlls/kernelbase/winerror.mc:1200
 msgid "Can't write registry key.\n"
 msgstr "لم يتمكن من كتابة المفتاح السجلي.\n"
 
-#: dlls/kernelbase/winerror.mc:1165
+#: dlls/kernelbase/winerror.mc:1205
 msgid "Registry has been recovered.\n"
 msgstr "تم استعادة السجل.\n"
 
-#: dlls/kernelbase/winerror.mc:1170
+#: dlls/kernelbase/winerror.mc:1210
 msgid "Registry is corrupt.\n"
 msgstr "السجل معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:1175
+#: dlls/kernelbase/winerror.mc:1215
 msgid "I/O to registry failed.\n"
 msgstr "فشل ضخ الثنائيات إلى السجل.\n"
 
-#: dlls/kernelbase/winerror.mc:1180
+#: dlls/kernelbase/winerror.mc:1220
 msgid "Not registry file.\n"
 msgstr "ليس ملفًا سجليًا.\n"
 
-#: dlls/kernelbase/winerror.mc:1185
+#: dlls/kernelbase/winerror.mc:1225
 msgid "Key deleted.\n"
 msgstr "تم حذف المفتاح.\n"
 
-#: dlls/kernelbase/winerror.mc:1190
+#: dlls/kernelbase/winerror.mc:1230
 msgid "No registry log space.\n"
 msgstr "لا يوجد مساحة لسجل السجل.\n"
 
-#: dlls/kernelbase/winerror.mc:1195
+#: dlls/kernelbase/winerror.mc:1235
 msgid "Registry key has subkeys.\n"
 msgstr "المفتاح السجلي يحتوي على مفاتيح فرعية.\n"
 
-#: dlls/kernelbase/winerror.mc:1200
+#: dlls/kernelbase/winerror.mc:1240
 msgid "Subkey must be volatile.\n"
 msgstr "المفتاح الفرعي يجب أن يكون سليمًا.\n"
 
-#: dlls/kernelbase/winerror.mc:1205
+#: dlls/kernelbase/winerror.mc:1245
 msgid "Notify change request in progress.\n"
 msgstr "التنبيه عن تغيير الطلب قيد الإجراء.\n"
 
-#: dlls/kernelbase/winerror.mc:1210
+#: dlls/kernelbase/winerror.mc:1250
 msgid "Dependent services are running.\n"
 msgstr "خدمات مستقلة قيد التشغيل.\n"
 
-#: dlls/kernelbase/winerror.mc:1215
+#: dlls/kernelbase/winerror.mc:1255
 msgid "Invalid service control.\n"
 msgstr "تحكم غير سليم بالخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1220
+#: dlls/kernelbase/winerror.mc:1260
 msgid "Service request timeout.\n"
 msgstr "انتهى زمن طلب الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1225
+#: dlls/kernelbase/winerror.mc:1265
 msgid "Cannot create service thread.\n"
 msgstr "لم يتمكن من إنشاء مادة الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1230
+#: dlls/kernelbase/winerror.mc:1270
 msgid "Service database locked.\n"
 msgstr "قاعدة بيانات الخدمة مقفلة.\n"
 
-#: dlls/kernelbase/winerror.mc:1235
+#: dlls/kernelbase/winerror.mc:1275
 msgid "Service already running.\n"
 msgstr "الخدمة تعمل بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:1240
+#: dlls/kernelbase/winerror.mc:1280
 msgid "Invalid service account.\n"
 msgstr "حساب الخدمة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1245
+#: dlls/kernelbase/winerror.mc:1285
 msgid "Service is disabled.\n"
 msgstr "الخدمة معطلة.\n"
 
-#: dlls/kernelbase/winerror.mc:1250
+#: dlls/kernelbase/winerror.mc:1290
 msgid "Circular dependency.\n"
 msgstr "اعتمادية دائرية.\n"
 
-#: dlls/kernelbase/winerror.mc:1255
+#: dlls/kernelbase/winerror.mc:1295
 msgid "Service does not exist.\n"
 msgstr "الخدمة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1260
+#: dlls/kernelbase/winerror.mc:1300
 msgid "Service cannot accept control message.\n"
 msgstr "الخدمة لم تقبل رسالة التحكم.\n"
 
-#: dlls/kernelbase/winerror.mc:1265
+#: dlls/kernelbase/winerror.mc:1305
 msgid "Service not active.\n"
 msgstr "الخدمة غير نشطة.\n"
 
-#: dlls/kernelbase/winerror.mc:1270
+#: dlls/kernelbase/winerror.mc:1310
 msgid "Service controller connect failed.\n"
 msgstr "فشل الاتصال بمتحكم الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1275
+#: dlls/kernelbase/winerror.mc:1315
 msgid "Exception in service.\n"
 msgstr "استثناءات الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1280
+#: dlls/kernelbase/winerror.mc:1320
 msgid "Database does not exist.\n"
 msgstr "قاعدة البيانات غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1285
+#: dlls/kernelbase/winerror.mc:1325
 msgid "Service-specific error.\n"
 msgstr "خطأ في الخطمة المخصصة.\n"
 
-#: dlls/kernelbase/winerror.mc:1290
+#: dlls/kernelbase/winerror.mc:1330
 msgid "Process aborted.\n"
 msgstr "أحبطت العملية.\n"
 
-#: dlls/kernelbase/winerror.mc:1295
+#: dlls/kernelbase/winerror.mc:1335
 msgid "Service dependency failed.\n"
 msgstr "فشلت اعتمادية الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1300
+#: dlls/kernelbase/winerror.mc:1340
 msgid "Service login failed.\n"
 msgstr "فشل الولوج إلى الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1305
+#: dlls/kernelbase/winerror.mc:1345
 msgid "Service start-hang.\n"
 msgstr "اختناق في تشغيل الخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1310
+#: dlls/kernelbase/winerror.mc:1350
 msgid "Invalid service lock.\n"
 msgstr "قفل الخدمة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1315
+#: dlls/kernelbase/winerror.mc:1355
 msgid "Service marked for delete.\n"
 msgstr "تم تحديد الخدمة للحذف.\n"
 
-#: dlls/kernelbase/winerror.mc:1320
+#: dlls/kernelbase/winerror.mc:1360
 msgid "Service exists.\n"
 msgstr "الخدمة موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1325
+#: dlls/kernelbase/winerror.mc:1365
 msgid "System running last-known-good config.\n"
 msgstr "النظام يعمل بآخر إعدادات سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1330
+#: dlls/kernelbase/winerror.mc:1370
 msgid "Service dependency deleted.\n"
 msgstr "اعتمادية الخدمة حذفت.\n"
 
-#: dlls/kernelbase/winerror.mc:1335
+#: dlls/kernelbase/winerror.mc:1375
 msgid "Boot already accepted as last-good config.\n"
 msgstr "الإقلاع قبل آخر اعدادات سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1340
+#: dlls/kernelbase/winerror.mc:1380
 msgid "Service not started since last boot.\n"
 msgstr "الخدمة لم تعمل منذ آخر إقلاع.\n"
 
-#: dlls/kernelbase/winerror.mc:1345
+#: dlls/kernelbase/winerror.mc:1385
 msgid "Duplicate service name.\n"
 msgstr "اسم الخدمة مكرر.\n"
 
-#: dlls/kernelbase/winerror.mc:1350
+#: dlls/kernelbase/winerror.mc:1390
 msgid "Different service account.\n"
 msgstr "حساب الخدمة مختلف.\n"
 
-#: dlls/kernelbase/winerror.mc:1355
+#: dlls/kernelbase/winerror.mc:1395
 msgid "Driver failure cannot be detected.\n"
 msgstr "لم يتمكن من تحديد فشل المحرك.\n"
 
-#: dlls/kernelbase/winerror.mc:1360
+#: dlls/kernelbase/winerror.mc:1400
 msgid "Process abort cannot be detected.\n"
 msgstr "لم يتمكن من تحديد العملية المحبطة.\n"
 
-#: dlls/kernelbase/winerror.mc:1365
+#: dlls/kernelbase/winerror.mc:1405
 msgid "No recovery program for service.\n"
 msgstr "لا يوجد برنامج استعادة للخدمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1370
+#: dlls/kernelbase/winerror.mc:1410
 msgid "Service not implemented by exe.\n"
 msgstr "لم تنفذ الخدمة بواسطة تطبيق.\n"
 
-#: dlls/kernelbase/winerror.mc:1375
+#: dlls/kernelbase/winerror.mc:1415
 msgid "End of media.\n"
 msgstr "نهاية الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:1380
+#: dlls/kernelbase/winerror.mc:1420
 msgid "Filemark detected.\n"
 msgstr "اكتشفت علامة الملف.\n"
 
-#: dlls/kernelbase/winerror.mc:1385
+#: dlls/kernelbase/winerror.mc:1425
 msgid "Beginning of media.\n"
 msgstr "بداية الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:1390
+#: dlls/kernelbase/winerror.mc:1430
 msgid "Setmark detected.\n"
 msgstr "اكتشفت علامة الضبط.\n"
 
-#: dlls/kernelbase/winerror.mc:1395
+#: dlls/kernelbase/winerror.mc:1435
 msgid "No data detected.\n"
 msgstr "لم تكتسف أي بيانات.\n"
 
-#: dlls/kernelbase/winerror.mc:1400
+#: dlls/kernelbase/winerror.mc:1440
 msgid "Partition failure.\n"
 msgstr "خطأ في التقسيم.\n"
 
-#: dlls/kernelbase/winerror.mc:1405
+#: dlls/kernelbase/winerror.mc:1445
 msgid "Invalid block length.\n"
 msgstr "خطأ في طول الوحدة.\n"
 
-#: dlls/kernelbase/winerror.mc:1410
+#: dlls/kernelbase/winerror.mc:1450
 msgid "Device not partitioned.\n"
 msgstr "الجهاز غير مقسم.\n"
 
-#: dlls/kernelbase/winerror.mc:1415
+#: dlls/kernelbase/winerror.mc:1455
 msgid "Unable to lock media.\n"
 msgstr "غير قادر على قفل الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:1420
+#: dlls/kernelbase/winerror.mc:1460
 msgid "Unable to unload media.\n"
 msgstr "غير قادر على فصل الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:1425
+#: dlls/kernelbase/winerror.mc:1465
 msgid "Media changed.\n"
 msgstr "تغير الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:1430
+#: dlls/kernelbase/winerror.mc:1470
 msgid "I/O bus reset.\n"
 msgstr "الناقل الثنائي أعيد ضبطه.\n"
 
-#: dlls/kernelbase/winerror.mc:1435
+#: dlls/kernelbase/winerror.mc:1475
 msgid "No media in drive.\n"
 msgstr "لا يوجد وسائط في المحرك.\n"
 
-#: dlls/kernelbase/winerror.mc:1440
+#: dlls/kernelbase/winerror.mc:1480
 msgid "No Unicode translation.\n"
 msgstr "الترجمة المتعددة غير متاحة.\n"
 
-#: dlls/kernelbase/winerror.mc:1445
+#: dlls/kernelbase/winerror.mc:1485
 #, fuzzy
 #| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "فشل بدء dll.\n"
 
-#: dlls/kernelbase/winerror.mc:1450
+#: dlls/kernelbase/winerror.mc:1490
 msgid "Shutdown in progress.\n"
 msgstr "جاري إيقاف التشغيل.\n"
 
-#: dlls/kernelbase/winerror.mc:1455
+#: dlls/kernelbase/winerror.mc:1495
 msgid "No shutdown in progress.\n"
 msgstr "لا يجري إيقاف التشغيل.\n"
 
-#: dlls/kernelbase/winerror.mc:1460
+#: dlls/kernelbase/winerror.mc:1500
 msgid "I/O device error.\n"
 msgstr "خطأ ثنائي في الجهاز.\n"
 
-#: dlls/kernelbase/winerror.mc:1465
+#: dlls/kernelbase/winerror.mc:1505
 msgid "No serial devices found.\n"
 msgstr "لم يعثر على أجهزة تسلسلية.\n"
 
-#: dlls/kernelbase/winerror.mc:1470
+#: dlls/kernelbase/winerror.mc:1510
 msgid "Shared IRQ busy.\n"
 msgstr "اشارة المقاطعة المشتركة مشغولة.\n"
 
-#: dlls/kernelbase/winerror.mc:1475
+#: dlls/kernelbase/winerror.mc:1515
 msgid "Serial I/O completed.\n"
 msgstr "اكتمل التسلسل الثنائي.\n"
 
-#: dlls/kernelbase/winerror.mc:1480
+#: dlls/kernelbase/winerror.mc:1520
 msgid "Serial I/O counter timeout.\n"
 msgstr "عداد التسلسل الثنائي انتهت مهلته.\n"
 
-#: dlls/kernelbase/winerror.mc:1485
+#: dlls/kernelbase/winerror.mc:1525
 msgid "Floppy ID address mark not found.\n"
 msgstr "عنوان القرص المرن غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1490
+#: dlls/kernelbase/winerror.mc:1530
 msgid "Floppy reports wrong cylinder.\n"
 msgstr "خطأ في قطاع القرص المرن.\n"
 
-#: dlls/kernelbase/winerror.mc:1495
+#: dlls/kernelbase/winerror.mc:1535
 msgid "Unknown floppy error.\n"
 msgstr "خطأ غير معلوم في القرص المرن.\n"
 
-#: dlls/kernelbase/winerror.mc:1500
+#: dlls/kernelbase/winerror.mc:1540
 msgid "Floppy registers inconsistent.\n"
 msgstr "القرص المرن غير قابل للتقسيم.\n"
 
-#: dlls/kernelbase/winerror.mc:1505
+#: dlls/kernelbase/winerror.mc:1545
 msgid "Hard disk recalibrate failed.\n"
 msgstr "فشلت عملية إعادة تقويم القرص الصلب .\n"
 
-#: dlls/kernelbase/winerror.mc:1510
+#: dlls/kernelbase/winerror.mc:1550
 msgid "Hard disk operation failed.\n"
 msgstr "فشلت العملية على القرص الصلب.\n"
 
-#: dlls/kernelbase/winerror.mc:1515
+#: dlls/kernelbase/winerror.mc:1555
 msgid "Hard disk reset failed.\n"
 msgstr "فشلت عملية إعادة ضبط القرص الصلب.\n"
 
-#: dlls/kernelbase/winerror.mc:1520
+#: dlls/kernelbase/winerror.mc:1560
 msgid "End of tape media.\n"
 msgstr "نهاية الوسيط التسجيلي.\n"
 
-#: dlls/kernelbase/winerror.mc:1525
+#: dlls/kernelbase/winerror.mc:1565
 msgid "Not enough server memory.\n"
 msgstr "لا توجد ذاكرة كافية على المخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:1530
+#: dlls/kernelbase/winerror.mc:1570
 msgid "Possible deadlock.\n"
 msgstr "ربما أنه قفل منتهٍ.\n"
 
-#: dlls/kernelbase/winerror.mc:1535
+#: dlls/kernelbase/winerror.mc:1575
 msgid "Incorrect alignment.\n"
 msgstr "جزئية غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1540
+#: dlls/kernelbase/winerror.mc:1580
 msgid "Set-power-state vetoed.\n"
 msgstr "تم نقض إعادة ضبط الطاقة.\n"
 
-#: dlls/kernelbase/winerror.mc:1545
+#: dlls/kernelbase/winerror.mc:1585
 msgid "Set-power-state failed.\n"
 msgstr "فشل إعادة ضبط الطاقة.\n"
 
-#: dlls/kernelbase/winerror.mc:1550
+#: dlls/kernelbase/winerror.mc:1590
 msgid "Too many links.\n"
 msgstr "وصلات كثيرة جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:1555
+#: dlls/kernelbase/winerror.mc:1595
 msgid "Newer Windows version needed.\n"
 msgstr "نسخة أحدث من وندوز مطلوبة.\n"
 
-#: dlls/kernelbase/winerror.mc:1560
+#: dlls/kernelbase/winerror.mc:1600
 msgid "Wrong operating system.\n"
 msgstr "نظام تشغيل خاطئ.\n"
 
-#: dlls/kernelbase/winerror.mc:1565
+#: dlls/kernelbase/winerror.mc:1605
 msgid "Single-instance application.\n"
 msgstr "تطبيق فردي المرحلة .\n"
 
-#: dlls/kernelbase/winerror.mc:1570
+#: dlls/kernelbase/winerror.mc:1610
 msgid "Real-mode application.\n"
 msgstr "تطبيق في الوقت الفعلي.\n"
 
-#: dlls/kernelbase/winerror.mc:1575
+#: dlls/kernelbase/winerror.mc:1615
 msgid "Invalid DLL.\n"
 msgstr "مكتبة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:1580
+#: dlls/kernelbase/winerror.mc:1620
 msgid "No associated application.\n"
 msgstr "لا يوجد تطبيق مقترن.\n"
 
-#: dlls/kernelbase/winerror.mc:1585
+#: dlls/kernelbase/winerror.mc:1625
 msgid "DDE failure.\n"
 msgstr "خطأ DDE.\n"
 
-#: dlls/kernelbase/winerror.mc:1590
+#: dlls/kernelbase/winerror.mc:1630
 msgid "DLL not found.\n"
 msgstr "المكتبة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1595
+#: dlls/kernelbase/winerror.mc:1635
 msgid "Out of user handles.\n"
 msgstr "يفتقر للمسات المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:1600
+#: dlls/kernelbase/winerror.mc:1640
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "الرسالة يمكن استعمالها فقط في طلبات المزامنة.\n"
 
-#: dlls/kernelbase/winerror.mc:1605
+#: dlls/kernelbase/winerror.mc:1645
 msgid "The source element is empty.\n"
 msgstr "مصدر التنفيذ فارغ.\n"
 
-#: dlls/kernelbase/winerror.mc:1610
+#: dlls/kernelbase/winerror.mc:1650
 msgid "The destination element is full.\n"
 msgstr "هدف التنفيذ ممتلئ.\n"
 
-#: dlls/kernelbase/winerror.mc:1615
+#: dlls/kernelbase/winerror.mc:1655
 msgid "The element address is invalid.\n"
 msgstr "عنوان التنفيذ غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1620
+#: dlls/kernelbase/winerror.mc:1660
 msgid "The magazine is not present.\n"
 msgstr "المجلة ليست موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1625
+#: dlls/kernelbase/winerror.mc:1665
 msgid "The device needs reinitialization.\n"
 msgstr "الجهاز يتطلب إعادة التمهيد.\n"
 
-#: dlls/kernelbase/winerror.mc:1630
+#: dlls/kernelbase/winerror.mc:1670
 msgid "The device requires cleaning.\n"
 msgstr "الجهاز يحتاج إلى تنظيف.\n"
 
-#: dlls/kernelbase/winerror.mc:1635
+#: dlls/kernelbase/winerror.mc:1675
 msgid "The device door is open.\n"
 msgstr "بوابة الجهاز مفتوحة.\n"
 
-#: dlls/kernelbase/winerror.mc:1640
+#: dlls/kernelbase/winerror.mc:1680
 msgid "The device is not connected.\n"
 msgstr "الجهاز غير موصول.\n"
 
-#: dlls/kernelbase/winerror.mc:1645
+#: dlls/kernelbase/winerror.mc:1685
 msgid "Element not found.\n"
 msgstr "العنصر غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1650
+#: dlls/kernelbase/winerror.mc:1690
 msgid "No match found.\n"
 msgstr "المطابق غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1655
+#: dlls/kernelbase/winerror.mc:1695
 msgid "Property set not found.\n"
 msgstr "إعداد الملكية غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1660
+#: dlls/kernelbase/winerror.mc:1700
 msgid "Point not found.\n"
 msgstr "النقطة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1665
+#: dlls/kernelbase/winerror.mc:1705
 msgid "No running tracking service.\n"
 msgstr "خدمة التوزيع غير مشغلة .\n"
 
-#: dlls/kernelbase/winerror.mc:1670
+#: dlls/kernelbase/winerror.mc:1710
 msgid "No such volume ID.\n"
 msgstr "لا يبدو كمعرف القسم .\n"
 
-#: dlls/kernelbase/winerror.mc:1675
+#: dlls/kernelbase/winerror.mc:1715
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "لم نتمكن من حذف الملف من أجل استبداله.\n"
 
-#: dlls/kernelbase/winerror.mc:1680
+#: dlls/kernelbase/winerror.mc:1720
 msgid "Unable to move the replacement file into place.\n"
 msgstr "لم نتمكن من نقل الملف إلى المكان المحدد.\n"
 
-#: dlls/kernelbase/winerror.mc:1685
+#: dlls/kernelbase/winerror.mc:1725
 msgid "Moving the replacement file failed.\n"
 msgstr "فشل نقل و استبدال الملف .\n"
 
-#: dlls/kernelbase/winerror.mc:1690
+#: dlls/kernelbase/winerror.mc:1730
 msgid "The journal is being deleted.\n"
 msgstr "يجري حذف التسجيل.\n"
 
-#: dlls/kernelbase/winerror.mc:1695
+#: dlls/kernelbase/winerror.mc:1735
 msgid "The journal is not active.\n"
 msgstr "التسجيل غير نشط.\n"
 
-#: dlls/kernelbase/winerror.mc:1700
+#: dlls/kernelbase/winerror.mc:1740
 msgid "Potential matching file found.\n"
 msgstr "تم العثور على ملف إمكانية التطابق.\n"
 
-#: dlls/kernelbase/winerror.mc:1705
+#: dlls/kernelbase/winerror.mc:1745
 msgid "The journal entry was deleted.\n"
 msgstr "إدخالات التسجيل تم حذفها.\n"
 
-#: dlls/kernelbase/winerror.mc:1710
+#: dlls/kernelbase/winerror.mc:1750
 msgid "Invalid device name.\n"
 msgstr "اسم الجهاز غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1715
+#: dlls/kernelbase/winerror.mc:1755
 msgid "Connection unavailable.\n"
 msgstr "الاتصال غير متوفر.\n"
 
-#: dlls/kernelbase/winerror.mc:1720
+#: dlls/kernelbase/winerror.mc:1760
 msgid "Device already remembered.\n"
 msgstr "الجهاز مذكور بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:1725
+#: dlls/kernelbase/winerror.mc:1765
 msgid "No network or bad path.\n"
 msgstr "لا يوجد اتصال شبكي أو أن المسار غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1730
+#: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid network provider name.\n"
 msgstr "اسم المزود الشبكي غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1735
+#: dlls/kernelbase/winerror.mc:1775
 msgid "Cannot open network connection profile.\n"
 msgstr "غير قادر على فتح ملف الاتصال الشبكي.\n"
 
-#: dlls/kernelbase/winerror.mc:1740
+#: dlls/kernelbase/winerror.mc:1780
 msgid "Corrupt network connection profile.\n"
 msgstr "ملف الاتصال الشبكي معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:1745
+#: dlls/kernelbase/winerror.mc:1785
 msgid "Not a container.\n"
 msgstr "ليس حاويًا.\n"
 
-#: dlls/kernelbase/winerror.mc:1750
+#: dlls/kernelbase/winerror.mc:1790
 msgid "Extended error.\n"
 msgstr "خطأ ممتد.\n"
 
-#: dlls/kernelbase/winerror.mc:1755
+#: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid group name.\n"
 msgstr "اسم المجموعة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1760
+#: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid computer name.\n"
 msgstr "اسم الحاسوب غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1765
+#: dlls/kernelbase/winerror.mc:1805
 msgid "Invalid event name.\n"
 msgstr "اسم الحدث غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1770
+#: dlls/kernelbase/winerror.mc:1810
 msgid "Invalid domain name.\n"
 msgstr "اسم الربط غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1775
+#: dlls/kernelbase/winerror.mc:1815
 msgid "Invalid service name.\n"
 msgstr "اسم الخدمة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1780
+#: dlls/kernelbase/winerror.mc:1820
 msgid "Invalid network name.\n"
 msgstr "اسم الشبكة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1785
+#: dlls/kernelbase/winerror.mc:1825
 msgid "Invalid share name.\n"
 msgstr "اسم المشاركة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1795
+#: dlls/kernelbase/winerror.mc:1835
 msgid "Invalid message name.\n"
 msgstr "اسم الرسالة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1800
+#: dlls/kernelbase/winerror.mc:1840
 msgid "Invalid message destination.\n"
 msgstr "هدف الرسالة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1805
+#: dlls/kernelbase/winerror.mc:1845
 msgid "Session credential conflict.\n"
 msgstr "تعارض في اعتمادات الجلسة.\n"
 
-#: dlls/kernelbase/winerror.mc:1810
+#: dlls/kernelbase/winerror.mc:1850
 msgid "Remote session limit exceeded.\n"
 msgstr "تم تجاوز الحد الأعلى للجلسة البعيدة.\n"
 
-#: dlls/kernelbase/winerror.mc:1815
+#: dlls/kernelbase/winerror.mc:1855
 msgid "Duplicate domain or workgroup name.\n"
 msgstr "اسم مجموعة العمل أو الرابط مكرر.\n"
 
-#: dlls/kernelbase/winerror.mc:1820
+#: dlls/kernelbase/winerror.mc:1860
 msgid "No network.\n"
 msgstr "لا يوجد شبكة.\n"
 
-#: dlls/kernelbase/winerror.mc:1825
+#: dlls/kernelbase/winerror.mc:1865
 msgid "Operation canceled by user.\n"
 msgstr "تم إلغاء العملية بواسطة المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:1830
+#: dlls/kernelbase/winerror.mc:1870
 msgid "File has a user-mapped section.\n"
 msgstr "يحتوي الملف على قسم مخطط بواسطة المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
+#: dlls/kernelbase/winerror.mc:1875 dlls/kernelbase/winerror.mc:3910
 msgid "Connection refused.\n"
 msgstr "تم رفض الاتصال.\n"
 
-#: dlls/kernelbase/winerror.mc:1840
+#: dlls/kernelbase/winerror.mc:1880
 msgid "Connection gracefully closed.\n"
 msgstr "تم إغلاق الاتصال بشكل سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1845
+#: dlls/kernelbase/winerror.mc:1885
 msgid "Address already associated with transport endpoint.\n"
 msgstr "العنوان مقترن بالفعل بنقطة النقل النهائية.\n"
 
-#: dlls/kernelbase/winerror.mc:1850
+#: dlls/kernelbase/winerror.mc:1890
 msgid "Address not associated with transport endpoint.\n"
 msgstr "العنوان غير مقترن بنقطة النقل النهائية.\n"
 
-#: dlls/kernelbase/winerror.mc:1855
+#: dlls/kernelbase/winerror.mc:1895
 msgid "Connection invalid.\n"
 msgstr "الاتصال غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1860
+#: dlls/kernelbase/winerror.mc:1900
 msgid "Connection is active.\n"
 msgstr "الاتصال نشط الآن.\n"
 
-#: dlls/kernelbase/winerror.mc:1865
+#: dlls/kernelbase/winerror.mc:1905
 msgid "Network unreachable.\n"
 msgstr "لا يمكن الوصول إلى الشبكة.\n"
 
-#: dlls/kernelbase/winerror.mc:1870
+#: dlls/kernelbase/winerror.mc:1910
 msgid "Host unreachable.\n"
 msgstr "لا يمكن الوصول إلى المزود.\n"
 
-#: dlls/kernelbase/winerror.mc:1875
+#: dlls/kernelbase/winerror.mc:1915
 msgid "Protocol unreachable.\n"
 msgstr "لا يمكن الوصول إلى البروتوكول.\n"
 
-#: dlls/kernelbase/winerror.mc:1880
+#: dlls/kernelbase/winerror.mc:1920
 msgid "Port unreachable.\n"
 msgstr "لا يمكن الوصول إلى المنفذ.\n"
 
-#: dlls/kernelbase/winerror.mc:1885
+#: dlls/kernelbase/winerror.mc:1925
 msgid "Request aborted.\n"
 msgstr "أحبط الطلب.\n"
 
-#: dlls/kernelbase/winerror.mc:1890
+#: dlls/kernelbase/winerror.mc:1930
 msgid "Connection aborted.\n"
 msgstr "أحبط الاتصال.\n"
 
-#: dlls/kernelbase/winerror.mc:1895
+#: dlls/kernelbase/winerror.mc:1935
 msgid "Please retry operation.\n"
 msgstr "أعد العملية رجاء.\n"
 
-#: dlls/kernelbase/winerror.mc:1900
+#: dlls/kernelbase/winerror.mc:1940
 msgid "Connection count limit reached.\n"
 msgstr "وصل الاتصال إلى الحد الأقصى.\n"
 
-#: dlls/kernelbase/winerror.mc:1905
+#: dlls/kernelbase/winerror.mc:1945
 msgid "Login time restriction.\n"
 msgstr "قيود زمن الولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:1910
+#: dlls/kernelbase/winerror.mc:1950
 msgid "Login workstation restriction.\n"
 msgstr "قيود محطة الولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:1915
+#: dlls/kernelbase/winerror.mc:1955
 msgid "Incorrect network address.\n"
 msgstr "عنوان الشبكة غير صحيح.\n"
 
-#: dlls/kernelbase/winerror.mc:1920
+#: dlls/kernelbase/winerror.mc:1960
 msgid "Service already registered.\n"
 msgstr "الخدمة مسجلة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:1925
+#: dlls/kernelbase/winerror.mc:1965
 msgid "Service not found.\n"
 msgstr "الخدمة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:1930
+#: dlls/kernelbase/winerror.mc:1970
 msgid "User not authenticated.\n"
 msgstr "لم يتم التحقق من المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:1935
+#: dlls/kernelbase/winerror.mc:1975
 msgid "User not logged on.\n"
 msgstr "المستخدم لم يلج بعد.\n"
 
-#: dlls/kernelbase/winerror.mc:1940
+#: dlls/kernelbase/winerror.mc:1980
 msgid "Continue work in progress.\n"
 msgstr "استكمال العمل.\n"
 
-#: dlls/kernelbase/winerror.mc:1945
+#: dlls/kernelbase/winerror.mc:1985
 msgid "Already initialized.\n"
 msgstr "تم البدء بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:1950
+#: dlls/kernelbase/winerror.mc:1990
 msgid "No more local devices.\n"
 msgstr "لا يوجد أجهزة محلية بعد.\n"
 
-#: dlls/kernelbase/winerror.mc:1955
+#: dlls/kernelbase/winerror.mc:1995
 msgid "The site does not exist.\n"
 msgstr "الموقع غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:1960
+#: dlls/kernelbase/winerror.mc:2000
 msgid "The domain controller already exists.\n"
 msgstr "متحكم الربط موجود بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:1965
+#: dlls/kernelbase/winerror.mc:2005
 msgid "Supported only when connected.\n"
 msgstr "غير مدعوم إلا عند الاتصال.\n"
 
-#: dlls/kernelbase/winerror.mc:1970
+#: dlls/kernelbase/winerror.mc:2010
 msgid "Perform operation even when nothing changed.\n"
 msgstr "تأدية العملية حتى عند عدم تغير أي شيء .\n"
 
-#: dlls/kernelbase/winerror.mc:1975
+#: dlls/kernelbase/winerror.mc:2015
 msgid "The user profile is invalid.\n"
 msgstr "ملف المستخدم الشخصي غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:1980
+#: dlls/kernelbase/winerror.mc:2020
 msgid "Not supported on Small Business Server.\n"
 msgstr "خادم الاعمال الصغير لا يدعم العملية.\n"
 
-#: dlls/kernelbase/winerror.mc:1985
+#: dlls/kernelbase/winerror.mc:2025
 msgid "Not all privileges assigned.\n"
 msgstr "ليست كل الصلاحيات موثقة.\n"
 
-#: dlls/kernelbase/winerror.mc:1990
+#: dlls/kernelbase/winerror.mc:2030
 msgid "Some security IDs not mapped.\n"
 msgstr "بعض معرفات الأمن غير موضوعة.\n"
 
-#: dlls/kernelbase/winerror.mc:1995
+#: dlls/kernelbase/winerror.mc:2035
 msgid "No quotas for account.\n"
 msgstr "لا يوجد حصة للحساب.\n"
 
-#: dlls/kernelbase/winerror.mc:2000
+#: dlls/kernelbase/winerror.mc:2040
 msgid "Local user session key.\n"
 msgstr "مفتاح جلسة المستخدم المحلي.\n"
 
-#: dlls/kernelbase/winerror.mc:2005
+#: dlls/kernelbase/winerror.mc:2045
 msgid "Password too complex for LM.\n"
 msgstr "كلمة السر معقد جدًا ﻷ LM.\n"
 
-#: dlls/kernelbase/winerror.mc:2010
+#: dlls/kernelbase/winerror.mc:2050
 msgid "Unknown revision.\n"
 msgstr "المراجعة غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2015
+#: dlls/kernelbase/winerror.mc:2055
 msgid "Incompatible revision levels.\n"
 msgstr "مستويات المراجعة غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2020
+#: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid owner.\n"
 msgstr "المالك غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2025
+#: dlls/kernelbase/winerror.mc:2065
 msgid "Invalid primary group.\n"
 msgstr "المجموعة الأساسية غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2030
+#: dlls/kernelbase/winerror.mc:2070
 msgid "No impersonation token.\n"
 msgstr "التمثيل الشخصي غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2035
+#: dlls/kernelbase/winerror.mc:2075
 msgid "Can't disable mandatory group.\n"
 msgstr "غير قادر على تعطيل المجموعة المنتدبة.\n"
 
-#: dlls/kernelbase/winerror.mc:2040
+#: dlls/kernelbase/winerror.mc:2080
 msgid "No logon servers available.\n"
 msgstr "خواديم الولوج غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:2045
+#: dlls/kernelbase/winerror.mc:2085
 msgid "No such logon session.\n"
 msgstr "لا تبدو كجلسة ولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:2050
+#: dlls/kernelbase/winerror.mc:2090
 msgid "No such privilege.\n"
 msgstr "لا تبدو كصلاحيات صحيحة.\n"
 
-#: dlls/kernelbase/winerror.mc:2055
+#: dlls/kernelbase/winerror.mc:2095
 msgid "Privilege not held.\n"
 msgstr "لم تؤخذ الصلاحيات.\n"
 
-#: dlls/kernelbase/winerror.mc:2060
+#: dlls/kernelbase/winerror.mc:2100
 msgid "Invalid account name.\n"
 msgstr "اسم الحساب غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2065
+#: dlls/kernelbase/winerror.mc:2105
 msgid "User already exists.\n"
 msgstr "المستخدم موجود بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2070
+#: dlls/kernelbase/winerror.mc:2110
 msgid "No such user.\n"
 msgstr "لا يبدو كمستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:2075
+#: dlls/kernelbase/winerror.mc:2115
 msgid "Group already exists.\n"
 msgstr "المجموعة موجودة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2080
+#: dlls/kernelbase/winerror.mc:2120
 msgid "No such group.\n"
 msgstr "لا تبدو كمجموعة.\n"
 
-#: dlls/kernelbase/winerror.mc:2085
+#: dlls/kernelbase/winerror.mc:2125
 msgid "User already in group.\n"
 msgstr "المستخدم موجود بالمجموعة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2090
+#: dlls/kernelbase/winerror.mc:2130
 msgid "User not in group.\n"
 msgstr "المستخدم ليس في المجموعة.\n"
 
-#: dlls/kernelbase/winerror.mc:2095
+#: dlls/kernelbase/winerror.mc:2135
 msgid "Can't delete last admin user.\n"
 msgstr "غير قادر على حذف المستخدم المدير الأخير.\n"
 
-#: dlls/kernelbase/winerror.mc:2100
+#: dlls/kernelbase/winerror.mc:2140
 msgid "Wrong password.\n"
 msgstr "كلمة السر خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:2105
+#: dlls/kernelbase/winerror.mc:2145
 msgid "Ill-formed password.\n"
 msgstr "صيغة كلمة السر خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:2110
+#: dlls/kernelbase/winerror.mc:2150
 msgid "Password restriction.\n"
 msgstr "قيود كلمة السر.\n"
 
-#: dlls/kernelbase/winerror.mc:2115
+#: dlls/kernelbase/winerror.mc:2155
 msgid "Logon failure.\n"
 msgstr "فشل الولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:2120
+#: dlls/kernelbase/winerror.mc:2160
 msgid "Account restriction.\n"
 msgstr "قيود الحساب.\n"
 
-#: dlls/kernelbase/winerror.mc:2125
+#: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid logon hours.\n"
 msgstr "ساعات الولوج غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2130
+#: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid workstation.\n"
 msgstr "المحطات غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2135
+#: dlls/kernelbase/winerror.mc:2175
 msgid "Password expired.\n"
 msgstr "كلمة السر منتهية الصلاحية.\n"
 
-#: dlls/kernelbase/winerror.mc:2140
+#: dlls/kernelbase/winerror.mc:2180
 msgid "Account disabled.\n"
 msgstr "الحساب معطل.\n"
 
-#: dlls/kernelbase/winerror.mc:2145
+#: dlls/kernelbase/winerror.mc:2185
 msgid "No security ID mapped.\n"
 msgstr "لا يوجد معرف أمني.\n"
 
-#: dlls/kernelbase/winerror.mc:2150
+#: dlls/kernelbase/winerror.mc:2190
 msgid "Too many LUIDs requested.\n"
 msgstr "تم طلب الكثير من معرفات LUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2155
+#: dlls/kernelbase/winerror.mc:2195
 msgid "LUIDs exhausted.\n"
 msgstr "استفذت معرفات LUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2160
+#: dlls/kernelbase/winerror.mc:2200
 msgid "Invalid sub authority.\n"
 msgstr "التحقق الثانوي غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2165
+#: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid ACL.\n"
 msgstr "ACL غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2170
+#: dlls/kernelbase/winerror.mc:2210
 msgid "Invalid SID.\n"
 msgstr "SID غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2175
+#: dlls/kernelbase/winerror.mc:2215
 msgid "Invalid security descriptor.\n"
 msgstr "الواصف الأمني غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2180
+#: dlls/kernelbase/winerror.mc:2220
 msgid "Bad inherited ACL.\n"
 msgstr "ACL الموروث خاطئ.\n"
 
-#: dlls/kernelbase/winerror.mc:2185
+#: dlls/kernelbase/winerror.mc:2225
 msgid "Server disabled.\n"
 msgstr "تم تعطيل الخادوم.\n"
 
-#: dlls/kernelbase/winerror.mc:2190
+#: dlls/kernelbase/winerror.mc:2230
 msgid "Server not disabled.\n"
 msgstr "الخادوم غير معطل.\n"
 
-#: dlls/kernelbase/winerror.mc:2195
+#: dlls/kernelbase/winerror.mc:2235
 msgid "Invalid ID authority.\n"
 msgstr "معرف التحقق غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2200
+#: dlls/kernelbase/winerror.mc:2240
 msgid "Allotted space exceeded.\n"
 msgstr "تم تجاوز المساحة المتاحة.\n"
 
-#: dlls/kernelbase/winerror.mc:2205
+#: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid group attributes.\n"
 msgstr "سمات المجموعة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2210
+#: dlls/kernelbase/winerror.mc:2250
 msgid "Bad impersonation level.\n"
 msgstr "مستوى التمثيل غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2215
+#: dlls/kernelbase/winerror.mc:2255
 msgid "Can't open anonymous security token.\n"
 msgstr "لم يتمكن من الفتح بواسطة الحساب المجهول.\n"
 
-#: dlls/kernelbase/winerror.mc:2220
+#: dlls/kernelbase/winerror.mc:2260
 msgid "Bad validation class.\n"
 msgstr "فئة التحقق غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2225
+#: dlls/kernelbase/winerror.mc:2265
 msgid "Bad token type.\n"
 msgstr "النوع مأخوذ غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2230
+#: dlls/kernelbase/winerror.mc:2270
 msgid "No security on object.\n"
 msgstr "العنصر غير مؤمّن.\n"
 
-#: dlls/kernelbase/winerror.mc:2235
+#: dlls/kernelbase/winerror.mc:2275
 msgid "Can't access domain information.\n"
 msgstr "لم يتمكن من الولوج إلى معلومات الربط.\n"
 
-#: dlls/kernelbase/winerror.mc:2240
+#: dlls/kernelbase/winerror.mc:2280
 msgid "Invalid server state.\n"
 msgstr "حالة الخادوم غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2245
+#: dlls/kernelbase/winerror.mc:2285
 msgid "Invalid domain state.\n"
 msgstr "حالة الربط غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2250
+#: dlls/kernelbase/winerror.mc:2290
 msgid "Invalid domain role.\n"
 msgstr "وظيفة الربط غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2255
+#: dlls/kernelbase/winerror.mc:2295
 msgid "No such domain.\n"
 msgstr "لا يبدو كرابط.\n"
 
-#: dlls/kernelbase/winerror.mc:2260
+#: dlls/kernelbase/winerror.mc:2300
 msgid "Domain already exists.\n"
 msgstr "الرابط موجود بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2265
+#: dlls/kernelbase/winerror.mc:2305
 msgid "Domain limit exceeded.\n"
 msgstr "تم تجاوز نهاية الرابط.\n"
 
-#: dlls/kernelbase/winerror.mc:2270
+#: dlls/kernelbase/winerror.mc:2310
 msgid "Internal database corruption.\n"
 msgstr "عطب في قاعدة البانات الداخلية.\n"
 
-#: dlls/kernelbase/winerror.mc:2275
+#: dlls/kernelbase/winerror.mc:2315
 msgid "Internal error.\n"
 msgstr "خطأ داخلي.\n"
 
-#: dlls/kernelbase/winerror.mc:2280
+#: dlls/kernelbase/winerror.mc:2320
 msgid "Generic access types not mapped.\n"
 msgstr "أنواع الولوج العامة غير مدرجة.\n"
 
-#: dlls/kernelbase/winerror.mc:2285
+#: dlls/kernelbase/winerror.mc:2325
 msgid "Bad descriptor format.\n"
 msgstr "صيغة الواصف غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2290
+#: dlls/kernelbase/winerror.mc:2330
 msgid "Not a logon process.\n"
 msgstr "ليست عملية ولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:2295
+#: dlls/kernelbase/winerror.mc:2335
 msgid "Logon session ID exists.\n"
 msgstr "معرف جلسة الولوج موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2300
+#: dlls/kernelbase/winerror.mc:2340
 msgid "Unknown authentication package.\n"
 msgstr "حزمة التحقق غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2305
+#: dlls/kernelbase/winerror.mc:2345
 msgid "Bad logon session state.\n"
 msgstr "حالة جلسة الولوج غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2310
+#: dlls/kernelbase/winerror.mc:2350
 msgid "Logon session ID collision.\n"
 msgstr "تعارض في معرفات جلسة الولوج.\n"
 
-#: dlls/kernelbase/winerror.mc:2315
+#: dlls/kernelbase/winerror.mc:2355
 msgid "Invalid logon type.\n"
 msgstr "نوع الولوج غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2320
+#: dlls/kernelbase/winerror.mc:2360
 msgid "Cannot impersonate.\n"
 msgstr "لم يتم التمثيل.\n"
 
-#: dlls/kernelbase/winerror.mc:2325
+#: dlls/kernelbase/winerror.mc:2365
 msgid "Invalid transaction state.\n"
 msgstr "حالة العملية غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2330
+#: dlls/kernelbase/winerror.mc:2370
 msgid "Security DB commit failure.\n"
 msgstr "سجلت قاعدة البيانات الأمنية فشلًا.\n"
 
-#: dlls/kernelbase/winerror.mc:2335
+#: dlls/kernelbase/winerror.mc:2375
 msgid "Account is built-in.\n"
 msgstr "الحساب مضمن.\n"
 
-#: dlls/kernelbase/winerror.mc:2340
+#: dlls/kernelbase/winerror.mc:2380
 msgid "Group is built-in.\n"
 msgstr "المجموعة مضمنة.\n"
 
-#: dlls/kernelbase/winerror.mc:2345
+#: dlls/kernelbase/winerror.mc:2385
 msgid "User is built-in.\n"
 msgstr "المستخدم مضمن.\n"
 
-#: dlls/kernelbase/winerror.mc:2350
+#: dlls/kernelbase/winerror.mc:2390
 msgid "Group is primary for user.\n"
 msgstr "المجموعة هي الرئيسية للمستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:2355
+#: dlls/kernelbase/winerror.mc:2395
 msgid "Token already in use.\n"
 msgstr "ما طلبته مستخدم بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2360
+#: dlls/kernelbase/winerror.mc:2400
 msgid "No such local group.\n"
 msgstr "لا تبدو كمجموعة محلية.\n"
 
-#: dlls/kernelbase/winerror.mc:2365
+#: dlls/kernelbase/winerror.mc:2405
 msgid "User not in local group.\n"
 msgstr "المستخدم ليس في المجموعة المحلية.\n"
 
-#: dlls/kernelbase/winerror.mc:2370
+#: dlls/kernelbase/winerror.mc:2410
 msgid "User already in local group.\n"
 msgstr "المستخدم بالمجموعة المحلية بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2375
+#: dlls/kernelbase/winerror.mc:2415
 msgid "Local group already exists.\n"
 msgstr "المجموعة المحلية موجودة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
+#: dlls/kernelbase/winerror.mc:2420 dlls/kernelbase/winerror.mc:2445
 msgid "Logon type not granted.\n"
 msgstr "نوع الولوج غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2385
+#: dlls/kernelbase/winerror.mc:2425
 msgid "Too many secrets.\n"
 msgstr "أسرار كثير جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:2390
+#: dlls/kernelbase/winerror.mc:2430
 msgid "Secret too long.\n"
 msgstr "السر طويل جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:2395
+#: dlls/kernelbase/winerror.mc:2435
 msgid "Internal security DB error.\n"
 msgstr "خطأ داخلي في قاعدة البيانات الأمنية.\n"
 
-#: dlls/kernelbase/winerror.mc:2400
+#: dlls/kernelbase/winerror.mc:2440
 msgid "Too many context IDs.\n"
 msgstr "معرفات بيئية كثيرة جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:2410
+#: dlls/kernelbase/winerror.mc:2450
 msgid "Cross-encrypted NT password required.\n"
 msgstr "كلمة سر NT عابرة للتشفير مطلوبة.\n"
 
-#: dlls/kernelbase/winerror.mc:2415
+#: dlls/kernelbase/winerror.mc:2455
 msgid "No such member.\n"
 msgstr "لا يبدو كعضو.\n"
 
-#: dlls/kernelbase/winerror.mc:2420
+#: dlls/kernelbase/winerror.mc:2460
 msgid "Invalid member.\n"
 msgstr "العضو غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2425
+#: dlls/kernelbase/winerror.mc:2465
 msgid "Too many SIDs.\n"
 msgstr "معرفات SID كثيرة جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:2430
+#: dlls/kernelbase/winerror.mc:2470
 msgid "Cross-encrypted LM password required.\n"
 msgstr "كلمة سر LM عابرة للتشفير مطلوبة.\n"
 
-#: dlls/kernelbase/winerror.mc:2435
+#: dlls/kernelbase/winerror.mc:2475
 msgid "No inheritable components.\n"
 msgstr "عناصر غير موروثة.\n"
 
-#: dlls/kernelbase/winerror.mc:2440
+#: dlls/kernelbase/winerror.mc:2480
 msgid "File or directory corrupt.\n"
 msgstr "الملف أو الدليل معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:2445
+#: dlls/kernelbase/winerror.mc:2485
 msgid "Disk is corrupt.\n"
 msgstr "القرص معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:2450
+#: dlls/kernelbase/winerror.mc:2490
 msgid "No user session key.\n"
 msgstr "مفتاح جلسة المستخدم غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2455
+#: dlls/kernelbase/winerror.mc:2495
 msgid "License quota exceeded.\n"
 msgstr "حصة الرخصة تم تجاوزها.\n"
 
-#: dlls/kernelbase/winerror.mc:2460
+#: dlls/kernelbase/winerror.mc:2500
 msgid "Wrong target name.\n"
 msgstr "اسم الهدف خاطئ.\n"
 
-#: dlls/kernelbase/winerror.mc:2465
+#: dlls/kernelbase/winerror.mc:2505
 msgid "Mutual authentication failed.\n"
 msgstr "فشل التحقق الأساسي.\n"
 
-#: dlls/kernelbase/winerror.mc:2470
+#: dlls/kernelbase/winerror.mc:2510
 msgid "Time skew between client and server.\n"
 msgstr "لا يتطابق الوقت بين الخادوم والعميل.\n"
 
-#: dlls/kernelbase/winerror.mc:2475
+#: dlls/kernelbase/winerror.mc:2515
 msgid "Invalid window handle.\n"
 msgstr "لاقط النافذة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2480
+#: dlls/kernelbase/winerror.mc:2520
 msgid "Invalid menu handle.\n"
 msgstr "لاقط القائمة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2485
+#: dlls/kernelbase/winerror.mc:2525
 msgid "Invalid cursor handle.\n"
 msgstr "لاقط المؤشر غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2490
+#: dlls/kernelbase/winerror.mc:2530
 msgid "Invalid accelerator table handle.\n"
 msgstr "لاقط جدول التسريع غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2495
+#: dlls/kernelbase/winerror.mc:2535
 msgid "Invalid hook handle.\n"
 msgstr "لاقط الخطاف غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2500
+#: dlls/kernelbase/winerror.mc:2540
 msgid "Invalid DWP handle.\n"
 msgstr "لاقط DWP غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2505
+#: dlls/kernelbase/winerror.mc:2545
 msgid "Can't create top-level child window.\n"
 msgstr "لم يتمكن من إنشاء النافذة الابنة العليا.\n"
 
-#: dlls/kernelbase/winerror.mc:2510
+#: dlls/kernelbase/winerror.mc:2550
 msgid "Can't find window class.\n"
 msgstr "لم يتمكن من العثور على فئة النافذة.\n"
 
-#: dlls/kernelbase/winerror.mc:2515
+#: dlls/kernelbase/winerror.mc:2555
 msgid "Window owned by another thread.\n"
 msgstr "النافذ مملوكة بمادة أخرى.\n"
 
-#: dlls/kernelbase/winerror.mc:2520
+#: dlls/kernelbase/winerror.mc:2560
 msgid "Hotkey already registered.\n"
 msgstr "المفتاح الساخن مسجل بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2525
+#: dlls/kernelbase/winerror.mc:2565
 msgid "Class already exists.\n"
 msgstr "الفئة موجودة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2530
+#: dlls/kernelbase/winerror.mc:2570
 msgid "Class does not exist.\n"
 msgstr "الفئة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:2535
+#: dlls/kernelbase/winerror.mc:2575
 msgid "Class has open windows.\n"
 msgstr "فتحت الفئة النوافذ.\n"
 
-#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
+#: dlls/kernelbase/winerror.mc:2580 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "الفهرس غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2545
+#: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid icon handle.\n"
 msgstr "لاقط الرمز غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2550
+#: dlls/kernelbase/winerror.mc:2590
 msgid "Private dialog index.\n"
 msgstr "فهرس الحوار خاص.\n"
 
-#: dlls/kernelbase/winerror.mc:2555
+#: dlls/kernelbase/winerror.mc:2595
 msgid "List box ID not found.\n"
 msgstr "معرف القائمة غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2560
+#: dlls/kernelbase/winerror.mc:2600
 msgid "No wildcard characters.\n"
 msgstr "لا يوجد محارف شائعة.\n"
 
-#: dlls/kernelbase/winerror.mc:2565
+#: dlls/kernelbase/winerror.mc:2605
 msgid "Clipboard not open.\n"
 msgstr "الحافظة ليست مفتوحة.\n"
 
-#: dlls/kernelbase/winerror.mc:2570
+#: dlls/kernelbase/winerror.mc:2610
 msgid "Hotkey not registered.\n"
 msgstr "المفتاح الساخن غير مسجل.\n"
 
-#: dlls/kernelbase/winerror.mc:2575
+#: dlls/kernelbase/winerror.mc:2615
 msgid "Not a dialog window.\n"
 msgstr "ليست نافذة حوار.\n"
 
-#: dlls/kernelbase/winerror.mc:2580
+#: dlls/kernelbase/winerror.mc:2620
 msgid "Control ID not found.\n"
 msgstr "معرف التحكم غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2585
+#: dlls/kernelbase/winerror.mc:2625
 msgid "Invalid combo box message.\n"
 msgstr "رسالة غير سليمة لصندوق الخيارات.\n"
 
-#: dlls/kernelbase/winerror.mc:2590
+#: dlls/kernelbase/winerror.mc:2630
 msgid "Not a combo box window.\n"
 msgstr "ليست نافذة صندوق خيارات.\n"
 
-#: dlls/kernelbase/winerror.mc:2595
+#: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid edit height.\n"
 msgstr "ارتفاع المحرر غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2600
+#: dlls/kernelbase/winerror.mc:2640
 msgid "DC not found.\n"
 msgstr "DC غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2605
+#: dlls/kernelbase/winerror.mc:2645
 msgid "Invalid hook filter.\n"
 msgstr "المنقي الخطاف غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2610
+#: dlls/kernelbase/winerror.mc:2650
 msgid "Invalid filter procedure.\n"
 msgstr "منتج التنقية غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2615
+#: dlls/kernelbase/winerror.mc:2655
 msgid "Hook procedure needs module handle.\n"
 msgstr "منتج الخطاف يتطلب وحدة اللقط.\n"
 
-#: dlls/kernelbase/winerror.mc:2620
+#: dlls/kernelbase/winerror.mc:2660
 msgid "Global-only hook procedure.\n"
 msgstr "منتجات خطاف عامة فقط.\n"
 
-#: dlls/kernelbase/winerror.mc:2625
+#: dlls/kernelbase/winerror.mc:2665
 msgid "Journal hook already set.\n"
 msgstr "التسجيل معد بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2630
+#: dlls/kernelbase/winerror.mc:2670
 msgid "Hook procedure not installed.\n"
 msgstr "منتتج الخطاف غير مثبت.\n"
 
-#: dlls/kernelbase/winerror.mc:2635
+#: dlls/kernelbase/winerror.mc:2675
 msgid "Invalid list box message.\n"
 msgstr "صندوق القائمة يحوي رسالة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2640
+#: dlls/kernelbase/winerror.mc:2680
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr "LB_SETCOUNT خاطئة أرسلت.\n"
 
-#: dlls/kernelbase/winerror.mc:2645
+#: dlls/kernelbase/winerror.mc:2685
 msgid "No tab stops on this list box.\n"
 msgstr "لم يتوقف أي لسان في صندوق القائمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2650
+#: dlls/kernelbase/winerror.mc:2690
 msgid "Can't destroy object owned by another thread.\n"
 msgstr "لم يتمكن من كسر عنصر مملوك بمادة أخرى.\n"
 
-#: dlls/kernelbase/winerror.mc:2655
+#: dlls/kernelbase/winerror.mc:2695
 msgid "Child window menus not allowed.\n"
 msgstr "قوائم النافذة الابنة غر مسموحة.\n"
 
-#: dlls/kernelbase/winerror.mc:2660
+#: dlls/kernelbase/winerror.mc:2700
 msgid "Window has no system menu.\n"
 msgstr "لا تمتلك النافذة قائمة نظام.\n"
 
-#: dlls/kernelbase/winerror.mc:2665
+#: dlls/kernelbase/winerror.mc:2705
 msgid "Invalid message box style.\n"
 msgstr "نمص صندوق الرسالة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2670
+#: dlls/kernelbase/winerror.mc:2710
 msgid "Invalid SPI parameter.\n"
 msgstr "معامل SPI غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2675
+#: dlls/kernelbase/winerror.mc:2715
 msgid "Screen already locked.\n"
 msgstr "الشاشة مقفولة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2680
+#: dlls/kernelbase/winerror.mc:2720
 msgid "Window handles have different parents.\n"
 msgstr "لواقط النافذة تملك أصولًا مختلفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2685
+#: dlls/kernelbase/winerror.mc:2725
 msgid "Not a child window.\n"
 msgstr "ليست نافذة ابنة.\n"
 
-#: dlls/kernelbase/winerror.mc:2690
+#: dlls/kernelbase/winerror.mc:2730
 msgid "Invalid GW command.\n"
 msgstr "أمر GW خاطئ.\n"
 
-#: dlls/kernelbase/winerror.mc:2695
+#: dlls/kernelbase/winerror.mc:2735
 msgid "Invalid thread ID.\n"
 msgstr "معرف المادة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2700
+#: dlls/kernelbase/winerror.mc:2740
 msgid "Not an MDI child window.\n"
 msgstr "ليست نافذة MDI ابنة.\n"
 
-#: dlls/kernelbase/winerror.mc:2705
+#: dlls/kernelbase/winerror.mc:2745
 msgid "Popup menu already active.\n"
 msgstr "النافذة المنبثقة نشطة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2710
+#: dlls/kernelbase/winerror.mc:2750
 msgid "No scrollbars.\n"
 msgstr "بدون أشرطة تمرير.\n"
 
-#: dlls/kernelbase/winerror.mc:2715
+#: dlls/kernelbase/winerror.mc:2755
 msgid "Invalid scrollbar range.\n"
 msgstr "مدى شريط التمرير غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2720
+#: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid ShowWin command.\n"
 msgstr "أمر إظهار النافذة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2725
+#: dlls/kernelbase/winerror.mc:2765
 msgid "No system resources.\n"
 msgstr "لا تتوفر المصادر.\n"
 
-#: dlls/kernelbase/winerror.mc:2730
+#: dlls/kernelbase/winerror.mc:2770
 msgid "No non-paged system resources.\n"
 msgstr "لا تتوفر مصادر غير مصفّحة في النظام.\n"
 
-#: dlls/kernelbase/winerror.mc:2735
+#: dlls/kernelbase/winerror.mc:2775
 msgid "No paged system resources.\n"
 msgstr "لا تتوفر مصادر مصفّحة في النظام.\n"
 
-#: dlls/kernelbase/winerror.mc:2740
+#: dlls/kernelbase/winerror.mc:2780
 msgid "No working set quota.\n"
 msgstr "لم يحدد أي عمل الحصة.\n"
 
-#: dlls/kernelbase/winerror.mc:2745
+#: dlls/kernelbase/winerror.mc:2785
 msgid "No page file quota.\n"
 msgstr "لا يوجد حصة لملف الصفحة.\n"
 
-#: dlls/kernelbase/winerror.mc:2750
+#: dlls/kernelbase/winerror.mc:2790
 msgid "Exceeded commitment limit.\n"
 msgstr "تم تجاوز نهاية الإضافات.\n"
 
-#: dlls/kernelbase/winerror.mc:2755
+#: dlls/kernelbase/winerror.mc:2795
 msgid "Menu item not found.\n"
 msgstr "عنصر القائمة غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:2760
+#: dlls/kernelbase/winerror.mc:2800
 msgid "Invalid keyboard handle.\n"
 msgstr "لاقط لوحة المفاتيح غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2765
+#: dlls/kernelbase/winerror.mc:2805
 msgid "Hook type not allowed.\n"
 msgstr "نمط الخطاف غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2770
+#: dlls/kernelbase/winerror.mc:2810
 msgid "Interactive window station required.\n"
 msgstr "نافذة تفاعلية مطلوبة.\n"
 
-#: dlls/kernelbase/winerror.mc:2775
+#: dlls/kernelbase/winerror.mc:2815
 msgid "Timeout.\n"
 msgstr "نهاية التوقيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2780
+#: dlls/kernelbase/winerror.mc:2820
 msgid "Invalid monitor handle.\n"
 msgstr "لاقط الشاشة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2785
+#: dlls/kernelbase/winerror.mc:2825
 msgid "Event log file corrupt.\n"
 msgstr "ملف سجل الاحداث معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:2790
+#: dlls/kernelbase/winerror.mc:2830
 msgid "Event log can't start.\n"
 msgstr "لم يتمكن من تشغيل سجل الأحداث.\n"
 
-#: dlls/kernelbase/winerror.mc:2795
+#: dlls/kernelbase/winerror.mc:2835
 msgid "Event log file full.\n"
 msgstr "ملف سجل الأحداث ممتلئ.\n"
 
-#: dlls/kernelbase/winerror.mc:2800
+#: dlls/kernelbase/winerror.mc:2840
 msgid "Event log file changed.\n"
 msgstr "ملف سجل الأحداث تم تغييره.\n"
 
-#: dlls/kernelbase/winerror.mc:2805
+#: dlls/kernelbase/winerror.mc:2845
 msgid "Installer service failed.\n"
 msgstr "فشلت خدمة التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2810
+#: dlls/kernelbase/winerror.mc:2850
 msgid "Installation aborted by user.\n"
 msgstr "أحبط التثبيت بواسطة المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:2815
+#: dlls/kernelbase/winerror.mc:2855
 msgid "Installation failure.\n"
 msgstr "فشل التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2820
+#: dlls/kernelbase/winerror.mc:2860
 msgid "Installation suspended.\n"
 msgstr "أرجئ التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2825
+#: dlls/kernelbase/winerror.mc:2865
 msgid "Unknown product.\n"
 msgstr "المنتج غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:2830
+#: dlls/kernelbase/winerror.mc:2870
 msgid "Unknown feature.\n"
 msgstr "الميزة غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2835
+#: dlls/kernelbase/winerror.mc:2875
 msgid "Unknown component.\n"
 msgstr "المكون غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:2840
+#: dlls/kernelbase/winerror.mc:2880
 msgid "Unknown property.\n"
 msgstr "الملكية غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2845
+#: dlls/kernelbase/winerror.mc:2885
 msgid "Invalid handle state.\n"
 msgstr "حالة اللاقط غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2850
+#: dlls/kernelbase/winerror.mc:2890
 msgid "Bad configuration.\n"
 msgstr "التهيئة خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:2855
+#: dlls/kernelbase/winerror.mc:2895
 msgid "Index is missing.\n"
 msgstr "الفهرس مفقود.\n"
 
-#: dlls/kernelbase/winerror.mc:2860
+#: dlls/kernelbase/winerror.mc:2900
 msgid "Installation source is missing.\n"
 msgstr "مصدر التثبيت مفقود.\n"
 
-#: dlls/kernelbase/winerror.mc:2865
+#: dlls/kernelbase/winerror.mc:2905
 msgid "Wrong installation package version.\n"
 msgstr "إصدارة حزمة التثبيت خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:2870
+#: dlls/kernelbase/winerror.mc:2910
 msgid "Product uninstalled.\n"
 msgstr "تمت إزالة المنتج.\n"
 
-#: dlls/kernelbase/winerror.mc:2875
+#: dlls/kernelbase/winerror.mc:2915
 msgid "Invalid query syntax.\n"
 msgstr "صيغة التحقق غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2880
+#: dlls/kernelbase/winerror.mc:2920
 msgid "Invalid field.\n"
 msgstr "الحقل غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2885
+#: dlls/kernelbase/winerror.mc:2925
 msgid "Device removed.\n"
 msgstr "تم حذف الجهاز.\n"
 
-#: dlls/kernelbase/winerror.mc:2890
+#: dlls/kernelbase/winerror.mc:2930
 msgid "Installation already running.\n"
 msgstr "عملية التثبيت مشغلة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:2895
+#: dlls/kernelbase/winerror.mc:2935
 msgid "Installation package failed to open.\n"
 msgstr "فشل في فتح حزمة التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2900
+#: dlls/kernelbase/winerror.mc:2940
 msgid "Installation package is invalid.\n"
 msgstr "حزمة التثبيت غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2905
+#: dlls/kernelbase/winerror.mc:2945
 msgid "Installer user interface failed.\n"
 msgstr "فشل في فتح واجهة المستخدم لعملية التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2910
+#: dlls/kernelbase/winerror.mc:2950
 msgid "Failed to open installation log file.\n"
 msgstr "فشل في فتح ملف سجل التثبيتات.\n"
 
-#: dlls/kernelbase/winerror.mc:2915
+#: dlls/kernelbase/winerror.mc:2955
 msgid "Installation language not supported.\n"
 msgstr "لغة التثبيت غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:2920
+#: dlls/kernelbase/winerror.mc:2960
 msgid "Installation transform failed to apply.\n"
 msgstr "فشل في تطبيق نقل التثبيت.\n"
 
-#: dlls/kernelbase/winerror.mc:2925
+#: dlls/kernelbase/winerror.mc:2965
 msgid "Installation package rejected.\n"
 msgstr "تم رفض تثبيت الحزمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2930
+#: dlls/kernelbase/winerror.mc:2970
 msgid "Function could not be called.\n"
 msgstr "لا يمكن طلب الوظيفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2935
+#: dlls/kernelbase/winerror.mc:2975
 msgid "Function failed.\n"
 msgstr "فشلت الوظيفة.\n"
 
-#: dlls/kernelbase/winerror.mc:2940
+#: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid table.\n"
 msgstr "الجدول غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:2945
+#: dlls/kernelbase/winerror.mc:2985
 msgid "Data type mismatch.\n"
 msgstr "نوع البيانات غير مطابق.\n"
 
-#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
+#: dlls/kernelbase/winerror.mc:2990 dlls/kernelbase/winerror.mc:3200
 msgid "Unsupported type.\n"
 msgstr "النوع غير مدعوم.\n"
 
-#: dlls/kernelbase/winerror.mc:2955
+#: dlls/kernelbase/winerror.mc:2995
 msgid "Creation failed.\n"
 msgstr "فشل الإنشاء.\n"
 
-#: dlls/kernelbase/winerror.mc:2960
+#: dlls/kernelbase/winerror.mc:3000
 msgid "Temporary directory not writable.\n"
 msgstr "لا توجد صلاحيات للكتابة في الدليل المؤقت.\n"
 
-#: dlls/kernelbase/winerror.mc:2965
+#: dlls/kernelbase/winerror.mc:3005
 msgid "Installation platform not supported.\n"
 msgstr "صيغة التثبيت غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:2970
+#: dlls/kernelbase/winerror.mc:3010
 msgid "Installer not used.\n"
 msgstr "لم يستخدم المثبت.\n"
 
-#: dlls/kernelbase/winerror.mc:2975
+#: dlls/kernelbase/winerror.mc:3015
 msgid "Failed to open the patch package.\n"
 msgstr "فشل في فتح حزمة الترقيع.\n"
 
-#: dlls/kernelbase/winerror.mc:2980
+#: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid patch package.\n"
 msgstr "حزمة الترقيع غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:2985
+#: dlls/kernelbase/winerror.mc:3025
 msgid "Unsupported patch package.\n"
 msgstr "حزمة الترقيع غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:2990
+#: dlls/kernelbase/winerror.mc:3030
 msgid "Another version is installed.\n"
 msgstr "إصدارة اخرى مثبتة.\n"
 
-#: dlls/kernelbase/winerror.mc:2995
+#: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid command line.\n"
 msgstr "سطر الاوامر غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3000
+#: dlls/kernelbase/winerror.mc:3040
 msgid "Remote installation not allowed.\n"
 msgstr "التثبيت البعيد غير مسموح.\n"
 
-#: dlls/kernelbase/winerror.mc:3005
+#: dlls/kernelbase/winerror.mc:3045
 msgid "Reboot initiated after successful install.\n"
 msgstr "إعادة الإقلاع بعد التثبيت الناجح.\n"
 
-#: dlls/kernelbase/winerror.mc:3010
+#: dlls/kernelbase/winerror.mc:3050
 msgid "Invalid string binding.\n"
 msgstr "ربط السلسلة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3015
+#: dlls/kernelbase/winerror.mc:3055
 msgid "Wrong kind of binding.\n"
 msgstr "نوع خاطئ للربط.\n"
 
-#: dlls/kernelbase/winerror.mc:3020
+#: dlls/kernelbase/winerror.mc:3060
 msgid "Invalid binding.\n"
 msgstr "الربط غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3025
+#: dlls/kernelbase/winerror.mc:3065
 msgid "RPC protocol sequence not supported.\n"
 msgstr "قطعة بروتوكول RPC غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:3030
+#: dlls/kernelbase/winerror.mc:3070
 msgid "Invalid RPC protocol sequence.\n"
 msgstr "قطعة بروتوكول RPC غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3035
+#: dlls/kernelbase/winerror.mc:3075
 msgid "Invalid string UUID.\n"
 msgstr "سلسلة UUID غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3040
+#: dlls/kernelbase/winerror.mc:3080
 msgid "Invalid endpoint format.\n"
 msgstr "صيغة نقطة النهاية غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3045
+#: dlls/kernelbase/winerror.mc:3085
 msgid "Invalid network address.\n"
 msgstr "عنوان الشبكة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3050
+#: dlls/kernelbase/winerror.mc:3090
 msgid "No endpoint found.\n"
 msgstr "لا يوجد نقطة نهاية.\n"
 
-#: dlls/kernelbase/winerror.mc:3055
+#: dlls/kernelbase/winerror.mc:3095
 msgid "Invalid timeout value.\n"
 msgstr "قيمة الزمن الاقصى غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3060
+#: dlls/kernelbase/winerror.mc:3100
 msgid "Object UUID not found.\n"
 msgstr "عنصر UUID غير موجود .\n"
 
-#: dlls/kernelbase/winerror.mc:3065
+#: dlls/kernelbase/winerror.mc:3105
 msgid "UUID already registered.\n"
 msgstr "UUID مسجل بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3070
+#: dlls/kernelbase/winerror.mc:3110
 msgid "UUID type already registered.\n"
 msgstr "نوع UUID مسجل بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3075
+#: dlls/kernelbase/winerror.mc:3115
 msgid "Server already listening.\n"
 msgstr "الخادوم مدرج بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3080
+#: dlls/kernelbase/winerror.mc:3120
 msgid "No protocol sequences registered.\n"
 msgstr "قطعة البروتوكول غي مسجلة.\n"
 
-#: dlls/kernelbase/winerror.mc:3085
+#: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server not listening.\n"
 msgstr "خادوم RPC غير مدرج.\n"
 
-#: dlls/kernelbase/winerror.mc:3090
+#: dlls/kernelbase/winerror.mc:3130
 msgid "Unknown manager type.\n"
 msgstr "نوع المدير غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:3095
+#: dlls/kernelbase/winerror.mc:3135
 msgid "Unknown interface.\n"
 msgstr "الواجهة غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:3100
+#: dlls/kernelbase/winerror.mc:3140
 msgid "No bindings.\n"
 msgstr "لا روابط.\n"
 
-#: dlls/kernelbase/winerror.mc:3105
+#: dlls/kernelbase/winerror.mc:3145
 msgid "No protocol sequences.\n"
 msgstr "لا يوجد قطع بروتوكولية.\n"
 
-#: dlls/kernelbase/winerror.mc:3110
+#: dlls/kernelbase/winerror.mc:3150
 msgid "Can't create endpoint.\n"
 msgstr "لم يتمكن من إنشاء نقطة نهاية.\n"
 
-#: dlls/kernelbase/winerror.mc:3115
+#: dlls/kernelbase/winerror.mc:3155
 msgid "Out of resources.\n"
 msgstr "المصادر لا تكفي.\n"
 
-#: dlls/kernelbase/winerror.mc:3120
+#: dlls/kernelbase/winerror.mc:3160
 msgid "RPC server unavailable.\n"
 msgstr "خادوم RPC غير متوفر.\n"
 
-#: dlls/kernelbase/winerror.mc:3125
+#: dlls/kernelbase/winerror.mc:3165
 msgid "RPC server too busy.\n"
 msgstr "خادوم RPC مشغول جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:3130
+#: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid network options.\n"
 msgstr "خيارات الشبكة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3135
+#: dlls/kernelbase/winerror.mc:3175
 msgid "No RPC call active.\n"
 msgstr "لا يوجد طلبات RPC نشطة.\n"
 
-#: dlls/kernelbase/winerror.mc:3140
+#: dlls/kernelbase/winerror.mc:3180
 msgid "RPC call failed.\n"
 msgstr "فشل طلب RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3145
+#: dlls/kernelbase/winerror.mc:3185
 msgid "RPC call failed and didn't execute.\n"
 msgstr "فشل طلب RPC و لم ينفذ.\n"
 
-#: dlls/kernelbase/winerror.mc:3150
+#: dlls/kernelbase/winerror.mc:3190
 msgid "RPC protocol error.\n"
 msgstr "خطأ في بروتوكول RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3155
+#: dlls/kernelbase/winerror.mc:3195
 msgid "Unsupported transfer syntax.\n"
 msgstr "صيغة النقل غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:3165
+#: dlls/kernelbase/winerror.mc:3205
 msgid "Invalid tag.\n"
 msgstr "التعليق غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3170
+#: dlls/kernelbase/winerror.mc:3210
 msgid "Invalid array bounds.\n"
 msgstr "الروابط غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3175
+#: dlls/kernelbase/winerror.mc:3215
 msgid "No entry name.\n"
 msgstr "لا يوجد اسم للمدخل.\n"
 
-#: dlls/kernelbase/winerror.mc:3180
+#: dlls/kernelbase/winerror.mc:3220
 msgid "Invalid name syntax.\n"
 msgstr "صيغة الاسم غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3185
+#: dlls/kernelbase/winerror.mc:3225
 msgid "Unsupported name syntax.\n"
 msgstr "صيغة الاسم غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:3190
+#: dlls/kernelbase/winerror.mc:3230
 msgid "No network address.\n"
 msgstr "لا يوجد عنوان شبكي.\n"
 
-#: dlls/kernelbase/winerror.mc:3195
+#: dlls/kernelbase/winerror.mc:3235
 msgid "Duplicate endpoint.\n"
 msgstr "نقطة النهاية مكررة.\n"
 
-#: dlls/kernelbase/winerror.mc:3200
+#: dlls/kernelbase/winerror.mc:3240
 msgid "Unknown authentication type.\n"
 msgstr "نمط التحقق غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:3205
+#: dlls/kernelbase/winerror.mc:3245
 msgid "Maximum calls too low.\n"
 msgstr "الحد الأقصى للطلبات منخفض جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:3210
+#: dlls/kernelbase/winerror.mc:3250
 msgid "String too long.\n"
 msgstr "السلسلة طويلة جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:3215
+#: dlls/kernelbase/winerror.mc:3255
 msgid "Protocol sequence not found.\n"
 msgstr "جزئية البروتوكول غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:3220
+#: dlls/kernelbase/winerror.mc:3260
 msgid "Procedure number out of range.\n"
 msgstr "اسم المنتج خارج المدى.\n"
 
-#: dlls/kernelbase/winerror.mc:3225
+#: dlls/kernelbase/winerror.mc:3265
 msgid "Binding has no authentication data.\n"
 msgstr "لم يتأتى الربط بأي بيانات تحقق.\n"
 
-#: dlls/kernelbase/winerror.mc:3230
+#: dlls/kernelbase/winerror.mc:3270
 msgid "Unknown authentication service.\n"
 msgstr "خدمة التحقق غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:3235
+#: dlls/kernelbase/winerror.mc:3275
 msgid "Unknown authentication level.\n"
 msgstr "مستوى التحقق غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:3240
+#: dlls/kernelbase/winerror.mc:3280
 msgid "Invalid authentication identity.\n"
 msgstr "معرف التحقق غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3245
+#: dlls/kernelbase/winerror.mc:3285
 msgid "Unknown authorization service.\n"
 msgstr "خدمة التحقق غير معروفة.\n"
 
-#: dlls/kernelbase/winerror.mc:3250
+#: dlls/kernelbase/winerror.mc:3290
 msgid "Invalid entry.\n"
 msgstr "المدخل غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3255
+#: dlls/kernelbase/winerror.mc:3295
 msgid "Can't perform operation.\n"
 msgstr "لم تتم العملية.\n"
 
-#: dlls/kernelbase/winerror.mc:3260
+#: dlls/kernelbase/winerror.mc:3300
 msgid "Endpoints not registered.\n"
 msgstr "لم يتم تسجيل نقاط النهاية.\n"
 
-#: dlls/kernelbase/winerror.mc:3265
+#: dlls/kernelbase/winerror.mc:3305
 msgid "Nothing to export.\n"
 msgstr "لا شيء لإصداره.\n"
 
-#: dlls/kernelbase/winerror.mc:3270
+#: dlls/kernelbase/winerror.mc:3310
 msgid "Incomplete name.\n"
 msgstr "الاسم غير مكتمل.\n"
 
-#: dlls/kernelbase/winerror.mc:3275
+#: dlls/kernelbase/winerror.mc:3315
 msgid "Invalid version option.\n"
 msgstr "خيار الإصدار غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3280
+#: dlls/kernelbase/winerror.mc:3320
 msgid "No more members.\n"
 msgstr "لا مزيد من الأعضاء.\n"
 
-#: dlls/kernelbase/winerror.mc:3285
+#: dlls/kernelbase/winerror.mc:3325
 msgid "Not all objects unexported.\n"
 msgstr "صدرت بعض العناصر بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3290
+#: dlls/kernelbase/winerror.mc:3330
 msgid "Interface not found.\n"
 msgstr "الواجهة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:3295
+#: dlls/kernelbase/winerror.mc:3335
 msgid "Entry already exists.\n"
 msgstr "المدخل موجود بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3300
+#: dlls/kernelbase/winerror.mc:3340
 msgid "Entry not found.\n"
 msgstr "المدخل غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3305
+#: dlls/kernelbase/winerror.mc:3345
 msgid "Name service unavailable.\n"
 msgstr "خدمة الاسم غير متوفرة.\n"
 
-#: dlls/kernelbase/winerror.mc:3310
+#: dlls/kernelbase/winerror.mc:3350
 msgid "Invalid network address family.\n"
 msgstr "عائلة عناوين الشبكة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3315
+#: dlls/kernelbase/winerror.mc:3355
 msgid "Operation not supported.\n"
 msgstr "العملية غير مدعومة.\n"
 
-#: dlls/kernelbase/winerror.mc:3320
+#: dlls/kernelbase/winerror.mc:3360
 msgid "No security context available.\n"
 msgstr "بيئة الأمن غير متوفرة.\n"
 
-#: dlls/kernelbase/winerror.mc:3325
+#: dlls/kernelbase/winerror.mc:3365
 msgid "RPCInternal error.\n"
 msgstr "خطأ داخلي في RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3330
+#: dlls/kernelbase/winerror.mc:3370
 msgid "RPC divide-by-zero.\n"
 msgstr "تم قسمة RPC على الصفر.\n"
 
-#: dlls/kernelbase/winerror.mc:3335
+#: dlls/kernelbase/winerror.mc:3375
 msgid "Address error.\n"
 msgstr "خطأ في العنوان.\n"
 
-#: dlls/kernelbase/winerror.mc:3340
+#: dlls/kernelbase/winerror.mc:3380
 msgid "Floating-point divide-by-zero.\n"
 msgstr "نقطة الطوفان مقسومة على صفر.\n"
 
-#: dlls/kernelbase/winerror.mc:3345
+#: dlls/kernelbase/winerror.mc:3385
 msgid "Floating-point underflow.\n"
 msgstr "نقطة الطوفان لم تجتز.\n"
 
-#: dlls/kernelbase/winerror.mc:3350
+#: dlls/kernelbase/winerror.mc:3390
 msgid "Floating-point overflow.\n"
 msgstr "نقطة الطوفان اجتيزت.\n"
 
-#: dlls/kernelbase/winerror.mc:3355
+#: dlls/kernelbase/winerror.mc:3395
 msgid "No more entries.\n"
 msgstr "لا مزيد من المدخلات.\n"
 
-#: dlls/kernelbase/winerror.mc:3360
+#: dlls/kernelbase/winerror.mc:3400
 msgid "Character translation table open failed.\n"
 msgstr "فشل فتح ملف جدول المحارف.\n"
 
-#: dlls/kernelbase/winerror.mc:3365
+#: dlls/kernelbase/winerror.mc:3405
 msgid "Character translation table file too small.\n"
 msgstr "ملف جدول المحارف صغير جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:3370
+#: dlls/kernelbase/winerror.mc:3410
 msgid "Null context handle.\n"
 msgstr "فراغ اللاقط البيئي.\n"
 
-#: dlls/kernelbase/winerror.mc:3375
+#: dlls/kernelbase/winerror.mc:3415
 msgid "Context handle damaged.\n"
 msgstr "انهار اللاقط البيئي.\n"
 
-#: dlls/kernelbase/winerror.mc:3380
+#: dlls/kernelbase/winerror.mc:3420
 msgid "Binding handle mismatch.\n"
 msgstr "ربط اللاقط غير مطابق.\n"
 
-#: dlls/kernelbase/winerror.mc:3385
+#: dlls/kernelbase/winerror.mc:3425
 msgid "Cannot get call handle.\n"
 msgstr "لم يتمكن من طلب اللاقط.\n"
 
-#: dlls/kernelbase/winerror.mc:3390
+#: dlls/kernelbase/winerror.mc:3430
 msgid "Null reference pointer.\n"
 msgstr "نقطة مرجعية فارغة.\n"
 
-#: dlls/kernelbase/winerror.mc:3395
+#: dlls/kernelbase/winerror.mc:3435
 msgid "Enumeration value out of range.\n"
 msgstr "تعداد القيم خرج عن المدى.\n"
 
-#: dlls/kernelbase/winerror.mc:3400
+#: dlls/kernelbase/winerror.mc:3440
 msgid "Byte count too small.\n"
 msgstr "عدد البايتات صغير جدًا.\n"
 
-#: dlls/kernelbase/winerror.mc:3405
+#: dlls/kernelbase/winerror.mc:3445
 msgid "Bad stub data.\n"
 msgstr "معلومات stub خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:3410
+#: dlls/kernelbase/winerror.mc:3450
 msgid "Invalid user buffer.\n"
 msgstr "التدفق الشخصي غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3415
+#: dlls/kernelbase/winerror.mc:3455
 msgid "Unrecognized media.\n"
 msgstr "الوسيط غير منظم.\n"
 
-#: dlls/kernelbase/winerror.mc:3420
+#: dlls/kernelbase/winerror.mc:3460
 msgid "No trust secret.\n"
 msgstr "السر غير موثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3425
+#: dlls/kernelbase/winerror.mc:3465
 msgid "No trust SAM account.\n"
 msgstr "لا يوجد حساب SAM موثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3430
+#: dlls/kernelbase/winerror.mc:3470
 msgid "Trusted domain failure.\n"
 msgstr "فشل الربط الموثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3435
+#: dlls/kernelbase/winerror.mc:3475
 msgid "Trusted relationship failure.\n"
 msgstr "فشلت العلاقات الموثوقة.\n"
 
-#: dlls/kernelbase/winerror.mc:3440
+#: dlls/kernelbase/winerror.mc:3480
 msgid "Trust logon failure.\n"
 msgstr "فشل الولوج الموثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3445
+#: dlls/kernelbase/winerror.mc:3485
 msgid "RPC call already in progress.\n"
 msgstr "طلب RPC قيد المعالجة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3450
+#: dlls/kernelbase/winerror.mc:3490
 msgid "NETLOGON is not started.\n"
 msgstr "لم يتم بدء الولوج الشبكي.\n"
 
-#: dlls/kernelbase/winerror.mc:3455
+#: dlls/kernelbase/winerror.mc:3495
 msgid "Account expired.\n"
 msgstr "انتهت صلاحية الحساب.\n"
 
-#: dlls/kernelbase/winerror.mc:3460
+#: dlls/kernelbase/winerror.mc:3500
 msgid "Redirector has open handles.\n"
 msgstr "تم فتح اللواقط بالموجه.\n"
 
-#: dlls/kernelbase/winerror.mc:3465
+#: dlls/kernelbase/winerror.mc:3505
 msgid "Printer driver already installed.\n"
 msgstr "الطابعة معرّفة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3470
+#: dlls/kernelbase/winerror.mc:3510
 msgid "Unknown port.\n"
 msgstr "المنفذ غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:3475
+#: dlls/kernelbase/winerror.mc:3515
 msgid "Unknown printer driver.\n"
 msgstr "الطابعة غي معرّفة.\n"
 
-#: dlls/kernelbase/winerror.mc:3480
+#: dlls/kernelbase/winerror.mc:3520
 msgid "Unknown print processor.\n"
 msgstr "معالج الطابعة غير معروف.\n"
 
-#: dlls/kernelbase/winerror.mc:3485
+#: dlls/kernelbase/winerror.mc:3525
 msgid "Invalid separator file.\n"
 msgstr "الملف الفاصل غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3490
+#: dlls/kernelbase/winerror.mc:3530
 msgid "Invalid priority.\n"
 msgstr "الاولوية غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3495
+#: dlls/kernelbase/winerror.mc:3535
 msgid "Invalid printer name.\n"
 msgstr "اسم الطابعة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3500
+#: dlls/kernelbase/winerror.mc:3540
 msgid "Printer already exists.\n"
 msgstr "الطابعة موجودة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3505
+#: dlls/kernelbase/winerror.mc:3545
 msgid "Invalid printer command.\n"
 msgstr "أمر الطابعة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3510
+#: dlls/kernelbase/winerror.mc:3550
 msgid "Invalid data type.\n"
 msgstr "نوع البيانات غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3515
+#: dlls/kernelbase/winerror.mc:3555
 msgid "Invalid environment.\n"
 msgstr "البيئة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3520
+#: dlls/kernelbase/winerror.mc:3560
 msgid "No more bindings.\n"
 msgstr "لا يوجد مرابط إضافية.\n"
 
-#: dlls/kernelbase/winerror.mc:3525
+#: dlls/kernelbase/winerror.mc:3565
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr "لم يتمكن من الولوج إلى الرابط الداخلي مع حساب موثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3530
+#: dlls/kernelbase/winerror.mc:3570
 msgid "Can't log on with workstation trust account.\n"
 msgstr "لم يتمكن من الولوج إلى المحطة مع حساب موثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3535
+#: dlls/kernelbase/winerror.mc:3575
 msgid "Can't log on with server trust account.\n"
 msgstr "لم يتمكن من الولوج إلى الخادوم مع حساب موثوق.\n"
 
-#: dlls/kernelbase/winerror.mc:3540
+#: dlls/kernelbase/winerror.mc:3580
 msgid "Domain trust information inconsistent.\n"
 msgstr "معلومات الرابط الموثوقة متضاربة.\n"
 
-#: dlls/kernelbase/winerror.mc:3545
+#: dlls/kernelbase/winerror.mc:3585
 msgid "Server has open handles.\n"
 msgstr "فتح الخادوم اللواقط.\n"
 
-#: dlls/kernelbase/winerror.mc:3550
+#: dlls/kernelbase/winerror.mc:3590
 msgid "Resource data not found.\n"
 msgstr "البيانات المصدرية غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:3555
+#: dlls/kernelbase/winerror.mc:3595
 msgid "Resource type not found.\n"
 msgstr "النوع المصدري غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3560
+#: dlls/kernelbase/winerror.mc:3600
 msgid "Resource name not found.\n"
 msgstr "الاسم المصدري غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3565
+#: dlls/kernelbase/winerror.mc:3605
 msgid "Resource language not found.\n"
 msgstr "اللغة المصدرية غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:3570
+#: dlls/kernelbase/winerror.mc:3610
 msgid "Not enough quota.\n"
 msgstr "الحصة لا تكفي.\n"
 
-#: dlls/kernelbase/winerror.mc:3575
+#: dlls/kernelbase/winerror.mc:3615
 msgid "No interfaces.\n"
 msgstr "لا يوجد واجهات.\n"
 
-#: dlls/kernelbase/winerror.mc:3580
+#: dlls/kernelbase/winerror.mc:3620
 msgid "RPC call canceled.\n"
 msgstr "قشل طلب RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3585
+#: dlls/kernelbase/winerror.mc:3625
 msgid "Binding incomplete.\n"
 msgstr "لم يتم الربط.\n"
 
-#: dlls/kernelbase/winerror.mc:3590
+#: dlls/kernelbase/winerror.mc:3630
 msgid "RPC comm failure.\n"
 msgstr "فشل RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3595
+#: dlls/kernelbase/winerror.mc:3635
 msgid "Unsupported authorization level.\n"
 msgstr "مستوى التحقق غير مدعوم.\n"
 
-#: dlls/kernelbase/winerror.mc:3600
+#: dlls/kernelbase/winerror.mc:3640
 msgid "No principal name registered.\n"
 msgstr "لا يوجد اسم أصلي مسجل.\n"
 
-#: dlls/kernelbase/winerror.mc:3605
+#: dlls/kernelbase/winerror.mc:3645
 msgid "Not an RPC error.\n"
 msgstr "ليس خطأ RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3610
+#: dlls/kernelbase/winerror.mc:3650
 msgid "UUID is local only.\n"
 msgstr "UUID فقط محلي.\n"
 
-#: dlls/kernelbase/winerror.mc:3615
+#: dlls/kernelbase/winerror.mc:3655
 msgid "Security package error.\n"
 msgstr "خطأ في الحزمة الأمنية.\n"
 
-#: dlls/kernelbase/winerror.mc:3620
+#: dlls/kernelbase/winerror.mc:3660
 msgid "Thread not canceled.\n"
 msgstr "لم يتم إلغاء المادة.\n"
 
-#: dlls/kernelbase/winerror.mc:3625
+#: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid handle operation.\n"
 msgstr "عملية اللقط غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3630
+#: dlls/kernelbase/winerror.mc:3670
 msgid "Wrong serializing package version.\n"
 msgstr "إصدارة حزمة التسلسل غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3635
+#: dlls/kernelbase/winerror.mc:3675
 msgid "Wrong stub version.\n"
 msgstr "إصدارة stup خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:3640
+#: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid pipe object.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3645
+#: dlls/kernelbase/winerror.mc:3685
 msgid "Wrong pipe order.\n"
 msgstr "أمر الوصلة خاطئ.\n"
 
-#: dlls/kernelbase/winerror.mc:3650
+#: dlls/kernelbase/winerror.mc:3690
 msgid "Wrong pipe version.\n"
 msgstr "إصدارة الوصلة خاطئة.\n"
 
-#: dlls/kernelbase/winerror.mc:3655
+#: dlls/kernelbase/winerror.mc:3695
 msgid "Group member not found.\n"
 msgstr "عنصر المجموعة غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3660
+#: dlls/kernelbase/winerror.mc:3700
 msgid "Can't create endpoint mapper DB.\n"
 msgstr "لم يتمكن من إنشاء قاعدة بيانات مخطط نقاط النهاية.\n"
 
-#: dlls/kernelbase/winerror.mc:3665
+#: dlls/kernelbase/winerror.mc:3705
 msgid "Invalid object.\n"
 msgstr "العنصر غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3670
+#: dlls/kernelbase/winerror.mc:3710
 msgid "Invalid time.\n"
 msgstr "خطأ في التوقيت.\n"
 
-#: dlls/kernelbase/winerror.mc:3675
+#: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid form name.\n"
 msgstr "اسم الصيغة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3680
+#: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid form size.\n"
 msgstr "حجم الصيغة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3685
+#: dlls/kernelbase/winerror.mc:3725
 msgid "Already awaiting printer handle.\n"
 msgstr "تم التقاط الطابعة المنتظرة بالفعل.\n"
 
-#: dlls/kernelbase/winerror.mc:3690
+#: dlls/kernelbase/winerror.mc:3730
 msgid "Printer deleted.\n"
 msgstr "حذفت الطابعة.\n"
 
-#: dlls/kernelbase/winerror.mc:3695
+#: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid printer state.\n"
 msgstr "حالة الطابعة غير سليمة.\n"
 
-#: dlls/kernelbase/winerror.mc:3700
+#: dlls/kernelbase/winerror.mc:3740
 msgid "User must change password.\n"
 msgstr "يجب على المستخدم ان يغير كلمة سره.\n"
 
-#: dlls/kernelbase/winerror.mc:3705
+#: dlls/kernelbase/winerror.mc:3745
 msgid "Domain controller not found.\n"
 msgstr "متحكم الربط غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3710
+#: dlls/kernelbase/winerror.mc:3750
 msgid "Account locked out.\n"
 msgstr "أنهي إقفال الحساب.\n"
 
-#: dlls/kernelbase/winerror.mc:3715
+#: dlls/kernelbase/winerror.mc:3755
 msgid "Invalid pixel format.\n"
 msgstr "خطأ في الصيغة البكسلية.\n"
 
-#: dlls/kernelbase/winerror.mc:3720
+#: dlls/kernelbase/winerror.mc:3760
 msgid "Invalid driver.\n"
 msgstr "المحرك غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3725
+#: dlls/kernelbase/winerror.mc:3765
 msgid "Invalid object resolver set.\n"
 msgstr "إعداد المحلل العنصري غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3730
+#: dlls/kernelbase/winerror.mc:3770
 msgid "Incomplete RPC send.\n"
 msgstr "إرسال غير مكتمل لـ RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3735
+#: dlls/kernelbase/winerror.mc:3775
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "خطأ في تزامن لاقط RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3740
+#: dlls/kernelbase/winerror.mc:3780
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "خطأ في تزامن طلب RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3745
+#: dlls/kernelbase/winerror.mc:3785
 msgid "RPC pipe closed.\n"
 msgstr "تم إغلاق وصلة RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3750
+#: dlls/kernelbase/winerror.mc:3790
 msgid "Discipline error on RPC pipe.\n"
 msgstr "خطأ نظامي في وصلة RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3795
 msgid "No data on RPC pipe.\n"
 msgstr "لا يوجد بيانات في وصلة RPC .\n"
 
-#: dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:3800
 msgid "No site name available.\n"
 msgstr "اسم الموقع غير متوفر.\n"
 
-#: dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:3805
 msgid "The file cannot be accessed.\n"
 msgstr "لم يتمكن من الوصول إلى الملف.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3810
 msgid "The filename cannot be resolved.\n"
 msgstr "لم يتمكن من تحليل اسم الملف.\n"
 
-#: dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:3815
 msgid "RPC entry type mismatch.\n"
 msgstr "نوع مدخل RPC غير متطابق.\n"
 
-#: dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:3820
 msgid "Not all objects could be exported.\n"
 msgstr "لم يتمكن من تصدير جميع العناصر.\n"
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3825
 msgid "The interface could not be exported.\n"
 msgstr "لم يتمكن من تصدير الواجهة.\n"
 
-#: dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:3830
 msgid "The profile could not be added.\n"
 msgstr "لم يتمكن من إضافة الملف الشخصي.\n"
 
-#: dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:3835
 msgid "The profile element could not be added.\n"
 msgstr "لم يتمكن من إضافة عنصر الملف الشخصي.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3840
 msgid "The profile element could not be removed.\n"
 msgstr "لم يتمكن من حذف عنصر الملف الشخصي.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3845
 msgid "The group element could not be added.\n"
 msgstr "لم يتمكن من إضافة عنصر المجموعة.\n"
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3850
 msgid "The group element could not be removed.\n"
 msgstr "لم يتمكن من حذف عنصر المجموعة.\n"
 
-#: dlls/kernelbase/winerror.mc:3815
+#: dlls/kernelbase/winerror.mc:3855
 msgid "The username could not be found.\n"
 msgstr "لم يتمكن من إيجاد اسم المستخدم.\n"
 
-#: dlls/kernelbase/winerror.mc:3820
+#: dlls/kernelbase/winerror.mc:3860
 #, fuzzy
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "الموقع غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3825
+#: dlls/kernelbase/winerror.mc:3865
 #, fuzzy
 #| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
 msgstr "الملف أو الدليل معطوب.\n"
 
-#: dlls/kernelbase/winerror.mc:3830
+#: dlls/kernelbase/winerror.mc:3870
 #, fuzzy
 #| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
 msgstr "خطأ في زمن المقاطعة.\n"
 
-#: dlls/kernelbase/winerror.mc:3835
+#: dlls/kernelbase/winerror.mc:3875
 #, fuzzy
 #| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
 msgstr "لاقط غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3845
+#: dlls/kernelbase/winerror.mc:3885
 #, fuzzy
 #| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
 msgstr "عنوان الشبكة غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3850
+#: dlls/kernelbase/winerror.mc:3890
 #, fuzzy
 #| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
 msgstr "الاسم غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3860
+#: dlls/kernelbase/winerror.mc:3900
 msgid "Cannot assign requested address.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3865
+#: dlls/kernelbase/winerror.mc:3905
 #, fuzzy
 #| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
 msgstr "تم رفض الاتصال.\n"
 
-#: dlls/kernelbase/winerror.mc:3875
+#: dlls/kernelbase/winerror.mc:3915
 #, fuzzy
 #| msgid "Point not found.\n"
 msgid "Host not found.\n"
 msgstr "النقطة غير موجودة.\n"
 
-#: dlls/kernelbase/winerror.mc:3880
+#: dlls/kernelbase/winerror.mc:3920
 #, fuzzy
 #| msgid "File not found.\n"
 msgid "Nonauthoritative host not found.\n"
 msgstr "الملف غير موجود.\n"
 
-#: dlls/kernelbase/winerror.mc:3885
+#: dlls/kernelbase/winerror.mc:3925
 #, fuzzy
 #| msgid "A printer error occurred."
 msgid "Nonrecoverable error.\n"
 msgstr "خطأ في الطابعة."
 
-#: dlls/kernelbase/winerror.mc:3890
+#: dlls/kernelbase/winerror.mc:3930
 msgid "Name valid, no data record.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3911
+#: dlls/kernelbase/winerror.mc:3951
 #, fuzzy
 #| msgid "Not implemented"
 msgid "Not implemented.\n"
 msgstr "لم تنفّذ"
 
-#: dlls/kernelbase/winerror.mc:3932
+#: dlls/kernelbase/winerror.mc:3972
 #, fuzzy
 #| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
 msgstr "فشل طلب RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3897
+#: dlls/kernelbase/winerror.mc:3937
 #, fuzzy
 #| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
 msgstr "غير قادر على فصل الوسيط.\n"
 
-#: dlls/kernelbase/winerror.mc:3904
+#: dlls/kernelbase/winerror.mc:3944
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"
 msgid "No Signature found in file.\n"
 msgstr "الرسالة 0x%1 غير موجودة في الملف %2.\n"
 
-#: dlls/kernelbase/winerror.mc:3918
+#: dlls/kernelbase/winerror.mc:3958
 #, fuzzy
 #| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
 msgstr "المستوى غير سليم.\n"
 
-#: dlls/kernelbase/winerror.mc:3925
+#: dlls/kernelbase/winerror.mc:3965
 #, fuzzy
 #| msgid "Help not available."
 msgid "Resource is not currently available.\n"

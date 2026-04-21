@@ -4287,11 +4287,11 @@ msgstr "Tiedostoa ei löydy.\n"
 msgid "Path not found.\n"
 msgstr "Polkua ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3895
 msgid "Too many open files.\n"
 msgstr "Liian monta avointa tiedostoa.\n"
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3880
 msgid "Access denied.\n"
 msgstr "Pääsy estetty.\n"
 
@@ -4535,7 +4535,7 @@ msgstr "Rakenteet loppuivat.\n"
 msgid "Already assigned.\n"
 msgstr "Tehtävä on jo annettu.\n"
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1830
 msgid "Invalid password.\n"
 msgstr "Salasana ei kelpaa.\n"
 
@@ -5094,2282 +5094,2325 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "Viestiä 0x%1 ei löytynyt tiedostosta %2.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
+#, fuzzy
+#| msgid "Sector not found.\n"
+msgid "Scope not found.\n"
+msgstr "Sektoria ei löydy.\n"
+
+#: dlls/kernelbase/winerror.mc:1055
+#, fuzzy
+#| msgid "The specified device handle is invalid."
+msgid "The specified Central Access Policy is undefined.\n"
+msgstr "Määritelty laitteen kahva ei kelpaa."
+
+#: dlls/kernelbase/winerror.mc:1060
+msgid "Central Access Policy from Active Directory is invalid.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1065
+#, fuzzy
+#| msgid "Host unreachable.\n"
+msgid "Device is unreachable.\n"
+msgstr "Palvelin saavuttamattomissa.\n"
+
+#: dlls/kernelbase/winerror.mc:1070
+msgid "Target device has insufficient resources to complete the operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1075
+msgid ""
+"A data integrity checksum error occurred. Data in the file stream is "
+"corrupt.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1080
+msgid ""
+"Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1085
+#, fuzzy
+#| msgid "Device does not exist.\n"
+msgid "Device does not support file-level TRIM.\n"
+msgstr "Laitetta ei ole.\n"
+
+#: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
 msgstr "Osoite ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1055
+#: dlls/kernelbase/winerror.mc:1095
 msgid "Arithmetic overflow.\n"
 msgstr "Aritmeettinen ylivuoto.\n"
 
-#: dlls/kernelbase/winerror.mc:1060
+#: dlls/kernelbase/winerror.mc:1100
 msgid "Pipe connected.\n"
 msgstr "Putki yhdistetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1065
+#: dlls/kernelbase/winerror.mc:1105
 msgid "Pipe listening.\n"
 msgstr "Putki kuuntelee.\n"
 
-#: dlls/kernelbase/winerror.mc:1070
+#: dlls/kernelbase/winerror.mc:1110
 msgid "Extended attribute access denied.\n"
 msgstr "Pääsy lisämääritteisiin estetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1075
+#: dlls/kernelbase/winerror.mc:1115
 msgid "I/O operation aborted.\n"
 msgstr "I/O-operaatio keskeytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1080
+#: dlls/kernelbase/winerror.mc:1120
 msgid "Overlapped I/O incomplete.\n"
 msgstr "Limittäinen I/O ei ole valmis.\n"
 
-#: dlls/kernelbase/winerror.mc:1085
+#: dlls/kernelbase/winerror.mc:1125
 msgid "Overlapped I/O pending.\n"
 msgstr "Limittäinen I/O on kesken.\n"
 
-#: dlls/kernelbase/winerror.mc:1090
+#: dlls/kernelbase/winerror.mc:1130
 msgid "No access to memory location.\n"
 msgstr "Ei pääsyä muistipaikkaan.\n"
 
-#: dlls/kernelbase/winerror.mc:1095
+#: dlls/kernelbase/winerror.mc:1135
 msgid "Swap error.\n"
 msgstr "Sivuvirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1100
+#: dlls/kernelbase/winerror.mc:1140
 msgid "Stack overflow.\n"
 msgstr "Pinon ylivuoto.\n"
 
-#: dlls/kernelbase/winerror.mc:1105
+#: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid message.\n"
 msgstr "Viesti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1110
+#: dlls/kernelbase/winerror.mc:1150
 msgid "Cannot complete.\n"
 msgstr "Ei voida suorittaa loppuun.\n"
 
-#: dlls/kernelbase/winerror.mc:1115
+#: dlls/kernelbase/winerror.mc:1155
 msgid "Invalid flags.\n"
 msgstr "Valitsimet eivät kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1120
+#: dlls/kernelbase/winerror.mc:1160
 msgid "Unrecognized volume.\n"
 msgstr "Osiota ei tunnisteta.\n"
 
-#: dlls/kernelbase/winerror.mc:1125
+#: dlls/kernelbase/winerror.mc:1165
 msgid "File invalid.\n"
 msgstr "Tiedosto viallinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1130
+#: dlls/kernelbase/winerror.mc:1170
 msgid "Cannot run full-screen.\n"
 msgstr "Ei voida suorittaa koko ruudulla.\n"
 
-#: dlls/kernelbase/winerror.mc:1135
+#: dlls/kernelbase/winerror.mc:1175
 msgid "Nonexistent token.\n"
 msgstr "Tunnusta ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:1140
+#: dlls/kernelbase/winerror.mc:1180
 msgid "Registry corrupt.\n"
 msgstr "Rekisteri vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:1145
+#: dlls/kernelbase/winerror.mc:1185
 msgid "Invalid key.\n"
 msgstr "Avain ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1150
+#: dlls/kernelbase/winerror.mc:1190
 msgid "Can't open registry key.\n"
 msgstr "Rekisteriavainta ei voida avata.\n"
 
-#: dlls/kernelbase/winerror.mc:1155
+#: dlls/kernelbase/winerror.mc:1195
 msgid "Can't read registry key.\n"
 msgstr "Rekisteriavainta ei voida lukea.\n"
 
-#: dlls/kernelbase/winerror.mc:1160
+#: dlls/kernelbase/winerror.mc:1200
 msgid "Can't write registry key.\n"
 msgstr "Rekisteriavainta ei voida kirjoittaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1165
+#: dlls/kernelbase/winerror.mc:1205
 msgid "Registry has been recovered.\n"
 msgstr "Rekisteri on palautettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1170
+#: dlls/kernelbase/winerror.mc:1210
 msgid "Registry is corrupt.\n"
 msgstr "Rekisteri on vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:1175
+#: dlls/kernelbase/winerror.mc:1215
 msgid "I/O to registry failed.\n"
 msgstr "I/O rekisteriin epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1180
+#: dlls/kernelbase/winerror.mc:1220
 msgid "Not registry file.\n"
 msgstr "Ei rekisteritiedosto.\n"
 
-#: dlls/kernelbase/winerror.mc:1185
+#: dlls/kernelbase/winerror.mc:1225
 msgid "Key deleted.\n"
 msgstr "Avain poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1190
+#: dlls/kernelbase/winerror.mc:1230
 msgid "No registry log space.\n"
 msgstr "Ei rekisterin lokitilaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1195
+#: dlls/kernelbase/winerror.mc:1235
 msgid "Registry key has subkeys.\n"
 msgstr "Rekisteriavaimella on aliavaimia.\n"
 
-#: dlls/kernelbase/winerror.mc:1200
+#: dlls/kernelbase/winerror.mc:1240
 msgid "Subkey must be volatile.\n"
 msgstr "Aliavain ei voi olla pysyvä.\n"
 
-#: dlls/kernelbase/winerror.mc:1205
+#: dlls/kernelbase/winerror.mc:1245
 msgid "Notify change request in progress.\n"
 msgstr "Ilmoita muutoksista -pyyntö kesken.\n"
 
-#: dlls/kernelbase/winerror.mc:1210
+#: dlls/kernelbase/winerror.mc:1250
 msgid "Dependent services are running.\n"
 msgstr "Riippuvaisia palveluita on käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:1215
+#: dlls/kernelbase/winerror.mc:1255
 msgid "Invalid service control.\n"
 msgstr "Palvelukontrolli ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1220
+#: dlls/kernelbase/winerror.mc:1260
 msgid "Service request timeout.\n"
 msgstr "Palvelupyyntö aikakatkaistu.\n"
 
-#: dlls/kernelbase/winerror.mc:1225
+#: dlls/kernelbase/winerror.mc:1265
 msgid "Cannot create service thread.\n"
 msgstr "Ei voida luoda palvelusäiettä.\n"
 
-#: dlls/kernelbase/winerror.mc:1230
+#: dlls/kernelbase/winerror.mc:1270
 msgid "Service database locked.\n"
 msgstr "Palvelutietokanta on lukittu.\n"
 
-#: dlls/kernelbase/winerror.mc:1235
+#: dlls/kernelbase/winerror.mc:1275
 msgid "Service already running.\n"
 msgstr "Palvelu on jo käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:1240
+#: dlls/kernelbase/winerror.mc:1280
 msgid "Invalid service account.\n"
 msgstr "Palvelutili ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1245
+#: dlls/kernelbase/winerror.mc:1285
 msgid "Service is disabled.\n"
 msgstr "Palvelu on poistettu käytöstä.\n"
 
-#: dlls/kernelbase/winerror.mc:1250
+#: dlls/kernelbase/winerror.mc:1290
 msgid "Circular dependency.\n"
 msgstr "Kehäriippuvuus.\n"
 
-#: dlls/kernelbase/winerror.mc:1255
+#: dlls/kernelbase/winerror.mc:1295
 msgid "Service does not exist.\n"
 msgstr "Palvelua ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:1260
+#: dlls/kernelbase/winerror.mc:1300
 msgid "Service cannot accept control message.\n"
 msgstr "Palvelu ei voi hyväksyä ohjausviestiä.\n"
 
-#: dlls/kernelbase/winerror.mc:1265
+#: dlls/kernelbase/winerror.mc:1305
 msgid "Service not active.\n"
 msgstr "Palvelu ei ole aktiivinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1270
+#: dlls/kernelbase/winerror.mc:1310
 msgid "Service controller connect failed.\n"
 msgstr "Palveluohjaimeen yhdistäminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1275
+#: dlls/kernelbase/winerror.mc:1315
 msgid "Exception in service.\n"
 msgstr "Poikkeus palvelussa.\n"
 
-#: dlls/kernelbase/winerror.mc:1280
+#: dlls/kernelbase/winerror.mc:1320
 msgid "Database does not exist.\n"
 msgstr "Tietokantaa ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:1285
+#: dlls/kernelbase/winerror.mc:1325
 msgid "Service-specific error.\n"
 msgstr "Palvelusta riippuva virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1290
+#: dlls/kernelbase/winerror.mc:1330
 msgid "Process aborted.\n"
 msgstr "Prosessi keskeytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1295
+#: dlls/kernelbase/winerror.mc:1335
 msgid "Service dependency failed.\n"
 msgstr "Palveluriippuvuus epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1300
+#: dlls/kernelbase/winerror.mc:1340
 msgid "Service login failed.\n"
 msgstr "Palveluun kirjautuminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1305
+#: dlls/kernelbase/winerror.mc:1345
 msgid "Service start-hang.\n"
 msgstr "Palvelu jumittui käynnistyessään.\n"
 
-#: dlls/kernelbase/winerror.mc:1310
+#: dlls/kernelbase/winerror.mc:1350
 msgid "Invalid service lock.\n"
 msgstr "Palvelun lukko ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1315
+#: dlls/kernelbase/winerror.mc:1355
 msgid "Service marked for delete.\n"
 msgstr "Palvelu merkitty poistettavaksi.\n"
 
-#: dlls/kernelbase/winerror.mc:1320
+#: dlls/kernelbase/winerror.mc:1360
 msgid "Service exists.\n"
 msgstr "Palvelu on olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:1325
+#: dlls/kernelbase/winerror.mc:1365
 msgid "System running last-known-good config.\n"
 msgstr "Ajetaan viimeisintä toimivaa konfiguraatiota.\n"
 
-#: dlls/kernelbase/winerror.mc:1330
+#: dlls/kernelbase/winerror.mc:1370
 msgid "Service dependency deleted.\n"
 msgstr "Palveluriippuvuus poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1335
+#: dlls/kernelbase/winerror.mc:1375
 msgid "Boot already accepted as last-good config.\n"
 msgstr "Käynnistys jo todettu toimivaksi konfiguraatioksi.\n"
 
-#: dlls/kernelbase/winerror.mc:1340
+#: dlls/kernelbase/winerror.mc:1380
 msgid "Service not started since last boot.\n"
 msgstr "Palvelua ei ole käynnistetty viime käynnistyksen jälkeen.\n"
 
-#: dlls/kernelbase/winerror.mc:1345
+#: dlls/kernelbase/winerror.mc:1385
 msgid "Duplicate service name.\n"
 msgstr "Palvelun nimi on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:1350
+#: dlls/kernelbase/winerror.mc:1390
 msgid "Different service account.\n"
 msgstr "Eri palvelutili.\n"
 
-#: dlls/kernelbase/winerror.mc:1355
+#: dlls/kernelbase/winerror.mc:1395
 msgid "Driver failure cannot be detected.\n"
 msgstr "Ajurivikaa ei voida havaita.\n"
 
-#: dlls/kernelbase/winerror.mc:1360
+#: dlls/kernelbase/winerror.mc:1400
 msgid "Process abort cannot be detected.\n"
 msgstr "Prosessin keskeytystä ei voida havaita.\n"
 
-#: dlls/kernelbase/winerror.mc:1365
+#: dlls/kernelbase/winerror.mc:1405
 msgid "No recovery program for service.\n"
 msgstr "Ei palvelun palautusohjelmaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1370
+#: dlls/kernelbase/winerror.mc:1410
 msgid "Service not implemented by exe.\n"
 msgstr "Ohjelmatiedosto ei toteuta palvelua.\n"
 
-#: dlls/kernelbase/winerror.mc:1375
+#: dlls/kernelbase/winerror.mc:1415
 msgid "End of media.\n"
 msgstr "Median loppu.\n"
 
-#: dlls/kernelbase/winerror.mc:1380
+#: dlls/kernelbase/winerror.mc:1420
 msgid "Filemark detected.\n"
 msgstr "Filemark havaittu.\n"
 
-#: dlls/kernelbase/winerror.mc:1385
+#: dlls/kernelbase/winerror.mc:1425
 msgid "Beginning of media.\n"
 msgstr "Median alku.\n"
 
-#: dlls/kernelbase/winerror.mc:1390
+#: dlls/kernelbase/winerror.mc:1430
 msgid "Setmark detected.\n"
 msgstr "Setmark havaittu.\n"
 
-#: dlls/kernelbase/winerror.mc:1395
+#: dlls/kernelbase/winerror.mc:1435
 msgid "No data detected.\n"
 msgstr "Dataa ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:1400
+#: dlls/kernelbase/winerror.mc:1440
 msgid "Partition failure.\n"
 msgstr "Virhe osioinnissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1405
+#: dlls/kernelbase/winerror.mc:1445
 msgid "Invalid block length.\n"
 msgstr "Lohkon pituus ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1410
+#: dlls/kernelbase/winerror.mc:1450
 msgid "Device not partitioned.\n"
 msgstr "Laitetta ei osioitu.\n"
 
-#: dlls/kernelbase/winerror.mc:1415
+#: dlls/kernelbase/winerror.mc:1455
 msgid "Unable to lock media.\n"
 msgstr "Mediaa ei voida lukita.\n"
 
-#: dlls/kernelbase/winerror.mc:1420
+#: dlls/kernelbase/winerror.mc:1460
 msgid "Unable to unload media.\n"
 msgstr "Mediaa ei voida syöttää ulos.\n"
 
-#: dlls/kernelbase/winerror.mc:1425
+#: dlls/kernelbase/winerror.mc:1465
 msgid "Media changed.\n"
 msgstr "Media vaihtunut.\n"
 
-#: dlls/kernelbase/winerror.mc:1430
+#: dlls/kernelbase/winerror.mc:1470
 msgid "I/O bus reset.\n"
 msgstr "I/O-laite nollattu.\n"
 
-#: dlls/kernelbase/winerror.mc:1435
+#: dlls/kernelbase/winerror.mc:1475
 msgid "No media in drive.\n"
 msgstr "Asemassa ei ole mediaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1440
+#: dlls/kernelbase/winerror.mc:1480
 msgid "No Unicode translation.\n"
 msgstr "Ei Unicode-käännöstä.\n"
 
-#: dlls/kernelbase/winerror.mc:1445
+#: dlls/kernelbase/winerror.mc:1485
 msgid "DLL initialization failed.\n"
 msgstr "DLL:n alustus epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1450
+#: dlls/kernelbase/winerror.mc:1490
 msgid "Shutdown in progress.\n"
 msgstr "Sammutus meneillään.\n"
 
-#: dlls/kernelbase/winerror.mc:1455
+#: dlls/kernelbase/winerror.mc:1495
 msgid "No shutdown in progress.\n"
 msgstr "Ei sammutusta meneillään.\n"
 
-#: dlls/kernelbase/winerror.mc:1460
+#: dlls/kernelbase/winerror.mc:1500
 msgid "I/O device error.\n"
 msgstr "I/O-laitteen virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1465
+#: dlls/kernelbase/winerror.mc:1505
 msgid "No serial devices found.\n"
 msgstr "Yhtään sarjaporttia ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:1470
+#: dlls/kernelbase/winerror.mc:1510
 msgid "Shared IRQ busy.\n"
 msgstr "Jaettu IRQ on kiireinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1475
+#: dlls/kernelbase/winerror.mc:1515
 msgid "Serial I/O completed.\n"
 msgstr "Sarjaporttioperaatio on jo valmis.\n"
 
-#: dlls/kernelbase/winerror.mc:1480
+#: dlls/kernelbase/winerror.mc:1520
 msgid "Serial I/O counter timeout.\n"
 msgstr "Sarjaporttioperaatio aikakatkaistu.\n"
 
-#: dlls/kernelbase/winerror.mc:1485
+#: dlls/kernelbase/winerror.mc:1525
 msgid "Floppy ID address mark not found.\n"
 msgstr "Levykkeeltä ei löydy ID-osoitemerkkiä.\n"
 
-#: dlls/kernelbase/winerror.mc:1490
+#: dlls/kernelbase/winerror.mc:1530
 msgid "Floppy reports wrong cylinder.\n"
 msgstr "Levykeasema ilmoittaa väärän sylinterin.\n"
 
-#: dlls/kernelbase/winerror.mc:1495
+#: dlls/kernelbase/winerror.mc:1535
 msgid "Unknown floppy error.\n"
 msgstr "Tuntematon levykevirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1500
+#: dlls/kernelbase/winerror.mc:1540
 msgid "Floppy registers inconsistent.\n"
 msgstr "Levykeaseman rekisterit epäyhtenäiset.\n"
 
-#: dlls/kernelbase/winerror.mc:1505
+#: dlls/kernelbase/winerror.mc:1545
 msgid "Hard disk recalibrate failed.\n"
 msgstr "Kovalevyn uudelleenkalibrointi epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1510
+#: dlls/kernelbase/winerror.mc:1550
 msgid "Hard disk operation failed.\n"
 msgstr "Kovalevyn toiminto epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1515
+#: dlls/kernelbase/winerror.mc:1555
 msgid "Hard disk reset failed.\n"
 msgstr "Kovalevyn nollaus epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1520
+#: dlls/kernelbase/winerror.mc:1560
 msgid "End of tape media.\n"
 msgstr "Nauhan loppu.\n"
 
-#: dlls/kernelbase/winerror.mc:1525
+#: dlls/kernelbase/winerror.mc:1565
 msgid "Not enough server memory.\n"
 msgstr "Ei tarpeeksi palvelinmuistia.\n"
 
-#: dlls/kernelbase/winerror.mc:1530
+#: dlls/kernelbase/winerror.mc:1570
 msgid "Possible deadlock.\n"
 msgstr "Mahdollinen lukkiutuminen.\n"
 
-#: dlls/kernelbase/winerror.mc:1535
+#: dlls/kernelbase/winerror.mc:1575
 msgid "Incorrect alignment.\n"
 msgstr "Tasaus ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1540
+#: dlls/kernelbase/winerror.mc:1580
 msgid "Set-power-state vetoed.\n"
 msgstr "Virrankäytön tilan muuttaminen estettiin.\n"
 
-#: dlls/kernelbase/winerror.mc:1545
+#: dlls/kernelbase/winerror.mc:1585
 msgid "Set-power-state failed.\n"
 msgstr "Virrankäytön tilan muuttaminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1550
+#: dlls/kernelbase/winerror.mc:1590
 msgid "Too many links.\n"
 msgstr "Liian monta linkkiä.\n"
 
-#: dlls/kernelbase/winerror.mc:1555
+#: dlls/kernelbase/winerror.mc:1595
 msgid "Newer Windows version needed.\n"
 msgstr "Tarvitaan uudempi Windowsin versio.\n"
 
-#: dlls/kernelbase/winerror.mc:1560
+#: dlls/kernelbase/winerror.mc:1600
 msgid "Wrong operating system.\n"
 msgstr "Väärä käyttöjärjestelmä.\n"
 
-#: dlls/kernelbase/winerror.mc:1565
+#: dlls/kernelbase/winerror.mc:1605
 msgid "Single-instance application.\n"
 msgstr "Ohjelmaa voi käynnistää vain yhden kappaleen.\n"
 
-#: dlls/kernelbase/winerror.mc:1570
+#: dlls/kernelbase/winerror.mc:1610
 msgid "Real-mode application.\n"
 msgstr "Reaalitilan sovellus.\n"
 
-#: dlls/kernelbase/winerror.mc:1575
+#: dlls/kernelbase/winerror.mc:1615
 msgid "Invalid DLL.\n"
 msgstr "DLL ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1580
+#: dlls/kernelbase/winerror.mc:1620
 msgid "No associated application.\n"
 msgstr "Ei liitettyä sovellusta.\n"
 
-#: dlls/kernelbase/winerror.mc:1585
+#: dlls/kernelbase/winerror.mc:1625
 msgid "DDE failure.\n"
 msgstr "DDE-virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1590
+#: dlls/kernelbase/winerror.mc:1630
 msgid "DLL not found.\n"
 msgstr "DLL ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:1595
+#: dlls/kernelbase/winerror.mc:1635
 msgid "Out of user handles.\n"
 msgstr "Käyttäjän kahvat loppuivat.\n"
 
-#: dlls/kernelbase/winerror.mc:1600
+#: dlls/kernelbase/winerror.mc:1640
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "Viestiä voi käyttää vain synkronisissa kutsuissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1605
+#: dlls/kernelbase/winerror.mc:1645
 msgid "The source element is empty.\n"
 msgstr "Lähde-elementti on tyhjä.\n"
 
-#: dlls/kernelbase/winerror.mc:1610
+#: dlls/kernelbase/winerror.mc:1650
 msgid "The destination element is full.\n"
 msgstr "Kohde-elementti on täysi.\n"
 
-#: dlls/kernelbase/winerror.mc:1615
+#: dlls/kernelbase/winerror.mc:1655
 msgid "The element address is invalid.\n"
 msgstr "Elementin osoite on virheellinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1620
+#: dlls/kernelbase/winerror.mc:1660
 msgid "The magazine is not present.\n"
 msgstr "Kokoelmaa ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:1625
+#: dlls/kernelbase/winerror.mc:1665
 msgid "The device needs reinitialization.\n"
 msgstr "Laite on alustettava uudelleen.\n"
 
-#: dlls/kernelbase/winerror.mc:1630
+#: dlls/kernelbase/winerror.mc:1670
 msgid "The device requires cleaning.\n"
 msgstr "Laite on puhdistettava.\n"
 
-#: dlls/kernelbase/winerror.mc:1635
+#: dlls/kernelbase/winerror.mc:1675
 msgid "The device door is open.\n"
 msgstr "Laitteen kansi on auki.\n"
 
-#: dlls/kernelbase/winerror.mc:1640
+#: dlls/kernelbase/winerror.mc:1680
 msgid "The device is not connected.\n"
 msgstr "Laite ei ole yhdistetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1645
+#: dlls/kernelbase/winerror.mc:1685
 msgid "Element not found.\n"
 msgstr "Elementtiä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:1650
+#: dlls/kernelbase/winerror.mc:1690
 msgid "No match found.\n"
 msgstr "Osumaa ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:1655
+#: dlls/kernelbase/winerror.mc:1695
 msgid "Property set not found.\n"
 msgstr "Ominaisuusjoukkoa ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:1660
+#: dlls/kernelbase/winerror.mc:1700
 msgid "Point not found.\n"
 msgstr "Pistettä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:1665
+#: dlls/kernelbase/winerror.mc:1705
 msgid "No running tracking service.\n"
 msgstr "Jäljityspalveluita ei ole käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:1670
+#: dlls/kernelbase/winerror.mc:1710
 msgid "No such volume ID.\n"
 msgstr "Osion ID:tä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:1675
+#: dlls/kernelbase/winerror.mc:1715
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "Korvattavaa tiedostoa ei voida poistaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1680
+#: dlls/kernelbase/winerror.mc:1720
 msgid "Unable to move the replacement file into place.\n"
 msgstr "Korvaavaa tiedostoa ei voida siirtää paikalleen.\n"
 
-#: dlls/kernelbase/winerror.mc:1685
+#: dlls/kernelbase/winerror.mc:1725
 msgid "Moving the replacement file failed.\n"
 msgstr "Korvaavan tiedoston siirto epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:1690
+#: dlls/kernelbase/winerror.mc:1730
 msgid "The journal is being deleted.\n"
 msgstr "Lokia poistetaan.\n"
 
-#: dlls/kernelbase/winerror.mc:1695
+#: dlls/kernelbase/winerror.mc:1735
 msgid "The journal is not active.\n"
 msgstr "Loki ei ole käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:1700
+#: dlls/kernelbase/winerror.mc:1740
 msgid "Potential matching file found.\n"
 msgstr "Mahdollinen vastaava tiedosto löytyi.\n"
 
-#: dlls/kernelbase/winerror.mc:1705
+#: dlls/kernelbase/winerror.mc:1745
 msgid "The journal entry was deleted.\n"
 msgstr "Lokimerkintä on poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1710
+#: dlls/kernelbase/winerror.mc:1750
 msgid "Invalid device name.\n"
 msgstr "Laitteen nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1715
+#: dlls/kernelbase/winerror.mc:1755
 msgid "Connection unavailable.\n"
 msgstr "Yhteys ei käytettävissä.\n"
 
-#: dlls/kernelbase/winerror.mc:1720
+#: dlls/kernelbase/winerror.mc:1760
 msgid "Device already remembered.\n"
 msgstr "Laite on jo muistissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1725
+#: dlls/kernelbase/winerror.mc:1765
 msgid "No network or bad path.\n"
 msgstr "Ei verkkoa tai viallinen polku.\n"
 
-#: dlls/kernelbase/winerror.mc:1730
+#: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid network provider name.\n"
 msgstr "Verkontarjoajan nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1735
+#: dlls/kernelbase/winerror.mc:1775
 msgid "Cannot open network connection profile.\n"
 msgstr "Verkkoyhteyden profiilia ei voida avata.\n"
 
-#: dlls/kernelbase/winerror.mc:1740
+#: dlls/kernelbase/winerror.mc:1780
 msgid "Corrupt network connection profile.\n"
 msgstr "Vioittunut verkkoyhteyden profiili.\n"
 
-#: dlls/kernelbase/winerror.mc:1745
+#: dlls/kernelbase/winerror.mc:1785
 msgid "Not a container.\n"
 msgstr "Ei ole säiliö.\n"
 
-#: dlls/kernelbase/winerror.mc:1750
+#: dlls/kernelbase/winerror.mc:1790
 msgid "Extended error.\n"
 msgstr "Laajennettu virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:1755
+#: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid group name.\n"
 msgstr "Ryhmän nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1760
+#: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid computer name.\n"
 msgstr "Tietokoneen nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1765
+#: dlls/kernelbase/winerror.mc:1805
 msgid "Invalid event name.\n"
 msgstr "Tapahtuman nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1770
+#: dlls/kernelbase/winerror.mc:1810
 msgid "Invalid domain name.\n"
 msgstr "Toimialueen nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1775
+#: dlls/kernelbase/winerror.mc:1815
 msgid "Invalid service name.\n"
 msgstr "Palvelun nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1780
+#: dlls/kernelbase/winerror.mc:1820
 msgid "Invalid network name.\n"
 msgstr "Verkon nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1785
+#: dlls/kernelbase/winerror.mc:1825
 msgid "Invalid share name.\n"
 msgstr "Jaon nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1795
+#: dlls/kernelbase/winerror.mc:1835
 msgid "Invalid message name.\n"
 msgstr "Viestin nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1800
+#: dlls/kernelbase/winerror.mc:1840
 msgid "Invalid message destination.\n"
 msgstr "Viestin kohde ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1805
+#: dlls/kernelbase/winerror.mc:1845
 msgid "Session credential conflict.\n"
 msgstr "Istunnon valtuustieto on ristiriidassa.\n"
 
-#: dlls/kernelbase/winerror.mc:1810
+#: dlls/kernelbase/winerror.mc:1850
 msgid "Remote session limit exceeded.\n"
 msgstr "Etäistuntojen raja ylitetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1815
+#: dlls/kernelbase/winerror.mc:1855
 msgid "Duplicate domain or workgroup name.\n"
 msgstr "Toimialueen tai työryhmän nimi on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:1820
+#: dlls/kernelbase/winerror.mc:1860
 msgid "No network.\n"
 msgstr "Ei verkkoa.\n"
 
-#: dlls/kernelbase/winerror.mc:1825
+#: dlls/kernelbase/winerror.mc:1865
 msgid "Operation canceled by user.\n"
 msgstr "Käyttäjän keskeyttämä.\n"
 
-#: dlls/kernelbase/winerror.mc:1830
+#: dlls/kernelbase/winerror.mc:1870
 msgid "File has a user-mapped section.\n"
 msgstr "Tiedoston osa on kuvattu muistiin.\n"
 
-#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
+#: dlls/kernelbase/winerror.mc:1875 dlls/kernelbase/winerror.mc:3910
 msgid "Connection refused.\n"
 msgstr "Yhteys estetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1840
+#: dlls/kernelbase/winerror.mc:1880
 msgid "Connection gracefully closed.\n"
 msgstr "Yhteys suljettu siististi.\n"
 
-#: dlls/kernelbase/winerror.mc:1845
+#: dlls/kernelbase/winerror.mc:1885
 msgid "Address already associated with transport endpoint.\n"
 msgstr "Osoite on jo liitetty siirron päätepisteeseen.\n"
 
-#: dlls/kernelbase/winerror.mc:1850
+#: dlls/kernelbase/winerror.mc:1890
 msgid "Address not associated with transport endpoint.\n"
 msgstr "Osoitetta ei ole liitetty siirron päätepisteeseen.\n"
 
-#: dlls/kernelbase/winerror.mc:1855
+#: dlls/kernelbase/winerror.mc:1895
 msgid "Connection invalid.\n"
 msgstr "Yhteys viallinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1860
+#: dlls/kernelbase/winerror.mc:1900
 msgid "Connection is active.\n"
 msgstr "Yhteys on aktiivinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1865
+#: dlls/kernelbase/winerror.mc:1905
 msgid "Network unreachable.\n"
 msgstr "Verkko saavuttamattomissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1870
+#: dlls/kernelbase/winerror.mc:1910
 msgid "Host unreachable.\n"
 msgstr "Palvelin saavuttamattomissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1875
+#: dlls/kernelbase/winerror.mc:1915
 msgid "Protocol unreachable.\n"
 msgstr "Protokolla saavuttamattomissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1880
+#: dlls/kernelbase/winerror.mc:1920
 msgid "Port unreachable.\n"
 msgstr "Portti saavuttamattomissa.\n"
 
-#: dlls/kernelbase/winerror.mc:1885
+#: dlls/kernelbase/winerror.mc:1925
 msgid "Request aborted.\n"
 msgstr "Pyyntö keskeytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1890
+#: dlls/kernelbase/winerror.mc:1930
 msgid "Connection aborted.\n"
 msgstr "Yhteys keskeytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:1895
+#: dlls/kernelbase/winerror.mc:1935
 msgid "Please retry operation.\n"
 msgstr "Yritä uudelleen.\n"
 
-#: dlls/kernelbase/winerror.mc:1900
+#: dlls/kernelbase/winerror.mc:1940
 msgid "Connection count limit reached.\n"
 msgstr "Yhteyksien enimmäismäärä saavutettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1905
+#: dlls/kernelbase/winerror.mc:1945
 msgid "Login time restriction.\n"
 msgstr "Kirjautumisen aikarajoitus.\n"
 
-#: dlls/kernelbase/winerror.mc:1910
+#: dlls/kernelbase/winerror.mc:1950
 msgid "Login workstation restriction.\n"
 msgstr "Kirjautumisen työasemarajoitus.\n"
 
-#: dlls/kernelbase/winerror.mc:1915
+#: dlls/kernelbase/winerror.mc:1955
 msgid "Incorrect network address.\n"
 msgstr "Verkko-osoite ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:1920
+#: dlls/kernelbase/winerror.mc:1960
 msgid "Service already registered.\n"
 msgstr "Palvelu on jo rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:1925
+#: dlls/kernelbase/winerror.mc:1965
 msgid "Service not found.\n"
 msgstr "Palvelua ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:1930
+#: dlls/kernelbase/winerror.mc:1970
 msgid "User not authenticated.\n"
 msgstr "Käyttäjää ei ole tunnistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1935
+#: dlls/kernelbase/winerror.mc:1975
 msgid "User not logged on.\n"
 msgstr "Käyttäjä ei ole kirjautunut.\n"
 
-#: dlls/kernelbase/winerror.mc:1940
+#: dlls/kernelbase/winerror.mc:1980
 msgid "Continue work in progress.\n"
 msgstr "Jatka kesken olevaa työtä.\n"
 
-#: dlls/kernelbase/winerror.mc:1945
+#: dlls/kernelbase/winerror.mc:1985
 msgid "Already initialized.\n"
 msgstr "Jo alustettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1950
+#: dlls/kernelbase/winerror.mc:1990
 msgid "No more local devices.\n"
 msgstr "Ei muita paikallisia laitteita.\n"
 
-#: dlls/kernelbase/winerror.mc:1955
+#: dlls/kernelbase/winerror.mc:1995
 msgid "The site does not exist.\n"
 msgstr "Sivustoa ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:1960
+#: dlls/kernelbase/winerror.mc:2000
 msgid "The domain controller already exists.\n"
 msgstr "Toimialueella on jo ohjauskone.\n"
 
-#: dlls/kernelbase/winerror.mc:1965
+#: dlls/kernelbase/winerror.mc:2005
 msgid "Supported only when connected.\n"
 msgstr "Tuettu vain, kun on yhteys.\n"
 
-#: dlls/kernelbase/winerror.mc:1970
+#: dlls/kernelbase/winerror.mc:2010
 msgid "Perform operation even when nothing changed.\n"
 msgstr "Suorita toiminto, vaikka mikään ei muuttuisi.\n"
 
-#: dlls/kernelbase/winerror.mc:1975
+#: dlls/kernelbase/winerror.mc:2015
 msgid "The user profile is invalid.\n"
 msgstr "Käyttäjäprofiili on viallinen.\n"
 
-#: dlls/kernelbase/winerror.mc:1980
+#: dlls/kernelbase/winerror.mc:2020
 msgid "Not supported on Small Business Server.\n"
 msgstr "Small Business Server ei tue tätä.\n"
 
-#: dlls/kernelbase/winerror.mc:1985
+#: dlls/kernelbase/winerror.mc:2025
 msgid "Not all privileges assigned.\n"
 msgstr "Kaikkia oikeuksia ei ole asetettu.\n"
 
-#: dlls/kernelbase/winerror.mc:1990
+#: dlls/kernelbase/winerror.mc:2030
 msgid "Some security IDs not mapped.\n"
 msgstr "Joitain SID:itä ei kuvattu.\n"
 
-#: dlls/kernelbase/winerror.mc:1995
+#: dlls/kernelbase/winerror.mc:2035
 msgid "No quotas for account.\n"
 msgstr "Ei kiintiöitä tilille.\n"
 
-#: dlls/kernelbase/winerror.mc:2000
+#: dlls/kernelbase/winerror.mc:2040
 msgid "Local user session key.\n"
 msgstr "Paikallisen käyttäjän istuntoavain.\n"
 
-#: dlls/kernelbase/winerror.mc:2005
+#: dlls/kernelbase/winerror.mc:2045
 msgid "Password too complex for LM.\n"
 msgstr "Salasana on liian mutkikas LM:lle.\n"
 
-#: dlls/kernelbase/winerror.mc:2010
+#: dlls/kernelbase/winerror.mc:2050
 msgid "Unknown revision.\n"
 msgstr "Tuntematon revisio.\n"
 
-#: dlls/kernelbase/winerror.mc:2015
+#: dlls/kernelbase/winerror.mc:2055
 msgid "Incompatible revision levels.\n"
 msgstr "Revisiotasot eivät sovi yhteen.\n"
 
-#: dlls/kernelbase/winerror.mc:2020
+#: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid owner.\n"
 msgstr "Omistaja ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2025
+#: dlls/kernelbase/winerror.mc:2065
 msgid "Invalid primary group.\n"
 msgstr "Virheellinen ensisijainen ryhmä.\n"
 
-#: dlls/kernelbase/winerror.mc:2030
+#: dlls/kernelbase/winerror.mc:2070
 msgid "No impersonation token.\n"
 msgstr "Ei tekeytymistunnusta.\n"
 
-#: dlls/kernelbase/winerror.mc:2035
+#: dlls/kernelbase/winerror.mc:2075
 msgid "Can't disable mandatory group.\n"
 msgstr "Pakollista ryhmää ei voida poistaa käytöstä.\n"
 
-#: dlls/kernelbase/winerror.mc:2040
+#: dlls/kernelbase/winerror.mc:2080
 msgid "No logon servers available.\n"
 msgstr "Ei kirjautumispalvelimia saatavilla.\n"
 
-#: dlls/kernelbase/winerror.mc:2045
+#: dlls/kernelbase/winerror.mc:2085
 msgid "No such logon session.\n"
 msgstr "Kirjautumisistuntoa ei ole olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2050
+#: dlls/kernelbase/winerror.mc:2090
 msgid "No such privilege.\n"
 msgstr "Oikeutta ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:2055
+#: dlls/kernelbase/winerror.mc:2095
 msgid "Privilege not held.\n"
 msgstr "Asiakkaalla ei ole tarvittavaa oikeutta.\n"
 
-#: dlls/kernelbase/winerror.mc:2060
+#: dlls/kernelbase/winerror.mc:2100
 msgid "Invalid account name.\n"
 msgstr "Tilin nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2065
+#: dlls/kernelbase/winerror.mc:2105
 msgid "User already exists.\n"
 msgstr "Käyttäjä on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2070
+#: dlls/kernelbase/winerror.mc:2110
 msgid "No such user.\n"
 msgstr "Käyttäjää ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:2075
+#: dlls/kernelbase/winerror.mc:2115
 msgid "Group already exists.\n"
 msgstr "Ryhmä on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2080
+#: dlls/kernelbase/winerror.mc:2120
 msgid "No such group.\n"
 msgstr "Ryhmää ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:2085
+#: dlls/kernelbase/winerror.mc:2125
 msgid "User already in group.\n"
 msgstr "Käyttäjä on jo ryhmässä.\n"
 
-#: dlls/kernelbase/winerror.mc:2090
+#: dlls/kernelbase/winerror.mc:2130
 msgid "User not in group.\n"
 msgstr "Käyttäjä ei ole ryhmässä.\n"
 
-#: dlls/kernelbase/winerror.mc:2095
+#: dlls/kernelbase/winerror.mc:2135
 msgid "Can't delete last admin user.\n"
 msgstr "Viimeistä järjestelmänvalvojaa ei voi poistaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2100
+#: dlls/kernelbase/winerror.mc:2140
 msgid "Wrong password.\n"
 msgstr "Väärä salasana.\n"
 
-#: dlls/kernelbase/winerror.mc:2105
+#: dlls/kernelbase/winerror.mc:2145
 msgid "Ill-formed password.\n"
 msgstr "Väärin muodostettu salasana.\n"
 
-#: dlls/kernelbase/winerror.mc:2110
+#: dlls/kernelbase/winerror.mc:2150
 msgid "Password restriction.\n"
 msgstr "Salasanarajoitus.\n"
 
-#: dlls/kernelbase/winerror.mc:2115
+#: dlls/kernelbase/winerror.mc:2155
 msgid "Logon failure.\n"
 msgstr "Virhe kirjautumisessa.\n"
 
-#: dlls/kernelbase/winerror.mc:2120
+#: dlls/kernelbase/winerror.mc:2160
 msgid "Account restriction.\n"
 msgstr "Tunnuksen rajoitus.\n"
 
-#: dlls/kernelbase/winerror.mc:2125
+#: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid logon hours.\n"
 msgstr "Kirjautumisajat eivät kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2130
+#: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid workstation.\n"
 msgstr "Työasema ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2135
+#: dlls/kernelbase/winerror.mc:2175
 msgid "Password expired.\n"
 msgstr "Salasana vanhentunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2140
+#: dlls/kernelbase/winerror.mc:2180
 msgid "Account disabled.\n"
 msgstr "Tunnus ei käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2145
+#: dlls/kernelbase/winerror.mc:2185
 msgid "No security ID mapped.\n"
 msgstr "Mitään SID:tä ei kuvattu.\n"
 
-#: dlls/kernelbase/winerror.mc:2150
+#: dlls/kernelbase/winerror.mc:2190
 msgid "Too many LUIDs requested.\n"
 msgstr "Pyydettiin liian monta LUID:tä.\n"
 
-#: dlls/kernelbase/winerror.mc:2155
+#: dlls/kernelbase/winerror.mc:2195
 msgid "LUIDs exhausted.\n"
 msgstr "LUID:t loppuivat.\n"
 
-#: dlls/kernelbase/winerror.mc:2160
+#: dlls/kernelbase/winerror.mc:2200
 msgid "Invalid sub authority.\n"
 msgstr "SID:n aliauktoriteetti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2165
+#: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid ACL.\n"
 msgstr "ACL ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2170
+#: dlls/kernelbase/winerror.mc:2210
 msgid "Invalid SID.\n"
 msgstr "SID ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2175
+#: dlls/kernelbase/winerror.mc:2215
 msgid "Invalid security descriptor.\n"
 msgstr "Suojauskuvaus ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2180
+#: dlls/kernelbase/winerror.mc:2220
 msgid "Bad inherited ACL.\n"
 msgstr "Peritty ACL ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2185
+#: dlls/kernelbase/winerror.mc:2225
 msgid "Server disabled.\n"
 msgstr "Palvelin ei käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2190
+#: dlls/kernelbase/winerror.mc:2230
 msgid "Server not disabled.\n"
 msgstr "Palvelin käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2195
+#: dlls/kernelbase/winerror.mc:2235
 msgid "Invalid ID authority.\n"
 msgstr "ID-auktoriteetti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2200
+#: dlls/kernelbase/winerror.mc:2240
 msgid "Allotted space exceeded.\n"
 msgstr "Myönnetty tila ylitetty.\n"
 
-#: dlls/kernelbase/winerror.mc:2205
+#: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid group attributes.\n"
 msgstr "Ryhmäominaisuudet eivät kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2210
+#: dlls/kernelbase/winerror.mc:2250
 msgid "Bad impersonation level.\n"
 msgstr "Tekeytymistaso ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2215
+#: dlls/kernelbase/winerror.mc:2255
 msgid "Can't open anonymous security token.\n"
 msgstr "Ei voida avata nimetöntä suojaustunnusta.\n"
 
-#: dlls/kernelbase/winerror.mc:2220
+#: dlls/kernelbase/winerror.mc:2260
 msgid "Bad validation class.\n"
 msgstr "Vahvistusluokka ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2225
+#: dlls/kernelbase/winerror.mc:2265
 msgid "Bad token type.\n"
 msgstr "Väärä tunnuksen tyyppi.\n"
 
-#: dlls/kernelbase/winerror.mc:2230
+#: dlls/kernelbase/winerror.mc:2270
 msgid "No security on object.\n"
 msgstr "Objektilla ei ole suojausta.\n"
 
-#: dlls/kernelbase/winerror.mc:2235
+#: dlls/kernelbase/winerror.mc:2275
 msgid "Can't access domain information.\n"
 msgstr "Ei pääsyä palvelimen tietoihin.\n"
 
-#: dlls/kernelbase/winerror.mc:2240
+#: dlls/kernelbase/winerror.mc:2280
 msgid "Invalid server state.\n"
 msgstr "Palvelimen tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2245
+#: dlls/kernelbase/winerror.mc:2285
 msgid "Invalid domain state.\n"
 msgstr "Toimialueen tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2250
+#: dlls/kernelbase/winerror.mc:2290
 msgid "Invalid domain role.\n"
 msgstr "Toimialueen rooli ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2255
+#: dlls/kernelbase/winerror.mc:2295
 msgid "No such domain.\n"
 msgstr "Toimialuetta ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2260
+#: dlls/kernelbase/winerror.mc:2300
 msgid "Domain already exists.\n"
 msgstr "Toimialue on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2265
+#: dlls/kernelbase/winerror.mc:2305
 msgid "Domain limit exceeded.\n"
 msgstr "Toimialueiden raja ylitetty.\n"
 
-#: dlls/kernelbase/winerror.mc:2270
+#: dlls/kernelbase/winerror.mc:2310
 msgid "Internal database corruption.\n"
 msgstr "Sisäinen tietokanta vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2275
+#: dlls/kernelbase/winerror.mc:2315
 msgid "Internal error.\n"
 msgstr "Sisäinen virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:2280
+#: dlls/kernelbase/winerror.mc:2320
 msgid "Generic access types not mapped.\n"
 msgstr "Yleisiä käyttöoikeustyyppejä on kuvaamatta.\n"
 
-#: dlls/kernelbase/winerror.mc:2285
+#: dlls/kernelbase/winerror.mc:2325
 msgid "Bad descriptor format.\n"
 msgstr "Kuvauksen muoto ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2290
+#: dlls/kernelbase/winerror.mc:2330
 msgid "Not a logon process.\n"
 msgstr "Ei kirjautumisprosessi.\n"
 
-#: dlls/kernelbase/winerror.mc:2295
+#: dlls/kernelbase/winerror.mc:2335
 msgid "Logon session ID exists.\n"
 msgstr "Kirjautumisistunnon ID on olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2300
+#: dlls/kernelbase/winerror.mc:2340
 msgid "Unknown authentication package.\n"
 msgstr "Tuntematon tunnistautumispaketti.\n"
 
-#: dlls/kernelbase/winerror.mc:2305
+#: dlls/kernelbase/winerror.mc:2345
 msgid "Bad logon session state.\n"
 msgstr "Kirjautumisistunnon tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2310
+#: dlls/kernelbase/winerror.mc:2350
 msgid "Logon session ID collision.\n"
 msgstr "Kirjautumisistunnon ID on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2315
+#: dlls/kernelbase/winerror.mc:2355
 msgid "Invalid logon type.\n"
 msgstr "Kirjautumistyyppi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2320
+#: dlls/kernelbase/winerror.mc:2360
 msgid "Cannot impersonate.\n"
 msgstr "Ei voida tekeytyä.\n"
 
-#: dlls/kernelbase/winerror.mc:2325
+#: dlls/kernelbase/winerror.mc:2365
 msgid "Invalid transaction state.\n"
 msgstr "Tapahtuman tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2330
+#: dlls/kernelbase/winerror.mc:2370
 msgid "Security DB commit failure.\n"
 msgstr "Suojaustietokanta on vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2335
+#: dlls/kernelbase/winerror.mc:2375
 msgid "Account is built-in.\n"
 msgstr "Tili on sisäänrakennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2340
+#: dlls/kernelbase/winerror.mc:2380
 msgid "Group is built-in.\n"
 msgstr "Ryhmä on sisäänrakennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2345
+#: dlls/kernelbase/winerror.mc:2385
 msgid "User is built-in.\n"
 msgstr "Käyttäjä on sisäänrakennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2350
+#: dlls/kernelbase/winerror.mc:2390
 msgid "Group is primary for user.\n"
 msgstr "Ryhmä on ensisijaisesti käyttäjälle.\n"
 
-#: dlls/kernelbase/winerror.mc:2355
+#: dlls/kernelbase/winerror.mc:2395
 msgid "Token already in use.\n"
 msgstr "Lipuke on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2360
+#: dlls/kernelbase/winerror.mc:2400
 msgid "No such local group.\n"
 msgstr "Paikallista ryhmää ei ole olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2365
+#: dlls/kernelbase/winerror.mc:2405
 msgid "User not in local group.\n"
 msgstr "Käyttäjä ei paikallisessa ryhmässä.\n"
 
-#: dlls/kernelbase/winerror.mc:2370
+#: dlls/kernelbase/winerror.mc:2410
 msgid "User already in local group.\n"
 msgstr "Käyttäjä on jo paikallisessa ryhmässä.\n"
 
-#: dlls/kernelbase/winerror.mc:2375
+#: dlls/kernelbase/winerror.mc:2415
 msgid "Local group already exists.\n"
 msgstr "Paikallinen ryhmä on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
+#: dlls/kernelbase/winerror.mc:2420 dlls/kernelbase/winerror.mc:2445
 msgid "Logon type not granted.\n"
 msgstr "Kirjautumistyyppiä ei ole sallittu.\n"
 
-#: dlls/kernelbase/winerror.mc:2385
+#: dlls/kernelbase/winerror.mc:2425
 msgid "Too many secrets.\n"
 msgstr "Liian monta salaisuutta.\n"
 
-#: dlls/kernelbase/winerror.mc:2390
+#: dlls/kernelbase/winerror.mc:2430
 msgid "Secret too long.\n"
 msgstr "Liian pitkä salaisuus.\n"
 
-#: dlls/kernelbase/winerror.mc:2395
+#: dlls/kernelbase/winerror.mc:2435
 msgid "Internal security DB error.\n"
 msgstr "Sisäinen virhe turvallisuustietokannassa.\n"
 
-#: dlls/kernelbase/winerror.mc:2400
+#: dlls/kernelbase/winerror.mc:2440
 msgid "Too many context IDs.\n"
 msgstr "Liian monta kontekstin ID:tä.\n"
 
-#: dlls/kernelbase/winerror.mc:2410
+#: dlls/kernelbase/winerror.mc:2450
 msgid "Cross-encrypted NT password required.\n"
 msgstr "Tarvitaan ristiinsalattu NT-salasana.\n"
 
-#: dlls/kernelbase/winerror.mc:2415
+#: dlls/kernelbase/winerror.mc:2455
 msgid "No such member.\n"
 msgstr "Jäsentä ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:2420
+#: dlls/kernelbase/winerror.mc:2460
 msgid "Invalid member.\n"
 msgstr "Jäsen ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2425
+#: dlls/kernelbase/winerror.mc:2465
 msgid "Too many SIDs.\n"
 msgstr "Liian monta SID:tä.\n"
 
-#: dlls/kernelbase/winerror.mc:2430
+#: dlls/kernelbase/winerror.mc:2470
 msgid "Cross-encrypted LM password required.\n"
 msgstr "Tarvitaan ristiinsalattu LM-salasana.\n"
 
-#: dlls/kernelbase/winerror.mc:2435
+#: dlls/kernelbase/winerror.mc:2475
 msgid "No inheritable components.\n"
 msgstr "Ei periytyviä osia.\n"
 
-#: dlls/kernelbase/winerror.mc:2440
+#: dlls/kernelbase/winerror.mc:2480
 msgid "File or directory corrupt.\n"
 msgstr "Tiedosto tai hakemisto vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2445
+#: dlls/kernelbase/winerror.mc:2485
 msgid "Disk is corrupt.\n"
 msgstr "Levy vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2450
+#: dlls/kernelbase/winerror.mc:2490
 msgid "No user session key.\n"
 msgstr "Ei käyttäjän istunnon avainta.\n"
 
-#: dlls/kernelbase/winerror.mc:2455
+#: dlls/kernelbase/winerror.mc:2495
 msgid "License quota exceeded.\n"
 msgstr "Lisenssikiintiö ylittyi.\n"
 
-#: dlls/kernelbase/winerror.mc:2460
+#: dlls/kernelbase/winerror.mc:2500
 msgid "Wrong target name.\n"
 msgstr "Väärä kohteen nimi.\n"
 
-#: dlls/kernelbase/winerror.mc:2465
+#: dlls/kernelbase/winerror.mc:2505
 msgid "Mutual authentication failed.\n"
 msgstr "Keskinäinen tunnistautuminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2470
+#: dlls/kernelbase/winerror.mc:2510
 msgid "Time skew between client and server.\n"
 msgstr "Aikavääristymä asiakkaan ja palvelimen välillä.\n"
 
-#: dlls/kernelbase/winerror.mc:2475
+#: dlls/kernelbase/winerror.mc:2515
 msgid "Invalid window handle.\n"
 msgstr "Ikkunan kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2480
+#: dlls/kernelbase/winerror.mc:2520
 msgid "Invalid menu handle.\n"
 msgstr "Valikon kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2485
+#: dlls/kernelbase/winerror.mc:2525
 msgid "Invalid cursor handle.\n"
 msgstr "Kursorin kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2490
+#: dlls/kernelbase/winerror.mc:2530
 msgid "Invalid accelerator table handle.\n"
 msgstr "Pikanäppäintaulun kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2495
+#: dlls/kernelbase/winerror.mc:2535
 msgid "Invalid hook handle.\n"
 msgstr "Koukun kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2500
+#: dlls/kernelbase/winerror.mc:2540
 msgid "Invalid DWP handle.\n"
 msgstr "DWP-kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2505
+#: dlls/kernelbase/winerror.mc:2545
 msgid "Can't create top-level child window.\n"
 msgstr "Ylintä lapsi-ikkunaa ei voida luoda.\n"
 
-#: dlls/kernelbase/winerror.mc:2510
+#: dlls/kernelbase/winerror.mc:2550
 msgid "Can't find window class.\n"
 msgstr "Ikkunaluokkaa ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2515
+#: dlls/kernelbase/winerror.mc:2555
 msgid "Window owned by another thread.\n"
 msgstr "Ikkuna kuuluu toiseen ketjuun.\n"
 
-#: dlls/kernelbase/winerror.mc:2520
+#: dlls/kernelbase/winerror.mc:2560
 msgid "Hotkey already registered.\n"
 msgstr "Pikanäppäin on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2525
+#: dlls/kernelbase/winerror.mc:2565
 msgid "Class already exists.\n"
 msgstr "Luokka on jo käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2530
+#: dlls/kernelbase/winerror.mc:2570
 msgid "Class does not exist.\n"
 msgstr "Luokkaa ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:2535
+#: dlls/kernelbase/winerror.mc:2575
 msgid "Class has open windows.\n"
 msgstr "Luokassa on uusia ikkunoita.\n"
 
-#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
+#: dlls/kernelbase/winerror.mc:2580 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Indeksi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2545
+#: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid icon handle.\n"
 msgstr "Kuvakkeen kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2550
+#: dlls/kernelbase/winerror.mc:2590
 msgid "Private dialog index.\n"
 msgstr "Yksityinen dialogin indeksi.\n"
 
-#: dlls/kernelbase/winerror.mc:2555
+#: dlls/kernelbase/winerror.mc:2595
 msgid "List box ID not found.\n"
 msgstr "Listan ID:tä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2560
+#: dlls/kernelbase/winerror.mc:2600
 msgid "No wildcard characters.\n"
 msgstr "Ei jokerimerkkejä.\n"
 
-#: dlls/kernelbase/winerror.mc:2565
+#: dlls/kernelbase/winerror.mc:2605
 msgid "Clipboard not open.\n"
 msgstr "Leikepöytä ei auki.\n"
 
-#: dlls/kernelbase/winerror.mc:2570
+#: dlls/kernelbase/winerror.mc:2610
 msgid "Hotkey not registered.\n"
 msgstr "Pikanäppäintä ei määritelty.\n"
 
-#: dlls/kernelbase/winerror.mc:2575
+#: dlls/kernelbase/winerror.mc:2615
 msgid "Not a dialog window.\n"
 msgstr "Ikkuna ei ole kelvollinen dialogi.\n"
 
-#: dlls/kernelbase/winerror.mc:2580
+#: dlls/kernelbase/winerror.mc:2620
 msgid "Control ID not found.\n"
 msgstr "Kontrollin ID:tä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2585
+#: dlls/kernelbase/winerror.mc:2625
 msgid "Invalid combo box message.\n"
 msgstr "Virheellinen viesti yhdistelmälaatikolle.\n"
 
-#: dlls/kernelbase/winerror.mc:2590
+#: dlls/kernelbase/winerror.mc:2630
 msgid "Not a combo box window.\n"
 msgstr "Ikkuna ei ole yhdistelmälaatikko.\n"
 
-#: dlls/kernelbase/winerror.mc:2595
+#: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid edit height.\n"
 msgstr "Virheellinen korkeus.\n"
 
-#: dlls/kernelbase/winerror.mc:2600
+#: dlls/kernelbase/winerror.mc:2640
 msgid "DC not found.\n"
 msgstr "DC:tä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2605
+#: dlls/kernelbase/winerror.mc:2645
 msgid "Invalid hook filter.\n"
 msgstr "Koukun suodatin ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2610
+#: dlls/kernelbase/winerror.mc:2650
 msgid "Invalid filter procedure.\n"
 msgstr "Suodatinproseduuri ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2615
+#: dlls/kernelbase/winerror.mc:2655
 msgid "Hook procedure needs module handle.\n"
 msgstr "Koukku tarvitsee moduulin kahvan.\n"
 
-#: dlls/kernelbase/winerror.mc:2620
+#: dlls/kernelbase/winerror.mc:2660
 msgid "Global-only hook procedure.\n"
 msgstr "Tämän koukun voi asettaa vain globaalisti.\n"
 
-#: dlls/kernelbase/winerror.mc:2625
+#: dlls/kernelbase/winerror.mc:2665
 msgid "Journal hook already set.\n"
 msgstr "Lokiin on jo asennettu koukku.\n"
 
-#: dlls/kernelbase/winerror.mc:2630
+#: dlls/kernelbase/winerror.mc:2670
 msgid "Hook procedure not installed.\n"
 msgstr "Koukkua ei asennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2635
+#: dlls/kernelbase/winerror.mc:2675
 msgid "Invalid list box message.\n"
 msgstr "Virheellinen viesti listalle.\n"
 
-#: dlls/kernelbase/winerror.mc:2640
+#: dlls/kernelbase/winerror.mc:2680
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr "Lähetetty LB_SETCOUNT ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2645
+#: dlls/kernelbase/winerror.mc:2685
 msgid "No tab stops on this list box.\n"
 msgstr "Lista ei tue sarkainkohtia.\n"
 
-#: dlls/kernelbase/winerror.mc:2650
+#: dlls/kernelbase/winerror.mc:2690
 msgid "Can't destroy object owned by another thread.\n"
 msgstr "Ei voida poistaa toisen ketjun objektia.\n"
 
-#: dlls/kernelbase/winerror.mc:2655
+#: dlls/kernelbase/winerror.mc:2695
 msgid "Child window menus not allowed.\n"
 msgstr "Lapsi-ikkunoille ei sallita valikoita.\n"
 
-#: dlls/kernelbase/winerror.mc:2660
+#: dlls/kernelbase/winerror.mc:2700
 msgid "Window has no system menu.\n"
 msgstr "Ikkunalla ei ole järjestelmävalikkoa.\n"
 
-#: dlls/kernelbase/winerror.mc:2665
+#: dlls/kernelbase/winerror.mc:2705
 msgid "Invalid message box style.\n"
 msgstr "Viestilaatikon tyyli ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2670
+#: dlls/kernelbase/winerror.mc:2710
 msgid "Invalid SPI parameter.\n"
 msgstr "SPI-parametri ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2675
+#: dlls/kernelbase/winerror.mc:2715
 msgid "Screen already locked.\n"
 msgstr "Näyttö on jo lukittu.\n"
 
-#: dlls/kernelbase/winerror.mc:2680
+#: dlls/kernelbase/winerror.mc:2720
 msgid "Window handles have different parents.\n"
 msgstr "Ikkunoiden kahvoilla on eri vanhemmat.\n"
 
-#: dlls/kernelbase/winerror.mc:2685
+#: dlls/kernelbase/winerror.mc:2725
 msgid "Not a child window.\n"
 msgstr "Ei ole lapsi-ikkuna.\n"
 
-#: dlls/kernelbase/winerror.mc:2690
+#: dlls/kernelbase/winerror.mc:2730
 msgid "Invalid GW command.\n"
 msgstr "GW-komento ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2695
+#: dlls/kernelbase/winerror.mc:2735
 msgid "Invalid thread ID.\n"
 msgstr "Säikeen ID ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2700
+#: dlls/kernelbase/winerror.mc:2740
 msgid "Not an MDI child window.\n"
 msgstr "Ei ole MDI-lapsi-ikkuna.\n"
 
-#: dlls/kernelbase/winerror.mc:2705
+#: dlls/kernelbase/winerror.mc:2745
 msgid "Popup menu already active.\n"
 msgstr "Ponnahdusvalikko on jo aktiivinen.\n"
 
-#: dlls/kernelbase/winerror.mc:2710
+#: dlls/kernelbase/winerror.mc:2750
 msgid "No scrollbars.\n"
 msgstr "Ei vierityspalkkeja.\n"
 
-#: dlls/kernelbase/winerror.mc:2715
+#: dlls/kernelbase/winerror.mc:2755
 msgid "Invalid scrollbar range.\n"
 msgstr "Vierityspalkin väli ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2720
+#: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid ShowWin command.\n"
 msgstr "ShowWin-komento ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2725
+#: dlls/kernelbase/winerror.mc:2765
 msgid "No system resources.\n"
 msgstr "Ei järjestelmän resursseja.\n"
 
-#: dlls/kernelbase/winerror.mc:2730
+#: dlls/kernelbase/winerror.mc:2770
 msgid "No non-paged system resources.\n"
 msgstr "Ei sivuttamattomia järjestelmän resursseja.\n"
 
-#: dlls/kernelbase/winerror.mc:2735
+#: dlls/kernelbase/winerror.mc:2775
 msgid "No paged system resources.\n"
 msgstr "Ei sivutettuja järjestelmän resursseja.\n"
 
-#: dlls/kernelbase/winerror.mc:2740
+#: dlls/kernelbase/winerror.mc:2780
 msgid "No working set quota.\n"
 msgstr "Työmuistin kiintiö täynnä.\n"
 
-#: dlls/kernelbase/winerror.mc:2745
+#: dlls/kernelbase/winerror.mc:2785
 msgid "No page file quota.\n"
 msgstr "Sivutustiedoston kiintiö täynnä.\n"
 
-#: dlls/kernelbase/winerror.mc:2750
+#: dlls/kernelbase/winerror.mc:2790
 msgid "Exceeded commitment limit.\n"
 msgstr "Muistin varausraja ylittyi.\n"
 
-#: dlls/kernelbase/winerror.mc:2755
+#: dlls/kernelbase/winerror.mc:2795
 msgid "Menu item not found.\n"
 msgstr "Valikon kohtaa ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:2760
+#: dlls/kernelbase/winerror.mc:2800
 msgid "Invalid keyboard handle.\n"
 msgstr "Näppäimistökahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2765
+#: dlls/kernelbase/winerror.mc:2805
 msgid "Hook type not allowed.\n"
 msgstr "Koukun tyyppi ei ole sallittu.\n"
 
-#: dlls/kernelbase/winerror.mc:2770
+#: dlls/kernelbase/winerror.mc:2810
 msgid "Interactive window station required.\n"
 msgstr "Tarvitaan vuorovaikutteinen ikkunasäilö.\n"
 
-#: dlls/kernelbase/winerror.mc:2775
+#: dlls/kernelbase/winerror.mc:2815
 msgid "Timeout.\n"
 msgstr "Aikakatkaisu.\n"
 
-#: dlls/kernelbase/winerror.mc:2780
+#: dlls/kernelbase/winerror.mc:2820
 msgid "Invalid monitor handle.\n"
 msgstr "Näytön kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2785
+#: dlls/kernelbase/winerror.mc:2825
 msgid "Event log file corrupt.\n"
 msgstr "Tapahtumalokitiedosto on vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2790
+#: dlls/kernelbase/winerror.mc:2830
 msgid "Event log can't start.\n"
 msgstr "Tapahtumalokia ei voida käynnistää.\n"
 
-#: dlls/kernelbase/winerror.mc:2795
+#: dlls/kernelbase/winerror.mc:2835
 msgid "Event log file full.\n"
 msgstr "Tapahtumalokitiedosto on täynnä.\n"
 
-#: dlls/kernelbase/winerror.mc:2800
+#: dlls/kernelbase/winerror.mc:2840
 msgid "Event log file changed.\n"
 msgstr "Tapahtumalokitiedosto on muuttunut.\n"
 
-#: dlls/kernelbase/winerror.mc:2805
+#: dlls/kernelbase/winerror.mc:2845
 msgid "Installer service failed.\n"
 msgstr "Asennuspalvelu epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2810
+#: dlls/kernelbase/winerror.mc:2850
 msgid "Installation aborted by user.\n"
 msgstr "Käyttäjä keskeytti asennuksen.\n"
 
-#: dlls/kernelbase/winerror.mc:2815
+#: dlls/kernelbase/winerror.mc:2855
 msgid "Installation failure.\n"
 msgstr "Virhe asennuksessa.\n"
 
-#: dlls/kernelbase/winerror.mc:2820
+#: dlls/kernelbase/winerror.mc:2860
 msgid "Installation suspended.\n"
 msgstr "Asennus pysäytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:2825
+#: dlls/kernelbase/winerror.mc:2865
 msgid "Unknown product.\n"
 msgstr "Tuntematon tuote.\n"
 
-#: dlls/kernelbase/winerror.mc:2830
+#: dlls/kernelbase/winerror.mc:2870
 msgid "Unknown feature.\n"
 msgstr "Tuntematon ominaisuus.\n"
 
-#: dlls/kernelbase/winerror.mc:2835
+#: dlls/kernelbase/winerror.mc:2875
 msgid "Unknown component.\n"
 msgstr "Tuntematon komponentti.\n"
 
-#: dlls/kernelbase/winerror.mc:2840
+#: dlls/kernelbase/winerror.mc:2880
 msgid "Unknown property.\n"
 msgstr "Tuntematon ominaisuus.\n"
 
-#: dlls/kernelbase/winerror.mc:2845
+#: dlls/kernelbase/winerror.mc:2885
 msgid "Invalid handle state.\n"
 msgstr "Kahvan tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2850
+#: dlls/kernelbase/winerror.mc:2890
 msgid "Bad configuration.\n"
 msgstr "Konfiguraatio ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2855
+#: dlls/kernelbase/winerror.mc:2895
 msgid "Index is missing.\n"
 msgstr "Hakemisto puuttuu.\n"
 
-#: dlls/kernelbase/winerror.mc:2860
+#: dlls/kernelbase/winerror.mc:2900
 msgid "Installation source is missing.\n"
 msgstr "Asennuksen lähde puuttuu.\n"
 
-#: dlls/kernelbase/winerror.mc:2865
+#: dlls/kernelbase/winerror.mc:2905
 msgid "Wrong installation package version.\n"
 msgstr "Väärä asennuspaketin versio.\n"
 
-#: dlls/kernelbase/winerror.mc:2870
+#: dlls/kernelbase/winerror.mc:2910
 msgid "Product uninstalled.\n"
 msgstr "Tuotteen asennus poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2875
+#: dlls/kernelbase/winerror.mc:2915
 msgid "Invalid query syntax.\n"
 msgstr "Kyselyn syntaksi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2880
+#: dlls/kernelbase/winerror.mc:2920
 msgid "Invalid field.\n"
 msgstr "Kenttä ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2885
+#: dlls/kernelbase/winerror.mc:2925
 msgid "Device removed.\n"
 msgstr "Laite poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2890
+#: dlls/kernelbase/winerror.mc:2930
 msgid "Installation already running.\n"
 msgstr "Asennus jo käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:2895
+#: dlls/kernelbase/winerror.mc:2935
 msgid "Installation package failed to open.\n"
 msgstr "Asennuspakkaus ei auennut.\n"
 
-#: dlls/kernelbase/winerror.mc:2900
+#: dlls/kernelbase/winerror.mc:2940
 msgid "Installation package is invalid.\n"
 msgstr "Asennuspakkaus on viallinen.\n"
 
-#: dlls/kernelbase/winerror.mc:2905
+#: dlls/kernelbase/winerror.mc:2945
 msgid "Installer user interface failed.\n"
 msgstr "Asennuksen käyttöliittymä epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2910
+#: dlls/kernelbase/winerror.mc:2950
 msgid "Failed to open installation log file.\n"
 msgstr "Asennuslokitiedoston avaaminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2915
+#: dlls/kernelbase/winerror.mc:2955
 msgid "Installation language not supported.\n"
 msgstr "Asennuskieltä ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:2920
+#: dlls/kernelbase/winerror.mc:2960
 msgid "Installation transform failed to apply.\n"
 msgstr "Muunnoksissa tapahtui virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:2925
+#: dlls/kernelbase/winerror.mc:2965
 msgid "Installation package rejected.\n"
 msgstr "Asennuspakkaus hylättiin.\n"
 
-#: dlls/kernelbase/winerror.mc:2930
+#: dlls/kernelbase/winerror.mc:2970
 msgid "Function could not be called.\n"
 msgstr "Funktiota ei voitu kutsua.\n"
 
-#: dlls/kernelbase/winerror.mc:2935
+#: dlls/kernelbase/winerror.mc:2975
 msgid "Function failed.\n"
 msgstr "Funktio epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2940
+#: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid table.\n"
 msgstr "Taulu ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2945
+#: dlls/kernelbase/winerror.mc:2985
 msgid "Data type mismatch.\n"
 msgstr "Tietotyyppi ei täsmää.\n"
 
-#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
+#: dlls/kernelbase/winerror.mc:2990 dlls/kernelbase/winerror.mc:3200
 msgid "Unsupported type.\n"
 msgstr "Tyyppiä ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:2955
+#: dlls/kernelbase/winerror.mc:2995
 msgid "Creation failed.\n"
 msgstr "Luominen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2960
+#: dlls/kernelbase/winerror.mc:3000
 msgid "Temporary directory not writable.\n"
 msgstr "Väliaikaishakemistoon ei voida kirjoittaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2965
+#: dlls/kernelbase/winerror.mc:3005
 msgid "Installation platform not supported.\n"
 msgstr "Asennusalustaa ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:2970
+#: dlls/kernelbase/winerror.mc:3010
 msgid "Installer not used.\n"
 msgstr "Asennusohjelma ei käytössä.\n"
 
-#: dlls/kernelbase/winerror.mc:2975
+#: dlls/kernelbase/winerror.mc:3015
 msgid "Failed to open the patch package.\n"
 msgstr "Korjauspaketin avaaminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:2980
+#: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid patch package.\n"
 msgstr "Korjauspaketti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:2985
+#: dlls/kernelbase/winerror.mc:3025
 msgid "Unsupported patch package.\n"
 msgstr "Korjauspakettia ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:2990
+#: dlls/kernelbase/winerror.mc:3030
 msgid "Another version is installed.\n"
 msgstr "Eri versio on asennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:2995
+#: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid command line.\n"
 msgstr "Komentorivi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3000
+#: dlls/kernelbase/winerror.mc:3040
 msgid "Remote installation not allowed.\n"
 msgstr "Etäasennusta ei sallita.\n"
 
-#: dlls/kernelbase/winerror.mc:3005
+#: dlls/kernelbase/winerror.mc:3045
 msgid "Reboot initiated after successful install.\n"
 msgstr "Käynnistetään uudelleen asennuksen onnistuttua.\n"
 
-#: dlls/kernelbase/winerror.mc:3010
+#: dlls/kernelbase/winerror.mc:3050
 msgid "Invalid string binding.\n"
 msgstr "Tekstiliitos ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3015
+#: dlls/kernelbase/winerror.mc:3055
 msgid "Wrong kind of binding.\n"
 msgstr "Vääränlainen liitos.\n"
 
-#: dlls/kernelbase/winerror.mc:3020
+#: dlls/kernelbase/winerror.mc:3060
 msgid "Invalid binding.\n"
 msgstr "Liitos ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3025
+#: dlls/kernelbase/winerror.mc:3065
 msgid "RPC protocol sequence not supported.\n"
 msgstr "RPC-protokollasekvenssiä ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:3030
+#: dlls/kernelbase/winerror.mc:3070
 msgid "Invalid RPC protocol sequence.\n"
 msgstr "RPC-protokollasekvenssi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3035
+#: dlls/kernelbase/winerror.mc:3075
 msgid "Invalid string UUID.\n"
 msgstr "UUID ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3040
+#: dlls/kernelbase/winerror.mc:3080
 msgid "Invalid endpoint format.\n"
 msgstr "Päätepisteen muoto ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3045
+#: dlls/kernelbase/winerror.mc:3085
 msgid "Invalid network address.\n"
 msgstr "Verkko-osoite ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3050
+#: dlls/kernelbase/winerror.mc:3090
 msgid "No endpoint found.\n"
 msgstr "Päätepistettä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3055
+#: dlls/kernelbase/winerror.mc:3095
 msgid "Invalid timeout value.\n"
 msgstr "Aikakatkaisun arvo ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3060
+#: dlls/kernelbase/winerror.mc:3100
 msgid "Object UUID not found.\n"
 msgstr "Objektin UUID:tä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3065
+#: dlls/kernelbase/winerror.mc:3105
 msgid "UUID already registered.\n"
 msgstr "UUID on jo rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:3070
+#: dlls/kernelbase/winerror.mc:3110
 msgid "UUID type already registered.\n"
 msgstr "UUID-tyyppi on jo rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:3075
+#: dlls/kernelbase/winerror.mc:3115
 msgid "Server already listening.\n"
 msgstr "Palvelin kuuntelee jo.\n"
 
-#: dlls/kernelbase/winerror.mc:3080
+#: dlls/kernelbase/winerror.mc:3120
 msgid "No protocol sequences registered.\n"
 msgstr "Protokollasekvenssejä ei ole rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:3085
+#: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server not listening.\n"
 msgstr "RPC-palvelin ei kuuntele.\n"
 
-#: dlls/kernelbase/winerror.mc:3090
+#: dlls/kernelbase/winerror.mc:3130
 msgid "Unknown manager type.\n"
 msgstr "Tuntematon hallintatoiminnon tyyppi.\n"
 
-#: dlls/kernelbase/winerror.mc:3095
+#: dlls/kernelbase/winerror.mc:3135
 msgid "Unknown interface.\n"
 msgstr "Tuntematon rajapinta.\n"
 
-#: dlls/kernelbase/winerror.mc:3100
+#: dlls/kernelbase/winerror.mc:3140
 msgid "No bindings.\n"
 msgstr "Ei sidoksia.\n"
 
-#: dlls/kernelbase/winerror.mc:3105
+#: dlls/kernelbase/winerror.mc:3145
 msgid "No protocol sequences.\n"
 msgstr "Ei protokollasekvenssejä.\n"
 
-#: dlls/kernelbase/winerror.mc:3110
+#: dlls/kernelbase/winerror.mc:3150
 msgid "Can't create endpoint.\n"
 msgstr "Päätepistettä ei voida luoda.\n"
 
-#: dlls/kernelbase/winerror.mc:3115
+#: dlls/kernelbase/winerror.mc:3155
 msgid "Out of resources.\n"
 msgstr "Resurssit loppuivat.\n"
 
-#: dlls/kernelbase/winerror.mc:3120
+#: dlls/kernelbase/winerror.mc:3160
 msgid "RPC server unavailable.\n"
 msgstr "RPC-palvelin ei ole tavoitettavissa.\n"
 
-#: dlls/kernelbase/winerror.mc:3125
+#: dlls/kernelbase/winerror.mc:3165
 msgid "RPC server too busy.\n"
 msgstr "RPC-palvelin on liian kiireinen.\n"
 
-#: dlls/kernelbase/winerror.mc:3130
+#: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid network options.\n"
 msgstr "Verkkovalinnat eivät kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3135
+#: dlls/kernelbase/winerror.mc:3175
 msgid "No RPC call active.\n"
 msgstr "Ei aktiivista RPC-kutsua.\n"
 
-#: dlls/kernelbase/winerror.mc:3140
+#: dlls/kernelbase/winerror.mc:3180
 msgid "RPC call failed.\n"
 msgstr "RPC-kutsu epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:3145
+#: dlls/kernelbase/winerror.mc:3185
 msgid "RPC call failed and didn't execute.\n"
 msgstr "RPC-kutsu epäonnistui, eikä sitä ajettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3150
+#: dlls/kernelbase/winerror.mc:3190
 msgid "RPC protocol error.\n"
 msgstr "RPC-protokollavirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3155
+#: dlls/kernelbase/winerror.mc:3195
 msgid "Unsupported transfer syntax.\n"
 msgstr "Siirtosyntaksia ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:3165
+#: dlls/kernelbase/winerror.mc:3205
 msgid "Invalid tag.\n"
 msgstr "Tagi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3170
+#: dlls/kernelbase/winerror.mc:3210
 msgid "Invalid array bounds.\n"
 msgstr "Taulukon rajat eivät kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3175
+#: dlls/kernelbase/winerror.mc:3215
 msgid "No entry name.\n"
 msgstr "Merkinnän nimi puuttuu.\n"
 
-#: dlls/kernelbase/winerror.mc:3180
+#: dlls/kernelbase/winerror.mc:3220
 msgid "Invalid name syntax.\n"
 msgstr "Nimen muoto ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3185
+#: dlls/kernelbase/winerror.mc:3225
 msgid "Unsupported name syntax.\n"
 msgstr "Nimen muotoa ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:3190
+#: dlls/kernelbase/winerror.mc:3230
 msgid "No network address.\n"
 msgstr "Ei verkko-osoitetta.\n"
 
-#: dlls/kernelbase/winerror.mc:3195
+#: dlls/kernelbase/winerror.mc:3235
 msgid "Duplicate endpoint.\n"
 msgstr "Toistuva päätepiste.\n"
 
-#: dlls/kernelbase/winerror.mc:3200
+#: dlls/kernelbase/winerror.mc:3240
 msgid "Unknown authentication type.\n"
 msgstr "Tuntematon tunnistautumistyyppi.\n"
 
-#: dlls/kernelbase/winerror.mc:3205
+#: dlls/kernelbase/winerror.mc:3245
 msgid "Maximum calls too low.\n"
 msgstr "Kutsujen maksimimäärä on liian matala.\n"
 
-#: dlls/kernelbase/winerror.mc:3210
+#: dlls/kernelbase/winerror.mc:3250
 msgid "String too long.\n"
 msgstr "Merkkijono liian pitkä.\n"
 
-#: dlls/kernelbase/winerror.mc:3215
+#: dlls/kernelbase/winerror.mc:3255
 msgid "Protocol sequence not found.\n"
 msgstr "Protokollasekvenssiä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3220
+#: dlls/kernelbase/winerror.mc:3260
 msgid "Procedure number out of range.\n"
 msgstr "Proseduurin numero on ulkona alueelta.\n"
 
-#: dlls/kernelbase/winerror.mc:3225
+#: dlls/kernelbase/winerror.mc:3265
 msgid "Binding has no authentication data.\n"
 msgstr "Sidoksessa ei ole tunnistautumistietoja.\n"
 
-#: dlls/kernelbase/winerror.mc:3230
+#: dlls/kernelbase/winerror.mc:3270
 msgid "Unknown authentication service.\n"
 msgstr "Tuntematon tunnistuspalvelu.\n"
 
-#: dlls/kernelbase/winerror.mc:3235
+#: dlls/kernelbase/winerror.mc:3275
 msgid "Unknown authentication level.\n"
 msgstr "Tuntematon tunnistustaso.\n"
 
-#: dlls/kernelbase/winerror.mc:3240
+#: dlls/kernelbase/winerror.mc:3280
 msgid "Invalid authentication identity.\n"
 msgstr "Tuntematon identiteetti tunnistautumisessa.\n"
 
-#: dlls/kernelbase/winerror.mc:3245
+#: dlls/kernelbase/winerror.mc:3285
 msgid "Unknown authorization service.\n"
 msgstr "Tuntematon valtuutuspalvelu.\n"
 
-#: dlls/kernelbase/winerror.mc:3250
+#: dlls/kernelbase/winerror.mc:3290
 msgid "Invalid entry.\n"
 msgstr "Merkintä ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3255
+#: dlls/kernelbase/winerror.mc:3295
 msgid "Can't perform operation.\n"
 msgstr "Tehtävää ei voida suorittaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3260
+#: dlls/kernelbase/winerror.mc:3300
 msgid "Endpoints not registered.\n"
 msgstr "Päätepisteitä ei ole rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:3265
+#: dlls/kernelbase/winerror.mc:3305
 msgid "Nothing to export.\n"
 msgstr "Ei vietävää.\n"
 
-#: dlls/kernelbase/winerror.mc:3270
+#: dlls/kernelbase/winerror.mc:3310
 msgid "Incomplete name.\n"
 msgstr "Epätäydellinen nimi.\n"
 
-#: dlls/kernelbase/winerror.mc:3275
+#: dlls/kernelbase/winerror.mc:3315
 msgid "Invalid version option.\n"
 msgstr "Versiovalinta ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3280
+#: dlls/kernelbase/winerror.mc:3320
 msgid "No more members.\n"
 msgstr "Ei enempää jäseniä.\n"
 
-#: dlls/kernelbase/winerror.mc:3285
+#: dlls/kernelbase/winerror.mc:3325
 msgid "Not all objects unexported.\n"
 msgstr "Kaikkia objekteja ei viety.\n"
 
-#: dlls/kernelbase/winerror.mc:3290
+#: dlls/kernelbase/winerror.mc:3330
 msgid "Interface not found.\n"
 msgstr "Rajapintaa ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3295
+#: dlls/kernelbase/winerror.mc:3335
 msgid "Entry already exists.\n"
 msgstr "Merkintä on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:3300
+#: dlls/kernelbase/winerror.mc:3340
 msgid "Entry not found.\n"
 msgstr "Merkintää ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3305
+#: dlls/kernelbase/winerror.mc:3345
 msgid "Name service unavailable.\n"
 msgstr "Nimipalvelu ei käytettävissä.\n"
 
-#: dlls/kernelbase/winerror.mc:3310
+#: dlls/kernelbase/winerror.mc:3350
 msgid "Invalid network address family.\n"
 msgstr "Verkko-osoiteperhe ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3315
+#: dlls/kernelbase/winerror.mc:3355
 msgid "Operation not supported.\n"
 msgstr "Tehtävää ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:3320
+#: dlls/kernelbase/winerror.mc:3360
 msgid "No security context available.\n"
 msgstr "Suojauskontekstia ei ole saatavilla.\n"
 
-#: dlls/kernelbase/winerror.mc:3325
+#: dlls/kernelbase/winerror.mc:3365
 msgid "RPCInternal error.\n"
 msgstr "RPC:n sisäinen virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3330
+#: dlls/kernelbase/winerror.mc:3370
 msgid "RPC divide-by-zero.\n"
 msgstr "RPC aiheutti nollalla jakamisen.\n"
 
-#: dlls/kernelbase/winerror.mc:3335
+#: dlls/kernelbase/winerror.mc:3375
 msgid "Address error.\n"
 msgstr "Osoitevirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3340
+#: dlls/kernelbase/winerror.mc:3380
 msgid "Floating-point divide-by-zero.\n"
 msgstr "Liukuluvun jako nollalla.\n"
 
-#: dlls/kernelbase/winerror.mc:3345
+#: dlls/kernelbase/winerror.mc:3385
 msgid "Floating-point underflow.\n"
 msgstr "Liukuluvun alivuoto.\n"
 
-#: dlls/kernelbase/winerror.mc:3350
+#: dlls/kernelbase/winerror.mc:3390
 msgid "Floating-point overflow.\n"
 msgstr "Liukuluvun ylivuoto.\n"
 
-#: dlls/kernelbase/winerror.mc:3355
+#: dlls/kernelbase/winerror.mc:3395
 msgid "No more entries.\n"
 msgstr "Ei enempää merkintöjä.\n"
 
-#: dlls/kernelbase/winerror.mc:3360
+#: dlls/kernelbase/winerror.mc:3400
 msgid "Character translation table open failed.\n"
 msgstr "Merkistönmuunnostaulua ei saatu avattua.\n"
 
-#: dlls/kernelbase/winerror.mc:3365
+#: dlls/kernelbase/winerror.mc:3405
 msgid "Character translation table file too small.\n"
 msgstr "Merkistönmuunnostaulun tiedosto on liian pieni.\n"
 
-#: dlls/kernelbase/winerror.mc:3370
+#: dlls/kernelbase/winerror.mc:3410
 msgid "Null context handle.\n"
 msgstr "Kontekstin kahva on NULL.\n"
 
-#: dlls/kernelbase/winerror.mc:3375
+#: dlls/kernelbase/winerror.mc:3415
 msgid "Context handle damaged.\n"
 msgstr "Kontekstin kahva on vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:3380
+#: dlls/kernelbase/winerror.mc:3420
 msgid "Binding handle mismatch.\n"
 msgstr "Sidosten kahvat eivät täsmää.\n"
 
-#: dlls/kernelbase/winerror.mc:3385
+#: dlls/kernelbase/winerror.mc:3425
 msgid "Cannot get call handle.\n"
 msgstr "Kutsun kahvaa ei saada.\n"
 
-#: dlls/kernelbase/winerror.mc:3390
+#: dlls/kernelbase/winerror.mc:3430
 msgid "Null reference pointer.\n"
 msgstr "Osoitin on NULL.\n"
 
-#: dlls/kernelbase/winerror.mc:3395
+#: dlls/kernelbase/winerror.mc:3435
 msgid "Enumeration value out of range.\n"
 msgstr "Arvo on luettelon ulkopuolella.\n"
 
-#: dlls/kernelbase/winerror.mc:3400
+#: dlls/kernelbase/winerror.mc:3440
 msgid "Byte count too small.\n"
 msgstr "Tavumäärä on liian pieni.\n"
 
-#: dlls/kernelbase/winerror.mc:3405
+#: dlls/kernelbase/winerror.mc:3445
 msgid "Bad stub data.\n"
 msgstr "Tyngän data ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3410
+#: dlls/kernelbase/winerror.mc:3450
 msgid "Invalid user buffer.\n"
 msgstr "Annettu puskuri ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3415
+#: dlls/kernelbase/winerror.mc:3455
 msgid "Unrecognized media.\n"
 msgstr "Tuntematon media.\n"
 
-#: dlls/kernelbase/winerror.mc:3420
+#: dlls/kernelbase/winerror.mc:3460
 msgid "No trust secret.\n"
 msgstr "Ei luottamussalaisuutta.\n"
 
-#: dlls/kernelbase/winerror.mc:3425
+#: dlls/kernelbase/winerror.mc:3465
 msgid "No trust SAM account.\n"
 msgstr "Suojaustilien hallinnassa ei ole tiliä tälle luottamussuhteelle.\n"
 
-#: dlls/kernelbase/winerror.mc:3430
+#: dlls/kernelbase/winerror.mc:3470
 msgid "Trusted domain failure.\n"
 msgstr "Toimialueiden välinen luottamussuhde epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:3435
+#: dlls/kernelbase/winerror.mc:3475
 msgid "Trusted relationship failure.\n"
 msgstr "Luottamussuhde epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:3440
+#: dlls/kernelbase/winerror.mc:3480
 msgid "Trust logon failure.\n"
 msgstr "Kirjautuminen epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:3445
+#: dlls/kernelbase/winerror.mc:3485
 msgid "RPC call already in progress.\n"
 msgstr "RPC-kutsu on jo käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:3450
+#: dlls/kernelbase/winerror.mc:3490
 msgid "NETLOGON is not started.\n"
 msgstr "NETLOGON ei ole käynnissä.\n"
 
-#: dlls/kernelbase/winerror.mc:3455
+#: dlls/kernelbase/winerror.mc:3495
 msgid "Account expired.\n"
 msgstr "Tili vanhentunut.\n"
 
-#: dlls/kernelbase/winerror.mc:3460
+#: dlls/kernelbase/winerror.mc:3500
 msgid "Redirector has open handles.\n"
 msgstr "Uudelleenohjaimella on avoimia kahvoja.\n"
 
-#: dlls/kernelbase/winerror.mc:3465
+#: dlls/kernelbase/winerror.mc:3505
 msgid "Printer driver already installed.\n"
 msgstr "Tulostimen ajuri on jo asennettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3470
+#: dlls/kernelbase/winerror.mc:3510
 msgid "Unknown port.\n"
 msgstr "Tuntematon portti.\n"
 
-#: dlls/kernelbase/winerror.mc:3475
+#: dlls/kernelbase/winerror.mc:3515
 msgid "Unknown printer driver.\n"
 msgstr "Tuntematon tulostinajuri.\n"
 
-#: dlls/kernelbase/winerror.mc:3480
+#: dlls/kernelbase/winerror.mc:3520
 msgid "Unknown print processor.\n"
 msgstr "Tulostuksen käsittelijä on tuntematon.\n"
 
-#: dlls/kernelbase/winerror.mc:3485
+#: dlls/kernelbase/winerror.mc:3525
 msgid "Invalid separator file.\n"
 msgstr "Erotintiedosto ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3490
+#: dlls/kernelbase/winerror.mc:3530
 msgid "Invalid priority.\n"
 msgstr "Prioriteetti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3495
+#: dlls/kernelbase/winerror.mc:3535
 msgid "Invalid printer name.\n"
 msgstr "Tulostimen nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3500
+#: dlls/kernelbase/winerror.mc:3540
 msgid "Printer already exists.\n"
 msgstr "Tulostin on jo olemassa.\n"
 
-#: dlls/kernelbase/winerror.mc:3505
+#: dlls/kernelbase/winerror.mc:3545
 msgid "Invalid printer command.\n"
 msgstr "Tulostinkäsky ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3510
+#: dlls/kernelbase/winerror.mc:3550
 msgid "Invalid data type.\n"
 msgstr "Tietotyyppi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3515
+#: dlls/kernelbase/winerror.mc:3555
 msgid "Invalid environment.\n"
 msgstr "Ympäristö ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3520
+#: dlls/kernelbase/winerror.mc:3560
 msgid "No more bindings.\n"
 msgstr "Ei enempää sidoksia.\n"
 
-#: dlls/kernelbase/winerror.mc:3525
+#: dlls/kernelbase/winerror.mc:3565
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr "Toimialueiden välisellä luottamustilillä ei voi kirjautua.\n"
 
-#: dlls/kernelbase/winerror.mc:3530
+#: dlls/kernelbase/winerror.mc:3570
 msgid "Can't log on with workstation trust account.\n"
 msgstr "Tietokoneen luottamustilillä ei voi kirjautua.\n"
 
-#: dlls/kernelbase/winerror.mc:3535
+#: dlls/kernelbase/winerror.mc:3575
 msgid "Can't log on with server trust account.\n"
 msgstr "Palvelimen luottamustilillä ei voi kirjautua.\n"
 
-#: dlls/kernelbase/winerror.mc:3540
+#: dlls/kernelbase/winerror.mc:3580
 msgid "Domain trust information inconsistent.\n"
 msgstr "Toimialueen luottamustiedot eivät ole johdonmukaiset.\n"
 
-#: dlls/kernelbase/winerror.mc:3545
+#: dlls/kernelbase/winerror.mc:3585
 msgid "Server has open handles.\n"
 msgstr "Palvelimella on avoimia kahvoja.\n"
 
-#: dlls/kernelbase/winerror.mc:3550
+#: dlls/kernelbase/winerror.mc:3590
 msgid "Resource data not found.\n"
 msgstr "Resurssin tietoa ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3555
+#: dlls/kernelbase/winerror.mc:3595
 msgid "Resource type not found.\n"
 msgstr "Resurssin tyyppiä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3560
+#: dlls/kernelbase/winerror.mc:3600
 msgid "Resource name not found.\n"
 msgstr "Resurssin nimeä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3565
+#: dlls/kernelbase/winerror.mc:3605
 msgid "Resource language not found.\n"
 msgstr "Resurssin kieltä ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3570
+#: dlls/kernelbase/winerror.mc:3610
 msgid "Not enough quota.\n"
 msgstr "Ei tarpeeksi kiintiötä.\n"
 
-#: dlls/kernelbase/winerror.mc:3575
+#: dlls/kernelbase/winerror.mc:3615
 msgid "No interfaces.\n"
 msgstr "Ei rajapintoja.\n"
 
-#: dlls/kernelbase/winerror.mc:3580
+#: dlls/kernelbase/winerror.mc:3620
 msgid "RPC call canceled.\n"
 msgstr "RPC-kutsu peruutettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3585
+#: dlls/kernelbase/winerror.mc:3625
 msgid "Binding incomplete.\n"
 msgstr "Sidos epätäydellinen.\n"
 
-#: dlls/kernelbase/winerror.mc:3590
+#: dlls/kernelbase/winerror.mc:3630
 msgid "RPC comm failure.\n"
 msgstr "Yhteysvirhe RPC-kutsussa.\n"
 
-#: dlls/kernelbase/winerror.mc:3595
+#: dlls/kernelbase/winerror.mc:3635
 msgid "Unsupported authorization level.\n"
 msgstr "Valtuutuksen tasoa ei tueta.\n"
 
-#: dlls/kernelbase/winerror.mc:3600
+#: dlls/kernelbase/winerror.mc:3640
 msgid "No principal name registered.\n"
 msgstr "Ensisijaista nimeä ei ole rekisteröity.\n"
 
-#: dlls/kernelbase/winerror.mc:3605
+#: dlls/kernelbase/winerror.mc:3645
 msgid "Not an RPC error.\n"
 msgstr "Ei RPC-virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3610
+#: dlls/kernelbase/winerror.mc:3650
 msgid "UUID is local only.\n"
 msgstr "UUID on vain paikallinen.\n"
 
-#: dlls/kernelbase/winerror.mc:3615
+#: dlls/kernelbase/winerror.mc:3655
 msgid "Security package error.\n"
 msgstr "Suojauspakkausvirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3620
+#: dlls/kernelbase/winerror.mc:3660
 msgid "Thread not canceled.\n"
 msgstr "Säiettä ei peruutettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3625
+#: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid handle operation.\n"
 msgstr "Kahvaoperaatio ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3630
+#: dlls/kernelbase/winerror.mc:3670
 msgid "Wrong serializing package version.\n"
 msgstr "Sarjoituspaketin versio on väärä.\n"
 
-#: dlls/kernelbase/winerror.mc:3635
+#: dlls/kernelbase/winerror.mc:3675
 msgid "Wrong stub version.\n"
 msgstr "Väärä tyngän versio.\n"
 
-#: dlls/kernelbase/winerror.mc:3640
+#: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid pipe object.\n"
 msgstr "Putkiobjekti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3645
+#: dlls/kernelbase/winerror.mc:3685
 msgid "Wrong pipe order.\n"
 msgstr "Väärä putkien järjestys.\n"
 
-#: dlls/kernelbase/winerror.mc:3650
+#: dlls/kernelbase/winerror.mc:3690
 msgid "Wrong pipe version.\n"
 msgstr "Väärä putken versio.\n"
 
-#: dlls/kernelbase/winerror.mc:3655
+#: dlls/kernelbase/winerror.mc:3695
 msgid "Group member not found.\n"
 msgstr "Ryhmän jäsentä ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:3660
+#: dlls/kernelbase/winerror.mc:3700
 msgid "Can't create endpoint mapper DB.\n"
 msgstr "Päätepisteiden kuvaustietokantaa ei voida luoda.\n"
 
-#: dlls/kernelbase/winerror.mc:3665
+#: dlls/kernelbase/winerror.mc:3705
 msgid "Invalid object.\n"
 msgstr "Objekti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3670
+#: dlls/kernelbase/winerror.mc:3710
 msgid "Invalid time.\n"
 msgstr "Aika ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3675
+#: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid form name.\n"
 msgstr "Lomakkeen nimi ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3680
+#: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid form size.\n"
 msgstr "Lomakkeen koko ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3685
+#: dlls/kernelbase/winerror.mc:3725
 msgid "Already awaiting printer handle.\n"
 msgstr "Odotetaan jo tulostinkahvaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3690
+#: dlls/kernelbase/winerror.mc:3730
 msgid "Printer deleted.\n"
 msgstr "Tulostin poistettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3695
+#: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid printer state.\n"
 msgstr "Tulostimen tila ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3700
+#: dlls/kernelbase/winerror.mc:3740
 msgid "User must change password.\n"
 msgstr "Käyttäjän on vaihdettava salasana.\n"
 
-#: dlls/kernelbase/winerror.mc:3705
+#: dlls/kernelbase/winerror.mc:3745
 msgid "Domain controller not found.\n"
 msgstr "Toimialueen ohjauskonetta ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3710
+#: dlls/kernelbase/winerror.mc:3750
 msgid "Account locked out.\n"
 msgstr "Tilin käyttö on estetty.\n"
 
-#: dlls/kernelbase/winerror.mc:3715
+#: dlls/kernelbase/winerror.mc:3755
 msgid "Invalid pixel format.\n"
 msgstr "Pikselimuoto ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3720
+#: dlls/kernelbase/winerror.mc:3760
 msgid "Invalid driver.\n"
 msgstr "Ajuri ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3725
+#: dlls/kernelbase/winerror.mc:3765
 msgid "Invalid object resolver set.\n"
 msgstr "Objektinratkaisijajoukko ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3730
+#: dlls/kernelbase/winerror.mc:3770
 msgid "Incomplete RPC send.\n"
 msgstr "Vajavainen RPC-lähetys.\n"
 
-#: dlls/kernelbase/winerror.mc:3735
+#: dlls/kernelbase/winerror.mc:3775
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "Asynkronisen RPC:n kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3740
+#: dlls/kernelbase/winerror.mc:3780
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "Asynkroninen RPC-kutsu ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3745
+#: dlls/kernelbase/winerror.mc:3785
 msgid "RPC pipe closed.\n"
 msgstr "RPC-putki suljettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3750
+#: dlls/kernelbase/winerror.mc:3790
 msgid "Discipline error on RPC pipe.\n"
 msgstr "RPC-putkien järjestysvirhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3795
 msgid "No data on RPC pipe.\n"
 msgstr "Ei dataa RPC-putkessa.\n"
 
-#: dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:3800
 msgid "No site name available.\n"
 msgstr "Sivuston nimeä ei saatavilla.\n"
 
-#: dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:3805
 msgid "The file cannot be accessed.\n"
 msgstr "Tiedostoon ei ole pääsyä.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3810
 msgid "The filename cannot be resolved.\n"
 msgstr "Tiedostonimeä ei pystytä tulkitsemaan.\n"
 
-#: dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:3815
 msgid "RPC entry type mismatch.\n"
 msgstr "RPC-merkinnän tyyppi ei täsmää.\n"
 
-#: dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:3820
 msgid "Not all objects could be exported.\n"
 msgstr "Kaikkia objekteja ei voitu viedä.\n"
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3825
 msgid "The interface could not be exported.\n"
 msgstr "Rajapintaa ei voitu viedä.\n"
 
-#: dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:3830
 msgid "The profile could not be added.\n"
 msgstr "Profiilia ei voitu lisätä.\n"
 
-#: dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:3835
 msgid "The profile element could not be added.\n"
 msgstr "Profiilielementtiä ei voitu lisätä.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3840
 msgid "The profile element could not be removed.\n"
 msgstr "Profiilielementtiä ei voitu poistaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3845
 msgid "The group element could not be added.\n"
 msgstr "Ryhmäelementtiä ei voitu lisätä.\n"
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3850
 msgid "The group element could not be removed.\n"
 msgstr "Ryhmäelementtiä ei voitu poistaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3815
+#: dlls/kernelbase/winerror.mc:3855
 msgid "The username could not be found.\n"
 msgstr "Käyttäjänimeä ei löytynyt.\n"
 
-#: dlls/kernelbase/winerror.mc:3820
+#: dlls/kernelbase/winerror.mc:3860
 msgid "This network connection does not exist.\n"
 msgstr "Tätä verkkoyhteyttä ei ole.\n"
 
-#: dlls/kernelbase/winerror.mc:3825
+#: dlls/kernelbase/winerror.mc:3865
 #, fuzzy
 #| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
 msgstr "Tiedosto tai hakemisto vioittunut.\n"
 
-#: dlls/kernelbase/winerror.mc:3830
+#: dlls/kernelbase/winerror.mc:3870
 msgid "Call interrupted.\n"
 msgstr "Kutsu keskeytetty.\n"
 
-#: dlls/kernelbase/winerror.mc:3835
+#: dlls/kernelbase/winerror.mc:3875
 msgid "Invalid file handle.\n"
 msgstr "Tiedoston kahva ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3845
+#: dlls/kernelbase/winerror.mc:3885
 msgid "Invalid pointer address.\n"
 msgstr "Osoittimen osoite ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3850
+#: dlls/kernelbase/winerror.mc:3890
 msgid "Invalid argument.\n"
 msgstr "Argumentti ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3860
+#: dlls/kernelbase/winerror.mc:3900
 msgid "Cannot assign requested address.\n"
 msgstr "Annettua osoitetta ei voi asettaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3865
+#: dlls/kernelbase/winerror.mc:3905
 msgid "Connection reset by peer.\n"
 msgstr "Vastapuoli nollasi yhteyden.\n"
 
-#: dlls/kernelbase/winerror.mc:3875
+#: dlls/kernelbase/winerror.mc:3915
 msgid "Host not found.\n"
 msgstr "Isäntää ei löydy.\n"
 
-#: dlls/kernelbase/winerror.mc:3880
+#: dlls/kernelbase/winerror.mc:3920
 msgid "Nonauthoritative host not found.\n"
 msgstr "Isäntää ei löydy (ei-autoritatiivinen).\n"
 
-#: dlls/kernelbase/winerror.mc:3885
+#: dlls/kernelbase/winerror.mc:3925
 msgid "Nonrecoverable error.\n"
 msgstr "Peruuttamaton virhe.\n"
 
-#: dlls/kernelbase/winerror.mc:3890
+#: dlls/kernelbase/winerror.mc:3930
 msgid "Name valid, no data record.\n"
 msgstr "Nimi kelpaa, ei tietuetta.\n"
 
-#: dlls/kernelbase/winerror.mc:3911
+#: dlls/kernelbase/winerror.mc:3951
 msgid "Not implemented.\n"
 msgstr "Ei toteutettu.\n"
 
-#: dlls/kernelbase/winerror.mc:3932
+#: dlls/kernelbase/winerror.mc:3972
 msgid "Call failed.\n"
 msgstr "Kutsu epäonnistui.\n"
 
-#: dlls/kernelbase/winerror.mc:3897
+#: dlls/kernelbase/winerror.mc:3937
 #, fuzzy
 #| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
 msgstr "Mediaa ei voida syöttää ulos.\n"
 
-#: dlls/kernelbase/winerror.mc:3904
+#: dlls/kernelbase/winerror.mc:3944
 msgid "No Signature found in file.\n"
 msgstr "Tiedostosta ei löytynyt allekirjoitusta.\n"
 
-#: dlls/kernelbase/winerror.mc:3918
+#: dlls/kernelbase/winerror.mc:3958
 msgid "Invalid call.\n"
 msgstr "Kutsu ei kelpaa.\n"
 
-#: dlls/kernelbase/winerror.mc:3925
+#: dlls/kernelbase/winerror.mc:3965
 msgid "Resource is not currently available.\n"
 msgstr "Resurssi ei ole nyt saatavilla.\n"
 

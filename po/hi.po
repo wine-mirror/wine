@@ -4198,11 +4198,11 @@ msgstr ""
 msgid "Path not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3895
 msgid "Too many open files.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3880
 msgid "Access denied.\n"
 msgstr ""
 
@@ -4446,7 +4446,7 @@ msgstr ""
 msgid "Already assigned.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1830
 msgid "Invalid password.\n"
 msgstr ""
 
@@ -4993,2279 +4993,2315 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1050
-msgid "Invalid address.\n"
-msgstr ""
+#, fuzzy
+msgid "Scope not found.\n"
+msgstr "सूचना (&o)"
 
 #: dlls/kernelbase/winerror.mc:1055
-msgid "Arithmetic overflow.\n"
+msgid "The specified Central Access Policy is undefined.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1060
-msgid "Pipe connected.\n"
+msgid "Central Access Policy from Active Directory is invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1065
-msgid "Pipe listening.\n"
+msgid "Device is unreachable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1070
-msgid "Extended attribute access denied.\n"
+msgid "Target device has insufficient resources to complete the operation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1075
-msgid "I/O operation aborted.\n"
+msgid ""
+"A data integrity checksum error occurred. Data in the file stream is "
+"corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1080
-msgid "Overlapped I/O incomplete.\n"
+msgid ""
+"Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1085
-msgid "Overlapped I/O pending.\n"
+msgid "Device does not support file-level TRIM.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1090
-msgid "No access to memory location.\n"
+msgid "Invalid address.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1095
-msgid "Swap error.\n"
+msgid "Arithmetic overflow.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1100
-msgid "Stack overflow.\n"
+msgid "Pipe connected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1105
-msgid "Invalid message.\n"
+msgid "Pipe listening.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1110
-msgid "Cannot complete.\n"
+msgid "Extended attribute access denied.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1115
-msgid "Invalid flags.\n"
+msgid "I/O operation aborted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1120
-msgid "Unrecognized volume.\n"
+msgid "Overlapped I/O incomplete.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1125
-msgid "File invalid.\n"
+msgid "Overlapped I/O pending.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1130
-msgid "Cannot run full-screen.\n"
+msgid "No access to memory location.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1135
-msgid "Nonexistent token.\n"
+msgid "Swap error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1140
-msgid "Registry corrupt.\n"
+msgid "Stack overflow.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1145
-msgid "Invalid key.\n"
+msgid "Invalid message.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1150
-msgid "Can't open registry key.\n"
+msgid "Cannot complete.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1155
-msgid "Can't read registry key.\n"
+msgid "Invalid flags.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1160
-msgid "Can't write registry key.\n"
+msgid "Unrecognized volume.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1165
-msgid "Registry has been recovered.\n"
+msgid "File invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1170
-msgid "Registry is corrupt.\n"
+msgid "Cannot run full-screen.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1175
-msgid "I/O to registry failed.\n"
+msgid "Nonexistent token.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1180
-msgid "Not registry file.\n"
+msgid "Registry corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1185
-msgid "Key deleted.\n"
+msgid "Invalid key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1190
-msgid "No registry log space.\n"
+msgid "Can't open registry key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1195
-msgid "Registry key has subkeys.\n"
+msgid "Can't read registry key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1200
-msgid "Subkey must be volatile.\n"
+msgid "Can't write registry key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1205
-msgid "Notify change request in progress.\n"
+msgid "Registry has been recovered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1210
-msgid "Dependent services are running.\n"
+msgid "Registry is corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1215
-msgid "Invalid service control.\n"
+msgid "I/O to registry failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1220
-msgid "Service request timeout.\n"
+msgid "Not registry file.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1225
-msgid "Cannot create service thread.\n"
+msgid "Key deleted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1230
-msgid "Service database locked.\n"
+msgid "No registry log space.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1235
-msgid "Service already running.\n"
+msgid "Registry key has subkeys.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1240
-msgid "Invalid service account.\n"
+msgid "Subkey must be volatile.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1245
-msgid "Service is disabled.\n"
+msgid "Notify change request in progress.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1250
-msgid "Circular dependency.\n"
+msgid "Dependent services are running.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1255
-msgid "Service does not exist.\n"
+msgid "Invalid service control.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1260
-msgid "Service cannot accept control message.\n"
+msgid "Service request timeout.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1265
-msgid "Service not active.\n"
+msgid "Cannot create service thread.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1270
-msgid "Service controller connect failed.\n"
+msgid "Service database locked.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1275
-msgid "Exception in service.\n"
+msgid "Service already running.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1280
-msgid "Database does not exist.\n"
+msgid "Invalid service account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1285
-msgid "Service-specific error.\n"
+msgid "Service is disabled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1290
-msgid "Process aborted.\n"
+msgid "Circular dependency.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1295
-msgid "Service dependency failed.\n"
+msgid "Service does not exist.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1300
-msgid "Service login failed.\n"
+msgid "Service cannot accept control message.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1305
-msgid "Service start-hang.\n"
+msgid "Service not active.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1310
-msgid "Invalid service lock.\n"
+msgid "Service controller connect failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1315
-msgid "Service marked for delete.\n"
+msgid "Exception in service.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1320
-msgid "Service exists.\n"
+msgid "Database does not exist.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1325
-msgid "System running last-known-good config.\n"
+msgid "Service-specific error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1330
-msgid "Service dependency deleted.\n"
+msgid "Process aborted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1335
-msgid "Boot already accepted as last-good config.\n"
+msgid "Service dependency failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1340
-msgid "Service not started since last boot.\n"
+msgid "Service login failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1345
-msgid "Duplicate service name.\n"
+msgid "Service start-hang.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1350
-msgid "Different service account.\n"
+msgid "Invalid service lock.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1355
-msgid "Driver failure cannot be detected.\n"
+msgid "Service marked for delete.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1360
-msgid "Process abort cannot be detected.\n"
+msgid "Service exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1365
-msgid "No recovery program for service.\n"
+msgid "System running last-known-good config.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1370
-msgid "Service not implemented by exe.\n"
+msgid "Service dependency deleted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1375
-msgid "End of media.\n"
+msgid "Boot already accepted as last-good config.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1380
-msgid "Filemark detected.\n"
+msgid "Service not started since last boot.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1385
-msgid "Beginning of media.\n"
+msgid "Duplicate service name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1390
-msgid "Setmark detected.\n"
+msgid "Different service account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1395
-msgid "No data detected.\n"
+msgid "Driver failure cannot be detected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1400
-msgid "Partition failure.\n"
+msgid "Process abort cannot be detected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1405
-msgid "Invalid block length.\n"
+msgid "No recovery program for service.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1410
-msgid "Device not partitioned.\n"
+msgid "Service not implemented by exe.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1415
-msgid "Unable to lock media.\n"
+msgid "End of media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1420
-msgid "Unable to unload media.\n"
+msgid "Filemark detected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1425
-msgid "Media changed.\n"
+msgid "Beginning of media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1430
-msgid "I/O bus reset.\n"
+msgid "Setmark detected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1435
-msgid "No media in drive.\n"
+msgid "No data detected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1440
-msgid "No Unicode translation.\n"
+msgid "Partition failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1445
-msgid "DLL initialization failed.\n"
+msgid "Invalid block length.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1450
-msgid "Shutdown in progress.\n"
+msgid "Device not partitioned.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1455
-msgid "No shutdown in progress.\n"
+msgid "Unable to lock media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1460
-msgid "I/O device error.\n"
+msgid "Unable to unload media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1465
-msgid "No serial devices found.\n"
+msgid "Media changed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1470
-msgid "Shared IRQ busy.\n"
+msgid "I/O bus reset.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1475
-msgid "Serial I/O completed.\n"
+msgid "No media in drive.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1480
-msgid "Serial I/O counter timeout.\n"
+msgid "No Unicode translation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1485
-msgid "Floppy ID address mark not found.\n"
+msgid "DLL initialization failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1490
-msgid "Floppy reports wrong cylinder.\n"
+msgid "Shutdown in progress.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1495
-msgid "Unknown floppy error.\n"
+msgid "No shutdown in progress.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1500
-msgid "Floppy registers inconsistent.\n"
+msgid "I/O device error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1505
-msgid "Hard disk recalibrate failed.\n"
+msgid "No serial devices found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1510
-msgid "Hard disk operation failed.\n"
+msgid "Shared IRQ busy.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1515
-msgid "Hard disk reset failed.\n"
+msgid "Serial I/O completed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1520
-msgid "End of tape media.\n"
+msgid "Serial I/O counter timeout.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1525
-msgid "Not enough server memory.\n"
+msgid "Floppy ID address mark not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1530
-msgid "Possible deadlock.\n"
+msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1535
-msgid "Incorrect alignment.\n"
+msgid "Unknown floppy error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1540
-msgid "Set-power-state vetoed.\n"
+msgid "Floppy registers inconsistent.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1545
-msgid "Set-power-state failed.\n"
+msgid "Hard disk recalibrate failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1550
-msgid "Too many links.\n"
+msgid "Hard disk operation failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1555
-msgid "Newer Windows version needed.\n"
+msgid "Hard disk reset failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1560
-msgid "Wrong operating system.\n"
+msgid "End of tape media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1565
-msgid "Single-instance application.\n"
+msgid "Not enough server memory.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1570
-msgid "Real-mode application.\n"
+msgid "Possible deadlock.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1575
-msgid "Invalid DLL.\n"
+msgid "Incorrect alignment.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1580
-msgid "No associated application.\n"
+msgid "Set-power-state vetoed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1585
-msgid "DDE failure.\n"
+msgid "Set-power-state failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1590
-msgid "DLL not found.\n"
+msgid "Too many links.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1595
-msgid "Out of user handles.\n"
+msgid "Newer Windows version needed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1600
-msgid "Message can only be used in synchronous calls.\n"
+msgid "Wrong operating system.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1605
-msgid "The source element is empty.\n"
+msgid "Single-instance application.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1610
-msgid "The destination element is full.\n"
+msgid "Real-mode application.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1615
-msgid "The element address is invalid.\n"
+msgid "Invalid DLL.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1620
-msgid "The magazine is not present.\n"
+msgid "No associated application.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1625
-msgid "The device needs reinitialization.\n"
+msgid "DDE failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1630
-msgid "The device requires cleaning.\n"
+msgid "DLL not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1635
-msgid "The device door is open.\n"
+msgid "Out of user handles.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1640
-msgid "The device is not connected.\n"
+msgid "Message can only be used in synchronous calls.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1645
-msgid "Element not found.\n"
+msgid "The source element is empty.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1650
-msgid "No match found.\n"
+msgid "The destination element is full.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1655
-msgid "Property set not found.\n"
+msgid "The element address is invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1660
-msgid "Point not found.\n"
+msgid "The magazine is not present.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1665
-msgid "No running tracking service.\n"
+msgid "The device needs reinitialization.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1670
-msgid "No such volume ID.\n"
+msgid "The device requires cleaning.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1675
-msgid "Unable to remove the file to be replaced.\n"
+msgid "The device door is open.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1680
-msgid "Unable to move the replacement file into place.\n"
+msgid "The device is not connected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1685
-msgid "Moving the replacement file failed.\n"
+msgid "Element not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1690
-msgid "The journal is being deleted.\n"
+msgid "No match found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1695
-msgid "The journal is not active.\n"
+msgid "Property set not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1700
-msgid "Potential matching file found.\n"
+msgid "Point not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1705
-msgid "The journal entry was deleted.\n"
+msgid "No running tracking service.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1710
-msgid "Invalid device name.\n"
+msgid "No such volume ID.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1715
-msgid "Connection unavailable.\n"
+msgid "Unable to remove the file to be replaced.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1720
-msgid "Device already remembered.\n"
+msgid "Unable to move the replacement file into place.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1725
-msgid "No network or bad path.\n"
+msgid "Moving the replacement file failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1730
-msgid "Invalid network provider name.\n"
+msgid "The journal is being deleted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1735
-msgid "Cannot open network connection profile.\n"
+msgid "The journal is not active.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1740
-msgid "Corrupt network connection profile.\n"
+msgid "Potential matching file found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1745
-msgid "Not a container.\n"
+msgid "The journal entry was deleted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1750
-msgid "Extended error.\n"
+msgid "Invalid device name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1755
-msgid "Invalid group name.\n"
+msgid "Connection unavailable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1760
-msgid "Invalid computer name.\n"
+msgid "Device already remembered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1765
-msgid "Invalid event name.\n"
+msgid "No network or bad path.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1770
-msgid "Invalid domain name.\n"
+msgid "Invalid network provider name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1775
-msgid "Invalid service name.\n"
+msgid "Cannot open network connection profile.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1780
-msgid "Invalid network name.\n"
+msgid "Corrupt network connection profile.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1785
-msgid "Invalid share name.\n"
+msgid "Not a container.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1790
+msgid "Extended error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1795
-msgid "Invalid message name.\n"
+msgid "Invalid group name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1800
-msgid "Invalid message destination.\n"
+msgid "Invalid computer name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1805
-msgid "Session credential conflict.\n"
+msgid "Invalid event name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1810
-msgid "Remote session limit exceeded.\n"
+msgid "Invalid domain name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1815
-msgid "Duplicate domain or workgroup name.\n"
+msgid "Invalid service name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1820
-msgid "No network.\n"
+msgid "Invalid network name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1825
-msgid "Operation canceled by user.\n"
+msgid "Invalid share name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1830
-msgid "File has a user-mapped section.\n"
-msgstr ""
-
-#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
-msgid "Connection refused.\n"
+#: dlls/kernelbase/winerror.mc:1835
+msgid "Invalid message name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1840
-msgid "Connection gracefully closed.\n"
+msgid "Invalid message destination.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1845
-msgid "Address already associated with transport endpoint.\n"
+msgid "Session credential conflict.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1850
-msgid "Address not associated with transport endpoint.\n"
+msgid "Remote session limit exceeded.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1855
-msgid "Connection invalid.\n"
+msgid "Duplicate domain or workgroup name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1860
-msgid "Connection is active.\n"
+msgid "No network.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1865
-msgid "Network unreachable.\n"
+msgid "Operation canceled by user.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1870
-msgid "Host unreachable.\n"
+msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1875
-msgid "Protocol unreachable.\n"
+#: dlls/kernelbase/winerror.mc:1875 dlls/kernelbase/winerror.mc:3910
+msgid "Connection refused.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1880
-msgid "Port unreachable.\n"
+msgid "Connection gracefully closed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1885
-msgid "Request aborted.\n"
+msgid "Address already associated with transport endpoint.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1890
-msgid "Connection aborted.\n"
+msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1895
-msgid "Please retry operation.\n"
+msgid "Connection invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1900
-msgid "Connection count limit reached.\n"
+msgid "Connection is active.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1905
-msgid "Login time restriction.\n"
+msgid "Network unreachable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1910
-msgid "Login workstation restriction.\n"
+msgid "Host unreachable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1915
-msgid "Incorrect network address.\n"
+msgid "Protocol unreachable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1920
-msgid "Service already registered.\n"
+msgid "Port unreachable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1925
-msgid "Service not found.\n"
+msgid "Request aborted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1930
-msgid "User not authenticated.\n"
+msgid "Connection aborted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1935
-msgid "User not logged on.\n"
+msgid "Please retry operation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1940
-msgid "Continue work in progress.\n"
+msgid "Connection count limit reached.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1945
-msgid "Already initialized.\n"
+msgid "Login time restriction.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1950
-msgid "No more local devices.\n"
+msgid "Login workstation restriction.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1955
-msgid "The site does not exist.\n"
+msgid "Incorrect network address.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1960
-msgid "The domain controller already exists.\n"
+msgid "Service already registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1965
-msgid "Supported only when connected.\n"
+msgid "Service not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1970
-msgid "Perform operation even when nothing changed.\n"
+msgid "User not authenticated.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1975
-msgid "The user profile is invalid.\n"
+msgid "User not logged on.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1980
-msgid "Not supported on Small Business Server.\n"
+msgid "Continue work in progress.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1985
-msgid "Not all privileges assigned.\n"
+msgid "Already initialized.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1990
-msgid "Some security IDs not mapped.\n"
+msgid "No more local devices.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1995
-msgid "No quotas for account.\n"
+msgid "The site does not exist.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2000
-msgid "Local user session key.\n"
+msgid "The domain controller already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2005
-msgid "Password too complex for LM.\n"
+msgid "Supported only when connected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2010
-msgid "Unknown revision.\n"
+msgid "Perform operation even when nothing changed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2015
-msgid "Incompatible revision levels.\n"
+msgid "The user profile is invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2020
-msgid "Invalid owner.\n"
+msgid "Not supported on Small Business Server.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2025
-msgid "Invalid primary group.\n"
+msgid "Not all privileges assigned.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2030
-msgid "No impersonation token.\n"
+msgid "Some security IDs not mapped.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2035
-msgid "Can't disable mandatory group.\n"
+msgid "No quotas for account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2040
-msgid "No logon servers available.\n"
+msgid "Local user session key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2045
-msgid "No such logon session.\n"
+msgid "Password too complex for LM.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2050
-msgid "No such privilege.\n"
+msgid "Unknown revision.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2055
-msgid "Privilege not held.\n"
+msgid "Incompatible revision levels.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2060
-msgid "Invalid account name.\n"
+msgid "Invalid owner.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2065
-msgid "User already exists.\n"
+msgid "Invalid primary group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2070
-msgid "No such user.\n"
+msgid "No impersonation token.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2075
-msgid "Group already exists.\n"
+msgid "Can't disable mandatory group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2080
-msgid "No such group.\n"
+msgid "No logon servers available.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2085
-msgid "User already in group.\n"
+msgid "No such logon session.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2090
-msgid "User not in group.\n"
+msgid "No such privilege.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2095
-msgid "Can't delete last admin user.\n"
+msgid "Privilege not held.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2100
-msgid "Wrong password.\n"
+msgid "Invalid account name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2105
-msgid "Ill-formed password.\n"
+msgid "User already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2110
-msgid "Password restriction.\n"
+msgid "No such user.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2115
-msgid "Logon failure.\n"
+msgid "Group already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2120
-msgid "Account restriction.\n"
+msgid "No such group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2125
-msgid "Invalid logon hours.\n"
+msgid "User already in group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2130
-msgid "Invalid workstation.\n"
+msgid "User not in group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2135
-msgid "Password expired.\n"
+msgid "Can't delete last admin user.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2140
-msgid "Account disabled.\n"
+msgid "Wrong password.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2145
-msgid "No security ID mapped.\n"
+msgid "Ill-formed password.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2150
-msgid "Too many LUIDs requested.\n"
+msgid "Password restriction.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2155
-msgid "LUIDs exhausted.\n"
+msgid "Logon failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2160
-msgid "Invalid sub authority.\n"
+msgid "Account restriction.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2165
-msgid "Invalid ACL.\n"
+msgid "Invalid logon hours.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2170
-msgid "Invalid SID.\n"
+msgid "Invalid workstation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2175
-msgid "Invalid security descriptor.\n"
+msgid "Password expired.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2180
-msgid "Bad inherited ACL.\n"
+msgid "Account disabled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2185
-msgid "Server disabled.\n"
+msgid "No security ID mapped.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2190
-msgid "Server not disabled.\n"
+msgid "Too many LUIDs requested.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2195
-msgid "Invalid ID authority.\n"
+msgid "LUIDs exhausted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2200
-msgid "Allotted space exceeded.\n"
+msgid "Invalid sub authority.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2205
-msgid "Invalid group attributes.\n"
+msgid "Invalid ACL.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2210
-msgid "Bad impersonation level.\n"
+msgid "Invalid SID.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2215
-msgid "Can't open anonymous security token.\n"
+msgid "Invalid security descriptor.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2220
-msgid "Bad validation class.\n"
+msgid "Bad inherited ACL.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2225
-msgid "Bad token type.\n"
+msgid "Server disabled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2230
-msgid "No security on object.\n"
+msgid "Server not disabled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2235
-msgid "Can't access domain information.\n"
+msgid "Invalid ID authority.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2240
-msgid "Invalid server state.\n"
+msgid "Allotted space exceeded.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2245
-msgid "Invalid domain state.\n"
+msgid "Invalid group attributes.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2250
-msgid "Invalid domain role.\n"
+msgid "Bad impersonation level.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2255
-msgid "No such domain.\n"
+msgid "Can't open anonymous security token.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2260
-msgid "Domain already exists.\n"
+msgid "Bad validation class.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2265
-msgid "Domain limit exceeded.\n"
+msgid "Bad token type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2270
-msgid "Internal database corruption.\n"
+msgid "No security on object.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2275
-msgid "Internal error.\n"
+msgid "Can't access domain information.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2280
-msgid "Generic access types not mapped.\n"
+msgid "Invalid server state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2285
-msgid "Bad descriptor format.\n"
+msgid "Invalid domain state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2290
-msgid "Not a logon process.\n"
+msgid "Invalid domain role.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2295
-msgid "Logon session ID exists.\n"
+msgid "No such domain.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2300
-msgid "Unknown authentication package.\n"
+msgid "Domain already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2305
-msgid "Bad logon session state.\n"
+msgid "Domain limit exceeded.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2310
-msgid "Logon session ID collision.\n"
+msgid "Internal database corruption.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2315
-msgid "Invalid logon type.\n"
+msgid "Internal error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2320
-msgid "Cannot impersonate.\n"
+msgid "Generic access types not mapped.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2325
-msgid "Invalid transaction state.\n"
+msgid "Bad descriptor format.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2330
-msgid "Security DB commit failure.\n"
+msgid "Not a logon process.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2335
-msgid "Account is built-in.\n"
+msgid "Logon session ID exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2340
-msgid "Group is built-in.\n"
+msgid "Unknown authentication package.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2345
-msgid "User is built-in.\n"
+msgid "Bad logon session state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2350
-msgid "Group is primary for user.\n"
+msgid "Logon session ID collision.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2355
-msgid "Token already in use.\n"
+msgid "Invalid logon type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2360
-msgid "No such local group.\n"
+msgid "Cannot impersonate.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2365
-msgid "User not in local group.\n"
+msgid "Invalid transaction state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2370
-msgid "User already in local group.\n"
+msgid "Security DB commit failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2375
-msgid "Local group already exists.\n"
+msgid "Account is built-in.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
-msgid "Logon type not granted.\n"
+#: dlls/kernelbase/winerror.mc:2380
+msgid "Group is built-in.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2385
-msgid "Too many secrets.\n"
+msgid "User is built-in.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2390
-msgid "Secret too long.\n"
+msgid "Group is primary for user.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2395
-msgid "Internal security DB error.\n"
+msgid "Token already in use.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2400
-msgid "Too many context IDs.\n"
+msgid "No such local group.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:2405
+msgid "User not in local group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2410
-msgid "Cross-encrypted NT password required.\n"
+msgid "User already in local group.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2415
-msgid "No such member.\n"
+msgid "Local group already exists.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2420
-msgid "Invalid member.\n"
+#: dlls/kernelbase/winerror.mc:2420 dlls/kernelbase/winerror.mc:2445
+msgid "Logon type not granted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2425
-msgid "Too many SIDs.\n"
+msgid "Too many secrets.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2430
-msgid "Cross-encrypted LM password required.\n"
+msgid "Secret too long.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2435
-msgid "No inheritable components.\n"
+msgid "Internal security DB error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2440
-msgid "File or directory corrupt.\n"
-msgstr ""
-
-#: dlls/kernelbase/winerror.mc:2445
-msgid "Disk is corrupt.\n"
+msgid "Too many context IDs.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2450
-msgid "No user session key.\n"
+msgid "Cross-encrypted NT password required.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2455
-msgid "License quota exceeded.\n"
+msgid "No such member.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2460
-msgid "Wrong target name.\n"
+msgid "Invalid member.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2465
-msgid "Mutual authentication failed.\n"
+msgid "Too many SIDs.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2470
-msgid "Time skew between client and server.\n"
+msgid "Cross-encrypted LM password required.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2475
-msgid "Invalid window handle.\n"
+msgid "No inheritable components.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2480
-msgid "Invalid menu handle.\n"
+msgid "File or directory corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2485
-msgid "Invalid cursor handle.\n"
+msgid "Disk is corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2490
-msgid "Invalid accelerator table handle.\n"
+msgid "No user session key.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2495
-msgid "Invalid hook handle.\n"
+msgid "License quota exceeded.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2500
-msgid "Invalid DWP handle.\n"
+msgid "Wrong target name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2505
-msgid "Can't create top-level child window.\n"
+msgid "Mutual authentication failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2510
-msgid "Can't find window class.\n"
+msgid "Time skew between client and server.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2515
-msgid "Window owned by another thread.\n"
+msgid "Invalid window handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2520
-msgid "Hotkey already registered.\n"
+msgid "Invalid menu handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2525
-msgid "Class already exists.\n"
+msgid "Invalid cursor handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2530
-msgid "Class does not exist.\n"
+msgid "Invalid accelerator table handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2535
-msgid "Class has open windows.\n"
+msgid "Invalid hook handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
-msgid "Invalid index.\n"
+#: dlls/kernelbase/winerror.mc:2540
+msgid "Invalid DWP handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2545
-msgid "Invalid icon handle.\n"
+msgid "Can't create top-level child window.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2550
-msgid "Private dialog index.\n"
+msgid "Can't find window class.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2555
-msgid "List box ID not found.\n"
+msgid "Window owned by another thread.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2560
-msgid "No wildcard characters.\n"
+msgid "Hotkey already registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2565
-msgid "Clipboard not open.\n"
+msgid "Class already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2570
-msgid "Hotkey not registered.\n"
+msgid "Class does not exist.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2575
-msgid "Not a dialog window.\n"
+msgid "Class has open windows.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2580
-msgid "Control ID not found.\n"
+#: dlls/kernelbase/winerror.mc:2580 dlls/mferror/mferror.mc:130
+msgid "Invalid index.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2585
-msgid "Invalid combo box message.\n"
+msgid "Invalid icon handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2590
-msgid "Not a combo box window.\n"
+msgid "Private dialog index.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2595
-msgid "Invalid edit height.\n"
+msgid "List box ID not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2600
-msgid "DC not found.\n"
+msgid "No wildcard characters.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2605
-msgid "Invalid hook filter.\n"
+msgid "Clipboard not open.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2610
-msgid "Invalid filter procedure.\n"
+msgid "Hotkey not registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2615
-msgid "Hook procedure needs module handle.\n"
+msgid "Not a dialog window.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2620
-msgid "Global-only hook procedure.\n"
+msgid "Control ID not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2625
-msgid "Journal hook already set.\n"
+msgid "Invalid combo box message.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2630
-msgid "Hook procedure not installed.\n"
+msgid "Not a combo box window.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2635
-msgid "Invalid list box message.\n"
+msgid "Invalid edit height.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2640
-msgid "Invalid LB_SETCOUNT sent.\n"
+msgid "DC not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2645
-msgid "No tab stops on this list box.\n"
+msgid "Invalid hook filter.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2650
-msgid "Can't destroy object owned by another thread.\n"
+msgid "Invalid filter procedure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2655
-msgid "Child window menus not allowed.\n"
+msgid "Hook procedure needs module handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2660
-msgid "Window has no system menu.\n"
+msgid "Global-only hook procedure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2665
-msgid "Invalid message box style.\n"
+msgid "Journal hook already set.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2670
-msgid "Invalid SPI parameter.\n"
+msgid "Hook procedure not installed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2675
-msgid "Screen already locked.\n"
+msgid "Invalid list box message.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2680
-msgid "Window handles have different parents.\n"
+msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2685
-msgid "Not a child window.\n"
+msgid "No tab stops on this list box.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2690
-msgid "Invalid GW command.\n"
+msgid "Can't destroy object owned by another thread.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2695
-msgid "Invalid thread ID.\n"
+msgid "Child window menus not allowed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2700
-msgid "Not an MDI child window.\n"
+msgid "Window has no system menu.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2705
-msgid "Popup menu already active.\n"
+msgid "Invalid message box style.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2710
-msgid "No scrollbars.\n"
+msgid "Invalid SPI parameter.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2715
-msgid "Invalid scrollbar range.\n"
+msgid "Screen already locked.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2720
-msgid "Invalid ShowWin command.\n"
+msgid "Window handles have different parents.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2725
-msgid "No system resources.\n"
+msgid "Not a child window.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2730
-msgid "No non-paged system resources.\n"
+msgid "Invalid GW command.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2735
-msgid "No paged system resources.\n"
+msgid "Invalid thread ID.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2740
-msgid "No working set quota.\n"
+msgid "Not an MDI child window.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2745
-msgid "No page file quota.\n"
+msgid "Popup menu already active.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2750
-msgid "Exceeded commitment limit.\n"
+msgid "No scrollbars.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2755
-msgid "Menu item not found.\n"
+msgid "Invalid scrollbar range.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2760
-msgid "Invalid keyboard handle.\n"
+msgid "Invalid ShowWin command.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2765
-msgid "Hook type not allowed.\n"
+msgid "No system resources.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2770
-msgid "Interactive window station required.\n"
+msgid "No non-paged system resources.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2775
-msgid "Timeout.\n"
+msgid "No paged system resources.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2780
-msgid "Invalid monitor handle.\n"
+msgid "No working set quota.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2785
-msgid "Event log file corrupt.\n"
+msgid "No page file quota.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2790
-msgid "Event log can't start.\n"
+msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2795
-msgid "Event log file full.\n"
+msgid "Menu item not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2800
-msgid "Event log file changed.\n"
+msgid "Invalid keyboard handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2805
-msgid "Installer service failed.\n"
+msgid "Hook type not allowed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2810
-msgid "Installation aborted by user.\n"
+msgid "Interactive window station required.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2815
-msgid "Installation failure.\n"
+msgid "Timeout.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2820
-msgid "Installation suspended.\n"
+msgid "Invalid monitor handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2825
-msgid "Unknown product.\n"
+msgid "Event log file corrupt.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2830
-msgid "Unknown feature.\n"
+msgid "Event log can't start.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2835
-msgid "Unknown component.\n"
+msgid "Event log file full.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2840
-msgid "Unknown property.\n"
+msgid "Event log file changed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2845
-msgid "Invalid handle state.\n"
+msgid "Installer service failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2850
-msgid "Bad configuration.\n"
+msgid "Installation aborted by user.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2855
-msgid "Index is missing.\n"
+msgid "Installation failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2860
-msgid "Installation source is missing.\n"
+msgid "Installation suspended.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2865
-msgid "Wrong installation package version.\n"
+msgid "Unknown product.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2870
-msgid "Product uninstalled.\n"
+msgid "Unknown feature.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2875
-msgid "Invalid query syntax.\n"
+msgid "Unknown component.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2880
-msgid "Invalid field.\n"
+msgid "Unknown property.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2885
-msgid "Device removed.\n"
+msgid "Invalid handle state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2890
-msgid "Installation already running.\n"
+msgid "Bad configuration.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2895
-msgid "Installation package failed to open.\n"
+msgid "Index is missing.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2900
-msgid "Installation package is invalid.\n"
+msgid "Installation source is missing.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2905
-msgid "Installer user interface failed.\n"
+msgid "Wrong installation package version.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2910
-msgid "Failed to open installation log file.\n"
+msgid "Product uninstalled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2915
-msgid "Installation language not supported.\n"
+msgid "Invalid query syntax.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2920
-msgid "Installation transform failed to apply.\n"
+msgid "Invalid field.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2925
-msgid "Installation package rejected.\n"
+msgid "Device removed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2930
-msgid "Function could not be called.\n"
+msgid "Installation already running.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2935
-msgid "Function failed.\n"
+msgid "Installation package failed to open.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2940
-msgid "Invalid table.\n"
+msgid "Installation package is invalid.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2945
-msgid "Data type mismatch.\n"
+msgid "Installer user interface failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
-msgid "Unsupported type.\n"
+#: dlls/kernelbase/winerror.mc:2950
+msgid "Failed to open installation log file.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2955
-msgid "Creation failed.\n"
+msgid "Installation language not supported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2960
-msgid "Temporary directory not writable.\n"
+msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2965
-msgid "Installation platform not supported.\n"
+msgid "Installation package rejected.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2970
-msgid "Installer not used.\n"
+msgid "Function could not be called.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2975
-msgid "Failed to open the patch package.\n"
+msgid "Function failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2980
-msgid "Invalid patch package.\n"
+msgid "Invalid table.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2985
-msgid "Unsupported patch package.\n"
+msgid "Data type mismatch.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2990
-msgid "Another version is installed.\n"
+#: dlls/kernelbase/winerror.mc:2990 dlls/kernelbase/winerror.mc:3200
+msgid "Unsupported type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:2995
-msgid "Invalid command line.\n"
+msgid "Creation failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3000
-msgid "Remote installation not allowed.\n"
+msgid "Temporary directory not writable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3005
-msgid "Reboot initiated after successful install.\n"
+msgid "Installation platform not supported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3010
-msgid "Invalid string binding.\n"
+msgid "Installer not used.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3015
-msgid "Wrong kind of binding.\n"
+msgid "Failed to open the patch package.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3020
-msgid "Invalid binding.\n"
+msgid "Invalid patch package.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3025
-msgid "RPC protocol sequence not supported.\n"
+msgid "Unsupported patch package.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3030
-msgid "Invalid RPC protocol sequence.\n"
+msgid "Another version is installed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3035
-msgid "Invalid string UUID.\n"
+msgid "Invalid command line.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3040
-msgid "Invalid endpoint format.\n"
+msgid "Remote installation not allowed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3045
-msgid "Invalid network address.\n"
+msgid "Reboot initiated after successful install.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3050
-msgid "No endpoint found.\n"
+msgid "Invalid string binding.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3055
-msgid "Invalid timeout value.\n"
+msgid "Wrong kind of binding.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3060
-msgid "Object UUID not found.\n"
+msgid "Invalid binding.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3065
-msgid "UUID already registered.\n"
+msgid "RPC protocol sequence not supported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3070
-msgid "UUID type already registered.\n"
+msgid "Invalid RPC protocol sequence.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3075
-msgid "Server already listening.\n"
+msgid "Invalid string UUID.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3080
-msgid "No protocol sequences registered.\n"
+msgid "Invalid endpoint format.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3085
-msgid "RPC server not listening.\n"
+msgid "Invalid network address.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3090
-msgid "Unknown manager type.\n"
+msgid "No endpoint found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3095
-msgid "Unknown interface.\n"
+msgid "Invalid timeout value.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3100
-msgid "No bindings.\n"
+msgid "Object UUID not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3105
-msgid "No protocol sequences.\n"
+msgid "UUID already registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3110
-msgid "Can't create endpoint.\n"
+msgid "UUID type already registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3115
-msgid "Out of resources.\n"
+msgid "Server already listening.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3120
-msgid "RPC server unavailable.\n"
+msgid "No protocol sequences registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3125
-msgid "RPC server too busy.\n"
+msgid "RPC server not listening.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3130
-msgid "Invalid network options.\n"
+msgid "Unknown manager type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3135
-msgid "No RPC call active.\n"
+msgid "Unknown interface.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3140
-msgid "RPC call failed.\n"
+msgid "No bindings.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3145
-msgid "RPC call failed and didn't execute.\n"
+msgid "No protocol sequences.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3150
-msgid "RPC protocol error.\n"
+msgid "Can't create endpoint.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3155
-msgid "Unsupported transfer syntax.\n"
+msgid "Out of resources.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3160
+msgid "RPC server unavailable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3165
-msgid "Invalid tag.\n"
+msgid "RPC server too busy.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3170
-msgid "Invalid array bounds.\n"
+msgid "Invalid network options.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3175
-msgid "No entry name.\n"
+msgid "No RPC call active.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3180
-msgid "Invalid name syntax.\n"
+msgid "RPC call failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3185
-msgid "Unsupported name syntax.\n"
+msgid "RPC call failed and didn't execute.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3190
-msgid "No network address.\n"
+msgid "RPC protocol error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3195
-msgid "Duplicate endpoint.\n"
-msgstr ""
-
-#: dlls/kernelbase/winerror.mc:3200
-msgid "Unknown authentication type.\n"
+msgid "Unsupported transfer syntax.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3205
-msgid "Maximum calls too low.\n"
+msgid "Invalid tag.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3210
-msgid "String too long.\n"
+msgid "Invalid array bounds.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3215
-msgid "Protocol sequence not found.\n"
+msgid "No entry name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3220
-msgid "Procedure number out of range.\n"
+msgid "Invalid name syntax.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3225
-msgid "Binding has no authentication data.\n"
+msgid "Unsupported name syntax.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3230
-msgid "Unknown authentication service.\n"
+msgid "No network address.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3235
-msgid "Unknown authentication level.\n"
+msgid "Duplicate endpoint.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3240
-msgid "Invalid authentication identity.\n"
+msgid "Unknown authentication type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3245
-msgid "Unknown authorization service.\n"
+msgid "Maximum calls too low.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3250
-msgid "Invalid entry.\n"
+msgid "String too long.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3255
-msgid "Can't perform operation.\n"
+msgid "Protocol sequence not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3260
-msgid "Endpoints not registered.\n"
+msgid "Procedure number out of range.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3265
-msgid "Nothing to export.\n"
+msgid "Binding has no authentication data.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3270
-msgid "Incomplete name.\n"
+msgid "Unknown authentication service.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3275
-msgid "Invalid version option.\n"
+msgid "Unknown authentication level.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3280
-msgid "No more members.\n"
+msgid "Invalid authentication identity.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3285
-msgid "Not all objects unexported.\n"
+msgid "Unknown authorization service.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3290
-msgid "Interface not found.\n"
+msgid "Invalid entry.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3295
-msgid "Entry already exists.\n"
+msgid "Can't perform operation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3300
-msgid "Entry not found.\n"
+msgid "Endpoints not registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3305
-msgid "Name service unavailable.\n"
+msgid "Nothing to export.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3310
-msgid "Invalid network address family.\n"
+msgid "Incomplete name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3315
-msgid "Operation not supported.\n"
+msgid "Invalid version option.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3320
-msgid "No security context available.\n"
+msgid "No more members.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3325
-msgid "RPCInternal error.\n"
+msgid "Not all objects unexported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3330
-msgid "RPC divide-by-zero.\n"
+msgid "Interface not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3335
-msgid "Address error.\n"
+msgid "Entry already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3340
-msgid "Floating-point divide-by-zero.\n"
+msgid "Entry not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3345
-msgid "Floating-point underflow.\n"
+msgid "Name service unavailable.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3350
-msgid "Floating-point overflow.\n"
+msgid "Invalid network address family.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3355
-msgid "No more entries.\n"
+msgid "Operation not supported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3360
-msgid "Character translation table open failed.\n"
+msgid "No security context available.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3365
-msgid "Character translation table file too small.\n"
+msgid "RPCInternal error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3370
-msgid "Null context handle.\n"
+msgid "RPC divide-by-zero.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3375
-msgid "Context handle damaged.\n"
+msgid "Address error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3380
-msgid "Binding handle mismatch.\n"
+msgid "Floating-point divide-by-zero.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3385
-msgid "Cannot get call handle.\n"
+msgid "Floating-point underflow.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3390
-msgid "Null reference pointer.\n"
+msgid "Floating-point overflow.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3395
-msgid "Enumeration value out of range.\n"
+msgid "No more entries.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3400
-msgid "Byte count too small.\n"
+msgid "Character translation table open failed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3405
-msgid "Bad stub data.\n"
+msgid "Character translation table file too small.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3410
-msgid "Invalid user buffer.\n"
+msgid "Null context handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3415
-msgid "Unrecognized media.\n"
+msgid "Context handle damaged.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3420
-msgid "No trust secret.\n"
+msgid "Binding handle mismatch.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3425
-msgid "No trust SAM account.\n"
+msgid "Cannot get call handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3430
-msgid "Trusted domain failure.\n"
+msgid "Null reference pointer.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3435
-msgid "Trusted relationship failure.\n"
+msgid "Enumeration value out of range.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3440
-msgid "Trust logon failure.\n"
+msgid "Byte count too small.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3445
-msgid "RPC call already in progress.\n"
+msgid "Bad stub data.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3450
-msgid "NETLOGON is not started.\n"
+msgid "Invalid user buffer.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3455
-msgid "Account expired.\n"
+msgid "Unrecognized media.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3460
-msgid "Redirector has open handles.\n"
+msgid "No trust secret.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3465
-msgid "Printer driver already installed.\n"
+msgid "No trust SAM account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3470
-msgid "Unknown port.\n"
+msgid "Trusted domain failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3475
-msgid "Unknown printer driver.\n"
+msgid "Trusted relationship failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3480
-msgid "Unknown print processor.\n"
+msgid "Trust logon failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3485
-msgid "Invalid separator file.\n"
+msgid "RPC call already in progress.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3490
-msgid "Invalid priority.\n"
+msgid "NETLOGON is not started.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3495
-msgid "Invalid printer name.\n"
+msgid "Account expired.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3500
-msgid "Printer already exists.\n"
+msgid "Redirector has open handles.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3505
-msgid "Invalid printer command.\n"
+msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3510
-msgid "Invalid data type.\n"
+msgid "Unknown port.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3515
-msgid "Invalid environment.\n"
+msgid "Unknown printer driver.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3520
-msgid "No more bindings.\n"
+msgid "Unknown print processor.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3525
-msgid "Can't log on with inter-domain trust account.\n"
+msgid "Invalid separator file.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3530
-msgid "Can't log on with workstation trust account.\n"
+msgid "Invalid priority.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3535
-msgid "Can't log on with server trust account.\n"
+msgid "Invalid printer name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3540
-msgid "Domain trust information inconsistent.\n"
+msgid "Printer already exists.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3545
-msgid "Server has open handles.\n"
+msgid "Invalid printer command.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3550
-msgid "Resource data not found.\n"
+msgid "Invalid data type.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3555
-msgid "Resource type not found.\n"
+msgid "Invalid environment.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3560
-msgid "Resource name not found.\n"
+msgid "No more bindings.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3565
-msgid "Resource language not found.\n"
+msgid "Can't log on with inter-domain trust account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3570
-msgid "Not enough quota.\n"
+msgid "Can't log on with workstation trust account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3575
-msgid "No interfaces.\n"
+msgid "Can't log on with server trust account.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3580
-msgid "RPC call canceled.\n"
+msgid "Domain trust information inconsistent.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3585
-msgid "Binding incomplete.\n"
+msgid "Server has open handles.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3590
-msgid "RPC comm failure.\n"
+msgid "Resource data not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3595
-msgid "Unsupported authorization level.\n"
+msgid "Resource type not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3600
-msgid "No principal name registered.\n"
+msgid "Resource name not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3605
-msgid "Not an RPC error.\n"
+msgid "Resource language not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3610
-msgid "UUID is local only.\n"
+msgid "Not enough quota.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3615
-msgid "Security package error.\n"
+msgid "No interfaces.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3620
-msgid "Thread not canceled.\n"
+msgid "RPC call canceled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3625
-msgid "Invalid handle operation.\n"
+msgid "Binding incomplete.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3630
-msgid "Wrong serializing package version.\n"
+msgid "RPC comm failure.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3635
-msgid "Wrong stub version.\n"
+msgid "Unsupported authorization level.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3640
-msgid "Invalid pipe object.\n"
+msgid "No principal name registered.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3645
-msgid "Wrong pipe order.\n"
+msgid "Not an RPC error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3650
-msgid "Wrong pipe version.\n"
+msgid "UUID is local only.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3655
-msgid "Group member not found.\n"
+msgid "Security package error.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3660
-msgid "Can't create endpoint mapper DB.\n"
+msgid "Thread not canceled.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3665
-msgid "Invalid object.\n"
+msgid "Invalid handle operation.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3670
-msgid "Invalid time.\n"
+msgid "Wrong serializing package version.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3675
-msgid "Invalid form name.\n"
+msgid "Wrong stub version.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3680
-msgid "Invalid form size.\n"
+msgid "Invalid pipe object.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3685
-msgid "Already awaiting printer handle.\n"
+msgid "Wrong pipe order.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3690
-msgid "Printer deleted.\n"
+msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3695
-msgid "Invalid printer state.\n"
+msgid "Group member not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3700
-msgid "User must change password.\n"
+msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3705
-msgid "Domain controller not found.\n"
+msgid "Invalid object.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3710
-msgid "Account locked out.\n"
+msgid "Invalid time.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3715
-msgid "Invalid pixel format.\n"
+msgid "Invalid form name.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3720
-msgid "Invalid driver.\n"
+msgid "Invalid form size.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3725
-msgid "Invalid object resolver set.\n"
+msgid "Already awaiting printer handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3730
-msgid "Incomplete RPC send.\n"
+msgid "Printer deleted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3735
-msgid "Invalid asynchronous RPC handle.\n"
+msgid "Invalid printer state.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3740
-msgid "Invalid asynchronous RPC call.\n"
+msgid "User must change password.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3745
-msgid "RPC pipe closed.\n"
+msgid "Domain controller not found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3750
-msgid "Discipline error on RPC pipe.\n"
+msgid "Account locked out.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3755
-msgid "No data on RPC pipe.\n"
+msgid "Invalid pixel format.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3760
-msgid "No site name available.\n"
+msgid "Invalid driver.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3765
-msgid "The file cannot be accessed.\n"
+msgid "Invalid object resolver set.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3770
-msgid "The filename cannot be resolved.\n"
+msgid "Incomplete RPC send.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3775
-msgid "RPC entry type mismatch.\n"
+msgid "Invalid asynchronous RPC handle.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3780
-msgid "Not all objects could be exported.\n"
+msgid "Invalid asynchronous RPC call.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3785
-msgid "The interface could not be exported.\n"
+msgid "RPC pipe closed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3790
-msgid "The profile could not be added.\n"
+msgid "Discipline error on RPC pipe.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3795
-msgid "The profile element could not be added.\n"
+msgid "No data on RPC pipe.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3800
-msgid "The profile element could not be removed.\n"
+msgid "No site name available.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3805
-msgid "The group element could not be added.\n"
+msgid "The file cannot be accessed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3810
-msgid "The group element could not be removed.\n"
+msgid "The filename cannot be resolved.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3815
-msgid "The username could not be found.\n"
+msgid "RPC entry type mismatch.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3820
-msgid "This network connection does not exist.\n"
+msgid "Not all objects could be exported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3825
-msgid "File or directory is not a reparse point.\n"
+msgid "The interface could not be exported.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3830
-msgid "Call interrupted.\n"
+msgid "The profile could not be added.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3835
-msgid "Invalid file handle.\n"
+msgid "The profile element could not be added.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3840
+msgid "The profile element could not be removed.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3845
-msgid "Invalid pointer address.\n"
+msgid "The group element could not be added.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3850
-msgid "Invalid argument.\n"
+msgid "The group element could not be removed.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3855
+msgid "The username could not be found.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3860
-msgid "Cannot assign requested address.\n"
+msgid "This network connection does not exist.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3865
-msgid "Connection reset by peer.\n"
+msgid "File or directory is not a reparse point.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3870
+msgid "Call interrupted.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:3875
+msgid "Invalid file handle.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3885
+msgid "Invalid pointer address.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3890
+msgid "Invalid argument.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3900
+msgid "Cannot assign requested address.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3905
+msgid "Connection reset by peer.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3915
 #, fuzzy
 msgid "Host not found.\n"
 msgstr "सूचना (&o)"
 
-#: dlls/kernelbase/winerror.mc:3880
+#: dlls/kernelbase/winerror.mc:3920
 msgid "Nonauthoritative host not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3885
+#: dlls/kernelbase/winerror.mc:3925
 msgid "Nonrecoverable error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3890
+#: dlls/kernelbase/winerror.mc:3930
 msgid "Name valid, no data record.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3911
+#: dlls/kernelbase/winerror.mc:3951
 msgid "Not implemented.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3932
+#: dlls/kernelbase/winerror.mc:3972
 msgid "Call failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3897
+#: dlls/kernelbase/winerror.mc:3937
 msgid "Unable to find matching object.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3904
+#: dlls/kernelbase/winerror.mc:3944
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3918
+#: dlls/kernelbase/winerror.mc:3958
 msgid "Invalid call.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3925
+#: dlls/kernelbase/winerror.mc:3965
 msgid "Resource is not currently available.\n"
 msgstr ""
 
