@@ -46,6 +46,29 @@
 
 #include <dlfcn.h>
 
+#define ANDROID_LOG_ERR ANDROID_LOG_ERROR
+#define ANDROID_LOG_TRACE ANDROID_LOG_VERBOSE
+#define ANDROID_LOG_FIXME 16
+
+static int log_flags;
+
+#define LOG(level, fmt, ...) \
+    do { \
+        if (!(log_flags & (1 << __WINE_DBCL_INIT)) || (log_flags & (1 << __WINE_DBCL_ ## level))) \
+        { \
+            int prio = (ANDROID_LOG_ ## level == ANDROID_LOG_FIXME) ? \
+                       ANDROID_LOG_WARN : ANDROID_LOG_ ## level; \
+            p__android_log_print(prio, "wineandroid.drv", "%s: %s" fmt, \
+                                 __func__, \
+                                 (ANDROID_LOG_ ## level == ANDROID_LOG_FIXME) ? "FIXME: " : "", \
+                                 ##__VA_ARGS__); \
+        } \
+    } while (0)
+
+#define DBGSTR_RECT_FMT "(%d,%d)-(%d,%d)"
+#define DBGSTR_RECT(rect) (int)(rect)->left, (int)(rect)->top, (int)(rect)->right, (int)(rect)->bottom
+
+
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 #ifndef SYNC_IOC_WAIT
@@ -260,7 +283,7 @@ static struct native_win_data *get_native_win_data( HWND hwnd, BOOL opengl )
     struct native_win_data *data = data_map[data_map_idx( hwnd, opengl )];
 
     if (data && data->hwnd == hwnd && !data->opengl == !opengl) return data;
-    WARN( "unknown win %p opengl %u\n", hwnd, opengl );
+    LOG( WARN, "unknown win %p opengl %u\n", hwnd, opengl );
     return NULL;
 }
 
@@ -360,7 +383,7 @@ static int register_buffer( struct native_win_data *win, struct AHardwareBuffer 
         i = win->buffer_lru[NB_CACHED_BUFFERS - 1];
         assert( i < NB_CACHED_BUFFERS );
 
-        TRACE( "%p %p evicting buffer %p id %d from cache\n",
+        LOG( TRACE, "%p %p evicting buffer %p id %d from cache\n",
                win->hwnd, win->parent, win->buffers[i], i );
         pAHardwareBuffer_release(win->buffers[i]);
     }
@@ -369,7 +392,7 @@ static int register_buffer( struct native_win_data *win, struct AHardwareBuffer 
 
     pAHardwareBuffer_acquire(buffer);
     *is_new = 1;
-    TRACE( "%p %p %p -> %d\n", win->hwnd, win->parent, buffer, i );
+    LOG( TRACE, "%p %p %p -> %d\n", win->hwnd, win->parent, buffer, i );
 
 done:
     insert_buffer_lru( win, i );
@@ -380,7 +403,7 @@ static struct ANativeWindowBuffer *get_registered_buffer( struct native_win_data
 {
     if (id < 0 || id >= NB_CACHED_BUFFERS || !win->buffers[id])
     {
-        ERR( "unknown buffer %d for %p %p\n", id, win->hwnd, win->parent );
+        LOG( ERR, "unknown buffer %d for %p %p\n", id, win->hwnd, win->parent );
         return NULL;
     }
     return anwb_from_ahb(win->buffers[id]);
@@ -416,7 +439,7 @@ static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
 
     if (data)
     {
-        WARN( "data for %p not freed correctly\n", data->hwnd );
+        LOG( WARN, "data for %p not freed correctly\n", data->hwnd );
         free_native_win_data( data );
     }
     if (!(data = calloc( 1, sizeof(*data) ))) return NULL;
@@ -443,7 +466,7 @@ NTSTATUS android_register_window( void *arg )
     {
         pANativeWindow_release( win );
         if (data) NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
-        TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
+        LOG( TRACE, "%p -> %p win %p (unchanged)\n", hwnd, data, win );
         return 0;
     }
 
@@ -456,7 +479,7 @@ NTSTATUS android_register_window( void *arg )
     win->setSwapInterval( win, data->swap_interval );
     unwrap_java_call();
     NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
-    TRACE( "%p -> %p win %p\n", hwnd, data, win );
+    LOG( TRACE, "%p -> %p win %p\n", hwnd, data, win );
     return 0;
 }
 
@@ -490,7 +513,7 @@ static NTSTATUS android_error_to_status( int err )
     case -EBADMSG:     return STATUS_INVALID_DEVICE_REQUEST;
     case -EWOULDBLOCK: return STATUS_DEVICE_NOT_READY;
     default:
-        FIXME( "unmapped error %d\n", err );
+        LOG( FIXME, "unmapped error %d\n", err );
         return STATUS_UNSUCCESSFUL;
     }
 }
@@ -531,7 +554,7 @@ static jobject load_java_method( jmethodID *method, const char *name, const char
         unwrap_java_call();
         if (!*method)
         {
-            FIXME( "method %s not found\n", name );
+            LOG( FIXME, "method %s not found\n", name );
             return NULL;
         }
     }
@@ -562,7 +585,7 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
     if (!(win_data = create_native_win_data( LongToHandle(res->hdr.hwnd), res->hdr.opengl )))
         return STATUS_NO_MEMORY;
 
-    TRACE( "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
+    LOG( TRACE, "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
 
     if (!(object = load_java_method( &method, "createWindow", "(IZZI)V" ))) return STATUS_NOT_SUPPORTED;
 
@@ -583,7 +606,7 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
 
     win_data = get_ioctl_native_win_data( &res->hdr );
 
-    TRACE( "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
+    LOG( TRACE, "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
 
     if (!(object = load_java_method( &method, "destroyWindow", "(I)V" ))) return STATUS_NOT_SUPPORTED;
 
@@ -602,9 +625,9 @@ static NTSTATUS windowPosChanged_ioctl( void *data, DWORD in_size, DWORD out_siz
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
 
-    TRACE( "hwnd %08x win %s client %s visible %s style %08x flags %08x after %08x owner %08x\n",
-           res->hdr.hwnd, wine_dbgstr_rect(&res->window_rect), wine_dbgstr_rect(&res->client_rect),
-           wine_dbgstr_rect(&res->visible_rect), res->style, res->flags, res->after, res->owner );
+    LOG( TRACE, "hwnd %08x win " DBGSTR_RECT_FMT " client " DBGSTR_RECT_FMT " visible " DBGSTR_RECT_FMT " style %08x flags %08x after %08x owner %08x\n",
+                res->hdr.hwnd, DBGSTR_RECT(&res->window_rect), DBGSTR_RECT(&res->client_rect),
+                DBGSTR_RECT(&res->visible_rect), res->style, res->flags, res->after, res->owner );
 
     if (!(object = load_java_method( &method, "windowPosChanged", "(IIIIIIIIIIIIIIIII)V" )))
         return STATUS_NOT_SUPPORTED;
@@ -643,17 +666,17 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
     unwrap_java_call();
     if (ret)
     {
-        ERR( "%08x failed %d\n", res->hdr.hwnd, ret );
+        LOG( ERR, "%08x failed %d\n", res->hdr.hwnd, ret );
         return android_error_to_status( ret );
     }
 
     if (!buffer)
     {
-        TRACE( "got invalid buffer\n" );
+        LOG( TRACE, "got invalid buffer\n" );
         return STATUS_UNSUCCESSFUL;
     }
 
-    TRACE( "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
+    LOG( TRACE, "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
     ahb = pANativeWindowBuffer_getHardwareBuffer( buffer );
 
     res->buffer_id = register_buffer( win_data, ahb, &is_new );
@@ -733,7 +756,7 @@ static NTSTATUS cancelBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, U
 
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
-    TRACE( "%08x buffer %p\n", res->hdr.hwnd, buffer );
+    LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
     wrap_java_call();
     ret = parent->cancelBuffer( parent, buffer, -1 );
     unwrap_java_call();
@@ -756,7 +779,7 @@ static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, UL
 
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
-    TRACE( "%08x buffer %p\n", res->hdr.hwnd, buffer );
+    LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
     wrap_java_call();
     ret = parent->queueBuffer( parent, buffer, -1 );
     unwrap_java_call();
@@ -864,7 +887,7 @@ static NTSTATUS perform_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_
     }
     case NATIVE_WINDOW_LOCK:
     default:
-        FIXME( "unsupported perform op %d\n", res->operation );
+        LOG( FIXME, "unsupported perform op %d\n", res->operation );
         break;
     }
     return android_error_to_status( ret );
@@ -900,7 +923,7 @@ static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size
 
     if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
 
-    TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
+    LOG( TRACE, "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
 
     if (!(object = load_java_method( &method, "setParent", "(II)V" ))) return STATUS_NOT_SUPPORTED;
 
@@ -918,7 +941,7 @@ static NTSTATUS setCapture_ioctl( void *data, DWORD in_size, DWORD out_size, ULO
 
     if (res->hdr.hwnd && !get_ioctl_native_win_data( &res->hdr )) return STATUS_INVALID_HANDLE;
 
-    TRACE( "hwnd %08x\n", res->hdr.hwnd );
+    LOG( TRACE, "hwnd %08x\n", res->hdr.hwnd );
 
     InterlockedExchangePointer( (void **)&capture_window, LongToHandle( res->hdr.hwnd ));
     return STATUS_SUCCESS;
@@ -940,7 +963,7 @@ static NTSTATUS setCursor_ioctl( void *data, DWORD in_size, DWORD out_size, ULON
     if (in_size != offsetof( struct ioctl_android_set_cursor, bits[size] ))
         return STATUS_INVALID_PARAMETER;
 
-    TRACE( "hwnd %08x size %d\n", res->hdr.hwnd, size );
+    LOG( TRACE, "hwnd %08x size %d\n", res->hdr.hwnd, size );
 
     if (!(object = load_java_method( &method, "setCursor", "(IIIII[I)V" )))
         return STATUS_NOT_SUPPORTED;
@@ -1032,6 +1055,7 @@ void start_android_device(void)
     void *ret_ptr;
     ULONG ret_len;
     struct dispatch_callback_params params = {.callback = start_device_callback};
+    log_flags = __wine_dbg_get_channel_flags(&__wine_dbch_android);
     if (KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len )) return;
     if (ret_len == sizeof(thread)) thread = *(HANDLE *)ret_ptr;
 }
