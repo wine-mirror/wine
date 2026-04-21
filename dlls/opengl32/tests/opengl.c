@@ -1514,8 +1514,7 @@ static void test_object_creation( HDC winhdc )
             /* host often doesn't support legacy program / shaders in core contexts */
             todo_wine_if( i == OBJ_PROGRAM_ARB || i == OBJ_PROGRAM_NV || i == OBJ_SHADER_EXT || i == OBJ_SHADER_ATI )
             /* Wine never allows implicit allocation in core contexts */
-            todo_wine_if( i == OBJ_FENCE_APPLE || i == OBJ_FENCE_NV || i == OBJ_PATH_NV ||
-                          i == OBJ_TRANSFORM_FEEDBACK_NV || i == OBJ_VERTEX_ARRAY_APPLE )
+            todo_wine_if( i == OBJ_FENCE_APPLE || i == OBJ_FENCE_NV || i == OBJ_TRANSFORM_FEEDBACK_NV || i == OBJ_VERTEX_ARRAY_APPLE )
             ok_ret( GL_NO_ERROR, glGetError() );
             ok_u4( obj, ==, 1 );
         }

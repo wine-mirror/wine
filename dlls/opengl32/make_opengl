@@ -707,6 +707,10 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_MEMORY"              if $class eq "memory";
     return "OBJ_TYPE_MEMORY"              if $ptype =~ /GLuint \*/ and $pname =~ /^memoryObjects/;
     return "OBJ_TYPE_MEMORY"              if $ptype =~ /GLuint/ and $pname =~ /^memory(Object)?$/;
+    return "OBJ_TYPE_PATH"                if $class eq "Path";
+    return "OBJ_TYPE_PATH"                if $func =~ /^glGenPaths/ and $pname eq "ret";
+    return "OBJ_TYPE_PATH"                if $func eq "glPathGlyphIndexArrayNV" and $pname eq "firstPathName";
+    return "OBJ_TYPE_PATH"                if $func eq "glPathMemoryGlyphIndexArrayNV" and $pname eq "firstPathName";
     return "OBJ_TYPE_PROGRAM"             if $class eq "program";
     return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
     return "OBJ_TYPE_SAMPLER"             if $class eq "sampler";
@@ -757,6 +761,7 @@ sub get_object_type($$$$)
     print "Missing possible display list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
     print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
     print "Missing possible memory: $func $ptype $pname $class\n" if lc( $pname ) =~ /memory/;
+    print "Missing possible path: $func $ptype $pname $class\n" if lc( $pname ) =~ /path/;
     print "Missing possible program: $func $ptype $pname $class\n" if lc( $pname ) =~ /program/;
     print "Missing possible sampler: $func $ptype $pname $class\n" if lc( $pname ) =~ /sampler/;
     print "Missing possible semaphore: $func $ptype $pname $class\n" if lc( $pname ) =~ /semaphore/;
@@ -771,6 +776,7 @@ sub allocate_object_names($)
     my $ret = $name =~ /(APPLE|ARB|ATI|EXT|NV)$/ ? "TRUE" : "FALSE";
 
     return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
+    return "TRUE" if has_extension( $name, "GL_NV_path_rendering" );
     return $ret if $name =~ /^glBindBuffer/;
     return $ret if $name =~ /^glBindFramebuffer/;
     return $ret if $name =~ /^glBindProgram/;

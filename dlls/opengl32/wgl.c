@@ -109,6 +109,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_DISPLAY_LIST: return "display list";
     case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
     case OBJ_TYPE_MEMORY: return "memory";
+    case OBJ_TYPE_PATH: return "path";
     case OBJ_TYPE_PROGRAM: return "program";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
     case OBJ_TYPE_SEMAPHORE: return "semaphore";
@@ -399,6 +400,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glGenLists, .range = 1 ); return args.ret; }
     case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
     case OBJ_TYPE_MEMORY: assert( 0 ); return 0;
+    case OBJ_TYPE_PATH: { MAKE_OBJECT_CALL( glGenPathsNV, .range = 1 ); return args.ret; }
     case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glGenProgramsARB, .n = 1, .programs = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
     case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
@@ -618,6 +620,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     case OBJ_TYPE_SHADER_EXT:
     case OBJ_TYPE_SHADER_ATI:
     case OBJ_TYPE_SEMAPHORE:
+    case OBJ_TYPE_PATH:
         alloc_client = extension;
         break;
     case OBJ_TYPE_SAMPLER:

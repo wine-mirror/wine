@@ -5331,9 +5331,13 @@ static void WINAPI glCopyNamedBufferSubData( GLuint readBuffer, GLuint writeBuff
 
 static void WINAPI glCopyPathNV( GLuint resultPath, GLuint srcPath )
 {
-    struct glCopyPathNV_params args = { .teb = NtCurrentTeb(), .resultPath = resultPath, .srcPath = srcPath };
+    struct glCopyPathNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "resultPath %d, srcPath %d\n", resultPath, srcPath );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &resultPath, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &srcPath, TRUE )) return;
+    args.resultPath = *map_context_objects( OBJ_TYPE_PATH, 1, &resultPath );
+    args.srcPath = *map_context_objects( OBJ_TYPE_PATH, 1, &srcPath );
     if ((status = UNIX_CALL( glCopyPathNV, &args ))) WARN( "glCopyPathNV returned %#lx\n", status );
 }
 
@@ -5464,33 +5468,41 @@ static void WINAPI glCopyTextureSubImage3DEXT( GLuint texture, GLenum target, GL
 
 static void WINAPI glCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glCoverFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
+    struct glCoverFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, coverMode %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glCoverFillPathInstancedNV, &args ))) WARN( "glCoverFillPathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glCoverFillPathNV( GLuint path, GLenum coverMode )
 {
-    struct glCoverFillPathNV_params args = { .teb = NtCurrentTeb(), .path = path, .coverMode = coverMode };
+    struct glCoverFillPathNV_params args = { .teb = NtCurrentTeb(), .coverMode = coverMode };
     NTSTATUS status;
     TRACE( "path %d, coverMode %d\n", path, coverMode );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glCoverFillPathNV, &args ))) WARN( "glCoverFillPathNV returned %#lx\n", status );
 }
 
 static void WINAPI glCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glCoverStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
+    struct glCoverStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, coverMode %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glCoverStrokePathInstancedNV, &args ))) WARN( "glCoverStrokePathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glCoverStrokePathNV( GLuint path, GLenum coverMode )
 {
-    struct glCoverStrokePathNV_params args = { .teb = NtCurrentTeb(), .path = path, .coverMode = coverMode };
+    struct glCoverStrokePathNV_params args = { .teb = NtCurrentTeb(), .coverMode = coverMode };
     NTSTATUS status;
     TRACE( "path %d, coverMode %d\n", path, coverMode );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glCoverStrokePathNV, &args ))) WARN( "glCoverStrokePathNV returned %#lx\n", status );
 }
 
@@ -5964,9 +5976,10 @@ static void WINAPI glDeleteOcclusionQueriesNV( GLsizei n, const GLuint *ids )
 
 static void WINAPI glDeletePathsNV( GLuint path, GLsizei range )
 {
-    struct glDeletePathsNV_params args = { .teb = NtCurrentTeb(), .path = path, .range = range };
+    struct glDeletePathsNV_params args = { .teb = NtCurrentTeb(), .range = range };
     NTSTATUS status;
     TRACE( "path %d, range %d\n", path, range );
+    args.path = *del_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glDeletePathsNV, &args ))) WARN( "glDeletePathsNV returned %#lx\n", status );
 }
 
@@ -7847,6 +7860,7 @@ static GLuint WINAPI glGenPathsNV( GLsizei range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenPathsNV, &args ))) WARN( "glGenPathsNV returned %#lx\n", status );
+    args.ret = put_context_object_range( OBJ_TYPE_PATH, range, args.ret );
     return args.ret;
 }
 
@@ -9664,74 +9678,92 @@ static void WINAPI glGetPathColorGenivNV( GLenum color, GLenum pname, GLint *val
 
 static void WINAPI glGetPathCommandsNV( GLuint path, GLubyte *commands )
 {
-    struct glGetPathCommandsNV_params args = { .teb = NtCurrentTeb(), .path = path, .commands = commands };
+    struct glGetPathCommandsNV_params args = { .teb = NtCurrentTeb(), .commands = commands };
     NTSTATUS status;
     TRACE( "path %d, commands %p\n", path, commands );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathCommandsNV, &args ))) WARN( "glGetPathCommandsNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathCoordsNV( GLuint path, GLfloat *coords )
 {
-    struct glGetPathCoordsNV_params args = { .teb = NtCurrentTeb(), .path = path, .coords = coords };
+    struct glGetPathCoordsNV_params args = { .teb = NtCurrentTeb(), .coords = coords };
     NTSTATUS status;
     TRACE( "path %d, coords %p\n", path, coords );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathCoordsNV, &args ))) WARN( "glGetPathCoordsNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathDashArrayNV( GLuint path, GLfloat *dashArray )
 {
-    struct glGetPathDashArrayNV_params args = { .teb = NtCurrentTeb(), .path = path, .dashArray = dashArray };
+    struct glGetPathDashArrayNV_params args = { .teb = NtCurrentTeb(), .dashArray = dashArray };
     NTSTATUS status;
     TRACE( "path %d, dashArray %p\n", path, dashArray );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathDashArrayNV, &args ))) WARN( "glGetPathDashArrayNV returned %#lx\n", status );
 }
 
 static GLfloat WINAPI glGetPathLengthNV( GLuint path, GLsizei startSegment, GLsizei numSegments )
 {
-    struct glGetPathLengthNV_params args = { .teb = NtCurrentTeb(), .path = path, .startSegment = startSegment, .numSegments = numSegments };
+    struct glGetPathLengthNV_params args = { .teb = NtCurrentTeb(), .startSegment = startSegment, .numSegments = numSegments };
     NTSTATUS status;
     TRACE( "path %d, startSegment %d, numSegments %d\n", path, startSegment, numSegments );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return args.ret;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathLengthNV, &args ))) WARN( "glGetPathLengthNV returned %#lx\n", status );
     return args.ret;
 }
 
 static void WINAPI glGetPathMetricRangeNV( GLbitfield metricQueryMask, GLuint firstPathName, GLsizei numPaths, GLsizei stride, GLfloat *metrics )
 {
-    struct glGetPathMetricRangeNV_params args = { .teb = NtCurrentTeb(), .metricQueryMask = metricQueryMask, .firstPathName = firstPathName, .numPaths = numPaths, .stride = stride, .metrics = metrics };
+    struct glGetPathMetricRangeNV_params args = { .teb = NtCurrentTeb(), .metricQueryMask = metricQueryMask, .numPaths = numPaths, .stride = stride, .metrics = metrics };
     NTSTATUS status;
     TRACE( "metricQueryMask %d, firstPathName %d, numPaths %d, stride %d, metrics %p\n", metricQueryMask, firstPathName, numPaths, stride, metrics );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &firstPathName, TRUE )) return;
+    args.firstPathName = *map_context_objects( OBJ_TYPE_PATH, 1, &firstPathName );
     if ((status = UNIX_CALL( glGetPathMetricRangeNV, &args ))) WARN( "glGetPathMetricRangeNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathMetricsNV( GLbitfield metricQueryMask, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLsizei stride, GLfloat *metrics )
 {
-    struct glGetPathMetricsNV_params args = { .teb = NtCurrentTeb(), .metricQueryMask = metricQueryMask, .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .stride = stride, .metrics = metrics };
+    struct glGetPathMetricsNV_params args = { .teb = NtCurrentTeb(), .metricQueryMask = metricQueryMask, .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .stride = stride, .metrics = metrics };
     NTSTATUS status;
     TRACE( "metricQueryMask %d, numPaths %d, pathNameType %d, paths %p, pathBase %d, stride %d, metrics %p\n", metricQueryMask, numPaths, pathNameType, paths, pathBase, stride, metrics );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glGetPathMetricsNV, &args ))) WARN( "glGetPathMetricsNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathParameterfvNV( GLuint path, GLenum pname, GLfloat *value )
 {
-    struct glGetPathParameterfvNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glGetPathParameterfvNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %p\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathParameterfvNV, &args ))) WARN( "glGetPathParameterfvNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathParameterivNV( GLuint path, GLenum pname, GLint *value )
 {
-    struct glGetPathParameterivNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glGetPathParameterivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %p\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glGetPathParameterivNV, &args ))) WARN( "glGetPathParameterivNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetPathSpacingNV( GLenum pathListMode, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLfloat advanceScale, GLfloat kerningScale, GLenum transformType, GLfloat *returnedSpacing )
 {
-    struct glGetPathSpacingNV_params args = { .teb = NtCurrentTeb(), .pathListMode = pathListMode, .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .advanceScale = advanceScale, .kerningScale = kerningScale, .transformType = transformType, .returnedSpacing = returnedSpacing };
+    struct glGetPathSpacingNV_params args = { .teb = NtCurrentTeb(), .pathListMode = pathListMode, .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .advanceScale = advanceScale, .kerningScale = kerningScale, .transformType = transformType, .returnedSpacing = returnedSpacing };
     NTSTATUS status;
     TRACE( "pathListMode %d, numPaths %d, pathNameType %d, paths %p, pathBase %d, advanceScale %f, kerningScale %f, transformType %d, returnedSpacing %p\n", pathListMode, numPaths, pathNameType, paths, pathBase, advanceScale, kerningScale, transformType, returnedSpacing );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glGetPathSpacingNV, &args ))) WARN( "glGetPathSpacingNV returned %#lx\n", status );
 }
 
@@ -11981,9 +12013,15 @@ static void WINAPI glInstrumentsBufferSGIX( GLsizei size, GLint *buffer )
 
 static void WINAPI glInterpolatePathsNV( GLuint resultPath, GLuint pathA, GLuint pathB, GLfloat weight )
 {
-    struct glInterpolatePathsNV_params args = { .teb = NtCurrentTeb(), .resultPath = resultPath, .pathA = pathA, .pathB = pathB, .weight = weight };
+    struct glInterpolatePathsNV_params args = { .teb = NtCurrentTeb(), .weight = weight };
     NTSTATUS status;
     TRACE( "resultPath %d, pathA %d, pathB %d, weight %f\n", resultPath, pathA, pathB, weight );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &resultPath, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathA, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathB, TRUE )) return;
+    args.resultPath = *map_context_objects( OBJ_TYPE_PATH, 1, &resultPath );
+    args.pathA = *map_context_objects( OBJ_TYPE_PATH, 1, &pathA );
+    args.pathB = *map_context_objects( OBJ_TYPE_PATH, 1, &pathB );
     if ((status = UNIX_CALL( glInterpolatePathsNV, &args ))) WARN( "glInterpolatePathsNV returned %#lx\n", status );
 }
 
@@ -12237,27 +12275,33 @@ static GLboolean WINAPI glIsOcclusionQueryNV( GLuint id )
 
 static GLboolean WINAPI glIsPathNV( GLuint path )
 {
-    struct glIsPathNV_params args = { .teb = NtCurrentTeb(), .path = path };
+    struct glIsPathNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "path %d\n", path );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return args.ret;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glIsPathNV, &args ))) WARN( "glIsPathNV returned %#lx\n", status );
     return args.ret;
 }
 
 static GLboolean WINAPI glIsPointInFillPathNV( GLuint path, GLuint mask, GLfloat x, GLfloat y )
 {
-    struct glIsPointInFillPathNV_params args = { .teb = NtCurrentTeb(), .path = path, .mask = mask, .x = x, .y = y };
+    struct glIsPointInFillPathNV_params args = { .teb = NtCurrentTeb(), .mask = mask, .x = x, .y = y };
     NTSTATUS status;
     TRACE( "path %d, mask %d, x %f, y %f\n", path, mask, x, y );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return args.ret;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glIsPointInFillPathNV, &args ))) WARN( "glIsPointInFillPathNV returned %#lx\n", status );
     return args.ret;
 }
 
 static GLboolean WINAPI glIsPointInStrokePathNV( GLuint path, GLfloat x, GLfloat y )
 {
-    struct glIsPointInStrokePathNV_params args = { .teb = NtCurrentTeb(), .path = path, .x = x, .y = y };
+    struct glIsPointInStrokePathNV_params args = { .teb = NtCurrentTeb(), .x = x, .y = y };
     NTSTATUS status;
     TRACE( "path %d, x %f, y %f\n", path, x, y );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return args.ret;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glIsPointInStrokePathNV, &args ))) WARN( "glIsPointInStrokePathNV returned %#lx\n", status );
     return args.ret;
 }
@@ -15823,17 +15867,21 @@ static void WINAPI glPathColorGenNV( GLenum color, GLenum genMode, GLenum colorF
 
 static void WINAPI glPathCommandsNV( GLuint path, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords )
 {
-    struct glPathCommandsNV_params args = { .teb = NtCurrentTeb(), .path = path, .numCommands = numCommands, .commands = commands, .numCoords = numCoords, .coordType = coordType, .coords = coords };
+    struct glPathCommandsNV_params args = { .teb = NtCurrentTeb(), .numCommands = numCommands, .commands = commands, .numCoords = numCoords, .coordType = coordType, .coords = coords };
     NTSTATUS status;
     TRACE( "path %d, numCommands %d, commands %p, numCoords %d, coordType %d, coords %p\n", path, numCommands, commands, numCoords, coordType, coords );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathCommandsNV, &args ))) WARN( "glPathCommandsNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathCoordsNV( GLuint path, GLsizei numCoords, GLenum coordType, const void *coords )
 {
-    struct glPathCoordsNV_params args = { .teb = NtCurrentTeb(), .path = path, .numCoords = numCoords, .coordType = coordType, .coords = coords };
+    struct glPathCoordsNV_params args = { .teb = NtCurrentTeb(), .numCoords = numCoords, .coordType = coordType, .coords = coords };
     NTSTATUS status;
     TRACE( "path %d, numCoords %d, coordType %d, coords %p\n", path, numCoords, coordType, coords );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathCoordsNV, &args ))) WARN( "glPathCoordsNV returned %#lx\n", status );
 }
 
@@ -15847,9 +15895,11 @@ static void WINAPI glPathCoverDepthFuncNV( GLenum func )
 
 static void WINAPI glPathDashArrayNV( GLuint path, GLsizei dashCount, const GLfloat *dashArray )
 {
-    struct glPathDashArrayNV_params args = { .teb = NtCurrentTeb(), .path = path, .dashCount = dashCount, .dashArray = dashArray };
+    struct glPathDashArrayNV_params args = { .teb = NtCurrentTeb(), .dashCount = dashCount, .dashArray = dashArray };
     NTSTATUS status;
     TRACE( "path %d, dashCount %d, dashArray %p\n", path, dashCount, dashArray );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathDashArrayNV, &args ))) WARN( "glPathDashArrayNV returned %#lx\n", status );
 }
 
@@ -15863,9 +15913,11 @@ static void WINAPI glPathFogGenNV( GLenum genMode )
 
 static GLenum WINAPI glPathGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
 {
-    struct glPathGlyphIndexArrayNV_params args = { .teb = NtCurrentTeb(), .firstPathName = firstPathName, .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .firstGlyphIndex = firstGlyphIndex, .numGlyphs = numGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
+    struct glPathGlyphIndexArrayNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .firstGlyphIndex = firstGlyphIndex, .numGlyphs = numGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
     NTSTATUS status;
     TRACE( "firstPathName %d, fontTarget %d, fontName %p, fontStyle %d, firstGlyphIndex %d, numGlyphs %d, pathParameterTemplate %d, emScale %f\n", firstPathName, fontTarget, fontName, fontStyle, firstGlyphIndex, numGlyphs, pathParameterTemplate, emScale );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &firstPathName, TRUE )) return args.ret;
+    args.firstPathName = *map_context_objects( OBJ_TYPE_PATH, 1, &firstPathName );
     if ((status = UNIX_CALL( glPathGlyphIndexArrayNV, &args ))) WARN( "glPathGlyphIndexArrayNV returned %#lx\n", status );
     return args.ret;
 }
@@ -15881,58 +15933,76 @@ static GLenum WINAPI glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fon
 
 static void WINAPI glPathGlyphRangeNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyph, GLsizei numGlyphs, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
 {
-    struct glPathGlyphRangeNV_params args = { .teb = NtCurrentTeb(), .firstPathName = firstPathName, .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .firstGlyph = firstGlyph, .numGlyphs = numGlyphs, .handleMissingGlyphs = handleMissingGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
+    struct glPathGlyphRangeNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .firstGlyph = firstGlyph, .numGlyphs = numGlyphs, .handleMissingGlyphs = handleMissingGlyphs, .emScale = emScale };
     NTSTATUS status;
     TRACE( "firstPathName %d, fontTarget %d, fontName %p, fontStyle %d, firstGlyph %d, numGlyphs %d, handleMissingGlyphs %d, pathParameterTemplate %d, emScale %f\n", firstPathName, fontTarget, fontName, fontStyle, firstGlyph, numGlyphs, handleMissingGlyphs, pathParameterTemplate, emScale );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &firstPathName, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathParameterTemplate, TRUE )) return;
+    args.firstPathName = *map_context_objects( OBJ_TYPE_PATH, 1, &firstPathName );
+    args.pathParameterTemplate = *map_context_objects( OBJ_TYPE_PATH, 1, &pathParameterTemplate );
     if ((status = UNIX_CALL( glPathGlyphRangeNV, &args ))) WARN( "glPathGlyphRangeNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathGlyphsNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLsizei numGlyphs, GLenum type, const void *charcodes, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
 {
-    struct glPathGlyphsNV_params args = { .teb = NtCurrentTeb(), .firstPathName = firstPathName, .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .numGlyphs = numGlyphs, .type = type, .charcodes = charcodes, .handleMissingGlyphs = handleMissingGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
+    struct glPathGlyphsNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .numGlyphs = numGlyphs, .type = type, .charcodes = charcodes, .handleMissingGlyphs = handleMissingGlyphs, .emScale = emScale };
     NTSTATUS status;
     TRACE( "firstPathName %d, fontTarget %d, fontName %p, fontStyle %d, numGlyphs %d, type %d, charcodes %p, handleMissingGlyphs %d, pathParameterTemplate %d, emScale %f\n", firstPathName, fontTarget, fontName, fontStyle, numGlyphs, type, charcodes, handleMissingGlyphs, pathParameterTemplate, emScale );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &firstPathName, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathParameterTemplate, TRUE )) return;
+    args.firstPathName = *map_context_objects( OBJ_TYPE_PATH, 1, &firstPathName );
+    args.pathParameterTemplate = *map_context_objects( OBJ_TYPE_PATH, 1, &pathParameterTemplate );
     if ((status = UNIX_CALL( glPathGlyphsNV, &args ))) WARN( "glPathGlyphsNV returned %#lx\n", status );
 }
 
 static GLenum WINAPI glPathMemoryGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, GLsizeiptr fontSize, const void *fontData, GLsizei faceIndex, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
 {
-    struct glPathMemoryGlyphIndexArrayNV_params args = { .teb = NtCurrentTeb(), .firstPathName = firstPathName, .fontTarget = fontTarget, .fontSize = fontSize, .fontData = fontData, .faceIndex = faceIndex, .firstGlyphIndex = firstGlyphIndex, .numGlyphs = numGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
+    struct glPathMemoryGlyphIndexArrayNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontSize = fontSize, .fontData = fontData, .faceIndex = faceIndex, .firstGlyphIndex = firstGlyphIndex, .numGlyphs = numGlyphs, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale };
     NTSTATUS status;
     TRACE( "firstPathName %d, fontTarget %d, fontSize %Id, fontData %p, faceIndex %d, firstGlyphIndex %d, numGlyphs %d, pathParameterTemplate %d, emScale %f\n", firstPathName, fontTarget, fontSize, fontData, faceIndex, firstGlyphIndex, numGlyphs, pathParameterTemplate, emScale );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &firstPathName, TRUE )) return args.ret;
+    args.firstPathName = *map_context_objects( OBJ_TYPE_PATH, 1, &firstPathName );
     if ((status = UNIX_CALL( glPathMemoryGlyphIndexArrayNV, &args ))) WARN( "glPathMemoryGlyphIndexArrayNV returned %#lx\n", status );
     return args.ret;
 }
 
 static void WINAPI glPathParameterfNV( GLuint path, GLenum pname, GLfloat value )
 {
-    struct glPathParameterfNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glPathParameterfNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %f\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathParameterfNV, &args ))) WARN( "glPathParameterfNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathParameterfvNV( GLuint path, GLenum pname, const GLfloat *value )
 {
-    struct glPathParameterfvNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glPathParameterfvNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %p\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathParameterfvNV, &args ))) WARN( "glPathParameterfvNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathParameteriNV( GLuint path, GLenum pname, GLint value )
 {
-    struct glPathParameteriNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glPathParameteriNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %d\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathParameteriNV, &args ))) WARN( "glPathParameteriNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathParameterivNV( GLuint path, GLenum pname, const GLint *value )
 {
-    struct glPathParameterivNV_params args = { .teb = NtCurrentTeb(), .path = path, .pname = pname, .value = value };
+    struct glPathParameterivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .value = value };
     NTSTATUS status;
     TRACE( "path %d, pname %d, value %p\n", path, pname, value );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathParameterivNV, &args ))) WARN( "glPathParameterivNV returned %#lx\n", status );
 }
 
@@ -15954,25 +16024,31 @@ static void WINAPI glPathStencilFuncNV( GLenum func, GLint ref, GLuint mask )
 
 static void WINAPI glPathStringNV( GLuint path, GLenum format, GLsizei length, const void *pathString )
 {
-    struct glPathStringNV_params args = { .teb = NtCurrentTeb(), .path = path, .format = format, .length = length, .pathString = pathString };
+    struct glPathStringNV_params args = { .teb = NtCurrentTeb(), .format = format, .length = length, .pathString = pathString };
     NTSTATUS status;
     TRACE( "path %d, format %d, length %d, pathString %p\n", path, format, length, pathString );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathStringNV, &args ))) WARN( "glPathStringNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathSubCommandsNV( GLuint path, GLsizei commandStart, GLsizei commandsToDelete, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords )
 {
-    struct glPathSubCommandsNV_params args = { .teb = NtCurrentTeb(), .path = path, .commandStart = commandStart, .commandsToDelete = commandsToDelete, .numCommands = numCommands, .commands = commands, .numCoords = numCoords, .coordType = coordType, .coords = coords };
+    struct glPathSubCommandsNV_params args = { .teb = NtCurrentTeb(), .commandStart = commandStart, .commandsToDelete = commandsToDelete, .numCommands = numCommands, .commands = commands, .numCoords = numCoords, .coordType = coordType, .coords = coords };
     NTSTATUS status;
     TRACE( "path %d, commandStart %d, commandsToDelete %d, numCommands %d, commands %p, numCoords %d, coordType %d, coords %p\n", path, commandStart, commandsToDelete, numCommands, commands, numCoords, coordType, coords );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathSubCommandsNV, &args ))) WARN( "glPathSubCommandsNV returned %#lx\n", status );
 }
 
 static void WINAPI glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei numCoords, GLenum coordType, const void *coords )
 {
-    struct glPathSubCoordsNV_params args = { .teb = NtCurrentTeb(), .path = path, .coordStart = coordStart, .numCoords = numCoords, .coordType = coordType, .coords = coords };
+    struct glPathSubCoordsNV_params args = { .teb = NtCurrentTeb(), .coordStart = coordStart, .numCoords = numCoords, .coordType = coordType, .coords = coords };
     NTSTATUS status;
     TRACE( "path %d, coordStart %d, numCoords %d, coordType %d, coords %p\n", path, coordStart, numCoords, coordType, coords );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPathSubCoordsNV, &args ))) WARN( "glPathSubCoordsNV returned %#lx\n", status );
 }
 
@@ -16114,9 +16190,11 @@ static void WINAPI glPixelZoomxOES( GLfixed xfactor, GLfixed yfactor )
 
 static GLboolean WINAPI glPointAlongPathNV( GLuint path, GLsizei startSegment, GLsizei numSegments, GLfloat distance, GLfloat *x, GLfloat *y, GLfloat *tangentX, GLfloat *tangentY )
 {
-    struct glPointAlongPathNV_params args = { .teb = NtCurrentTeb(), .path = path, .startSegment = startSegment, .numSegments = numSegments, .distance = distance, .x = x, .y = y, .tangentX = tangentX, .tangentY = tangentY };
+    struct glPointAlongPathNV_params args = { .teb = NtCurrentTeb(), .startSegment = startSegment, .numSegments = numSegments, .distance = distance, .x = x, .y = y, .tangentX = tangentX, .tangentY = tangentY };
     NTSTATUS status;
     TRACE( "path %d, startSegment %d, numSegments %d, distance %f, x %p, y %p, tangentX %p, tangentY %p\n", path, startSegment, numSegments, distance, x, y, tangentX, tangentY );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return args.ret;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glPointAlongPathNV, &args ))) WARN( "glPointAlongPathNV returned %#lx\n", status );
     return args.ret;
 }
@@ -19363,17 +19441,21 @@ static void WINAPI glStencilClearTagEXT( GLsizei stencilTagBits, GLuint stencilC
 
 static void WINAPI glStencilFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glStencilFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .fillMode = fillMode, .mask = mask, .transformType = transformType, .transformValues = transformValues };
+    struct glStencilFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .fillMode = fillMode, .mask = mask, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, fillMode %d, mask %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, fillMode, mask, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glStencilFillPathInstancedNV, &args ))) WARN( "glStencilFillPathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilFillPathNV( GLuint path, GLenum fillMode, GLuint mask )
 {
-    struct glStencilFillPathNV_params args = { .teb = NtCurrentTeb(), .path = path, .fillMode = fillMode, .mask = mask };
+    struct glStencilFillPathNV_params args = { .teb = NtCurrentTeb(), .fillMode = fillMode, .mask = mask };
     NTSTATUS status;
     TRACE( "path %d, fillMode %d, mask %d\n", path, fillMode, mask );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glStencilFillPathNV, &args ))) WARN( "glStencilFillPathNV returned %#lx\n", status );
 }
 
@@ -19427,49 +19509,61 @@ static void WINAPI glStencilOpValueAMD( GLenum face, GLuint value )
 
 static void WINAPI glStencilStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glStencilStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .reference = reference, .mask = mask, .transformType = transformType, .transformValues = transformValues };
+    struct glStencilStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .reference = reference, .mask = mask, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, reference %d, mask %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, reference, mask, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glStencilStrokePathInstancedNV, &args ))) WARN( "glStencilStrokePathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilStrokePathNV( GLuint path, GLint reference, GLuint mask )
 {
-    struct glStencilStrokePathNV_params args = { .teb = NtCurrentTeb(), .path = path, .reference = reference, .mask = mask };
+    struct glStencilStrokePathNV_params args = { .teb = NtCurrentTeb(), .reference = reference, .mask = mask };
     NTSTATUS status;
     TRACE( "path %d, reference %d, mask %d\n", path, reference, mask );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glStencilStrokePathNV, &args ))) WARN( "glStencilStrokePathNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilThenCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glStencilThenCoverFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .fillMode = fillMode, .mask = mask, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
+    struct glStencilThenCoverFillPathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .fillMode = fillMode, .mask = mask, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, fillMode %d, mask %d, coverMode %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, fillMode, mask, coverMode, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glStencilThenCoverFillPathInstancedNV, &args ))) WARN( "glStencilThenCoverFillPathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilThenCoverFillPathNV( GLuint path, GLenum fillMode, GLuint mask, GLenum coverMode )
 {
-    struct glStencilThenCoverFillPathNV_params args = { .teb = NtCurrentTeb(), .path = path, .fillMode = fillMode, .mask = mask, .coverMode = coverMode };
+    struct glStencilThenCoverFillPathNV_params args = { .teb = NtCurrentTeb(), .fillMode = fillMode, .mask = mask, .coverMode = coverMode };
     NTSTATUS status;
     TRACE( "path %d, fillMode %d, mask %d, coverMode %d\n", path, fillMode, mask, coverMode );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glStencilThenCoverFillPathNV, &args ))) WARN( "glStencilThenCoverFillPathNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilThenCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glStencilThenCoverStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .pathBase = pathBase, .reference = reference, .mask = mask, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
+    struct glStencilThenCoverStrokePathInstancedNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .pathNameType = pathNameType, .paths = paths, .reference = reference, .mask = mask, .coverMode = coverMode, .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "numPaths %d, pathNameType %d, paths %p, pathBase %d, reference %d, mask %d, coverMode %d, transformType %d, transformValues %p\n", numPaths, pathNameType, paths, pathBase, reference, mask, coverMode, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &pathBase, TRUE )) return;
+    args.pathBase = *map_context_objects( OBJ_TYPE_PATH, 1, &pathBase );
     if ((status = UNIX_CALL( glStencilThenCoverStrokePathInstancedNV, &args ))) WARN( "glStencilThenCoverStrokePathInstancedNV returned %#lx\n", status );
 }
 
 static void WINAPI glStencilThenCoverStrokePathNV( GLuint path, GLint reference, GLuint mask, GLenum coverMode )
 {
-    struct glStencilThenCoverStrokePathNV_params args = { .teb = NtCurrentTeb(), .path = path, .reference = reference, .mask = mask, .coverMode = coverMode };
+    struct glStencilThenCoverStrokePathNV_params args = { .teb = NtCurrentTeb(), .reference = reference, .mask = mask, .coverMode = coverMode };
     NTSTATUS status;
     TRACE( "path %d, reference %d, mask %d, coverMode %d\n", path, reference, mask, coverMode );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &path, TRUE )) return;
+    args.path = *map_context_objects( OBJ_TYPE_PATH, 1, &path );
     if ((status = UNIX_CALL( glStencilThenCoverStrokePathNV, &args ))) WARN( "glStencilThenCoverStrokePathNV returned %#lx\n", status );
 }
 
@@ -21092,9 +21186,13 @@ static void WINAPI glTransformFeedbackVaryingsNV( GLuint program, GLsizei count,
 
 static void WINAPI glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues )
 {
-    struct glTransformPathNV_params args = { .teb = NtCurrentTeb(), .resultPath = resultPath, .srcPath = srcPath, .transformType = transformType, .transformValues = transformValues };
+    struct glTransformPathNV_params args = { .teb = NtCurrentTeb(), .transformType = transformType, .transformValues = transformValues };
     NTSTATUS status;
     TRACE( "resultPath %d, srcPath %d, transformType %d, transformValues %p\n", resultPath, srcPath, transformType, transformValues );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &resultPath, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &srcPath, TRUE )) return;
+    args.resultPath = *map_context_objects( OBJ_TYPE_PATH, 1, &resultPath );
+    args.srcPath = *map_context_objects( OBJ_TYPE_PATH, 1, &srcPath );
     if ((status = UNIX_CALL( glTransformPathNV, &args ))) WARN( "glTransformPathNV returned %#lx\n", status );
 }
 
@@ -25112,10 +25210,17 @@ static void WINAPI glWaitVkSemaphoreNV( GLuint64 vkSemaphore )
 
 static void WINAPI glWeightPathsNV( GLuint resultPath, GLsizei numPaths, const GLuint *paths, const GLfloat *weights )
 {
-    struct glWeightPathsNV_params args = { .teb = NtCurrentTeb(), .resultPath = resultPath, .numPaths = numPaths, .paths = paths, .weights = weights };
+    GLuint paths_buf[64], *paths_tmp;
+    struct glWeightPathsNV_params args = { .teb = NtCurrentTeb(), .numPaths = numPaths, .weights = weights };
     NTSTATUS status;
     TRACE( "resultPath %d, numPaths %d, paths %p, weights %p\n", resultPath, numPaths, paths, weights );
+    if (!alloc_context_objects( OBJ_TYPE_PATH, 1, &resultPath, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_PATH, numPaths, paths, TRUE )) return;
+    args.resultPath = *map_context_objects( OBJ_TYPE_PATH, 1, &resultPath );
+    paths_tmp = numPaths > 0 ? memdup_objects( numPaths, paths, paths_buf, ARRAY_SIZE(paths_buf) ) : NULL;
+    args.paths = numPaths > 0 ? map_context_objects( OBJ_TYPE_PATH, numPaths, paths_tmp ) : NULL;
     if ((status = UNIX_CALL( glWeightPathsNV, &args ))) WARN( "glWeightPathsNV returned %#lx\n", status );
+    if (paths_tmp != paths_buf) free( paths_tmp );
 }
 
 static void WINAPI glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const void *pointer )
