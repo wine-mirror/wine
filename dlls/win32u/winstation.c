@@ -821,7 +821,7 @@ HWND get_desktop_window(void)
         PS_ATTRIBUTE_LIST ps_attr;
         PS_CREATE_INFO create_info;
         WCHAR desktop[MAX_PATH];
-        PEB *peb = NtCurrentTeb()->Peb;
+        PEB *peb = RtlGetCurrentPeb();
         HANDLE process, thread;
         unsigned int status;
 
@@ -907,7 +907,7 @@ static HANDLE get_winstations_dir_handle(void)
     NTSTATUS status;
     HANDLE dir;
 
-    snprintf( bufferA, sizeof(bufferA), "\\Sessions\\%u\\Windows\\WindowStations", NtCurrentTeb()->Peb->SessionId );
+    snprintf( bufferA, sizeof(bufferA), "\\Sessions\\%u\\Windows\\WindowStations", RtlGetCurrentPeb()->SessionId );
     str.Buffer = buffer;
     str.MaximumLength = asciiz_to_unicode( buffer, bufferA );
     str.Length = str.MaximumLength - sizeof(WCHAR);
@@ -923,7 +923,7 @@ static HANDLE get_winstations_dir_handle(void)
  */
 static const WCHAR *get_default_desktop( void *buf, size_t buf_size )
 {
-    const WCHAR *p, *appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    const WCHAR *p, *appname = RtlGetCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = buf;
     WCHAR *buffer = buf;
     HKEY tmpkey, appkey;
@@ -969,7 +969,7 @@ static const WCHAR *get_default_desktop( void *buf, size_t buf_size )
  */
 void winstation_init(void)
 {
-    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+    RTL_USER_PROCESS_PARAMETERS *params = RtlGetCurrentPeb()->ProcessParameters;
     WCHAR *winstation = NULL, *desktop = NULL, *buffer = NULL;
     HANDLE handle, dir = NULL;
     OBJECT_ATTRIBUTES attr;

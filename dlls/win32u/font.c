@@ -3046,12 +3046,12 @@ static void update_codepage( UINT screen_dpi )
         font_dpi = *(DWORD *)info->Data;
 
     RtlInitCodePageTable( utf8_hdr, &utf8_cp );
-    if (NtCurrentTeb()->Peb->AnsiCodePageData)
-        RtlInitCodePageTable( NtCurrentTeb()->Peb->AnsiCodePageData, &ansi_cp );
+    if (RtlGetCurrentPeb()->AnsiCodePageData)
+        RtlInitCodePageTable( RtlGetCurrentPeb()->AnsiCodePageData, &ansi_cp );
     else
         ansi_cp = utf8_cp;
-    if (NtCurrentTeb()->Peb->OemCodePageData)
-        RtlInitCodePageTable( NtCurrentTeb()->Peb->OemCodePageData, &oem_cp );
+    if (RtlGetCurrentPeb()->OemCodePageData)
+        RtlInitCodePageTable( RtlGetCurrentPeb()->OemCodePageData, &oem_cp );
     else
         oem_cp = utf8_cp;
     snprintf( cpbuf, sizeof(cpbuf), "%u,%u", ansi_cp.CodePage, oem_cp.CodePage );

@@ -580,7 +580,7 @@ static void init_gdi_shared(void)
     }
 #endif
     /* NOTE: Windows uses 32-bit for 32-bit kernel */
-    NtCurrentTeb()->Peb->GdiSharedHandleTable = gdi_shared;
+    RtlGetCurrentPeb()->GdiSharedHandleTable = gdi_shared;
 }
 
 /***********************************************************************

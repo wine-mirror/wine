@@ -418,7 +418,7 @@ static inline UINT unicodez_to_ascii( char *dst, const WCHAR *src )
 
 static inline BOOL is_win9x(void)
 {
-    return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
+    return RtlGetCurrentPeb()->OSPlatformId == VER_PLATFORM_WIN32s;
 }
 
 static inline const char *debugstr_us( const UNICODE_STRING *us )

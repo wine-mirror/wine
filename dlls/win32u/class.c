@@ -531,7 +531,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
          RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
          return 0;
     }
-    if (!(instance = wc->hInstance)) instance = NtCurrentTeb()->Peb->ImageBaseAddress;
+    if (!(instance = wc->hInstance)) instance = RtlGetCurrentPeb()->ImageBaseAddress;
 
     TRACE( "name=%s hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
            debugstr_us(name), instance, wc->style, wc->cbClsExtra, wc->cbWndExtra );

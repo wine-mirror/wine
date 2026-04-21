@@ -285,7 +285,7 @@ static void init_shared_resource_path( const WCHAR *name, UNICODE_STRING *str )
     char buffer[MAX_PATH];
 
     snprintf( buffer, ARRAY_SIZE(buffer), "\\Sessions\\%u\\BaseNamedObjects\\",
-              NtCurrentTeb()->Peb->SessionId );
+              RtlGetCurrentPeb()->SessionId );
     str->MaximumLength = asciiz_to_unicode( str->Buffer, buffer );
     str->Length = str->MaximumLength - sizeof(WCHAR);
 

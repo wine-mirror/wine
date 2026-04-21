@@ -3439,11 +3439,11 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
 static HANDLE normalize_std_handle( HANDLE handle )
 {
     if (handle == (HANDLE)STD_INPUT_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+        return RtlGetCurrentPeb()->ProcessParameters->hStdInput;
     if (handle == (HANDLE)STD_OUTPUT_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+        return RtlGetCurrentPeb()->ProcessParameters->hStdOutput;
     if (handle == (HANDLE)STD_ERROR_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+        return RtlGetCurrentPeb()->ProcessParameters->hStdError;
 
     return handle;
 }
