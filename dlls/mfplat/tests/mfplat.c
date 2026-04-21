@@ -1276,6 +1276,30 @@ static void test_source_resolver(void)
     ULONG refcount;
     BOOL ret;
 
+    static const struct
+    {
+        const WCHAR *chars;
+        UINT win_error;
+        BOOL todo;
+    }
+    leading_char_tests[] =
+    {
+        {L"/",            ERROR_SUCCESS, TRUE},
+        {L"//",           ERROR_SUCCESS, TRUE},
+        {L"///",          ERROR_SUCCESS, TRUE},
+        {L"/////",        ERROR_SUCCESS, TRUE},
+        {L":",            ERROR_INVALID_NAME, TRUE},
+        {L"::",           ERROR_PATH_NOT_FOUND},
+        {L":::::",        ERROR_PATH_NOT_FOUND},
+        {L"/file://",     ERROR_INVALID_NAME, TRUE},
+        {L"//file://",    ERROR_BAD_NETPATH, TRUE},
+        {L"///file://",   ERROR_INVALID_NAME, TRUE},
+        {L"/////file://", ERROR_BAD_NETPATH, TRUE},
+        {L":file://",     ERROR_INVALID_NAME, TRUE},
+        {L"::file://",    ERROR_PATH_NOT_FOUND},
+        {L":::::file://", ERROR_PATH_NOT_FOUND},
+    };
+
     if (!pMFCreateSourceResolver)
     {
         win_skip("MFCreateSourceResolver() not found\n");
@@ -1339,6 +1363,24 @@ static void test_source_resolver(void)
 
     if (SUCCEEDED(hr))
         WaitForSingleObject(callback->event, INFINITE);
+
+    /* With leading forward slashes or colons. */
+    for (i = 0; i < ARRAY_SIZE(leading_char_tests); ++i)
+    {
+        winetest_push_context("test %d", i);
+
+        lstrcpyW(pathW, leading_char_tests[i].chars);
+        lstrcatW(pathW, filename);
+
+        hr = IMFSourceResolver_CreateObjectFromURL(resolver, pathW, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
+                (IUnknown **)&stream);
+        todo_wine_if(leading_char_tests[i].todo)
+        ok(hr == HRESULT_FROM_WIN32(leading_char_tests[i].win_error), "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            IMFByteStream_Release(stream);
+
+        winetest_pop_context();
+    }
 
     /* With explicit scheme. */
     lstrcpyW(pathW, fileschemeW);
