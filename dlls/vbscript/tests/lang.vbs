@@ -3843,10 +3843,11 @@ Call ok(GetLocale() = 1041, "GetLocale after SetLocale(1041)")
 Call ok(FormatNumber(1234567.89) = "1,234,567.89", "FormatNumber ja-JP: " & FormatNumber(1234567.89))
 Call ok(FormatPercent(0.1234) = "12.34%", "FormatPercent ja-JP: " & FormatPercent(0.1234))
 
-' CStr goes through VariantChangeType with LCID=0 (LOCALE_USER_DEFAULT).
-' Plumbing ctx->lcid into that path is follow-up work.
+' Variant coercion to string (CStr etc.) uses the script LCID.
 Call SetLocale(1031)
-Call todo_wine_ok(CStr(1.5) = "1,5", "CStr(1.5) de-DE: " & CStr(1.5))
+Call ok(CStr(1.5) = "1,5", "CStr(1.5) de-DE: " & CStr(1.5))
+Call SetLocale(1033)
+Call ok(CStr(1.5) = "1.5", "CStr(1.5) en-US: " & CStr(1.5))
 
 ' Restore original locale.
 Call SetLocale(origLcid)
