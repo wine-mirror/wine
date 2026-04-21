@@ -3645,7 +3645,7 @@ static void release_output_samples(struct topo_node *node, MFT_OUTPUT_DATA_BUFFE
 
 static BOOL transform_node_markin_need_more_input(const struct media_session *session, struct topo_node *node, MFT_OUTPUT_DATA_BUFFER *buffers)
 {
-    BOOL need_more_input, drop_sample;
+    BOOL need_more_input, drop_sample, have_duration, have_time;
     LONGLONG time, duration;
     HRESULT hr;
     UINT i;
@@ -3659,7 +3659,7 @@ static BOOL transform_node_markin_need_more_input(const struct media_session *se
     {
         struct transform_stream *stream = &node->u.transform.outputs[i];
 
-        drop_sample = FALSE;
+        drop_sample = have_duration = have_time = FALSE;
 
         if (buffers[i].pEvents)
             need_more_input = FALSE;
@@ -3673,19 +3673,32 @@ static BOOL transform_node_markin_need_more_input(const struct media_session *se
             continue;
         }
 
-        if (FAILED(hr = IMFSample_GetSampleTime(buffers[i].pSample, &time)))
-            WARN("Failed to get sample time, hr %#lx\n", hr);
-        else if (FAILED(hr = IMFSample_GetSampleDuration(buffers[i].pSample, &duration)))
-            WARN("Failed to get sample time, hr %#lx\n", hr);
-        else if (time + duration <= session->presentation.start_position.hVal.QuadPart)
-            drop_sample = TRUE;
+        if (SUCCEEDED(hr = IMFSample_GetSampleTime(buffers[i].pSample, &time)))
+        {
+            have_time = TRUE;
+            if (SUCCEEDED(hr = IMFSample_GetSampleDuration(buffers[i].pSample, &duration)))
+                have_duration = TRUE;
+            else
+                WARN("Failed to get sample duration, hr %#lx\n", hr);
 
-        if (!drop_sample && time < session->presentation.start_position.hVal.QuadPart)
+            if (have_duration && time + duration <= session->presentation.start_position.hVal.QuadPart)
+                drop_sample = TRUE;
+        }
+        else
+        {
+            WARN("Failed to get sample time, hr %#lx\n", hr);
+        }
+
+        if (have_time && !drop_sample && time < session->presentation.start_position.hVal.QuadPart)
         {
             LONGLONG delta = session->presentation.start_position.hVal.QuadPart - time;
-            duration -= delta;
             IMFSample_SetSampleTime(buffers[i].pSample, session->presentation.start_position.hVal.QuadPart);
-            IMFSample_SetSampleDuration(buffers[i].pSample, duration);
+
+            if (have_duration)
+            {
+                duration -= delta;
+                IMFSample_SetSampleDuration(buffers[i].pSample, duration);
+            }
 
             if (stream->raw_audio && stream->bytes_per_second && stream->block_alignment)
             {
