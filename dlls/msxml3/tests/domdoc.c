@@ -15113,7 +15113,8 @@ static void test_comment(void)
 
         hr = IXMLDOMComment_get_nodeValue(comment, &v);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        ok(V_VT(&v) == VT_BSTR, "Unexpected type %d.\n", V_VT(&v));
+        ok(!lstrcmpW(V_BSTR(&v), L"A \nCo\nmment\n  & < \""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&v)));
         VariantClear(&v);
 
         hr = IXMLDOMComment_put_nodeValue(comment, _variantbstr_("comment --> a"));
