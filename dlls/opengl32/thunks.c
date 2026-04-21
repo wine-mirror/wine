@@ -971,8 +971,10 @@ void WINAPI glGetPointerv( GLenum pname, void **params )
 {
     struct glGetPointerv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, params %p\n", pname, params );
     if ((status = UNIX_CALL( glGetPointerv, &args ))) WARN( "glGetPointerv returned %#lx\n", status );
+    else if (get_integer( pname, 0, (UINT_PTR)*params, &integer )) *params = (void *)(UINT_PTR)integer;
 }
 
 void WINAPI glGetPolygonStipple( GLubyte *mask )
@@ -1035,16 +1037,20 @@ void WINAPI glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, 
 {
     struct glGetTexLevelParameterfv_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, level %d, pname %d, params %p\n", target, level, pname, params );
     if ((status = UNIX_CALL( glGetTexLevelParameterfv, &args ))) WARN( "glGetTexLevelParameterfv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 void WINAPI glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
 {
     struct glGetTexLevelParameteriv_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, level %d, pname %d, params %p\n", target, level, pname, params );
     if ((status = UNIX_CALL( glGetTexLevelParameteriv, &args ))) WARN( "glGetTexLevelParameteriv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 void WINAPI glGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
@@ -8366,16 +8372,20 @@ static void WINAPI glGetFixedv( GLenum pname, GLfixed *params )
 {
     struct glGetFixedv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, params %p\n", pname, params );
     if ((status = UNIX_CALL( glGetFixedv, &args ))) WARN( "glGetFixedv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetFixedvOES( GLenum pname, GLfixed *params )
 {
     struct glGetFixedvOES_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, params %p\n", pname, params );
     if ((status = UNIX_CALL( glGetFixedvOES, &args ))) WARN( "glGetFixedvOES returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetFloatIndexedvEXT( GLenum target, GLuint index, GLfloat *data )
@@ -8487,16 +8497,20 @@ static void WINAPI glGetFramebufferAttachmentParameteriv( GLenum target, GLenum 
 {
     struct glGetFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
     if ((status = UNIX_CALL( glGetFramebufferAttachmentParameteriv, &args ))) WARN( "glGetFramebufferAttachmentParameteriv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint *params )
 {
     struct glGetFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
     if ((status = UNIX_CALL( glGetFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetFramebufferAttachmentParameterivEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetFramebufferParameterfvAMD( GLenum target, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
@@ -9009,16 +9023,20 @@ static void WINAPI glGetMultiTexLevelParameterfvEXT( GLenum texunit, GLenum targ
 {
     struct glGetMultiTexLevelParameterfvEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texunit %d, target %d, level %d, pname %d, params %p\n", texunit, target, level, pname, params );
     if ((status = UNIX_CALL( glGetMultiTexLevelParameterfvEXT, &args ))) WARN( "glGetMultiTexLevelParameterfvEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetMultiTexLevelParameterivEXT( GLenum texunit, GLenum target, GLint level, GLenum pname, GLint *params )
 {
     struct glGetMultiTexLevelParameterivEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texunit %d, target %d, level %d, pname %d, params %p\n", texunit, target, level, pname, params );
     if ((status = UNIX_CALL( glGetMultiTexLevelParameterivEXT, &args ))) WARN( "glGetMultiTexLevelParameterivEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetMultiTexParameterIivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params )
@@ -9140,16 +9158,20 @@ static void WINAPI glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffe
 {
     struct glGetNamedFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
     if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameteriv, &args ))) WARN( "glGetNamedFramebufferAttachmentParameteriv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
 {
     struct glGetNamedFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
     if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetNamedFramebufferAttachmentParameterivEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
@@ -9573,24 +9595,30 @@ static void WINAPI glGetPointerIndexedvEXT( GLenum target, GLuint index, void **
 {
     struct glGetPointerIndexedvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .data = data };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, index %d, data %p\n", target, index, data );
     if ((status = UNIX_CALL( glGetPointerIndexedvEXT, &args ))) WARN( "glGetPointerIndexedvEXT returned %#lx\n", status );
+    else if (get_integer( target, index, (UINT_PTR)*data, &integer )) *data = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetPointeri_vEXT( GLenum pname, GLuint index, void **params )
 {
     struct glGetPointeri_vEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .index = index, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, index %d, params %p\n", pname, index, params );
     if ((status = UNIX_CALL( glGetPointeri_vEXT, &args ))) WARN( "glGetPointeri_vEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, (UINT_PTR)*params, &integer )) *params = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetPointervEXT( GLenum pname, void **params )
 {
     struct glGetPointervEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, params %p\n", pname, params );
     if ((status = UNIX_CALL( glGetPointervEXT, &args ))) WARN( "glGetPointervEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, (UINT_PTR)*params, &integer )) *params = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary )
@@ -9725,8 +9753,10 @@ static void WINAPI glGetProgramPipelineiv( GLuint pipeline, GLenum pname, GLint 
 {
     struct glGetProgramPipelineiv_params args = { .teb = NtCurrentTeb(), .pipeline = pipeline, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "pipeline %d, pname %d, params %p\n", pipeline, pname, params );
     if ((status = UNIX_CALL( glGetProgramPipelineiv, &args ))) WARN( "glGetProgramPipelineiv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static GLuint WINAPI glGetProgramResourceIndex( GLuint program, GLenum programInterface, const GLchar *name )
@@ -9824,8 +9854,10 @@ static void WINAPI glGetProgramivARB( GLenum target, GLenum pname, GLint *params
 {
     struct glGetProgramivARB_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, pname %d, params %p\n", target, pname, params );
     if ((status = UNIX_CALL( glGetProgramivARB, &args ))) WARN( "glGetProgramivARB returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetProgramivNV( GLuint id, GLenum pname, GLint *params )
@@ -10188,8 +10220,10 @@ static void WINAPI glGetTexLevelParameterxvOES( GLenum target, GLint level, GLen
 {
     struct glGetTexLevelParameterxvOES_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, level %d, pname %d, params %p\n", target, level, pname, params );
     if ((status = UNIX_CALL( glGetTexLevelParameterxvOES, &args ))) WARN( "glGetTexLevelParameterxvOES returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTexParameterIiv( GLenum target, GLenum pname, GLint *params )
@@ -10286,32 +10320,40 @@ static void WINAPI glGetTextureLevelParameterfv( GLuint texture, GLint level, GL
 {
     struct glGetTextureLevelParameterfv_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texture %d, level %d, pname %d, params %p\n", texture, level, pname, params );
     if ((status = UNIX_CALL( glGetTextureLevelParameterfv, &args ))) WARN( "glGetTextureLevelParameterfv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameterfvEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLfloat *params )
 {
     struct glGetTextureLevelParameterfvEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texture %d, target %d, level %d, pname %d, params %p\n", texture, target, level, pname, params );
     if ((status = UNIX_CALL( glGetTextureLevelParameterfvEXT, &args ))) WARN( "glGetTextureLevelParameterfvEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameteriv( GLuint texture, GLint level, GLenum pname, GLint *params )
 {
     struct glGetTextureLevelParameteriv_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texture %d, level %d, pname %d, params %p\n", texture, level, pname, params );
     if ((status = UNIX_CALL( glGetTextureLevelParameteriv, &args ))) WARN( "glGetTextureLevelParameteriv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameterivEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLint *params )
 {
     struct glGetTextureLevelParameterivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "texture %d, target %d, level %d, pname %d, params %p\n", texture, target, level, pname, params );
     if ((status = UNIX_CALL( glGetTextureLevelParameterivEXT, &args ))) WARN( "glGetTextureLevelParameterivEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureParameterIiv( GLuint texture, GLenum pname, GLint *params )
@@ -10440,24 +10482,30 @@ static void WINAPI glGetTransformFeedbacki64_v( GLuint xfb, GLenum pname, GLuint
 {
     struct glGetTransformFeedbacki64_v_params args = { .teb = NtCurrentTeb(), .xfb = xfb, .pname = pname, .index = index, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "xfb %d, pname %d, index %d, param %p\n", xfb, pname, index, param );
     if ((status = UNIX_CALL( glGetTransformFeedbacki64_v, &args ))) WARN( "glGetTransformFeedbacki64_v returned %#lx\n", status );
+    else if (get_integer( pname, index, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetTransformFeedbacki_v( GLuint xfb, GLenum pname, GLuint index, GLint *param )
 {
     struct glGetTransformFeedbacki_v_params args = { .teb = NtCurrentTeb(), .xfb = xfb, .pname = pname, .index = index, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "xfb %d, pname %d, index %d, param %p\n", xfb, pname, index, param );
     if ((status = UNIX_CALL( glGetTransformFeedbacki_v, &args ))) WARN( "glGetTransformFeedbacki_v returned %#lx\n", status );
+    else if (get_integer( pname, index, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetTransformFeedbackiv( GLuint xfb, GLenum pname, GLint *param )
 {
     struct glGetTransformFeedbackiv_params args = { .teb = NtCurrentTeb(), .xfb = xfb, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "xfb %d, pname %d, param %p\n", xfb, pname, param );
     if ((status = UNIX_CALL( glGetTransformFeedbackiv, &args ))) WARN( "glGetTransformFeedbackiv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *param, &integer )) *param = integer;
 }
 
 static GLuint WINAPI glGetUniformBlockIndex( GLuint program, const GLchar *uniformBlockName )
@@ -10613,16 +10661,20 @@ static void WINAPI glGetUnsignedBytei_vEXT( GLenum target, GLuint index, GLubyte
 {
     struct glGetUnsignedBytei_vEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .data = data };
     NTSTATUS status;
+    int integer;
     TRACE( "target %d, index %d, data %p\n", target, index, data );
     if ((status = UNIX_CALL( glGetUnsignedBytei_vEXT, &args ))) WARN( "glGetUnsignedBytei_vEXT returned %#lx\n", status );
+    else if (get_integer( target, index, *data, &integer )) *data = integer;
 }
 
 static void WINAPI glGetUnsignedBytevEXT( GLenum pname, GLubyte *data )
 {
     struct glGetUnsignedBytevEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
     NTSTATUS status;
+    int integer;
     TRACE( "pname %d, data %p\n", pname, data );
     if ((status = UNIX_CALL( glGetUnsignedBytevEXT, &args ))) WARN( "glGetUnsignedBytevEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *data, &integer )) *data = integer;
 }
 
 static void WINAPI glGetVariantArrayObjectfvATI( GLuint id, GLenum pname, GLfloat *params )
@@ -10686,240 +10738,300 @@ static void WINAPI glGetVertexArrayIndexed64iv( GLuint vaobj, GLuint index, GLen
 {
     struct glGetVertexArrayIndexed64iv_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .index = index, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, index %d, pname %d, param %p\n", vaobj, index, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayIndexed64iv, &args ))) WARN( "glGetVertexArrayIndexed64iv returned %#lx\n", status );
+    else if (get_integer( pname, index, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetVertexArrayIndexediv( GLuint vaobj, GLuint index, GLenum pname, GLint *param )
 {
     struct glGetVertexArrayIndexediv_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .index = index, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, index %d, pname %d, param %p\n", vaobj, index, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayIndexediv, &args ))) WARN( "glGetVertexArrayIndexediv returned %#lx\n", status );
+    else if (get_integer( pname, index, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetVertexArrayIntegeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, GLint *param )
 {
     struct glGetVertexArrayIntegeri_vEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .index = index, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, index %d, pname %d, param %p\n", vaobj, index, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayIntegeri_vEXT, &args ))) WARN( "glGetVertexArrayIntegeri_vEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetVertexArrayIntegervEXT( GLuint vaobj, GLenum pname, GLint *param )
 {
     struct glGetVertexArrayIntegervEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, pname %d, param %p\n", vaobj, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayIntegervEXT, &args ))) WARN( "glGetVertexArrayIntegervEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetVertexArrayPointeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, void **param )
 {
     struct glGetVertexArrayPointeri_vEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .index = index, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, index %d, pname %d, param %p\n", vaobj, index, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayPointeri_vEXT, &args ))) WARN( "glGetVertexArrayPointeri_vEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, (UINT_PTR)*param, &integer )) *param = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetVertexArrayPointervEXT( GLuint vaobj, GLenum pname, void **param )
 {
     struct glGetVertexArrayPointervEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, pname %d, param %p\n", vaobj, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayPointervEXT, &args ))) WARN( "glGetVertexArrayPointervEXT returned %#lx\n", status );
+    else if (get_integer( pname, 0, (UINT_PTR)*param, &integer )) *param = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetVertexArrayiv( GLuint vaobj, GLenum pname, GLint *param )
 {
     struct glGetVertexArrayiv_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .pname = pname, .param = param };
     NTSTATUS status;
+    int integer;
     TRACE( "vaobj %d, pname %d, param %p\n", vaobj, pname, param );
     if ((status = UNIX_CALL( glGetVertexArrayiv, &args ))) WARN( "glGetVertexArrayiv returned %#lx\n", status );
+    else if (get_integer( pname, 0, *param, &integer )) *param = integer;
 }
 
 static void WINAPI glGetVertexAttribArrayObjectfvATI( GLuint index, GLenum pname, GLfloat *params )
 {
     struct glGetVertexAttribArrayObjectfvATI_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribArrayObjectfvATI, &args ))) WARN( "glGetVertexAttribArrayObjectfvATI returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribArrayObjectivATI( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribArrayObjectivATI_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribArrayObjectivATI, &args ))) WARN( "glGetVertexAttribArrayObjectivATI returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribIiv( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribIiv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribIiv, &args ))) WARN( "glGetVertexAttribIiv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribIivEXT( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribIivEXT_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribIivEXT, &args ))) WARN( "glGetVertexAttribIivEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribIuiv( GLuint index, GLenum pname, GLuint *params )
 {
     struct glGetVertexAttribIuiv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribIuiv, &args ))) WARN( "glGetVertexAttribIuiv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribIuivEXT( GLuint index, GLenum pname, GLuint *params )
 {
     struct glGetVertexAttribIuivEXT_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribIuivEXT, &args ))) WARN( "glGetVertexAttribIuivEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribLdv( GLuint index, GLenum pname, GLdouble *params )
 {
     struct glGetVertexAttribLdv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribLdv, &args ))) WARN( "glGetVertexAttribLdv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribLdvEXT( GLuint index, GLenum pname, GLdouble *params )
 {
     struct glGetVertexAttribLdvEXT_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribLdvEXT, &args ))) WARN( "glGetVertexAttribLdvEXT returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribLi64vNV( GLuint index, GLenum pname, GLint64EXT *params )
 {
     struct glGetVertexAttribLi64vNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribLi64vNV, &args ))) WARN( "glGetVertexAttribLi64vNV returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribLui64vARB( GLuint index, GLenum pname, GLuint64EXT *params )
 {
     struct glGetVertexAttribLui64vARB_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribLui64vARB, &args ))) WARN( "glGetVertexAttribLui64vARB returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribLui64vNV( GLuint index, GLenum pname, GLuint64EXT *params )
 {
     struct glGetVertexAttribLui64vNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribLui64vNV, &args ))) WARN( "glGetVertexAttribLui64vNV returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribPointerv( GLuint index, GLenum pname, void **pointer )
 {
     struct glGetVertexAttribPointerv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .pointer = pointer };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, pointer %p\n", index, pname, pointer );
     if ((status = UNIX_CALL( glGetVertexAttribPointerv, &args ))) WARN( "glGetVertexAttribPointerv returned %#lx\n", status );
+    else if (get_integer( pname, index, (UINT_PTR)*pointer, &integer )) *pointer = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetVertexAttribPointervARB( GLuint index, GLenum pname, void **pointer )
 {
     struct glGetVertexAttribPointervARB_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .pointer = pointer };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, pointer %p\n", index, pname, pointer );
     if ((status = UNIX_CALL( glGetVertexAttribPointervARB, &args ))) WARN( "glGetVertexAttribPointervARB returned %#lx\n", status );
+    else if (get_integer( pname, index, (UINT_PTR)*pointer, &integer )) *pointer = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetVertexAttribPointervNV( GLuint index, GLenum pname, void **pointer )
 {
     struct glGetVertexAttribPointervNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .pointer = pointer };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, pointer %p\n", index, pname, pointer );
     if ((status = UNIX_CALL( glGetVertexAttribPointervNV, &args ))) WARN( "glGetVertexAttribPointervNV returned %#lx\n", status );
+    else if (get_integer( pname, index, (UINT_PTR)*pointer, &integer )) *pointer = (void *)(UINT_PTR)integer;
 }
 
 static void WINAPI glGetVertexAttribdv( GLuint index, GLenum pname, GLdouble *params )
 {
     struct glGetVertexAttribdv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribdv, &args ))) WARN( "glGetVertexAttribdv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribdvARB( GLuint index, GLenum pname, GLdouble *params )
 {
     struct glGetVertexAttribdvARB_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribdvARB, &args ))) WARN( "glGetVertexAttribdvARB returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribdvNV( GLuint index, GLenum pname, GLdouble *params )
 {
     struct glGetVertexAttribdvNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribdvNV, &args ))) WARN( "glGetVertexAttribdvNV returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribfv( GLuint index, GLenum pname, GLfloat *params )
 {
     struct glGetVertexAttribfv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribfv, &args ))) WARN( "glGetVertexAttribfv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribfvARB( GLuint index, GLenum pname, GLfloat *params )
 {
     struct glGetVertexAttribfvARB_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribfvARB, &args ))) WARN( "glGetVertexAttribfvARB returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribfvNV( GLuint index, GLenum pname, GLfloat *params )
 {
     struct glGetVertexAttribfvNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribfvNV, &args ))) WARN( "glGetVertexAttribfvNV returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribiv( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribiv_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribiv, &args ))) WARN( "glGetVertexAttribiv returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribivARB( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribivARB_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribivARB, &args ))) WARN( "glGetVertexAttribivARB returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVertexAttribivNV( GLuint index, GLenum pname, GLint *params )
 {
     struct glGetVertexAttribivNV_params args = { .teb = NtCurrentTeb(), .index = index, .pname = pname, .params = params };
     NTSTATUS status;
+    int integer;
     TRACE( "index %d, pname %d, params %p\n", index, pname, params );
     if ((status = UNIX_CALL( glGetVertexAttribivNV, &args ))) WARN( "glGetVertexAttribivNV returned %#lx\n", status );
+    else if (get_integer( pname, index, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetVideoCaptureStreamdvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLdouble *params )

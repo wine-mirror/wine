@@ -1188,6 +1188,8 @@ sub add_extension($)
 sub get_integer_call($)
 {
     my ($name, $func) = @_;
+    my $to_int = "";
+    my $to_val = "";
     my $index = 0;
     my $params;
     my $pname;
@@ -1198,13 +1200,80 @@ sub get_integer_call($)
         my $type = get_arg_type( $arg );
         $pname = $name if $name =~ /^(pname|target|value)$/;
         $index = $name if $name eq "index";
+        $to_val = "(void *)(UINT_PTR)" if $type =~ /void \*/;
+        $to_int = "(UINT_PTR)" if $type =~ /void \*/;
         $params = $name;
     }
 
     return 0 if !$pname;
+    return 0 if $name !~ /^glGet/;
 
-    my $hook = "if (get_integer( $pname, $index, *$params, &integer )) *$params = integer;";
-    return $hook if $name =~ /^glGet(Boolean|Double|Float|Integer)/;
+    my $hook = "if (get_integer( $pname, $index, $to_int*$params, &integer )) *$params = $to_val" . "integer;";
+    return $hook if $name =~ /^glGet(Boolean|Double|Fixed|Float|Integer|Pointer|UnsignedByte)/;
+    return $hook if $name =~ /^glGet(Multi)?Tex(ture)?LevelParameter/;
+    return $hook if $name =~ /^glGet(Named)?FramebufferAttachmentParameter/;
+    return $hook if $name =~ /^glGetProgramivARB/;
+    return $hook if $name =~ /^glGetProgramPipeline/;
+    return $hook if $name =~ /^glGetTransformFeedback/;
+    return $hook if $name =~ /^glGetVertex(Array|Attrib)/;
+
+    return 0 if $name =~ /^glGet(Detail|Sharpen)?Tex(Filter)?Func/;
+    return 0 if $name =~ /^glGet(Final)?Combiner/;
+    return 0 if $name =~ /^glGet(Multi)?Tex(ture)?Parameter/;
+    return 0 if $name =~ /^glGet(Multi)?TexEnv/;
+    return 0 if $name =~ /^glGet(Multi|Path)?TexGen/;
+    return 0 if $name =~ /^glGet(Named)?BufferParameter/;
+    return 0 if $name =~ /^glGet(Named)?BufferPointer/;
+    return 0 if $name =~ /^glGet(Named)?FramebufferParameter/;
+    return 0 if $name =~ /^glGet(Named)?Program(Env|Local|Subroutine)?Parameter/;
+    return 0 if $name =~ /^glGet(Named)?Program(Interface|Stage|String)/;
+    return 0 if $name =~ /^glGet(Named)?RenderbufferParameter/;
+    return 0 if $name =~ /^glGetActive(Subroutine)?Uniform/;
+    return 0 if $name =~ /^glGetActiveAtomicCounterBuffer/;
+    return 0 if $name =~ /^glGetArrayObject/;
+    return 0 if $name =~ /^glGetBuffer(Sub)?Data/;
+    return 0 if $name =~ /^glGetFence/;
+    return 0 if $name =~ /^glGetFragment(Material|Light)/;
+    return 0 if $name =~ /^glGetHandle/;
+    return 0 if $name =~ /^glGetImageTransformParameter/;
+    return 0 if $name =~ /^glGetInternalformat/;
+    return 0 if $name =~ /^glGetInvariant/;
+    return 0 if $name =~ /^glGetLight/;
+    return 0 if $name =~ /^glGetListParameter/;
+    return 0 if $name =~ /^glGetLocalConstant/;
+    return 0 if $name =~ /^glGetMaterial/;
+    return 0 if $name =~ /^glGetMemoryObjectDetachedResourcesu/;
+    return 0 if $name =~ /^glGetMemoryObjectParameter/;
+    return 0 if $name =~ /^glGetMultisample/;
+    return 0 if $name =~ /^glGetn?(Compressed)?(Multi)?Tex(ture)?Image/;
+    return 0 if $name =~ /^glGetn?Color/;
+    return 0 if $name =~ /^glGetn?Convolution/;
+    return 0 if $name =~ /^glGetn?Histogram/;
+    return 0 if $name =~ /^glGetn?Map/;
+    return 0 if $name =~ /^glGetn?Minmax/;
+    return 0 if $name =~ /^glGetn?Separable/;
+    return 0 if $name =~ /^glGetNamedProgram/;
+    return 0 if $name =~ /^glGetNamedString/;
+    return 0 if $name =~ /^glGetObjectBuffer/;
+    return 0 if $name =~ /^glGetObjectParameter/;
+    return 0 if $name =~ /^glGetOcclusionQuery/;
+    return 0 if $name =~ /^glGetPath(Parameter|Color)/;
+    return 0 if $name =~ /^glGetPerfMonitorCounter/;
+    return 0 if $name =~ /^glGetPixelTexGenParameter/;
+    return 0 if $name =~ /^glGetPixelTransformParameter/;
+    return 0 if $name =~ /^glGetProgram/;
+    return 0 if $name =~ /^glGetQuery/;
+    return 0 if $name =~ /^glGetSamplerParameter/;
+    return 0 if $name =~ /^glGetSemaphoreParameter/;
+    return 0 if $name =~ /^glGetShader/;
+    return 0 if $name =~ /^glGetSync/;
+    return 0 if $name =~ /^glGetTexBumpParameter/;
+    return 0 if $name =~ /^glGetTrackMatrixiv/;
+    return 0 if $name =~ /^glGetVariant/;
+    return 0 if $name =~ /^glGetVideo/;
+
+    print "Missing possible glGet integer: $name\n";
+    return 0;
 }
 
 sub parse_registry($)
