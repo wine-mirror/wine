@@ -595,6 +595,36 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
         free( children_multi );
     }
 
+    for (i = 0; i < count; ++i)
+    {
+        SP_DEVINFO_DATA child_sp = {sizeof(child_sp)};
+        if (SetupDiOpenDeviceInfoW( set, child_ids[i], NULL, 0, &child_sp ))
+        {
+            DWORD sib_len = 1, j;
+            WCHAR *siblings_multi, *p;
+
+            for (j = 0; j < count; ++j)
+                if (j != i) sib_len += wcslen( child_ids[j] ) + 1;
+
+            siblings_multi = malloc( sib_len * sizeof(WCHAR) );
+            p = siblings_multi;
+            for (j = 0; j < count; ++j)
+            {
+                if (j != i)
+                {
+                    wcscpy( p, child_ids[j] );
+                    p += wcslen( child_ids[j] ) + 1;
+                }
+            }
+            *p = 0;
+            SetupDiSetDevicePropertyW( set, &child_sp, &DEVPKEY_Device_Siblings,
+                    DEVPROP_TYPE_STRING_LIST, (BYTE *)siblings_multi,
+                    sib_len * sizeof(WCHAR), 0 );
+            free( siblings_multi );
+        }
+    }
+    free( child_ids );
+
     SetupDiDestroyDeviceInfoList( set );
 }
 
