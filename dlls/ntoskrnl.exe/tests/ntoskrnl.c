@@ -2295,6 +2295,21 @@ static void test_pnp_devices(void)
     ok(size == sizeof(WCHAR), "got size %lu, expected %Iu\n", size, sizeof(WCHAR));
     ok(buffer_w[0] == 0, "got non-empty siblings %s\n", debugstr_w(buffer_w));
 
+    /* CM_Get_Parent on the PnP-managed child returns the bus parent. */
+    {
+        char parent_id[MAX_DEVICE_ID_LEN];
+        DEVINST cm_parent = 0;
+        CONFIGRET cm_ret;
+
+        cm_ret = CM_Get_Parent(&cm_parent, device.DevInst, 0);
+        ok(cm_ret == CR_SUCCESS, "CM_Get_Parent: got %#lx\n", cm_ret);
+        ok(cm_parent != 0, "got null parent devnode\n");
+
+        cm_ret = CM_Get_Device_IDA(cm_parent, parent_id, sizeof(parent_id), 0);
+        ok(cm_ret == CR_SUCCESS, "CM_Get_Device_IDA: got %#lx\n", cm_ret);
+        ok(!strcmp(parent_id, "ROOT\\WINETEST\\0"), "got parent ID %s\n", parent_id);
+    }
+
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &child_class),

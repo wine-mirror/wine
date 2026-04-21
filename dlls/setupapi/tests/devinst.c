@@ -2853,6 +2853,12 @@ static void test_devnode(void)
     ok(!ret, "got %#lx\n", ret);
     ok(!strcmp(buffer, "ROOT\\LEGACY_BOGUS\\0000"), "got %s\n", buffer);
 
+    /* CM_Get_Parent parameter validation. The CR_SUCCESS path requires a
+     * PnP-managed device with DEVPKEY_Device_Parent populated by the bus
+     * driver, which is exercised in ntoskrnl/tests/ntoskrnl.c::test_pnp_devices. */
+    ret = CM_Get_Parent(NULL, device.DevInst, 0);
+    ok(ret == CR_INVALID_POINTER, "got %#lx\n", ret);
+
     SetupDiDestroyDeviceInfoList(set);
 }
 
