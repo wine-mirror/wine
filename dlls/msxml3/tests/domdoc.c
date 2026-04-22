@@ -17320,10 +17320,7 @@ static void test_doctype(void)
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMDocumentType_get_nextSibling(doctype, &node);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(node_type == NODE_ELEMENT, "Unexpected type %d.\n", node_type);
@@ -17332,7 +17329,7 @@ if (hr == S_OK)
     ok(!wcscmp(str, L"email"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
-}
+
     hr = IXMLDOMDocumentType_get_attributes(doctype, &map);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
