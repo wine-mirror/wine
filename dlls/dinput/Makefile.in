@@ -1,6 +1,6 @@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
-IMPORTS   = dinput cfgmgr32 dxguid uuid comctl32 ole32 user32 advapi32 hid setupapi
+IMPORTS   = dinput cfgmgr32 dxguid uuid comctl32 ole32 user32 advapi32 hid
 EXTRADEFS = -DDIRECTINPUT_VERSION=0x0700
 
 VER_FILEDESCRIPTION_STR = "Wine DirectInput"

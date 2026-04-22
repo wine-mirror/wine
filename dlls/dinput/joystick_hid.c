@@ -36,7 +36,6 @@
 #include "cfgmgr32.h"
 #include "devguid.h"
 #include "dinput.h"
-#include "setupapi.h"
 
 #include "dinput_private.h"
 #include "device_private.h"
@@ -1601,6 +1600,7 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
         goto failed;
     }
 
+    instance->dwSize = sizeof(DIDEVICEINSTANCEW);
     instance->guidInstance = hid_joystick_guid;
     instance->guidInstance.Data1 ^= handle;
     instance->guidProduct = dinput_pidvid_guid;
@@ -1750,81 +1750,26 @@ HRESULT hid_joystick_refresh_devices(void)
     return hr;
 }
 
-static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *instance,
-                                         WCHAR *device_path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
-                                         HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DWORD version )
-{
-    char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
-    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
-    SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
-    SP_DEVINFO_DATA devinfo = {.cbSize = sizeof(devinfo)};
-    HDEVINFO set, xi_set;
-    UINT32 i = 0;
-    GUID hid;
-
-    TRACE( "index %d, guid %s\n", index, debugstr_guid( guid ) );
-
-    HidD_GetHidGuid( &hid );
-
-    set = SetupDiGetClassDevsW( &hid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
-    if (set == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
-    xi_set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_WINEXINPUT, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
-
-    *device = NULL;
-    *preparsed = NULL;
-    while (SetupDiEnumDeviceInterfaces( set, NULL, &hid, i++, &iface ))
-    {
-        detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-        if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, &devinfo ))
-            continue;
-        if (FAILED(hid_joystick_device_try_open( detail->DevicePath, device, preparsed,
-                                                 attrs, caps, instance, version )))
-            continue;
-
-        /* enumerate device by GUID */
-        if (IsEqualGUID( guid, &instance->guidProduct ) || IsEqualGUID( guid, &instance->guidInstance )) break;
-
-        /* enumerate all devices */
-        if (index >= 0 && !index--) break;
-
-        CloseHandle( *device );
-        HidD_FreePreparsedData( *preparsed );
-        *device = NULL;
-        *preparsed = NULL;
-    }
-
-    if (xi_set != INVALID_HANDLE_VALUE) SetupDiDestroyDeviceInfoList( xi_set );
-    SetupDiDestroyDeviceInfoList( set );
-    if (!*device || !*preparsed) return DIERR_DEVICENOTREG;
-
-    lstrcpynW( device_path, detail->DevicePath, MAX_PATH );
-    return DI_OK;
-}
-
 HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
 {
-    HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
-    PHIDP_PREPARSED_DATA preparsed;
-    WCHAR device_path[MAX_PATH];
-    GUID guid = GUID_NULL;
-    HIDP_CAPS caps;
-    HANDLE device;
-    HRESULT hr;
+    struct cache_entry *entry;
+    HRESULT hr = DI_OK;
 
-    TRACE( "type %#lx, flags %#lx, instance %p, version %#lx, index %d\n", type, flags, instance, version, index );
+    EnterCriticalSection( &joystick_cache_cs );
 
-    hr = hid_joystick_device_open( index, &guid, instance, device_path, &device, &preparsed,
-                                   &attrs, &caps, version );
-    if (hr != DI_OK) return hr;
+    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
+        if (!index--) break;
+    if (&entry->entry == &joystick_cache) hr = DIERR_DEVICENOTREG;
+    else
+    {
+        *instance = entry->instance;
+        instance->dwDevType = device_type_for_version( instance->dwDevType, version ) | DIDEVTYPE_HID;
+    }
 
-    HidD_FreePreparsedData( preparsed );
-    CloseHandle( device );
+    LeaveCriticalSection( &joystick_cache_cs );
 
-    TRACE( "found device %s, usage %04x:%04x, product %s, instance %s, name %s\n", debugstr_w(device_path),
-           instance->wUsagePage, instance->wUsage, debugstr_guid( &instance->guidProduct ),
-           debugstr_guid( &instance->guidInstance ), debugstr_w(instance->tszInstanceName) );
-
-    return DI_OK;
+    if (FAILED(hr)) WARN( "index %u not found\n", index );
+    return hr;
 }
 
 static BOOL init_object_properties( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
