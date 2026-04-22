@@ -1428,6 +1428,7 @@ static HRESULT hid_joystick_device_try_open( const WCHAR *path, HANDLE *device, 
     ULONG node_count;
     NTSTATUS status;
     UINT32 handle;
+    BOOL override;
     USHORT count;
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1449,6 +1450,8 @@ static HRESULT hid_joystick_device_try_open( const WCHAR *path, HANDLE *device, 
 
     if (!HidD_GetProductString( device_file, instance->tszInstanceName, MAX_PATH * sizeof(WCHAR) )) goto failed;
     if (!HidD_GetProductString( device_file, instance->tszProductName, MAX_PATH * sizeof(WCHAR) )) goto failed;
+
+    if (device_instance_is_disabled( instance->tszInstanceName, &override )) goto failed;
 
     if (!DeviceIoControl( device_file, IOCTL_HID_GET_WINE_RAWINPUT_HANDLE, NULL, 0, &handle, sizeof(handle), &size, NULL ))
     {
@@ -1564,7 +1567,7 @@ static HRESULT hid_joystick_device_try_open( const WCHAR *path, HANDLE *device, 
 
     *device = device_file;
     *preparsed = preparsed_data;
-    return DI_OK;
+    return override ? S_FALSE : DI_OK;
 
 failed:
     CloseHandle( device_file );
@@ -1582,8 +1585,8 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
     SP_DEVINFO_DATA devinfo = {.cbSize = sizeof(devinfo)};
     WCHAR device_id[MAX_PATH], *tmp;
     HDEVINFO set, xi_set;
-    BOOL override;
     UINT32 i = 0;
+    HRESULT hr;
     GUID hid;
 
     TRACE( "index %d, guid %s\n", index, debugstr_guid( guid ) );
@@ -1601,14 +1604,11 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
         detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
         if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, &devinfo ))
             continue;
-        if (FAILED(hid_joystick_device_try_open( detail->DevicePath, device, preparsed,
-                                                 attrs, caps, instance, version )))
+        if (FAILED(hr = hid_joystick_device_try_open( detail->DevicePath, device, preparsed,
+                                                      attrs, caps, instance, version )))
             continue;
 
-        if (device_instance_is_disabled( instance->tszInstanceName, &override ))
-            goto next;
-
-        if (override && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
+        if (hr == S_FALSE && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
             (tmp = wcsstr( device_id, L"&IG_" )))
         {
             memcpy( tmp, L"&XI_", sizeof(L"&XI_") - sizeof(WCHAR) );
@@ -2048,6 +2048,7 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         wcscpy( impl->device_path, *(const WCHAR **)guid );
         hr = hid_joystick_device_try_open( impl->device_path, &impl->device, &impl->preparsed, &attrs,
                                            &impl->caps, &impl->base.instance, dinput->dwVersion );
+        if (hr == S_FALSE) hr = S_OK;
     }
     if (hr != DI_OK) goto failed;
 
