@@ -49,8 +49,41 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x47,0x67,0x50,0xc5,0xe1,0xa6 );
-DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_GUID( device_path_guid, 0x00000000, 0x0000, 0x0000, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf8 );
+
+/*
+ * Version 1 UUID timestamps are a count of the number of 100 nanosecond
+ * intervals since 00:00:00.00, 15 October 1582 (the date of Gregorian
+ * reform to the Christian calendar). FILETIME is a count of the number of 100
+ * nanosecond intervals since 00:00:00.00, 1 January 1601. In order to convert
+ * a FILETIME value to a UUID timestamp, we need to add:
+ * - 17 days in October 1582.
+ * - 30 days in November 1582.
+ * - 31 days in December 1582.
+ * - 18 years between January 1583 and January 1601.
+ * - 5 leap days in those 18 years.
+ */
+#define UUID_TIME_TO_SYSTEM_TIME_DAYS ((ULONG64)((365 * 18) + 5 + 17 + 30 + 31))
+#define UUID_TIME_TO_SYSTEM_TIME_NS_DIFFERENCE ((UUID_TIME_TO_SYSTEM_TIME_DAYS) * 24 * 60 * 60 * 10000000)
+DEFINE_GUID( dinput_joystick_uuid_init, 0x00000000, 0x0000, 0x1000, 0x80, 0x00, 0x00, 0x00, 'D', 'E', 'S', 'T' );
+
+static GUID create_instance_uuid(void)
+{
+    GUID tmp = dinput_joystick_uuid_init;
+    static LONG clock_seq;
+    ULARGE_INTEGER time;
+    ULONG cur_seq;
+
+    GetSystemTimeAsFileTime( (FILETIME *)&time );
+    time.QuadPart += UUID_TIME_TO_SYSTEM_TIME_NS_DIFFERENCE;
+    tmp.Data1 = (time.QuadPart & 0xffffffff);
+    tmp.Data2 = ((time.QuadPart >> 32) & 0xffff);
+    tmp.Data3 |= ((time.QuadPart >> 48) & 0x0fff);
+    cur_seq = InterlockedIncrement( &clock_seq );
+    tmp.Data4[1] |= (cur_seq & 0xff);
+    tmp.Data4[0] |= ((cur_seq & 0x3f00) >> 8);
+    return tmp;
+}
 
 static CRITICAL_SECTION joystick_cache_cs;
 static CRITICAL_SECTION_DEBUG joystick_cache_cs_debug =
@@ -1623,7 +1656,7 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
     BOOL has_accelerator, has_brake, has_clutch, has_z, has_pov;
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
     HIDP_LINK_COLLECTION_NODE nodes[256];
-    DWORD type, size, button_count = 0;
+    DWORD type, button_count = 0;
     HIDP_BUTTON_CAPS buttons[10];
     WCHAR *override_paths;
     HIDP_VALUE_CAPS value;
@@ -1631,7 +1664,6 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
     ULONG node_count;
     NTSTATUS status;
     BOOL override;
-    UINT32 handle;
     USHORT count;
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1667,15 +1699,8 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
         return hid_joystick_device_try_open( path, device, preparsed, attrs, caps, instance, version );
     }
 
-    if (!DeviceIoControl( device_file, IOCTL_HID_GET_WINE_RAWINPUT_HANDLE, NULL, 0, &handle, sizeof(handle), &size, NULL ))
-    {
-        ERR( "failed to get raw input handle, error %lu\n", GetLastError() );
-        goto failed;
-    }
-
     instance->dwSize = sizeof(DIDEVICEINSTANCEW);
-    instance->guidInstance = hid_joystick_guid;
-    instance->guidInstance.Data1 ^= handle;
+    instance->guidInstance = create_instance_uuid();
     instance->guidProduct = dinput_pidvid_guid;
     instance->guidProduct.Data1 = MAKELONG( attrs->VendorID, attrs->ProductID );
     instance->guidFFDriver = GUID_NULL;

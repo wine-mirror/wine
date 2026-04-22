@@ -6161,7 +6161,7 @@ static void test_joystick_instance_guid( DWORD version )
     ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
 
     hr = dinput_create_device( &di2, &expect_instances[0], &device );
-    if (version == 0x800) todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+    if (version == 0x800) ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
     else ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
     if (SUCCEEDED(hr))
     {
@@ -6191,12 +6191,12 @@ static void test_joystick_instance_guid( DWORD version )
     {
         winetest_push_context( "device %d", i );
 
-        todo_wine ok( !IsEqualGUID( &expect_instances[i], &instances[i] ),
-                      "Unexpected instance %s.\n", debugstr_guid( &instances[i] ) );
+        ok( !IsEqualGUID( &expect_instances[i], &instances[i] ),
+           "Unexpected instance %s.\n", debugstr_guid( &instances[i] ) );
 
         /* Old guidInstance no longer works. */
         hr = dinput_create_device( &di, &expect_instances[i], &device );
-        todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+        ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
         if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
         expect_instances[i] = instances[i];
 
@@ -6224,8 +6224,7 @@ static void test_joystick_instance_guid( DWORD version )
     ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
 
     hr = dinput_create_device( &di, &expect_instances[0], &device );
-    todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
-    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+    ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
 
     instances_end = instances;
     hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
@@ -6245,8 +6244,7 @@ static void test_joystick_instance_guid( DWORD version )
     ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
 
     hr = dinput_create_device( &di, &expect_instances[0], &device );
-    todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
-    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+    ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
 
     instances_end = instances;
     hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
