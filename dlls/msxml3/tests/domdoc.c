@@ -17288,6 +17288,87 @@ static void test_dtd_validation(void)
     free_bstrs();
 }
 
+static void test_doctype(void)
+{
+    IXMLDOMDocumentType *doctype;
+    IXMLDOMNamedNodeMap *map;
+    DOMNodeType node_type;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    LONG length;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentType_get_previousSibling(doctype, &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_PROCESSING_INSTRUCTION, "Unexpected type %d.\n", node_type);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"xml"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMDocumentType_get_nextSibling(doctype, &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_ELEMENT, "Unexpected type %d.\n", node_type);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"email"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMDocumentType_get_attributes(doctype, &map);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 1, "Unexpected length %ld.\n", length);
+    hr = IXMLDOMNamedNodeMap_nextNode(map, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_ATTRIBUTE, "Unexpected type %d.\n", node_type);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"sent"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMNamedNodeMap_Release(map);
+}
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocumentType_hasChildNodes(doctype, &b);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(b == VARIANT_FALSE, "Unexpected value %d\n", b);
+
+    IXMLDOMDocumentType_Release(doctype);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -17396,6 +17477,7 @@ START_TEST(domdoc)
     test_indent();
     test_interfaces();
     test_dtd_validation();
+    test_doctype();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
