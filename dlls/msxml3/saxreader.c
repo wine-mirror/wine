@@ -814,18 +814,36 @@ struct input_buffer
     struct list entities;
 };
 
+static bool is_mb_codepage(UINT codepage)
+{
+    return codepage == 932 || codepage == 936;
+}
+
 static size_t convert_get_raw_length(struct input_buffer *buffer)
 {
     const struct encoded_buffer *raw = &buffer->raw;
     size_t size = raw->written;
 
-    if (buffer->encoding == XML_ENCODING_UTF8 && buffer->code_page == CP_UTF8)
+    if (buffer->encoding == XML_ENCODING_UTF8)
     {
-        /* Incomplete single byte char, look for a start byte of multibyte char. */
-        if (raw->data[size-1] & 0x80)
+        if (buffer->code_page == CP_UTF8)
         {
-            while (--size && !(raw->data[size] & 0xc0))
-                ;
+            /* Incomplete single byte char, look for a start byte of multibyte char. */
+            if (raw->data[size-1] & 0x80)
+            {
+                while (--size && !(raw->data[size] & 0xc0))
+                    ;
+            }
+        }
+        else if (is_mb_codepage(buffer->code_page))
+        {
+            /* Attempt to skip incomplete character */
+            if (size > 2
+                   && IsDBCSLeadByteEx(buffer->code_page, raw->data[size-1])
+                   && !IsDBCSLeadByteEx(buffer->code_page, raw->data[size-2]))
+            {
+                --size;
+            }
         }
     }
 
