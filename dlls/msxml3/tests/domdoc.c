@@ -820,6 +820,12 @@ static const char win1252decl[] =
 DECL_WIN_1252
 ;
 
+static const char shift_jis_xml[] =
+    "<?xml version=\"1.0\" encoding=\"shift_jis\" ?><a>" "\x83\x89" "</a>";
+
+static const char shift_jis_xml2[] =
+    "<?xml version=\"1.0\" encoding=\"shift-jis\" ?><a>" "\x83\x89" "</a>";
+
 static const char nocontent[] = "no xml content here";
 
 static const char szExampleXML[] =
@@ -11531,6 +11537,47 @@ static void test_load(void)
         DeleteFileA(path);
         IXMLDOMDocument_Release(doc);
     }
+
+    /* Shift_JIS */
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "shift_jis.xml");
+    write_to_file(path, shift_jis_xml);
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = _bstr_(path);
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMDocument_get_text(doc, &bstr1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(bstr1, L"\u30e9"), "Unexpected text %s.\n", debugstr_w(bstr1));
+    SysFreeString(bstr1);
+}
+    DeleteFileA(path);
+    IXMLDOMDocument_Release(doc);
+
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "shift_jis.xml");
+    write_to_file(path, shift_jis_xml2);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = _bstr_(path);
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMDocument_get_text(doc, &bstr1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(bstr1, L"\u30e9"), "Unexpected text %s.\n", debugstr_w(bstr1));
+    SysFreeString(bstr1);
+}
+    DeleteFileA(path);
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
