@@ -222,7 +222,7 @@ static BOOL test_input_lost( DWORD version )
     hr = dinput_test_create_device( version, &devinst2, &device2 );
     ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
     ok( !!device2, "device2 is NULL.\n" );
-    todo_wine ok( !memcmp( &devinst.guidInstance, &devinst2.guidInstance, sizeof(GUID) ),
+    ok( !memcmp( &devinst.guidInstance, &devinst2.guidInstance, sizeof(GUID) ),
                   "Unexpected guidInstance.\n" );
     ref = IDirectInputDevice8_Release( device2 );
     ok( ref == 0, "Release returned %ld\n", ref );

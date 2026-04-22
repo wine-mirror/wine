@@ -96,7 +96,18 @@ static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, const WCHAR *pat
 
 #define SWAP(x) MAKELONG( HIWORD(x), LOWORD(x) )
     LIST_FOR_EACH_ENTRY( next, &joystick_cache, struct cache_entry, entry )
+    {
         if (SWAP( next->instance.guidProduct.Data1 ) > SWAP( instance->guidProduct.Data1 )) break;
+        if (SWAP( next->instance.guidProduct.Data1 ) < SWAP( instance->guidProduct.Data1 )) continue;
+        if (*path && !*next->path)
+        {
+            instance->guidInstance = next->instance.guidInstance;
+            TRACE( "Reusing instance %s, path %s\n", debugstr_device_instance( instance ), debugstr_w( path ) );
+            next->instance = *instance;
+            wcscpy( next->path, path );
+            return S_OK;
+        }
+    }
 #undef SWAP
 
     if (FAILED(hr = cache_entry_create( instance, path, &entry ))) return hr;
@@ -104,6 +115,67 @@ static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, const WCHAR *pat
     list_add_before( &next->entry, &entry->entry );
 
     return S_OK;
+}
+
+static void save_registry_instances( HKEY root )
+{
+    struct cache_entry *entry;
+    DWORD vidpid = 0, index = -1;
+    WCHAR buffer[MAX_PATH];
+
+    TRACE( "Saving cached instance GUIDs\n" );
+
+    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
+    {
+        index = (entry->instance.guidProduct.Data1 == vidpid) ? index + 1 : 0;
+        vidpid = entry->instance.guidProduct.Data1;
+
+        swprintf( buffer, ARRAY_SIZE(buffer), L"VID_%04X&PID_%04X\\Calibration\\%u",
+                  LOWORD(vidpid), HIWORD(vidpid), index );
+        RegSetKeyValueW( root, buffer, L"GUID", REG_BINARY, (BYTE *)&entry->instance.guidInstance,
+                         sizeof(entry->instance.guidInstance) );
+
+        TRACE( "Saved %04x:%04x index %lu, guid %s\n", LOWORD(vidpid), HIWORD(vidpid), index,
+               debugstr_guid( &entry->instance.guidInstance ) );
+    }
+}
+
+static void load_registry_product_instances( HKEY root, DWORD vidpid )
+{
+    WCHAR name[MAX_PATH];
+
+    for (DWORD i = 0; !RegEnumKeyW( root, i, name, ARRAY_SIZE(name) ); i++)
+    {
+        DIDEVICEINSTANCEW instance = {.guidProduct = dinput_pidvid_guid };
+        DWORD len = sizeof(GUID);
+
+        instance.guidProduct.Data1 = vidpid;
+        if (RegGetValueW( root, name, L"GUID", RRF_RT_REG_BINARY, NULL, &instance.guidInstance, &len )) continue;
+        insert_cache_entry( &instance, L"" );
+
+        TRACE( "Loaded %04x:%04x index %s, guid %s\n", LOWORD(vidpid), HIWORD(vidpid), debugstr_w( name ),
+               debugstr_guid( &instance.guidInstance ) );
+    }
+}
+
+static void load_registry_instances( HKEY root )
+{
+    WCHAR name[MAX_PATH], buffer[MAX_PATH];
+    HKEY hkey;
+
+    TRACE( "Loading cached instance GUIDs\n" );
+
+    for (DWORD i = 0; !RegEnumKeyW( root, i, name, ARRAY_SIZE(name) ); i++)
+    {
+        UINT vid, pid;
+
+        if (swscanf( name, L"VID_%04X&PID_%04X", &vid, &pid ) != 2) continue;
+        swprintf( buffer, ARRAY_SIZE(buffer), L"VID_%04X&PID_%04X\\Calibration", vid, pid );
+
+        if (RegOpenKeyExW( root, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &hkey )) continue;
+        load_registry_product_instances( hkey, MAKELONG(vid, pid) );
+        RegCloseKey( hkey );
+    }
 }
 
 static HRESULT get_instance_from_guid( const GUID *guid, DIDEVICEINSTANCEW *instance, WCHAR *path )
@@ -121,6 +193,7 @@ static HRESULT get_instance_from_guid( const GUID *guid, DIDEVICEINSTANCEW *inst
 
     LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
     {
+        if (!*entry->path) continue;
         if (IsEqualGUID( &entry->instance.guidProduct, guid )) break;
         if (IsEqualGUID( &entry->instance.guidInstance, guid )) break;
     }
@@ -1719,17 +1792,30 @@ failed:
 
 HRESULT hid_joystick_refresh_devices(void)
 {
+    static const WCHAR *dinput_path = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
+                                       "PrivateProperties\\DirectInput";
+
     WCHAR *paths = NULL;
     HANDLE device;
+    HANDLE mutex;
     HRESULT hr;
+    HKEY root;
     GUID hid;
 
     TRACE( "\n" );
 
     HidD_GetHidGuid( &hid );
 
+    if (RegCreateKeyExW( HKEY_CURRENT_USER, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root, NULL ))
+        return DIERR_DEVICENOTREG;
+
     EnterCriticalSection( &joystick_cache_cs );
+
+    mutex = CreateMutexW( NULL, FALSE, L"__wine_dinput_reg_mutex" );
+    WaitForSingleObject( mutex, INFINITE );
+
     hid_joystick_cleanup_devices();
+    load_registry_instances( root );
 
     hr = get_device_interfaces( hid, NULL, &paths );
     for (WCHAR *path = paths; SUCCEEDED(hr) && *path; path = path + wcslen( path ) + 1)
@@ -1746,7 +1832,13 @@ HRESULT hid_joystick_refresh_devices(void)
     }
     free( paths );
 
+    save_registry_instances( root );
+    ReleaseMutex( mutex );
+    CloseHandle( mutex );
+
     LeaveCriticalSection( &joystick_cache_cs );
+    RegCloseKey( root );
+
     return hr;
 }
 
@@ -1758,7 +1850,7 @@ HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *in
     EnterCriticalSection( &joystick_cache_cs );
 
     LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-        if (!index--) break;
+        if (*entry->path && !index--) break;
     if (&entry->entry == &joystick_cache) hr = DIERR_DEVICENOTREG;
     else
     {
@@ -2148,6 +2240,7 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
                                        &impl->caps, &impl->base.instance, dinput->dwVersion );
     if (hr != DI_OK) goto failed;
 
+    impl->base.instance.guidInstance = instance.guidInstance; /* use the instance GUID from the cache */
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->attrs = attrs;
     list_init( &impl->effect_list );
