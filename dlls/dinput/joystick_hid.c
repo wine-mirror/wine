@@ -107,6 +107,37 @@ static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, const WCHAR *pat
     return S_OK;
 }
 
+static HRESULT get_instance_from_guid( const GUID *guid, DIDEVICEINSTANCEW *instance, WCHAR *path )
+{
+    struct cache_entry *entry;
+    HRESULT hr = DI_OK;
+
+    if (!memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
+    {
+        wcscpy( path, *(const WCHAR **)guid );
+        return S_OK;
+    }
+
+    EnterCriticalSection( &joystick_cache_cs );
+
+    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
+    {
+        if (IsEqualGUID( &entry->instance.guidProduct, guid )) break;
+        if (IsEqualGUID( &entry->instance.guidInstance, guid )) break;
+    }
+    if (&entry->entry == &joystick_cache) hr = DIERR_DEVICENOTREG;
+    else
+    {
+        *instance = entry->instance;
+        wcscpy( path, entry->path );
+    }
+
+    LeaveCriticalSection( &joystick_cache_cs );
+
+    if (FAILED(hr)) WARN( "guid %s not found\n", debugstr_guid(guid) );
+    return hr;
+}
+
 void hid_joystick_cleanup_devices(void)
 {
     struct list *ptr;
@@ -2146,8 +2177,10 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
             .dwHow = DIPH_DEVICE,
         },
     };
+    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(instance)};
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     struct hid_joystick *impl = NULL;
+    WCHAR device_path[MAX_PATH];
     USAGE_AND_PAGE *usages;
     char *buffer;
     HRESULT hr;
@@ -2157,21 +2190,17 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
 
     *out = NULL;
 
+    if (FAILED(hr = get_instance_from_guid( guid, &instance, device_path ))) return hr;
+
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     dinput_device_init( &impl->base, &hid_joystick_vtbl, guid, dinput );
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    wcscpy( impl->device_path, device_path );
 
-    if (memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
-        hr = hid_joystick_device_open( -1, guid, &impl->base.instance, impl->device_path, &impl->device, &impl->preparsed,
-                                       &attrs, &impl->caps, dinput->dwVersion );
-    else
-    {
-        wcscpy( impl->device_path, *(const WCHAR **)guid );
-        hr = hid_joystick_device_try_open( impl->device_path, &impl->device, &impl->preparsed, &attrs,
-                                           &impl->caps, &impl->base.instance, dinput->dwVersion );
-    }
+    hr = hid_joystick_device_try_open( impl->device_path, &impl->device, &impl->preparsed, &attrs,
+                                       &impl->caps, &impl->base.instance, dinput->dwVersion );
     if (hr != DI_OK) goto failed;
 
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
