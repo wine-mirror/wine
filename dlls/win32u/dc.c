@@ -926,7 +926,7 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
 {
     PHYSDEV physdev;
     BOOL ret = TRUE;
-    DWORD prev;
+    DWORD prev = 0;
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
