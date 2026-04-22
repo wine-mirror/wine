@@ -974,6 +974,11 @@ static HRESULT WINAPI present_clock_shutdown_Shutdown(IMFShutdown *iface)
 
     EnterCriticalSection(&clock->cs);
     clock->is_shut_down = TRUE;
+    if (clock->key)
+    {
+        MFRemovePeriodicCallback(clock->key);
+        clock->key = 0;
+    }
     LeaveCriticalSection(&clock->cs);
 
     return S_OK;
