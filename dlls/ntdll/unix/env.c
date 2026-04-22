@@ -63,6 +63,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
+DWORD pid = 0;
 PEB *peb = NULL;
 WOW_PEB *wow_peb = NULL;
 USHORT *uctable = NULL, *lctable = NULL;
@@ -1841,7 +1842,7 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
         NtCurrentTeb()->WowTebOffset = teb_offset;
         NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
         wow_peb = (PEB32 *)((char *)peb + page_size);
-        set_thread_id( NtCurrentTeb(), GetCurrentProcessId(), GetCurrentThreadId() );
+        set_thread_id( NtCurrentTeb(), GetCurrentThreadId() );
     }
 #endif
 
@@ -1968,7 +1969,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     params->Size            = size;
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params->wShowWindow     = 1; /* SW_SHOWNORMAL */
-    params->ProcessGroupId  = GetCurrentProcessId();
+    params->ProcessGroupId  = pid;
 
     params->CurrentDirectory.DosPath.Buffer = (WCHAR *)(params + 1);
     wcscpy( params->CurrentDirectory.DosPath.Buffer, get_dos_path( curdir ));

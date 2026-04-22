@@ -1599,7 +1599,7 @@ size_t server_init_process(void)
     int ret, reply_pipe;
     struct sigaction sig_act;
     size_t info_size;
-    DWORD pid, tid;
+    DWORD tid;
 
     server_pid = -1;
     if (env_socket)
@@ -1716,7 +1716,7 @@ size_t server_init_process(void)
             fatal_error( "WINEARCH set to %s but '%s' is a 32-bit installation.\n", arch, config_dir );
     }
 
-    set_thread_id( NtCurrentTeb(), pid, tid );
+    set_thread_id( NtCurrentTeb(), tid );
 
     for (i = 0; i < supported_machines_count; i++)
         if (supported_machines[i] == current_machine) return info_size;

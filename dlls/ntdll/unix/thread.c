@@ -1180,7 +1180,7 @@ void *get_cpu_area( USHORT machine )
 /***********************************************************************
  *           set_thread_id
  */
-void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
+void set_thread_id( TEB *teb, DWORD tid )
 {
     WOW_TEB *wow_teb = get_wow_teb( teb );
 
@@ -1426,7 +1426,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         goto done;
     }
 
-    set_thread_id( teb, GetCurrentProcessId(), tid );
+    set_thread_id( teb, tid );
 
     teb->SkipThreadAttach = !!(flags & THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH);
     teb->SkipLoaderInit = !!(flags & THREAD_CREATE_FLAGS_SKIP_LOADER_INIT);
@@ -2030,7 +2030,7 @@ static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
     if (NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
         return;
 
-    if (HandleToULong( info.ClientId.UniqueProcess ) != GetCurrentProcessId())
+    if (HandleToULong( info.ClientId.UniqueProcess ) != pid )
     {
         static int once;
         if (!once++) FIXME("cross-process native thread naming not supported\n");
@@ -2089,7 +2089,7 @@ static BOOL is_process_wow64( const CLIENT_ID *id )
     ULONG_PTR info;
     BOOL ret = FALSE;
 
-    if (id->UniqueProcess == ULongToHandle(GetCurrentProcessId())) return is_old_wow64();
+    if (id->UniqueProcess == ULongToHandle(pid)) return is_old_wow64();
     if (!NtOpenProcess( &handle, PROCESS_QUERY_LIMITED_INFORMATION, NULL, id ))
     {
         if (!NtQueryInformationProcess( handle, ProcessWow64Information, &info, sizeof(info), NULL ))

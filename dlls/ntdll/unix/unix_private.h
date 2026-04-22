@@ -197,6 +197,7 @@ extern const char **dll_paths;
 extern const char **system_dll_paths;
 extern pthread_key_t teb_key;
 extern PEB *peb;
+extern DWORD pid;
 extern USHORT *uctable;
 extern USHORT *lctable;
 extern SIZE_T startup_info_size;
@@ -272,7 +273,7 @@ extern void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 
 extern void set_process_instrumentation_callback( void *callback );
 
 extern void *get_cpu_area( USHORT machine );
-extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid );
+extern void set_thread_id( TEB *teb, DWORD tid );
 extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size );
 extern void DECLSPEC_NORETURN abort_thread( int status );
 extern void DECLSPEC_NORETURN abort_process( int status );
