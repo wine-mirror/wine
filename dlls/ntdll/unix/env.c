@@ -2447,3 +2447,19 @@ PEB * WINAPI RtlGetCurrentPeb(void)
 {
     return peb;
 }
+
+/**********************************************************************
+ *      PsGetCurrentProcessId  (ntdll.so)
+ */
+HANDLE WINAPI PsGetCurrentProcessId(void)
+{
+    return ULongToHandle( pid );
+}
+
+/**********************************************************************
+ *      PsGetCurrentThreadId  (ntdll.so)
+ */
+HANDLE WINAPI PsGetCurrentThreadId(void)
+{
+    return NtCurrentTeb()->ClientId.UniqueThread;
+}

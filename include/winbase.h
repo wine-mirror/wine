@@ -2649,8 +2649,8 @@ extern WCHAR * CDECL wine_get_dos_file_name( const char * ) __WINE_DEALLOC(HeapF
 
 #define GetCurrentProcess()   NtCurrentProcess()
 #define GetCurrentThread()    NtCurrentThread()
-#define GetCurrentProcessId() HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess)
-#define GetCurrentThreadId()  HandleToULong(NtCurrentTeb()->ClientId.UniqueThread)
+#define GetCurrentProcessId() HandleToULong(PsGetCurrentProcessId())
+#define GetCurrentThreadId()  HandleToULong(PsGetCurrentThreadId())
 
 #elif defined(__WINESRC__)
 
