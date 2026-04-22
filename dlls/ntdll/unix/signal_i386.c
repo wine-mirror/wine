@@ -517,11 +517,13 @@ struct x86_thread_data
     UINT               dr6;           /* 1ec */
     UINT               dr7;           /* 1f0 */
     UINT               frame_size;    /* 1f4 syscall frame size including xstate */
+    UINT               fpcw;          /* 1f8 FPU control word */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame_size ) == 0x1f4 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, fpcw ) == 0x1f8 );
 
 static unsigned int frame_size;
 static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
@@ -1653,8 +1655,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "andl $~63,%esp\n\t"
                    "leal 8(%ebp),%eax\n\t"
                    "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
-                   "movl 0x218(%edx),%ecx\n\t" /* thread_data->syscall_frame */
-                   "movl %ecx,0x3c(%esp)\n\t"  /* frame->prev_frame */
+                   "movl 0x218(%edx),%edi\n\t" /* thread_data->syscall_frame */
+                   "movl %edi,0x3c(%esp)\n\t"  /* frame->prev_frame */
                    "movl %esp,0x218(%edx)\n\t" /* thread_data->syscall_frame */
                    "testl $1,0x21c(%edx)\n\t"  /* thread_data->syscall_trace */
                    "jz 1f\n\t"
@@ -1666,6 +1668,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "1:\tmovl 0x14(%ebp),%ecx\n\t" /* func */
                    /* switch to user stack */
                    "movl %ebx,%esp\n\t"
+                   "fnclex\n\t"
+                   "fldcw 0x40(%edi)\n\t"      /* prev_frame->fsave.ControlWord */
                    "xorl %ebp,%ebp\n\t"
                    "jmpl *%ecx" )
 
@@ -2506,6 +2510,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "1:\tmovl $0,(%eax)\n\t"     /* frame->restore_flags */
                    "movl %edx,0x38(%eax)\n\t"   /* frame->syscall_cfa */
                    "movl $0,0x3c(%eax)\n\t"     /* frame->prev_frame */
+                   "fnstcw 0x1f8(%ecx)\n\t"     /* thread_data->fpcw */
                    /* switch to kernel stack */
                    "movl %eax,%esp\n\t"
                    "pushl %ecx\n\t"             /* teb */
@@ -2587,6 +2592,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* The xsavec instruction is not supported by
                     * binutils < 2.25. */
                    ".byte 0x0f, 0xc7, 0x61, 0x40\n\t" /* xsavec 0x40(%ecx) */
+                   "fnstcw 0x40(%ecx)\n\t"         /* frame->fsave.ControlWord */
                    "jmp 4f\n"
                    "1:\txsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
@@ -2605,6 +2611,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_offset %ebx,-12\n\t")
                    __ASM_CFI(".cfi_offset %esi,-16\n\t")
                    __ASM_CFI(".cfi_offset %edi,-20\n\t")
+                   "fnclex\n\t"
+                   "fldcw %fs:0x1f8\n\t"           /* thread_data->fpcw */
                    "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
                    "andl $0xfff,%edx\n\t"          /* syscall number */
                    "cmpl 8(%ebx),%edx\n\t"         /* table->ServiceLimit */
@@ -2628,8 +2636,11 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
                    "movl 0(%esp),%ecx\n\t"         /* frame->restore_flags */
                    "testl $0x68,%ecx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
-                   "jz 3f\n\t"
-                   "cmpb $0,0x7ffe0285\n\t"        /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
+                   "jnz 1f\n\t"
+                   "fnclex\n\t"
+                   "fldcw 0x40(%esp)\n\t"          /* frame->fsave.ControlWord */
+                   "jmp 3f\n"
+                   "1:\tcmpb $0,0x7ffe0285\n\t"    /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
                    "jz 1f\n\t"
                    "movl %eax,%esi\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
@@ -2768,6 +2779,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_REG_IS_AT1(esi, ecx, 0x30)
                    "movl %ebp,0x34(%ecx)\n\t"
                    __ASM_CFI_REG_IS_AT1(ebp, ecx, 0x34)
+                   "fnstcw 0x40(%ecx)\n\t"     /* frame->fsave.ControlWord */
                    "movl 12(%esp),%edx\n\t"    /* args */
                    "movl %edx,-16(%ecx)\n\t"
                    "movl (%esp),%eax\n\t"      /* handle */
@@ -2781,10 +2793,14 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_offset %ebx,-12\n\t")
                    __ASM_CFI(".cfi_offset %esi,-16\n\t")
                    __ASM_CFI(".cfi_offset %edi,-20\n\t")
+                   "fnclex\n\t"
+                   "fldcw %fs:0x1f8\n\t"       /* thread_data->fpcw */
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
                    "testl $0x7fff,(%esp)\n\t"  /* frame->restore_flags */
                    "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
+                   "fnclex\n\t"
+                   "fldcw 0x40(%esp)\n\t"      /* frame->fsave.ControlWord */
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
