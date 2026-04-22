@@ -208,9 +208,11 @@ static HRESULT WINAPI domdoctype_get_lastChild(IXMLDOMDocumentType *iface, IXMLD
 
 static HRESULT WINAPI domdoctype_get_previousSibling(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    FIXME("%p, %p: stub\n", iface, node);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, node);
+
+    return node_get_previous_sibling(doctype->node, node);
 }
 
 static HRESULT WINAPI domdoctype_get_nextSibling(IXMLDOMDocumentType *iface, IXMLDOMNode **node)

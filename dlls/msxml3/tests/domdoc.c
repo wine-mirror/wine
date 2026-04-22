@@ -17309,10 +17309,7 @@ static void test_doctype(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocumentType_get_previousSibling(doctype, &node);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(node_type == NODE_PROCESSING_INSTRUCTION, "Unexpected type %d.\n", node_type);
@@ -17321,7 +17318,7 @@ if (hr == S_OK)
     ok(!wcscmp(str, L"xml"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
-}
+
     hr = IXMLDOMDocumentType_get_nextSibling(doctype, &node);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
