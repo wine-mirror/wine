@@ -11547,15 +11547,11 @@ static void test_load(void)
     V_VT(&src) = VT_BSTR;
     V_BSTR(&src) = _bstr_(path);
     hr = IXMLDOMDocument_load(doc, src, &b);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     hr = IXMLDOMDocument_get_text(doc, &bstr1);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(bstr1, L"\u30e9"), "Unexpected text %s.\n", debugstr_w(bstr1));
     SysFreeString(bstr1);
-}
     DeleteFileA(path);
     IXMLDOMDocument_Release(doc);
 
@@ -11567,15 +11563,11 @@ if (hr == S_OK)
     V_VT(&src) = VT_BSTR;
     V_BSTR(&src) = _bstr_(path);
     hr = IXMLDOMDocument_load(doc, src, &b);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     hr = IXMLDOMDocument_get_text(doc, &bstr1);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(bstr1, L"\u30e9"), "Unexpected text %s.\n", debugstr_w(bstr1));
     SysFreeString(bstr1);
-}
     DeleteFileA(path);
     IXMLDOMDocument_Release(doc);
 

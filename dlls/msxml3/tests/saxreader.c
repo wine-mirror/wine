@@ -3513,17 +3513,15 @@ static void test_saxreader_encoding(void)
     create_test_file(testXmlA, xml_shift_jis_test, sizeof(xml_shift_jis_test) - 1);
     set_expected_seq(xml_shift_jis_seq);
     hr = ISAXXMLReader_parseURL(reader, L"test.xml");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok_sequence(sequences, CONTENT_HANDLER_INDEX, xml_shift_jis_seq, "Content test with shift_jis", TRUE);
+    ok_sequence(sequences, CONTENT_HANDLER_INDEX, xml_shift_jis_seq, "Content test with shift_jis", FALSE);
     DeleteFileA(testXmlA);
 
     create_test_file(testXmlA, xml_shift_jis_test2, sizeof(xml_shift_jis_test2) - 1);
     set_expected_seq(xml_shift_jis_seq);
     hr = ISAXXMLReader_parseURL(reader, L"test.xml");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok_sequence(sequences, CONTENT_HANDLER_INDEX, xml_shift_jis_seq, "Content test with shift-jis", TRUE);
+    ok_sequence(sequences, CONTENT_HANDLER_INDEX, xml_shift_jis_seq, "Content test with shift-jis", FALSE);
     DeleteFileA(testXmlA);
 
     ISAXXMLReader_Release(reader);

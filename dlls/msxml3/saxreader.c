@@ -587,6 +587,8 @@ static bool saxreader_get_encoding_codepage(const WCHAR *name, UINT *codepage)
     }
     encodings[] =
     {
+        { L"shift_jis", 932 },
+        { L"shift-jis", 932 },
         { L"gbk", 936 },
         { L"gb2312", 936 },
         { L"us-ascii", 20127 },
