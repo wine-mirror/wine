@@ -1931,6 +1931,61 @@ static void test_implicit_mta(void)
     ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
 }
 
+static void test_primary_independent(void)
+{
+    DSBUFFERDESC bufdesc = {.dwSize = sizeof(bufdesc)};
+    IDirectSoundBuffer *primary1, *primary2;
+    IDirectSound8 *dso1, *dso2;
+    DSBCAPS caps;
+    HRESULT hr;
+    LONG vol;
+
+    hr = DirectSoundCreate8(NULL, &dso1, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+       "DirectSoundCreate8() failed: %08lx\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = DirectSoundCreate8(NULL, &dso2, NULL);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectSound8_SetCooperativeLevel(dso1, get_hwnd(), DSSCL_PRIORITY);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectSound8_SetCooperativeLevel(dso2, get_hwnd(), DSSCL_PRIORITY);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    /* Create a primary buffer on dso1 with CTRL3D but without CTRLVOLUME */
+    bufdesc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRL3D;
+    hr = IDirectSound8_CreateSoundBuffer(dso1, &bufdesc, &primary1, NULL);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    /* Create a primary buffer on dso2 with CTRLVOLUME */
+    bufdesc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLVOLUME;
+    hr = IDirectSound8_CreateSoundBuffer(dso2, &bufdesc, &primary2, NULL);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    /* Check whether the two IDirectSound objects share a primary buffer */
+    todo_wine ok(primary1 != primary2,
+       "Two IDirectSound objects should have independent primary buffers\n");
+
+    /* GetVolume on dso2's primary buffer should succeed */
+    hr = IDirectSoundBuffer_GetVolume(primary2, &vol);
+    todo_wine ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+
+    /* Verify dso2's primary buffer has CTRLVOLUME */
+    memset(&caps, 0, sizeof(caps));
+    caps.dwSize = sizeof(caps);
+    hr = IDirectSoundBuffer_GetCaps(primary2, &caps);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(caps.dwFlags & DSBCAPS_CTRLVOLUME, "Unexpected dwFlags %#lx.\n", caps.dwFlags);
+
+    IDirectSoundBuffer_Release(primary2);
+    IDirectSoundBuffer_Release(primary1);
+    IDirectSound8_Release(dso2);
+    IDirectSound8_Release(dso1);
+}
+
 START_TEST(dsound8)
 {
     DWORD cookie;
@@ -1955,6 +2010,8 @@ START_TEST(dsound8)
     test_effects();
 
     CoRevokeClassObject(cookie);
+
+    test_primary_independent();
 
     CoUninitialize();
 }
