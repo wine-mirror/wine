@@ -22,7 +22,28 @@
 #include "wine/fil_data.h"
 #include "wine/test.h"
 
+#include <control.h>
 #include <uuids.h>
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static HRESULT create_color_conv(IBaseFilter **filter)
+{
+    return CoCreateInstance(&CLSID_Colour, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)filter);
+}
 
 static HRESULT create_filter_mapper(IFilterMapper2 **mapper)
 {
@@ -167,11 +188,86 @@ static void test_registration(void)
     IPropertyBag_Release(property_bag);
 }
 
+static void test_interfaces(void)
+{
+    IBaseFilter *filter;
+    ULONG refcount;
+    HRESULT hr;
+    IPin *pin;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr != S_OK)
+        return;
+
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicAudio, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IMediaPosition, FALSE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualityControl, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        todo_wine
+        check_interface(pin, &IID_IMemInputPin, TRUE);
+        check_interface(pin, &IID_IPin, TRUE);
+        todo_wine
+        check_interface(pin, &IID_IQualityControl, TRUE);
+        check_interface(pin, &IID_IUnknown, TRUE);
+
+        check_interface(pin, &IID_IMediaPosition, FALSE);
+        check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+        IPin_Release(pin);
+    }
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        check_interface(pin, &IID_IPin, TRUE);
+        todo_wine
+        check_interface(pin, &IID_IMediaPosition, TRUE);
+        todo_wine
+        check_interface(pin, &IID_IMediaSeeking, TRUE);
+        todo_wine
+        check_interface(pin, &IID_IQualityControl, TRUE);
+        check_interface(pin, &IID_IUnknown, TRUE);
+
+        check_interface(pin, &IID_IAsyncReader, FALSE);
+
+        IPin_Release(pin);
+    }
+
+    refcount = IBaseFilter_Release(filter);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
 
     test_registration();
+    test_interfaces();
 
     CoUninitialize();
 }
