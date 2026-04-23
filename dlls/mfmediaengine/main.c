@@ -1530,7 +1530,9 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
     start_playback = engine->flags & FLAGS_ENGINE_PLAY_PENDING;
     media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING | FLAGS_ENGINE_PLAY_PENDING, FALSE);
 
-    if (SUCCEEDED(IMFAsyncResult_GetState(result, &state)))
+    if (engine->extension)
+        hr = IMFMediaEngineExtension_EndCreateObject(engine->extension, result, &object);
+    else if (SUCCEEDED(IMFAsyncResult_GetState(result, &state)))
     {
         hr = IMFSourceResolver_EndCreateObjectFromByteStream(engine->resolver, result, &obj_type, &object);
         IUnknown_Release(state);
@@ -1739,20 +1741,25 @@ static HRESULT media_engine_set_source(struct media_engine *engine, IMFByteStrea
             media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING, TRUE);
 
         if (engine->extension)
-            FIXME("Use extension to load from.\n");
-
-        flags = MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
-        if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
-            flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
-
-        IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
-                &IID_IPropertyStore, (void **)&props);
-        if (bytestream)
-            hr = IMFSourceResolver_BeginCreateObjectFromByteStream(engine->resolver, bytestream, url, flags,
-                    props, NULL, &engine->load_handler, (IUnknown *)bytestream);
+        {
+            hr = IMFMediaEngineExtension_BeginCreateObject(engine->extension, url, bytestream, MF_OBJECT_MEDIASOURCE, NULL,
+                    &engine->load_handler, (IUnknown *)bytestream);
+        }
         else
-            hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
-                    &engine->load_handler, NULL);
+        {
+            flags = MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
+            if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
+                flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
+
+            IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
+                    &IID_IPropertyStore, (void **)&props);
+            if (bytestream)
+                hr = IMFSourceResolver_BeginCreateObjectFromByteStream(engine->resolver, bytestream, url, flags,
+                        props, NULL, &engine->load_handler, (IUnknown *)bytestream);
+            else
+                hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
+                        &engine->load_handler, NULL);
+        }
 
         if (props)
             IPropertyStore_Release(props);
