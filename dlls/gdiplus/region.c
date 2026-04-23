@@ -2261,6 +2261,10 @@ static GpStatus edge_list_to_spans_alternate(struct edge_list *edges, struct spa
 
         assert(edge[0].y == edge[1].y);
 
+        /* edges can be collapsed to the left or right bound, making an empty span */
+        if (edge[0].x == edge[1].x)
+            continue;
+
         span = &spans->spans[spans->length++];
         span->x[0] = edge[0].x;
         span->x[1] = edge[1].x;
