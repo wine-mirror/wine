@@ -75,6 +75,7 @@ struct layout
 
     LANGID lang;
     DWORD klid;
+    WORD layout_id;
 };
 
 static const unsigned int ControlMask = 1 << 2;
@@ -89,6 +90,57 @@ static struct list xkb_layouts = LIST_INIT( xkb_layouts );
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
+static const WCHAR keyboard_layouts_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','C','o','n','t','r','o','l',
+    '\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s'
+};
+
+static ULONG query_reg_ascii_value( HKEY hkey, const char *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+{
+    WCHAR nameW[64];
+
+    asciiz_to_unicode( nameW, name );
+    return query_reg_value( hkey, nameW, info, size );
+}
+
+static WORD get_layout_id_from_klid( DWORD klid )
+{
+    static WORD next_layout_id = 0x100;
+
+    char buffer[2048];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    WORD layout_id = 0;
+    HKEY hkey = NULL, subkey;
+    WCHAR name[16];
+
+    TRACE( "klid %08x\n", klid );
+
+    if (!HIWORD(klid)) return 0;
+    if (klid == -1) goto done;
+
+    snprintf( buffer, sizeof(buffer), "%08x", klid );
+    asciiz_to_unicode( name, buffer );
+
+    if (!(hkey = reg_open_key( NULL, keyboard_layouts_keyW, sizeof(keyboard_layouts_keyW) ))) goto done;
+
+    if (!(subkey = reg_open_key( hkey, name, 8 * sizeof(WCHAR) ))) goto done;
+
+    if (query_reg_ascii_value( subkey, "Layout Id", value, sizeof(buffer) ) && value->Type == REG_SZ)
+        layout_id = wcstoul( (const WCHAR *)value->Data, NULL, 16 );
+    NtClose( subkey );
+
+done:
+    if (hkey) NtClose( hkey );
+    if (!layout_id) layout_id = next_layout_id++;
+    TRACE( "layout_id %04x\n", layout_id );
+    return layout_id;
+}
+
 static void create_layout_from_xkb( int xkb_group, const char *xkb_layout, LANGID lang, DWORD klid )
 {
     struct layout *layout;
@@ -100,8 +152,8 @@ static void create_layout_from_xkb( int xkb_group, const char *xkb_layout, LANGI
     {
         if (!strcmp( layout->xkb_layout, xkb_layout ))
         {
-            TRACE( "Found existing layout entry %p, lang %04x, klid %08x\n",
-                   layout, layout->lang, layout->klid );
+            TRACE( "Found existing layout entry %p, lang %04x, klid %08x, layout_id %04x\n",
+                   layout, layout->lang, layout->klid, layout->layout_id );
             if (layout->xkb_group == -1) layout->xkb_group = xkb_group;
             return;
         }
@@ -120,8 +172,9 @@ static void create_layout_from_xkb( int xkb_group, const char *xkb_layout, LANGI
 
     layout->lang = lang;
     layout->klid = !klid ? MAKELONG(lang, 0) : (klid == -1) ? MAKELONG(lang, index + 0x20) : klid;
+    layout->layout_id = get_layout_id_from_klid( klid );
 
-    TRACE( "Created layout entry %p, lang %04x, klid %08x\n", layout, layout->lang, layout->klid );
+    TRACE( "Created layout entry %p, lang %04x, klid %08x, layout_id %04x\n", layout, layout->lang, layout->klid, layout->layout_id );
 }
 
 /* Keyboard translation tables */
