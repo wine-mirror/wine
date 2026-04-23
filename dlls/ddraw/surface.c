@@ -4641,7 +4641,8 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
     if (old_clipper && ddraw_clipper_is_valid(old_clipper))
         IDirectDrawClipper_Release(&old_clipper->IDirectDrawClipper_iface);
 
-    if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && This->ddraw->wined3d_swapchain)
+    if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && This->ddraw->wined3d_swapchain
+            && !(This->ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
         clipWindow = NULL;
         if(clipper) {
