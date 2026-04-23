@@ -1182,8 +1182,8 @@ static HRESULT WINAPI domdoc_createNode(IXMLDOMDocument3 *iface, VARIANT type, B
 
     *node = NULL;
 
-    if (FAILED(hr = domnode_create(node_type, name, SysStringLen(name), uri, SysStringLen(uri),
-            doc->node, &domnode)))
+    if (FAILED(hr = domnode_create(node_type, name, name ? wcslen(name) : 0,
+            uri, uri ? wcslen(uri) : 0, doc->node, &domnode)))
     {
         return hr;
     }
