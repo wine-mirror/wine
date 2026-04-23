@@ -2274,9 +2274,8 @@ static void test_makecurrent(HDC winhdc)
 
     SetLastError( 0xdeadbeef );
     ret = wglMakeCurrent( NULL, NULL );
-    ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
-    if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
-                  "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
+    ok( !ret, "wglMakeCurrent succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, NULL );
     ok( ret, "wglMakeCurrent failed\n" );
@@ -2291,9 +2290,8 @@ static void test_makecurrent(HDC winhdc)
 
     SetLastError( 0xdeadbeef );
     ret = wglMakeCurrent( NULL, NULL );
-    ok( !ret || broken(ret) /* nt4 */, "wglMakeCurrent succeeded\n" );
-    if (!ret) ok( GetLastError() == ERROR_INVALID_HANDLE,
-                  "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
+    ok( !ret, "wglMakeCurrent succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got error=%lx\n", GetLastError() );
 
     ret = wglMakeCurrent( winhdc, hglrc );
     ok( ret, "wglMakeCurrent failed\n" );

@@ -316,7 +316,7 @@ static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context 
         return FALSE;
     }
 
-    funcs->p_wglMakeCurrent( hdc, client_dst );
+    funcs->p_wglMakeContextCurrentARB( hdc, hdc, client_dst );
 
     if (mask & GL_COLOR_BUFFER_BIT)
     {
@@ -369,8 +369,7 @@ static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context 
     }
     dst->used |= (src->used & mask);
 
-    if (!old_ctx) funcs->p_wglMakeCurrent( NULL, NULL );
-    else if (!old_funcs->p_wglMakeContextCurrentARB) old_funcs->p_wglMakeCurrent( draw_hdc, old_ctx->client );
+    if (!old_ctx) funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL );
     else old_funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, old_ctx->client );
 
     NtUserReleaseDC( hwnd, hdc );
@@ -1143,40 +1142,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", all_extensions[client->extension_array[i]].name );
 }
 
-BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC client_context )
-{
-    DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
-
-    if (client_context)
-    {
-        const struct opengl_funcs *funcs = get_context_funcs( client_context );
-        if (!(ctx = get_updated_context( teb, client_context ))) return FALSE;
-        if (ctx->tid && ctx->tid != tid)
-        {
-            RtlSetLastWin32Error( ERROR_BUSY );
-            return FALSE;
-        }
-
-        if (!funcs->p_wglMakeCurrent( hdc, client_context )) return FALSE;
-        if (prev) prev->tid = 0;
-        make_context_current( teb, funcs, hdc, hdc, client_context, ctx );
-    }
-    else if (prev)
-    {
-        const struct opengl_funcs *funcs = teb->glTable;
-        if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->tid = 0;
-        teb->glTable = &null_opengl_funcs;
-    }
-    else if (!hdc)
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static void free_context( struct context *ctx )
 {
     free( ctx->wow64_version );
@@ -1428,7 +1393,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     else if (prev)
     {
         const struct opengl_funcs *funcs = teb->glTable;
-        if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
+        if (!funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL )) return FALSE;
         prev->tid = 0;
         teb->glTable = &null_opengl_funcs;
     }

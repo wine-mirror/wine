@@ -407,20 +407,13 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
 
 BOOL WINAPI wglMakeCurrent( HDC hdc, HGLRC handle )
 {
-    TEB *teb = NtCurrentTeb();
-    struct wglMakeCurrent_params args = { .teb = teb, .hDc = hdc };
-    NTSTATUS status;
-
-    TRACE( "hdc %p, newContext %p\n", hdc, handle );
-
-    if (!get_context_from_handle( handle, &args.newContext )) return FALSE;
-    if ((status = UNIX_CALL( wglMakeCurrent, &args ))) WARN( "wglMakeCurrent returned %#lx\n", status );
-    if (status || !args.ret) return FALSE;
-
-    teb->glCurrentRC = handle;
-    teb->glReserved1[0] = hdc;
-    teb->glReserved1[1] = hdc;
-    return TRUE;
+    TRACE( "hdc %p, handle %p\n", hdc, handle );
+    if (!hdc && !handle && !NtCurrentTeb()->glCurrentRC)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    return wglMakeContextCurrentARB( hdc, hdc, handle );
 }
 
 BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC handle )

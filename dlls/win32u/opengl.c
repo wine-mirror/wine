@@ -1929,11 +1929,6 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC c
     return TRUE;
 }
 
-static BOOL win32u_wglMakeCurrent( HDC hdc, HGLRC client_context )
-{
-    return win32u_wglMakeContextCurrentARB( hdc, hdc, client_context );
-}
-
 static void opengl_client_pbuffer_init( HPBUFFERARB client_pbuffer, struct pbuffer *pbuffer, const struct opengl_funcs *funcs )
 {
     struct opengl_client_pbuffer *client = opengl_client_pbuffer_from_client( client_pbuffer );
@@ -2702,7 +2697,7 @@ static void display_funcs_init(void)
     display_funcs.p_wglDeleteContext = (void *)1; /* never called */
     display_funcs.p_wglCopyContext = (void *)1; /* never called */
     display_funcs.p_wglShareLists = (void *)1; /* never called */
-    display_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
+    display_funcs.p_wglMakeCurrent = (void *)1; /* never called */
 
     display_funcs.p_wglSwapBuffers = win32u_wglSwapBuffers;
     display_funcs.p_context_flush = win32u_context_flush;

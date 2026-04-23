@@ -51,14 +51,6 @@ struct wglGetPixelFormat_params
     int ret;
 };
 
-struct wglMakeCurrent_params
-{
-    TEB *teb;
-    HDC hDc;
-    HGLRC newContext;
-    BOOL ret;
-};
-
 struct wglSetPixelFormat_params
 {
     TEB *teb;
@@ -25874,7 +25866,6 @@ enum unix_funcs
     unix_wglCreateContext,
     unix_wglDeleteContext,
     unix_wglGetPixelFormat,
-    unix_wglMakeCurrent,
     unix_wglSetPixelFormat,
     unix_wglShareLists,
     unix_wglSwapBuffers,
