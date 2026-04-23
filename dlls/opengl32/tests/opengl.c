@@ -1483,9 +1483,7 @@ static void test_object_creation( HDC winhdc )
         }
         if (!is_implicit_allowed( i, TRUE ))
         {
-            todo_wine_if( i == OBJ_RENDERBUFFER )
             ok_ret( GL_INVALID_OPERATION, glGetError() );
-            if (!winetest_platform_is_wine || i != OBJ_RENDERBUFFER)
             ok_ret( TRUE, create_object( i, 0, &obj ) );
         }
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -1516,7 +1514,7 @@ static void test_object_creation( HDC winhdc )
             /* Wine never allows implicit allocation in core contexts */
             todo_wine_if( i == OBJ_FENCE_APPLE || i == OBJ_FENCE_NV || i == OBJ_PATH_NV ||
                           i == OBJ_PROGRAM_ARB || i == OBJ_PROGRAM_NV || i == OBJ_SHADER_EXT || i == OBJ_SHADER_ATI ||
-                          i == OBJ_RENDERBUFFER_EXT || i == OBJ_SEMAPHORE_EXT || i == OBJ_TRANSFORM_FEEDBACK_NV ||
+                          i == OBJ_SEMAPHORE_EXT || i == OBJ_TRANSFORM_FEEDBACK_NV ||
                           i == OBJ_VERTEX_ARRAY_APPLE )
             ok_ret( GL_NO_ERROR, glGetError() );
             ok_u4( obj, ==, 1 );
