@@ -179,7 +179,6 @@ DEFINE_EXPECT(BindToStorage);
 DEFINE_EXPECT(IsSystemMoniker);
 DEFINE_EXPECT(GetBindResult);
 DEFINE_EXPECT(GetClassID);
-DEFINE_EXPECT(Abort);
 DEFINE_EXPECT(Read);
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(Start);
@@ -197,7 +196,6 @@ DEFINE_EXPECT(EnableModeless_TRUE);
 DEFINE_EXPECT(EnableModeless_FALSE);
 DEFINE_EXPECT(Frame_EnableModeless_TRUE);
 DEFINE_EXPECT(Frame_EnableModeless_FALSE);
-DEFINE_EXPECT(Frame_GetWindow);
 DEFINE_EXPECT(TranslateUrl);
 DEFINE_EXPECT(Advise_Close);
 DEFINE_EXPECT(OnViewChange);
@@ -232,7 +230,7 @@ static BOOL set_clientsite, container_locked;
 static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
 static BOOL editmode = FALSE, ignore_external_qi;
 static BOOL inplace_deactivated, open_call;
-static BOOL complete, loading_js, loading_hash, is_refresh, is_from_hist;
+static BOOL loading_js, loading_hash, is_refresh, is_from_hist;
 static DWORD status_code = HTTP_STATUS_OK;
 static BOOL asynchronous_binding = FALSE;
 static BOOL support_wbapp, allow_new_window, no_travellog;
@@ -1469,7 +1467,7 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
 
 static HRESULT WINAPI Binding_Abort(IBinding *iface)
 {
-    CHECK_EXPECT(Abort);
+    ok(0, "unexpected call\n");
     if(asynchronous_binding)
         PeekMessageA(NULL, container_hwnd, WM_CONTINUE_BINDING, WM_CONTINUE_BINDING, PM_REMOVE);
     return S_OK;
@@ -1998,7 +1996,7 @@ static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
 
 static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
 {
-    CHECK_EXPECT(Frame_GetWindow);
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -3533,10 +3531,9 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
             CHECK_EXPECT(Invoke_OnReadyStateChange_Interactive);
         else if(!lstrcmpW(state, L"loading"))
             CHECK_EXPECT(Invoke_OnReadyStateChange_Loading);
-        else if(!lstrcmpW(state, L"complete")) {
+        else if(!lstrcmpW(state, L"complete"))
             CHECK_EXPECT(Invoke_OnReadyStateChange_Complete);
-            complete = TRUE;
-        } else
+        else
             ok(0, "Unexpected readyState: %s\n", wine_dbgstr_w(state));
 
         SysFreeString(state);
@@ -8383,7 +8380,6 @@ static void init_test(enum load_state_t ls) {
     nav_url = NULL;
     ipsex = FALSE;
     inplace_deactivated = FALSE;
-    complete = FALSE;
     testing_submit = FALSE;
     expect_uihandler_iface = &DocHostUIHandler;
     is_mhtml = FALSE;
@@ -9545,7 +9541,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(GetWindow);
     if(use_ipsex) {
         CHECK_CALLED(OnInPlaceActivateEx);
-        SET_EXPECT(RequestUIActivate);
+        CHECK_CALLED(RequestUIActivate);
     }
     else
         CHECK_CALLED(OnInPlaceActivate);
@@ -9782,7 +9778,7 @@ static void test_com_aggregation(const CLSID *clsid)
     SET_EXPECT(outer_QI_IPersistMoniker); /* Some IE version QI for that. */
     hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CreateInstance returned: %08lx\n", hres);
-    SET_CALLED(outer_QI_IPersistMoniker);
+    CLEAR_CALLED(outer_QI_IPersistMoniker);
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&unk2);
     ok(hres == S_OK, "Could not get IDispatch iface: %08lx\n", hres);
