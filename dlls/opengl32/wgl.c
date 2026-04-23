@@ -307,9 +307,10 @@ static GLuint *alloc_object_ids( GLuint **ids[L1_COUNT], GLuint client_id )
     return ptr[j];
 }
 
-static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT] )
+static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT],
+                             void (*callback)(struct object_table *, GLuint, GLuint) )
 {
-    GLuint **l1_block, *l2_block;
+    GLuint id, **l1_block, *l2_block;
 
     for (int i = 0; i < L1_COUNT; i++)
     {
@@ -317,6 +318,11 @@ static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT] 
         for (int j = 0; j < L2_COUNT; j++)
         {
             if (!(l2_block = l1_block[j])) continue;
+            for (int k = 0; callback && k < L3_COUNT; k++)
+            {
+                if (!(id = l2_block[k])) continue;
+                callback( table, id, (i * L2_COUNT + j) * L3_COUNT + k );
+            }
             free( l2_block );
         }
         free( l1_block );
@@ -346,7 +352,7 @@ static GLuint set_object( struct object_table *table, GLuint client_id, GLuint h
     if (!(ids = alloc_object_ids( table->host_ids, client_id ))) goto failed;
     ids[client_id % L3_COUNT] = host_id;
 
-    if (table->implicit)
+    if (table->implicit || table->type == OBJ_TYPE_SHADER /* for destruction check */)
     {
         if (!(ids = alloc_object_ids( table->client_ids, host_id ))) goto failed;
         ids[host_id % L3_COUNT] = client_id;
@@ -414,10 +420,23 @@ static GLuint create_object( enum object_type type )
 
 #undef MAKE_OBJECT_CALL
 
+static void destroy_host_object( struct object_table *table, GLuint host_id, GLuint client_id )
+{
+    WARN( "Leaking %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+}
+
+static void destroy_host_shader( struct object_table *table, GLuint host_id, GLuint client_id )
+{
+    GLuint *object;
+    if (!(object = find_object_id( table->client_ids, host_id )) || !(client_id = *object)) return;
+    WARN( "Leaking %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+}
+
 static void free_object_table( struct object_table *table )
 {
-    free_object_ids( table, table->host_ids );
-    free_object_ids( table, table->client_ids );
+    if (table->type == OBJ_TYPE_SHADER) free_object_ids( table, table->host_ids, destroy_host_shader );
+    else free_object_ids( table, table->host_ids, destroy_host_object );
+    free_object_ids( table, table->client_ids, NULL );
 }
 
 static void init_object_table( struct object_table *table, enum object_type type )
@@ -465,6 +484,7 @@ static void display_lists_release( struct display_lists *lists )
     {
         struct handle_entry *entry = lists->syncs.handles + i;
         if (LOWORD(entry->handle) == 0xffff) continue;
+        WARN( "Leaking sync client %#x, host %p\n", entry->handle, entry->user_data );
         free( entry->user_data );
     }
 
