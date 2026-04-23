@@ -2110,6 +2110,9 @@ BOOL get_integer( GLenum name, GLint *data )
 
     switch (name)
     {
+    case GL_CONTEXT_PROFILE_MASK:
+        *data = ctx->base.profile_mask;
+        return TRUE;
     case GL_MAJOR_VERSION:
         *data = ctx->base.major_version;
         return TRUE;
