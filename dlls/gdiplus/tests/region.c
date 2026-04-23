@@ -2727,6 +2727,56 @@ static void test_rounding(void)
     GdipDeleteMatrix(matrix);
 }
 
+static void test_empty_spans(void)
+{
+    GpStatus status;
+    GpGraphics *graphics;
+    GpBitmap *bitmap;
+    GpPath *path, *path2;
+    const GpPointF inside_path_points[] = { { 20, 20 }, { 80, 20 }, { 80, 80 } };
+    const GpPointF outside_path_points[] = { { 100, 20 }, { 101, 20 }, { 101, 80 } };
+    GpRegion *region;
+    GpBrush *brush;
+
+    status = GdipCreateBitmapFromScan0(100, 100, 400, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipAddPathPolygon(path, inside_path_points, ARRAY_SIZE(inside_path_points));
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeAlternate, &path2);
+    expect(Ok, status);
+    /* add a path inside the device bounds and one outside,
+     * resulting in an empty span at the end of each scanline */
+    status = GdipAddPathPolygon(path2, inside_path_points, ARRAY_SIZE(inside_path_points));
+    expect(Ok, status);
+    status = GdipAddPathPolygon(path2, outside_path_points, ARRAY_SIZE(outside_path_points));
+    expect(Ok, status);
+
+    status = GdipCreateRegionPath(path, &region);
+    expect(Ok, status);
+    status = GdipCombineRegionPath(region, path2, CombineModeIntersect);
+    expect(Ok, status);
+
+    status = GdipCreateSolidFill(0xffffffff, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    status = GdipFillRegion(graphics, brush, region);
+    expect(Ok, status);
+
+    GdipDeleteBrush(brush);
+    GdipDeleteRegion(region);
+    GdipDeletePath(path2);
+    GdipDeletePath(path);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDeleteGraphics(graphics);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2763,6 +2813,7 @@ START_TEST(region)
     test_GdipCreateRegionRgnData();
     test_incombinedregion();
     test_rounding();
+    test_empty_spans();
 
     GdiplusShutdown(gdiplusToken);
 }
