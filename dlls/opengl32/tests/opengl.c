@@ -56,8 +56,10 @@ static const char *debugstr_ok( const char *cond )
         t v = (r);                                                                                 \
         ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
+#define ok_u4( r, op, e )   ok_ex( r, op, e, UINT, "%u" )
 #define ok_ptr( r, op, e )  ok_ex( r, op, e, const void *, "%p" )
 #define ok_ret( e, r )      ok_ex( r, ==, e, UINT_PTR, "%#Ix, error %ld", GetLastError() )
+#define ok_nt( e, r )       ok_ex( r, ==, e, NTSTATUS, "%#lx" )
 
 #define check_gl_error(exp) check_gl_error_(__LINE__, exp)
 static void check_gl_error_( unsigned int line, GLenum exp )
@@ -1052,6 +1054,444 @@ static void test_setpixelformat(HDC winhdc)
         ok( i == pf, "GetPixelFormat returned wrong format %d/%d\n", i, pf );
         ReleaseDC( hwnd, hdc );
         DestroyWindow( hwnd );
+    }
+}
+
+enum object_type
+{
+    OBJ_BUFFER,
+    OBJ_BUFFER_ARB,
+    OBJ_COMMAND_LIST_NV,
+    OBJ_FENCE_APPLE,
+    OBJ_FENCE_NV,
+    OBJ_FRAMEBUFFER,
+    OBJ_FRAMEBUFFER_EXT,
+    OBJ_DISPLAY_LIST,
+    OBJ_MEMORY_OBJECT_EXT,
+    OBJ_OBJECT_BUFFER_ATI,
+    OBJ_PATH_NV,
+    OBJ_PROGRAM_ARB,
+    OBJ_PROGRAM_NV,
+    OBJ_SHADER_EXT,
+    OBJ_SHADER_ATI,
+    OBJ_PROGRAM_OBJECT,
+    OBJ_PROGRAM_OBJECT_ARB,
+    OBJ_SHADER_OBJECT,
+    OBJ_SHADER_OBJECT_ARB,
+    OBJ_PROGRAM_PIPELINE,
+    OBJ_QUERY,
+    OBJ_QUERY_ARB,
+    OBJ_OCCLUSION_QUERY_NV,
+    OBJ_RENDERBUFFER,
+    OBJ_RENDERBUFFER_EXT,
+    OBJ_SAMPLER,
+    OBJ_SEMAPHORE_EXT,
+    OBJ_STATE_NV,
+    OBJ_TEXTURE,
+    OBJ_TEXTURE_EXT,
+    OBJ_TRANSFORM_FEEDBACK,
+    OBJ_TRANSFORM_FEEDBACK_NV,
+    OBJ_VERTEX_ARRAY,
+    OBJ_VERTEX_ARRAY_APPLE,
+    OBJ_TYPE_COUNT,
+};
+
+static const char *debugstr_object_type( enum object_type type )
+{
+    switch (type)
+    {
+    case OBJ_BUFFER:                return "buffer";
+    case OBJ_BUFFER_ARB:            return "buffer_arb";
+    case OBJ_COMMAND_LIST_NV:       return "command_list_nv";
+    case OBJ_FENCE_APPLE:           return "fence_apple";
+    case OBJ_FENCE_NV:              return "fence_nv";
+    case OBJ_FRAMEBUFFER:           return "framebuffer";
+    case OBJ_FRAMEBUFFER_EXT:       return "framebuffer_ext";
+    case OBJ_DISPLAY_LIST:          return "display list";
+    case OBJ_MEMORY_OBJECT_EXT:     return "memory_object_ext";
+    case OBJ_OBJECT_BUFFER_ATI:     return "object_buffer_ati";
+    case OBJ_PATH_NV:               return "path_nv";
+    case OBJ_PROGRAM_ARB:           return "program_arb";
+    case OBJ_PROGRAM_NV:            return "program_nv";
+    case OBJ_SHADER_EXT:            return "shader_ext";
+    case OBJ_SHADER_ATI:            return "shader_ati";
+    case OBJ_PROGRAM_OBJECT:        return "program";
+    case OBJ_PROGRAM_OBJECT_ARB:    return "program_object_arb";
+    case OBJ_SHADER_OBJECT:         return "shader";
+    case OBJ_SHADER_OBJECT_ARB:     return "shader_object_arb";
+    case OBJ_PROGRAM_PIPELINE:      return "program_pipeline";
+    case OBJ_QUERY:                 return "query";
+    case OBJ_QUERY_ARB:             return "query_arb";
+    case OBJ_OCCLUSION_QUERY_NV:    return "occlusion_query_nv";
+    case OBJ_RENDERBUFFER:          return "renderbuffer";
+    case OBJ_RENDERBUFFER_EXT:      return "renderbuffer_ext";
+    case OBJ_SAMPLER:               return "sampler";
+    case OBJ_SEMAPHORE_EXT:         return "semaphore_ext";
+    case OBJ_STATE_NV:              return "state_nv";
+    case OBJ_TEXTURE:               return "texture";
+    case OBJ_TEXTURE_EXT:           return "texture_ext";
+    case OBJ_TRANSFORM_FEEDBACK:    return "transform_feedback";
+    case OBJ_TRANSFORM_FEEDBACK_NV: return "transform_feedback_nv";
+    case OBJ_VERTEX_ARRAY:          return "vertex_array";
+    case OBJ_VERTEX_ARRAY_APPLE:    return "vertex_array_apple";
+    default:                        return wine_dbg_sprintf( "%u", type );
+    }
+}
+
+static BOOL create_object( enum object_type type, GLuint name, GLuint *obj )
+{
+    switch (type)
+    {
+    case OBJ_BUFFER:
+        if (!ext.glGenBuffers) return FALSE;
+        if (!(*obj = name)) ext.glGenBuffers( 1, obj );
+        ext.glBindBuffer( GL_ARRAY_BUFFER, *obj );
+        break;
+    case OBJ_BUFFER_ARB:
+        if (!ext.glGenBuffersARB) return FALSE;
+        if (!(*obj = name)) ext.glGenBuffersARB( 1, obj );
+        ext.glBindBufferARB( GL_ARRAY_BUFFER, *obj );
+        break;
+    case OBJ_COMMAND_LIST_NV:
+        if (!ext.glCreateCommandListsNV) return FALSE;
+        ext.glCreateCommandListsNV( 1, obj );
+        break;
+    case OBJ_FENCE_APPLE:
+        if (!ext.glGenFencesAPPLE) return FALSE;
+        if (!(*obj = name)) ext.glGenFencesAPPLE( 1, obj );
+        ext.glSetFenceAPPLE( *obj );
+        break;
+    case OBJ_FENCE_NV:
+        if (!ext.glGenFencesNV) return FALSE;
+        if (!(*obj = name)) ext.glGenFencesNV( 1, obj );
+        ext.glSetFenceNV( *obj, GL_ALL_COMPLETED_NV );
+        break;
+    case OBJ_FRAMEBUFFER:
+        if (!ext.glGenFramebuffers) return FALSE;
+        if (!(*obj = name)) ext.glGenFramebuffers( 1, obj );
+        ext.glBindFramebuffer( GL_DRAW_FRAMEBUFFER, *obj );
+        break;
+    case OBJ_FRAMEBUFFER_EXT:
+        if (!ext.glGenFramebuffersEXT) return FALSE;
+        if (!(*obj = name)) ext.glGenFramebuffersEXT( 1, obj );
+        ext.glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER, *obj );
+        break;
+    case OBJ_DISPLAY_LIST:
+        if (!(*obj = name)) *obj = glGenLists( 1 );
+        glNewList( *obj, GL_COMPILE );
+        glClear( GL_COLOR_BUFFER_BIT );
+        glEndList();
+        break;
+    case OBJ_MEMORY_OBJECT_EXT:
+        if (!ext.glCreateMemoryObjectsEXT) return FALSE;
+        ext.glCreateMemoryObjectsEXT( 1, obj );
+        break;
+    case OBJ_OBJECT_BUFFER_ATI:
+        if (!ext.glNewObjectBufferATI) return FALSE;
+        *obj = ext.glNewObjectBufferATI( sizeof(name), &name, GL_STATIC_ATI );
+        break;
+    case OBJ_PATH_NV:
+    {
+        static const GLshort coords[2] = {100, 180};
+        static const GLubyte cmds[1] = {GL_MOVE_TO_NV};
+
+        if (!ext.glGenPathsNV) return FALSE;
+        if (!(*obj = name)) *obj = ext.glGenPathsNV( 1 );
+        ext.glPathCommandsNV( *obj, 1, cmds, 2, GL_SHORT, coords );
+        break;
+    }
+    case OBJ_PROGRAM_ARB:
+    {
+        static const GLubyte shader[] = "!!ARBfp1.0\nEND";
+
+        if (!ext.glGenProgramsARB) return FALSE;
+        if (!(*obj = name)) ext.glGenProgramsARB( 1, obj );
+        ext.glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, *obj );
+        ext.glProgramStringARB( GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, sizeof(shader) - 1, shader );
+        break;
+    }
+    case OBJ_PROGRAM_NV:
+    {
+        static const GLubyte shader[] = "!!VP1.0END";
+
+        if (!ext.glGenProgramsNV) return FALSE;
+        if (!(*obj = name)) ext.glGenProgramsNV( 1, obj );
+        ext.glBindProgramNV( GL_VERTEX_PROGRAM_NV, *obj );
+        ext.glLoadProgramNV( GL_VERTEX_PROGRAM_NV, *obj, sizeof(shader) - 1, shader );
+        break;
+    }
+    case OBJ_SHADER_EXT:
+        if (!ext.glGenVertexShadersEXT) return FALSE;
+        if (!(*obj = name)) *obj = ext.glGenVertexShadersEXT( 1 );
+        ext.glBindVertexShaderEXT( *obj );
+        break;
+    case OBJ_SHADER_ATI:
+        if (!ext.glGenFragmentShadersATI) return FALSE;
+        if (!(*obj = name)) *obj = ext.glGenFragmentShadersATI( 1 );
+        ext.glBindFragmentShaderATI( *obj );
+        break;
+    case OBJ_PROGRAM_OBJECT:
+        if (!ext.glCreateProgram) return FALSE;
+        *obj = ext.glCreateProgram();
+        break;
+    case OBJ_PROGRAM_OBJECT_ARB:
+        if (!ext.glCreateProgramObjectARB) return FALSE;
+        *obj = ext.glCreateProgramObjectARB();
+        break;
+    case OBJ_SHADER_OBJECT:
+        if (!ext.glCreateShader) return FALSE;
+        *obj = ext.glCreateShader( GL_VERTEX_SHADER );
+        break;
+    case OBJ_SHADER_OBJECT_ARB:
+        if (!ext.glCreateShaderObjectARB) return FALSE;
+        *obj = ext.glCreateShaderObjectARB( GL_VERTEX_SHADER_ARB );
+        break;
+    case OBJ_PROGRAM_PIPELINE:
+        if (!ext.glGenProgramPipelines) return FALSE;
+        if (!(*obj = name)) ext.glGenProgramPipelines( 1, obj );
+        ext.glBindProgramPipeline( *obj );
+        break;
+    case OBJ_QUERY:
+        if (!ext.glGenQueries) return FALSE;
+        if (!(*obj = name)) ext.glGenQueries( 1, obj );
+        ext.glBeginQuery( GL_SAMPLES_PASSED, *obj );
+        ext.glEndQuery( GL_SAMPLES_PASSED );
+        break;
+    case OBJ_QUERY_ARB:
+        if (!ext.glGenQueriesARB) return FALSE;
+        if (!(*obj = name)) ext.glGenQueriesARB( 1, obj );
+        ext.glBeginQueryARB( GL_SAMPLES_PASSED_ARB, *obj );
+        ext.glEndQueryARB( GL_SAMPLES_PASSED_ARB );
+        break;
+    case OBJ_OCCLUSION_QUERY_NV:
+        if (!ext.glGenOcclusionQueriesNV) return FALSE;
+        if (!(*obj = name)) ext.glGenOcclusionQueriesNV( 1, obj );
+        ext.glBeginOcclusionQueryNV( *obj );
+        ext.glEndOcclusionQueryNV();
+        break;
+    case OBJ_RENDERBUFFER:
+        if (!ext.glGenRenderbuffers) return FALSE;
+        if (!(*obj = name)) ext.glGenRenderbuffers( 1, obj );
+        ext.glBindRenderbuffer( GL_RENDERBUFFER, *obj );
+        break;
+    case OBJ_RENDERBUFFER_EXT:
+        if (!ext.glGenRenderbuffersEXT) return FALSE;
+        if (!(*obj = name)) ext.glGenRenderbuffersEXT( 1, obj );
+        ext.glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, *obj );
+        break;
+    case OBJ_SAMPLER:
+        if (!ext.glGenSamplers) return FALSE;
+        if (!(*obj = name)) ext.glGenSamplers( 1, obj );
+        ext.glBindSampler( 0, *obj );
+        break;
+    case OBJ_SEMAPHORE_EXT:
+    {
+        D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter = {0};
+        D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroy = {0};
+        D3DKMT_CREATESYNCHRONIZATIONOBJECT2 create2 = {0};
+        D3DKMT_DESTROYDEVICE destroy_device = {0};
+        D3DKMT_CREATEDEVICE create_device = {0};
+        D3DKMT_CLOSEADAPTER close_adapter = {0};
+        NTSTATUS status;
+
+        if (!ext.glGenSemaphoresEXT) return FALSE;
+
+        wcscpy( open_adapter.DeviceName, L"\\\\.\\DISPLAY1" );
+        status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter );
+        ok_nt( STATUS_SUCCESS, status );
+        create_device.hAdapter = open_adapter.hAdapter;
+        status = D3DKMTCreateDevice( &create_device );
+        ok_nt( STATUS_SUCCESS, status );
+
+        create2.hDevice = create_device.hDevice;
+        create2.Info.Type = D3DDDI_FENCE;
+        create2.Info.Flags.Shared = 1;
+        create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
+        status = D3DKMTCreateSynchronizationObject2( &create2 );
+        ok_nt( STATUS_SUCCESS, status );
+
+        if (!(*obj = name)) ext.glGenSemaphoresEXT( 1, obj );
+        ext.glImportSemaphoreWin32HandleEXT( *obj, GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT,
+                                             UlongToHandle( create2.Info.SharedHandle ) );
+
+        destroy.hSyncObject = create2.hSyncObject;
+        status = D3DKMTDestroySynchronizationObject( &destroy );
+        ok_nt( STATUS_SUCCESS, status );
+        destroy_device.hDevice = create_device.hDevice;
+        status = D3DKMTDestroyDevice( &destroy_device );
+        ok_nt( STATUS_SUCCESS, status );
+        close_adapter.hAdapter = open_adapter.hAdapter;
+        status = D3DKMTCloseAdapter( &close_adapter );
+        ok_nt( STATUS_SUCCESS, status );
+        break;
+    }
+    case OBJ_STATE_NV:
+        if (!ext.glCreateStatesNV) return FALSE;
+        ext.glCreateStatesNV( 1, obj );
+        break;
+    case OBJ_TEXTURE:
+        if (!(*obj = name)) glGenTextures( 1, obj );
+        glBindTexture( GL_TEXTURE_2D, *obj );
+        break;
+    case OBJ_TEXTURE_EXT:
+        if (!ext.glGenTexturesEXT) return FALSE;
+        if (!(*obj = name)) ext.glGenTexturesEXT( 1, obj );
+        ext.glBindTextureEXT( GL_TEXTURE_2D, *obj );
+        break;
+    case OBJ_TRANSFORM_FEEDBACK:
+        if (!ext.glGenTransformFeedbacks) return FALSE;
+        if (!(*obj = name)) ext.glGenTransformFeedbacks( 1, obj );
+        ext.glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, *obj );
+        break;
+    case OBJ_TRANSFORM_FEEDBACK_NV:
+        if (!ext.glGenTransformFeedbacksNV) return FALSE;
+        if (!(*obj = name)) ext.glGenTransformFeedbacksNV( 1, obj );
+        ext.glBindTransformFeedbackNV( GL_TRANSFORM_FEEDBACK_NV, *obj );
+        break;
+    case OBJ_VERTEX_ARRAY:
+        if (!ext.glGenVertexArrays) return FALSE;
+        if (!(*obj = name)) ext.glGenVertexArrays( 1, obj );
+        ext.glBindVertexArray( *obj );
+        break;
+    case OBJ_VERTEX_ARRAY_APPLE:
+        if (!ext.glGenVertexArraysAPPLE) return FALSE;
+        if (!(*obj = name)) ext.glGenVertexArraysAPPLE( 1, obj );
+        ext.glBindVertexArrayAPPLE( *obj );
+        break;
+    case OBJ_TYPE_COUNT: return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* some functions don't allow implicit names even in compat contexts, or even in core contexts */
+static BOOL is_implicit_allowed( enum object_type type, BOOL compat )
+{
+    switch (type)
+    {
+    case OBJ_BUFFER:                return compat;
+    case OBJ_BUFFER_ARB:            return compat;
+    case OBJ_DISPLAY_LIST:          return compat;
+    case OBJ_OCCLUSION_QUERY_NV:    return compat;
+    case OBJ_QUERY:                 return compat;
+    case OBJ_QUERY_ARB:             return compat;
+    case OBJ_TEXTURE:               return compat;
+    case OBJ_TEXTURE_EXT:           return compat;
+
+    /* never allow implicit allocation even in compat contexts */
+    case OBJ_FRAMEBUFFER:           return FALSE;
+    case OBJ_PROGRAM_PIPELINE:      return FALSE;
+    case OBJ_RENDERBUFFER:          return FALSE;
+    case OBJ_SAMPLER:               return FALSE;
+    case OBJ_TRANSFORM_FEEDBACK:    return FALSE;
+    case OBJ_VERTEX_ARRAY:          return FALSE;
+
+    /* always allow implicit allocation even in core contexts */
+    case OBJ_FENCE_APPLE:           return TRUE;
+    case OBJ_FENCE_NV:              return TRUE;
+    case OBJ_FRAMEBUFFER_EXT:       return TRUE;
+    case OBJ_PATH_NV:               return TRUE;
+    case OBJ_PROGRAM_ARB:           return TRUE;
+    case OBJ_PROGRAM_NV:            return TRUE;
+    case OBJ_RENDERBUFFER_EXT:      return TRUE;
+    case OBJ_SEMAPHORE_EXT:         return TRUE;
+    case OBJ_SHADER_ATI:            return TRUE;
+    case OBJ_SHADER_EXT:            return TRUE;
+    case OBJ_TRANSFORM_FEEDBACK_NV: return TRUE;
+    case OBJ_VERTEX_ARRAY_APPLE:    return TRUE;
+
+    /* some types are always allocated explicitly */
+    case OBJ_COMMAND_LIST_NV:       return TRUE;
+    case OBJ_MEMORY_OBJECT_EXT:     return TRUE;
+    case OBJ_OBJECT_BUFFER_ATI:     return TRUE;
+    case OBJ_PROGRAM_OBJECT:        return TRUE;
+    case OBJ_PROGRAM_OBJECT_ARB:    return TRUE;
+    case OBJ_SHADER_OBJECT:         return TRUE;
+    case OBJ_SHADER_OBJECT_ARB:     return TRUE;
+    case OBJ_STATE_NV:              return TRUE;
+
+    default:                        return FALSE;
+    }
+}
+
+static void test_object_creation( HDC winhdc )
+{
+    static const GLint compat_attribs[] =
+    {
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+        0, 0
+    };
+    static const GLint core_attribs[] =
+    {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0, 0
+    };
+
+    GLuint obj;
+    HGLRC ctx;
+
+    for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
+    {
+        if (broken( i == OBJ_TRANSFORM_FEEDBACK )) continue; /* NVIDIA / AMD don't agree */
+
+        winetest_push_context( "%u %s compat", i, debugstr_object_type( i ) );
+
+        ctx = ext.wglCreateContextAttribsARB( winhdc, NULL, compat_attribs );
+        ok_ptr( ctx, !=, NULL );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        if ((i == OBJ_SEMAPHORE_EXT && winetest_platform_is_wine) || !create_object( i, 1, &obj ))
+        {
+            skip( "Skipping unsupported object type.\n" );
+            goto next;
+        }
+        if (!is_implicit_allowed( i, TRUE ))
+        {
+            todo_wine_if( i == OBJ_FRAMEBUFFER || i == OBJ_RENDERBUFFER )
+            ok_ret( GL_INVALID_OPERATION, glGetError() );
+            if (!winetest_platform_is_wine || (i != OBJ_FRAMEBUFFER && i != OBJ_RENDERBUFFER))
+            ok_ret( TRUE, create_object( i, 0, &obj ) );
+        }
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_u4( obj, ==, 1 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+        winetest_pop_context();
+
+
+        winetest_push_context( "%u %s core", i, debugstr_object_type( i ) );
+
+        ctx = ext.wglCreateContextAttribsARB( winhdc, NULL, core_attribs );
+        ok_ptr( ctx, !=, NULL );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, create_object( i, 1, &obj ) );
+        if (!is_implicit_allowed( i, FALSE ))
+        {
+            ok_ret( GL_INVALID_OPERATION, glGetError() );
+            ok_ret( TRUE, create_object( i, 0, &obj ) );
+        }
+        if (i == OBJ_DISPLAY_LIST) ok_ret( GL_INVALID_OPERATION, glGetError() );
+        else
+        {
+            /* Wine never allows implicit allocation in core contexts */
+            todo_wine_if( i == OBJ_FENCE_APPLE || i == OBJ_FENCE_NV || i == OBJ_FRAMEBUFFER_EXT || i == OBJ_PATH_NV ||
+                          i == OBJ_PROGRAM_ARB || i == OBJ_PROGRAM_NV || i == OBJ_SHADER_EXT || i == OBJ_SHADER_ATI ||
+                          i == OBJ_RENDERBUFFER_EXT || i == OBJ_SEMAPHORE_EXT || i == OBJ_TRANSFORM_FEEDBACK_NV ||
+                          i == OBJ_VERTEX_ARRAY_APPLE )
+            ok_ret( GL_NO_ERROR, glGetError() );
+            ok_u4( obj, ==, 1 );
+        }
+
+next:
+        ok_ret( TRUE, wglDeleteContext( ctx ) );
+        winetest_pop_context();
     }
 }
 
@@ -3548,7 +3988,7 @@ static void test_memory_map( HDC hdc)
     const char *dst_ptr, *version;
     char *src_ptr, *ptr;
     HGLRC rc, old_rc;
-    GLuint src, dst;
+    GLuint src, dst, objs1[0x10], objs2[0x10];
     char data[0x1000];
     BOOL ret;
 
@@ -3571,8 +4011,46 @@ static void test_memory_map( HDC hdc)
         }
     }
 
+    src = 128;
+    ok_ret( FALSE, ext.glIsBuffer( src ) );
+    ok_ret( 0, glGetError() );
+    ext.glDeleteBuffers( 1, &src );
+    ok_ret( 0, glGetError() );
+
+    ok_ret( FALSE, ext.glIsBuffer( src ) );
+    ok_ret( 0, glGetError() );
+    ok_ret( FALSE, ext.glIsBuffer( 0xffffffff ) );
+    ok_ret( 0, glGetError() );
+    ext.glBindBuffer( GL_ARRAY_BUFFER, 0xffffffff );
+    ok_ret( 0, glGetError() );
+    ok_ret( TRUE, ext.glIsBuffer( 0xffffffff ) );
+    ok_ret( 0, glGetError() );
+
     ext.glGenBuffers( 1, &src );
+    ok_ret( 0, glGetError() );
+    ext.glBindBuffer( GL_ARRAY_BUFFER, src );
+    ok_ret( 0, glGetError() );
+    ok_ret( TRUE, ext.glIsBuffer( src ) );
+    ok_ret( 0, glGetError() );
+
+    ext.glGenBuffers( ARRAY_SIZE(objs1), objs1 );
+    ok_ret( 0, glGetError() );
+    ext.glDeleteBuffers( ARRAY_SIZE(objs1) / 2, objs1 );
+    ok_ret( 0, glGetError() );
+    ext.glGenBuffers( ARRAY_SIZE(objs2), objs2 );
+    ok_ret( 0, glGetError() );
     ext.glGenBuffers( 1, &dst );
+    ok_ret( 0, glGetError() );
+    ext.glDeleteBuffers( ARRAY_SIZE(objs1) / 2, objs1 + ARRAY_SIZE(objs1) / 2 );
+    ok_ret( 0, glGetError() );
+    ext.glDeleteBuffers( ARRAY_SIZE(objs2), objs2 );
+    ok_ret( 0, glGetError() );
+
+    src = 0xffffffff;
+    ext.glDeleteBuffers( 1, &src );
+    ok_ret( 0, glGetError() );
+    ok_ret( FALSE, ext.glIsBuffer( 0xffffffff ) );
+    ok_ret( 0, glGetError() );
 
     ext.glBindBuffer( GL_ARRAY_BUFFER, src );
     ext.glBufferData( GL_ARRAY_BUFFER, sizeof(data), NULL, GL_STATIC_DRAW );
@@ -3864,7 +4342,11 @@ START_TEST(opengl)
     if (wgl_extensions == NULL) skip( "Skipping opengl32 tests because this OpenGL implementation "
                                       "doesn't support WGL extensions!\n" );
 
-    if (strstr( wgl_extensions, "WGL_ARB_create_context" )) test_opengl3( hdc );
+    if (strstr( wgl_extensions, "WGL_ARB_create_context" ))
+    {
+        test_opengl3( hdc );
+        test_object_creation( hdc );
+    }
 
     if (strstr( wgl_extensions, "WGL_ARB_make_current_read" ))
     {
