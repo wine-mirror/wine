@@ -2052,12 +2052,6 @@ if (0)
         ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
         ok(nodeChild == NULL, "pLastChild not NULL\n");
 
-        /* baseName */
-        str = (void *)0xdeadbeef;
-        hr = IXMLDOMComment_get_baseName(node_comment, &str);
-        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-        ok(str == NULL, "Expected NULL\n");
-
         IXMLDOMComment_Release( node_comment );
     }
 
@@ -7065,6 +7059,7 @@ static void test_put_nodeValue(void)
     IXMLDOMNode *node;
     HRESULT hr;
     VARIANT data, type;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -7083,6 +7078,10 @@ static void test_put_nodeValue(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
     hr = IXMLDOMNode_put_nodeValue(node, _variantbstr_("one two three"));
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
+    ok(!str, "Unexpected name %p.\n", str);
     IXMLDOMNode_Release(node);
 
     /* NODE_ELEMENT */
@@ -14927,6 +14926,14 @@ static void test_comment(void)
     hr = CoCreateInstance(&CLSID_DOMDocument2, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("comment"), &comment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMComment_get_baseName(comment, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected pointer %p.\n", str);
+    IXMLDOMComment_Release(comment);
+
     for (int i = 0; i < 2; ++i)
     {
         hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, i == 0 ? VARIANT_TRUE : VARIANT_FALSE);
@@ -15514,6 +15521,10 @@ static void test_doc_fragment(void)
     ok(!lstrcmpW(str, L"#document-fragment"), "Unexpected name %s\n", debugstr_w(str));
     SysFreeString(str);
 
+    hr = IXMLDOMDocumentFragment_get_baseName(fragment, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected name %p.\n", str);
+
     /* Siblings */
     hr = IXMLDOMDocumentFragment_get_nextSibling(fragment, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -15676,6 +15687,16 @@ static void test_text(void)
 
     hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = NODE_TEXT;
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("text"), NULL, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected name %p.\n", str);
+    IXMLDOMNode_Release(node);
 
     str = SysAllocString( L"open" );
     hr = IXMLDOMDocument_createTextNode(doc, str, NULL);
@@ -16421,10 +16442,21 @@ static void test_cdata(void)
     IXMLDOMDocument *doc;
     IXMLDOMNode *node;
     HRESULT hr;
+    VARIANT v;
     LONG len;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_CDATA_SECTION;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("cdata"), NULL, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected name %p.\n", str);
+    IXMLDOMNode_Release(node);
 
     str = SysAllocString(L"[1]*2=3; &gee that is not right!");
     hr = IXMLDOMDocument_createCDATASection(doc, str, NULL);
@@ -16440,6 +16472,11 @@ static void test_cdata(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(str, L"#cdata-section"), "Unexpected named %s.\n", debugstr_w(str));
     SysFreeString(str);
+
+    str = (void *)0x1;
+    hr = IXMLDOMCDATASection_get_baseName(cdata, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected name %p.\n", str);
 
     hr = IXMLDOMCDATASection_get_xml(cdata, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -17308,6 +17345,15 @@ static void test_doctype(void)
     hr = IXMLDOMDocument_get_doctype(doc, &doctype);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IXMLDOMDocumentType_get_baseName(doctype, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(!wcscmp(str, L"email"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+}
+
     hr = IXMLDOMDocumentType_get_previousSibling(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
@@ -17359,6 +17405,32 @@ if (hr == S_OK)
     ok(b == VARIANT_FALSE, "Unexpected value %d\n", b);
 
     IXMLDOMDocumentType_Release(doctype);
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_entityref(void)
+{
+    IXMLDOMEntityReference *ref;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createEntityReference(doc, _bstr_("ent"), &ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMEntityReference_get_baseName(ref, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(!wcscmp(str, L"ent"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+}
+
+    IXMLDOMEntityReference_Release(ref);
 
     IXMLDOMDocument_Release(doc);
 }
@@ -17472,6 +17544,7 @@ START_TEST(domdoc)
     test_interfaces();
     test_dtd_validation();
     test_doctype();
+    test_entityref();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
