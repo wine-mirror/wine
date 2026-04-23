@@ -73,6 +73,7 @@ struct opengl_client_context
     struct HGLRC__              obj;            /* client object header */
     UINT64                      unix_handle;
     UINT64                      unix_funcs;
+    DWORD                       current_tid;                            /* thread that the context is current in */
     GLenum                      last_error;
     int                         major_version;
     int                         minor_version;

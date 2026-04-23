@@ -379,16 +379,16 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
     if (!ptr) return FALSE;
     args.oldContext = &ptr->context->obj;
 
-    if (handle && handle == teb->glCurrentRC) wglMakeCurrent( NULL, NULL );
+    if (handle == teb->glCurrentRC) wglMakeCurrent( NULL, NULL );
+    if (ptr->context->current_tid)
+    {
+        SetLastError( ERROR_BUSY );
+        return FALSE;
+    }
+
     if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#lx\n", status );
     if (status || !args.ret) return FALSE;
 
-    if (handle == teb->glCurrentRC)
-    {
-        teb->glCurrentRC = 0;
-        teb->glReserved1[0] = 0;
-        teb->glReserved1[1] = 0;
-    }
     free_client_context( ptr );
     return TRUE;
 }
@@ -408,14 +408,24 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC handle )
 {
     TEB *teb = NtCurrentTeb();
     struct wglMakeContextCurrentARB_params args = { .teb = teb, .hDrawDC = draw_hdc, .hReadDC = read_hdc };
+    struct opengl_client_context *context = NULL, *previous = opengl_client_context_from_handle( teb->glCurrentRC );
     NTSTATUS status;
 
     TRACE( "draw_hdc %p, read_hdc %p, handle %p\n", draw_hdc, read_hdc, handle );
 
     if (!get_context_from_handle( handle, &args.hglrc )) return FALSE;
+    if ((context = opengl_client_context_from_handle( handle )) &&
+        context->current_tid && context->current_tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_BUSY );
+        return FALSE;
+    }
+
     if ((status = UNIX_CALL( wglMakeContextCurrentARB, &args ))) WARN( "wglMakeContextCurrentARB returned %#lx\n", status );
     if (status || !args.ret) return FALSE;
 
+    if (context) context->current_tid = GetCurrentThreadId();
+    if (previous) previous->current_tid = 0;
     teb->glCurrentRC = handle;
     teb->glReserved1[0] = draw_hdc;
     teb->glReserved1[1] = read_hdc;
