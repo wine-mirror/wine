@@ -3545,9 +3545,11 @@ static void WINAPI glBindVertexBuffers( GLuint first, GLsizei count, const GLuin
 
 static void WINAPI glBindVertexShaderEXT( GLuint id )
 {
-    struct glBindVertexShaderEXT_params args = { .teb = NtCurrentTeb(), .id = id };
+    struct glBindVertexShaderEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "id %d\n", id );
+    if (!alloc_context_objects( OBJ_TYPE_SHADER_EXT, 1, &id, TRUE )) return;
+    args.id = *map_context_objects( OBJ_TYPE_SHADER_EXT, 1, &id );
     if ((status = UNIX_CALL( glBindVertexShaderEXT, &args ))) WARN( "glBindVertexShaderEXT returned %#lx\n", status );
 }
 
@@ -6121,9 +6123,10 @@ static void WINAPI glDeleteVertexArraysAPPLE( GLsizei n, const GLuint *arrays )
 
 static void WINAPI glDeleteVertexShaderEXT( GLuint id )
 {
-    struct glDeleteVertexShaderEXT_params args = { .teb = NtCurrentTeb(), .id = id };
+    struct glDeleteVertexShaderEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "id %d\n", id );
+    args.id = *del_context_objects( OBJ_TYPE_SHADER_EXT, 1, &id );
     if ((status = UNIX_CALL( glDeleteVertexShaderEXT, &args ))) WARN( "glDeleteVertexShaderEXT returned %#lx\n", status );
 }
 
@@ -7958,6 +7961,7 @@ static GLuint WINAPI glGenVertexShadersEXT( GLuint range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenVertexShadersEXT, &args ))) WARN( "glGenVertexShadersEXT returned %#lx\n", status );
+    args.ret = put_context_object_range( OBJ_TYPE_SHADER_EXT, range, args.ret );
     return args.ret;
 }
 

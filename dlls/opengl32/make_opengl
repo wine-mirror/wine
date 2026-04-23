@@ -692,6 +692,8 @@ sub get_object_type($$$$)
     $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_NV_vertex_program" );
     $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_EXT_direct_state_access" );
 
+    $class = "shader_ext" if has_extension( $func, "GL_EXT_vertex_shader" );
+
     return "srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE" if $pname eq "srcName";
     return "dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE" if $pname eq "dstName";
 
@@ -704,6 +706,7 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_PROGRAM"             if $class eq "program";
     return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
     return "OBJ_TYPE_SAMPLER"             if $class eq "sampler";
+    return "OBJ_TYPE_SHADER_EXT"          if $class eq "shader_ext" and $func =~ /^gl(Bind|GenVertex|Delete)/ and $pname =~ /^(id|ret)$/;
     return "OBJ_TYPE_TEXTURE"             if $class eq "texture";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^glVDPAURegister/ and $pname eq "textureNames";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^gl(LGPU|Multicast|Async|)CopyImageSubData/ and $pname =~ /^(src|dst)Name$/;
@@ -764,6 +767,7 @@ sub allocate_object_names($)
     return $ret if $name =~ /^glBindRenderbuffer/;
     return $ret if $name =~ /^glBindSampler/;
     return $ret if $name =~ /^glBindTexture/;
+    return $ret if $name =~ /^glBindVertexShader/;
     return $ret if $name =~ /^glNewList/;
 
     return 0;
