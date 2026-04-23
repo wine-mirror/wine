@@ -17053,13 +17053,13 @@ static void test_d3d_state_reset(void)
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, 0, 0);
 
-    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
     if (!(device = create_device(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)))
     {
         skip("Failed to create 3D device.\n");
+        IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
