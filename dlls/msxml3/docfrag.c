@@ -430,7 +430,7 @@ static HRESULT WINAPI docfrag_get_prefix(IXMLDOMDocumentFragment *iface, BSTR *p
 
 static HRESULT WINAPI docfrag_get_baseName(IXMLDOMDocumentFragment *iface, BSTR *name)
 {
-    FIXME("%p, %p: needs test\n", iface, name);
+    TRACE("%p, %p.\n", iface, name);
 
     return return_null_bstr(name);
 }

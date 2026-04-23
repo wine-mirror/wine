@@ -425,7 +425,7 @@ static HRESULT WINAPI domcdata_get_prefix(IXMLDOMCDATASection *iface, BSTR *pref
 
 static HRESULT WINAPI domcdata_get_baseName(IXMLDOMCDATASection *iface, BSTR *name)
 {
-    FIXME("%p, %p: needs test\n", iface, name);
+    TRACE("%p, %p.\n", iface, name);
 
     return return_null_bstr(name);
 }
