@@ -187,13 +187,6 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     return DS_OK;
 }
 
-static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
-{
-    ULONG ref = InterlockedIncrement(&(device->ref));
-    TRACE("(%p) ref %ld\n", device, ref);
-    return ref;
-}
-
 static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 {
     HRESULT hr;
@@ -280,16 +273,6 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
         return hr;
 
     EnterCriticalSection(&DSOUND_renderers_lock);
-
-    LIST_FOR_EACH_ENTRY(device, &DSOUND_renderers, DirectSoundDevice, entry){
-        if(IsEqualGUID(&device->guid, &devGUID)){
-            IMMDevice_Release(mmdevice);
-            DirectSoundDevice_AddRef(device);
-            *ppDevice = device;
-            LeaveCriticalSection(&DSOUND_renderers_lock);
-            return DS_OK;
-        }
-    }
 
     hr = DirectSoundDevice_Create(&device);
     if(FAILED(hr)){

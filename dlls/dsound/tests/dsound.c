@@ -2227,19 +2227,19 @@ static void test_primary_independent(void)
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);
 
     /* Check whether the two IDirectSound objects share a primary buffer */
-    todo_wine ok(primary1 != primary2,
+    ok(primary1 != primary2,
        "Two IDirectSound objects should have independent primary buffers\n");
 
     /* GetVolume on dso2's primary buffer should succeed */
     hr = IDirectSoundBuffer_GetVolume(primary2, &vol);
-    todo_wine ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
 
     /* Verify dso2's primary buffer has CTRLVOLUME */
     memset(&caps, 0, sizeof(caps));
     caps.dwSize = sizeof(caps);
     hr = IDirectSoundBuffer_GetCaps(primary2, &caps);
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(caps.dwFlags & DSBCAPS_CTRLVOLUME, "Unexpected dwFlags %#lx.\n", caps.dwFlags);
+    ok(caps.dwFlags & DSBCAPS_CTRLVOLUME, "Unexpected dwFlags %#lx.\n", caps.dwFlags);
 
     IDirectSoundBuffer_Release(primary2);
     IDirectSoundBuffer_Release(primary1);
