@@ -1076,8 +1076,7 @@ static void macdrv_client_surface_destroy(struct client_surface *client)
 
     TRACE("%s\n", debugstr_client_surface(client));
 
-    if (surface->metal_view) macdrv_view_release_metal_view(surface->metal_view);
-    if (surface->metal_device) macdrv_release_metal_device(surface->metal_device);
+    if (surface->metal_swapchain) macdrv_destroy_swapchain(surface->metal_swapchain);
 }
 
 static void macdrv_client_surface_detach(struct client_surface *client)
@@ -1165,6 +1164,21 @@ struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
     }
 
     return surface;
+}
+
+BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface)
+{
+    HWND hwnd = surface->client.hwnd;
+    struct macdrv_win_data *data;
+
+    if (surface->metal_swapchain) return TRUE;
+
+    if ((data = get_win_data(hwnd)))
+    {
+        release_win_data(data);
+        surface->metal_swapchain = macdrv_create_view_swapchain(surface->cocoa_view);
+    }
+    return surface->metal_swapchain != NULL;
 }
 
 /**********************************************************************

@@ -193,10 +193,9 @@ struct macdrv_win_data
 
 struct macdrv_client_surface
 {
-    struct client_surface client;
-    macdrv_view           cocoa_view;
-    macdrv_metal_device   metal_device;
-    macdrv_metal_view     metal_view;
+    struct client_surface   client;
+    macdrv_view             cocoa_view;
+    macdrv_metal_swapchain  metal_swapchain;
 };
 
 static inline struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client)
@@ -205,6 +204,7 @@ static inline struct macdrv_client_surface *impl_from_client_surface(struct clie
 }
 
 extern struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd);
+extern BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface);
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);
 extern void release_win_data(struct macdrv_win_data *data);

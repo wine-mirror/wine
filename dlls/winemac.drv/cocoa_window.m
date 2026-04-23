@@ -3972,6 +3972,74 @@ void macdrv_view_release_metal_view(macdrv_metal_view v)
     });
 }
 
+@protocol WineMetalSwapChain <NSObject>
+
+- (CAMetalLayer*) layer;
+
+@end
+
+@interface MetalViewSwapChain : NSObject <WineMetalSwapChain>
+{
+    macdrv_metal_device device;
+    macdrv_metal_view metal_view;
+}
+
+- (instancetype) initWithView:(macdrv_view)view;
+
+@end
+
+@implementation MetalViewSwapChain
+
+- (instancetype) initWithView:(macdrv_view)view
+{
+    self = [super init];
+    if (!self) return nil;
+
+    if (!(device = macdrv_create_metal_device()))
+    {
+        [self release];
+        return nil;
+    }
+    if (!(metal_view = macdrv_view_create_metal_view(view, device)))
+    {
+        macdrv_release_metal_device(device);
+        device = NULL;
+        [self release];
+        return nil;
+    }
+    return self;
+}
+
+- (CAMetalLayer*) layer
+{
+    return (CAMetalLayer*)macdrv_view_get_metal_layer(metal_view);
+}
+
+- (void) dealloc
+{
+    if (metal_view) macdrv_view_release_metal_view(metal_view);
+    if (device) macdrv_release_metal_device(device);
+    [super dealloc];
+}
+
+@end
+
+macdrv_metal_swapchain macdrv_create_view_swapchain(macdrv_view v)
+{
+    return (macdrv_metal_swapchain)[[MetalViewSwapChain alloc] initWithView:v];
+}
+
+macdrv_metal_layer macdrv_swapchain_get_layer(macdrv_metal_swapchain swapchain)
+{
+    return (macdrv_metal_layer)[(id<WineMetalSwapChain>)swapchain layer];
+}
+
+
+void macdrv_destroy_swapchain(macdrv_metal_swapchain swapchain)
+{
+    [(id<WineMetalSwapChain>)swapchain release];
+}
+
 bool macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
 {
     WineContentView* view = (WineContentView*)v;
