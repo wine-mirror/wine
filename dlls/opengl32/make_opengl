@@ -1561,6 +1561,25 @@ print OUT "#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, para
 print OUT "#endif /* __WINE_OPENGL32_UNIXLIB_H */\n";
 close OUT;
 
+
+#
+# Generate the thunks.h file
+#
+open OUT, ">thunks.h" or die "cannot create thunks.h";
+print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
+
+foreach (sort keys %ext_functions)
+{
+    next unless is_exposed_function( $ext_functions{$_} );
+    next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
+    my $decl_args = get_func_args( $ext_functions{$_} );
+    my $func_ret = get_func_ret( $ext_functions{$_} );
+    printf OUT "extern %s WINAPI %s(%s);\n", $func_ret, $_, $decl_args;
+}
+
+close OUT;
+
+
 #
 # Generate the thunks.c file
 #
@@ -1601,15 +1620,6 @@ foreach (sort keys %ext_functions)
     print OUT "\nstatic " . generate_win_thunk($_, $ext_functions{$_});
 }
 print OUT "\n";
-
-foreach (sort keys %ext_functions)
-{
-    next unless is_exposed_function( $ext_functions{$_} );
-    next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
-    my $decl_args = get_func_args( $ext_functions{$_} );
-    my $func_ret = get_func_ret( $ext_functions{$_} );
-    printf OUT "extern %s WINAPI %s(%s);\n", $func_ret, $_, $decl_args;
-}
 
 print OUT "const void *extension_procs[] =\n";
 print OUT "{\n";

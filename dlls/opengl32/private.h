@@ -27,6 +27,7 @@
 #include "winternl.h"
 #include "wingdi.h"
 #include "wine/opengl_driver.h"
+#include "thunks.h"
 
 struct registry_entry
 {
