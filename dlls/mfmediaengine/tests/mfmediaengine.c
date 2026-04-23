@@ -1472,11 +1472,11 @@ static void test_TransferVideoFrame(void)
 
     IMFDXGIDeviceManager_Release(manager);
 
-    hr = IMFMediaEngineEx_SetVolume(media_engine, 0.5);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
     if (!(notify->media_engine = media_engine))
         goto done;
+
+    hr = IMFMediaEngineEx_SetVolume(media_engine, 0.5);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&desc, 0, sizeof(desc));
     desc.Width = 64;
