@@ -162,6 +162,14 @@ static void flush_events(void)
     }
 }
 
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+        DispatchMessageA(&msg);
+}
+
 static HWND create_foreground_window(void)
 {
     for (UINT retries = 5; retries; retries--)
@@ -20950,6 +20958,137 @@ out:
     DestroyWindow(window);
 }
 
+static void check_surface_clipper(IDirectDrawSurface7 *surface,
+        IDirectDrawClipper *clipper, RECT *window_rect, DWORD style)
+{
+    unsigned int c;
+    DDBLTFX fx;
+    HRESULT hr;
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.dwFillColor = 0xff00ff00;
+
+    fill_surface(surface, 0xffff0000);
+
+    /* Clippers with a region work. Clippers with a window work on Windows 98,
+     * but are ignored on modern windows. */
+
+    hr = IDirectDrawSurface7_SetClipper(surface, clipper);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    c = get_surface_color(surface, 101, 101);
+    ok(c == 0x00ff0000, "got %#x.\n", c);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    c = get_surface_color(surface, 0, 0);
+    ok(c == 0x00ff0000, "got %#x.\n", c);
+    c = get_surface_color(surface, 101, 101);
+    ok(c == 0x0000ff00, "got %#x.\n", c);
+
+    hr = IDirectDrawSurface7_SetClipper(surface, NULL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    clear_surface(surface, 0);
+}
+
+static void test_clipper_in_exclusive_fullscreen(void)
+{
+    static const struct
+    {
+        DWORD style;
+        BOOL parent;
+    }
+    tests[] =
+    {
+        { WS_POPUP },
+        { WS_POPUP, TRUE },
+        { WS_CHILD, TRUE },
+        { WS_OVERLAPPED },
+        { WS_CHILD | WS_VISIBLE, TRUE },
+        { WS_POPUP | WS_VISIBLE },
+    };
+    IDirectDrawSurface7 *primary, *offscreen;
+    IDirectDrawClipper *clipper;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw7 *ddraw;
+    RGNDATA *rgn_data;
+    DWORD ret, style;
+    RECT window_rect;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    HRGN rgn;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw, skipping test.\n");
+        return;
+    }
+    hr = IDirectDraw7_CreateClipper(ddraw, 0, &clipper, NULL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    window = CreateWindowA("static", "ddraw_fullscreen", WS_POPUP | WS_VISIBLE, 0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    pump_messages();
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    pump_messages();
+
+    rgn = CreateRectRgn(100, 100, 200, 200);
+    ok(!!rgn, "Failed to create region.\n");
+    ret = GetRegionData(rgn, 0, NULL);
+    rgn_data = malloc(ret);
+    ret = GetRegionData(rgn, ret, rgn_data);
+    ok(!!ret, "Failed to get region data.\n");
+    DeleteObject(rgn);
+    hr = IDirectDrawClipper_SetClipList(clipper, rgn_data, 0);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    free(rgn_data);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &offscreen, NULL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        style = tests[i].style;
+
+        winetest_push_context("primary");
+        check_surface_clipper(primary, clipper, &window_rect, style);
+        winetest_pop_context();
+
+        winetest_push_context("offscreen");
+        check_surface_clipper(offscreen, clipper, &window_rect, style);
+        winetest_pop_context();
+
+        winetest_pop_context();
+    }
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    IDirectDrawClipper_Release(clipper);
+    refcount = IDirectDrawSurface7_Release(offscreen);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+    refcount = IDirectDrawSurface7_Release(primary);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+
+    IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+    pump_messages();
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -21133,4 +21272,5 @@ START_TEST(ddraw7)
     test_sysmem_x_channel();
     test_yuv_blit();
     test_blit_to_self();
+    test_clipper_in_exclusive_fullscreen();
 }
