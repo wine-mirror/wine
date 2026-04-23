@@ -31,15 +31,6 @@ static NTSTATUS wgl_wglCopyContext( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wgl_wglCreateContext( void *args )
-{
-    struct wglCreateContext_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
-    if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
-    params->ret = wrap_wglCreateContext( params->teb, params->hDc, params->ret );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
@@ -30570,7 +30561,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     process_detach,
     get_pixel_formats,
     wgl_wglCopyContext,
-    wgl_wglCreateContext,
     wgl_wglDeleteContext,
     wgl_wglGetPixelFormat,
     wgl_wglSetPixelFormat,
@@ -33691,21 +33681,6 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
     const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->hglrcSrc) );
     if (!funcs || !funcs->p_wglCopyContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglCopyContext( teb, ULongToPtr(params->hglrcSrc), ULongToPtr(params->hglrcDst), params->mask );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wow64_wgl_wglCreateContext( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hDc;
-        PTR32 ret;
-    } *params = args;
-    TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDc) );
-    if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (UINT_PTR)wrap_wglCreateContext( teb, ULongToPtr(params->hDc), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
 
@@ -86979,7 +86954,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_process_detach,
     wow64_get_pixel_formats,
     wow64_wgl_wglCopyContext,
-    wow64_wgl_wglCreateContext,
     wow64_wgl_wglDeleteContext,
     wow64_wgl_wglGetPixelFormat,
     wow64_wgl_wglSetPixelFormat,
@@ -90087,11 +90061,6 @@ static BOOL null_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     WARN( "unsupported\n" );
     return 0;
 }
-static HGLRC null_wglCreateContext( HDC hDc )
-{
-    WARN( "unsupported\n" );
-    return 0;
-}
 static BOOL null_wglDeleteContext( HGLRC oldContext )
 {
     WARN( "unsupported\n" );
@@ -91474,7 +91443,6 @@ static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 struct opengl_funcs null_opengl_funcs =
 {
     .p_wglCopyContext = null_wglCopyContext,
-    .p_wglCreateContext = null_wglCreateContext,
     .p_wglDeleteContext = null_wglDeleteContext,
     .p_wglGetPixelFormat = null_wglGetPixelFormat,
     .p_wglSetPixelFormat = null_wglSetPixelFormat,

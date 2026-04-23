@@ -3,7 +3,6 @@
 typedef ULONG PTR32;
 
 extern BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
-extern HGLRC wrap_wglCreateContext( TEB *teb, HDC hDc, HGLRC handle );
 extern BOOL wrap_wglDeleteContext( TEB *teb, HGLRC oldContext );
 extern BOOL wrap_wglShareLists( TEB *teb, HGLRC hrcSrvShare, HGLRC hrcSrvSource );
 extern BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc );

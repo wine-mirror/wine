@@ -132,6 +132,7 @@ my %manual_win_functions =
     (
      "glDebugEntry" => 1,
      "wglChoosePixelFormat" => 1,
+     "wglCreateContext" => 1,
      "wglCreateLayerContext" => 1,
      "wglDescribeLayerPlane" => 1,
      "wglDescribePixelFormat" => 1,
@@ -166,7 +167,6 @@ my %manual_win_thunks =
      "glGetStringi" => 1,
      "glImportSyncEXT" => 1,
      "wglChoosePixelFormatARB" => 1,
-     "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
      "wglDeleteContext" => 1,

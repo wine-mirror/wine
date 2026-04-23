@@ -334,21 +334,9 @@ void set_gl_error( GLenum error )
 
 HGLRC WINAPI wglCreateContext( HDC hdc )
 {
-    struct wglCreateContext_params args = { .teb = NtCurrentTeb(), .hDc = hdc };
-    struct handle_entry *ptr;
-    NTSTATUS status;
-
+    static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0, 0 };
     TRACE( "hdc %p\n", hdc );
-
-    if (!(ptr = alloc_client_context())) return NULL;
-    args.ret = &ptr->context->obj;
-
-    if ((status = UNIX_CALL( wglCreateContext, &args ))) WARN( "wglCreateContext returned %#lx\n", status );
-    assert( args.ret == &ptr->context->obj || !args.ret );
-
-    if (!status && args.ret) return UlongToHandle( ptr->handle );
-    free_client_context( ptr );
-    return NULL;
+    return wglCreateContextAttribsARB( hdc, NULL, attribs );
 }
 
 HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
