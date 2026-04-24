@@ -17413,10 +17413,36 @@ static void test_entityref(void)
 {
     IXMLDOMEntityReference *ref;
     IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
     HRESULT hr;
+    VARIANT v;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
+
+    V_VT(&v) = VT_I1;
+    V_I1(&v) = NODE_ENTITY_REFERENCE;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("p:name"), NULL, &node);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) IXMLDOMNode_Release(node);
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("p:name"), _bstr_("uri"), &node);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) IXMLDOMNode_Release(node);
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), _bstr_("uri"), &node);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) IXMLDOMNode_Release(node);
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), _bstr_(""), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument_createEntityReference(doc, _bstr_("p:ent"), &ref);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IXMLDOMEntityReference_Release(ref);
 
     hr = IXMLDOMDocument_createEntityReference(doc, _bstr_("ent"), &ref);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -17433,6 +17459,7 @@ if (hr == S_OK)
     IXMLDOMEntityReference_Release(ref);
 
     IXMLDOMDocument_Release(doc);
+    free_bstrs();
 }
 
 START_TEST(domdoc)
