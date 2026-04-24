@@ -3849,6 +3849,23 @@ Call ok(CStr(1.5) = "1,5", "CStr(1.5) de-DE: " & CStr(1.5))
 Call SetLocale(1033)
 Call ok(CStr(1.5) = "1.5", "CStr(1.5) en-US: " & CStr(1.5))
 
+' Day/Month/Year parse date strings using the script LCID.
+Call SetLocale(1031)
+Call ok(Day("15.03.2026") = 15, "Day(""15.03.2026"") de-DE: " & Day("15.03.2026"))
+Call ok(Month("15.03.2026") = 3, "Month(""15.03.2026"") de-DE: " & Month("15.03.2026"))
+Call ok(Year("15.03.2026") = 2026, "Year(""15.03.2026"") de-DE: " & Year("15.03.2026"))
+
+' The German-format string is rejected under en-US.
+Call SetLocale(1033)
+Dim dateErr
+On Error Resume Next
+Err.Clear
+Call Day("15.03.2026")
+dateErr = Err.Number
+Err.Clear
+On Error Goto 0
+Call ok(dateErr <> 0, "Day(""15.03.2026"") en-US should error: err=" & dateErr)
+
 ' Restore original locale.
 Call SetLocale(origLcid)
 Call ok(GetLocale() = origLcid, "restore: GetLocale = " & GetLocale())

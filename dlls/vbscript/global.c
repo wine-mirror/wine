@@ -467,17 +467,17 @@ static HRESULT to_string(LCID lcid, VARIANT *v, BSTR *ret)
     return S_OK;
 }
 
-static HRESULT to_system_time(VARIANT *v, SYSTEMTIME *st)
+static HRESULT to_system_time(LCID lcid, VARIANT *v, SYSTEMTIME *st)
 {
     VARIANT date;
     HRESULT hres;
 
     V_VT(&date) = VT_EMPTY;
-    hres = VariantChangeType(&date, v, 0, VT_DATE);
+    hres = VariantChangeTypeEx(&date, v, lcid, 0, VT_DATE);
     if(FAILED(hres))
         return hres;
 
-    return VariantTimeToSystemTime(V_DATE(&date), st);
+    return VariantTimeToSystemTime(V_DATE(&date), st) ? S_OK : E_INVALIDARG;
 }
 
 static HRESULT set_object_site(script_ctx_t *ctx, IUnknown *obj)
@@ -2122,7 +2122,7 @@ static HRESULT Global_Day(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wDay);
 }
 
@@ -2133,7 +2133,7 @@ static HRESULT Global_Month(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMonth);
 }
 
@@ -2178,7 +2178,7 @@ static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     if (V_VT(args) == VT_NULL)
         return return_null(res);
 
-    if (FAILED(hres = to_system_time(args, &st))) return hres;
+    if (FAILED(hres = to_system_time(This->ctx->lcid, args, &st))) return hres;
 
     return return_short(res, 1 + (7 - first_day + st.wDayOfWeek) % 7);
 }
@@ -2190,7 +2190,7 @@ static HRESULT Global_Year(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wYear);
 }
 
@@ -2201,7 +2201,7 @@ static HRESULT Global_Hour(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wHour);
 }
 
@@ -2212,7 +2212,7 @@ static HRESULT Global_Minute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMinute);
 }
 
@@ -2223,7 +2223,7 @@ static HRESULT Global_Second(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    hres = to_system_time(arg, &st);
+    hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wSecond);
 }
 
@@ -2497,7 +2497,7 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     if (SUCCEEDED(hres))
         hres = to_int(args + 1, &count);
     if (SUCCEEDED(hres))
-        hres = to_system_time(args + 2, &ud.st);
+        hres = to_system_time(This->ctx->lcid, args + 2, &ud.st);
     if (SUCCEEDED(hres))
     {
         if (!vbs_wcsicmp(interval, L"yyyy"))
@@ -3697,7 +3697,6 @@ static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned 
     int format = 0;
     LCID lcid = This->ctx->lcid;
     WCHAR buff[256];
-    VARIANT v;
     SYSTEMTIME st;
     HRESULT hres;
     BSTR str;
@@ -3724,13 +3723,8 @@ static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned 
         return return_bstr(res, str);
     }
 
-    V_VT(&v) = VT_EMPTY;
-    hres = VariantCopyInd(&v, args);
+    hres = to_system_time(lcid, args, &st);
     if(FAILED(hres)) return hres;
-    hres = VariantChangeTypeEx(&v, &v, lcid, 0, VT_DATE);
-    if(FAILED(hres)) return hres;
-    if(!VariantTimeToSystemTime(V_DATE(&v), &st))
-        return E_INVALIDARG;
 
     switch(format) {
     case 1: /* vbLongDate */
