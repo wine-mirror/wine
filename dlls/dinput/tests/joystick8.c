@@ -6853,13 +6853,12 @@ static void test_joystick_id( DWORD version )
 
             joystick_id_guid.Data1 += i;
             hr = dinput_create_device( &di, &joystick_id_guid, &device );
-            todo_wine ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
-            if (device)
-            {
-                check_device_hid_serial( device, descs_bulk[i].serial_str );
-                check_device_joystick_id( device, i, TRUE );
-                IDirectInputDevice8_Release( device );
-            }
+            ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+            check_device_hid_serial( device, descs_bulk[i].serial_str );
+            check_device_joystick_id( device, i, FALSE );
+
+            IDirectInputDevice8_Release( device );
         }
 
         winetest_pop_context();

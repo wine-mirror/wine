@@ -264,7 +264,10 @@ static HRESULT get_instance_from_guid( const GUID *guid, DIDEVICEINSTANCEW *inst
 
     LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
     {
+        GUID guid_joystick = GUID_Joystick;
+        guid_joystick.Data1 += entry->joy_id;
         if (!*entry->path) continue;
+        if (IsEqualGUID( &guid_joystick, guid )) break;
         if (IsEqualGUID( &entry->instance.guidProduct, guid )) break;
         if (IsEqualGUID( &entry->instance.guidInstance, guid )) break;
     }
