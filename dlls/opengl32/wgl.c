@@ -106,6 +106,7 @@ static const char *debugstr_object_type( enum object_type type )
     switch (type)
     {
     case OBJ_TYPE_BUFFER: return "buffer";
+    case OBJ_TYPE_DISPLAY_LIST: return "display list";
     case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
     case OBJ_TYPE_SAMPLER: return "sampler";
@@ -319,17 +320,17 @@ static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT] 
     }
 }
 
-static GLuint alloc_client_id( struct object_table *table, GLuint host_id )
+static GLuint alloc_client_id( struct object_table *table, GLuint host_id, UINT range )
 {
     /* if we don't need implicit allocations, use the host allocated ids directly */
     if (!table->implicit) return host_id;
 
     /* otherwise we need to allocate client id ourselves, lookup for a free id */
-    for (GLuint id = table->min_free + 1, *ids; id != 0; id++)
+    for (GLuint id = table->min_free + 1, n = range, *ids; id != 0; id++)
     {
         if (!(ids = alloc_object_ids( table->host_ids, id ))) return 0;
-        if (ids[id % L3_COUNT]) continue;
-        return table->min_free = id;
+        if (ids[id % L3_COUNT]) n = range;
+        else if (!n--) return table->min_free = id - range;
     }
 
     return 0;
@@ -390,6 +391,7 @@ static GLuint create_object( enum object_type type )
     switch (type)
     {
     case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
+    case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glGenLists, .range = 1 ); return args.ret; }
     case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
     case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
@@ -455,6 +457,8 @@ struct context
     struct opengl_client_context base;
     struct handle_table          syncs;
     struct display_lists        *lists;
+
+    GLuint list_base;
 };
 
 static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
@@ -544,8 +548,25 @@ void put_context_objects( enum object_type type, UINT n, GLuint *handles )
     if (!(table = get_object_table( ctx, type, TRUE ))) return;
 
     AcquireSRWLockExclusive( &table->lock );
-    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, alloc_client_id( table, handles[i] ), handles[i] ) : 0;
+    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, alloc_client_id( table, handles[i], 0 ), handles[i] ) : 0;
     ReleaseSRWLockExclusive( &table->lock );
+}
+
+GLuint put_context_object_range( enum object_type type, UINT range, GLuint base )
+{
+    struct object_table *table;
+    struct context *ctx;
+    GLuint first;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return base;
+    if (!(table = get_object_table( ctx, type, TRUE ))) return base;
+
+    AcquireSRWLockExclusive( &table->lock );
+    first = alloc_client_id( table, base, range );
+    for (UINT i = 0; i < range; i++) set_object( table, first + i, base + i );
+    ReleaseSRWLockExclusive( &table->lock );
+
+    return first;
 }
 
 static void alloc_client_objects( struct context *ctx, enum object_type type, UINT n, const GLuint *handles )
@@ -567,7 +588,7 @@ static void alloc_client_objects( struct context *ctx, enum object_type type, UI
 
 BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension )
 {
-    BOOL alloc_client = TRUE, needs_client = FALSE;
+    BOOL alloc_client, needs_client = FALSE;
     struct object_table *table;
     struct context *ctx;
 
@@ -575,10 +596,23 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     if (!(table = get_object_table( ctx, type, FALSE ))) return TRUE;
 
     /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
-    if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) alloc_client = FALSE;
-    if (type == OBJ_TYPE_FRAMEBUFFER) alloc_client = extension;
-    if (type == OBJ_TYPE_RENDERBUFFER) alloc_client = extension;
-    if (type == OBJ_TYPE_SAMPLER) alloc_client = FALSE;
+    switch (type)
+    {
+    case OBJ_TYPE_DISPLAY_LIST:
+        if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) return FALSE;
+        alloc_client = TRUE;
+        break;
+    case OBJ_TYPE_FRAMEBUFFER:
+    case OBJ_TYPE_RENDERBUFFER:
+        alloc_client = extension;
+        break;
+    case OBJ_TYPE_SAMPLER:
+        alloc_client = FALSE;
+        break;
+    default:
+        alloc_client = !(ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+        break;
+    }
 
     AcquireSRWLockShared( &table->lock );
     for (UINT i = 0; i < n && !needs_client; i++)
@@ -687,6 +721,8 @@ static GLuint get_pname_object_type( GLenum pname )
         return OBJ_TYPE_TEXTURE;
     case GL_SAMPLER_BINDING:
         return OBJ_TYPE_SAMPLER;
+    case GL_LIST_INDEX:
+        return OBJ_TYPE_DISPLAY_LIST;
     }
 
     return OBJ_TYPE_COUNT;

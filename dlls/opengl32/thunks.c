@@ -109,9 +109,10 @@ void WINAPI glBlendFunc( GLenum sfactor, GLenum dfactor )
 
 void WINAPI glCallList( GLuint list )
 {
-    struct glCallList_params args = { .teb = NtCurrentTeb(), .list = list };
+    struct glCallList_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "list %d\n", list );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glCallList, &args ))) WARN( "glCallList returned %#lx\n", status );
 }
 
@@ -509,9 +510,10 @@ void WINAPI glCullFace( GLenum mode )
 
 void WINAPI glDeleteLists( GLuint list, GLsizei range )
 {
-    struct glDeleteLists_params args = { .teb = NtCurrentTeb(), .list = list, .range = range };
+    struct glDeleteLists_params args = { .teb = NtCurrentTeb(), .range = range };
     NTSTATUS status;
     TRACE( "list %d, range %d\n", list, range );
+    args.list = *del_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glDeleteLists, &args ))) WARN( "glDeleteLists returned %#lx\n", status );
 }
 
@@ -829,6 +831,7 @@ GLuint WINAPI glGenLists( GLsizei range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenLists, &args ))) WARN( "glGenLists returned %#lx\n", status );
+    args.ret = put_context_object_range( OBJ_TYPE_DISPLAY_LIST, range, args.ret );
     return args.ret;
 }
 
@@ -1211,9 +1214,10 @@ GLboolean WINAPI glIsEnabled( GLenum cap )
 
 GLboolean WINAPI glIsList( GLuint list )
 {
-    struct glIsList_params args = { .teb = NtCurrentTeb(), .list = list };
+    struct glIsList_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "list %d\n", list );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glIsList, &args ))) WARN( "glIsList returned %#lx\n", status );
     return args.ret;
 }
@@ -1310,9 +1314,10 @@ void WINAPI glLineWidth( GLfloat width )
 
 void WINAPI glListBase( GLuint base )
 {
-    struct glListBase_params args = { .teb = NtCurrentTeb(), .base = base };
+    struct glListBase_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "base %d\n", base );
+    args.base = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &base );
     if ((status = UNIX_CALL( glListBase, &args ))) WARN( "glListBase returned %#lx\n", status );
 }
 
@@ -1478,9 +1483,11 @@ void WINAPI glMultMatrixf( const GLfloat *m )
 
 void WINAPI glNewList( GLuint list, GLenum mode )
 {
-    struct glNewList_params args = { .teb = NtCurrentTeb(), .list = list, .mode = mode };
+    struct glNewList_params args = { .teb = NtCurrentTeb(), .mode = mode };
     NTSTATUS status;
     TRACE( "list %d, mode %d\n", list, mode );
+    if (!alloc_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list, FALSE )) return;
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glNewList, &args ))) WARN( "glNewList returned %#lx\n", status );
 }
 
@@ -9004,17 +9011,19 @@ static void WINAPI glGetLightxv( GLenum light, GLenum pname, GLfixed *params )
 
 static void WINAPI glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat *params )
 {
-    struct glGetListParameterfvSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .params = params };
+    struct glGetListParameterfvSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "list %d, pname %d, params %p\n", list, pname, params );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glGetListParameterfvSGIX, &args ))) WARN( "glGetListParameterfvSGIX returned %#lx\n", status );
 }
 
 static void WINAPI glGetListParameterivSGIX( GLuint list, GLenum pname, GLint *params )
 {
-    struct glGetListParameterivSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .params = params };
+    struct glGetListParameterivSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "list %d, pname %d, params %p\n", list, pname, params );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glGetListParameterivSGIX, &args ))) WARN( "glGetListParameterivSGIX returned %#lx\n", status );
 }
 
@@ -12521,33 +12530,37 @@ static void WINAPI glListDrawCommandsStatesClientNV( GLuint list, GLuint segment
 
 static void WINAPI glListParameterfSGIX( GLuint list, GLenum pname, GLfloat param )
 {
-    struct glListParameterfSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .param = param };
+    struct glListParameterfSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "list %d, pname %d, param %f\n", list, pname, param );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glListParameterfSGIX, &args ))) WARN( "glListParameterfSGIX returned %#lx\n", status );
 }
 
 static void WINAPI glListParameterfvSGIX( GLuint list, GLenum pname, const GLfloat *params )
 {
-    struct glListParameterfvSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .params = params };
+    struct glListParameterfvSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "list %d, pname %d, params %p\n", list, pname, params );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glListParameterfvSGIX, &args ))) WARN( "glListParameterfvSGIX returned %#lx\n", status );
 }
 
 static void WINAPI glListParameteriSGIX( GLuint list, GLenum pname, GLint param )
 {
-    struct glListParameteriSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .param = param };
+    struct glListParameteriSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "list %d, pname %d, param %d\n", list, pname, param );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glListParameteriSGIX, &args ))) WARN( "glListParameteriSGIX returned %#lx\n", status );
 }
 
 static void WINAPI glListParameterivSGIX( GLuint list, GLenum pname, const GLint *params )
 {
-    struct glListParameterivSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .params = params };
+    struct glListParameterivSGIX_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "list %d, pname %d, params %p\n", list, pname, params );
+    args.list = *map_context_objects( OBJ_TYPE_DISPLAY_LIST, 1, &list );
     if ((status = UNIX_CALL( glListParameterivSGIX, &args ))) WARN( "glListParameterivSGIX returned %#lx\n", status );
 }
 

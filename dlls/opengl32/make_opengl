@@ -692,6 +692,7 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_BUFFER"              if $class eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDeleteObjectBufferATI" and $pname eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDrawCommandsNV" and $pname eq "buffer";
+    return "OBJ_TYPE_DISPLAY_LIST"        if $class eq "display list";
     return "OBJ_TYPE_FRAMEBUFFER"         if $class eq "framebuffer";
     return "OBJ_TYPE_FRAMEBUFFER"         if $pname =~ "fbo";
     return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
@@ -714,6 +715,7 @@ sub get_object_type($$$$)
     return 0 if $class eq "vertex array";
     return 0 if $class =~ /^Vector/;
     return 0 if $func eq "glGetActiveAtomicCounterBufferiv" and $pname eq "bufferIndex";
+    return 0 if $func eq "glSelectPerfMonitorCountersAMD" and $pname eq "counterList";
     return 0 if $func =~ /^glBlend(Equation|Func)/ and $pname eq "buf";
     return 0 if $func =~ /^gl(Signal|Wait)Semaphore/ and $pname eq "numBufferBarriers";
     return 0 if $func =~ /^gl(Signal|Wait)Semaphore/ and $pname eq "numTextureBarriers";
@@ -733,9 +735,11 @@ sub get_object_type($$$$)
     return 0 if $pname eq "pathParameterTemplate";
 
     print "Missing possible buffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /buffer/;
+    print "Missing possible display list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
     print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
     print "Missing possible sampler: $func $ptype $pname $class\n" if lc( $pname ) =~ /sampler/;
     print "Missing possible texture: $func $ptype $pname $class\n" if lc( $pname ) =~ /texture/;
+    print "Missing possible list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
     return 0;
 }
 
@@ -750,6 +754,7 @@ sub allocate_object_names($)
     return $ret if $name =~ /^glBindRenderbuffer/;
     return $ret if $name =~ /^glBindSampler/;
     return $ret if $name =~ /^glBindTexture/;
+    return $ret if $name =~ /^glNewList/;
 
     return 0;
 }
@@ -836,6 +841,10 @@ sub generate_win_thunk($$)
         {
             $params .= ", .$pname = $pname";
         }
+    }
+    if (my $map_type = get_object_type( $name, $func_ret, "ret", get_arg_class( $func->[0] ) ))
+    {
+        $post_call .= "    args.ret = put_context_object_range( $map_type, range, args.ret );\n" if $name =~ /^glGen/;
     }
     $ret .= "    struct $name\_params args = {$params };\n";
     $ret .= "    NTSTATUS status;\n";

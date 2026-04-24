@@ -49,6 +49,7 @@ extern BOOL get_integer( GLenum pname, GLuint index, GLint value, GLint *data );
 enum object_type
 {
     OBJ_TYPE_BUFFER,
+    OBJ_TYPE_DISPLAY_LIST,
     OBJ_TYPE_FRAMEBUFFER,
     OBJ_TYPE_RENDERBUFFER,
     OBJ_TYPE_SAMPLER,
@@ -65,6 +66,7 @@ static inline GLuint *memdup_objects( UINT n, const GLuint *handles, GLuint *buf
 }
 
 extern void put_context_objects( enum object_type type, UINT n, GLuint *handles );
+extern GLuint put_context_object_range( enum object_type type, UINT n, GLuint base );
 extern BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension );
 extern GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles );
 extern GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles );
