@@ -2018,7 +2018,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* cannot overwrite non-empty lists with some other */
-        todo_wine_if( i >= 14 ) ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, wglShareLists( ctx2, ctx1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );

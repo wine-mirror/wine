@@ -113,6 +113,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_PROGRAM: return "program";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
     case OBJ_TYPE_SEMAPHORE: return "semaphore";
+    case OBJ_TYPE_SHADER: return "shader";
     case OBJ_TYPE_SAMPLER: return "sampler";
     case OBJ_TYPE_SHADER_ATI: return "fragment shader";
     case OBJ_TYPE_SHADER_EXT: return "vertex shader";
@@ -370,7 +371,7 @@ static GLuint del_object( struct object_table *table, GLuint client_id )
     if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return -1;
     table->min_free = min( table->min_free, client_id - 1 );
     host_id = *object;
-    *object = 0;
+    if (table->type != OBJ_TYPE_SHADER) *object = 0; /* shader objects may outlive their deletion */
     if (host_id && (object = find_object_id( table->client_ids, host_id ))) *object = 0;
 
     TRACE( "Deleting %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
@@ -405,6 +406,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
     case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
     case OBJ_TYPE_SEMAPHORE: { MAKE_OBJECT_CALL( glGenSemaphoresEXT, .n = 1, .semaphores = &object ); return object; }
+    case OBJ_TYPE_SHADER: assert( 0 ); return 0;
     case OBJ_TYPE_SHADER_ATI: { MAKE_OBJECT_CALL( glGenFragmentShadersATI, .range = 1 ); return args.ret; }
     case OBJ_TYPE_SHADER_EXT: { MAKE_OBJECT_CALL( glGenVertexShadersEXT, .range = 1 ); return args.ret; }
     case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
@@ -625,6 +627,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
         break;
     case OBJ_TYPE_SAMPLER:
     case OBJ_TYPE_MEMORY:
+    case OBJ_TYPE_SHADER:
         alloc_client = FALSE;
         break;
     default:
@@ -745,6 +748,15 @@ static GLuint get_pname_object_type( GLenum pname )
     case GL_VERTEX_PROGRAM_BINDING_NV:
     case GL_FRAGMENT_PROGRAM_BINDING_NV:
         return OBJ_TYPE_PROGRAM;
+    case GL_COMPUTE_SHADER:
+    case GL_CURRENT_PROGRAM:
+    case GL_FRAGMENT_SHADER:
+    case GL_GEOMETRY_SHADER:
+    case GL_TESS_CONTROL_SHADER:
+    case GL_TESS_EVALUATION_SHADER:
+    case GL_VERTEX_SHADER:
+    case GL_ACTIVE_PROGRAM:
+        return OBJ_TYPE_SHADER;
     case GL_VERTEX_SHADER_BINDING_EXT:
         return OBJ_TYPE_SHADER_EXT;
     }
@@ -2445,6 +2457,79 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
 				LPGLYPHMETRICSFLOAT lpgmf)
 {
     return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, TRUE);
+}
+
+GLhandleARB WINAPI glGetHandleARB( GLenum pname )
+{
+    struct glGetHandleARB_params args = { .teb = NtCurrentTeb(), .pname = pname };
+    GLuint *object, client_id = 0;
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "pname %d\n", pname );
+
+    if ((status = UNIX_CALL( glGetHandleARB, &args ))) WARN( "glGetHandleARB returned %#lx\n", status );
+    if (!args.ret) return args.ret;
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return 0;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return 0;
+
+    AcquireSRWLockShared( &table->lock );
+    if ((object = find_object_id( table->client_ids, args.ret ))) client_id = *object;
+    ReleaseSRWLockShared( &table->lock );
+
+    return client_id;
+}
+
+void WINAPI glGetAttachedObjectsARB( GLhandleARB container, GLsizei max_count, GLsizei *count, GLhandleARB *obj )
+{
+    struct glGetAttachedObjectsARB_params args = { .teb = NtCurrentTeb(), .maxCount = max_count, .count = count };
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+    GLuint *object;
+
+    TRACE( "container %d, max_count %d, count %p, obj %p\n", container, max_count, count, obj );
+
+    args.containerObj = *map_context_objects( OBJ_TYPE_SHADER, 1, &container );
+    if ((status = UNIX_CALL( glGetAttachedObjectsARB, &args ))) WARN( "glGetAttachedObjectsARB returned %#lx\n", status );
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return;
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < max_count; ++i)
+    {
+        if (!obj[i] || !(object = find_object_id( table->client_ids, obj[i] ))) continue;
+        obj[i] = *object;
+    }
+    ReleaseSRWLockShared( &table->lock );
+}
+
+void WINAPI glGetAttachedShaders( GLuint program, GLsizei max_count, GLsizei *count, GLuint *shaders )
+{
+    struct glGetAttachedShaders_params args = { .teb = NtCurrentTeb(), .maxCount = max_count, .count = count };
+    struct object_table *table;
+    struct context *ctx;
+    NTSTATUS status;
+    GLuint *object;
+
+    TRACE( "program %d, max_count %d, count %p, shaders %p\n", program, max_count, count, shaders );
+
+    args.program = *map_context_objects( OBJ_TYPE_SHADER, 1, &program );
+    if ((status = UNIX_CALL( glGetAttachedShaders, &args ))) WARN( "glGetAttachedShaders returned %#lx\n", status );
+
+    if (!(ctx = context_from_handle( args.teb->glCurrentRC ))) return;
+    if (!(table = get_object_table( ctx, OBJ_TYPE_SHADER, FALSE ))) return;
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < max_count; ++i)
+    {
+        if (!shaders[i] || !(object = find_object_id( table->client_ids, shaders[i] ))) continue;
+        shaders[i] = *object;
+    }
+    ReleaseSRWLockShared( &table->lock );
 }
 
 /***********************************************************************

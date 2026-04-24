@@ -692,6 +692,24 @@ sub get_object_type($$$$)
     $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_NV_vertex_program" );
     $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_EXT_direct_state_access" );
 
+    $class = "shader" if $class eq "program/shader" and $func !~ /(ARB|EXT|NV)$/;
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_AMD_gpu_shader_int64" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_bindless_texture" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_geometry_shader4" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_gpu_shader_int64" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_robustness" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_separate_shader_objects" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_ARB_uniform_buffer_object" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_EXT_bindable_uniform" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_EXT_geometry_shader4" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_EXT_gpu_shader4" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_EXT_separate_shader_objects" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_EXT_transform_feedback" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_NV_bindless_texture" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_NV_path_rendering" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_NV_shader_buffer_load" );
+    $class = "shader" if $class eq "program/shader" and has_extension( $func, "GL_NV_transform_feedback" );
+
     $class = "shader_ati" if has_extension( $func, "GL_ATI_fragment_shader" );
     $class = "shader_ext" if has_extension( $func, "GL_EXT_vertex_shader" );
 
@@ -717,12 +735,16 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_SEMAPHORE"           if $class eq "semaphore";
     return "OBJ_TYPE_SEMAPHORE"           if $ptype =~ /GLuint \*/ and $pname =~ /^(waitS|signalS|s)emaphore(s|Array)$/;
     return "OBJ_TYPE_SEMAPHORE"           if $ptype =~ /GLuint/ and $pname =~ /^semaphore$/;
+    return "OBJ_TYPE_SHADER"              if $class eq "shader";
+    return "OBJ_TYPE_SHADER"              if $func =~ /^gl(Get)?Attach(ed)?Object/ and $pname eq "obj";
+    return "OBJ_TYPE_SHADER"              if $func =~ /^glCreate(Program|Shader)Object/ and $pname eq "ret";
+    return "OBJ_TYPE_SHADER"              if $func =~ /^glGetShaderSource/ and $pname eq "obj";
+    return "OBJ_TYPE_SHADER"              if $ptype =~ /GLhandleARB/;
     return "OBJ_TYPE_SHADER_ATI"          if $class eq "shader_ati" and $func =~ /^gl(Bind|GenFragment|Delete)/ and $pname =~ /^(id|ret)$/;
     return "OBJ_TYPE_SHADER_EXT"          if $class eq "shader_ext" and $func =~ /^gl(Bind|GenVertex|Delete)/ and $pname =~ /^(id|ret)$/;
     return "OBJ_TYPE_TEXTURE"             if $class eq "texture";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^glVDPAURegister/ and $pname eq "textureNames";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^gl(LGPU|Multicast|Async|)CopyImageSubData/ and $pname =~ /^(src|dst)Name$/;
-    return 0                              if $class eq "program/shader";
 
     return 0 if $class eq "Color";
     return 0 if $class eq "ColorIndexMask";
@@ -733,6 +755,7 @@ sub get_object_type($$$$)
     return 0 if $class eq "StencilMask";
     return 0 if $class eq "StencilValue";
     return 0 if $class eq "SelectName";
+    return 0 if $class eq "shader";
     return 0 if $class eq "sync";
     return 0 if $class eq "transform feedback";
     return 0 if $class eq "vertex array";
@@ -749,7 +772,7 @@ sub get_object_type($$$$)
     return 0 if $func eq "glDeleteCommandListsNV" and $pname =~ /^list/;
     return 0 if $func eq "glIsCommandListNV" and $pname =~ /^list/;
     return 0 if $func eq "glListDrawCommandsStatesClientNV" and $pname =~ /^list/;
-    return 0 if $ptype !~ /GLuint|GLhandleARB/;
+    return 0 if $ptype !~ /GLuint/;
     return 0 if $ptype =~ /GLuint \*/ and $pname =~ /^fences$/;
     return 0 if $pname eq "fence";
     return 0 if $pname eq "vkSemaphore";
@@ -770,13 +793,13 @@ sub get_object_type($$$$)
     return 0;
 }
 
-sub allocate_object_names($)
+sub allocate_object_names($$)
 {
-    my $name = shift;
+    my ($name, $type) = @_;
     my $ret = $name =~ /(APPLE|ARB|ATI|EXT|NV)$/ ? "TRUE" : "FALSE";
 
     return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
-    return "TRUE" if has_extension( $name, "GL_NV_path_rendering" );
+    return "TRUE" if has_extension( $name, "GL_NV_path_rendering" ) and $type eq "OBJ_TYPE_PATH";
     return $ret if $name =~ /^glBindBuffer/;
     return $ret if $name =~ /^glBindFramebuffer/;
     return $ret if $name =~ /^glBindProgram/;
@@ -851,7 +874,7 @@ sub generate_win_thunk($$)
             else
             {
                 my $return = is_void_func($func) ? "" : " args.ret";
-                my $alloc = allocate_object_names( $name );
+                my $alloc = allocate_object_names( $name, $map_type );
 
                 if ($len eq "1")
                 {
