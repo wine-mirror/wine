@@ -57,6 +57,7 @@ static const char *debugstr_ok( const char *cond )
         ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
 #define ok_u4( r, op, e )   ok_ex( r, op, e, UINT, "%u" )
+#define ok_x4( r, op, e )   ok_ex( r, op, e, UINT, "%#x" )
 #define ok_ptr( r, op, e )  ok_ex( r, op, e, const void *, "%p" )
 #define ok_ret( e, r )      ok_ex( r, ==, e, UINT_PTR, "%#Ix, error %ld", GetLastError() )
 #define ok_nt( e, r )       ok_ex( r, ==, e, NTSTATUS, "%#lx" )
@@ -3409,67 +3410,465 @@ static void test_minimized(void)
 
 static void test_framebuffer(void)
 {
-    static const PIXELFORMATDESCRIPTOR pf_desc =
+    PIXELFORMATDESCRIPTOR pfd =
     {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,                     /* version */
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        24,                    /* 24-bit color depth */
-        0, 0, 0, 0, 0, 0,      /* color bits */
-        0,                     /* alpha buffer */
-        0,                     /* shift bit */
-        0,                     /* accumulation buffer */
-        0, 0, 0, 0,            /* accum bits */
-        32,                    /* z-buffer */
-        0,                     /* stencil buffer */
-        0,                     /* auxiliary buffer */
-        PFD_MAIN_PLANE,        /* main layer */
-        0,                     /* reserved */
-        0, 0, 0                /* layer masks */
+        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+        .nVersion = 1,
+        .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        .iPixelType = PFD_TYPE_RGBA,
+        .cColorBits = 24,
     };
-    int pixel_format;
+
+    int format;
+    GLuint fbo, rbos[2], buffers[2];
+    HWND hwnd, hwnd2;
+    HGLRC ctx, ctx2;
+    HDC hdc, hdc2;
     GLenum status;
-    HWND window;
-    HGLRC ctx;
-    BOOL ret;
-    HDC dc;
+    GLint value;
+    BOOL amd;
+
 
     /* Test the default framebuffer status for a window that becomes visible after wglMakeCurrent() */
-    window = CreateWindowA("static", "opengl32_test", WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window, "Failed to create window, last error %#lx.\n", GetLastError());
-    dc = GetDC(window);
-    ok(!!dc, "Failed to get DC.\n");
-    pixel_format = ChoosePixelFormat(dc, &pf_desc);
-    if (!pixel_format)
-    {
-        win_skip("Failed to find pixel format.\n");
-        ReleaseDC(window, dc);
-        DestroyWindow(window);
-        return;
-    }
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP, 0, 0, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd, !=, NULL );
+    hdc = GetDC( hwnd );
+    ok_ptr( hdc, !=, NULL );
+    format = ChoosePixelFormat( hdc, &pfd );
+    ok_u4( format, >, 0 );
+    ok_ret( TRUE, SetPixelFormat( hdc, format, &pfd ) );
 
-    ret = SetPixelFormat(dc, pixel_format, &pf_desc);
-    ok(ret, "Failed to set pixel format, last error %#lx.\n", GetLastError());
-    ctx = wglCreateContext(dc);
-    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
-    ret = wglMakeCurrent(dc, ctx);
-    ok(ret, "Failed to make context current, last error %#lx.\n", GetLastError());
+    ctx = wglCreateContext( hdc );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ReleaseDC( hwnd, hdc );
 
-    ShowWindow(window, SW_SHOW);
+    ShowWindow( hwnd, SW_SHOW );
     flush_events();
 
     ext.glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+    DestroyWindow( hwnd );
+
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP, 0, 0, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd, !=, NULL );
+    hdc = GetDC( hwnd );
+    ok_ptr( hdc, !=, NULL );
+    format = ChoosePixelFormat( hdc, &pfd );
+    ok_u4( format, >, 0 );
+    ok_ret( TRUE, SetPixelFormat( hdc, format, &pfd ) );
+
+    ctx = wglCreateContext( hdc );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+    ReleaseDC( hwnd, hdc );
+
+    amd = strstr( (const char*)glGetString(GL_VENDOR), "AMD" ) ||
+          strstr( (const char*)glGetString(GL_VENDOR), "ATI" );
 
     status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
-    ok(status == GL_FRAMEBUFFER_COMPLETE, "Expected %#x, got %#x.\n", GL_FRAMEBUFFER_COMPLETE, status);
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
 
-    ret = wglMakeCurrent(NULL, NULL);
-    ok(ret, "Failed to clear current context, last error %#lx.\n", GetLastError());
-    ret = wglDeleteContext(ctx);
-    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
-    ReleaseDC(window, dc);
-    DestroyWindow(window);
+    /* only glGetFramebufferParameterivEXT allows querying draw/read buffers */
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DRAW_BUFFER, &value );
+    ok_ret( GL_INVALID_ENUM, glGetError() );
+    ext.glGetNamedFramebufferParameteriv( 0, GL_DRAW_BUFFER, &value );
+    ok_ret( GL_INVALID_ENUM, glGetError() );
+    ext.glGetNamedFramebufferParameterivEXT( 0, GL_DRAW_BUFFER, &value );
+    ok_ret( GL_INVALID_ENUM, glGetError() );
+    ext.glGetFramebufferParameterivEXT( 0, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_BACK );
+    ext.glGetNamedFramebufferParameterivEXT( 0, GL_READ_BUFFER, &value );
+    ok_ret( GL_INVALID_ENUM, glGetError() );
+    ext.glGetFramebufferParameterivEXT( 0, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_BACK );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_TRUE );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+
+    ShowWindow( hwnd, SW_SHOW );
+    flush_events();
+
+    status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
+    ext.glGetFramebufferParameterivEXT( 0, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_BACK );
+    ext.glGetFramebufferParameterivEXT( 0, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_BACK );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_TRUE );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+
+
+    ext.glCreateFramebuffers( 1, &fbo );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glBindFramebuffer( GL_FRAMEBUFFER, fbo );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, broken( amd ) ? GL_TRUE : GL_FALSE );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+
+
+    ext.glCreateRenderbuffers( 2, rbos );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glBindRenderbuffer( GL_RENDERBUFFER, rbos[0] );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, 1, 1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbos[0] );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glBindRenderbuffer( GL_RENDERBUFFER, rbos[1] );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, 1, 1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, rbos[1] );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+    status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, broken( amd ) ? GL_TRUE : GL_FALSE );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+
+
+    ext.glBindFramebuffer( GL_READ_FRAMEBUFFER, fbo );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ext.glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, 0 );
+    glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, fbo );
+
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_BACK );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_TRUE );
+    ext.glGetFramebufferParameteriv( GL_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+    ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, broken( amd ) ? GL_TRUE : GL_FALSE );
+    ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+
+
+    glDrawBuffer( GL_FRONT_AND_BACK );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glReadBuffer( GL_FRONT_LEFT );
+    ok_ret( GL_INVALID_OPERATION, glGetError() );
+    glReadBuffer( GL_COLOR_ATTACHMENT1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    ext.glGetFramebufferParameterivEXT( 0, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ext.glGetFramebufferParameterivEXT( 0, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_BACK );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+
+    hdc = GetDC( hwnd );
+    ok_ptr( hdc, !=, NULL );
+    ctx2 = ext.wglCreateContextAttribsARB( hdc, ctx, NULL );
+    ok_ptr( ctx2, !=, NULL );
+
+    hwnd2 = CreateWindowW( L"static", NULL, WS_POPUP, 0, 0, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd2, !=, NULL );
+    hdc2 = GetDC( hwnd2 );
+    ok_ptr( hdc2, !=, NULL );
+    pfd.dwFlags &= ~PFD_DOUBLEBUFFER;
+    format = ChoosePixelFormat( hdc2, &pfd );
+    ok_u4( format, >, 0 );
+    ok_ret( TRUE, SetPixelFormat( hdc2, format, &pfd ) );
+
+    if (!broken( amd )) /* AMD allows to mix DCs with different pixel formats */
+    {
+        SetLastError( 0xdeadbeef );
+        todo_wine ok_ret( FALSE, ext.wglMakeContextCurrentARB( hdc, hdc2, ctx2 ) );
+        todo_wine ok_ret( ERROR_INVALID_PIXEL_FORMAT, LOWORD( GetLastError() ) );
+        ok_ret( TRUE, wglDeleteContext( ctx2 ) );
+        ctx2 = ext.wglCreateContextAttribsARB( hdc2, ctx, NULL );
+        ok_ptr( ctx2, !=, NULL );
+        ok_ret( FALSE, ext.wglMakeContextCurrentARB( hdc, hdc2, ctx2 ) );
+        ok_ret( ERROR_INVALID_PIXEL_FORMAT, LOWORD( GetLastError() ) );
+    }
+
+    ok_ret( TRUE, ext.wglMakeContextCurrentARB( hdc2, hdc2, ctx2 ) );
+
+    glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, 0 );
+    glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, 0 );
+
+    ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_DOUBLEBUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FALSE );
+    ext.glGetFramebufferParameteriv( GL_READ_FRAMEBUFFER, GL_STEREO, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_FALSE );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT );
+
+    glDrawBuffer( GL_FRONT_AND_BACK );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glDrawBuffer( GL_RIGHT );
+    ok_ret( GL_INVALID_OPERATION, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT );
+    buffers[0] = GL_FRONT_LEFT;
+    buffers[1] = GL_FRONT_LEFT;
+    ext.glDrawBuffers( 2, buffers );
+    ok_ret( GL_INVALID_OPERATION, glGetError() );
+    buffers[0] = GL_FRONT_LEFT;
+    buffers[1] = GL_BACK_LEFT;
+    ext.glDrawBuffers( 2, buffers );
+    ok_ret( GL_INVALID_OPERATION, glGetError() );
+    buffers[0] = GL_FRONT_AND_BACK;
+    buffers[1] = GL_FRONT_LEFT;
+    ext.glDrawBuffers( 2, buffers );
+    todo_wine ok_ret( GL_INVALID_ENUM, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT );
+
+    glReadBuffer( GL_NONE );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+
+    glDrawBuffer( GL_NONE );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+
+    ext.glGetFramebufferParameterivEXT( fbo, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+    ok_ret( TRUE, wglDeleteContext( ctx2 ) );
+    ReleaseDC( hwnd2, hdc2 );
+    DestroyWindow( hwnd2 );
+
+
+    hwnd2 = CreateWindowW( L"static", NULL, WS_POPUP, 0, 0, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd2, !=, NULL );
+    hdc2 = GetDC( hwnd2 );
+    ok_ptr( hdc2, !=, NULL );
+    pfd.dwFlags |= PFD_DOUBLEBUFFER;
+    format = ChoosePixelFormat( hdc2, &pfd );
+    ok_u4( format, >, 0 );
+    ok_ret( TRUE, SetPixelFormat( hdc2, format, &pfd ) );
+
+    ok_ret( TRUE, ext.wglMakeContextCurrentARB( hdc, hdc2, ctx ) );
+
+    glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, 0 );
+    glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, fbo );
+
+    status = ext.glCheckFramebufferStatus( GL_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    status = ext.glCheckFramebufferStatus( GL_READ_FRAMEBUFFER );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_DRAW_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT0 );
+    ext.glGetFramebufferParameterivEXT( fbo, GL_READ_BUFFER, &value );
+    if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
+    else ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+    ok_ret( TRUE, ext.wglMakeContextCurrentARB( hdc2, hdc, ctx ) );
+    ReleaseDC( hwnd, hdc );
+    ReleaseDC( hwnd2, hdc2 );
+
+    glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, 0 );
+    glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_u4( value, ==, fbo );
+
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    buffers[0] = GL_FRONT_LEFT;
+    buffers[1] = GL_BACK_LEFT;
+    ext.glDrawBuffers( 2, buffers );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_LEFT );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_BACK_LEFT );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    glDrawBuffer( GL_FRONT_AND_BACK );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    buffers[0] = GL_FRONT_LEFT;
+    buffers[1] = GL_BACK_LEFT;
+    ext.glDrawBuffers( 2, buffers );
+    todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_FRONT_LEFT );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    todo_wine ok_x4( value, ==, GL_BACK_LEFT );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+    glDrawBuffer( GL_NONE );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    glGetIntegerv( GL_DRAW_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_DRAW_BUFFER1, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_NONE );
+    glGetIntegerv( GL_READ_BUFFER, &value );
+    ok_ret( GL_NO_ERROR, glGetError() );
+    ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
+
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+    DestroyWindow( hwnd );
+    DestroyWindow( hwnd2 );
 }
 
 static DWORD CALLBACK test_window_dc_thread( void *arg )
