@@ -570,6 +570,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
 
     /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
     if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) alloc_client = FALSE;
+    if (type == OBJ_TYPE_FRAMEBUFFER) alloc_client = extension;
 
     AcquireSRWLockShared( &table->lock );
     for (UINT i = 0; i < n && !needs_client; i++)
