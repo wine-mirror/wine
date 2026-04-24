@@ -144,12 +144,13 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     return return_code;
 }
 
-BOOL WCMD_next_word(WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length)
+BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length)
 {
-    WCHAR *ptr;
+    const WCHAR *ptr;
     if (!s || !*s) return FALSE;
-    for (ptr = s; wcschr(delims, *ptr); ptr++) {}
-    *start = ptr;
+    for (ptr = s; *ptr && wcschr(delims, *ptr); ptr++) {}
+    if (!*ptr) return FALSE;
+    *start = (WCHAR*)ptr;
     while (*ptr && !wcschr(delims, *ptr))
     {
         /* If we find a quote, advance until we get the end quote */
@@ -181,6 +182,65 @@ WCHAR *WCMD_dup_unquoted(const WCHAR *s, size_t length)
         if (s[j] != L'"') ret[i++] = s[j];
     ret[i] = L'\0';
     return ret;
+}
+
+struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags)
+{
+    iterator->from = string;
+    iterator->position = 0;
+    iterator->length = 0;
+    iterator->delimiters = delims;
+    iterator->flags = flags;
+    iterator->raw_argument = NULL;
+    iterator->unquoted_argument = NULL;
+    iterator->is_an_option = FALSE;
+
+    return iterator;
+}
+
+/* we need to handle two levels:
+ * - first level: the words separated by 'delims'
+ * - second level: options can be packed as '/Q/S' in a single word.
+ */
+BOOL WCMD_word_iterator_advance(struct word_iterator *iterator)
+{
+    WCHAR *start;
+    size_t length;
+    size_t delta_in_option = 0;
+
+    iterator->position += iterator->length;
+    if (!WCMD_next_word(&iterator->from[iterator->position], iterator->delimiters, &start, &length)) return FALSE;
+    /* we need a bit of tweaking for / delimiter as start of option
+     * + it can introduce an option as first character
+     * + it can introduce an option when in quotes (for certain commands only, eg CHOICE)
+     * + if in an option, / becomes a delimiter (eg /P/Q is handled as two options)
+     * + if not an option, / is not a delimiter and is part of arg
+     */
+    if (iterator->flags & WORD_WITH_QUOTED_OPT)
+    {
+        const WCHAR *p;
+        for (p = start; *p == L'"' && p < start + length; p++) {}
+        if (p < start + length && *p == L'/') delta_in_option = p - start + 1;
+    }
+    else if (iterator->flags & WORD_WITH_OPT)
+    {
+        if (start[0] == L'/') delta_in_option = 1;
+    }
+    if (delta_in_option)
+    {
+        WCHAR *p = wmemchr(start + delta_in_option, L'/', length - delta_in_option);
+        if (p)
+            length = p - start;
+    }
+
+    iterator->position = start - iterator->from;
+    iterator->length = length;
+    free(iterator->raw_argument);
+    free(iterator->unquoted_argument);
+    iterator->raw_argument = WCMD_dup(start, length);
+    iterator->unquoted_argument = WCMD_dup_unquoted(start, length);
+    iterator->is_an_option = delta_in_option != 0;
+    return iterator->length != 0;
 }
 
 /*******************************************************************

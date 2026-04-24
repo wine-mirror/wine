@@ -1516,53 +1516,50 @@ void if_condition_dispose(CMD_IF_CONDITION *cond)
 
 static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond)
 {
-    WCHAR *param_start;
-    const WCHAR *param_copy;
-    int narg = 0;
+    struct word_iterator iterator;
 
     if (cond) memset(cond, 0, sizeof(*cond));
-    param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
+    if (!WCMD_word_iterator_advance(WCMD_word_iterator_init(&iterator, start, STANDARD_DELIMS, WORD_WITH_OPT)))
+        return FALSE;
     /* /I is the only option supported */
-    if (!wcsicmp(param_copy, L"/I"))
+    if (!wcsicmp(iterator.raw_argument, L"/I"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->case_insensitive = 1;
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
     }
-    if (!wcsicmp(param_copy, L"NOT"))
+    if (!wcsicmp(iterator.raw_argument, L"NOT"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->negated = 1;
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
     }
-    if (!wcsicmp(param_copy, L"errorlevel"))
+    if (!wcsicmp(iterator.raw_argument, L"errorlevel"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
         if (cond) cond->op = CMD_IF_ERRORLEVEL;
-        if (cond) cond->operand = xstrdupW(param_copy);
+        if (cond) cond->operand = xstrdupW(iterator.raw_argument);
     }
-    else if (!wcsicmp(param_copy, L"exist"))
+    else if (!wcsicmp(iterator.raw_argument, L"exist"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, FALSE);
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
         if (cond) cond->op = CMD_IF_EXIST;
-        if (cond) cond->operand = xstrdupW(param_copy);
+        if (cond) cond->operand = xstrdupW(iterator.unquoted_argument);
     }
-    else if (!wcsicmp(param_copy, L"defined"))
+    else if (!wcsicmp(iterator.raw_argument, L"defined"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
         if (cond) cond->op = CMD_IF_DEFINED;
-        if (cond) cond->operand = xstrdupW(param_copy);
+        if (cond) cond->operand = xstrdupW(iterator.raw_argument);
     }
     else /* comparison operation */
     {
-        if (*param_copy == L'\0') return FALSE;
-        param_copy = WCMD_parameter(start, narg - 1, &param_start, TRUE);
-        if (cond) cond->left = xstrdupW(param_copy);
+        if (cond) cond->left = xstrdupW(iterator.raw_argument);
 
-        start = WCMD_skip_leading_spaces(param_start + wcslen(param_copy));
-
-        /* Note: '==' can't be returned by WCMD_parameter since '=' is a separator */
+        /* Note: '==' can't be returned by WCMD_word_iterator since '=' is a separator, so do it by hand */
+        start = WCMD_skip_leading_spaces((WCHAR*)&iterator.from[iterator.position + iterator.length]);
         if (start[0] == L'=' && start[1] == L'=')
         {
-            start += 2; /* == */
+            iterator.position = start - iterator.from;
+            iterator.length = 2; /* == */
             if (cond) cond->op = CMD_IF_BINOP_EQUAL;
         }
         else
@@ -1581,32 +1578,35 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
             };
             int i;
 
-            param_copy = WCMD_parameter(start, 0, &param_start, FALSE);
-            for (i = 0; i < ARRAY_SIZE(allowed_operators); i++)
-                if (!wcsicmp(param_copy, allowed_operators[i].name)) break;
+            if (WCMD_word_iterator_advance(&iterator))
+            {
+                for (i = 0; i < ARRAY_SIZE(allowed_operators); i++)
+                    if (!wcsicmp(iterator.raw_argument, allowed_operators[i].name)) break;
+            }
+            else
+                i = ARRAY_SIZE(allowed_operators);
             if (i == ARRAY_SIZE(allowed_operators))
             {
                 if (cond) free((void*)cond->left);
                 return FALSE;
             }
             if (cond) cond->op = allowed_operators[i].binop;
-            start += wcslen(param_copy);
         }
 
-        param_copy = WCMD_parameter(start, 0, &param_start, TRUE);
-        if (*param_copy == L'\0')
+        if (!WCMD_word_iterator_advance(&iterator))
         {
             if (cond) free((void*)cond->left);
             return FALSE;
         }
-        if (cond) cond->right = wcsdup(param_copy);
-
-        start = param_start + wcslen(param_copy);
-        narg = 0;
+        if (cond) cond->right = xstrdupW(iterator.raw_argument);
     }
     /* check all remaning args are present, and compute pointer to end of condition */
-    param_copy = WCMD_parameter(start, narg, end, TRUE);
-    return cond || *param_copy != L'\0';
+    if (end)
+    {
+        if (!WCMD_word_iterator_advance(&iterator)) return FALSE;
+        *end = (WCHAR*)&iterator.from[iterator.position];
+    }
+    return TRUE;
 }
 
 static const char *debugstr_if_condition(const CMD_IF_CONDITION *cond)
@@ -1976,7 +1976,7 @@ static BOOL search_in_pathext(WCHAR *path)
     return TRUE;
 }
 
-static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOOL fast)
+static RETURN_CODE search_command(const WCHAR *command, struct search_command *sc, BOOL fast)
 {
     WCHAR  temp[MAX_PATH];
     WCHAR  pathtosearch[MAXSTRING];
@@ -1988,7 +1988,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     WCHAR *end_command;
     size_t length;
     DWORD  len;
-    WCHAR *p;
+    const WCHAR *p;
 
     sc->has_path = sc->has_extension = sc->is_command_file = FALSE;
     sc->cmd_index = WCMD_EXIT + 1;
@@ -2161,7 +2161,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     return RETURN_CODE_CANT_LAUNCH;
 }
 
-BOOL WCMD_split_command_build(WCHAR *from, struct split_command *split_command)
+BOOL WCMD_split_command_build(const WCHAR *from, struct split_command *split_command)
 {
     struct search_command sc;
     WCHAR *st;
@@ -3045,7 +3045,6 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             ERROR_IF(left);
             ERROR_IF(redir);
             {
-                WCHAR *end;
                 CMD_IF_CONDITION cond;
                 CMD_NODE *then_block;
                 CMD_NODE *else_block;
@@ -3060,7 +3059,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     left = node_create_single(command_create(L"help if", 7), do_echo);
                     break;
                 }
-                ERROR_IF(!if_condition_parse(pmt.command, &end, &cond));
+                ERROR_IF(!if_condition_parse(pmt.command, NULL, &cond));
                 free(pmt.command);
                 node_builder_consume(builder);
                 if (!node_builder_parse(builder, 0, &then_block))

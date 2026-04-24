@@ -227,9 +227,32 @@ RETURN_CODE WCMD_mklink(WCHAR *args);
 RETURN_CODE WCMD_change_drive(WCHAR drive);
 
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD n, HANDLE stream);
-BOOL WCMD_next_word(WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length);
+BOOL WCMD_next_word(const WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length);
 WCHAR *WCMD_dup(const WCHAR *s, size_t length);
 WCHAR *WCMD_dup_unquoted(const WCHAR *s, size_t length);
+struct word_iterator
+{
+    /* internal fields, do not not use them */
+    const WCHAR *from;
+    size_t position, length;
+    /* flags at creation time */
+    const WCHAR *delimiters;
+    unsigned int flags;
+    /* getters */
+    WCHAR *raw_argument;
+    WCHAR *unquoted_argument;
+    BOOL is_an_option;
+};
+#define WORD_WITH_OPT 0x01
+#define WORD_WITH_QUOTED_OPT 0x02
+
+struct word_iterator *WCMD_word_iterator_init(struct word_iterator *iterator, const WCHAR *string, const WCHAR *delims, unsigned int flags);
+BOOL WCMD_word_iterator_advance(struct word_iterator *iterator);
+static inline void WCMD_word_iterator_dispose(struct word_iterator *iterator)
+{
+    free(iterator->raw_argument);
+    free(iterator->unquoted_argument);
+}
 WCHAR *WCMD_parameter(WCHAR *s, int n, WCHAR **start, BOOL raw);
 WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
@@ -238,7 +261,7 @@ WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, cons
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, const WCHAR *ptr);
 void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
-BOOL WCMD_split_command_build(WCHAR *from, struct split_command *split_command);
+BOOL WCMD_split_command_build(const WCHAR *from, struct split_command *split_command);
 void WCMD_split_command_dispose(struct split_command *split_command);
 BOOL WCMD_split_command_get_positional_argument(struct split_command *split_command, WCHAR arg_char, const WCHAR **start);
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
