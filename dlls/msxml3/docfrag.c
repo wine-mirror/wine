@@ -414,11 +414,9 @@ static HRESULT WINAPI docfrag_get_parsed(IXMLDOMDocumentFragment *iface, VARIANT
 
 static HRESULT WINAPI docfrag_get_namespaceURI(IXMLDOMDocumentFragment *iface, BSTR *p)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
     TRACE("%p, %p.\n", iface, p);
 
-    return node_get_namespaceURI(docfrag->node, p);
+    return return_null_bstr(p);
 }
 
 static HRESULT WINAPI docfrag_get_prefix(IXMLDOMDocumentFragment *iface, BSTR *prefix)

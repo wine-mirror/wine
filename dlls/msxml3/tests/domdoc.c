@@ -15503,11 +15503,8 @@ static void test_doc_fragment(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = (void *)0x1;
     hr = IXMLDOMNode_get_namespaceURI(node, &str);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!str, "Unexpected string %p.\n", str);
-    if (hr == S_OK) SysFreeString(str);
     str = (void *)0x1;
     hr = IXMLDOMNode_get_baseName(node, &str);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);

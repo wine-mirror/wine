@@ -1186,6 +1186,10 @@ static HRESULT WINAPI domdoc_createNode(IXMLDOMDocument3 *iface, VARIANT type, B
         if (uri && *uri)
             return E_FAIL;
     }
+    else if (node_type == NODE_DOCUMENT_FRAGMENT)
+    {
+        name = uri = NULL;
+    }
 
     *node = NULL;
 
