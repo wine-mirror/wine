@@ -6220,11 +6220,17 @@ GpStatus WINGDIPAPI GdipInitializePalette(ColorPalette *palette,
         wic_palette = get_palette(NULL, (WICBitmapPaletteType)type);
         if (!wic_palette) return OutOfMemory;
 
-        if (palette->Count >= wic_palette->Count)
+        if (palette->Count >= wic_palette->Count + (transparent ? 1 : 0))
         {
-            palette->Flags = wic_palette->Flags;
+            palette->Flags = (UINT)type << 8;
             palette->Count = wic_palette->Count;
             memcpy(palette->Entries, wic_palette->Entries, wic_palette->Count * sizeof(wic_palette->Entries[0]));
+            if (transparent)
+            {
+                /* If there is transparent color, add additional entry to palette */
+                palette->Entries[palette->Count] = 0x00000000;
+                palette->Count++;
+            }
         }
         else
             status = GenericError;

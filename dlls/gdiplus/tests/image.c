@@ -6512,7 +6512,6 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedBW, 0, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x200, palette->Flags);
     expect(2, palette->Count);
     expect(0xff000000, palette->Entries[0]);
@@ -6523,7 +6522,6 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, NULL);
     expect(Ok, status);
-    todo_wine
     expect(0x300, palette->Flags);
     expect(16, palette->Count);
     expect(0xff000000, palette->Entries[0]);
@@ -6536,7 +6534,6 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x300, palette->Flags);
     expect(16, palette->Count);
     expect(0xff000000, palette->Entries[0]);
@@ -6549,14 +6546,11 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, TRUE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x300, palette->Flags);
-    todo_wine
     expect(17, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xffc0c0c0, palette->Entries[8]);
     expect(0xff008080, palette->Entries[15]);
-    todo_wine
     expect(0x00000000, palette->Entries[16]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
@@ -6564,16 +6558,13 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone64, 1, TRUE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x500, palette->Flags);
-    todo_wine
     expect(73, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xff00aa00, palette->Entries[8]);
     expect(0xff00ffff, palette->Entries[15]);
     expect(0xffaa0000, palette->Entries[32]);
     expect(0xff008080, palette->Entries[71]);
-    todo_wine
     expect(0x00000000, palette->Entries[72]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
@@ -6581,7 +6572,6 @@ static void test_GdipInitializePalette(void)
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone252, 1, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x800, palette->Flags);
     expect(252, palette->Count);
     expect(0xff000000, palette->Entries[0]);
