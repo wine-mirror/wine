@@ -6486,29 +6486,29 @@ static void test_GdipInitializePalette(void)
 
     palette = GdipAlloc(sizeof(*palette) + sizeof(ARGB) * 255);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 15;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, bitmap);
     expect(GenericError, status);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, NULL);
     expect(InvalidParameter, status);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeCustom, 16, FALSE, NULL);
     expect(Ok, status);
-    expect(0, palette->Flags);
+    expect(9999, palette->Flags);
     expect(256, palette->Count);
     expect(0x11111111, palette->Entries[0]);
     expect(0x11111111, palette->Entries[128]);
     expect(0x11111111, palette->Entries[255]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedBW, 0, FALSE, bitmap);
     expect(Ok, status);
@@ -6519,7 +6519,7 @@ static void test_GdipInitializePalette(void)
     expect(0xffffffff, palette->Entries[1]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, NULL);
     expect(Ok, status);
@@ -6530,8 +6530,9 @@ static void test_GdipInitializePalette(void)
     expect(0xffc0c0c0, palette->Entries[8]);
     expect(0xff008080, palette->Entries[15]);
 
+    /* With bitmap */
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, bitmap);
     expect(Ok, status);
@@ -6542,8 +6543,41 @@ static void test_GdipInitializePalette(void)
     expect(0xffc0c0c0, palette->Entries[8]);
     expect(0xff008080, palette->Entries[15]);
 
+    /* With transparent color and bitmap */
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
+    palette->Count = 256;
+    status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, TRUE, bitmap);
+    expect(Ok, status);
+    todo_wine
+    expect(0x300, palette->Flags);
+    todo_wine
+    expect(17, palette->Count);
+    expect(0xff000000, palette->Entries[0]);
+    expect(0xffc0c0c0, palette->Entries[8]);
+    expect(0xff008080, palette->Entries[15]);
+    todo_wine
+    expect(0x00000000, palette->Entries[16]);
+
+    memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
+    palette->Flags = 9999;
+    palette->Count = 256;
+    status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone64, 1, TRUE, bitmap);
+    expect(Ok, status);
+    todo_wine
+    expect(0x500, palette->Flags);
+    todo_wine
+    expect(73, palette->Count);
+    expect(0xff000000, palette->Entries[0]);
+    expect(0xff00aa00, palette->Entries[8]);
+    expect(0xff00ffff, palette->Entries[15]);
+    expect(0xffaa0000, palette->Entries[32]);
+    expect(0xff008080, palette->Entries[71]);
+    todo_wine
+    expect(0x00000000, palette->Entries[72]);
+
+    memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone252, 1, FALSE, bitmap);
     expect(Ok, status);
@@ -6554,19 +6588,19 @@ static void test_GdipInitializePalette(void)
     expect(0xff990066, palette->Entries[128]);
     expect(0xffffffff, palette->Entries[251]);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 1, FALSE, bitmap);
     expect(InvalidParameter, status);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 2, FALSE, bitmap);
     expect(Ok, status);
     expect(0, palette->Flags);
     expect(2, palette->Count);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, bitmap);
     expect(Ok, status);
