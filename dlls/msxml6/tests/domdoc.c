@@ -1134,6 +1134,95 @@ static void test_dtd_validation(void)
     free_bstrs();
 }
 
+static void test_max_element_depth_values(void)
+{
+    IXMLDOMParseError *parse_error;
+    IXMLDOMDocument2 *doc, *doc3;
+    IXMLDOMDocument *doc2;
+    VARIANT var;
+    HRESULT hr;
+    LONG code;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* The default max element depth value should be 256. */
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 0xdeadbeef;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"MaxElementDepth"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_I4(&var) == 256, "Unexpected property value.\n");
+}
+
+    /* Changes to the depth value should be observable when subsequently retrieved. */
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 32;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"MaxElementDepth"), var);
+    ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 0xdeadbeef;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"MaxElementDepth"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_I4(&var) == 32, "Unexpected property value.\n");
+}
+
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_FALSE, (IXMLDOMNode **)&doc2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_QueryInterface(doc2, &IID_IXMLDOMDocument2, (void **)&doc3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 0xdeadbeef;
+    hr = IXMLDOMDocument2_getProperty(doc3, _bstr_(L"MaxElementDepth"), &var);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_I4(&var) == 32, "Unexpected property value.\n");
+}
+    IXMLDOMDocument2_Release(doc3);
+    IXMLDOMDocument_Release(doc2);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = -1;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"MaxElementDepth"), var);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 2147483648;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"MaxElementDepth"), var);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 1;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"MaxElementDepth"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(L"<a>text<!-- comment --></a>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(L"<a>text<!-- comment --><b/></a>"), NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument2_get_parseError(doc, &parse_error);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMParseError_get_errorCode(parse_error, &code);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(code == 0xc00ce586, "Unexpected error code %#lx.\n", code);
+    IXMLDOMParseError_Release(parse_error);
+
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -1159,6 +1248,7 @@ START_TEST(domdoc)
     test_prohibitdtd();
     test_interfaces();
     test_dtd_validation();
+    test_max_element_depth_values();
 
     CoUninitialize();
 }
