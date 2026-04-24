@@ -68,7 +68,7 @@ struct accessor
     DBBINDING bindings[1];
 };
 
-static void dbtype_free(DBTYPE type, void *data)
+void dbtype_free(DBTYPE type, void *data)
 {
     if (type & DBTYPE_BYREF)
     {

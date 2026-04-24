@@ -46,4 +46,6 @@ typedef enum tid_t {
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
 
+void dbtype_free( DBTYPE, void *data );
+
 #endif /* _WINE_MSADO15_PRIVATE_H_ */

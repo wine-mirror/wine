@@ -33,12 +33,14 @@ struct rowsetex
 {
     IRowsetExactScroll IRowsetExactScroll_iface;
     IAccessor IAccessor_iface;
+    IRowsetFind IRowsetFind_iface;
     LONG refs;
 
     IRowset *rowset;
     IRowsetLocate *rowset_loc;
     IRowsetExactScroll *rowset_es;
     IAccessor *accessor;
+    IRowsetFind *rowset_find;
 
     DBTYPE bookmark_type;
     HACCESSOR bookmark_hacc;
@@ -52,6 +54,11 @@ static inline struct rowsetex *impl_from_IRowsetExactScroll(IRowsetExactScroll *
 static inline struct rowsetex *impl_from_IAccessor(IAccessor *iface)
 {
     return CONTAINING_RECORD(iface, struct rowsetex, IAccessor_iface);
+}
+
+static inline struct rowsetex *impl_from_IRowsetFind(IRowsetFind *iface)
+{
+    return CONTAINING_RECORD(iface, struct rowsetex, IRowsetFind_iface);
 }
 
 static HRESULT WINAPI rowsetex_QueryInterface(IRowsetExactScroll *iface, REFIID riid, void **obj)
@@ -82,6 +89,10 @@ static HRESULT WINAPI rowsetex_QueryInterface(IRowsetExactScroll *iface, REFIID 
             if (FAILED(hr)) return hr;
         }
         *obj = &rowset->IAccessor_iface;
+    }
+    else if (IsEqualGUID(&IID_IRowsetFind, riid))
+    {
+        *obj = &rowset->IRowsetFind_iface;
     }
     else if (IsEqualGUID(&IID_IColumnsInfo, riid) ||
             IsEqualGUID(&IID_IRowsetIndex, riid) ||
@@ -127,6 +138,8 @@ static ULONG WINAPI rowsetex_Release(IRowsetExactScroll *iface)
         if (rowset->bookmark_hacc)
             IAccessor_ReleaseAccessor(rowset->accessor, rowset->bookmark_hacc, NULL);
         if (rowset->accessor) IAccessor_Release(rowset->accessor);
+        if (rowset->rowset_find && rowset->rowset_find != NO_INTERFACE)
+            IRowsetFind_Release(rowset->rowset_find);
         free(rowset);
     }
     return refs;
@@ -462,6 +475,258 @@ static const struct IAccessorVtbl accessor_vtbl =
     accessor_ReleaseAccessor
 };
 
+static HRESULT WINAPI find_QueryInterface(IRowsetFind *iface, REFIID riid, void **obj)
+{
+    struct rowsetex *rowset = impl_from_IRowsetFind(iface);
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI find_AddRef(IRowsetFind *iface)
+{
+    struct rowsetex *rowset = impl_from_IRowsetFind(iface);
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI find_Release(IRowsetFind *iface)
+{
+    struct rowsetex *rowset = impl_from_IRowsetFind(iface);
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT int_compare(DBCOMPAREOP compare_op, long long x, long long y)
+{
+    switch (compare_op)
+    {
+    case DBCOMPAREOPS_LT:
+        return x < y ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_LE:
+        return x <= y ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_EQ:
+        return x == y ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_GE:
+        return x >= y ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_GT:
+        return x > y ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_NE:
+        return x != y ? S_OK : S_FALSE;
+    default:
+        return S_FALSE;
+    }
+}
+
+static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HACCESSOR hacc,
+        void *find_value, DBCOMPAREOP compare_op, DBBKMARK bookmark_size, const BYTE *bookmark,
+        DBROWOFFSET offset, DBROWCOUNT rows, DBCOUNTITEM *obtained, HROW **hrows)
+{
+    BYTE tmp[sizeof(long long)], *bm = (BYTE *)bookmark, *data_buf = NULL;
+    struct rowsetex *rowset = impl_from_IRowsetFind(iface);
+    DWORD status = DBSTATUS_S_OK;
+    DBBINDING *bindings = NULL;
+    DBCOUNTITEM bindings_no;
+    HROW row, *prow = &row;
+    DBACCESSORFLAGS flags;
+    BOOL free_val = FALSE;
+    DBCOUNTITEM count = 0;
+    size_t data_size;
+    VARIANT conv;
+    HRESULT hr;
+
+    TRACE("%p, %Id, %Id, %p, %ld, %Id, %p, %Id, %Id, %p, %p\n", rowset, chapter, hacc,
+            find_value, compare_op, bookmark_size, bookmark, offset, rows, obtained, hrows);
+
+    if (!rowset->rowset_find)
+    {
+        HRESULT hr = IRowset_QueryInterface(rowset->rowset,
+                &IID_IRowsetFind, (void**)&rowset->rowset_find);
+        if (FAILED(hr))
+            rowset->rowset_find = NO_INTERFACE;
+    }
+
+    if (rowset->rowset_find != NO_INTERFACE)
+    {
+        return IRowsetFind_FindNextRow(rowset->rowset_find, chapter, hacc, find_value,
+                compare_op, bookmark_size, bookmark, offset, rows, obtained, hrows);
+    }
+
+    if (!obtained || !hrows) return E_INVALIDARG;
+    if (rows != -1 && rows != 1)
+    {
+        FIXME("rows = %Id\n", rows);
+        return E_NOTIMPL;
+    }
+
+    if (!hacc || !rowset->accessor)
+        return DB_E_BADACCESSORHANDLE;
+    /* TODO: Use custom HACCESSOR instead of calling IAccessor::GetBinding. */
+    hr = IAccessor_GetBindings(rowset->accessor, hacc, &flags, &bindings_no, &bindings);
+    if (FAILED(hr)) return hr;
+    VariantInit(&conv);
+    if (bindings_no != 1 || !(flags & DBACCESSOR_ROWDATA) || !(bindings->dwPart & DBPART_VALUE))
+    {
+        hr = DB_E_BADACCESSORTYPE;
+        goto done;
+    }
+
+    if (bindings->dwPart & DBPART_STATUS)
+        status = *(DWORD *)((BYTE *)find_value + bindings->obStatus);
+    if (status != DBSTATUS_S_OK)
+    {
+        FIXME("unhandled pattern status: %ld\n", status);
+        hr = E_NOTIMPL;
+        goto done;
+    }
+
+    data_size = bindings->obValue + bindings->cbMaxLen;
+    if (bindings->dwPart & DBPART_LENGTH && bindings->obLength + sizeof(DBLENGTH) > data_size)
+        data_size = bindings->obLength + sizeof(DBLENGTH);
+    if (bindings->dwPart & DBPART_STATUS && bindings->obStatus + sizeof(DWORD) > data_size)
+        data_size = bindings->obStatus + sizeof(DWORD);
+    data_buf = malloc(data_size);
+    if (!data_buf)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    /* Non DBBMK_FIRST bookmark is ignored if IRowsetLocate is not implemented */
+    if (!rowset->rowset_loc && bookmark_size == 1 && *bookmark == DBBMK_FIRST)
+    {
+        hr = IRowset_RestartPosition(rowset->rowset, chapter);
+        if (FAILED(hr)) goto done;
+    }
+    if (!rowset->rowset_loc) bookmark_size = 0;
+
+    while (1)
+    {
+        BYTE *x = data_buf + bindings->obValue;
+        BYTE *y = (BYTE *)find_value + bindings->obValue;
+        DBTYPE type = bindings->wType;
+
+        if (bookmark_size)
+        {
+            hr = IRowsetLocate_GetRowsAt(rowset->rowset_loc, 0, chapter,
+                    bookmark_size, bm, offset, rows, &count, &prow);
+            if (bm != bookmark && bm != tmp)
+            {
+                CoTaskMemFree(bm);
+                bm = NULL;
+            }
+        }
+        else
+        {
+            hr = IRowset_GetNextRows(rowset->rowset, chapter, offset, rows, &count, &prow);
+        }
+        if (FAILED(hr)) goto done;
+        if (!count) break;
+        offset = bookmark_size ? 1 : 0;
+
+        hr = IRowset_GetData(rowset->rowset, row, hacc, data_buf);
+        if (FAILED(hr)) goto done;
+        free_val = TRUE;
+        if (compare_op == DBCOMPAREOPS_IGNORE) break;
+
+        if (bindings->dwPart & DBPART_STATUS)
+            status = *(DWORD *)(data_buf + bindings->obStatus);
+        if (status == DBSTATUS_S_ISNULL)
+            type = DBTYPE_NULL;
+        else if (status != DBSTATUS_S_OK)
+        {
+            FIXME("unhandled status: %ld\n", status);
+            hr = E_NOTIMPL;
+            goto done;
+        }
+
+        if (bookmark_size)
+        {
+            hr = get_bookmark(rowset, row, &bookmark_size, &bm, tmp);
+            if (FAILED(hr)) goto done;
+        }
+
+        if (type == DBTYPE_VARIANT)
+        {
+            VARIANT *xv = (VARIANT *)x;
+            VARIANT *yv = (VARIANT *)y;
+
+            type = V_VT(xv);
+            if (type != V_VT(yv))
+            {
+                if (type != V_VT(&conv))
+                {
+                    VariantClear(&conv);
+                    hr = VariantChangeType(&conv, yv, 0, type);
+                    if (FAILED(hr)) goto done;
+                }
+                yv = &conv;
+            }
+
+            x = &V_UI1(xv);
+            y = &V_UI1(yv);
+        }
+
+        switch (type)
+        {
+        case DBTYPE_I1:
+            hr = int_compare(compare_op, *(char *)x, *(char *)y);
+            break;
+        case DBTYPE_I2:
+            hr = int_compare(compare_op, *(short *)x, *(short *)y);
+            break;
+        case DBTYPE_I4:
+            hr = int_compare(compare_op, *(int *)x, *(int *)y);
+            break;
+        case DBTYPE_I8:
+            hr = int_compare(compare_op, *(long long*)x, *(long long*)y);
+            break;
+        default:
+            FIXME("unhandled data type: %d\n", type);
+            hr = E_NOTIMPL;
+            break;
+        }
+
+        if (hr != S_FALSE) break;
+        if (bindings->dwMemOwner == DBMEMOWNER_CLIENTOWNED)
+            dbtype_free(bindings->wType, data_buf + bindings->obValue);
+        free_val = FALSE;
+        IRowset_ReleaseRows(rowset->rowset, count, prow, NULL, NULL, NULL);
+        count = 0;
+    }
+
+done:
+    if (free_val && bindings->dwMemOwner == DBMEMOWNER_CLIENTOWNED)
+        dbtype_free(bindings->wType, data_buf + bindings->obValue);
+    if (bm != bookmark && bm != tmp) CoTaskMemFree(bm);
+    VariantClear(&conv);
+    CoTaskMemFree(bindings);
+    free(data_buf);
+
+    if (SUCCEEDED(hr))
+    {
+        if (count && !*hrows)
+        {
+            *hrows = CoTaskMemAlloc(sizeof(**hrows));
+            if (*hrows) hr = E_OUTOFMEMORY;
+        }
+        if (count && *hrows)
+        {
+            IRowset_AddRefRows(rowset->rowset, 1, &row, NULL, NULL);
+            *hrows[0] = row;
+        }
+    }
+    if (count) IRowset_ReleaseRows(rowset->rowset, count, prow, NULL, NULL, NULL);
+    if (FAILED(hr)) return hr;
+
+    *obtained = count;
+    return count ? hr : DB_S_ENDOFROWSET;
+}
+
+static const struct IRowsetFindVtbl find_vtbl =
+{
+    find_QueryInterface,
+    find_AddRef,
+    find_Release,
+    find_FindNextRow
+};
+
 HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
 {
     struct rowsetex *rowsetex;
@@ -472,6 +737,7 @@ HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
 
     rowsetex->IRowsetExactScroll_iface.lpVtbl = &rowsetex_vtbl;
     rowsetex->IAccessor_iface.lpVtbl = &accessor_vtbl;
+    rowsetex->IRowsetFind_iface.lpVtbl = &find_vtbl;
     rowsetex->refs = 1;
 
     hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void **)&rowsetex->rowset);
