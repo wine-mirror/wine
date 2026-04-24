@@ -293,7 +293,7 @@ static HRESULT _protocol_start(unsigned line, IInternetProtocol *protocol, LPCWS
         if(expect_mime)
             SET_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         if(test_protocol == MK_PROTOCOL)
-            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+            SET_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
         SET_CALLED(ReportData);
         if(test_protocol == ITS_PROTOCOL)
             SET_CALLED(ReportProgress_BEGINDOWNLOADDATA);
@@ -306,7 +306,8 @@ static HRESULT _protocol_start(unsigned line, IInternetProtocol *protocol, LPCWS
         if(expect_mime)
             CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         if(test_protocol == MK_PROTOCOL)
-            SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+            todo_wine
+            CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
         CHECK_CALLED(ReportData);
         if(test_protocol == ITS_PROTOCOL)
             CHECK_CALLED(ReportProgress_BEGINDOWNLOADDATA);
