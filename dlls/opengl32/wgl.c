@@ -431,6 +431,7 @@ struct display_lists
     LONG                refcount;
     LONG                modified;
     struct object_table tables[OBJ_TYPE_COUNT];
+    struct handle_table syncs;
 };
 
 static struct display_lists *display_lists_create(void)
@@ -442,6 +443,7 @@ static struct display_lists *display_lists_create(void)
 
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
         init_object_table( lists->tables + i, i );
+    InitializeSRWLock( &lists->syncs.lock );
 
     return lists;
 }
@@ -459,16 +461,20 @@ static void display_lists_release( struct display_lists *lists )
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
         free_object_table( lists->tables + i );
 
+    for (int i = 0; i < lists->syncs.count; i++)
+    {
+        struct handle_entry *entry = lists->syncs.handles + i;
+        if (LOWORD(entry->handle) == 0xffff) continue;
+        free( entry->user_data );
+    }
+
     free( lists );
 }
 
 struct context
 {
     struct opengl_client_context base;
-    struct handle_table          syncs;
-    struct display_lists        *lists;
-
-    GLuint list_base;
+    struct display_lists *lists;
 };
 
 static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
@@ -501,7 +507,6 @@ static struct handle_entry *alloc_client_context( struct context *share )
     struct handle_entry *ptr;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
-    InitializeSRWLock( &context->syncs.lock );
     if (!(context->lists = share ? display_lists_acquire( share->lists ) : display_lists_create())) goto failed;
     if ((ptr = alloc_handle( &contexts, context ))) return ptr;
 
@@ -515,12 +520,6 @@ static void free_client_context( struct handle_entry *ptr )
 {
     struct context *context = context_from_opengl_client_context( ptr->context );
 
-    for (int i = 0; i < context->syncs.count; i++)
-    {
-        struct handle_entry *entry = context->syncs.handles + i;
-        if (LOWORD(entry->handle) == 0xffff) continue;
-        free( entry->user_data );
-    }
     display_lists_release( context->lists );
 
     free_handle( &contexts, ptr );
@@ -2529,7 +2528,7 @@ static GLsync sync_from_handle( GLsync handle )
     struct context *ctx;
 
     if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
-    if (!(ptr = get_handle_ptr( &ctx->syncs, handle ))) return NULL;
+    if (!(ptr = get_handle_ptr( &ctx->lists->syncs, handle ))) return NULL;
     return ptr->user_data;
 }
 
@@ -2545,19 +2544,16 @@ static struct handle_entry *alloc_client_sync( struct context *ctx )
     GLsync sync;
 
     if (!(sync = calloc( 1, sizeof(*sync) ))) return NULL;
-    if (!(ptr = alloc_handle( &ctx->syncs, sync )))
-    {
-        free( sync );
-        return NULL;
-    }
-
+    if (!(ptr = alloc_handle( &ctx->lists->syncs, sync ))) free( sync );
+    else InterlockedExchange( &ctx->lists->modified, 1 );
     return ptr;
 }
 
 static void free_client_sync( struct context *ctx, struct handle_entry *ptr )
 {
     GLsync sync = ptr->user_data;
-    free_handle( &ctx->syncs, ptr );
+    InterlockedExchange( &ctx->lists->modified, 1 );
+    free_handle( &ctx->lists->syncs, ptr );
     free( sync );
 }
 
@@ -2594,7 +2590,7 @@ void WINAPI glDeleteSync( GLsync sync )
     TRACE( "sync %p\n", sync );
 
     if (!(ctx = context_from_handle( teb->glCurrentRC ))) return;
-    if (!(ptr = get_handle_ptr( &ctx->syncs, sync ))) return set_gl_error( GL_INVALID_VALUE );
+    if (!(ptr = get_handle_ptr( &ctx->lists->syncs, sync ))) return set_gl_error( GL_INVALID_VALUE );
     args.sync = ptr->user_data;
 
     if ((status = UNIX_CALL( glDeleteSync, &args ))) WARN( "glDeleteSync returned %#lx\n", status );

@@ -2125,7 +2125,7 @@ static void test_sharelists(HDC winhdc)
         /* object 1 is now valid in ctx2 */
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* object 1 is not valid in ctx3 */
@@ -2144,7 +2144,7 @@ static void test_sharelists(HDC winhdc)
         /* object 1 is still valid in ctx2 */
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         ok_ret( TRUE, wglDeleteContext( ctx1 ) );
@@ -2175,7 +2175,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* cannot overwrite non-empty lists with some other */
-        todo_wine ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ret = wglShareLists( ctx2, ctx1 );
         ok( !ret || broken(nvidia), "wglShareLists returned %d\n", ret );
@@ -2192,7 +2192,7 @@ static void test_sharelists(HDC winhdc)
 
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, ext.glIsSync( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -2225,7 +2225,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( FALSE, ext.glIsSync( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( TRUE, ext.glIsSync( obj3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -2236,7 +2236,7 @@ static void test_sharelists(HDC winhdc)
         /* objects are still valid after shared context destruction */
         ok_ret( FALSE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( FALSE, ext.glIsSync( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( TRUE, ext.glIsSync( obj3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
