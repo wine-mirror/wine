@@ -213,7 +213,7 @@ int winetest_start_time, winetest_last_time;
 int winetest_mute_threshold = 42;
 
 static KSPIN_LOCK tls_data_lock;
-static struct winetest_thread_data tls_data_pool[128];
+static struct winetest_thread_data tls_data_pool[256];
 static HANDLE tls_data_thread[ARRAY_SIZE(tls_data_pool)];
 static DWORD tls_data_count;
 
