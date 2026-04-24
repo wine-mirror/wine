@@ -77,7 +77,7 @@ static void dbtype_free(DBTYPE type, void *data)
         if (p)
         {
             dbtype_free(type & ~DBTYPE_BYREF, p);
-            free(p);
+            CoTaskMemFree(p);
         }
         return;
     }
