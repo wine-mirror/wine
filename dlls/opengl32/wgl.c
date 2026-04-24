@@ -108,6 +108,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_BUFFER: return "buffer";
     case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
+    case OBJ_TYPE_SAMPLER: return "sampler";
     case OBJ_TYPE_TEXTURE: return "texture";
     case OBJ_TYPE_COUNT: break;
     }
@@ -391,6 +392,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
     case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
+    case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
     case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
     case OBJ_TYPE_COUNT: break;
     }
@@ -576,6 +578,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) alloc_client = FALSE;
     if (type == OBJ_TYPE_FRAMEBUFFER) alloc_client = extension;
     if (type == OBJ_TYPE_RENDERBUFFER) alloc_client = extension;
+    if (type == OBJ_TYPE_SAMPLER) alloc_client = FALSE;
 
     AcquireSRWLockShared( &table->lock );
     for (UINT i = 0; i < n && !needs_client; i++)
@@ -682,6 +685,8 @@ static GLuint get_pname_object_type( GLenum pname )
     case GL_SHADING_RATE_IMAGE_BINDING_NV:
     case GL_IMAGE_BINDING_NAME:
         return OBJ_TYPE_TEXTURE;
+    case GL_SAMPLER_BINDING:
+        return OBJ_TYPE_SAMPLER;
     }
 
     return OBJ_TYPE_COUNT;

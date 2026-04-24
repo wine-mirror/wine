@@ -3394,18 +3394,25 @@ static void WINAPI glBindRenderbufferEXT( GLenum target, GLuint renderbuffer )
 
 static void WINAPI glBindSampler( GLuint unit, GLuint sampler )
 {
-    struct glBindSampler_params args = { .teb = NtCurrentTeb(), .unit = unit, .sampler = sampler };
+    struct glBindSampler_params args = { .teb = NtCurrentTeb(), .unit = unit };
     NTSTATUS status;
     TRACE( "unit %d, sampler %d\n", unit, sampler );
+    if (!alloc_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler, FALSE )) return;
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glBindSampler, &args ))) WARN( "glBindSampler returned %#lx\n", status );
 }
 
 static void WINAPI glBindSamplers( GLuint first, GLsizei count, const GLuint *samplers )
 {
-    struct glBindSamplers_params args = { .teb = NtCurrentTeb(), .first = first, .count = count, .samplers = samplers };
+    GLuint samplers_buf[64], *samplers_tmp;
+    struct glBindSamplers_params args = { .teb = NtCurrentTeb(), .first = first, .count = count };
     NTSTATUS status;
     TRACE( "first %d, count %d, samplers %p\n", first, count, samplers );
+    if (!alloc_context_objects( OBJ_TYPE_SAMPLER, count, samplers, FALSE )) return;
+    samplers_tmp = count > 0 ? memdup_objects( count, samplers, samplers_buf, ARRAY_SIZE(samplers_buf) ) : NULL;
+    args.samplers = count > 0 ? map_context_objects( OBJ_TYPE_SAMPLER, count, samplers_tmp ) : NULL;
     if ((status = UNIX_CALL( glBindSamplers, &args ))) WARN( "glBindSamplers returned %#lx\n", status );
+    if (samplers_tmp != samplers_buf) free( samplers_tmp );
 }
 
 static void WINAPI glBindShadingRateImageNV( GLuint texture )
@@ -5560,6 +5567,7 @@ static void WINAPI glCreateSamplers( GLsizei n, GLuint *samplers )
     NTSTATUS status;
     TRACE( "n %d, samplers %p\n", n, samplers );
     if ((status = UNIX_CALL( glCreateSamplers, &args ))) WARN( "glCreateSamplers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_SAMPLER, n, samplers );
 }
 
 static void WINAPI glCreateSemaphoresNV( GLsizei n, GLuint *semaphores )
@@ -6010,10 +6018,14 @@ static void WINAPI glDeleteRenderbuffersEXT( GLsizei n, const GLuint *renderbuff
 
 static void WINAPI glDeleteSamplers( GLsizei count, const GLuint *samplers )
 {
-    struct glDeleteSamplers_params args = { .teb = NtCurrentTeb(), .count = count, .samplers = samplers };
+    GLuint samplers_buf[64], *samplers_tmp;
+    struct glDeleteSamplers_params args = { .teb = NtCurrentTeb(), .count = count };
     NTSTATUS status;
     TRACE( "count %d, samplers %p\n", count, samplers );
+    samplers_tmp = count > 0 ? memdup_objects( count, samplers, samplers_buf, ARRAY_SIZE(samplers_buf) ) : NULL;
+    args.samplers = count > 0 ? del_context_objects( OBJ_TYPE_SAMPLER, count, samplers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteSamplers, &args ))) WARN( "glDeleteSamplers returned %#lx\n", status );
+    if (samplers_tmp != samplers_buf) free( samplers_tmp );
 }
 
 static void WINAPI glDeleteSemaphoresEXT( GLsizei n, const GLuint *semaphores )
@@ -6600,10 +6612,11 @@ static void WINAPI glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end
 
 static void WINAPI glDrawTextureNV( GLuint texture, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 )
 {
-    struct glDrawTextureNV_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
+    struct glDrawTextureNV_params args = { .teb = NtCurrentTeb(), .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d, x0 %f, y0 %f, x1 %f, y1 %f, z %f, s0 %f, t0 %f, s1 %f, t1 %f\n", texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glDrawTextureNV, &args ))) WARN( "glDrawTextureNV returned %#lx\n", status );
 }
 
@@ -6649,9 +6662,10 @@ static void WINAPI glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint i
 
 static void WINAPI glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 )
 {
-    struct glDrawVkImageNV_params args = { .teb = NtCurrentTeb(), .vkImage = vkImage, .sampler = sampler, .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
+    struct glDrawVkImageNV_params args = { .teb = NtCurrentTeb(), .vkImage = vkImage, .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
     NTSTATUS status;
     TRACE( "vkImage %s, sampler %d, x0 %f, y0 %f, x1 %f, y1 %f, z %f, s0 %f, t0 %f, s1 %f, t1 %f\n", wine_dbgstr_longlong(vkImage), sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glDrawVkImageNV, &args ))) WARN( "glDrawVkImageNV returned %#lx\n", status );
 }
 
@@ -7852,6 +7866,7 @@ static void WINAPI glGenSamplers( GLsizei count, GLuint *samplers )
     NTSTATUS status;
     TRACE( "count %d, samplers %p\n", count, samplers );
     if ((status = UNIX_CALL( glGenSamplers, &args ))) WARN( "glGenSamplers returned %#lx\n", status );
+    if (count > 0) put_context_objects( OBJ_TYPE_SAMPLER, count, samplers );
 }
 
 static void WINAPI glGenSemaphoresEXT( GLsizei n, GLuint *semaphores )
@@ -10191,33 +10206,37 @@ static void WINAPI glGetRenderbufferParameterivEXT( GLenum target, GLenum pname,
 
 static void WINAPI glGetSamplerParameterIiv( GLuint sampler, GLenum pname, GLint *params )
 {
-    struct glGetSamplerParameterIiv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .params = params };
+    struct glGetSamplerParameterIiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, params %p\n", sampler, pname, params );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetSamplerParameterIiv, &args ))) WARN( "glGetSamplerParameterIiv returned %#lx\n", status );
 }
 
 static void WINAPI glGetSamplerParameterIuiv( GLuint sampler, GLenum pname, GLuint *params )
 {
-    struct glGetSamplerParameterIuiv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .params = params };
+    struct glGetSamplerParameterIuiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, params %p\n", sampler, pname, params );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetSamplerParameterIuiv, &args ))) WARN( "glGetSamplerParameterIuiv returned %#lx\n", status );
 }
 
 static void WINAPI glGetSamplerParameterfv( GLuint sampler, GLenum pname, GLfloat *params )
 {
-    struct glGetSamplerParameterfv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .params = params };
+    struct glGetSamplerParameterfv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, params %p\n", sampler, pname, params );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetSamplerParameterfv, &args ))) WARN( "glGetSamplerParameterfv returned %#lx\n", status );
 }
 
 static void WINAPI glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint *params )
 {
-    struct glGetSamplerParameteriv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .params = params };
+    struct glGetSamplerParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, params %p\n", sampler, pname, params );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetSamplerParameteriv, &args ))) WARN( "glGetSamplerParameteriv returned %#lx\n", status );
 }
 
@@ -10630,20 +10649,22 @@ static void WINAPI glGetTextureParameterivEXT( GLuint texture, GLenum target, GL
 
 static GLuint64 WINAPI glGetTextureSamplerHandleARB( GLuint texture, GLuint sampler )
 {
-    struct glGetTextureSamplerHandleARB_params args = { .teb = NtCurrentTeb(), .sampler = sampler };
+    struct glGetTextureSamplerHandleARB_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d\n", texture, sampler );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetTextureSamplerHandleARB, &args ))) WARN( "glGetTextureSamplerHandleARB returned %#lx\n", status );
     return args.ret;
 }
 
 static GLuint64 WINAPI glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler )
 {
-    struct glGetTextureSamplerHandleNV_params args = { .teb = NtCurrentTeb(), .sampler = sampler };
+    struct glGetTextureSamplerHandleNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d\n", texture, sampler );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glGetTextureSamplerHandleNV, &args ))) WARN( "glGetTextureSamplerHandleNV returned %#lx\n", status );
     return args.ret;
 }
@@ -12220,9 +12241,10 @@ static GLboolean WINAPI glIsRenderbufferEXT( GLuint renderbuffer )
 
 static GLboolean WINAPI glIsSampler( GLuint sampler )
 {
-    struct glIsSampler_params args = { .teb = NtCurrentTeb(), .sampler = sampler };
+    struct glIsSampler_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "sampler %d\n", sampler );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glIsSampler, &args ))) WARN( "glIsSampler returned %#lx\n", status );
     return args.ret;
 }
@@ -18334,49 +18356,55 @@ static void WINAPI glSamplePatternSGIS( GLenum pattern )
 
 static void WINAPI glSamplerParameterIiv( GLuint sampler, GLenum pname, const GLint *param )
 {
-    struct glSamplerParameterIiv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameterIiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %p\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameterIiv, &args ))) WARN( "glSamplerParameterIiv returned %#lx\n", status );
 }
 
 static void WINAPI glSamplerParameterIuiv( GLuint sampler, GLenum pname, const GLuint *param )
 {
-    struct glSamplerParameterIuiv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameterIuiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %p\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameterIuiv, &args ))) WARN( "glSamplerParameterIuiv returned %#lx\n", status );
 }
 
 static void WINAPI glSamplerParameterf( GLuint sampler, GLenum pname, GLfloat param )
 {
-    struct glSamplerParameterf_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameterf_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %f\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameterf, &args ))) WARN( "glSamplerParameterf returned %#lx\n", status );
 }
 
 static void WINAPI glSamplerParameterfv( GLuint sampler, GLenum pname, const GLfloat *param )
 {
-    struct glSamplerParameterfv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameterfv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %p\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameterfv, &args ))) WARN( "glSamplerParameterfv returned %#lx\n", status );
 }
 
 static void WINAPI glSamplerParameteri( GLuint sampler, GLenum pname, GLint param )
 {
-    struct glSamplerParameteri_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameteri_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %d\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameteri, &args ))) WARN( "glSamplerParameteri returned %#lx\n", status );
 }
 
 static void WINAPI glSamplerParameteriv( GLuint sampler, GLenum pname, const GLint *param )
 {
-    struct glSamplerParameteriv_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .pname = pname, .param = param };
+    struct glSamplerParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %p\n", sampler, pname, param );
+    args.sampler = *map_context_objects( OBJ_TYPE_SAMPLER, 1, &sampler );
     if ((status = UNIX_CALL( glSamplerParameteriv, &args ))) WARN( "glSamplerParameteriv returned %#lx\n", status );
 }
 
