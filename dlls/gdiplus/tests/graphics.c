@@ -4956,7 +4956,6 @@ static void test_measure_string(void)
     status = GdipGetRegionBounds(region, graphics, &bounds);
     expect(Ok, status);
     expectf_(5.0 + width_rgn/2.0, bounds.X, 1.0);
-    todo_wine
     expectf_(5.0 + height_rgn/2.0, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -4972,7 +4971,6 @@ static void test_measure_string(void)
     expect(Ok, status);
     todo_wine
     expectf_(5.0 - width_rgn/2.0, bounds.X, 1.0);
-    todo_wine
     expectf_(5.0 - height_rgn/2.0, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -5020,7 +5018,6 @@ static void test_measure_string(void)
     expect(Ok, status);
     todo_wine
     expectf_(5.0 + width_rgn, bounds.X, 2.0);
-    todo_wine
     expectf_(5.0 + height_rgn, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
@@ -5036,7 +5033,6 @@ static void test_measure_string(void)
     expect(Ok, status);
     todo_wine
     expectf_(5.0 - width_rgn, bounds.X, 2.0);
-    todo_wine
     expectf_(5.0 - height_rgn, bounds.Y, 1.0);
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
