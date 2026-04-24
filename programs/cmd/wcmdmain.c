@@ -942,17 +942,6 @@ WCHAR *WCMD_skip_leading_spaces(WCHAR *string)
     return string;
 }
 
-void WCMD_unquote(WCHAR *cmd)
-{
-    WCHAR *dst = cmd;
-
-    for (; *cmd; cmd++)
-    {
-        if (*cmd != L'"') *dst++ = *cmd;
-    }
-    *dst = L'\0';
-}
-
 /***************************************************************************
  * WCMD_keyword_ws_found
  *
@@ -1225,10 +1214,9 @@ void handleExpansion(WCHAR *cmd, BOOL atExecute)
         /* Handle ref to current context command */
         else if (!atExecute && WCMD_is_in_context(NULL) && startchar == L'%' && ((p[1] >= L'0' && p[1] <= L'9') || p[1] == L'*'))
         {
-            WCHAR *start;
-            size_t length;
-            if (!WCMD_get_positional_argument(context->command, p[1], &start, &length)) length = 0;
-            p = WCMD_strsubstW(p, p + 2, start, length);
+            const WCHAR *start;
+            if (!WCMD_split_command_get_positional_argument(&context->split_command, p[1], &start)) start = NULL;
+            p = WCMD_strsubstW(p, p + 2, start, -1);
         }
         else
         {
@@ -1828,11 +1816,16 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
     else
     {
         SHELLEXECUTEINFOW sei = {.cbSize = sizeof(sei)};
-        WCHAR *args;
+        WCHAR *start;
         size_t length;
 
-        if (!WCMD_get_positional_argument(full_cmdline, L'*', &args, &length))
-            args = NULL;
+        /* file contains full path to file to execute, while full_cmdline can contain a relative path
+         * extract all arguments after filename in full_cmdline
+         */
+        if (!WCMD_next_word(full_cmdline, EXECUTABLE_DELIMS, &start, &length) ||
+            !WCMD_next_word(start, STANDARD_DELIMS, &start, &length))
+            return ERROR_INVALID_FUNCTION;
+
         /* FIXME: when the file extension is not registered,
          * native cmd does popup a dialog box to register an app for this extension.
          * Also, ShellExecuteW returns before the dialog box is closed.
@@ -1842,10 +1835,12 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
          */
         sei.fMask = SEE_MASK_NO_CONSOLE | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
         sei.lpFile = file;
-        sei.lpParameters = args;
+        sei.lpParameters = start + length;
         sei.nShow = SW_SHOWNORMAL;
 
-        if (ShellExecuteExW(&sei) && (INT_PTR)sei.hInstApp >= 32)
+        ret = ShellExecuteExW(&sei);
+
+        if (ret && (INT_PTR)sei.hInstApp >= 32)
         {
             *handle = sei.hProcess;
         }
@@ -1988,6 +1983,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     WCHAR *lastSlash;
     WCHAR *firstParam;
     WCHAR *end_command;
+    size_t length;
     DWORD  len;
     WCHAR *p;
 
@@ -2020,9 +2016,10 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
         sc->end_command = p - command;
         return RETURN_CODE_CANT_LAUNCH;
     }
-    firstParam = wcsdup(WCMD_parameter_with_delims(command, 0, &end_command, TRUE, EXECUTABLE_DELIMS));
-    end_command += wcslen(firstParam);
-    WCMD_unquote(firstParam);
+    if (!WCMD_next_word(command, EXECUTABLE_DELIMS, &end_command, &length))
+        return ERROR_INVALID_FUNCTION;
+    firstParam = WCMD_dup_unquoted(end_command, length);
+    end_command += length;
 
     /* Calculate the search path and stem to search for */
     if (wcspbrk(firstParam, L"/\\:") == NULL)
@@ -2161,20 +2158,19 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     return RETURN_CODE_CANT_LAUNCH;
 }
 
-BOOL WCMD_get_positional_argument(WCHAR *from, WCHAR arg_char, WCHAR **start, size_t *length)
+BOOL WCMD_split_command_build(WCHAR *from, struct split_command *split_command)
 {
     struct search_command sc;
-    WCHAR *arg, *st;
-    unsigned idx;
-    size_t command_len;
+    WCHAR *st;
+    size_t command_len, length;
+    int i;
 
+    split_command->num_arguments = 1;
+    split_command->command = from;
+    split_command->arguments = xalloc(sizeof(split_command->arguments[0]));
     for (; wcschr(STANDARD_DELIMS, *from) != NULL; from++) {}
-    if (arg_char != L'*')
-    {
-        idx = arg_char - L'0';
-        idx += context->shift_count[idx];
-    }
-    else idx = 1; /* SHIFT doesn't impact %* */
+    split_command->arguments[0].start_pos = from - split_command->command;
+
     if (*from == L':')
     {
         command_len = 0;
@@ -2183,40 +2179,58 @@ BOOL WCMD_get_positional_argument(WCHAR *from, WCHAR arg_char, WCHAR **start, si
     }
     else if (search_command(from, &sc, TRUE) == RETURN_CODE_CANT_LAUNCH && sc.cmd_index > WCMD_EXIT)
     {
-        arg = WCMD_parameter(from, 0, &st, TRUE);
-        if (!*arg || !st || st != from) return FALSE;
-        command_len = st + wcslen(arg) - from;
+        if (!WCMD_next_word(from, STANDARD_DELIMS, &st, &length) || st != from)
+            return FALSE;
+        command_len = st + length - from;
     }
     else
-    {
         command_len = sc.end_command;
+
+    split_command->arguments[0].length = command_len;
+    for (from += command_len; WCMD_next_word(from, STANDARD_DELIMS, &st, &length); from = st + length)
+    {
+        split_command->arguments = xrealloc(split_command->arguments, (split_command->num_arguments + 1) * sizeof(split_command->arguments[0]));
+        split_command->arguments[split_command->num_arguments].start_pos = st - split_command->command;
+        split_command->arguments[split_command->num_arguments].length = length;
+        split_command->num_arguments++;
     }
+    for (i = 0; i < split_command->num_arguments; i++)
+    {
+        split_command->arguments[i].raw_string = WCMD_dup(split_command->command + split_command->arguments[i].start_pos,
+                                                           split_command->arguments[i].length);
+        split_command->arguments[i].unquoted_string = WCMD_dup_unquoted(split_command->command + split_command->arguments[i].start_pos,
+                                                                         split_command->arguments[i].length);
+    }
+    return TRUE;
+}
+
+void WCMD_split_command_dispose(struct split_command *split_command)
+{
+    int i;
+    for (i = 0; i < split_command->num_arguments; i++)
+    {
+        free((WCHAR*)split_command->arguments[i].raw_string);
+        free((WCHAR*)split_command->arguments[i].unquoted_string);
+    }
+    free(split_command->arguments);
+}
+
+BOOL WCMD_split_command_get_positional_argument(struct split_command *split_command, WCHAR arg_char, const WCHAR **start)
+{
     if (arg_char == L'*')
     {
-        *start = WCMD_skip_leading_spaces(from + command_len);
-        *length = wcslen(*start);
-        return TRUE;
-    }
-    if (idx)
-    {
-        for (from += command_len; *from; from = st + wcslen(arg))
-        {
-            arg = WCMD_parameter(from, 0, &st, TRUE);
-            if (!*arg || !st) return FALSE;
-            if (!--idx)
-            {
-                *start = st;
-                *length = wcslen(arg);
-                return TRUE;
-            }
-        }
-        *start = from;
-        *length = 0;
+        *start = split_command->command + split_command->arguments[0].start_pos + split_command->arguments[0].length;
+        /* only trailing white spaces are removed, other delims are kept
+         * FIXME maybe the trailing white-spaces are better stored in arguments[0] ?
+         */
+        while (iswspace(**start)) (*start)++;
     }
     else
     {
-        *start = from;
-        *length = command_len;
+        unsigned idx = arg_char - L'0';
+        idx += context->shift_count[idx];
+        if (idx >= split_command->num_arguments) return FALSE;
+        *start = split_command->arguments[idx].raw_string;
     }
     return TRUE;
 }
@@ -3320,8 +3334,8 @@ static WCHAR *fetch_next_line(BOOL first_line, WCHAR* buffer)
     {
         if ((ret = (context->file_position.QuadPart == 0)))
         {
-            wcscpy(buffer, context->command);
-            context->file_position.QuadPart += wcslen(context->command) + 1;
+            wcscpy(buffer, context->split_command.command);
+            context->file_position.QuadPart += wcslen(context->split_command.command) + 1;
         }
     }
 

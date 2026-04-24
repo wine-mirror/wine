@@ -162,6 +162,19 @@ static inline BOOL WCMD_is_break(RETURN_CODE return_code)
     return return_code == RETURN_CODE_ABORTED || return_code == RETURN_CODE_GOTO;
 }
 
+struct split_command
+{
+    const WCHAR          *command;	    /* The whole command line invoked the batch file */
+    unsigned              num_arguments;
+    struct
+    {
+        /* Note: command is at max MAXSTRING = 8192 = 2^13 bytes long */
+        unsigned start_pos : 13, length : 13;
+        const WCHAR *raw_string;
+        const WCHAR *unquoted_string;
+    } *arguments; /* num_arguments */
+};
+
 BOOL WCMD_print_volume_information(const WCHAR *);
 
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
@@ -214,6 +227,9 @@ RETURN_CODE WCMD_mklink(WCHAR *args);
 RETURN_CODE WCMD_change_drive(WCHAR drive);
 
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD n, HANDLE stream);
+BOOL WCMD_next_word(WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length);
+WCHAR *WCMD_dup(const WCHAR *s, size_t length);
+WCHAR *WCMD_dup_unquoted(const WCHAR *s, size_t length);
 WCHAR *WCMD_parameter(WCHAR *s, int n, WCHAR **start, BOOL raw);
 WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
@@ -222,8 +238,9 @@ WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, cons
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, const WCHAR *ptr);
 void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
-BOOL WCMD_get_positional_argument(WCHAR *line, WCHAR arg_char, WCHAR **start, size_t *length);
-
+BOOL WCMD_split_command_build(WCHAR *from, struct split_command *split_command);
+void WCMD_split_command_dispose(struct split_command *split_command);
+BOOL WCMD_split_command_get_positional_argument(struct split_command *split_command, WCHAR arg_char, const WCHAR **start);
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
@@ -292,7 +309,7 @@ struct batch_file
 
 struct batch_context
 {
-    WCHAR                *command;	    /* The command which invoked the batch file */
+    struct split_command  split_command;
     LARGE_INTEGER         file_position;
     int                   shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
     struct batch_context *prev_context;     /* Pointer to the previous context block */

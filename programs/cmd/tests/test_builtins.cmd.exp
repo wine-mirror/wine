@@ -1985,7 +1985,7 @@ footype=foo_opencmd
 footype=cmd.exe /c "echo '%1'"
 '@drive@@path@foobar\test.foo'@or_broken@Skipped as not enough permissions
 footype=cmd.exe /c "echo '%*'"
-@todo_wine@' one two three'@or_broken@Skipped as not enough permissions
+' one two three'@or_broken@Skipped as not enough permissions
 foobar@or_broken@Skipped as not enough permissions
 --- resetting association
 original value@or_broken@buggyXP@or_broken@!WINE_FOO!

@@ -93,7 +93,7 @@ static struct batch_context *push_batch_context(WCHAR *command, struct batch_fil
 
     context = xalloc(sizeof(struct batch_context));
     context->file_position.QuadPart = pos;
-    context->command = command;
+    WCMD_split_command_build(command, &context->split_command);
     memset(context->shift_count, 0x00, sizeof(context->shift_count));
     context->prev_context = prev;
     context->batch_file = batch_file;
@@ -116,6 +116,7 @@ static struct batch_context *pop_batch_context(struct batch_context *ctx)
         free(batchfile);
         ctx->batch_file = NULL;
     }
+    WCMD_split_command_dispose(&ctx->split_command);
     free(ctx);
     return prev;
 }
@@ -141,6 +142,45 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     context = pop_batch_context(context);
 
     return return_code;
+}
+
+BOOL WCMD_next_word(WCHAR *s, const WCHAR *delims, WCHAR **start, size_t *length)
+{
+    WCHAR *ptr;
+    if (!s || !*s) return FALSE;
+    for (ptr = s; wcschr(delims, *ptr); ptr++) {}
+    *start = ptr;
+    while (*ptr && !wcschr(delims, *ptr))
+    {
+        /* If we find a quote, advance until we get the end quote */
+        if (*ptr++ == '"') while (*ptr && *ptr++ != '"') {}
+    }
+    *length = ptr - *start;
+    return TRUE;
+}
+
+WCHAR *WCMD_dup(const WCHAR *s, size_t length)
+{
+    WCHAR *ret;
+
+    if (!s) length = 0;
+    ret = xalloc((length + 1) * sizeof(WCHAR));
+    memcpy(ret, s, length * sizeof(WCHAR));
+    ret[length] = L'\0';
+    return ret;
+}
+
+WCHAR *WCMD_dup_unquoted(const WCHAR *s, size_t length)
+{
+    size_t i, j;
+    WCHAR *ret;
+
+    if (!s) length = 0;
+    ret = xalloc((length + 1) * sizeof(WCHAR));
+    for (i = j = 0; j < length; j++)
+        if (s[j] != L'"') ret[i++] = s[j];
+    ret[i] = L'\0';
+    return ret;
 }
 
 /*******************************************************************
@@ -416,12 +456,10 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   if (*lastModifier == '0' && modifierLen > 1 && context->batch_file) {
     lstrcpyW(outputparam, context->batch_file->path_name);
   } else if (*lastModifier >= '0' && *lastModifier <= '9') {
-      WCHAR *start;
-      size_t length;
-      if (WCMD_get_positional_argument(context->command, *lastModifier, &start, &length) && length)
+      const WCHAR *start;
+      if (WCMD_split_command_get_positional_argument(&context->split_command, *lastModifier, &start))
       {
-          memcpy(outputparam, start, length * sizeof(WCHAR));
-          outputparam[length] = L'\0';
+          wcscpy(outputparam, start);
       }
       else
           *outputparam = L'\0';
