@@ -269,8 +269,8 @@ static HRESULT WINAPI rowsetex_GetRowsAtRatio(IRowsetExactScroll *iface, HWATCHR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAPTER chapter,
-        DBBKMARK bookmark_size, const BYTE *bookmark, DBCOUNTITEM *position, DBCOUNTITEM *rows)
+static HRESULT get_bookmark(struct rowsetex *rowset, HROW hrow, DBBKMARK *size,
+        BYTE **bookmark, BYTE buf[sizeof(long long)])
 {
     struct bookmark_data
     {
@@ -283,11 +283,55 @@ static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAP
         DBLENGTH len;
         DBSTATUS status;
     } bookmark_data;
+    HRESULT hr;
 
+    if (!rowset->bookmark_hacc)
+    {
+        DBBINDING binding;
+
+        memset(&binding, 0, sizeof(binding));
+        binding.obValue = offsetof(struct bookmark_data, val);
+        binding.obLength = offsetof(struct bookmark_data, len);
+        binding.obStatus = offsetof(struct bookmark_data, status);
+        binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+        binding.cbMaxLen = rowset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(void *);
+        binding.wType = rowset->bookmark_type;
+
+        hr = IAccessor_CreateAccessor(rowset->accessor, DBACCESSOR_ROWDATA,
+                1, &binding, 0, &rowset->bookmark_hacc, NULL);
+        if (FAILED(hr)) return hr;
+    }
+
+    hr = IRowset_GetData(rowset->rowset, hrow, rowset->bookmark_hacc, &bookmark_data);
+    if (FAILED(hr)) return hr;
+
+    if (rowset->bookmark_type == DBTYPE_I4)
+    {
+        *size = sizeof(int);
+        memcpy(buf, &bookmark_data.val.i4, *size);
+        *bookmark = buf;
+    }
+    else if (rowset->bookmark_type == DBTYPE_I8)
+    {
+        *size = sizeof(long long);
+        memcpy(buf, &bookmark_data.val.i8, *size);
+        *bookmark = buf;
+    }
+    else
+    {
+        *size = bookmark_data.len;
+        *bookmark = bookmark_data.val.ptr;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAPTER chapter,
+        DBBKMARK bookmark_size, const BYTE *bookmark, DBCOUNTITEM *position, DBCOUNTITEM *rows)
+{
     struct rowsetex *rowset = impl_from_IRowsetExactScroll(iface);
+    BYTE tmp[sizeof(long long)], *bm = tmp;
     DBCOUNTITEM got_rows, n = 0;
     HROW hrow[64], *prow = hrow;
-    BYTE tmp, *bm = &tmp;
     DBBKMARK size;
     HRESULT hr;
 
@@ -303,53 +347,23 @@ static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAP
     if (!rows) return S_OK;
 
     size = 1;
-    bm[0] = DBBMK_FIRST;
+    tmp[0] = DBBMK_FIRST;
     n = 0;
     while (1)
     {
         hr = IRowsetLocate_GetRowsAt(rowset->rowset_loc, 0, chapter, size, bm,
                 n ? 1 : 0, ARRAY_SIZE(hrow), &got_rows, &prow);
-        if (n && rowset->bookmark_type == (DBTYPE_BYREF | DBTYPE_BYTES))
-            CoTaskMemFree( bookmark_data.val.ptr );
+        if (bm != tmp) CoTaskMemFree(bm);
         if (FAILED(hr)) return hr;
         n += got_rows;
 
         if (hr != DB_S_ENDOFROWSET && got_rows)
         {
-            if (!rowset->bookmark_hacc)
+            hr = get_bookmark(rowset, hrow[got_rows - 1], &size, &bm, tmp);
+            if (FAILED(hr))
             {
-                DBBINDING binding;
-
-                memset(&binding, 0, sizeof(binding));
-                binding.obValue = offsetof(struct bookmark_data, val);
-                binding.obLength = offsetof(struct bookmark_data, len);
-                binding.obStatus = offsetof(struct bookmark_data, status);
-                binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
-                binding.cbMaxLen = rowset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(void *);
-                binding.wType = rowset->bookmark_type;
-
-                hr = IAccessor_CreateAccessor(rowset->accessor, DBACCESSOR_ROWDATA,
-                        1, &binding, 0, &rowset->bookmark_hacc, NULL);
-                if (FAILED(hr)) return hr;
-            }
-
-            hr = IRowset_GetData(rowset->rowset, hrow[got_rows - 1], rowset->bookmark_hacc, &bookmark_data);
-            if (FAILED(hr)) return hr;
-
-            if (rowset->bookmark_type == DBTYPE_I4)
-            {
-                size = sizeof(int);
-                bm = (BYTE *)&bookmark_data.val.i4;
-            }
-            else if (rowset->bookmark_type == DBTYPE_I8)
-            {
-                size = sizeof(long long);
-                bm = (BYTE *)&bookmark_data.val.i8;
-            }
-            else
-            {
-                size = bookmark_data.len;
-                bm = bookmark_data.val.ptr;
+                IRowset_ReleaseRows(rowset->rowset, got_rows, hrow, NULL, NULL, NULL);
+                return hr;
             }
         }
         IRowset_ReleaseRows(rowset->rowset, got_rows, hrow, NULL, NULL, NULL);
