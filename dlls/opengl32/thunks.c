@@ -3241,17 +3241,21 @@ static void WINAPI glBindFragmentShaderATI( GLuint id )
 
 static void WINAPI glBindFramebuffer( GLenum target, GLuint framebuffer )
 {
-    struct glBindFramebuffer_params args = { .teb = NtCurrentTeb(), .target = target, .framebuffer = framebuffer };
+    struct glBindFramebuffer_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, framebuffer %d\n", target, framebuffer );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, FALSE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glBindFramebuffer, &args ))) WARN( "glBindFramebuffer returned %#lx\n", status );
 }
 
 static void WINAPI glBindFramebufferEXT( GLenum target, GLuint framebuffer )
 {
-    struct glBindFramebufferEXT_params args = { .teb = NtCurrentTeb(), .target = target, .framebuffer = framebuffer };
+    struct glBindFramebufferEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, framebuffer %d\n", target, framebuffer );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glBindFramebufferEXT, &args ))) WARN( "glBindFramebufferEXT returned %#lx\n", status );
 }
 
@@ -3835,9 +3839,11 @@ static void WINAPI glBlitFramebufferLayersEXT( GLint srcX0, GLint srcY0, GLint s
 
 static void WINAPI glBlitNamedFramebuffer( GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
 {
-    struct glBlitNamedFramebuffer_params args = { .teb = NtCurrentTeb(), .readFramebuffer = readFramebuffer, .drawFramebuffer = drawFramebuffer, .srcX0 = srcX0, .srcY0 = srcY0, .srcX1 = srcX1, .srcY1 = srcY1, .dstX0 = dstX0, .dstY0 = dstY0, .dstX1 = dstX1, .dstY1 = dstY1, .mask = mask, .filter = filter };
+    struct glBlitNamedFramebuffer_params args = { .teb = NtCurrentTeb(), .srcX0 = srcX0, .srcY0 = srcY0, .srcX1 = srcX1, .srcY1 = srcY1, .dstX0 = dstX0, .dstY0 = dstY0, .dstX1 = dstX1, .dstY1 = dstY1, .mask = mask, .filter = filter };
     NTSTATUS status;
     TRACE( "readFramebuffer %d, drawFramebuffer %d, srcX0 %d, srcY0 %d, srcX1 %d, srcY1 %d, dstX0 %d, dstY0 %d, dstX1 %d, dstY1 %d, mask %d, filter %d\n", readFramebuffer, drawFramebuffer, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter );
+    args.readFramebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &readFramebuffer );
+    args.drawFramebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &drawFramebuffer );
     if ((status = UNIX_CALL( glBlitNamedFramebuffer, &args ))) WARN( "glBlitNamedFramebuffer returned %#lx\n", status );
 }
 
@@ -3974,18 +3980,21 @@ static GLenum WINAPI glCheckFramebufferStatusEXT( GLenum target )
 
 static GLenum WINAPI glCheckNamedFramebufferStatus( GLuint framebuffer, GLenum target )
 {
-    struct glCheckNamedFramebufferStatus_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .target = target };
+    struct glCheckNamedFramebufferStatus_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "framebuffer %d, target %d\n", framebuffer, target );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glCheckNamedFramebufferStatus, &args ))) WARN( "glCheckNamedFramebufferStatus returned %#lx\n", status );
     return args.ret;
 }
 
 static GLenum WINAPI glCheckNamedFramebufferStatusEXT( GLuint framebuffer, GLenum target )
 {
-    struct glCheckNamedFramebufferStatusEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .target = target };
+    struct glCheckNamedFramebufferStatusEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "framebuffer %d, target %d\n", framebuffer, target );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return args.ret;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glCheckNamedFramebufferStatusEXT, &args ))) WARN( "glCheckNamedFramebufferStatusEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -4174,33 +4183,37 @@ static void WINAPI glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalf
 
 static void WINAPI glClearNamedFramebufferfi( GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil )
 {
-    struct glClearNamedFramebufferfi_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .buffer = buffer, .drawbuffer = drawbuffer, .depth = depth, .stencil = stencil };
+    struct glClearNamedFramebufferfi_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .drawbuffer = drawbuffer, .depth = depth, .stencil = stencil };
     NTSTATUS status;
     TRACE( "framebuffer %d, buffer %d, drawbuffer %d, depth %f, stencil %d\n", framebuffer, buffer, drawbuffer, depth, stencil );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glClearNamedFramebufferfi, &args ))) WARN( "glClearNamedFramebufferfi returned %#lx\n", status );
 }
 
 static void WINAPI glClearNamedFramebufferfv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat *value )
 {
-    struct glClearNamedFramebufferfv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
+    struct glClearNamedFramebufferfv_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
     NTSTATUS status;
     TRACE( "framebuffer %d, buffer %d, drawbuffer %d, value %p\n", framebuffer, buffer, drawbuffer, value );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glClearNamedFramebufferfv, &args ))) WARN( "glClearNamedFramebufferfv returned %#lx\n", status );
 }
 
 static void WINAPI glClearNamedFramebufferiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint *value )
 {
-    struct glClearNamedFramebufferiv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
+    struct glClearNamedFramebufferiv_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
     NTSTATUS status;
     TRACE( "framebuffer %d, buffer %d, drawbuffer %d, value %p\n", framebuffer, buffer, drawbuffer, value );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glClearNamedFramebufferiv, &args ))) WARN( "glClearNamedFramebufferiv returned %#lx\n", status );
 }
 
 static void WINAPI glClearNamedFramebufferuiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint *value )
 {
-    struct glClearNamedFramebufferuiv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
+    struct glClearNamedFramebufferuiv_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .drawbuffer = drawbuffer, .value = value };
     NTSTATUS status;
     TRACE( "framebuffer %d, buffer %d, drawbuffer %d, value %p\n", framebuffer, buffer, drawbuffer, value );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glClearNamedFramebufferuiv, &args ))) WARN( "glClearNamedFramebufferuiv returned %#lx\n", status );
 }
 
@@ -5391,6 +5404,7 @@ static void WINAPI glCreateFramebuffers( GLsizei n, GLuint *framebuffers )
     NTSTATUS status;
     TRACE( "n %d, framebuffers %p\n", n, framebuffers );
     if ((status = UNIX_CALL( glCreateFramebuffers, &args ))) WARN( "glCreateFramebuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_FRAMEBUFFER, n, framebuffers );
 }
 
 static void WINAPI glCreateMemoryObjectsEXT( GLsizei n, GLuint *memoryObjects )
@@ -5738,18 +5752,26 @@ static void WINAPI glDeleteFragmentShaderATI( GLuint id )
 
 static void WINAPI glDeleteFramebuffers( GLsizei n, const GLuint *framebuffers )
 {
-    struct glDeleteFramebuffers_params args = { .teb = NtCurrentTeb(), .n = n, .framebuffers = framebuffers };
+    GLuint framebuffers_buf[64], *framebuffers_tmp;
+    struct glDeleteFramebuffers_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, framebuffers %p\n", n, framebuffers );
+    framebuffers_tmp = n > 0 ? memdup_objects( n, framebuffers, framebuffers_buf, ARRAY_SIZE(framebuffers_buf) ) : NULL;
+    args.framebuffers = n > 0 ? del_context_objects( OBJ_TYPE_FRAMEBUFFER, n, framebuffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteFramebuffers, &args ))) WARN( "glDeleteFramebuffers returned %#lx\n", status );
+    if (framebuffers_tmp != framebuffers_buf) free( framebuffers_tmp );
 }
 
 static void WINAPI glDeleteFramebuffersEXT( GLsizei n, const GLuint *framebuffers )
 {
-    struct glDeleteFramebuffersEXT_params args = { .teb = NtCurrentTeb(), .n = n, .framebuffers = framebuffers };
+    GLuint framebuffers_buf[64], *framebuffers_tmp;
+    struct glDeleteFramebuffersEXT_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, framebuffers %p\n", n, framebuffers );
+    framebuffers_tmp = n > 0 ? memdup_objects( n, framebuffers, framebuffers_buf, ARRAY_SIZE(framebuffers_buf) ) : NULL;
+    args.framebuffers = n > 0 ? del_context_objects( OBJ_TYPE_FRAMEBUFFER, n, framebuffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteFramebuffersEXT, &args ))) WARN( "glDeleteFramebuffersEXT returned %#lx\n", status );
+    if (framebuffers_tmp != framebuffers_buf) free( framebuffers_tmp );
 }
 
 static void WINAPI glDeleteMemoryObjectsEXT( GLsizei n, const GLuint *memoryObjects )
@@ -6300,19 +6322,27 @@ static void WINAPI glDrawCommandsNV( GLenum primitiveMode, GLuint buffer, const 
 
 static void WINAPI glDrawCommandsStatesAddressNV( const GLuint64 *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
 {
-    struct glDrawCommandsStatesAddressNV_params args = { .teb = NtCurrentTeb(), .indirects = indirects, .sizes = sizes, .states = states, .fbos = fbos, .count = count };
+    GLuint fbos_buf[64], *fbos_tmp;
+    struct glDrawCommandsStatesAddressNV_params args = { .teb = NtCurrentTeb(), .indirects = indirects, .sizes = sizes, .states = states, .count = count };
     NTSTATUS status;
     TRACE( "indirects %p, sizes %p, states %p, fbos %p, count %d\n", indirects, sizes, states, fbos, count );
+    fbos_tmp = count > 0 ? memdup_objects( count, fbos, fbos_buf, ARRAY_SIZE(fbos_buf) ) : NULL;
+    args.fbos = count > 0 ? map_context_objects( OBJ_TYPE_FRAMEBUFFER, count, fbos_tmp ) : NULL;
     if ((status = UNIX_CALL( glDrawCommandsStatesAddressNV, &args ))) WARN( "glDrawCommandsStatesAddressNV returned %#lx\n", status );
+    if (fbos_tmp != fbos_buf) free( fbos_tmp );
 }
 
 static void WINAPI glDrawCommandsStatesNV( GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
 {
-    struct glDrawCommandsStatesNV_params args = { .teb = NtCurrentTeb(), .indirects = indirects, .sizes = sizes, .states = states, .fbos = fbos, .count = count };
+    GLuint fbos_buf[64], *fbos_tmp;
+    struct glDrawCommandsStatesNV_params args = { .teb = NtCurrentTeb(), .indirects = indirects, .sizes = sizes, .states = states, .count = count };
     NTSTATUS status;
     TRACE( "buffer %d, indirects %p, sizes %p, states %p, fbos %p, count %d\n", buffer, indirects, sizes, states, fbos, count );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
+    fbos_tmp = count > 0 ? memdup_objects( count, fbos, fbos_buf, ARRAY_SIZE(fbos_buf) ) : NULL;
+    args.fbos = count > 0 ? map_context_objects( OBJ_TYPE_FRAMEBUFFER, count, fbos_tmp ) : NULL;
     if ((status = UNIX_CALL( glDrawCommandsStatesNV, &args ))) WARN( "glDrawCommandsStatesNV returned %#lx\n", status );
+    if (fbos_tmp != fbos_buf) free( fbos_tmp );
 }
 
 static void WINAPI glDrawElementArrayAPPLE( GLenum mode, GLint first, GLsizei count )
@@ -7273,17 +7303,21 @@ static void WINAPI glFrameZoomSGIX( GLint factor )
 
 static void WINAPI glFramebufferDrawBufferEXT( GLuint framebuffer, GLenum mode )
 {
-    struct glFramebufferDrawBufferEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .mode = mode };
+    struct glFramebufferDrawBufferEXT_params args = { .teb = NtCurrentTeb(), .mode = mode };
     NTSTATUS status;
     TRACE( "framebuffer %d, mode %d\n", framebuffer, mode );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glFramebufferDrawBufferEXT, &args ))) WARN( "glFramebufferDrawBufferEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, const GLenum *bufs )
 {
-    struct glFramebufferDrawBuffersEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .n = n, .bufs = bufs };
+    struct glFramebufferDrawBuffersEXT_params args = { .teb = NtCurrentTeb(), .n = n, .bufs = bufs };
     NTSTATUS status;
     TRACE( "framebuffer %d, n %d, bufs %p\n", framebuffer, n, bufs );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glFramebufferDrawBuffersEXT, &args ))) WARN( "glFramebufferDrawBuffersEXT returned %#lx\n", status );
 }
 
@@ -7313,9 +7347,11 @@ static void WINAPI glFramebufferParameteriMESA( GLenum target, GLenum pname, GLi
 
 static void WINAPI glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode )
 {
-    struct glFramebufferReadBufferEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .mode = mode };
+    struct glFramebufferReadBufferEXT_params args = { .teb = NtCurrentTeb(), .mode = mode };
     NTSTATUS status;
     TRACE( "framebuffer %d, mode %d\n", framebuffer, mode );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glFramebufferReadBufferEXT, &args ))) WARN( "glFramebufferReadBufferEXT returned %#lx\n", status );
 }
 
@@ -7586,6 +7622,7 @@ static void WINAPI glGenFramebuffers( GLsizei n, GLuint *framebuffers )
     NTSTATUS status;
     TRACE( "n %d, framebuffers %p\n", n, framebuffers );
     if ((status = UNIX_CALL( glGenFramebuffers, &args ))) WARN( "glGenFramebuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_FRAMEBUFFER, n, framebuffers );
 }
 
 static void WINAPI glGenFramebuffersEXT( GLsizei n, GLuint *framebuffers )
@@ -7594,6 +7631,7 @@ static void WINAPI glGenFramebuffersEXT( GLsizei n, GLuint *framebuffers )
     NTSTATUS status;
     TRACE( "n %d, framebuffers %p\n", n, framebuffers );
     if ((status = UNIX_CALL( glGenFramebuffersEXT, &args ))) WARN( "glGenFramebuffersEXT returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_FRAMEBUFFER, n, framebuffers );
 }
 
 static void WINAPI glGenNamesAMD( GLenum identifier, GLuint num, GLuint *names )
@@ -8570,9 +8608,11 @@ static void WINAPI glGetFramebufferParameteriv( GLenum target, GLenum pname, GLi
 
 static void WINAPI glGetFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params )
 {
-    struct glGetFramebufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .params = params };
+    struct glGetFramebufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, params %p\n", framebuffer, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetFramebufferParameterivEXT, &args ))) WARN( "glGetFramebufferParameterivEXT returned %#lx\n", status );
 }
 
@@ -9203,45 +9243,52 @@ static void WINAPI glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, G
 
 static void WINAPI glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
 {
-    struct glGetNamedFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .pname = pname, .params = params };
+    struct glGetNamedFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameteriv, &args ))) WARN( "glGetNamedFramebufferAttachmentParameteriv returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
 {
-    struct glGetNamedFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .pname = pname, .params = params };
+    struct glGetNamedFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetNamedFramebufferAttachmentParameterivEXT returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
 {
-    struct glGetNamedFramebufferParameterfvAMD_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .numsamples = numsamples, .pixelindex = pixelindex, .size = size, .values = values };
+    struct glGetNamedFramebufferParameterfvAMD_params args = { .teb = NtCurrentTeb(), .pname = pname, .numsamples = numsamples, .pixelindex = pixelindex, .size = size, .values = values };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, numsamples %d, pixelindex %d, size %d, values %p\n", framebuffer, pname, numsamples, pixelindex, size, values );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetNamedFramebufferParameterfvAMD, &args ))) WARN( "glGetNamedFramebufferParameterfvAMD returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedFramebufferParameteriv( GLuint framebuffer, GLenum pname, GLint *param )
 {
-    struct glGetNamedFramebufferParameteriv_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .param = param };
+    struct glGetNamedFramebufferParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, param %p\n", framebuffer, pname, param );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetNamedFramebufferParameteriv, &args ))) WARN( "glGetNamedFramebufferParameteriv returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params )
 {
-    struct glGetNamedFramebufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .params = params };
+    struct glGetNamedFramebufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, params %p\n", framebuffer, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glGetNamedFramebufferParameterivEXT, &args ))) WARN( "glGetNamedFramebufferParameterivEXT returned %#lx\n", status );
 }
 
@@ -11740,17 +11787,19 @@ static void WINAPI glInvalidateFramebuffer( GLenum target, GLsizei numAttachment
 
 static void WINAPI glInvalidateNamedFramebufferData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments )
 {
-    struct glInvalidateNamedFramebufferData_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .numAttachments = numAttachments, .attachments = attachments };
+    struct glInvalidateNamedFramebufferData_params args = { .teb = NtCurrentTeb(), .numAttachments = numAttachments, .attachments = attachments };
     NTSTATUS status;
     TRACE( "framebuffer %d, numAttachments %d, attachments %p\n", framebuffer, numAttachments, attachments );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glInvalidateNamedFramebufferData, &args ))) WARN( "glInvalidateNamedFramebufferData returned %#lx\n", status );
 }
 
 static void WINAPI glInvalidateNamedFramebufferSubData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-    struct glInvalidateNamedFramebufferSubData_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .numAttachments = numAttachments, .attachments = attachments, .x = x, .y = y, .width = width, .height = height };
+    struct glInvalidateNamedFramebufferSubData_params args = { .teb = NtCurrentTeb(), .numAttachments = numAttachments, .attachments = attachments, .x = x, .y = y, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "framebuffer %d, numAttachments %d, attachments %p, x %d, y %d, width %d, height %d\n", framebuffer, numAttachments, attachments, x, y, width, height );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glInvalidateNamedFramebufferSubData, &args ))) WARN( "glInvalidateNamedFramebufferSubData returned %#lx\n", status );
 }
 
@@ -11863,18 +11912,20 @@ static GLboolean WINAPI glIsFenceNV( GLuint fence )
 
 static GLboolean WINAPI glIsFramebuffer( GLuint framebuffer )
 {
-    struct glIsFramebuffer_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer };
+    struct glIsFramebuffer_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "framebuffer %d\n", framebuffer );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glIsFramebuffer, &args ))) WARN( "glIsFramebuffer returned %#lx\n", status );
     return args.ret;
 }
 
 static GLboolean WINAPI glIsFramebufferEXT( GLuint framebuffer )
 {
-    struct glIsFramebufferEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer };
+    struct glIsFramebufferEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "framebuffer %d\n", framebuffer );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glIsFramebufferEXT, &args ))) WARN( "glIsFramebufferEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -12318,10 +12369,14 @@ static void WINAPI glLinkProgramARB( GLhandleARB programObj )
 
 static void WINAPI glListDrawCommandsStatesClientNV( GLuint list, GLuint segment, const void **indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
 {
-    struct glListDrawCommandsStatesClientNV_params args = { .teb = NtCurrentTeb(), .list = list, .segment = segment, .indirects = indirects, .sizes = sizes, .states = states, .fbos = fbos, .count = count };
+    GLuint fbos_buf[64], *fbos_tmp;
+    struct glListDrawCommandsStatesClientNV_params args = { .teb = NtCurrentTeb(), .list = list, .segment = segment, .indirects = indirects, .sizes = sizes, .states = states, .count = count };
     NTSTATUS status;
     TRACE( "list %d, segment %d, indirects %p, sizes %p, states %p, fbos %p, count %d\n", list, segment, indirects, sizes, states, fbos, count );
+    fbos_tmp = count > 0 ? memdup_objects( count, fbos, fbos_buf, ARRAY_SIZE(fbos_buf) ) : NULL;
+    args.fbos = count > 0 ? map_context_objects( OBJ_TYPE_FRAMEBUFFER, count, fbos_tmp ) : NULL;
     if ((status = UNIX_CALL( glListDrawCommandsStatesClientNV, &args ))) WARN( "glListDrawCommandsStatesClientNV returned %#lx\n", status );
+    if (fbos_tmp != fbos_buf) free( fbos_tmp );
 }
 
 static void WINAPI glListParameterfSGIX( GLuint list, GLenum pname, GLfloat param )
@@ -14613,9 +14668,10 @@ static void WINAPI glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstG
 
 static void WINAPI glMulticastFramebufferSampleLocationsfvNV( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
 {
-    struct glMulticastFramebufferSampleLocationsfvNV_params args = { .teb = NtCurrentTeb(), .gpu = gpu, .framebuffer = framebuffer, .start = start, .count = count, .v = v };
+    struct glMulticastFramebufferSampleLocationsfvNV_params args = { .teb = NtCurrentTeb(), .gpu = gpu, .start = start, .count = count, .v = v };
     NTSTATUS status;
     TRACE( "gpu %d, framebuffer %d, start %d, count %d, v %p\n", gpu, framebuffer, start, count, v );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glMulticastFramebufferSampleLocationsfvNV, &args ))) WARN( "glMulticastFramebufferSampleLocationsfvNV returned %#lx\n", status );
 }
 
@@ -14808,153 +14864,180 @@ static void WINAPI glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeB
 
 static void WINAPI glNamedFramebufferDrawBuffer( GLuint framebuffer, GLenum buf )
 {
-    struct glNamedFramebufferDrawBuffer_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .buf = buf };
+    struct glNamedFramebufferDrawBuffer_params args = { .teb = NtCurrentTeb(), .buf = buf };
     NTSTATUS status;
     TRACE( "framebuffer %d, buf %d\n", framebuffer, buf );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferDrawBuffer, &args ))) WARN( "glNamedFramebufferDrawBuffer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferDrawBuffers( GLuint framebuffer, GLsizei n, const GLenum *bufs )
 {
-    struct glNamedFramebufferDrawBuffers_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .n = n, .bufs = bufs };
+    struct glNamedFramebufferDrawBuffers_params args = { .teb = NtCurrentTeb(), .n = n, .bufs = bufs };
     NTSTATUS status;
     TRACE( "framebuffer %d, n %d, bufs %p\n", framebuffer, n, bufs );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferDrawBuffers, &args ))) WARN( "glNamedFramebufferDrawBuffers returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferParameteri( GLuint framebuffer, GLenum pname, GLint param )
 {
-    struct glNamedFramebufferParameteri_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .param = param };
+    struct glNamedFramebufferParameteri_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, param %d\n", framebuffer, pname, param );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferParameteri, &args ))) WARN( "glNamedFramebufferParameteri returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferParameteriEXT( GLuint framebuffer, GLenum pname, GLint param )
 {
-    struct glNamedFramebufferParameteriEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .pname = pname, .param = param };
+    struct glNamedFramebufferParameteriEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "framebuffer %d, pname %d, param %d\n", framebuffer, pname, param );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferParameteriEXT, &args ))) WARN( "glNamedFramebufferParameteriEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferReadBuffer( GLuint framebuffer, GLenum src )
 {
-    struct glNamedFramebufferReadBuffer_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .src = src };
+    struct glNamedFramebufferReadBuffer_params args = { .teb = NtCurrentTeb(), .src = src };
     NTSTATUS status;
     TRACE( "framebuffer %d, src %d\n", framebuffer, src );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferReadBuffer, &args ))) WARN( "glNamedFramebufferReadBuffer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glNamedFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glNamedFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", framebuffer, attachment, renderbuffertarget, renderbuffer );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferRenderbuffer, &args ))) WARN( "glNamedFramebufferRenderbuffer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glNamedFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glNamedFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", framebuffer, attachment, renderbuffertarget, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferRenderbufferEXT, &args ))) WARN( "glNamedFramebufferRenderbufferEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferSampleLocationsfvARB( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
 {
-    struct glNamedFramebufferSampleLocationsfvARB_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .start = start, .count = count, .v = v };
+    struct glNamedFramebufferSampleLocationsfvARB_params args = { .teb = NtCurrentTeb(), .start = start, .count = count, .v = v };
     NTSTATUS status;
     TRACE( "framebuffer %d, start %d, count %d, v %p\n", framebuffer, start, count, v );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferSampleLocationsfvARB, &args ))) WARN( "glNamedFramebufferSampleLocationsfvARB returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferSampleLocationsfvNV( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
 {
-    struct glNamedFramebufferSampleLocationsfvNV_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .start = start, .count = count, .v = v };
+    struct glNamedFramebufferSampleLocationsfvNV_params args = { .teb = NtCurrentTeb(), .start = start, .count = count, .v = v };
     NTSTATUS status;
     TRACE( "framebuffer %d, start %d, count %d, v %p\n", framebuffer, start, count, v );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferSampleLocationsfvNV, &args ))) WARN( "glNamedFramebufferSampleLocationsfvNV returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferSamplePositionsfvAMD( GLuint framebuffer, GLuint numsamples, GLuint pixelindex, const GLfloat *values )
 {
-    struct glNamedFramebufferSamplePositionsfvAMD_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .numsamples = numsamples, .pixelindex = pixelindex, .values = values };
+    struct glNamedFramebufferSamplePositionsfvAMD_params args = { .teb = NtCurrentTeb(), .numsamples = numsamples, .pixelindex = pixelindex, .values = values };
     NTSTATUS status;
     TRACE( "framebuffer %d, numsamples %d, pixelindex %d, values %p\n", framebuffer, numsamples, pixelindex, values );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferSamplePositionsfvAMD, &args ))) WARN( "glNamedFramebufferSamplePositionsfvAMD returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d\n", framebuffer, attachment, texture, level );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTexture, &args ))) WARN( "glNamedFramebufferTexture returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d\n", framebuffer, attachment, textarget, texture, level );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTexture1DEXT, &args ))) WARN( "glNamedFramebufferTexture1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d\n", framebuffer, attachment, textarget, texture, level );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTexture2DEXT, &args ))) WARN( "glNamedFramebufferTexture2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture3DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
 {
-    struct glNamedFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level, .zoffset = zoffset };
+    struct glNamedFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level, .zoffset = zoffset };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d, zoffset %d\n", framebuffer, attachment, textarget, texture, level, zoffset );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTexture3DEXT, &args ))) WARN( "glNamedFramebufferTexture3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level };
+    struct glNamedFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d\n", framebuffer, attachment, texture, level );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureEXT, &args ))) WARN( "glNamedFramebufferTextureEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureFaceEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLenum face )
 {
-    struct glNamedFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level, .face = face };
+    struct glNamedFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .face = face };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, face %d\n", framebuffer, attachment, texture, level, face );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureFaceEXT, &args ))) WARN( "glNamedFramebufferTextureFaceEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureLayer( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glNamedFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glNamedFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, layer %d\n", framebuffer, attachment, texture, level, layer );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureLayer, &args ))) WARN( "glNamedFramebufferTextureLayer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureLayerEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glNamedFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glNamedFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, layer %d\n", framebuffer, attachment, texture, level, layer );
+    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureLayerEXT, &args ))) WARN( "glNamedFramebufferTextureLayerEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureMultiviewOVR( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews )
 {
-    struct glNamedFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
+    struct glNamedFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, baseViewIndex %d, numViews %d\n", framebuffer, attachment, texture, level, baseViewIndex, numViews );
+    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureMultiviewOVR, &args ))) WARN( "glNamedFramebufferTextureMultiviewOVR returned %#lx\n", status );
 }
 

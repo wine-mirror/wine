@@ -49,6 +49,7 @@ extern BOOL get_integer( GLenum pname, GLuint index, GLint value, GLint *data );
 enum object_type
 {
     OBJ_TYPE_BUFFER,
+    OBJ_TYPE_FRAMEBUFFER,
     OBJ_TYPE_COUNT,
 };
 

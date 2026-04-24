@@ -685,7 +685,8 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_BUFFER"              if $class eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDeleteObjectBufferATI" and $pname eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDrawCommandsNV" and $pname eq "buffer";
-    return 0                              if $class eq "framebuffer";
+    return "OBJ_TYPE_FRAMEBUFFER"         if $class eq "framebuffer";
+    return "OBJ_TYPE_FRAMEBUFFER"         if $pname =~ "fbo";
     return 0                              if $class eq "renderbuffer";
 
     return 0 if $class eq "SelectName";
@@ -695,6 +696,7 @@ sub get_object_type($$$$)
     return 0 if $ptype !~ /GLuint|GLhandleARB/;
 
     print "Missing possible buffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /buffer/;
+    print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
     return 0;
 }
 
@@ -705,6 +707,7 @@ sub allocate_object_names($)
 
     return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
     return $ret if $name =~ /^glBindBuffer/;
+    return $ret if $name =~ /^glBindFramebuffer/;
 
     return 0;
 }
@@ -739,6 +742,9 @@ sub generate_win_thunk($$)
             my $len = get_arg_len( $arg );
             my $addr = $len eq "1" ? "&" : "";
             my $deref = $len eq "1" ? "*" : "";
+
+            $len = "count" if $name =~ /^glDrawCommandsStates/ and $pname eq "fbos";
+            $addr = "" if $name =~ /^glDrawCommandsStates/ and $pname eq "fbos";
 
             if ($name =~ /^(glGen|glCreate)/)
             {

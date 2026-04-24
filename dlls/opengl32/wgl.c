@@ -106,6 +106,7 @@ static const char *debugstr_object_type( enum object_type type )
     switch (type)
     {
     case OBJ_TYPE_BUFFER: return "buffer";
+    case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
     case OBJ_TYPE_COUNT: break;
     }
     return wine_dbg_sprintf( "object (type %u)", type );
@@ -386,6 +387,7 @@ static GLuint create_object( enum object_type type )
     switch (type)
     {
     case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
+    case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
     case OBJ_TYPE_COUNT: break;
     }
 
@@ -647,6 +649,9 @@ static GLuint get_pname_object_type( GLenum pname )
     case GL_WEIGHT_ARRAY_BUFFER_BINDING:
     case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
         return OBJ_TYPE_BUFFER;
+    case GL_READ_FRAMEBUFFER_BINDING:
+    case GL_DRAW_FRAMEBUFFER_BINDING:
+        return OBJ_TYPE_FRAMEBUFFER;
     }
 
     return OBJ_TYPE_COUNT;
