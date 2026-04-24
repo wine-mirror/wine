@@ -15491,10 +15491,32 @@ static void test_doc_fragment(void)
     IXMLDOMNode *node;
     IXMLDOMText *text;
     HRESULT hr;
+    VARIANT v;
     BSTR str;
 
     hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_I1;
+    V_I4(&v) = NODE_DOCUMENT_FRAGMENT;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("p:text"), _bstr_("uri"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_namespaceURI(node, &str);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!str, "Unexpected string %p.\n", str);
+    if (hr == S_OK) SysFreeString(str);
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected string %p.\n", str);
+    str = (void *)0x1;
+    hr = IXMLDOMNode_get_prefix(node, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected string %p.\n", str);
+    IXMLDOMNode_Release(node);
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("e"), &element);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
