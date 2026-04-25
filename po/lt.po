@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-10 00:32+0300\n"
+"PO-Revision-Date: 2026-04-25 18:28+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Gtranslator 46.0\n"
+"X-Generator: Gtranslator 49.0\n"
 "X-Project-Style: default\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
@@ -5029,78 +5029,66 @@ msgid "Invalid oplock message received.\n"
 msgstr "Gautas neteisingas oportunistinio užblokavimo pranešimas.\n"
 
 #: dlls/kernelbase/winerror.mc:970
-#, fuzzy
-#| msgid "Disk is corrupt.\n"
 msgid "Disk is too fragmented.\n"
-msgstr "Diskas pažeistas.\n"
+msgstr "Diskas per daug fragmentuotas.\n"
 
 #: dlls/kernelbase/winerror.mc:975
 msgid "File cannot be opened because it is in the process of being deleted.\n"
-msgstr ""
+msgstr "Failas negali būti atvertas, nes šiuo metu yra šalinamas.\n"
 
 #: dlls/kernelbase/winerror.mc:980
 msgid "Short name settings incompatible with global registry setting.\n"
 msgstr ""
+"Trumpo vardo nuostatos yra nesuderinamos su globalaus registro nuostata.\n"
 
 #: dlls/kernelbase/winerror.mc:985
 msgid "Short names are not enabled on this volume.\n"
-msgstr ""
+msgstr "Trumpi vardai neįjungti šiame tome.\n"
 
 #: dlls/kernelbase/winerror.mc:990
-#, fuzzy
-#| msgid "Floppy registers inconsistent.\n"
 msgid "Security stream is inconsistent.\n"
-msgstr "Diskelio registrai prieštaringi.\n"
+msgstr "Saugumo srautas prieštaringas.\n"
 
 #: dlls/kernelbase/winerror.mc:995
 msgid "File lock operation cannot be processed due to invalid byte range.\n"
 msgstr ""
+"Failo užrakinimo operacija negali būti apdorota dėl neteisingo baitų rėžio.\n"
 
 #: dlls/kernelbase/winerror.mc:1000
 msgid "Subsystem for supporting image type is not present.\n"
-msgstr ""
+msgstr "Nėra posistemės atvaizdžio tipo palaikymui.\n"
 
 #: dlls/kernelbase/winerror.mc:1005
 msgid "Notification GUID is already defined.\n"
-msgstr ""
+msgstr "Pranešimo GUID jau apibrėžtas.\n"
 
 #: dlls/kernelbase/winerror.mc:1010
-#, fuzzy
-#| msgid "Invalid icon handle.\n"
 msgid "Invalid exception handler.\n"
-msgstr "Neteisinga piktogramos rodyklė.\n"
+msgstr "Neteisinga išimtinių situacijų doroklė.\n"
 
 #: dlls/kernelbase/winerror.mc:1015
-#, fuzzy
-#| msgid "Duplicate service name.\n"
 msgid "Duplicate privileges for the token.\n"
-msgstr "Vienodas tarnybos vardas.\n"
+msgstr "Vienodos prieigos rakto teisės.\n"
 
 #: dlls/kernelbase/winerror.mc:1020
-#, fuzzy
-#| msgid "Not all objects could be exported.\n"
 msgid "No ranges could be processed.\n"
-msgstr "Ne visi objektai eksportuoti.\n"
+msgstr "Nepavyko apdoroti nė vieno rėžio.\n"
 
 #: dlls/kernelbase/winerror.mc:1025
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation not allowed on system file.\n"
-msgstr "Operacija nutraukta naudotojo.\n"
+msgstr "Operacija negalima sisteminiam failui.\n"
 
 #: dlls/kernelbase/winerror.mc:1030
 msgid "Disk resources have been exhausted.\n"
-msgstr ""
+msgstr "Disko resursai buvo išnaudoti.\n"
 
 #: dlls/kernelbase/winerror.mc:1035
-#, fuzzy
-#| msgid "Invalid key.\n"
 msgid "Invalid token.\n"
-msgstr "Neteisingas raktas.\n"
+msgstr "Neteisingas prieigos raktas.\n"
 
 #: dlls/kernelbase/winerror.mc:1040
 msgid "Command feature not supported on the device.\n"
-msgstr ""
+msgstr "Komandos funkcija nepalaikoma šio įrenginio.\n"
 
 #: dlls/kernelbase/winerror.mc:1045
 msgid "Message 0x%1 not found in file %2.\n"
@@ -7317,10 +7305,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Šis tinklo ryšys neegzistuoja.\n"
 
 #: dlls/kernelbase/winerror.mc:3825
-#, fuzzy
-#| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
-msgstr "Failas ar katalogas pažeisti.\n"
+msgstr "Failas ar katalogas nėra „reparse point“.\n"
 
 #: dlls/kernelbase/winerror.mc:3830
 msgid "Call interrupted.\n"
@@ -13059,7 +13045,7 @@ msgstr "Nurodyta DLL funkcija nerasta"
 
 #: dlls/vbscript/vbscript.rc:61
 msgid "This key is already associated with an element of this collection"
-msgstr ""
+msgstr "Raktas jau susietas su šios kolekcijos elementu"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Variable uses an Automation type not supported in VBScript"
@@ -13078,16 +13064,12 @@ msgid "Invalid or unqualified reference"
 msgstr "Netinkama arba nepatikslinta nuoroda"
 
 #: dlls/vbscript/vbscript.rc:68
-#, fuzzy
-#| msgid "Class does not exist.\n"
 msgid "Class not defined"
-msgstr "Klasė neegzistuoja.\n"
+msgstr "Klasė neapibrėžta"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ']'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „]“"
 
 #: dlls/vbscript/vbscript.rc:75
 msgid "Expected 'If'"
@@ -13154,10 +13136,8 @@ msgid "Expected 'With'"
 msgstr "Tikėtasi „With“"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Secret too long.\n"
 msgid "Identifier too long"
-msgstr "Paslaptis per ilga.\n"
+msgstr "Identifikatorius per ilgas"
 
 #: dlls/vbscript/vbscript.rc:92
 msgid "Invalid number"
@@ -13177,7 +13157,7 @@ msgstr "Neteisingas „exit“ sakinys"
 
 #: dlls/vbscript/vbscript.rc:98
 msgid "Invalid 'for' loop control variable"
-msgstr ""
+msgstr "Neteisingas „for“ ciklo kontrolės kintamasis"
 
 #: dlls/vbscript/vbscript.rc:99
 msgid "Name redefined"
@@ -15415,26 +15395,45 @@ msgid ""
 "//X         Execute script in debugger\n"
 "//U         Use Unicode for redirected I/O from the console\n"
 msgstr ""
+"Naudojimas: CScript skriptovardas.plėtinys [parametras...] [argumentai...]\n"
+"\n"
+"Parametrai:\n"
+"//B         Paketinė veiksena: Paslepia skripto klaidas ir raginimus\n"
+"//D         Įjungti aktyvų derinimą\n"
+"//E:modulis Naudoti modulį „modulis“ skriptų vykdymui\n"
+"//H:CScript Pakeičia numatytąją skriptų prieglobą į CScript.exe\n"
+"//H:WScript Pakeičia numatytąją skriptų prieglobą į WScript.exe "
+"(numatytoji)\n"
+"//I         Interaktyvi veiksena (numatytoji, priešinga //B)\n"
+"//Job:xxxx  Vykdyti WSF užduotį\n"
+"//Logo      Rodyti logotipą (numatytoji)\n"
+"//Nologo    Nerodyti logotipo: nebus rodoma reklamjuostė vykdymo metu\n"
+"//S         Išsaugoti dabartinius komandos eilutės parametrus šiam "
+"naudotojui\n"
+"//T:nn      Laukimo laikas sekundėmis: ilgiausias leidžiamas laikas skripto "
+"vykdymui\n"
+"//X         Vykdyti skriptą derintuvėje\n"
+"//U         Naudoti unikodą iš pulto nukreiptam Į/I\n"
 
 #: programs/wscript/wscript.rc:47
 msgid "Input Error: There is no script file specified.\n"
-msgstr ""
+msgstr "Įvesties klaida: nenurodytas skripto failas.\n"
 
 #: programs/wscript/wscript.rc:48
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Input Error: Can not find script file \"%1\".\n"
-msgstr "Klaida: nepavyko rasti proceso „%1“.\n"
+msgstr "Įvesties klaida: nepavyko rasti skripto failo „%1“.\n"
 
 #: programs/wscript/wscript.rc:49
 msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
-msgstr ""
+msgstr "CScript klaida: nepavyko įkelti skripto „%1“ (%2).\n"
 
 #: programs/wscript/wscript.rc:52
 msgid ""
 "Script execution time was exceeded on script \"%1\".\n"
 "Script execution was terminated.\n"
 msgstr ""
+"Viršytas skripto „%1“ vykdymo laikas.\n"
+"Skripto vykdymas nutrauktas.\n"
 
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
@@ -19426,10 +19425,8 @@ msgid "(System default)"
 msgstr "(Sistemos numatytasis)"
 
 #: programs/winecfg/winecfg.rc:90
-#, fuzzy
-#| msgid "5.1 Surround"
 msgid "7.1 Surround"
-msgstr "Erdviniai 5.1"
+msgstr "Erdviniai 7.1"
 
 #: programs/winecfg/winecfg.rc:91
 msgid "5.1 Surround"
