@@ -92,6 +92,38 @@ typedef struct _UNICODE_STRING {
 
 typedef UNICODE_STRING SECURITY_STRING, *PSECURITY_STRING;
 
+#define SEC_WINNT_AUTH_IDENTITY_VERSION 0x200
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_EXW
+{
+    ULONG   Version;
+    ULONG   Length;
+    USHORT *User;
+    ULONG   UserLength;
+    USHORT *Domain;
+    ULONG   DomainLength;
+    USHORT *Password;
+    ULONG   PasswordLength;
+    ULONG   Flags;
+    USHORT *PackageList;
+    ULONG   PackageListLength;
+} SEC_WINNT_AUTH_IDENTITY_EXW, *PSEC_WINNT_AUTH_IDENTITY_EXW;
+
+typedef struct _SEC_WINNT_AUTH_IDENTITY_EXA
+{
+    ULONG  Version;
+    ULONG  Length;
+    UCHAR *User;
+    ULONG  UserLength;
+    UCHAR *Domain;
+    ULONG  DomainLength;
+    UCHAR *Password;
+    ULONG  PasswordLength;
+    ULONG  Flags;
+    UCHAR *PackageList;
+    ULONG  PackageListLength;
+} SEC_WINNT_AUTH_IDENTITY_EXA, *PSEC_WINNT_AUTH_IDENTITY_EXA;
+
 #define SSPIPFC_CREDPROV_DO_NOT_SAVE 0x00000001
 #define SSPIPFC_NO_CHECKBOX          0x00000002
 

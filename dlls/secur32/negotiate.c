@@ -138,23 +138,66 @@ static NTSTATUS NTAPI nego_SpGetInfo( SecPkgInfoW *info )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS map_auth_data( const void *auth_data, SEC_WINNT_AUTH_IDENTITY_W *id )
+{
+    const SEC_WINNT_AUTH_IDENTITY_EXA *exA = auth_data;
+    const SEC_WINNT_AUTH_IDENTITY_EXW *exW = auth_data;
+
+    if (exW->Version != SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        *id = *(SEC_WINNT_AUTH_IDENTITY_W *)auth_data;
+        return SEC_E_OK;
+    }
+    if (exW->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+    {
+        id->User           = exW->User;
+        id->UserLength     = exW->UserLength;
+        id->Domain         = exW->Domain;
+        id->DomainLength   = exW->DomainLength;
+        id->Password       = exW->Password;
+        id->PasswordLength = exW->PasswordLength;
+        id->Flags          = exW->Flags;
+        if (exW->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_wn(exW->PackageList, exW->PackageListLength) );
+    }
+    else
+    {
+        SEC_WINNT_AUTH_IDENTITY_A *idA = (SEC_WINNT_AUTH_IDENTITY_A *)id;
+
+        idA->User           = exA->User;
+        idA->UserLength     = exA->UserLength;
+        idA->Domain         = exA->Domain;
+        idA->DomainLength   = exA->DomainLength;
+        idA->Password       = exA->Password;
+        idA->PasswordLength = exA->PasswordLength;
+        idA->Flags          = exA->Flags;
+        if (exA->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_an((const char *)exA->PackageList, exA->PackageListLength) );
+    }
+    return SEC_E_OK;
+}
+
 static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
     UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
     void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
-    NTSTATUS ret = SEC_E_NO_CREDENTIALS;
+    NTSTATUS ret;
     struct sec_handle *cred;
     SECPKG_FUNCTION_TABLE *package;
     SECPKG_USER_FUNCTION_TABLE *user;
+    SEC_WINNT_AUTH_IDENTITY_W id;
 
     TRACE( "%p, %#lx, %p, %p, %p, %p, %p, %p\n", principal_us, credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
+    if (auth_data && (ret = map_auth_data( auth_data, &id ))) return ret;
+
     if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
 
+    ret = SEC_E_NO_CREDENTIALS;
     if ((package = lsa_find_package( "Kerberos", &user )))
     {
-        ret = package->SpAcquireCredentialsHandle( principal_us, credential_use, logon_id, auth_data,
+        ret = package->SpAcquireCredentialsHandle( principal_us, credential_use, logon_id, auth_data ? &id : NULL,
                                                    get_key_fn, get_key_arg, &cred->handle_krb, expiry );
         if (ret == SEC_E_OK)
         {
@@ -167,7 +210,7 @@ static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
     {
         ULONG cred_use = auth_data ? credential_use : credential_use | WINE_NO_CACHED_CREDENTIALS;
 
-        ret = package->SpAcquireCredentialsHandle( principal_us, cred_use, logon_id, auth_data,
+        ret = package->SpAcquireCredentialsHandle( principal_us, cred_use, logon_id, auth_data ? &id : NULL,
                                                    get_key_fn, get_key_arg, &cred->handle_ntlm, expiry );
         if (ret == SEC_E_OK)
         {
