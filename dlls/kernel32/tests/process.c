@@ -79,7 +79,6 @@ static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS 
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
-static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
 static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
@@ -98,6 +97,10 @@ static DWORD  (WINAPI *pGetMaximumProcessorCount)(WORD);
 static BOOL   (WINAPI *pGetProcessInformation)(HANDLE,PROCESS_INFORMATION_CLASS,void*,DWORD);
 static void (WINAPI *pClosePseudoConsole)(HPCON);
 static HRESULT (WINAPI *pCreatePseudoConsole)(COORD,HANDLE,HANDLE,DWORD,HPCON*);
+
+#if defined(__x86_64__) || defined(__i386__)
+static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
+#endif
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -244,8 +247,10 @@ static BOOL init(void)
     hntdll    = GetModuleHandleA("ntdll.dll");
 
     pNtQueryInformationProcess = (void *)GetProcAddress(hntdll, "NtQueryInformationProcess");
-    pNtQueryInformationThread = (void *)GetProcAddress(hntdll, "NtQueryInformationThread");
     pNtQuerySystemInformationEx = (void *)GetProcAddress(hntdll, "NtQuerySystemInformationEx");
+#if defined(__x86_64__) || defined(__i386__)
+    pNtQueryInformationThread = (void *)GetProcAddress(hntdll, "NtQueryInformationThread");
+#endif
 
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");

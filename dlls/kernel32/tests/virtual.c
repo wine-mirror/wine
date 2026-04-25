@@ -46,15 +46,18 @@ static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_A
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG_PTR, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, SIZE_T, SIZE_T *);
-static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
-static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
-static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
 static NTSTATUS (WINAPI *pNtReadVirtualMemory)(HANDLE,const void *,void *,SIZE_T, SIZE_T *);
 static NTSTATUS (WINAPI *pNtWriteVirtualMemory)(HANDLE, void *, const void *, SIZE_T, SIZE_T *);
 static BOOL  (WINAPI *pPrefetchVirtualMemory)(HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
 static void  (WINAPI *pFlushProcessWriteBuffers)(void);
+
+#ifdef __i386__
+static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
+static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
+static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
+#endif
 
 /* ############################### */
 
@@ -4774,20 +4777,22 @@ START_TEST(virtual)
 
     pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
-    pGetProcessDEPPolicy = (void *)GetProcAddress( hkernel32, "GetProcessDEPPolicy" );
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
     pNtCreateSection = (void *)GetProcAddress( hntdll, "NtCreateSection" );
     pNtMapViewOfSection = (void *)GetProcAddress( hntdll, "NtMapViewOfSection" );
     pNtUnmapViewOfSection = (void *)GetProcAddress( hntdll, "NtUnmapViewOfSection" );
     pNtQuerySection = (void *)GetProcAddress( hntdll, "NtQuerySection" );
-    pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
-    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
     pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
     pNtWriteVirtualMemory = (void *)GetProcAddress( hntdll, "NtWriteVirtualMemory" );
     pPrefetchVirtualMemory = (void *)GetProcAddress( hkernelbase, "PrefetchVirtualMemory" );
     pFlushProcessWriteBuffers = (void *)GetProcAddress( hkernel32, "FlushProcessWriteBuffers" );
+#ifdef __i386__
+    pGetProcessDEPPolicy = (void *)GetProcAddress( hkernel32, "GetProcessDEPPolicy" );
+    pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
+    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
+#endif
 
     GetSystemInfo(&si);
     trace("system page size %#lx\n", si.dwPageSize);

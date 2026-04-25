@@ -79,7 +79,6 @@ static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, IN
 static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT,
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
 static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
-static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoEx)(const WCHAR *, GEOTYPE, PWSTR, INT);
 static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
 static BOOL (WINAPI *pSetUserGeoName)(PWSTR);
@@ -136,7 +135,6 @@ static void InitFunctionPointers(void)
   X(CompareStringOrdinal);
   X(CompareStringEx);
   X(GetGeoInfoA);
-  X(GetGeoInfoW);
   X(GetGeoInfoEx);
   X(GetUserDefaultGeoName);
   X(SetUserGeoName);
