@@ -60,6 +60,9 @@
 #endif
 #include <unistd.h>
 #include <dlfcn.h>
+#if defined(__linux__) && defined(__GLIBC__)
+# include <pthread.h>
+#endif
 #ifdef HAVE_VALGRIND_VALGRIND_H
 # include <valgrind/valgrind.h>
 #endif
@@ -4066,6 +4069,7 @@ TEB *virtual_alloc_first_teb(void)
     teb = init_teb( ptr, FALSE );
     pthread_key_create( &teb_key, NULL );
     pthread_setspecific( teb_key, teb );
+    virtual_init_thread_stack_cache();
     return teb;
 }
 
@@ -4612,6 +4616,78 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
 
 
 /***********************************************************************
+ *           pthread stack bounds cache
+ *
+ * Some environments (gVisor's runsc sentry, user-mode Linux kernels,
+ * Firecracker, certain seccomp/mount namespace layouts) allocate the
+ * pthread stack at an address range that does not exactly match the
+ * DeallocationStack/StackBase bounds cached in the TEB at thread
+ * creation time. When the TEB bounds look too narrow (e.g. because
+ * the active pthread stack lives at a lower address than
+ * DeallocationStack), virtual_setup_exception can reject a legitimate
+ * exception frame as a stack overflow and kill the thread.
+ *
+ * To widen the bounds without calling pthread_getattr_np() from a
+ * signal handler (it is not async-signal-safe), each thread caches
+ * its real pthread stack start address in thread-local storage during
+ * startup, before any fault can occur. refresh_stack_info_from_pthread()
+ * then only reads the TLS slot from the signal path, which is safe.
+ *
+ * On all conventional Linux kernels the pthread bounds and the TEB
+ * bounds agree and the cache is never consulted.
+ */
+#if defined(__linux__) && defined(__GLIBC__)
+static __thread char *pthread_stack_start_cache;
+#endif
+
+/***********************************************************************
+ *           virtual_init_thread_stack_cache
+ *
+ * Populate the current thread's pthread stack start cache. Must be
+ * called from a normal (non-signal-handler) context during thread
+ * startup, because pthread_getattr_np() is a glibc extension that is
+ * not documented as async-signal-safe. A no-op on platforms that do
+ * not provide pthread_getattr_np().
+ */
+void virtual_init_thread_stack_cache(void)
+{
+#if defined(__linux__) && defined(__GLIBC__)
+    pthread_attr_t attr;
+    void *addr;
+    size_t sz;
+
+    pthread_stack_start_cache = NULL;
+    if (pthread_getattr_np( pthread_self(), &attr )) return;
+    if (!pthread_attr_getstack( &attr, &addr, &sz ))
+        pthread_stack_start_cache = addr;
+    pthread_attr_destroy( &attr );
+#endif
+}
+
+/***********************************************************************
+ *           refresh_stack_info_from_pthread
+ *
+ * Async-signal-safe: only reads the thread-local cache populated by
+ * virtual_init_thread_stack_cache() at thread startup. Returns TRUE
+ * if stack_info->start was widened because the real pthread stack
+ * starts below the cached TEB bounds.
+ */
+static BOOL refresh_stack_info_from_pthread( struct thread_stack_info *stack_info )
+{
+#if defined(__linux__) && defined(__GLIBC__)
+    if (pthread_stack_start_cache && pthread_stack_start_cache < stack_info->start)
+    {
+        stack_info->start = pthread_stack_start_cache;
+        return TRUE;
+    }
+#else
+    (void)stack_info;
+#endif
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           virtual_setup_exception
  */
 void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec )
@@ -4636,11 +4712,28 @@ void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *r
 
     if (stack < stack_info.start + host_page_size)
     {
-        /* stack overflow on last page, unrecoverable */
-        UINT diff = stack_info.start + host_page_size - stack;
-        ERR( "stack overflow %u bytes addr %p stack %p (%p-%p-%p)\n",
-             diff, rec->ExceptionAddress, stack, stack_info.start, stack_info.limit, stack_info.end );
-        abort_thread(1);
+        /* The proposed exception frame would land in the guard page of
+         * the thread stack as known to the TEB. Before declaring this an
+         * unrecoverable overflow, give the kernel one chance to correct
+         * our bookkeeping: under user-mode Linux kernels (gVisor,
+         * Firecracker, etc.) the actual pthread stack may extend below
+         * the cached DeallocationStack. */
+        if (refresh_stack_info_from_pthread( &stack_info ) &&
+            stack >= stack_info.start + host_page_size)
+        {
+            WARN( "stack_info start widened from TEB value to pthread value;"
+                  " proceeding with exception frame addr %p stack %p (%p-%p-%p)\n",
+                  rec->ExceptionAddress, stack, stack_info.start,
+                  stack_info.limit, stack_info.end );
+        }
+        else
+        {
+            /* stack overflow on last page, unrecoverable */
+            UINT diff = stack_info.start + host_page_size - stack;
+            ERR( "stack overflow %u bytes addr %p stack %p (%p-%p-%p)\n",
+                 diff, rec->ExceptionAddress, stack, stack_info.start, stack_info.limit, stack_info.end );
+            abort_thread(1);
+        }
     }
     else if (stack < stack_info.limit)
     {
