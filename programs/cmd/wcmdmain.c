@@ -1456,7 +1456,7 @@ static void for_control_create(enum for_control_operator for_op, unsigned flags,
     switch (for_ctrl->operator)
     {
     case CMD_FOR_FILETREE:
-        for_ctrl->root_dir = options && *options ? xstrdupW(options) : NULL;
+        for_ctrl->root_dir = options && *options ? WCMD_dup_unquoted(options, wcslen(options)) : NULL;
         break;
     default:
         break;
@@ -4444,45 +4444,42 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     return return_code;
 }
 
-static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *from_dir, size_t ref_len, CMD_NODE *node)
+static RETURN_CODE for_control_execute_set(const CMD_FOR_CONTROL *for_ctrl, const WCHAR *from_dir, size_t ref_len, CMD_NODE *node)
 {
     RETURN_CODE return_code = NO_ERROR;
+    struct word_iterator iterator;
     size_t len;
     WCHAR set[MAXSTRING];
     WCHAR buffer[MAX_PATH];
-    int i;
 
     if (from_dir)
     {
-        len = wcslen(from_dir) + 1;
-        wcscpy(buffer, from_dir);
-        wcscat(buffer, L"\\");
+        len = GetFullPathNameW(from_dir, ARRAY_SIZE(buffer) - 1, buffer, NULL);
+        if (!len || len > ARRAY_SIZE(buffer) - 1) return ERROR_INVALID_FUNCTION;
+        wcscpy(&buffer[len], L"\\");
+        len++;
     }
     else
         len = 0;
 
     wcscpy(set, for_ctrl->set);
     handleExpansion(set, TRUE);
-    for (i = 0; !WCMD_is_break(return_code); i++)
+    WCMD_word_iterator_init(&iterator, set, STANDARD_DELIMS, 0);
+    while (!WCMD_is_break(return_code) && WCMD_word_iterator_advance(&iterator))
     {
-        WCHAR *element = WCMD_parameter(set, i, NULL, TRUE);
-        if (!element || !*element) break;
-        if (len + wcslen(element) + 1 >= ARRAY_SIZE(buffer)) continue;
+        TRACE("Doing set element %s + %s\n", wine_dbgstr_wn(buffer, len), wine_dbgstr_w(iterator.raw_argument));
 
-        wcscpy(&buffer[len], element);
-
-        TRACE("Doing set element %s\n", wine_dbgstr_w(buffer));
-
-        if (wcspbrk(element, L"?*"))
+        if (wcspbrk(iterator.raw_argument, L"?*"))
         {
             WIN32_FIND_DATAW fd;
             HANDLE hff;
             size_t insert_pos;
 
-            if (*buffer == L'"') WCMD_strip_quotes(buffer);
+            /* wildcarded elements are always unquoted */
+            if (len + wcslen(iterator.unquoted_argument) + 1 >= ARRAY_SIZE(buffer)) continue;
+            wcscpy(&buffer[len], iterator.unquoted_argument);
             hff = FindFirstFileW(buffer, &fd);
             insert_pos = wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0;
-
             if (hff == INVALID_HANDLE_VALUE)
             {
                 TRACE("Couldn't FindFirstFile on %s\n", wine_dbgstr_w(buffer));
@@ -4508,14 +4505,18 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
         }
         else
         {
+            /* non wildcarded elements keep their quotes if any */
+            if (len + wcslen(iterator.raw_argument) + 1 >= ARRAY_SIZE(buffer)) continue;
+            wcscpy(&buffer[len], iterator.raw_argument);
             WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
             return_code = node_execute_with_echo(node, echo_mode);
         }
     }
+    WCMD_word_iterator_dispose(&iterator);
     return return_code;
 }
 
-static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
+static RETURN_CODE for_control_execute_walk_files(const CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
     DIRECTORY_STACK *dirs_to_walk;
     size_t ref_len;
