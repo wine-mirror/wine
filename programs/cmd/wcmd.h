@@ -225,7 +225,7 @@ RETURN_CODE WCMD_type(struct word_iterator *);
 RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 RETURN_CODE WCMD_volume(void);
-RETURN_CODE WCMD_mklink(WCHAR *args);
+RETURN_CODE WCMD_mklink(struct word_iterator *);
 RETURN_CODE WCMD_change_drive(WCHAR drive);
 
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD n, HANDLE stream);

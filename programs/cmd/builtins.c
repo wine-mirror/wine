@@ -4159,62 +4159,58 @@ BOOL create_mount_point(const WCHAR *full_link, const WCHAR *target) {
  * WCMD_mklink
  */
 
-RETURN_CODE WCMD_mklink(WCHAR *args)
+RETURN_CODE WCMD_mklink(struct word_iterator *iterator)
 {
-    int   argno = 0;
-    WCHAR *argN = args;
+    RETURN_CODE return_code = NOERROR;
     BOOL isdir = FALSE;
     BOOL junction = FALSE;
     BOOL hard = FALSE;
     BOOL ret = TRUE;
-    WCHAR file1[MAX_PATH];
-    WCHAR file2[MAXSTRING];
+    WCHAR *file1 = NULL, *file2 = NULL;
 
-    file1[0] = file2[0] = L'\0';
+    while (ret && WCMD_word_iterator_advance(iterator))
+    {
+        WINE_TRACE("mklink: Processing arg '%s'\n", wine_dbgstr_w(iterator->raw_argument));
 
-    while (argN && ret) {
-        WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
-
-        if (!argN) break;
-
-        WINE_TRACE("mklink: Processing arg '%s'\n", wine_dbgstr_w(thisArg));
-
-        if (lstrcmpiW(thisArg, L"/D") == 0)
-            isdir = TRUE;
-        else if (lstrcmpiW(thisArg, L"/H") == 0)
-            hard = TRUE;
-        else if (lstrcmpiW(thisArg, L"/J") == 0)
-            junction = TRUE;
-        else if (*thisArg == L'/')
-            ret = FALSE;
+        if (!iterator->is_an_option)
+        {
+            if (!file1) file1 = xstrdupW(iterator->unquoted_argument);
+            else if (!file2) file2 = xstrdupW(iterator->unquoted_argument);
+            else ret = FALSE;
+        }
         else
         {
-            if (!file1[0])
-                ret = WCMD_get_fullpath(thisArg, ARRAY_SIZE(file1), file1, NULL);
-            else if (!file2[0])
-                wcscpy(file2, thisArg);
-            else
-                ret = FALSE;
+            if (!wcsicmp(iterator->raw_argument, L"/D")) isdir = TRUE;
+            else if (!wcsicmp(iterator->raw_argument,  L"/H")) hard = TRUE;
+            else if (!wcsicmp(iterator->raw_argument, L"/J")) junction = TRUE;
+            else ret = FALSE;
         }
     }
 
-    if (!file2[0] || !ret)
+    if (file2 && ret)
+    {
+        if (hard)
+            ret = CreateHardLinkW(file1, file2, NULL);
+        else if (!junction)
+            ret = CreateSymbolicLinkW(file1, file2, isdir);
+        else
+            ret = create_mount_point(file1, file2);
+        if (!ret)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), file1);
+            return_code = ERROR_INVALID_FUNCTION;
+        }
+    }
+    else
     {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-        return errorlevel = ERROR_INVALID_FUNCTION;
+        return_code = ERROR_INVALID_FUNCTION;
     }
 
-    if (hard)
-        ret = CreateHardLinkW(file1, file2, NULL);
-    else if (!junction)
-        ret = CreateSymbolicLinkW(file1, file2, isdir);
-    else
-        ret = create_mount_point(file1, file2);
+    free(file1);
+    free(file2);
 
-    if (ret) return errorlevel = NO_ERROR;
-
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), file1);
-    return errorlevel = ERROR_INVALID_FUNCTION;
+    return errorlevel = return_code;
 }
 
 RETURN_CODE WCMD_change_drive(WCHAR drive)

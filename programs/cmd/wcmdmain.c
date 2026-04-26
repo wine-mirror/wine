@@ -2480,7 +2480,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_choice(&iterator);
         break;
     case WCMD_MKLINK:
-        return_code = WCMD_mklink(parms_start);
+        return_code = WCMD_mklink(&iterator);
         break;
     case WCMD_CHGDRIVE:
         return_code = WCMD_change_drive(cmd[0]);
