@@ -3475,10 +3475,16 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
     V_BSTR(&v) = col;
     hr = get_accessor( recordset, &v, &hacc );
     SysFreeString( col );
-    if (SUCCEEDED(hr))
-        hr = get_bookmark_data( &start, &bm_data, &bm_len, &int_buf );
     if (FAILED(hr))
     {
+        SysFreeString( val );
+        if (free_bookmark) VariantClear( &start );
+        return hr;
+    }
+    hr = get_bookmark_data( &start, &bm_data, &bm_len, &int_buf );
+    if (FAILED(hr))
+    {
+        IAccessor_ReleaseAccessor( recordset->accessor, hacc, NULL );
         SysFreeString( val );
         if (free_bookmark) VariantClear( &start );
         return hr;
