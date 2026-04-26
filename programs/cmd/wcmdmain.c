@@ -4547,11 +4547,12 @@ static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD
     return return_code;
 }
 
-static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
+static RETURN_CODE for_control_execute_numbers(const CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
     RETURN_CODE return_code = NO_ERROR;
     WCHAR set[MAXSTRING];
     int numbers[3] = {0, 0, 0}, var;
+    struct word_iterator iterator;
     int i;
 
     wcscpy(set, for_ctrl->set);
@@ -4562,12 +4563,11 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
      * so (-10 1) is interpreted as (-10 1 0)
      * and (10) loops for ever !!!
      */
-    for (i = 0; i < ARRAY_SIZE(numbers); i++)
+    WCMD_word_iterator_init(&iterator, set, STANDARD_DELIMS, 0);
+    for (i = 0; i < ARRAY_SIZE(numbers) && WCMD_word_iterator_advance(&iterator); i++)
     {
-        WCHAR *element = WCMD_parameter(set, i, NULL, FALSE);
-        if (!element || !*element) break;
-        /* native doesn't no error handling */
-        numbers[i] = wcstol(element, NULL, 0);
+        /* native doesn't do any error handling */
+        numbers[i] = wcstol(iterator.raw_argument, NULL, 0);
     }
 
     for (var = numbers[0];
@@ -4581,6 +4581,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
         TRACE("Processing FOR number %s\n", wine_dbgstr_w(tmp));
         return_code = node_execute_with_echo(node, echo_mode);
     }
+    WCMD_word_iterator_dispose(&iterator);
     return return_code;
 }
 
