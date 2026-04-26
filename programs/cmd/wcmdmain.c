@@ -4246,9 +4246,9 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
                                                WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
 {
     RETURN_CODE return_code = NO_ERROR;
+    struct word_iterator iterator;
     struct for_loop_variables flv;
-    WCHAR *parm;
-    unsigned i;
+    unsigned flv_idx, word_idx, i;
 
     for_loop_variables_init(&flv);
     if (!for_loop_fill_variables(forf_tokens, &flv))
@@ -4262,24 +4262,26 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
     for (i = 0; i < flv.last + flv.num_duplicates; i++)
         WCMD_set_for_loop_variable(varidx + i, L"");
 
-    for (i = 0; i < flv.last; i++)
+    WCMD_word_iterator_init(&iterator, buffer, forf_delims, 0);
+    for (flv_idx = word_idx = 0; flv_idx < flv.last && WCMD_word_iterator_advance(&iterator); word_idx++)
     {
+        for (i = 0; i < flv.last; i++)
+            if (flv.table[i] == word_idx) break;
+        if (i == flv.last) continue;
         if (flv.has_star && i + 1 == flv.last)
         {
-            WCMD_parameter_with_delims(buffer, flv.table[i], &parm, FALSE, forf_delims);
             TRACE("Parsed all remaining tokens %d(%s) as parameter %s\n",
-                  flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
-            if (parm)
-                WCMD_set_for_loop_variable(varidx + i, parm);
+                  flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(&iterator.from[iterator.position]));
+            WCMD_set_for_loop_variable(varidx + i, &iterator.from[iterator.position]);
             break;
         }
         /* Extract the token number requested and set into the next variable context */
-        parm = WCMD_parameter_with_delims(buffer, flv.table[i], NULL, TRUE, forf_delims);
         TRACE("Parsed token %d(%s) as parameter %s\n",
-              flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
-        if (parm)
-            WCMD_set_for_loop_variable(varidx + i, parm);
+              flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(iterator.raw_argument));
+        WCMD_set_for_loop_variable(varidx + i, iterator.raw_argument);
+        flv_idx++;
     }
+    WCMD_word_iterator_dispose(&iterator);
 
     /* Execute the body of the for loop with these values */
     if (forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol)
