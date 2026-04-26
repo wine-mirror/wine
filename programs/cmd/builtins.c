@@ -1980,69 +1980,90 @@ RETURN_CODE WCMD_pause(void)
  * Delete a directory.
  */
 
-RETURN_CODE WCMD_remove_dir(WCHAR *args)
+RETURN_CODE WCMD_remove_dir(struct word_iterator *iterator)
 {
-  int   argno         = 0;
-  int   argsProcessed = 0;
-  WCHAR *argN         = args;
+    int count = 0;
+    BOOL is_quiet = FALSE, is_recursive = FALSE;
 
-  /* Loop through all args */
-  while (argN) {
-    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
-    if (argN && argN[0] != '/') {
-      WINE_TRACE("rd: Processing arg %s (quals:%s)\n", wine_dbgstr_w(thisArg),
-                 wine_dbgstr_w(quals));
-      argsProcessed++;
-
-      /* If subdirectory search not supplied, just try to remove
-         and report error if it fails (eg if it contains a file) */
-      if (wcsstr(quals, L"/S") == NULL) {
-        if (!RemoveDirectoryW(thisArg))
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
         {
-            RETURN_CODE return_code = GetLastError();
-            WCMD_print_error();
-            return return_code;
+            if (!wcsicmp(iterator->raw_argument, L"/Q")) is_quiet = TRUE;
+            else if (!wcsicmp(iterator->raw_argument, L"/S")) is_recursive = TRUE;
+            else
+            {
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+                return ERROR_INVALID_FUNCTION;
+            }
         }
-
-      /* Otherwise use ShFileOp to recursively remove a directory */
-      } else {
-
-        SHFILEOPSTRUCTW lpDir;
-
-        /* Ask first */
-        if (wcsstr(quals, L"/Q") == NULL) {
-          BOOL  ok;
-          WCHAR  question[MAXSTRING];
-
-          /* Ask for confirmation */
-          wsprintfW(question, L"%s ", thisArg);
-          ok = WCMD_ask_confirm(question, TRUE, NULL);
-
-          /* Abort if answer is 'N' */
-          if (!ok) return ERROR_INVALID_FUNCTION;
-        }
-
-        /* Do the delete */
-        lpDir.hwnd   = NULL;
-        lpDir.pTo    = NULL;
-        lpDir.pFrom  = thisArg;
-        lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
-        lpDir.wFunc  = FO_DELETE;
-
-        /* SHFileOperationW needs file list with a double null termination */
-        thisArg[lstrlenW(thisArg) + 1] = 0x00;
-
-        if (SHFileOperationW(&lpDir)) WCMD_print_error ();
-      }
+        else count++;
     }
-  }
+    /* Handle no valid args */
+    if (!count)
+    {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
+        return ERROR_INVALID_FUNCTION;
+    }
 
-  /* Handle no valid args */
-  if (argsProcessed == 0) {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    return ERROR_INVALID_FUNCTION;
-  }
-  return NO_ERROR;
+    WCMD_word_iterator_reset(iterator);
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option) continue;
+
+        WINE_TRACE("rd: Processing arg %s (quiet=%u recursive=%u)\n",
+                   wine_dbgstr_w(iterator->unquoted_argument), is_quiet, is_recursive);
+
+        /* If subdirectory search not supplied, just try to remove
+           and report error if it fails (eg if it contains a file) */
+        if (!is_recursive)
+        {
+            if (!RemoveDirectoryW(iterator->unquoted_argument))
+            {
+                RETURN_CODE return_code = GetLastError();
+                WCMD_print_error();
+                return return_code;
+            }
+        }
+        else /* Otherwise use ShFileOp to recursively remove a directory */
+        {
+            size_t len;
+            SHFILEOPSTRUCTW lpDir;
+            WCHAR *arg;
+
+            /* Ask first */
+            if (!is_quiet)
+            {
+                BOOL  ok;
+                WCHAR  question[MAXSTRING];
+
+                /* Ask for confirmation */
+                wsprintfW(question, L"%s ", iterator->unquoted_argument);
+                ok = WCMD_ask_confirm(question, TRUE, NULL);
+
+                /* Abort if answer is 'N' */
+                if (!ok) return ERROR_INVALID_FUNCTION;
+            }
+
+            /* SHFileOperationW needs file list with a double null termination */
+            len = wcslen(iterator->unquoted_argument);
+            arg = xalloc((len + 2) * sizeof(WCHAR));
+            wcscpy(arg, iterator->unquoted_argument);
+            arg[len + 1] = L'\0';
+
+            /* Do the delete */
+            lpDir.hwnd   = NULL;
+            lpDir.pTo    = NULL;
+            lpDir.pFrom  = arg;
+            lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+            lpDir.wFunc  = FO_DELETE;
+
+            if (SHFileOperationW(&lpDir)) WCMD_print_error();
+            free(arg);
+        }
+    }
+
+    return NO_ERROR;
 }
 
 /****************************************************************************

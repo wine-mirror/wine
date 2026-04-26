@@ -209,7 +209,7 @@ RETURN_CODE WCMD_pause(void);
 RETURN_CODE WCMD_popd(void);
 void WCMD_print_error (void);
 RETURN_CODE WCMD_pushd(const WCHAR *args);
-RETURN_CODE WCMD_remove_dir(WCHAR *command);
+RETURN_CODE WCMD_remove_dir(struct word_iterator *);
 RETURN_CODE WCMD_rename(void);
 RETURN_CODE WCMD_setlocal(WCHAR *args);
 RETURN_CODE WCMD_setshow_date(void);
