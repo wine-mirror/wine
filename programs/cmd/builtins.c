@@ -94,6 +94,7 @@ const WCHAR inbuilt[][10] = {
 };
 static const WCHAR externals[][10] = {
         L"ATTRIB",
+        L"CMD",
         L"XCOPY"
 };
 
@@ -1687,33 +1688,45 @@ static int find_in_array(const WCHAR array[][10], size_t sz, const WCHAR *what)
  *	Simple on-line help. Help text is stored in the resource file.
  */
 
-RETURN_CODE WCMD_give_help(WCHAR *args)
+RETURN_CODE WCMD_give_help(struct word_iterator *iterator)
 {
-    WCHAR *help_on = WCMD_parameter(args, 0, NULL, FALSE);
+    const WCHAR *help_on = NULL;
+    RETURN_CODE return_code = ERROR_INVALID_FUNCTION;
+    int i;
 
     /* yes, return code / errorlevel look inverted, but native does it this way */
-    if (!*help_on)
-        WCMD_output_asis(WCMD_LoadMessage(WCMD_ALLHELP));
-    else
+    while (WCMD_word_iterator_advance(iterator))
     {
-        int i;
-        /* Display help message for builtin commands */
+        if (iterator->is_an_option || help_on)
+        {
+            help_on = L"help";
+            break;
+        }
+        help_on = iterator->unquoted_argument;
+    }
+    if (help_on)
+    {
         if ((i = find_in_array(inbuilt, ARRAY_SIZE(inbuilt), help_on)) >= 0)
             WCMD_output_asis(WCMD_LoadMessage(i));
         else if ((i = find_in_array(externals, ARRAY_SIZE(externals), help_on)) >= 0)
         {
-            WCHAR cmd[128];
-            lstrcpyW(cmd, help_on);
-            lstrcatW(cmd, L" /?");
-            WCMD_run_builtin_command(WCMD_HELP, cmd);
+            WCHAR cmd[MAX_PATH];
+            if (wcslen(help_on) + 3 + 1 <= ARRAY_SIZE(cmd))
+            {
+                wcscpy(cmd, help_on);
+                wcscat(cmd, L" /?");
+                WCMD_run_external_full_path(help_on, cmd);
+            }
         }
         else
         {
             WCMD_output(WCMD_LoadMessage(WCMD_NOCMDHELP), help_on);
-            return errorlevel = NO_ERROR;
+            return_code = NO_ERROR;
         }
     }
-    return errorlevel = ERROR_INVALID_FUNCTION;
+    else
+        WCMD_output_asis(WCMD_LoadMessage(WCMD_ALLHELP));
+    return errorlevel = return_code;
 }
 
 /****************************************************************************

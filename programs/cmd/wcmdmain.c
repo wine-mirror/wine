@@ -1861,7 +1861,7 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
     return NO_ERROR;
 }
 
-static RETURN_CODE run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
+RETURN_CODE WCMD_run_external_full_path(const WCHAR *file, WCHAR *full_cmdline)
 {
     HANDLE handle;
     BOOL waitable;
@@ -2341,17 +2341,25 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
 {
     size_t count = wcslen(inbuilt[cmd_index]);
     WCHAR *parms_start = WCMD_skip_leading_spaces(&cmd[count]);
+    struct word_iterator iterator;
     RETURN_CODE return_code;
 
     WCMD_parse(parms_start, quals, param1, param2);
     TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 
-    if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?'))
+    WCMD_word_iterator_init(&iterator, parms_start, STANDARD_DELIMS, WORD_WITH_OPT);
+    while (WCMD_word_iterator_advance(&iterator))
     {
-        /* this is a help request for a builtin program */
-        cmd_index = WCMD_HELP;
-        wcscpy(parms_start, inbuilt[cmd_index]);
+        if (iterator.is_an_option && !wcscmp(iterator.raw_argument, L"/?"))
+        {
+            /* this is a help request for a builtin (or external) program */
+            WCMD_word_iterator_dispose(&iterator);
+            WCMD_word_iterator_init(&iterator, inbuilt[cmd_index], STANDARD_DELIMS, WORD_WITH_OPT);
+            cmd_index = WCMD_HELP;
+            break;
+        }
     }
+    WCMD_word_iterator_reset(&iterator);
 
     switch (cmd_index)
     {
@@ -2385,7 +2393,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_goto();
         break;
     case WCMD_HELP:
-        return_code = WCMD_give_help(parms_start);
+        return_code = WCMD_give_help(&iterator);
         break;
     case WCMD_LABEL:
         return_code = WCMD_label();
@@ -2487,6 +2495,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = RETURN_CODE_CANT_LAUNCH;
         break;
     }
+    WCMD_word_iterator_dispose(&iterator);
     return return_code;
 }
 
@@ -2551,7 +2560,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
                 }
             }
             else
-                return_code = run_external_full_path(sc.path, cmd);
+                return_code = WCMD_run_external_full_path(sc.path, cmd);
         }
 
     }
@@ -2577,7 +2586,7 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
               errorlevel = return_code;
       }
       else
-          return_code = run_external_full_path(sc.path, command);
+          return_code = WCMD_run_external_full_path(sc.path, command);
       return return_code;
   }
 

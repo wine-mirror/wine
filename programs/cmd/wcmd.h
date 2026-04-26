@@ -177,6 +177,8 @@ struct split_command
 
 BOOL WCMD_print_volume_information(const WCHAR *);
 
+struct word_iterator;
+
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_call(WCHAR *command);
 RETURN_CODE WCMD_choice(WCHAR *);
@@ -191,7 +193,7 @@ RETURN_CODE WCMD_endlocal(void);
 void WCMD_enter_paged_mode(const WCHAR *);
 RETURN_CODE WCMD_exit(void);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
-RETURN_CODE WCMD_give_help(WCHAR *args);
+RETURN_CODE WCMD_give_help(struct word_iterator *);
 RETURN_CODE WCMD_goto(void);
 RETURN_CODE WCMD_label(void);
 void WCMD_leave_paged_mode(void);
@@ -253,6 +255,11 @@ static inline void WCMD_word_iterator_dispose(struct word_iterator *iterator)
     free(iterator->raw_argument);
     free(iterator->unquoted_argument);
 }
+static inline void WCMD_word_iterator_reset(struct word_iterator *iterator)
+{
+    iterator->position = 0;
+    iterator->length = 0;
+}
 WCHAR *WCMD_parameter(WCHAR *s, int n, WCHAR **start, BOOL raw);
 WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
@@ -279,6 +286,7 @@ RETURN_CODE node_execute(CMD_NODE *node);
 RETURN_CODE WCMD_call_batch(const WCHAR *, WCHAR *);
 RETURN_CODE WCMD_call_command(WCHAR *command);
 RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd);
+RETURN_CODE WCMD_run_external_full_path(const WCHAR *file, WCHAR *full_cmdline);
 
 BOOL WCMD_find_label(HANDLE h, const WCHAR*, LARGE_INTEGER *pos);
 void WCMD_set_label_end(WCHAR *string);
