@@ -283,7 +283,7 @@ RETURN_CODE WCMD_clear_screen(void)
  *
  */
 
-RETURN_CODE WCMD_choice(WCHAR *args)
+RETURN_CODE WCMD_choice(struct word_iterator *iterator)
 {
     RETURN_CODE return_code = NO_ERROR;
     WCHAR answer[16];
@@ -293,56 +293,42 @@ RETURN_CODE WCMD_choice(WCHAR *args)
     WCHAR *opt_m = NULL;
     WCHAR opt_default = 0;
     DWORD opt_timeout = -1;
-    WCHAR *end;
+    WCHAR *arg, *end;
     DWORD oldmode;
     BOOL have_console;
     BOOL opt_n = FALSE;
     BOOL opt_cs = FALSE;
-    int argno;
 
-    for (argno = 0; ; argno++)
+    /* CHOICE accepts "/M:msg" (with the quote as a valid option) */
+    iterator->flags = WORD_WITH_QUOTED_OPT;
+    while (WCMD_word_iterator_advance(iterator))
     {
-        WCHAR *arg = WCMD_parameter(args, argno, NULL, FALSE);
-        if (!*arg) break;
-
-        if (!wcsicmp(arg, L"/N")) opt_n = TRUE;
-        else if (!wcsicmp(arg, L"/CS")) opt_cs = TRUE;
-        else if (arg[0] == L'/' && wcschr(L"CDTM", towupper(arg[1])))
+        if (!iterator->is_an_option) continue;
+        if (!wcsicmp(iterator->unquoted_argument, L"/N")) opt_n = TRUE;
+        else if (!wcsicmp(iterator->unquoted_argument, L"/CS")) opt_cs = TRUE;
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/C", &arg))
         {
-            WCHAR opt = towupper(arg[1]);
-            if (arg[2] == L'\0')
-            {
-                arg = WCMD_parameter(args, ++argno, NULL, FALSE);
-                if (!*arg)
-                {
-                    return_code = ERROR_INVALID_FUNCTION;
-                    break;
-                }
-            }
-            else if (arg[2] == L':')
-                arg += 3;
-            else
-            {
+            if (opt_c)
                 return_code = ERROR_INVALID_FUNCTION;
-                break;
-            }
-            switch (opt)
-            {
-            case L'C':
-                opt_c = wcsdup(arg);
-                break;
-            case L'M':
-                opt_m = wcsdup(arg);
-                break;
-            case L'D':
-                opt_default = *arg;
-                break;
-            case L'T':
-                opt_timeout = wcstol(arg, &end, 10);
-                if (end == arg || (*end && !iswspace(*end)))
-                    opt_timeout = 10000;
-                break;
-            }
+            else
+                opt_c = xstrdupW(arg);
+        }
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/D", &arg))
+        {
+            opt_default = *arg;
+        }
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/T", &arg))
+        {
+            opt_timeout = wcstol(arg, &end, 10);
+            if (end == arg || *end)
+                opt_timeout = 10000;
+        }
+        else if (WCMD_word_iterator_advance_if_option_arg(iterator, L"/M", &arg))
+        {
+            if (opt_m)
+                return_code = ERROR_INVALID_FUNCTION;
+            else
+                opt_m = xstrdupW(arg);
         }
         else
             return_code = ERROR_INVALID_FUNCTION;

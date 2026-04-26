@@ -243,6 +243,31 @@ BOOL WCMD_word_iterator_advance(struct word_iterator *iterator)
     return iterator->length != 0;
 }
 
+BOOL WCMD_word_iterator_advance_if_option_arg(struct word_iterator *iterator, const WCHAR *option, WCHAR **arg)
+{
+    size_t option_len;
+    BOOL ret;
+
+    if (!iterator->is_an_option) return FALSE;
+    option_len = wcslen(option);
+    /* case /OPT ARG */
+    if (!wcsicmp(iterator->unquoted_argument, option))
+    {
+        ret = WCMD_word_iterator_advance(iterator);
+        if (ret) *arg = iterator->unquoted_argument;
+    }
+    /* case /OPT:ARG */
+    else if (!wcsnicmp(iterator->unquoted_argument, option, option_len) &&
+             iterator->unquoted_argument[option_len] == L':')
+    {
+        *arg = &iterator->unquoted_argument[option_len + 1];
+        ret = TRUE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 /*******************************************************************
  * WCMD_parameter_with_delims
  *
