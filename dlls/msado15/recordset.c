@@ -3448,7 +3448,8 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
 
     if (!recordset->current_row) return S_FALSE;
 
-    if (V_VT(&start) == VT_ERROR && V_ERROR(&start) == DISP_E_PARAMNOTFOUND)
+    if ((V_VT(&start) == VT_ERROR && V_ERROR(&start) == DISP_E_PARAMNOTFOUND) ||
+            (V_VT(&start) == VT_BSTR && !SysStringLen(V_BSTR(&start))))
     {
         if (!recordset->bookmark_hacc)
             VariantInit( &start );

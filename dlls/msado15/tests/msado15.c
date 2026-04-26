@@ -1355,6 +1355,7 @@ static HRESULT WINAPI rowset_find_FindNextRow(IRowsetFind *iface,
     DBBKMARK bookmark_size, const BYTE *bookmark, DBROWOFFSET offset,
     DBROWCOUNT rows, DBCOUNTITEM *obtained, HROW **hrows)
 {
+    struct test_rowset *rowset = impl_from_IRowsetFind( iface );
     struct haccessor *accessor = (struct haccessor *)hacc;
     VARIANT *v = find_value;
 
@@ -1368,6 +1369,10 @@ static HRESULT WINAPI rowset_find_FindNextRow(IRowsetFind *iface,
     ok(V_VT(v) == VT_BSTR, "v = %s\n", wine_dbgstr_variant(v));
     ok(!wcscmp(V_BSTR(v), L"1'1"), "v = %s\n", wine_dbgstr_variant(v));
     ok(compare_op == DBCOMPAREOPS_EQ, "compare_op = %ld\n", compare_op);
+    if (rowset->exact_scroll)
+        ok(bookmark_size == sizeof(int), "bookmark_size = %Id\n", bookmark_size);
+    else
+        ok(!bookmark_size, "bookmark_size = %Id\n", bookmark_size);
     if (!bookmark_size)
     {
         ok(!bookmark, "bookmark != NULL\n");
@@ -2319,6 +2324,24 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_Find( recordset, (BSTR)L"non_existing = 1", 0, adSearchForward, missing );
     ok(hr == MAKE_ADO_HRESULT( adErrItemNotFound ), "got %08lx\n", hr );
     if (exact_scroll) CHECK_CALLED(rowset_GetData);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString( L"" );
+    SET_EXPECT(accessor_AddRefAccessor);
+    SET_EXPECT(rowset_AddRefRows);
+    SET_EXPECT(rowset_ReleaseRows);
+    SET_EXPECT(rowset_find_FindNextRow);
+    if (exact_scroll) SET_EXPECT(rowset_GetData);
+    SET_EXPECT(accessor_ReleaseAccessor);
+    hr = _Recordset_Find( recordset, (BSTR)L"Column1 = 1'1", 0, adSearchForward, v );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(accessor_AddRefAccessor);
+    CHECK_CALLED(rowset_AddRefRows);
+    CHECK_CALLED(rowset_ReleaseRows);
+    CHECK_CALLED(rowset_find_FindNextRow);
+    if (exact_scroll) CHECK_CALLED(rowset_GetData);
+    CHECK_CALLED(accessor_ReleaseAccessor);
+    VariantClear(&v);
 
     for (i = 0; i < ARRAY_SIZE(find_criteria); i++)
     {
