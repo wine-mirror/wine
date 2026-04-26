@@ -514,6 +514,54 @@ static HRESULT int_compare(DBCOMPAREOP compare_op, long long x, long long y)
     }
 }
 
+static HRESULT str_compare(DBCOMPAREOP compare_op, BSTR x, BSTR y)
+{
+    HRESULT hr;
+
+    if (compare_op == DBCOMPAREOPS_BEGINSWITH)
+    {
+        unsigned int x_len = SysStringLen(x);
+        unsigned int y_len = SysStringLen(y);
+
+        if (x_len < y_len) return S_FALSE;
+        hr = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, x, y_len, y, y_len);
+        return hr == CSTR_EQUAL ? S_OK : S_FALSE;
+    }
+
+    if (compare_op == DBCOMPAREOPS_CONTAINS)
+    {
+        unsigned int x_len = SysStringLen(x);
+        unsigned int y_len = SysStringLen(y);
+        int i;
+
+        if (x_len < y_len) return S_FALSE;
+        for (i = 0; i <= x_len - y_len; i++)
+        {
+            hr = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, x + i, y_len, y, y_len);
+            if (hr == CSTR_EQUAL) return S_OK;
+        }
+        return S_FALSE;
+    }
+
+    hr = VarBstrCmp(x, y, LOCALE_USER_DEFAULT, NORM_IGNORECASE);
+    switch (compare_op)
+    {
+    case DBCOMPAREOPS_LT:
+        return hr == VARCMP_LT ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_LE:
+        return hr != VARCMP_GT ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_EQ:
+        return hr == VARCMP_EQ ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_GE:
+        return hr != VARCMP_LT ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_GT:
+        return hr == VARCMP_GT ? S_OK : S_FALSE;
+    case DBCOMPAREOPS_NE:
+        return hr != VARCMP_EQ ? S_OK : S_FALSE;
+    }
+    return S_FALSE;
+}
+
 static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HACCESSOR hacc,
         void *find_value, DBCOMPAREOP compare_op, DBBKMARK bookmark_size, const BYTE *bookmark,
         DBROWOFFSET offset, DBROWCOUNT rows, DBCOUNTITEM *obtained, HROW **hrows)
@@ -596,6 +644,8 @@ static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HAC
     }
     if (!rowset->rowset_loc) bookmark_size = 0;
 
+    compare_op &= ~(DBCOMPAREOPS_CASESENSITIVE | DBCOMPAREOPS_CASEINSENSITIVE);
+
     while (1)
     {
         BYTE *x = data_buf + bindings->obValue;
@@ -636,12 +686,6 @@ static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HAC
             goto done;
         }
 
-        if (bookmark_size)
-        {
-            hr = get_bookmark(rowset, row, &bookmark_size, &bm, tmp);
-            if (FAILED(hr)) goto done;
-        }
-
         if (type == DBTYPE_VARIANT)
         {
             VARIANT *xv = (VARIANT *)x;
@@ -677,6 +721,9 @@ static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HAC
         case DBTYPE_I8:
             hr = int_compare(compare_op, *(long long*)x, *(long long*)y);
             break;
+        case DBTYPE_BSTR:
+            hr = str_compare(compare_op, *(BSTR *)x, *(BSTR *)y);
+            break;
         default:
             FIXME("unhandled data type: %d\n", type);
             hr = E_NOTIMPL;
@@ -684,6 +731,13 @@ static HRESULT WINAPI find_FindNextRow(IRowsetFind *iface, HCHAPTER chapter, HAC
         }
 
         if (hr != S_FALSE) break;
+
+        if (bookmark_size)
+        {
+            hr = get_bookmark(rowset, row, &bookmark_size, &bm, tmp);
+            if (FAILED(hr)) goto done;
+        }
+
         if (bindings->dwMemOwner == DBMEMOWNER_CLIENTOWNED)
             dbtype_free(bindings->wType, data_buf + bindings->obValue);
         free_val = FALSE;
