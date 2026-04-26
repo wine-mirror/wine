@@ -260,6 +260,7 @@ enum saxreader_feature
     UseSchemaLocation            = 0x00002000,
     LexicalHandlerParEntities    = 0x00004000,
     NormalizeLineBreaks          = 0x00008000,
+    NormalizeAttributeValues     = 0x00010000,
     FeatureForceDWord            = 0xffffffff,
 };
 
@@ -276,6 +277,7 @@ static const struct saxreader_feature_pair saxreader_feature_map[] = {
     { LexicalHandlerParEntities, L"http://xml.org/sax/features/lexical-handler/parameter-entities" },
     { NamespacePrefixes, L"http://xml.org/sax/features/namespace-prefixes" },
     { Namespaces, L"http://xml.org/sax/features/namespaces" },
+    { NormalizeAttributeValues, L"normalize-attribute-values" },
     { NormalizeLineBreaks, L"normalize-line-breaks" },
     { ProhibitDTD, L"prohibit-dtd" },
     { SchemaValidation, L"schema-validation" },
@@ -3714,6 +3716,7 @@ static BSTR saxreader_parse_attvalue(struct saxlocator *locator)
     struct string_buffer buffer = { 0 };
     struct text_position position;
     WCHAR quote[2] = { 0 }, ch;
+    bool normalized;
     BSTR name;
 
     if (!(quote[0] = saxreader_is_quote(locator)))
@@ -3754,14 +3757,29 @@ static BSTR saxreader_parse_attvalue(struct saxlocator *locator)
         }
         else
         {
-            if (saxreader_cmp(locator, L"\r\n")
-                    || saxreader_cmp(locator, L"\r")
-                    || saxreader_cmp(locator, L"\n")
-                    || saxreader_cmp(locator, L"\t"))
+            normalized = false;
+            if (locator->saxreader->features & NormalizeAttributeValues)
             {
-                saxreader_string_append(locator, &buffer, L" ", 1);
+                if (saxreader_cmp(locator, L"\r\n")
+                        || saxreader_cmp(locator, L"\r")
+                        || saxreader_cmp(locator, L"\n")
+                        || saxreader_cmp(locator, L"\t"))
+                {
+                    saxreader_string_append(locator, &buffer, L" ", 1);
+                    normalized = true;
+                }
             }
             else
+            {
+                /* Potentially could happen on read */
+                if (saxreader_cmp(locator, L"\r\n"))
+                {
+                    saxreader_string_append(locator, &buffer, L"\n", 1);
+                    normalized = true;
+                }
+            }
+
+            if (!normalized)
             {
                 ch = *saxreader_get_ptr_noread(locator);
                 if (!ch)
@@ -6199,6 +6217,7 @@ static HRESULT WINAPI isaxxmlreader_putFeature(ISAXXMLReader *iface, const WCHAR
          feature == Namespaces ||
          feature == NamespacePrefixes ||
          feature == NormalizeLineBreaks ||
+         feature == NormalizeAttributeValues ||
          feature == ProhibitDTD)
     {
         return set_feature_value(reader, feature, value);
@@ -6406,7 +6425,7 @@ static HRESULT saxreader_create(MSXML_VERSION version, struct saxreader **reader
     object->ISAXXMLReader_iface.lpVtbl = &saxxmlreadervtbl;
     object->ISAXXMLReaderExtension_iface.lpVtbl = &saxxmlreaderextensionvtbl;
     object->refcount = 1;
-    object->features = Namespaces | NamespacePrefixes | NormalizeLineBreaks;
+    object->features = Namespaces | NamespacePrefixes | NormalizeLineBreaks | NormalizeAttributeValues;
     object->version = version;
     object->empty_bstr = SysAllocString(L"");
     object->max_element_depth = version > MSXML3 ? 256 : 5000;

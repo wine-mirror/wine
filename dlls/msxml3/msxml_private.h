@@ -192,6 +192,7 @@ enum domnode_flags
     DOMNODE_READONLY_VALUE = 0x1,
     DOMNODE_IGNORED_WS_AFTER_STARTTAG = 0x2,
     DOMNODE_IGNORED_WS = 0x4,
+    DOMNODE_PARSED_VALUE = 0x8,
 };
 
 typedef struct _select_ns_entry
@@ -214,6 +215,7 @@ struct domdoc_properties
     LONG selectNsStr_len;
     bool XPath;
     bool prohibit_dtd;
+    bool normalize_attribute_values;
     int max_element_depth;
     IUri *uri;
 };
@@ -373,7 +375,7 @@ extern HRESULT node_get_namespaceURI(struct domnode*, BSTR *);
 extern HRESULT node_remove_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_has_childnodes(const struct domnode*,VARIANT_BOOL*);
 extern HRESULT node_get_owner_document(const struct domnode*,IXMLDOMDocument**);
-extern HRESULT node_get_text(const struct domnode*,BSTR*);
+extern HRESULT node_get_text(struct domnode*,BSTR*);
 extern HRESULT node_get_preserved_text(const struct domnode*,BSTR*);
 extern HRESULT node_get_value(struct domnode *node, VARIANT *value);
 extern HRESULT node_select_nodes(struct domnode*,BSTR,IXMLDOMNodeList**);

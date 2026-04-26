@@ -838,11 +838,17 @@ static void test_normalize_attribute_values(void)
 {
     IXMLDOMElement *element;
     IXMLDOMDocument2 *doc;
+    VARIANT_BOOL b;
     VARIANT var;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    b = 0x1;
+    hr = IXMLDOMDocument2_get_preserveWhiteSpace(doc, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(L"<a attr=\"v\r\na\tl\r\" />"), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -852,23 +858,38 @@ static void test_normalize_attribute_values(void)
 
     hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
     VariantClear(&var);
+
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     V_VT(&var) = VT_I2;
     V_I2(&var) = 10;
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"NormalizeAttributeValues"), &var);
-todo_wine {
     ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
     ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
     ok(V_BOOL(&var) == VARIANT_FALSE, "Unexpected property value.\n");
-}
+
     hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
     VariantClear(&var);
+
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     V_VT(&var) = VT_BOOL;
     V_BOOL(&var) = VARIANT_TRUE;
@@ -878,15 +899,55 @@ todo_wine {
     V_VT(&var) = VT_I2;
     V_I2(&var) = 10;
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"NormalizeAttributeValues"), &var);
-todo_wine {
     ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
     ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
     ok(V_BOOL(&var) == VARIANT_TRUE, "Unexpected property value.\n");
-}
+
     hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(V_BSTR(&var), L"v a l "), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
     VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"v\r\na\tl\n\t");
+    hr = IXMLDOMElement_setAttribute(element, _bstr_(L"attr"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(V_BSTR(&var), L"v\r\na\tl\n\t"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(V_BSTR(&var), L"v\r\na\tl\n\t"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_BOOL;
+    V_BOOL(&var) = VARIANT_FALSE;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"NormalizeAttributeValues"), var);
+    ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n\t"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_getAttribute(element, _bstr_(L"attr"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"v\na\tl\n\t"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    hr = IXMLDOMDocument2_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IXMLDOMElement_Release(element);
     IXMLDOMDocument2_Release(doc);

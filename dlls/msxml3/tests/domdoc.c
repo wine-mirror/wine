@@ -16299,7 +16299,6 @@ static void test_attribute_value(void)
 
     hr = IXMLDOMElement_getAttribute(element, _bstr_("attr"), &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(V_BSTR(&value), L"v\na\nl\nu\te"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&value)));
     VariantClear(&value);
 

@@ -1810,12 +1810,24 @@ static HRESULT WINAPI domdoc_validate(IXMLDOMDocument3 *iface, IXMLDOMParseError
     return IXMLDOMDocument3_validateNode(iface, (IXMLDOMNode *)iface, err);
 }
 
+static HRESULT variant_get_bool_property(const VARIANT *v, VARIANT_BOOL *ret)
+{
+    VARIANT dest;
+
+    VariantInit(&dest);
+    if (FAILED(VariantChangeType(&dest, v, 0, VT_BOOL)))
+        return E_FAIL;
+
+    *ret = V_BOOL(&dest);
+    return S_OK;
+}
+
 static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIANT value)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
     struct domdoc_properties *properties = doc->node->properties;
+    VARIANT_BOOL b;
     HRESULT hr;
-    VARIANT v;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_w(p), debugstr_variant(&value));
 
@@ -1982,7 +1994,6 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     else if (wcsicmp(p, L"NewParser") == 0 ||
              wcsicmp(p, L"ResolveExternals") == 0 ||
              wcsicmp(p, L"AllowXsltScript") == 0 ||
-             wcsicmp(p, L"NormalizeAttributeValues") == 0 ||
              wcsicmp(p, L"AllowDocumentFunction") == 0 ||
              wcsicmp(p, L"UseInlineSchema") == 0)
     {
@@ -1993,14 +2004,22 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
 
     if (!wcscmp(p, L"ProhibitDTD"))
     {
-        V_VT(&v) = VT_EMPTY;
-        if (FAILED(hr = VariantChangeType(&v, &value, 0, VT_BOOL)))
-        {
-            WARN("Failed to convert to boolean.\n");
+        if (FAILED(hr = variant_get_bool_property(&value, &b)))
             return hr;
-        }
 
-        properties->prohibit_dtd = V_BOOL(&v) == VARIANT_TRUE;
+        properties->prohibit_dtd = b == VARIANT_TRUE;
+        return S_OK;
+    }
+
+    if (!wcscmp(p, L"NormalizeAttributeValues"))
+    {
+        if (properties->version < MSXML6)
+            return E_FAIL;
+
+        if (FAILED(hr = variant_get_bool_property(&value, &b)))
+            return hr;
+
+        properties->normalize_attribute_values = b == VARIANT_TRUE;
         return S_OK;
     }
 
@@ -2096,6 +2115,16 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     {
         V_VT(var) = VT_I4;
         V_I4(var) = properties->max_element_depth;
+        return S_OK;
+    }
+
+    if (!wcscmp(p, L"NormalizeAttributeValues"))
+    {
+        if (properties->version < MSXML6)
+            return E_FAIL;
+
+        V_VT(var) = VT_BOOL;
+        V_BOOL(var) = properties->normalize_attribute_values ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
     }
 
