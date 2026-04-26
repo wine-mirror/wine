@@ -1984,7 +1984,6 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
              wcsicmp(p, L"AllowXsltScript") == 0 ||
              wcsicmp(p, L"NormalizeAttributeValues") == 0 ||
              wcsicmp(p, L"AllowDocumentFunction") == 0 ||
-             wcsicmp(p, L"MaxElementDepth") == 0 ||
              wcsicmp(p, L"UseInlineSchema") == 0)
     {
         /* Ignore */
@@ -2002,6 +2001,20 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
         }
 
         properties->prohibit_dtd = V_BOOL(&v) == VARIANT_TRUE;
+        return S_OK;
+    }
+
+    if (!wcscmp(p, L"MaxElementDepth"))
+    {
+        int depth;
+
+        if (FAILED(variant_get_int_property(&value, &depth)))
+            return E_FAIL;
+
+        if (depth < 0)
+            return E_INVALIDARG;
+
+        properties->max_element_depth = depth;
         return S_OK;
     }
 
@@ -2076,6 +2089,13 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     {
         V_VT(var) = VT_BOOL;
         V_BOOL(var) = properties->prohibit_dtd ? VARIANT_TRUE : VARIANT_FALSE;
+        return S_OK;
+    }
+
+    if (!wcscmp(p, L"MaxElementDepth"))
+    {
+        V_VT(var) = VT_I4;
+        V_I4(var) = properties->max_element_depth;
         return S_OK;
     }
 

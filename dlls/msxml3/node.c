@@ -1254,6 +1254,7 @@ struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version)
     properties->version = version;
     properties->XPath = (version == MSXML4 || version == MSXML6);
     properties->prohibit_dtd = version == MSXML6;
+    properties->max_element_depth = version > MSXML3 ? 256 : 5000;
 
     /* document uri */
     properties->uri = NULL;
@@ -1290,6 +1291,7 @@ static struct domdoc_properties* domdoc_properties_clone(struct domdoc_propertie
         if (pcopy->schemaCache)
             IXMLDOMSchemaCollection2_AddRef(pcopy->schemaCache);
         pcopy->XPath = properties->XPath;
+        pcopy->max_element_depth = properties->max_element_depth;
         pcopy->selectNsStr_len = properties->selectNsStr_len;
         list_init( &pcopy->selectNsList );
         pcopy->selectNsStr = malloc(len);
@@ -3568,7 +3570,10 @@ struct parse_context
     /* Parsed output */
     struct domnode *root;
 
+    MSXML_VERSION version;
     HRESULT status;
+    int max_depth;
+    int depth;
 };
 
 static void parse_context_node_create(struct parse_context *context, DOMNodeType type,
@@ -3743,8 +3748,13 @@ static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *ifa
 {
     struct parse_context *c = impl_from_ISAXContentHandler(iface);
     struct domnode *element, *attr;
+    int max_depth = c->max_depth;
     int count, length;
     const WCHAR *str;
+
+    ++c->depth;
+    if (max_depth && c->depth > max_depth)
+        return c->version < MSXML6 ? E_ABORT : E_DOM_MAX_ELEMENT_DEPTH;
 
     parse_context_create_text_node(c, NODE_TEXT);
     parse_context_node_create(c, NODE_ELEMENT, qname, qname_len, uri, uri_len, c->root, &element);
@@ -3781,6 +3791,7 @@ static HRESULT WINAPI parse_content_handler_endElement(ISAXContentHandler *iface
 {
     struct parse_context *c = impl_from_ISAXContentHandler(iface);
 
+    --c->depth;
     parse_context_create_text_node(c, NODE_TEXT);
     c->node = c->node->parent;
 
@@ -4032,6 +4043,8 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     c->extension_handler.lpVtbl = &parse_extension_handler_vtbl;
     c->lexical_handler.lpVtbl = &parse_lexical_handler_vtbl;
     c->buffer.status = &c->status;
+    c->max_depth = properties->max_element_depth;
+    c->version = properties->version;
 
     if (FAILED(hr = SAXXMLReader_create(MSXML3, (void **)&unk)))
         return hr;
@@ -4050,6 +4063,9 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     V_UNKNOWN(&v) = (IUnknown *)&c->extension_handler;
     ISAXXMLReader_putProperty(c->reader, L"http://winehq.org/sax/properties/extension-handler", v);
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    ISAXXMLReader_putProperty(c->reader, L"max-element-depth", v);
     ISAXXMLReader_putFeature(c->reader, L"prohibit-dtd", properties->prohibit_dtd ? VARIANT_TRUE : VARIANT_FALSE);
 
     domnode_create(NODE_DOCUMENT, NULL, 0, NULL, 0, NULL, &c->root);
