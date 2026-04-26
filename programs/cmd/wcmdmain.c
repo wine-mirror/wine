@@ -4385,7 +4385,6 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     WCHAR *args;
     size_t len;
     FILE *input;
-    int i;
 
     wcscpy(set, for_ctrl->set);
     handleExpansion(set, TRUE);
@@ -4421,23 +4420,25 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     }
     else
     {
-        for (i = 0; !WCMD_is_break(return_code); i++)
+        struct word_iterator iterator;
+        WCMD_word_iterator_init(&iterator, args, STANDARD_DELIMS, 0);
+        while (!WCMD_is_break(return_code) && WCMD_word_iterator_advance(&iterator))
         {
-            WCHAR *element = WCMD_parameter(args, i, NULL, TRUE);
-            if (!element || !*element) break;
-            if (element[0] == L'"' && match_ending_delim(element)) element++;
             /* Open the file, read line by line and process */
-            TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(element));
-            input = _wfopen(element, L"rt,ccs=unicode");
-            if (!input)
+            TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(iterator.unquoted_argument));
+            if ((input = _wfopen(iterator.unquoted_argument, L"rt,ccs=unicode")))
+            {
+                return_code = for_control_execute_from_FILE(for_ctrl, input, node);
+                fclose(input);
+            }
+            else
             {
                 WCMD_print_error();
-                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), element);
-                return errorlevel = ERROR_INVALID_FUNCTION; /* FOR loop aborts at first failure here */
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), iterator.unquoted_argument);
+                return_code = errorlevel = ERROR_INVALID_FUNCTION; /* FOR loop aborts at first failure here */
             }
-            return_code = for_control_execute_from_FILE(for_ctrl, input, node);
-            fclose(input);
         }
+        WCMD_word_iterator_dispose(&iterator);
     }
 
     return return_code;
