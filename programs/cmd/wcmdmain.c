@@ -2400,7 +2400,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         break;
     case WCMD_MD:
     case WCMD_MKDIR:
-        return_code = WCMD_create_dir(parms_start);
+        return_code = WCMD_create_dir(&iterator);
         break;
     case WCMD_MOVE:
         return_code = WCMD_move();

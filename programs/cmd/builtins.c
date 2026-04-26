@@ -1241,24 +1241,29 @@ static BOOL create_full_path(WCHAR* path)
     return FALSE;
 }
 
-RETURN_CODE WCMD_create_dir(WCHAR *args)
+RETURN_CODE WCMD_create_dir(struct word_iterator *iterator)
 {
-    int   argno = 0;
-    WCHAR *argN = args;
-    RETURN_CODE return_code;
+    RETURN_CODE return_code = NO_ERROR;
+    unsigned int count = 0;
 
-    if (param1[0] == L'\0')
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        if (iterator->is_an_option)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+        count++;
+    }
+    if (!count)
     {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
         return errorlevel = ERROR_INVALID_FUNCTION;
     }
-    return_code = NO_ERROR;
-    /* Loop through all args */
-    for (;;)
+    WCMD_word_iterator_reset(iterator);
+    while (WCMD_word_iterator_advance(iterator))
     {
-        WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE);
-        if (!argN) break;
-        if (!create_full_path(thisArg))
+        if (!create_full_path(iterator->unquoted_argument))
         {
             WCMD_print_error();
             return_code = ERROR_INVALID_FUNCTION;
