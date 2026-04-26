@@ -2194,56 +2194,59 @@ static WCHAR *WCMD_dupenv( const WCHAR *env )
  *  setlocal pushes the environment onto a stack
  *  Save the environment as unicode so we don't screw anything up.
  */
-RETURN_CODE WCMD_setlocal(WCHAR *args)
+RETURN_CODE WCMD_setlocal(struct word_iterator *iterator)
 {
-  WCHAR *env;
-  struct env_stack *env_copy;
-  WCHAR cwd[MAX_PATH];
-  BOOL newdelay;
-  int argno = 0;
-  WCHAR *argN = args;
+    RETURN_CODE return_code = NOERROR;
+    WCHAR *env;
+    struct env_stack *env_copy;
+    WCHAR cwd[MAX_PATH];
+    BOOL newdelay = delayedsubst;
 
-  /* setlocal does nothing outside of batch programs */
-  if (!WCMD_is_in_context(NULL))
-      return NO_ERROR;
-  newdelay = delayedsubst;
-  while (argN)
-  {
-      WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
-      if (!thisArg || !*thisArg) break;
-      if (!wcsicmp(thisArg, L"ENABLEDELAYEDEXPANSION"))
-          newdelay = TRUE;
-      else if (!wcsicmp(thisArg, L"DISABLEDELAYEDEXPANSION"))
-          newdelay = FALSE;
-      /* ENABLE/DISABLE EXTENSIONS ignored for now */
-      else if (!wcsicmp(thisArg, L"ENABLEEXTENSIONS") || !wcsicmp(thisArg, L"DISABLEEXTENSIONS"))
-      {}
-      else
-          return errorlevel = ERROR_INVALID_FUNCTION;
-      TRACE("Setting delayed expansion to %d\n", newdelay);
-  }
+    /* setlocal does nothing outside of batch programs */
+    if (!WCMD_is_in_context(NULL))
+        return NO_ERROR;
 
-  env_copy = xalloc( sizeof(struct env_stack));
+    while (return_code == NOERROR && WCMD_word_iterator_advance(iterator))
+    {
+        if (!iterator->is_an_option)
+        {
+            if (!wcsicmp(iterator->raw_argument, L"ENABLEDELAYEDEXPANSION")) newdelay = TRUE;
+            else if (!wcsicmp(iterator->raw_argument, L"DISABLEDELAYEDEXPANSION")) newdelay = FALSE;
+            /* ENABLE/DISABLE EXTENSIONS ignored for now */
+            else if (!wcsicmp(iterator->raw_argument, L"ENABLEEXTENSIONS") ||
+                     !wcsicmp(iterator->raw_argument, L"DISABLEEXTENSIONS"))
+            {}
+            else return_code = ERROR_INVALID_FUNCTION;
+        }
+        else return_code = ERROR_INVALID_FUNCTION;
+    }
 
-  env = GetEnvironmentStringsW ();
-  env_copy->strings = WCMD_dupenv (env);
-  if (env_copy->strings)
-  {
-    env_copy->context = context;
-    env_copy->next = saved_environment;
-    env_copy->delayedsubst = delayedsubst;
-    delayedsubst = newdelay;
-    saved_environment = env_copy;
+    if (return_code != NOERROR)
+        return errorlevel = return_code;
 
-    /* Save the current drive letter */
-    GetCurrentDirectoryW(MAX_PATH, cwd);
-    env_copy->u.cwd = cwd[0];
-  }
-  else
-    free(env_copy);
+    TRACE("Setting delayed expansion to %d\n", newdelay);
 
-  FreeEnvironmentStringsW (env);
-  return errorlevel = NO_ERROR;
+    env_copy = xalloc( sizeof(struct env_stack));
+
+    env = GetEnvironmentStringsW();
+    env_copy->strings = WCMD_dupenv(env);
+    if (env_copy->strings)
+    {
+        env_copy->context = context;
+        env_copy->next = saved_environment;
+        env_copy->delayedsubst = delayedsubst;
+        delayedsubst = !!newdelay;
+        saved_environment = env_copy;
+
+        /* Save the current drive letter */
+        GetCurrentDirectoryW(MAX_PATH, cwd);
+        env_copy->u.cwd = cwd[0];
+    }
+    else
+        free(env_copy);
+
+    FreeEnvironmentStringsW(env);
+    return errorlevel = NO_ERROR;
 }
 
 /*****************************************************************************

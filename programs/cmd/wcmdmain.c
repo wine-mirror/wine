@@ -2426,7 +2426,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_remove_dir(&iterator);
         break;
     case WCMD_SETLOCAL:
-        return_code = WCMD_setlocal(parms_start);
+        return_code = WCMD_setlocal(&iterator);
         break;
     case WCMD_ENDLOCAL:
         return_code = WCMD_endlocal();
