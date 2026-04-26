@@ -2381,7 +2381,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
 	break;
     case WCMD_DEL:
     case WCMD_ERASE:
-        return_code = WCMD_delete(parms_start);
+        return_code = WCMD_delete(&iterator);
         break;
     case WCMD_DIR:
         return_code = WCMD_directory(parms_start);

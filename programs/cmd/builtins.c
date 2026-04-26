@@ -1541,30 +1541,19 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
  *         non-hidden files
  */
 
-RETURN_CODE WCMD_delete(WCHAR *args)
+RETURN_CODE WCMD_delete(struct word_iterator *iterator)
 {
-    int   argno;
-    WCHAR *argN;
-    BOOL  argsProcessed = FALSE;
+    BOOL argsProcessed = FALSE;
 
     errorlevel = NO_ERROR;
 
-    for (argno = 0; ; argno++)
+    while (WCMD_word_iterator_advance(iterator))
     {
-        WCHAR *thisArg;
-
-        argN = NULL;
-        thisArg = WCMD_parameter(args, argno, &argN, FALSE);
-        if (!argN)
-            break;       /* no more parameters */
-        if (argN[0] == '/')
-            continue;    /* skip options */
+        if (iterator->is_an_option) continue; /* skip options */
 
         argsProcessed = TRUE;
-        if (!WCMD_delete_one(thisArg))
-        {
+        if (!WCMD_delete_one(iterator->unquoted_argument))
             errorlevel = ERROR_INVALID_FUNCTION;
-        }
     }
 
     /* Handle no valid args */
