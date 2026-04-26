@@ -221,7 +221,7 @@ RETURN_CODE WCMD_setshow_time(void);
 RETURN_CODE WCMD_shift(const WCHAR *args);
 RETURN_CODE WCMD_start(WCHAR *args);
 RETURN_CODE WCMD_title(const WCHAR *);
-RETURN_CODE WCMD_type(WCHAR *);
+RETURN_CODE WCMD_type(struct word_iterator *);
 RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 RETURN_CODE WCMD_volume(void);

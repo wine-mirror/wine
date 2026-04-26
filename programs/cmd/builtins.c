@@ -3453,160 +3453,149 @@ RETURN_CODE WCMD_title(const WCHAR *args)
  * Copy a file to standard output.
  */
 
-RETURN_CODE WCMD_type(WCHAR *args)
+RETURN_CODE WCMD_type(struct word_iterator *iterator)
 {
-  RETURN_CODE return_code;
-  int   argno         = 0;
-  WCHAR *argN          = args;
-  BOOL  writeHeaders  = FALSE;
-  HANDLE hOut;
-  BOOL is_ascii_out;
-  DWORD console_mode;
-  DWORD file_share_access_flags;
+    RETURN_CODE return_code;
+    BOOL write_headers;
+    HANDLE hIn, hOut;
+    BOOL is_ascii_out;
+    DWORD console_mode;
+    DWORD file_share_access_flags;
+    unsigned count = 0;
 
-  if (param1[0] == 0x00) {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    return errorlevel = ERROR_INVALID_FUNCTION;
-  }
-
-  if (param2[0] != 0x00) writeHeaders = TRUE;
-
-  return_code = NO_ERROR;
-  hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-  is_ascii_out = GetConsoleMode(hOut, &console_mode);
-  file_share_access_flags = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-
-  /* Loop through all args */
-  while (argN) {
-    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
-
-    HANDLE hIn;
-
-    if (!argN) break;
-
-    WINE_TRACE("type: Processing arg '%s'\n", wine_dbgstr_w(thisArg));
-
-    if (wcspbrk(thisArg, L"*?"))
+    while (WCMD_word_iterator_advance(iterator))
     {
-        BOOL foundOnlyDirectories = TRUE;
-        WIN32_FIND_DATAW fd;
-        HANDLE hff = INVALID_HANDLE_VALUE;
-        WCHAR *fileNamePart;
-        DWORD till_file_name_part_len;
-        DWORD full_path_len;
-        WCHAR srcpath[MAX_PATH];
-
-        hff = FindFirstFileW(thisArg, &fd);
-
-        if (hff == INVALID_HANDLE_VALUE) {
-          DWORD is_dir_error;
-
-          /* Store GetLastError right after CreateFileW so that it isn't overwritten */
-          is_dir_error = GetLastError();
-
-          WCMD_print_error ();
-          WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-
-          /* Invalid directory path; Return immediately */
-          if(is_dir_error == ERROR_PATH_NOT_FOUND) {
+        if (iterator->is_an_option)
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
             return errorlevel = ERROR_INVALID_FUNCTION;
-          }
-
-          continue;
         }
-
-        writeHeaders = TRUE;
-        fileNamePart = NULL;
-        srcpath[0] = L'\0';
-
-        do {
-          if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-              WINE_TRACE("Skipping directories\n");
-              continue;
-          }
-
-          foundOnlyDirectories = FALSE;
-
-          /* Compute fileNamePart and till_file_name_part_len only for the first time */
-          if (fileNamePart == NULL) {
-            fileNamePart = PathFindFileNameW(thisArg);
-            till_file_name_part_len = thisArg - fileNamePart;
-          }
-
-          /* Calculate length till fileNamePart */
-          full_path_len = till_file_name_part_len + wcslen(fd.cFileName);
-
-          if (full_path_len >= MAX_PATH) {
-              return_code = ERROR_INVALID_FUNCTION;
-              WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENAMETOOLONG), thisArg);
-
-              continue;
-          }
-
-          /* Copy to srcpath only if it is empty */
-          if (!srcpath[0]) {
-              StringCbCopyNW(srcpath, MAX_PATH, thisArg, till_file_name_part_len);
-          }
-
-          lstrcpyW(srcpath + till_file_name_part_len, fd.cFileName);
-          srcpath[full_path_len] = L'\0';
-
-          WINE_TRACE("type: Expanded arg to'%s'\n", wine_dbgstr_w(srcpath));
-
-          hIn = CreateFileW(srcpath, GENERIC_READ, file_share_access_flags, NULL, OPEN_EXISTING,
-          FILE_ATTRIBUTE_NORMAL, NULL);
-
-          if (writeHeaders) {
-            WCMD_output_stderr(L"\n%1\n\n\n", srcpath);
-          }
-
-          WCMD_copy_loop(hIn, hOut, is_ascii_out || GetConsoleMode(hIn, &console_mode));
-
-          CloseHandle (hIn);
-
-      } while (FindNextFileW(hff, &fd) != 0);
-
-      FindClose (hff);
-
-      if (foundOnlyDirectories) {
-        return_code = ERROR_INVALID_FUNCTION;
-        WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
-      }
+        count++;
     }
-    else
+    if (!count)
     {
-          hIn = CreateFileW(thisArg, GENERIC_READ, file_share_access_flags, NULL, OPEN_EXISTING,
-          FILE_ATTRIBUTE_NORMAL, NULL);
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    }
+    write_headers = count > 1;
 
-          if (hIn == INVALID_HANDLE_VALUE) {
-            DWORD is_dir_error;
+    return_code = NO_ERROR;
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    is_ascii_out = GetConsoleMode(hOut, &console_mode);
+    file_share_access_flags = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
-            /* Store GetLastError right after CreateFileW so that it isn't overwritten */
-            is_dir_error = GetLastError();
+    WCMD_word_iterator_reset(iterator);
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        WINE_TRACE("type: Processing arg '%s'\n", wine_dbgstr_w(iterator->unquoted_argument));
 
-            return_code = ERROR_INVALID_FUNCTION;
-            WCMD_print_error ();
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
+        if (wcspbrk(iterator->unquoted_argument, L"*?"))
+        {
+            BOOL foundOnlyDirectories = TRUE;
+            WIN32_FIND_DATAW fd;
+            HANDLE hff = INVALID_HANDLE_VALUE;
+            WCHAR *fileNamePart;
+            DWORD till_file_name_part_len;
+            DWORD full_path_len;
+            WCHAR srcpath[MAX_PATH];
 
-            /* Invalid directory path; Return immediately */
-            if(is_dir_error == ERROR_PATH_NOT_FOUND) {
-              return errorlevel = ERROR_INVALID_FUNCTION;
+            hff = FindFirstFileW(iterator->unquoted_argument, &fd);
+
+            if (hff == INVALID_HANDLE_VALUE)
+            {
+                DWORD last_error = GetLastError();
+                WCMD_print_error();
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), iterator->unquoted_argument);
+
+                /* Invalid directory path; Return immediately */
+                if (last_error == ERROR_PATH_NOT_FOUND) break;
+                continue;
             }
 
-            continue;
-          }
+            write_headers = TRUE;
+            fileNamePart = NULL;
+            srcpath[0] = L'\0';
 
-          if (writeHeaders) {
-            WCMD_output_stderr(L"\n%1\n\n\n", thisArg);
-          }
+            do
+            {
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    WINE_TRACE("Skipping directories\n");
+                    continue;
+                }
 
-          WCMD_copy_loop(hIn, hOut, is_ascii_out || GetConsoleMode(hIn, &console_mode));
+                foundOnlyDirectories = FALSE;
 
-          CloseHandle (hIn);
-      }
-  }
+                /* Compute fileNamePart and till_file_name_part_len only for the first time */
+                if (fileNamePart == NULL)
+                {
+                    fileNamePart = PathFindFileNameW(iterator->unquoted_argument);
+                    till_file_name_part_len = iterator->unquoted_argument - fileNamePart;
+                }
 
-  return errorlevel = return_code;
+                /* Calculate length till fileNamePart */
+                full_path_len = till_file_name_part_len + wcslen(fd.cFileName);
+
+                if (full_path_len >= MAX_PATH)
+                {
+                    return_code = ERROR_INVALID_FUNCTION;
+                    WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENAMETOOLONG), iterator->unquoted_argument);
+                    continue;
+                }
+
+                /* Copy to srcpath only if it is empty */
+                if (!srcpath[0])
+                    StringCbCopyNW(srcpath, MAX_PATH, iterator->unquoted_argument, till_file_name_part_len);
+
+                lstrcpyW(srcpath + till_file_name_part_len, fd.cFileName);
+                srcpath[full_path_len] = L'\0';
+
+                WINE_TRACE("type: Expanded arg to'%s'\n", wine_dbgstr_w(srcpath));
+
+                hIn = CreateFileW(srcpath, GENERIC_READ, file_share_access_flags, NULL, OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL, NULL);
+
+                if (write_headers) WCMD_output_stderr(L"\n%1\n\n\n", srcpath);
+
+                WCMD_copy_loop(hIn, hOut, is_ascii_out || GetConsoleMode(hIn, &console_mode));
+
+                CloseHandle(hIn);
+
+            } while (FindNextFileW(hff, &fd) != 0);
+
+            FindClose (hff);
+
+            if (foundOnlyDirectories)
+            {
+                return_code = ERROR_INVALID_FUNCTION;
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), iterator->unquoted_argument);
+            }
+        }
+        else
+        {
+            hIn = CreateFileW(iterator->unquoted_argument, GENERIC_READ, file_share_access_flags,
+                              NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+            if (hIn == INVALID_HANDLE_VALUE)
+            {
+                DWORD last_error = GetLastError();
+
+                return_code = ERROR_INVALID_FUNCTION;
+                WCMD_print_error();
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), iterator->unquoted_argument);
+
+                /* Invalid directory path; Return immediately */
+                if (last_error == ERROR_PATH_NOT_FOUND) break;
+                continue;
+            }
+
+            if (write_headers) WCMD_output_stderr(L"\n%1\n\n\n", iterator->unquoted_argument);
+            WCMD_copy_loop(hIn, hOut, is_ascii_out || GetConsoleMode(hIn, &console_mode));
+
+            CloseHandle(hIn);
+        }
+    }
+    return errorlevel = return_code;
 }
 
 static RETURN_CODE page_file(HANDLE h, ULONG64 file_length, BOOL close_previous)

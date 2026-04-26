@@ -2447,7 +2447,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_title(parms_start);
         break;
     case WCMD_TYPE:
-        return_code = WCMD_type(parms_start);
+        return_code = WCMD_type(&iterator);
         break;
     case WCMD_VER:
         return_code = WCMD_version();
