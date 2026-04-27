@@ -11256,6 +11256,41 @@ static void test_media_session_scrubbing(void)
     PropVariantClear(&propvar);
     CHECK_CALLED(test_transform_ProcessMessage_BEGIN_STREAMING);
 
+    /* Test that during a default start (i.e. rate == 1.0), preroll is called on the sink */
+    SET_EXPECT(test_media_sink_GetPresentationClock);
+    SET_EXPECT(test_media_sink_SetPresentationClock);
+    SET_EXPECT(test_transform_ProcessMessage_START_OF_STREAM);
+    SET_EXPECT(test_media_sink_preroll_NotifyPreroll);
+
+    propvar.vt = VT_I8; /* hVal will be zero */
+    hr = IMFMediaSession_Start(session, NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    SET_EXPECT(test_media_sink_GetStreamSinkCount);
+    hr = WaitForSingleObject(media_sink->preroll_event, 100);
+    todo_wine
+    ok(hr == WAIT_OBJECT_0, "Unexpected hr %#lx.\n", hr);
+
+    todo_wine
+    CHECK_CALLED(test_media_sink_preroll_NotifyPreroll);
+
+    hr = wait_media_event_until_blocking(session, callback, MESessionStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    SET_EXPECT(test_transform_ProcessMessage_FLUSH);
+    SET_EXPECT(test_stream_sink_Flush);
+    hr = IMFMediaSession_Stop(session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = wait_media_event_until_blocking(session, callback, MESessionStopped, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    /* The transform flush call can happen after receiving the MESessionStopped event */
+    hr = WaitForSingleObject(transform->flush_event, 1000);
+    ok(hr == WAIT_OBJECT_0, "Unexpected hr %#lx.\n", hr);
+
     /* Test that when rate is zero (i.e. we're scrubbing), no preroll occurs */
     SET_EXPECT(test_media_sink_clock_sink_OnClockSetRate);
     SET_EXPECT(test_media_sink_GetPresentationClock);
