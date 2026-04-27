@@ -4574,6 +4574,7 @@ static void test_sample_grabber(void)
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Failed to get sink flags, hr %#lx.\n", hr);
     ok(flags & MEDIASINK_FIXED_STREAMS, "Unexpected flags %#lx.\n", flags);
+    ok(!(flags & MEDIASINK_CAN_PREROLL), "Unexpected flags %#lx.\n", flags);
 
     hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
     ok(hr == S_OK, "Failed to get stream count, hr %#lx.\n", hr);
