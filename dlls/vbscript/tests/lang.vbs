@@ -3228,6 +3228,24 @@ RecurseForever
 Call ok(Err.Number = 28, "infinite recursion: err.number = " & Err.Number)
 On Error GoTo 0
 
+' Regression: early-return paths in exec_script must not leak
+' ctx->call_depth, otherwise a hot loop of arity-mismatch calls under
+' OERN saturates the limit and breaks every later call.
+Sub callDepthLeakProbe(a, b, c)
+End Sub
+Sub callDepthLeakSink()
+End Sub
+Dim callDepthLeakI
+On Error Resume Next
+For callDepthLeakI = 1 To 1100
+    Err.Clear
+    callDepthLeakProbe
+Next
+Err.Clear
+callDepthLeakSink
+Call ok(Err.Number = 0, "call_depth leak after arity-mismatch flood: err.number = " & Err.Number)
+On Error GoTo 0
+
 function f2(x,y)
 end function
 

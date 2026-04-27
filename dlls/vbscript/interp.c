@@ -2722,11 +2722,6 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     vbsop_t op;
     HRESULT hres = S_OK;
 
-    if(!extern_caller && ctx->call_depth++ >= max_call_depth) {
-        ctx->call_depth--;
-        return MAKE_VBSERROR(VBSE_OUT_OF_STACK);
-    }
-
     exec.code = func->code_ctx;
     exec.caller = ctx->caller_exec;
     ctx->caller_exec = NULL;
@@ -2785,6 +2780,15 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     if(!exec.stack) {
         release_exec(&exec);
         return E_OUTOFMEMORY;
+    }
+
+    /* Recursion guard. Counted only once setup has succeeded so the
+     * single decrement at the bottom always pairs with this. Adding new
+     * early returns above this point can't desync the counter. */
+    if(!extern_caller && ctx->call_depth++ >= max_call_depth) {
+        ctx->call_depth--;
+        release_exec(&exec);
+        return MAKE_VBSERROR(VBSE_OUT_OF_STACK);
     }
 
     if(extern_caller)
