@@ -3944,7 +3944,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -3960,7 +3959,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -3978,7 +3976,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -4153,7 +4150,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileW(device, path, NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -4166,7 +4162,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileA(device, get_str_a(path), NULL, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -4270,7 +4265,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromResourceW(device, resource_module,
                 test_resource_name, NULL, NULL, &resource, &hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
@@ -4284,7 +4278,6 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromResourceA(device, resource_module,
                 get_str_a(test_resource_name), NULL, NULL, &resource, &hr2);
-        todo_wine_if (i == 30)
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX11_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
