@@ -173,22 +173,27 @@ static HRESULT update_current_row( struct recordset *recordset )
     return _Recordset_Update( &recordset->Recordset_iface, missing, missing);
 }
 
-static void cache_release( struct recordset *recordset )
+static int cache_release( struct recordset *recordset )
 {
+    int off;
+
     if (cache_is_empty( recordset ))
     {
         if (recordset->current_row)
             IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
         recordset->current_row = DB_NULL_HROW;
-        return;
+        return recordset->cache.dir + (recordset->cache.dir < 0);
     }
 
+    off = recordset->cache.dir * recordset->cache.fetched;
+    if (recordset->cache.dir < 0) off++;
     IRowset_ReleaseRows( recordset->row_set, recordset->cache.fetched,
             recordset->cache.rows, NULL, NULL, NULL );
     recordset->cache.fetched = 0;
     recordset->cache.dir = 0;
     recordset->cache.pos = 0;
     recordset->current_row = DB_NULL_HROW;
+    return off;
 }
 
 static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *bookmark )
@@ -3434,7 +3439,7 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
     DBCOMPAREOP op;
     HACCESSOR hacc;
     BSTR col, val;
-    int int_buf;
+    int int_buf, off;
     HRESULT hr;
     VARIANT v;
 
@@ -3496,20 +3501,20 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
     {
         row = recordset->current_row;
     }
-    cache_release( recordset );
     recordset->current_row = row;
+    off = cache_release( recordset );
+    if (search_direction == adSearchBackward) off--;
+    if (!bm_len) skip_records -= off;
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = val;
-    if (!bm_len && search_direction == adSearchForward)
-        skip_records--;
     hr = IRowsetFind_FindNextRow( recordset->rowset_find, DB_NULL_HCHAPTER, hacc, &v, op,
             bm_len, bm_data, skip_records, search_direction, &obtained, &rows );
     SysFreeString( val );
     release_bookmark_data( &start );
     if (free_bookmark) VariantClear( &start );
     IAccessor_ReleaseAccessor( recordset->accessor, hacc, NULL );
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr) || !obtained) return hr;
 
     if (recordset->bookmark_hacc)
     {
@@ -3526,6 +3531,7 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
     if (recordset->current_row)
         IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
     recordset->current_row = row;
+    recordset->cache.dir = (search_direction == adSearchForward ? 1 : -1);
     return S_OK;
 }
 
