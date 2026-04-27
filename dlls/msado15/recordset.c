@@ -3446,12 +3446,30 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
     TRACE( "%p, %s, %ld, %d, %s\n", iface, debugstr_w(criteria), skip_records, search_direction,
            debugstr_variant(&start) );
 
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (!criteria) return MAKE_ADO_HRESULT( adErrInvalidArgument );
     if (search_direction != adSearchForward && search_direction != adSearchBackward)
         return MAKE_ADO_HRESULT( adErrInvalidArgument );
     if (!recordset->rowset_find) return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    else if (recordset->is_eof && search_direction == adSearchBackward)
+    {
+        hr = _Recordset_MoveLast(iface);
+        if (FAILED(hr)) return hr;
+    }
+    else if (recordset->is_bof && search_direction == adSearchForward)
+    {
+        hr = _Recordset_MoveFirst(iface);
+        if (FAILED(hr)) return hr;
+    }
     if (!recordset->current_row) return S_FALSE;
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
 
     if ((V_VT(&start) == VT_ERROR && V_ERROR(&start) == DISP_E_PARAMNOTFOUND) ||
             (V_VT(&start) == VT_BSTR && !SysStringLen(V_BSTR(&start))))
