@@ -9,5 +9,5 @@ SOURCES = \
 	msado15_tlb.idl \
 	recordset.c \
 	rowset.c \
-	rowsetex.c \
+	server_cursor.c \
 	stream.c

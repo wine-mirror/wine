@@ -359,6 +359,10 @@ static void test_Recordset(void)
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
 
+    hr = _Recordset_get_CursorLocation(recordset, &location);
+    ok(hr == S_OK, "hr = %08lx\n", hr);
+    todo_wine ok(location == adUseClient, "got %d\n", location);
+
     hr = _Recordset_get_LockType( recordset, &lock_type );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );

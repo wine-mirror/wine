@@ -27,7 +27,7 @@ HRESULT Recordset_create( void ** );
 HRESULT Stream_create( void ** );
 
 HRESULT create_mem_rowset( int, const DBCOLUMNINFO *, IUnknown ** );
-HRESULT create_rowsetex( IUnknown *, IUnknown ** );
+HRESULT create_server_cursor( IUnknown *, IUnknown ** );
 
 typedef enum tid_t {
     ADORecordsetConstruction_tid,

@@ -781,7 +781,7 @@ static const struct IRowsetFindVtbl find_vtbl =
     find_FindNextRow
 };
 
-HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
+HRESULT create_server_cursor(IUnknown *rowset, IUnknown **ret)
 {
     struct rowsetex *rowsetex;
     HRESULT hr;

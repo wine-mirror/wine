@@ -2841,10 +2841,22 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr) || !rowset)
         return hr;
 
-    hr = create_rowsetex(rowset, &rowsetex);
-    IUnknown_Release(rowset);
-    if (FAILED(hr))
-        return hr;
+    if (recordset->cursor_location == adUseServer)
+    {
+        hr = create_server_cursor(rowset, &rowsetex);
+        IUnknown_Release(rowset);
+        if (FAILED(hr))
+            return hr;
+    }
+    else if (recordset->cursor_location == adUseClient)
+    {
+        FIXME("unsupported adUseClient cursor location\n");
+        rowsetex = rowset;
+    }
+    else
+    {
+        rowsetex = rowset;
+    }
 
     hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowsetex);
     IUnknown_Release(rowsetex);
