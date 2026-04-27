@@ -772,6 +772,55 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
 
 
 /***********************************************************************
+ *           set_gs_base
+ *
+ * Set the gs.base MSR to point at the given TEB.
+ *
+ * On bare-metal Linux, arch_prctl(ARCH_SET_GS) is the canonical path
+ * and always works. On user-mode Linux kernel emulators - notably
+ * gVisor's runsc sentry - arch_prctl(ARCH_SET_GS) either returns
+ * failure or lies (returns success but never writes the MSR), leaving
+ * gs.base at whatever the emulator initially chose (often a
+ * glibc-private address). Under those conditions Wine's PE ntdll hits
+ * NULL-pointer faults every time it reads NtCurrentTeb() via
+ * `%gs:0x30`.
+ *
+ * Try arch_prctl first and VERIFY the write took effect by reading
+ * `%gs:0x30` (which, on a correctly-initialised TEB, equals teb
+ * because teb->NtTib.Self is set to &teb->Tib and Tib is at offset 0
+ * inside TEB). If either the syscall failed or the verification
+ * mismatched, fall through to wrgsbase - a direct CPU instruction,
+ * not a syscall, that cannot be intercepted by an emulator.
+ *
+ * This layout keeps the pre-patch behaviour on every host that
+ * implements arch_prctl correctly, INCLUDING hosts that disable
+ * CR4.FSGSBASE. On those hosts arch_prctl works, verification
+ * passes, and the wrgsbase fallback is never executed, so there is
+ * no risk of an unconditional SIGILL from wrgsbase on a host where
+ * FSGSBASE is not enabled. The wrgsbase fallback is only reached
+ * when arch_prctl has already been proven broken, which in practice
+ * means a user-mode Linux kernel that does expose the FSGSBASE
+ * feature to user space (such as gVisor).
+ */
+static inline void set_gs_base( TEB *teb )
+{
+    ULONG_PTR probe = 0;
+
+    if (arch_prctl( ARCH_SET_GS, teb ) == 0)
+    {
+        __asm__ volatile( "movq %%gs:0x30, %0" : "=r"(probe) );
+        if (probe == (ULONG_PTR)teb) return;
+    }
+    /* arch_prctl failed or silently discarded the write - fall back
+     * to the wrgsbase instruction. This is only reached on broken
+     * hosts; on bare-metal Linux the early return above is always
+     * taken and wrgsbase is never executed, so hosts with
+     * CR4.FSGSBASE cleared are unaffected. */
+    __asm__ volatile( "wrgsbase %0" :: "r"((ULONG_PTR)teb) );
+}
+
+
+/***********************************************************************
  *           init_handler
  */
 static inline ucontext_t *init_handler( void *sigcontext )
@@ -779,9 +828,24 @@ static inline ucontext_t *init_handler( void *sigcontext )
     clear_alignment_flag();
 #ifdef __linux__
     {
-        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_teb()->GdiTebBatch;
+        TEB *teb = get_current_teb();
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
         thread_data->syscall_dispatch = 0; /* SYSCALL_DISPATCH_FILTER_ALLOW */
         if (fs32_sel) arch_prctl( ARCH_SET_FS, thread_data->pthread_teb );
+        /* Under gVisor's runsc sentry (and other user-mode Linux
+         * kernels), the initial arch_prctl(ARCH_SET_GS) call in
+         * signal_start_thread_c may have been silently ignored,
+         * leaving gs.base set to a non-TEB value. If the first fault
+         * on a thread is delivered via this handler while gs.base is
+         * still wrong, re-issue the set (via wrgsbase) here so the
+         * resumed user code sees the correct TEB via %gs:0x30. On
+         * bare-metal Linux arch_prctl works and this is a no-op. */
+        {
+            ULONG_PTR gs_self = 0;
+            __asm__ volatile("mov %%gs:0x30, %0" : "=r"(gs_self));
+            if (gs_self != (ULONG_PTR)teb)
+                set_gs_base( teb );
+        }
     }
 #elif defined __APPLE__
     {
@@ -2249,7 +2313,7 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
     TRACE( "gsbase %016lx teb %p at instr %p, fixing up\n", cur_gsbase, teb, instr );
 
 #ifdef __linux__
-    arch_prctl( ARCH_SET_GS, teb );
+    set_gs_base( teb );
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2822,7 +2886,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     thread_data->instrumentation_callback = &instrumentation_callback;
 
 #if defined __linux__
-    arch_prctl( ARCH_SET_GS, teb );
+    set_gs_base( teb );
     if (fs32_sel)
     {
         arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
