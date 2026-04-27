@@ -2934,7 +2934,7 @@ static HRESULT WINAPI recordset_Update( _Recordset *iface, VARIANT fields, VARIA
     status = NULL;
     hr = IRowsetUpdate_Update( recordset->rowset_update, 0, 1, &recordset->current_row, NULL, &row, &status );
     if (FAILED(hr)) return hr;
-    if (status[0] == DBROWSTATUS_E_CANCELED) FIXME("status = DBROWSTATUS_E_CANCELED\n");
+    if (status && status[0] == DBROWSTATUS_E_CANCELED) FIXME("status = DBROWSTATUS_E_CANCELED\n");
     CoTaskMemFree( row );
     CoTaskMemFree( status );
 
