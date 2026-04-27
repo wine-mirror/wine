@@ -159,19 +159,19 @@ HRESULT stream_wrapper_create(const void *buffer, DWORD size, ISequentialStream 
     return S_OK;
 }
 
-enum attdef_type
+enum attribute_type
 {
-    ATTDEF_TYPE_INVALID = 0,
-    ATTDEF_TYPE_CDATA,
-    ATTDEF_TYPE_ID,
-    ATTDEF_TYPE_IDREF,
-    ATTDEF_TYPE_IDREFS,
-    ATTDEF_TYPE_ENTITY,
-    ATTDEF_TYPE_ENTITIES,
-    ATTDEF_TYPE_NMTOKEN,
-    ATTDEF_TYPE_NMTOKENS,
-    ATTDEF_TYPE_NOTATION,
-    ATTDEF_TYPE_ENUMERATION,
+    ATTR_TYPE_INVALID = 0,
+    ATTR_TYPE_CDATA,
+    ATTR_TYPE_ID,
+    ATTR_TYPE_IDREF,
+    ATTR_TYPE_IDREFS,
+    ATTR_TYPE_ENTITY,
+    ATTR_TYPE_ENTITIES,
+    ATTR_TYPE_NMTOKEN,
+    ATTR_TYPE_NMTOKENS,
+    ATTR_TYPE_NOTATION,
+    ATTR_TYPE_ENUMERATION,
 };
 
 enum attdefault_value_type
@@ -192,10 +192,18 @@ struct attribute
     bool nsdef;
 };
 
+struct enumeration
+{
+    BSTR *values;
+    size_t count;
+    size_t capacity;
+};
+
 struct attlist_attr
 {
     struct parsed_name name;
-    BSTR type;
+    enum attribute_type type;
+    struct enumeration valuelist;
     BSTR valuetype;
     BSTR value;
 };
@@ -857,6 +865,7 @@ struct saxlocator
     {
         struct list attr_decls;
         struct list entities;
+        BSTR typenames[ATTR_TYPE_NMTOKENS + 1];
     } dtd;
 
     bool collect;
@@ -956,6 +965,21 @@ static BSTR saxreader_alloc_stringlen(struct saxlocator *locator, const WCHAR *s
         saxreader_set_error(locator, E_OUTOFMEMORY);
 
     return ret;
+}
+
+static void saxreader_ensure_dtd_typenames(struct saxlocator *locator)
+{
+    if (locator->dtd.typenames[ATTR_TYPE_CDATA])
+        return;
+
+    locator->dtd.typenames[ATTR_TYPE_CDATA] = saxreader_alloc_string(locator, L"CDATA");
+    locator->dtd.typenames[ATTR_TYPE_ID] = saxreader_alloc_string(locator, L"ID");
+    locator->dtd.typenames[ATTR_TYPE_IDREF] = saxreader_alloc_string(locator, L"IDREF");
+    locator->dtd.typenames[ATTR_TYPE_IDREFS] = saxreader_alloc_string(locator, L"IDREFS");
+    locator->dtd.typenames[ATTR_TYPE_ENTITY] = saxreader_alloc_string(locator, L"ENTITY");
+    locator->dtd.typenames[ATTR_TYPE_ENTITIES] = saxreader_alloc_string(locator, L"ENTITIES");
+    locator->dtd.typenames[ATTR_TYPE_NMTOKEN] = saxreader_alloc_string(locator, L"NMTOKEN");
+    locator->dtd.typenames[ATTR_TYPE_NMTOKENS] = saxreader_alloc_string(locator, L"NMTOKENS");
 }
 
 static bool is_namespaces_enabled(const struct saxreader *reader)
@@ -1120,7 +1144,6 @@ static const struct attribute *saxlocator_get_attribute_by_qname(const struct sa
 
     return NULL;
 }
-
 
 static HRESULT WINAPI ivbsaxattributes_getURI(IVBSAXAttributes *iface, int index, BSTR *uri)
 {
@@ -1742,6 +1765,12 @@ static ULONG WINAPI isaxlocator_AddRef(ISAXLocator* iface)
     return refcount;
 }
 
+static void saxreader_clear_dtd(struct saxlocator *locator)
+{
+    for (int i = 0; i < ARRAYSIZE(locator->dtd.typenames); ++i)
+        SysFreeString(locator->dtd.typenames[i]);
+}
+
 static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
 {
     struct saxlocator *locator = impl_from_ISAXLocator(iface);
@@ -1759,6 +1788,8 @@ static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
 
         saxreader_clear_attributes(locator);
         free(locator->attributes.entries);
+
+        saxreader_clear_dtd(locator);
 
         /* element stack */
         LIST_FOR_EACH_ENTRY_SAFE(element, element2, &locator->elements, element_entry, entry)
@@ -2724,9 +2755,31 @@ static void saxlocator_internal_entitydecl(struct saxlocator *locator, BSTR name
     locator->status = saxlocator_callback_result(locator, hr);
 }
 
+static BSTR saxreader_attribute_type_stringify(struct saxlocator *locator, struct attlist_attr *attr)
+{
+    struct string_buffer buffer = { 0 };
+    bool separate = false;
+
+    if (attr->type == ATTR_TYPE_NOTATION)
+        saxreader_string_append(locator, &buffer, L"NOTATION ", 9);
+
+    saxreader_string_append(locator, &buffer, L"(", 1);
+    for (size_t i = 0; i < attr->valuelist.count; ++i)
+    {
+        if (separate)
+            saxreader_string_append(locator, &buffer, L"|", 1);
+        saxreader_string_append(locator, &buffer, attr->valuelist.values[i], SysStringLen(attr->valuelist.values[i]));
+        separate = true;
+    }
+    saxreader_string_append(locator, &buffer, L")", 1);
+
+    return saxreader_string_to_bstr(locator, &buffer);
+}
+
 static void saxlocator_attribute_decl(struct saxlocator *locator, struct attlist_decl *decl)
 {
     struct saxdeclhandler_iface *handler = saxreader_get_declhandler(locator->saxreader);
+    BSTR typename, tofree;
     HRESULT hr;
 
     if (locator->status != S_OK)
@@ -2738,19 +2791,36 @@ static void saxlocator_attribute_decl(struct saxlocator *locator, struct attlist
     if (!saxreader_has_handler(locator, SAXDeclHandler))
         return;
 
+    saxreader_ensure_dtd_typenames(locator);
+    if (locator->status != S_OK)
+        return;
+
     for (size_t i = 0; i < decl->count && locator->status == S_OK; ++i)
     {
+        tofree = NULL;
+
+        if (decl->attributes[i].type == ATTR_TYPE_NOTATION
+                || decl->attributes[i].type == ATTR_TYPE_ENUMERATION)
+        {
+            typename = tofree = saxreader_attribute_type_stringify(locator, &decl->attributes[i]);
+        }
+        else
+        {
+            typename = locator->dtd.typenames[decl->attributes[i].type];
+        }
+
         if (locator->vbInterface)
             hr = IVBSAXDeclHandler_attributeDecl(handler->vbhandler, &decl->name,
-                    &decl->attributes[i].name.qname, &decl->attributes[i].type,
+                    &decl->attributes[i].name.qname, &typename,
                     &decl->attributes[i].valuetype, &decl->attributes[i].value);
         else
             hr = ISAXDeclHandler_attributeDecl(handler->handler, decl->name, SysStringLen(decl->name),
                     decl->attributes[i].name.qname, SysStringLen(decl->attributes[i].name.qname),
-                    decl->attributes[i].type, SysStringLen(decl->attributes[i].type),
+                    typename, SysStringLen(typename),
                     decl->attributes[i].valuetype, SysStringLen(decl->attributes[i].valuetype),
                     decl->attributes[i].value, SysStringLen(decl->attributes[i].value));
 
+        SysFreeString(tofree);
         locator->status = saxlocator_callback_result(locator, hr);
     }
 }
@@ -5010,11 +5080,41 @@ static void saxreader_parse_entitydecl(struct saxlocator *locator)
     SysFreeString(notation);
 }
 
-/* [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' */
-static BSTR saxreader_parse_notation_type(struct saxlocator *locator)
+static void saxreader_discard_string(BSTR *str)
 {
-    struct string_buffer buffer = { 0 };
-    BSTR name, value = NULL;
+    SysFreeString(*str);
+    *str = NULL;
+}
+
+static void saxreader_append_enum_item(struct saxlocator *locator, struct enumeration *list,
+        BSTR *value)
+{
+    if (locator->status != S_OK)
+        return saxreader_discard_string(value);
+
+    if (!saxreader_array_reserve(locator, (void **)&list->values, &list->capacity, list->count + 1,
+            sizeof(*list->values)))
+    {
+        return;
+    }
+
+    list->values[list->count++] = *value;
+    *value = NULL;
+}
+
+static void saxreader_clear_enumeration(struct enumeration *list)
+{
+    for (size_t i = 0; i < list->count; ++i)
+        SysFreeString(list->values[i]);
+    free(list->values);
+}
+
+/* [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' */
+static enum attribute_type saxreader_parse_notation_type(struct saxlocator *locator,
+        struct enumeration *list)
+{
+    bool done = false;
+    BSTR name;
 
     /* Skip NOTATION */
     saxreader_skip(locator, 8);
@@ -5022,60 +5122,57 @@ static BSTR saxreader_parse_notation_type(struct saxlocator *locator)
     if (!saxreader_cmp(locator, L"("))
     {
         saxreader_set_error(locator, E_SAX_MISSING_PAREN);
-        return NULL;
+        return ATTR_TYPE_INVALID;
     }
 
-    saxreader_string_append(locator, &buffer, L"NOTATION (", 10);
-    while (locator->status == S_OK && !value)
+    while (locator->status == S_OK && !done)
     {
         saxreader_skipspaces(locator);
         saxreader_parse_name_strict(locator, &name);
-        saxreader_string_append_bstr(locator, &buffer, &name);
+        saxreader_append_enum_item(locator, list, &name);
         saxreader_skipspaces(locator);
 
         if (saxreader_cmp(locator, L")"))
-        {
-            saxreader_string_append(locator, &buffer, L")", 1);
-            value = saxreader_string_to_bstr(locator, &buffer);
-        }
-        else if (saxreader_cmp(locator, L"|"))
-            saxreader_string_append(locator, &buffer, L"|", 1);
-        else
+            done = true;
+        else if (!saxreader_cmp(locator, L"|"))
             saxreader_set_error(locator, E_SAX_BADCHARINENUMERATION);
     }
 
-    return value;
+    if (locator->status == S_OK)
+        return ATTR_TYPE_NOTATION;
+
+    saxreader_clear_enumeration(list);
+    return ATTR_TYPE_INVALID;
 }
 
 /* [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')' */
-static BSTR saxreader_parse_enumeration_type(struct saxlocator *locator)
+static enum attribute_type saxreader_parse_enumeration_type(struct saxlocator *locator,
+        struct enumeration *list)
 {
-    struct string_buffer buffer = { 0 };
-    BSTR token, value = NULL;
+    bool done = false;
+    BSTR token;
 
     /* Skip '(' */
     saxreader_skip(locator, 1);
-    saxreader_string_append(locator, &buffer, L"(", 1);
 
-    while (locator->status == S_OK && !value)
+    while (locator->status == S_OK && !done)
     {
         saxreader_skipspaces(locator);
         saxreader_parse_nmtoken(locator, &token);
-        saxreader_string_append_bstr(locator, &buffer, &token);
+        saxreader_append_enum_item(locator, list, &token);
         saxreader_skipspaces(locator);
 
         if (saxreader_cmp(locator, L")"))
-        {
-            saxreader_string_append(locator, &buffer, L")", 1);
-            value = saxreader_string_to_bstr(locator, &buffer);
-        }
-        else if (saxreader_cmp(locator, L"|"))
-            saxreader_string_append(locator, &buffer, L"|", 1);
-        else
+            done = true;
+        else if (!saxreader_cmp(locator, L"|"))
             saxreader_set_error(locator, E_SAX_BADCHARINENUMERATION);
     }
 
-    return value;
+    if (locator->status == S_OK)
+        return ATTR_TYPE_ENUMERATION;
+
+    saxreader_clear_enumeration(list);
+    return ATTR_TYPE_INVALID;
 }
 
 /* [54] AttType ::= StringType | TokenizedType | EnumeratedType
@@ -5083,34 +5180,33 @@ static BSTR saxreader_parse_enumeration_type(struct saxlocator *locator)
    [56] TokenizedType ::= 'ID' | 'IDREF' | 'IDREFS' | 'ENTITY'
            | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
    [57] EnumeratedType ::= NotationType | Enumeration */
-static BSTR saxreader_parse_atttype(struct saxlocator *locator)
+static enum attribute_type saxreader_parse_atttype(struct saxlocator *locator,
+        struct enumeration *list)
 {
-    /* TODO: this could reuse strings */
-
     if (saxreader_cmp(locator, L"CDATA"))
-        return saxreader_alloc_string(locator, L"CDATA");
+        return ATTR_TYPE_CDATA;
     if (saxreader_cmp(locator, L"IDREFS"))
-        return saxreader_alloc_string(locator, L"IDREFS");
+        return ATTR_TYPE_IDREFS;
     if (saxreader_cmp(locator, L"IDREF"))
-        return saxreader_alloc_string(locator, L"IDREF");
+        return ATTR_TYPE_IDREF;
     if (saxreader_cmp(locator, L"ID"))
-        return saxreader_alloc_string(locator, L"ID");
+        return ATTR_TYPE_ID;
     if (saxreader_cmp(locator, L"ENTITY"))
-        return saxreader_alloc_string(locator, L"ENTITY");
+        return ATTR_TYPE_ENTITY;
     if (saxreader_cmp(locator, L"ENTITIES"))
-        return saxreader_alloc_string(locator, L"ENTITIES");
+        return ATTR_TYPE_ENTITIES;
     if (saxreader_cmp(locator, L"NMTOKENS"))
-        return saxreader_alloc_string(locator, L"NMTOKENS");
+        return ATTR_TYPE_NMTOKENS;
     if (saxreader_cmp(locator, L"NMTOKEN"))
-        return saxreader_alloc_string(locator, L"NMTOKEN");
+        return ATTR_TYPE_NMTOKEN;
 
     if (saxreader_peek(locator, L"NOTATION", 8))
-        return saxreader_parse_notation_type(locator);
+        return saxreader_parse_notation_type(locator, list);
     else if (saxreader_peek(locator, L"(", 1))
-        return saxreader_parse_enumeration_type(locator);
+        return saxreader_parse_enumeration_type(locator, list);
 
     saxreader_set_error(locator, E_SAX_INVALID_TYPE);
-    return NULL;
+    return ATTR_TYPE_INVALID;
 }
 
 /* [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue) */
@@ -5164,10 +5260,11 @@ static void saxreader_parse_attlistdecl(struct saxlocator *locator)
             break;
         }
         attr = &decl->attributes[decl->count++];
+        memset(attr, 0, sizeof(*attr));
 
         saxreader_parse_qname(locator, &attr->name);
         saxreader_skip_required_spaces(locator);
-        attr->type = saxreader_parse_atttype(locator);
+        attr->type = saxreader_parse_atttype(locator, &attr->valuelist);
         saxreader_skip_required_spaces(locator);
         attr->valuetype = saxreader_parse_defaultdecl(locator, &attr->value);
 
