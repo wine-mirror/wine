@@ -174,12 +174,12 @@ enum attribute_type
     ATTR_TYPE_ENUMERATION,
 };
 
-enum attdefault_value_type
+enum attribute_default_type
 {
-    ATTDEFDECL_NONE = 0,
-    ATTDEFDECL_REQUIRED,
-    ATTDEFDECL_IMPLIED,
-    ATTDEFDECL_FIXED,
+    ATTR_DEF_TYPE_NONE = 0,
+    ATTR_DEF_TYPE_REQUIRED,
+    ATTR_DEF_TYPE_IMPLIED,
+    ATTR_DEF_TYPE_FIXED,
 };
 
 struct attribute
@@ -204,7 +204,7 @@ struct attlist_attr
     struct parsed_name name;
     enum attribute_type type;
     struct enumeration valuelist;
-    BSTR valuetype;
+    enum attribute_default_type valuetype;
     BSTR value;
 };
 
@@ -866,6 +866,7 @@ struct saxlocator
         struct list attr_decls;
         struct list entities;
         BSTR typenames[ATTR_TYPE_NMTOKENS + 1];
+        BSTR valuenames[ATTR_DEF_TYPE_FIXED + 1];
     } dtd;
 
     bool collect;
@@ -980,6 +981,10 @@ static void saxreader_ensure_dtd_typenames(struct saxlocator *locator)
     locator->dtd.typenames[ATTR_TYPE_ENTITIES] = saxreader_alloc_string(locator, L"ENTITIES");
     locator->dtd.typenames[ATTR_TYPE_NMTOKEN] = saxreader_alloc_string(locator, L"NMTOKEN");
     locator->dtd.typenames[ATTR_TYPE_NMTOKENS] = saxreader_alloc_string(locator, L"NMTOKENS");
+
+    locator->dtd.valuenames[ATTR_DEF_TYPE_REQUIRED] = saxreader_alloc_string(locator, L"#REQUIRED");
+    locator->dtd.valuenames[ATTR_DEF_TYPE_IMPLIED] = saxreader_alloc_string(locator, L"#IMPLIED");
+    locator->dtd.valuenames[ATTR_DEF_TYPE_FIXED] = saxreader_alloc_string(locator, L"#FIXED");
 }
 
 static bool is_namespaces_enabled(const struct saxreader *reader)
@@ -1769,6 +1774,8 @@ static void saxreader_clear_dtd(struct saxlocator *locator)
 {
     for (int i = 0; i < ARRAYSIZE(locator->dtd.typenames); ++i)
         SysFreeString(locator->dtd.typenames[i]);
+    for (int i = 0; i < ARRAYSIZE(locator->dtd.valuenames); ++i)
+        SysFreeString(locator->dtd.valuenames[i]);
 }
 
 static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
@@ -2779,7 +2786,7 @@ static BSTR saxreader_attribute_type_stringify(struct saxlocator *locator, struc
 static void saxlocator_attribute_decl(struct saxlocator *locator, struct attlist_decl *decl)
 {
     struct saxdeclhandler_iface *handler = saxreader_get_declhandler(locator->saxreader);
-    BSTR typename, tofree;
+    BSTR typename, tofree, valuetype;
     HRESULT hr;
 
     if (locator->status != S_OK)
@@ -2808,16 +2815,15 @@ static void saxlocator_attribute_decl(struct saxlocator *locator, struct attlist
         {
             typename = locator->dtd.typenames[decl->attributes[i].type];
         }
+        valuetype = locator->dtd.valuenames[decl->attributes[i].valuetype];
 
         if (locator->vbInterface)
             hr = IVBSAXDeclHandler_attributeDecl(handler->vbhandler, &decl->name,
-                    &decl->attributes[i].name.qname, &typename,
-                    &decl->attributes[i].valuetype, &decl->attributes[i].value);
+                    &decl->attributes[i].name.qname, &typename, &valuetype, &decl->attributes[i].value);
         else
             hr = ISAXDeclHandler_attributeDecl(handler->handler, decl->name, SysStringLen(decl->name),
                     decl->attributes[i].name.qname, SysStringLen(decl->attributes[i].name.qname),
-                    typename, SysStringLen(typename),
-                    decl->attributes[i].valuetype, SysStringLen(decl->attributes[i].valuetype),
+                    typename, SysStringLen(typename), valuetype, SysStringLen(valuetype),
                     decl->attributes[i].value, SysStringLen(decl->attributes[i].value));
 
         SysFreeString(tofree);
@@ -5210,20 +5216,20 @@ static enum attribute_type saxreader_parse_atttype(struct saxlocator *locator,
 }
 
 /* [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue) */
-static BSTR saxreader_parse_defaultdecl(struct saxlocator *locator, BSTR *value)
+static enum attribute_default_type saxreader_parse_defaultdecl(struct saxlocator *locator, BSTR *value)
 {
-    BSTR ret = NULL;
+    enum attribute_default_type ret = ATTR_DEF_TYPE_NONE;
 
     *value = NULL;
 
     if (saxreader_cmp(locator, L"#REQUIRED"))
-        return saxreader_alloc_string(locator, L"#REQUIRED");
+        return ATTR_DEF_TYPE_REQUIRED;
     if (saxreader_cmp(locator, L"#IMPLIED"))
-        return saxreader_alloc_string(locator, L"#IMPLIED");
+        return ATTR_DEF_TYPE_IMPLIED;
 
     if (saxreader_cmp(locator, L"#FIXED"))
     {
-        ret = saxreader_alloc_string(locator, L"#FIXED");
+        ret = ATTR_DEF_TYPE_FIXED;
         saxreader_skip_required_spaces(locator);
     }
     *value = saxreader_parse_attvalue(locator);
