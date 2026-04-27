@@ -637,7 +637,7 @@ void init_load_info(const D3DX10_IMAGE_LOAD_INFO *load_info, D3DX10_IMAGE_LOAD_I
 HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
         D3D10_SUBRESOURCE_DATA **resource_data)
 {
-    uint32_t loaded_mip_level_count, max_mip_level_count;
+    uint32_t loaded_mip_level_count, max_mip_level_count, loaded_layer_count;
     const struct pixel_format_desc *fmt_desc, *src_desc;
     struct d3dx_subresource_data *sub_rsrcs = NULL;
     D3DX10_IMAGE_INFO img_info;
@@ -661,12 +661,11 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         goto end;
     }
 
-    if ((!(img_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE) || img_info.ArraySize != 6)
-            && img_info.ArraySize != 1)
+    loaded_layer_count = img_info.ArraySize;
+    if ((loaded_layer_count > 1) && (img_info.ResourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE3D))
     {
-        FIXME("img_info.ArraySize = %u not supported.\n", img_info.ArraySize);
-        hr = E_NOTIMPL;
-        goto end;
+        TRACE("Ignoring array size variable %u for 3D texture.\n", img_info.ArraySize);
+        loaded_layer_count = 1;
     }
 
     if (load_info->FirstMipLevel == D3DX10_DEFAULT || load_info->FirstMipLevel >= img_info.MipLevels)
@@ -720,13 +719,13 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     }
 
     hr = d3dx_create_subresource_data_for_texture(load_info->Width, load_info->Height, load_info->Depth,
-            load_info->MipLevels, img_info.ArraySize, fmt_desc, &sub_rsrcs);
+            load_info->MipLevels, loaded_layer_count, fmt_desc, &sub_rsrcs);
     if (FAILED(hr))
         goto end;
 
     src_desc = get_d3dx_pixel_format_info(image.format);
     loaded_mip_level_count = min(img_info.MipLevels - load_info->FirstMipLevel, load_info->MipLevels);
-    for (i = 0; i < img_info.ArraySize; ++i)
+    for (i = 0; i < loaded_layer_count; ++i)
     {
         struct volume dst_size = { load_info->Width, load_info->Height, load_info->Depth };
 
@@ -765,7 +764,7 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         }
 
         d3dx_get_mip_level_size(&base_level_size, base_level);
-        for (i = 0; i < img_info.ArraySize; ++i)
+        for (i = 0; i < loaded_layer_count; ++i)
         {
             struct volume src_size, dst_size;
 
