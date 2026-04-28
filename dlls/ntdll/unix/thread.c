@@ -1126,8 +1126,8 @@ static void start_thread( struct thread_data *data )
 
     thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->syscall_trace = TRACE_ON(syscall);
-    server_init_thread( thread_data->start, &suspend );
-    signal_start_thread( thread_data->start, thread_data->param, suspend, data->teb );
+    server_init_thread( data->start, &suspend );
+    signal_start_thread( data->start, data->param, suspend, data->teb );
 }
 
 
@@ -1441,8 +1441,8 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
-    thread_data->start = start;
-    thread_data->param = param;
+    data->start = start;
+    data->param = param;
 
     pthread_attr_init( &pthread_attr );
     pthread_attr_setstack( &pthread_attr, get_kernel_stack( data ), kernel_stack_size );

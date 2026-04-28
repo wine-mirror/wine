@@ -105,6 +105,8 @@ struct thread_data
     TEB         *teb;               /* TEB */
     pthread_t    pthread_id;        /* pthread thread id */
     void        *jmp_buf;           /* setjmp buffer for exception handling */
+    void        *start;             /* thread entry point */
+    void        *param;             /* thread entry point parameter */
     char         signal_stack[];    /* signal stack */
     /* char kernel_stack[] */
 };
@@ -129,8 +131,6 @@ struct ntdll_thread_data
     int                       alert_fd;      /* inproc sync fd for user apc alerts */
     BOOL                      allow_writes;  /* ThreadAllowWrites flags */
     struct list               entry;         /* entry in TEB list */
-    PRTL_THREAD_START_ROUTINE start;         /* thread entry point */
-    void                     *param;         /* thread entry point parameter */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
