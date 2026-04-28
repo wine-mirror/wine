@@ -1078,7 +1078,7 @@ static struct IRowsetInfoVtbl rowset_info_vtbl =
     rowset_info_GetSpecification
 };
 
-HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
+HRESULT create_client_cursor(int count, const DBCOLUMNINFO *info, IUnknown **ret)
 {
     struct rowset *rowset;
     HRESULT hr;

@@ -2,12 +2,12 @@ MODULE    = msado15.dll
 IMPORTS   = oleaut32 ole32
 
 SOURCES = \
+	client_cursor.c \
 	command.c \
 	connection.c \
 	main.c \
 	msado15_classes.idl \
 	msado15_tlb.idl \
 	recordset.c \
-	rowset.c \
 	server_cursor.c \
 	stream.c

@@ -2808,7 +2808,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
             info[i].columnid.uName.pwszName = field->name;
         }
 
-        hr = create_mem_rowset(recordset->fields.count + 1, info, &rowset);
+        hr = create_client_cursor(recordset->fields.count + 1, info, &rowset);
         free(info);
         if (FAILED(hr))
             return hr;
