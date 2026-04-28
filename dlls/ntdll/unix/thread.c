@@ -1896,8 +1896,9 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
  */
 void ntdll_set_exception_jmp_buf( jmp_buf jmp )
 {
-    assert( !jmp || !ntdll_get_thread_data()->jmp_buf );
-    ntdll_get_thread_data()->jmp_buf = jmp;
+    struct thread_data *data = get_thread_data();
+    assert( !jmp || !data->jmp_buf );
+    data->jmp_buf = jmp;
 }
 
 

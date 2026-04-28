@@ -999,6 +999,7 @@ NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status 
  */
 static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
 {
+    struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame();
     DWORD i;
 
@@ -1035,19 +1036,19 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
           (DWORD64)REGn_sig(28, context), (DWORD64)FP_sig(context),
           (DWORD64)LR_sig(context), (DWORD64)SP_sig(context) );
 
-    if (ntdll_get_thread_data()->jmp_buf)
+    if (data->jmp_buf)
     {
         TRACE( "returning to handler\n" );
-        REGn_sig(0, context) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
+        REGn_sig(0, context) = (ULONG_PTR)data->jmp_buf;
         REGn_sig(1, context) = 1;
         PC_sig(context)      = (ULONG_PTR)longjmp;
-        ntdll_get_thread_data()->jmp_buf = NULL;
+        data->jmp_buf = NULL;
     }
     else
     {
         TRACE( "returning to user mode ip=%p ret=%08x\n", (void *)frame->pc, rec->ExceptionCode );
         REGn_sig(0, context)  = rec->ExceptionCode;
-        REGn_sig(18, context) = (ULONG_PTR)NtCurrentTeb();
+        REGn_sig(18, context) = (ULONG_PTR)data->teb;
         SP_sig(context)       = (ULONG_PTR)frame;
         PC_sig(context)       = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
