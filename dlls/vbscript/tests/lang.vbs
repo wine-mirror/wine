@@ -223,6 +223,120 @@ on error goto 0
 Call todo_wine_ok(not ("10" > CByte(5)), """10"" > CByte(5) should be false (lex)")
 Call todo_wine_ok(not ("5" < CCur(10)),  """5"" < CCur(10) should be false (lex)")
 
+' --- BSTR vs numeric LITERAL: BSTR coerces to a number, parse failure raises 13. ---
+Dim saved_err
+on error resume next
+err.clear
+x = ("abc" = 5.5)        : saved_err = err.number : err.clear
+Call ok(saved_err = 13, "literal R8: ""abc"" = 5.5 should error 13 (got " & saved_err & ")")
+x = ("abc" = 1e2)        : saved_err = err.number : err.clear
+Call ok(saved_err = 13, "literal sci: ""abc"" = 1e2 should error 13 (got " & saved_err & ")")
+x = ("abc" = &hff)       : saved_err = err.number : err.clear
+Call ok(saved_err = 13, "literal hex: ""abc"" = &hff should error 13 (got " & saved_err & ")")
+x = ("abc" = 100000)     : saved_err = err.number : err.clear
+Call ok(saved_err = 13, "literal I4: ""abc"" = 100000 should error 13 (got " & saved_err & ")")
+x = ("abc" = #1/15/2024#): saved_err = err.number : err.clear
+Call ok(saved_err = 13, "literal date: ""abc"" = #1/15/2024# should error 13 (got " & saved_err & ")")
+on error goto 0
+
+' --- Variable holding a numeric loses "literal" status: string compare, no error. ---
+Dim n5  : n5  = 5
+Dim n10 : n10 = 10
+on error resume next
+err.clear
+x = ("abc" = n5)         : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "var: ""abc"" = (n=5) should not raise (got " & saved_err & ")")
+err.clear
+x = ("abc" = n5) : Call todo_wine_ok(err.number = 0 and (x = False), "var: ""abc"" = (n=5) should be false")
+err.clear
+x = ("010" = n10) : Call todo_wine_ok(err.number = 0 and (x = False), "var: ""010"" = (n=10) should be false (string)")
+err.clear
+x = ("abc" = (5+0))      : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "arith: ""abc"" = (5+0) should not raise (got " & saved_err & ")")
+err.clear
+x = ("010" = (5+5)) : Call todo_wine_ok(err.number = 0 and (x = False), "arith: ""010"" = (5+5) should be false")
+err.clear
+x = ("010" = (10*1)) : Call todo_wine_ok(err.number = 0 and (x = False), "arith: ""010"" = (10*1) should be false")
+err.clear
+x = ("abc" = -5)         : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "neg: ""abc"" = -5 should not raise (got " & saved_err & ")")
+err.clear
+x = ("010" = CInt(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CInt: ""010"" = CInt(10) should be false")
+err.clear
+x = ("010" = CLng(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CLng: ""010"" = CLng(10) should be false")
+err.clear
+x = ("010" = CSng(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CSng: ""010"" = CSng(10) should be false")
+err.clear
+x = ("010" = CDbl(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CDbl: ""010"" = CDbl(10) should be false")
+err.clear
+x = ("abc" = CInt(5)) : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "CInt: ""abc"" = CInt(5) should not raise (got " & saved_err & ")")
+err.clear
+x = ("abc" = CLng(5)) : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "CLng: ""abc"" = CLng(5) should not raise (got " & saved_err & ")")
+err.clear
+x = ("abc" = CSng(5)) : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "CSng: ""abc"" = CSng(5) should not raise (got " & saved_err & ")")
+err.clear
+x = ("abc" = CDbl(5)) : saved_err = err.number : err.clear
+Call todo_wine_ok(saved_err = 0, "CDbl: ""abc"" = CDbl(5) should not raise (got " & saved_err & ")")
+err.clear
+x = ("10" > CDbl(5)) : Call todo_wine_ok(err.number = 0 and (x = False), """10"" > CDbl(5) should be false (lex)")
+err.clear
+x = ("10" > CSng(5)) : Call todo_wine_ok(err.number = 0 and (x = False), """10"" > CSng(5) should be false (lex)")
+err.clear
+x = ("9" < CDbl(10)) : Call todo_wine_ok(err.number = 0 and (x = False), """9"" < CDbl(10) should be false (lex)")
+on error goto 0
+
+' --- VT_DATE from CDate is non-literal: string compare, no error. ---
+Dim cdt : cdt = CDate("2024-01-15")
+on error resume next
+err.clear
+x = ("abc" = cdt) : saved_err = err.number : err.clear
+on error goto 0
+Call todo_wine_ok(saved_err = 0, "CDate: ""abc"" = CDate(...) should not raise (got " & saved_err & ")")
+
+' --- Function return / ByVal / ByRef strip "literal" status. ---
+Function GetFiveLit()
+    GetFiveLit = 5
+End Function
+on error resume next
+err.clear
+x = ("abc" = GetFiveLit()) : saved_err = err.number : err.clear
+on error goto 0
+Call todo_wine_ok(saved_err = 0, "fn return: ""abc"" = GetFiveLit() should not raise (got " & saved_err & ")")
+
+Sub TestByValStripsLit(ByVal v)
+    Dim local_err
+    on error resume next
+    err.clear
+    x = ("abc" = v) : local_err = err.number : err.clear
+    on error goto 0
+    Call todo_wine_ok(local_err = 0, "ByVal: ""abc"" = v should not raise (got " & local_err & ")")
+End Sub
+TestByValStripsLit 5
+
+Sub TestByRefStripsLit(ByRef v)
+    Dim local_err
+    on error resume next
+    err.clear
+    x = ("abc" = v) : local_err = err.number : err.clear
+    on error goto 0
+    Call todo_wine_ok(local_err = 0, "ByRef: ""abc"" = v should not raise (got " & local_err & ")")
+End Sub
+Dim litvar : litvar = 5
+TestByRefStripsLit litvar
+
+' --- Const inlines at compile-time in Wine, so the value is treated as a
+'     literal and raises error 13; on Windows Const acts like a variable.
+'     Tracked separately from the var_cmp fix; remains todo_wine for now. ---
+Const FIVE_C = 5
+on error resume next
+err.clear
+x = ("abc" = FIVE_C) : saved_err = err.number : err.clear
+on error goto 0
+Call todo_wine_ok(saved_err = 0, "Const: ""abc"" = FIVE should not raise (got " & saved_err & "; needs compile-time fix)")
+
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
 Call ok(getVT("") = "VT_BSTR", "getVT("""") is not VT_BSTR")
