@@ -1171,11 +1171,11 @@ static void test_sys_mouse( DWORD version )
             .dwHow = DIPH_DEVICE,
         },
     };
+    IDirectInputDevice8W *device, *tmp_device;
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEOBJECTDATA objdata = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
-    IDirectInputDevice8W *device;
     HWND hwnd, tmp_hwnd, child;
     DIDEVCAPS caps = {0};
     DIMOUSESTATE state;
@@ -1200,6 +1200,13 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_SysMouseEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysMouseEm ) );
+
+    hr = create_dinput_device( version, &GUID_SysMouseEm, &tmp_device );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
+    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
+    hr = create_dinput_device( version, &GUID_SysMouseEm2, &tmp_device );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
+    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
 
     hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysMouse );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
@@ -2671,10 +2678,10 @@ static void test_sys_keyboard( DWORD version )
         sizeof(key_state), ARRAY_SIZE(obj_data_format), obj_data_format,
     };
 
+    IDirectInputDevice8W *device, *tmp_device;
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
-    IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     BYTE full_state[256];
     HKL hkl, old_hkl;
@@ -2698,6 +2705,13 @@ static void test_sys_keyboard( DWORD version )
     ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_SysKeyboardEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysKeyboardEm ) );
+
+    hr = create_dinput_device( version, &GUID_SysKeyboardEm, &tmp_device );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
+    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
+    hr = create_dinput_device( version, &GUID_SysKeyboardEm2, &tmp_device );
+    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
+    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
 
     hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysKeyboard );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
