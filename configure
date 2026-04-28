@@ -23895,6 +23895,7 @@ wine_fn_config_makefile dlls/winsock.dll16 enable_win16
 wine_fn_config_makefile dlls/winspool.drv enable_winspool_drv
 wine_fn_config_makefile dlls/winspool.drv/tests enable_tests
 wine_fn_config_makefile dlls/winsqlite3 enable_winsqlite3
+wine_fn_config_makefile dlls/winsqlite3/tests enable_tests
 wine_fn_config_makefile dlls/winsta enable_winsta
 wine_fn_config_makefile dlls/wintab.dll16 enable_win16
 wine_fn_config_makefile dlls/wintab32 enable_wintab32
