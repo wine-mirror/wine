@@ -2738,20 +2738,16 @@ void signal_init_process(void)
 {
     struct sigaction sig_act;
     WOW_TEB *wow_teb = get_wow_teb( NtCurrentTeb() );
-    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
-    void *ptr, *kernel_stack = (char *)thread_data->kernel_stack + kernel_stack_size;
+    void *ptr;
 
     if (user_shared_data->XState.Size) xstate_size = user_shared_data->XState.Size - sizeof(XSAVE_FORMAT);
     frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
-
-    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
+    xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
     ptr = (char *)user_shared_data + page_size;
     anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
     *(void **)ptr = __wine_syscall_dispatcher;
-
-    xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
     __asm__( "movw %%cs,%0" : "=m" (cs64_sel) );
     __asm__( "movw %%ss,%0" : "=m" (ds64_sel) );
@@ -2774,6 +2770,7 @@ void signal_init_process(void)
     }
 #endif
 
+    alloc_syscall_frame( (frame_size + 63) & ~63 );
     signal_alloc_thread( NtCurrentTeb() );
 
     sig_act.sa_mask = server_block_set;

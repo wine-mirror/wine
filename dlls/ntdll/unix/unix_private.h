@@ -435,6 +435,13 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
+static inline void alloc_syscall_frame( SIZE_T frame_size )
+{
+    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
+    void *frame = (char *)thread_data->kernel_stack + kernel_stack_size - frame_size;
+    thread_data->syscall_frame = frame;
+}
+
 static inline void *get_signal_stack(void)
 {
     return (void *)(((ULONG_PTR)NtCurrentTeb() & ~signal_stack_mask) + teb_size);

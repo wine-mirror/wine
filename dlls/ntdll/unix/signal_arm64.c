@@ -1374,11 +1374,8 @@ void signal_free_thread( TEB *teb )
 void signal_init_process(void)
 {
     struct sigaction sig_act;
-    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
-    void *kernel_stack = (char *)thread_data->kernel_stack + kernel_stack_size;
 
-    thread_data->syscall_frame = (struct syscall_frame *)kernel_stack - 1;
-
+    alloc_syscall_frame( sizeof(struct syscall_frame) );
     signal_alloc_thread( NtCurrentTeb() );
 
     sig_act.sa_mask = server_block_set;
