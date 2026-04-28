@@ -561,15 +561,13 @@ static inline int ldt_is_system( WORD sel )
 
 
 /***********************************************************************
- *           get_current_teb
- *
- * Get the current teb based on the stack pointer.
+ *           get_current_thread_data
  */
-static inline TEB *get_current_teb(void)
+static inline struct thread_data *get_current_thread_data(void)
 {
     unsigned long esp;
     __asm__("movl %%esp,%0" : "=g" (esp) );
-    return (TEB *)((esp & ~signal_stack_mask) + teb_offset);
+    return (struct thread_data *)(esp & ~signal_stack_mask);
 }
 
 
@@ -645,7 +643,7 @@ static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext
 
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
-    thread_data = (struct x86_thread_data *)get_current_teb()->GdiTebBatch;
+    thread_data = (struct x86_thread_data *)&get_current_thread_data()->teb->GdiTebBatch;
     set_fs( thread_data->fs );
     set_gs( thread_data->gs );
 
@@ -687,13 +685,13 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
  */
 static inline void *init_handler( const ucontext_t *sigcontext )
 {
-    TEB *teb = get_current_teb();
+    struct thread_data *data = get_current_thread_data();
 
     clear_alignment_flag();
 
 #ifndef __sun  /* see above for Solaris handling */
     {
-        struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
+        struct x86_thread_data *thread_data = (struct x86_thread_data *)&data->teb->GdiTebBatch;
         set_fs( thread_data->fs );
         set_gs( thread_data->gs );
     }
@@ -708,7 +706,7 @@ static inline void *init_handler( const ucontext_t *sigcontext )
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        return teb->SystemReserved1[0];
+        return data->teb->SystemReserved1[0];
     }
     return (void *)(ESP_sig(sigcontext) & ~3);
 }
@@ -1751,12 +1749,12 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
  */
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
+    struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame();
     ULONG esp = (frame->esp - offsetof(struct callback_stack_layout, args_data[len])) & ~3;
     struct callback_stack_layout *stack = (struct callback_stack_layout *)esp;
 
-    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
-        return STATUS_STACK_OVERFLOW;
+    if ((char *)get_kernel_stack( data ) + min_kernel_stack > (char *)&frame) return STATUS_STACK_OVERFLOW;
 
     stack->eip  = frame->eip;
     stack->id   = id;
@@ -2182,12 +2180,13 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
     if (is_inside_syscall( ESP_sig(ucontext) ))
     {
+        struct thread_data *data = get_thread_data();
         struct syscall_frame *frame = get_syscall_frame();
         ULONG64 saved_compaction = 0;
         struct xcontext *context;
 
         context = (struct xcontext *)(((ULONG_PTR)ESP_sig(ucontext) - sizeof(*context)) & ~15);
-        if ((char *)context < (char *)ntdll_get_thread_data()->kernel_stack)
+        if ((char *)context < (char *)get_kernel_stack( data ))
         {
             ERR_(seh)( "kernel stack overflow.\n" );
             return;

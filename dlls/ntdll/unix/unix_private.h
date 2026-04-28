@@ -98,6 +98,23 @@ static inline BOOL is_arm64ec(void)
             main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64);
 }
 
+/* per-thread data for the Unix side, stored at the bottom of the signal stack */
+
+struct thread_data
+{
+    TEB         *teb;               /* TEB */
+    pthread_t    pthread_id;        /* pthread thread id */
+    char         signal_stack[];    /* signal stack */
+    /* char kernel_stack[] */
+};
+
+extern pthread_key_t thread_data_key;
+
+static inline struct thread_data *get_thread_data(void)
+{
+    return pthread_getspecific( thread_data_key );
+}
+
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
@@ -110,8 +127,6 @@ struct ntdll_thread_data
     int                       wait_fd[2];    /* fd for sleeping server requests */
     int                       alert_fd;      /* inproc sync fd for user apc alerts */
     BOOL                      allow_writes;  /* ThreadAllowWrites flags */
-    pthread_t                 pthread_id;    /* pthread thread id */
-    void                     *kernel_stack;  /* stack for thread startup and kernel syscalls */
     struct list               entry;         /* entry in TEB list */
     PRTL_THREAD_START_ROUTINE start;         /* thread entry point */
     void                     *param;         /* thread entry point parameter */
@@ -161,9 +176,8 @@ struct pe_mapping_info
 };
 
 static const SIZE_T page_size = 0x1000;
-static const SIZE_T teb_size = 0x3800;  /* TEB64 + TEB32 + debug info */
 static const SIZE_T signal_stack_mask = 0xffff;
-static const SIZE_T signal_stack_size = 0x10000 - 0x3800;
+static const SIZE_T signal_stack_size = 0x10000 - offsetof( struct thread_data, signal_stack );
 static const SIZE_T kernel_stack_size = 0x100000;
 static const SIZE_T min_kernel_stack  = 0x2000;
 static const LONG teb_offset = 0x2000;
@@ -302,7 +316,8 @@ extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING 
 extern NTSTATUS virtual_relocate_module( void *module );
 extern TEB *virtual_alloc_first_teb(void);
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb );
-extern void virtual_free_teb( TEB *teb );
+struct thread_data *virtual_alloc_thread_data(void);
+extern void virtual_free_thread_data( struct thread_data *data );
 extern NTSTATUS virtual_clear_tls_index( ULONG index );
 extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, ULONG_PTR limit_high,
                                             SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page );
@@ -435,27 +450,28 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
-static inline void alloc_syscall_frame( SIZE_T frame_size )
+static inline void *get_kernel_stack( struct thread_data *data )
 {
-    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
-    void *frame = (char *)thread_data->kernel_stack + kernel_stack_size - frame_size;
-    thread_data->syscall_frame = frame;
+    return data->signal_stack + signal_stack_size;
 }
 
-static inline void *get_signal_stack(void)
+static inline void alloc_syscall_frame( SIZE_T frame_size )
 {
-    return (void *)(((ULONG_PTR)NtCurrentTeb() & ~signal_stack_mask) + teb_size);
+    struct thread_data *data = get_thread_data();
+    void *frame = (char *)get_kernel_stack(data) + kernel_stack_size - frame_size;
+    ntdll_get_thread_data()->syscall_frame = frame;
 }
 
 static inline BOOL is_inside_signal_stack( void *ptr )
 {
-    return ((char *)ptr >= (char *)get_signal_stack() &&
-            (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+    struct thread_data *data = get_thread_data();
+    return ((char *)ptr >= data->signal_stack && (char *)ptr < data->signal_stack + signal_stack_size);
 }
 
 static inline BOOL is_inside_syscall( ULONG_PTR sp )
 {
-    return ((char *)sp >= (char *)ntdll_get_thread_data()->kernel_stack &&
+    struct thread_data *data = get_thread_data();
+    return ((char *)sp >= (char *)get_kernel_stack( data ) &&
             (char *)sp <= (char *)get_syscall_frame());
 }
 

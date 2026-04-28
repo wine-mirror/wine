@@ -1555,10 +1555,11 @@ static int get_unix_tid(void)
  */
 static int init_thread_pipe(void)
 {
+    struct thread_data *data = get_thread_data();
     int reply_pipe[2];
     stack_t ss;
 
-    ss.ss_sp    = get_signal_stack();
+    ss.ss_sp    = data->signal_stack;
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
     sigaltstack( &ss, NULL );

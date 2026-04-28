@@ -167,6 +167,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 static struct wine_rb_tree views_tree;
 static pthread_mutex_t virtual_mutex;
+pthread_key_t thread_data_key = 0;
 
 static const UINT page_shift = 12;
 static const UINT_PTR page_mask = 0xfff;
@@ -4044,8 +4045,9 @@ TEB *virtual_alloc_first_teb(void)
     TEB *teb;
     unsigned int status;
     SIZE_T data_size = page_size;
-    SIZE_T block_size = signal_stack_mask + 1;
+    SIZE_T block_size = 4 * page_size;
     SIZE_T total = 32 * block_size;
+    struct thread_data *thread_data;
 
     /* reserve space for shared user data */
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&user_shared_data, 0, &data_size,
@@ -4066,6 +4068,11 @@ TEB *virtual_alloc_first_teb(void)
     teb = init_teb( ptr, FALSE );
     pthread_key_create( &teb_key, NULL );
     pthread_setspecific( teb_key, teb );
+
+    thread_data = virtual_alloc_thread_data();
+    thread_data->teb = teb;
+    pthread_key_create( &thread_data_key, NULL );
+    pthread_setspecific( thread_data_key, thread_data );
     return teb;
 }
 
@@ -4079,14 +4086,14 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
     TEB *teb;
     void *ptr = NULL;
     NTSTATUS status = STATUS_SUCCESS;
-    SIZE_T block_size = signal_stack_mask + 1;
+    SIZE_T block_size = 4 * page_size;
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     if (next_free_teb)
     {
         ptr = next_free_teb;
         next_free_teb = *(void **)ptr;
-        memset( ptr, 0, teb_size );
+        memset( ptr, 0, block_size );
     }
     else
     {
@@ -4120,15 +4127,44 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 
 
 /***********************************************************************
- *           virtual_free_teb
+ *           virtual_alloc_thread_data
  */
-void virtual_free_teb( TEB *teb )
+struct thread_data *virtual_alloc_thread_data(void)
 {
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    NTSTATUS status;
+    sigset_t sigset;
+    struct file_view *view;
+    struct thread_data *data = NULL;
+    SIZE_T size = signal_stack_mask + 1 + kernel_stack_size;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    status = map_view( &view, NULL, size, 0, VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, limit_4g, 0, 0 );
+    if (!status)
+    {
+        data = view->base;
+#ifdef VALGRIND_STACK_REGISTER
+        VALGRIND_STACK_REGISTER( (char *)data + signal_stack_mask + 1, (char *)data + view->size );
+#endif
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return data;
+}
+
+
+/***********************************************************************
+ *           virtual_free_thread_data
+ */
+void virtual_free_thread_data( struct thread_data *data )
+{
+    struct ntdll_thread_data *thread_data;
+    TEB *teb;
     void *ptr;
     SIZE_T size;
     sigset_t sigset;
-    WOW_TEB *wow_teb = get_wow_teb( teb );
+    WOW_TEB *wow_teb;
+
+    if (!(teb = data->teb)) goto done;
 
     if (teb->DeallocationStack)
     {
@@ -4142,12 +4178,7 @@ void virtual_free_teb( TEB *teb )
         NtFreeVirtualMemory( GetCurrentProcess(), (void **)&teb->ChpeV2CpuAreaInfo, &size, MEM_RELEASE );
     }
 #endif
-    if (thread_data->kernel_stack)
-    {
-        size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->kernel_stack, &size, MEM_RELEASE );
-    }
-    if (wow_teb && (ptr = ULongToPtr( wow_teb->DeallocationStack )))
+    if ((wow_teb = get_wow_teb( teb )) && (ptr = ULongToPtr( wow_teb->DeallocationStack )))
     {
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
@@ -4155,12 +4186,18 @@ void virtual_free_teb( TEB *teb )
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     signal_free_thread( teb );
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     list_remove( &thread_data->entry );
     ptr = teb;
     if (!is_win64) ptr = (char *)ptr - teb_offset;
     *(void **)ptr = next_free_teb;
     next_free_teb = ptr;
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+
+ done:
+    size = 0;
+    ptr = data;
+    NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
 }
 
 
