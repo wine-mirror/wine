@@ -2235,7 +2235,10 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         {
         case SC_RESTORE:
             if (HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-            NtUserSetInternalWindowPos( hwnd, SW_SHOW, &window_rect, NULL );
+
+            /* make the win32 window restore to the current host window config */
+            set_window_normal_placement( hwnd, window_rect );
+
             /* fallthrough */
         default:
             send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );

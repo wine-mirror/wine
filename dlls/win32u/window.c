@@ -3075,6 +3075,18 @@ static void make_point_onscreen( POINT *pt )
     pt->y = rect.top;
 }
 
+void set_window_normal_placement( HWND hwnd, RECT rect )
+{
+    WND *win = get_win_ptr( hwnd );
+
+    if (win && win != WND_OTHER_PROCESS && win != WND_DESKTOP)
+    {
+        make_rect_onscreen( &rect );
+        win->normal_rect = rect_thread_to_win_dpi( hwnd, rect );
+        release_win_ptr( win );
+    }
+}
+
 static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT flags )
 {
     WND *win = get_win_ptr( hwnd );
