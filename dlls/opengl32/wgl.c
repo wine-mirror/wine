@@ -2306,7 +2306,7 @@ GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync
     return NULL;
 }
 
-BOOL get_integer( GLenum name, GLint *data )
+BOOL get_integer( GLenum name, GLuint index, GLint *data )
 {
     struct context *ctx;
 

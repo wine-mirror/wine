@@ -44,7 +44,7 @@ extern BOOL get_context_from_handle( HGLRC handle, HGLRC *obj );
 extern BOOL get_sync_from_handle( GLsync handle, GLsync *obj );
 extern void set_gl_error( GLenum error );
 extern struct registry_entry *get_function_entry( const char *name );
-extern BOOL get_integer( GLenum name, GLint *data );
+extern BOOL get_integer( GLenum name, GLuint index, GLint *data );
 
 enum object_type
 {

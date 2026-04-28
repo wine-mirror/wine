@@ -1188,6 +1188,7 @@ sub add_extension($)
 sub get_integer_call($)
 {
     my ($name, $func) = @_;
+    my $index = 0;
     my $params;
     my $pname;
 
@@ -1196,13 +1197,14 @@ sub get_integer_call($)
         my $name = get_arg_name( $arg );
         my $type = get_arg_type( $arg );
         $pname = $name if $name =~ /^(pname|target|value)$/;
+        $index = $name if $name eq "index";
         $params = $name;
     }
 
     return 0 if !$pname;
 
-    my $hook = "if (get_integer( $pname, &integer )) *$params = integer;";
-    return $hook if $name =~ /^glGet(Boolean|Double|Float|Integer|Integer64)v/;
+    my $hook = "if (get_integer( $pname, $index, &integer )) *$params = integer;";
+    return $hook if $name =~ /^glGet(Boolean|Double|Float|Integer)/;
 }
 
 sub parse_registry($)
