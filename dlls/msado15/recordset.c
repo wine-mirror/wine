@@ -1924,6 +1924,8 @@ static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT
 
     TRACE( "%p, %s\n", iface, debugstr_variant(&connection) );
 
+    if (recordset->state == adStateOpen) FIXME( "changing active connection\n" );
+
     switch( V_VT(&connection) )
     {
     case VT_BSTR:
