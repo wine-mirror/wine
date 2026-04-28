@@ -137,11 +137,13 @@ static WINMM_MMDevice *g_out_mmdevices;
 static WINMM_MMDevice **g_out_map;
 static UINT g_outmmdevices_count;
 static WINMM_Device *g_out_mapper_devices[MAX_DEVICES];
+static UINT g_out_voicecom_id;
 
 static WINMM_MMDevice *g_in_mmdevices;
 static WINMM_MMDevice **g_in_map;
 static UINT g_inmmdevices_count;
 static WINMM_Device *g_in_mapper_devices[MAX_DEVICES];
+static UINT g_in_voicecom_id;
 
 static IMMDeviceEnumerator *g_devenum;
 
@@ -499,6 +501,7 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
         IMMDeviceEnumerator *devenum)
 {
     IMMDeviceCollection *devcoll;
+    UINT *voicecom_id;
     HRESULT hr;
 
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(devenum, flow,
@@ -512,9 +515,13 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
         return hr;
     }
 
+    voicecom_id = flow == eRender ? &g_out_voicecom_id : &g_in_voicecom_id;
+    *voicecom_id = -1;
+
     if(*devcount > 0){
-        UINT n, count = 1;
+        UINT n, idx, count = 1;
         IMMDevice *def_dev = NULL;
+        IMMDevice *voicecom_dev = NULL;
 
         *devices = calloc(*devcount, sizeof(WINMM_MMDevice));
         if(!*devices){
@@ -532,6 +539,8 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
         /* make sure that device 0 is the default device */
         IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum,
                 flow, eConsole, &def_dev);
+        IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum,
+                flow, eCommunications, &voicecom_dev);
 
         for(n = 0; n < *devcount; ++n){
             IMMDevice *device;
@@ -540,12 +549,10 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
             if(SUCCEEDED(hr)){
                 WINMM_InitMMDevice(flow, device, &(*devices)[n], n);
 
-                if(device == def_dev)
-                    (*map)[0] = &(*devices)[n];
-                else{
-                    (*map)[count] = &(*devices)[n];
-                    ++count;
-                }
+                idx = device == def_dev ? 0 : count++;
+                (*map)[idx] = &(*devices)[n];
+                if(device == voicecom_dev)
+                    *voicecom_id = idx;
 
                 IMMDevice_Release(device);
             }
@@ -3118,6 +3125,16 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
         *(DWORD *)dwParam2 = 0;
 
         return MMSYSERR_NOERROR;
+    case DRVM_MAPPER_CONSOLEVOICECOM_GET:
+        if(!dwParam1 || !dwParam2)
+            return MMSYSERR_INVALPARAM;
+
+        /* Device ID */
+        *(DWORD *)dwParam1 = g_out_voicecom_id;
+        /* Status flags */
+        *(DWORD *)dwParam2 = 0;
+
+        return MMSYSERR_NOERROR;
     }
 
     TRACE("Message not supported: %u\n", uMessage);
@@ -3517,6 +3534,16 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
         else
             *(DWORD *)dwParam1 = -1;
 
+        /* Status flags */
+        *(DWORD *)dwParam2 = 0;
+
+        return MMSYSERR_NOERROR;
+    case DRVM_MAPPER_CONSOLEVOICECOM_GET:
+        if(!dwParam1 || !dwParam2)
+            return MMSYSERR_INVALPARAM;
+
+        /* Device ID */
+        *(DWORD *)dwParam1 = g_in_voicecom_id;
         /* Status flags */
         *(DWORD *)dwParam2 = 0;
 
