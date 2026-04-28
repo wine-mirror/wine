@@ -136,12 +136,34 @@ Call ok(30 > "0", "30 > ""0"" should be true")
 Call ok(9 < "10", "9 < ""10"" should be true")
 Call ok(42 = "42", "42 = ""42"" should be true")
 Call ok(not ("10" > "9"), """10"" > ""9"" should be false (string comparison)")
+' Locale-invariant numeric strings: parse to the same value as the literal in any locale
+Call ok("+5" = 5, """+5"" = 5 should be true")
+Call ok("-0" = 0, """-0"" = 0 should be true")
+Call ok("05" = 5, """05"" = 5 should be true")
+Call ok(" 5" = 5, """ 5"" = 5 should be true")
+Call ok("5 " = 5, """5 "" = 5 should be true")
+Call ok("5e0" = 5, """5e0"" = 5 should be true")
 ' String vs Boolean uses string comparison, not numeric conversion
 Call ok(not ("1" = True), """1"" = True should be false")
 Call ok(not ("-1" = True), """-1"" = True should be false")
 Call ok(not ("0" = False), """0"" = False should be false")
-' Non-numeric string compared to number should raise type mismatch
+' Non-numeric BSTR compared to number raises type mismatch (= / <> / relational)
 on error resume next
+err.clear
+x = ("abc" = 5)
+Call ok(err.number = 13, """abc"" = 5 err.number = " & err.number)
+err.clear
+x = ("" = 5)
+Call ok(err.number = 13, """"" = 5 err.number = " & err.number)
+err.clear
+x = (" " = 0)
+Call ok(err.number = 13, """ "" = 0 err.number = " & err.number)
+err.clear
+x = ("abc" <> 5)
+Call ok(err.number = 13, """abc"" <> 5 err.number = " & err.number)
+err.clear
+x = ("" <> 5)
+Call ok(err.number = 13, """"" <> 5 err.number = " & err.number)
 err.clear
 x = ("abc" > 5)
 Call ok(err.number = 13, """abc"" > 5 err.number = " & err.number)
