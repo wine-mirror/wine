@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-24 21:36+0200\n"
+"PO-Revision-Date: 2026-04-28 18:12+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -5116,47 +5116,44 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "Nie znaleziono wiadomości 0x%1 w pliku %2.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
-#, fuzzy
-#| msgid "Sector not found.\n"
 msgid "Scope not found.\n"
-msgstr "Nie znaleziono sektora.\n"
+msgstr "Nie znaleziono zakresu.\n"
 
 #: dlls/kernelbase/winerror.mc:1055
-#, fuzzy
-#| msgid "The specified device handle is invalid."
 msgid "The specified Central Access Policy is undefined.\n"
-msgstr "Podane dojście urządzenia jest nieprawidłowe."
+msgstr "Określone centralne zasady dostępu są niezdefiniowane.\n"
 
 #: dlls/kernelbase/winerror.mc:1060
 msgid "Central Access Policy from Active Directory is invalid.\n"
-msgstr ""
+msgstr "Centralne zasady dostępu z usługi Active Directory są nieprawidłowe.\n"
 
 #: dlls/kernelbase/winerror.mc:1065
-#, fuzzy
-#| msgid "Host unreachable.\n"
 msgid "Device is unreachable.\n"
-msgstr "Host nieosiągalny.\n"
+msgstr "Urządzenie jest nieosiągalne.\n"
 
 #: dlls/kernelbase/winerror.mc:1070
 msgid "Target device has insufficient resources to complete the operation.\n"
 msgstr ""
+"Urządzenie docelowe nie ma wystarczających zasobów, aby dokończyć operację.\n"
 
 #: dlls/kernelbase/winerror.mc:1075
 msgid ""
 "A data integrity checksum error occurred. Data in the file stream is "
 "corrupt.\n"
 msgstr ""
+"Wystąpił błąd sumy kontrolnej integralności danych. Dane w strumieniu pliku "
+"są uszkodzone.\n"
 
 #: dlls/kernelbase/winerror.mc:1080
 msgid ""
 "Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
 msgstr ""
+"Nie można modyfikować atrybutów rozszerzonych zarówno JĄDRA, jak i "
+"normalnych w jednej operacji.\n"
 
 #: dlls/kernelbase/winerror.mc:1085
-#, fuzzy
-#| msgid "Device does not exist.\n"
 msgid "Device does not support file-level TRIM.\n"
-msgstr "Urządzenie nie istnieje.\n"
+msgstr "Urządzenie nie obsługuje funkcji TRIM na poziomie pliku.\n"
 
 #: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
