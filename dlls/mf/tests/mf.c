@@ -11268,10 +11268,8 @@ static void test_media_session_scrubbing(void)
 
     SET_EXPECT(test_media_sink_GetStreamSinkCount);
     hr = WaitForSingleObject(media_sink->preroll_event, 100);
-    todo_wine
     ok(hr == WAIT_OBJECT_0, "Unexpected hr %#lx.\n", hr);
 
-    todo_wine
     CHECK_CALLED(test_media_sink_preroll_NotifyPreroll);
 
     hr = wait_media_event_until_blocking(session, callback, MESessionStarted, 1000, &propvar);
