@@ -175,6 +175,54 @@ x = (5 > "abc")
 Call ok(err.number = 13, "5 > ""abc"" err.number = " & err.number)
 on error goto 0
 
+' BSTR coerces to numeric for comparison even when it carries VT_BYREF
+' (e.g. ByRef parameter holding a string).
+Sub TestByRefStrEq5(ByRef x)
+    Call ok(x = 5,  "ByRef ""5"" = 5 should be true")
+    Call ok(x < 6,  "ByRef ""5"" < 6 should be true")
+End Sub
+TestByRefStrEq5 "5"
+
+' BSTR vs each numeric VT VBScript can produce.
+Call ok("5" = CByte(5), """5"" = CByte(5) should be true")
+Call ok("5" = CInt(5),  """5"" = CInt(5) should be true")
+Call ok("5" = CLng(5),  """5"" = CLng(5) should be true")
+Call ok("5" = CSng(5),  """5"" = CSng(5) should be true")
+Call ok("5" = CDbl(5),  """5"" = CDbl(5) should be true")
+Call ok("5" = CCur(5),  """5"" = CCur(5) should be true")
+Call ok(CByte(5) = "5", "CByte(5) = ""5"" should be true")
+Call ok(CCur(5)  = "5", "CCur(5) = ""5"" should be true")
+
+' Hex / scientific BSTRs parse as numeric.
+Call ok("1e2" = 100, """1e2"" = 100 should be true")
+Call ok("&hff" = 255, """&hff"" = 255 should be true")
+Call ok("&H1F" = 31,  """&H1F"" = 31 should be true")
+
+' VT_UI1/VT_CY vs BSTR diverge from VT_I2: string-compare against CStr(numeric).
+' Non-numeric BSTR returns False with NO error (VT_I2 raises 13 for the same).
+on error resume next
+err.clear
+x = ("abc" = CByte(5))
+saved_err = err.number
+err.clear
+Call todo_wine_ok(saved_err = 0, """abc"" = CByte(5) should not raise error (err=" & saved_err & ")")
+x = ("abc" = CCur(5))
+saved_err = err.number
+err.clear
+Call todo_wine_ok(saved_err = 0, """abc"" = CCur(5) should not raise error (err=" & saved_err & ")")
+x = ("" = CByte(0))
+saved_err = err.number
+err.clear
+Call todo_wine_ok(saved_err = 0, """"" = CByte(0) should not raise error (err=" & saved_err & ")")
+x = ("" = CCur(0))
+saved_err = err.number
+err.clear
+Call todo_wine_ok(saved_err = 0, """"" = CCur(0) should not raise error (err=" & saved_err & ")")
+on error goto 0
+' Relational confirms lex compare: 10 > 5 numerically would be true; lex "10" < "5".
+Call todo_wine_ok(not ("10" > CByte(5)), """10"" > CByte(5) should be false (lex)")
+Call todo_wine_ok(not ("5" < CCur(10)),  """5"" < CCur(10) should be false (lex)")
+
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
 Call ok(getVT("") = "VT_BSTR", "getVT("""") is not VT_BSTR")
