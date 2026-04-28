@@ -1203,7 +1203,7 @@ sub get_integer_call($)
 
     return 0 if !$pname;
 
-    my $hook = "if (get_integer( $pname, $index, &integer )) *$params = integer;";
+    my $hook = "if (get_integer( $pname, $index, *$params, &integer )) *$params = integer;";
     return $hook if $name =~ /^glGet(Boolean|Double|Float|Integer)/;
 }
 
