@@ -6839,6 +6839,29 @@ static void test_joystick_id( DWORD version )
         else check_device_joystick_id( device, i, FALSE );
 
         IDirectInputDevice8_Release( device );
+
+        /*
+         * Undocumented behavior, guessed at by seeing GUID_SysMouseEm/GUID_SysMouseEm2
+         * where their Data1 values are 0x6f1d2b80/0x6f1d2b81 respectively.
+         * GUID_Joystick has a Data1 value of 0x6f1d2b70, which gives us 16
+         * possible values before hitting GUID_SysMouseEm. This aligns with
+         * the maximum possible unique joystick ID being 15.
+         */
+        if (i <= 15)
+        {
+            GUID joystick_id_guid = GUID_Joystick;
+
+            joystick_id_guid.Data1 += i;
+            hr = dinput_create_device( &di, &joystick_id_guid, &device );
+            todo_wine ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+            if (device)
+            {
+                check_device_hid_serial( device, descs_bulk[i].serial_str );
+                check_device_joystick_id( device, i, TRUE );
+                IDirectInputDevice8_Release( device );
+            }
+        }
+
         winetest_pop_context();
     }
 
