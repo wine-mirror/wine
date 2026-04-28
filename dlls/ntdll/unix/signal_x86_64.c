@@ -1791,7 +1791,7 @@ NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_p
     stack->machine_frame.rip = frame->rip;
     stack->machine_frame.rsp = frame->rsp;
     memcpy( stack->args_data, args, len );
-    return call_user_mode_callback( rsp, ret_ptr, ret_len, pKiUserCallbackDispatcher, NtCurrentTeb() );
+    return call_user_mode_callback( rsp, ret_ptr, ret_len, pKiUserCallbackDispatcher, data->teb );
 }
 
 
@@ -2538,7 +2538,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))
              && (wow_context->ContextFlags & CONTEXT_I386_CONTROL) == CONTEXT_I386_CONTROL)
         {
-            WOW64_CPURESERVED *cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
+            WOW64_CPURESERVED *cpu = data->teb->TlsSlots[WOW64_TLS_CPURESERVED];
 
             cpu->Flags |= WOW64_CPURESERVED_FLAG_RESET_STATE;
         }

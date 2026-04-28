@@ -81,8 +81,6 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(syscall);
 WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
-pthread_key_t teb_key = 0;
-
 static LONG nb_threads = 1;
 
 static inline int get_unix_exit_code( NTSTATUS status )
@@ -1128,7 +1126,6 @@ static void start_thread( struct thread_data *data )
 
     thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->syscall_trace = TRACE_ON(syscall);
-    pthread_setspecific( teb_key, data->teb );
     server_init_thread( thread_data->start, &suspend );
     signal_start_thread( thread_data->start, thread_data->param, suspend, data->teb );
 }
@@ -1636,7 +1633,8 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return pthread_getspecific( teb_key );
+    struct thread_data *data = get_thread_data();
+    return data ? data->teb : NULL;
 }
 
 

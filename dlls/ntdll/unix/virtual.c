@@ -4066,8 +4066,6 @@ TEB *virtual_alloc_first_teb(void)
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
     peb = (PEB *)((char *)teb_block + 31 * block_size + (is_win64 ? 0 : page_size));
     teb = init_teb( ptr, FALSE );
-    pthread_key_create( &teb_key, NULL );
-    pthread_setspecific( teb_key, teb );
 
     thread_data = virtual_alloc_thread_data();
     thread_data->teb = teb;
@@ -4255,7 +4253,7 @@ NTSTATUS ldt_get_entry( WORD sel, CLIENT_ID client_id, LDT_ENTRY *entry )
     struct ldt_bits bits = { 0 };
     unsigned int idx = sel >> 3;
 
-    if (client_id.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess)
+    if (HandleToULong(client_id.UniqueProcess) == pid)
     {
         if (ldt_copy)
         {
