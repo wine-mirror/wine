@@ -113,6 +113,7 @@ struct thread_data
     void        *jmp_buf;           /* setjmp buffer for exception handling */
     void        *start;             /* thread entry point */
     void        *param;             /* thread entry point parameter */
+    struct list  entry;             /* entry in TEB list */
     char         signal_stack[];    /* signal stack */
     /* char kernel_stack[] */
 };
@@ -131,7 +132,6 @@ struct ntdll_thread_data
     SYSTEM_SERVICE_TABLE     *syscall_table; /* 214/0370 syscall table */
     struct syscall_frame     *syscall_frame; /* 218/0378 current syscall frame */
     int                       syscall_trace; /* 21c/0380 syscall trace flag */
-    struct list               entry;         /* entry in TEB list */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
@@ -315,7 +315,7 @@ extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING 
                                              struct pe_image_info *info, void *so_handle );
 extern NTSTATUS virtual_relocate_module( void *module );
 extern TEB *virtual_alloc_first_teb(void);
-extern NTSTATUS virtual_alloc_teb( TEB **ret_teb );
+extern NTSTATUS virtual_alloc_teb( struct thread_data *data );
 struct thread_data *virtual_alloc_thread_data(void);
 extern void virtual_free_thread_data( struct thread_data *data );
 extern NTSTATUS virtual_clear_tls_index( ULONG index );

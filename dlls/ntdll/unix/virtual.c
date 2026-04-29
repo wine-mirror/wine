@@ -3980,7 +3980,6 @@ NTSTATUS virtual_relocate_module( void *module )
 /* set some initial values in a new TEB */
 static TEB *init_teb( void *ptr, BOOL is_wow )
 {
-    struct ntdll_thread_data *thread_data;
     TEB *teb;
     TEB64 *teb64 = ptr;
     TEB32 *teb32 = (TEB32 *)((char *)ptr + teb_offset);
@@ -4025,8 +4024,6 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     InitializeListHead( &teb->ActivationContextStack.FrameListCache );
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    list_add_head( &teb_list, &thread_data->entry );
     return teb;
 }
 
@@ -4064,6 +4061,7 @@ TEB *virtual_alloc_first_teb(void)
 
     thread_data = virtual_alloc_thread_data();
     thread_data->teb = teb;
+    list_add_head( &teb_list, &thread_data->entry );
     pthread_key_create( &thread_data_key, NULL );
     pthread_setspecific( thread_data_key, thread_data );
     return teb;
@@ -4073,10 +4071,9 @@ TEB *virtual_alloc_first_teb(void)
 /***********************************************************************
  *           virtual_alloc_teb
  */
-NTSTATUS virtual_alloc_teb( TEB **ret_teb )
+NTSTATUS virtual_alloc_teb( struct thread_data *data )
 {
     sigset_t sigset;
-    TEB *teb;
     void *ptr = NULL;
     NTSTATUS status = STATUS_SUCCESS;
     SIZE_T block_size = 4 * page_size;
@@ -4107,9 +4104,10 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    *ret_teb = teb = init_teb( ptr, is_wow64() );
+    data->teb = init_teb( ptr, is_wow64() );
+    list_add_head( &teb_list, &data->entry );
 
-    if ((status = signal_alloc_thread( teb )))
+    if ((status = signal_alloc_thread( data->teb )))
     {
         *(void **)ptr = next_free_teb;
         next_free_teb = ptr;
@@ -4155,7 +4153,6 @@ struct thread_data *virtual_alloc_thread_data(void)
  */
 void virtual_free_thread_data( struct thread_data *data )
 {
-    struct ntdll_thread_data *thread_data;
     TEB *teb;
     void *ptr;
     SIZE_T size;
@@ -4184,8 +4181,7 @@ void virtual_free_thread_data( struct thread_data *data )
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     signal_free_thread( teb );
-    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    list_remove( &thread_data->entry );
+    list_remove( &data->entry );
     ptr = teb;
     if (!is_win64) ptr = (char *)ptr - teb_offset;
     *(void **)ptr = next_free_teb;
@@ -4341,15 +4337,15 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, ULONG entry1_low, ULONG entry1_high
  */
 NTSTATUS virtual_clear_tls_index( ULONG index )
 {
-    struct ntdll_thread_data *thread_data;
+    struct thread_data *data;
     sigset_t sigset;
 
     if (index < TLS_MINIMUM_AVAILABLE)
     {
         server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-        LIST_FOR_EACH_ENTRY( thread_data, &teb_list, struct ntdll_thread_data, entry )
+        LIST_FOR_EACH_ENTRY( data, &teb_list, struct thread_data, entry )
         {
-            TEB *teb = CONTAINING_RECORD( thread_data, TEB, GdiTebBatch );
+            TEB *teb = data->teb;
 #ifdef _WIN64
             WOW_TEB *wow_teb = get_wow_teb( teb );
             if (wow_teb) wow_teb->TlsSlots[index] = 0;
@@ -4365,9 +4361,9 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
         if (index >= 8 * sizeof(peb->TlsExpansionBitmapBits)) return STATUS_INVALID_PARAMETER;
 
         server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-        LIST_FOR_EACH_ENTRY( thread_data, &teb_list, struct ntdll_thread_data, entry )
+        LIST_FOR_EACH_ENTRY( data, &teb_list, struct thread_data, entry )
         {
-            TEB *teb = CONTAINING_RECORD( thread_data, TEB, GdiTebBatch );
+            TEB *teb = data->teb;
 #ifdef _WIN64
             WOW_TEB *wow_teb = get_wow_teb( teb );
             if (wow_teb)
