@@ -254,6 +254,7 @@ struct element_content
 
 struct element_decl
 {
+    struct list entry;
     BSTR name;
     enum element_type type;
     struct element_content *content;
@@ -877,6 +878,7 @@ struct dtd
 {
     unsigned int refcount;
     struct list attr_decls;
+    struct list elements;
     struct list entities;
 };
 
@@ -1005,6 +1007,7 @@ static struct dtd * saxreader_new_dtd(struct saxlocator *locator)
     }
 
     dtd->refcount = 1;
+    list_init(&dtd->elements);
     list_init(&dtd->attr_decls);
     list_init(&dtd->entities);
 
@@ -1050,8 +1053,58 @@ static void saxreader_free_entity(struct entity_decl *entity)
     free(entity);
 }
 
+static struct element_content * saxreader_free_element_content(struct element_content *c)
+{
+    int depth = 0;
+
+    while (true)
+    {
+        struct element_content *parent;
+
+        while (c->left || c->right)
+        {
+            c = c->left ? c->left : c->right;
+            ++depth;
+        }
+
+        SysFreeString(c->name);
+        parent = c->parent;
+        if (depth == 0 || !parent)
+        {
+            free(c);
+            break;
+        }
+        if (c == parent->left)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(c);
+
+        if (parent->right)
+        {
+            c = parent->right;
+        }
+        else
+        {
+            --depth;
+            c = parent;
+        }
+    }
+
+    return NULL;
+}
+
+static void saxreader_free_element_decl(struct element_decl *decl)
+{
+    if (decl->content)
+        saxreader_free_element_content(decl->content);
+    SysFreeString(decl->name);
+    free(decl);
+}
+
 static void parser_release_dtd(struct dtd *dtd)
 {
+    struct element_decl *element, *element_next;
     struct entity_decl *entity, *entity_next;
     struct attlist_decl *attr, *attr_next;
 
@@ -1068,6 +1121,12 @@ static void parser_release_dtd(struct dtd *dtd)
     {
         list_remove(&attr->entry);
         saxreader_free_attlist(attr);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(element, element_next, &dtd->elements, struct element_decl, entry)
+    {
+        list_remove(&element->entry);
+        saxreader_free_element_decl(element);
     }
 
     free(dtd);
@@ -4793,47 +4852,6 @@ static struct element_content *saxreader_new_element_content(struct saxlocator *
     return ret;
 }
 
-static struct element_content * saxreader_free_element_content(struct element_content *c)
-{
-    int depth = 0;
-
-    while (true)
-    {
-        struct element_content *parent;
-
-        while (c->left || c->right)
-        {
-            c = c->left ? c->left : c->right;
-            ++depth;
-        }
-
-        SysFreeString(c->name);
-        parent = c->parent;
-        if (depth == 0 || !parent)
-        {
-            free(c);
-            break;
-        }
-        if (c == parent->left)
-            parent->left = NULL;
-        else
-            parent->right = NULL;
-        free(c);
-
-        if (parent->right)
-        {
-            c = parent->right;
-        }
-        else
-        {
-            --depth;
-            c = parent;
-        }
-    }
-
-    return NULL;
-}
-
 static void saxreader_link_element_content_part(struct element_content *parent, struct element_content *child, bool left)
 {
     if (left)
@@ -4846,13 +4864,11 @@ static void saxreader_link_element_content_part(struct element_content *parent, 
 }
 
 /* [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' */
-static enum element_type saxreader_parse_mixed_contentspec(struct saxlocator *locator, struct element_content **model)
+static void saxreader_parse_mixed_contentspec(struct saxlocator *locator, struct element_decl *decl)
 {
     struct element_content *ret = NULL, *cur = NULL, *n, *left;
     BSTR name = NULL;
     WCHAR ch;
-
-    *model = NULL;
 
     saxreader_skipspaces(locator);
     if (saxreader_cmp(locator, L")"))
@@ -4905,11 +4921,15 @@ static enum element_type saxreader_parse_mixed_contentspec(struct saxlocator *lo
 
     if (locator->status == S_OK)
     {
-        *model = ret;
-        return ELEMENT_TYPE_MIXED;
+        decl->content = ret;
+        decl->type = ELEMENT_TYPE_MIXED;
     }
-
-    return ELEMENT_TYPE_UNDEFINED;
+    else
+    {
+        if (ret)
+            saxreader_free_element_content(ret);
+        decl->type = ELEMENT_TYPE_UNDEFINED;
+    }
 }
 
 static struct element_content * saxreader_parse_children_contentspec(struct saxlocator *locator);
@@ -5092,55 +5112,57 @@ static struct element_content * saxreader_parse_children_contentspec(struct saxl
 
 /* [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children
    [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' */
-static enum element_type saxreader_parse_contentspec(struct saxlocator *locator, struct element_content **content)
+static void saxreader_parse_contentspec(struct saxlocator *locator, struct element_decl *decl)
 {
-    *content = NULL;
+    decl->content = NULL;
 
     if (saxreader_cmp(locator, L"EMPTY"))
     {
-        return ELEMENT_TYPE_EMPTY;
+        decl->type = ELEMENT_TYPE_EMPTY;
     }
     else if (saxreader_cmp(locator, L"ANY"))
     {
-        return ELEMENT_TYPE_ANY;
+        decl->type = ELEMENT_TYPE_ANY;
     }
     else if (saxreader_cmp(locator, L"("))
     {
         saxreader_skipspaces(locator);
 
         if (saxreader_cmp(locator, L"#PCDATA"))
-            return saxreader_parse_mixed_contentspec(locator, content);
+            return saxreader_parse_mixed_contentspec(locator, decl);
         else
         {
-            *content = saxreader_parse_children_contentspec(locator);
-            return ELEMENT_TYPE_ELEMENT;
+            decl->content = saxreader_parse_children_contentspec(locator);
+            decl->type = ELEMENT_TYPE_ELEMENT;
         }
     }
     else
     {
         saxreader_set_error(locator, E_SAX_INVALID_MODEL);
-        return ELEMENT_TYPE_UNDEFINED;
+        decl->type = ELEMENT_TYPE_UNDEFINED;
     }
 }
 
 /* [45] elementdecl ::= '<!ELEMENT' S Name S contentspec S? '>' */
 static void saxreader_parse_elementdecl(struct saxlocator *locator)
 {
-    struct element_decl decl;
+    struct element_decl *decl;
+
+    if (!(decl = saxreader_calloc(locator, 1, sizeof(*decl))))
+        return;
+    list_add_tail(&locator->dtd->elements, &decl->entry);
 
     /* Skip <!ELEMENT */
     saxreader_skip(locator, 9);
     saxreader_skip_required_spaces(locator);
-    saxreader_parse_name(locator, &decl.name);
+    saxreader_parse_name(locator, &decl->name);
     saxreader_skip_required_spaces(locator);
-    decl.type = saxreader_parse_contentspec(locator, &decl.content);
+    saxreader_parse_contentspec(locator, decl);
     saxreader_skipspaces(locator);
     if (saxreader_cmp(locator, L">"))
-        saxlocator_elementdecl(locator, &decl);
+        saxlocator_elementdecl(locator, decl);
     else
         saxreader_set_error(locator, E_SAX_EXPECTINGTAGEND);
-
-    SysFreeString(decl.name);
 }
 
 /* [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
