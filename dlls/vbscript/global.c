@@ -2055,14 +2055,59 @@ static HRESULT Global_InStrB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt
 
 static HRESULT Global_AscB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR conv_str = NULL, str;
+    HRESULT hres = S_OK;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    switch(V_VT(arg)) {
+    case VT_NULL:
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    case VT_EMPTY:
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    case VT_BSTR:
+        str = V_BSTR(arg);
+        break;
+    default:
+        hres = to_string(This->ctx->lcid, arg, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    if(!SysStringByteLen(str))
+        hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    else if(res) {
+        V_VT(res) = VT_UI1;
+        V_UI1(res) = *(const BYTE*)str;
+    }
+
+    SysFreeString(conv_str);
+    return hres;
 }
 
 static HRESULT Global_ChrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int c;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    hres = to_int(arg, &c);
+    if(FAILED(hres))
+        return hres;
+
+    if(c < 0 || c > 255)
+        return MAKE_VBSERROR(VBSE_OVERFLOW);
+
+    if(res) {
+        BYTE b = c;
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringByteLen((const char*)&b, 1);
+        if(!V_BSTR(res))
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

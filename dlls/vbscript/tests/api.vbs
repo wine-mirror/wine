@@ -2999,4 +2999,39 @@ Call ok(InStrB("ABC", "D") = 0, "InStrB(""ABC"", ""D"") = " & InStrB("ABC", "D")
 Call ok(InStrB("ABC", "A") = 1, "InStrB(""ABC"", ""A"") = " & InStrB("ABC", "A"))
 Call ok(InStrB("ABCABC", "B") = 3, "InStrB(""ABCABC"", ""B"") = " & InStrB("ABCABC", "B"))
 
+' AscB tests
+Call ok(AscB("A") = 65, "AscB(""A"") = " & AscB("A"))
+Call ok(AscB("a") = 97, "AscB(""a"") = " & AscB("a"))
+Call ok(AscB("ABC") = 65, "AscB(""ABC"") = " & AscB("ABC"))
+Call ok(getVT(AscB("A")) = "VT_UI1", "getVT(AscB) = " & getVT(AscB("A")))
+
+' ChrB tests
+Call ok(AscB(ChrB(65)) = 65, "AscB(ChrB(65)) roundtrip = " & AscB(ChrB(65)))
+Call ok(LenB(ChrB(65)) = 1, "LenB(ChrB(65)) = " & LenB(ChrB(65)))
+Call ok(AscB(ChrB(0)) = 0, "AscB(ChrB(0)) = " & AscB(ChrB(0)))
+Call ok(AscB(ChrB(255)) = 255, "AscB(ChrB(255)) = " & AscB(ChrB(255)))
+
+sub testByteCharErrors()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = AscB("")
+    Call ok(Err.number = 5, "AscB("""") Err.number = " & Err.number)
+
+    call Err.clear()
+    r = AscB(Null)
+    Call ok(Err.number = 94, "AscB(Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = ChrB(256)
+    Call ok(Err.number = 6, "ChrB(256) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = ChrB(-1)
+    Call ok(Err.number = 6, "ChrB(-1) Err.number = " & Err.number)
+end sub
+
+call testByteCharErrors()
+
 Call reportSuccess()
