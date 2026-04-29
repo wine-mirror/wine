@@ -28,6 +28,7 @@
 #include <initguid.h>
 #include <d3d9on12.h>
 #include <dxgi1_4.h>
+#include <psapi.h>
 
 static HMODULE d3d9_handle = 0;
 static HMODULE d3d12_handle = 0;
@@ -15295,6 +15296,61 @@ out:
     DestroyWindow(window);
 }
 
+/* BFME Online Arena hooks the IDirect3DDevice9 vtbl, getting its address by
+ * searching for this sequence. Test that this reliably works. */
+static void test_device_vtbl_initialization_assembly_hook(void)
+{
+#ifdef __i386__
+    const unsigned char *base, *p;
+    IDirect3DDevice9Vtbl *vtbl;
+    IDirect3DDevice9 *device;
+    BOOL found = FALSE;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    MODULEINFO mi;
+    HWND window;
+    BOOL ret;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    ret = GetModuleInformation(GetCurrentProcess(), GetModuleHandleA("d3d9.dll"), &mi, sizeof(mi));
+    ok(ret, "Failed to get module information, error %lu.\n", GetLastError());
+    base = (const unsigned char *)mi.lpBaseOfDll;
+
+    for (p = base; p + 14 <= base + mi.SizeOfImage; ++p)
+    {
+        if (p[0] == 0xc7 && p[1] == 0x06
+                && p[6] == 0x89 && p[7] == 0x86
+                && p[12] == 0x89 && p[13] == 0x86)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+    ok(found, "Could not find device vtbl initialization sequence.\n");
+
+    memcpy(&vtbl, p + 2, sizeof(vtbl));
+
+    /* On modern Windows this seems to be similarly decoy code.
+     * The vtbl pointer doesn't match, and neither do multiple of the functions.
+     * At least one of the functions actually hooked, Present, still matches. */
+    ok(vtbl->Present == device->lpVtbl->Present, "Got different Present() addresses.\n");
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+#endif
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = GetModuleHandleA("d3d9.dll");
@@ -15432,6 +15488,7 @@ START_TEST(device)
     test_cursor_clipping();
     test_window_position();
     test_d3d9on12();
+    test_device_vtbl_initialization_assembly_hook();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

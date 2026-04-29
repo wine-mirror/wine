@@ -4626,6 +4626,38 @@ static const struct IDirect3DDevice9ExVtbl d3d9_device_vtbl =
     d3d9_device_GetDisplayModeEx,
 };
 
+#ifdef __i386__
+
+/* BFME Online Arena hooks the IDirect3DDevice9 vtbl. Instead of getting the
+ * vtbl address by doing something as simple as constructing a device, it
+ * apparently looks for the code sequence used by MSVC to initialize the device
+ * object with the vtbl address. Somehow this sequence has both remained stable
+ * and can be reliably used to identify *this* COM object specifically. It is:
+ *
+ *  mov &d3d9_device_vtbl, %esi
+ *  mov %eax, 0x########(%esi)
+ *  mov %eax, 0x########(%esi)
+ *
+ * It doesn't really make sense to force using this sequence to initialize the
+ * d3d9_device, so instead just put it here. */
+
+#pragma pack(push,1)
+
+static const __attribute__((used)) struct
+{
+    unsigned char op_mov_to_this[2];
+    const struct IDirect3DDevice9ExVtbl *vtable_addr;
+    unsigned char op_mov_field_a[2];
+    unsigned int disp_a;
+    unsigned char op_mov_field_b[2];
+    unsigned int disp_b;
+}
+d3d9_overlay_scanner_marker = {{0xc7, 0x06}, &d3d9_device_vtbl, {0x89, 0x86}, 0, {0x89, 0x86}, 0};
+
+#pragma pack(pop)
+
+#endif
+
 static inline struct d3d9_device *device_from_device_parent(struct wined3d_device_parent *device_parent)
 {
     return CONTAINING_RECORD(device_parent, struct d3d9_device, device_parent);
