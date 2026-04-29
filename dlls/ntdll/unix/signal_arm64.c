@@ -1005,9 +1005,8 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
 
     if (!is_inside_syscall( SP_sig(context) )) return FALSE;
 
-    TRACE( "code=%x flags=%x addr=%p pc=%p tid=%04x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-           (void *)PC_sig(context), GetCurrentThreadId() );
+    TRACE( "code=%x flags=%x addr=%p pc=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (void *)PC_sig(context) );
     for (i = 0; i < rec->NumberParameters; i++)
         TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
 

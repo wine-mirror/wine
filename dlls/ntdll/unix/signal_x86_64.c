@@ -2084,9 +2084,8 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
 
     if (!is_inside_syscall( RSP_sig(sigcontext) )) return FALSE;
 
-    TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
-                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-                 context->Rip, GetCurrentThreadId() );
+    TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx\n",
+                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Rip );
     for (i = 0; i < rec->NumberParameters; i++)
         TRACE_(seh)( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
     TRACE_(seh)( " rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",

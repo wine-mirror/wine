@@ -107,6 +107,7 @@ struct thread_data
     int          reply_fd;          /* fd for receiving server replies */
     int          wait_fd[2];        /* fd for sleeping server requests */
     int          alert_fd;          /* inproc sync fd for user apc alerts */
+    DWORD        tid;               /* thread id */
     BOOL         allow_writes;      /* ThreadAllowWrites flags */
     pthread_t    pthread_id;        /* pthread thread id */
     void        *jmp_buf;           /* setjmp buffer for exception handling */
@@ -286,7 +287,7 @@ extern void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 
 extern void set_process_instrumentation_callback( void *callback );
 
 extern void *get_cpu_area( USHORT machine );
-extern void set_thread_id( TEB *teb, DWORD tid );
+extern void set_thread_id( struct thread_data *data );
 extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size );
 extern void DECLSPEC_NORETURN abort_thread( int status );
 extern void DECLSPEC_NORETURN abort_process( int status );
