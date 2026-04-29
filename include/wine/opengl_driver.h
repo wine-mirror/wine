@@ -224,6 +224,11 @@ static inline const char *debugstr_opengl_drawable( struct opengl_drawable *draw
     return wine_dbg_sprintf( "%s/%p (format %u)", debugstr_client_surface( drawable->client ), drawable, drawable->format );
 }
 
+static inline void opengl_drawable_map_buffer( struct opengl_drawable *drawable, GLenum buffer, GLenum set )
+{
+    drawable->buffer_map[buffer - GL_FRONT_LEFT] = set;
+}
+
 W32KAPI void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client );
 W32KAPI void opengl_drawable_add_ref( struct opengl_drawable *drawable );
 W32KAPI void opengl_drawable_release( struct opengl_drawable *drawable );
