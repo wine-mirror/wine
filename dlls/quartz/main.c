@@ -93,6 +93,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AudioRender, dsound_render_create },
     { &CLSID_AVIDec, avi_dec_create },
     { &CLSID_AviSplitter, avi_splitter_create },
+    { &CLSID_Colour, color_create },
     { &CLSID_CMpegAudioCodec, mpeg_audio_codec_create },
     { &CLSID_CMpegVideoCodec, mpeg_video_codec_create },
     { &CLSID_DSoundRender, dsound_render_create },
@@ -353,6 +354,44 @@ HRESULT WINAPI DllRegisterServer(void)
         .rgPins2 = acm_wrapper_pins,
     };
 
+    static const REGPINTYPES color_inputs[] =
+    {
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB8},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB555},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB565},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB24},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB32},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_ARGB32},
+    };
+    static const REGPINTYPES color_outputs[] =
+    {
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB8},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB555},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB565},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB24},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_RGB32},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_ARGB32},
+    };
+    static const REGFILTERPINS2 color_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(color_inputs),
+            .lpMediaType = color_inputs,
+        },
+        {
+            .nMediaTypes = ARRAY_SIZE(color_outputs),
+            .lpMediaType = color_outputs,
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+        },
+    };
+    static const REGFILTER2 color_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_UNLIKELY + 1,
+        .cPins2 = ARRAY_SIZE(color_pins),
+        .rgPins2 = color_pins,
+    };
+
     static const REGPINTYPES mpeg_splitter_inputs[] =
     {
         {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio},
@@ -542,6 +581,9 @@ HRESULT WINAPI DllRegisterServer(void)
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_ACMWrapper, L"ACM Wrapper", NULL,
             &CLSID_LegacyAmFilterCategory, NULL, &acm_wrapper_reg)))
         goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_Colour, L"Color Space Converter", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &color_reg)))
+        goto done;
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_AviSplitter, L"AVI Splitter", NULL,
             NULL, NULL, &avi_splitter_reg)))
         goto done;
@@ -588,6 +630,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_AsyncReader)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_ACMWrapper)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_Colour)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_AviSplitter)))
         goto done;

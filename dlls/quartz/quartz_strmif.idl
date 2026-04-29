@@ -92,6 +92,13 @@ coclass AsyncReader { interface IBaseFilter; }
 coclass AVIDec { interface IBaseFilter; }
 
 [
+    helpstring("Color Space Converter"),
+    threading(both),
+    uuid(1643e180-90f5-11ce-97d5-00aa0055595a)
+]
+coclass Colour { interface IBaseFilter; }
+
+[
     helpstring("DirectSound Audio Renderer"),
     threading(both),
     uuid(79376820-07d0-11cf-a24d-0020afd79767)

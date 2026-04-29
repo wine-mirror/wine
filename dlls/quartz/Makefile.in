@@ -9,6 +9,7 @@ VER_OLESELFREGISTER = 1
 SOURCES = \
 	acmwrapper.c \
 	avidec.c \
+	colorconv.c \
 	control_tlb.idl \
 	decoder.c \
 	dsoundrender.c \
