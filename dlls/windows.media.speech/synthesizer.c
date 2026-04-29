@@ -115,7 +115,7 @@ static HRESULT WINAPI voice_information_get_DisplayName( IVoiceInformation *ifac
 {
     struct voice_information *impl = impl_from_IVoiceInformation(iface);
 
-    TRACE("iface %p, value %p!n", iface, value);
+    TRACE("iface %p, value %p\n", iface, value);
     return WindowsDuplicateString(impl->display_name, value);
 }
 
