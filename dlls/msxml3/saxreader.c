@@ -259,7 +259,6 @@ struct element_decl
     struct element_content *content;
 };
 
-
 struct entity_part
 {
     BSTR value;
@@ -908,9 +907,13 @@ struct saxlocator
     {
         struct list attr_decls;
         struct list entities;
+    } dtd;
+
+    struct
+    {
         BSTR typenames[ATTR_TYPE_NMTOKENS + 1];
         BSTR valuenames[ATTR_DEF_TYPE_FIXED + 1];
-    } dtd;
+    } strings;
 
     bool collect;
     struct string_buffer scratch;
@@ -1013,21 +1016,21 @@ static BSTR saxreader_alloc_stringlen(struct saxlocator *locator, const WCHAR *s
 
 static void saxreader_ensure_dtd_typenames(struct saxlocator *locator)
 {
-    if (locator->dtd.typenames[ATTR_TYPE_CDATA])
+    if (locator->strings.typenames[ATTR_TYPE_CDATA])
         return;
 
-    locator->dtd.typenames[ATTR_TYPE_CDATA] = saxreader_alloc_string(locator, L"CDATA");
-    locator->dtd.typenames[ATTR_TYPE_ID] = saxreader_alloc_string(locator, L"ID");
-    locator->dtd.typenames[ATTR_TYPE_IDREF] = saxreader_alloc_string(locator, L"IDREF");
-    locator->dtd.typenames[ATTR_TYPE_IDREFS] = saxreader_alloc_string(locator, L"IDREFS");
-    locator->dtd.typenames[ATTR_TYPE_ENTITY] = saxreader_alloc_string(locator, L"ENTITY");
-    locator->dtd.typenames[ATTR_TYPE_ENTITIES] = saxreader_alloc_string(locator, L"ENTITIES");
-    locator->dtd.typenames[ATTR_TYPE_NMTOKEN] = saxreader_alloc_string(locator, L"NMTOKEN");
-    locator->dtd.typenames[ATTR_TYPE_NMTOKENS] = saxreader_alloc_string(locator, L"NMTOKENS");
+    locator->strings.typenames[ATTR_TYPE_CDATA] = saxreader_alloc_string(locator, L"CDATA");
+    locator->strings.typenames[ATTR_TYPE_ID] = saxreader_alloc_string(locator, L"ID");
+    locator->strings.typenames[ATTR_TYPE_IDREF] = saxreader_alloc_string(locator, L"IDREF");
+    locator->strings.typenames[ATTR_TYPE_IDREFS] = saxreader_alloc_string(locator, L"IDREFS");
+    locator->strings.typenames[ATTR_TYPE_ENTITY] = saxreader_alloc_string(locator, L"ENTITY");
+    locator->strings.typenames[ATTR_TYPE_ENTITIES] = saxreader_alloc_string(locator, L"ENTITIES");
+    locator->strings.typenames[ATTR_TYPE_NMTOKEN] = saxreader_alloc_string(locator, L"NMTOKEN");
+    locator->strings.typenames[ATTR_TYPE_NMTOKENS] = saxreader_alloc_string(locator, L"NMTOKENS");
 
-    locator->dtd.valuenames[ATTR_DEF_TYPE_REQUIRED] = saxreader_alloc_string(locator, L"#REQUIRED");
-    locator->dtd.valuenames[ATTR_DEF_TYPE_IMPLIED] = saxreader_alloc_string(locator, L"#IMPLIED");
-    locator->dtd.valuenames[ATTR_DEF_TYPE_FIXED] = saxreader_alloc_string(locator, L"#FIXED");
+    locator->strings.valuenames[ATTR_DEF_TYPE_REQUIRED] = saxreader_alloc_string(locator, L"#REQUIRED");
+    locator->strings.valuenames[ATTR_DEF_TYPE_IMPLIED] = saxreader_alloc_string(locator, L"#IMPLIED");
+    locator->strings.valuenames[ATTR_DEF_TYPE_FIXED] = saxreader_alloc_string(locator, L"#FIXED");
 }
 
 static bool is_namespaces_enabled(const struct saxreader *reader)
@@ -1818,10 +1821,10 @@ static ULONG WINAPI isaxlocator_AddRef(ISAXLocator* iface)
 
 static void saxreader_clear_dtd(struct saxlocator *locator)
 {
-    for (int i = 0; i < ARRAYSIZE(locator->dtd.typenames); ++i)
-        SysFreeString(locator->dtd.typenames[i]);
-    for (int i = 0; i < ARRAYSIZE(locator->dtd.valuenames); ++i)
-        SysFreeString(locator->dtd.valuenames[i]);
+    for (int i = 0; i < ARRAYSIZE(locator->strings.typenames); ++i)
+        SysFreeString(locator->strings.typenames[i]);
+    for (int i = 0; i < ARRAYSIZE(locator->strings.valuenames); ++i)
+        SysFreeString(locator->strings.valuenames[i]);
 }
 
 static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
@@ -2957,9 +2960,9 @@ static void saxlocator_attribute_decl(struct saxlocator *locator, struct attlist
         }
         else
         {
-            typename = locator->dtd.typenames[decl->attributes[i].type];
+            typename = locator->strings.typenames[decl->attributes[i].type];
         }
-        valuetype = locator->dtd.valuenames[decl->attributes[i].valuetype];
+        valuetype = locator->strings.valuenames[decl->attributes[i].valuetype];
 
         if (locator->vbInterface)
             hr = IVBSAXDeclHandler_attributeDecl(handler->vbhandler, &decl->name,
