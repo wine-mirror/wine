@@ -892,9 +892,6 @@ struct saxlocator
     ISequentialStream *stream;
     bool eos;
 
-    BSTR xmlns_uri;
-    BSTR xml_uri;
-    BSTR null_uri;
     struct
     {
         struct attribute *entries;
@@ -911,6 +908,9 @@ struct saxlocator
 
     struct
     {
+        BSTR xmlns_uri;
+        BSTR xml_uri;
+        BSTR null_uri;
         BSTR typenames[ATTR_TYPE_NMTOKENS + 1];
         BSTR valuenames[ATTR_DEF_TYPE_FIXED + 1];
     } strings;
@@ -1819,12 +1819,16 @@ static ULONG WINAPI isaxlocator_AddRef(ISAXLocator* iface)
     return refcount;
 }
 
-static void saxreader_clear_dtd(struct saxlocator *locator)
+static void saxreader_clear_strings(struct saxlocator *locator)
 {
     for (int i = 0; i < ARRAYSIZE(locator->strings.typenames); ++i)
         SysFreeString(locator->strings.typenames[i]);
     for (int i = 0; i < ARRAYSIZE(locator->strings.valuenames); ++i)
         SysFreeString(locator->strings.valuenames[i]);
+
+    SysFreeString(locator->strings.xmlns_uri);
+    SysFreeString(locator->strings.xml_uri);
+    SysFreeString(locator->strings.null_uri);
 }
 
 static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
@@ -1838,14 +1842,10 @@ static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
     {
         element_entry *element, *element2;
 
-        SysFreeString(locator->xmlns_uri);
-        SysFreeString(locator->xml_uri);
-        SysFreeString(locator->null_uri);
-
         saxreader_clear_attributes(locator);
         free(locator->attributes.entries);
 
-        saxreader_clear_dtd(locator);
+        saxreader_clear_strings(locator);
 
         /* element stack */
         LIST_FOR_EACH_ENTRY_SAFE(element, element2, &locator->elements, element_entry, entry)
@@ -1943,12 +1943,12 @@ static HRESULT saxlocator_create(struct saxreader *reader, ISequentialStream *st
 
     locator->ret = S_OK;
 
-    locator->xml_uri = saxreader_alloc_string(locator, L"http://www.w3.org/XML/1998/namespace");
-    locator->null_uri = saxreader_alloc_stringlen(locator, NULL, 0);
+    locator->strings.xml_uri = saxreader_alloc_string(locator, L"http://www.w3.org/XML/1998/namespace");
+    locator->strings.null_uri = saxreader_alloc_stringlen(locator, NULL, 0);
     if (locator->saxreader->version >= MSXML6)
-        locator->xmlns_uri = saxreader_alloc_string(locator, L"http://www.w3.org/2000/xmlns/");
+        locator->strings.xmlns_uri = saxreader_alloc_string(locator, L"http://www.w3.org/2000/xmlns/");
     else
-        locator->xmlns_uri = saxreader_alloc_stringlen(locator, NULL, 0);
+        locator->strings.xmlns_uri = saxreader_alloc_stringlen(locator, NULL, 0);
 
     list_init(&locator->elements);
     list_init(&locator->dtd.attr_decls);
@@ -3781,15 +3781,15 @@ static void saxreader_set_element_uri(struct saxlocator *locator, struct element
 
         if (attr->nsdef)
         {
-            attr->uri = locator->xmlns_uri;
+            attr->uri = locator->strings.xmlns_uri;
         }
         else if (!attr->prefix)
         {
-            attr->uri = locator->null_uri;
+            attr->uri = locator->strings.null_uri;
         }
         else if (!wcscmp(attr->prefix, L"xml"))
         {
-            attr->uri = locator->xml_uri;
+            attr->uri = locator->strings.xml_uri;
         }
         else if (!(ns = saxreader_get_namespace(locator, attr->prefix)))
         {
