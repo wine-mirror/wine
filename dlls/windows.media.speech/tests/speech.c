@@ -1012,9 +1012,6 @@ static void test_SpeechSynthesizer(void)
     ref = IVoiceInformation_Release(voice);
     ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
-    ref = IVectorView_VoiceInformation_Release(voices);
-    ok(!ref, "Got unexpected ref %lu.\n", ref);
-
 skip_voices:
     IInstalledVoicesStatic_Release(voices_static);
     IAgileObject_Release(agile_object);
@@ -1050,6 +1047,23 @@ skip_voices:
 
     hr = WindowsDeleteString(default_voice_id);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    if (voices)
+    {
+        voice = (IVoiceInformation *)0xdeadbeef;
+        hr = IVectorView_VoiceInformation_GetAt(voices, 0, &voice);
+        ok(hr == S_OK, "IVectorView_VoiceInformation_GetAt failed, hr %#lx\n", hr);
+        ok(voice != (IVoiceInformation *)0xdeadbeef, "IVectorView_VoiceInformation_GetAt returned %p\n", voice);
+
+        ref = IVectorView_VoiceInformation_Release(voices);
+        ok(!ref, "Got unexpected ref %lu.\n", ref);
+
+        hr = ISpeechSynthesizer_put_Voice(synthesizer, voice);
+        ok(hr == S_OK, "ISpeechSynthesizer_put_Voice failed, hr %#lx\n", hr);
+
+        ref = IVoiceInformation_Release(voice);
+        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+    }
 
     /* Test SynthesizeTextToStreamAsync */
     hr = WindowsCreateString(simple_synth_text, wcslen(simple_synth_text), &str);

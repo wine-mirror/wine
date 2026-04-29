@@ -1472,19 +1472,27 @@ static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesize
 static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )
 {
     struct synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
+    IVectorView_VoiceInformation *all_voices_vector;
+    IInstalledVoicesStatic *installed_voices;
     IVoiceInformation *voice;
-    HSTRING id, id2;
+    HSTRING id = NULL, id2;
     HRESULT hr;
     INT32 cmp, idx;
 
     TRACE("iface %p, value %p semi-stub.\n", iface, value);
 
-    if (FAILED(hr = IVoiceInformation_get_Id(value, &id)))
-        return hr;
+    if (SUCCEEDED(hr = IActivationFactory_QueryInterface(synthesizer_factory, &IID_IInstalledVoicesStatic, (void **)&installed_voices)))
+    {
+        hr = IInstalledVoicesStatic_get_AllVoices(installed_voices, &all_voices_vector);
+        IInstalledVoicesStatic_Release(installed_voices);
+    }
+    if (FAILED(hr)) return hr;
+
+    hr = IVoiceInformation_get_Id(value, &id);
 
     for (idx = 0; ; idx++)
     {
-        if (SUCCEEDED(hr = IVectorView_VoiceInformation_GetAt(&all_voices.IVectorView_VoiceInformation_iface, idx, &voice)))
+        if (SUCCEEDED(hr = IVectorView_VoiceInformation_GetAt(all_voices_vector, idx, &voice)))
         {
             if (SUCCEEDED(hr = IVoiceInformation_get_Id(voice, &id2)))
             {
@@ -1496,6 +1504,7 @@ static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceIn
         if (FAILED(hr) || cmp == 0) break;
     }
     WindowsDeleteString(id);
+    IVectorView_VoiceInformation_Release(all_voices_vector);
 
     if (SUCCEEDED(hr))
     {
