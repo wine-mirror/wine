@@ -1298,8 +1298,28 @@ static HRESULT Global_Len(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_LenB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD len;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return return_null(res);
+
+    if(V_VT(arg) != VT_BSTR) {
+        BSTR str;
+
+        hres = to_string(This->ctx->lcid, arg, &str);
+        if(FAILED(hres))
+            return hres;
+
+        len = SysStringByteLen(str);
+        SysFreeString(str);
+    }else {
+        len = SysStringByteLen(V_BSTR(arg));
+    }
+
+    return return_int(res, len);
 }
 
 static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

@@ -2952,4 +2952,12 @@ call testSetLocaleError()
 SetLocale(origLocale)
 Call ok(GetLocale() = origLocale, "GetLocale() after restore = " & GetLocale() & " expected " & origLocale)
 
+' LenB tests
+Call ok(LenB("") = 0, "LenB("""") = " & LenB(""))
+Call ok(LenB("A") = 2, "LenB(""A"") = " & LenB("A"))
+Call ok(LenB("ABC") = 6, "LenB(""ABC"") = " & LenB("ABC"))
+Call ok(LenB("hello") = 10, "LenB(""hello"") = " & LenB("hello"))
+Call ok(getVT(LenB("A")) = "VT_I4", "getVT(LenB) = " & getVT(LenB("A")))
+Call ok(IsNull(LenB(Null)), "LenB(Null) should be Null")
+
 Call reportSuccess()
