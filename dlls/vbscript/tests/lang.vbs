@@ -143,10 +143,32 @@ Call ok("05" = 5, """05"" = 5 should be true")
 Call ok(" 5" = 5, """ 5"" = 5 should be true")
 Call ok("5 " = 5, """5 "" = 5 should be true")
 Call ok("5e0" = 5, """5e0"" = 5 should be true")
-' String vs Boolean uses string comparison, not numeric conversion
+' BSTR vs Boolean: string-compare against CStr(bool) ("True"/"False"),
+' case-sensitive, no whitespace trimming, no numeric coercion, no type-mismatch.
+Call ok("True" = True, """True"" = True should be true")
+Call ok("False" = False, """False"" = False should be true")
+Call ok(not ("True" = False), """True"" = False should be false")
+Call ok(not ("False" = True), """False"" = True should be false")
+Call ok(not ("true" = True), """true"" = True should be false (case-sensitive)")
+Call ok(not ("TRUE" = True), """TRUE"" = True should be false (case-sensitive)")
+Call ok(not ("True " = True), """True "" = True should be false (no trim)")
+Call ok(not (" True" = True), """ True"" = True should be false (no trim)")
 Call ok(not ("1" = True), """1"" = True should be false")
 Call ok(not ("-1" = True), """-1"" = True should be false")
 Call ok(not ("0" = False), """0"" = False should be false")
+Call ok(not ("-1" = False), """-1"" = False should be false")
+Call ok(not ("True" <> True), """True"" <> True should be false")
+Call ok("False" <> True, """False"" <> True should be true")
+Call ok(not ("abc" = True), """abc"" = True should be false (no error)")
+Call ok(not ("" = True), """"" = True should be false (no error)")
+Call ok(not ("" = False), """"" = False should be false (no error)")
+Call ok(True = "True", "True = ""True"" should be true")
+Call ok(False = "False", "False = ""False"" should be true")
+' Relational: lexicographic string comparison after coercing bool to BSTR
+Call ok("True" > False, """True"" > False should be true (lex)")
+Call ok(not ("True" < False), """True"" < False should be false (lex)")
+Call ok(not ("False" > True), """False"" > True should be false (lex)")
+Call ok("abc" > True, """abc"" > True should be true (lex)")
 ' Non-numeric BSTR compared to number raises type mismatch (= / <> / relational)
 on error resume next
 err.clear
@@ -200,142 +222,85 @@ Call ok("&H1F" = 31,  """&H1F"" = 31 should be true")
 
 ' VT_UI1/VT_CY vs BSTR diverge from VT_I2: string-compare against CStr(numeric).
 ' Non-numeric BSTR returns False with NO error (VT_I2 raises 13 for the same).
-on error resume next
-err.clear
-x = ("abc" = CByte(5))
-saved_err = err.number
-err.clear
-Call todo_wine_ok(saved_err = 0, """abc"" = CByte(5) should not raise error (err=" & saved_err & ")")
-x = ("abc" = CCur(5))
-saved_err = err.number
-err.clear
-Call todo_wine_ok(saved_err = 0, """abc"" = CCur(5) should not raise error (err=" & saved_err & ")")
-x = ("" = CByte(0))
-saved_err = err.number
-err.clear
-Call todo_wine_ok(saved_err = 0, """"" = CByte(0) should not raise error (err=" & saved_err & ")")
-x = ("" = CCur(0))
-saved_err = err.number
-err.clear
-Call todo_wine_ok(saved_err = 0, """"" = CCur(0) should not raise error (err=" & saved_err & ")")
-on error goto 0
+Call ok(not ("abc" = CByte(5)), """abc"" = CByte(5) should be false (no error)")
+Call ok(not ("abc" = CCur(5)),  """abc"" = CCur(5) should be false (no error)")
+Call ok(not ("" = CByte(0)),    """"" = CByte(0) should be false (no error)")
+Call ok(not ("" = CCur(0)),     """"" = CCur(0) should be false (no error)")
 ' Relational confirms lex compare: 10 > 5 numerically would be true; lex "10" < "5".
-Call todo_wine_ok(not ("10" > CByte(5)), """10"" > CByte(5) should be false (lex)")
-Call todo_wine_ok(not ("5" < CCur(10)),  """5"" < CCur(10) should be false (lex)")
+Call ok(not ("10" > CByte(5)),  """10"" > CByte(5) should be false (lex)")
+Call ok(not ("5" < CCur(10)),   """5"" < CCur(10) should be false (lex)")
 
 ' --- BSTR vs numeric LITERAL: BSTR coerces to a number, parse failure raises 13. ---
 Dim saved_err
 on error resume next
 err.clear
 x = ("abc" = 5.5)        : saved_err = err.number : err.clear
-Call ok(saved_err = 13, "literal R8: ""abc"" = 5.5 should error 13 (got " & saved_err & ")")
+Call ok(saved_err = 13, "literal R8: ""abc"" = 5.5 should error 13 (got " & saved_err & "; needs literal tracking)")
 x = ("abc" = 1e2)        : saved_err = err.number : err.clear
-Call ok(saved_err = 13, "literal sci: ""abc"" = 1e2 should error 13 (got " & saved_err & ")")
+Call ok(saved_err = 13, "literal sci: ""abc"" = 1e2 should error 13 (got " & saved_err & "; needs literal tracking)")
 x = ("abc" = &hff)       : saved_err = err.number : err.clear
 Call ok(saved_err = 13, "literal hex: ""abc"" = &hff should error 13 (got " & saved_err & ")")
 x = ("abc" = 100000)     : saved_err = err.number : err.clear
 Call ok(saved_err = 13, "literal I4: ""abc"" = 100000 should error 13 (got " & saved_err & ")")
 x = ("abc" = #1/15/2024#): saved_err = err.number : err.clear
-Call ok(saved_err = 13, "literal date: ""abc"" = #1/15/2024# should error 13 (got " & saved_err & ")")
+Call ok(saved_err = 13, "literal date: ""abc"" = #1/15/2024# should error 13 (got " & saved_err & "; needs literal tracking)")
 on error goto 0
 
-' --- Variable holding a numeric loses "literal" status: string compare, no error. ---
+' --- Variable holding a numeric / arithmetic / unary / function return ---
+' VBScript on Windows treats these as non-literal: BSTR vs numeric uses
+' string-compare, non-numeric BSTR returns False with no error.
 Dim n5  : n5  = 5
 Dim n10 : n10 = 10
-on error resume next
-err.clear
-x = ("abc" = n5)         : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "var: ""abc"" = (n=5) should not raise (got " & saved_err & ")")
-err.clear
-x = ("abc" = n5) : Call todo_wine_ok(err.number = 0 and (x = False), "var: ""abc"" = (n=5) should be false")
-err.clear
-x = ("010" = n10) : Call todo_wine_ok(err.number = 0 and (x = False), "var: ""010"" = (n=10) should be false (string)")
-err.clear
-x = ("abc" = (5+0))      : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "arith: ""abc"" = (5+0) should not raise (got " & saved_err & ")")
-err.clear
-x = ("010" = (5+5)) : Call todo_wine_ok(err.number = 0 and (x = False), "arith: ""010"" = (5+5) should be false")
-err.clear
-x = ("010" = (10*1)) : Call todo_wine_ok(err.number = 0 and (x = False), "arith: ""010"" = (10*1) should be false")
-err.clear
-x = ("abc" = -5)         : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "neg: ""abc"" = -5 should not raise (got " & saved_err & ")")
-err.clear
-x = ("010" = CInt(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CInt: ""010"" = CInt(10) should be false")
-err.clear
-x = ("010" = CLng(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CLng: ""010"" = CLng(10) should be false")
-err.clear
-x = ("010" = CSng(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CSng: ""010"" = CSng(10) should be false")
-err.clear
-x = ("010" = CDbl(10)) : Call todo_wine_ok(err.number = 0 and (x = False), "CDbl: ""010"" = CDbl(10) should be false")
-err.clear
-x = ("abc" = CInt(5)) : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "CInt: ""abc"" = CInt(5) should not raise (got " & saved_err & ")")
-err.clear
-x = ("abc" = CLng(5)) : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "CLng: ""abc"" = CLng(5) should not raise (got " & saved_err & ")")
-err.clear
-x = ("abc" = CSng(5)) : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "CSng: ""abc"" = CSng(5) should not raise (got " & saved_err & ")")
-err.clear
-x = ("abc" = CDbl(5)) : saved_err = err.number : err.clear
-Call todo_wine_ok(saved_err = 0, "CDbl: ""abc"" = CDbl(5) should not raise (got " & saved_err & ")")
-err.clear
-x = ("10" > CDbl(5)) : Call todo_wine_ok(err.number = 0 and (x = False), """10"" > CDbl(5) should be false (lex)")
-err.clear
-x = ("10" > CSng(5)) : Call todo_wine_ok(err.number = 0 and (x = False), """10"" > CSng(5) should be false (lex)")
-err.clear
-x = ("9" < CDbl(10)) : Call todo_wine_ok(err.number = 0 and (x = False), """9"" < CDbl(10) should be false (lex)")
-on error goto 0
+Call ok(not ("abc" = n5),       "var: ""abc"" = (n=5) should be false")
+Call ok(not ("010" = n10),      "var: ""010"" = (n=10) should be false (string)")
+Call ok(not ("abc" = (5+0)),    "arith: ""abc"" = (5+0) should be false")
+Call ok(not ("010" = (5+5)),    "arith: ""010"" = (5+5) should be false")
+Call ok(not ("010" = (10*1)),   "arith: ""010"" = (10*1) should be false")
+Call ok(not ("abc" = -5),       "neg: ""abc"" = -5 should be false")
+
+' --- C-coercion functions return non-literal values; BSTR vs numeric
+' uses string-compare regardless of the underlying VT. ---
+Call ok(not ("010" = CInt(10)), "CInt: ""010"" = CInt(10) should be false")
+Call ok(not ("010" = CLng(10)), "CLng: ""010"" = CLng(10) should be false")
+Call ok(not ("010" = CSng(10)), "CSng: ""010"" = CSng(10) should be false")
+Call ok(not ("010" = CDbl(10)), "CDbl: ""010"" = CDbl(10) should be false")
+Call ok(not ("abc" = CInt(5)),  "CInt: ""abc"" = CInt(5) should be false")
+Call ok(not ("abc" = CLng(5)),  "CLng: ""abc"" = CLng(5) should be false")
+Call ok(not ("abc" = CSng(5)),  "CSng: ""abc"" = CSng(5) should be false")
+Call ok(not ("abc" = CDbl(5)),  "CDbl: ""abc"" = CDbl(5) should be false")
+
+' VT_R4 / VT_R8 from CSng/CDbl: relational uses lex compare.
+Call ok(not ("10" > CDbl(5)), """10"" > CDbl(5) should be false (lex)")
+Call ok(not ("10" > CSng(5)), """10"" > CSng(5) should be false (lex)")
+Call ok(not ("9" < CDbl(10)), """9"" < CDbl(10) should be false (lex)")
 
 ' --- VT_DATE from CDate is non-literal: string compare, no error. ---
 Dim cdt : cdt = CDate("2024-01-15")
-on error resume next
-err.clear
-x = ("abc" = cdt) : saved_err = err.number : err.clear
-on error goto 0
-Call todo_wine_ok(saved_err = 0, "CDate: ""abc"" = CDate(...) should not raise (got " & saved_err & ")")
+Call ok(not ("abc" = cdt), "CDate: ""abc"" = CDate(...) should be false")
 
 ' --- Function return / ByVal / ByRef strip "literal" status. ---
 Function GetFiveLit()
     GetFiveLit = 5
 End Function
-on error resume next
-err.clear
-x = ("abc" = GetFiveLit()) : saved_err = err.number : err.clear
-on error goto 0
-Call todo_wine_ok(saved_err = 0, "fn return: ""abc"" = GetFiveLit() should not raise (got " & saved_err & ")")
+Call ok(not ("abc" = GetFiveLit()), "fn return: ""abc"" = GetFiveLit() should be false")
 
 Sub TestByValStripsLit(ByVal v)
-    Dim local_err
-    on error resume next
-    err.clear
-    x = ("abc" = v) : local_err = err.number : err.clear
-    on error goto 0
-    Call todo_wine_ok(local_err = 0, "ByVal: ""abc"" = v should not raise (got " & local_err & ")")
+    Call ok(not ("abc" = v), "ByVal: ""abc"" = v should be false")
 End Sub
 TestByValStripsLit 5
 
 Sub TestByRefStripsLit(ByRef v)
-    Dim local_err
-    on error resume next
-    err.clear
-    x = ("abc" = v) : local_err = err.number : err.clear
-    on error goto 0
-    Call todo_wine_ok(local_err = 0, "ByRef: ""abc"" = v should not raise (got " & local_err & ")")
+    Call ok(not ("abc" = v), "ByRef: ""abc"" = v should be false")
 End Sub
 Dim litvar : litvar = 5
 TestByRefStripsLit litvar
 
-' --- Const inlines at compile-time in Wine, so the value is treated as a
-'     literal and raises error 13; on Windows Const acts like a variable.
-'     Tracked separately from the var_cmp fix; remains todo_wine for now. ---
+' Const references compile to an EXPR_MEMBER node so the comparison is
+' tagged non-literal even though the value is inlined; "abc" = FIVE goes
+' through the BSTR-vs-numeric string-compare path and returns False with
+' no error.
 Const FIVE_C = 5
-on error resume next
-err.clear
-x = ("abc" = FIVE_C) : saved_err = err.number : err.clear
-on error goto 0
-Call todo_wine_ok(saved_err = 0, "Const: ""abc"" = FIVE should not raise (got " & saved_err & "; needs compile-time fix)")
+Call ok(not ("abc" = FIVE_C), "Const: ""abc"" = FIVE_C should be false")
 
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")

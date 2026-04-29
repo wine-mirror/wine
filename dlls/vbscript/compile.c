@@ -204,6 +204,19 @@ static HRESULT push_instr_addr(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
     return S_OK;
 }
 
+static HRESULT push_instr_addr_uint(compile_ctx_t *ctx, vbsop_t op, unsigned arg1, unsigned arg2)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.uint = arg1;
+    instr_ptr(ctx, ret)->arg2.uint = arg2;
+    return S_OK;
+}
+
 static HRESULT push_instr_str(compile_ctx_t *ctx, vbsop_t op, const WCHAR *arg)
 {
     unsigned instr;
@@ -590,6 +603,28 @@ static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *
     return push_instr(ctx, op) ? S_OK : E_OUTOFMEMORY;
 }
 
+/* Bare numeric literals at a comparison site take a different code path on
+ * native VBScript: BSTR vs literal numeric coerces to a number (error 13 on
+ * parse failure), while BSTR vs anything else (variable, arithmetic result,
+ * function return, Const, ...) uses string comparison. Detect "bare numeric
+ * literal" syntactically; parens are transparent, but a Const reference is an
+ * EXPR_MEMBER and thus correctly treated as non-literal even if its expansion
+ * is itself an EXPR_INT. */
+static BOOL is_literal_expr(expression_t *expr)
+{
+    while(expr->type == EXPR_BRACKETS)
+        expr = ((unary_expression_t*)expr)->subexpr;
+    return expr->type == EXPR_INT
+        || expr->type == EXPR_DOUBLE
+        || expr->type == EXPR_DATE;
+}
+
+static BOOL is_compare_op(vbsop_t op)
+{
+    return op == OP_equal || op == OP_nequal || op == OP_gt
+        || op == OP_gteq  || op == OP_lt     || op == OP_lteq;
+}
+
 static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t *expr, vbsop_t op)
 {
     HRESULT hres;
@@ -601,6 +636,12 @@ static HRESULT compile_binary_expression(compile_ctx_t *ctx, binary_expression_t
     hres = compile_expression(ctx, expr->right);
     if(FAILED(hres))
         return hres;
+
+    if(is_compare_op(op)) {
+        unsigned flags = (is_literal_expr(expr->left)  ? CMP_LEFT_LITERAL  : 0)
+                       | (is_literal_expr(expr->right) ? CMP_RIGHT_LITERAL : 0);
+        return push_instr_uint(ctx, op, flags);
+    }
 
     return push_instr(ctx, op) ? S_OK : E_OUTOFMEMORY;
 }
@@ -1060,7 +1101,10 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
     unsigned end_label, case_cnt = 0, *case_labels = NULL, i;
     case_clausule_t *case_iter;
     expression_t *expr_iter;
+    BOOL test_lit;
     HRESULT hres;
+
+    test_lit = is_literal_expr(stat->expr);
 
     hres = compile_expression(ctx, stat->expr);
     if(FAILED(hres))
@@ -1096,11 +1140,14 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
             break;
 
         for(expr_iter = case_iter->expr; expr_iter; expr_iter = expr_iter->next) {
+            unsigned flags = (test_lit ? CMP_LEFT_LITERAL : 0)
+                           | (is_literal_expr(expr_iter) ? CMP_RIGHT_LITERAL : 0);
+
             hres = compile_expression(ctx, expr_iter);
             if(FAILED(hres))
                 break;
 
-            hres = push_instr_addr(ctx, OP_case, case_labels[i]);
+            hres = push_instr_addr_uint(ctx, OP_case, case_labels[i], flags);
             if(FAILED(hres))
                 break;
 
