@@ -2993,4 +2993,10 @@ end sub
 
 call testByteSubstrErrors()
 
+' InStrB tests
+Call ok(InStrB("ABC", "B") = 3, "InStrB(""ABC"", ""B"") = " & InStrB("ABC", "B"))
+Call ok(InStrB("ABC", "D") = 0, "InStrB(""ABC"", ""D"") = " & InStrB("ABC", "D"))
+Call ok(InStrB("ABC", "A") = 1, "InStrB(""ABC"", ""A"") = " & InStrB("ABC", "A"))
+Call ok(InStrB("ABCABC", "B") = 3, "InStrB(""ABCABC"", ""B"") = " & InStrB("ABCABC", "B"))
+
 Call reportSuccess()
