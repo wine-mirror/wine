@@ -217,6 +217,49 @@ struct attlist_decl
     size_t capacity;
 };
 
+enum element_type
+{
+    ELEMENT_TYPE_UNDEFINED = 0,
+    ELEMENT_TYPE_EMPTY,
+    ELEMENT_TYPE_ANY,
+    ELEMENT_TYPE_MIXED,
+    ELEMENT_TYPE_ELEMENT,
+};
+
+enum element_content_type
+{
+    ELEMENT_CONTENT_PCDATA = 1,
+    ELEMENT_CONTENT_ELEMENT,
+    ELEMENT_CONTENT_SEQ,
+    ELEMENT_CONTENT_OR,
+};
+
+enum element_content_occurrence
+{
+    ELEMENT_CONTENT_ONCE = 1,
+    ELEMENT_CONTENT_OPT,
+    ELEMENT_CONTENT_MULT,
+    ELEMENT_CONTENT_PLUS,
+};
+
+struct element_content
+{
+    BSTR name;
+    enum element_content_type type;
+    enum element_content_occurrence occurrence;
+    struct element_content *left;
+    struct element_content *right;
+    struct element_content *parent;
+};
+
+struct element_decl
+{
+    BSTR name;
+    enum element_type type;
+    struct element_content *content;
+};
+
+
 struct entity_part
 {
     BSTR value;
@@ -1565,8 +1608,11 @@ static const struct ISAXAttributesVtbl isaxattributes_vtbl =
 
 static void saxreader_free_bstr(BSTR *str)
 {
-    SysFreeString(*str);
-    *str = NULL;
+    if (str)
+    {
+        SysFreeString(*str);
+        *str = NULL;
+    }
 }
 
 static void saxreader_clear_attributes(struct saxlocator *locator)
@@ -2717,10 +2763,104 @@ static void saxlocator_external_entitydecl(struct saxlocator *locator, BSTR name
     locator->status = saxlocator_callback_result(locator, hr);
 }
 
-static void saxlocator_elementdecl(struct saxlocator *locator, BSTR name, BSTR model)
+static void saxreader_element_decl_occurence_stringify(struct saxlocator *locator, struct string_buffer *buffer,
+        struct element_content *c)
+{
+    if (c->occurrence == ELEMENT_CONTENT_OPT)
+        saxreader_string_append(locator, buffer, L"?", 1);
+    else if (c->occurrence == ELEMENT_CONTENT_MULT)
+        saxreader_string_append(locator, buffer, L"*", 1);
+    else if (c->occurrence == ELEMENT_CONTENT_PLUS)
+        saxreader_string_append(locator, buffer, L"+", 1);
+}
+
+static void saxreader_element_decl_content_stringify(struct saxlocator *locator, struct string_buffer *buffer,
+        struct element_decl *decl)
+{
+    struct element_content *cur, *content;
+
+    saxreader_string_append(locator, buffer, L"(", 1);
+    cur = content = decl->content;
+
+    do
+    {
+        if (!cur) return;
+
+        switch (cur->type)
+        {
+            case ELEMENT_CONTENT_PCDATA:
+                saxreader_string_append(locator, buffer, L"#PCDATA", 7);
+                break;
+            case ELEMENT_CONTENT_ELEMENT:
+                saxreader_string_append(locator, buffer, cur->name, SysStringLen(cur->name));
+                break;
+            case ELEMENT_CONTENT_SEQ:
+            case ELEMENT_CONTENT_OR:
+                if ((cur != decl->content) && cur->parent &&
+                        ((cur->type != cur->parent->type) || (cur->occurrence != ELEMENT_CONTENT_ONCE)))
+                {
+                    saxreader_string_append(locator, buffer, L"(", 1);
+                }
+                cur = cur->left;
+                continue;
+            default:
+                ;
+        }
+
+        while (cur != content)
+        {
+            struct element_content *parent = cur->parent;
+
+            if (!parent) return;
+
+            if (((cur->type == ELEMENT_CONTENT_OR) ||
+                 (cur->type == ELEMENT_CONTENT_SEQ)) &&
+                ((cur->type != parent->type) ||
+                 (cur->occurrence != ELEMENT_CONTENT_ONCE)))
+            {
+                saxreader_string_append(locator, buffer, L")", 1);
+            }
+            saxreader_element_decl_occurence_stringify(locator, buffer, cur);
+
+            if (cur == parent->left)
+            {
+                if (parent->type == ELEMENT_CONTENT_SEQ)
+                    saxreader_string_append(locator, buffer, L",", 1);
+                else if (parent->type == ELEMENT_CONTENT_OR)
+                    saxreader_string_append(locator, buffer, L"|", 1);
+
+                cur = parent->right;
+                break;
+            }
+
+            cur = parent;
+        }
+    }
+    while (cur != content);
+
+    saxreader_string_append(locator, buffer, L")", 1);
+    saxreader_element_decl_occurence_stringify(locator, buffer, content);
+}
+
+static BSTR saxreader_element_decl_model_stringify(struct saxlocator *locator, struct element_decl *decl)
+{
+    struct string_buffer buffer = { 0 };
+
+    if (decl->type == ELEMENT_TYPE_EMPTY)
+        saxreader_string_append(locator, &buffer, L"EMPTY", 5);
+    else if (decl->type == ELEMENT_TYPE_ANY)
+        saxreader_string_append(locator, &buffer, L"ANY", 3);
+    else
+        saxreader_element_decl_content_stringify(locator, &buffer, decl);
+
+    return saxreader_string_to_bstr(locator, &buffer);
+}
+
+static void saxlocator_elementdecl(struct saxlocator *locator, struct element_decl *decl)
 {
     struct saxdeclhandler_iface *handler = saxreader_get_declhandler(locator->saxreader);
     HRESULT hr;
+    BSTR model;
 
     if (locator->status != S_OK)
         return;
@@ -2731,10 +2871,14 @@ static void saxlocator_elementdecl(struct saxlocator *locator, BSTR name, BSTR m
     if (!saxreader_has_handler(locator, SAXDeclHandler))
         return;
 
+    model = saxreader_element_decl_model_stringify(locator, decl);
+
     if (locator->vbInterface)
-        hr = IVBSAXDeclHandler_elementDecl(handler->vbhandler, &name, &model);
+        hr = IVBSAXDeclHandler_elementDecl(handler->vbhandler, &decl->name, &model);
     else
-        hr = ISAXDeclHandler_elementDecl(handler->handler, name, SysStringLen(name), model, SysStringLen(model));
+        hr = ISAXDeclHandler_elementDecl(handler->handler, decl->name, SysStringLen(decl->name), model, SysStringLen(model));
+
+    SysFreeString(model);
 
     locator->status = saxlocator_callback_result(locator, hr);
 }
@@ -4536,86 +4680,209 @@ static void saxreader_parse_cdata(struct saxlocator *locator)
     saxreader_set_error(locator, E_SAX_UNCLOSEDCDATA);
 }
 
-/* [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' */
-static void saxreader_parse_mixed_contentspec(struct saxlocator *locator, struct string_buffer *buffer)
+static struct element_content *saxreader_new_element_content(struct saxlocator *locator,
+        BSTR *name, enum element_content_type type)
 {
-    BSTR name;
+    struct element_content *ret;
+
+    if (locator->status != S_OK)
+    {
+        saxreader_free_bstr(name);
+        return NULL;
+    }
+
+    if (!(ret = calloc(1, sizeof(*ret))))
+    {
+        saxreader_free_bstr(name);
+        saxreader_set_error(locator, E_OUTOFMEMORY);
+        return NULL;
+    }
+
+    if (name)
+    {
+        ret->name = *name;
+        *name = NULL;
+    }
+    ret->type = type;
+    ret->occurrence = ELEMENT_CONTENT_ONCE;
+
+    return ret;
+}
+
+static struct element_content * saxreader_free_element_content(struct element_content *c)
+{
+    int depth = 0;
+
+    while (true)
+    {
+        struct element_content *parent;
+
+        while (c->left || c->right)
+        {
+            c = c->left ? c->left : c->right;
+            ++depth;
+        }
+
+        SysFreeString(c->name);
+        parent = c->parent;
+        if (depth == 0 || !parent)
+        {
+            free(c);
+            break;
+        }
+        if (c == parent->left)
+            parent->left = NULL;
+        else
+            parent->right = NULL;
+        free(c);
+
+        if (parent->right)
+        {
+            c = parent->right;
+        }
+        else
+        {
+            --depth;
+            c = parent;
+        }
+    }
+
+    return NULL;
+}
+
+static void saxreader_link_element_content_part(struct element_content *parent, struct element_content *child, bool left)
+{
+    if (left)
+        parent->left = child;
+    else
+        parent->right = child;
+
+    if (child)
+        child->parent = parent;
+}
+
+/* [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' */
+static enum element_type saxreader_parse_mixed_contentspec(struct saxlocator *locator, struct element_content **model)
+{
+    struct element_content *ret = NULL, *cur = NULL, *n, *left;
+    BSTR name = NULL;
     WCHAR ch;
 
-    saxreader_string_append(locator, buffer, L"#PCDATA", 7);
+    *model = NULL;
+
     saxreader_skipspaces(locator);
     if (saxreader_cmp(locator, L")"))
     {
-        saxreader_string_append(locator, buffer, L")", 1);
+        ret = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_PCDATA);
         if (saxreader_cmp(locator, L"*"))
-            saxreader_string_append(locator, buffer, L"*", 1);
-        return;
+            ret->occurrence = ELEMENT_CONTENT_MULT;
     }
-
-    ch = *saxreader_get_ptr_noread(locator);
-    while (ch == '|' && locator->status == S_OK)
+    else
     {
-        saxreader_skip(locator, 1);
-        saxreader_string_append(locator, buffer, L"|", 1);
-        saxreader_skipspaces(locator);
-        saxreader_parse_name(locator, &name);
-        saxreader_string_append_bstr(locator, buffer, &name);
-        saxreader_skipspaces(locator);
         ch = *saxreader_get_ptr_noread(locator);
+        if (ch == '(' || ch == '|')
+            ret = cur = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_PCDATA);
+        while (ch == '|' && locator->status == S_OK)
+        {
+            saxreader_skip(locator, 1);
+            if (name)
+            {
+                n = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_OR);
+                left = saxreader_new_element_content(locator, &name, ELEMENT_CONTENT_ELEMENT);
+                saxreader_link_element_content_part(n, left, true);
+
+                saxreader_link_element_content_part(cur, n, false);
+                cur = n;
+            }
+            else
+            {
+                ret = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_OR);
+                saxreader_link_element_content_part(ret, cur, true);
+                cur = ret;
+            }
+            saxreader_skipspaces(locator);
+            saxreader_parse_name(locator, &name);
+            saxreader_skipspaces(locator);
+            ch = *saxreader_get_ptr_noread(locator);
+        }
+
+        if (!saxreader_cmp(locator, L")"))
+            saxreader_set_error(locator, E_SAX_BADCHARINMIXEDMODEL);
+        else if (!saxreader_cmp(locator, L"*"))
+            saxreader_set_error(locator, E_SAX_MISSING_STAR);
+        if (name)
+        {
+            cur->right = saxreader_new_element_content(locator, &name, ELEMENT_CONTENT_ELEMENT);
+            if (cur->right) cur->right->parent = cur;
+        }
+        if (ret)
+            ret->occurrence = ELEMENT_CONTENT_MULT;
     }
 
-    if (!saxreader_cmp(locator, L")"))
-        saxreader_set_error(locator, E_SAX_BADCHARINMIXEDMODEL);
-    else if (!saxreader_cmp(locator, L"*"))
-        saxreader_set_error(locator, E_SAX_MISSING_STAR);
-    saxreader_string_append(locator, buffer, L")*", 2);
-}
-
-static void saxreader_parse_children_contentspec(struct saxlocator *locator, struct string_buffer *buffer);
-
-static void saxreader_parse_occurence_spec(struct saxlocator *locator, struct string_buffer *buffer)
-{
-    WCHAR ch;
-
-    ch = *saxreader_get_ptr(locator);
-    if (ch == '?' || ch == '*' || ch == '+')
+    if (locator->status == S_OK)
     {
-        saxreader_string_append(locator, buffer, &ch, 1);
-        saxreader_skip(locator, 1);
+        *model = ret;
+        return ELEMENT_TYPE_MIXED;
     }
+
+    return ELEMENT_TYPE_UNDEFINED;
 }
 
-static void saxreader_parse_child_contentspec(struct saxlocator *locator, struct string_buffer *buffer)
+static struct element_content * saxreader_parse_children_contentspec(struct saxlocator *locator);
+
+static struct element_content * saxreader_parse_child_contentspec(struct saxlocator *locator)
 {
+    struct element_content *ret;
     BSTR name;
 
     saxreader_skipspaces(locator);
     if (saxreader_cmp(locator, L"("))
     {
-        saxreader_string_append(locator, buffer, L"(", 1);
-        saxreader_skipspaces(locator);
-        saxreader_parse_children_contentspec(locator, buffer);
+        ret = saxreader_parse_children_contentspec(locator);
         saxreader_skipspaces(locator);
     }
     else
     {
         saxreader_parse_name(locator, &name);
-        saxreader_string_append_bstr(locator, buffer, &name);
-        saxreader_parse_occurence_spec(locator, buffer);
+        ret = saxreader_new_element_content(locator, &name, ELEMENT_CONTENT_ELEMENT);
+        if (!ret)
+            return NULL;
+        if (saxreader_cmp(locator, L"?"))
+            ret->occurrence = ELEMENT_CONTENT_OPT;
+        else if (saxreader_cmp(locator, L"*"))
+            ret->occurrence = ELEMENT_CONTENT_MULT;
+        else if (saxreader_cmp(locator, L"+"))
+            ret->occurrence = ELEMENT_CONTENT_PLUS;
+        else
+            ret->occurrence = ELEMENT_CONTENT_ONCE;
     }
     saxreader_skipspaces(locator);
+
+    return ret;
 }
 
-static void saxreader_parse_children_contentspec(struct saxlocator *locator, struct string_buffer *buffer)
+static struct element_content * saxreader_free_element_content_pair(struct element_content *c1, struct element_content *c2)
 {
+    if (c1 && c1 != c2)
+        saxreader_free_element_content(c1);
+    if (c2)
+        saxreader_free_element_content(c2);
+    return NULL;
+}
+
+static struct element_content * saxreader_parse_children_contentspec(struct saxlocator *locator)
+{
+    struct element_content *ret = NULL, *cur = NULL, *last = NULL, *op = NULL;
     WCHAR ch, sep = 0;
 
     /* TODO: limit recursion depth */
 
     if (locator->status != S_OK)
-        return;
+        return NULL;
 
-    saxreader_parse_child_contentspec(locator, buffer);
+    cur = ret = saxreader_parse_child_contentspec(locator);
+    if (!cur)
+        return NULL;
 
     ch = *saxreader_get_ptr(locator);
     while (ch != ')' && locator->status == S_OK)
@@ -4625,88 +4892,171 @@ static void saxreader_parse_children_contentspec(struct saxlocator *locator, str
             /* Check for "Name | Name , Name" */
             if (sep == 0) sep = ch;
             else if (sep != ch)
-                return saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+            {
+                ret = saxreader_free_element_content_pair(last, ret);
+                saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+                break;
+            }
 
             saxreader_skip(locator, 1);
-            saxreader_string_append(locator, buffer, &ch, 1);
+            op = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_SEQ);
+            if (!op)
+            {
+                ret = saxreader_free_element_content_pair(last, ret);
+                break;
+            }
+            if (!last)
+            {
+                saxreader_link_element_content_part(op, ret, true);
+                ret = cur = op;
+            }
+            else
+            {
+                saxreader_link_element_content_part(cur, op, false);
+                saxreader_link_element_content_part(op, last, true);
+                cur = op;
+                last = NULL;
+            }
         }
         else if (ch == '|')
         {
             /* Check for "Name , Name | Name" */
             if (sep == 0) sep = ch;
             else if (sep != ch)
-                return saxreader_set_error(locator, E_SAX_INVALID_MODEL);
-
+            {
+                ret = saxreader_free_element_content_pair(last, ret);
+                saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+                break;
+            }
             saxreader_skip(locator, 1);
-            saxreader_string_append(locator, buffer, &ch, 1);
+
+            op = saxreader_new_element_content(locator, NULL, ELEMENT_CONTENT_OR);
+            if (!op)
+            {
+                ret = saxreader_free_element_content_pair(last, ret);
+                break;
+            }
+            if (!last)
+            {
+                saxreader_link_element_content_part(op, ret, true);
+                ret = cur = op;
+            }
+            else
+            {
+                saxreader_link_element_content_part(cur, op, false);
+                saxreader_link_element_content_part(op, last, true);
+                cur = op;
+                last = NULL;
+            }
         }
         else
         {
-            return saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+            ret = saxreader_free_element_content_pair(last, ret);
+            saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+            break;
         }
 
-        saxreader_parse_child_contentspec(locator, buffer);
+        if (!(last = saxreader_parse_child_contentspec(locator)))
+        {
+            ret = saxreader_free_element_content(ret);
+            break;
+        }
+
         ch = *saxreader_get_ptr(locator);
     }
 
+    if (!ret)
+        return NULL;
+
+    /* Closing ')' */
     saxreader_skip(locator, 1);
-    saxreader_string_append(locator, buffer, L")", 1);
-    saxreader_parse_occurence_spec(locator, buffer);
+
+    if (cur && last)
+        saxreader_link_element_content_part(cur, last, false);
+
+    if (saxreader_cmp(locator, L"?"))
+    {
+        if (ret->occurrence == ELEMENT_CONTENT_PLUS
+                || ret->occurrence == ELEMENT_CONTENT_MULT)
+        {
+            ret->occurrence = ELEMENT_CONTENT_MULT;
+        }
+        else
+        {
+            ret->occurrence = ELEMENT_CONTENT_OPT;
+        }
+    }
+    else if (saxreader_cmp(locator, L"*"))
+    {
+        ret->occurrence = ELEMENT_CONTENT_MULT;
+    }
+    else if (saxreader_cmp(locator, L"+"))
+    {
+        if (ret->occurrence == ELEMENT_CONTENT_PLUS
+                || ret->occurrence == ELEMENT_CONTENT_MULT)
+        {
+            ret->occurrence = ELEMENT_CONTENT_MULT;
+        }
+        else
+        {
+            ret->occurrence = ELEMENT_CONTENT_PLUS;
+        }
+    }
+
+    return ret;
 }
 
 /* [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children
    [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' */
-static void saxreader_parse_contentspec(struct saxlocator *locator, BSTR *model)
+static enum element_type saxreader_parse_contentspec(struct saxlocator *locator, struct element_content **content)
 {
-    struct string_buffer buffer = { 0 };
-
-    *model = NULL;
+    *content = NULL;
 
     if (saxreader_cmp(locator, L"EMPTY"))
     {
-        *model = saxreader_alloc_string(locator, L"EMPTY");
+        return ELEMENT_TYPE_EMPTY;
     }
     else if (saxreader_cmp(locator, L"ANY"))
     {
-        *model = saxreader_alloc_string(locator, L"ANY");
+        return ELEMENT_TYPE_ANY;
     }
     else if (saxreader_cmp(locator, L"("))
     {
         saxreader_skipspaces(locator);
 
-        saxreader_string_append(locator, &buffer, L"(", 1);
         if (saxreader_cmp(locator, L"#PCDATA"))
-            saxreader_parse_mixed_contentspec(locator, &buffer);
+            return saxreader_parse_mixed_contentspec(locator, content);
         else
-            saxreader_parse_children_contentspec(locator, &buffer);
-
-        *model = saxreader_string_to_bstr(locator, &buffer);
+        {
+            *content = saxreader_parse_children_contentspec(locator);
+            return ELEMENT_TYPE_ELEMENT;
+        }
     }
     else
     {
         saxreader_set_error(locator, E_SAX_INVALID_MODEL);
+        return ELEMENT_TYPE_UNDEFINED;
     }
 }
 
 /* [45] elementdecl ::= '<!ELEMENT' S Name S contentspec S? '>' */
 static void saxreader_parse_elementdecl(struct saxlocator *locator)
 {
-    BSTR name, model;
+    struct element_decl decl;
 
     /* Skip <!ELEMENT */
     saxreader_skip(locator, 9);
     saxreader_skip_required_spaces(locator);
-    saxreader_parse_name(locator, &name);
+    saxreader_parse_name(locator, &decl.name);
     saxreader_skip_required_spaces(locator);
-    saxreader_parse_contentspec(locator, &model);
+    decl.type = saxreader_parse_contentspec(locator, &decl.content);
     saxreader_skipspaces(locator);
     if (saxreader_cmp(locator, L">"))
-        saxlocator_elementdecl(locator, name, model);
+        saxlocator_elementdecl(locator, &decl);
     else
         saxreader_set_error(locator, E_SAX_EXPECTINGTAGEND);
 
-    SysFreeString(name);
-    SysFreeString(model);
+    SysFreeString(decl.name);
 }
 
 /* [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
