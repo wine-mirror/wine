@@ -1150,7 +1150,7 @@
 @ stub -syscall NtUserInitializeInputDeviceInjection
 @ stub -syscall NtUserInitializePointerDeviceInjection
 @ stub -syscall NtUserInitializePointerDeviceInjectionEx
-@ stub -syscall NtUserInitializeTouchInjection
+@ stdcall -syscall NtUserInitializeTouchInjection(long long)
 @ stub -syscall NtUserInjectDeviceInput
 @ stub -syscall NtUserInjectGenericHidInput
 @ stub -syscall NtUserInjectGesture

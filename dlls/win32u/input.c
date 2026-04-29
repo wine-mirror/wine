@@ -2852,3 +2852,12 @@ INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
 
     return 0;
 }
+
+/**********************************************************************
+ *       NtUserInitializeTouchInjection    (win32u.@)
+ */
+BOOL WINAPI NtUserInitializeTouchInjection( UINT max_count, UINT mode )
+{
+    FIXME( "max_count %u, mode %#x stub!\n", max_count, mode );
+    return TRUE;
+}

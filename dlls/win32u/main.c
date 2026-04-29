@@ -1885,6 +1885,11 @@ NTSTATUS SYSCALL_API NtUserInitializeClientPfnArrays( const ntuser_client_func_p
     SYSCALL_FUNC( NtUserInitializeClientPfnArrays );
 }
 
+BOOL SYSCALL_API NtUserInitializeTouchInjection( UINT max_count, UINT mode )
+{
+    SYSCALL_FUNC( NtUserInitializeTouchInjection );
+}
+
 HICON SYSCALL_API NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
 {
     SYSCALL_FUNC( NtUserInternalGetWindowIcon );

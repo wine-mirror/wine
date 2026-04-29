@@ -3282,6 +3282,14 @@ NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
     return NtUserInitializeClientPfnArrays( procsA, procsW, workers, user_module );
 }
 
+NTSTATUS WINAPI wow64_NtUserInitializeTouchInjection( UINT *args )
+{
+    UINT max_count = get_ulong( &args );
+    UINT mode = get_ulong( &args );
+
+    return NtUserInitializeTouchInjection( max_count, mode );
+}
+
 NTSTATUS WINAPI wow64_NtUserInternalGetWindowIcon( UINT *args )
 {
     HWND hwnd = get_handle( &args );

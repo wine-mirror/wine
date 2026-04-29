@@ -1152,7 +1152,7 @@
     SYSCALL_ENTRY( 0x147c, NtUserInitializeInputDeviceInjection, 0 ) \
     SYSCALL_ENTRY( 0x147d, NtUserInitializePointerDeviceInjection, 0 ) \
     SYSCALL_ENTRY( 0x147e, NtUserInitializePointerDeviceInjectionEx, 0 ) \
-    SYSCALL_ENTRY( 0x147f, NtUserInitializeTouchInjection, 0 ) \
+    SYSCALL_ENTRY( 0x147f, NtUserInitializeTouchInjection, 8 ) \
     SYSCALL_ENTRY( 0x1480, NtUserInjectDeviceInput, 0 ) \
     SYSCALL_ENTRY( 0x1481, NtUserInjectGenericHidInput, 0 ) \
     SYSCALL_ENTRY( 0x1482, NtUserInjectGesture, 0 ) \
@@ -2694,7 +2694,7 @@
     SYSCALL_ENTRY( 0x147c, NtUserInitializeInputDeviceInjection, 0 ) \
     SYSCALL_ENTRY( 0x147d, NtUserInitializePointerDeviceInjection, 0 ) \
     SYSCALL_ENTRY( 0x147e, NtUserInitializePointerDeviceInjectionEx, 0 ) \
-    SYSCALL_ENTRY( 0x147f, NtUserInitializeTouchInjection, 0 ) \
+    SYSCALL_ENTRY( 0x147f, NtUserInitializeTouchInjection, 16 ) \
     SYSCALL_ENTRY( 0x1480, NtUserInjectDeviceInput, 0 ) \
     SYSCALL_ENTRY( 0x1481, NtUserInjectGenericHidInput, 0 ) \
     SYSCALL_ENTRY( 0x1482, NtUserInjectGesture, 0 ) \
@@ -3887,7 +3887,6 @@
     SYSCALL_STUB( NtUserInitializeInputDeviceInjection ) \
     SYSCALL_STUB( NtUserInitializePointerDeviceInjection ) \
     SYSCALL_STUB( NtUserInitializePointerDeviceInjectionEx ) \
-    SYSCALL_STUB( NtUserInitializeTouchInjection ) \
     SYSCALL_STUB( NtUserInjectDeviceInput ) \
     SYSCALL_STUB( NtUserInjectGenericHidInput ) \
     SYSCALL_STUB( NtUserInjectGesture ) \

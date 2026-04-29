@@ -749,7 +749,7 @@
 # @ stub InitializeLpkHooks
 # @ stub InitializePointerDeviceInjection
 # @ stub InitializePointerDeviceInjectionEx
-# @ stub InitializeTouchInjection
+@ stdcall InitializeTouchInjection(long long) NtUserInitializeTouchInjection
 # @ stub InjectDeviceInput
 # @ stub InjectGenericHidInput
 # @ stub InjectKeyboardInput
