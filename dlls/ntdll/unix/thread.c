@@ -2642,7 +2642,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (handle != GetCurrentThread()) return STATUS_NOT_SUPPORTED;
         if (mem->Version != 2) return STATUS_REVISION_MISMATCH;
         if (mem->ProcessEnableWriteExceptions) return STATUS_INVALID_PARAMETER;
-        ntdll_get_thread_data()->allow_writes = mem->ThreadAllowWrites;
+        get_thread_data()->allow_writes = mem->ThreadAllowWrites;
         return STATUS_SUCCESS;
 #else
         return STATUS_NOT_SUPPORTED;
