@@ -871,7 +871,7 @@ static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *inf
 
 static int get_inproc_alert_fd(void)
 {
-    struct ntdll_thread_data *data = ntdll_get_thread_data();
+    struct thread_data *data = get_thread_data();
     obj_handle_t token;
     sigset_t sigset;
     int fd;

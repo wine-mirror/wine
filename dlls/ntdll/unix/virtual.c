@@ -4026,11 +4026,6 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    thread_data->request_fd = -1;
-    thread_data->reply_fd   = -1;
-    thread_data->wait_fd[0] = -1;
-    thread_data->wait_fd[1] = -1;
-    thread_data->alert_fd   = -1;
     list_add_head( &teb_list, &thread_data->entry );
     return teb;
 }
@@ -4140,6 +4135,11 @@ struct thread_data *virtual_alloc_thread_data(void)
     if (!status)
     {
         data = view->base;
+        data->request_fd = -1;
+        data->reply_fd   = -1;
+        data->wait_fd[0] = -1;
+        data->wait_fd[1] = -1;
+        data->alert_fd   = -1;
 #ifdef VALGRIND_STACK_REGISTER
         VALGRIND_STACK_REGISTER( (char *)data + signal_stack_mask + 1, (char *)data + view->size );
 #endif

@@ -179,10 +179,8 @@ static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
  *
  * Send a request to the server.
  */
-static unsigned int send_request( const struct __server_request_info *req )
+static unsigned int send_request( int request_fd, const struct __server_request_info *req )
 {
-    int request_fd = ntdll_get_thread_data()->request_fd;
-
     if (!req->u.req.request_header.request_size)
     {
         data_size_t to_write = sizeof(req->u.req);
@@ -245,13 +243,13 @@ static unsigned int send_request( const struct __server_request_info *req )
  *
  * Read data from the reply buffer; helper for wait_reply.
  */
-static void read_reply_data( void *buffer, size_t size )
+static void read_reply_data( int reply_fd, void *buffer, size_t size )
 {
     int ret;
 
     for (;;)
     {
-        if ((ret = read( ntdll_get_thread_data()->reply_fd, buffer, size )) > 0)
+        if ((ret = read( reply_fd, buffer, size )) > 0)
         {
             if (!(size -= ret)) return;
             buffer = (char *)buffer + ret;
@@ -272,11 +270,11 @@ static void read_reply_data( void *buffer, size_t size )
  *
  * Wait for a reply from the server.
  */
-static inline unsigned int wait_reply( struct __server_request_info *req )
+static inline unsigned int wait_reply( int reply_fd, struct __server_request_info *req )
 {
-    read_reply_data( &req->u.reply, sizeof(req->u.reply) );
+    read_reply_data( reply_fd, &req->u.reply, sizeof(req->u.reply) );
     if (req->u.reply.reply_header.reply_size)
-        read_reply_data( req->reply_data, req->u.reply.reply_header.reply_size );
+        read_reply_data( reply_fd, req->reply_data, req->u.reply.reply_header.reply_size );
     return req->u.reply.reply_header.error;
 }
 
@@ -286,11 +284,12 @@ static inline unsigned int wait_reply( struct __server_request_info *req )
  */
 unsigned int server_call_unlocked( void *req_ptr )
 {
+    struct thread_data *data = get_thread_data();
     struct __server_request_info * const req = req_ptr;
     unsigned int ret;
 
-    if ((ret = send_request( req ))) return ret;
-    return wait_reply( req );
+    if ((ret = send_request( data->request_fd, req ))) return ret;
+    return wait_reply( data->reply_fd, req );
 }
 
 
@@ -347,24 +346,25 @@ void server_leave_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigse
  *
  * Wait for a reply on the waiting pipe of the current thread.
  */
-static int wait_select_reply( void *cookie )
+static int wait_select_reply( int wait_fd[2], void *cookie )
 {
     int signaled;
     struct wake_up_reply reply;
+
     for (;;)
     {
         int ret;
-        ret = read( ntdll_get_thread_data()->wait_fd[0], &reply, sizeof(reply) );
+        ret = read( wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {
             if (!reply.cookie) abort_thread( reply.signaled );  /* thread got killed */
             if (wine_server_get_ptr(reply.cookie) == cookie) return reply.signaled;
             /* we stole another reply, wait for the real one */
-            signaled = wait_select_reply( cookie );
+            signaled = wait_select_reply( wait_fd, cookie );
             /* and now put the wrong one back in the pipe */
             for (;;)
             {
-                ret = write( ntdll_get_thread_data()->wait_fd[1], &reply, sizeof(reply) );
+                ret = write( wait_fd[1], &reply, sizeof(reply) );
                 if (ret == sizeof(reply)) break;
                 if (ret >= 0) server_protocol_error( "partial wakeup write %d\n", ret );
                 if (errno == EINTR) continue;
@@ -720,6 +720,7 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
 {
     unsigned int ret;
     int cookie;
+    struct thread_data *data = get_thread_data();
     obj_handle_t apc_handle = 0;
     BOOL suspend_context = !!context;
     union apc_result result;
@@ -773,7 +774,7 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
         if (signaled) break;
 
-        ret = wait_select_reply( &cookie );
+        ret = wait_select_reply( data->wait_fd, &cookie );
     }
     while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
 
@@ -1565,10 +1566,10 @@ static int init_thread_pipe(void)
     sigaltstack( &ss, NULL );
 
     if (server_pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
-    if (server_pipe( ntdll_get_thread_data()->wait_fd ) == -1) server_protocol_perror( "pipe" );
+    if (server_pipe( data->wait_fd ) == -1) server_protocol_perror( "pipe" );
     wine_server_send_fd( reply_pipe[1] );
-    wine_server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
-    ntdll_get_thread_data()->reply_fd = reply_pipe[0];
+    wine_server_send_fd( data->wait_fd[1] );
+    data->reply_fd = reply_pipe[0];
     return reply_pipe[1];
 }
 
@@ -1594,7 +1595,7 @@ size_t server_init_process(void)
 {
     const char *arch = getenv( "WINEARCH" );
     const char *env_socket = getenv( "WINESERVERSOCKET" );
-    struct ntdll_thread_data *data = ntdll_get_thread_data();
+    struct thread_data *data = get_thread_data();
     obj_handle_t version;
     unsigned int i;
     int ret, reply_pipe;
@@ -1704,8 +1705,8 @@ size_t server_init_process(void)
         if (arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
 #ifndef _WIN64
-        NtCurrentTeb()->GdiBatchCount = PtrToUlong( (char *)NtCurrentTeb() - teb_offset );
-        NtCurrentTeb()->WowTebOffset  = -teb_offset;
+        data->teb->GdiBatchCount = PtrToUlong( (char *)data->teb - teb_offset );
+        data->teb->WowTebOffset  = -teb_offset;
         wow_peb = (PEB64 *)((char *)peb - page_size);
 #endif
     }
@@ -1778,10 +1779,11 @@ void server_init_process_done(void)
 void server_init_thread( void *entry_point, BOOL *suspend )
 {
     void *teb;
+    struct thread_data *data = get_thread_data();
     int reply_pipe = init_thread_pipe();
 
     /* always send the native TEB */
-    if (!(teb = NtCurrentTeb64())) teb = NtCurrentTeb();
+    if (!(teb = NtCurrentTeb64())) teb = data->teb;
 
     SERVER_START_REQ( init_thread )
     {
@@ -1789,7 +1791,7 @@ void server_init_thread( void *entry_point, BOOL *suspend )
         req->teb       = wine_server_client_ptr( teb );
         req->entry     = wine_server_client_ptr( entry_point );
         req->reply_fd  = reply_pipe;
-        req->wait_fd   = ntdll_get_thread_data()->wait_fd[1];
+        req->wait_fd   = data->wait_fd[1];
         wine_server_call( req );
         *suspend = reply->suspend;
     }
