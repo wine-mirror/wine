@@ -68,11 +68,7 @@ static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 static inline struct debug_info *get_info(void)
 {
     if (!init_done) return &initial_info;
-#ifdef _WIN64
-    return (struct debug_info *)((TEB32 *)((char *)NtCurrentTeb() + teb_offset) + 1);
-#else
-    return (struct debug_info *)(NtCurrentTeb() + 1);
-#endif
+    return (struct debug_info *)get_thread_data()->debug_info;
 }
 
 /* add a string to the output buffer */
