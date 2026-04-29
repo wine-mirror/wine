@@ -873,6 +873,13 @@ struct string_buffer
     size_t capacity;
 };
 
+struct dtd
+{
+    unsigned int refcount;
+    struct list attr_decls;
+    struct list entities;
+};
+
 struct saxlocator
 {
     IVBSAXLocator IVBSAXLocator_iface;
@@ -900,11 +907,7 @@ struct saxlocator
         size_t *map;
     } attributes;
 
-    struct
-    {
-        struct list attr_decls;
-        struct list entities;
-    } dtd;
+    struct dtd *dtd;
 
     struct
     {
@@ -989,6 +992,85 @@ static void saxreader_set_error(struct saxlocator *locator, HRESULT status)
 {
     if (locator->status == S_OK)
         locator->status = status;
+}
+
+static struct dtd * saxreader_new_dtd(struct saxlocator *locator)
+{
+    struct dtd *dtd;
+
+    if (!(dtd = calloc(1, sizeof(*dtd))))
+    {
+        saxreader_set_error(locator, E_OUTOFMEMORY);
+        return NULL;
+    }
+
+    dtd->refcount = 1;
+    list_init(&dtd->attr_decls);
+    list_init(&dtd->entities);
+
+    return dtd;
+}
+
+static void saxreader_clear_enumeration(struct enumeration *list)
+{
+    for (size_t i = 0; i < list->count; ++i)
+        SysFreeString(list->values[i]);
+    free(list->values);
+}
+
+static void saxreader_free_name(struct parsed_name *name)
+{
+    SysFreeString(name->prefix);
+    SysFreeString(name->local);
+    SysFreeString(name->qname);
+    memset(name, 0, sizeof(*name));
+}
+
+static void saxreader_free_attlist(struct attlist_decl *decl)
+{
+    for (size_t i = 0; i < decl->count; ++i)
+    {
+        struct attlist_attr *attr = &decl->attributes[i];
+
+        saxreader_free_name(&attr->name);
+        saxreader_clear_enumeration(&attr->valuelist);
+        SysFreeString(attr->value);
+    }
+
+    SysFreeString(decl->name);
+    free(decl->attributes);
+    free(decl);
+}
+
+static void saxreader_free_entity(struct entity_decl *entity)
+{
+    SysFreeString(entity->name);
+    SysFreeString(entity->sysid);
+    SysFreeString(entity->value);
+    free(entity);
+}
+
+static void parser_release_dtd(struct dtd *dtd)
+{
+    struct entity_decl *entity, *entity_next;
+    struct attlist_decl *attr, *attr_next;
+
+    if (--dtd->refcount)
+        return;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entity, entity_next, &dtd->entities, struct entity_decl, entry)
+    {
+        list_remove(&entity->entry);
+        saxreader_free_entity(entity);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(attr, attr_next, &dtd->attr_decls, struct attlist_decl, entry)
+    {
+        list_remove(&attr->entry);
+        saxreader_free_attlist(attr);
+    }
+
+    free(dtd);
 }
 
 static BSTR saxreader_alloc_string(struct saxlocator *locator, const WCHAR *str)
@@ -1846,6 +1928,9 @@ static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
         free(locator->attributes.entries);
 
         saxreader_clear_strings(locator);
+        if (locator->dtd)
+            parser_release_dtd(locator->dtd);
+        locator->dtd = NULL;
 
         /* element stack */
         LIST_FOR_EACH_ENTRY_SAFE(element, element2, &locator->elements, element_entry, entry)
@@ -1951,8 +2036,6 @@ static HRESULT saxlocator_create(struct saxreader *reader, ISequentialStream *st
         locator->strings.xmlns_uri = saxreader_alloc_stringlen(locator, NULL, 0);
 
     list_init(&locator->elements);
-    list_init(&locator->dtd.attr_decls);
-    list_init(&locator->dtd.entities);
 
     if (FAILED(locator->status))
     {
@@ -3642,14 +3725,6 @@ static struct element *saxreader_new_element(struct saxlocator *locator, struct 
     return element;
 }
 
-static void saxreader_free_name(struct parsed_name *name)
-{
-    SysFreeString(name->prefix);
-    SysFreeString(name->local);
-    SysFreeString(name->qname);
-    memset(name, 0, sizeof(*name));
-}
-
 static void saxreader_free_element(struct element *element)
 {
     saxreader_free_name(&element->name);
@@ -3741,7 +3816,10 @@ static void saxreader_add_default_attributes(struct saxlocator *locator, struct 
 {
     struct attlist_decl *decl;
 
-    LIST_FOR_EACH_ENTRY(decl, &locator->dtd.attr_decls, struct attlist_decl, entry)
+    if (!locator->dtd)
+        return;
+
+    LIST_FOR_EACH_ENTRY(decl, &locator->dtd->attr_decls, struct attlist_decl, entry)
     {
         if (bstr_equal(decl->name, element->name.qname))
         {
@@ -3882,10 +3960,13 @@ static struct entity_decl *saxreader_get_entity(struct saxlocator *locator, BSTR
     if (!name)
         return NULL;
 
-    LIST_FOR_EACH_ENTRY(entity, &locator->dtd.entities, struct entity_decl, entry)
+    if (locator->dtd)
     {
-        if (bstr_equal(entity->name, name))
-            return entity;
+        LIST_FOR_EACH_ENTRY(entity, &locator->dtd->entities, struct entity_decl, entry)
+        {
+            if (bstr_equal(entity->name, name))
+                return entity;
+        }
     }
 
     return NULL;
@@ -5302,14 +5383,6 @@ static void saxreader_parse_entityvalue(struct saxlocator *locator, struct entit
     saxreader_set_error(locator, E_SAX_EXPECTINGCLOSEQUOTE);
 }
 
-static void saxreader_release_entity(struct entity_decl *entity)
-{
-    SysFreeString(entity->name);
-    SysFreeString(entity->sysid);
-    SysFreeString(entity->value);
-    free(entity);
-}
-
 /* [70] EntityDecl ::= GEDecl | PEDecl
    [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
    [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
@@ -5431,9 +5504,9 @@ static void saxreader_parse_entitydecl(struct saxlocator *locator)
     }
 
     if (undeclared)
-        list_add_tail(&locator->dtd.entities, &decl->entry);
+        list_add_tail(&locator->dtd->entities, &decl->entry);
     else
-        saxreader_release_entity(decl);
+        saxreader_free_entity(decl);
 
     SysFreeString(pubid);
     SysFreeString(notation);
@@ -5459,13 +5532,6 @@ static void saxreader_append_enum_item(struct saxlocator *locator, struct enumer
 
     list->values[list->count++] = *value;
     *value = NULL;
-}
-
-static void saxreader_clear_enumeration(struct enumeration *list)
-{
-    for (size_t i = 0; i < list->count; ++i)
-        SysFreeString(list->values[i]);
-    free(list->values);
 }
 
 /* [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' */
@@ -5598,7 +5664,7 @@ static void saxreader_parse_attlistdecl(struct saxlocator *locator)
 
     if (!(decl = saxreader_calloc(locator, 1, sizeof(*decl))))
         return;
-    list_add_tail(&locator->dtd.attr_decls, &decl->entry);
+    list_add_tail(&locator->dtd->attr_decls, &decl->entry);
 
     /* Skip <!ATTLIST */
     saxreader_skip(locator, 9);
@@ -5751,6 +5817,9 @@ static void saxreader_parse_doctype(struct saxlocator *locator)
 
     if (locator->saxreader->features & ProhibitDTD)
         return saxreader_set_error(locator, E_SAX_INVALIDATROOTLEVEL);
+
+    if (!(locator->dtd = saxreader_new_dtd(locator)))
+        return;
 
     if (saxreader_has_handler(locator, SAXExtensionHandler))
         locator->collect = true;
