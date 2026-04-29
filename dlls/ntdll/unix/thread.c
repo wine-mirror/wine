@@ -1329,6 +1329,33 @@ static NTSTATUS create_server_thread( HANDLE *handle, struct thread_data **data_
 
 
 /***********************************************************************
+ *           spawn_thread
+ */
+static NTSTATUS spawn_thread( struct thread_data *data )
+{
+    sigset_t sigset;
+    pthread_t pthread_id;
+    pthread_attr_t attr;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
+    pthread_attr_init( &attr );
+    pthread_attr_setstack( &attr, get_kernel_stack( data ), kernel_stack_size );
+    pthread_attr_setguardsize( &attr, 0 );
+    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
+    InterlockedIncrement( &nb_threads );
+    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, data ))
+    {
+        InterlockedDecrement( &nb_threads );
+        status = STATUS_NO_MEMORY;
+    }
+    pthread_attr_destroy( &attr );
+    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
+    return status;
+}
+
+
+/***********************************************************************
  *           update_attr_list
  *
  * Update the output attributes.
@@ -1391,9 +1418,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     static const ULONG supported_flags = THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH |
                                          THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER | THREAD_CREATE_FLAGS_SKIP_LOADER_INIT |
                                          THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE;
-    sigset_t sigset;
-    pthread_t pthread_id;
-    pthread_attr_t pthread_attr;
     struct thread_data *data;
     TEB *teb;
     WOW_TEB *wow_teb;
@@ -1441,8 +1465,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     if ((status = create_server_thread( handle, &data, access, attr, start, param, flags )))
         return status;
 
-    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
-
     if ((status = virtual_alloc_teb( data ))) goto done;
     teb = data->teb;
     set_thread_id( data );
@@ -1458,20 +1480,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         wow_teb->SkipLoaderInit = teb->SkipLoaderInit;
     }
 
-    pthread_attr_init( &pthread_attr );
-    pthread_attr_setstack( &pthread_attr, get_kernel_stack( data ), kernel_stack_size );
-    pthread_attr_setguardsize( &pthread_attr, 0 );
-    pthread_attr_setscope( &pthread_attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
-    InterlockedIncrement( &nb_threads );
-    if (pthread_create( &pthread_id, &pthread_attr, (void * (*)(void *))start_thread, data ))
-    {
-        InterlockedDecrement( &nb_threads );
-        status = STATUS_NO_MEMORY;
-    }
-    pthread_attr_destroy( &pthread_attr );
+    status = spawn_thread( data );
 
 done:
-    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     if (status)
     {
         NtClose( *handle );
