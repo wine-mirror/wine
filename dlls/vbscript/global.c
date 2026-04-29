@@ -1360,10 +1360,49 @@ static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, 
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_LeftB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LeftB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, conv_str = NULL;
+    int len, byte_len;
+    HRESULT hres;
+
+    TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
+
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
+    }else {
+        hres = to_string(This->ctx->lcid, args, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    hres = to_int(args+1, &len);
+    if(FAILED(hres)) {
+        SysFreeString(conv_str);
+        return hres;
+    }
+
+    if(len < 0) {
+        SysFreeString(conv_str);
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    byte_len = SysStringByteLen(str);
+    if(len > byte_len)
+        len = byte_len;
+
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringByteLen((const char*)str, len);
+        if(!V_BSTR(res)) {
+            SysFreeString(conv_str);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    SysFreeString(conv_str);
+    return S_OK;
 }
 
 static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1408,10 +1447,51 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, conv_str = NULL;
+    int len, byte_len;
+    HRESULT hres;
+
+    TRACE("(%s %s)\n", debugstr_variant(args), debugstr_variant(args+1));
+
+    if(V_VT(args+1) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    hres = to_int(args+1, &len);
+    if(FAILED(hres))
+        return hres;
+
+    if(len < 0)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+    if(V_VT(args) == VT_NULL)
+        return return_null(res);
+
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
+    }else {
+        hres = to_string(This->ctx->lcid, args, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    byte_len = SysStringByteLen(str);
+    if(len > byte_len)
+        len = byte_len;
+
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringByteLen((const char*)str + byte_len - len, len);
+        if(!V_BSTR(res)) {
+            SysFreeString(conv_str);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    SysFreeString(conv_str);
+    return S_OK;
 }
 
 static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1486,10 +1566,75 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
     return hres;
 }
 
-static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int len = -1, start, byte_len;
+    BSTR str, conv_str = NULL;
+    HRESULT hres;
+
+    TRACE("(%s %s ...)\n", debugstr_variant(args), debugstr_variant(args+1));
+
+    assert(args_cnt == 2 || args_cnt == 3);
+
+    if(V_VT(args+1) == VT_NULL || (args_cnt == 3 && V_VT(args+2) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(args+1) == VT_EMPTY)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+    hres = to_int(args+1, &start);
+    if(FAILED(hres))
+        return hres;
+
+    if(start <= 0)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+    if(args_cnt == 3) {
+        if(V_VT(args+2) == VT_EMPTY)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+        hres = to_int(args+2, &len);
+        if(FAILED(hres))
+            return hres;
+
+        if(len < 0)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    if(V_VT(args) == VT_EMPTY)
+        return return_string(res, L"");
+
+    if(V_VT(args) == VT_NULL)
+        return return_null(res);
+
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
+    }else {
+        hres = to_string(This->ctx->lcid, args, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    byte_len = SysStringByteLen(str);
+    start--;
+    if(start > byte_len)
+        start = byte_len;
+
+    if(len == -1)
+        len = byte_len - start;
+    else if(len > byte_len - start)
+        len = byte_len - start;
+
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringByteLen((const char*)str + start, len);
+        if(!V_BSTR(res))
+            hres = E_OUTOFMEMORY;
+    }
+
+    SysFreeString(conv_str);
+    return hres;
 }
 
 static HRESULT Global_StrComp(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

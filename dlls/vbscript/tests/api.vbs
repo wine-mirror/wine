@@ -2960,4 +2960,37 @@ Call ok(LenB("hello") = 10, "LenB(""hello"") = " & LenB("hello"))
 Call ok(getVT(LenB("A")) = "VT_I4", "getVT(LenB) = " & getVT(LenB("A")))
 Call ok(IsNull(LenB(Null)), "LenB(Null) should be Null")
 
+' LeftB tests
+Call ok(LeftB("ABC", 0) = "", "LeftB(""ABC"", 0) = """ & LeftB("ABC", 0) & """")
+Call ok(LeftB("ABC", 2) = "A", "LeftB(""ABC"", 2) = " & LeftB("ABC", 2))
+Call ok(LeftB("ABC", 4) = "AB", "LeftB(""ABC"", 4) = " & LeftB("ABC", 4))
+Call ok(LeftB("ABC", 6) = "ABC", "LeftB(""ABC"", 6) = " & LeftB("ABC", 6))
+Call ok(LeftB("ABC", 100) = "ABC", "LeftB(""ABC"", 100) = " & LeftB("ABC", 100))
+Call ok(LenB(LeftB("ABC", 3)) = 3, "LenB(LeftB(""ABC"", 3)) = " & LenB(LeftB("ABC", 3)))
+
+' RightB tests
+Call ok(RightB("ABC", 0) = "", "RightB(""ABC"", 0) = """ & RightB("ABC", 0) & """")
+Call ok(RightB("ABC", 2) = "C", "RightB(""ABC"", 2) = " & RightB("ABC", 2))
+Call ok(RightB("ABC", 4) = "BC", "RightB(""ABC"", 4) = " & RightB("ABC", 4))
+Call ok(RightB("ABC", 100) = "ABC", "RightB(""ABC"", 100) = " & RightB("ABC", 100))
+Call ok(LenB(RightB("ABC", 3)) = 3, "LenB(RightB(""ABC"", 3)) = " & LenB(RightB("ABC", 3)))
+
+' MidB tests
+Call ok(MidB("ABC", 1, 2) = "A", "MidB(""ABC"", 1, 2) = " & MidB("ABC", 1, 2))
+Call ok(MidB("ABC", 3, 2) = "B", "MidB(""ABC"", 3, 2) = " & MidB("ABC", 3, 2))
+Call ok(MidB("ABC", 1) = "ABC", "MidB(""ABC"", 1) = " & MidB("ABC", 1))
+Call ok(MidB("ABC", 3) = "BC", "MidB(""ABC"", 3) = " & MidB("ABC", 3))
+Call ok(LenB(MidB("ABC", 2, 2)) = 2, "LenB(MidB(""ABC"", 2, 2)) = " & LenB(MidB("ABC", 2, 2)))
+
+sub testByteSubstrErrors()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = LeftB("ABC", -1)
+    Call ok(Err.number = 5, "LeftB(-1) Err.number = " & Err.number)
+end sub
+
+call testByteSubstrErrors()
+
 Call reportSuccess()
