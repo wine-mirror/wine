@@ -2186,6 +2186,19 @@ Call ok(Err.number = 438, "obj.publicProp(0, 1) Err.number = " & Err.number)
 Err.Clear
 obj.publicProp("k") = 5
 Call ok(Err.number = 438, "obj.publicProp(""k"") = 5 Err.number = " & Err.number)
+
+' Empty parens on a variant-typed public property: native raises 5 on get
+' (not callable). Set with empty parens succeeds: the source-level () adds
+' no positional args, so DISPATCH_PROPERTYPUT receives just the value.
+Err.Clear
+x = obj.publicProp()
+Call todo_wine_ok(Err.number = 5, "obj.publicProp() Err.number = " & Err.number)
+Err.Clear
+x = obj.publicArrayProp()
+Call todo_wine_ok(Err.number = 5, "obj.publicArrayProp() Err.number = " & Err.number)
+Err.Clear
+obj.publicProp() = 7
+Call ok(Err.number = 0, "obj.publicProp() = 7 Err.number = " & Err.number)
 Err.Clear
 On Error Goto 0
 
@@ -3176,6 +3189,29 @@ sub test_index_non_array
     err.clear
     x(0, 1) = 1
     call ok(err.number = 13, "assign int(0,1): err.number = " & err.number)
+
+    ' empty parens on a non-array Dim variable: native raises 13.
+    x = 42
+    err.clear
+    tmp = x()
+    call todo_wine_ok(err.number = 13, "read int(): err.number = " & err.number)
+
+    x = "hello"
+    err.clear
+    tmp = x()
+    call todo_wine_ok(err.number = 13, "read str(): err.number = " & err.number)
+
+    x = Empty
+    err.clear
+    tmp = x()
+    call todo_wine_ok(err.number = 13, "read empty(): err.number = " & err.number)
+
+    ' empty parens on a Dim array: native raises 9 (subscript out of range,
+    ' since () supplies zero indices for a multi-dim access).
+    Dim arr(2)
+    err.clear
+    tmp = arr()
+    call todo_wine_ok(err.number = 9, "read arr(): err.number = " & err.number)
 
     on error goto 0
 end sub
