@@ -29,6 +29,7 @@ struct color_converter
     struct strmbase_filter filter;
 
     struct strmbase_source source;
+    struct strmbase_passthrough passthrough;
 
     struct strmbase_sink sink;
 };
@@ -63,8 +64,22 @@ static HRESULT WINAPI color_source_DecideBufferSize(
     return IMemAllocator_SetProperties(alloc, props, &actual);
 }
 
+static HRESULT color_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->passthrough.IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_interface = color_source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = color_source_DecideBufferSize,
@@ -95,6 +110,7 @@ static void color_destroy(struct strmbase_filter *iface)
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->source);
+    strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_filter_cleanup(&filter->filter);
 
     free(filter);
@@ -157,6 +173,9 @@ HRESULT color_create(IUnknown *outer, IUnknown **out)
 
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
     wcscpy(object->source.pin.name, L"XForm Out");
+
+    strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE, &object->sink.pin.IPin_iface);
 
     TRACE("Created Color Converter %p.\n", object);
     *out = &object->filter.IUnknown_inner;
