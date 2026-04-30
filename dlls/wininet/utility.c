@@ -50,18 +50,8 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
     TRACE("%s\n", debugstr_w(name));
 
     memset( &hints, 0, sizeof(hints) );
-    /* Prefer IPv4 to IPv6 addresses, since some servers do not listen on
-     * their IPv6 addresses even though they have IPv6 addresses in the DNS.
-     */
-    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     ret = GetAddrInfoW(name, NULL, &hints, &res);
-    if (ret != 0)
-    {
-        TRACE("failed to get IPv4 address of %s, retrying with IPv6\n", debugstr_w(name));
-        hints.ai_family = AF_INET6;
-        ret = GetAddrInfoW(name, NULL, &hints, &res);
-    }
     if (ret != 0)
     {
         TRACE("failed to get address of %s\n", debugstr_w(name));

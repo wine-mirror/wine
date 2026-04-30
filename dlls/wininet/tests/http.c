@@ -6888,11 +6888,11 @@ static void test_af_priority(int port)
     ok(data.resolving && !strcmp(data.resolving, "localhost"), "got %s.\n", debugstr_a(data.resolving));
     free(data.resolving);
     ok(data.resolved_count == 1, "got %d.\n", data.resolved_count);
-    todo_wine ok(data.resolved && !strcmp(data.resolved, "[::1]"), "got %s.\n", debugstr_a(data.resolved));
+    ok(data.resolved && !strcmp(data.resolved, "[::1]"), "got %s.\n", debugstr_a(data.resolved));
     free(data.resolved);
-    todo_wine ok(data.connecting_count == 2, "got %d.\n", data.connecting_count);
-    todo_wine ok(data.connecting[0] && !strcmp(data.connecting[0], "[::1]"), "got %s.\n", debugstr_a(data.connecting[0]));
-    todo_wine ok(data.connecting[1] && !strcmp(data.connecting[1], "127.0.0.1"), "got %s.\n", debugstr_a(data.connecting[1]));
+    ok(data.connecting_count == 2, "got %d.\n", data.connecting_count);
+    ok(data.connecting[0] && !strcmp(data.connecting[0], "[::1]"), "got %s.\n", debugstr_a(data.connecting[0]));
+    ok(data.connecting[1] && !strcmp(data.connecting[1], "127.0.0.1"), "got %s.\n", debugstr_a(data.connecting[1]));
     for (i = 0; i < ARRAY_SIZE(data.connecting); ++i)
         free(data.connecting[i]);
     ok(data.connected_count == 1, "got %d.\n", data.connected_count);
