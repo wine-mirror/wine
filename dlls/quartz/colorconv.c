@@ -167,6 +167,16 @@ static HRESULT color_source_query_interface(struct strmbase_pin *iface, REFIID i
     return S_OK;
 }
 
+static HRESULT color_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (!filter->sink.pin.peer)
+        return S_FALSE;
+
+    return get_subtype(mt) ? S_OK : S_FALSE;
+}
+
 static const RGBQUAD color_prefix[] =
 {
     { 0, 0, 0 },
@@ -257,6 +267,7 @@ static HRESULT color_source_get_media_type(struct strmbase_pin *iface, unsigned 
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_interface = color_source_query_interface,
+    .base.pin_query_accept = color_source_query_accept,
     .base.pin_get_media_type = color_source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,

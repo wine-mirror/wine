@@ -1547,7 +1547,6 @@ static void test_media_types(void)
 
     /* The previously accepted media type is no longer accepted after disconnect */
     hr = IPin_QueryAccept(source, &rgb32);
-    todo_wine
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     FreeMediaType(&rgb32);
 
