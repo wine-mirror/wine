@@ -961,7 +961,6 @@ static void test_interfaces(void)
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    todo_wine
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
     todo_wine
@@ -2583,7 +2582,6 @@ static void test_connect_pin(void)
 
     meminput = NULL;
     hr = IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     sink_allocator = create_mem_allocator();

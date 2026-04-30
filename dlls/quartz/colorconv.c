@@ -39,6 +39,19 @@ static struct color_converter *impl_from_strmbase_filter(struct strmbase_filter 
     return CONTAINING_RECORD(iface, struct color_converter, filter);
 }
 
+static HRESULT color_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static HRESULT color_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     FIXME("stub\n");
@@ -47,6 +60,7 @@ static HRESULT color_sink_query_accept(struct strmbase_pin *iface, const AM_MEDI
 
 static const struct strmbase_sink_ops sink_ops =
 {
+    .base.pin_query_interface = color_sink_query_interface,
     .base.pin_query_accept = color_sink_query_accept,
 };
 
