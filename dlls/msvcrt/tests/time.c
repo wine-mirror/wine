@@ -51,6 +51,8 @@ typedef struct {
     int refcount;
 } __lc_time_data;
 
+static errno_t    (__cdecl *p_ctime32_s)(char*, size_t, __time32_t*);
+static errno_t    (__cdecl *p_ctime64_s)(char*, size_t, __time64_t*);
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static struct tm* (__cdecl *p_gmtime)(time_t*);
@@ -76,6 +78,8 @@ static void init(void)
     HMODULE hmod = LoadLibraryA("msvcrt.dll");
 
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
+    p_ctime32_s = (void*)GetProcAddress(hmod, "_ctime32_s");
+    p_ctime64_s = (void*)GetProcAddress(hmod, "_ctime64_s");
     p_gmtime = (void*)GetProcAddress(hmod, "gmtime");
     p_gmtime32_s = (void*)GetProcAddress(hmod, "_gmtime32_s");
     p_gmtime64 = (void*)GetProcAddress(hmod, "_gmtime64");
@@ -116,6 +120,53 @@ static void test_ctime(void)
     ret = ctime(&badtime);
     ok(ret == NULL, "expected ctime to return NULL, got %s\n", ret);
 }
+
+static void test_ctime32_s(void)
+{
+    __time32_t goodtime = 0;
+    __time32_t badtime = -1;
+    char out[26];
+    int ret;
+
+    if(!p_ctime32_s) {
+        win_skip("Skipping _ctime32_s tests\n");
+        return;
+    }
+
+    errno = 0;
+    ret = p_ctime32_s(out, 26, &goodtime);
+    ok(ret == 0, "expected _ctime32_s to return NULL, got %d\n", ret);
+    ok(errno == 0, "expected _ctime32_s to set errno to 0, got %d\n", errno);
+
+    errno = 0;
+    ret = p_ctime32_s(out, 26, &badtime);
+    ok(ret == EINVAL, "expected _ctime32_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected _ctime32_s to set errno to EINVAL, got %d\n", errno);
+}
+
+static void test_ctime64_s(void)
+{
+    __time64_t goodtime = 0;
+    __time64_t badtime = -1;
+    char out[26];
+    int ret;
+
+    if(!p_ctime64_s) {
+        win_skip("Skipping _ctime64_s tests\n");
+        return;
+    }
+
+    errno = 0;
+    ret = p_ctime64_s(out, 26, &goodtime);
+    ok(ret == 0, "expected _ctime64_s to return NULL, got %d\n", ret);
+    ok(errno == 0, "expected _ctime64_s to set errno to 0, got %d\n", errno);
+
+    errno = 0;
+    ret = p_ctime64_s(out, 26, &badtime);
+    ok(ret == EINVAL, "expected _ctime64_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected _ctime64_s to set errno to EINVAL, got %d\n", errno);
+}
+
 static void test_gmtime(void)
 {
     __time32_t valid, gmt;
@@ -1038,6 +1089,8 @@ START_TEST(time)
     test__tzset();
     test_strftime();
     test_ctime();
+    test_ctime32_s();
+    test_ctime64_s();
     test_gmtime();
     test_gmtime64();
     test_mktime();

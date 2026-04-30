@@ -1737,7 +1737,11 @@ errno_t CDECL _ctime64_s(char *res, size_t len, const __time64_t *time)
     if (!MSVCRT_CHECK_PMT( len >= 26 )) return EINVAL;
     res[0] = '\0';
     if (!MSVCRT_CHECK_PMT( time != NULL )) return EINVAL;
-    if (!MSVCRT_CHECK_PMT( *time > 0 )) return EINVAL;
+    if (*time < 0)
+    {
+        *_errno() = EINVAL;
+        return EINVAL;
+    }
 
     ret = _localtime64_s( &t, time );
     if (ret)
@@ -1768,7 +1772,11 @@ errno_t CDECL _ctime32_s(char *res, size_t len, const __time32_t *time)
     if (!MSVCRT_CHECK_PMT( len >= 26 )) return EINVAL;
     res[0] = '\0';
     if (!MSVCRT_CHECK_PMT( time != NULL )) return EINVAL;
-    if (!MSVCRT_CHECK_PMT( *time > 0 )) return EINVAL;
+    if (*time < 0)
+    {
+        *_errno() = EINVAL;
+        return EINVAL;
+    }
 
     ret = _localtime32_s( &t, time );
     if (ret)
