@@ -324,13 +324,13 @@ extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_
                                             SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page );
 extern void virtual_map_user_shared_data(void);
 extern void virtual_init_user_shared_data(void);
-extern NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack );
+extern NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, void *stack );
 extern unsigned int virtual_locked_server_call( void *req_ptr );
 extern ssize_t virtual_locked_read( int fd, void *addr, size_t size );
 extern ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset );
 extern ssize_t virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags );
 extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size );
-extern void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec );
+extern void *virtual_setup_exception( struct thread_data *data, void *stack_ptr, size_t size, EXCEPTION_RECORD *rec );
 extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size );
 extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size );
 extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size );

@@ -4582,7 +4582,7 @@ static NTSTATUS grow_thread_stack( char *page, struct thread_stack_info *stack_i
 /***********************************************************************
  *           virtual_handle_fault
  */
-NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
+NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, void *stack )
 {
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
     ULONG_PTR err = rec->ExceptionInformation[0];
@@ -4617,7 +4617,7 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
     {
         if (vprot & VPROT_WRITEWATCH)
         {
-            if (enable_write_exceptions && is_vprot_exec_write( vprot ) && !get_thread_data()->allow_writes)
+            if (enable_write_exceptions && is_vprot_exec_write( vprot ) && !data->allow_writes)
             {
                 rec->NumberParameters = 3;
                 rec->ExceptionInformation[2] = STATUS_EXECUTABLE_MEMORY_WRITE;
@@ -4645,7 +4645,7 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
 /***********************************************************************
  *           virtual_setup_exception
  */
-void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec )
+void *virtual_setup_exception( struct thread_data *data, void *stack_ptr, size_t size, EXCEPTION_RECORD *rec )
 {
     char *stack = stack_ptr;
     struct thread_stack_info stack_info;
@@ -4658,8 +4658,8 @@ void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *r
             abort_thread(1);
         }
         WARN( "exception outside of stack limits addr %p stack %p (%p-%p-%p)\n",
-              rec->ExceptionAddress, stack, NtCurrentTeb()->DeallocationStack,
-              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+              rec->ExceptionAddress, stack, data->teb->DeallocationStack,
+              data->teb->Tib.StackLimit, data->teb->Tib.StackBase );
         return stack - size;
     }
 
