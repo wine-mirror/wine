@@ -1164,21 +1164,42 @@ static GLenum drawable_buffer_from_buffer( struct opengl_drawable *drawable, GLe
     return drawable->buffer_map[buffer - GL_FRONT_LEFT];
 }
 
+enum buffer_mask
+{
+    MASK_NONE        = 0,
+    MASK_FRONT_LEFT  = 1,
+    MASK_FRONT_RIGHT = 2,
+    MASK_BACK_LEFT   = 4,
+    MASK_BACK_RIGHT  = 8,
+    MASK_BACK        = MASK_BACK_LEFT | MASK_BACK_RIGHT,
+    MASK_FRONT       = MASK_FRONT_LEFT | MASK_FRONT_RIGHT,
+    MASK_LEFT        = MASK_FRONT_LEFT | MASK_BACK_LEFT,
+    MASK_RIGHT       = MASK_FRONT_RIGHT | MASK_BACK_RIGHT,
+    MASK_ALL         = MASK_FRONT | MASK_BACK,
+};
+
+static enum buffer_mask buffer_mask_from_enum( GLenum buffer )
+{
+    switch (buffer)
+    {
+    case GL_BACK:           return MASK_BACK;
+    case GL_BACK_LEFT:      return MASK_BACK_LEFT;
+    case GL_BACK_RIGHT:     return MASK_BACK_LEFT;
+    case GL_FRONT:          return MASK_FRONT;
+    case GL_FRONT_LEFT:     return MASK_FRONT_LEFT;
+    case GL_FRONT_RIGHT:    return MASK_FRONT_RIGHT;
+    case GL_LEFT:           return MASK_LEFT;
+    case GL_RIGHT:          return MASK_RIGHT;
+    case GL_FRONT_AND_BACK: return MASK_ALL;
+    default:                return MASK_NONE;
+    }
+}
+
 static BOOL context_draws_back( struct context *ctx )
 {
     for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-    {
-        switch (ctx->color_buffer.draw_buffers[i])
-        {
-        case GL_LEFT:
-        case GL_RIGHT:
-        case GL_BACK:
-        case GL_FRONT_AND_BACK:
-        case GL_BACK_LEFT:
-        case GL_BACK_RIGHT:
+        if (buffer_mask_from_enum( ctx->color_buffer.draw_buffers[i] ) & MASK_BACK)
             return TRUE;
-        }
-    }
 
     return FALSE;
 }
@@ -1186,19 +1207,8 @@ static BOOL context_draws_back( struct context *ctx )
 static BOOL context_draws_front( struct context *ctx )
 {
     for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-    {
-        switch (ctx->color_buffer.draw_buffers[i])
-        {
-        case GL_LEFT:
-        case GL_RIGHT:
-        case GL_FRONT:
-        case GL_FRONT_AND_BACK:
-        case GL_FRONT_LEFT:
-        case GL_FRONT_RIGHT:
+        if (buffer_mask_from_enum( ctx->color_buffer.draw_buffers[i] ) & MASK_FRONT)
             return TRUE;
-        }
-    }
-
     return FALSE;
 }
 
@@ -1538,18 +1548,22 @@ void resolve_default_fbo( TEB *teb, BOOL read )
 static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_drawable *draw,
                                              GLsizei count, const GLenum *src, GLenum *dst )
 {
-    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
+    UINT used[4] = {0};
 
+    for (GLsizei i = 0; i < count; i++) dst[i] = GL_BACK_LEFT; /* some invalid combination */
+    for (GLsizei i = 0; i < count; i++)
+    {
+        if ((buffer_mask_from_enum( src[i] ) & MASK_FRONT_LEFT) && used[0]++) return dst;
+        if ((buffer_mask_from_enum( src[i] ) & MASK_FRONT_RIGHT) && used[1]++) return dst;
+        if ((buffer_mask_from_enum( src[i] ) & MASK_BACK_LEFT) && used[2]++) return dst;
+        if ((buffer_mask_from_enum( src[i] ) & MASK_BACK_RIGHT) && used[3]++) return dst;
+        if (src[i] && !drawable_buffer_from_buffer( draw, src[i] )) return dst;
+    }
+
+    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
     for (GLsizei i = 0; i < count; i++)
     {
         dst[i] = drawable_buffer_from_buffer( draw, src[i] );
-        if (src[i] && !dst[i])
-        {
-            WARN( "Invalid draw buffer #%d %#x for context %p\n", i, src[i], ctx );
-            dst[i] = src[i];
-            continue;
-        }
-
         if (i >= MAX_DRAW_BUFFERS) FIXME( "Needs %u draw buffers\n", i );
         else ctx->color_buffer.draw_buffers[i] = src[i];
     }
