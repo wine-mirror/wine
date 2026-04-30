@@ -774,18 +774,21 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
 /***********************************************************************
  *           init_handler
  */
-static inline ucontext_t *init_handler( void *sigcontext )
+static inline struct thread_data *init_handler( void *sigcontext )
 {
+    struct thread_data *data = get_current_thread_data();
+
     clear_alignment_flag();
+
 #ifdef __linux__
     {
-        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_thread_data()->teb->GdiTebBatch;
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&data->teb->GdiTebBatch;
         thread_data->syscall_dispatch = 0; /* SYSCALL_DISPATCH_FILTER_ALLOW */
         if (fs32_sel) arch_prctl( ARCH_SET_FS, thread_data->pthread_teb );
     }
 #elif defined __APPLE__
     {
-        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_thread_data()->teb->GdiTebBatch;
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&data->teb->GdiTebBatch;
         _thread_set_tsd_base( (uint64_t)thread_data->pthread_teb );
 
         /* When in a syscall, CS will be the kernel's selector (0x07, SYSCALL_CS in xnu source)
@@ -798,7 +801,7 @@ static inline ucontext_t *init_handler( void *sigcontext )
             CS_sig((ucontext_t *)sigcontext) = cs64_sel;
     }
 #endif
-    return sigcontext;
+    return data;
 }
 
 
@@ -2262,8 +2265,8 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
  */
 static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     struct xcontext context;
     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(sigcontext) };
 
@@ -2353,8 +2356,8 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     struct xcontext context;
     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(sigcontext) };
 
@@ -2387,8 +2390,8 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     struct xcontext context;
     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(sigcontext) };
 
@@ -2444,8 +2447,8 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     HANDLE handle;
 
     if (p__wine_ctrl_routine)
@@ -2465,8 +2468,8 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     struct xcontext context;
     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_WINE_ASSERTION,
                              .ExceptionFlags = EXCEPTION_NONCONTINUABLE,
@@ -2484,8 +2487,8 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
 
     if (is_inside_syscall( data, RSP_sig(sigcontext) )) abort_thread( 0 );
     user_mode_abort_thread( 0, get_syscall_frame( data ));
@@ -2499,8 +2502,8 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
 
     if (is_inside_syscall( data, RSP_sig(sigcontext) ))
     {
@@ -2570,8 +2573,8 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void sigsys_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     extern const void *__wine_syscall_dispatcher_prolog_end_ptr;
-    ucontext_t *sigcontext = init_handler( _sigcontext );
-    struct thread_data *data = get_thread_data();
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     struct syscall_frame *frame = get_syscall_frame( data );
 
     TRACE_(seh)("SIGSYS, rax %#lx, rip %#lx.\n", (long)RAX_sig(sigcontext), (long)RIP_sig(sigcontext));
