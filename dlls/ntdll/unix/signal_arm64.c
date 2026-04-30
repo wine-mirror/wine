@@ -184,6 +184,11 @@ struct syscall_frame
 C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 
 
+static DWORD64 make_esr( ULONG ec, ULONG info )
+{
+    return ((DWORD64)ec << 26) | (info & 0xffff);
+}
+
 /***********************************************************************
  *           context_init_empty_xstate
  *
@@ -1127,46 +1132,57 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
     ucontext_t *context = sigcontext;
+    DWORD64 esr = get_fault_esr( context );
     CONTEXT ctx;
 
     rec.ExceptionAddress = (void *)PC_sig(context);
     save_context( &ctx, sigcontext );
 
-    switch (siginfo->si_code)
+    if (!esr)
     {
-    case TRAP_TRACE:
+        /* debug exceptions do not update ESR on Linux, so we synthesize it. */
+        switch (siginfo->si_code)
+        {
+        case TRAP_TRACE:
+            esr = make_esr( 0x33, 0 );
+            break;
+        case TRAP_BRKPT:
+            if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
+                !(PC_sig( context ) & 3))
+                esr = make_esr( 0x3c, *(ULONG *)PC_sig( context ) >> 5 );
+            break;
+        }
+    }
+
+    switch ((esr >> 26) & 0x3c)
+    {
+    case 0x30: /* software step */
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
-    case TRAP_BRKPT:
-        /* debug exceptions do not update ESR on Linux, so we fetch the instruction directly. */
-        if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
-            !(PC_sig( context ) & 3))
+    case 0x3c: /* bkpt */
+        switch (esr & 0xffff)
         {
-            ULONG imm = (*(ULONG *)PC_sig( context ) >> 5) & 0xffff;
-            switch (imm)
-            {
-            case 0xf000:
-                ctx.Pc += 4;  /* skip the brk instruction */
-                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-                rec.NumberParameters = 1;
-                break;
-            case 0xf001:
-                rec.ExceptionCode = STATUS_ASSERTION_FAILURE;
-                break;
-            case 0xf003:
-                rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-                rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-                rec.NumberParameters = 1;
-                rec.ExceptionInformation[0] = ctx.X[0];
-                NtRaiseException( &rec, &ctx, FALSE );
-                break;
-            case 0xf004:
-                rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
-                break;
-            default:
-                rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-                break;
-            }
+        case 0xf000:
+            ctx.Pc += 4;  /* skip the brk instruction */
+            rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+            rec.NumberParameters = 1;
+            break;
+        case 0xf001:
+            rec.ExceptionCode = STATUS_ASSERTION_FAILURE;
+            break;
+        case 0xf003:
+            rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+            rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+            rec.NumberParameters = 1;
+            rec.ExceptionInformation[0] = ctx.X[0];
+            NtRaiseException( &rec, &ctx, FALSE );
+            break;
+        case 0xf004:
+            rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+            break;
+        default:
+            rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+            break;
         }
         break;
     default:
