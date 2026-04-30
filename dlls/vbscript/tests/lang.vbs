@@ -230,6 +230,49 @@ Call ok(not ("" = CCur(0)),     """"" = CCur(0) should be false (no error)")
 Call ok(not ("10" > CByte(5)),  """10"" > CByte(5) should be false (lex)")
 Call ok(not ("5" < CCur(10)),   """5"" < CCur(10) should be false (lex)")
 
+' VT_I8/UI8/I1/UI2/UI4/UINT cannot be produced by VBScript natively; obtain
+' them via a host IDispatch (testobj). Native VBScript:
+'  - VT_UI8/UI2/UI4/UINT: error 458 (VBSE_INVALID_TYPELIB_VARIABLE) on
+'    both 32-bit and 64-bit when used in any expression.
+'  - VT_I8: error 458 on 32-bit; on 64-bit no error but BSTR-vs-I8 compares
+'    as not-equal (no CStr coercion of the numeric side).
+'  - VT_I1: no error on either arch (treated as a small integer); BSTR
+'    literal vs I1 compares equal via numeric coercion, matching the
+'    baseline "5" = CInt(5) behavior.
+Call ok("5" = testobj.i1val, """5"" = testobj.i1val should be true")
+
+Dim x_str : x_str = "5"
+Dim cmp_result
+On Error Resume Next
+
+' VT_I8 vs non-literal BSTR. 32-bit: err 458. 64-bit: cmp = False (default
+' VarCmp returns BSTR > other since I8 isn't in is_numeric_vt).
+Err.Clear : cmp_result = (x_str = testobj.i8val) : saved_err = Err.number : Err.Clear
+Call ok(saved_err = 458 or cmp_result = False, _
+    "x_str = testobj.i8val: err=" & saved_err & " result=" & cmp_result)
+
+' VT_UI8/UI2/UI4/UINT: native errors 458 on both archs. Wine's VarCmp
+' rejects VT_UI8 and VT_UINT via DISP_E_BADVARTYPE (mapped to 458)
+' without a script-level gate; UI2/UI4 still go through DISP_E_TYPEMISMATCH
+' (mapped to 13) and need the gate, so they remain todo_wine for now.
+Err.Clear : cmp_result = ("5" = testobj.ui8val) : saved_err = Err.number : Err.Clear
+Call ok(saved_err = 458, _
+    "BSTR = testobj.ui8val should err 458, got " & saved_err)
+
+Err.Clear : cmp_result = ("5" = testobj.ui2val) : saved_err = Err.number : Err.Clear
+Call todo_wine_ok(saved_err = 458, _
+    "BSTR = testobj.ui2val should err 458, got " & saved_err)
+
+Err.Clear : cmp_result = ("5" = testobj.ui4val) : saved_err = Err.number : Err.Clear
+Call todo_wine_ok(saved_err = 458, _
+    "BSTR = testobj.ui4val should err 458, got " & saved_err)
+
+Err.Clear : cmp_result = ("5" = testobj.uintval) : saved_err = Err.number : Err.Clear
+Call ok(saved_err = 458, _
+    "BSTR = testobj.uintval should err 458, got " & saved_err)
+
+On Error Goto 0
+
 ' --- BSTR vs numeric LITERAL: BSTR coerces to a number, parse failure raises 13. ---
 Dim saved_err
 on error resume next

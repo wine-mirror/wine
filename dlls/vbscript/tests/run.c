@@ -152,6 +152,12 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
 #define DISPID_TESTOBJ_KEYWORD      2002
+#define DISPID_TESTOBJ_I8VAL        2003
+#define DISPID_TESTOBJ_UI8VAL       2004
+#define DISPID_TESTOBJ_I1VAL        2005
+#define DISPID_TESTOBJ_UI2VAL       2006
+#define DISPID_TESTOBJ_UI4VAL       2007
+#define DISPID_TESTOBJ_UINTVAL      2008
 
 #define DISPID_COLLOBJ_RESET        3000
 
@@ -846,6 +852,12 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
     static const dispid_t dispids[] = {
        { L"propget",  DISPID_TESTOBJ_PROPGET, REF_EXPECT(testobj_propget_d) },
        { L"propput",  DISPID_TESTOBJ_PROPPUT, REF_EXPECT(testobj_propput_d) },
+       { L"i8val",    DISPID_TESTOBJ_I8VAL  },
+       { L"ui8val",   DISPID_TESTOBJ_UI8VAL },
+       { L"i1val",    DISPID_TESTOBJ_I1VAL  },
+       { L"ui2val",   DISPID_TESTOBJ_UI2VAL },
+       { L"ui4val",   DISPID_TESTOBJ_UI4VAL },
+       { L"uintval",  DISPID_TESTOBJ_UINTVAL },
        { L"rem",      DISPID_TESTOBJ_KEYWORD },
        { L"true",     DISPID_TESTOBJ_KEYWORD },
        { L"false",    DISPID_TESTOBJ_KEYWORD },
@@ -993,6 +1005,31 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
     case DISPID_TESTOBJ_KEYWORD:
         V_VT(pvarRes) = VT_I2;
         V_I2(pvarRes) = 10;
+        return S_OK;
+
+    case DISPID_TESTOBJ_I8VAL:
+        V_VT(pvarRes) = VT_I8;
+        V_I8(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI8VAL:
+        V_VT(pvarRes) = VT_UI8;
+        V_UI8(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_I1VAL:
+        V_VT(pvarRes) = VT_I1;
+        V_I1(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI2VAL:
+        V_VT(pvarRes) = VT_UI2;
+        V_UI2(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UI4VAL:
+        V_VT(pvarRes) = VT_UI4;
+        V_UI4(pvarRes) = 5;
+        return S_OK;
+    case DISPID_TESTOBJ_UINTVAL:
+        V_VT(pvarRes) = VT_UINT;
+        V_UINT(pvarRes) = 5;
         return S_OK;
     }
 
