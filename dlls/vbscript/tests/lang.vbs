@@ -260,11 +260,11 @@ Call ok(saved_err = 458, _
     "BSTR = testobj.ui8val should err 458, got " & saved_err)
 
 Err.Clear : cmp_result = ("5" = testobj.ui2val) : saved_err = Err.number : Err.Clear
-Call todo_wine_ok(saved_err = 458, _
+Call ok(saved_err = 458, _
     "BSTR = testobj.ui2val should err 458, got " & saved_err)
 
 Err.Clear : cmp_result = ("5" = testobj.ui4val) : saved_err = Err.number : Err.Clear
-Call todo_wine_ok(saved_err = 458, _
+Call ok(saved_err = 458, _
     "BSTR = testobj.ui4val should err 458, got " & saved_err)
 
 Err.Clear : cmp_result = ("5" = testobj.uintval) : saved_err = Err.number : Err.Clear

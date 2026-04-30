@@ -2114,6 +2114,16 @@ static inline BOOL is_numeric_vt(VARTYPE vt)
         || vt == VT_I1;
 }
 
+/* Native VBScript rejects these Automation types with error 458
+ * (VBSE_INVALID_TYPELIB_VARIABLE) when they appear in script expressions,
+ * on both 32-bit and 64-bit. VT_I8 is rejected on 32-bit native but
+ * accepted on 64-bit; not included here so BSTR-vs-I8 falls through to
+ * the default VarCmp path (BSTR > other), matching 64-bit native. */
+static inline BOOL is_unsupported_script_vt(VARTYPE vt)
+{
+    return vt == VT_UI2 || vt == VT_UI4 || vt == VT_UI8 || vt == VT_UINT;
+}
+
 /* CMP_LEFT_LITERAL / CMP_RIGHT_LITERAL are set by the compiler: each side is
  * flagged if the source expression at the comparison site is a bare numeric
  * literal. Native VBScript dispatches BSTR-vs-numeric on this distinction
@@ -2126,6 +2136,9 @@ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r, unsigned flags)
     VARTYPE rvt = V_VT(r) & VT_TYPEMASK;
 
     TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    if(is_unsupported_script_vt(lvt) || is_unsupported_script_vt(rvt))
+        return MAKE_VBSERROR(VBSE_INVALID_TYPELIB_VARIABLE);
 
     /* BSTR vs numeric LITERAL: coerce BSTR to a number, parse failure raises
      * type-mismatch (error 13). */
