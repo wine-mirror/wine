@@ -1355,6 +1355,12 @@ void domnode_destroy_tree(struct domnode *tree)
             list_remove(&node->entry);
             domnode_destroy_tree(node);
         }
+
+        if (tree->type == NODE_DOCUMENT_TYPE)
+        {
+            parser_dtd_release(tree->dtd);
+            tree->dtd = NULL;
+        }
     }
 
     if (tree->prefix)
@@ -1401,6 +1407,8 @@ HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **clo
 
     if (node->type == NODE_DOCUMENT)
         object->properties = domdoc_properties_clone(node->properties);
+    else if (node->type == NODE_DOCUMENT_TYPE)
+        object->dtd = parser_dtd_addref(node->dtd);
 
     if (deep)
     {
@@ -3938,7 +3946,8 @@ static HRESULT WINAPI parse_extension_handler_xmldecl(ISAXExtensionHandler *ifac
     return c->status;
 }
 
-static HRESULT WINAPI parse_extension_handler_dtd(ISAXExtensionHandler *iface, BSTR data)
+static HRESULT WINAPI parse_extension_handler_dtd(ISAXExtensionHandler *iface,
+        BSTR data, struct dtd *dtd)
 {
     struct parse_context *c = impl_from_ISAXExtensionHandler(iface);
 
@@ -3946,6 +3955,7 @@ static HRESULT WINAPI parse_extension_handler_dtd(ISAXExtensionHandler *iface, B
     {
         if (!(c->node->data = SysAllocStringLen(data, SysStringLen(data))))
             c->status = E_OUTOFMEMORY;
+        c->node->dtd = parser_dtd_addref(dtd);
     }
 
     return c->status;

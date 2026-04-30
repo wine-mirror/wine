@@ -1102,13 +1102,20 @@ static void saxreader_free_element_decl(struct element_decl *decl)
     free(decl);
 }
 
-static void parser_release_dtd(struct dtd *dtd)
+struct dtd *parser_dtd_addref(struct dtd *dtd)
+{
+    if (dtd)
+        ++dtd->refcount;
+    return dtd;
+}
+
+void parser_dtd_release(struct dtd *dtd)
 {
     struct element_decl *element, *element_next;
     struct entity_decl *entity, *entity_next;
     struct attlist_decl *attr, *attr_next;
 
-    if (--dtd->refcount)
+    if (!dtd || --dtd->refcount)
         return;
 
     LIST_FOR_EACH_ENTRY_SAFE(entity, entity_next, &dtd->entities, struct entity_decl, entry)
@@ -1988,7 +1995,7 @@ static ULONG WINAPI isaxlocator_Release(ISAXLocator *iface)
 
         saxreader_clear_strings(locator);
         if (locator->dtd)
-            parser_release_dtd(locator->dtd);
+            parser_dtd_release(locator->dtd);
         locator->dtd = NULL;
 
         /* element stack */
@@ -3178,7 +3185,7 @@ static void saxlocator_extension_dtd(struct saxlocator *locator)
     if (saxreader_has_handler(locator, SAXExtensionHandler))
     {
         if (!locator->vbInterface)
-            hr = ISAXExtensionHandler_dtd(handler->handler, str);
+            hr = ISAXExtensionHandler_dtd(handler->handler, str, locator->dtd);
     }
     SysFreeString(str);
 

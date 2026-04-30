@@ -235,7 +235,11 @@ struct domnode
     BSTR data;
     BSTR uri;
 
-    struct domdoc_properties *properties;
+    union
+    {
+        struct domdoc_properties *properties;
+        struct dtd *dtd;
+    };
 
     struct domnode *parent;
     struct domnode *owner;
@@ -341,6 +345,9 @@ extern bool node_query_interface(struct domnode*,REFIID,void**);
 extern struct domnode *get_node_obj(void *iface);
 extern bool parser_is_valid_qualified_name(const WCHAR *name);
 extern HRESULT parse_xml_decl_body(const WCHAR *text, BSTR *version, BSTR *encoding, BSTR *standalone);
+
+extern struct dtd * parser_dtd_addref(struct dtd *dtd);
+extern void parser_dtd_release(struct dtd *dtd);
 
 extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);
