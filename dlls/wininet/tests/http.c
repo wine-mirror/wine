@@ -30,6 +30,7 @@
 #include "wininet.h"
 #include "winineti.h"
 #include "winsock2.h"
+#include "ws2tcpip.h"
 
 #include "wine/test.h"
 
@@ -6812,6 +6813,97 @@ static void test_pac(int port)
     close_request(&req);
 }
 
+struct af_priority_callback_data
+{
+    int resolving_count;
+    char *resolving;
+    int resolved_count;
+    char *resolved;
+    int connecting_count;
+    char *connecting[64];
+    int connected_count;
+    char *connected;
+};
+
+static VOID WINAPI af_priority_callback(HINTERNET hi, DWORD_PTR context, DWORD status,
+        void *info, DWORD info_len)
+{
+    struct af_priority_callback_data *data = (struct af_priority_callback_data *)context;
+
+    ok(!!data, "got NULL.\n");
+
+    switch (status)
+    {
+        case INTERNET_STATUS_RESOLVING_NAME:
+            ++data->resolving_count;
+            data->resolving = strdup(info);
+            break;
+        case INTERNET_STATUS_NAME_RESOLVED:
+            ++data->resolved_count;
+            data->resolved = strdup(info);
+            break;
+        case INTERNET_STATUS_CONNECTING_TO_SERVER:
+            ok(data->connecting_count < ARRAY_SIZE(data->connecting), "got %d.\n", data->connecting_count);
+            data->connecting[data->connecting_count++] = strdup(info);
+            break;
+        case INTERNET_STATUS_CONNECTED_TO_SERVER:
+            ++data->connected_count;
+            data->connected = strdup(info);
+            break;
+    }
+}
+
+static void test_af_priority(int port)
+{
+    struct af_priority_callback_data data = { 0 };
+    HINTERNET ses, con, req;
+    struct addrinfo *addr_info, hints;
+    int i, ret;
+    BOOL bret;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    ret = getaddrinfo("localhost", NULL, &hints, &addr_info);
+    ok(!ret, "got error %d.\n", ret);
+    if (addr_info->ai_family != AF_INET6)
+    {
+        skip("AF_INET6 not available for localhost.\n");
+        freeaddrinfo(addr_info);
+        return;
+    }
+    freeaddrinfo(addr_info);
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+    pInternetSetStatusCallbackA(ses, &af_priority_callback);
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&data);
+    ok( con != NULL, "InternetConnectA failed %lu\n", GetLastError() );
+    req = HttpOpenRequestA(con, "GET", "/test1", NULL, NULL, NULL, 0, (DWORD_PTR)&data);
+    ok( req != NULL, "HttpOpenRequestA failed %lu\n", GetLastError());
+    bret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(bret, "HttpSendRequest failed with error %lu\n", GetLastError());
+
+    ok(data.resolving_count == 1, "got %d.\n", data.resolving_count);
+    ok(data.resolving && !strcmp(data.resolving, "localhost"), "got %s.\n", debugstr_a(data.resolving));
+    free(data.resolving);
+    ok(data.resolved_count == 1, "got %d.\n", data.resolved_count);
+    todo_wine ok(data.resolved && !strcmp(data.resolved, "[::1]"), "got %s.\n", debugstr_a(data.resolved));
+    free(data.resolved);
+    todo_wine ok(data.connecting_count == 2, "got %d.\n", data.connecting_count);
+    todo_wine ok(data.connecting[0] && !strcmp(data.connecting[0], "[::1]"), "got %s.\n", debugstr_a(data.connecting[0]));
+    todo_wine ok(data.connecting[1] && !strcmp(data.connecting[1], "127.0.0.1"), "got %s.\n", debugstr_a(data.connecting[1]));
+    for (i = 0; i < ARRAY_SIZE(data.connecting); ++i)
+        free(data.connecting[i]);
+    ok(data.connected_count == 1, "got %d.\n", data.connected_count);
+    ok(data.connected && !strcmp(data.connected, "127.0.0.1"), "got %s.\n", debugstr_a(data.connected));
+    free(data.connected);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -6832,6 +6924,7 @@ static void test_http_connection(void)
         return;
     }
 
+    test_af_priority(si.port);
     test_basic_request(si.port, "GET", "/test1");
     test_proxy_indirect(si.port);
     test_proxy_direct(si.port);
