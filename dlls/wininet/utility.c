@@ -39,10 +39,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, int *sa_len, char *addr_str)
+server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
 {
+    struct sockaddr_storage *addr;
+    server_addr_t *server_addr;
     ADDRINFOW *res, hints;
-    void *addr = NULL;
+    void *ip_addr = NULL;
     int ret;
 
     TRACE("%s\n", debugstr_w(name));
@@ -63,33 +65,28 @@ BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, int
     if (ret != 0)
     {
         TRACE("failed to get address of %s\n", debugstr_w(name));
-        return FALSE;
+        return NULL;
     }
-    if (*sa_len < res->ai_addrlen)
-    {
-        WARN("address too small\n");
-        FreeAddrInfoW(res);
-        return FALSE;
-    }
-    *sa_len = res->ai_addrlen;
-    memcpy( psa, res->ai_addr, res->ai_addrlen );
+    server_addr = malloc(sizeof(*server_addr));
+    addr = &server_addr->addr;
+    server_addr->addr_len = res->ai_addrlen;
+    memcpy( addr, res->ai_addr, res->ai_addrlen );
     /* Copy port */
     switch (res->ai_family)
     {
     case AF_INET:
-        addr = &((struct sockaddr_in *)psa)->sin_addr;
-        ((struct sockaddr_in *)psa)->sin_port = htons(port);
+        ip_addr = &((struct sockaddr_in *)addr)->sin_addr;
+        ((struct sockaddr_in *)addr)->sin_port = htons(port);
         break;
     case AF_INET6:
-        addr = &((struct sockaddr_in6 *)psa)->sin6_addr;
-        ((struct sockaddr_in6 *)psa)->sin6_port = htons(port);
+        ip_addr = &((struct sockaddr_in6 *)addr)->sin6_addr;
+        ((struct sockaddr_in6 *)addr)->sin6_port = htons(port);
         break;
     }
 
-    if(addr_str)
-        inet_ntop(res->ai_family, addr, addr_str, INET6_ADDRSTRLEN);
+    inet_ntop(res->ai_family, ip_addr, server_addr->addr_str, INET6_ADDRSTRLEN);
     FreeAddrInfoW(res);
-    return TRUE;
+    return server_addr;
 }
 
 /*

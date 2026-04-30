@@ -31,14 +31,18 @@
 
 extern HMODULE WININET_hModule;
 
+typedef struct server_addr
+{
+    struct sockaddr_storage addr;
+    int addr_len;
+    char addr_str[INET6_ADDRSTRLEN];
+} server_addr_t;
+
 typedef struct {
     WCHAR *name;
     INTERNET_PORT port;
     BOOL is_https;
-    struct sockaddr_storage addr;
-    int addr_len;
-    char addr_str[INET6_ADDRSTRLEN];
-
+    server_addr_t *addr;
     WCHAR *scheme_host_port;
     const WCHAR *host_port;
     const WCHAR *canon_host_port;
@@ -380,7 +384,7 @@ DWORD HTTP_Connect(appinfo_t*,LPCWSTR,
         LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
         DWORD dwInternalFlags, HINTERNET*);
 
-BOOL GetAddress(const WCHAR*,INTERNET_PORT,SOCKADDR*,int*,char*);
+server_addr_t *GetAddress(const WCHAR*,INTERNET_PORT);
 
 DWORD get_cookie_header(const WCHAR*,const WCHAR*,WCHAR**);
 DWORD set_cookie(substr_t,substr_t,substr_t,substr_t,DWORD);

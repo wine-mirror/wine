@@ -294,11 +294,11 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
 
     init_winsock();
 
-    assert(server->addr_len);
-    result = netconn->socket = socket(server->addr.ss_family, SOCK_STREAM, 0);
+    assert(server->addr);
+    result = netconn->socket = socket(server->addr->addr.ss_family, SOCK_STREAM, 0);
     if(result != -1) {
         set_socket_blocking(netconn, FALSE);
-        result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
+        result = connect(netconn->socket, (struct sockaddr*)&server->addr->addr, server->addr->addr_len);
         if(result == -1)
         {
             res = WSAGetLastError();

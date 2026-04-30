@@ -2428,12 +2428,11 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags)
 {
-    struct sockaddr_in socketAddr;
     INT nsocket = -1;
     socklen_t sock_namelen;
     BOOL bSuccess = FALSE;
     ftp_session_t *lpwfs = NULL;
-    char szaddr[INET6_ADDRSTRLEN];
+    server_addr_t *server_addr;
 
     TRACE("%p  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
 	    hIC, debugstr_w(lpszServerName),
@@ -2520,22 +2519,21 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_RESOLVING_NAME,
         (LPWSTR) lpszServerName, (lstrlenW(lpszServerName)+1) * sizeof(WCHAR));
 
-    sock_namelen = sizeof(socketAddr);
-    if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen, szaddr))
+    if (!(server_addr = GetAddress(lpszServerName, lpwfs->serverport)))
     {
 	INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         goto lerror;
     }
 
-    if (socketAddr.sin_family != AF_INET)
+    if (server_addr->addr.ss_family != AF_INET)
     {
-        WARN("unsupported address family %d\n", socketAddr.sin_family);
+        WARN("unsupported address family %d\n", server_addr->addr.ss_family);
         INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
         goto lerror;
     }
 
     INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
-                      szaddr, strlen(szaddr)+1);
+                      server_addr->addr_str, strlen(server_addr->addr_str)+1);
 
     init_winsock();
     nsocket = socket(AF_INET,SOCK_STREAM,0);
@@ -2546,9 +2544,9 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
 
     INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTING_TO_SERVER,
-                      szaddr, strlen(szaddr)+1);
+                      server_addr->addr_str, strlen(server_addr->addr_str)+1);
 
-    if (connect(nsocket, (struct sockaddr *)&socketAddr, sock_namelen) < 0)
+    if (connect(nsocket, (struct sockaddr *)&server_addr->addr, server_addr->addr_len) < 0)
     {
 	ERR("Unable to connect (%d)\n", WSAGetLastError());
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
@@ -2559,7 +2557,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         TRACE("Connected to server\n");
 	lpwfs->sndSocket = nsocket;
         INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTED_TO_SERVER,
-                          szaddr, strlen(szaddr)+1);
+                          server_addr->addr_str, strlen(server_addr->addr_str)+1);
 
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
@@ -2572,6 +2570,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
 
 lerror:
+    free(server_addr);
     if (!bSuccess)
     {
         WININET_Release(&lpwfs->hdr);
