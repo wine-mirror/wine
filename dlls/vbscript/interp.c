@@ -640,7 +640,7 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
         break;
     case VT_DISPATCH:
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-        hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, &dp, res);
+        hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, TRUE, &dp, res);
         stack_popn(ctx, arg_cnt);
         return hres;
     default:
@@ -710,7 +710,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
         break;
     case REF_DISP:
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-        hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, res);
+        hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, is_call, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
@@ -723,7 +723,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
     case REF_OBJ:
         if(arg_cnt) {
             vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-            hres = disp_call(ctx->script, ref.u.obj, DISPID_VALUE, &dp, res);
+            hres = disp_call(ctx->script, ref.u.obj, DISPID_VALUE, TRUE, &dp, res);
             if(FAILED(hres))
                 return hres;
             break;
@@ -847,7 +847,7 @@ static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
 
     hres = disp_get_id(obj, identifier, VBDISP_CALLGET, FALSE, &id);
     if(SUCCEEDED(hres))
-        hres = disp_call(ctx->script, obj, id, &dp, res);
+        hres = disp_call(ctx->script, obj, id, TRUE, &dp, res);
     IDispatch_Release(obj);
     if(FAILED(hres))
         return hres;
@@ -875,6 +875,36 @@ static HRESULT interp_mcallv(exec_ctx_t *ctx)
     TRACE("\n");
 
     return do_mcall(ctx, NULL);
+}
+
+static HRESULT interp_mget(exec_ctx_t *ctx)
+{
+    const BSTR identifier = ctx->instr->arg1.bstr;
+    DISPPARAMS dp = {0};
+    IDispatch *obj;
+    VARIANT res;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_disp(ctx, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(!obj) {
+        WARN("NULL obj\n");
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
+    }
+
+    hres = disp_get_id(obj, identifier, VBDISP_CALLGET, FALSE, &id);
+    if(SUCCEEDED(hres))
+        hres = disp_call(ctx->script, obj, id, FALSE, &dp, &res);
+    IDispatch_Release(obj);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &res);
 }
 
 static HRESULT interp_ident(exec_ctx_t *ctx)
@@ -1723,7 +1753,7 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         DISPPARAMS dp = {0};
         VARIANT iterv;
 
-        hres = disp_call(ctx->script, V_ISBYREF(v.v) ? *V_DISPATCHREF(v.v) : V_DISPATCH(v.v), DISPID_NEWENUM, &dp, &iterv);
+        hres = disp_call(ctx->script, V_ISBYREF(v.v) ? *V_DISPATCHREF(v.v) : V_DISPATCH(v.v), DISPID_NEWENUM, TRUE, &dp, &iterv);
         release_val(&v);
         if(FAILED(hres))
             return hres;

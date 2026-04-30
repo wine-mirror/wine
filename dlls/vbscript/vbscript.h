@@ -171,7 +171,7 @@ HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
 const WCHAR *vbdisp_class_name(IDispatch*);
 HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
-HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,BOOL,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*);
 HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*);
 void collect_objects(script_ctx_t*);
@@ -296,6 +296,7 @@ typedef enum {
     X(lteq,           1, ARG_UINT,    0)          \
     X(mcall,          1, ARG_BSTR,    ARG_UINT)   \
     X(mcallv,         1, ARG_BSTR,    ARG_UINT)   \
+    X(mget,           1, ARG_BSTR,    0)          \
     X(me,             1, 0,           0)          \
     X(mod,            1, 0,           0)          \
     X(mul,            1, 0,           0)          \

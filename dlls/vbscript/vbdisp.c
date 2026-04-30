@@ -162,7 +162,7 @@ static HRESULT get_array_from_variant(VARIANT *v, SAFEARRAY **array)
     }
 }
 
-static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
+static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, BOOL is_call, DISPPARAMS *dp, VARIANT *res)
 {
     HRESULT hres;
 
@@ -179,6 +179,12 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
                 WARN("failed to access array element\n");
                 return hres;
             }
+        }else if(is_call && (flags & DISPATCH_METHOD)) {
+            /* Empty parens in script source on a variant-typed property:
+             * not callable. is_call is set only for script-internal call
+             * forms (`obj.x()`, etc.); bare access (`obj.x`) and external
+             * IDispatchEx callers still receive the value normally. */
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
         }
 
         hres = VariantCopyInd(res, v);
@@ -231,7 +237,7 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
     return hres;
 }
 
-static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern_caller, DISPPARAMS *params, VARIANT *res)
+static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern_caller, BOOL is_call, DISPPARAMS *params, VARIANT *res)
 {
     if(id < 0)
         return DISP_E_MEMBERNOTFOUND;
@@ -315,7 +321,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
         return DISP_E_MEMBERNOTFOUND;
 
     TRACE("%p->%s\n", This, debugstr_w(This->desc->props[id - This->desc->func_cnt].name));
-    return invoke_variant_prop(This->desc->ctx, This->props+(id-This->desc->func_cnt), flags, params, res);
+    return invoke_variant_prop(This->desc->ctx, This->props+(id-This->desc->func_cnt), flags, is_call, params, res);
 }
 
 static BOOL run_terminator(vbdisp_t *This)
@@ -489,7 +495,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(pspCaller)
         IServiceProvider_AddRef(pspCaller);
 
-    hres = invoke_vbdisp(This, id, wFlags, TRUE, pdp, pvarRes);
+    hres = invoke_vbdisp(This, id, wFlags, TRUE, FALSE, pdp, pvarRes);
 
     This->desc->ctx->vbcaller->caller = prev_caller;
     if(pspCaller)
@@ -1659,7 +1665,7 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         goto done;
     }
 
-    hres = invoke_variant_prop(This->ctx, &This->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
+    hres = invoke_variant_prop(This->ctx, &This->global_vars[id - 1]->v, wFlags, FALSE, pdp, pvarRes);
 
 done:
     This->ctx->vbcaller->caller = prev_caller;
@@ -1861,7 +1867,7 @@ void map_vbs_exception(EXCEPINFO *ei)
             ei->bstrDescription = get_vbscript_string(VBS_UNKNOWN_RUNTIME_ERROR);
 }
 
-HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp, VARIANT *retv)
+HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, BOOL is_call, DISPPARAMS *dp, VARIANT *retv)
 {
     const WORD flags = DISPATCH_METHOD|(retv ? DISPATCH_PROPERTYGET : 0);
     IDispatchEx *dispex;
@@ -1875,7 +1881,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
 
     vbdisp = unsafe_impl_from_IDispatch(disp);
     if(vbdisp && vbdisp->desc && vbdisp->desc->ctx == ctx)
-        return invoke_vbdisp(vbdisp, id, flags, FALSE, dp, retv);
+        return invoke_vbdisp(vbdisp, id, flags, FALSE, is_call, dp, retv);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
@@ -1901,7 +1907,7 @@ HRESULT get_disp_value(script_ctx_t *ctx, IDispatch *disp, VARIANT *v)
     DISPPARAMS dp = {NULL};
     if(!disp)
         return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-    return disp_call(ctx, disp, DISPID_VALUE, &dp, v);
+    return disp_call(ctx, disp, DISPID_VALUE, TRUE, &dp, v);
 }
 
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *dp)
@@ -1913,7 +1919,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, 
 
     vbdisp = unsafe_impl_from_IDispatch(disp);
     if(vbdisp && vbdisp->desc && vbdisp->desc->ctx == ctx)
-        return invoke_vbdisp(vbdisp, id, flags, FALSE, dp, NULL);
+        return invoke_vbdisp(vbdisp, id, flags, FALSE, FALSE, dp, NULL);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {

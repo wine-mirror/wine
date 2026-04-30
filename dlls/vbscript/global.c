@@ -4521,7 +4521,7 @@ static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
 
     if(!disp)
         return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-    hres = disp_call(ctx, disp, DISPID_VALUE, &dp, &v);
+    hres = disp_call(ctx, disp, DISPID_VALUE, TRUE, &dp, &v);
     if(FAILED(hres))
         return hres;
     if(V_VT(&v) == VT_BSTR) {

@@ -543,9 +543,14 @@ static HRESULT compile_member_call_expression(compile_ctx_t *ctx, member_express
 static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr)
 {
     expression_t *const_expr;
+    HRESULT hres;
 
-    if (expr->obj_expr) /* FIXME: we should probably have a dedicated opcode as well */
-        return compile_member_call_expression(ctx, expr, 0, TRUE);
+    if (expr->obj_expr) {
+        hres = compile_expression(ctx, expr->obj_expr);
+        if(FAILED(hres))
+            return hres;
+        return push_instr_bstr(ctx, OP_mget, expr->identifier);
+    }
 
     if (!lookup_dim_decls(ctx, expr->identifier) && !lookup_args_name(ctx, expr->identifier)) {
         const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);

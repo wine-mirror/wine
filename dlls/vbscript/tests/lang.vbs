@@ -2192,10 +2192,10 @@ Call ok(Err.number = 438, "obj.publicProp(""k"") = 5 Err.number = " & Err.number
 ' no positional args, so DISPATCH_PROPERTYPUT receives just the value.
 Err.Clear
 x = obj.publicProp()
-Call todo_wine_ok(Err.number = 5, "obj.publicProp() Err.number = " & Err.number)
+Call ok(Err.number = 5, "obj.publicProp() Err.number = " & Err.number)
 Err.Clear
 x = obj.publicArrayProp()
-Call todo_wine_ok(Err.number = 5, "obj.publicArrayProp() Err.number = " & Err.number)
+Call ok(Err.number = 5, "obj.publicArrayProp() Err.number = " & Err.number)
 Err.Clear
 obj.publicProp() = 7
 Call ok(Err.number = 0, "obj.publicProp() = 7 Err.number = " & Err.number)
