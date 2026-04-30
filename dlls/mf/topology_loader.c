@@ -998,6 +998,7 @@ static HRESULT clone_topology(IMFTopology *input_topology, IMFCollection *source
     HRESULT hr = S_OK;
     IUnknown *object;
     TOPOID topoid;
+    UINT32 method;
 
     IMFTopology_GetTopologyID(input_topology, &topoid);
     if (FAILED(hr = create_topology(topoid, output_topology)))
@@ -1009,13 +1010,17 @@ static HRESULT clone_topology(IMFTopology *input_topology, IMFCollection *source
         switch (topology_node_get_type(node))
         {
             case MF_TOPOLOGY_OUTPUT_NODE:
-                if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
-                    break;
-                if (FAILED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&sink)))
-                    hr = MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
-                else
-                    IMFStreamSink_Release(sink);
-                IUnknown_Release(object);
+                if (SUCCEEDED(IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, &method))
+                        && (method & MF_CONNECT_AS_OPTIONAL))
+                    hr = MF_E_TOPO_UNSUPPORTED;
+                else if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &object)))
+                {
+                    if (FAILED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&sink)))
+                        hr = MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
+                    else
+                        IMFStreamSink_Release(sink);
+                    IUnknown_Release(object);
+                }
                 break;
             case MF_TOPOLOGY_SOURCESTREAM_NODE:
                 if (SUCCEEDED(hr = IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL)))

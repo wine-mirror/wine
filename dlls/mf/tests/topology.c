@@ -2998,7 +2998,6 @@ static void test_topology_loader(void)
             /* PCM -> PCM, optional sink */
             .input_types = {&audio_pcm_44100}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_AS_OPTIONAL, .source_method = -1,
             .expected_result = MF_E_TOPO_UNSUPPORTED,
-            .flags = LOADER_TODO,
         },
         {
             /* PCM -> PCM, optional source is ignored */
@@ -3009,7 +3008,6 @@ static void test_topology_loader(void)
             /* H264 -> NV12, optional sink */
             .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_AS_OPTIONAL | MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .expected_result = MF_E_TOPO_UNSUPPORTED, .decoder_class = CLSID_CMSH264DecoderMFT,
-            .flags = LOADER_TODO,
         },
         {
             /* #70 H264 -> NV12, optional source is ignored */
