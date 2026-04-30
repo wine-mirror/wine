@@ -44,7 +44,7 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
     struct sockaddr_storage *addr;
     server_addr_t *server_addr;
     ADDRINFOW *res, hints;
-    void *ip_addr = NULL;
+    unsigned int len;
     int ret;
 
     TRACE("%s\n", debugstr_w(name));
@@ -75,16 +75,19 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
     switch (res->ai_family)
     {
     case AF_INET:
-        ip_addr = &((struct sockaddr_in *)addr)->sin_addr;
         ((struct sockaddr_in *)addr)->sin_port = htons(port);
+        inet_ntop(res->ai_family, &((struct sockaddr_in *)addr)->sin_addr, server_addr->addr_str, INET6_ADDRSTRLEN);
         break;
     case AF_INET6:
-        ip_addr = &((struct sockaddr_in6 *)addr)->sin6_addr;
         ((struct sockaddr_in6 *)addr)->sin6_port = htons(port);
+        server_addr->addr_str[0] = '[';
+        inet_ntop(res->ai_family, &((struct sockaddr_in6 *)addr)->sin6_addr, server_addr->addr_str + 1, INET6_ADDRSTRLEN - 2);
+        len = strlen(server_addr->addr_str);
+        server_addr->addr_str[len] = ']';
+        server_addr->addr_str[len + 1] = 0;
         break;
     }
 
-    inet_ntop(res->ai_family, ip_addr, server_addr->addr_str, INET6_ADDRSTRLEN);
     FreeAddrInfoW(res);
     return server_addr;
 }
