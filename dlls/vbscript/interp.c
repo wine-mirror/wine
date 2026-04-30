@@ -682,23 +682,8 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
         if(arg_cnt)
             return variant_call(ctx, ref.u.v, arg_cnt, res);
 
-        if(is_call) {
-            VARIANT *v;
-
-            v = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
-            if(V_VT(v) == VT_DISPATCH) {
-                VARIANT result;
-                V_VT(&result) = VT_EMPTY;
-                hres = get_disp_value(ctx->script, V_DISPATCH(v), &result);
-                if(FAILED(hres))
-                    return hres;
-                if(res)
-                    *res = result;
-                else
-                    VariantClear(&result);
-                break;
-            }
-        }
+        if(is_call)
+            return variant_call(ctx, ref.u.v, 0, res);
 
         if(!res) {
             WARN("REF_VAR no res\n");

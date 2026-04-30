@@ -3194,24 +3194,24 @@ sub test_index_non_array
     x = 42
     err.clear
     tmp = x()
-    call todo_wine_ok(err.number = 13, "read int(): err.number = " & err.number)
+    call ok(err.number = 13, "read int(): err.number = " & err.number)
 
     x = "hello"
     err.clear
     tmp = x()
-    call todo_wine_ok(err.number = 13, "read str(): err.number = " & err.number)
+    call ok(err.number = 13, "read str(): err.number = " & err.number)
 
     x = Empty
     err.clear
     tmp = x()
-    call todo_wine_ok(err.number = 13, "read empty(): err.number = " & err.number)
+    call ok(err.number = 13, "read empty(): err.number = " & err.number)
 
     ' empty parens on a Dim array: native raises 9 (subscript out of range,
     ' since () supplies zero indices for a multi-dim access).
     Dim arr(2)
     err.clear
     tmp = arr()
-    call todo_wine_ok(err.number = 9, "read arr(): err.number = " & err.number)
+    call ok(err.number = 9, "read arr(): err.number = " & err.number)
 
     on error goto 0
 end sub
