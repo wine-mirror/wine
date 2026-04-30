@@ -1336,9 +1336,7 @@ static void test_source_media_types(const char *test_context, IPin *source, cons
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(num_types == 6, "Got num_types %lu.\n", num_types);
 
     mt = *req_mt;

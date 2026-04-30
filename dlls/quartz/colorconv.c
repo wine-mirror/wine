@@ -90,6 +90,11 @@ static const struct subtype *get_subtype(const AM_MEDIA_TYPE *mt)
     return subtype;
 }
 
+static LONG calculate_stride(const BITMAPINFOHEADER *bmi_header)
+{
+    return (bmi_header->biWidth * (bmi_header->biBitCount / 8) + 3) & ~3;
+}
+
 static struct color_converter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct color_converter, filter);
@@ -162,9 +167,97 @@ static HRESULT color_source_query_interface(struct strmbase_pin *iface, REFIID i
     return S_OK;
 }
 
+static const RGBQUAD color_prefix[] =
+{
+    { 0, 0, 0 },
+    { 0, 0, 128 },
+    { 0, 128, 0 },
+    { 0, 128, 128 },
+    { 128, 0, 0 },
+    { 128, 0, 128 },
+    { 128, 128, 0 },
+    { 192, 192, 192 },
+    { 192, 220, 192 },
+    { 240, 202, 166 },
+};
+
+static const BYTE color_pattern[] = { 1, 51, 102, 153, 204, 254 };
+
+static HRESULT color_source_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->filter);
+    const VIDEOINFOHEADER *sink_format;
+    const struct subtype *subtype;
+    VIDEOINFO *format;
+    RGBQUAD *ptr;
+    int r, g, b;
+
+    if (!filter->sink.pin.peer || index >= ARRAY_SIZE(subtypes))
+        return VFW_S_NO_MORE_ITEMS;
+
+    subtype = subtypes + index;
+    sink_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+
+    mt->cbFormat = max(filter->sink.pin.mt.cbFormat, subtype->cbFormat);
+    if (!(format = CoTaskMemAlloc(mt->cbFormat)))
+        return E_OUTOFMEMORY;
+
+    memset(format, 0, mt->cbFormat);
+
+    format->rcSource = sink_format->rcSource;
+    format->rcTarget = sink_format->rcTarget;
+    format->dwBitRate = sink_format->dwBitRate;
+    format->dwBitErrorRate = sink_format->dwBitErrorRate;
+    format->AvgTimePerFrame = sink_format->AvgTimePerFrame;
+
+    format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    format->bmiHeader.biWidth = sink_format->bmiHeader.biWidth;
+    format->bmiHeader.biHeight = sink_format->bmiHeader.biHeight;
+    format->bmiHeader.biPlanes = sink_format->bmiHeader.biPlanes;
+    format->bmiHeader.biBitCount = subtype->bitcount;
+    format->bmiHeader.biCompression = subtype->compression;
+    format->bmiHeader.biSizeImage = calculate_stride(&format->bmiHeader) * labs(format->bmiHeader.biHeight);
+
+    if (IsEqualGUID(subtype->guid, &MEDIASUBTYPE_RGB565))
+    {
+        format->dwBitMasks[iRED] = 0xf800;
+        format->dwBitMasks[iGREEN] = 0x07e0;
+        format->dwBitMasks[iBLUE] = 0x001f;
+    }
+    else if (IsEqualGUID(subtype->guid, &MEDIASUBTYPE_RGB555))
+    {
+        format->dwBitMasks[iRED] = 0x7c00;
+        format->dwBitMasks[iGREEN] = 0x03e0;
+        format->dwBitMasks[iBLUE] = 0x001f;
+    }
+    else if (IsEqualGUID(subtype->guid, &MEDIASUBTYPE_RGB8))
+    {
+        format->bmiHeader.biClrUsed = 226;
+        format->bmiHeader.biClrImportant = 226;
+        memcpy(format->bmiColors, color_prefix, sizeof(color_prefix));
+        ptr = format->bmiColors + ARRAY_SIZE(color_prefix);
+        for (b = 0; b < ARRAY_SIZE(color_pattern); b++)
+            for (g = 0; g < ARRAY_SIZE(color_pattern); g++)
+                for (r = 0; r < ARRAY_SIZE(color_pattern); r++)
+                    *ptr++ = (RGBQUAD){ color_pattern[b], color_pattern[g], color_pattern[r] };
+    }
+
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = *subtype->guid;
+    mt->bFixedSizeSamples = TRUE;
+    mt->lSampleSize = format->bmiHeader.biSizeImage;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->pbFormat = (BYTE *)format;
+
+    return S_OK;
+}
+
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_interface = color_source_query_interface,
+    .base.pin_get_media_type = color_source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = color_source_DecideBufferSize,
