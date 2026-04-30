@@ -101,27 +101,21 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
     return refcount;
 }
 
-struct topoloader_context
-{
-    IMFTopology *input_topology;
-    IMFTopology *output_topology;
-};
-
-static HRESULT topology_loader_clone_node(struct topoloader_context *context, IMFTopologyNode *node, IMFTopologyNode **clone)
+static HRESULT topology_clone_node(IMFTopology *topology, IMFTopologyNode *node, IMFTopologyNode **clone)
 {
     HRESULT hr;
     TOPOID id;
 
     if (FAILED(hr = IMFTopologyNode_GetTopoNodeID(node, &id)))
         return hr;
-    if (SUCCEEDED(hr = IMFTopology_GetNodeByID(context->output_topology, id, clone)))
+    if (SUCCEEDED(hr = IMFTopology_GetNodeByID(topology, id, clone)))
         return hr;
     if (FAILED(hr = MFCreateTopologyNode(topology_node_get_type(node), clone)))
         return hr;
 
     hr = IMFTopologyNode_CloneFrom(*clone, node);
     if (SUCCEEDED(hr))
-        hr = IMFTopology_AddNode(context->output_topology, *clone);
+        hr = IMFTopology_AddNode(topology, *clone);
 
     if (FAILED(hr))
     {
@@ -224,14 +218,14 @@ static HRESULT topology_branch_create_indirect(struct topology_branch *branch,
     return hr;
 }
 
-static HRESULT topology_branch_clone_nodes(struct topoloader_context *context, struct topology_branch *branch)
+static HRESULT topology_branch_clone_nodes(IMFTopology *topology, struct topology_branch *branch)
 {
     IMFTopologyNode *up, *down;
     HRESULT hr;
 
-    if (FAILED(hr = topology_loader_clone_node(context, branch->up.node, &up)))
+    if (FAILED(hr = topology_clone_node(topology, branch->up.node, &up)))
         return hr;
-    if (FAILED(hr = topology_loader_clone_node(context, branch->down.node, &down)))
+    if (FAILED(hr = topology_clone_node(topology, branch->down.node, &down)))
     {
         IMFTopologyNode_Release(up);
         return hr;
@@ -752,7 +746,7 @@ static HRESULT topology_branch_connect(IMFTopology *topology, enum connect_metho
     return hr;
 }
 
-static HRESULT topology_loader_resolve_branches(struct topoloader_context *context, struct list *branches)
+static HRESULT topology_loader_resolve_branches(IMFTopology *topology, struct list *branches)
 {
     enum connect_method method_mask = connect_method_from_mf(MF_CONNECT_ALLOW_DECODER);
     struct topology_branch *branch, *next;
@@ -762,10 +756,10 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
     {
         list_remove(&branch->entry);
 
-        if (FAILED(hr = topology_branch_clone_nodes(context, branch)))
+        if (FAILED(hr = topology_branch_clone_nodes(topology, branch)))
             WARN("Failed to clone nodes for branch %s\n", debugstr_topology_branch(branch));
         else
-            hr = topology_branch_connect(context->output_topology, method_mask, branch, NULL);
+            hr = topology_branch_connect(topology, method_mask, branch, NULL);
 
         topology_branch_destroy(branch);
         if (FAILED(hr))
@@ -840,7 +834,7 @@ static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWO
     return hr;
 }
 
-static HRESULT topology_loader_connect_copier(struct topoloader_context *context, IMFTopologyNode *upstream_node,
+static HRESULT topology_loader_connect_copier(IMFTopology *topology, IMFTopologyNode *upstream_node,
         DWORD upstream_output, IMFTopologyNode *downstream_node, DWORD downstream_input, IMFTransform *copier)
 {
     IMFTopologyNode *copier_node;
@@ -850,7 +844,7 @@ static HRESULT topology_loader_connect_copier(struct topoloader_context *context
         return hr;
 
     IMFTopologyNode_SetObject(copier_node, (IUnknown *)copier);
-    IMFTopology_AddNode(context->output_topology, copier_node);
+    IMFTopology_AddNode(topology, copier_node);
     IMFTopologyNode_ConnectOutput(upstream_node, upstream_output, copier_node, 0);
     IMFTopologyNode_ConnectOutput(copier_node, 0, downstream_node, downstream_input);
 
@@ -907,7 +901,7 @@ HRESULT stream_sink_get_device_manager(IMFStreamSink *stream_sink, IUnknown **de
 }
 
 /* Right now this should be used for output nodes only. */
-static HRESULT topology_loader_connect_d3d_aware_sink(struct topoloader_context *context,
+static HRESULT topology_loader_connect_d3d_aware_sink(IMFTopology *topology,
         IMFTopologyNode *node, MFTOPOLOGY_DXVA_MODE dxva_mode)
 {
     IMFTopologyNode *upstream_node;
@@ -940,7 +934,7 @@ static HRESULT topology_loader_connect_d3d_aware_sink(struct topoloader_context 
 
             if (needs_copier && SUCCEEDED(hr = topology_loader_create_copier(upstream_node, upstream_output, node, 0, &copier)))
             {
-                hr = topology_loader_connect_copier(context, upstream_node, upstream_output, node, 0, copier);
+                hr = topology_loader_connect_copier(topology, upstream_node, upstream_output, node, 0, copier);
                 IMFTransform_Release(copier);
             }
 
@@ -958,21 +952,21 @@ static HRESULT topology_loader_connect_d3d_aware_sink(struct topoloader_context 
     return hr;
 }
 
-static void topology_loader_resolve_complete(struct topoloader_context *context)
+static void topology_loader_resolve_complete(IMFTopology *topology)
 {
     MFTOPOLOGY_DXVA_MODE dxva_mode;
     IMFTopologyNode *node;
     WORD i, node_count;
     HRESULT hr;
 
-    IMFTopology_GetNodeCount(context->output_topology, &node_count);
+    IMFTopology_GetNodeCount(topology, &node_count);
 
-    if (FAILED(IMFTopology_GetUINT32(context->input_topology, &MF_TOPOLOGY_DXVA_MODE, (UINT32 *)&dxva_mode)))
+    if (FAILED(IMFTopology_GetUINT32(topology, &MF_TOPOLOGY_DXVA_MODE, (UINT32 *)&dxva_mode)))
         dxva_mode = 0;
 
     for (i = 0; i < node_count; ++i)
     {
-        if (SUCCEEDED(IMFTopology_GetNode(context->output_topology, i, &node)))
+        if (SUCCEEDED(IMFTopology_GetNode(topology, i, &node)))
         {
             switch (topology_node_get_type(node))
             {
@@ -981,7 +975,7 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
                     if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
                         IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
 
-                    if (FAILED(hr = topology_loader_connect_d3d_aware_sink(context, node, dxva_mode)))
+                    if (FAILED(hr = topology_loader_connect_d3d_aware_sink(topology, node, dxva_mode)))
                         WARN("Failed to connect D3D-aware input, hr %#lx.\n", hr);
                     break;
                 case MF_TOPOLOGY_SOURCESTREAM_NODE:
@@ -1002,7 +996,6 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         IMFTopology **ret_topology, IMFTopology *current_topology)
 {
     struct list branches = LIST_INIT(branches);
-    struct topoloader_context context = { 0 };
     struct topology_branch *branch, *next;
     IMFTopology *output_topology;
     IMFTopologyNode *node;
@@ -1056,9 +1049,6 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
 
     IMFTopology_CopyAllItems(input_topology, (IMFAttributes *)output_topology);
 
-    context.input_topology = input_topology;
-    context.output_topology = output_topology;
-
     for (i = 0; SUCCEEDED(IMFTopology_GetNode(input_topology, i, &node)); i++)
     {
         hr = topology_node_list_branches(node, &branches);
@@ -1070,7 +1060,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         hr = MF_E_TOPO_UNSUPPORTED;
 
     while (SUCCEEDED(hr) && !list_empty(&branches))
-        hr = topology_loader_resolve_branches(&context, &branches);
+        hr = topology_loader_resolve_branches(output_topology, &branches);
 
     LIST_FOR_EACH_ENTRY_SAFE(branch, next, &branches, struct topology_branch, entry)
     {
@@ -1083,7 +1073,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         IMFTopology_Release(output_topology);
     else
     {
-        topology_loader_resolve_complete(&context);
+        topology_loader_resolve_complete(output_topology);
         *ret_topology = output_topology;
     }
 
