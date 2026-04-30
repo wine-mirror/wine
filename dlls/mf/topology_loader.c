@@ -218,23 +218,23 @@ static HRESULT topology_branch_create_indirect(struct topology_branch *branch,
     return hr;
 }
 
-static HRESULT topology_branch_clone_nodes(IMFTopology *topology, struct topology_branch *branch)
+static HRESULT topology_branch_create_cloned(IMFTopology *topology, IMFTopologyNode *up_node, DWORD up_stream,
+        IMFTopologyNode *down_node, DWORD down_stream, struct topology_branch **out)
 {
     IMFTopologyNode *up, *down;
     HRESULT hr;
 
-    if (FAILED(hr = topology_clone_node(topology, branch->up.node, &up)))
+    if (FAILED(hr = topology_clone_node(topology, up_node, &up)))
         return hr;
-    if (FAILED(hr = topology_clone_node(topology, branch->down.node, &down)))
+    if (FAILED(hr = topology_clone_node(topology, down_node, &down)))
     {
         IMFTopologyNode_Release(up);
         return hr;
     }
 
-    IMFTopologyNode_Release(branch->up.node);
-    IMFTopologyNode_Release(branch->down.node);
-    branch->up.node = up;
-    branch->down.node = down;
+    hr = topology_branch_create(up, up_stream, down, down_stream, out);
+    IMFTopologyNode_Release(up);
+    IMFTopologyNode_Release(down);
     return hr;
 }
 
@@ -749,17 +749,19 @@ static HRESULT topology_branch_connect(IMFTopology *topology, enum connect_metho
 static HRESULT topology_loader_resolve_branches(IMFTopology *topology, struct list *branches)
 {
     enum connect_method method_mask = connect_method_from_mf(MF_CONNECT_ALLOW_DECODER);
-    struct topology_branch *branch, *next;
+    struct topology_branch *branch, *cloned, *next;
     HRESULT hr = S_OK;
 
     LIST_FOR_EACH_ENTRY_SAFE(branch, next, branches, struct topology_branch, entry)
     {
         list_remove(&branch->entry);
 
-        if (FAILED(hr = topology_branch_clone_nodes(topology, branch)))
-            WARN("Failed to clone nodes for branch %s\n", debugstr_topology_branch(branch));
-        else
-            hr = topology_branch_connect(topology, method_mask, branch, NULL);
+        if (SUCCEEDED(hr = topology_branch_create_cloned(topology, branch->up.node, branch->up.stream,
+                branch->down.node, branch->down.stream, &cloned)))
+        {
+            hr = topology_branch_connect(topology, method_mask, cloned, NULL);
+            topology_branch_destroy(cloned);
+        }
 
         topology_branch_destroy(branch);
         if (FAILED(hr))
