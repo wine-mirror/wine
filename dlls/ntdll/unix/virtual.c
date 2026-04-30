@@ -4525,9 +4525,9 @@ struct thread_stack_info
 /***********************************************************************
  *           is_inside_thread_stack
  */
-static BOOL is_inside_thread_stack( void *ptr, struct thread_stack_info *stack )
+static BOOL is_inside_thread_stack( struct thread_data *data, void *ptr, struct thread_stack_info *stack )
 {
-    TEB *teb = NtCurrentTeb();
+    TEB *teb = data->teb;
     WOW_TEB *wow_teb = get_wow_teb( teb );
     size_t min_guaranteed = max( page_size * (is_win64 ? 2 : 1), host_page_size );
 
@@ -4602,10 +4602,10 @@ NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, 
     }
 #endif
 
-    if (!is_inside_signal_stack( stack ) && (vprot & VPROT_GUARD))
+    if (!is_inside_signal_stack( data, stack ) && (vprot & VPROT_GUARD))
     {
         struct thread_stack_info stack_info;
-        if (!is_inside_thread_stack( page, &stack_info ))
+        if (!is_inside_thread_stack( data, page, &stack_info ))
         {
             set_page_vprot_bits( page, host_page_size, 0, VPROT_GUARD );
             mprotect_range( page, host_page_size, 0, 0 );
@@ -4650,9 +4650,9 @@ void *virtual_setup_exception( struct thread_data *data, void *stack_ptr, size_t
     char *stack = stack_ptr;
     struct thread_stack_info stack_info;
 
-    if (!is_inside_thread_stack( stack, &stack_info ))
+    if (!is_inside_thread_stack( data, stack, &stack_info ))
     {
-        if (is_inside_signal_stack( stack ))
+        if (is_inside_signal_stack( data, stack ))
         {
             ERR( "nested exception on signal stack addr %p stack %p\n", rec->ExceptionAddress, stack );
             abort_thread(1);

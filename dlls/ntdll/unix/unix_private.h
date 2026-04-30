@@ -151,11 +151,6 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
-static inline struct syscall_frame *get_syscall_frame(void)
-{
-    return ntdll_get_thread_data()->syscall_frame;
-}
-
 /* returns TRUE if the async is complete; FALSE if it should be restarted */
 typedef BOOL async_callback_t( void *user, ULONG_PTR *info, unsigned int *status );
 
@@ -456,24 +451,32 @@ static inline void *get_kernel_stack( struct thread_data *data )
     return data->signal_stack + signal_stack_size;
 }
 
+static inline struct ntdll_thread_data *get_teb_data( struct thread_data *data )
+{
+    return (struct ntdll_thread_data *)&data->teb->GdiTebBatch;
+}
+
+static inline struct syscall_frame *get_syscall_frame( struct thread_data *data )
+{
+    return get_teb_data(data)->syscall_frame;
+}
+
 static inline void alloc_syscall_frame( SIZE_T frame_size )
 {
     struct thread_data *data = get_thread_data();
     void *frame = (char *)get_kernel_stack(data) + kernel_stack_size - frame_size;
-    ntdll_get_thread_data()->syscall_frame = frame;
+    get_teb_data(data)->syscall_frame = frame;
 }
 
-static inline BOOL is_inside_signal_stack( void *ptr )
+static inline BOOL is_inside_signal_stack( struct thread_data *data, void *ptr )
 {
-    struct thread_data *data = get_thread_data();
     return ((char *)ptr >= data->signal_stack && (char *)ptr < data->signal_stack + signal_stack_size);
 }
 
-static inline BOOL is_inside_syscall( ULONG_PTR sp )
+static inline BOOL is_inside_syscall( struct thread_data *data, ULONG_PTR sp )
 {
-    struct thread_data *data = get_thread_data();
     return ((char *)sp >= (char *)get_kernel_stack( data ) &&
-            (char *)sp <= (char *)get_syscall_frame());
+            (char *)sp <= (char *)get_syscall_frame( data ));
 }
 
 static inline BOOL is_ec_code( ULONG_PTR ptr )
