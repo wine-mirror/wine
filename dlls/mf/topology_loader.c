@@ -992,6 +992,55 @@ static void topology_loader_resolve_complete(IMFTopology *topology)
     }
 }
 
+static HRESULT clone_topology(IMFTopology *input_topology, IMFCollection *sources,
+        IMFTopology **output_topology)
+{
+    BOOL has_source = FALSE;
+    IMFTopologyNode *node;
+    IMFStreamSink *sink;
+    HRESULT hr = S_OK;
+    IUnknown *object;
+    TOPOID topoid;
+
+    IMFTopology_GetTopologyID(input_topology, &topoid);
+    if (FAILED(hr = create_topology(topoid, output_topology)))
+        return hr;
+    hr = IMFTopology_CopyAllItems(input_topology, (IMFAttributes *)*output_topology);
+
+    for (UINT i = 0; SUCCEEDED(hr) && SUCCEEDED(IMFTopology_GetNode(input_topology, i, &node)); i++)
+    {
+        switch (topology_node_get_type(node))
+        {
+            case MF_TOPOLOGY_OUTPUT_NODE:
+                if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
+                    break;
+                if (FAILED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&sink)))
+                    hr = MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
+                else
+                    IMFStreamSink_Release(sink);
+                IUnknown_Release(object);
+                break;
+            case MF_TOPOLOGY_SOURCESTREAM_NODE:
+                if (SUCCEEDED(hr = IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL)))
+                    hr = IMFCollection_AddElement(sources, (IUnknown *)node);
+                has_source = TRUE;
+                break;
+            default:
+                break;
+        }
+
+        IMFTopologyNode_Release(node);
+    }
+
+    if (SUCCEEDED(hr) && !has_source)
+        hr = MF_E_TOPO_UNSUPPORTED;
+    if (SUCCEEDED(hr))
+        return hr;
+
+    IMFTopology_Release(*output_topology);
+    return hr;
+}
+
 static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
         IMFTopology **ret_topology, IMFTopology *current_topology)
 {
@@ -999,55 +1048,20 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     struct topology_branch *branch, *next;
     IMFTopology *output_topology;
     IMFTopologyNode *node;
+    IMFCollection *nodes;
     unsigned short i = 0;
-    IMFStreamSink *sink;
-    IUnknown *object;
-    TOPOID topoid;
     HRESULT hr = E_FAIL;
 
-    FIXME("iface %p, input_topology %p, ret_topology %p, current_topology %p stub!\n",
-          iface, input_topology, ret_topology, current_topology);
+    TRACE("iface %p, input_topology %p, ret_topology %p, current_topology %p.\n",
+            iface, input_topology, ret_topology, current_topology);
 
     if (current_topology)
         FIXME("Current topology instance is ignored.\n");
 
-    /* Basic sanity checks for input topology:
-
-       - source nodes must have stream descriptor set;
-       - sink nodes must be resolved to stream sink objects;
-    */
-    while (SUCCEEDED(IMFTopology_GetNode(input_topology, i++, &node)))
-    {
-        switch (topology_node_get_type(node))
-        {
-            case MF_TOPOLOGY_OUTPUT_NODE:
-                if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &object)))
-                {
-                    /* Sinks must be bound beforehand. */
-                    if (FAILED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&sink)))
-                        hr = MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
-                    else if (sink)
-                        IMFStreamSink_Release(sink);
-                    IUnknown_Release(object);
-                }
-                break;
-            case MF_TOPOLOGY_SOURCESTREAM_NODE:
-                hr = IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL);
-                break;
-            default:
-                ;
-        }
-
-        IMFTopologyNode_Release(node);
-        if (FAILED(hr))
-            return hr;
-    }
-
-    IMFTopology_GetTopologyID(input_topology, &topoid);
-    if (FAILED(hr = create_topology(topoid, &output_topology)))
+    if (FAILED(hr = MFCreateCollection(&nodes)))
         return hr;
-
-    IMFTopology_CopyAllItems(input_topology, (IMFAttributes *)output_topology);
+    if (FAILED(hr = clone_topology(input_topology, nodes, &output_topology)))
+        goto done;
 
     for (i = 0; SUCCEEDED(IMFTopology_GetNode(input_topology, i, &node)); i++)
     {
@@ -1077,6 +1091,8 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         *ret_topology = output_topology;
     }
 
+done:
+    IMFCollection_Release(nodes);
     return hr;
 }
 
