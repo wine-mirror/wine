@@ -385,6 +385,7 @@ DWORD HTTP_Connect(appinfo_t*,LPCWSTR,
         DWORD dwInternalFlags, HINTERNET*);
 
 server_addr_t *GetAddress(const WCHAR*,INTERNET_PORT);
+int create_connect_socket(server_addr_t*,int,DWORD,object_header_t*,DWORD_PTR);
 
 DWORD get_cookie_header(const WCHAR*,const WCHAR*,WCHAR**);
 DWORD set_cookie(substr_t,substr_t,substr_t,substr_t,DWORD);
@@ -399,7 +400,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength);
 WCHAR *INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto);
 
-DWORD create_netconn(server_t*,DWORD,BOOL,DWORD,netconn_t**);
+DWORD create_netconn(server_t*,object_header_t*,DWORD,BOOL,DWORD,netconn_t**);
 void free_netconn(netconn_t*);
 void NETCON_unload(void);
 DWORD NETCON_secure_connect(netconn_t*,server_t*);

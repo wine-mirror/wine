@@ -4189,11 +4189,10 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
       if(!addr)
           goto End;
       init_winsock();
-      fd = socket(addr->addr.ss_family, SOCK_STREAM, 0);
+      fd = create_connect_socket(addr, AF_UNSPEC, INFINITE, NULL, 0);
       if (fd != -1)
       {
-          if (connect(fd, (struct sockaddr *)&addr->addr, addr->addr_len) == 0)
-              rc = TRUE;
+          rc = TRUE;
           closesocket(fd);
       }
       free(addr);

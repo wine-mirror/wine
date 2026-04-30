@@ -4960,12 +4960,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
           request->proxy ? debugstr_w(request->proxy->name) : "(null)");
     server = request->proxy ? request->proxy : request->server;
     assert(server->addr);
-    INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
-                          INTERNET_STATUS_CONNECTING_TO_SERVER,
-                          server->addr->addr_str,
-                          strlen(server->addr->addr_str)+1);
-
-    res = create_netconn(server, request->security_flags,
+    res = create_netconn(server, &request->hdr, request->security_flags,
                          (request->hdr.ErrorMask & INTERNET_ERROR_MASK_COMBINED_SEC_CERT) != 0,
                          request->hdr.connect_timeout, &netconn);
     if(res != ERROR_SUCCESS) {
@@ -4974,11 +4969,6 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
     }
 
     request->netconn = netconn;
-
-    INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
-            INTERNET_STATUS_CONNECTED_TO_SERVER,
-            server->addr->addr_str, strlen(server->addr->addr_str)+1);
-
     *reusing = FALSE;
     TRACE("Created connection to %s: %p\n", debugstr_w(request->server->name), netconn);
     return ERROR_SUCCESS;

@@ -286,58 +286,26 @@ static void set_socket_blocking(netconn_t *conn, BOOL is_blocking)
     conn->is_blocking = is_blocking;
 }
 
-static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
+static DWORD create_netconn_socket(server_t *server, object_header_t *hdr, DWORD_PTR callback_context,
+                                   netconn_t *netconn, DWORD timeout)
 {
-    int result;
     ULONG flag;
-    DWORD res;
 
     init_winsock();
 
     assert(server->addr);
-    result = netconn->socket = socket(server->addr->addr.ss_family, SOCK_STREAM, 0);
-    if(result != -1) {
-        set_socket_blocking(netconn, FALSE);
-        result = connect(netconn->socket, (struct sockaddr*)&server->addr->addr, server->addr->addr_len);
-        if(result == -1)
-        {
-            res = WSAGetLastError();
-            if (res == WSAEINPROGRESS || res == WSAEWOULDBLOCK) {
-                FD_SET set;
-                int res;
-                socklen_t len = sizeof(res);
-                TIMEVAL timeout_timeval = {0, timeout*1000};
-
-                FD_ZERO(&set);
-                FD_SET(netconn->socket, &set);
-                res = select(netconn->socket+1, NULL, &set, NULL, &timeout_timeval);
-                if(!res || res == SOCKET_ERROR) {
-                    closesocket(netconn->socket);
-                    netconn->socket = -1;
-                    return ERROR_INTERNET_CANNOT_CONNECT;
-                }
-                if (!getsockopt(netconn->socket, SOL_SOCKET, SO_ERROR, (void *)&res, &len) && !res)
-                    result = 0;
-            }
-        }
-        if(result == -1)
-        {
-            closesocket(netconn->socket);
-            netconn->socket = -1;
-        }
-    }
-    if(result == -1)
+    if ((netconn->socket = create_connect_socket(server->addr, AF_UNSPEC, timeout, hdr, callback_context)) == -1)
         return ERROR_INTERNET_CANNOT_CONNECT;
 
     flag = 1;
-    result = setsockopt(netconn->socket, IPPROTO_TCP, TCP_NODELAY, (void*)&flag, sizeof(flag));
-    if(result < 0)
+    if(setsockopt(netconn->socket, IPPROTO_TCP, TCP_NODELAY, (void*)&flag, sizeof(flag)) < 0)
         WARN("setsockopt(TCP_NODELAY) failed\n");
 
     return ERROR_SUCCESS;
 }
 
-DWORD create_netconn(server_t *server, DWORD security_flags, BOOL mask_errors, DWORD timeout, netconn_t **ret)
+DWORD create_netconn(server_t *server, object_header_t *hdr, DWORD security_flags,
+                     BOOL mask_errors, DWORD timeout, netconn_t **ret)
 {
     netconn_t *netconn;
     int result;
@@ -352,7 +320,7 @@ DWORD create_netconn(server_t *server, DWORD security_flags, BOOL mask_errors, D
     list_init(&netconn->pool_entry);
     SecInvalidateHandle(&netconn->ssl_ctx);
 
-    result = create_netconn_socket(server, netconn, timeout);
+    result = create_netconn_socket(server, hdr, hdr->dwContext, netconn, timeout);
     if (result != ERROR_SUCCESS) {
         free(netconn);
         return result;
@@ -618,7 +586,7 @@ DWORD NETCON_secure_connect(netconn_t *connection, server_t *server)
     if (res == ERROR_INTERNET_SECURITY_CHANNEL_ERROR && have_compat_cred_handle)
     {
         closesocket(connection->socket);
-        res = create_netconn_socket(connection->server, connection, 500);
+        res = create_netconn_socket(connection->server, NULL, 0, connection, 500);
         if (res != ERROR_SUCCESS)
             return res;
         res = netcon_secure_connect_setup(connection, TRUE);

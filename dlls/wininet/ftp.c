@@ -2525,40 +2525,19 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         goto lerror;
     }
 
-    if (server_addr->addr.ss_family != AF_INET)
-    {
-        WARN("unsupported address family %d\n", server_addr->addr.ss_family);
-        INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
-        goto lerror;
-    }
-
     INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
                       server_addr->addr_str, strlen(server_addr->addr_str)+1);
 
     init_winsock();
-    nsocket = socket(AF_INET,SOCK_STREAM,0);
-    if (nsocket == -1)
-    {
-	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
-        goto lerror;
-    }
-
-    INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTING_TO_SERVER,
-                      server_addr->addr_str, strlen(server_addr->addr_str)+1);
-
-    if (connect(nsocket, (struct sockaddr *)&server_addr->addr, server_addr->addr_len) < 0)
+    if ((nsocket = create_connect_socket(server_addr, AF_INET, INFINITE, &hIC->hdr, dwContext)) < 0)
     {
 	ERR("Unable to connect (%d)\n", WSAGetLastError());
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
-	closesocket(nsocket);
     }
     else
     {
         TRACE("Connected to server\n");
 	lpwfs->sndSocket = nsocket;
-        INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTED_TO_SERVER,
-                          server_addr->addr_str, strlen(server_addr->addr_str)+1);
-
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
 

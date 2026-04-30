@@ -92,6 +92,58 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
     return server_addr;
 }
 
+int create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr, DWORD_PTR callback_context)
+{
+    TIMEVAL timeout_timeval = {0, timeout * 1000};
+    ULONG blocking;
+    socklen_t len;
+    FD_SET set;
+    DWORD err;
+    int res;
+    int s;
+
+    if (hdr)
+        INTERNET_SendCallback(hdr, callback_context, INTERNET_STATUS_CONNECTING_TO_SERVER,
+                              addr->addr_str, strlen(addr->addr_str) + 1);
+
+    if (af != AF_UNSPEC && addr->addr.ss_family != af)
+        return -1;
+
+    if ((s = socket(addr->addr.ss_family, SOCK_STREAM, 0)) == -1)
+        return -1;
+
+    blocking = 0;
+    ioctlsocket(s, FIONBIO, &blocking);
+
+    if (!connect(s, (struct sockaddr *)&addr->addr, addr->addr_len))
+        goto done;
+
+    err = WSAGetLastError();
+    if (err != WSAEINPROGRESS && err != WSAEWOULDBLOCK)
+    {
+        closesocket(s);
+        return -1;
+    }
+
+    FD_ZERO(&set);
+    FD_SET(s, &set);
+    res = select(s + 1, NULL, &set, NULL, timeout == INFINITE ? NULL : &timeout_timeval);
+    len = sizeof(res);
+    if(!res || res == SOCKET_ERROR || getsockopt(s, SOL_SOCKET, SO_ERROR, (void *)&res, &len) || res)
+    {
+        closesocket(s);
+        return -1;
+    }
+
+done:
+    blocking = 1;
+    ioctlsocket(s, FIONBIO, &blocking);
+    if (hdr)
+        INTERNET_SendCallback(hdr, callback_context, INTERNET_STATUS_CONNECTED_TO_SERVER,
+                              addr->addr_str, strlen(addr->addr_str) + 1);
+    return s;
+}
+
 /*
  * Helper function for sending async Callbacks
  */
