@@ -743,14 +743,12 @@ static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable
 {
     if (pname == GL_READ_BUFFER && !ctx->read_fbo && read->read_fbo)
     {
-        if (ctx->pixel_mode.read_buffer) *data = ctx->pixel_mode.read_buffer;
-        else *data = read->doublebuffer ? GL_BACK : GL_FRONT;
+        *data = ctx->pixel_mode.read_buffer;
         return TRUE;
     }
     if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo && draw->draw_fbo)
     {
-        if (ctx->color_buffer.draw_buffers[0]) *data = ctx->color_buffer.draw_buffers[0];
-        else *data = draw->doublebuffer ? GL_BACK : GL_FRONT;
+        *data = ctx->color_buffer.draw_buffers[0];
         return TRUE;
     }
     if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo && draw->draw_fbo)
@@ -1138,6 +1136,9 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     client->extension_count = count;
 
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", all_extensions[client->extension_array[i]].name );
+
+    ctx->color_buffer.draw_buffers[0] = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
+    ctx->pixel_mode.read_buffer = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
 }
 
 static void free_context( struct context *ctx )
