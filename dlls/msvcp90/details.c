@@ -568,7 +568,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
         InterlockedCompareExchangeSizeT(&this->first_block, block_idx + 1, 0);
     i = _vector_base_v4__Segment_index_of(capacity);
     if(this->storage == this->segment) {
-        for(; i <= block_idx && i < STORAGE_SIZE; i++)
+        for(i = 0; i <= block_idx && i < STORAGE_SIZE; i++)
             concurrent_vector_alloc_segment(this, i, element_size);
         if(block_idx >= STORAGE_SIZE) {
             new_segment = malloc(SEGMENT_SIZE * sizeof(void*));
