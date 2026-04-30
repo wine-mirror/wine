@@ -1445,30 +1445,24 @@ static void test_media_types(void)
         req_mt.cbFormat = subtypes[i].format;
         video_info.bmiHeader.biHeight = 240;
         hr = IPin_QueryAccept(sink, &req_mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_Disconnect(sink);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         /* Test negative height */
         video_info.bmiHeader.biHeight = -240;
 
         hr = IPin_QueryAccept(sink, &req_mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_Disconnect(sink);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         winetest_pop_context();
@@ -1509,7 +1503,6 @@ static void test_media_types(void)
     test_source_media_types("RGB565", source, &req_mt, NULL);
 
     hr = IPin_Disconnect(sink);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test RGB8 with a bmiColor */
@@ -1519,13 +1512,11 @@ static void test_media_types(void)
     video_info.bmiHeader.biClrImportant = 1;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_source_media_types("RGB8 (1 color)", source, &req_mt, NULL);
 
     hr = IPin_Disconnect(sink);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test RGB8 with a biClrUsed larger than cbFormat will fit */
@@ -1547,20 +1538,17 @@ static void test_media_types(void)
     test_source_media_types("RGB8 (0 color)", source, &req_mt, NULL);
 
     hr = IPin_Disconnect(sink);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Test RGB32 */
     req_mt.subtype = MEDIASUBTYPE_RGB32;
 
     hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_source_media_types("RGB32", source, &req_mt, &rgb32);
 
     hr = IPin_Disconnect(sink);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* The previously accepted media type is no longer accepted after disconnect */
@@ -2632,10 +2620,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IFilterGraph_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &req_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_connection_test;
 
     hr = IPin_ConnectedTo(sink, &peer);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2704,9 +2689,7 @@ static void test_connect_pin(void)
     hr = IFilterGraph_Disconnect(graph, &testsource->source.pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-skip_connection_test:
-    if (meminput)
-        IMemInputPin_Release(meminput);
+    IMemInputPin_Release(meminput);
 
     IPin_Release(sink);
     IPin_Release(source);
