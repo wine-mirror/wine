@@ -18,6 +18,7 @@
  */
 
 #include "cfgmgr32_private.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -41,8 +42,11 @@ static const char *debugstr_CM_NOTIFY_FILTER( const CM_NOTIFY_FILTER *filter )
     }
 }
 
+#define CM_NOTIFY_CONTEXT_MAGIC 0xbeef4dad
+
 struct cm_notify_context
 {
+    DWORD magic;
     HDEVNOTIFY notify;
     void *user_data;
     PCM_NOTIFY_CALLBACK callback;
@@ -155,6 +159,7 @@ static CONFIGRET create_notify_context( const CM_NOTIFY_FILTER *filter, HCMNOTIF
 
     if (!(ctx = calloc( 1, sizeof(*ctx) ))) return CR_OUT_OF_MEMORY;
 
+    ctx->magic = CM_NOTIFY_CONTEXT_MAGIC;
     ctx->user_data = user_data;
     ctx->callback = callback;
     if (!(ctx->notify = I_ScRegisterDeviceNotification( ctx, &notify_filter.header, devnotify_callback )))
@@ -191,13 +196,27 @@ CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *conte
 CONFIGRET WINAPI CM_Unregister_Notification( HCMNOTIFICATION notify )
 {
     struct cm_notify_context *ctx = notify;
+    CONFIGRET ret = CR_SUCCESS;
 
     TRACE( "(%p)\n", notify );
 
     if (!notify) return CR_INVALID_DATA;
 
-    I_ScUnregisterDeviceNotification( ctx->notify );
-    free( ctx );
+    __TRY
+    {
+        if (ctx->magic == CM_NOTIFY_CONTEXT_MAGIC)
+        {
+            I_ScUnregisterDeviceNotification( ctx->notify );
+            free( ctx );
+        }
+        else
+            ret = CR_INVALID_DATA;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        ret = CR_FAILURE;
+    }
+    __ENDTRY
 
-    return CR_SUCCESS;
+    return ret;
 }

@@ -431,6 +431,16 @@ static void test_CM_Register_Notification( void )
         }
         winetest_pop_context();
     }
+
+    /* Some unregister edge cases */
+    ret = pCM_Unregister_Notification( NULL );
+    ok( ret == CR_INVALID_DATA, "Expected CR_INVALID_DATA, got %#lx\n", ret );
+
+    ret = pCM_Unregister_Notification( (HCMNOTIFICATION)"valid pointer but not a handle" );
+    ok( ret == CR_INVALID_DATA, "Expected CR_INVALID_DATA, got %#lx\n", ret );
+
+    ret = pCM_Unregister_Notification( (HCMNOTIFICATION)0xdeadbeef );
+    ok( ret == CR_FAILURE, "Expected CR_FAILURE, got %#lx\n", ret );
 }
 
 static void check_device_path_casing(const WCHAR *original_path)
