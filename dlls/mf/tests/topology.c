@@ -2512,7 +2512,6 @@ static void test_topology_loader(void)
         unsigned int expected_output_index;
         unsigned int optional_mft_count;
         BOOL expect_optional_mft_rejected[2];
-        BOOL expect_optional_mft_accepted_todo;
         unsigned int flags;
         GUID decoder_class;
         GUID converter_class;
@@ -2980,7 +2979,7 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
             .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280, &video_yuy2_1280},
             .optional_mft_input_types = {&video_yuy2_1280},
-            .optional_mft_count = 1, .expect_optional_mft_accepted_todo = TRUE,
+            .optional_mft_count = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
             .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT | LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM | LOADER_EXPECT_MFT_INPUT_ENUMERATED | LOADER_EXPECT_MFT_OUTPUT_ENUMERATED_TODO,
         },
@@ -3431,7 +3430,6 @@ static void test_topology_loader(void)
             for (j = 0; j < test->optional_mft_count; ++j)
             {
                 hr = IMFTopology_GetNodeByID(full_topology, optional_mft_node_id[j], &mft_node);
-                todo_wine_if(test->expect_optional_mft_accepted_todo)
                 ok(hr == (test->expect_optional_mft_rejected[j] ? MF_E_NOT_FOUND : S_OK), "Unexpected hr %#lx.\n", hr);
                 expect_optional_rejected |= test->expect_optional_mft_rejected[j];
 
@@ -3467,7 +3465,6 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
-            todo_wine_if(test->expect_optional_mft_accepted_todo)
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);
@@ -3670,7 +3667,6 @@ todo_wine {
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             hr = IMFTopology_GetNodeCount(topology2, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
-            todo_wine_if(test->expect_optional_mft_accepted_todo)
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             ref = IMFTopology_Release(topology2);
