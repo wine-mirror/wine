@@ -741,27 +741,27 @@ static void set_gl_error( TEB *teb, GLenum error )
 static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
                                      GLenum pname, GLint *data )
 {
-    if (pname == GL_READ_BUFFER && !ctx->read_fbo && read->read_fbo)
+    if (pname == GL_READ_BUFFER && !ctx->read_fbo)
     {
         *data = ctx->pixel_mode.read_buffer;
         return TRUE;
     }
-    if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo && draw->draw_fbo)
+    if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo)
     {
         *data = ctx->color_buffer.draw_buffers[0];
         return TRUE;
     }
-    if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo && draw->draw_fbo)
+    if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo)
     {
         *data = ctx->color_buffer.draw_buffers[pname - GL_DRAW_BUFFER0];
         return TRUE;
     }
-    if (pname == GL_DOUBLEBUFFER && draw->draw_fbo)
+    if (pname == GL_DOUBLEBUFFER && !ctx->draw_fbo)
     {
         *data = draw->doublebuffer;
         return TRUE;
     }
-    if (pname == GL_STEREO && draw->draw_fbo)
+    if (pname == GL_STEREO && !ctx->draw_fbo)
     {
         *data = draw->stereo;
         return TRUE;
@@ -785,11 +785,9 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
     switch (pname)
     {
     case GL_DRAW_FRAMEBUFFER_BINDING:
-        if (!draw->draw_fbo) break;
         *data = ctx->draw_fbo;
         return TRUE;
     case GL_READ_FRAMEBUFFER_BINDING:
-        if (!read->read_fbo) break;
         *data = ctx->read_fbo;
         return TRUE;
     case GL_DEVICE_NODE_MASK_EXT:
@@ -1738,8 +1736,11 @@ void wrap_glGetFramebufferParameteriv( TEB *teb, GLuint fbo, GLenum pname, GLint
     struct opengl_drawable *draw, *read;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, &read )) && !fbo && (fbo = draw->draw_fbo))
+    if ((ctx = get_current_context( teb, &draw, &read )) && !fbo)
+    {
         if (get_default_fbo_integer( ctx, draw, read, pname, params )) return;
+        fbo = draw->draw_fbo;
+    }
 
     p_glGetFramebufferParameteriv( fbo, pname, params );
 }

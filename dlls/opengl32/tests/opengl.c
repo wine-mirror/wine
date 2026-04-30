@@ -3613,7 +3613,7 @@ static void test_framebuffer(void)
     ok_ret( GL_NO_ERROR, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_NONE );
@@ -3623,7 +3623,7 @@ static void test_framebuffer(void)
 
     ext.glGetFramebufferParameterivEXT( 0, GL_DRAW_BUFFER, &value );
     if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
-    else todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    else ok_x4( value, ==, GL_FRONT_AND_BACK );
     ext.glGetFramebufferParameterivEXT( 0, GL_READ_BUFFER, &value );
     if (broken( amd )) ok_ret( GL_INVALID_ENUM, glGetError() );
     else ok_x4( value, ==, GL_BACK );
@@ -3679,10 +3679,10 @@ static void test_framebuffer(void)
     ok_x4( value, ==, GL_FALSE );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT );
+    ok_x4( value, ==, GL_FRONT );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT );
+    ok_x4( value, ==, GL_FRONT );
 
     glDrawBuffer( GL_FRONT_AND_BACK );
     ok_ret( GL_NO_ERROR, glGetError() );
@@ -3690,13 +3690,13 @@ static void test_framebuffer(void)
     ok_ret( GL_INVALID_OPERATION, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_NONE );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT );
+    ok_x4( value, ==, GL_FRONT );
     buffers[0] = GL_FRONT_LEFT;
     buffers[1] = GL_FRONT_LEFT;
     ext.glDrawBuffers( 2, buffers );
@@ -3711,19 +3711,19 @@ static void test_framebuffer(void)
     todo_wine ok_ret( GL_INVALID_ENUM, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_NONE );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT );
+    ok_x4( value, ==, GL_FRONT );
 
     glReadBuffer( GL_NONE );
     ok_ret( GL_NO_ERROR, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_NONE );
@@ -3779,7 +3779,7 @@ static void test_framebuffer(void)
     ok_x4( status, ==, GL_FRAMEBUFFER_COMPLETE );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
@@ -3808,7 +3808,7 @@ static void test_framebuffer(void)
 
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
@@ -3819,10 +3819,10 @@ static void test_framebuffer(void)
     todo_wine ok_ret( GL_NO_ERROR, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_LEFT );
+    ok_x4( value, ==, GL_FRONT_LEFT );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_BACK_LEFT );
+    ok_x4( value, ==, GL_BACK_LEFT );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
@@ -3831,7 +3831,7 @@ static void test_framebuffer(void)
     ok_ret( GL_NO_ERROR, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_AND_BACK );
+    ok_x4( value, ==, GL_FRONT_AND_BACK );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_NONE );
@@ -3845,10 +3845,10 @@ static void test_framebuffer(void)
     todo_wine ok_ret( GL_NO_ERROR, glGetError() );
     glGetIntegerv( GL_DRAW_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_FRONT_LEFT );
+    ok_x4( value, ==, GL_FRONT_LEFT );
     glGetIntegerv( GL_DRAW_BUFFER1, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
-    todo_wine ok_x4( value, ==, GL_BACK_LEFT );
+    ok_x4( value, ==, GL_BACK_LEFT );
     glGetIntegerv( GL_READ_BUFFER, &value );
     ok_ret( GL_NO_ERROR, glGetError() );
     ok_x4( value, ==, GL_COLOR_ATTACHMENT1 );
