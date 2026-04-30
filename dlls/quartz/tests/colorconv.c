@@ -959,43 +959,35 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
-        todo_wine
-        check_interface(pin, &IID_IMemInputPin, TRUE);
-        check_interface(pin, &IID_IPin, TRUE);
-        todo_wine
-        check_interface(pin, &IID_IQualityControl, TRUE);
-        check_interface(pin, &IID_IUnknown, TRUE);
+    todo_wine
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine
+    check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
 
-        check_interface(pin, &IID_IMediaPosition, FALSE);
-        check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
 
-        IPin_Release(pin);
-    }
+    IPin_Release(pin);
 
     hr = IBaseFilter_FindPin(filter, L"Out", &pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
-        check_interface(pin, &IID_IPin, TRUE);
-        todo_wine
-        check_interface(pin, &IID_IMediaPosition, TRUE);
-        todo_wine
-        check_interface(pin, &IID_IMediaSeeking, TRUE);
-        todo_wine
-        check_interface(pin, &IID_IQualityControl, TRUE);
-        check_interface(pin, &IID_IUnknown, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine
+    check_interface(pin, &IID_IMediaPosition, TRUE);
+    todo_wine
+    check_interface(pin, &IID_IMediaSeeking, TRUE);
+    todo_wine
+    check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
 
-        check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IAsyncReader, FALSE);
 
-        IPin_Release(pin);
-    }
+    IPin_Release(pin);
 
     refcount = IBaseFilter_Release(filter);
     ok(refcount == 0, "Got refcount %lu.\n", refcount);
@@ -1121,10 +1113,7 @@ static void test_enum_pins(void)
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     refcount = get_refcount(filter);
     ok(refcount == 3, "Got refcount %ld.\n", refcount);
@@ -1212,8 +1201,6 @@ static void test_enum_pins(void)
     IPin_Release(pins[0]);
 
     IEnumPins_Release(enum2);
-
-skip_test:
     IEnumPins_Release(enum1);
     refcount = IBaseFilter_Release(filter);
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
@@ -1234,10 +1221,7 @@ static void test_find_pin(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1253,7 +1237,6 @@ static void test_find_pin(void)
     IPin_Release(pin2);
     IPin_Release(pin);
 
-skip_test:
     IEnumPins_Release(enum_pins);
     refcount = IBaseFilter_Release(filter);
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
@@ -1274,10 +1257,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     refcount = get_refcount(filter);
     ok(refcount == 2, "Got refcount %ld.\n", refcount);
@@ -1337,7 +1317,6 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-skip_test:
     refcount = IBaseFilter_Release(filter);
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
 }
@@ -1445,10 +1424,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"Out", &source);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     hr = IBaseFilter_FindPin(filter, L"In", &sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1471,6 +1447,7 @@ static void test_media_types(void)
         req_mt.cbFormat = subtypes[i].format;
         video_info.bmiHeader.biHeight = 240;
         hr = IPin_QueryAccept(sink, &req_mt);
+        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
@@ -1485,6 +1462,7 @@ static void test_media_types(void)
         video_info.bmiHeader.biHeight = -240;
 
         hr = IPin_QueryAccept(sink, &req_mt);
+        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
@@ -1599,7 +1577,6 @@ static void test_media_types(void)
     refcount = IBaseFilter_Release(&peer->filter.IBaseFilter_iface);
     ok(refcount == 0, "Got refcount %lu.\n", refcount);
 
-skip_test:
     hr = IFilterGraph_RemoveFilter(graph, filter);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -1623,10 +1600,7 @@ static void test_enum_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1688,7 +1662,6 @@ static void test_enum_media_types(void)
     IEnumMediaTypes_Release(enum2);
     IPin_Release(pin);
 
-skip_test:
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
@@ -2604,10 +2577,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"In", &sink);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_test;
 
     hr = IBaseFilter_FindPin(filter, L"Out", &source);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2758,7 +2728,7 @@ skip_connection_test:
 
     refcount = IMemAllocator_Release(&sink_allocator->IMemAllocator_iface);
     ok(refcount == 0, "Got refcount %lu.\n", refcount);
-skip_test:
+
     IMediaControl_Release(control);
 
     hr = IFilterGraph_RemoveFilter(graph, filter);
