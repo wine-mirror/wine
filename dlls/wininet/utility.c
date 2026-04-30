@@ -41,10 +41,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
 {
+    server_addr_t *server_addr, *p;
     struct sockaddr_storage *addr;
-    server_addr_t *server_addr;
-    ADDRINFOW *res, hints;
-    unsigned int len;
+    ADDRINFOW *res, *ai, hints;
+    unsigned int len, count;
     int ret;
 
     TRACE("%s\n", debugstr_w(name));
@@ -54,7 +54,7 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
      * their IPv6 addresses even though they have IPv6 addresses in the DNS.
      */
     hints.ai_family = AF_INET;
-
+    hints.ai_socktype = SOCK_STREAM;
     ret = GetAddrInfoW(name, NULL, &hints, &res);
     if (ret != 0)
     {
@@ -67,32 +67,44 @@ server_addr_t *GetAddress(const WCHAR *name, INTERNET_PORT port)
         TRACE("failed to get address of %s\n", debugstr_w(name));
         return NULL;
     }
-    server_addr = malloc(sizeof(*server_addr));
-    addr = &server_addr->addr;
-    server_addr->addr_len = res->ai_addrlen;
-    memcpy( addr, res->ai_addr, res->ai_addrlen );
-    /* Copy port */
-    switch (res->ai_family)
+    count = 0;
+    for (ai = res; ai; ai = ai->ai_next)
+        ++count;
+    p = server_addr = calloc(count, sizeof(*server_addr));
+    ai = res;
+    while (ai)
     {
-    case AF_INET:
-        ((struct sockaddr_in *)addr)->sin_port = htons(port);
-        inet_ntop(res->ai_family, &((struct sockaddr_in *)addr)->sin_addr, server_addr->addr_str, INET6_ADDRSTRLEN);
-        break;
-    case AF_INET6:
-        ((struct sockaddr_in6 *)addr)->sin6_port = htons(port);
-        server_addr->addr_str[0] = '[';
-        inet_ntop(res->ai_family, &((struct sockaddr_in6 *)addr)->sin6_addr, server_addr->addr_str + 1, INET6_ADDRSTRLEN - 2);
-        len = strlen(server_addr->addr_str);
-        server_addr->addr_str[len] = ']';
-        server_addr->addr_str[len + 1] = 0;
-        break;
+        addr = &p->addr;
+        p->addr_len = ai->ai_addrlen;
+        memcpy( addr, ai->ai_addr, ai->ai_addrlen );
+        /* Copy port */
+        switch (ai->ai_family)
+        {
+        case AF_INET:
+            ((struct sockaddr_in *)addr)->sin_port = htons(port);
+            inet_ntop(ai->ai_family, &((struct sockaddr_in *)addr)->sin_addr, p->addr_str, INET6_ADDRSTRLEN);
+            break;
+        case AF_INET6:
+            ((struct sockaddr_in6 *)addr)->sin6_port = htons(port);
+            p->addr_str[0] = '[';
+            inet_ntop(ai->ai_family, &((struct sockaddr_in6 *)addr)->sin6_addr, p->addr_str + 1, INET6_ADDRSTRLEN - 2);
+            len = strlen(p->addr_str);
+            p->addr_str[len] = ']';
+            p->addr_str[len + 1] = 0;
+            break;
+        }
+        if (!(ai = ai->ai_next))
+            break;
+        p->next = p + 1;
+        p = p->next;
     }
 
     FreeAddrInfoW(res);
     return server_addr;
 }
 
-int create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr, DWORD_PTR callback_context)
+static int try_create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr,
+                                     DWORD_PTR callback_context)
 {
     TIMEVAL timeout_timeval = {0, timeout * 1000};
     ULONG blocking;
@@ -142,6 +154,43 @@ done:
         INTERNET_SendCallback(hdr, callback_context, INTERNET_STATUS_CONNECTED_TO_SERVER,
                               addr->addr_str, strlen(addr->addr_str) + 1);
     return s;
+}
+
+int create_connect_socket(server_addr_t *addr, int af, DWORD timeout, object_header_t *hdr, DWORD_PTR callback_context)
+{
+    LARGE_INTEGER qpf, qpc, end;
+    server_addr_t *a, tmp;
+    int s;
+
+    if (timeout != INFINITE)
+    {
+        QueryPerformanceFrequency(&qpf);
+        QueryPerformanceCounter(&end);
+        end.QuadPart += qpf.QuadPart / 1000 * timeout;
+    }
+    a = addr;
+    while (a)
+    {
+        if ((s = try_create_connect_socket(a, af, timeout, hdr, callback_context)) != -1)
+        {
+            /* try this address first next time. */
+            tmp = *addr;
+            *addr = *a;
+            *a = tmp;
+            a->next = addr->next;
+            addr->next = tmp.next;
+            return s;
+        }
+        if (timeout != INFINITE)
+        {
+            QueryPerformanceCounter(&qpc);
+            if (qpc.QuadPart >= end.QuadPart)
+                return -1;
+            timeout = (end.QuadPart - qpc.QuadPart) * 1000 / qpf.QuadPart;
+        }
+        a = a->next;
+    }
+    return -1;
 }
 
 /*

@@ -36,6 +36,7 @@ typedef struct server_addr
     struct sockaddr_storage addr;
     int addr_len;
     char addr_str[INET6_ADDRSTRLEN];
+    struct server_addr *next;
 } server_addr_t;
 
 typedef struct {
