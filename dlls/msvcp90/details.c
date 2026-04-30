@@ -541,7 +541,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
     last_block = (this->segment == this->storage ? STORAGE_SIZE : SEGMENT_SIZE);
     for(i = 0; i < last_block; i++)
     {
-        if(!this->segment[i])
+        if(!this->segment[i] || this->segment[i] == SEGMENT_ALLOC_MARKER)
             return !i ? 0 : 1 << i;
     }
     return 1 << i;
