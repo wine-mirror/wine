@@ -1,13 +1,13 @@
-The Wine development release 11.7 is now available.
+The Wine development release 11.8 is now available.
 
 What's new in this release:
-  - Beginnings of MSXML reimplementation without libxml2.
-  - VBScript compatibility fixes and optimizations.
-  - SRGB filter support in D3DX.
-  - 7.1 speaker configuration in DirectSound.
+  - Mono engine updated to version 11.1.0.
+  - More work on MSXML reimplementation without libxml2.
+  - Improved keyboard layout support using XKBRegistry.
+  - More VBScript compatibility improvements.
   - Various bug fixes.
 
-The source is available at <https://dl.winehq.org/wine/source/11.x/wine-11.7.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/11.x/wine-11.8.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -19,438 +19,349 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.7/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.8/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 11.7 (total 35):
+### Bugs fixed in 11.8 (total 22):
 
- - #26226  msxml4 emits too much xmlns attributes
- - #33118  Adding bin.base64 attribute causes duplicate datatype attribute
- - #38350  FTDI Vinculum II IDE V2.0.2-SP2 gets OLE Error 80020006 and exits, native msxml3 is workaround
- - #49029  ABBYY FineReader 12 Professional crashes in trial mode
- - #52607  build on Cygwin fails, error: undefined references to _alldiv, _allmul, _allrem, _aulldiv, _aullrem (etc.) in dlls/ntdll
- - #54236  Default to Windows 10 when creating a prefix
- - #54291  vbscript stuck in endless for loop when UBound on Empty and On Error Resume Next
- - #54344  simtower (setup.exe) says could not open the file name "h:\wine64....."
- - #55031  experimental wow64 mode: crashes in some 3d graphics code
- - #55093  vbscript: if boolean condition should work without braces
- - #55196  vbscript: Trailing End If
- - #56480  vbscript: underscore line continue issues
- - #56931  vbscript: Const used before declaration fails (explicit)
- - #58026  vbscript: Script running error when Dictionary contains array
- - #58051  vbscript: Dictionary direct Keys/Items access causes parse error
- - #58056  vbscript: Directly indexing a Split returns Empty
- - #58392  Can't display background and characters in MapleStory World.
- - #58398  vbscript: For each function with Split a empty string
- - #58673  Kinco Dtools fails to start: err:msxml:doparse Unsupported encoding: gb2312
- - #58802  Inserting XML document fragment adds the fragment instead of its content.
- - #59415  In Falsus demo cannot be interacted with
- - #59446  Latest VOCALOID6 version (6.11) crashes after VOCALOID:AI track
- - #59512  HID devices report wrong DeviceType causing GetFileType() to return FILE_TYPE_DISK
- - #59516  Songbookpro crashes with RoFailFastWithErrorContext()
- - #59517  IWICFormatConverter does not support BlackWhite as destination pixel format
- - #59528  Fade In Pro: Crashes immediately after splash screen
- - #59534  Cabinet.dll missing Compressor interfaces
- - #59558  HTTP 200 response body empty since Wine 11.5 regression (worked in 11.4)
- - #59572  Stratego (1997) shows a black screen on startup
- - #59578  Act of War: Direct Action crashes while loading the main menu
- - #59613  case 64 is missing in key_asymmetric_verify function
- - #59627  Kakaowork crashes at start.
- - #59632  VC_redist fails to start (regression)
- - #59643  SHCreateStreamOnFileW (IStream::Seek) truncates 64-bit offsets to 32-bit, breaking >4GB file reads
- - #59658  Xara Designer Pro + crashes:  Call from 00006FFFFFFA4E45 to unimplemented function icuuc.dll.udata_setCommonData_70, aborting
+ - #1201   Microsoft Golf 99 (Direct3D game) crashes on startup (IDirect3D::EnumDevices() needs to return the RGB device second)
+ - #32619  Tom Clancy's Rainbow Six: Lockdown can't save a game (directory not created)
+ - #39922  Hoot Sound Hardware Emulator: crashes on startup
+ - #42400  cscript.exe doesn't show errors
+ - #46107  Altium Designer 18.x - 20.x crashes on startup
+ - #46951  MSXML Multi line attribute value - #10 char lost
+ - #49908  vbscript: ExecuteGlobal is not implemented
+ - #50384  Visio 2013 fails to install with builtin msxml6
+ - #53844  vbscript invoke_vbdisp not handling let property correctly for VT_DISPATCH arguments
+ - #53889  vbscript does not support Get_Item call on IDispatch objects
+ - #53962  vbscript does not Eval implemented
+ - #54221  vbscript: missing support for GetRef
+ - #55006  vbscript: single line if else without else body fails compilation
+ - #57511  vbscript: For loop where loop var is not defined throws error without context
+ - #58248  vbscript: Me(Idx) fails to compile
+ - #59636  Petka crashes when starting a new game
+ - #59644  Enigma Virtual Box packed applications fail with file access errors since commit 35916176078
+ - #59645  FormatMessageW fails to format ERROR_NOT_A_REPARSE_POINT (4390) with error 317
+ - #59678  PLSQL Developer: Won't start on Wine 11.7
+ - #59684  ExamDiffPro now Crashes under 11.7
+ - #59689  SEC_WINNT_AUTH_IDENTITY_EX support in AcquireCredentialsHandle
+ - #59694  Assassin's Creed Shadows fails to start since Wine 11.4, after windows.media.speech changes
 
-### Changes since 11.6:
+### Changes since 11.7:
 ```
-Adam Markowski (2):
+Adam Markowski (4):
       po: Update Polish translation.
       po: Update Polish translation.
-
-Akihiro Sagawa (5):
-      quartz/tests: Add IMediaEvent(Ex)::WaitForCompletion tests.
-      quartz: Reset the completion event on paused -> running transition.
-      quartz: Don't leak the completion event handle.
-      quartz/tests: Add more WaitForCompletion tests.
-      quartz: Fix WaitForCompletion behavior when default handling is canceled.
+      po: Update Polish translation.
+      po: Update Polish translation.
 
 Alex Henrie (1):
-      kernelbase: Ignore GENERIC_WRITE in CreateFile on CDs on Windows 9x.
+      imagehlp: Add ReBaseImage64 stub.
 
-Alexandre Julliard (9):
-      configure: Stop using external libxml/libxslt.
-      shell32/tests: Remove todo from test that succeeds now.
-      ntdll: For the native heuristics, assume that dll without version is not from Microsoft.
-      opengl32: Link to pthread library for pthread_once.
-      mf/tests: Fix 64-bit printf formats.
-      shcore: Store the app user model id in the process parameters.
-      configure: Require the Mingw compiler on Cygwin.
-      tools: Remove Cygwin platform and treat it as Mingw.
-      Revert "msi/tests: Add regression tests for table stream padding and mismatched string refs."
+Alexandre Julliard (28):
+      ntdll: Merge signal_init_threading() and signal_init_process().
+      ntdll: Export RtlGetCurrentPeb() on the Unix side.
+      win32u: Use RtlGetCurrentPeb() on the Unix side.
+      winemac.drv: Use RtlGetCurrentPeb() on the Unix side.
+      winewayland.drv: Use RtlGetCurrentPeb() on the Unix side.
+      winex11.drv: Use RtlGetCurrentPeb() on the Unix side.
+      ntdll: Swap the FPU control word between PE and Unix on i386.
+      ntdll: Store the current process id in a global variable.
+      ntdll: Export PsGetCurrentProcessId() and PsGetCurrentThreadId() on the Unix side.
+      win32u: Silence a compiler warning.
+      ntdll: Add a helper to allocate the initial syscall frame.
+      ntdll: Allocate the kernel stack and signal stack together.
+      ntdll: Get the TEB from the Unix thread data.
+      ntdll: Move the exception jmp_buf to the Unix thread data.
+      ntdll: Move the thread start params to the Unix thread data.
+      ntdll: Move the server file descriptors to the Unix thread data.
+      ntdll: Move the allow write flag to the Unix thread data.
+      ntdll: Store the thread id in the Unix thread data.
+      ntdll: Move the TEB list entry to the Unix thread data.
+      ntdll: Use a separate debug_info structure on the kernel side.
+      ntdll: Use a consistent code pattern in all signal handler functions.
+      ntdll: Pass the thread data structure to signal handling helpers.
+      ntdll: Pass the thread data structure to inline helper functions.
+      ntdll: Return the thread data structure from init_handler() on i386.
+      ntdll: Return the thread data structure from init_handler() on x86-64.
+      ntdll: Retrieve the CPU-specific data from the thread data structure on i386.
+      ntdll: Retrieve the CPU-specific data from the thread data structure on x86-64.
+      ntdll: Rename ntdll_thread_data to teb_data.
 
-Andrey Gusev (2):
-      d3d11: Fix a memory leak in d3d_video_decoder_create().
-      d3dcompiler: Fix misplaced parentheses.
+Alistair Leslie-Hughes (1):
+      windows.ui.core.textinput: Add CoreTextServicesManager stubbed interface.
 
-Antoine Leresche (1):
-      kernelbase: Add message string for ERROR_NOT_A_REPARSE_POINT.
+Antoine Leresche (2):
+      kernelbase: Add message string for errors 302-316.
+      kernelbase: Add message string for error 318-326.
 
-Anton Baskanov (5):
-      dsound: Replace multiplications by fir_step and fir_width with bit shifts.
-      dsound: Use a 0.32 fixed point to represent the resampling ratio.
-      dsound: Make rem_num signed.
-      dsound: Calculate opos_num and ipos_num incrementally.
-      dsound: Calculate rem and rem_inv incrementally.
-
-Aurimas Fišeras (3):
+Aurimas Fišeras (1):
       po: Update Lithuanian translation.
-      po: Update Lithuanian translation.
-      po: Update Lithuanian translation.
 
-Bartosz Kosiorek (1):
-      gdiplus/tests: Fix flaky rounding error in test_getblend.
+Bartosz Kosiorek (5):
+      gdiplus: Add support to line alignment for GdipMeasureString.
+      gdiplus: Add support for PixelFormat 16bpp RGB565 and RGB555 to GdipGetNearestColor.
+      gdiplus: Initial implementation of GdipWarpPath.
+      gdiplus/tests: Extend GdipInitializePalette tests with transparent color.
+      gdiplus: Fix returned flags and add transparency to GdipInitializePalette.
 
-Brendan McGrath (21):
-      amstream/tests: Test when top-down image is not accepted.
-      amstream: Reject filter when top-down image is not accepted.
-      amstream: Always return S_OK on disconnect.
-      iyuv_32/tests: Fix a read overrun.
-      winegstreamer: Add winegstreamer_create_color_converter.
-      iyuv_32: Implement IYUV_GetInfo.
-      iyuv_32: Implement IYUV_DecompressQuery.
-      iyuv_32: Implement IYUV_DecompressGetFormat.
-      iyuv_32: Implement IYUV_Open.
-      iyuv_32: Implement IYUV_DecompressBegin.
-      iyuv_32: Implement IYUV_Decompress.
-      amstream/tests: Test QueryAccept when connected.
-      amstream/tests: Test negative heights in QueryAccept.
-      amstream: Reject negative heights in QueryAccept.
-      amstream: Accept additional subtypes in QueryAccept.
-      amstream/tests: Test AcceptQuery behavior after SetFormat.
-      amstream: Only accept format passed in SetFormat.
-      amstream/tests: Test media types when ddraw is passed to AddMediaStream.
-      amstream: Use DisplayMode to determine pixel format.
-      amstream/tests: Test media type is only on the first of each sample.
-      amstream: Only provide MediaType on first retrieval.
+Benoît Legat (1):
+      secur32: Fix handling by SChannel for CNG/NCrypt client certificates for mTLS.
 
-Brendan Shanks (3):
-      kernelbase: In GetProcessInformation(ProcessMachineTypeInfo), use SystemSupportedProcessorArchitectures2.
-      kernelbase: Implement GetMachineTypeAttributes().
-      kernelbase/tests: Add tests for GetMachineTypeAttributes().
+Bernhard Kölbl (2):
+      windows.media.speech: Don't access the all voices vector view directly.
+      windows.media.speech: Fix a trace typo.
 
-Chris Denton (1):
-      bcryptprimitives: Ensure ProcessPrng fills the whole buffer.
+Brendan McGrath (6):
+      amstream/tests: Test enum media type with ddraw.
+      amstream/tests: Test enum media type whilst connected.
+      amstream/tests: Test enum media type on disconnect.
+      amstream: Return current format in media type enum.
+      amstream: Return connected media subtype in enum if connected.
+      mf: Handle no time and/or duration during markin.
 
-Connor McAdams (11):
-      d3dx10/tests: Add tests for decoding DXTn DDS files.
-      d3dx11/tests: Add tests for decoding DXTn DDS files.
-      d3dx9: Properly handle DXT textures with premultiplied alpha.
-      d3dx10/tests: Add a test for invalid image load filter flags.
-      d3dx11/tests: Add a test for invalid image load filter flags.
-      d3dx10: Only use passed in filter flags if image scaling is necessary.
-      d3dx11: Only use passed in filter flags if image scaling is necessary.
-      d3dx9/tests: Add tests for D3DX_FILTER_SRGB flags.
-      d3dx10/tests: Add tests for SRGB formats and filter flags.
-      d3dx11/tests: Add tests for SRGB formats and filter flags.
-      d3dx: Handle SRGB filter flags.
+Connor McAdams (10):
+      dinput: Only pass instance name string to device_instance_is_disabled().
+      dinput: Create a cache of currently connected HID joysticks.
+      dinput: Use joystick cache in hid_joystick_create_device().
+      dinput: Use joystick cache in hid_joystick_enum_device().
+      dinput: Return E_FAIL when opening a joystick device that is currently disconnected.
+      dinput: Create a version 1 UUID for dinput joystick devices.
+      dinput/tests: Add tests for dinput joystick IDs.
+      dinput: Add support for DIPROP_JOYSTICKID.
+      dinput/tests: Add tests for GUID_Joystick.
+      dinput: Add support for GUID_Joystick.
 
-Conor McCarthy (8):
-      mf/topology_loader: Return specific error on indirect connection failure.
-      mf/topology_loader: Load the down connection method in topology_branch_connect().
-      mf/topology_loader: Introduce a helper to clone a media type.
-      mf/topology_loader: Use the color converter for video conversion by default.
-      gdiplus: Refactor SOFTWARE_GdipFillRegion() to separate bitmap handling.
-      gdiplus: Implement software region fill for bitmap images.
-      gdiplus: Bypass span combination for intersected rects.
-      winegstreamer: Free the streams in unknown_inner_Release().
+Conor McCarthy (15):
+      mf/tests: Test setting the input type on the topology loader test transform.
+      mf/topology_loader: Compare the current type with upstream on direct connection only for output nodes.
+      mf/tests: Check IsMediaTypeSupported() is always called on the topology loader test sink.
+      mf/topology_loader: Always call IsMediaTypeSupported() on downstream when connecting a branch.
+      gdiplus: Elide empty spans.
+      gdiplus/tests: Test a region intersect which produces empty spans.
+      mf/tests: Introduce a helper for creating an activated media sink.
+      mf/tests: Check for sample grabber sink shutdown.
+      mf/tests: Add tests for sample grabber sink shutdown.
+      mf/session: Ensure the session object is shut down on release.
+      mf/session: Shut down all topologies on session shutdown.
+      mfmediaengine/tests: Set the volume after the null check in test_TransferVideoFrame().
+      mfmediaengine/tests: Test a media engine extension.
+      mfmediaengine: Set the source pending flag before creating the source.
+      mfmediaengine: Support media engine extensions.
 
-Daniel Lehman (1):
-      msxml3/tests: Test encoding of special characters.
+Cooper Morgan (3):
+      winewayland: Fix use-after-release of window rects in configure handler.
+      winewayland: Handle WS_MINIMIZE to suppress incorrect state transitions.
+      winewayland: Restore minimized windows when compositor sends configure.
 
-Elizabeth Figura (2):
-      ntdll/tests: Test a symlink that unwinds past the directory it's in.
-      ntdll: Unwind the Unix path if necessary when processing relative symlinks.
+David Carrasco Flores (1):
+      wusa: Recognize runtime.syswow64 expressions.
 
-Eric Pouech (5):
-      winedbg: Don't proceed with some 'info' commands on non active targets.
-      winedbg: Introduce helpers to fetch thread name.
-      winedbg: Let 'backtrace' do something when attached to a minidump.
-      winedbg: Let 'info thread' work when debugging a minidump.
-      dbghelp/dwarf: Store btBool constant leaves as signed integer.
+Dmitry Timoshkov (2):
+      gdiplus: Copy logic for trimming bounds width from GdipMeasureString() to GdipMeasureCharacterRanges().
+      gdiplus: Copy logic for calculating y-offset from GdipDrawString() to GdipMeasureCharacterRanges().
 
-Esme Povirk (7):
-      mscoree: Use coop-aware thread attach functions.
-      gdiplus/tests: Make the FromGdiDib tests more thorough.
-      gdiplus/tests: Test FromGdiDib with a top-down DIB.
-      gdiplus/tests: Check more structure types with FromGdiDib.
-      gdiplus/tests: Test more image formats with FromGdiDib.
-      gdiplus: Rewrite GdipCreateBitmapFromGdiDib.
-      gdiplus: Assume bitmaps are top-down in image-reading code.
+Ekaterine Papava (1):
+      po: Update Georgian translation.
 
-Francis De Brabandere (45):
-      vbscript: Fix error character positions for Exit and Dim statements.
-      vbscript: Return "Illegal assignment" error for Const and function assignment.
-      vbscript: Restrict identifier characters to ASCII-only.
-      vbscript: Handle vertical tab and form feed as whitespace in lexer.
-      vbscript: Use ASCII-only case folding in check_keyword.
-      vbscript: Add vbs_wcsicmp and use it in interpreter.
-      vbscript: Replace wcsicmp with vbs_wcsicmp in compiler, globals, and dispatch.
-      vbscript: Fast-path stack_pop_bool for VT_BOOL.
-      vbscript: Defer For loop control variable assignment until all expressions are evaluated.
-      vbscript: Return proper error for undefined variables with Option Explicit.
-      vbscript: Fix For loop getting stuck when expression evaluation fails with On Error Resume Next.
-      vbscript: Reject arguments on Class_Initialize and Class_Terminate.
-      vbscript: Add missing compiler error constants, messages, and tests.
-      vbscript: Return specific errors for mismatched End keywords in blocks.
-      vbscript: Return specific errors for unclosed parens, multiple defaults, and default on Property Let/Set.
-      vbscript: Support chained call syntax like dict.Keys()(i).
-      vbscript: Reject 'Set Me' with error 1037 instead of crashing.
-      vbscript: Return error 1054 for Property Let/Set without arguments.
-      vbscript: Return error 1005 for missing opening parenthesis in Sub/Function.
-      vbscript: Implement Filter function.
-      vbscript: Return specific error codes for integer constant and Property declarations.
-      vbscript: Return DISP_E_TYPEMISMATCH when indexing non-array variables.
-      vbscript: Return error 1048 for Property declaration outside a Class.
-      scrrun: Fix BSTR length off-by-one in create_folder.
-      scrrun: Implement IFolder::get_ParentFolder.
-      scrrun: Implement IFile::get_ParentFolder.
-      scrrun: Implement IFolder::get_IsRootFolder.
-      scrrun: Implement IFolder::get_Attributes and IFolder::put_Attributes.
-      scrrun: Implement IFolder and IFile date getters.
-      vbscript: Return correct error codes for missing statement separators.
-      vbscript: Silence FuncRef::QueryInterface(IID_IDispatchEx) warning.
-      vbscript: Fix crash when GetRef is called as a statement.
-      vbscript: Add missing runtime error constants and tests.
-      vbscript: Return proper error for New on undefined or non-class identifier.
-      vbscript: Reject identifiers longer than 255 characters.
-      vbscript: Support bracketed identifiers like [my var].
-      vbscript: Return error 1028 for invalid keyword after 'Do'.
-      vbscript: Return error 1047 for wrong 'End' keyword inside class.
-      vbscript: Return error 1051 for inconsistent property argument counts.
-      vbscript: Return proper error for wrong number of arguments.
-      wscript: Implement error messages, usage output, and //nologo banner.
-      vbscript: Add call depth limit to prevent stack overflow on infinite recursion.
-      vbscript: Return specific error codes for missing keywords in parser.
-      vbscript: Use indexed lookup for global functions.
-      vbscript: Use indexed lookup for global variables.
+Esme Povirk (1):
+      mscoree: Update Wine Mono to 11.1.0.
 
-Hans Leidekker (11):
-      winhttp/tests: Fix test failures on old Windows versions.
-      winhttp/tests: Fix a test failure.
-      winhttp: Rename request_state.
-      winhttp: Remove unused arguments from read_more_data().
-      winhttp: Start the first chunk right after receiving the headers.
-      winhttp/tests: Add a fully recursive asynchronous test.
-      winhttp: Increase recursion limit.
-      winhttp: Stub WinHttpSetOption(WINHTTP_OPTION_IPV6_FAST_FALLBACK).
-      winhttp: Stub WinHttpQueryOption(WINHTTP_OPTION_HTTP_VERSION).
-      winhttp: Stub WinHttpQueryOption(WINHTTP_OPTION_CONNECT_RETRIES).
-      winhttp: Read as much data as possible in WinHttpReadData().
+Francis De Brabandere (30):
+      wscript: Implement WScript.Timeout property and //T:nn CLI flag.
+      wscript: Terminate the script when WScript.Timeout elapses.
+      vbscript: Return specific error codes for unterminated block statements.
+      vbscript: Return error 1045 for non-literal constant expressions.
+      vbscript: Convert VT_DISPATCH arguments to string in Eval/Execute/ExecuteGlobal.
+      vbscript: Track source location in const, class, and function declarations.
+      vbscript: Return "Name redefined" error for duplicate global declarations.
+      vbscript: Return "Name redefined" error for duplicate class members.
+      scrrun: Implement IFolder and IFile ShortName and ShortPath.
+      vbscript: Return error 1010 for keyword used where identifier expected in Dim.
+      vbscript: Return "Invalid for loop control variable" error for member expressions.
+      vbscript: Implement DatePart built-in function.
+      vbscript: Fix Sub first argument parentheses handling.
+      vbscript: Convert string to number for comparison operators.
+      vbscript: Return proper errors for orphan Loop and Next keywords.
+      vbscript: Move call_depth check past exec_script's setup phase.
+      vbscript: Resolve parser conflicts with %prec and %expect.
+      vbscript: Implement GetLocale and SetLocale functions.
+      vbscript: Use script LCID in Format* functions.
+      vbscript: Pass script LCID to VariantChangeType in to_string helper.
+      vbscript: Pass script LCID to VariantChangeType in to_system_time helper.
+      vbscript: Implement LenB.
+      vbscript: Implement LeftB, RightB, and MidB.
+      vbscript: Implement InStrB.
+      vbscript: Implement AscB and ChrB.
+      vbscript: Support element access on public array properties of class instances.
+      scrrun: Implement IFile::Delete.
+      scrrun: Implement IFolder::Delete.
+      scrrun: Implement IFile::Move.
+      scrrun: Implement IFolder::Move.
 
-Jacek Caban (14):
-      widl: Do not override name prefix settings from pragmas in imported modules.
-      include: Don't use ns_prefix in windows.graphics.directx.direct3d11.interop.idl.
-      opengl32: Move GL_NUM_EXTENSIONS to client side.
-      opengl32: Remove unexposed extensions for functions registry.
-      opengl32: Rename ALL_GL_CLIENT_EXTS to ALL_GL_EXTS.
-      opengl32: Store extension_array as opengl_extension.
-      opengl32: Implement glGetStringi(GL_EXTENSIONS) on client side.
-      opengl32: Initialize enabled / disabled OpenGL extensions struct.
-      opengl32: Use parse_extensions in filter_extensions.
-      opengl32: Store core GL version separate from extensions in the function registry.
-      opengl32: Store extensions an an enum in functions registry.
-      opengl32: Introduce get_function_entry helper.
-      opengl32: Always check available extensions in wrap_wglGetProcAddress.
-      opengl32: Implement wglGetProcAddress on the client side.
+Hans Leidekker (1):
+      secur32: Handle SEC_WINNT_AUTH_IDENTITY_EX in the Negotiate provider.
 
-Jinoh Kang (2):
-      ntdll: Do not fail with STATUS_INVALID_INFO_CLASS for anonymous files.
-      Revert "kernelbase: Replace FileAllInformation with FileStatInformation in GetFileInformationByHandle().".
+Hendrik Borchardt (1):
+      msvcrt: Only reject negative timestamps with EINVAL in ctime_s.
 
-Katharina Bogad (7):
-      makedep: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      winebuild: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      winegcc: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      ntdll: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      winebth.sys: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      winex11.drv: Fix -Wdiscarded-qualifier warnings with recent glibc.
-      include: Fix warnings with C23 and GLIBC.
+Henri Verbeet (1):
+      winmm: Handle DRVM_MAPPER_CONSOLEVOICECOM_GET messages.
 
-Louis Lenders (1):
-      wine.inf: Add HKCU\Software\Classes key.
+Ivan Ivlev (3):
+      odbc32: Compare strings case-insensitively in get_driver_filename().
+      odbc32: Skip operations for NULL filename in replicate_odbc_to_registry().
+      odbc32: Check if row_number is NULL in param_options_unix().
 
-Marc-Aurel Zent (7):
-      win32u: Introduce new ImeToAsciiEx user driver call.
-      win32u: Move IME processing to ImeToAsciiEx.
-      winemac: Implement and use macdrv_ImeToAsciiEx().
-      winemac: Move macdrv_ImeProcessKey logic to ImeProcessKey and macdrv_ImeToAsciiEx.
-      win32u: Remove builtin WINE_IME_PROCESS_KEY driver call.
-      winemac: Replace OSAtomic functions with builtin __atomic counterparts.
-      winemac: Relax builtin __atomic memory barriers.
+Jacek Caban (9):
+      mshtml/tests: Remove unused variables.
+      mshtml/tests: Add missing CHECK_CALLED statements.
+      mshtml/tests: Remove unused variables and fix CLEAR_CALLED statements.
+      winspool.drv/tests: Remove unused variables.
+      localspl/tests: Remove unused variable.
+      urlmon/tests: Remove unused variables.
+      urlmon/tests: Add missing CHECK_CALLED statements.
+      itss/tests: Fix CHECK_CALLED statement.
+      ntdll: Use ESR in the ARM64 signal handler when possible.
 
-Matteo Bruni (1):
-      configure: Use alsa library search paths in the alsa library check.
+Joe Meyer (1):
+      win32u: Stub NtUserInitializeTouchInjection.
 
-Mohamad Al-Jaf (2):
-      dsound: Support 7.1 speaker config.
-      winecfg: Support 7.1 speaker config.
+Lubomir Rintel (1):
+      cmd: Fix handling of "ECHO.ON".
 
-Nikolay Sivov (41):
-      odbc32: Add SQLGetStmtOption() -> SQLGetStmtAttr() fallback for a few options.
-      odbc32: Add SQLSetStmtOption() -> SQLSetStmtAttr() for a few options.
-      msxml3/tests: Add some more xml() tests.
-      msxml3/tests: Add more text() tests.
-      msxml3/tests: Add some more tests for whitespace handling.
-      msxml3/tests: Add some more tests for namespace handling.
-      msxml3/tests: Add some tests for doctype node.
-      msxml3/tests: Add more tests for the XmlDecl PI.
-      msxml3/tests: Add a couple of SAX parsing tests.
-      msxml3: Rework DOM API.
-      msxml3/tests: Add some more appendChild() tests with fragments.
-      msxml3/tests: Add some tests for attribute value normalization.
-      msxml3/tests: Add a setAttribute() test for setting namespace definition.
-      msxml3: Fix setAttribute() for elements with unspecified namespace uri.
-      msxml3/tests: Add some more tests for getNamedItem().
-      msxml3: Do not try to convert NULL strings when creating libxml2 document representation.
-      msxml3: Remove duplicated SafeArrayUnaccessData() in load().
-      msxml3/tests: Add another test for subtree serialization with default namespaces.
-      msxml3/tests: Add a simple test for loading with gb2312 specified encoding.
-      msxml3: Release temporary document.
-      shcore: Handle 64-bit position in file stream Seek().
-      msxml3: Remove unused field from a node structure.
-      msxml3: Implement parentNode() property for DTD nodes.
-      msxml3: Implement ownerDocument() property for DTD nodes.
-      msxml3: Implement nodeTypeString() for DTD nodes.
-      msxml3/tests: Add some tests for ProhibitDTD property.
-      msxml3: Handle ProhibitDTD property.
-      msxml3/tests: Add more splitText() tests.
-      msxml3: Unify splitText() implementation.
-      msxml3: Unify deleteData() implementation.
-      msxml3: Unify substringData() implementation.
-      msxml3: Unify length() property implementation for textual nodes.
-      msxml3: Unify insertData() implementation.
-      msxml3: Unify replaceData() implementation.
-      msxml3/tests: Run formatted output tests on the main thread.
-      msxml3: Remove redundant check in cloneNode().
-      msxml3/tests: Add more tests for setAttribute().
-      msxml3: Improve check for new attribute collision with element namespace.
-      msxml3: Make namespace definitions added with setAttribute() read-only.
-      msxml3/tests: Add another test for insertBefore().
-      msxml3/tests: Check for supported interfaces on a document object.
+Matteo Bruni (4):
+      winex11: Factor out mapping keycodes to scancodes / keysyms into a separate function.
+      winex11: Get Xkb group names.
+      winex11: Look up keysyms for the currently selected Xkb group in X11DRV_KEYBOARD_DetectLayout().
+      winex11: Decode current keyboard layout from the Xkb group name.
 
-Paul Gofman (5):
-      winmm/tests: Add tests for destination scaling with AVI window resize.
-      mciavi32: Update destination rect on window size change.
-      mciavi32: Use msvfw32 for presentation.
-      wmvcore/tests: Add test for COM initialization in async reader thread.
-      wmvcore: Initialize COM in async_reader_callback_thread().
+Michał Durak (3):
+      nsiproxy.sys: Avoid null pointer dereference on if_nameindex() failure.
+      nsiproxy.sys: Avoid malloc(0) in case no network interfaces are present.
+      iphlpapi: Avoid out-of-bounds read if no network interfaces are present.
 
-Piotr Caban (14):
-      msvcrt: Add _vwprintf_l implementation.
-      msvcrt: Add _wprintf_l implementation.
-      odbc32: Use SQLEndTran() in SQLTransact if needed.
-      odbc32: Add odbc v3 test driver and use it in SQLConnect tests.
-      odbc32: Use test driver in SQLDriverConnect tests.
-      odbc32: Use test driver in SQLBrowseConnect tests.
-      odbc32: Use test driver in SQLExecDirect tests.
-      odbc32: Fix SQLBrowseConnect tests.
-      odbc32: Use SQLFreeHandle in SQLFreeStmt if possible.
-      odbc32: Only set connection and login timeout if it was ever set.
-      odbc32: Don't call into driver in SQLGetEnvAttr.
-      odbc32: Don't call into driver in SQLSetEnvAttr.
-      odbc32: Implement sharing environment handle between connections.
-      odbc32: Don't leak connection object if it's reused in connect functions.
+Nikolay Sivov (37):
+      msxml3: Fix owner node refcount update when adding children and attributes.
+      msxml3: Respect document encoding in Save().
+      msxml3: Fix a leak when parsing xml declaration body (Coverity).
+      msxml3: Improve cleanup on error paths when creating DOM nodes (Coverity).
+      msxml3/tests: Fix copy-paste issue when testing node value (Coverity).
+      msxml3/tests: Fix a string double free (Coverity).
+      msxml3/tests: Fix some use-after-free (Coverity).
+      msxml3/tests: Add a few missing return value checks (Coverity).
+      odbc32: Add missing object unlock on return in SQLSetEnvAttr().
+      msxml3/tests: Add some tests for loading documents with Shift_JIS encoding.
+      msxml3: Handle Shift_JIS encoding in the parser.
+      msxml3: Improve handling of incomplete multibyte sequences in parser input.
+      msxml3/tests: Separate DTD validation tests.
+      msxml3/tests: Add more tests for DTD node methods.
+      msxml3: Implement previousSibling() property for DTD node.
+      msxml3: Implement nextSibling() property for DTD node.
+      msxml3: Do not rely on strings being BSTRs in createNode().
+      msxml3/tests: Add more tests for baseName property.
+      msxml3: Remove fixme's from implemented methods.
+      msxml3/tests: Add more tests for creating entity references.
+      msxml3: Improve name validation for entity reference nodes.
+      msxml3/tests: Add some tests for creating document fragments.
+      msxml3: Ignore name and uri when creating document fragments.
+      msxml3/tests: Add some tests for max-element-depth property.
+      msxml3/tests: Extend MaxElementDepth tests.
+      msxml3/sax: Add support for max-element-depth property.
+      msxml3: Add support for MaxElementDepth property in the DOM parser.
+      msxml3: Improve attribute value normalization in DOM.
+      msxml3: Store attribute types in parsed form.
+      msxml3: Store parsed attribute default declaration type.
+      msxml6/tests: Add some tests for XMLHTTP API.
+      msxml3: Create structured representation for element declarations.
+      msxml3/sax: Store reusable type strings separately.
+      msxml3/sax: Keep reused strings together.
+      msxml3/sax: Keep DTD data in a separate structure.
+      msxml3/sax: Retain element declarations as DTD data.
+      msxml3: Pass parsed DTD data to the DOM.
 
-Robert Gerigk (3):
-      include: Add identity string length constants to appmodel.h.
-      shcore: Implement Set/GetCurrentProcessExplicitAppUserModelID.
-      shcore/tests: Add tests for Set/GetCurrentProcessExplicitAppUserModelID.
+Paul Gofman (3):
+      ntdll: Do not crash in RtlVirtualUnwind2() in some cases of NULL output parameters on x64.
+      ntdll: Catch access violation in RtlVirtualUnwind2() on arm64.
+      ntdll: Only take PEB lock to update PEB data in RtlSetCurrentDirectory_U().
 
-Rémi Bernon (44):
-      opengl32: Move some unsupported extensions to unexposed.
-      opengl32: Add support for some unregistered extensions.
-      opengl32: Don't expose unsupported or unknown extensions.
-      mf/topology_loader: Disconnect the node after indirect connection failed.
-      mf/topology_loader: Allocate indirect connection branches dynamically.
-      mf/topology_loader: Cache the media type handlers on the branches.
-      mf/topology_loader: Always try setting current up type when connecting directly.
-      mf/topology_loader: Avoid making redundant connection method attempts.
-      ntdll: Remove unused namepos variable.
-      ntdll: Fix unixlib extension position.
-      mf/topology_loader: Lookup best media type when connecting converter / decoders.
-      mf/topology_loader: Don't force MFTEnumEx output info either for converters.
-      mf/topology_loader: Move current type check into topology_branch_foreach_up_types.
-      mf/topology_loader: Enumerate and select downstream type in connect_direct.
-      mf/topology_loader: Only enumerate transform outputs if no current type is set.
-      mf/topology_loader: Update media types while enumerating up types.
-      winex11: Use unsigned long for monitor indices generation.
-      cfgmgr32: Implement CM_Get_DevNode_Property(_Ex)(A|W).
-      setupapi: Forward CM_Get_DevNode_Property(_Ex)(A|W) to cfgmgr32.
-      cfgmgr32: Implement CM_Get_DevNode_Property_Keys(_Ex).
-      cfgmgr32: Implement CM_Get_Device_ID_List(_Size)(_Ex)(A|W).
-      setupapi: Forward CM_Get_Device_ID_List(_Size)(_Ex)(A|W) to cfgmgr32.
-      cfgmgr32: Move remaining stubs from setupapi.
-      cfgmgr32: Fix querying unnamed properties.
-      opengl32: Check for GL_EXT_memory_object_fd before filtering extensions.
-      mfplat: Don't set frame size or stride if missing from VIDEOINFOHEADER2.
-      mfplat: Support FORMAT_MFVideoFormat in MFInitMediaTypeFromAMMediaType.
-      mf/tests: Check resampler IMFTransform / IMediaObject interop.
-      mf/tests: Check color converter IMFTransform / IMediaObject interop.
-      opengl32: Move major / minor version to the PE side context wrapper.
-      opengl32: Implement wglGetExtensionsString(ARB|EXT) on the PE side.
-      win32u: Query every OpenGL functions on initialization.
-      opengl32: Don't generate extra params in function pointers.
-      opengl32: Get rid of make_opengl $gen_trace variable.
-      opengl32: Simplify make_opengl GL_VERSION filtering.
-      opengl32: Support parsing multiple registry.py APIs.
-      opengl32: Simplify adding functions in make_opengl.
-      mfplat/tests: Test MFInitAMMediaTypeFromMFMediaType GUID conversions.
-      opengl32: Support more function suffixes for hide_default_fbo.
-      opengl32: Support more function suffixes for resolve_default_fbo.
-      opengl32: Support more function suffixes for map_default_fbo_thunks.
-      opengl32: Use a unique WOW64 wrapper for each group of functions.
-      opengl32: Remove now unnecessary wow64 buffer function lookup.
-      opengl32: Use a unique wrapper for each group of wrapped functions.
+Piotr Caban (19):
+      odbc32: Support data type conversion on version mismatch.
+      msado15: Wrap IAccessor interface in rowset wrapper.
+      msado15: Use CoTaskMemFree in dbtype_free.
+      msado15: Introduce helper to get bookmark in IRowset wrapper.
+      msado15: Add partial implementation of IRowsetFind::FindNextRow in rowset wrapper.
+      msado15: Handle BSTR data in IRowsetFind::FindNextRow.
+      msado15: Don't leak HACCESSOR on error in _Recordset::Find.
+      msado15: Handle empty BSTR bookmark in _Recordset::Find.
+      msado15: Don't crash if IRowsetUpdate::Update doesn't allocate status in _Recordset::Update.
+      msado15: Take cache size into account when calculating offset from current row in recordset_Find.
+      msado15: Initialize recordset->current_row in recordset_Find.
+      msado15: Validate arguments in _Recordset::put_CursorLocation.
+      msado15: Print FIXME message when client-side cursor is requested.
+      msado15: Rename create_mem_rowset to create_client_cursor.
+      msado15: Print FIXME message when changing active connection when recordset is open.
+      msvcp120: Ensure that segments are not being allocated when segments table is enlarged.
+      msvcp120: Don't count segments being allocated when reporting vector capacity.
+      Revert "msvcp120: Ensure that segments are not being allocated when segments table is enlarged.".
+      concrt140: Sync details.c file with msvcp90.
 
-Stephan Seitz (1):
-      shell32: Add stub for `SHEvaluateSystemCommandTemplate`.
+Rémi Bernon (24):
+      winex11: Fix some X11DRV_InitKeyboard loop indentation.
+      opengl32: Fix incorrect cleanup when GLsync creation fails.
+      opengl32: Avoid leaking client syncs on context destruction.
+      opengl32: Move wgl_cs entry / exit out of handle functions.
+      dinput: Check for disabled/overridden devices in hid_joystick_try_open.
+      dinput: Handle device override directly in hid_joystick_device_try_open.
+      dinput: Save and load HID joystick instance GUIDs to the registry.
+      opengl32/tests: Remove unnecessary window creation check.
+      opengl32/tests: Declare and load every GL/WGL functions.
+      opengl32/tests: Test implicit object allocation support.
+      opengl32/tests: Test wglShareLists sharing of various types.
+      opengl32/tests: Test wglShareLists sharing of GLsync objects.
+      opengl32/tests: Test object types shared namespaces.
+      dinput: Test and implement support for GUID_Sys(Mouse|Keyboard)Em.
+      opengl32: Generate a thunks.h file for extern declarations.
+      opengl32: Implement wglMakeCurrent with wglMakeContextCurrentARB.
+      opengl32: Implement wglCreateContext with wglCreateContextAttribsARB.
+      opengl32: Move context thread id checks to the PE side.
+      opengl32: Generate code to call the get_integer hooks.
+      opengl32/tests: Test the default framebuffer behavior.
+      win32u: Only fill the drawable buffer map for valid buffers.
+      opengl32: Validate glDrawBuffers enum before setting the state.
+      opengl32: Initialize the context draw / read buffers on creation.
+      opengl32: Always use the partial context state tracker.
 
-Steven Don (1):
-      taskmgr: Fix CPU and Memory usage history graphs.
+Sameer Singh (समीर सिंह) (1):
+      gdi32/uniscribe: Correct the script tag for Tamil.
 
-Tim Clem (8):
-      mountmgr.sys: Fall back to statfs if "important" free space is 0 on macOS.
-      ntdll: Fall back to statfs if "important" free space is 0 on macOS.
-      sechost: Catch invalid HDEVNOTIFY arguments to I_ScUnregisterDeviceNotification.
-      sechost: Don't attempt to unregister an HDEVNOTIFY with bad magic.
-      winemac.drv: Handle windows becoming invalid between WM_QUERYENDSESSION and WM_ENDSESSION.
-      wintab32: Make the internal window message-only.
-      wintab32: Use an HINSTANCE when registering the internal window class.
-      wintab32: Create the internal window on demand.
+Stefan Dösinger (1):
+      hhctrl.ocx: Make Contents/Search/Index children of the tab control.
 
-Trent Waddington (2):
-      kernel32/tests: Add tests for GetModuleFileName string termination.
-      kernelbase: Fix string termination of GetModuleFileName.
+Sven Baars (1):
+      ntdll: Make sure User Syscall Dispatch defines are always defined on Linux.
 
-Twaik Yont (5):
-      wineandroid: Remove redundant backend DPI scaling.
-      wineandroid: Fix 64-bit crash in setCursor JNI call.
-      wineandroid: Lower targetSdkVersion to avoid Android 10 W^X restrictions.
-      wineandroid: Fix loader path and library lookup for modern Wine/Android.
-      wineandroid: Move environment setup to Java and drop obsolete env vars.
+Tim Clem (1):
+      cfgmgr32: Catch invalid handles in CM_Unregister_Notification.
 
-Vitaly Lipatov (2):
-      include: Fix _LIBCPP_DEFER_NEW_TO_VCRUNTIME not being set with old clang.
-      include: Avoid __builtin_wmemchr with clang < 13.
+Twaik Yont (6):
+      wineandroid: Switch java_* variables to direct linking.
+      wineandroid: Load AHardwareBuffer symbols from libandroid.
+      wineandroid: Simplify client pid handling.
+      wineandroid: Use Android logging for ioctl paths.
+      wineandroid: Move native window registration to surface_changed.
+      wineandroid: Pass JNIEnv explicitly through ioctl handlers.
 
-Yuxuan Shui (1):
-      setupapi: Fix wrong buffer size in SetupDiGetClassDescriptionExA.
+Yuxuan Shui (2):
+      urlmon/tests: Test output length calculation when output buffer is too small.
+      iertutil: Fix out-of-bound access in remove_dot_segments.
 
 Zhiyi Zhang (6):
-      iertutil: Fix parsing some partial IPv4 addresses.
-      iertutil: Fix parsing URIs without a port value.
-      iertutil: Do not encode user info if the scheme is unknown.
-      iertutil: Fix backslash processing in URIs.
-      iertutil: Add initial URI parsing support for IUriRuntimeClass.
-      iertutil/tests: Add URI parser tests.
+      Revert "win32u: Don't forcefully activate windows before restoring them.".
+      iertutil: Fix wrong host type for Punycode-encoded hostnames.
+      gdi32: Test that GetDIBits() rejects DDBs that are not 1-bit or 32-bit.
+      win32u: Reject DDBs that are not 1-bit or 32-bit for GetDIBits().
+      win32u: Optimize the speed of halftone primitives by using 32.32 fixed point arithmetic.
+      win32u: Set the normal window position without going through NtUserSetInternalWindowPos().
 ```
