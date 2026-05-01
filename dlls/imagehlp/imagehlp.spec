@@ -33,8 +33,8 @@
 @ stdcall MapFileAndCheckSumA(str ptr ptr)
 @ stdcall MapFileAndCheckSumW(wstr ptr ptr)
 @ stub  MarkImageAsRunFromSwap
-@ stub ReBaseImage64
 @ stdcall ReBaseImage(str str long long long long ptr ptr ptr ptr long)
+@ stdcall ReBaseImage64(str str long long long long ptr ptr ptr ptr long)
 @ stdcall RemovePrivateCvSymbolic(ptr ptr ptr)
 @ stub RemovePrivateCvSymbolicEx
 @ stdcall RemoveRelocations(ptr)
