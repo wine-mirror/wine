@@ -483,12 +483,11 @@ static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
             __TRY
             {
                 if(seg == 0)
-                    this->segment[seg] = this->allocator(this, element_size * (1 << this->first_block));
+                    this->segment[seg] = this->allocator(this, 1 << this->first_block);
                 else if(seg < this->first_block)
-                    this->segment[seg] = (BYTE**)this->segment[0]
-                        + element_size * (1 << seg);
+                    this->segment[seg] = (BYTE *)this->segment[0] + element_size * (1 << seg);
                 else
-                    this->segment[seg] = this->allocator(this, element_size * (1 << seg));
+                    this->segment[seg] = this->allocator(this, 1 << seg);
             }
             __EXCEPT_ALL
             {
@@ -528,7 +527,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
     last_block = (this->segment == this->storage ? STORAGE_SIZE : SEGMENT_SIZE);
     for(i = 0; i < last_block; i++)
     {
-        if(!this->segment[i])
+        if(!this->segment[i] || this->segment[i] == SEGMENT_ALLOC_MARKER)
             return !i ? 0 : 1 << i;
     }
     return 1 << i;
@@ -714,7 +713,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_assign(
     if(this->early_size > v_size)
     {
         if((i ? 1 << i : 2) - remain_element > 0)
-            clear((BYTE**)this->segment[i] + element_size * remain_element,
+            clear((BYTE*)this->segment[i] + element_size * remain_element,
                     (i ? 1 << i : 2) - remain_element);
         if(i < seg_no)
         {
@@ -726,8 +725,8 @@ void __thiscall _Concurrent_vector_base_v4__Internal_assign(
     else if(this->early_size < v_size)
     {
         if((i ? 1 << i : 2) - remain_element > 0)
-            copy((BYTE**)this->segment[i] + element_size * remain_element,
-                    (BYTE**)v->segment[i] + element_size * remain_element,
+            copy((BYTE*)this->segment[i] + element_size * remain_element,
+                    (BYTE*)v->segment[i] + element_size * remain_element,
                     (i ? 1 << i : 2) - remain_element);
         if(i < v_seg_no)
         {
@@ -763,7 +762,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
     last_seg_no = _vector_base_v4__Segment_index_of(size + count - 1);
     remain_size = min(size + count, 1 << (seg_no + 1)) - size;
     if(remain_size > 0)
-        copy(((BYTE**)this->segment[seg_no] + element_size * (size - ((1 << seg_no) & ~1))), v,
+        copy(((BYTE*)this->segment[seg_no] + element_size * (size - ((1 << seg_no) & ~1))), v,
             remain_size);
     if(seg_no != last_seg_no)
     {
@@ -796,7 +795,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_res
     last_seg_no = _vector_base_v4__Segment_index_of(count - 1);
     remain_size = min(count, 1 << (seg_no + 1)) - size;
     if(remain_size > 0)
-        copy(((BYTE**)this->segment[seg_no] + element_size * (size - ((1 << seg_no) & ~1))), v,
+        copy(((BYTE*)this->segment[seg_no] + element_size * (size - ((1 << seg_no) & ~1))), v,
             remain_size);
     if(seg_no != last_seg_no)
     {
@@ -862,7 +861,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_resize(
             clear(this->segment[seg_no], 1 << seg_no);
         clear_element = (1 << (end_seg_no + 1)) - resize;
         if(clear_element > 0)
-            clear((BYTE**)this->segment[end_seg_no] + element_size * (resize - ((1 << end_seg_no) & ~1)),
+            clear((BYTE*)this->segment[end_seg_no] + element_size * (resize - ((1 << end_seg_no) & ~1)),
                     clear_element);
         this->early_size = resize;
     }
