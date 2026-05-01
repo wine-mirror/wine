@@ -70,11 +70,11 @@ var=33@space@
 1@space@
 2@space@
 0@space@
-@todo_wine@3@space@
+3@space@
 3@space@
 4@space@
 Passed
-@todo_wine@6@space@
+6@space@
 ---------- Testing CMD /C quoting -----------------
 "hi"
 1@space@
@@ -84,7 +84,7 @@ Passed
 1@space@
 0@space@
 0@space@
-@todo_wine@3@space@
+3@space@
 3@space@
 2@space@
 2@space@

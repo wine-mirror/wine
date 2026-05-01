@@ -4849,7 +4849,7 @@ static void parse_command_line_parameters(struct cmd_parameters *parameters)
         /* opt_s left unflagged if the command starts with and contains exactly
          * one quoted string (exactly two quote characters). The quoted string
          * must be an executable name that has whitespace and must not have the
-         * following characters: &<>()@^|
+         * following characters: &<>@^|
          */
 
         /* 1. Confirm there is at least one quote */
@@ -4867,7 +4867,7 @@ static void parse_command_line_parameters(struct cmd_parameters *parameters)
             opt_s = TRUE;
             for (p = q1; p != q2; p++)
             {
-                if (wcschr(L"&<>()@^'", *p))
+                if (wcschr(L"&<>@^'", *p))
                 {
                     opt_s = TRUE;
                     break;
