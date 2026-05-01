@@ -127,7 +127,7 @@ static inline struct thread_data *get_thread_data(void)
 }
 
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
-struct ntdll_thread_data
+struct teb_data
 {
     void                     *cpu_data[16];  /* 1d4/02f0 reserved for CPU-specific data */
     SYSTEM_SERVICE_TABLE     *syscall_table; /* 214/0370 syscall table */
@@ -135,21 +135,16 @@ struct ntdll_thread_data
     int                       syscall_trace; /* 21c/0380 syscall trace flag */
 };
 
-C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
+C_ASSERT( sizeof(struct teb_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
 #ifdef _WIN64
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_table ) == 0x370 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_frame ) == 0x378 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_trace ) == 0x380 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_table ) == 0x370 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_frame ) == 0x378 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_trace ) == 0x380 );
 #else
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_table ) == 0x214 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_frame ) == 0x218 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_trace ) == 0x21c );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_table ) == 0x214 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_frame ) == 0x218 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct teb_data, syscall_trace ) == 0x21c );
 #endif
-
-static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
-{
-    return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
-}
 
 /* returns TRUE if the async is complete; FALSE if it should be restarted */
 typedef BOOL async_callback_t( void *user, ULONG_PTR *info, unsigned int *status );
@@ -451,9 +446,9 @@ static inline void *get_kernel_stack( struct thread_data *data )
     return data->signal_stack + signal_stack_size;
 }
 
-static inline struct ntdll_thread_data *get_teb_data( struct thread_data *data )
+static inline struct teb_data *get_teb_data( struct thread_data *data )
 {
-    return (struct ntdll_thread_data *)&data->teb->GdiTebBatch;
+    return (struct teb_data *)&data->teb->GdiTebBatch;
 }
 
 static inline struct syscall_frame *get_syscall_frame( struct thread_data *data )
