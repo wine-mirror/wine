@@ -204,14 +204,14 @@ static DWORD chunked_fill_buffer( struct data_stream *stream, struct request *re
     int read_bytes;
     char ch;
 
-    if (chunked_end_of_data( stream, request )) return ERROR_SUCCESS;
+    if (chunked_end_of_data( stream, request ) || buf->size) return ERROR_SUCCESS;
 
     if (buf->pos)
     {
         if (buf->size) memmove( buf->buf, buf->buf + buf->pos, buf->size );
         buf->pos = 0;
     }
-    to_read = sizeof(buf->buf) - buf->size;
+    to_read = sizeof(buf->buf);
 
     do
     {
@@ -306,7 +306,11 @@ static DWORD chunked_fill_buffer( struct data_stream *stream, struct request *re
             buf->size += read_bytes;
             to_read -= read_bytes;
             offset += read_bytes;
-            if (!chunked_stream->chunk_size) chunked_stream->state = CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA;
+            if (!chunked_stream->chunk_size)
+            {
+                chunked_stream->state = CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA;
+                continue_read = FALSE; /* don't buffer more than 1 chunk */
+            }
             break;
 
         case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA:

@@ -5819,8 +5819,9 @@ static void test_WinHttpGetProxyForUrl(int port)
 static void test_chunked_read(void)
 {
     WCHAR header[32];
-    DWORD len, err;
+    DWORD len, err, bytes_read;
     HINTERNET ses, con = NULL, req = NULL;
+    char *buf;
     BOOL ret;
 
     trace( "starting chunked read test\n" );
@@ -5865,33 +5866,31 @@ static void test_chunked_read(void)
     ok( !ret, "unexpected CONTENT_LENGTH header %s\n", wine_dbgstr_w(header) );
     ok( GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND, "wrong error %lu\n", GetLastError() );
 
-    trace( "entering query loop\n" );
-    for (;;)
-    {
-        len = 0xdeadbeef;
-        ret = WinHttpQueryDataAvailable( req, &len );
-        ok( ret, "WinHttpQueryDataAvailable failed with error %lu\n", GetLastError() );
-        if (ret) ok( len != 0xdeadbeef, "WinHttpQueryDataAvailable return wrong length\n" );
-        trace( "got %lu available\n", len );
-        if (len)
-        {
-            DWORD bytes_read;
-            char *buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+    len = 0xdeadbeef;
+    ret = WinHttpQueryDataAvailable( req, &len );
+    ok( ret, "got %lu\n", GetLastError() );
+    ok( len == 70, "got %lu\n", len );
 
-            ret = WinHttpReadData( req, buf, len, &bytes_read );
-            ok(ret, "WinHttpReadData failed: %lu\n", GetLastError());
+    buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+    ret = WinHttpReadData( req, buf, len, &bytes_read );
+    ok(ret, "got %lu\n", GetLastError());
+    buf[bytes_read] = 0;
+    ok( len == bytes_read, "only got %lu of %lu available\n", bytes_read, len );
+    ok( buf[bytes_read - 1] == '\n', "received partial line '%s'\n", buf );
+    HeapFree( GetProcessHeap(), 0, buf );
 
-            buf[bytes_read] = 0;
-            trace( "WinHttpReadData -> %d %lu\n", ret, bytes_read );
-            ok( len == bytes_read, "only got %lu of %lu available\n", bytes_read, len );
-            ok( buf[bytes_read - 1] == '\n', "received partial line '%s'\n", buf );
+    len = 0xdeadbeef;
+    ret = WinHttpQueryDataAvailable( req, &len );
+    ok( ret, "got %lu\n", GetLastError() );
+    ok( len == 5, "got %lu\n", len );
 
-            HeapFree( GetProcessHeap(), 0, buf );
-            if (!bytes_read) break;
-        }
-        if (!len) break;
-    }
-    trace( "done\n" );
+    buf = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+    ret = WinHttpReadData( req, buf, len, &bytes_read );
+    ok(ret, "got %lu\n", GetLastError());
+    buf[bytes_read] = 0;
+    ok( len == bytes_read, "only got %lu of %lu available\n", bytes_read, len );
+    ok( buf[bytes_read - 1] == '\n', "received partial line '%s'\n", buf );
+    HeapFree( GetProcessHeap(), 0, buf );
 
 done:
     if (req) WinHttpCloseHandle( req );
