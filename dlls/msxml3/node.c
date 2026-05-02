@@ -1801,15 +1801,14 @@ static void node_dump_xml_attr(struct domnode *node, struct node_dump_context *c
 
 static void node_dump_xml(struct domnode *node, struct node_dump_context *context)
 {
-    struct string_buffer *buffer = &context->buffer;
     BSTR p = node->data;
 
     while (p && *p)
     {
         if (*p == '\n')
-            string_append(buffer, L"\r\n", 2);
+            node_dump_append(context, L"\r\n", 2);
         else
-            string_append(buffer, p, 1);
+            node_dump_append(context, p, 1);
         ++p;
     }
 }
@@ -1866,17 +1865,16 @@ static void node_dump_pi(struct domnode *node, struct node_dump_context *context
 
 static void node_dump_format(struct node_dump_context *context)
 {
-    struct string_buffer *buffer = &context->buffer;
     unsigned int indent = context->indent;
 
     if (!context->needs_formatting)
         return;
 
-    string_append(buffer, L"\r\n", 2);
+    node_dump_append(context, L"\r\n", 2);
 
     while (indent--)
     {
-        string_append(buffer, L"\t", 1);
+        node_dump_append(context, L"\t", 1);
     }
 }
 
