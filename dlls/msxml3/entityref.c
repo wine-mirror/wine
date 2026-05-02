@@ -146,7 +146,7 @@ static HRESULT WINAPI entityref_get_nodeName(IXMLDOMEntityReference *iface, BSTR
 {
     entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    FIXME("%p, %p.\n", iface, p);
+    TRACE("%p, %p.\n", iface, p);
 
     return node_get_name(ref->node, p);
 }
@@ -418,25 +418,25 @@ static HRESULT WINAPI entityref_get_parsed(IXMLDOMEntityReference *iface, VARIAN
 
 static HRESULT WINAPI entityref_get_namespaceURI(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
-
     TRACE("%p, %p.\n", iface, p);
 
-    return node_get_namespaceURI(ref->node, p);
+    return return_null_bstr(p);
 }
 
 static HRESULT WINAPI entityref_get_prefix(IXMLDOMEntityReference *iface, BSTR *prefix)
 {
-    FIXME("%p, %p: stub\n", iface, prefix);
+    TRACE("%p, %p.\n", iface, prefix);
 
     return return_null_bstr(prefix);
 }
 
 static HRESULT WINAPI entityref_get_baseName(IXMLDOMEntityReference *iface, BSTR *name)
 {
-    FIXME("%p, %p: needs test\n", iface, name);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    return return_null_bstr(name);
+    TRACE("%p, %p.\n", iface, name);
+
+    return node_get_name(ref->node, name);
 }
 
 static HRESULT WINAPI entityref_transformNodeToObject(IXMLDOMEntityReference *iface, IXMLDOMNode *node, VARIANT var1)

@@ -17585,14 +17585,29 @@ static void test_entityref(void)
     hr = IXMLDOMDocument_createEntityReference(doc, _bstr_("ent"), &ref);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXMLDOMEntityReference_get_baseName(ref, &str);
-    todo_wine
+    hr = IXMLDOMEntityReference_get_prefix(ref, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    str = (void *)0x1;
+    hr = IXMLDOMEntityReference_get_prefix(ref, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected prefix %p.\n", str);
+
+    hr = IXMLDOMEntityReference_get_namespaceURI(ref, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    str = (void *)0x1;
+    hr = IXMLDOMEntityReference_get_namespaceURI(ref, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected prefix %s.\n", debugstr_w(str));
+
+    hr = IXMLDOMEntityReference_get_nodeName(ref, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"ent"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
+
+    hr = IXMLDOMEntityReference_get_baseName(ref, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"ent"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
 
     IXMLDOMEntityReference_Release(ref);
 
