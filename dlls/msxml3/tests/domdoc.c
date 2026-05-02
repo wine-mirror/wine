@@ -9966,10 +9966,6 @@ static void test_appendChild(void)
     hr = IXMLDOMDocument_createElement(doc2, _bstr_("elem2"), &elem2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    EXPECT_REF(doc, 1);
-    todo_wine EXPECT_REF(elem, 2);
-    EXPECT_REF(doc2, 1);
-    todo_wine EXPECT_REF(elem2, 2);
     EXPECT_NO_CHILDREN(doc);
     EXPECT_NO_CHILDREN(doc2);
 
@@ -9983,10 +9979,6 @@ static void test_appendChild(void)
     hr = IXMLDOMDocument_appendChild(doc2, (IXMLDOMNode*)elem, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    EXPECT_REF(doc, 1);
-    todo_wine EXPECT_REF(elem, 2);
-    EXPECT_REF(doc2, 1);
-    todo_wine EXPECT_REF(elem2, 2);
     EXPECT_NO_CHILDREN(doc);
     EXPECT_CHILDREN(doc2);
 
