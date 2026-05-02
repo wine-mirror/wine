@@ -157,7 +157,6 @@ static void test_CoreTextServicesManager(void)
 
     hr = ICoreTextServicesManagerStatics_GetForCurrentView(core_text_manager_stat, &core_text_manager);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ICoreTextServicesManager_Release(core_text_manager);
 
     check_interface(core_text_manager, &IID_IUnknown, TRUE);
     check_interface(core_text_manager, &IID_IInspectable, TRUE);
@@ -165,6 +164,7 @@ static void test_CoreTextServicesManager(void)
     check_interface(core_text_manager, &IID_ICoreTextServicesManagerStatics, FALSE);
     check_interface(core_text_manager, &IID_ICoreTextServicesManager, TRUE);
 
+    ICoreTextServicesManager_Release(core_text_manager);
     ref = ICoreTextServicesManagerStatics_Release(core_text_manager_stat);
     ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
     ref = IActivationFactory_Release(factory);
