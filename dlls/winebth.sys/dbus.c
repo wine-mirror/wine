@@ -1059,8 +1059,11 @@ void bluez_gatt_characteristic_value_free( void *val )
 {
     struct bluez_gatt_characteristic_value *value = val;
 
-    p_dbus_message_unref( value->message );
-    free( value );
+    if (value)
+    {
+        p_dbus_message_unref( value->message );
+        free( value );
+    }
 }
 
 void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *value, BYTE *dest )
