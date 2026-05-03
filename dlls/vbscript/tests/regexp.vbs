@@ -167,6 +167,11 @@ Set submatch = match.SubMatches
 Call ok(submatch.Count = 2, "submatch.Count = " & submatch.Count)
 Call ok(submatch.Item(0) = "a", "submatch.Item(0) = " & submatch.Item(0))
 Call ok(submatch.Item(1) = "b", "submatch.Item(0) = " & submatch.Item(1))
+' Bare property-then-index form: match.SubMatches(N) parses as a single
+' index expression on the SubMatches collection, distinct from the
+' chained-call form match.SubMatches()(N).
+Call ok(match.SubMatches(0) = "a", "match.SubMatches(0) = " & match.SubMatches(0))
+Call ok(match.SubMatches(1) = "b", "match.SubMatches(1) = " & match.SubMatches(1))
 
 Set x = new regexp
 Call ok(x.Pattern = "", "RegExp.Pattern = " & x.Pattern)
