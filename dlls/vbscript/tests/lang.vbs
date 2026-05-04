@@ -464,10 +464,31 @@ call ok(false imp false, "false does not imp false?")
 call ok(not (true imp false), "true imp false?")
 call ok(false imp null, "false imp null is false?")
 
-' For VT_UI1 Imp VT_NULL, native VBScript keeps UI1 width and returns
-' the bitwise complement of the left operand, rather than applying
-' VarImp's three-valued all-ones rule. interp_imp has a narrow special
-' case to match this native behavior.
+' Smoke check that VBScript's `And` operator reaches VarAnd correctly and
+' propagates the result payload. The full VarAnd+Null conformance table
+' lives in dlls/oleaut32/tests/vartest.c.
+Call ok((False And Null) = False,            "False And Null is not False")
+Call ok(isNull(True And Null),               "True And Null is not Null")
+Call ok(isNull(Null And Null),               "Null And Null is not Null")
+Call ok((CInt(0) And Null) = 0,              "CInt(0) And Null is not 0")
+Call ok(getVT(CInt(0) And Null) = "VT_I2",   "getVT(CInt(0) And Null) = " & getVT(CInt(0) And Null))
+Call ok(isNull(CInt(5) And Null),            "CInt(5) And Null is not Null")
+
+' Smoke checks that VBScript's sibling logical operators reach Var*
+' correctly and propagate the result payload. The full conformance tables
+' live in dlls/oleaut32/tests/vartest.c.
+Call ok((True Or Null) = True,               "True Or Null is not True")
+Call ok(isNull(False Or Null),               "False Or Null is not Null")
+Call ok(isNull(CInt(5) Xor Null),            "CInt(5) Xor Null is not Null")
+Call ok(isNull(CInt(5) Eqv Null),            "CInt(5) Eqv Null is not Null")
+Call ok(isNull(CDate(-1) Imp Null),          "CDate(-1) Imp Null is not Null")
+Call ok((Not CLng(0)) = -1,                  "Not CLng(0) is not -1")
+
+' VBScript-specific: for VT_UI1 Imp VT_NULL, native VBScript keeps UI1
+' width and returns the bitwise complement of the left operand, rather
+' than applying VarImp's three-valued "all-ones Imp unknown = unknown"
+' rule (which returns VT_NULL at the C level for UI1 0xFF). interp_imp
+' has a narrow special case to match this native behavior.
 Call ok((CByte(0) Imp Null) = 255,           "CByte(0) Imp Null is not 255")
 Call ok(getVT(CByte(0) Imp Null) = "VT_UI1", "getVT(CByte(0) Imp Null) = " & getVT(CByte(0) Imp Null))
 Call ok((CByte(170) Imp Null) = 85,          "CByte(170) Imp Null is not 85")
