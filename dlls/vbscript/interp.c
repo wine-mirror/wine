@@ -2168,8 +2168,30 @@ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r, unsigned flags)
        (rvt == VT_BSTR && (is_numeric_vt(lvt) || lvt == VT_BOOL))) {
         VARIANT *num = lvt == VT_BSTR ? r : l;
         VARIANT *str = lvt == VT_BSTR ? l : r;
+        BSTR str_bstr = V_BSTR(str);
         VARIANT num_str;
         HRESULT hres;
+
+        /* Native treats a BSTR as greater than any numeric or boolean,
+         * regardless of binary lex order, when it is non-empty and either
+         * all-whitespace or contains any C0 control character (Chr(0)..
+         * Chr(31)). BSTRs are length-prefixed and may contain embedded
+         * NUL, so use SysStringLen rather than NUL-terminated scan. */
+        if(str_bstr) {
+            UINT len = SysStringLen(str_bstr);
+            BOOL has_ctrl = FALSE, all_space = TRUE;
+            UINT i;
+            for(i = 0; i < len; i++) {
+                if(str_bstr[i] < 0x20) {
+                    has_ctrl = TRUE;
+                    break;
+                }
+                if(!iswspace(str_bstr[i]))
+                    all_space = FALSE;
+            }
+            if(len && (has_ctrl || all_space))
+                return lvt == VT_BSTR ? VARCMP_GT : VARCMP_LT;
+        }
 
         VariantInit(&num_str);
         if((V_VT(num) & VT_TYPEMASK) == VT_BOOL) {
