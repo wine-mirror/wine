@@ -317,6 +317,47 @@ Call ok(not ("10" > CDbl(5)), """10"" > CDbl(5) should be false (lex)")
 Call ok(not ("10" > CSng(5)), """10"" > CSng(5) should be false (lex)")
 Call ok(not ("9" < CDbl(10)), """9"" < CDbl(10) should be false (lex)")
 
+Dim ws_space : ws_space = Space(3)
+Dim ws_tab   : ws_tab   = Chr(9)
+Dim ws_lf    : ws_lf    = Chr(10)
+Dim ws_cr    : ws_cr    = Chr(13)
+Dim ws_nbsp  : ws_nbsp  = Chr(160)
+Call todo_wine_ok(not (Len("ab") > ws_space), "Len(""ab"") > Space(3) should be false")
+Call todo_wine_ok((Len("ab") < ws_space),     "Len(""ab"") < Space(3) should be true")
+Call ok(not (Len("ab") = ws_space),           "Len(""ab"") = Space(3) should be false")
+Call todo_wine_ok(not (Len("ab") > ws_tab),   "Len(""ab"") > Chr(9) should be false")
+Call todo_wine_ok((Len("ab") < ws_tab),       "Len(""ab"") < Chr(9) should be true")
+Call todo_wine_ok(not (Len("ab") > ws_lf),    "Len(""ab"") > Chr(10) should be false")
+Call todo_wine_ok((Len("ab") < ws_lf),        "Len(""ab"") < Chr(10) should be true")
+Call todo_wine_ok(not (Len("ab") > ws_cr),    "Len(""ab"") > Chr(13) should be false")
+Call todo_wine_ok((Len("ab") < ws_cr),        "Len(""ab"") < Chr(13) should be true")
+Call ok(not (Len("ab") > ws_nbsp),  "Len(""ab"") > Chr(160) should be false")
+Call ok((Len("ab") < ws_nbsp),      "Len(""ab"") < Chr(160) should be true")
+
+Dim ctl_nul  : ctl_nul  = Chr(0)
+Dim ctl_soh  : ctl_soh  = Chr(1)
+Dim ctl_us   : ctl_us   = Chr(31)
+Call todo_wine_ok((Len("ab") < ctl_nul),         "Len(""ab"") < Chr(0) should be true")
+Call todo_wine_ok((Len("ab") < ctl_soh),         "Len(""ab"") < Chr(1) should be true")
+Call todo_wine_ok((Len("ab") < ctl_us),          "Len(""ab"") < Chr(31) should be true")
+Call todo_wine_ok((Len("ab") < (ctl_nul & "5")), "Len(""ab"") < Chr(0)&""5"" should be true")
+Call todo_wine_ok((Len("ab") < (ctl_nul & " ")), "Len(""ab"") < Chr(0)&"" "" should be true")
+Call todo_wine_ok((Len("ab") < (" " & ctl_nul)), "Len(""ab"") < "" ""&Chr(0) should be true")
+
+Call ok((Len("ab") > ""),                     "Len(""ab"") > """" should be true")
+
+Dim guard_str : guard_str = "ab"
+Dim guard_err, guard_r
+On Error Resume Next
+Err.Clear
+If Len(guard_str) > Space(3) Then
+    guard_r = Left(guard_str, Space(3))
+End If
+guard_err = Err.number
+Err.Clear
+On Error Goto 0
+Call todo_wine_ok(guard_err = 0, "Len(""ab"") > Space(3) guard should not raise (got " & guard_err & ")")
+
 ' --- VT_DATE from CDate is non-literal: string compare, no error. ---
 Dim cdt : cdt = CDate("2024-01-15")
 Call ok(not ("abc" = cdt), "CDate: ""abc"" = CDate(...) should be false")
