@@ -4480,12 +4480,16 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry1 *ifac
 
 static inline void d2d_arc_transform(D2D1_ARC_SEGMENT *arc, const D2D1_MATRIX_3X2_F *transform)
 {
+    D2D1_MATRIX_3X2_F m = *transform;
     D2D_POINT_2F point;
 
+    m._31 = 0.0f;
+    m._32 = 0.0f;
+
     d2d_point_transform(&arc->point, transform, arc->point.x, arc->point.y);
-    d2d_point_transform(&point, transform, arc->size.width, 0.0f);
+    d2d_point_transform(&point, &m, arc->size.width, 0.0f);
     arc->size.width = d2d_point_length(&point);
-    d2d_point_transform(&point, transform, 0.0f, arc->size.height);
+    d2d_point_transform(&point, &m, 0.0f, arc->size.height);
     arc->size.height = d2d_point_length(&point);
 }
 
