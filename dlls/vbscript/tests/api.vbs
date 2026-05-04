@@ -1726,6 +1726,9 @@ Call ok(TypeName(collectionObj) = "Object", "TypeName(collectionObj) = " & TypeN
 Dim regex
 set regex = new RegExp
 Call ok(TypeName(regex) = "IRegExp2", "TypeName(regex) = " & TypeName(regex))
+Dim ec
+set ec = new EmptyClass
+Call ok(TypeName(ec) = "EmptyClass", "TypeName(EmptyClass) = " & TypeName(ec))
 
 Call ok(VarType(Empty) = vbEmpty, "VarType(Empty) = " & VarType(Empty))
 Call ok(getVT(VarType(Empty)) = "VT_I2", "getVT(VarType(Empty)) = " & getVT(VarType(Empty)))

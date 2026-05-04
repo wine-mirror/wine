@@ -169,6 +169,7 @@ typedef struct named_item_t {
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
+const WCHAR *vbdisp_class_name(IDispatch*);
 HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*);
