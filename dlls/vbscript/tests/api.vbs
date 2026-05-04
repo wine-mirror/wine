@@ -2924,6 +2924,26 @@ end sub
 
 call testFilterError()
 
+sub testLeftNull()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = Left(Null, 3)
+    Call ok(Err.number = 0, "Left(Null, 3) Err.number = " & Err.number)
+    Call ok(IsNull(r),       "Left(Null, 3) should be Null")
+
+    call Err.clear()
+    r = Left("abcde", Null)
+    Call ok(Err.number = 94, "Left(""abcde"", Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = Left("abcde", -1)
+    Call ok(Err.number = 5,  "Left(""abcde"", -1) Err.number = " & Err.number)
+end sub
+
+call testLeftNull()
+
 ' GetLocale/SetLocale tests
 Dim origLocale
 origLocale = GetLocale()
