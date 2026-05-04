@@ -1266,6 +1266,69 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
 
 
 /***********************************************************************
+ *           create_server_thread
+ */
+static NTSTATUS create_server_thread( HANDLE *handle, struct thread_data **data_ret,
+                                      ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                      void *start, void *param, ULONG flags )
+{
+    data_size_t len;
+    struct object_attributes *objattr;
+    struct thread_data *data;
+    int request_pipe[2];
+    DWORD tid = 0;
+    NTSTATUS status;
+
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    if (server_pipe( request_pipe ) == -1)
+    {
+        free( objattr );
+        return STATUS_TOO_MANY_OPENED_FILES;
+    }
+    wine_server_send_fd( request_pipe[0] );
+
+    SERVER_START_REQ( new_thread )
+    {
+        req->process    = wine_server_obj_handle( NtCurrentProcess() );
+        req->access     = access;
+        req->flags      = flags;
+        req->request_fd = request_pipe[0];
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req )))
+        {
+            *handle = wine_server_ptr_handle( reply->handle );
+            tid = reply->tid;
+        }
+        close( request_pipe[0] );
+    }
+    SERVER_END_REQ;
+
+    free( objattr );
+    if (status)
+    {
+        close( request_pipe[1] );
+        return status;
+    }
+
+    if (!(data = virtual_alloc_thread_data()))
+    {
+        NtClose( *handle );
+        close( request_pipe[1] );
+        return STATUS_NO_MEMORY;
+    }
+
+    data->request_fd = request_pipe[1];
+    data->tid        = tid;
+    data->start      = start;
+    data->param      = param;
+
+    *data_ret = data;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           update_attr_list
  *
  * Update the output attributes.
@@ -1331,11 +1394,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     sigset_t sigset;
     pthread_t pthread_id;
     pthread_attr_t pthread_attr;
-    data_size_t len;
-    struct object_attributes *objattr;
     struct thread_data *data;
-    DWORD tid = 0;
-    int request_pipe[2];
     TEB *teb;
     WOW_TEB *wow_teb;
     unsigned int status;
@@ -1377,60 +1436,19 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         return status;
     }
 
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
-
-    if (server_pipe( request_pipe ) == -1)
-    {
-        free( objattr );
-        return STATUS_TOO_MANY_OPENED_FILES;
-    }
-    wine_server_send_fd( request_pipe[0] );
-
     if (!access) access = THREAD_ALL_ACCESS;
 
-    SERVER_START_REQ( new_thread )
-    {
-        req->process    = wine_server_obj_handle( process );
-        req->access     = access;
-        req->flags      = flags;
-        req->request_fd = request_pipe[0];
-        wine_server_add_data( req, objattr, len );
-        if (!(status = wine_server_call( req )))
-        {
-            *handle = wine_server_ptr_handle( reply->handle );
-            tid = reply->tid;
-        }
-        close( request_pipe[0] );
-    }
-    SERVER_END_REQ;
-
-    free( objattr );
-    if (status)
-    {
-        close( request_pipe[1] );
+    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags )))
         return status;
-    }
-
-    if (!(data = virtual_alloc_thread_data()))
-    {
-        NtClose( *handle );
-        close( request_pipe[1] );
-        return STATUS_NO_MEMORY;
-    }
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
     if ((status = virtual_alloc_teb( data ))) goto done;
     teb = data->teb;
+    set_thread_id( data );
 
     if ((status = init_thread_stack( teb, get_zero_bits_limit( zero_bits ), stack_reserve, stack_commit )))
-    {
-        virtual_free_thread_data( data );
         goto done;
-    }
-
-    data->tid = tid;
-    set_thread_id( data );
 
     teb->SkipThreadAttach = !!(flags & THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH);
     teb->SkipLoaderInit = !!(flags & THREAD_CREATE_FLAGS_SKIP_LOADER_INIT);
@@ -1440,10 +1458,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         wow_teb->SkipLoaderInit = teb->SkipLoaderInit;
     }
 
-    data->request_fd = request_pipe[1];
-    data->start = start;
-    data->param = param;
-
     pthread_attr_init( &pthread_attr );
     pthread_attr_setstack( &pthread_attr, get_kernel_stack( data ), kernel_stack_size );
     pthread_attr_setguardsize( &pthread_attr, 0 );
@@ -1452,7 +1466,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     if (pthread_create( &pthread_id, &pthread_attr, (void * (*)(void *))start_thread, data ))
     {
         InterlockedDecrement( &nb_threads );
-        virtual_free_thread_data( data );
         status = STATUS_NO_MEMORY;
     }
     pthread_attr_destroy( &pthread_attr );
@@ -1462,7 +1475,8 @@ done:
     if (status)
     {
         NtClose( *handle );
-        close( request_pipe[1] );
+        close( data->request_fd );
+        virtual_free_thread_data( data );
         return status;
     }
     if (attr_list) status = update_attr_list( attr_list, *handle, &teb->ClientId, teb );
