@@ -1192,6 +1192,9 @@ static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
         return E_NOTIMPL;
     }
 
+    if(!sa)
+        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);
         if(FAILED(hres))
@@ -1232,6 +1235,9 @@ static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
         FIXME("arg %s not supported\n", debugstr_variant(arg));
         return E_NOTIMPL;
     }
+
+    if(!sa)
+        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
 
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);

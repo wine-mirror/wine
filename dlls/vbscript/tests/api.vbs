@@ -370,6 +370,22 @@ end sub
 call testLBoundError()
 call testUBoundError()
 
+sub testBoundUninitArray()
+    Dim u()
+    on error resume next
+    call Err.clear()
+    call UBound(u)
+    call ok(Err.number = 9, "UBound(uninit) Err.number = " & Err.number)
+    call Err.clear()
+    call LBound(u)
+    call ok(Err.number = 9, "LBound(uninit) Err.number = " & Err.number)
+    call Err.clear()
+    call UBound(u, 1)
+    call ok(Err.number = 9, "UBound(uninit,1) Err.number = " & Err.number)
+end sub
+
+call testBoundUninitArray()
+
 Dim newObject
 Set newObject = New ValClass
 newObject.myval = 1
