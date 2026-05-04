@@ -1247,6 +1247,7 @@ static int d2d_arc_to_bezier(const D2D_POINT_2F *start_point, const D2D1_ARC_SEG
     if (!d2d_arc_check_radius(rHalfChord2, fuzz2, &radius.x) ||
         !d2d_arc_check_radius(rHalfChord2, fuzz2, &radius.y))
     {
+        points[0] = arc->point;
         return 0;
     }
 
