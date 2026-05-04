@@ -4149,6 +4149,13 @@ static const char* debugstr_prop_id(const GUID *guid, DBPROPID id)
     {
         switch (id)
         {
+        case DBPROP_IRowset: return "DBPROP_IRowset";
+        case DBPROP_IColumnsRowset: return "DBPROP_IColumnsRowset";
+        case DBPROP_OWNINSERT: return "DBPROP_OWNINSERT";
+        case DBPROP_OWNUPDATEDELETE: return "DBPROP_OWNUPDATEDELETE";
+        case DBPROP_IRowsetChange: return "DBPROP_IRowsetChange";
+        case DBPROP_ISequentialStream: return "DBPROP_ISequentialStream";
+        case DBPROP_CANFETCHBACKWARDS: return "DBPROP_CANFETCHBACKWARDS";
         case DBPROP_OTHERUPDATEDELETE: return "DBPROP_OTHERUPDATEDELETE";
         case DBPROP_OTHERINSERT: return "DBPROP_OTHERINSERT";
         case DBPROP_CANHOLDROWS: return "DBPROP_CANHOLDROWS";
