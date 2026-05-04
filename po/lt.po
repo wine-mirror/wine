@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-25 18:28+0300\n"
+"PO-Revision-Date: 2026-05-04 21:55+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -5095,47 +5095,43 @@ msgid "Message 0x%1 not found in file %2.\n"
 msgstr "Pranešimas 0x%1 nerastas faile %2.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
-#, fuzzy
-#| msgid "Sector not found.\n"
 msgid "Scope not found.\n"
-msgstr "Sektorius nerastas.\n"
+msgstr "Sritis nerasta.\n"
 
 #: dlls/kernelbase/winerror.mc:1055
-#, fuzzy
-#| msgid "The specified device handle is invalid."
 msgid "The specified Central Access Policy is undefined.\n"
-msgstr "Nurodyta įrenginio rodyklė netinkama."
+msgstr "Nurodyta Centrinės prieigos strategija neapibrėžta.\n"
 
 #: dlls/kernelbase/winerror.mc:1060
 msgid "Central Access Policy from Active Directory is invalid.\n"
-msgstr ""
+msgstr "Centrinės prieigos strategija iš „Active Directory“ yra netinkama.\n"
 
 #: dlls/kernelbase/winerror.mc:1065
-#, fuzzy
-#| msgid "Host unreachable.\n"
 msgid "Device is unreachable.\n"
-msgstr "Serveris nepasiekiamas.\n"
+msgstr "Įrenginys nepasiekiamas.\n"
 
 #: dlls/kernelbase/winerror.mc:1070
 msgid "Target device has insufficient resources to complete the operation.\n"
-msgstr ""
+msgstr "Paskirties įrenginys turi nepakankamai resursų operacijai užbaigti.\n"
 
 #: dlls/kernelbase/winerror.mc:1075
 msgid ""
 "A data integrity checksum error occurred. Data in the file stream is "
 "corrupt.\n"
 msgstr ""
+"Įvyko duomenų nepažeidžiamumo kontrolinės sumos klaida. Duomenys failo "
+"sraute yra pažeisti.\n"
 
 #: dlls/kernelbase/winerror.mc:1080
 msgid ""
 "Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
 msgstr ""
+"Negalima modifikuoti ir branduolio, ir normalių išplėstinių atributų viena "
+"operacija.\n"
 
 #: dlls/kernelbase/winerror.mc:1085
-#, fuzzy
-#| msgid "Device does not exist.\n"
 msgid "Device does not support file-level TRIM.\n"
-msgstr "Įrenginys neegzistuoja.\n"
+msgstr "Įrenginys nepalaiko failų lygio TRIM.\n"
 
 #: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
