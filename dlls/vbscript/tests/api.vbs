@@ -2095,6 +2095,13 @@ Call ok(Minute(2.02083) = 30, "Minute(2.02083) = " & Minute(2.02083))
 Call ok(getVT(Second(now)) = "VT_I2", "getVT(Second(now)) = " & getVT(Second(now)))
 Call ok(Second(2) = 0, "Second(2) = " & Second(2))
 
+Call ok(getVT(Day(Null)) = "VT_NULL", "getVT(Day(Null)) = " & getVT(Day(Null)))
+Call ok(getVT(Month(Null)) = "VT_NULL", "getVT(Month(Null)) = " & getVT(Month(Null)))
+Call ok(getVT(Year(Null)) = "VT_NULL", "getVT(Year(Null)) = " & getVT(Year(Null)))
+Call ok(getVT(Hour(Null)) = "VT_NULL", "getVT(Hour(Null)) = " & getVT(Hour(Null)))
+Call ok(getVT(Minute(Null)) = "VT_NULL", "getVT(Minute(Null)) = " & getVT(Minute(Null)))
+Call ok(getVT(Second(Null)) = "VT_NULL", "getVT(Second(Null)) = " & getVT(Second(Null)))
+
 Sub testRGBError(arg1, arg2, arg3, error_num)
     on error resume next
     Dim x

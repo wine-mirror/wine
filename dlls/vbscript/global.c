@@ -2411,6 +2411,9 @@ static HRESULT Global_Day(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
+
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wDay);
 }
@@ -2421,6 +2424,9 @@ static HRESULT Global_Month(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     HRESULT hres;
 
     TRACE("(%s)\n", debugstr_variant(arg));
+
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
 
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMonth);
@@ -2479,6 +2485,9 @@ static HRESULT Global_Year(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
+
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wYear);
 }
@@ -2489,6 +2498,9 @@ static HRESULT Global_Hour(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
     HRESULT hres;
 
     TRACE("(%s)\n", debugstr_variant(arg));
+
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
 
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wHour);
@@ -2501,6 +2513,9 @@ static HRESULT Global_Minute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
+
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMinute);
 }
@@ -2511,6 +2526,9 @@ static HRESULT Global_Second(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     HRESULT hres;
 
     TRACE("(%s)\n", debugstr_variant(arg));
+
+    if (V_VT(arg) == VT_NULL)
+        return return_null(res);
 
     hres = to_system_time(This->ctx->lcid, arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wSecond);
