@@ -1182,7 +1182,6 @@ struct bluez_watcher_ctx
 {
     DBusConnection *connection;
     char *bluez_dbus_unique_name;
-    DBusPendingCall *init_device_list_call;
 
     /* struct bluez_watcher_event */
     struct list event_list;
@@ -1296,17 +1295,42 @@ static NTSTATUS bluez_dbus_get_unique_name_async( DBusConnection *connection, DB
     return success ? (*call ? STATUS_SUCCESS : STATUS_INTERNAL_ERROR) : STATUS_NO_MEMORY;
 }
 
+static NTSTATUS bluez_enumerate_objects( DBusMessage *reply, struct list *event_list );
+
+static void bluez_get_managed_objects_callback( DBusPendingCall *call, void *data )
+{
+    DBusMessage *reply = p_dbus_pending_call_steal_reply( call );
+    struct bluez_watcher_ctx *ctx = data;
+    DBusError error;
+    NTSTATUS status;
+
+    p_dbus_error_init( &error );
+    if (p_dbus_set_error_from_message( &error, reply ))
+        ERR( "Error getting object list from BlueZ: %s\n", dbgstr_dbus_error( &error ) );
+    else if ((status = bluez_enumerate_objects( reply, &ctx->event_list )))
+        ERR( "Error enumerating BlueZ objects: %x\n", status );
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+}
+
 /* Called once the BlueZ service has been activated by the system. */
 static void bluez_on_service_available( struct bluez_watcher_ctx *ctx )
 {
+    DBusPendingCall *call;
     NTSTATUS status;
 
     TRACE_(dbus)( "org.bluez available on %s, initializing bluetooth.\n", debugstr_a( ctx->bluez_dbus_unique_name ) );
 
     if ((status = bluez_register_auth_agent_async( ctx->connection )))
         ERR_(dbus)( "Failed to create async RegisterAgent call: %#x\n", status );
-    if ((status = bluez_get_objects_async( ctx->connection, &ctx->init_device_list_call )))
+    if ((status = bluez_get_objects_async( ctx->connection, &call )))
         ERR_(dbus)( "Failed to create async GetManagedObjects call: %#x\n", status );
+    else
+    {
+        if (!p_dbus_pending_call_set_notify( call, bluez_get_managed_objects_callback, ctx, NULL ))
+            p_dbus_pending_call_cancel( call );
+        p_dbus_pending_call_unref( call );
+    }
 }
 
 static void bluez_dbus_get_name_owner_callback( DBusPendingCall *call, void *data )
@@ -2511,12 +2535,6 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
 {
     struct bluez_watcher_event *event1, *event2;
 
-    if (watcher->init_device_list_call)
-    {
-        p_dbus_pending_call_cancel( watcher->init_device_list_call );
-        p_dbus_pending_call_unref( watcher->init_device_list_call );
-    }
-
     LIST_FOR_EACH_ENTRY_SAFE( event1, event2, &watcher->event_list, struct bluez_watcher_event, entry )
     {
         list_remove( &event1->entry );
@@ -2582,11 +2600,6 @@ done:
     p_dbus_error_free( &err );
     if (status)
     {
-        if (watcher_ctx->init_device_list_call)
-        {
-            p_dbus_pending_call_cancel( watcher_ctx->init_device_list_call );
-            p_dbus_pending_call_unref( watcher_ctx->init_device_list_call );
-        }
         p_dbus_connection_unref( watcher_ctx->connection );
         free( watcher_ctx->bluez_dbus_unique_name );
         free( watcher_ctx );
@@ -2711,38 +2724,6 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher, void *auth_agent,
             p_dbus_connection_unref( connection );
             TRACE( "Disconnected from DBus\n" );
             return STATUS_SUCCESS;
-        }
-
-        if (watcher_ctx->init_device_list_call != NULL
-            && p_dbus_pending_call_get_completed( watcher_ctx->init_device_list_call ))
-        {
-            DBusMessage *reply = p_dbus_pending_call_steal_reply( watcher_ctx->init_device_list_call );
-            DBusError error;
-            NTSTATUS status;
-
-            p_dbus_pending_call_unref( watcher_ctx->init_device_list_call );
-            watcher_ctx->init_device_list_call = NULL;
-
-            p_dbus_error_init( &error );
-            if (p_dbus_set_error_from_message( &error, reply ))
-            {
-                WARN( "Error getting object list from BlueZ: %s\n", dbgstr_dbus_error( &error ) );
-                p_dbus_error_free( &error );
-                p_dbus_message_unref( reply );
-                p_dbus_connection_unref( connection );
-                bluez_auth_agent_ctx_decref( auth_agent );
-                return STATUS_NO_MEMORY;
-            }
-            p_dbus_error_free( &error );
-            status = bluez_enumerate_objects( reply, &watcher_ctx->event_list );
-            p_dbus_message_unref( reply );
-            if (status != STATUS_SUCCESS)
-            {
-                WARN( "Error building initial bluetooth devices list: %#x\n", status );
-                p_dbus_connection_unref( connection );
-                bluez_auth_agent_ctx_decref( auth_agent );
-                return status;
-            }
         }
     }
 }
