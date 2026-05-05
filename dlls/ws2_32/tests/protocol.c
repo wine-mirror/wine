@@ -2637,14 +2637,14 @@ static void test_gethostbyname(void)
     for (count = 0; addr_list[count] != NULL; count++)
     {
         char *ip = inet_ntoa(*addr_list[count]);
-        if (!strcmp(ip, "127.0.0.1"))
+        if (!strcmp(ip, "127.0.0.1") || !strcmp(ip, "127.12.34.56") /* Wine hack loopback addr substitute */)
             local_ip = TRUE;
         if (winetest_debug > 1) trace("%s\n", ip);
     }
 
     if (local_ip)
     {
-        ok(count == 1, "expected 127.0.0.1 to be the only IP returned\n");
+        todo_wine ok(count == 1, "expected 127.0.0.1 to be the only IP returned\n");
         skip("Only the loopback address is present, skipping tests\n");
         return;
     }
