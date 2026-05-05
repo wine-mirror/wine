@@ -1179,6 +1179,8 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     TRACE("hkl %p flags %04x\n", hkl, flags);
 
+    NtUserPostMessage( NULL, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, is_ime_hkl(hkl) );
+
     if (hkl == thread_data->active_keyboard_layout)
         return TRUE;
 
