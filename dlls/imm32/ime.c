@@ -419,7 +419,7 @@ static UINT ime_set_comp_string( HIMC himc, LPARAM lparam )
 
 static LRESULT ime_ui_notify( HIMC himc, HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", hwnd, himc, debugstr_imn(wparam), lparam );
+    TRACE( "himc %p, hwnd %p, wparam %s, lparam %#Ix\n", himc, hwnd, debugstr_imn(wparam), lparam );
 
     switch (wparam)
     {
