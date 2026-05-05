@@ -1070,7 +1070,22 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     pthread_mutex_lock(&pointer->mutex);
     if (wl_surface && pointer->pending_warp)
     {
-        wayland_pointer_update_constraint(wl_surface, NULL, FALSE, TRUE);
+        if (process_wayland.wp_pointer_warp_v1)
+        {
+            wp_pointer_warp_v1_warp_pointer(
+                    process_wayland.wp_pointer_warp_v1,
+                    wl_surface,
+                    pointer->wl_pointer,
+                    wl_fixed_from_int(warp_x),
+                    wl_fixed_from_int(warp_y),
+                    pointer->enter_serial);
+            TRACE("warp_pointer hwnd=%p wayland_xy=%d,%d screen_xy=%d,%d\n",
+                    hwnd, warp_x, warp_y, cursor_pos.x, cursor_pos.y);
+        }
+        else
+        {
+            wayland_pointer_update_constraint(wl_surface, NULL, FALSE, TRUE);
+        }
         pointer->pending_warp = FALSE;
     }
 

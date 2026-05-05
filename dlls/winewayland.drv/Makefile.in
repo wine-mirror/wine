@@ -12,6 +12,7 @@ SOURCES = \
 	dllmain.c \
 	opengl.c \
 	pointer-constraints-unstable-v1.xml \
+	pointer-warp-v1.xml \
 	relative-pointer-unstable-v1.xml \
 	text-input-unstable-v3.xml \
 	viewporter.xml \
