@@ -802,7 +802,7 @@ static int __cdecl compare_routes_by_metric_asc( const void *left, const void *r
  */
 static struct hostent *get_local_ips( char *hostname )
 {
-    int numroutes = 0, i, j, default_routes = 0;
+    int numroutes = 0, i, j, default_routes = 0, matched_routes = 0;
     IP_ADAPTER_INFO *adapters = NULL, *k;
     struct hostent *hostlist = NULL;
     MIB_IPFORWARDTABLE *routes = NULL;
@@ -876,10 +876,25 @@ static struct hostent *get_local_ips( char *hostname )
             char *ip = k->IpAddressList.IpAddress.String;
 
             if (route_addrs[i].interface == k->Index)
+            {
                 route_addrs[i].addr.s_addr = inet_addr(ip);
+                if (memcmp( &route_addrs[i].addr.s_addr, magic_loopback_addr, 4 )) ++matched_routes;
+            }
         }
     }
 
+    if (matched_routes)
+    {
+        for (i = 0; i < numroutes; ++i)
+        {
+            if (!memcmp( &route_addrs[i].addr.s_addr, magic_loopback_addr, 4 ))
+            {
+                --numroutes;
+                memmove( &route_addrs[i], &route_addrs[i + 1], sizeof(*route_addrs) * (numroutes - i) );
+                --i;
+            }
+        }
+    }
     /* Allocate a hostent and enough memory for all the IPs,
      * including the NULL at the end of the list.
      */

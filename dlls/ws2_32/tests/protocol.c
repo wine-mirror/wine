@@ -2644,7 +2644,7 @@ static void test_gethostbyname(void)
 
     if (local_ip)
     {
-        todo_wine ok(count == 1, "expected 127.0.0.1 to be the only IP returned\n");
+        ok(count == 1, "expected 127.0.0.1 to be the only IP returned\n");
         skip("Only the loopback address is present, skipping tests\n");
         return;
     }
