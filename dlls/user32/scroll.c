@@ -240,6 +240,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
     case WM_KEYDOWN:
     case WM_KEYUP:
     case WM_ENABLE:
+    case WM_GETOBJECT:
     case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:

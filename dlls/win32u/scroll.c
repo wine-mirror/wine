@@ -1307,6 +1307,11 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         return 0;
 
+    case WM_GETOBJECT:
+        if ((LONG)lparam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x1000a;
+        return default_window_proc( hwnd, msg, wparam, lparam, ansi );
+
     case WM_SETFOCUS:
         {
             /* Create a caret when a ScrollBar get focus */
