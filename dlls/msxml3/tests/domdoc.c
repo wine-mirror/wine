@@ -5684,6 +5684,9 @@ static void test_cloneNode(void )
 {
     IXMLDOMDocumentType *doctype, *doctype2;
     IXMLDOMDocument2 *doc, *doc_clone;
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMCDATASection *cdata;
+    IXMLDOMComment *comment;
     IXMLDOMElement *element;
     IXMLDOMDocument *doc2;
     VARIANT_BOOL b;
@@ -5694,8 +5697,10 @@ static void test_cloneNode(void )
     IXMLDOMNode *node, *attr;
     IXMLDOMNode *node_clone;
     IXMLDOMNode *node_first;
+    IXMLDOMText *textnode;
     VARIANT v;
     HRESULT hr;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument2);
 
@@ -5866,6 +5871,91 @@ static void test_cloneNode(void )
     IXMLDOMNode_Release(node_clone);
 
     IXMLDOMNode_Release(node);
+
+    /* Text */
+    hr = IXMLDOMDocument2_createTextNode(doc, _bstr_("Text"), &textnode);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_cloneNode(textnode, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"Text"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMText_cloneNode(textnode, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"Text"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMText_Release(textnode);
+
+    /* CDATA */
+    hr = IXMLDOMDocument2_createCDATASection(doc, _bstr_("CData"), &cdata);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMCDATASection_cloneNode(cdata, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<![CDATA[CData]]>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMCDATASection_cloneNode(cdata, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<![CDATA[CData]]>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMCDATASection_Release(cdata);
+
+    /* PI */
+    hr = IXMLDOMDocument2_createProcessingInstruction(doc, _bstr_("target"), _bstr_("data"), &pi);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMProcessingInstruction_cloneNode(pi, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?target data?>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMProcessingInstruction_cloneNode(pi, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?target data?>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMProcessingInstruction_Release(pi);
+
+    /* Comment */
+    hr = IXMLDOMDocument2_createComment(doc, _bstr_("comment"), &comment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMComment_cloneNode(comment, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<!--comment-->"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMComment_cloneNode(comment, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<!--comment-->"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMComment_Release(comment);
+
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
 }
