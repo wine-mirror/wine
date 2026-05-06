@@ -1483,12 +1483,12 @@ static void wave_out_test_device(UINT_PTR device)
 
 static void wave_out_tests(void)
 {
+    DWORD preferred, voicecom, status;
     WAVEOUTCAPSA capsA;
     WAVEOUTCAPSW capsW;
     WAVEFORMATEX format;
     HWAVEOUT wout;
     MMRESULT rc;
-    DWORD preferred, status;
     UINT ndev,d;
 
     ndev=waveOutGetNumDevs();
@@ -1513,6 +1513,26 @@ static void wave_out_tests(void)
          0, (DWORD_PTR)&status);
     ok(rc == MMSYSERR_INVALPARAM || rc == MMSYSERR_BADDEVICEID, /* w2008+wvista */
        "waveOutMessage(DRVM_MAPPER_PREFERRED_GET) failed: %u\n", rc);
+
+    rc = waveOutMessage((HWAVEOUT)WAVE_MAPPER, DRVM_MAPPER_CONSOLEVOICECOM_GET,
+            (DWORD_PTR)&voicecom, (DWORD_PTR)&status);
+    ok((ndev == 0 && (rc == MMSYSERR_NODRIVER || rc == MMSYSERR_BADDEVICEID)) ||
+            rc == MMSYSERR_NOTSUPPORTED ||
+            rc == MMSYSERR_NOERROR, "waveOutMessage(DRVM_MAPPER_CONSOLEVOICECOM_GET) failed: %u\n", rc);
+
+    if(rc != MMSYSERR_NOTSUPPORTED)
+        ok((ndev == 0 && (voicecom == -1 || broken(voicecom != -1))) ||
+                voicecom < ndev, "Got invalid voicecom device: 0x%lx\n", voicecom);
+
+    rc = waveOutMessage((HWAVEOUT)WAVE_MAPPER, DRVM_MAPPER_CONSOLEVOICECOM_GET,
+         (DWORD_PTR)-1, 0);
+    ok(rc == MMSYSERR_INVALPARAM || rc == MMSYSERR_BADDEVICEID, /* w2008+wvista */
+       "waveOutMessage(DRVM_MAPPER_CONSOLEVOICECOM_GET) failed: %u\n", rc);
+
+    rc = waveOutMessage((HWAVEOUT)WAVE_MAPPER, DRVM_MAPPER_CONSOLEVOICECOM_GET,
+         0, (DWORD_PTR)&status);
+    ok(rc == MMSYSERR_INVALPARAM || rc == MMSYSERR_BADDEVICEID, /* w2008+wvista */
+       "waveOutMessage(DRVM_MAPPER_CONSOLEVOICECOM_GET) failed: %u\n", rc);
 
     rc=waveOutGetDevCapsA(ndev+1,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_BADDEVICEID,
