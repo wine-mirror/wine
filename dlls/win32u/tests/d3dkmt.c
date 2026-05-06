@@ -1627,7 +1627,8 @@ static void test_D3DKMTQueryAdapterInfo(void)
         case KMTQAITYPE_DRIVERVERSION:
         {
             D3DKMT_DRIVERVERSION *value = query_adapter_info.pPrivateDriverData;
-            ok( *value >= KMT_DRIVERVERSION_WDDM_1_3, "Expected %d >= %d.\n", *value, KMT_DRIVERVERSION_WDDM_1_3 );
+            ok( *value >= KMT_DRIVERVERSION_WDDM_3_1 || broken( *value >= KMT_DRIVERVERSION_WDDM_1_3 ),
+                "Expected %d >= %d.\n", *value, KMT_DRIVERVERSION_WDDM_3_1 );
             break;
         }
         default:
