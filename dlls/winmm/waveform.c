@@ -497,11 +497,10 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
 }
 
 static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
-        WINMM_MMDevice ***map, UINT *devcount, EDataFlow flow,
+        WINMM_MMDevice ***map, UINT *devcount, UINT *voicecom_id, EDataFlow flow,
         IMMDeviceEnumerator *devenum)
 {
     IMMDeviceCollection *devcoll;
-    UINT *voicecom_id;
     HRESULT hr;
 
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(devenum, flow,
@@ -515,7 +514,6 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
         return hr;
     }
 
-    voicecom_id = flow == eRender ? &g_out_voicecom_id : &g_in_voicecom_id;
     *voicecom_id = -1;
 
     if(*devcount > 0){
@@ -558,6 +556,7 @@ static HRESULT WINMM_EnumDevices(WINMM_MMDevice **devices,
             }
         }
 
+        IMMDevice_Release(voicecom_dev);
         IMMDevice_Release(def_dev);
 
         *devcount = count;
@@ -791,7 +790,7 @@ static BOOL WINAPI WINMM_InitMMDevices(INIT_ONCE *once, void *param, void **cont
     if(FAILED(hr))
         goto exit;
 
-    hr = WINMM_EnumDevices(&g_out_mmdevices, &g_out_map, &g_outmmdevices_count,
+    hr = WINMM_EnumDevices(&g_out_mmdevices, &g_out_map, &g_outmmdevices_count, &g_out_voicecom_id,
             eRender, g_devenum);
     if(FAILED(hr)){
         g_outmmdevices_count = 0;
@@ -799,7 +798,7 @@ static BOOL WINAPI WINMM_InitMMDevices(INIT_ONCE *once, void *param, void **cont
         goto exit;
     }
 
-    hr = WINMM_EnumDevices(&g_in_mmdevices, &g_in_map, &g_inmmdevices_count,
+    hr = WINMM_EnumDevices(&g_in_mmdevices, &g_in_map, &g_inmmdevices_count, &g_in_voicecom_id,
             eCapture, g_devenum);
     if(FAILED(hr)){
         g_inmmdevices_count = 0;
