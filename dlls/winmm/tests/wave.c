@@ -1502,7 +1502,7 @@ static void wave_out_tests(void)
 
     if(rc != MMSYSERR_NOTSUPPORTED)
         ok((ndev == 0 && (preferred == -1 || broken(preferred != -1))) ||
-                preferred < ndev, "Got invalid preferred device: 0x%lx\n", preferred);
+                preferred == 0, "Got invalid preferred device: 0x%lx\n", preferred);
 
     rc = waveOutMessage((HWAVEOUT)WAVE_MAPPER, DRVM_MAPPER_PREFERRED_GET,
          (DWORD_PTR)-1  , 0);
