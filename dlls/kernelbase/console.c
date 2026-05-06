@@ -473,7 +473,7 @@ static BOOL alloc_console( BOOL headless )
     if (headless) wcscat( cmd, L" --headless" );
     Wow64DisableWow64FsRedirection( &redir );
     ret = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS | EXTENDED_STARTUPINFO_PRESENT,
-                          NULL, NULL, &console_si.StartupInfo, &pi );
+                          NULL, system_dir, &console_si.StartupInfo, &pi );
     Wow64RevertWow64FsRedirection( redir );
 
     if (!ret || !create_console_connection( console)) goto error;
@@ -2253,7 +2253,7 @@ static HANDLE create_pseudo_console( COORD size, HANDLE input, HANDLE output, HA
     }
     Wow64DisableWow64FsRedirection( &redir );
     res = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS | EXTENDED_STARTUPINFO_PRESENT,
-                          NULL, NULL, &si.StartupInfo, &pi );
+                          NULL, system_dir, &si.StartupInfo, &pi );
     HeapFree( GetProcessHeap(), 0, si.lpAttributeList );
     Wow64RevertWow64FsRedirection( redir );
     NtClose( server );
