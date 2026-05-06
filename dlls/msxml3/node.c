@@ -1392,6 +1392,7 @@ void domnode_release(struct domnode *node)
         domnode_destroy_tree(top);
 }
 
+/* TODO: needs to handle allocation failures */
 HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **cloned)
 {
     struct domnode *object, *n, *child;
@@ -1424,6 +1425,9 @@ HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **clo
         node_clone_domnode(n, true, &child);
         domnode_insert_attribute(object, child, NULL);
     }
+
+    if (node->data)
+        object->data = SysAllocStringLen(node->data, SysStringLen(node->data));
 
     *cloned = object;
 
