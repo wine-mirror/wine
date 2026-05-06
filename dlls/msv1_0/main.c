@@ -163,18 +163,60 @@ static char *get_domain_arg( const WCHAR *domain, int domain_len )
     return ret;
 }
 
+
+static NTSTATUS map_auth_data( const void *auth_data, SEC_WINNT_AUTH_IDENTITY_W *id )
+{
+    const SEC_WINNT_AUTH_IDENTITY_EXA *exA = auth_data;
+    const SEC_WINNT_AUTH_IDENTITY_EXW *exW = auth_data;
+
+    if (exW->Version != SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        *id = *(SEC_WINNT_AUTH_IDENTITY_W *)auth_data;
+        return SEC_E_OK;
+    }
+    if (exW->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+    {
+        id->User           = exW->User;
+        id->UserLength     = exW->UserLength;
+        id->Domain         = exW->Domain;
+        id->DomainLength   = exW->DomainLength;
+        id->Password       = exW->Password;
+        id->PasswordLength = exW->PasswordLength;
+        id->Flags          = exW->Flags;
+        if (exW->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_wn(exW->PackageList, exW->PackageListLength) );
+    }
+    else
+    {
+        SEC_WINNT_AUTH_IDENTITY_A *idA = (SEC_WINNT_AUTH_IDENTITY_A *)id;
+
+        idA->User           = exA->User;
+        idA->UserLength     = exA->UserLength;
+        idA->Domain         = exA->Domain;
+        idA->DomainLength   = exA->DomainLength;
+        idA->Password       = exA->Password;
+        idA->PasswordLength = exA->PasswordLength;
+        idA->Flags          = exA->Flags;
+        if (exA->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_an((const char *)exA->PackageList, exA->PackageListLength) );
+    }
+    return SEC_E_OK;
+}
+
 #define WINE_NO_CACHED_CREDENTIALS 0x10000000
 static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal, ULONG cred_use, LUID *logon_id,
                                                        void *auth_data, void *get_key_fn, void *get_key_arg,
                                                        LSA_SEC_HANDLE *handle, TimeStamp *expiry )
 {
-    SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    SECURITY_STATUS status;
     struct ntlm_cred *cred = NULL;
     WCHAR *domain = NULL, *user = NULL, *password = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W *id = NULL;
+    SEC_WINNT_AUTH_IDENTITY_W id = {0};
 
     TRACE( "%s, %#lx, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal), cred_use, logon_id, auth_data,
            get_key_fn, get_key_arg, cred, expiry );
+
+    if (auth_data && (status = map_auth_data( auth_data, &id ))) return status;
 
     cred_use &= ~SECPKG_CRED_RESERVED;
     switch (cred_use)
@@ -204,38 +246,38 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
         cred->password_len = 0;
         cred->no_cached_credentials = (cred_use & WINE_NO_CACHED_CREDENTIALS);
 
-        if ((id = auth_data))
+        if (auth_data)
         {
             int domain_len = 0, user_len = 0, password_len = 0;
-            if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+            if (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
             {
-                if (id->DomainLength)
+                if (id.DomainLength)
                 {
-                    domain_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
+                    domain_len = MultiByteToWideChar( CP_ACP, 0, (char *)id.Domain, id.DomainLength, NULL, 0 );
                     if (!(domain = malloc( sizeof(WCHAR) * domain_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, domain, domain_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id.Domain, id.DomainLength, domain, domain_len );
                 }
-                if (id->UserLength)
+                if (id.UserLength)
                {
-                    user_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
+                    user_len = MultiByteToWideChar( CP_ACP, 0, (char *)id.User, id.UserLength, NULL, 0 );
                     if (!(user = malloc( sizeof(WCHAR) * user_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, user, user_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id.User, id.UserLength, user, user_len );
                 }
-                if (id->PasswordLength)
+                if (id.PasswordLength)
                 {
-                    password_len = MultiByteToWideChar( CP_ACP, 0,(char *)id->Password, id->PasswordLength, NULL, 0 );
+                    password_len = MultiByteToWideChar( CP_ACP, 0,(char *)id.Password, id.PasswordLength, NULL, 0 );
                     if (!(password = malloc( sizeof(WCHAR) * password_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, password, password_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id.Password, id.PasswordLength, password, password_len );
                 }
             }
             else
             {
-                domain = id->Domain;
-                domain_len = id->DomainLength;
-                user = id->User;
-                user_len = id->UserLength;
-                password = id->Password;
-                password_len = id->PasswordLength;
+                domain = id.Domain;
+                domain_len = id.DomainLength;
+                user = id.User;
+                user_len = id.UserLength;
+                password = id.Password;
+                password_len = id.PasswordLength;
             }
 
             TRACE( "username is %s\n", debugstr_wn(user, user_len) );
@@ -263,7 +305,7 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
     }
 
 done:
-    if (id && (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
+    if (auth_data && (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
     {
         free( domain );
         free( user );

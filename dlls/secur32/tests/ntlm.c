@@ -1348,6 +1348,7 @@ static void testAcquireCredentialsHandleW(void)
     SECURITY_STATUS ret;
     SEC_WINNT_AUTH_IDENTITY_A idA;
     SEC_WINNT_AUTH_IDENTITY_W id;
+    SEC_WINNT_AUTH_IDENTITY_EXW ex;
     PSecPkgInfoA pkg_info = NULL;
 
     if(QuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
@@ -1419,6 +1420,37 @@ static void testAcquireCredentialsHandleW(void)
     ok(ret == SEC_E_OK, "AcquireCredentialsHandeW() returned %s\n",
             getSecError(ret));
     FreeCredentialsHandle(&cred);
+
+    memset( &ex, 0, sizeof(ex) );
+    ex.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+    ex.Length = sizeof(id);
+    ex.User = (USHORT *)L"winetest";
+    ex.UserLength = ARRAY_SIZE( L"winetest" ) - 1;
+    ex.Domain = (USHORT *)L"winetest";
+    ex.DomainLength = ARRAY_SIZE( L"winetest" ) - 1;
+    ex.Password = (USHORT *)L"winetest";
+    ex.PasswordLength = ARRAY_SIZE( L"winetest" ) - 1;
+    ex.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+    ex.PackageList = (USHORT *)L"ntlm,!kerberos";
+    ex.PackageListLength = ARRAY_SIZE( L"ntlm,!kerberos" ) - 1;
+
+    ret = AcquireCredentialsHandleW( NULL, sec_pkg_nameW, SECPKG_CRED_OUTBOUND,
+                                     NULL, &ex, NULL, NULL, &cred, NULL );
+    ok( ret == SEC_E_OK, "got %#lx\n", ret );
+    FreeCredentialsHandle( &cred );
+
+    ex.PackageList = (USHORT *)L"nosuch";
+    ex.PackageListLength = ARRAY_SIZE( L"nosuch" );
+    ret = AcquireCredentialsHandleW( NULL, sec_pkg_nameW, SECPKG_CRED_OUTBOUND,
+                                     NULL, &ex, NULL, NULL, &cred, NULL );
+    ok( ret == SEC_E_OK, "got %#lx\n", ret );
+    FreeCredentialsHandle( &cred );
+
+    ex.Length = 0;
+    ret = AcquireCredentialsHandleW( NULL, sec_pkg_nameW, SECPKG_CRED_OUTBOUND,
+                                     NULL, &ex, NULL, NULL, &cred, NULL );
+    ok( ret == SEC_E_OK, "got %#lx\n", ret );
+    FreeCredentialsHandle( &cred );
 }
 
 static void test_cred_multiple_use(void)
