@@ -437,7 +437,7 @@ static int is_valid_view_addr( struct process *process, client_ptr_t addr, mem_s
     struct memory_view *view;
 
     if (!size) return 0;
-    if (addr & host_page_mask) return 0;
+    if (addr & (process->page_size - 1)) return 0;
     if (addr + size < addr) return 0;  /* overflow */
 
     /* check for overlapping view */

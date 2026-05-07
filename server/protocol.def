@@ -1154,6 +1154,7 @@ typedef volatile struct
     int          debug_level;  /* new debug level */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
+    unsigned int page_size;    /* client page size */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */

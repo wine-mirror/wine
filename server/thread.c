@@ -1751,6 +1751,7 @@ DECL_HANDLER(init_first_thread)
     struct process *process = current->process;
     int fd;
 
+    process->page_size = req->page_size;
     if (!init_thread( current, req->reply_fd, req->wait_fd )) return;
 
     current->unix_pid = process->unix_pid = req->unix_pid;

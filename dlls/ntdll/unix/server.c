@@ -1672,6 +1672,7 @@ size_t server_init_process(void)
         req->reply_fd    = reply_pipe;
         req->wait_fd     = data->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
+        req->page_size   = get_host_page_size();
         wine_server_set_reply( req, supported_machines, sizeof(supported_machines) );
         if (!(ret = wine_server_call( req )))
         {

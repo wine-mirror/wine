@@ -3733,6 +3733,16 @@ ULONG_PTR get_system_affinity_mask(void)
     return ((ULONG_PTR)1 << num_cpus) - 1;
 }
 
+
+/***********************************************************************
+ *           get_host_page_size
+ */
+UINT_PTR get_host_page_size(void)
+{
+    return host_page_size;
+}
+
+
 /***********************************************************************
  *           virtual_get_system_info
  */

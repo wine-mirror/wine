@@ -1173,6 +1173,8 @@ struct init_first_thread_request
     int          debug_level;
     int          reply_fd;
     int          wait_fd;
+    unsigned int page_size;
+    char __pad_36[4];
 };
 struct init_first_thread_reply
 {
@@ -7096,6 +7098,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 931
+#define SERVER_PROTOCOL_VERSION 932
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

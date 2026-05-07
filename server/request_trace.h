@@ -140,6 +140,7 @@ static void dump_init_first_thread_request( const struct init_first_thread_reque
     fprintf( stderr, ", debug_level=%d", req->debug_level );
     fprintf( stderr, ", reply_fd=%d", req->reply_fd );
     fprintf( stderr, ", wait_fd=%d", req->wait_fd );
+    fprintf( stderr, ", page_size=%08x", req->page_size );
 }
 
 static void dump_init_first_thread_reply( const struct init_first_thread_reply *req )
