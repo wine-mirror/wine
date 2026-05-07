@@ -4251,9 +4251,12 @@ static void test_replaceChild(void)
     IXMLDOMElement *element, *ba_element;
     IXMLDOMNode *fo_node, *ba_node, *lc_node, *removed_node, *temp_node;
     IXMLDOMNodeList *root_list, *fo_list;
+    IXMLDOMNode *node, *node2, *node3;
     IUnknown * unk1, *unk2;
     HRESULT hr;
+    VARIANT v;
     LONG len;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -4351,6 +4354,45 @@ static void test_replaceChild(void)
     IXMLDOMNode_Release(temp_node);
     IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
+
+    /* Attributes */
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = NODE_ATTRIBUTE;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("attr"), NULL, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = NODE_TEXT;
+    hr = IXMLDOMDocument_createNode(doc, v, NULL, NULL, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_put_text(node2, _bstr_("value"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = NODE_TEXT;
+    hr = IXMLDOMDocument_createNode(doc, v, NULL, NULL, &node3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_put_text(node3, _bstr_("value2"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_appendChild(node, node2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"attr=\"value\""), "Unexpected xml %s\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMNode_replaceChild(node, node3, node2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"attr=\"value2\""), "Unexpected xml %s\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNode_Release(node3);
+    IXMLDOMNode_Release(node2);
+    IXMLDOMNode_Release(node);
+
     IXMLDOMDocument_Release( doc );
 
     free_bstrs();

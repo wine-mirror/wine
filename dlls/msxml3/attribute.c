@@ -239,7 +239,7 @@ static HRESULT WINAPI domattr_insertBefore(IXMLDOMAttribute *iface, IXMLDOMNode*
 {
     domattr *attr = impl_from_IXMLDOMAttribute(iface);
 
-    FIXME("%p, %p, %s, %p needs test\n", iface, newNode, debugstr_variant(&refChild), old_node);
+    TRACE("%p, %p, %s, %p.\n", iface, newNode, debugstr_variant(&refChild), old_node);
 
     return node_insert_before(attr->node, newNode, &refChild, old_node);
 }
@@ -249,7 +249,7 @@ static HRESULT WINAPI domattr_replaceChild(IXMLDOMAttribute *iface, IXMLDOMNode 
 {
     domattr *attr = impl_from_IXMLDOMAttribute(iface);
 
-    FIXME("%p, %p, %p, %p needs tests\n", iface, newNode, oldNode, outOldNode);
+    TRACE("%p, %p, %p, %p.\n", iface, newNode, oldNode, outOldNode);
 
     return node_replace_child(attr->node, newNode, oldNode, outOldNode);
 }
