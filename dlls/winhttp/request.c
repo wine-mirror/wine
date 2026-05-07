@@ -3641,7 +3641,6 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, const void *buffer, DWORD to_w
 {
     DWORD ret;
     struct request *request;
-    BOOL async;
 
     TRACE( "%p, %p, %lu, %p\n", hrequest, buffer, to_write, written );
 
@@ -3657,9 +3656,9 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, const void *buffer, DWORD to_w
         return FALSE;
     }
 
-    if (!(async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) || request->hdr.recursion_count <= RECURSION_LIMIT)
+    if (!(request->connect->hdr.flags & WINHTTP_FLAG_ASYNC))
     {
-        ret = write_data( request, buffer, to_write, written, async );
+        ret = write_data( request, buffer, to_write, written, FALSE );
     }
     else
     {
