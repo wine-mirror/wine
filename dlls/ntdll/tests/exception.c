@@ -9122,6 +9122,56 @@ static void test_mrs_currentel(void)
     ok( result == 0, "expected 0, got %llx\n", result );
 }
 
+static BOOL got_misaligned_exception;
+
+static const DWORD misaligned_code[] =
+{
+    0xa9bf7bfd, /* stp x29, x30, [sp, #-16]! */
+    0x910003fd, /* mov x29, sp */
+    0x91003c00, /* add x0, x0, #15 */
+    0xc89ffc12, /* stlr x18, [x0] */
+    0xa8c17bfd, /* ldp x29, x30, [sp], #16 */
+    0xd65f03c0, /* ret */
+};
+
+static DWORD WINAPI misaligned_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                  CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    ok( rec->ExceptionCode == EXCEPTION_DATATYPE_MISALIGNMENT, "got: %08lx\n", rec->ExceptionCode );
+    ok( rec->NumberParameters == 0, "got: %ld\n", rec->NumberParameters );
+    ok( rec->ExceptionAddress == (void *)context->Pc, "got addr: %p, pc: %p\n", rec->ExceptionAddress, (void *)context->Pc );
+    got_misaligned_exception = TRUE;
+    context->Pc += 4;
+    return ExceptionContinueExecution;
+}
+
+static void test_misaligned(void)
+{
+    /* Windows, Linux, and macOS all set SCTLR_EL1.A = 0, so most instructions
+     * will not generate an alignment fault.
+     * When FEAT_LSE2 is not implemented, load/store-exclusive and atomic instructions
+     * will generate a fault on unaligned accesses.
+     * When FEAT_LSE2 is implemented there are fewer situations where a fault is generated,
+     * but one is non-atomic load-acquire/store-release instructions accessing across
+     * a 16-byte quantity when SCTLR_EL1.nAA is 0.
+     * (All Apple chips support FEAT_LSE2, as does the Snapdragon X Elite).
+     *
+     * Test that situation here: a store to memory with release semantics, where not
+     * all bytes of the store lie within a single 16-byte aligned block.
+     *
+     * Windows sets SCTLR_EL1.nAA to 1 so there's no fault.
+     * Linux and macOS set it to 0 and do fault.
+     */
+    DWORD64 buf[4];
+    got_misaligned_exception = FALSE;
+    run_exception_test( misaligned_exception_handler, NULL, misaligned_code,
+                        sizeof(misaligned_code), sizeof(misaligned_code),
+                        PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER,
+                        buf, 0 );
+    todo_wine
+    ok( !got_misaligned_exception, "Got misaligned data exception.\n" );
+}
+
 
 #endif  /* __aarch64__ */
 
@@ -12940,6 +12990,7 @@ START_TEST(exception)
     test_collided_unwind();
     test_restore_context();
     test_mrs_currentel();
+    test_misaligned();
 
 #elif defined(__arm__)
 
