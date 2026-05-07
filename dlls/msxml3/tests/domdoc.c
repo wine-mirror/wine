@@ -8674,9 +8674,13 @@ static void test_get_prefix(void)
 
 static void test_selectSingleNode(void)
 {
+    IXMLDOMElement *element;
+    IXMLDOMDocument2 *doc2;
+    IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     IXMLDOMNodeList *list;
     IXMLDOMNode *node;
+    DOMNodeType type;
     VARIANT_BOOL b;
     HRESULT hr;
     LONG len;
@@ -8732,6 +8736,47 @@ static void test_selectSingleNode(void)
     ok(len == 0, "got %ld\n", len);
     IXMLDOMNodeList_Release(list);
 
+    /* Select from detached tree. */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMDocument2, (void **)&doc2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>text</a>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Root location '/' refers to a subtree and not the owning document. */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("b"), &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_selectSingleNode(element, _bstr_("/"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(type == NODE_ELEMENT, "Unexpected node %d.\n", type);
+    IXMLDOMNode_Release(node);
+
+    /* Detached root has no parent */
+    hr = IXMLDOMElement_selectSingleNode(element, _bstr_(".."), &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("a"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_selectSingleNode(attr, _bstr_("/"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(type == NODE_ATTRIBUTE, "Unexpected node %d.\n", type);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMAttribute_selectSingleNode(attr, _bstr_(".."), &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMDocument2_Release(doc2);
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
