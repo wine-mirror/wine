@@ -2809,6 +2809,98 @@ static void test_named_item_no_dim_routes_to_host(void)
     ok(!ref, "ref = %ld\n", ref);
 }
 
+static void test_const_at_top_level(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    HRESULT hres;
+    LONG ref;
+
+    /* Top-level const behavior: succeeds when the constant name does not
+     * conflict with a member of the named item, fails (name-redefined,
+     * reported via OnScriptError) when it does. Without a named item
+     * context, top-level const always succeeds. Inside a Sub it works
+     * normally. */
+
+    script = create_vbscript();
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    hres = IActiveScript_AddNamedItem(script, L"visibleItem", SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    /* A top-level const whose name does NOT conflict with anything on the
+     * host succeeds on both. */
+    SET_EXPECT(GetItemInfo_visible);
+    SET_EXPECT(GetIDsOfNames_visible);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"const NEW_NAME = 99\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(GetItemInfo_visible);
+    CHECK_CALLED(GetIDsOfNames_visible);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* A top-level const whose name conflicts with a host member fails: the
+     * engine raises a name-redefined error and reports it via
+     * OnScriptError. */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnScriptError);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"const testCall = 1\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(FAILED(hres), "ParseScriptText returned: %08lx, expected failure\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* Without a named item context the parse succeeds on both. */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"const MIN = 1\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* const inside a Sub is accepted on both. */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse,
+            L"sub useConst\nconst INNER = 2\nif INNER <> 2 then err.raise 500\nend sub\nuseConst\n",
+            NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScriptParse_Release(parse);
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %ld\n", ref);
+}
+
 static void test_RegExp(void)
 {
     IRegExp2 *regexp;
@@ -3034,6 +3126,7 @@ START_TEST(vbscript)
         test_named_item_sub_shadowing();
         test_named_item_dim_shadowing();
         test_named_item_no_dim_routes_to_host();
+        test_const_at_top_level();
         test_scriptdisp();
         test_code_persistence();
         test_script_typeinfo();
