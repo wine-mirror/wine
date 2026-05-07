@@ -2375,6 +2375,14 @@ void WINAPI vkCmdSetDiscardRectangleModeEXT(VkCommandBuffer commandBuffer, VkDis
     UNIX_CALL(vkCmdSetDiscardRectangleModeEXT, &params);
 }
 
+void WINAPI vkCmdSetDispatchParametersARM(VkCommandBuffer commandBuffer, const VkDispatchParametersARM *pDispatchParameters)
+{
+    struct vkCmdSetDispatchParametersARM_params params;
+    params.commandBuffer = commandBuffer;
+    params.pDispatchParameters = pDispatchParameters;
+    UNIX_CALL(vkCmdSetDispatchParametersARM, &params);
+}
+
 void WINAPI vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stageMask)
 {
     struct vkCmdSetEvent_params params;
@@ -2594,6 +2602,14 @@ void WINAPI vkCmdSetPrimitiveRestartEnableEXT(VkCommandBuffer commandBuffer, VkB
     params.commandBuffer = commandBuffer;
     params.primitiveRestartEnable = primitiveRestartEnable;
     UNIX_CALL(vkCmdSetPrimitiveRestartEnableEXT, &params);
+}
+
+void WINAPI vkCmdSetPrimitiveRestartIndexEXT(VkCommandBuffer commandBuffer, uint32_t primitiveRestartIndex)
+{
+    struct vkCmdSetPrimitiveRestartIndexEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.primitiveRestartIndex = primitiveRestartIndex;
+    UNIX_CALL(vkCmdSetPrimitiveRestartIndexEXT, &params);
 }
 
 void WINAPI vkCmdSetPrimitiveTopology(VkCommandBuffer commandBuffer, VkPrimitiveTopology primitiveTopology)
@@ -4737,7 +4753,7 @@ VkResult WINAPI vkGetAccelerationStructureHandleNV(VkDevice device, VkAccelerati
     return params.result;
 }
 
-void WINAPI vkGetAccelerationStructureMemoryRequirementsNV(VkDevice device, const VkAccelerationStructureMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2KHR *pMemoryRequirements)
+void WINAPI vkGetAccelerationStructureMemoryRequirementsNV(VkDevice device, const VkAccelerationStructureMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
 {
     struct vkGetAccelerationStructureMemoryRequirementsNV_params params;
     NTSTATUS status;
@@ -6087,6 +6103,34 @@ void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice physicalDevice, V
     assert(!status && "vkGetPhysicalDeviceProperties2KHR");
 }
 
+VkResult WINAPI vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const VkQueueFamilyDataGraphPropertiesARM *pQueueFamilyDataGraphProperties, VkBaseOutStructure *pProperties)
+{
+    struct vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.queueFamilyIndex = queueFamilyIndex;
+    params.pQueueFamilyDataGraphProperties = pQueueFamilyDataGraphProperties;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM, &params);
+    assert(!status && "vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM");
+    return params.result;
+}
+
+VkResult WINAPI vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const VkQueueFamilyDataGraphPropertiesARM *pQueueFamilyDataGraphProperties, const VkDataGraphOpticalFlowImageFormatInfoARM *pOpticalFlowImageFormatInfo, uint32_t *pFormatCount, VkDataGraphOpticalFlowImageFormatPropertiesARM *pImageFormatProperties)
+{
+    struct vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.queueFamilyIndex = queueFamilyIndex;
+    params.pQueueFamilyDataGraphProperties = pQueueFamilyDataGraphProperties;
+    params.pOpticalFlowImageFormatInfo = pOpticalFlowImageFormatInfo;
+    params.pFormatCount = pFormatCount;
+    params.pImageFormatProperties = pImageFormatProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM, &params);
+    assert(!status && "vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM");
+    return params.result;
+}
+
 void WINAPI vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceQueueFamilyDataGraphProcessingEngineInfoARM *pQueueFamilyDataGraphProcessingEngineInfo, VkQueueFamilyDataGraphProcessingEnginePropertiesARM *pQueueFamilyDataGraphProcessingEngineProperties)
 {
     struct vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM_params params;
@@ -6455,7 +6499,7 @@ VkResult WINAPI vkGetPipelineKeyKHR(VkDevice device, const VkPipelineCreateInfoK
     return params.result;
 }
 
-VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
+VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoKHR *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
 {
     struct vkGetPipelinePropertiesEXT_params params;
     NTSTATUS status;
@@ -7030,6 +7074,17 @@ VkResult WINAPI vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *pPresen
     params.pPresentInfo = pPresentInfo;
     status = UNIX_CALL(vkQueuePresentKHR, &params);
     assert(!status && "vkQueuePresentKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkQueueSetPerfHintQCOM(VkQueue queue, const VkPerfHintInfoQCOM *pPerfHintInfo)
+{
+    struct vkQueueSetPerfHintQCOM_params params;
+    NTSTATUS status;
+    params.queue = queue;
+    params.pPerfHintInfo = pPerfHintInfo;
+    status = UNIX_CALL(vkQueueSetPerfHintQCOM, &params);
+    assert(!status && "vkQueueSetPerfHintQCOM");
     return params.result;
 }
 
@@ -7926,6 +7981,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetDiscardRectangleEXT", vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetDiscardRectangleEnableEXT", vkCmdSetDiscardRectangleEnableEXT},
     {"vkCmdSetDiscardRectangleModeEXT", vkCmdSetDiscardRectangleModeEXT},
+    {"vkCmdSetDispatchParametersARM", vkCmdSetDispatchParametersARM},
     {"vkCmdSetEvent", vkCmdSetEvent},
     {"vkCmdSetEvent2", vkCmdSetEvent2},
     {"vkCmdSetEvent2KHR", vkCmdSetEvent2KHR},
@@ -7951,6 +8007,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetPolygonModeEXT", vkCmdSetPolygonModeEXT},
     {"vkCmdSetPrimitiveRestartEnable", vkCmdSetPrimitiveRestartEnable},
     {"vkCmdSetPrimitiveRestartEnableEXT", vkCmdSetPrimitiveRestartEnableEXT},
+    {"vkCmdSetPrimitiveRestartIndexEXT", vkCmdSetPrimitiveRestartIndexEXT},
     {"vkCmdSetPrimitiveTopology", vkCmdSetPrimitiveTopology},
     {"vkCmdSetPrimitiveTopologyEXT", vkCmdSetPrimitiveTopologyEXT},
     {"vkCmdSetProvokingVertexModeEXT", vkCmdSetProvokingVertexModeEXT},
@@ -8269,6 +8326,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkQueueInsertDebugUtilsLabelEXT", vkQueueInsertDebugUtilsLabelEXT},
     {"vkQueueNotifyOutOfBandNV", vkQueueNotifyOutOfBandNV},
     {"vkQueuePresentKHR", vkQueuePresentKHR},
+    {"vkQueueSetPerfHintQCOM", vkQueueSetPerfHintQCOM},
     {"vkQueueSetPerformanceConfigurationINTEL", vkQueueSetPerformanceConfigurationINTEL},
     {"vkQueueSubmit", vkQueueSubmit},
     {"vkQueueSubmit2", vkQueueSubmit2},
@@ -8366,6 +8424,8 @@ static const struct vulkan_func vk_phys_dev_dispatch_table[] =
     {"vkGetPhysicalDeviceProperties", vkGetPhysicalDeviceProperties},
     {"vkGetPhysicalDeviceProperties2", vkGetPhysicalDeviceProperties2},
     {"vkGetPhysicalDeviceProperties2KHR", vkGetPhysicalDeviceProperties2KHR},
+    {"vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM},
+    {"vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM", vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM},
     {"vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM},
     {"vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM},
     {"vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR", vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR},
@@ -8442,6 +8502,8 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceProperties", vkGetPhysicalDeviceProperties},
     {"vkGetPhysicalDeviceProperties2", vkGetPhysicalDeviceProperties2},
     {"vkGetPhysicalDeviceProperties2KHR", vkGetPhysicalDeviceProperties2KHR},
+    {"vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM},
+    {"vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM", vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM},
     {"vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM},
     {"vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM", vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM},
     {"vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR", vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR},

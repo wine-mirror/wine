@@ -269,6 +269,7 @@ enum unix_call
     unix_vkCmdSetDiscardRectangleEXT,
     unix_vkCmdSetDiscardRectangleEnableEXT,
     unix_vkCmdSetDiscardRectangleModeEXT,
+    unix_vkCmdSetDispatchParametersARM,
     unix_vkCmdSetEvent,
     unix_vkCmdSetEvent2,
     unix_vkCmdSetEvent2KHR,
@@ -294,6 +295,7 @@ enum unix_call
     unix_vkCmdSetPolygonModeEXT,
     unix_vkCmdSetPrimitiveRestartEnable,
     unix_vkCmdSetPrimitiveRestartEnableEXT,
+    unix_vkCmdSetPrimitiveRestartIndexEXT,
     unix_vkCmdSetPrimitiveTopology,
     unix_vkCmdSetPrimitiveTopologyEXT,
     unix_vkCmdSetProvokingVertexModeEXT,
@@ -609,6 +611,8 @@ enum unix_call
     unix_vkGetPhysicalDeviceProperties,
     unix_vkGetPhysicalDeviceProperties2,
     unix_vkGetPhysicalDeviceProperties2KHR,
+    unix_vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM,
+    unix_vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM,
     unix_vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM,
     unix_vkGetPhysicalDeviceQueueFamilyDataGraphPropertiesARM,
     unix_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR,
@@ -686,6 +690,7 @@ enum unix_call
     unix_vkQueueInsertDebugUtilsLabelEXT,
     unix_vkQueueNotifyOutOfBandNV,
     unix_vkQueuePresentKHR,
+    unix_vkQueueSetPerfHintQCOM,
     unix_vkQueueSetPerformanceConfigurationINTEL,
     unix_vkQueueSubmit,
     unix_vkQueueSubmit2,
@@ -2574,6 +2579,12 @@ struct vkCmdSetDiscardRectangleModeEXT_params
     VkDiscardRectangleModeEXT discardRectangleMode;
 };
 
+struct vkCmdSetDispatchParametersARM_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkDispatchParametersARM *pDispatchParameters;
+};
+
 struct vkCmdSetEvent_params
 {
     VkCommandBuffer commandBuffer;
@@ -2737,6 +2748,12 @@ struct vkCmdSetPrimitiveRestartEnableEXT_params
 {
     VkCommandBuffer commandBuffer;
     VkBool32 primitiveRestartEnable;
+};
+
+struct vkCmdSetPrimitiveRestartIndexEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t primitiveRestartIndex;
 };
 
 struct vkCmdSetPrimitiveTopology_params
@@ -4320,7 +4337,7 @@ struct vkGetAccelerationStructureMemoryRequirementsNV_params
 {
     VkDevice device;
     const VkAccelerationStructureMemoryRequirementsInfoNV *pInfo;
-    VkMemoryRequirements2KHR *pMemoryRequirements;
+    VkMemoryRequirements2 *pMemoryRequirements;
 };
 
 struct vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT_params
@@ -5200,6 +5217,26 @@ struct vkGetPhysicalDeviceProperties2KHR_params
     VkPhysicalDeviceProperties2 *pProperties;
 };
 
+struct vkGetPhysicalDeviceQueueFamilyDataGraphEngineOperationPropertiesARM_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t queueFamilyIndex;
+    const VkQueueFamilyDataGraphPropertiesARM *pQueueFamilyDataGraphProperties;
+    VkBaseOutStructure *pProperties;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t queueFamilyIndex;
+    const VkQueueFamilyDataGraphPropertiesARM *pQueueFamilyDataGraphProperties;
+    const VkDataGraphOpticalFlowImageFormatInfoARM *pOpticalFlowImageFormatInfo;
+    uint32_t *pFormatCount;
+    VkDataGraphOpticalFlowImageFormatPropertiesARM *pImageFormatProperties;
+    VkResult result;
+};
+
 struct vkGetPhysicalDeviceQueueFamilyDataGraphProcessingEnginePropertiesARM_params
 {
     VkPhysicalDevice physicalDevice;
@@ -5451,7 +5488,7 @@ struct vkGetPipelineKeyKHR_params
 struct vkGetPipelinePropertiesEXT_params
 {
     VkDevice device;
-    const VkPipelineInfoEXT *pPipelineInfo;
+    const VkPipelineInfoKHR *pPipelineInfo;
     VkBaseOutStructure *pPipelineProperties;
     VkResult result;
 };
@@ -5835,6 +5872,13 @@ struct vkQueuePresentKHR_params
 {
     VkQueue queue;
     const VkPresentInfoKHR *pPresentInfo;
+    VkResult result;
+};
+
+struct vkQueueSetPerfHintQCOM_params
+{
+    VkQueue queue;
+    const VkPerfHintInfoQCOM *pPerfHintInfo;
     VkResult result;
 };
 
