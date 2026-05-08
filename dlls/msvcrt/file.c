@@ -1117,7 +1117,10 @@ int CDECL _commit(int fd)
     TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
 
     if (info->handle == INVALID_HANDLE_VALUE)
+    {
+        *_errno() = EBADF;
         ret = -1;
+    }
     else if (!FlushFileBuffers(info->handle))
     {
         if (GetLastError() == ERROR_INVALID_HANDLE)
