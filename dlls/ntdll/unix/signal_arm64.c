@@ -1145,25 +1145,26 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION,
                              .ExceptionAddress = (void *)PC_sig(sigcontext) };
-    DWORD64 esr = get_fault_esr( sigcontext );
+    DWORD64 esr = 0;
 
     save_context( &context, sigcontext );
 
-    if (!esr)
+#ifdef linux
+    /* Only SIGSEGV/SIGBUS expose ESR, synthesize it instead. */
+    switch (siginfo->si_code)
     {
-        /* debug exceptions do not update ESR on Linux, so we synthesize it. */
-        switch (siginfo->si_code)
-        {
-        case TRAP_TRACE:
-            esr = make_esr( 0x33, 0 );
-            break;
-        case TRAP_BRKPT:
-            if (!(PSTATE_sig( sigcontext ) & 0x10) && /* AArch64 (not WoW) */
-                !(PC_sig( sigcontext ) & 3))
-                esr = make_esr( 0x3c, *(ULONG *)PC_sig( sigcontext ) >> 5 );
-            break;
-        }
+    case TRAP_TRACE:
+        esr = make_esr( 0x33, 0 );
+        break;
+    case TRAP_BRKPT:
+        if (!(PSTATE_sig( sigcontext ) & 0x10) && /* AArch64 (not WoW) */
+            !(PC_sig( sigcontext ) & 3))
+            esr = make_esr( 0x3c, *(ULONG *)PC_sig( sigcontext ) >> 5 );
+        break;
     }
+#else
+    esr = get_fault_esr( sigcontext );
+#endif
 
     switch ((esr >> 26) & 0x3c)
     {
