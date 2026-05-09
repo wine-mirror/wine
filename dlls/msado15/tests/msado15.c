@@ -3217,6 +3217,11 @@ static void test_Command(void)
     hr = Parameters_Append(parameters, disp);
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    V_VT(&value) = VT_I4;
+    V_I4(&value) = 10;
+    hr = Parameters_Delete(parameters, value);
+    ok( hr == MAKE_ADO_HRESULT(adErrItemNotFound), "got %08lx\n", hr );
+
     IDispatch_Release(disp);
     _Parameter_Release(parameter);
 

@@ -212,12 +212,18 @@ static HRESULT WINAPI parameters_Append(Parameters *iface, IDispatch *object)
 static HRESULT WINAPI parameters_Delete(Parameters *iface, VARIANT index)
 {
     struct command *command = impl_from_Parameters( iface );
-    struct param_item *para, *para2;
+    struct param_item *para;
     int cnt = 0;
 
     TRACE( "%p, %s\n", iface, debugstr_variant(&index));
 
-    LIST_FOR_EACH_ENTRY_SAFE(para, para2, &command->parameters, struct param_item, entry)
+    if (V_VT(&index) != VT_I4)
+    {
+        FIXME("Unsupported index type %d\n", V_VT(&index));
+        return E_NOTIMPL;
+    }
+
+    LIST_FOR_EACH_ENTRY(para, &command->parameters, struct param_item, entry)
     {
         if(cnt == V_I4(&index))
         {
@@ -225,11 +231,12 @@ static HRESULT WINAPI parameters_Delete(Parameters *iface, VARIANT index)
             if (para->param)
                 IDispatch_Release(para->param);
             free(para);
-            break;
+            return S_OK;
         }
+        cnt++;
     }
 
-    return S_OK;
+    return MAKE_ADO_HRESULT(adErrItemNotFound);
 }
 
 static HRESULT WINAPI parameters_get_Item(Parameters *iface, VARIANT index, _Parameter **object)
