@@ -466,9 +466,20 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
     return E_NOTIMPL;
 }
 
+static int last_script_error;
+
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
+    EXCEPINFO ei = {0};
+    HRESULT hr;
     CHECK_EXPECT(OnScriptError);
+    hr = IActiveScriptError_GetExceptionInfo(pscripterror, &ei);
+    if(SUCCEEDED(hr)) {
+        last_script_error = HRESULT_CODE(ei.scode);
+        SysFreeString(ei.bstrSource);
+        SysFreeString(ei.bstrDescription);
+        SysFreeString(ei.bstrHelpFile);
+    }
     return E_NOTIMPL;
 }
 
@@ -2901,6 +2912,133 @@ static void test_const_at_top_level(void)
     ok(!ref, "ref = %ld\n", ref);
 }
 
+/* Cross-parse name redefinition semantics: parse declaration `first`,
+ * then declaration `second` on the same script object. Expect the
+ * second parse to either succeed (S_OK) or report `expected_err` via
+ * OnScriptError.  todo says the assertion should match native but
+ * Wine currently diverges. */
+static void run_cross_parse_redef(unsigned line, const WCHAR *first, const WCHAR *second,
+                                  int expected_err, BOOL todo)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *vbscript;
+    HRESULT hr;
+
+    vbscript = create_vbscript();
+    hr = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok_(__FILE__,line)(hr == S_OK, "QI(IActiveScriptParse) hr=%08lx\n", hr);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok_(__FILE__,line)(hr == S_OK, "SetScriptSite hr=%08lx\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parser);
+    ok_(__FILE__,line)(hr == S_OK, "InitNew hr=%08lx\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok_(__FILE__,line)(hr == S_OK, "SetScriptState hr=%08lx\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parser, first, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok_(__FILE__,line)(hr == S_OK, "first parse hr=%08lx for %s\n", hr, wine_dbgstr_w(first));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* The second parse may fire OnEnter/OnLeave (runtime errors) or not
+     * (compile-time errors). Allow them either way and only assert on
+     * the error code. */
+    last_script_error = 0;
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(OnScriptError);
+    hr = IActiveScriptParse_ParseScriptText(parser, second, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    expect_OnEnterScript = called_OnEnterScript = 0;
+    expect_OnLeaveScript = called_OnLeaveScript = 0;
+    expect_OnScriptError = called_OnScriptError = 0;
+    if (expected_err) {
+        todo_wine_if(todo) ok_(__FILE__,line)(last_script_error == expected_err,
+            "second parse for %s: expected err %d, got err=%d hr=%08lx\n",
+            wine_dbgstr_w(second), expected_err, last_script_error, hr);
+    } else {
+        todo_wine_if(todo) ok_(__FILE__,line)(hr == S_OK && last_script_error == 0,
+            "second parse for %s: expected S_OK, got hr=%08lx err=%d\n",
+            wine_dbgstr_w(second), hr, last_script_error);
+    }
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(vbscript);
+    ok_(__FILE__,line)(hr == S_OK, "Close hr=%08lx\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScriptParse_Release(parser);
+    IActiveScript_Release(vbscript);
+}
+
+#define cross_parse_ok(a, b)        run_cross_parse_redef(__LINE__, a, b, 0, FALSE)
+#define cross_parse_ok_todo(a, b)   run_cross_parse_redef(__LINE__, a, b, 0, TRUE)
+#define cross_parse_err(a, b, e)    run_cross_parse_redef(__LINE__, a, b, e, FALSE)
+#define cross_parse_err_todo(a, b, e) run_cross_parse_redef(__LINE__, a, b, e, TRUE)
+
+static void test_cross_parse_name_redef(void)
+{
+    /* Native rule:
+     * - Dim is permissive: never errors when re-declared cross-parse.
+     * - Sub/Func re-declare each other and Dim freely; only error when
+     *   the name already names a Class.
+     * - Const errors when the name is already in use by anything.
+     * - Class errors when the name is already in use by anything (any
+     *   kind, including itself).
+     */
+    static const WCHAR dim[]   = L"Dim N\n";
+    static const WCHAR konst[] = L"Const N = 1\n";
+    static const WCHAR sub[]   = L"Sub N\nEnd Sub\n";
+    static const WCHAR func[]  = L"Function N\nEnd Function\n";
+    static const WCHAR cls[]   = L"Class N\nEnd Class\n";
+
+    /* Anything followed by Dim: native always accepts. Wine currently
+     * errors -- needs the over-aggressive var loop dropped. */
+    cross_parse_ok_todo(dim,   dim);
+    cross_parse_ok_todo(konst, dim);
+    cross_parse_ok_todo(sub,   dim);
+    cross_parse_ok_todo(func,  dim);
+    cross_parse_ok_todo(cls,   dim);
+
+    /* Class-then-X: native errors for Const/Sub/Func because the name
+     * is taken. Wine currently allows -- needs added cross-parse check. */
+    cross_parse_err_todo(cls, konst, 1041);
+    cross_parse_err_todo(cls, sub,   1041);
+    cross_parse_err_todo(cls, func,  1041);
+    cross_parse_err     (cls, cls,   1041); /* Wine already catches this */
+
+    /* Cases Wine and native already agree on. */
+    cross_parse_ok      (dim,   sub);
+    cross_parse_ok      (dim,   func);
+    cross_parse_ok      (sub,   sub);
+    cross_parse_ok      (sub,   func);
+    cross_parse_ok      (func,  sub);
+    cross_parse_ok      (func,  func);
+    cross_parse_ok      (konst, sub);
+    cross_parse_ok      (konst, func);
+    cross_parse_err     (dim,   konst, 1041);
+    cross_parse_err     (dim,   cls,   1041);
+    cross_parse_err     (konst, konst, 1041);
+    cross_parse_err     (konst, cls,   1041);
+    cross_parse_err     (sub,   konst, 1041);
+    cross_parse_err     (sub,   cls,   1041);
+    cross_parse_err     (func,  konst, 1041);
+    cross_parse_err     (func,  cls,   1041);
+}
+
 static void test_RegExp(void)
 {
     IRegExp2 *regexp;
@@ -3127,6 +3265,7 @@ START_TEST(vbscript)
         test_named_item_dim_shadowing();
         test_named_item_no_dim_routes_to_host();
         test_const_at_top_level();
+        test_cross_parse_name_redef();
         test_scriptdisp();
         test_code_persistence();
         test_script_typeinfo();
