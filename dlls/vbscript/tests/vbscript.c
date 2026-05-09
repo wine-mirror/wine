@@ -1550,6 +1550,266 @@ static void test_script_typeinfo(void)
     IActiveScript_Release(vbscript);
 }
 
+static void test_vbdisp_typeinfo(void)
+{
+    IActiveScriptParse *parser;
+    IDispatchEx *obj_disp;
+    IActiveScript *vbscript;
+    ITypeInfo *typeinfo, *typeinfo2;
+    FUNCDESC *funcdesc;
+    VARDESC *vardesc;
+    INT implTypeFlags;
+    UINT count;
+    HREFTYPE reftype;
+    MEMBERID memid;
+    TYPEATTR *attr;
+    HRESULT hr;
+    WCHAR str[64], *names = str;
+    BSTR bstr, bstrs[5];
+    VARIANT var_result;
+    void *obj;
+
+    vbscript = create_vbscript();
+
+    hr = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hr == S_OK, "Could not get IActiveScriptParse iface: %08lx\n", hr);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08lx\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parser);
+    ok(hr == S_OK, "InitNew failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    parse_script(parser,
+        L"class C\n"
+        "    dim x\n"
+        "    public sub method\n    end sub\n"
+        "    public function add(a, b)\n"
+        "        add = a + b\n"
+        "    end function\n"
+        "    public property get val\n"
+        "        val = x\n"
+        "    end property\n"
+        "    public property let val(v)\n"
+        "        x = v\n"
+        "    end property\n"
+        "    public default property get defprop\n"
+        "        defprop = x\n"
+        "    end property\n"
+        "    private function strret\n"
+        "        strret = \"ret\"\n"
+        "    end function\n"
+        "    private sub helper\n    end sub\n"
+        "    private y\n"
+        "end class\n");
+
+    /* SCRIPTTEXT_ISEXPRESSION to obtain the class instance dispatch directly. */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    V_VT(&var_result) = VT_EMPTY;
+    bstr = SysAllocString(L"new C");
+    hr = IActiveScriptParse_ParseScriptText(parser, bstr, NULL, NULL, NULL, 0, 0,
+            SCRIPTTEXT_ISEXPRESSION, &var_result, NULL);
+    SysFreeString(bstr);
+    ok(hr == S_OK, "ParseScriptText(new C) failed: %08lx\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    ok(V_VT(&var_result) == VT_DISPATCH, "Unexpected vt %d\n", V_VT(&var_result));
+
+    if (V_VT(&var_result) != VT_DISPATCH || !V_DISPATCH(&var_result))
+    {
+        skip("Could not get class instance dispatch, skipping vbdisp typeinfo tests\n");
+        VariantClear(&var_result);
+        goto done;
+    }
+    hr = IDispatch_QueryInterface(V_DISPATCH(&var_result), &IID_IDispatchEx, (void**)&obj_disp);
+    ok(hr == S_OK, "QI(IDispatchEx) failed: %08lx\n", hr);
+    VariantClear(&var_result);
+
+    hr = IDispatchEx_GetTypeInfoCount(obj_disp, &count);
+    ok(hr == S_OK, "GetTypeInfoCount failed: %08lx\n", hr);
+    ok(count == 1, "Unexpected count %u\n", count);
+
+    hr = IDispatchEx_GetTypeInfo(obj_disp, 1, LOCALE_USER_DEFAULT, &typeinfo);
+    ok(hr == DISP_E_BADINDEX, "GetTypeInfo(1) returned: %08lx\n", hr);
+
+    hr = IDispatchEx_GetTypeInfo(obj_disp, 0, LOCALE_USER_DEFAULT, &typeinfo);
+    ok(hr == S_OK, "GetTypeInfo failed: %08lx\n", hr);
+    hr = IDispatchEx_GetTypeInfo(obj_disp, 0, LOCALE_USER_DEFAULT, &typeinfo2);
+    ok(hr == S_OK, "GetTypeInfo failed: %08lx\n", hr);
+    ok(typeinfo != typeinfo2, "TypeInfo was not supposed to be shared.\n");
+    ITypeInfo_Release(typeinfo2);
+
+    hr = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation(MEMBERID_NIL) failed: %08lx\n", hr);
+    ok(!lstrcmpW(bstr, L"C"), "Unexpected class name %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &attr);
+    ok(hr == S_OK, "GetTypeAttr failed: %08lx\n", hr);
+    ok(attr->typekind == TKIND_DISPATCH, "Unexpected typekind %u\n", attr->typekind);
+    /* On Wine, oleaut32 CreateTypeLib2 currently adds 7 phantom inherited
+     * IDispatch methods to TKIND_DISPATCH typeinfos, inflating cFuncs
+     * from 4 to 11 and zeroing cImplTypes. */
+    todo_wine ok(attr->cFuncs == 4, "Unexpected cFuncs %u\n", attr->cFuncs);
+    ok(attr->cVars == 1, "Unexpected cVars %u\n", attr->cVars);
+    todo_wine ok(attr->cImplTypes == 1, "Unexpected cImplTypes %u\n", attr->cImplTypes);
+    ok(attr->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "Unexpected wTypeFlags 0x%x\n", attr->wTypeFlags);
+    ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
+
+    wcscpy(str, L"method");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(method) failed: %08lx\n", hr);
+    hr = ITypeInfo_GetFuncDesc(typeinfo, 0, &funcdesc);
+    ok(hr == S_OK, "GetFuncDesc failed: %08lx\n", hr);
+    ok(funcdesc->funckind == FUNC_DISPATCH, "Unexpected funckind %u\n", funcdesc->funckind);
+    /* Wine's phantom IDispatch methods occupy slots 0-6, so func[0] is
+     * QueryInterface (invkind reported as PROPERTYGET due to a separate
+     * Wine bug) instead of our 'method'. */
+    todo_wine ok(funcdesc->invkind == INVOKE_FUNC, "Unexpected invkind %u\n", funcdesc->invkind);
+    ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);
+
+    wcscpy(str, L"add");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(add) failed: %08lx\n", hr);
+    hr = ITypeInfo_GetNames(typeinfo, memid, bstrs, ARRAY_SIZE(bstrs), &count);
+    ok(hr == S_OK, "GetNames(add) failed: %08lx\n", hr);
+    ok(count == 3, "Unexpected name count %u\n", count);
+    ok(!lstrcmpW(bstrs[0], L"add"), "Unexpected name[0] %s\n", wine_dbgstr_w(bstrs[0]));
+    ok(!lstrcmpW(bstrs[1], L"a"), "Unexpected name[1] %s\n", wine_dbgstr_w(bstrs[1]));
+    ok(!lstrcmpW(bstrs[2], L"b"), "Unexpected name[2] %s\n", wine_dbgstr_w(bstrs[2]));
+    SysFreeString(bstrs[0]);
+    SysFreeString(bstrs[1]);
+    SysFreeString(bstrs[2]);
+
+    wcscpy(str, L"val");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(val) failed: %08lx\n", hr);
+    hr = ITypeInfo_GetDocumentation(typeinfo, memid, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation(val) failed: %08lx\n", hr);
+    ok(!lstrcmpW(bstr, L"val"), "Unexpected name %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    wcscpy(str, L"defprop");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(defprop) failed: %08lx\n", hr);
+    hr = ITypeInfo_GetDocumentation(typeinfo, memid, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation(defprop) failed: %08lx\n", hr);
+    ok(!lstrcmpW(bstr, L"defprop"), "Unexpected name %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = ITypeInfo_GetFuncDesc(typeinfo, 4, &funcdesc);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetFuncDesc(4) returned: %08lx\n", hr);
+
+    hr = ITypeInfo_GetVarDesc(typeinfo, 0, &vardesc);
+    ok(hr == S_OK, "GetVarDesc(0) failed: %08lx\n", hr);
+    ok(vardesc->varkind == VAR_DISPATCH, "Unexpected varkind %u\n", vardesc->varkind);
+    ok(vardesc->elemdescVar.tdesc.vt == VT_VARIANT, "Unexpected var vt %d\n", vardesc->elemdescVar.tdesc.vt);
+    hr = ITypeInfo_GetDocumentation(typeinfo, vardesc->memid, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation failed: %08lx\n", hr);
+    ok(!lstrcmpW(bstr, L"x"), "Unexpected var name %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    ITypeInfo_ReleaseVarDesc(typeinfo, vardesc);
+
+    hr = ITypeInfo_GetVarDesc(typeinfo, 1, &vardesc);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetVarDesc(1) returned: %08lx\n", hr);
+
+    wcscpy(str, L"METHOD");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(METHOD) failed: %08lx\n", hr);
+    wcscpy(str, L"strret");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames(strret) returned: %08lx\n", hr);
+    wcscpy(str, L"helper");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames(helper) returned: %08lx\n", hr);
+    wcscpy(str, L"y");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames(y) returned: %08lx\n", hr);
+    wcscpy(str, L"nonexistent");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames(nonexistent) returned: %08lx\n", hr);
+
+    wcscpy(str, L"method");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames(method) failed: %08lx\n", hr);
+    hr = ITypeInfo_GetNames(typeinfo, memid, bstrs, ARRAY_SIZE(bstrs), &count);
+    ok(hr == S_OK, "GetNames failed: %08lx\n", hr);
+    ok(count == 1, "Unexpected count %u\n", count);
+    ok(!lstrcmpW(bstrs[0], L"method"), "Unexpected name %s\n", wine_dbgstr_w(bstrs[0]));
+    SysFreeString(bstrs[0]);
+
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, 0, &implTypeFlags);
+    ok(hr == S_OK, "GetImplTypeFlags failed: %08lx\n", hr);
+    ok(implTypeFlags == 0, "Unexpected implTypeFlags 0x%x\n", implTypeFlags);
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, 1, &implTypeFlags);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetImplTypeFlags(1) returned: %08lx\n", hr);
+
+    /* IDispatch parent. Wine's CreateTypeLib2 returns success here
+     * but the resulting reftype isn't usable via GetRefTypeInfo. */
+    hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, 0, &reftype);
+    ok(hr == S_OK, "GetRefTypeOfImplType failed: %08lx\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, &typeinfo2);
+        todo_wine ok(hr == S_OK, "GetRefTypeInfo failed: %08lx\n", hr);
+        if(SUCCEEDED(hr)) {
+            hr = ITypeInfo_GetDocumentation(typeinfo2, MEMBERID_NIL, &bstr, NULL, NULL, NULL);
+            ok(hr == S_OK, "GetDocumentation failed: %08lx\n", hr);
+            ok(!lstrcmpW(bstr, L"IDispatch"), "Unexpected TypeInfo name %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+            ITypeInfo_Release(typeinfo2);
+        }
+    }
+
+    hr = ITypeInfo_GetMops(typeinfo, MEMBERID_NIL, &bstr);
+    ok(hr == S_OK, "GetMops failed: %08lx\n", hr);
+    ok(!bstr, "Unexpected non-null string %s\n", wine_dbgstr_w(bstr));
+
+    obj = (void*)0xdeadbeef;
+    hr = ITypeInfo_CreateInstance(typeinfo, NULL, NULL, &obj);
+    /* Wine returns E_INVALIDARG instead of TYPE_E_BADMODULEKIND. */
+    todo_wine ok(hr == TYPE_E_BADMODULEKIND, "CreateInstance returned: %08lx\n", hr);
+    ok(!obj, "Unexpected non-null obj %p.\n", obj);
+    obj = (void*)0xdeadbeef;
+    wcscpy(str, L"method");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames failed: %08lx\n", hr);
+    hr = ITypeInfo_AddressOfMember(typeinfo, memid, INVOKE_FUNC, &obj);
+    ok(hr == TYPE_E_BADMODULEKIND, "AddressOfMember returned: %08lx\n", hr);
+    /* Wine doesn't zero obj on failure. */
+    todo_wine ok(!obj, "Unexpected non-null obj %p.\n", obj);
+    bstr = (BSTR)0xdeadbeef;
+    hr = ITypeInfo_GetDllEntry(typeinfo, memid, INVOKE_FUNC, &bstr, NULL, NULL);
+    ok(hr == TYPE_E_BADMODULEKIND, "GetDllEntry returned: %08lx\n", hr);
+    ok(!bstr, "Unexpected non-null str %p.\n", bstr);
+
+    ITypeInfo_Release(typeinfo);
+    IDispatchEx_Release(obj_disp);
+
+done:
+    IActiveScriptParse_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(vbscript);
+    ok(hr == S_OK, "Close failed: %08lx\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScript_Release(vbscript);
+}
+
 static void test_vbscript(void)
 {
     IActiveScriptParseProcedure2 *parse_proc;
@@ -3266,6 +3526,7 @@ START_TEST(vbscript)
         test_scriptdisp();
         test_code_persistence();
         test_script_typeinfo();
+        test_vbdisp_typeinfo();
         test_RegExp();
         test_RegExp_Replace();
     }else {

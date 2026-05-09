@@ -1726,6 +1726,17 @@ Call ok(TypeName(collectionObj) = "Object", "TypeName(collectionObj) = " & TypeN
 Dim regex
 set regex = new RegExp
 Call ok(TypeName(regex) = "IRegExp2", "TypeName(regex) = " & TypeName(regex))
+
+' TypeName for VBScript class instances
+Dim emptyClsObj
+Set emptyClsObj = New EmptyClass
+Call ok(TypeName(emptyClsObj) = "EmptyClass", "TypeName(EmptyClass) = " & TypeName(emptyClsObj))
+Call ok(getVT(TypeName(emptyClsObj)) = "VT_BSTR", "getVT(TypeName(EmptyClass)) = " & getVT(TypeName(emptyClsObj)))
+Dim valClsObj
+Set valClsObj = New ValClass
+Call ok(TypeName(valClsObj) = "ValClass", "TypeName(ValClass) = " & TypeName(valClsObj))
+Set emptyClsObj = Nothing
+Call ok(TypeName(emptyClsObj) = "Nothing", "TypeName after Set Nothing = " & TypeName(emptyClsObj))
 Dim ec
 set ec = new EmptyClass
 Call ok(TypeName(ec) = "EmptyClass", "TypeName(EmptyClass) = " & TypeName(ec))
