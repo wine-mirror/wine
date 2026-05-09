@@ -2915,10 +2915,9 @@ static void test_const_at_top_level(void)
 /* Cross-parse name redefinition semantics: parse declaration `first`,
  * then declaration `second` on the same script object. Expect the
  * second parse to either succeed (S_OK) or report `expected_err` via
- * OnScriptError.  todo says the assertion should match native but
- * Wine currently diverges. */
+ * OnScriptError. */
 static void run_cross_parse_redef(unsigned line, const WCHAR *first, const WCHAR *second,
-                                  int expected_err, BOOL todo)
+                                  int expected_err)
 {
     IActiveScriptParse *parser;
     IActiveScript *vbscript;
@@ -2962,11 +2961,11 @@ static void run_cross_parse_redef(unsigned line, const WCHAR *first, const WCHAR
     expect_OnLeaveScript = called_OnLeaveScript = 0;
     expect_OnScriptError = called_OnScriptError = 0;
     if (expected_err) {
-        todo_wine_if(todo) ok_(__FILE__,line)(last_script_error == expected_err,
+        ok_(__FILE__,line)(last_script_error == expected_err,
             "second parse for %s: expected err %d, got err=%d hr=%08lx\n",
             wine_dbgstr_w(second), expected_err, last_script_error, hr);
     } else {
-        todo_wine_if(todo) ok_(__FILE__,line)(hr == S_OK && last_script_error == 0,
+        ok_(__FILE__,line)(hr == S_OK && last_script_error == 0,
             "second parse for %s: expected S_OK, got hr=%08lx err=%d\n",
             wine_dbgstr_w(second), hr, last_script_error);
     }
@@ -2984,10 +2983,8 @@ static void run_cross_parse_redef(unsigned line, const WCHAR *first, const WCHAR
     IActiveScript_Release(vbscript);
 }
 
-#define cross_parse_ok(a, b)        run_cross_parse_redef(__LINE__, a, b, 0, FALSE)
-#define cross_parse_ok_todo(a, b)   run_cross_parse_redef(__LINE__, a, b, 0, TRUE)
-#define cross_parse_err(a, b, e)    run_cross_parse_redef(__LINE__, a, b, e, FALSE)
-#define cross_parse_err_todo(a, b, e) run_cross_parse_redef(__LINE__, a, b, e, TRUE)
+#define cross_parse_ok(a, b)     run_cross_parse_redef(__LINE__, a, b, 0)
+#define cross_parse_err(a, b, e) run_cross_parse_redef(__LINE__, a, b, e)
 
 static void test_cross_parse_name_redef(void)
 {
@@ -3007,17 +3004,17 @@ static void test_cross_parse_name_redef(void)
 
     /* Anything followed by Dim: native always accepts. Wine currently
      * errors -- needs the over-aggressive var loop dropped. */
-    cross_parse_ok_todo(dim,   dim);
-    cross_parse_ok_todo(konst, dim);
-    cross_parse_ok_todo(sub,   dim);
-    cross_parse_ok_todo(func,  dim);
-    cross_parse_ok_todo(cls,   dim);
+    cross_parse_ok(dim,   dim);
+    cross_parse_ok(konst, dim);
+    cross_parse_ok(sub,   dim);
+    cross_parse_ok(func,  dim);
+    cross_parse_ok(cls,   dim);
 
     /* Class-then-X: native errors for Const/Sub/Func because the name
      * is taken. Wine currently allows -- needs added cross-parse check. */
-    cross_parse_err_todo(cls, konst, 1041);
-    cross_parse_err_todo(cls, sub,   1041);
-    cross_parse_err_todo(cls, func,  1041);
+    cross_parse_err(cls, konst, 1041);
+    cross_parse_err(cls, sub,   1041);
+    cross_parse_err(cls, func,  1041);
     cross_parse_err     (cls, cls,   1041); /* Wine already catches this */
 
     /* Cases Wine and native already agree on. */

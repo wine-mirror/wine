@@ -2213,22 +2213,65 @@ static BOOL lookup_script_identifier(compile_ctx_t *ctx, script_ctx_t *script, c
     return FALSE;
 }
 
-static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
+/* Returns TRUE if `name` matches a class declared in any prior parse
+ * still kept on this script. Used to enforce native semantics where
+ * Sub/Function/Const declarations cannot reuse an existing class name. */
+static BOOL lookup_existing_class(compile_ctx_t *ctx, script_ctx_t *script, const WCHAR *name)
 {
-    unsigned i, var_cnt = ctx->code->main_code.var_cnt;
-    var_desc_t *vars = ctx->code->main_code.vars;
+    ScriptDisp *contexts[] = {
+        ctx->code->named_item ? ctx->code->named_item->script_obj : NULL,
+        script->script_obj
+    };
     class_desc_t *class;
+    vbscode_t *code;
+    unsigned c;
 
-    for(i = 0; i < var_cnt; i++) {
-        if(lookup_script_identifier(ctx, script, vars[i].name)) {
-            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+    for(c = 0; c < ARRAY_SIZE(contexts); c++) {
+        if(!contexts[c]) continue;
+        for(class = contexts[c]->classes; class; class = class->next) {
+            if(!vbs_wcsicmp(class->name, name))
+                return TRUE;
         }
     }
 
-    for(class = ctx->code->classes; class; class = class->next) {
-        if(lookup_script_identifier(ctx, script, class->name)) {
-            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+    LIST_FOR_EACH_ENTRY(code, &script->code_list, vbscode_t, entry) {
+        if(!code->pending_exec || (code->named_item && code->named_item != ctx->code->named_item))
+            continue;
+        for(class = code->classes; class; class = class->next) {
+            if(!vbs_wcsicmp(class->name, name))
+                return TRUE;
         }
+    }
+    return FALSE;
+}
+
+static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
+{
+    class_desc_t *class;
+    function_t *func;
+    const_decl_t *konst;
+
+    /* Native rule: top-level Dim is permissive and never errors when
+     * cross-parse re-declared, so we don't check vars here. Const is
+     * caught at runtime by interp_const, so we don't double-check.
+     *
+     * What this layer enforces: declaring a new Class, or a Sub /
+     * Function / Const, when the name is already used by a Class from
+     * a previous parse. */
+
+    for(class = ctx->code->classes; class; class = class->next) {
+        if(lookup_script_identifier(ctx, script, class->name))
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+    }
+
+    for(func = ctx->code->funcs; func; func = func->next) {
+        if(lookup_existing_class(ctx, script, func->name))
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+    }
+
+    for(konst = ctx->const_decls; konst; konst = konst->next) {
+        if(lookup_existing_class(ctx, script, konst->name))
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 
     return S_OK;
