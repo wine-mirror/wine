@@ -3648,51 +3648,48 @@ static RETURN_CODE page_file(HANDLE h, ULONG64 file_length, BOOL close_previous)
  *
  * Output either a file or stdin to screen in pages
  */
-RETURN_CODE WCMD_more(WCHAR *args)
+RETURN_CODE WCMD_more(struct word_iterator *iterator)
 {
-    int argno = 0;
-    WCHAR *argN;
+    RETURN_CODE return_code = NO_ERROR;
+    LARGE_INTEGER lizero = {.QuadPart = 0}, lifilelen;
+    HANDLE h;
+    unsigned int count = 0;
 
-    if (param1[0] == 0x00)
+    /* Loop through all args */
+    WINE_TRACE("Parms supplied - working through each file\n");
+
+    while (WCMD_word_iterator_advance(iterator))
+    {
+        /* FIXME there are actually some options to handle here */
+        if (iterator->is_an_option) continue;
+
+        WINE_TRACE("more: Processing arg '%s'\n", wine_dbgstr_w(iterator->unquoted_argument));
+
+        count++;
+        h = CreateFileW(iterator->unquoted_argument, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE)
+        {
+            WCMD_print_error();
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), iterator->unquoted_argument);
+            break;
+        }
+        SetFilePointerEx(h, lizero, &lifilelen, FILE_END);
+        SetFilePointerEx(h, lizero, NULL, FILE_BEGIN);
+
+        return_code = page_file(h, lifilelen.QuadPart, count > 1);
+
+        CloseHandle(h);
+    }
+
+    if (!count)
     {
         WINE_TRACE("No parms - working probably in pipe mode\n");
-        page_file(GetStdHandle(STD_INPUT_HANDLE), 0, FALSE);
+        return_code = page_file(GetStdHandle(STD_INPUT_HANDLE), 0, FALSE);
         WCMD_output_asis(L"\r\n");
     }
-    else
-    {
-        RETURN_CODE return_code = NO_ERROR;
 
-        /* Loop through all args */
-        WINE_TRACE("Parms supplied - working through each file\n");
-
-        for (argno = 0; return_code == NO_ERROR; argno++)
-        {
-            LARGE_INTEGER lizero = {.QuadPart = 0}, lifilelen;
-            WCHAR *thisArg = WCMD_parameter(args, argno, &argN, FALSE);
-            HANDLE h;
-
-            if (!argN) break;
-
-            WINE_TRACE("more: Processing arg '%s'\n", wine_dbgstr_w(thisArg));
-            h = CreateFileW(thisArg, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                            FILE_ATTRIBUTE_NORMAL, NULL);
-            if (h == INVALID_HANDLE_VALUE)
-            {
-                WCMD_print_error();
-                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-                break;
-            }
-
-            SetFilePointerEx(h, lizero, &lifilelen, FILE_END);
-            SetFilePointerEx(h, lizero, NULL, FILE_BEGIN);
-
-            return_code = page_file(h, lifilelen.QuadPart, argno != 0);
-
-            CloseHandle(h);
-        }
-    }
-    return errorlevel = NO_ERROR;
+    return errorlevel = return_code;
 }
 
 /****************************************************************************

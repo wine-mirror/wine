@@ -2474,7 +2474,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_assoc(parms_start, FALSE);
         break;
     case WCMD_MORE:
-        return_code = WCMD_more(parms_start);
+        return_code = WCMD_more(&iterator);
         break;
     case WCMD_CHOICE:
         return_code = WCMD_choice(&iterator);
