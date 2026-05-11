@@ -2402,8 +2402,9 @@ void WINAPI RtlInitUnicodeString( UNICODE_STRING *str, const WCHAR *data )
  */
 ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 {
-    NtCurrentTeb()->LastStatusValue = status;
+    TEB *teb = NtCurrentTeb();
 
+    if (teb) teb->LastStatusValue = status;
     if (!status || (status & 0x20000000)) return status;
     if ((status & 0xf0000000) == 0xd0000000) status &= ~0x10000000;
 
@@ -2420,11 +2421,16 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 DWORD WINAPI RtlGetLastWin32Error(void)
 {
     TEB *teb = NtCurrentTeb();
+
+    if (teb)
+    {
 #ifdef _WIN64
-    WOW_TEB *wow_teb = get_wow_teb( teb );
-    if (wow_teb) return wow_teb->LastErrorValue;
+        WOW_TEB *wow_teb = get_wow_teb( teb );
+        if (wow_teb) return wow_teb->LastErrorValue;
 #endif
-    return teb->LastErrorValue;
+        return teb->LastErrorValue;
+    }
+    else return 0;
 }
 
 /**********************************************************************
@@ -2433,11 +2439,15 @@ DWORD WINAPI RtlGetLastWin32Error(void)
 void WINAPI RtlSetLastWin32Error( DWORD err )
 {
     TEB *teb = NtCurrentTeb();
+
+    if (teb)
+    {
 #ifdef _WIN64
-    WOW_TEB *wow_teb = get_wow_teb( teb );
-    if (wow_teb) wow_teb->LastErrorValue = err;
+        WOW_TEB *wow_teb = get_wow_teb( teb );
+        if (wow_teb) wow_teb->LastErrorValue = err;
 #endif
-    teb->LastErrorValue = err;
+        teb->LastErrorValue = err;
+    }
 }
 
 /**********************************************************************
