@@ -4537,10 +4537,11 @@ struct thread_stack_info
  */
 static BOOL is_inside_thread_stack( struct thread_data *data, void *ptr, struct thread_stack_info *stack )
 {
-    TEB *teb = data->teb;
-    WOW_TEB *wow_teb = get_wow_teb( teb );
+    TEB *teb;
+    WOW_TEB *wow_teb;
     size_t min_guaranteed = max( page_size * (is_win64 ? 2 : 1), host_page_size );
 
+    if (!(teb = data->teb)) return FALSE;
     stack->start = teb->DeallocationStack;
     stack->limit = teb->Tib.StackLimit;
     stack->end   = teb->Tib.StackBase;
@@ -4548,7 +4549,7 @@ static BOOL is_inside_thread_stack( struct thread_data *data, void *ptr, struct 
     stack->is_wow = FALSE;
     if ((char *)ptr > stack->start && (char *)ptr <= stack->end) return TRUE;
 
-    if (!wow_teb) return FALSE;
+    if (!(wow_teb = get_wow_teb( teb ))) return FALSE;
     stack->start = ULongToPtr( wow_teb->DeallocationStack );
     stack->limit = ULongToPtr( wow_teb->Tib.StackLimit );
     stack->end   = ULongToPtr( wow_teb->Tib.StackBase );

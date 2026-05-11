@@ -1321,7 +1321,11 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     struct thread_data *data = get_thread_data();
     CONTEXT context;
 
-    if (is_inside_syscall( data, SP_sig(sigcontext) ))
+    if (!data->teb)
+    {
+        server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL, NULL );
+    }
+    else if (is_inside_syscall( data, SP_sig(sigcontext) ))
     {
         context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context );
