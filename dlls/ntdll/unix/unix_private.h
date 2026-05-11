@@ -255,7 +255,7 @@ extern int wine_server_receive_fd( obj_handle_t *handle );
 extern void process_exit_wrapper( int status ) DECLSPEC_NORETURN;
 extern size_t server_init_process(void);
 extern void server_init_process_done(void);
-extern void server_init_thread( void *entry_point, BOOL *suspend );
+extern void server_init_thread( struct thread_data *data, BOOL *suspend );
 extern int server_pipe( int fd[2] );
 
 extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux );
@@ -343,7 +343,7 @@ extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_
 extern NTSTATUS signal_alloc_thread( TEB *teb );
 extern void signal_free_thread( TEB *teb );
 extern void signal_disable_syscall_dispatch(void);
-extern void signal_init_process(void);
+extern void signal_init_process( TEB *teb );
 extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
                                                    BOOL suspend, TEB *teb );
 extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];

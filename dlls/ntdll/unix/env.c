@@ -1839,10 +1839,11 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
 #ifdef _WIN64
     if (!is_machine_64bit( main_image_info.Machine ))
     {
-        NtCurrentTeb()->WowTebOffset = teb_offset;
-        NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
+        struct thread_data *data = get_thread_data();
+        data->teb->WowTebOffset = teb_offset;
+        data->teb->Tib.ExceptionList = (void *)((char *)data->teb + teb_offset);
         wow_peb = (PEB32 *)((char *)peb + page_size);
-        set_thread_id( get_thread_data() );
+        set_thread_id( data );
     }
 #endif
 

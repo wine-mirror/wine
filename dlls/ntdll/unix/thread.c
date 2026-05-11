@@ -1127,7 +1127,7 @@ static void start_thread( struct thread_data *data )
 
     teb_data->syscall_table = KeServiceDescriptorTable;
     teb_data->syscall_trace = TRACE_ON(syscall);
-    server_init_thread( data->start, &suspend );
+    server_init_thread( data, &suspend );
     signal_start_thread( data->start, data->param, suspend, data->teb );
 }
 

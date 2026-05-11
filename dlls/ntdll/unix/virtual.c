@@ -4562,7 +4562,7 @@ static BOOL is_inside_thread_stack( struct thread_data *data, void *ptr, struct 
 /***********************************************************************
  *           grow_thread_stack
  */
-static NTSTATUS grow_thread_stack( char *page, struct thread_stack_info *stack_info )
+static NTSTATUS grow_thread_stack( struct thread_data *data, char *page, struct thread_stack_info *stack_info )
 {
     NTSTATUS ret = 0;
 
@@ -4582,10 +4582,10 @@ static NTSTATUS grow_thread_stack( char *page, struct thread_stack_info *stack_i
     }
     if (stack_info->is_wow)
     {
-        WOW_TEB *wow_teb = get_wow_teb( NtCurrentTeb() );
+        WOW_TEB *wow_teb = get_wow_teb( data->teb );
         wow_teb->Tib.StackLimit = PtrToUlong( page );
     }
-    else NtCurrentTeb()->Tib.StackLimit = page;
+    else data->teb->Tib.StackLimit = page;
     return ret;
 }
 
@@ -4622,7 +4622,7 @@ NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, 
             mprotect_range( page, host_page_size, 0, 0 );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
-        else ret = grow_thread_stack( page, &stack_info );
+        else ret = grow_thread_stack( data, page, &stack_info );
     }
     else if (err == EXCEPTION_WRITE_FAULT)
     {
@@ -4688,7 +4688,7 @@ void *virtual_setup_exception( struct thread_data *data, void *stack_ptr, size_t
     {
         char *page = ROUND_ADDR( stack, host_page_mask );
         mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
-        if ((get_host_page_vprot( page ) & VPROT_GUARD) && grow_thread_stack( page, &stack_info ))
+        if ((get_host_page_vprot( page ) & VPROT_GUARD) && grow_thread_stack( data, page, &stack_info ))
         {
             rec->ExceptionCode = STATUS_STACK_OVERFLOW;
             rec->NumberParameters = 0;

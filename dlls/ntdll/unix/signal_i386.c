@@ -2381,7 +2381,7 @@ void signal_free_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process(void)
+void signal_init_process( TEB *teb )
 {
     struct sigaction sig_act;
 
@@ -2405,7 +2405,7 @@ void signal_init_process(void)
     if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) memset( ldt_bitmap, 0xff, 512 / 8 );
 
     alloc_syscall_frame( (frame_size + 63) & ~63 );
-    signal_alloc_thread( NtCurrentTeb() );
+    signal_alloc_thread( teb );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;

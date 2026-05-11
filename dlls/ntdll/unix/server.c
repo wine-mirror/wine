@@ -1554,9 +1554,8 @@ static int get_unix_tid(void)
  *
  * Create the server->client communication pipe.
  */
-static int init_thread_pipe(void)
+static int init_thread_pipe( struct thread_data *data )
 {
-    struct thread_data *data = get_thread_data();
     int reply_pipe[2];
     stack_t ss;
 
@@ -1663,7 +1662,7 @@ size_t server_init_process(void)
     sigemptyset( &sig_act.sa_mask );
     sigaction( SIGPIPE, &sig_act, NULL );
 
-    reply_pipe = init_thread_pipe();
+    reply_pipe = init_thread_pipe( data );
 
     SERVER_START_REQ( init_first_thread )
     {
@@ -1750,7 +1749,7 @@ void server_init_process_done(void)
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that
      * is sent by init_process_done */
-    signal_init_process();
+    signal_init_process( data->teb );
     teb_data->syscall_table = KeServiceDescriptorTable;
     teb_data->syscall_trace = TRACE_ON(syscall);
 
@@ -1777,11 +1776,10 @@ void server_init_process_done(void)
  *
  * Send an init thread request.
  */
-void server_init_thread( void *entry_point, BOOL *suspend )
+void server_init_thread( struct thread_data *data, BOOL *suspend )
 {
     void *teb;
-    struct thread_data *data = get_thread_data();
-    int reply_pipe = init_thread_pipe();
+    int reply_pipe = init_thread_pipe( data );
 
     /* always send the native TEB */
     if (!(teb = NtCurrentTeb64())) teb = data->teb;
@@ -1790,7 +1788,7 @@ void server_init_thread( void *entry_point, BOOL *suspend )
     {
         req->unix_tid  = get_unix_tid();
         req->teb       = wine_server_client_ptr( teb );
-        req->entry     = wine_server_client_ptr( entry_point );
+        req->entry     = wine_server_client_ptr( data->start );
         req->reply_fd  = reply_pipe;
         req->wait_fd   = data->wait_fd[1];
         wine_server_call( req );

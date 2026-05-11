@@ -2773,10 +2773,10 @@ static int libc_addr_cb( struct dl_phdr_info *info, size_t size, void *arg )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process(void)
+void signal_init_process( TEB *teb )
 {
     struct sigaction sig_act;
-    WOW_TEB *wow_teb = get_wow_teb( NtCurrentTeb() );
+    WOW_TEB *wow_teb = get_wow_teb( teb );
     void *ptr;
 
     if (user_shared_data->XState.Size) xstate_size = user_shared_data->XState.Size - sizeof(XSAVE_FORMAT);
@@ -2810,7 +2810,7 @@ void signal_init_process(void)
 #endif
 
     alloc_syscall_frame( (frame_size + 63) & ~63 );
-    signal_alloc_thread( NtCurrentTeb() );
+    signal_alloc_thread( teb );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;

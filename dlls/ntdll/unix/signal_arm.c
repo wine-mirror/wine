@@ -1074,12 +1074,12 @@ void signal_free_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process(void)
+void signal_init_process( TEB *teb )
 {
     struct sigaction sig_act;
 
     alloc_syscall_frame( sizeof(struct syscall_frame) );
-    signal_alloc_thread( NtCurrentTeb() );
+    signal_alloc_thread( teb );
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
