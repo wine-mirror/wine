@@ -836,8 +836,8 @@ void WINAPI glGetBooleanv( GLenum pname, GLboolean *data )
     NTSTATUS status;
     int integer;
     TRACE( "pname %d, data %p\n", pname, data );
-    if (get_integer( pname, &integer )) *data = integer;
-    else if ((status = UNIX_CALL( glGetBooleanv, &args ))) WARN( "glGetBooleanv returned %#lx\n", status );
+    if ((status = UNIX_CALL( glGetBooleanv, &args ))) WARN( "glGetBooleanv returned %#lx\n", status );
+    else if (get_integer( pname, &integer )) *data = integer;
 }
 
 void WINAPI glGetClipPlane( GLenum plane, GLdouble *equation )
@@ -854,8 +854,8 @@ void WINAPI glGetDoublev( GLenum pname, GLdouble *data )
     NTSTATUS status;
     int integer;
     TRACE( "pname %d, data %p\n", pname, data );
-    if (get_integer( pname, &integer )) *data = integer;
-    else if ((status = UNIX_CALL( glGetDoublev, &args ))) WARN( "glGetDoublev returned %#lx\n", status );
+    if ((status = UNIX_CALL( glGetDoublev, &args ))) WARN( "glGetDoublev returned %#lx\n", status );
+    else if (get_integer( pname, &integer )) *data = integer;
 }
 
 GLenum WINAPI glGetError(void)
@@ -873,8 +873,8 @@ void WINAPI glGetFloatv( GLenum pname, GLfloat *data )
     NTSTATUS status;
     int integer;
     TRACE( "pname %d, data %p\n", pname, data );
-    if (get_integer( pname, &integer )) *data = integer;
-    else if ((status = UNIX_CALL( glGetFloatv, &args ))) WARN( "glGetFloatv returned %#lx\n", status );
+    if ((status = UNIX_CALL( glGetFloatv, &args ))) WARN( "glGetFloatv returned %#lx\n", status );
+    else if (get_integer( pname, &integer )) *data = integer;
 }
 
 void WINAPI glGetIntegerv( GLenum pname, GLint *data )
@@ -883,8 +883,8 @@ void WINAPI glGetIntegerv( GLenum pname, GLint *data )
     NTSTATUS status;
     int integer;
     TRACE( "pname %d, data %p\n", pname, data );
-    if (get_integer( pname, &integer )) *data = integer;
-    else if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#lx\n", status );
+    if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#lx\n", status );
+    else if (get_integer( pname, &integer )) *data = integer;
 }
 
 void WINAPI glGetLightfv( GLenum light, GLenum pname, GLfloat *params )
@@ -8663,8 +8663,8 @@ static void WINAPI glGetInteger64v( GLenum pname, GLint64 *data )
     NTSTATUS status;
     int integer;
     TRACE( "pname %d, data %p\n", pname, data );
-    if (get_integer( pname, &integer )) *data = integer;
-    else if ((status = UNIX_CALL( glGetInteger64v, &args ))) WARN( "glGetInteger64v returned %#lx\n", status );
+    if ((status = UNIX_CALL( glGetInteger64v, &args ))) WARN( "glGetInteger64v returned %#lx\n", status );
+    else if (get_integer( pname, &integer )) *data = integer;
 }
 
 static void WINAPI glGetIntegerIndexedvEXT( GLenum target, GLuint index, GLint *data )

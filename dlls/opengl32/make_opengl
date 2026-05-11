@@ -784,8 +784,8 @@ sub generate_win_thunk($$)
     $ret .= "    " . get_func_trace( $name, $func, 1 );
     $ret .= $checks;
     $ret .= $map_args;
-    $ret .= $get_integer ? "    $get_integer\n    else " : "    ";
-    $ret .= "if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
+    $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
+    $ret .= "    else $get_integer\n" if $get_integer;
     $ret .= $post_call;
     $ret .= "    return args.ret;\n" unless is_void_func($func);
     $ret .= "}\n";
