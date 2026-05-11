@@ -765,7 +765,7 @@ NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status 
  */
 static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context, EXCEPTION_RECORD *rec )
 {
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame;
     UINT i;
 
     if (!is_inside_syscall( data, SP_sig(context) )) return FALSE;
@@ -793,7 +793,7 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context,
         PC_sig(context)      = (DWORD)longjmp;
         data->jmp_buf = NULL;
     }
-    else
+    else if ((frame = get_syscall_frame( data )))
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->pc, rec->ExceptionCode );
         REGn_sig(0, context) = rec->ExceptionCode;
@@ -801,6 +801,8 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context,
         REGn_sig(8, context) = (DWORD)frame;
         PC_sig(context)      = (DWORD)__wine_syscall_dispatcher_return;
     }
+    else return FALSE;
+
     if (PC_sig(context) & 1) CPSR_sig(context) |= 0x20;
     else CPSR_sig(context) &= ~0x20;
     return TRUE;

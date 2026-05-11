@@ -2079,7 +2079,7 @@ static BOOL check_atl_thunk( struct thread_data *data, ucontext_t *sigcontext,
  */
 static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame;
     DWORD i;
 
     if (!is_inside_syscall( data, RSP_sig(sigcontext) )) return FALSE;
@@ -2104,16 +2104,18 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *sigconte
         RSI_sig(sigcontext) = 1;
         RIP_sig(sigcontext) = (ULONG_PTR)longjmp;
         data->jmp_buf = NULL;
+        return TRUE;
     }
-    else
+    if ((frame = get_syscall_frame( data )))
     {
         TRACE_(seh)( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
         RAX_sig(sigcontext) = rec->ExceptionCode;
         R13_sig(sigcontext) = (ULONG_PTR)data->teb;
         RSP_sig(sigcontext) = (ULONG_PTR)frame;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
+        return TRUE;
     }
-    return TRUE;
+    return FALSE;
 }
 
 
