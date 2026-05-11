@@ -2914,9 +2914,11 @@ static GLuint WINAPI glAsyncCopyBufferSubDataNVX( GLsizei waitSemaphoreCount, co
 
 static GLuint WINAPI glAsyncCopyImageSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *waitValueArray, GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray )
 {
-    struct glAsyncCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitSemaphoreArray = waitSemaphoreArray, .waitValueArray = waitValueArray, .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcName = srcName, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstName = dstName, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth, .signalSemaphoreCount = signalSemaphoreCount, .signalSemaphoreArray = signalSemaphoreArray, .signalValueArray = signalValueArray };
+    struct glAsyncCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitSemaphoreArray = waitSemaphoreArray, .waitValueArray = waitValueArray, .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth, .signalSemaphoreCount = signalSemaphoreCount, .signalSemaphoreArray = signalSemaphoreArray, .signalValueArray = signalValueArray };
     NTSTATUS status;
     TRACE( "waitSemaphoreCount %d, waitSemaphoreArray %p, waitValueArray %p, srcGpu %d, dstGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d, signalSemaphoreCount %d, signalSemaphoreArray %p, signalValueArray %p\n", waitSemaphoreCount, waitSemaphoreArray, waitValueArray, srcGpu, dstGpuMask, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth, signalSemaphoreCount, signalSemaphoreArray, signalValueArray );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
     if ((status = UNIX_CALL( glAsyncCopyImageSubDataNVX, &args ))) WARN( "glAsyncCopyImageSubDataNVX returned %#lx\n", status );
     return args.ret;
 }
@@ -3344,17 +3346,21 @@ static void WINAPI glBindProgramPipeline( GLuint pipeline )
 
 static void WINAPI glBindRenderbuffer( GLenum target, GLuint renderbuffer )
 {
-    struct glBindRenderbuffer_params args = { .teb = NtCurrentTeb(), .target = target, .renderbuffer = renderbuffer };
+    struct glBindRenderbuffer_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, renderbuffer %d\n", target, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, FALSE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glBindRenderbuffer, &args ))) WARN( "glBindRenderbuffer returned %#lx\n", status );
 }
 
 static void WINAPI glBindRenderbufferEXT( GLenum target, GLuint renderbuffer )
 {
-    struct glBindRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .target = target, .renderbuffer = renderbuffer };
+    struct glBindRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, renderbuffer %d\n", target, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glBindRenderbufferEXT, &args ))) WARN( "glBindRenderbufferEXT returned %#lx\n", status );
 }
 
@@ -5149,17 +5155,21 @@ static void WINAPI glCopyConvolutionFilter2DEXT( GLenum target, GLenum internalf
 
 static void WINAPI glCopyImageSubData( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth )
 {
-    struct glCopyImageSubData_params args = { .teb = NtCurrentTeb(), .srcName = srcName, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstName = dstName, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
+    struct glCopyImageSubData_params args = { .teb = NtCurrentTeb(), .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
     NTSTATUS status;
     TRACE( "srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d\n", srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
     if ((status = UNIX_CALL( glCopyImageSubData, &args ))) WARN( "glCopyImageSubData returned %#lx\n", status );
 }
 
 static void WINAPI glCopyImageSubDataNV( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth )
 {
-    struct glCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcName = srcName, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstName = dstName, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
+    struct glCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, width %d, height %d, depth %d\n", srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, width, height, depth );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
     if ((status = UNIX_CALL( glCopyImageSubDataNV, &args ))) WARN( "glCopyImageSubDataNV returned %#lx\n", status );
 }
 
@@ -5472,6 +5482,7 @@ static void WINAPI glCreateRenderbuffers( GLsizei n, GLuint *renderbuffers )
     NTSTATUS status;
     TRACE( "n %d, renderbuffers %p\n", n, renderbuffers );
     if ((status = UNIX_CALL( glCreateRenderbuffers, &args ))) WARN( "glCreateRenderbuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_RENDERBUFFER, n, renderbuffers );
 }
 
 static void WINAPI glCreateSamplers( GLsizei n, GLuint *samplers )
@@ -5905,18 +5916,26 @@ static void WINAPI glDeleteQueryResourceTagNV( GLsizei n, const GLint *tagIds )
 
 static void WINAPI glDeleteRenderbuffers( GLsizei n, const GLuint *renderbuffers )
 {
-    struct glDeleteRenderbuffers_params args = { .teb = NtCurrentTeb(), .n = n, .renderbuffers = renderbuffers };
+    GLuint renderbuffers_buf[64], *renderbuffers_tmp;
+    struct glDeleteRenderbuffers_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, renderbuffers %p\n", n, renderbuffers );
+    renderbuffers_tmp = n > 0 ? memdup_objects( n, renderbuffers, renderbuffers_buf, ARRAY_SIZE(renderbuffers_buf) ) : NULL;
+    args.renderbuffers = n > 0 ? del_context_objects( OBJ_TYPE_RENDERBUFFER, n, renderbuffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteRenderbuffers, &args ))) WARN( "glDeleteRenderbuffers returned %#lx\n", status );
+    if (renderbuffers_tmp != renderbuffers_buf) free( renderbuffers_tmp );
 }
 
 static void WINAPI glDeleteRenderbuffersEXT( GLsizei n, const GLuint *renderbuffers )
 {
-    struct glDeleteRenderbuffersEXT_params args = { .teb = NtCurrentTeb(), .n = n, .renderbuffers = renderbuffers };
+    GLuint renderbuffers_buf[64], *renderbuffers_tmp;
+    struct glDeleteRenderbuffersEXT_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, renderbuffers %p\n", n, renderbuffers );
+    renderbuffers_tmp = n > 0 ? memdup_objects( n, renderbuffers, renderbuffers_buf, ARRAY_SIZE(renderbuffers_buf) ) : NULL;
+    args.renderbuffers = n > 0 ? del_context_objects( OBJ_TYPE_RENDERBUFFER, n, renderbuffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteRenderbuffersEXT, &args ))) WARN( "glDeleteRenderbuffersEXT returned %#lx\n", status );
+    if (renderbuffers_tmp != renderbuffers_buf) free( renderbuffers_tmp );
 }
 
 static void WINAPI glDeleteSamplers( GLsizei count, const GLuint *samplers )
@@ -7357,17 +7376,19 @@ static void WINAPI glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode )
 
 static void WINAPI glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .renderbuffertarget = renderbuffertarget };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", target, attachment, renderbuffertarget, renderbuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glFramebufferRenderbuffer, &args ))) WARN( "glFramebufferRenderbuffer returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .renderbuffertarget = renderbuffertarget };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", target, attachment, renderbuffertarget, renderbuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glFramebufferRenderbufferEXT, &args ))) WARN( "glFramebufferRenderbufferEXT returned %#lx\n", status );
 }
 
@@ -7721,6 +7742,7 @@ static void WINAPI glGenRenderbuffers( GLsizei n, GLuint *renderbuffers )
     NTSTATUS status;
     TRACE( "n %d, renderbuffers %p\n", n, renderbuffers );
     if ((status = UNIX_CALL( glGenRenderbuffers, &args ))) WARN( "glGenRenderbuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_RENDERBUFFER, n, renderbuffers );
 }
 
 static void WINAPI glGenRenderbuffersEXT( GLsizei n, GLuint *renderbuffers )
@@ -7729,6 +7751,7 @@ static void WINAPI glGenRenderbuffersEXT( GLsizei n, GLuint *renderbuffers )
     NTSTATUS status;
     TRACE( "n %d, renderbuffers %p\n", n, renderbuffers );
     if ((status = UNIX_CALL( glGenRenderbuffersEXT, &args ))) WARN( "glGenRenderbuffersEXT returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_RENDERBUFFER, n, renderbuffers );
 }
 
 static void WINAPI glGenSamplers( GLsizei count, GLuint *samplers )
@@ -8570,26 +8593,6 @@ static void WINAPI glGetFragmentShadingRatesEXT( GLsizei samples, GLsizei maxCou
     if ((status = UNIX_CALL( glGetFragmentShadingRatesEXT, &args ))) WARN( "glGetFragmentShadingRatesEXT returned %#lx\n", status );
 }
 
-static void WINAPI glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint *params )
-{
-    struct glGetFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
-    NTSTATUS status;
-    int integer;
-    TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
-    if ((status = UNIX_CALL( glGetFramebufferAttachmentParameteriv, &args ))) WARN( "glGetFramebufferAttachmentParameteriv returned %#lx\n", status );
-    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
-}
-
-static void WINAPI glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint *params )
-{
-    struct glGetFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .pname = pname, .params = params };
-    NTSTATUS status;
-    int integer;
-    TRACE( "target %d, attachment %d, pname %d, params %p\n", target, attachment, pname, params );
-    if ((status = UNIX_CALL( glGetFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetFramebufferAttachmentParameterivEXT returned %#lx\n", status );
-    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
-}
-
 static void WINAPI glGetFramebufferParameterfvAMD( GLenum target, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
 {
     struct glGetFramebufferParameterfvAMD_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .numsamples = numsamples, .pixelindex = pixelindex, .size = size, .values = values };
@@ -9241,29 +9244,6 @@ static void WINAPI glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, G
     if ((status = UNIX_CALL( glGetNamedBufferSubDataEXT, &args ))) WARN( "glGetNamedBufferSubDataEXT returned %#lx\n", status );
 }
 
-static void WINAPI glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
-{
-    struct glGetNamedFramebufferAttachmentParameteriv_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
-    NTSTATUS status;
-    int integer;
-    TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
-    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
-    if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameteriv, &args ))) WARN( "glGetNamedFramebufferAttachmentParameteriv returned %#lx\n", status );
-    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
-}
-
-static void WINAPI glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
-{
-    struct glGetNamedFramebufferAttachmentParameterivEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .pname = pname, .params = params };
-    NTSTATUS status;
-    int integer;
-    TRACE( "framebuffer %d, attachment %d, pname %d, params %p\n", framebuffer, attachment, pname, params );
-    if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
-    args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
-    if ((status = UNIX_CALL( glGetNamedFramebufferAttachmentParameterivEXT, &args ))) WARN( "glGetNamedFramebufferAttachmentParameterivEXT returned %#lx\n", status );
-    else if (get_integer( pname, 0, *params, &integer )) *params = integer;
-}
-
 static void WINAPI glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
 {
     struct glGetNamedFramebufferParameterfvAMD_params args = { .teb = NtCurrentTeb(), .pname = pname, .numsamples = numsamples, .pixelindex = pixelindex, .size = size, .values = values };
@@ -9342,17 +9322,20 @@ static void WINAPI glGetNamedProgramivEXT( GLuint program, GLenum target, GLenum
 
 static void WINAPI glGetNamedRenderbufferParameteriv( GLuint renderbuffer, GLenum pname, GLint *params )
 {
-    struct glGetNamedRenderbufferParameteriv_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .pname = pname, .params = params };
+    struct glGetNamedRenderbufferParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "renderbuffer %d, pname %d, params %p\n", renderbuffer, pname, params );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glGetNamedRenderbufferParameteriv, &args ))) WARN( "glGetNamedRenderbufferParameteriv returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedRenderbufferParameterivEXT( GLuint renderbuffer, GLenum pname, GLint *params )
 {
-    struct glGetNamedRenderbufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .pname = pname, .params = params };
+    struct glGetNamedRenderbufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "renderbuffer %d, pname %d, params %p\n", renderbuffer, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glGetNamedRenderbufferParameterivEXT, &args ))) WARN( "glGetNamedRenderbufferParameterivEXT returned %#lx\n", status );
 }
 
@@ -12087,18 +12070,20 @@ static GLboolean WINAPI glIsQueryARB( GLuint id )
 
 static GLboolean WINAPI glIsRenderbuffer( GLuint renderbuffer )
 {
-    struct glIsRenderbuffer_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer };
+    struct glIsRenderbuffer_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "renderbuffer %d\n", renderbuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glIsRenderbuffer, &args ))) WARN( "glIsRenderbuffer returned %#lx\n", status );
     return args.ret;
 }
 
 static GLboolean WINAPI glIsRenderbufferEXT( GLuint renderbuffer )
 {
-    struct glIsRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer };
+    struct glIsRenderbufferEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "renderbuffer %d\n", renderbuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glIsRenderbufferEXT, &args ))) WARN( "glIsRenderbufferEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -12232,9 +12217,11 @@ static GLboolean WINAPI glIsVertexAttribEnabledAPPLE( GLuint index, GLenum pname
 
 static void WINAPI glLGPUCopyImageSubDataNVX( GLuint sourceGpu, GLbitfield destinationGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srxY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth )
 {
-    struct glLGPUCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .sourceGpu = sourceGpu, .destinationGpuMask = destinationGpuMask, .srcName = srcName, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srxY = srxY, .srcZ = srcZ, .dstName = dstName, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
+    struct glLGPUCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .sourceGpu = sourceGpu, .destinationGpuMask = destinationGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srxY = srxY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "sourceGpu %d, destinationGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srxY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, width %d, height %d, depth %d\n", sourceGpu, destinationGpuMask, srcName, srcTarget, srcLevel, srcX, srxY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, width, height, depth );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
     if ((status = UNIX_CALL( glLGPUCopyImageSubDataNVX, &args ))) WARN( "glLGPUCopyImageSubDataNVX returned %#lx\n", status );
 }
 
@@ -14593,9 +14580,11 @@ static void WINAPI glMultiTexParameterivEXT( GLenum texunit, GLenum target, GLen
 
 static void WINAPI glMultiTexRenderbufferEXT( GLenum texunit, GLenum target, GLuint renderbuffer )
 {
-    struct glMultiTexRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target, .renderbuffer = renderbuffer };
+    struct glMultiTexRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target };
     NTSTATUS status;
     TRACE( "texunit %d, target %d, renderbuffer %d\n", texunit, target, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glMultiTexRenderbufferEXT, &args ))) WARN( "glMultiTexRenderbufferEXT returned %#lx\n", status );
 }
 
@@ -14660,9 +14649,11 @@ static void WINAPI glMulticastCopyBufferSubDataNV( GLuint readGpu, GLbitfield wr
 
 static void WINAPI glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth )
 {
-    struct glMulticastCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcName = srcName, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstName = dstName, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
+    struct glMulticastCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
     NTSTATUS status;
     TRACE( "srcGpu %d, dstGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d\n", srcGpu, dstGpuMask, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
     if ((status = UNIX_CALL( glMulticastCopyImageSubDataNV, &args ))) WARN( "glMulticastCopyImageSubDataNV returned %#lx\n", status );
 }
 
@@ -14910,20 +14901,23 @@ static void WINAPI glNamedFramebufferReadBuffer( GLuint framebuffer, GLenum src 
 
 static void WINAPI glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glNamedFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glNamedFramebufferRenderbuffer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", framebuffer, attachment, renderbuffertarget, renderbuffer );
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedFramebufferRenderbuffer, &args ))) WARN( "glNamedFramebufferRenderbuffer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
 {
-    struct glNamedFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget, .renderbuffer = renderbuffer };
+    struct glNamedFramebufferRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .renderbuffertarget = renderbuffertarget };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, renderbuffertarget %d, renderbuffer %d\n", framebuffer, attachment, renderbuffertarget, renderbuffer );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedFramebufferRenderbufferEXT, &args ))) WARN( "glNamedFramebufferRenderbufferEXT returned %#lx\n", status );
 }
 
@@ -15139,49 +15133,58 @@ static void WINAPI glNamedProgramStringEXT( GLuint program, GLenum target, GLenu
 
 static void WINAPI glNamedRenderbufferStorage( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorage_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorage_params args = { .teb = NtCurrentTeb(), .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, internalformat %d, width %d, height %d\n", renderbuffer, internalformat, width, height );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorage, &args ))) WARN( "glNamedRenderbufferStorage returned %#lx\n", status );
 }
 
 static void WINAPI glNamedRenderbufferStorageEXT( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorageEXT_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorageEXT_params args = { .teb = NtCurrentTeb(), .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, internalformat %d, width %d, height %d\n", renderbuffer, internalformat, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorageEXT, &args ))) WARN( "glNamedRenderbufferStorageEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedRenderbufferStorageMultisample( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorageMultisample_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .samples = samples, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorageMultisample_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, samples %d, internalformat %d, width %d, height %d\n", renderbuffer, samples, internalformat, width, height );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorageMultisample, &args ))) WARN( "glNamedRenderbufferStorageMultisample returned %#lx\n", status );
 }
 
 static void WINAPI glNamedRenderbufferStorageMultisampleAdvancedAMD( GLuint renderbuffer, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .samples = samples, .storageSamples = storageSamples, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params args = { .teb = NtCurrentTeb(), .samples = samples, .storageSamples = storageSamples, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, samples %d, storageSamples %d, internalformat %d, width %d, height %d\n", renderbuffer, samples, storageSamples, internalformat, width, height );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorageMultisampleAdvancedAMD, &args ))) WARN( "glNamedRenderbufferStorageMultisampleAdvancedAMD returned %#lx\n", status );
 }
 
 static void WINAPI glNamedRenderbufferStorageMultisampleCoverageEXT( GLuint renderbuffer, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorageMultisampleCoverageEXT_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorageMultisampleCoverageEXT_params args = { .teb = NtCurrentTeb(), .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, coverageSamples %d, colorSamples %d, internalformat %d, width %d, height %d\n", renderbuffer, coverageSamples, colorSamples, internalformat, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorageMultisampleCoverageEXT, &args ))) WARN( "glNamedRenderbufferStorageMultisampleCoverageEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedRenderbufferStorageMultisampleEXT( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glNamedRenderbufferStorageMultisampleEXT_params args = { .teb = NtCurrentTeb(), .renderbuffer = renderbuffer, .samples = samples, .internalformat = internalformat, .width = width, .height = height };
+    struct glNamedRenderbufferStorageMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "renderbuffer %d, samples %d, internalformat %d, width %d, height %d\n", renderbuffer, samples, internalformat, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glNamedRenderbufferStorageMultisampleEXT, &args ))) WARN( "glNamedRenderbufferStorageMultisampleEXT returned %#lx\n", status );
 }
 
@@ -19875,9 +19878,10 @@ static void WINAPI glTexParameterxvOES( GLenum target, GLenum pname, const GLfix
 
 static void WINAPI glTexRenderbufferNV( GLenum target, GLuint renderbuffer )
 {
-    struct glTexRenderbufferNV_params args = { .teb = NtCurrentTeb(), .target = target, .renderbuffer = renderbuffer };
+    struct glTexRenderbufferNV_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, renderbuffer %d\n", target, renderbuffer );
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glTexRenderbufferNV, &args ))) WARN( "glTexRenderbufferNV returned %#lx\n", status );
 }
 
@@ -20305,9 +20309,11 @@ static void WINAPI glTextureRangeAPPLE( GLenum target, GLsizei length, const voi
 
 static void WINAPI glTextureRenderbufferEXT( GLuint texture, GLenum target, GLuint renderbuffer )
 {
-    struct glTextureRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .renderbuffer = renderbuffer };
+    struct glTextureRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target };
     NTSTATUS status;
     TRACE( "texture %d, target %d, renderbuffer %d\n", texture, target, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glTextureRenderbufferEXT, &args ))) WARN( "glTextureRenderbufferEXT returned %#lx\n", status );
 }
 

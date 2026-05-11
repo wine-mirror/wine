@@ -161,6 +161,10 @@ my %manual_win_thunks =
      "glGetString" => 1,
      "glGetStringi" => 1,
      "glImportSyncEXT" => 1,
+     "glGetFramebufferAttachmentParameteriv" => 1,
+     "glGetFramebufferAttachmentParameterivEXT" => 1,
+     "glGetNamedFramebufferAttachmentParameteriv" => 1,
+     "glGetNamedFramebufferAttachmentParameterivEXT" => 1,
      "wglChoosePixelFormatARB" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
@@ -682,12 +686,15 @@ sub get_object_type($$$$)
 {
     my ($func, $ptype, $pname, $class) = @_;
 
+    return "srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT" if $pname eq "srcName";
+    return "dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT" if $pname eq "dstName";
+
     return "OBJ_TYPE_BUFFER"              if $class eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDeleteObjectBufferATI" and $pname eq "buffer";
     return "OBJ_TYPE_BUFFER"              if $func eq "glDrawCommandsNV" and $pname eq "buffer";
     return "OBJ_TYPE_FRAMEBUFFER"         if $class eq "framebuffer";
     return "OBJ_TYPE_FRAMEBUFFER"         if $pname =~ "fbo";
-    return 0                              if $class eq "renderbuffer";
+    return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
 
     return 0 if $class eq "SelectName";
     return 0 if $func eq "glGetActiveAtomicCounterBufferiv" and $pname eq "bufferIndex";
@@ -708,6 +715,7 @@ sub allocate_object_names($)
     return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
     return $ret if $name =~ /^glBindBuffer/;
     return $ret if $name =~ /^glBindFramebuffer/;
+    return $ret if $name =~ /^glBindRenderbuffer/;
 
     return 0;
 }

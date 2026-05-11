@@ -50,6 +50,7 @@ enum object_type
 {
     OBJ_TYPE_BUFFER,
     OBJ_TYPE_FRAMEBUFFER,
+    OBJ_TYPE_RENDERBUFFER,
     OBJ_TYPE_COUNT,
 };
 
