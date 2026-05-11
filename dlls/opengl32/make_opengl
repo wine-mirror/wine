@@ -678,19 +678,40 @@ sub get_handle_function($)
     return 0;
 }
 
+sub get_object_type($$$$)
+{
+    my ($func, $ptype, $pname, $class) = @_;
+
+    return "OBJ_TYPE_BUFFER"              if $class eq "buffer";
+    return "OBJ_TYPE_BUFFER"              if $func eq "glDeleteObjectBufferATI" and $pname eq "buffer";
+    return "OBJ_TYPE_BUFFER"              if $func eq "glDrawCommandsNV" and $pname eq "buffer";
+    return 0                              if $class eq "framebuffer";
+    return 0                              if $class eq "renderbuffer";
+
+    return 0 if $class eq "SelectName";
+    return 0 if $func eq "glGetActiveAtomicCounterBufferiv" and $pname eq "bufferIndex";
+    return 0 if $func =~ /^glBlend(Equation|Func)/ and $pname eq "buf";
+    return 0 if $func =~ /^gl(Signal|Wait)Semaphore/ and $pname eq "numBufferBarriers";
+    return 0 if $ptype !~ /GLuint|GLhandleARB/;
+
+    print "Missing possible buffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /buffer/;
+    return 0;
+}
+
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
     my $get_integer = get_integer_call( $name, $func );
     my $decl_args = get_func_args( $func );
     my $func_ret = get_func_ret( $func );
+    my $post_call = "";
+    my $map_args = "";
     my $params = "";
     my $checks = "";
     my $ret = "";
 
     $ret .= "$func_ret WINAPI $name($decl_args)\n";
     $ret .= "{\n";
-    $ret .= "    struct $name\_params args";
     $params .= " .teb = NtCurrentTeb()";
     foreach my $arg (@{$func->[1]})
     {
@@ -702,19 +723,52 @@ sub generate_win_thunk($$)
             $retval = "{ set_gl_error( GL_INVALID_VALUE ); $retval }" if $ptype =~ /GLsync/ && $name !~ /glIsSync/;
             $checks .= "    if (!$get_handle( $pname, &args.$pname )) $retval\n";
         }
+        elsif (my $map_type = get_object_type( $name, $ptype, $pname, get_arg_class( $arg ) ))
+        {
+            my $len = get_arg_len( $arg );
+            my $addr = $len eq "1" ? "&" : "";
+            my $deref = $len eq "1" ? "*" : "";
+
+            if ($name =~ /^(glGen|glCreate)/)
+            {
+                $params .= ", .$pname = $pname";
+                $post_call .= "    if ($len > 0) put_context_objects( $map_type, $len, $addr$pname );\n";
+            }
+            elsif ($name =~ /^glDelete/)
+            {
+                if ($len eq "1")
+                {
+                    $map_args .= "    args.$pname = *del_context_objects( $map_type, 1, &$pname );\n";
+                }
+                else
+                {
+                    my ($buf, $tmp) = ($pname . "_buf", $pname . "_tmp");
+                    $ret .= "    GLuint $buf\[64\], *$tmp;\n";
+
+                    $map_args .= "    $tmp = $len > 0 ? memdup_objects( $len, $pname, $buf, ARRAY_SIZE($buf) ) : NULL;\n";
+                    $map_args .= "    args.$pname = $len > 0 ? del_context_objects( $map_type, $len, $tmp ) : NULL;\n";
+                    $post_call .= "    if ($tmp != $buf) free( $tmp );\n";
+                }
+            }
+            else
+            {
+                $params .= ", .$pname = $pname";
+            }
+        }
         else
         {
             $params .= ", .$pname = $pname";
         }
     }
-    $ret .= " = {$params }";
-    $ret .= ";\n";
+    $ret .= "    struct $name\_params args = {$params };\n";
     $ret .= "    NTSTATUS status;\n";
     $ret .= "    int integer;\n" if $get_integer;
     $ret .= "    " . get_func_trace( $name, $func, 1 );
     $ret .= $checks;
+    $ret .= $map_args;
     $ret .= $get_integer ? "    $get_integer\n    else " : "    ";
     $ret .= "if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
+    $ret .= $post_call;
     $ret .= "    return args.ret;\n" unless is_void_func($func);
     $ret .= "}\n";
 
@@ -816,6 +870,18 @@ sub get_arg_name($)
     my $p = shift;
     my @name = $p->findnodes("./name");
     return $name[0]->textContent();
+}
+
+sub get_arg_class($)
+{
+    my $p = shift;
+    return $p->{class} || $p->{kind} || "";
+}
+
+sub get_arg_len($)
+{
+    my $p = shift;
+    return $p->{len} || "1";
 }
 
 #

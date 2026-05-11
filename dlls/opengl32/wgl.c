@@ -101,6 +101,16 @@ static void cleanup_wow64_strings(void)
 
 #endif
 
+static const char *debugstr_object_type( enum object_type type )
+{
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: return "buffer";
+    case OBJ_TYPE_COUNT: break;
+    }
+    return wine_dbg_sprintf( "object (type %u)", type );
+}
+
 static void init_wgl_extensions( const BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
     UINT pos = 0, len = 0, ext;
@@ -259,9 +269,92 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
     return args.ret;
 }
 
+#define L1_COUNT   0x80
+#define L2_COUNT  0x400
+#define L3_COUNT 0x8000
+
+struct object_table
+{
+    enum object_type    type;                   /* object type of the id table */
+    SRWLOCK             lock;                   /* lock for accessing the table */
+    GLuint            **host_ids[L1_COUNT];     /* client -> host id mapping sparse array */
+};
+
+static GLuint *find_object_id( GLuint **ids[L1_COUNT], GLuint client_id )
+{
+    GLuint i = client_id / L3_COUNT / L2_COUNT, j = (client_id / L3_COUNT) % L2_COUNT, k = client_id % L3_COUNT;
+    return ids[i] ? ids[i][j] ? ids[i][j] + k : NULL : NULL;
+}
+
+static GLuint *alloc_object_ids( GLuint **ids[L1_COUNT], GLuint client_id )
+{
+    GLuint i = client_id / L3_COUNT / L2_COUNT, j = (client_id / L3_COUNT) % L2_COUNT;
+    GLuint **ptr;
+
+    if (!(ptr = ids[i]) && !(ptr = ids[i] = calloc( L2_COUNT, sizeof(*ptr) ))) return NULL;
+    if (!ptr[j] && !(ptr[j] = calloc( L3_COUNT, sizeof(*ptr[j]) ))) return NULL;
+    return ptr[j];
+}
+
+static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT] )
+{
+    GLuint **l1_block, *l2_block;
+
+    for (int i = 0; i < L1_COUNT; i++)
+    {
+        if (!(l1_block = ids[i])) continue;
+        for (int j = 0; j < L2_COUNT; j++)
+        {
+            if (!(l2_block = l1_block[j])) continue;
+            free( l2_block );
+        }
+        free( l1_block );
+    }
+}
+
+static GLuint set_object( struct object_table *table, GLuint client_id, GLuint host_id )
+{
+    GLuint *ids;
+
+    if (!(ids = alloc_object_ids( table->host_ids, client_id ))) goto failed;
+    ids[client_id % L3_COUNT] = host_id;
+
+    TRACE( "Inserted %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    return client_id;
+
+failed:
+    ERR( "Failed to allocate object id block\n" );
+    return -1;
+}
+
+static GLuint del_object( struct object_table *table, GLuint client_id )
+{
+    GLuint *object, host_id = 0;
+
+    if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return client_id;
+    host_id = *object;
+    *object = 0;
+
+    TRACE( "Deleting %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    return host_id ? host_id : client_id;
+}
+
+static void free_object_table( struct object_table *table )
+{
+    free_object_ids( table, table->host_ids );
+}
+
+static void init_object_table( struct object_table *table, enum object_type type )
+{
+    InitializeSRWLock( &table->lock );
+    table->type = type;
+}
+
 struct display_lists
 {
-    LONG refcount;
+    LONG                refcount;
+    LONG                modified;
+    struct object_table tables[OBJ_TYPE_COUNT];
 };
 
 static struct display_lists *display_lists_create(void)
@@ -270,6 +363,9 @@ static struct display_lists *display_lists_create(void)
 
     if (!(lists = calloc( 1, sizeof(*lists) ))) return NULL;
     lists->refcount = 1;
+
+    for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
+        init_object_table( lists->tables + i, i );
 
     return lists;
 }
@@ -283,6 +379,10 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
 static void display_lists_release( struct display_lists *lists )
 {
     if (InterlockedDecrement( &lists->refcount )) return;
+
+    for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
+        free_object_table( lists->tables + i );
+
     free( lists );
 }
 
@@ -363,6 +463,40 @@ void set_gl_error( GLenum error )
     struct opengl_client_context *context;
     if (!(context = opengl_client_context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
     if (!context->last_error && !(context->last_error = glGetError())) context->last_error = error;
+}
+
+static struct object_table *get_object_table( struct context *ctx, enum object_type type, BOOL write )
+{
+    if (write) InterlockedExchange( &ctx->lists->modified, 1 );
+    return type < OBJ_TYPE_COUNT ? ctx->lists->tables + type : NULL;
+}
+
+void put_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
+    if (!(table = get_object_table( ctx, type, TRUE ))) return;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, handles[i], handles[i] ) : 0;
+    ReleaseSRWLockExclusive( &table->lock );
+}
+
+GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return handles;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++) handles[i] = del_object( table, handles[i] );
+    ReleaseSRWLockExclusive( &table->lock );
+
+    return handles;
 }
 
 HGLRC WINAPI wglCreateContext( HDC hdc )
@@ -482,6 +616,7 @@ BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
 
     if (!(src_context = context_from_handle( src_handle ))) return FALSE;
     if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
+    if (ReadNoFence( &dst_context->lists->modified )) return FALSE;
 
     args.hrcSrvShare = &src_context->base.obj;
     args.hrcSrvSource = &dst_context->base.obj;

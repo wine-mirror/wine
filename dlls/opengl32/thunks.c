@@ -5322,6 +5322,7 @@ static void WINAPI glCreateBuffers( GLsizei n, GLuint *buffers )
     NTSTATUS status;
     TRACE( "n %d, buffers %p\n", n, buffers );
     if ((status = UNIX_CALL( glCreateBuffers, &args ))) WARN( "glCreateBuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_BUFFER, n, buffers );
 }
 
 static void WINAPI glCreateCommandListsNV( GLsizei n, GLuint *lists )
@@ -5629,18 +5630,26 @@ static void WINAPI glDeleteBufferRegion( GLenum region )
 
 static void WINAPI glDeleteBuffers( GLsizei n, const GLuint *buffers )
 {
-    struct glDeleteBuffers_params args = { .teb = NtCurrentTeb(), .n = n, .buffers = buffers };
+    GLuint buffers_buf[64], *buffers_tmp;
+    struct glDeleteBuffers_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, buffers %p\n", n, buffers );
+    buffers_tmp = n > 0 ? memdup_objects( n, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
+    args.buffers = n > 0 ? del_context_objects( OBJ_TYPE_BUFFER, n, buffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteBuffers, &args ))) WARN( "glDeleteBuffers returned %#lx\n", status );
+    if (buffers_tmp != buffers_buf) free( buffers_tmp );
 }
 
 static void WINAPI glDeleteBuffersARB( GLsizei n, const GLuint *buffers )
 {
-    struct glDeleteBuffersARB_params args = { .teb = NtCurrentTeb(), .n = n, .buffers = buffers };
+    GLuint buffers_buf[64], *buffers_tmp;
+    struct glDeleteBuffersARB_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, buffers %p\n", n, buffers );
+    buffers_tmp = n > 0 ? memdup_objects( n, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
+    args.buffers = n > 0 ? del_context_objects( OBJ_TYPE_BUFFER, n, buffers_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteBuffersARB, &args ))) WARN( "glDeleteBuffersARB returned %#lx\n", status );
+    if (buffers_tmp != buffers_buf) free( buffers_tmp );
 }
 
 static void WINAPI glDeleteCommandListsNV( GLsizei n, const GLuint *lists )
@@ -5725,9 +5734,10 @@ static void WINAPI glDeleteObjectARB( GLhandleARB obj )
 
 static void WINAPI glDeleteObjectBufferATI( GLuint buffer )
 {
-    struct glDeleteObjectBufferATI_params args = { .teb = NtCurrentTeb(), .buffer = buffer };
+    struct glDeleteObjectBufferATI_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "buffer %d\n", buffer );
+    args.buffer = *del_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
     if ((status = UNIX_CALL( glDeleteObjectBufferATI, &args ))) WARN( "glDeleteObjectBufferATI returned %#lx\n", status );
 }
 
@@ -7475,6 +7485,7 @@ static void WINAPI glGenBuffers( GLsizei n, GLuint *buffers )
     NTSTATUS status;
     TRACE( "n %d, buffers %p\n", n, buffers );
     if ((status = UNIX_CALL( glGenBuffers, &args ))) WARN( "glGenBuffers returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_BUFFER, n, buffers );
 }
 
 static void WINAPI glGenBuffersARB( GLsizei n, GLuint *buffers )
@@ -7483,6 +7494,7 @@ static void WINAPI glGenBuffersARB( GLsizei n, GLuint *buffers )
     NTSTATUS status;
     TRACE( "n %d, buffers %p\n", n, buffers );
     if ((status = UNIX_CALL( glGenBuffersARB, &args ))) WARN( "glGenBuffersARB returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_BUFFER, n, buffers );
 }
 
 static void WINAPI glGenFencesAPPLE( GLsizei n, GLuint *fences )
