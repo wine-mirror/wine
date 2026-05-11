@@ -1572,7 +1572,8 @@ void wait_suspend( CONTEXT *context )
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
-NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance, BOOL exception )
+NTSTATUS send_debug_event( struct thread_data *data, EXCEPTION_RECORD *rec,
+                           CONTEXT *context, BOOL first_chance, BOOL exception )
 {
     unsigned int ret;
     DWORD i;
@@ -1580,6 +1581,12 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
     client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
     union select_op select_op;
     sigset_t old_set;
+
+    if (!data->teb)
+    {
+        ERR_(seh)( "Exception %x in system thread at %p\n", rec->ExceptionCode, rec->ExceptionAddress );
+        NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
+    }
 
     if (!peb->BeingDebugged) return 0;  /* no debugger present */
 
@@ -1633,12 +1640,13 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
  */
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
-    NTSTATUS status = send_debug_event( rec, context, first_chance, !(is_win64 || is_wow64() || is_old_wow64()) );
+    struct thread_data *data = get_thread_data();
+    NTSTATUS status = send_debug_event( data, rec, context, first_chance, !(is_win64 || is_wow64()) );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
         return NtContinue( context, FALSE );
 
-    if (first_chance) return call_user_exception_dispatcher( rec, context );
+    if (first_chance) return call_user_exception_dispatcher( data, rec, context );
 
     if (rec->ExceptionFlags & EXCEPTION_STACK_INVALID)
         ERR_(seh)("Exception frame is not in stack limits => unable to dispatch exception.\n");

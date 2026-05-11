@@ -1959,8 +1959,10 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (!peb->BeingDebugged) return ret;
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
-        NtCurrentTeb()->ExceptionCode = ret;
-        call_raise_user_exception_dispatcher();
+        struct thread_data *data = get_thread_data();
+        if (!data->teb) return ret;
+        data->teb->ExceptionCode = ret;
+        call_raise_user_exception_dispatcher( data );
     }
     return ret;
 }
