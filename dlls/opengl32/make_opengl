@@ -699,11 +699,37 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^glVDPAURegister/ and $pname eq "textureNames";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^gl(LGPU|Multicast|Async|)CopyImageSubData/ and $pname =~ /^(src|dst)Name$/;
 
+    return 0 if $class eq "Color";
+    return 0 if $class eq "ColorIndexMask";
+    return 0 if $class eq "perf query handle";
+    return 0 if $class eq "perf query id";
+    return 0 if $class eq "program pipeline";
+    return 0 if $class eq "query";
+    return 0 if $class eq "StencilMask";
+    return 0 if $class eq "StencilValue";
     return 0 if $class eq "SelectName";
+    return 0 if $class eq "sync";
+    return 0 if $class eq "transform feedback";
+    return 0 if $class eq "vertex array";
+    return 0 if $class =~ /^Vector/;
     return 0 if $func eq "glGetActiveAtomicCounterBufferiv" and $pname eq "bufferIndex";
     return 0 if $func =~ /^glBlend(Equation|Func)/ and $pname eq "buf";
     return 0 if $func =~ /^gl(Signal|Wait)Semaphore/ and $pname eq "numBufferBarriers";
+    return 0 if $func =~ /^gl(Signal|Wait)Semaphore/ and $pname eq "numTextureBarriers";
+    return 0 if $func eq "glCallCommandListNV" and $pname =~ /^list/;
+    return 0 if $func eq "glCommandListSegmentsNV" and $pname =~ /^list/;
+    return 0 if $func eq "glCompileCommandListNV" and $pname =~ /^list/;
+    return 0 if $func eq "glCreateCommandListsNV" and $pname =~ /^list/;
+    return 0 if $func eq "glDeleteCommandListsNV" and $pname =~ /^list/;
+    return 0 if $func eq "glIsCommandListNV" and $pname =~ /^list/;
+    return 0 if $func eq "glListDrawCommandsStatesClientNV" and $pname =~ /^list/;
     return 0 if $ptype !~ /GLuint|GLhandleARB/;
+    return 0 if $ptype =~ /GLuint \*/ and $pname =~ /^fences$/;
+    return 0 if $pname eq "fence";
+    return 0 if $pname eq "vkSemaphore";
+    return 0 if $pname eq "vkFence";
+    return 0 if $pname eq "fenceValueArray";
+    return 0 if $pname eq "pathParameterTemplate";
 
     print "Missing possible buffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /buffer/;
     print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
