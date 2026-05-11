@@ -2019,7 +2019,7 @@ static void test_GetVolumeInformationByHandle(void)
     ret = pGetVolumeInformationByHandleW( file, label, ARRAY_SIZE(label), &serial,
             &filename_len, &flags, fsname, ARRAY_SIZE(fsname) );
     ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(flags & FILE_SUPPORTS_OPEN_BY_FILE_ID,
+    ok(flags & FILE_SUPPORTS_OPEN_BY_FILE_ID,
             "expected FILE_SUPPORTS_OPEN_BY_FILE_ID to be set, got %#lx\n", flags);
 
     memset(buffer, 0, sizeof(buffer));
