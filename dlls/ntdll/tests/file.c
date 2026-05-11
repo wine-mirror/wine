@@ -4870,7 +4870,7 @@ static void test_query_attribute_information_file(void)
     ok(ffai->FileSystemAttributes != 0, "Missing FileSystemAttributes\n");
     ok(ffai->MaximumComponentNameLength != 0, "Missing MaximumComponentNameLength\n");
     ok(ffai->FileSystemNameLength != 0, "Missing FileSystemNameLength\n");
-    todo_wine ok(ffai->FileSystemAttributes & FILE_SUPPORTS_OPEN_BY_FILE_ID,
+    ok(ffai->FileSystemAttributes & FILE_SUPPORTS_OPEN_BY_FILE_ID,
             "expected FILE_SUPPORTS_OPEN_BY_FILE_ID to be set, got %#lx\n", ffai->FileSystemAttributes);
 
     trace("FileSystemAttributes: %lx MaximumComponentNameLength: %lx FileSystemName: %s\n",
