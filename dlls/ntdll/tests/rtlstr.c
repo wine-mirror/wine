@@ -38,7 +38,6 @@
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
-static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlAppendAsciizToString)(STRING *, LPCSTR);
 static NTSTATUS (WINAPI *pRtlAppendStringToString)(STRING *, const STRING *);
 static NTSTATUS (WINAPI *pRtlAppendUnicodeStringToString)(UNICODE_STRING *, const UNICODE_STRING *);
@@ -47,11 +46,8 @@ static NTSTATUS (WINAPI *pRtlCharToInteger)(PCSZ, ULONG, int *);
 static LONG     (WINAPI *pRtlCompareUnicodeString)(const UNICODE_STRING*, const UNICODE_STRING*, BOOLEAN);
 static LONG     (WINAPI *pRtlCompareUnicodeStrings)(const WCHAR *,SIZE_T,const WCHAR *,SIZE_T,BOOLEAN);
 static VOID     (WINAPI *pRtlCopyString)(STRING *, const STRING *);
-static BOOLEAN  (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
-static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, LPCSTR);
 static NTSTATUS (WINAPI *pRtlDowncaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlDuplicateUnicodeString)(int, UNICODE_STRING *, UNICODE_STRING *);
-static BOOLEAN  (WINAPI *pRtlEqualUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlFindCharInUnicodeString)(int, const UNICODE_STRING *, const UNICODE_STRING *, USHORT *);
 static VOID     (WINAPI *pRtlFreeAnsiString)(PSTRING);
 static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
@@ -61,14 +57,12 @@ static VOID     (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlInitUnicodeStringEx)(PUNICODE_STRING, LPCWSTR);
 static NTSTATUS (WINAPI *pRtlIntegerToChar)(ULONG, ULONG, ULONG, PCHAR);
 static NTSTATUS (WINAPI *pRtlIntegerToUnicodeString)(ULONG, ULONG, UNICODE_STRING *);
-static NTSTATUS (WINAPI *pRtlMultiAppendUnicodeStringBuffer)(UNICODE_STRING *, LONG, UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToInteger)(const UNICODE_STRING *, int, int *);
 static WCHAR    (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 static NTSTATUS (WINAPI *pRtlUpcaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static CHAR     (WINAPI *pRtlUpperChar)(CHAR);
 static NTSTATUS (WINAPI *pRtlUpperString)(STRING *, const STRING *);
-static NTSTATUS (WINAPI *pRtlValidateUnicodeString)(LONG, UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlGUIDFromString)(const UNICODE_STRING*,GUID*);
 static NTSTATUS (WINAPI *pRtlStringFromGUID)(const GUID*, UNICODE_STRING*);
 static BOOLEAN (WINAPI *pRtlIsTextUnicode)(LPVOID, INT, INT *);
@@ -111,7 +105,6 @@ static void InitFunctionPtrs(void)
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed\n");
     if (hntdll) {
-	pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
 	pRtlAppendAsciizToString = (void *)GetProcAddress(hntdll, "RtlAppendAsciizToString");
 	pRtlAppendStringToString = (void *)GetProcAddress(hntdll, "RtlAppendStringToString");
 	pRtlAppendUnicodeStringToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeStringToString");
@@ -120,11 +113,8 @@ static void InitFunctionPtrs(void)
 	pRtlCompareUnicodeString = (void *)GetProcAddress(hntdll, "RtlCompareUnicodeString");
 	pRtlCompareUnicodeStrings = (void *)GetProcAddress(hntdll, "RtlCompareUnicodeStrings");
 	pRtlCopyString = (void *)GetProcAddress(hntdll, "RtlCopyString");
-	pRtlCreateUnicodeString = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeString");
-	pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
 	pRtlDowncaseUnicodeString = (void *)GetProcAddress(hntdll, "RtlDowncaseUnicodeString");
 	pRtlDuplicateUnicodeString = (void *)GetProcAddress(hntdll, "RtlDuplicateUnicodeString");
-	pRtlEqualUnicodeString = (void *)GetProcAddress(hntdll, "RtlEqualUnicodeString");
 	pRtlFindCharInUnicodeString = (void *)GetProcAddress(hntdll, "RtlFindCharInUnicodeString");
 	pRtlFreeAnsiString = (void *)GetProcAddress(hntdll, "RtlFreeAnsiString");
 	pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
@@ -134,14 +124,12 @@ static void InitFunctionPtrs(void)
 	pRtlInitUnicodeStringEx = (void *)GetProcAddress(hntdll, "RtlInitUnicodeStringEx");
 	pRtlIntegerToChar = (void *)GetProcAddress(hntdll, "RtlIntegerToChar");
 	pRtlIntegerToUnicodeString = (void *)GetProcAddress(hntdll, "RtlIntegerToUnicodeString");
-	pRtlMultiAppendUnicodeStringBuffer = (void *)GetProcAddress(hntdll, "RtlMultiAppendUnicodeStringBuffer");
 	pRtlUnicodeStringToAnsiString = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
 	pRtlUnicodeStringToInteger = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToInteger");
 	pRtlUpcaseUnicodeChar = (void *)GetProcAddress(hntdll, "RtlUpcaseUnicodeChar");
 	pRtlUpcaseUnicodeString = (void *)GetProcAddress(hntdll, "RtlUpcaseUnicodeString");
 	pRtlUpperChar = (void *)GetProcAddress(hntdll, "RtlUpperChar");
 	pRtlUpperString = (void *)GetProcAddress(hntdll, "RtlUpperString");
-	pRtlValidateUnicodeString = (void *)GetProcAddress(hntdll, "RtlValidateUnicodeString");
 	pRtlGUIDFromString = (void *)GetProcAddress(hntdll, "RtlGUIDFromString");
 	pRtlStringFromGUID = (void *)GetProcAddress(hntdll, "RtlStringFromGUID");
 	pRtlIsTextUnicode = (void *)GetProcAddress(hntdll, "RtlIsTextUnicode");

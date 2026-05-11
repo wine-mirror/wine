@@ -37,8 +37,6 @@ static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static void * (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char*);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
-static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
-static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
 static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
                                                      MEM_EXTENDED_PARAMETER *, ULONG);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE, HANDLE, PVOID *, const LARGE_INTEGER *, SIZE_T *,
@@ -46,6 +44,14 @@ static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE, HANDLE, PVOID *, const L
 static NTSTATUS (WINAPI *pNtSetInformationVirtualMemory)(HANDLE, VIRTUAL_MEMORY_INFORMATION_CLASS,
                                                          ULONG_PTR, PMEMORY_RANGE_ENTRY,
                                                          PVOID, ULONG);
+
+#ifndef __aarch64__
+static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+#endif
+
+#ifdef __x86_64__
+static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
+#endif
 
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 static BOOL is_wow64;
@@ -3329,7 +3335,7 @@ static void test_exec_memory_writes(void)
         SYSTEM_CPU_INFORMATION info;
         ULONG len;
 
-        RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len );
+        pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len );
         ok (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64, "succeeded on non-ARM64\n" );
         mem.ProcessEnableWriteExceptions = 1;
         NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
@@ -3577,11 +3583,16 @@ START_TEST(virtual)
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
     pRtlFindExportedRoutineByName = (void *)GetProcAddress(mod, "RtlFindExportedRoutineByName");
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
-    pRtlGetNativeSystemInformation = (void *)GetProcAddress(mod, "RtlGetNativeSystemInformation");
-    pRtlIsEcCode = (void *)GetProcAddress(mod, "RtlIsEcCode");
     pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
     pNtMapViewOfSectionEx = (void *)GetProcAddress(mod, "NtMapViewOfSectionEx");
     pNtSetInformationVirtualMemory = (void *)GetProcAddress(mod, "NtSetInformationVirtualMemory");
+
+#ifndef __aarch64__
+    pRtlGetNativeSystemInformation = (void *)GetProcAddress(mod, "RtlGetNativeSystemInformation");
+#endif
+#ifdef __x86_64__
+    pRtlIsEcCode = (void *)GetProcAddress(mod, "RtlIsEcCode");
+#endif
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#lx\n", sbi.PageSize);
