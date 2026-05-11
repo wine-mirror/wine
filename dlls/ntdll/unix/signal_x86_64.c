@@ -1007,6 +1007,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     struct syscall_frame *frame = get_syscall_frame( data );
     struct amd64_thread_data *amd64_data = amd64_thread_data( data );
 
+    if (self && !frame) return STATUS_ACCESS_DENIED;
+
     if ((flags & CONTEXT_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
@@ -1107,6 +1109,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     struct amd64_thread_data *amd64_data = amd64_thread_data( data );
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
     BOOL self = (handle == GetCurrentThread());
+
+    if (self && !frame) return STATUS_ACCESS_DENIED;
 
     /* debug registers require a server call */
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
@@ -1250,6 +1254,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
     if (size != sizeof(I386_CONTEXT)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (self && !frame) return STATUS_ACCESS_DENIED;
 
     /* debug registers require a server call */
     if (self && (flags & CONTEXT_I386_DEBUG_REGISTERS))
@@ -1354,6 +1359,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
     BOOL self = (handle == GetCurrentThread());
 
     if (size != sizeof(I386_CONTEXT)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (self && !frame) return STATUS_ACCESS_DENIED;
 
     needed_flags = context->ContextFlags & ~CONTEXT_i386;
 
@@ -2648,7 +2654,6 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
 {
     THREAD_BASIC_INFORMATION tbi;
     NTSTATUS status;
-    TEB *teb = NtCurrentTeb();
 
     if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
     if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
@@ -2659,8 +2664,12 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
         status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
         if (status) return status;
     }
-    else tbi.ClientId = teb->ClientId;
-
+    else
+    {
+        TEB *teb = NtCurrentTeb();
+        if (!teb) return STATUS_ACCESS_DENIED;
+        tbi.ClientId = teb->ClientId;
+    }
     return ldt_get_entry( info->Selector, tbi.ClientId, &info->Entry );
 }
 

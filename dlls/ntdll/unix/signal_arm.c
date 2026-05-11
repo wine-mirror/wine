@@ -409,6 +409,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         ret = set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_ARMNT );
         if (ret || !self) return ret;
     }
+    else if (!frame) return STATUS_ACCESS_DENIED;
+
     if (flags & CONTEXT_INTEGER)
     {
         frame->r0  = context->R0;
@@ -459,6 +461,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_ARMNT );
         if (ret || !self) return ret;
     }
+    else if (!frame) return STATUS_ACCESS_DENIED;
 
     if (needed_flags & CONTEXT_INTEGER)
     {

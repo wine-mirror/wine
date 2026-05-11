@@ -947,6 +947,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
+    if (self && !frame) return STATUS_ACCESS_DENIED;
+
     if ((flags & CONTEXT_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
@@ -1061,6 +1063,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
     NTSTATUS ret;
+
+    if (self && !frame) return STATUS_ACCESS_DENIED;
 
     /* debug registers require a server call */
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
@@ -2296,13 +2300,14 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
 {
     THREAD_BASIC_INFORMATION tbi;
     NTSTATUS status = STATUS_SUCCESS;
-    TEB *teb = NtCurrentTeb();
 
     if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
     if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
 
     if (handle == GetCurrentThread())
     {
+        TEB *teb = NtCurrentTeb();
+        if (!teb) return STATUS_ACCESS_DENIED;
         tbi.TebBaseAddress = teb;
         tbi.ClientId = teb->ClientId;
     }

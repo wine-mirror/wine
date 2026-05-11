@@ -449,12 +449,12 @@ static inline void *get_kernel_stack( struct thread_data *data )
 
 static inline struct teb_data *get_teb_data( struct thread_data *data )
 {
-    return (struct teb_data *)&data->teb->GdiTebBatch;
+    return data->teb ? (struct teb_data *)&data->teb->GdiTebBatch : NULL;
 }
 
 static inline struct syscall_frame *get_syscall_frame( struct thread_data *data )
 {
-    return get_teb_data(data)->syscall_frame;
+    return data->teb ? get_teb_data(data)->syscall_frame : NULL;
 }
 
 static inline void alloc_syscall_frame( SIZE_T frame_size )
