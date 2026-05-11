@@ -54,10 +54,14 @@ void WINAPI glAlphaFunc( GLenum func, GLfloat ref )
 
 GLboolean WINAPI glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
 {
-    struct glAreTexturesResident_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures, .residences = residences };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glAreTexturesResident_params args = { .teb = NtCurrentTeb(), .n = n, .residences = residences };
     NTSTATUS status;
     TRACE( "n %d, textures %p, residences %p\n", n, textures, residences );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glAreTexturesResident, &args ))) WARN( "glAreTexturesResident returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
     return args.ret;
 }
 
@@ -79,9 +83,11 @@ void WINAPI glBegin( GLenum mode )
 
 void WINAPI glBindTexture( GLenum target, GLuint texture )
 {
-    struct glBindTexture_params args = { .teb = NtCurrentTeb(), .target = target, .texture = texture };
+    struct glBindTexture_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, texture %d\n", target, texture );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, FALSE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindTexture, &args ))) WARN( "glBindTexture returned %#lx\n", status );
 }
 
@@ -511,10 +517,14 @@ void WINAPI glDeleteLists( GLuint list, GLsizei range )
 
 void WINAPI glDeleteTextures( GLsizei n, const GLuint *textures )
 {
-    struct glDeleteTextures_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glDeleteTextures_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, textures %p\n", n, textures );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? del_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteTextures, &args ))) WARN( "glDeleteTextures returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 void WINAPI glDepthFunc( GLenum func )
@@ -828,6 +838,7 @@ void WINAPI glGenTextures( GLsizei n, GLuint *textures )
     NTSTATUS status;
     TRACE( "n %d, textures %p\n", n, textures );
     if ((status = UNIX_CALL( glGenTextures, &args ))) WARN( "glGenTextures returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_TEXTURE, n, textures );
 }
 
 void WINAPI glGetBooleanv( GLenum pname, GLboolean *data )
@@ -1209,9 +1220,10 @@ GLboolean WINAPI glIsList( GLuint list )
 
 GLboolean WINAPI glIsTexture( GLuint texture )
 {
-    struct glIsTexture_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glIsTexture_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glIsTexture, &args ))) WARN( "glIsTexture returned %#lx\n", status );
     return args.ret;
 }
@@ -1706,10 +1718,14 @@ void WINAPI glPopName(void)
 
 void WINAPI glPrioritizeTextures( GLsizei n, const GLuint *textures, const GLfloat *priorities )
 {
-    struct glPrioritizeTextures_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures, .priorities = priorities };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glPrioritizeTextures_params args = { .teb = NtCurrentTeb(), .n = n, .priorities = priorities };
     NTSTATUS status;
     TRACE( "n %d, textures %p, priorities %p\n", n, textures, priorities );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glPrioritizeTextures, &args ))) WARN( "glPrioritizeTextures returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 void WINAPI glPushAttrib( GLbitfield mask )
@@ -2877,10 +2893,14 @@ static GLboolean WINAPI glAreProgramsResidentNV( GLsizei n, const GLuint *progra
 
 static GLboolean WINAPI glAreTexturesResidentEXT( GLsizei n, const GLuint *textures, GLboolean *residences )
 {
-    struct glAreTexturesResidentEXT_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures, .residences = residences };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glAreTexturesResidentEXT_params args = { .teb = NtCurrentTeb(), .n = n, .residences = residences };
     NTSTATUS status;
     TRACE( "n %d, textures %p, residences %p\n", n, textures, residences );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glAreTexturesResidentEXT, &args ))) WARN( "glAreTexturesResidentEXT returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
     return args.ret;
 }
 
@@ -2917,8 +2937,8 @@ static GLuint WINAPI glAsyncCopyImageSubDataNVX( GLsizei waitSemaphoreCount, con
     struct glAsyncCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitSemaphoreArray = waitSemaphoreArray, .waitValueArray = waitValueArray, .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth, .signalSemaphoreCount = signalSemaphoreCount, .signalSemaphoreArray = signalSemaphoreArray, .signalValueArray = signalValueArray };
     NTSTATUS status;
     TRACE( "waitSemaphoreCount %d, waitSemaphoreArray %p, waitValueArray %p, srcGpu %d, dstGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d, signalSemaphoreCount %d, signalSemaphoreArray %p, signalValueArray %p\n", waitSemaphoreCount, waitSemaphoreArray, waitValueArray, srcGpu, dstGpuMask, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth, signalSemaphoreCount, signalSemaphoreArray, signalValueArray );
-    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
-    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
     if ((status = UNIX_CALL( glAsyncCopyImageSubDataNVX, &args ))) WARN( "glAsyncCopyImageSubDataNVX returned %#lx\n", status );
     return args.ret;
 }
@@ -3263,26 +3283,32 @@ static void WINAPI glBindFramebufferEXT( GLenum target, GLuint framebuffer )
 
 static void WINAPI glBindImageTexture( GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format )
 {
-    struct glBindImageTexture_params args = { .teb = NtCurrentTeb(), .unit = unit, .texture = texture, .level = level, .layered = layered, .layer = layer, .access = access, .format = format };
+    struct glBindImageTexture_params args = { .teb = NtCurrentTeb(), .unit = unit, .level = level, .layered = layered, .layer = layer, .access = access, .format = format };
     NTSTATUS status;
     TRACE( "unit %d, texture %d, level %d, layered %d, layer %d, access %d, format %d\n", unit, texture, level, layered, layer, access, format );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindImageTexture, &args ))) WARN( "glBindImageTexture returned %#lx\n", status );
 }
 
 static void WINAPI glBindImageTextureEXT( GLuint index, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLint format )
 {
-    struct glBindImageTextureEXT_params args = { .teb = NtCurrentTeb(), .index = index, .texture = texture, .level = level, .layered = layered, .layer = layer, .access = access, .format = format };
+    struct glBindImageTextureEXT_params args = { .teb = NtCurrentTeb(), .index = index, .level = level, .layered = layered, .layer = layer, .access = access, .format = format };
     NTSTATUS status;
     TRACE( "index %d, texture %d, level %d, layered %d, layer %d, access %d, format %d\n", index, texture, level, layered, layer, access, format );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindImageTextureEXT, &args ))) WARN( "glBindImageTextureEXT returned %#lx\n", status );
 }
 
 static void WINAPI glBindImageTextures( GLuint first, GLsizei count, const GLuint *textures )
 {
-    struct glBindImageTextures_params args = { .teb = NtCurrentTeb(), .first = first, .count = count, .textures = textures };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glBindImageTextures_params args = { .teb = NtCurrentTeb(), .first = first, .count = count };
     NTSTATUS status;
     TRACE( "first %d, count %d, textures %p\n", first, count, textures );
+    textures_tmp = count > 0 ? memdup_objects( count, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = count > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, count, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glBindImageTextures, &args ))) WARN( "glBindImageTextures returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static GLuint WINAPI glBindLightParameterEXT( GLenum light, GLenum value )
@@ -3305,9 +3331,11 @@ static GLuint WINAPI glBindMaterialParameterEXT( GLenum face, GLenum value )
 
 static void WINAPI glBindMultiTextureEXT( GLenum texunit, GLenum target, GLuint texture )
 {
-    struct glBindMultiTextureEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target, .texture = texture };
+    struct glBindMultiTextureEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target };
     NTSTATUS status;
     TRACE( "texunit %d, target %d, texture %d\n", texunit, target, texture );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindMultiTextureEXT, &args ))) WARN( "glBindMultiTextureEXT returned %#lx\n", status );
 }
 
@@ -3382,9 +3410,10 @@ static void WINAPI glBindSamplers( GLuint first, GLsizei count, const GLuint *sa
 
 static void WINAPI glBindShadingRateImageNV( GLuint texture )
 {
-    struct glBindShadingRateImageNV_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glBindShadingRateImageNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindShadingRateImageNV, &args ))) WARN( "glBindShadingRateImageNV returned %#lx\n", status );
 }
 
@@ -3399,17 +3428,21 @@ static GLuint WINAPI glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum
 
 static void WINAPI glBindTextureEXT( GLenum target, GLuint texture )
 {
-    struct glBindTextureEXT_params args = { .teb = NtCurrentTeb(), .target = target, .texture = texture };
+    struct glBindTextureEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, texture %d\n", target, texture );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindTextureEXT, &args ))) WARN( "glBindTextureEXT returned %#lx\n", status );
 }
 
 static void WINAPI glBindTextureUnit( GLuint unit, GLuint texture )
 {
-    struct glBindTextureUnit_params args = { .teb = NtCurrentTeb(), .unit = unit, .texture = texture };
+    struct glBindTextureUnit_params args = { .teb = NtCurrentTeb(), .unit = unit };
     NTSTATUS status;
     TRACE( "unit %d, texture %d\n", unit, texture );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, FALSE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindTextureUnit, &args ))) WARN( "glBindTextureUnit returned %#lx\n", status );
 }
 
@@ -3424,10 +3457,15 @@ static GLuint WINAPI glBindTextureUnitParameterEXT( GLenum unit, GLenum value )
 
 static void WINAPI glBindTextures( GLuint first, GLsizei count, const GLuint *textures )
 {
-    struct glBindTextures_params args = { .teb = NtCurrentTeb(), .first = first, .count = count, .textures = textures };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glBindTextures_params args = { .teb = NtCurrentTeb(), .first = first, .count = count };
     NTSTATUS status;
     TRACE( "first %d, count %d, textures %p\n", first, count, textures );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, count, textures, FALSE )) return;
+    textures_tmp = count > 0 ? memdup_objects( count, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = count > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, count, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glBindTextures, &args ))) WARN( "glBindTextures returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glBindTransformFeedback( GLenum target, GLuint id )
@@ -3501,9 +3539,10 @@ static void WINAPI glBindVideoCaptureStreamBufferNV( GLuint video_capture_slot, 
 
 static void WINAPI glBindVideoCaptureStreamTextureNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLenum target, GLuint texture )
 {
-    struct glBindVideoCaptureStreamTextureNV_params args = { .teb = NtCurrentTeb(), .video_capture_slot = video_capture_slot, .stream = stream, .frame_region = frame_region, .target = target, .texture = texture };
+    struct glBindVideoCaptureStreamTextureNV_params args = { .teb = NtCurrentTeb(), .video_capture_slot = video_capture_slot, .stream = stream, .frame_region = frame_region, .target = target };
     NTSTATUS status;
     TRACE( "video_capture_slot %d, stream %d, frame_region %d, target %d, texture %d\n", video_capture_slot, stream, frame_region, target, texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glBindVideoCaptureStreamTextureNV, &args ))) WARN( "glBindVideoCaptureStreamTextureNV returned %#lx\n", status );
 }
 
@@ -4225,17 +4264,19 @@ static void WINAPI glClearNamedFramebufferuiv( GLuint framebuffer, GLenum buffer
 
 static void WINAPI glClearTexImage( GLuint texture, GLint level, GLenum format, GLenum type, const void *data )
 {
-    struct glClearTexImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .format = format, .type = type, .data = data };
+    struct glClearTexImage_params args = { .teb = NtCurrentTeb(), .level = level, .format = format, .type = type, .data = data };
     NTSTATUS status;
     TRACE( "texture %d, level %d, format %d, type %d, data %p\n", texture, level, format, type, data );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glClearTexImage, &args ))) WARN( "glClearTexImage returned %#lx\n", status );
 }
 
 static void WINAPI glClearTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *data )
 {
-    struct glClearTexSubImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .data = data };
+    struct glClearTexSubImage_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .data = data };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, type %d, data %p\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, data );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glClearTexSubImage, &args ))) WARN( "glClearTexSubImage returned %#lx\n", status );
 }
 
@@ -4883,73 +4924,88 @@ static void WINAPI glCompressedTexSubImage3DARB( GLenum target, GLint level, GLi
 
 static void WINAPI glCompressedTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .border = border, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .border = border, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, border %d, imageSize %d, bits %p\n", texture, target, level, internalformat, width, border, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureImage1DEXT, &args ))) WARN( "glCompressedTextureImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .border = border, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .border = border, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, height %d, border %d, imageSize %d, bits %p\n", texture, target, level, internalformat, width, height, border, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureImage2DEXT, &args ))) WARN( "glCompressedTextureImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureImage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .border = border, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureImage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .border = border, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, height %d, depth %d, border %d, imageSize %d, bits %p\n", texture, target, level, internalformat, width, height, depth, border, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureImage3DEXT, &args ))) WARN( "glCompressedTextureImage3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data )
 {
-    struct glCompressedTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .width = width, .format = format, .imageSize = imageSize, .data = data };
+    struct glCompressedTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .width = width, .format = format, .imageSize = imageSize, .data = data };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, width %d, format %d, imageSize %d, data %p\n", texture, level, xoffset, width, format, imageSize, data );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage1D, &args ))) WARN( "glCompressedTextureSubImage1D returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .width = width, .format = format, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .width = width, .format = format, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, width %d, format %d, imageSize %d, bits %p\n", texture, target, level, xoffset, width, format, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage1DEXT, &args ))) WARN( "glCompressedTextureSubImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data )
 {
-    struct glCompressedTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .imageSize = imageSize, .data = data };
+    struct glCompressedTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .imageSize = imageSize, .data = data };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, width %d, height %d, format %d, imageSize %d, data %p\n", texture, level, xoffset, yoffset, width, height, format, imageSize, data );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage2D, &args ))) WARN( "glCompressedTextureSubImage2D returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, width %d, height %d, format %d, imageSize %d, bits %p\n", texture, target, level, xoffset, yoffset, width, height, format, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage2DEXT, &args ))) WARN( "glCompressedTextureSubImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data )
 {
-    struct glCompressedTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .imageSize = imageSize, .data = data };
+    struct glCompressedTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .imageSize = imageSize, .data = data };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, imageSize %d, data %p\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage3D, &args ))) WARN( "glCompressedTextureSubImage3D returned %#lx\n", status );
 }
 
 static void WINAPI glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *bits )
 {
-    struct glCompressedTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .imageSize = imageSize, .bits = bits };
+    struct glCompressedTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .imageSize = imageSize, .bits = bits };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, imageSize %d, bits %p\n", texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, bits );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCompressedTextureSubImage3DEXT, &args ))) WARN( "glCompressedTextureSubImage3DEXT returned %#lx\n", status );
 }
 
@@ -5158,8 +5214,8 @@ static void WINAPI glCopyImageSubData( GLuint srcName, GLenum srcTarget, GLint s
     struct glCopyImageSubData_params args = { .teb = NtCurrentTeb(), .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
     NTSTATUS status;
     TRACE( "srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d\n", srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth );
-    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
-    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
     if ((status = UNIX_CALL( glCopyImageSubData, &args ))) WARN( "glCopyImageSubData returned %#lx\n", status );
 }
 
@@ -5168,8 +5224,8 @@ static void WINAPI glCopyImageSubDataNV( GLuint srcName, GLenum srcTarget, GLint
     struct glCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, width %d, height %d, depth %d\n", srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, width, height, depth );
-    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
-    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
     if ((status = UNIX_CALL( glCopyImageSubDataNV, &args ))) WARN( "glCopyImageSubDataNV returned %#lx\n", status );
 }
 
@@ -5281,65 +5337,78 @@ static void WINAPI glCopyTexSubImage3DEXT( GLenum target, GLint level, GLint xof
 
 static void WINAPI glCopyTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
 {
-    struct glCopyTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .x = x, .y = y, .width = width, .border = border };
+    struct glCopyTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .x = x, .y = y, .width = width, .border = border };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, x %d, y %d, width %d, border %d\n", texture, target, level, internalformat, x, y, width, border );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureImage1DEXT, &args ))) WARN( "glCopyTextureImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
 {
-    struct glCopyTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .x = x, .y = y, .width = width, .height = height, .border = border };
+    struct glCopyTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .x = x, .y = y, .width = width, .height = height, .border = border };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, x %d, y %d, width %d, height %d, border %d\n", texture, target, level, internalformat, x, y, width, height, border );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureImage2DEXT, &args ))) WARN( "glCopyTextureImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
 {
-    struct glCopyTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .x = x, .y = y, .width = width };
+    struct glCopyTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .x = x, .y = y, .width = width };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, x %d, y %d, width %d\n", texture, level, xoffset, x, y, width );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage1D, &args ))) WARN( "glCopyTextureSubImage1D returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
 {
-    struct glCopyTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .x = x, .y = y, .width = width };
+    struct glCopyTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .x = x, .y = y, .width = width };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, x %d, y %d, width %d\n", texture, target, level, xoffset, x, y, width );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage1DEXT, &args ))) WARN( "glCopyTextureSubImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-    struct glCopyTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .x = x, .y = y, .width = width, .height = height };
+    struct glCopyTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .x = x, .y = y, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, x %d, y %d, width %d, height %d\n", texture, level, xoffset, yoffset, x, y, width, height );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage2D, &args ))) WARN( "glCopyTextureSubImage2D returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-    struct glCopyTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .x = x, .y = y, .width = width, .height = height };
+    struct glCopyTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .x = x, .y = y, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, x %d, y %d, width %d, height %d\n", texture, target, level, xoffset, yoffset, x, y, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage2DEXT, &args ))) WARN( "glCopyTextureSubImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-    struct glCopyTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .x = x, .y = y, .width = width, .height = height };
+    struct glCopyTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .x = x, .y = y, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, x %d, y %d, width %d, height %d\n", texture, level, xoffset, yoffset, zoffset, x, y, width, height );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage3D, &args ))) WARN( "glCopyTextureSubImage3D returned %#lx\n", status );
 }
 
 static void WINAPI glCopyTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-    struct glCopyTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .x = x, .y = y, .width = width, .height = height };
+    struct glCopyTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .x = x, .y = y, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, zoffset %d, x %d, y %d, width %d, height %d\n", texture, target, level, xoffset, yoffset, zoffset, x, y, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glCopyTextureSubImage3DEXT, &args ))) WARN( "glCopyTextureSubImage3DEXT returned %#lx\n", status );
 }
 
@@ -5551,6 +5620,7 @@ static void WINAPI glCreateTextures( GLenum target, GLsizei n, GLuint *textures 
     NTSTATUS status;
     TRACE( "target %d, n %d, textures %p\n", target, n, textures );
     if ((status = UNIX_CALL( glCreateTextures, &args ))) WARN( "glCreateTextures returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_TEXTURE, n, textures );
 }
 
 static void WINAPI glCreateTransformFeedbacks( GLsizei n, GLuint *ids )
@@ -5972,10 +6042,14 @@ static void WINAPI glDeleteStatesNV( GLsizei n, const GLuint *states )
 
 static void WINAPI glDeleteTexturesEXT( GLsizei n, const GLuint *textures )
 {
-    struct glDeleteTexturesEXT_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glDeleteTexturesEXT_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, textures %p\n", n, textures );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? del_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteTexturesEXT, &args ))) WARN( "glDeleteTexturesEXT returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glDeleteTransformFeedbacks( GLsizei n, const GLuint *ids )
@@ -6526,9 +6600,10 @@ static void WINAPI glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end
 
 static void WINAPI glDrawTextureNV( GLuint texture, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 )
 {
-    struct glDrawTextureNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .sampler = sampler, .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
+    struct glDrawTextureNV_params args = { .teb = NtCurrentTeb(), .sampler = sampler, .x0 = x0, .y0 = y0, .x1 = x1, .y1 = y1, .z = z, .s0 = s0, .t0 = t0, .s1 = s1, .t1 = t1 };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d, x0 %f, y0 %f, x1 %f, y1 %f, z %f, s0 %f, t0 %f, s1 %f, t1 %f\n", texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glDrawTextureNV, &args ))) WARN( "glDrawTextureNV returned %#lx\n", status );
 }
 
@@ -6590,9 +6665,10 @@ static void WINAPI glEGLImageTargetTexStorageEXT( GLenum target, GLeglImageOES i
 
 static void WINAPI glEGLImageTargetTextureStorageEXT( GLuint texture, GLeglImageOES image, const GLint* attrib_list )
 {
-    struct glEGLImageTargetTextureStorageEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .image = image, .attrib_list = attrib_list };
+    struct glEGLImageTargetTextureStorageEXT_params args = { .teb = NtCurrentTeb(), .image = image, .attrib_list = attrib_list };
     NTSTATUS status;
     TRACE( "texture %d, image %p, attrib_list %p\n", texture, image, attrib_list );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glEGLImageTargetTextureStorageEXT, &args ))) WARN( "glEGLImageTargetTextureStorageEXT returned %#lx\n", status );
 }
 
@@ -7418,129 +7494,145 @@ static void WINAPI glFramebufferSamplePositionsfvAMD( GLenum target, GLuint nums
 
 static void WINAPI glFramebufferShadingRateEXT( GLenum target, GLenum attachment, GLuint texture, GLint baseLayer, GLsizei numLayers, GLsizei texelWidth, GLsizei texelHeight )
 {
-    struct glFramebufferShadingRateEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .baseLayer = baseLayer, .numLayers = numLayers, .texelWidth = texelWidth, .texelHeight = texelHeight };
+    struct glFramebufferShadingRateEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .baseLayer = baseLayer, .numLayers = numLayers, .texelWidth = texelWidth, .texelHeight = texelHeight };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, baseLayer %d, numLayers %d, texelWidth %d, texelHeight %d\n", target, attachment, texture, baseLayer, numLayers, texelWidth, texelHeight );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferShadingRateEXT, &args ))) WARN( "glFramebufferShadingRateEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture( GLenum target, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glFramebufferTexture_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level };
+    struct glFramebufferTexture_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d\n", target, attachment, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture, &args ))) WARN( "glFramebufferTexture returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture1D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glFramebufferTexture1D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glFramebufferTexture1D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d\n", target, attachment, textarget, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture1D, &args ))) WARN( "glFramebufferTexture1D returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture1DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d\n", target, attachment, textarget, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture1DEXT, &args ))) WARN( "glFramebufferTexture1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture2D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glFramebufferTexture2D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glFramebufferTexture2D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d\n", target, attachment, textarget, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture2D, &args ))) WARN( "glFramebufferTexture2D returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture2DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d\n", target, attachment, textarget, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture2DEXT, &args ))) WARN( "glFramebufferTexture2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture3D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
 {
-    struct glFramebufferTexture3D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level, .zoffset = zoffset };
+    struct glFramebufferTexture3D_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level, .zoffset = zoffset };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d, zoffset %d\n", target, attachment, textarget, texture, level, zoffset );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture3D, &args ))) WARN( "glFramebufferTexture3D returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTexture3DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
 {
-    struct glFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .texture = texture, .level = level, .zoffset = zoffset };
+    struct glFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .textarget = textarget, .level = level, .zoffset = zoffset };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, textarget %d, texture %d, level %d, zoffset %d\n", target, attachment, textarget, texture, level, zoffset );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTexture3DEXT, &args ))) WARN( "glFramebufferTexture3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureARB( GLenum target, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glFramebufferTextureARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level };
+    struct glFramebufferTextureARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d\n", target, attachment, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureARB, &args ))) WARN( "glFramebufferTextureARB returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureEXT( GLenum target, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level };
+    struct glFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d\n", target, attachment, texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureEXT, &args ))) WARN( "glFramebufferTextureEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureFaceARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face )
 {
-    struct glFramebufferTextureFaceARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .face = face };
+    struct glFramebufferTextureFaceARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .face = face };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, face %d\n", target, attachment, texture, level, face );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureFaceARB, &args ))) WARN( "glFramebufferTextureFaceARB returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureFaceEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face )
 {
-    struct glFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .face = face };
+    struct glFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .face = face };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, face %d\n", target, attachment, texture, level, face );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureFaceEXT, &args ))) WARN( "glFramebufferTextureFaceEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureLayer( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, layer %d\n", target, attachment, texture, level, layer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureLayer, &args ))) WARN( "glFramebufferTextureLayer returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureLayerARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glFramebufferTextureLayerARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glFramebufferTextureLayerARB_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, layer %d\n", target, attachment, texture, level, layer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureLayerARB, &args ))) WARN( "glFramebufferTextureLayerARB returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureLayerEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, layer %d\n", target, attachment, texture, level, layer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureLayerEXT, &args ))) WARN( "glFramebufferTextureLayerEXT returned %#lx\n", status );
 }
 
 static void WINAPI glFramebufferTextureMultiviewOVR( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews )
 {
-    struct glFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .texture = texture, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
+    struct glFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .target = target, .attachment = attachment, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
     NTSTATUS status;
     TRACE( "target %d, attachment %d, texture %d, level %d, baseViewIndex %d, numViews %d\n", target, attachment, texture, level, baseViewIndex, numViews );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glFramebufferTextureMultiviewOVR, &args ))) WARN( "glFramebufferTextureMultiviewOVR returned %#lx\n", status );
 }
 
@@ -7785,6 +7877,7 @@ static void WINAPI glGenTexturesEXT( GLsizei n, GLuint *textures )
     NTSTATUS status;
     TRACE( "n %d, textures %p\n", n, textures );
     if ((status = UNIX_CALL( glGenTexturesEXT, &args ))) WARN( "glGenTexturesEXT returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_TEXTURE, n, textures );
 }
 
 static void WINAPI glGenTransformFeedbacks( GLsizei n, GLuint *ids )
@@ -7854,17 +7947,20 @@ static void WINAPI glGenerateMultiTexMipmapEXT( GLenum texunit, GLenum target )
 
 static void WINAPI glGenerateTextureMipmap( GLuint texture )
 {
-    struct glGenerateTextureMipmap_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glGenerateTextureMipmap_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGenerateTextureMipmap, &args ))) WARN( "glGenerateTextureMipmap returned %#lx\n", status );
 }
 
 static void WINAPI glGenerateTextureMipmapEXT( GLuint texture, GLenum target )
 {
-    struct glGenerateTextureMipmapEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target };
+    struct glGenerateTextureMipmapEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "texture %d, target %d\n", texture, target );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGenerateTextureMipmapEXT, &args ))) WARN( "glGenerateTextureMipmapEXT returned %#lx\n", status );
 }
 
@@ -8285,25 +8381,29 @@ static void WINAPI glGetCompressedTexImageARB( GLenum target, GLint level, void 
 
 static void WINAPI glGetCompressedTextureImage( GLuint texture, GLint level, GLsizei bufSize, void *pixels )
 {
-    struct glGetCompressedTextureImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .bufSize = bufSize, .pixels = pixels };
+    struct glGetCompressedTextureImage_params args = { .teb = NtCurrentTeb(), .level = level, .bufSize = bufSize, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, bufSize %d, pixels %p\n", texture, level, bufSize, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetCompressedTextureImage, &args ))) WARN( "glGetCompressedTextureImage returned %#lx\n", status );
 }
 
 static void WINAPI glGetCompressedTextureImageEXT( GLuint texture, GLenum target, GLint lod, void *img )
 {
-    struct glGetCompressedTextureImageEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .lod = lod, .img = img };
+    struct glGetCompressedTextureImageEXT_params args = { .teb = NtCurrentTeb(), .target = target, .lod = lod, .img = img };
     NTSTATUS status;
     TRACE( "texture %d, target %d, lod %d, img %p\n", texture, target, lod, img );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetCompressedTextureImageEXT, &args ))) WARN( "glGetCompressedTextureImageEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetCompressedTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei bufSize, void *pixels )
 {
-    struct glGetCompressedTextureSubImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .bufSize = bufSize, .pixels = pixels };
+    struct glGetCompressedTextureSubImage_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .bufSize = bufSize, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, bufSize %d, pixels %p\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, bufSize, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetCompressedTextureSubImage, &args ))) WARN( "glGetCompressedTextureSubImage returned %#lx\n", status );
 }
 
@@ -8712,18 +8812,20 @@ static void WINAPI glGetHistogramParameterxvOES( GLenum target, GLenum pname, GL
 
 static GLuint64 WINAPI glGetImageHandleARB( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format )
 {
-    struct glGetImageHandleARB_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .layered = layered, .layer = layer, .format = format };
+    struct glGetImageHandleARB_params args = { .teb = NtCurrentTeb(), .level = level, .layered = layered, .layer = layer, .format = format };
     NTSTATUS status;
     TRACE( "texture %d, level %d, layered %d, layer %d, format %d\n", texture, level, layered, layer, format );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetImageHandleARB, &args ))) WARN( "glGetImageHandleARB returned %#lx\n", status );
     return args.ret;
 }
 
 static GLuint64 WINAPI glGetImageHandleNV( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format )
 {
-    struct glGetImageHandleNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .layered = layered, .layer = layer, .format = format };
+    struct glGetImageHandleNV_params args = { .teb = NtCurrentTeb(), .level = level, .layered = layered, .layer = layer, .format = format };
     NTSTATUS status;
     TRACE( "texture %d, level %d, layered %d, layer %d, format %d\n", texture, level, layered, layer, format );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetImageHandleNV, &args ))) WARN( "glGetImageHandleNV returned %#lx\n", status );
     return args.ret;
 }
@@ -10367,165 +10469,191 @@ static void WINAPI glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed 
 
 static GLuint64 WINAPI glGetTextureHandleARB( GLuint texture )
 {
-    struct glGetTextureHandleARB_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glGetTextureHandleARB_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureHandleARB, &args ))) WARN( "glGetTextureHandleARB returned %#lx\n", status );
     return args.ret;
 }
 
 static GLuint64 WINAPI glGetTextureHandleNV( GLuint texture )
 {
-    struct glGetTextureHandleNV_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glGetTextureHandleNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureHandleNV, &args ))) WARN( "glGetTextureHandleNV returned %#lx\n", status );
     return args.ret;
 }
 
 static void WINAPI glGetTextureImage( GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels )
 {
-    struct glGetTextureImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .format = format, .type = type, .bufSize = bufSize, .pixels = pixels };
+    struct glGetTextureImage_params args = { .teb = NtCurrentTeb(), .level = level, .format = format, .type = type, .bufSize = bufSize, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, format %d, type %d, bufSize %d, pixels %p\n", texture, level, format, type, bufSize, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureImage, &args ))) WARN( "glGetTextureImage returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureImageEXT( GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, void *pixels )
 {
-    struct glGetTextureImageEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .format = format, .type = type, .pixels = pixels };
+    struct glGetTextureImageEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, format %d, type %d, pixels %p\n", texture, target, level, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureImageEXT, &args ))) WARN( "glGetTextureImageEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureLevelParameterfv( GLuint texture, GLint level, GLenum pname, GLfloat *params )
 {
-    struct glGetTextureLevelParameterfv_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .pname = pname, .params = params };
+    struct glGetTextureLevelParameterfv_params args = { .teb = NtCurrentTeb(), .level = level, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "texture %d, level %d, pname %d, params %p\n", texture, level, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureLevelParameterfv, &args ))) WARN( "glGetTextureLevelParameterfv returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameterfvEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLfloat *params )
 {
-    struct glGetTextureLevelParameterfvEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .pname = pname, .params = params };
+    struct glGetTextureLevelParameterfvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "texture %d, target %d, level %d, pname %d, params %p\n", texture, target, level, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureLevelParameterfvEXT, &args ))) WARN( "glGetTextureLevelParameterfvEXT returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameteriv( GLuint texture, GLint level, GLenum pname, GLint *params )
 {
-    struct glGetTextureLevelParameteriv_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .pname = pname, .params = params };
+    struct glGetTextureLevelParameteriv_params args = { .teb = NtCurrentTeb(), .level = level, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "texture %d, level %d, pname %d, params %p\n", texture, level, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureLevelParameteriv, &args ))) WARN( "glGetTextureLevelParameteriv returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureLevelParameterivEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLint *params )
 {
-    struct glGetTextureLevelParameterivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .pname = pname, .params = params };
+    struct glGetTextureLevelParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .pname = pname, .params = params };
     NTSTATUS status;
     int integer;
     TRACE( "texture %d, target %d, level %d, pname %d, params %p\n", texture, target, level, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureLevelParameterivEXT, &args ))) WARN( "glGetTextureLevelParameterivEXT returned %#lx\n", status );
     else if (get_integer( pname, 0, *params, &integer )) *params = integer;
 }
 
 static void WINAPI glGetTextureParameterIiv( GLuint texture, GLenum pname, GLint *params )
 {
-    struct glGetTextureParameterIiv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glGetTextureParameterIiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterIiv, &args ))) WARN( "glGetTextureParameterIiv returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params )
 {
-    struct glGetTextureParameterIivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glGetTextureParameterIivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterIivEXT, &args ))) WARN( "glGetTextureParameterIivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterIuiv( GLuint texture, GLenum pname, GLuint *params )
 {
-    struct glGetTextureParameterIuiv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glGetTextureParameterIuiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterIuiv, &args ))) WARN( "glGetTextureParameterIuiv returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, GLuint *params )
 {
-    struct glGetTextureParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glGetTextureParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterIuivEXT, &args ))) WARN( "glGetTextureParameterIuivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterfv( GLuint texture, GLenum pname, GLfloat *params )
 {
-    struct glGetTextureParameterfv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glGetTextureParameterfv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterfv, &args ))) WARN( "glGetTextureParameterfv returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, GLfloat *params )
 {
-    struct glGetTextureParameterfvEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glGetTextureParameterfvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterfvEXT, &args ))) WARN( "glGetTextureParameterfvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameteriv( GLuint texture, GLenum pname, GLint *params )
 {
-    struct glGetTextureParameteriv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glGetTextureParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameteriv, &args ))) WARN( "glGetTextureParameteriv returned %#lx\n", status );
 }
 
 static void WINAPI glGetTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params )
 {
-    struct glGetTextureParameterivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glGetTextureParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureParameterivEXT, &args ))) WARN( "glGetTextureParameterivEXT returned %#lx\n", status );
 }
 
 static GLuint64 WINAPI glGetTextureSamplerHandleARB( GLuint texture, GLuint sampler )
 {
-    struct glGetTextureSamplerHandleARB_params args = { .teb = NtCurrentTeb(), .texture = texture, .sampler = sampler };
+    struct glGetTextureSamplerHandleARB_params args = { .teb = NtCurrentTeb(), .sampler = sampler };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d\n", texture, sampler );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureSamplerHandleARB, &args ))) WARN( "glGetTextureSamplerHandleARB returned %#lx\n", status );
     return args.ret;
 }
 
 static GLuint64 WINAPI glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler )
 {
-    struct glGetTextureSamplerHandleNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .sampler = sampler };
+    struct glGetTextureSamplerHandleNV_params args = { .teb = NtCurrentTeb(), .sampler = sampler };
     NTSTATUS status;
     TRACE( "texture %d, sampler %d\n", texture, sampler );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureSamplerHandleNV, &args ))) WARN( "glGetTextureSamplerHandleNV returned %#lx\n", status );
     return args.ret;
 }
 
 static void WINAPI glGetTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void *pixels )
 {
-    struct glGetTextureSubImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .bufSize = bufSize, .pixels = pixels };
+    struct glGetTextureSubImage_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .bufSize = bufSize, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, type %d, bufSize %d, pixels %p\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, bufSize, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glGetTextureSubImage, &args ))) WARN( "glGetTextureSubImage returned %#lx\n", status );
 }
 
@@ -11796,17 +11924,19 @@ static void WINAPI glInvalidateSubFramebuffer( GLenum target, GLsizei numAttachm
 
 static void WINAPI glInvalidateTexImage( GLuint texture, GLint level )
 {
-    struct glInvalidateTexImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level };
+    struct glInvalidateTexImage_params args = { .teb = NtCurrentTeb(), .level = level };
     NTSTATUS status;
     TRACE( "texture %d, level %d\n", texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glInvalidateTexImage, &args ))) WARN( "glInvalidateTexImage returned %#lx\n", status );
 }
 
 static void WINAPI glInvalidateTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth )
 {
-    struct glInvalidateTexSubImage_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth };
+    struct glInvalidateTexSubImage_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d\n", texture, level, xoffset, yoffset, zoffset, width, height, depth );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glInvalidateTexSubImage, &args ))) WARN( "glInvalidateTexSubImage returned %#lx\n", status );
 }
 
@@ -12136,9 +12266,10 @@ static GLboolean WINAPI glIsSync( GLsync sync )
 
 static GLboolean WINAPI glIsTextureEXT( GLuint texture )
 {
-    struct glIsTextureEXT_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glIsTextureEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glIsTextureEXT, &args ))) WARN( "glIsTextureEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -12220,8 +12351,8 @@ static void WINAPI glLGPUCopyImageSubDataNVX( GLuint sourceGpu, GLbitfield desti
     struct glLGPUCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .sourceGpu = sourceGpu, .destinationGpuMask = destinationGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srxY = srxY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "sourceGpu %d, destinationGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srxY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, width %d, height %d, depth %d\n", sourceGpu, destinationGpuMask, srcName, srcTarget, srcLevel, srcX, srxY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, width, height, depth );
-    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
-    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
     if ((status = UNIX_CALL( glLGPUCopyImageSubDataNVX, &args ))) WARN( "glLGPUCopyImageSubDataNVX returned %#lx\n", status );
 }
 
@@ -12729,9 +12860,10 @@ static void WINAPI glMapParameterivNV( GLenum target, GLenum pname, const GLint 
 
 static void * WINAPI glMapTexture2DINTEL( GLuint texture, GLint level, GLbitfield access, GLint *stride, GLenum *layout )
 {
-    struct glMapTexture2DINTEL_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .access = access, .stride = stride, .layout = layout };
+    struct glMapTexture2DINTEL_params args = { .teb = NtCurrentTeb(), .level = level, .access = access, .stride = stride, .layout = layout };
     NTSTATUS status;
     TRACE( "texture %d, level %d, access %d, stride %p, layout %p\n", texture, level, access, stride, layout );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glMapTexture2DINTEL, &args ))) WARN( "glMapTexture2DINTEL returned %#lx\n", status );
     return args.ret;
 }
@@ -14652,8 +14784,8 @@ static void WINAPI glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstG
     struct glMulticastCopyImageSubDataNV_params args = { .teb = NtCurrentTeb(), .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth };
     NTSTATUS status;
     TRACE( "srcGpu %d, dstGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d\n", srcGpu, dstGpuMask, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth );
-    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &srcName );
-    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_COUNT, 1, &dstName );
+    args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
+    args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
     if ((status = UNIX_CALL( glMulticastCopyImageSubDataNV, &args ))) WARN( "glMulticastCopyImageSubDataNV returned %#lx\n", status );
 }
 
@@ -14950,88 +15082,103 @@ static void WINAPI glNamedFramebufferSamplePositionsfvAMD( GLuint framebuffer, G
 
 static void WINAPI glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d\n", framebuffer, attachment, texture, level );
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTexture, &args ))) WARN( "glNamedFramebufferTexture returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture1DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d\n", framebuffer, attachment, textarget, texture, level );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTexture1DEXT, &args ))) WARN( "glNamedFramebufferTexture1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level };
+    struct glNamedFramebufferTexture2DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d\n", framebuffer, attachment, textarget, texture, level );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTexture2DEXT, &args ))) WARN( "glNamedFramebufferTexture2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTexture3DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
 {
-    struct glNamedFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .texture = texture, .level = level, .zoffset = zoffset };
+    struct glNamedFramebufferTexture3DEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .textarget = textarget, .level = level, .zoffset = zoffset };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, textarget %d, texture %d, level %d, zoffset %d\n", framebuffer, attachment, textarget, texture, level, zoffset );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTexture3DEXT, &args ))) WARN( "glNamedFramebufferTexture3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
 {
-    struct glNamedFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level };
+    struct glNamedFramebufferTextureEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d\n", framebuffer, attachment, texture, level );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTextureEXT, &args ))) WARN( "glNamedFramebufferTextureEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureFaceEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLenum face )
 {
-    struct glNamedFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .face = face };
+    struct glNamedFramebufferTextureFaceEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level, .face = face };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, face %d\n", framebuffer, attachment, texture, level, face );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTextureFaceEXT, &args ))) WARN( "glNamedFramebufferTextureFaceEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureLayer( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glNamedFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glNamedFramebufferTextureLayer_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, layer %d\n", framebuffer, attachment, texture, level, layer );
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTextureLayer, &args ))) WARN( "glNamedFramebufferTextureLayer returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureLayerEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
 {
-    struct glNamedFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .layer = layer };
+    struct glNamedFramebufferTextureLayerEXT_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level, .layer = layer };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, layer %d\n", framebuffer, attachment, texture, level, layer );
     if (!alloc_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTextureLayerEXT, &args ))) WARN( "glNamedFramebufferTextureLayerEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedFramebufferTextureMultiviewOVR( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews )
 {
-    struct glNamedFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .texture = texture, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
+    struct glNamedFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .attachment = attachment, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, baseViewIndex %d, numViews %d\n", framebuffer, attachment, texture, level, baseViewIndex, numViews );
     args.framebuffer = *map_context_objects( OBJ_TYPE_FRAMEBUFFER, 1, &framebuffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glNamedFramebufferTextureMultiviewOVR, &args ))) WARN( "glNamedFramebufferTextureMultiviewOVR returned %#lx\n", status );
 }
 
@@ -16088,18 +16235,26 @@ static void WINAPI glPrimitiveRestartNV(void)
 
 static void WINAPI glPrioritizeTexturesEXT( GLsizei n, const GLuint *textures, const GLclampf *priorities )
 {
-    struct glPrioritizeTexturesEXT_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures, .priorities = priorities };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glPrioritizeTexturesEXT_params args = { .teb = NtCurrentTeb(), .n = n, .priorities = priorities };
     NTSTATUS status;
     TRACE( "n %d, textures %p, priorities %p\n", n, textures, priorities );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glPrioritizeTexturesEXT, &args ))) WARN( "glPrioritizeTexturesEXT returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glPrioritizeTexturesxOES( GLsizei n, const GLuint *textures, const GLfixed *priorities )
 {
-    struct glPrioritizeTexturesxOES_params args = { .teb = NtCurrentTeb(), .n = n, .textures = textures, .priorities = priorities };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glPrioritizeTexturesxOES_params args = { .teb = NtCurrentTeb(), .n = n, .priorities = priorities };
     NTSTATUS status;
     TRACE( "n %d, textures %p, priorities %p\n", n, textures, priorities );
+    textures_tmp = n > 0 ? memdup_objects( n, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = n > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, n, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glPrioritizeTexturesxOES, &args ))) WARN( "glPrioritizeTexturesxOES returned %#lx\n", status );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glProgramBinary( GLuint program, GLenum binaryFormat, const void *binary, GLsizei length )
@@ -18820,13 +18975,17 @@ static void WINAPI glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat
 static void WINAPI glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *dstLayouts )
 {
     GLuint buffers_buf[64], *buffers_tmp;
-    struct glSignalSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .textures = textures, .dstLayouts = dstLayouts };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glSignalSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .dstLayouts = dstLayouts };
     NTSTATUS status;
     TRACE( "semaphore %d, numBufferBarriers %d, buffers %p, numTextureBarriers %d, textures %p, dstLayouts %p\n", semaphore, numBufferBarriers, buffers, numTextureBarriers, textures, dstLayouts );
     buffers_tmp = numBufferBarriers > 0 ? memdup_objects( numBufferBarriers, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
     args.buffers = numBufferBarriers > 0 ? map_context_objects( OBJ_TYPE_BUFFER, numBufferBarriers, buffers_tmp ) : NULL;
+    textures_tmp = numTextureBarriers > 0 ? memdup_objects( numTextureBarriers, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = numTextureBarriers > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, numTextureBarriers, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glSignalSemaphoreEXT, &args ))) WARN( "glSignalSemaphoreEXT returned %#lx\n", status );
     if (buffers_tmp != buffers_buf) free( buffers_tmp );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glSignalSemaphoreui64NVX( GLuint signalGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
@@ -19071,9 +19230,10 @@ static void WINAPI glSwizzleEXT( GLuint res, GLuint in, GLenum outX, GLenum outY
 
 static void WINAPI glSyncTextureINTEL( GLuint texture )
 {
-    struct glSyncTextureINTEL_params args = { .teb = NtCurrentTeb(), .texture = texture };
+    struct glSyncTextureINTEL_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "texture %d\n", texture );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glSyncTextureINTEL, &args ))) WARN( "glSyncTextureINTEL returned %#lx\n", status );
 }
 
@@ -20039,9 +20199,10 @@ static void WINAPI glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffse
 
 static void WINAPI glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset )
 {
-    struct glTextureAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .memory = memory, .offset = offset };
+    struct glTextureAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, memory %d, offset %s\n", texture, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureAttachMemoryNV, &args ))) WARN( "glTextureAttachMemoryNV returned %#lx\n", status );
 }
 
@@ -20063,38 +20224,44 @@ static void WINAPI glTextureBarrierNV(void)
 
 static void WINAPI glTextureBuffer( GLuint texture, GLenum internalformat, GLuint buffer )
 {
-    struct glTextureBuffer_params args = { .teb = NtCurrentTeb(), .texture = texture, .internalformat = internalformat };
+    struct glTextureBuffer_params args = { .teb = NtCurrentTeb(), .internalformat = internalformat };
     NTSTATUS status;
     TRACE( "texture %d, internalformat %d, buffer %d\n", texture, internalformat, buffer );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
     if ((status = UNIX_CALL( glTextureBuffer, &args ))) WARN( "glTextureBuffer returned %#lx\n", status );
 }
 
 static void WINAPI glTextureBufferEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer )
 {
-    struct glTextureBufferEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .internalformat = internalformat };
+    struct glTextureBufferEXT_params args = { .teb = NtCurrentTeb(), .target = target, .internalformat = internalformat };
     NTSTATUS status;
     TRACE( "texture %d, target %d, internalformat %d, buffer %d\n", texture, target, internalformat, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
     if ((status = UNIX_CALL( glTextureBufferEXT, &args ))) WARN( "glTextureBufferEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureBufferRange( GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size )
 {
-    struct glTextureBufferRange_params args = { .teb = NtCurrentTeb(), .texture = texture, .internalformat = internalformat, .offset = offset, .size = size };
+    struct glTextureBufferRange_params args = { .teb = NtCurrentTeb(), .internalformat = internalformat, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "texture %d, internalformat %d, buffer %d, offset %Id, size %Id\n", texture, internalformat, buffer, offset, size );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
     if ((status = UNIX_CALL( glTextureBufferRange, &args ))) WARN( "glTextureBufferRange returned %#lx\n", status );
 }
 
 static void WINAPI glTextureBufferRangeEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size )
 {
-    struct glTextureBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .internalformat = internalformat, .offset = offset, .size = size };
+    struct glTextureBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .target = target, .internalformat = internalformat, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "texture %d, target %d, internalformat %d, buffer %d, offset %Id, size %Id\n", texture, target, internalformat, buffer, offset, size );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
     if ((status = UNIX_CALL( glTextureBufferRangeEXT, &args ))) WARN( "glTextureBufferRangeEXT returned %#lx\n", status );
 }
@@ -20109,57 +20276,67 @@ static void WINAPI glTextureColorMaskSGIS( GLboolean red, GLboolean green, GLboo
 
 static void WINAPI glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .border = border, .format = format, .type = type, .pixels = pixels };
+    struct glTextureImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .border = border, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, border %d, format %d, type %d, pixels %p\n", texture, target, level, internalformat, width, border, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage1DEXT, &args ))) WARN( "glTextureImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .border = border, .format = format, .type = type, .pixels = pixels };
+    struct glTextureImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .border = border, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, height %d, border %d, format %d, type %d, pixels %p\n", texture, target, level, internalformat, width, height, border, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage2DEXT, &args ))) WARN( "glTextureImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage2DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations )
 {
-    struct glTextureImage2DMultisampleCoverageNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations };
+    struct glTextureImage2DMultisampleCoverageNV_params args = { .teb = NtCurrentTeb(), .target = target, .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, coverageSamples %d, colorSamples %d, internalFormat %d, width %d, height %d, fixedSampleLocations %d\n", texture, target, coverageSamples, colorSamples, internalFormat, width, height, fixedSampleLocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage2DMultisampleCoverageNV, &args ))) WARN( "glTextureImage2DMultisampleCoverageNV returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage2DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations )
 {
-    struct glTextureImage2DMultisampleNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations };
+    struct glTextureImage2DMultisampleNV_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, samples %d, internalFormat %d, width %d, height %d, fixedSampleLocations %d\n", texture, target, samples, internalFormat, width, height, fixedSampleLocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage2DMultisampleNV, &args ))) WARN( "glTextureImage2DMultisampleNV returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureImage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .border = border, .format = format, .type = type, .pixels = pixels };
+    struct glTextureImage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .border = border, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, internalformat %d, width %d, height %d, depth %d, border %d, format %d, type %d, pixels %p\n", texture, target, level, internalformat, width, height, depth, border, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage3DEXT, &args ))) WARN( "glTextureImage3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage3DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations )
 {
-    struct glTextureImage3DMultisampleCoverageNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations };
+    struct glTextureImage3DMultisampleCoverageNV_params args = { .teb = NtCurrentTeb(), .target = target, .coverageSamples = coverageSamples, .colorSamples = colorSamples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, coverageSamples %d, colorSamples %d, internalFormat %d, width %d, height %d, depth %d, fixedSampleLocations %d\n", texture, target, coverageSamples, colorSamples, internalFormat, width, height, depth, fixedSampleLocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage3DMultisampleCoverageNV, &args ))) WARN( "glTextureImage3DMultisampleCoverageNV returned %#lx\n", status );
 }
 
 static void WINAPI glTextureImage3DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations )
 {
-    struct glTextureImage3DMultisampleNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations };
+    struct glTextureImage3DMultisampleNV_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, samples %d, internalFormat %d, width %d, height %d, depth %d, fixedSampleLocations %d\n", texture, target, samples, internalFormat, width, height, depth, fixedSampleLocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureImage3DMultisampleNV, &args ))) WARN( "glTextureImage3DMultisampleNV returned %#lx\n", status );
 }
 
@@ -20189,113 +20366,134 @@ static void WINAPI glTextureNormalEXT( GLenum mode )
 
 static void WINAPI glTexturePageCommitmentEXT( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean commit )
 {
-    struct glTexturePageCommitmentEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .commit = commit };
+    struct glTexturePageCommitmentEXT_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .commit = commit };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, commit %d\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, commit );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTexturePageCommitmentEXT, &args ))) WARN( "glTexturePageCommitmentEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexturePageCommitmentMemNV( GLuint texture, GLint layer, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset, GLboolean commit )
 {
-    struct glTexturePageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
+    struct glTexturePageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
     NTSTATUS status;
     TRACE( "texture %d, layer %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, memory %d, offset %s, commit %d\n", texture, layer, level, xoffset, yoffset, zoffset, width, height, depth, memory, wine_dbgstr_longlong(offset), commit );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTexturePageCommitmentMemNV, &args ))) WARN( "glTexturePageCommitmentMemNV returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterIiv( GLuint texture, GLenum pname, const GLint *params )
 {
-    struct glTextureParameterIiv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glTextureParameterIiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterIiv, &args ))) WARN( "glTextureParameterIiv returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params )
 {
-    struct glTextureParameterIivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glTextureParameterIivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterIivEXT, &args ))) WARN( "glTextureParameterIivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterIuiv( GLuint texture, GLenum pname, const GLuint *params )
 {
-    struct glTextureParameterIuiv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .params = params };
+    struct glTextureParameterIuiv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, params %p\n", texture, pname, params );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterIuiv, &args ))) WARN( "glTextureParameterIuiv returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, const GLuint *params )
 {
-    struct glTextureParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glTextureParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterIuivEXT, &args ))) WARN( "glTextureParameterIuivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterf( GLuint texture, GLenum pname, GLfloat param )
 {
-    struct glTextureParameterf_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .param = param };
+    struct glTextureParameterf_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, param %f\n", texture, pname, param );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterf, &args ))) WARN( "glTextureParameterf returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterfEXT( GLuint texture, GLenum target, GLenum pname, GLfloat param )
 {
-    struct glTextureParameterfEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .param = param };
+    struct glTextureParameterfEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, param %f\n", texture, target, pname, param );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterfEXT, &args ))) WARN( "glTextureParameterfEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterfv( GLuint texture, GLenum pname, const GLfloat *param )
 {
-    struct glTextureParameterfv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .param = param };
+    struct glTextureParameterfv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, param %p\n", texture, pname, param );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterfv, &args ))) WARN( "glTextureParameterfv returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, const GLfloat *params )
 {
-    struct glTextureParameterfvEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glTextureParameterfvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterfvEXT, &args ))) WARN( "glTextureParameterfvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameteri( GLuint texture, GLenum pname, GLint param )
 {
-    struct glTextureParameteri_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .param = param };
+    struct glTextureParameteri_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, param %d\n", texture, pname, param );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameteri, &args ))) WARN( "glTextureParameteri returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameteriEXT( GLuint texture, GLenum target, GLenum pname, GLint param )
 {
-    struct glTextureParameteriEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .param = param };
+    struct glTextureParameteriEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, param %d\n", texture, target, pname, param );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameteriEXT, &args ))) WARN( "glTextureParameteriEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameteriv( GLuint texture, GLenum pname, const GLint *param )
 {
-    struct glTextureParameteriv_params args = { .teb = NtCurrentTeb(), .texture = texture, .pname = pname, .param = param };
+    struct glTextureParameteriv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "texture %d, pname %d, param %p\n", texture, pname, param );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameteriv, &args ))) WARN( "glTextureParameteriv returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params )
 {
-    struct glTextureParameterivEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .pname = pname, .params = params };
+    struct glTextureParameterivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "texture %d, target %d, pname %d, params %p\n", texture, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureParameterivEXT, &args ))) WARN( "glTextureParameterivEXT returned %#lx\n", status );
 }
 
@@ -20309,195 +20507,229 @@ static void WINAPI glTextureRangeAPPLE( GLenum target, GLsizei length, const voi
 
 static void WINAPI glTextureRenderbufferEXT( GLuint texture, GLenum target, GLuint renderbuffer )
 {
-    struct glTextureRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target };
+    struct glTextureRenderbufferEXT_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "texture %d, target %d, renderbuffer %d\n", texture, target, renderbuffer );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
     if (!alloc_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     args.renderbuffer = *map_context_objects( OBJ_TYPE_RENDERBUFFER, 1, &renderbuffer );
     if ((status = UNIX_CALL( glTextureRenderbufferEXT, &args ))) WARN( "glTextureRenderbufferEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage1D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width )
 {
-    struct glTextureStorage1D_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalformat = internalformat, .width = width };
+    struct glTextureStorage1D_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalformat = internalformat, .width = width };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalformat %d, width %d\n", texture, levels, internalformat, width );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage1D, &args ))) WARN( "glTextureStorage1D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage1DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width )
 {
-    struct glTextureStorage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .levels = levels, .internalformat = internalformat, .width = width };
+    struct glTextureStorage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width };
     NTSTATUS status;
     TRACE( "texture %d, target %d, levels %d, internalformat %d, width %d\n", texture, target, levels, internalformat, width );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage1DEXT, &args ))) WARN( "glTextureStorage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage2D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glTextureStorage2D_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalformat = internalformat, .width = width, .height = height };
+    struct glTextureStorage2D_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalformat %d, width %d, height %d\n", texture, levels, internalformat, width, height );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage2D, &args ))) WARN( "glTextureStorage2D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage2DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
 {
-    struct glTextureStorage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height };
+    struct glTextureStorage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "texture %d, target %d, levels %d, internalformat %d, width %d, height %d\n", texture, target, levels, internalformat, width, height );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage2DEXT, &args ))) WARN( "glTextureStorage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage2DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
 {
-    struct glTextureStorage2DMultisample_params args = { .teb = NtCurrentTeb(), .texture = texture, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .fixedsamplelocations = fixedsamplelocations };
+    struct glTextureStorage2DMultisample_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalformat = internalformat, .width = width, .height = height, .fixedsamplelocations = fixedsamplelocations };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalformat %d, width %d, height %d, fixedsamplelocations %d\n", texture, samples, internalformat, width, height, fixedsamplelocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage2DMultisample, &args ))) WARN( "glTextureStorage2DMultisample returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage2DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
 {
-    struct glTextureStorage2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .fixedsamplelocations = fixedsamplelocations };
+    struct glTextureStorage2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .fixedsamplelocations = fixedsamplelocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, samples %d, internalformat %d, width %d, height %d, fixedsamplelocations %d\n", texture, target, samples, internalformat, width, height, fixedsamplelocations );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage2DMultisampleEXT, &args ))) WARN( "glTextureStorage2DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage3D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
 {
-    struct glTextureStorage3D_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalformat = internalformat, .width = width, .height = height, .depth = depth };
+    struct glTextureStorage3D_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalformat = internalformat, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalformat %d, width %d, height %d, depth %d\n", texture, levels, internalformat, width, height, depth );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage3D, &args ))) WARN( "glTextureStorage3D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
 {
-    struct glTextureStorage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height, .depth = depth };
+    struct glTextureStorage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height, .depth = depth };
     NTSTATUS status;
     TRACE( "texture %d, target %d, levels %d, internalformat %d, width %d, height %d, depth %d\n", texture, target, levels, internalformat, width, height, depth );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage3DEXT, &args ))) WARN( "glTextureStorage3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage3DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
 {
-    struct glTextureStorage3DMultisample_params args = { .teb = NtCurrentTeb(), .texture = texture, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .fixedsamplelocations = fixedsamplelocations };
+    struct glTextureStorage3DMultisample_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .fixedsamplelocations = fixedsamplelocations };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalformat %d, width %d, height %d, depth %d, fixedsamplelocations %d\n", texture, samples, internalformat, width, height, depth, fixedsamplelocations );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage3DMultisample, &args ))) WARN( "glTextureStorage3DMultisample returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
 {
-    struct glTextureStorage3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .fixedsamplelocations = fixedsamplelocations };
+    struct glTextureStorage3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalformat = internalformat, .width = width, .height = height, .depth = depth, .fixedsamplelocations = fixedsamplelocations };
     NTSTATUS status;
     TRACE( "texture %d, target %d, samples %d, internalformat %d, width %d, height %d, depth %d, fixedsamplelocations %d\n", texture, target, samples, internalformat, width, height, depth, fixedsamplelocations );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorage3DMultisampleEXT, &args ))) WARN( "glTextureStorage3DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem1DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalFormat = internalFormat, .width = width, .memory = memory, .offset = offset };
+    struct glTextureStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, memory %d, offset %s\n", texture, levels, internalFormat, width, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageMem1DEXT, &args ))) WARN( "glTextureStorageMem1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem2DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .memory = memory, .offset = offset };
+    struct glTextureStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, height %d, memory %d, offset %s\n", texture, levels, internalFormat, width, height, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageMem2DEXT, &args ))) WARN( "glTextureStorageMem2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem2DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTextureStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalFormat %d, width %d, height %d, fixedSampleLocations %d, memory %d, offset %s\n", texture, samples, internalFormat, width, height, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageMem2DMultisampleEXT, &args ))) WARN( "glTextureStorageMem2DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem3DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset };
+    struct glTextureStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, height %d, depth %d, memory %d, offset %s\n", texture, levels, internalFormat, width, height, depth, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageMem3DEXT, &args ))) WARN( "glTextureStorageMem3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem3DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTextureStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalFormat %d, width %d, height %d, depth %d, fixedSampleLocations %d, memory %d, offset %s\n", texture, samples, internalFormat, width, height, depth, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageMem3DMultisampleEXT, &args ))) WARN( "glTextureStorageMem3DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageSparseAMD( GLuint texture, GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags )
 {
-    struct glTextureStorageSparseAMD_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .layers = layers, .flags = flags };
+    struct glTextureStorageSparseAMD_params args = { .teb = NtCurrentTeb(), .target = target, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .layers = layers, .flags = flags };
     NTSTATUS status;
     TRACE( "texture %d, target %d, internalFormat %d, width %d, height %d, depth %d, layers %d, flags %d\n", texture, target, internalFormat, width, height, depth, layers, flags );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureStorageSparseAMD, &args ))) WARN( "glTextureStorageSparseAMD returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .width = width, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage1D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .width = width, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, width %d, format %d, type %d, pixels %p\n", texture, level, xoffset, width, format, type, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage1D, &args ))) WARN( "glTextureSubImage1D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .width = width, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .width = width, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, width %d, format %d, type %d, pixels %p\n", texture, target, level, xoffset, width, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage1DEXT, &args ))) WARN( "glTextureSubImage1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage2D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, width %d, height %d, format %d, type %d, pixels %p\n", texture, level, xoffset, yoffset, width, height, format, type, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage2D, &args ))) WARN( "glTextureSubImage2D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .width = width, .height = height, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, width %d, height %d, format %d, type %d, pixels %p\n", texture, target, level, xoffset, yoffset, width, height, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage2DEXT, &args ))) WARN( "glTextureSubImage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage3D_params args = { .teb = NtCurrentTeb(), .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, type %d, pixels %p\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage3D, &args ))) WARN( "glTextureSubImage3D returned %#lx\n", status );
 }
 
 static void WINAPI glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
 {
-    struct glTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .pixels = pixels };
+    struct glTextureSubImage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .format = format, .type = type, .pixels = pixels };
     NTSTATUS status;
     TRACE( "texture %d, target %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, format %d, type %d, pixels %p\n", texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
+    if (!alloc_context_objects( OBJ_TYPE_TEXTURE, 1, &texture, TRUE )) return;
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glTextureSubImage3DEXT, &args ))) WARN( "glTextureSubImage3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureView( GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers )
 {
-    struct glTextureView_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .origtexture = origtexture, .internalformat = internalformat, .minlevel = minlevel, .numlevels = numlevels, .minlayer = minlayer, .numlayers = numlayers };
+    struct glTextureView_params args = { .teb = NtCurrentTeb(), .target = target, .internalformat = internalformat, .minlevel = minlevel, .numlevels = numlevels, .minlayer = minlayer, .numlayers = numlayers };
     NTSTATUS status;
     TRACE( "texture %d, target %d, origtexture %d, internalformat %d, minlevel %d, numlevels %d, minlayer %d, numlayers %d\n", texture, target, origtexture, internalformat, minlevel, numlevels, minlayer, numlayers );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.origtexture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &origtexture );
     if ((status = UNIX_CALL( glTextureView, &args ))) WARN( "glTextureView returned %#lx\n", status );
 }
 
@@ -21594,9 +21826,10 @@ static void WINAPI glUnmapObjectBufferATI( GLuint buffer )
 
 static void WINAPI glUnmapTexture2DINTEL( GLuint texture, GLint level )
 {
-    struct glUnmapTexture2DINTEL_params args = { .teb = NtCurrentTeb(), .texture = texture, .level = level };
+    struct glUnmapTexture2DINTEL_params args = { .teb = NtCurrentTeb(), .level = level };
     NTSTATUS status;
     TRACE( "texture %d, level %d\n", texture, level );
+    args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
     if ((status = UNIX_CALL( glUnmapTexture2DINTEL, &args ))) WARN( "glUnmapTexture2DINTEL returned %#lx\n", status );
 }
 
@@ -21692,28 +21925,40 @@ static void WINAPI glVDPAUMapSurfacesNV( GLsizei numSurfaces, const GLvdpauSurfa
 
 static GLvdpauSurfaceNV WINAPI glVDPAURegisterOutputSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames )
 {
-    struct glVDPAURegisterOutputSurfaceNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames, .textureNames = textureNames };
+    GLuint textureNames_buf[64], *textureNames_tmp;
+    struct glVDPAURegisterOutputSurfaceNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames };
     NTSTATUS status;
     TRACE( "vdpSurface %p, target %d, numTextureNames %d, textureNames %p\n", vdpSurface, target, numTextureNames, textureNames );
+    textureNames_tmp = numTextureNames > 0 ? memdup_objects( numTextureNames, textureNames, textureNames_buf, ARRAY_SIZE(textureNames_buf) ) : NULL;
+    args.textureNames = numTextureNames > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, numTextureNames, textureNames_tmp ) : NULL;
     if ((status = UNIX_CALL( glVDPAURegisterOutputSurfaceNV, &args ))) WARN( "glVDPAURegisterOutputSurfaceNV returned %#lx\n", status );
+    if (textureNames_tmp != textureNames_buf) free( textureNames_tmp );
     return args.ret;
 }
 
 static GLvdpauSurfaceNV WINAPI glVDPAURegisterVideoSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames )
 {
-    struct glVDPAURegisterVideoSurfaceNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames, .textureNames = textureNames };
+    GLuint textureNames_buf[64], *textureNames_tmp;
+    struct glVDPAURegisterVideoSurfaceNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames };
     NTSTATUS status;
     TRACE( "vdpSurface %p, target %d, numTextureNames %d, textureNames %p\n", vdpSurface, target, numTextureNames, textureNames );
+    textureNames_tmp = numTextureNames > 0 ? memdup_objects( numTextureNames, textureNames, textureNames_buf, ARRAY_SIZE(textureNames_buf) ) : NULL;
+    args.textureNames = numTextureNames > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, numTextureNames, textureNames_tmp ) : NULL;
     if ((status = UNIX_CALL( glVDPAURegisterVideoSurfaceNV, &args ))) WARN( "glVDPAURegisterVideoSurfaceNV returned %#lx\n", status );
+    if (textureNames_tmp != textureNames_buf) free( textureNames_tmp );
     return args.ret;
 }
 
 static GLvdpauSurfaceNV WINAPI glVDPAURegisterVideoSurfaceWithPictureStructureNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames, GLboolean isFrameStructure )
 {
-    struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames, .textureNames = textureNames, .isFrameStructure = isFrameStructure };
+    GLuint textureNames_buf[64], *textureNames_tmp;
+    struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params args = { .teb = NtCurrentTeb(), .vdpSurface = vdpSurface, .target = target, .numTextureNames = numTextureNames, .isFrameStructure = isFrameStructure };
     NTSTATUS status;
     TRACE( "vdpSurface %p, target %d, numTextureNames %d, textureNames %p, isFrameStructure %d\n", vdpSurface, target, numTextureNames, textureNames, isFrameStructure );
+    textureNames_tmp = numTextureNames > 0 ? memdup_objects( numTextureNames, textureNames, textureNames_buf, ARRAY_SIZE(textureNames_buf) ) : NULL;
+    args.textureNames = numTextureNames > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, numTextureNames, textureNames_tmp ) : NULL;
     if ((status = UNIX_CALL( glVDPAURegisterVideoSurfaceWithPictureStructureNV, &args ))) WARN( "glVDPAURegisterVideoSurfaceWithPictureStructureNV returned %#lx\n", status );
+    if (textureNames_tmp != textureNames_buf) free( textureNames_tmp );
     return args.ret;
 }
 
@@ -24531,13 +24776,17 @@ static void WINAPI glViewportSwizzleNV( GLuint index, GLenum swizzlex, GLenum sw
 static void WINAPI glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *srcLayouts )
 {
     GLuint buffers_buf[64], *buffers_tmp;
-    struct glWaitSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .textures = textures, .srcLayouts = srcLayouts };
+    GLuint textures_buf[64], *textures_tmp;
+    struct glWaitSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .srcLayouts = srcLayouts };
     NTSTATUS status;
     TRACE( "semaphore %d, numBufferBarriers %d, buffers %p, numTextureBarriers %d, textures %p, srcLayouts %p\n", semaphore, numBufferBarriers, buffers, numTextureBarriers, textures, srcLayouts );
     buffers_tmp = numBufferBarriers > 0 ? memdup_objects( numBufferBarriers, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
     args.buffers = numBufferBarriers > 0 ? map_context_objects( OBJ_TYPE_BUFFER, numBufferBarriers, buffers_tmp ) : NULL;
+    textures_tmp = numTextureBarriers > 0 ? memdup_objects( numTextureBarriers, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
+    args.textures = numTextureBarriers > 0 ? map_context_objects( OBJ_TYPE_TEXTURE, numTextureBarriers, textures_tmp ) : NULL;
     if ((status = UNIX_CALL( glWaitSemaphoreEXT, &args ))) WARN( "glWaitSemaphoreEXT returned %#lx\n", status );
     if (buffers_tmp != buffers_buf) free( buffers_tmp );
+    if (textures_tmp != textures_buf) free( textures_tmp );
 }
 
 static void WINAPI glWaitSemaphoreui64NVX( GLuint waitGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )

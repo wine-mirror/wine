@@ -108,6 +108,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_BUFFER: return "buffer";
     case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
+    case OBJ_TYPE_TEXTURE: return "texture";
     case OBJ_TYPE_COUNT: break;
     }
     return wine_dbg_sprintf( "object (type %u)", type );
@@ -390,6 +391,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
     case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
+    case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
     case OBJ_TYPE_COUNT: break;
     }
 
@@ -659,6 +661,27 @@ static GLuint get_pname_object_type( GLenum pname )
     case GL_RENDERBUFFER_BINDING:
     case GL_TEXTURE_RENDERBUFFER_DATA_STORE_BINDING_NV:
         return OBJ_TYPE_RENDERBUFFER;
+    case GL_TEXTURE_BINDING_1D:
+    case GL_TEXTURE_BINDING_1D_ARRAY:
+    case GL_TEXTURE_BINDING_2D:
+    case GL_TEXTURE_BINDING_2D_ARRAY:
+    case GL_TEXTURE_BINDING_2D_MULTISAMPLE:
+    case GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY:
+    case GL_TEXTURE_BINDING_3D:
+    case GL_TEXTURE_BINDING_BUFFER:
+    case GL_TEXTURE_BINDING_CUBE_MAP:
+    case GL_TEXTURE_BINDING_CUBE_MAP_ARRAY:
+    case GL_TEXTURE_BINDING_EXTERNAL_OES:
+    case GL_TEXTURE_BINDING_RECTANGLE:
+    case GL_TEXTURE_BUFFER_BINDING:
+    case GL_TEXTURE_BINDING_RENDERBUFFER_NV:
+    case GL_TEXTURE_1D_STACK_BINDING_MESAX:
+    case GL_TEXTURE_2D_STACK_BINDING_MESAX:
+    case GL_TEXTURE_4D_BINDING_SGIS:
+    case GL_DETAIL_TEXTURE_2D_BINDING_SGIS:
+    case GL_SHADING_RATE_IMAGE_BINDING_NV:
+    case GL_IMAGE_BINDING_NAME:
+        return OBJ_TYPE_TEXTURE;
     }
 
     return OBJ_TYPE_COUNT;
@@ -689,6 +712,7 @@ static void map_framebuffer_attachment_param( GLenum target, GLenum attachment, 
     if (pname != GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME) return;
     glGetFramebufferAttachmentParameteriv( target, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type );
     if (type == GL_RENDERBUFFER && map_client_objects( OBJ_TYPE_RENDERBUFFER, *params, (GLuint *)&value )) *params = value;
+    if (type == GL_TEXTURE && map_client_objects( OBJ_TYPE_TEXTURE, *params, (GLuint *)&value )) *params = value;
 }
 
 void WINAPI glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint *params )
@@ -720,6 +744,7 @@ static void map_named_framebuffer_attachment_param( GLuint framebuffer, GLenum a
     if (pname != GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME) return;
     glGetNamedFramebufferAttachmentParameteriv( framebuffer, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type );
     if (type == GL_RENDERBUFFER && map_client_objects( OBJ_TYPE_RENDERBUFFER, *params, (GLuint *)&value )) *params = value;
+    if (type == GL_TEXTURE && map_client_objects( OBJ_TYPE_TEXTURE, *params, (GLuint *)&value )) *params = value;
 }
 
 void WINAPI glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
