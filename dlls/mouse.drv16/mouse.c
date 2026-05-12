@@ -42,8 +42,6 @@ typedef struct _MOUSEINFO
 } MOUSEINFO, *LPMOUSEINFO;
 #pragma pack(pop)
 
-static FARPROC16 DefMouseEventProc;
-
 /***********************************************************************
  *           Inquire                       (MOUSE.1)
  */
@@ -67,7 +65,6 @@ WORD WINAPI Inquire16(LPMOUSEINFO mouseInfo)
  */
 VOID WINAPI Enable16( FARPROC16 proc )
 {
-    DefMouseEventProc = proc;
 }
 
 /***********************************************************************
@@ -75,5 +72,4 @@ VOID WINAPI Enable16( FARPROC16 proc )
  */
 VOID WINAPI Disable16(void)
 {
-    DefMouseEventProc = 0;
 }
