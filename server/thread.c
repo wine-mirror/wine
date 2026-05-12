@@ -1800,7 +1800,7 @@ DECL_HANDLER(init_thread)
     current->entry_point = req->entry;
 
     init_thread_context( current );
-    generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
+    if (!current->is_system) generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
     set_thread_base_priority( current, current->base_priority );
     set_thread_affinity( current, current->affinity );
 

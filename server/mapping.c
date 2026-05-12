@@ -1309,8 +1309,8 @@ void generate_startup_debug_events( struct process *process )
     /* generate creation events */
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        if (thread != first_thread)
-            generate_debug_event( thread, DbgCreateThreadStateChange, NULL );
+        if (thread->is_system) continue;
+        if (thread != first_thread) generate_debug_event( thread, DbgCreateThreadStateChange, NULL );
     }
 
     /* generate dll events (in loading order) */

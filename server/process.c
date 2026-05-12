@@ -1044,7 +1044,8 @@ void remove_process_thread( struct process *process, struct thread *thread )
         list_remove( &process->entry );
         process_killed( process );
     }
-    else generate_debug_event( thread, DbgExitThreadStateChange, thread );
+    else if (!thread->is_system) generate_debug_event( thread, DbgExitThreadStateChange, thread );
+
     release_object( thread );
 }
 
