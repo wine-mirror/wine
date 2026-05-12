@@ -30,8 +30,6 @@
 
 #define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~0u >> 16))
 
-static BOOL is_theme_active;
-
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -2566,22 +2564,11 @@ static void test_radiobutton_focus(void)
 
 START_TEST(button)
 {
-    BOOL (WINAPI * pIsThemeActive)(VOID);
     ULONG_PTR ctx_cookie;
-    HMODULE uxtheme;
     HANDLE hCtx;
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
-
-    uxtheme = LoadLibraryA("uxtheme.dll");
-    if (uxtheme)
-    {
-        pIsThemeActive = (void*)GetProcAddress(uxtheme, "IsThemeActive");
-        if (pIsThemeActive)
-            is_theme_active = pIsThemeActive();
-        FreeLibrary(uxtheme);
-    }
 
     register_parent_class();
 

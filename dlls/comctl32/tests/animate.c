@@ -32,7 +32,6 @@
 
 static HWND hAnimateParentWnd, hAnimateWnd;
 static const char animateTestClass[] = "AnimateTestClass";
-static WNDPROC animate_wndproc;
 static HANDLE shell32;
 
 /* try to make sure pending X events have been processed before continuing */
@@ -100,7 +99,7 @@ static void create_animate(DWORD parent_style, DWORD animate_style)
     hAnimateWnd = CreateWindowExA(0, ANIMATE_CLASSA, NULL, WS_CHILD | WS_VISIBLE | animate_style,
       0, 0, rect.right, rect.bottom, hAnimateParentWnd, NULL, shell32, 0);
     ok(hAnimateWnd != NULL, "failed to create parent wnd\n");
-    animate_wndproc = (WNDPROC)SetWindowLongPtrA(hAnimateWnd, GWLP_WNDPROC, 0);
+    SetWindowLongPtrA(hAnimateWnd, GWLP_WNDPROC, 0);
 
     ShowWindow(hAnimateParentWnd, SW_SHOWNORMAL);
     ok(GetUpdateRect(hAnimateParentWnd, NULL, FALSE), "GetUpdateRect: There should be a region that needs to be updated\n");

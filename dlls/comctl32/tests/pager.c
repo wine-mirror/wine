@@ -202,7 +202,6 @@ static const struct notify_test_datetime_format
 #define CHILD2_ID 2
 
 static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
-static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -1294,8 +1293,6 @@ static void init_functions(void)
 #define X(f) p##f = (void*)GetProcAddress(mod, #f);
     X(InitCommonControlsEx);
 #undef X
-
-    pSetWindowSubclass = (void*)GetProcAddress(mod, (LPSTR)410);
 }
 
 START_TEST(pager)
