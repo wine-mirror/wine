@@ -1120,15 +1120,14 @@ static DECLSPEC_NORETURN void pthread_exit_wrapper( int status )
 static void start_thread( struct thread_data *data )
 {
     struct teb_data *teb_data = get_teb_data( data );
-    BOOL suspend;
 
     data->pthread_id = pthread_self();
     pthread_setspecific( thread_data_key, data );
 
     teb_data->syscall_table = KeServiceDescriptorTable;
     teb_data->syscall_trace = TRACE_ON(syscall);
-    server_init_thread( data, &suspend );
-    signal_start_thread( data->start, data->param, suspend, data->teb );
+    server_init_thread( data );
+    signal_start_thread( data->start, data->param, data->teb );
 }
 
 

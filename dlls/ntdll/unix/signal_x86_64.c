@@ -2846,7 +2846,7 @@ void signal_init_process( TEB *teb )
 /***********************************************************************
  *           init_syscall_frame
  */
-void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
@@ -2911,7 +2911,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
         *(XSAVE_FORMAT *)wow_context->ExtendedRegisters = context.FltSave;
     }
 
-    if (suspend) wait_suspend( &context );
+    if (data->suspend) wait_suspend( &context );
 
     ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
     *ctx = context;
@@ -2958,20 +2958,20 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
                    "leaq 0x10(%rbp),%r9\n\t"       /* syscall_cfa */
                    /* set syscall frame */
-                   "movq 0x378(%rcx),%r8\n\t"      /* thread_data->syscall_frame */
+                   "movq 0x378(%rdx),%r8\n\t"      /* thread_data->syscall_frame */
                    "orq %r8,%r8\n\t"
                    "jnz 1f\n\t"
                    "movq %rsp,%r8\n\t"
-                   "subq 0x328(%rcx),%r8\n\t"      /* amd64_thread_data()->frame_size */
+                   "subq 0x328(%rdx),%r8\n\t"      /* amd64_thread_data()->frame_size */
                    "andq $~63,%r8\n\t"
-                   "movq %r8,0x378(%rcx)\n"        /* thread_data->syscall_frame */
+                   "movq %r8,0x378(%rdx)\n"        /* thread_data->syscall_frame */
                    "1:\tmovq $0,0xa0(%r8)\n\t"     /* frame->prev_frame */
                    "movq %r9,0xa8(%r8)\n\t"        /* frame->syscall_cfa */
                    "movl $0,0xb4(%r8)\n\t"         /* frame->restore_flags */
-                   "stmxcsr 0x33c(%rcx)\n\t"       /* amd64_thread_data()->mxcsr */
+                   "stmxcsr 0x33c(%rdx)\n\t"       /* amd64_thread_data()->mxcsr */
                    /* switch to kernel stack */
                    "movq %r8,%rsp\n\t"
-                   "movq %rcx,%r13\n\t"            /* teb */
+                   "movq %rdx,%r13\n\t"            /* teb */
                    "call " __ASM_NAME("init_syscall_frame") "\n\t"
                    "movq %rsp,%rcx\n\t"            /* frame */
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )

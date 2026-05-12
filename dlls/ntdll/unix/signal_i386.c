@@ -2440,7 +2440,7 @@ void signal_init_process( TEB *teb )
 /***********************************************************************
  *           init_syscall_frame
  */
-void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
@@ -2468,7 +2468,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
     if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
 
-    if (suspend)
+    if (data->suspend)
     {
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
         wait_suspend( &context );
@@ -2512,7 +2512,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    "leal 8(%ebp),%edx\n\t"      /* syscall_cfa */
                    /* set syscall frame */
-                   "movl 20(%ebp),%ecx\n\t"     /* teb */
+                   "movl 16(%ebp),%ecx\n\t"     /* teb */
                    "movl 0x218(%ecx),%eax\n\t"  /* thread_data->syscall_frame */
                    "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
@@ -2525,9 +2525,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl $0,0x3c(%eax)\n\t"     /* frame->prev_frame */
                    "fnstcw 0x1f8(%ecx)\n\t"     /* thread_data->fpcw */
                    /* switch to kernel stack */
-                   "movl %eax,%esp\n\t"
+                   "leal -4(%eax),%esp\n\t"
                    "pushl %ecx\n\t"             /* teb */
-                   "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */
                    "call " __ASM_NAME("init_syscall_frame") "\n\t"

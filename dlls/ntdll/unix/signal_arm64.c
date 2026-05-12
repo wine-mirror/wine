@@ -1460,7 +1460,7 @@ void syscall_dispatcher_return_slowpath(void)
 /***********************************************************************
  *           init_syscall_frame
  */
-void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
@@ -1503,7 +1503,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
         if (arm_context->Pc & 1) arm_context->Cpsr |= 0x20; /* thumb mode */
     }
 
-    if (suspend)
+    if (data->suspend)
     {
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
         wait_suspend( &context );
@@ -1551,10 +1551,10 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset 28,0x58\n\t")
                    "add x5, x29, #0xc0\n\t"     /* syscall_cfa */
                    /* set syscall frame */
-                   "ldr x4, [x3, #0x378]\n\t"   /* thread_data->syscall_frame */
+                   "ldr x4, [x2, #0x378]\n\t"   /* thread_data->syscall_frame */
                    "cbnz x4, 1f\n\t"
                    "sub x4, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
-                   "str x4, [x3, #0x378]\n\t"   /* thread_data->syscall_frame */
+                   "str x4, [x2, #0x378]\n\t"   /* thread_data->syscall_frame */
                    "1:\tstr wzr, [x4, #0x10c]\n\t" /* frame->restore_flags */
                    "stp xzr, x5, [x4, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
                    /* switch to kernel stack */

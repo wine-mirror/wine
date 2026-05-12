@@ -1111,7 +1111,7 @@ void signal_init_process( TEB *teb )
 /***********************************************************************
  *           init_syscall_frame
  */
-void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
@@ -1124,7 +1124,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     if (context.Pc & 1) context.Cpsr |= 0x20; /* thumb mode */
     if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_ARMNT ))) *ctx = context;
 
-    if (suspend)
+    if (data->suspend)
     {
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
         wait_suspend( &context );
@@ -1150,12 +1150,12 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_EHABI(".cantunwind\n\t")
                    "push {r4-r12,lr}\n\t"
                    "add r7, sp, #0x28\n\t"    /* syscall_cfa */
-                   "mcr p15, 0, r3, c13, c0, 2\n\t" /* set teb register */
+                   "mcr p15, 0, r2, c13, c0, 2\n\t" /* set teb register */
                    /* set syscall frame */
-                   "ldr r6, [r3, #0x218]\n\t" /* thread_data->syscall_frame */
+                   "ldr r6, [r2, #0x218]\n\t" /* thread_data->syscall_frame */
                    "cbnz r6, 1f\n\t"
                    "sub r6, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) */
-                   "str r6, [r3, #0x218]\n\t" /* thread_data->syscall_frame */
+                   "str r6, [r2, #0x218]\n\t" /* thread_data->syscall_frame */
                    "1:\tmov r4, #0\n\t"
                    "str r4, [r6, #0x44]\n\t"  /* frame->restore_flags */
                    "str r4, [r6, #0x4c]\n\t"  /* frame->prev_frame */

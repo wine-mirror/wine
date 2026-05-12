@@ -1733,7 +1733,6 @@ void server_init_process_done(void)
 {
     void *teb;
     unsigned int status;
-    int suspend;
     FILE_FS_DEVICE_INFORMATION info;
     struct thread_data *data = get_thread_data();
     struct teb_data *teb_data = get_teb_data( data );
@@ -1762,12 +1761,12 @@ void server_init_process_done(void)
         req->teb = wine_server_client_ptr( teb );
         req->peb = NtCurrentTeb64() ? NtCurrentTeb64()->Peb : wine_server_client_ptr( peb );
         status = wine_server_call( req );
-        suspend = reply->suspend;
+        data->suspend = reply->suspend;
     }
     SERVER_END_REQ;
 
     assert( !status );
-    signal_start_thread( main_image_info.TransferAddress, peb, suspend, data->teb );
+    signal_start_thread( main_image_info.TransferAddress, peb, data->teb );
 }
 
 
@@ -1776,7 +1775,7 @@ void server_init_process_done(void)
  *
  * Send an init thread request.
  */
-void server_init_thread( struct thread_data *data, BOOL *suspend )
+void server_init_thread( struct thread_data *data )
 {
     void *teb;
     int reply_pipe = init_thread_pipe( data );
@@ -1792,7 +1791,7 @@ void server_init_thread( struct thread_data *data, BOOL *suspend )
         req->reply_fd  = reply_pipe;
         req->wait_fd   = data->wait_fd[1];
         wine_server_call( req );
-        *suspend = reply->suspend;
+        data->suspend = reply->suspend;
     }
     SERVER_END_REQ;
     close( reply_pipe );

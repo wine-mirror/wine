@@ -109,6 +109,7 @@ struct thread_data
     int          alert_fd;          /* inproc sync fd for user apc alerts */
     DWORD        tid;               /* thread id */
     BOOL         allow_writes;      /* ThreadAllowWrites flags */
+    BOOL         suspend;           /* suspend on startup */
     pthread_t    pthread_id;        /* pthread thread id */
     void        *jmp_buf;           /* setjmp buffer for exception handling */
     void        *start;             /* thread entry point */
@@ -255,7 +256,7 @@ extern int wine_server_receive_fd( obj_handle_t *handle );
 extern void process_exit_wrapper( int status ) DECLSPEC_NORETURN;
 extern size_t server_init_process(void);
 extern void server_init_process_done(void);
-extern void server_init_thread( struct thread_data *data, BOOL *suspend );
+extern void server_init_thread( struct thread_data *data );
 extern int server_pipe( int fd[2] );
 
 extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux );
@@ -344,8 +345,7 @@ extern NTSTATUS signal_alloc_thread( TEB *teb );
 extern void signal_free_thread( TEB *teb );
 extern void signal_disable_syscall_dispatch(void);
 extern void signal_init_process( TEB *teb );
-extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
-                                                   BOOL suspend, TEB *teb );
+extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg, TEB *teb );
 extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 extern void __wine_syscall_dispatcher(void);
 extern void __wine_syscall_dispatcher_return(void);
