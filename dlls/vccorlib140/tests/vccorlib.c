@@ -704,7 +704,7 @@ static void test_GetActivationFactoryByPCWSTR(void)
 
 static void test_GetIidsFn(void)
 {
-    static const GUID guids_src[] = {IID_IUnknown, IID_IInspectable, IID_IAgileObject, IID_IMarshal, guid_null};
+    const GUID guids_src[] = {IID_IUnknown, IID_IInspectable, IID_IAgileObject, IID_IMarshal, guid_null};
     GUID *guids_dest;
     UINT32 copied;
     HRESULT hr;
@@ -1351,7 +1351,7 @@ static void test_CreateValue(void)
         Size size;
         Rect rect;
     };
-    static const struct {
+    const struct {
         int typecode;
         union value value;
         PropertyType exp_winrt_type;
@@ -2190,7 +2190,7 @@ static void test_ToString(void)
 {
     static const UINT64 uint64 = 0xdeadbeefdeadbeef;
     static const INT64 int64 = 0xdeadbeefdeadbeef;
-    static const GUID guid = IID_IInspectable;
+    const GUID guid = IID_IInspectable;
     static const DOUBLE float64 = 2.71828182;
     static const FLOAT float32 = 2.71828182;
     static const UINT32 uint32 = 0xdeadbeef;
