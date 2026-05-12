@@ -1693,6 +1693,7 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
+    fprintf( stderr, ", ansi=%08x", req->ansi );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
 
@@ -1742,7 +1743,6 @@ static void dump_get_window_info_request( const struct get_window_info_request *
 static void dump_get_window_info_reply( const struct get_window_info_reply *req )
 {
     fprintf( stderr, " last_active=%08x", req->last_active );
-    fprintf( stderr, ", is_unicode=%d", req->is_unicode );
     dump_uint64( ", info=", &req->info );
 }
 
@@ -1751,7 +1751,6 @@ static void dump_init_window_info_request( const struct init_window_info_request
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
-    fprintf( stderr, ", is_unicode=%d", req->is_unicode );
 }
 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
@@ -1760,12 +1759,14 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, ", offset=%d", req->offset );
     fprintf( stderr, ", size=%u", req->size );
     dump_uint64( ", new_info=", &req->new_info );
+    fprintf( stderr, ", new_ansi=%08x", req->new_ansi );
     fprintf( stderr, ", internal=%08x", req->internal );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
 {
     dump_uint64( " old_info=", &req->old_info );
+    fprintf( stderr, ", old_ansi=%08x", req->old_ansi );
 }
 
 static void dump_set_window_fnid_request( const struct set_window_fnid_request *req )

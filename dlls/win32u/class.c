@@ -274,17 +274,6 @@ WNDPROC get_winproc( WNDPROC proc, BOOL ansi )
     }
 }
 
-/* Return the window procedure type, or the default value if not a winproc handle. */
-BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val )
-{
-    WINDOWPROC *ptr = get_winproc_ptr( proc );
-
-    if (!ptr) return def_val;
-    if (ptr == WINPROC_PROC16) return FALSE;  /* 16-bit is always A */
-    if (ptr->procA && ptr->procW) return def_val;  /* can be both */
-    return ptr->procW != NULL;
-}
-
 void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst )
 {
     WINDOWPROC *proc = get_winproc_ptr( params->func );
@@ -570,22 +559,6 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
     }
     user_unlock();
     return NULL;
-}
-
-/***********************************************************************
- *           get_class_winproc
- */
-WNDPROC get_class_winproc( CLASS *class )
-{
-    struct object_lock lock = OBJECT_LOCK_INIT;
-    const class_shm_t *class_shm;
-    WNDPROC wndproc = NULL;
-    NTSTATUS status;
-
-    while ((status = get_shared_class( class, &lock, &class_shm )) == STATUS_PENDING)
-        wndproc = wine_server_get_ptr( class_shm->info.wndproc );
-    if (status) return 0;
-    return wndproc;
 }
 
 /***********************************************************************

@@ -1068,6 +1068,7 @@ struct window_info
     lparam_t             id;               /* window id */
     mod_handle_t         instance;         /* creator instance */
     lparam_t             user_data;        /* user-specific data */
+    client_ptr_t         wndproc;          /* window proc */
 };
 
 typedef volatile struct
@@ -1075,6 +1076,8 @@ typedef volatile struct
     struct obj_locator   class;            /* object locator for the window class shared object */
     unsigned int         dpi_context;      /* DPI awareness context */
     unsigned int         fnid;             /* builtin class FNID, or 0 */
+    unsigned int         ansi;             /* window wndproc is ansi */
+    int                  __pad;
     data_size_t          private_size;     /* length of private extra bytes range */
     data_size_t          extra_size;       /* size of the extra info */
     struct window_info   info;             /* window info (GWLP_*) */
@@ -2637,6 +2640,7 @@ enum message_type
     unsigned int   dpi_context; /* thread DPI context */
     unsigned int   style;       /* window style */
     unsigned int   ex_style;    /* window extended style */
+    unsigned int   ansi;        /* window created as ansi */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */
@@ -2678,7 +2682,6 @@ enum message_type
     data_size_t    size;        /* size of the info value to read */
 @REPLY
     user_handle_t  last_active; /* last active popup */
-    int            is_unicode;  /* ANSI or unicode */
     lparam_t       info;        /* current window info value */
 @END
 
@@ -2688,7 +2691,6 @@ enum message_type
     user_handle_t  handle;        /* handle to the window */
     unsigned int   style;         /* window style */
     unsigned int   ex_style;      /* window extended style */
-    short int      is_unicode;    /* ANSI or unicode */
 @REPLY
 @END
 
@@ -2699,9 +2701,11 @@ enum message_type
     int            offset;        /* offset of the info */
     data_size_t    size;          /* size of the info value to write */
     lparam_t       new_info;      /* new window info value */
+    unsigned int   new_ansi;      /* new window info is ansi */
     unsigned int   internal;      /* set internal control info */
 @REPLY
     lparam_t       old_info;      /* previous window info value */
+    unsigned int   old_ansi;      /* previous window info is ansi */
 @END
 
 

@@ -38,6 +38,9 @@
 #include "winuser.h"
 #include "winternl.h"
 
+/* also defined in win32u/ntuser_private.h */
+#define MAKE_WNDPROC(index)     ((UINT_PTR)(UINT)MAKELONG(index, 0xffff))
+
 struct window_class
 {
     struct list         entry;           /* entry in process list */
@@ -170,6 +173,16 @@ unsigned int get_class_fnid( struct window_class *class, data_size_t *extra_size
     }
 
     return class->fnid;
+}
+
+client_ptr_t get_class_wndproc( struct window_class *class, bool *is_ansi )
+{
+    client_ptr_t wndproc = class->shared->info.wndproc;
+    UINT index = LOWORD(wndproc);
+
+    /* builtin wndproc can be both ansi or unicode, otherwise use the class wndproc kind */
+    if (wndproc != MAKE_WNDPROC(index) || index >= NTUSER_NB_PROCS) *is_ansi = !!class->ansi;
+    return wndproc;
 }
 
 client_ptr_t get_class_client_ptr( struct window_class *class )

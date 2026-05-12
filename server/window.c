@@ -74,7 +74,6 @@ struct window
     struct region   *update_region;   /* update region (relative to window rect) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
-    unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
     unsigned int     is_orphan : 1;   /* is window orphaned */
@@ -605,7 +604,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     mod_handle_t class_instance )
+                                     mod_handle_t class_instance, bool ansi )
 {
     data_size_t extra_size, private_size;
     struct window *win = NULL;
@@ -655,7 +654,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->update_region  = NULL;
     win->style          = 0;
     win->ex_style       = 0;
-    win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;
     win->is_orphan      = 0;
@@ -682,6 +680,8 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->extra_size      = extra_size;
         memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
+        shared->info.wndproc    = get_class_wndproc( win->class, &ansi );
+        shared->ansi            = ansi;
     }
     SHARED_WRITE_END;
 
@@ -2235,7 +2235,7 @@ DECL_HANDLER(create_window)
 
     if (!atom) atom = find_atom( table, &cls_name );
 
-    if (!(win = create_window( parent, owner, atom, req->class_instance ))) return;
+    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi ))) return;
 
     if (parent && !is_desktop_window( parent ))
         dpi_context = parent->shared->dpi_context;
@@ -2333,7 +2333,7 @@ DECL_HANDLER(get_desktop_window)
 
     if (!desktop->top_window && req->force)  /* create it */
     {
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2346,7 +2346,7 @@ DECL_HANDLER(get_desktop_window)
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         struct atom_table *table = get_user_atom_table();
         atom_t atom = add_atom( table, &name );
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0 )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2396,14 +2396,12 @@ DECL_HANDLER(get_window_info)
     if (!(win = get_window( req->handle ))) return;
 
     reply->last_active = win->handle;
-    reply->is_unicode  = win->is_unicode;
     if (get_user_object( win->last_active, NTUSER_OBJ_WINDOW )) reply->last_active = win->last_active;
 
     switch (req->offset)
     {
     case GWL_STYLE:       reply->info = win->style;  break;
     case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
-    case GWLP_WNDPROC:    reply->info = win->is_unicode;  break;
     default:
         if (req->size) set_win32_error( ERROR_INVALID_INDEX );
         break;
@@ -2419,7 +2417,6 @@ DECL_HANDLER(init_window_info)
     if (!(win = get_window( req->handle ))) return;
     win->style = req->style;
     win->ex_style = req->ex_style;
-    win->is_unicode = req->is_unicode;
 
     /* changing window style triggers a non-client paint */
     win->paint_flags |= PAINT_NONCLIENT;
@@ -2430,6 +2427,7 @@ DECL_HANDLER(init_window_info)
 DECL_HANDLER(set_window_info)
 {
     struct window *win;
+    bool ansi;
 
     if (!(win = get_window( req->handle ))) return;
     if (is_desktop_window( win ) && win->thread != current)
@@ -2462,8 +2460,11 @@ DECL_HANDLER(set_window_info)
             shared->info.instance = req->new_info;
             break;
         case GWLP_WNDPROC:
-            reply->old_info = win->is_unicode;
-            win->is_unicode = req->new_info;
+            reply->old_info = shared->info.wndproc;
+            reply->old_ansi = shared->ansi;
+            if (req->new_info) shared->info.wndproc = req->new_info;
+            else shared->info.wndproc = get_class_wndproc( win->class, &ansi );
+            shared->ansi = req->new_ansi; /* class ansi is actually ignored */
             break;
         case GWLP_USERDATA:
             reply->old_info = shared->info.user_data;

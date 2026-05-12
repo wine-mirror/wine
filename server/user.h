@@ -195,6 +195,7 @@ extern int is_message_class( struct window_class *class );
 extern int get_class_style( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
 extern unsigned int get_class_fnid( struct window_class *class, data_size_t *extra_size, data_size_t *private_size );
+extern client_ptr_t get_class_wndproc( struct window_class *class, bool *ansi );
 extern client_ptr_t get_class_client_ptr( struct window_class *class );
 
 /* windows station functions */
