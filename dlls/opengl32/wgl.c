@@ -278,6 +278,8 @@ struct object_table
     enum object_type    type;                   /* object type of the id table */
     SRWLOCK             lock;                   /* lock for accessing the table */
     GLuint            **host_ids[L1_COUNT];     /* client -> host id mapping sparse array */
+    GLuint              min_free;               /* id to start looking for a free slot */
+    BOOL                implicit;               /* table allows implicit allocation */
 };
 
 static GLuint *find_object_id( GLuint **ids[L1_COUNT], GLuint client_id )
@@ -312,6 +314,22 @@ static void free_object_ids( struct object_table *table, GLuint **ids[L1_COUNT] 
     }
 }
 
+static GLuint alloc_client_id( struct object_table *table, GLuint host_id )
+{
+    /* if we don't need implicit allocations, use the host allocated ids directly */
+    if (!table->implicit) return host_id;
+
+    /* otherwise we need to allocate client id ourselves, lookup for a free id */
+    for (GLuint id = table->min_free + 1, *ids; id != 0; id++)
+    {
+        if (!(ids = alloc_object_ids( table->host_ids, id ))) return 0;
+        if (ids[id % L3_COUNT]) continue;
+        return table->min_free = id;
+    }
+
+    return 0;
+}
+
 static GLuint set_object( struct object_table *table, GLuint client_id, GLuint host_id )
 {
     GLuint *ids;
@@ -332,11 +350,21 @@ static GLuint del_object( struct object_table *table, GLuint client_id )
     GLuint *object, host_id = 0;
 
     if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return client_id;
+    table->min_free = min( table->min_free, client_id - 1 );
     host_id = *object;
     *object = 0;
 
     TRACE( "Deleting %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
     return host_id ? host_id : client_id;
+}
+
+static GLuint get_object( struct object_table *table, GLuint client_id, BOOL check )
+{
+    const GLuint *object = find_object_id( table->host_ids, client_id );
+    GLuint host_id = object ? *object : 0;
+
+    TRACE( "Found %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    return check || host_id ? host_id : -1;
 }
 
 static void free_object_table( struct object_table *table )
@@ -480,8 +508,49 @@ void put_context_objects( enum object_type type, UINT n, GLuint *handles )
     if (!(table = get_object_table( ctx, type, TRUE ))) return;
 
     AcquireSRWLockExclusive( &table->lock );
-    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, handles[i], handles[i] ) : 0;
+    for (UINT i = 0; i < n; i++) handles[i] = handles[i] ? set_object( table, alloc_client_id( table, handles[i] ), handles[i] ) : 0;
     ReleaseSRWLockExclusive( &table->lock );
+}
+
+static void alloc_client_objects( struct context *ctx, enum object_type type, UINT n, const GLuint *handles )
+{
+    struct object_table *table;
+
+    if (!(table = get_object_table( ctx, type, TRUE ))) return;
+
+    AcquireSRWLockExclusive( &table->lock );
+    for (UINT i = 0; i < n; i++)
+    {
+        if (!handles[i] || get_object( table, handles[i], TRUE )) continue;
+        WARN( "Creating implicit %s client %#x\n", debugstr_object_type( type ), handles[i] );
+        set_object( table, handles[i], handles[i] );
+        table->implicit = TRUE; /* from now on we cannot rely on host-allocated ids */
+    }
+    ReleaseSRWLockExclusive( &table->lock );
+}
+
+BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension )
+{
+    BOOL alloc_client = TRUE, needs_client = FALSE;
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return TRUE;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return TRUE;
+
+    /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
+    if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) alloc_client = FALSE;
+
+    AcquireSRWLockShared( &table->lock );
+    for (UINT i = 0; i < n && !needs_client; i++)
+        needs_client = handles[i] && !get_object( table, handles[i], TRUE );
+    ReleaseSRWLockShared( &table->lock );
+    if (!needs_client) return TRUE;
+
+    if (alloc_client) alloc_client_objects( ctx, type, n, handles );
+    else set_gl_error( GL_INVALID_OPERATION );
+
+    return alloc_client;
 }
 
 GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )

@@ -698,6 +698,17 @@ sub get_object_type($$$$)
     return 0;
 }
 
+sub allocate_object_names($)
+{
+    my $name = shift;
+    my $ret = $name =~ /(APPLE|ARB|ATI|EXT|NV)$/ ? "TRUE" : "FALSE";
+
+    return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
+    return $ret if $name =~ /^glBindBuffer/;
+
+    return 0;
+}
+
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
@@ -752,6 +763,13 @@ sub generate_win_thunk($$)
             }
             else
             {
+                my $return = is_void_func($func) ? "" : " args.ret";
+                my $alloc = allocate_object_names( $name );
+
+                if ($len eq "1")
+                {
+                    $checks .= "    if (!alloc_context_objects( $map_type, 1, &$pname, $alloc )) return$return;\n" if $alloc;
+                }
                 $params .= ", .$pname = $pname";
             }
         }
@@ -1134,6 +1152,12 @@ sub is_exposed_function($)
         return 1 if is_exposed_extension($ext);
     }
     return 0;
+}
+
+sub has_extension($$)
+{
+    my ($func, $name) = @_;
+    return grep( /^$name$/, keys %{$ext_functions{$func}->[2]} );
 }
 
 # some functions need a hand-written wrapper

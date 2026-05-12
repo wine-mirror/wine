@@ -3077,6 +3077,7 @@ static void WINAPI glBindBuffer( GLenum target, GLuint buffer )
     struct glBindBuffer_params args = { .teb = NtCurrentTeb(), .target = target, .buffer = buffer };
     NTSTATUS status;
     TRACE( "target %d, buffer %d\n", target, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, FALSE )) return;
     if ((status = UNIX_CALL( glBindBuffer, &args ))) WARN( "glBindBuffer returned %#lx\n", status );
 }
 
@@ -3085,6 +3086,7 @@ static void WINAPI glBindBufferARB( GLenum target, GLuint buffer )
     struct glBindBufferARB_params args = { .teb = NtCurrentTeb(), .target = target, .buffer = buffer };
     NTSTATUS status;
     TRACE( "target %d, buffer %d\n", target, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferARB, &args ))) WARN( "glBindBufferARB returned %#lx\n", status );
 }
 
@@ -3093,6 +3095,7 @@ static void WINAPI glBindBufferBase( GLenum target, GLuint index, GLuint buffer 
     struct glBindBufferBase_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d\n", target, index, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, FALSE )) return;
     if ((status = UNIX_CALL( glBindBufferBase, &args ))) WARN( "glBindBufferBase returned %#lx\n", status );
 }
 
@@ -3101,6 +3104,7 @@ static void WINAPI glBindBufferBaseEXT( GLenum target, GLuint index, GLuint buff
     struct glBindBufferBaseEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d\n", target, index, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferBaseEXT, &args ))) WARN( "glBindBufferBaseEXT returned %#lx\n", status );
 }
 
@@ -3109,6 +3113,7 @@ static void WINAPI glBindBufferBaseNV( GLenum target, GLuint index, GLuint buffe
     struct glBindBufferBaseNV_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d\n", target, index, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferBaseNV, &args ))) WARN( "glBindBufferBaseNV returned %#lx\n", status );
 }
 
@@ -3117,6 +3122,7 @@ static void WINAPI glBindBufferOffsetEXT( GLenum target, GLuint index, GLuint bu
     struct glBindBufferOffsetEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d, offset %Id\n", target, index, buffer, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferOffsetEXT, &args ))) WARN( "glBindBufferOffsetEXT returned %#lx\n", status );
 }
 
@@ -3125,6 +3131,7 @@ static void WINAPI glBindBufferOffsetNV( GLenum target, GLuint index, GLuint buf
     struct glBindBufferOffsetNV_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d, offset %Id\n", target, index, buffer, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferOffsetNV, &args ))) WARN( "glBindBufferOffsetNV returned %#lx\n", status );
 }
 
@@ -3133,6 +3140,7 @@ static void WINAPI glBindBufferRange( GLenum target, GLuint index, GLuint buffer
     struct glBindBufferRange_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d, offset %Id, size %Id\n", target, index, buffer, offset, size );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, FALSE )) return;
     if ((status = UNIX_CALL( glBindBufferRange, &args ))) WARN( "glBindBufferRange returned %#lx\n", status );
 }
 
@@ -3141,6 +3149,7 @@ static void WINAPI glBindBufferRangeEXT( GLenum target, GLuint index, GLuint buf
     struct glBindBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d, offset %Id, size %Id\n", target, index, buffer, offset, size );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferRangeEXT, &args ))) WARN( "glBindBufferRangeEXT returned %#lx\n", status );
 }
 
@@ -3149,6 +3158,7 @@ static void WINAPI glBindBufferRangeNV( GLenum target, GLuint index, GLuint buff
     struct glBindBufferRangeNV_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .buffer = buffer, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "target %d, index %d, buffer %d, offset %Id, size %Id\n", target, index, buffer, offset, size );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glBindBufferRangeNV, &args ))) WARN( "glBindBufferRangeNV returned %#lx\n", status );
 }
 
@@ -4103,6 +4113,7 @@ static void WINAPI glClearNamedBufferDataEXT( GLuint buffer, GLenum internalform
     struct glClearNamedBufferDataEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .internalformat = internalformat, .format = format, .type = type, .data = data };
     NTSTATUS status;
     TRACE( "buffer %d, internalformat %d, format %d, type %d, data %p\n", buffer, internalformat, format, type, data );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glClearNamedBufferDataEXT, &args ))) WARN( "glClearNamedBufferDataEXT returned %#lx\n", status );
 }
 
@@ -4119,6 +4130,7 @@ static void WINAPI glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalf
     struct glClearNamedBufferSubDataEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .internalformat = internalformat, .offset = offset, .size = size, .format = format, .type = type, .data = data };
     NTSTATUS status;
     TRACE( "buffer %d, internalformat %d, offset %Id, size %Id, format %d, type %d, data %p\n", buffer, internalformat, offset, size, format, type, data );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glClearNamedBufferSubDataEXT, &args ))) WARN( "glClearNamedBufferSubDataEXT returned %#lx\n", status );
 }
 
@@ -6891,6 +6903,7 @@ static void WINAPI glFlushMappedNamedBufferRangeEXT( GLuint buffer, GLintptr off
     struct glFlushMappedNamedBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .length = length };
     NTSTATUS status;
     TRACE( "buffer %d, offset %Id, length %Id\n", buffer, offset, length );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glFlushMappedNamedBufferRangeEXT, &args ))) WARN( "glFlushMappedNamedBufferRangeEXT returned %#lx\n", status );
 }
 
@@ -9051,6 +9064,7 @@ static void WINAPI glGetNamedBufferParameterivEXT( GLuint buffer, GLenum pname, 
     struct glGetNamedBufferParameterivEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "buffer %d, pname %d, params %p\n", buffer, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glGetNamedBufferParameterivEXT, &args ))) WARN( "glGetNamedBufferParameterivEXT returned %#lx\n", status );
 }
 
@@ -9075,6 +9089,7 @@ static void WINAPI glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, voi
     struct glGetNamedBufferPointervEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "buffer %d, pname %d, params %p\n", buffer, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glGetNamedBufferPointervEXT, &args ))) WARN( "glGetNamedBufferPointervEXT returned %#lx\n", status );
 }
 
@@ -9091,6 +9106,7 @@ static void WINAPI glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, G
     struct glGetNamedBufferSubDataEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .size = size, .data = data };
     NTSTATUS status;
     TRACE( "buffer %d, offset %Id, size %Id, data %p\n", buffer, offset, size, data );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glGetNamedBufferSubDataEXT, &args ))) WARN( "glGetNamedBufferSubDataEXT returned %#lx\n", status );
 }
 
@@ -12415,6 +12431,7 @@ static void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access )
     struct glMapNamedBufferEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .access = access };
     NTSTATUS status;
     TRACE( "buffer %d, access %d\n", buffer, access );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return args.ret;
     if ((status = UNIX_CALL( glMapNamedBufferEXT, &args ))) WARN( "glMapNamedBufferEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -12433,6 +12450,7 @@ static void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, G
     struct glMapNamedBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .length = length, .access = access };
     NTSTATUS status;
     TRACE( "buffer %d, offset %Id, length %Id, access %d\n", buffer, offset, length, access );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return args.ret;
     if ((status = UNIX_CALL( glMapNamedBufferRangeEXT, &args ))) WARN( "glMapNamedBufferRangeEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -13108,6 +13126,7 @@ static void WINAPI glMultiTexBufferEXT( GLenum texunit, GLenum target, GLenum in
     struct glMultiTexBufferEXT_params args = { .teb = NtCurrentTeb(), .texunit = texunit, .target = target, .internalformat = internalformat, .buffer = buffer };
     NTSTATUS status;
     TRACE( "texunit %d, target %d, internalformat %d, buffer %d\n", texunit, target, internalformat, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glMultiTexBufferEXT, &args ))) WARN( "glMultiTexBufferEXT returned %#lx\n", status );
 }
 
@@ -14476,6 +14495,7 @@ static void WINAPI glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const v
     struct glNamedBufferDataEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .size = size, .data = data, .usage = usage };
     NTSTATUS status;
     TRACE( "buffer %d, size %Id, data %p, usage %d\n", buffer, size, data, usage );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glNamedBufferDataEXT, &args ))) WARN( "glNamedBufferDataEXT returned %#lx\n", status );
 }
 
@@ -14516,6 +14536,7 @@ static void WINAPI glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, cons
     struct glNamedBufferStorageEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .size = size, .data = data, .flags = flags };
     NTSTATUS status;
     TRACE( "buffer %d, size %Id, data %p, flags %d\n", buffer, size, data, flags );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glNamedBufferStorageEXT, &args ))) WARN( "glNamedBufferStorageEXT returned %#lx\n", status );
 }
 
@@ -14548,6 +14569,7 @@ static void WINAPI glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsi
     struct glNamedBufferSubDataEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .size = size, .data = data };
     NTSTATUS status;
     TRACE( "buffer %d, offset %Id, size %Id, data %p\n", buffer, offset, size, data );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glNamedBufferSubDataEXT, &args ))) WARN( "glNamedBufferSubDataEXT returned %#lx\n", status );
 }
 
@@ -14556,6 +14578,8 @@ static void WINAPI glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeB
     struct glNamedCopyBufferSubDataEXT_params args = { .teb = NtCurrentTeb(), .readBuffer = readBuffer, .writeBuffer = writeBuffer, .readOffset = readOffset, .writeOffset = writeOffset, .size = size };
     NTSTATUS status;
     TRACE( "readBuffer %d, writeBuffer %d, readOffset %Id, writeOffset %Id, size %Id\n", readBuffer, writeBuffer, readOffset, writeOffset, size );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &readBuffer, TRUE )) return;
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &writeBuffer, TRUE )) return;
     if ((status = UNIX_CALL( glNamedCopyBufferSubDataEXT, &args ))) WARN( "glNamedCopyBufferSubDataEXT returned %#lx\n", status );
 }
 
@@ -19732,6 +19756,7 @@ static void WINAPI glTextureBufferEXT( GLuint texture, GLenum target, GLenum int
     struct glTextureBufferEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .internalformat = internalformat, .buffer = buffer };
     NTSTATUS status;
     TRACE( "texture %d, target %d, internalformat %d, buffer %d\n", texture, target, internalformat, buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glTextureBufferEXT, &args ))) WARN( "glTextureBufferEXT returned %#lx\n", status );
 }
 
@@ -19748,6 +19773,7 @@ static void WINAPI glTextureBufferRangeEXT( GLuint texture, GLenum target, GLenu
     struct glTextureBufferRangeEXT_params args = { .teb = NtCurrentTeb(), .texture = texture, .target = target, .internalformat = internalformat, .buffer = buffer, .offset = offset, .size = size };
     NTSTATUS status;
     TRACE( "texture %d, target %d, internalformat %d, buffer %d, offset %Id, size %Id\n", texture, target, internalformat, buffer, offset, size );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glTextureBufferRangeEXT, &args ))) WARN( "glTextureBufferRangeEXT returned %#lx\n", status );
 }
 
@@ -21223,6 +21249,7 @@ static GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
     struct glUnmapNamedBufferEXT_params args = { .teb = NtCurrentTeb(), .buffer = buffer };
     NTSTATUS status;
     TRACE( "buffer %d\n", buffer );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return args.ret;
     if ((status = UNIX_CALL( glUnmapNamedBufferEXT, &args ))) WARN( "glUnmapNamedBufferEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -21668,6 +21695,7 @@ static void WINAPI glVertexArrayBindVertexBufferEXT( GLuint vaobj, GLuint bindin
     struct glVertexArrayBindVertexBufferEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .bindingindex = bindingindex, .buffer = buffer, .offset = offset, .stride = stride };
     NTSTATUS status;
     TRACE( "vaobj %d, bindingindex %d, buffer %d, offset %Id, stride %d\n", vaobj, bindingindex, buffer, offset, stride );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayBindVertexBufferEXT, &args ))) WARN( "glVertexArrayBindVertexBufferEXT returned %#lx\n", status );
 }
 
@@ -21684,6 +21712,7 @@ static void WINAPI glVertexArrayColorOffsetEXT( GLuint vaobj, GLuint buffer, GLi
     struct glVertexArrayColorOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayColorOffsetEXT, &args ))) WARN( "glVertexArrayColorOffsetEXT returned %#lx\n", status );
 }
 
@@ -21692,6 +21721,7 @@ static void WINAPI glVertexArrayEdgeFlagOffsetEXT( GLuint vaobj, GLuint buffer, 
     struct glVertexArrayEdgeFlagOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, stride %d, offset %Id\n", vaobj, buffer, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayEdgeFlagOffsetEXT, &args ))) WARN( "glVertexArrayEdgeFlagOffsetEXT returned %#lx\n", status );
 }
 
@@ -21708,6 +21738,7 @@ static void WINAPI glVertexArrayFogCoordOffsetEXT( GLuint vaobj, GLuint buffer, 
     struct glVertexArrayFogCoordOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, type %d, stride %d, offset %Id\n", vaobj, buffer, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayFogCoordOffsetEXT, &args ))) WARN( "glVertexArrayFogCoordOffsetEXT returned %#lx\n", status );
 }
 
@@ -21716,6 +21747,7 @@ static void WINAPI glVertexArrayIndexOffsetEXT( GLuint vaobj, GLuint buffer, GLe
     struct glVertexArrayIndexOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, type %d, stride %d, offset %Id\n", vaobj, buffer, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayIndexOffsetEXT, &args ))) WARN( "glVertexArrayIndexOffsetEXT returned %#lx\n", status );
 }
 
@@ -21724,6 +21756,7 @@ static void WINAPI glVertexArrayMultiTexCoordOffsetEXT( GLuint vaobj, GLuint buf
     struct glVertexArrayMultiTexCoordOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .texunit = texunit, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, texunit %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, texunit, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayMultiTexCoordOffsetEXT, &args ))) WARN( "glVertexArrayMultiTexCoordOffsetEXT returned %#lx\n", status );
 }
 
@@ -21732,6 +21765,7 @@ static void WINAPI glVertexArrayNormalOffsetEXT( GLuint vaobj, GLuint buffer, GL
     struct glVertexArrayNormalOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, type %d, stride %d, offset %Id\n", vaobj, buffer, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayNormalOffsetEXT, &args ))) WARN( "glVertexArrayNormalOffsetEXT returned %#lx\n", status );
 }
 
@@ -21764,6 +21798,7 @@ static void WINAPI glVertexArraySecondaryColorOffsetEXT( GLuint vaobj, GLuint bu
     struct glVertexArraySecondaryColorOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArraySecondaryColorOffsetEXT, &args ))) WARN( "glVertexArraySecondaryColorOffsetEXT returned %#lx\n", status );
 }
 
@@ -21772,6 +21807,7 @@ static void WINAPI glVertexArrayTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, 
     struct glVertexArrayTexCoordOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayTexCoordOffsetEXT, &args ))) WARN( "glVertexArrayTexCoordOffsetEXT returned %#lx\n", status );
 }
 
@@ -21812,6 +21848,7 @@ static void WINAPI glVertexArrayVertexAttribIOffsetEXT( GLuint vaobj, GLuint buf
     struct glVertexArrayVertexAttribIOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .index = index, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, index %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, index, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayVertexAttribIOffsetEXT, &args ))) WARN( "glVertexArrayVertexAttribIOffsetEXT returned %#lx\n", status );
 }
 
@@ -21828,6 +21865,7 @@ static void WINAPI glVertexArrayVertexAttribLOffsetEXT( GLuint vaobj, GLuint buf
     struct glVertexArrayVertexAttribLOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .index = index, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, index %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, index, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayVertexAttribLOffsetEXT, &args ))) WARN( "glVertexArrayVertexAttribLOffsetEXT returned %#lx\n", status );
 }
 
@@ -21836,6 +21874,7 @@ static void WINAPI glVertexArrayVertexAttribOffsetEXT( GLuint vaobj, GLuint buff
     struct glVertexArrayVertexAttribOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .index = index, .size = size, .type = type, .normalized = normalized, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, index %d, size %d, type %d, normalized %d, stride %d, offset %Id\n", vaobj, buffer, index, size, type, normalized, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayVertexAttribOffsetEXT, &args ))) WARN( "glVertexArrayVertexAttribOffsetEXT returned %#lx\n", status );
 }
 
@@ -21868,6 +21907,7 @@ static void WINAPI glVertexArrayVertexOffsetEXT( GLuint vaobj, GLuint buffer, GL
     struct glVertexArrayVertexOffsetEXT_params args = { .teb = NtCurrentTeb(), .vaobj = vaobj, .buffer = buffer, .size = size, .type = type, .stride = stride, .offset = offset };
     NTSTATUS status;
     TRACE( "vaobj %d, buffer %d, size %d, type %d, stride %d, offset %Id\n", vaobj, buffer, size, type, stride, offset );
+    if (!alloc_context_objects( OBJ_TYPE_BUFFER, 1, &buffer, TRUE )) return;
     if ((status = UNIX_CALL( glVertexArrayVertexOffsetEXT, &args ))) WARN( "glVertexArrayVertexOffsetEXT returned %#lx\n", status );
 }
 
