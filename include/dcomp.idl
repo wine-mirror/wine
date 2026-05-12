@@ -18,6 +18,7 @@
 
 import "objidl.idl";
 import "d2dbasetypes.h";
+import "d2d1_1.idl";
 import "dcommon.idl";
 import "dcompanimation.idl";
 import "dcomptypes.idl";
@@ -425,6 +426,267 @@ interface IDCompositionDevice2 : IUnknown
     HRESULT CreateEffectGroup([out] IDCompositionEffectGroup **effect_group);
     HRESULT CreateRectangleClip([out] IDCompositionRectangleClip **clip);
     HRESULT CreateAnimation([out] IDCompositionAnimation **animation);
+}
+
+[
+    object,
+    uuid(30c421d5-8cb2-4e9f-b133-37be270d4ac2),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionFilterEffect : IDCompositionEffect
+{
+    HRESULT SetInput(UINT index, IUnknown *input, UINT flags);
+};
+
+[
+    object,
+    uuid(45d4d0b7-1bd4-454e-8894-2bfa68443033),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionGaussianBlurEffect : IDCompositionFilterEffect
+{
+    HRESULT SetStandardDeviationAnimation(IDCompositionAnimation *animation);
+    HRESULT SetStandardDeviation(float amount);
+    HRESULT SetBorderMode(D2D1_BORDER_MODE mode);
+};
+
+[
+    object,
+    uuid(6027496e-cb3a-49ab-934f-d798da4f7da6),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionBrightnessEffect : IDCompositionFilterEffect
+{
+    HRESULT SetWhitePoint(const D2D1_VECTOR_2F *white_point);
+    HRESULT SetBlackPoint(const D2D1_VECTOR_2F *black_point);
+    HRESULT SetWhitePointXAnimation(IDCompositionAnimation *animation);
+    HRESULT SetWhitePointX(float white_point_x);
+    HRESULT SetWhitePointYAnimation(IDCompositionAnimation *animation);
+    HRESULT SetWhitePointY(float white_point_y);
+    HRESULT SetBlackPointXAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlackPointX(float black_point_x);
+    HRESULT SetBlackPointYAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlackPointY(float black_point_y);
+};
+
+[
+    object,
+    uuid(c1170a22-3ce2-4966-90d4-55408bfc84c4),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionColorMatrixEffect : IDCompositionFilterEffect
+{
+    HRESULT SetMatrix(const D2D1_MATRIX_5X4_F *matrix);
+    HRESULT SetMatrixElementAnimation(int row, int column, IDCompositionAnimation *animation);
+    HRESULT SetMatrixElement(int row, int column, float value);
+    HRESULT SetAlphaMode(D2D1_COLORMATRIX_ALPHA_MODE mode);
+    HRESULT SetClampOutput(BOOL clamp);
+};
+
+[
+    object,
+    uuid(4ad18ac0-cfd2-4c2f-bb62-96e54fdb6879),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionShadowEffect : IDCompositionFilterEffect
+{
+    HRESULT SetStandardDeviationAnimation(IDCompositionAnimation *animation);
+    HRESULT SetStandardDeviation(float amount);
+    HRESULT SetColor(const D2D1_VECTOR_4F *color);
+    HRESULT SetRedAnimation(IDCompositionAnimation *animation);
+    HRESULT SetRed(float amount);
+    HRESULT SetGreenAnimation(IDCompositionAnimation *animation);
+    HRESULT SetGreen(float amount);
+    HRESULT SetBlueAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlue(float amount);
+    HRESULT SetAlphaAnimation(IDCompositionAnimation *animation);
+    HRESULT SetAlpha(float amount);
+};
+
+[
+    object,
+    uuid(6db9f920-0770-4781-b0c6-381912f9d167),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionHueRotationEffect : IDCompositionFilterEffect
+{
+    HRESULT SetAngleAnimation(IDCompositionAnimation *animation);
+    HRESULT SetAngle(float degrees);
+};
+
+[
+    object,
+    uuid(a08debda-3258-4fa4-9f16-9174d3fe93b1),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionSaturationEffect : IDCompositionFilterEffect
+{
+    HRESULT SetSaturationAnimation(IDCompositionAnimation *animation);
+    HRESULT SetSaturation(float ratio);
+};
+
+[
+    object,
+    uuid(a6a55bda-c09c-49f3-9193-a41922c89715),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionTurbulenceEffect : IDCompositionFilterEffect
+{
+    HRESULT SetOffset(const D2D1_VECTOR_2F *offset);
+    HRESULT SetBaseFrequency(const D2D1_VECTOR_2F *frequency);
+    HRESULT SetSize(const D2D1_VECTOR_2F *size);
+    HRESULT SetNumOctaves(UINT octaves);
+    HRESULT SetSeed(UINT seed);
+    HRESULT SetNoise(D2D1_TURBULENCE_NOISE noise);
+    HRESULT SetStitchable(BOOL stitchable);
+};
+
+[
+    object,
+    uuid(4305ee5b-c4a0-4c88-9385-67124e017683),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionLinearTransferEffect : IDCompositionFilterEffect
+{
+    HRESULT SetRedYInterceptAnimation(IDCompositionAnimation *animation);
+    HRESULT SetRedYIntercept(float red_y_intercept);
+    HRESULT SetRedSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetRedSlope(float red_slope);
+    HRESULT SetRedDisable(BOOL red_disable);
+    HRESULT SetGreenYInterceptAnimation(IDCompositionAnimation *animation);
+    HRESULT SetGreenYIntercept(float green_y_intercept);
+    HRESULT SetGreenSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetGreenSlope(float green_slope);
+    HRESULT SetGreenDisable(BOOL green_disable);
+    HRESULT SetBlueYInterceptAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlueYIntercept(float blue_y_intercept);
+    HRESULT SetBlueSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetBlueSlope(float blue_slope);
+    HRESULT SetBlueDisable(BOOL blue_disable);
+    HRESULT SetAlphaYInterceptAnimation(IDCompositionAnimation *animation);
+    HRESULT SetAlphaYIntercept(float alpha_y_intercept);
+    HRESULT SetAlphaSlopeAnimation(IDCompositionAnimation *animation);
+    HRESULT SetAlphaSlope(float alpha_slope);
+    HRESULT SetAlphaDisable(BOOL alpha_disable);
+    HRESULT SetClampOutput(BOOL clamp_output);
+};
+
+[
+    object,
+    uuid(9b7e82e2-69c5-4eb4-a5f5-a7033f5132cd),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionTableTransferEffect : IDCompositionFilterEffect
+{
+    HRESULT SetRedTable(const float *table_values, UINT count);
+    HRESULT SetGreenTable(const float *table_values, UINT count);
+    HRESULT SetBlueTable(const float *table_values, UINT count);
+    HRESULT SetAlphaTable(const float *table_values, UINT count);
+    HRESULT SetRedDisable(BOOL red_disable);
+    HRESULT SetGreenDisable(BOOL green_disable);
+    HRESULT SetBlueDisable(BOOL blue_disable);
+    HRESULT SetAlphaDisable(BOOL alpha_disable);
+    HRESULT SetClampOutput(BOOL clamp_output);
+    HRESULT SetRedTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetRedTableValue(UINT index, float value);
+    HRESULT SetGreenTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetGreenTableValue(UINT index, float value);
+    HRESULT SetBlueTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetBlueTableValue(UINT index, float value);
+    HRESULT SetAlphaTableValueAnimation(UINT index, IDCompositionAnimation *animation);
+    HRESULT SetAlphaTableValue(UINT index, float value);
+};
+
+[
+    object,
+    uuid(576616c0-a231-494d-a38d-00fd5ec4db46),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionCompositeEffect : IDCompositionFilterEffect
+{
+    HRESULT SetMode(D2D1_COMPOSITE_MODE mode);
+};
+
+[
+    object,
+    uuid(33ecdc0a-578a-4a11-9c14-0cb90517f9c5),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionBlendEffect : IDCompositionFilterEffect
+{
+    HRESULT SetMode(D2D1_BLEND_MODE mode);
+};
+
+[
+    object,
+    uuid(3b67dfa8-e3dd-4e61-b640-46c2f3d739dc),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionArithmeticCompositeEffect : IDCompositionFilterEffect
+{
+    HRESULT SetCoefficients(const D2D1_VECTOR_4F *coefficients);
+    HRESULT SetClampOutput(BOOL clamp_output);
+    HRESULT SetCoefficient1Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient1(float coeffcient);
+    HRESULT SetCoefficient2Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient2(float coefficient);
+    HRESULT SetCoefficient3Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient3(float coefficient);
+    HRESULT SetCoefficient4Animation(IDCompositionAnimation *animation);
+    HRESULT SetCoefficient4(float coefficient);
+};
+
+[
+    object,
+    uuid(0b74b9e8-cdd6-492f-bbbc-5ed32157026d),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionAffineTransform2DEffect : IDCompositionFilterEffect
+{
+    HRESULT SetInterpolationMode(D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE mode);
+    HRESULT SetBorderMode(D2D1_BORDER_MODE mode);
+    HRESULT SetTransformMatrix(const D2D1_MATRIX_3X2_F *matrix);
+    HRESULT SetTransformMatrixElementAnimation(int row, int column, IDCompositionAnimation *animation);
+    HRESULT SetTransformMatrixElement(int row, int column, float value);
+    HRESULT SetSharpnessAnimation(IDCompositionAnimation *animation);
+    HRESULT SetSharpness(float sharpness);
+};
+
+[
+    object,
+    uuid(0987cb06-f916-48bf-8d35-ce7641781bd9),
+    local,
+    pointer_default(unique)
+]
+interface IDCompositionDevice3 : IDCompositionDevice2
+{
+    HRESULT CreateGaussianBlurEffect(IDCompositionGaussianBlurEffect **effect);
+    HRESULT CreateBrightnessEffect(IDCompositionBrightnessEffect **effect);
+    HRESULT CreateColorMatrixEffect(IDCompositionColorMatrixEffect **effect);
+    HRESULT CreateShadowEffect(IDCompositionShadowEffect **effect);
+    HRESULT CreateHueRotationEffect(IDCompositionHueRotationEffect **effect);
+    HRESULT CreateSaturationEffect(IDCompositionSaturationEffect **effect);
+    HRESULT CreateTurbulenceEffect(IDCompositionTurbulenceEffect **effect);
+    HRESULT CreateLinearTransferEffect(IDCompositionLinearTransferEffect **effect);
+    HRESULT CreateTableTransferEffect(IDCompositionTableTransferEffect **effect);
+    HRESULT CreateCompositeEffect(IDCompositionCompositeEffect **effect);
+    HRESULT CreateBlendEffect(IDCompositionBlendEffect **effect);
+    HRESULT CreateArithmeticCompositeEffect(IDCompositionArithmeticCompositeEffect **effect);
+    HRESULT CreateAffineTransform2DEffect(IDCompositionAffineTransform2DEffect **effect);
 }
 
 [
