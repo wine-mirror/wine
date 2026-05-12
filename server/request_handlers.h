@@ -702,6 +702,7 @@ C_ASSERT( offsetof(struct new_thread_request, process) == 12 );
 C_ASSERT( offsetof(struct new_thread_request, access) == 16 );
 C_ASSERT( offsetof(struct new_thread_request, flags) == 20 );
 C_ASSERT( offsetof(struct new_thread_request, request_fd) == 24 );
+C_ASSERT( offsetof(struct new_thread_request, is_system) == 28 );
 C_ASSERT( sizeof(struct new_thread_request) == 32 );
 C_ASSERT( offsetof(struct new_thread_reply, tid) == 8 );
 C_ASSERT( offsetof(struct new_thread_reply, handle) == 12 );

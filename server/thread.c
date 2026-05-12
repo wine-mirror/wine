@@ -423,6 +423,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->suspend         = 0;
     thread->dbg_hidden      = 0;
     thread->bypass_proc_suspend = 0;
+    thread->is_system       = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
     thread->desc            = NULL;
@@ -1699,6 +1700,7 @@ DECL_HANDLER(new_thread)
     {
         thread->system_regs = current->system_regs;
         if (req->flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED) thread->suspend++;
+        thread->is_system = req->is_system;
         thread->dbg_hidden = !!(req->flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER);
         thread->bypass_proc_suspend = !!(req->flags & THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE);
         reply->tid = get_thread_id( thread );

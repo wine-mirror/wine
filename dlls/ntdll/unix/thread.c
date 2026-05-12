@@ -1249,7 +1249,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
  */
 static NTSTATUS create_server_thread( HANDLE *handle, struct thread_data **data_ret,
                                       ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                      void *start, void *param, ULONG flags )
+                                      void *start, void *param, ULONG flags, BOOL is_system )
 {
     data_size_t len;
     struct object_attributes *objattr;
@@ -1272,6 +1272,7 @@ static NTSTATUS create_server_thread( HANDLE *handle, struct thread_data **data_
         req->process    = wine_server_obj_handle( NtCurrentProcess() );
         req->access     = access;
         req->flags      = flags;
+        req->is_system  = !!is_system;
         req->request_fd = request_pipe[0];
         wine_server_add_data( req, objattr, len );
         if (!(status = wine_server_call( req )))
@@ -1441,7 +1442,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     if (!access) access = THREAD_ALL_ACCESS;
 
-    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags )))
+    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags, FALSE )))
         return status;
 
     if ((status = virtual_alloc_teb( data ))) goto done;
@@ -1484,7 +1485,7 @@ NTSTATUS WINAPI PsCreateSystemThread( HANDLE *handle, ACCESS_MASK access, OBJECT
     NTSTATUS status;
     ULONG flags = THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE;
 
-    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags )))
+    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags, TRUE )))
         return status;
 
     if ((status = spawn_thread( data )))

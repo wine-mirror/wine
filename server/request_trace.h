@@ -101,6 +101,7 @@ static void dump_new_thread_request( const struct new_thread_request *req )
     fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", request_fd=%d", req->request_fd );
+    fprintf( stderr, ", is_system=%d", req->is_system );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 

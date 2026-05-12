@@ -22,6 +22,7 @@
 #define __WINE_SERVER_OBJECT_H
 
 #include <poll.h>
+#include <stdbool.h>
 #include <sys/time.h>
 #include "wine/server_protocol.h"
 #include "wine/list.h"

@@ -1120,8 +1120,8 @@ struct new_thread_request
     unsigned int access;
     unsigned int flags;
     int          request_fd;
+    int          is_system;
     /* VARARG(objattr,object_attributes); */
-    char __pad_28[4];
 };
 struct new_thread_reply
 {
@@ -7098,6 +7098,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 932
+#define SERVER_PROTOCOL_VERSION 933
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
