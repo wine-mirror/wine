@@ -577,7 +577,6 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     }
 
     set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
-    add_process_thread( thread->process, thread );
     return thread;
 
 error:
@@ -1703,6 +1702,7 @@ DECL_HANDLER(new_thread)
         thread->is_system = req->is_system;
         thread->dbg_hidden = !!(req->flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER);
         thread->bypass_proc_suspend = !!(req->flags & THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE);
+        add_process_thread( process, thread );
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle_no_access_check( current->process, thread,
                                                            req->access, objattr->attributes )))
@@ -1860,7 +1860,7 @@ DECL_HANDLER(get_thread_info)
             reply->flags |= GET_THREAD_INFO_FLAG_DBG_HIDDEN;
         if (thread->state == TERMINATED)
             reply->flags |= GET_THREAD_INFO_FLAG_TERMINATED;
-        if (thread->process->running_threads == 1)
+        if (thread->process->user_threads == 1)
             reply->flags |= GET_THREAD_INFO_FLAG_LAST;
         if (thread->disable_boost)
             reply->flags |= GET_THREAD_INFO_FLAG_DISABLE_BOOST;
@@ -2380,7 +2380,7 @@ DECL_HANDLER(get_next_thread)
     while (ptr)
     {
         thread = LIST_ENTRY( ptr, struct thread, entry );
-        if (thread->process == process &&
+        if (thread->process == process && !thread->is_system &&
             (reply->handle = alloc_handle( current->process, thread, req->access, req->attributes )))
         {
             release_object( process );

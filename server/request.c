@@ -562,7 +562,8 @@ static void master_socket_poll_event( struct fd *fd, int event )
         fcntl( client, F_SETFL, O_NONBLOCK );
         if ((process = create_process( client, NULL, 0, NULL, NULL, NULL, 0, NULL )))
         {
-            create_thread( -1, process, NULL );
+            struct thread *thread = create_thread( -1, process, NULL );
+            if (thread) add_process_thread( process, thread );
             release_object( process );
         }
     }

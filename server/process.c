@@ -552,9 +552,11 @@ void *get_ptid_entry( unsigned int id )
 /* return the main thread of the process */
 struct thread *get_process_first_thread( struct process *process )
 {
-    struct list *ptr = list_head( &process->thread_list );
-    if (!ptr) return NULL;
-    return LIST_ENTRY( ptr, struct thread, proc_entry );
+    struct thread *thread;
+
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+        if (!thread->is_system) return thread;
+    return NULL;
 }
 
 /* set the state of the process startup info */
@@ -675,6 +677,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->unix_pid        = -1;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
+    process->user_threads    = 0;
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
     process->base_priority   = 8;
     process->disable_boost   = 0;
@@ -1007,6 +1010,7 @@ static void process_killed( struct process *process )
 void add_process_thread( struct process *process, struct thread *thread )
 {
     list_add_tail( &process->thread_list, &thread->proc_entry );
+    if (!thread->is_system) process->user_threads++;
     if (!process->running_threads++)
     {
         list_add_tail( &process_list, &process->entry );
@@ -1030,6 +1034,7 @@ void remove_process_thread( struct process *process, struct thread *thread )
     assert( !list_empty( &process->thread_list ));
 
     list_remove( &thread->proc_entry );
+    if (!thread->is_system) process->user_threads--;
 
     if (!--process->running_threads)
     {
@@ -2067,9 +2072,9 @@ DECL_HANDLER(list_processes)
         reply->info_size = (reply->info_size + 7) & ~7;
         reply->info_size += sizeof(struct process_info) + process->imagelen;
         reply->info_size = (reply->info_size + 7) & ~7;
-        reply->info_size += process->running_threads * sizeof(struct thread_info);
+        reply->info_size += process->user_threads * sizeof(struct thread_info);
         reply->process_count++;
-        reply->total_thread_count += process->running_threads;
+        reply->total_thread_count += process->user_threads;
         reply->total_name_len += process->imagelen;
     }
 
@@ -2090,7 +2095,7 @@ DECL_HANDLER(list_processes)
         process_info = (struct process_info *)(buffer + pos);
         process_info->start_time = process->start_time;
         process_info->name_len = process->imagelen;
-        process_info->thread_count = process->running_threads;
+        process_info->thread_count = process->user_threads;
         process_info->priority = process->priority;
         process_info->pid = process->id;
         process_info->parent_pid = process->parent_id;
@@ -2105,6 +2110,7 @@ DECL_HANDLER(list_processes)
         {
             struct thread_info *thread_info = (struct thread_info *)(buffer + pos);
 
+            if (thread->is_system) continue;
             thread_info->start_time = thread->creation_time;
             thread_info->tid = thread->id;
             thread_info->base_priority = thread->base_priority;
