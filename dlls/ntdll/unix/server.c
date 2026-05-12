@@ -1574,6 +1574,18 @@ static int init_thread_pipe( struct thread_data *data )
 
 
 /***********************************************************************
+ *           init_teb_data
+ */
+static void init_teb_data( struct thread_data *data )
+{
+    struct teb_data *teb_data = get_teb_data( data );
+
+    teb_data->syscall_table = KeServiceDescriptorTable;
+    teb_data->syscall_trace = TRACE_ON(syscall);
+}
+
+
+/***********************************************************************
  *           process_exit_wrapper
  *
  * Close server socket and exit process normally.
@@ -1735,7 +1747,6 @@ void server_init_process_done(void)
     unsigned int status;
     FILE_FS_DEVICE_INFORMATION info;
     struct thread_data *data = get_thread_data();
-    struct teb_data *teb_data = get_teb_data( data );
 
     if (!get_device_info( initial_cwd, &info ) && (info.Characteristics & FILE_REMOVABLE_MEDIA))
         chdir( "/" );
@@ -1749,8 +1760,7 @@ void server_init_process_done(void)
      * send exceptions to the debugger before the create process event that
      * is sent by init_process_done */
     signal_init_process( data->teb );
-    teb_data->syscall_table = KeServiceDescriptorTable;
-    teb_data->syscall_trace = TRACE_ON(syscall);
+    init_teb_data( data );
 
     /* always send the native TEB */
     if (!(teb = NtCurrentTeb64())) teb = data->teb;
@@ -1778,11 +1788,15 @@ void server_init_process_done(void)
 void server_init_thread( struct thread_data *data )
 {
     void *teb;
-    int reply_pipe = init_thread_pipe( data );
+    int reply_pipe;
+
+    data->pthread_id = pthread_self();
+    pthread_setspecific( thread_data_key, data );
 
     /* always send the native TEB */
     if (!(teb = NtCurrentTeb64())) teb = data->teb;
 
+    reply_pipe = init_thread_pipe( data );
     SERVER_START_REQ( init_thread )
     {
         req->unix_tid  = get_unix_tid();
@@ -1795,6 +1809,9 @@ void server_init_thread( struct thread_data *data )
     }
     SERVER_END_REQ;
     close( reply_pipe );
+
+    init_teb_data( data );
+    signal_start_thread( data->start, data->param, data->teb );
 }
 
 NTSTATUS WINAPI NtAllocateReserveObject( HANDLE *handle, const OBJECT_ATTRIBUTES *attr,

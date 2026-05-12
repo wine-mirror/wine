@@ -78,7 +78,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
-WINE_DECLARE_DEBUG_CHANNEL(syscall);
 WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 static LONG nb_threads = 1;
@@ -1113,25 +1112,6 @@ static DECLSPEC_NORETURN void pthread_exit_wrapper( int status )
 
 
 /***********************************************************************
- *           start_thread
- *
- * Startup routine for a newly created thread.
- */
-static void start_thread( struct thread_data *data )
-{
-    struct teb_data *teb_data = get_teb_data( data );
-
-    data->pthread_id = pthread_self();
-    pthread_setspecific( thread_data_key, data );
-
-    teb_data->syscall_table = KeServiceDescriptorTable;
-    teb_data->syscall_trace = TRACE_ON(syscall);
-    server_init_thread( data );
-    signal_start_thread( data->start, data->param, data->teb );
-}
-
-
-/***********************************************************************
  *           get_machine_context_size
  */
 static SIZE_T get_machine_context_size( USHORT machine )
@@ -1343,7 +1323,7 @@ static NTSTATUS spawn_thread( struct thread_data *data )
     pthread_attr_setguardsize( &attr, 0 );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     InterlockedIncrement( &nb_threads );
-    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, data ))
+    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))server_init_thread, data ))
     {
         InterlockedDecrement( &nb_threads );
         status = STATUS_NO_MEMORY;
