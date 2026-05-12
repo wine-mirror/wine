@@ -2439,7 +2439,7 @@ void fill_wave_formats(const WAVEFORMATEXTENSIBLE *base_fmt)
 
 static void test_formats(void)
 {
-    static const WAVEFORMATEXTENSIBLE base_fmt =
+    const WAVEFORMATEXTENSIBLE base_fmt =
     {
         .Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE,
         .Format.nChannels = 2,
