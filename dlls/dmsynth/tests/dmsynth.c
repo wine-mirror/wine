@@ -1709,26 +1709,29 @@ struct DECLSPEC_ALIGN(8) midi_message
     DWORD message;
 };
 
-static const struct midi_message default_note_on =
-{
-    .header =
-    {
-        .cbEvent = 3,
-        .dwFlags = DMUS_EVENT_STRUCTURED,
-    },
-    .message = 0x7f3c90,
-};
+#define DEFAULT_NOTE_ON \
+    { \
+        .header = \
+        { \
+            .cbEvent = 3, \
+            .dwFlags = DMUS_EVENT_STRUCTURED, \
+        }, \
+        .message = 0x7f3c90, \
+    }
 
-static const struct midi_message default_note_off =
-{
-    .header =
-    {
-        .cbEvent = 3,
-        .rtDelta = 10000000,
-        .dwFlags = DMUS_EVENT_STRUCTURED,
-    },
-    .message = 0x7f3c80,
-};
+#define DEFAULT_NOTE_OFF \
+    { \
+        .header = \
+        { \
+            .cbEvent = 3, \
+            .rtDelta = 10000000, \
+            .dwFlags = DMUS_EVENT_STRUCTURED, \
+        }, \
+        .message = 0x7f3c80, \
+    }
+
+static const struct midi_message default_note_on = DEFAULT_NOTE_ON;
+static const struct midi_message default_note_off = DEFAULT_NOTE_OFF;
 
 static struct midi_message make_midi_message(REFERENCE_TIME delta, DWORD message)
 {
@@ -1785,8 +1788,8 @@ struct midi default_midi =
 {
     .messages =
     {
-        default_note_on,
-        default_note_off,
+        DEFAULT_NOTE_ON,
+        DEFAULT_NOTE_OFF,
     },
 };
 
