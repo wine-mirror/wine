@@ -769,8 +769,19 @@ sub generate_win_thunk($$)
                 if ($len eq "1")
                 {
                     $checks .= "    if (!alloc_context_objects( $map_type, 1, &$pname, $alloc )) return$return;\n" if $alloc;
+                    $map_args .= "    args.$pname = *map_context_objects( $map_type, 1, &$pname );\n";
                 }
-                $params .= ", .$pname = $pname";
+                else
+                {
+                    my ($buf, $tmp) = ($pname . "_buf", $pname . "_tmp");
+                    $ret .= "    GLuint $buf\[64\], *$tmp;\n";
+                    $len =~ s/^COMPSIZE\((.*)\)$/$1/;
+
+                    $checks .= "    if (!alloc_context_objects( $map_type, $len, $pname, $alloc )) return$return;\n" if $alloc;
+                    $map_args .= "    $tmp = $len > 0 ? memdup_objects( $len, $pname, $buf, ARRAY_SIZE($buf) ) : NULL;\n";
+                    $map_args .= "    args.$pname = $len > 0 ? map_context_objects( $map_type, $len, $tmp ) : NULL;\n";
+                    $post_call .= "    if ($tmp != $buf) free( $tmp );\n";
+                }
             }
         }
         else

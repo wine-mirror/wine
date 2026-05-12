@@ -63,5 +63,6 @@ static inline GLuint *memdup_objects( UINT n, const GLuint *handles, GLuint *buf
 extern void put_context_objects( enum object_type type, UINT n, GLuint *handles );
 extern BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension );
 extern GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles );
+extern GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles );
 
 #endif /* __WINE_OPENGL32_PRIVATE_H */

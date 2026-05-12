@@ -278,6 +278,7 @@ struct object_table
     enum object_type    type;                   /* object type of the id table */
     SRWLOCK             lock;                   /* lock for accessing the table */
     GLuint            **host_ids[L1_COUNT];     /* client -> host id mapping sparse array */
+    GLuint            **client_ids[L1_COUNT];   /* host -> client id mapping sparse array */
     GLuint              min_free;               /* id to start looking for a free slot */
     BOOL                implicit;               /* table allows implicit allocation */
 };
@@ -337,7 +338,13 @@ static GLuint set_object( struct object_table *table, GLuint client_id, GLuint h
     if (!(ids = alloc_object_ids( table->host_ids, client_id ))) goto failed;
     ids[client_id % L3_COUNT] = host_id;
 
-    TRACE( "Inserted %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    if (table->implicit)
+    {
+        if (!(ids = alloc_object_ids( table->client_ids, host_id ))) goto failed;
+        ids[host_id % L3_COUNT] = client_id;
+    }
+
+    TRACE( "Inserted %s client %#x, host %#x\n", debugstr_object_type(table->type), client_id, host_id );
     return client_id;
 
 failed:
@@ -349,13 +356,14 @@ static GLuint del_object( struct object_table *table, GLuint client_id )
 {
     GLuint *object, host_id = 0;
 
-    if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return client_id;
+    if (!client_id || !(object = find_object_id( table->host_ids, client_id ))) return -1;
     table->min_free = min( table->min_free, client_id - 1 );
     host_id = *object;
     *object = 0;
+    if (host_id && (object = find_object_id( table->client_ids, host_id ))) *object = 0;
 
     TRACE( "Deleting %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
-    return host_id ? host_id : client_id;
+    return host_id ? host_id : -1;
 }
 
 static GLuint get_object( struct object_table *table, GLuint client_id, BOOL check )
@@ -367,9 +375,29 @@ static GLuint get_object( struct object_table *table, GLuint client_id, BOOL che
     return check || host_id ? host_id : -1;
 }
 
+#define MAKE_OBJECT_CALL( func, ... )                                                              \
+    struct func##_params args = { .teb = NtCurrentTeb(), __VA_ARGS__ };                            \
+    UNIX_CALL( func, &args )
+
+static GLuint create_object( enum object_type type )
+{
+    GLuint object;
+
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
+    case OBJ_TYPE_COUNT: break;
+    }
+
+    return 0;
+}
+
+#undef MAKE_OBJECT_CALL
+
 static void free_object_table( struct object_table *table )
 {
     free_object_ids( table, table->host_ids );
+    free_object_ids( table, table->client_ids );
 }
 
 static void init_object_table( struct object_table *table, enum object_type type )
@@ -523,7 +551,7 @@ static void alloc_client_objects( struct context *ctx, enum object_type type, UI
     {
         if (!handles[i] || get_object( table, handles[i], TRUE )) continue;
         WARN( "Creating implicit %s client %#x\n", debugstr_object_type( type ), handles[i] );
-        set_object( table, handles[i], handles[i] );
+        set_object( table, handles[i], create_object( table->type ) );
         table->implicit = TRUE; /* from now on we cannot rely on host-allocated ids */
     }
     ReleaseSRWLockExclusive( &table->lock );
@@ -566,6 +594,80 @@ GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )
     ReleaseSRWLockExclusive( &table->lock );
 
     return handles;
+}
+
+GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles )
+{
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return handles;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
+
+    AcquireSRWLockShared( &table->lock );
+    while (n--) handles[n] = handles[n] ? get_object( table, handles[n], FALSE ) : 0;
+    ReleaseSRWLockShared( &table->lock );
+
+    return handles;
+}
+
+static GLuint get_pname_object_type( GLenum pname )
+{
+    switch (pname)
+    {
+    case GL_ARRAY_BUFFER_BINDING:
+    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
+    case GL_COLOR_ARRAY_BUFFER_BINDING:
+    case GL_COPY_READ_BUFFER_BINDING:
+    case GL_COPY_WRITE_BUFFER_BINDING:
+    case GL_DISPATCH_INDIRECT_BUFFER_BINDING:
+    case GL_DRAW_INDIRECT_BUFFER_BINDING:
+    case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING:
+    case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+    case GL_FOG_COORD_ARRAY_BUFFER_BINDING:
+    case GL_INDEX_ARRAY_BUFFER_BINDING:
+    case GL_NORMAL_ARRAY_BUFFER_BINDING:
+    case GL_PARAMETER_BUFFER_BINDING:
+    case GL_PIXEL_PACK_BUFFER_BINDING:
+    case GL_PIXEL_UNPACK_BUFFER_BINDING:
+    case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
+    case GL_QUERY_BUFFER_BINDING:
+    case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING:
+    case GL_SHADER_STORAGE_BUFFER_BINDING:
+    case GL_TEXTURE_BUFFER_DATA_STORE_BINDING:
+    case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:
+    case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+    case GL_UNIFORM_BLOCK_BINDING:
+    case GL_UNIFORM_BUFFER_BINDING:
+    case GL_UNIFORM_BUFFER_BINDING_EXT:
+    case GL_VERTEX_ARRAY_BUFFER_BINDING:
+    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING:
+    case GL_VERTEX_BINDING_BUFFER:
+    case GL_VIDEO_BUFFER_BINDING_NV:
+    case GL_WEIGHT_ARRAY_BUFFER_BINDING:
+    case GL_MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES:
+        return OBJ_TYPE_BUFFER;
+    }
+
+    return OBJ_TYPE_COUNT;
+}
+
+static BOOL map_client_objects( enum object_type type, GLuint host_id, GLuint *ret )
+{
+    GLuint *object, client_id = host_id;
+    struct object_table *table;
+    struct context *ctx;
+
+    if (!host_id || type == OBJ_TYPE_COUNT) return FALSE;
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return FALSE;
+    if (!(table = get_object_table( ctx, type, FALSE ))) return FALSE;
+
+    AcquireSRWLockShared( &table->lock );
+    if ((object = find_object_id( table->client_ids, host_id ))) client_id = *object;
+    ReleaseSRWLockShared( &table->lock );
+
+    *ret = client_id;
+    return TRUE;
 }
 
 HGLRC WINAPI wglCreateContext( HDC hdc )
@@ -2328,7 +2430,7 @@ BOOL get_integer( GLenum name, GLuint index, GLint value, GLint *data )
         return TRUE;
     }
 
-    return FALSE;
+    return map_client_objects( get_pname_object_type( name ), value, (GLuint *)data );
 }
 
 const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )

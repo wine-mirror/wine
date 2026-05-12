@@ -2069,7 +2069,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( FALSE, test->exists( obj1 ) );
+        todo_wine_if( i >= 2 ) ok_ret( FALSE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, test->exists( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -2080,7 +2080,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( TRUE, wglDeleteContext( ctx3 ) );
 
         /* objects are still valid after shared context destruction */
-        todo_wine ok_ret( FALSE, test->exists( obj1 ) );
+        todo_wine_if( i >= 2 ) ok_ret( FALSE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, test->exists( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
