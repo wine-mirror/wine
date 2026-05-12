@@ -27,28 +27,36 @@
 static const char *bindir;
 static const char *libdir;
 
+static void *try_dlopen( const char *path, struct strarray *errors )
+{
+    void *handle = dlopen( path, RTLD_NOW );
+    if (!handle) strarray_add( errors, xstrdup( dlerror() ) );
+    return handle;
+}
+
 static void *load_ntdll(void)
 {
     const char *arch_dir = get_arch_dir( get_default_target() );
-    struct strarray dllpath;
+    struct strarray dllpath, errors = empty_strarray;
     void *handle;
 
     if (bindir && strendswith( bindir, "/tools/wine" ) &&
-        ((handle = dlopen( strmake( "%s/../../dlls/ntdll/ntdll.so", bindir ), RTLD_NOW ))))
+        ((handle = try_dlopen( strmake( "%s/../../dlls/ntdll/ntdll.so", bindir ), &errors ))))
         return handle;
 
-    if ((handle = dlopen( strmake( "%s/wine%s/ntdll.so", libdir, arch_dir ), RTLD_NOW )))
+    if ((handle = try_dlopen( strmake( "%s/wine%s/ntdll.so", libdir, arch_dir ), &errors )))
         return handle;
 
     dllpath = strarray_frompath( getenv( "WINEDLLPATH" ));
     STRARRAY_FOR_EACH( dir, &dllpath )
     {
-        if ((handle = dlopen( strmake( "%s%s/ntdll.so", dir, arch_dir ), RTLD_NOW )))
+        if ((handle = try_dlopen( strmake( "%s%s/ntdll.so", dir, arch_dir ), &errors )))
             return handle;
-        if ((handle = dlopen( strmake( "%s/ntdll.so", dir ), RTLD_NOW )))
+        if ((handle = try_dlopen( strmake( "%s/ntdll.so", dir ), &errors )))
             return handle;
     }
-    fprintf( stderr, "wine: could not load ntdll.so: %s\n", dlerror() );
+    fprintf( stderr, "wine: could not load ntdll.so:\n" );
+    STRARRAY_FOR_EACH( error, &errors ) fprintf( stderr, "  %s\n", error );
     exit(1);
 }
 
