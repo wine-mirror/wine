@@ -1475,6 +1475,35 @@ done:
 
 
 /***********************************************************************
+ *              PsCreateSystemThread   (ntdll.so)
+ */
+NTSTATUS WINAPI PsCreateSystemThread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                      HANDLE process, CLIENT_ID *id, PKSTART_ROUTINE start, void *param )
+{
+    struct thread_data *data;
+    NTSTATUS status;
+    ULONG flags = THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE;
+
+    if ((status = create_server_thread( handle, &data, access, attr, start, param, flags )))
+        return status;
+
+    if ((status = spawn_thread( data )))
+    {
+        NtClose( *handle );
+        virtual_free_thread_data( data );
+        return status;
+    }
+
+    if (id)
+    {
+        id->UniqueProcess = ULongToHandle( pid );
+        id->UniqueThread  = ULongToHandle( data->tid );
+    }
+    return status;
+}
+
+
+/***********************************************************************
  *           abort_thread
  */
 void abort_thread( int status )
@@ -1756,6 +1785,15 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
         exit_thread( exit_code );
     }
     return ret;
+}
+
+
+/******************************************************************************
+ *              PsTerminateSystemThread  (ntdll.so)
+ */
+NTSTATUS WINAPI PsTerminateSystemThread( NTSTATUS exit_code )
+{
+    for (;;) exit_thread( exit_code );
 }
 
 

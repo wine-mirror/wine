@@ -1801,17 +1801,26 @@ void server_init_thread( struct thread_data *data )
     {
         req->unix_tid  = get_unix_tid();
         req->teb       = wine_server_client_ptr( teb );
-        req->entry     = wine_server_client_ptr( data->start );
         req->reply_fd  = reply_pipe;
         req->wait_fd   = data->wait_fd[1];
+        if (data->teb) req->entry = wine_server_client_ptr( data->start );
         wine_server_call( req );
         data->suspend = reply->suspend;
     }
     SERVER_END_REQ;
     close( reply_pipe );
 
-    init_teb_data( data );
-    signal_start_thread( data->start, data->param, data->teb );
+    if (data->teb)
+    {
+        init_teb_data( data );
+        signal_start_thread( data->start, data->param, data->teb );
+    }
+    else
+    {
+        void (*entry)(void *) = data->start;
+        entry( data->param );
+        PsTerminateSystemThread( 1 );
+    }
 }
 
 NTSTATUS WINAPI NtAllocateReserveObject( HANDLE *handle, const OBJECT_ATTRIBUTES *attr,
