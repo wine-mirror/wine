@@ -202,16 +202,10 @@ static WINDOWPROC *find_winproc( WNDPROC func, BOOL ansi )
 static WINDOWPROC *get_winproc_ptr( WNDPROC handle )
 {
     UINT index = LOWORD(handle);
-    if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return NULL;
+    if (handle != MAKE_WNDPROC(index)) return NULL;
     if (index >= MAX_WINPROCS) return WINPROC_PROC16;
     if (index >= winproc_used) return NULL;
     return &winproc_array[index];
-}
-
-/* create a handle for a given window proc */
-static inline WNDPROC proc_to_handle( WINDOWPROC *proc )
-{
-    return (WNDPROC)(ULONG_PTR)((proc - winproc_array) | (WINPROC_HANDLE << 16));
 }
 
 /* allocate and initialize a new winproc */
@@ -233,13 +227,12 @@ static inline WINDOWPROC *alloc_winproc_ptr( WNDPROC func, BOOL ansi )
             proc = &winproc_array[winproc_used++];
             if (ansi) proc->procA = func;
             else proc->procW = func;
-            TRACE_(win)( "allocated %p for %c %p (%d/%d used)\n",
-                         proc_to_handle(proc), ansi ? 'A' : 'W', func,
-                         winproc_used, MAX_WINPROCS );
+            TRACE_(win)( "allocated %p for %c %p (%d/%d used)\n", MAKE_WNDPROC(proc - winproc_array),
+                         ansi ? 'A' : 'W', func, winproc_used, MAX_WINPROCS );
         }
         else WARN_(win)( "too many winprocs, cannot allocate one for %p\n", func );
     }
-    else TRACE_(win)( "reusing %p for %p\n", proc_to_handle(proc), func );
+    else TRACE_(win)( "reusing %p for %p\n", MAKE_WNDPROC(proc - winproc_array), func );
 
     pthread_mutex_unlock( &winproc_lock );
     return proc;
@@ -260,7 +253,7 @@ WNDPROC alloc_winproc( WNDPROC func, BOOL ansi )
 
     if (!(proc = alloc_winproc_ptr( func, ansi ))) return func;
     if (proc == WINPROC_PROC16) return func;
-    return proc_to_handle( proc );
+    return MAKE_WNDPROC(proc - winproc_array);
 }
 
 /* Get a window procedure pointer that can be passed to the Windows program. */
@@ -1112,7 +1105,7 @@ static void register_builtin( enum ntuser_client_procs proc )
         .style = descr->style,
         .cbWndExtra = descr->extra,
         .hbrBackground = descr->brush,
-        .lpfnWndProc = BUILTIN_WINPROC( proc ),
+        .lpfnWndProc = MAKE_WNDPROC( proc ),
     };
 
     if (descr->atom) return; /* already registered */

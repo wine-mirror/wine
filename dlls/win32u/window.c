@@ -1248,7 +1248,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
          * more tolerant to A/W mismatches. The lack of W->A->W conversion for such a mismatch suggests
          * that the hack is in GetWindowLongPtr[AW], not in winprocs.
          */
-        if (win->winproc == BUILTIN_WINPROC(NTUSER_WNDPROC_EDIT) && (!!ansi != !(win->flags & WIN_ISUNICODE)))
+        if (win->winproc == MAKE_WNDPROC(NTUSER_WNDPROC_EDIT) && (!!ansi != !(win->flags & WIN_ISUNICODE)))
             retval = (ULONG_PTR)win->winproc;
         else
             retval = (ULONG_PTR)get_winproc( win->winproc, ansi );

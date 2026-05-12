@@ -152,8 +152,7 @@ struct scroll_info
     BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 };
 
-#define WINPROC_HANDLE (~0u >> 16)
-#define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
+#define MAKE_WNDPROC(index)     ((WNDPROC)(UINT_PTR)(UINT)MAKELONG(index, 0xffff))
 
 #define MAX_ATOM_LEN 255
 
