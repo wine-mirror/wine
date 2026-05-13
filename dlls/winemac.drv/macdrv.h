@@ -114,10 +114,11 @@ struct macdrv_thread_data
 };
 
 extern struct macdrv_thread_data *macdrv_init_thread_data(void);
+extern pthread_key_t macdrv_thread_data_key;
 
 static inline struct macdrv_thread_data *macdrv_thread_data(void)
 {
-    return (struct macdrv_thread_data *)(UINT_PTR)NtUserGetThreadInfo()->driver_data;
+    return pthread_getspecific( macdrv_thread_data_key );
 }
 
 

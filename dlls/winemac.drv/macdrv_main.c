@@ -58,6 +58,7 @@ int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
 bool retina_enabled = false;
 bool enable_app_nap = false;
 
+pthread_key_t macdrv_thread_data_key = 0;
 UINT64 app_icon_callback = 0;
 UINT64 app_quit_request_callback = 0;
 
@@ -435,6 +436,8 @@ static NTSTATUS macdrv_init(void *arg)
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
         return STATUS_UNSUCCESSFUL;
 
+    pthread_key_create( &macdrv_thread_data_key, NULL );
+
     init_win_context();
     setup_options();
     load_strings(params->strings);
@@ -465,7 +468,7 @@ void macdrv_ThreadDetach(void)
             CFRelease(data->keyboard_layout_uchr);
         free(data);
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        NtUserGetThreadInfo()->driver_data = 0;
+        pthread_setspecific( macdrv_thread_data_key, NULL );
     }
 }
 
@@ -528,7 +531,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
     macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
-    NtUserGetThreadInfo()->driver_data = (UINT_PTR)data;
+    pthread_setspecific( macdrv_thread_data_key, data );
 
     NtUserActivateKeyboardLayout(data->active_keyboard_layout, 0);
     return data;
