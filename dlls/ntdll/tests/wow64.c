@@ -40,9 +40,13 @@ static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INFO*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
+#ifndef __arm__
 static NTSTATUS (WINAPI *pNtSetLdtEntries)(ULONG,ULONG,ULONG,ULONG,ULONG,ULONG);
-#ifdef _WIN64
+#endif
+#ifdef __x86_64__
 static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
+#endif
+#ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
@@ -120,7 +124,6 @@ static void init(void)
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
     GET_PROC( NtMapViewOfSectionEx );
-    GET_PROC( NtSetLdtEntries );
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlOpenCrossProcessEmulatorWorkConnection );
@@ -129,8 +132,13 @@ static void init(void)
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetSharedInfoProcess );
     GET_PROC( RtlWow64IsWowGuestMachineSupported );
-#ifdef _WIN64
+#ifndef __arm__
+    GET_PROC( NtSetLdtEntries );
+#endif
+#ifdef __x86_64__
     GET_PROC( KiUserExceptionDispatcher );
+#endif
+#ifdef _WIN64
     GET_PROC( RtlWow64GetCpuAreaInfo );
     GET_PROC( RtlWow64GetThreadContext );
     GET_PROC( RtlWow64GetThreadSelectorEntry );
