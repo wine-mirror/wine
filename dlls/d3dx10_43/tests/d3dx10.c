@@ -6370,7 +6370,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, D3DERR_INVALIDCALL, .todo_hr = TRUE
+            }, { 0 }, FALSE, D3DERR_INVALIDCALL
         },
         /*
          * Filter flags aren't validated if DstFirstMip is higher than the
@@ -6448,7 +6448,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 2, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_2d_array_4_4[0x94], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_2d_array_4_4[0x94]
         },
         /* Destination texture is immutable. */
         {
@@ -6473,7 +6473,7 @@ static void test_load_texture_from_texture(void)
         {
             { NULL, NULL, 0, 0, D3DX10_DEFAULT, 0, 1, D3DX10_DEFAULT, D3DX10_FILTER_NONE, D3DX10_DEFAULT },
             dds_2d_array_4_4, sizeof(dds_2d_array_4_4), { 0 }, FALSE,
-            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_10_expected, .todo_hr = TRUE
+            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_10_expected
         },
         /* Load a 3D texture into a 2D texture. */
         {
@@ -6537,7 +6537,7 @@ static void test_load_texture_from_texture(void)
         {
             { NULL, NULL, 0, 1, 3, 0, 0, D3DX10_DEFAULT, D3DX10_FILTER_NONE, 9 },
             dds_dxt10_8_8, sizeof(dds_dxt10_8_8), { 0 }, FALSE,
-            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_15_expected, .todo_hr = TRUE
+            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_15_expected
         },
         /*
          * Source and destination are the same texture.
@@ -6564,7 +6564,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 2, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_2d_array_4_4[0x94], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_2d_array_4_4[0x94]
         },
         /*
          * Empty source box results in a 1x1x1 box.
@@ -6579,7 +6579,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, test_18_expected, .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, test_18_expected
         },
         /*
          * Empty destination box results in a 1x1x1 box.
@@ -6594,7 +6594,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, TRUE, S_OK, test_18_expected, .todo_hr = TRUE
+            }, { 0 }, TRUE, S_OK, test_18_expected
         },
     };
     const uint8_t empty_buffer[8192] = { 0 };
@@ -6675,9 +6675,8 @@ static void test_load_texture_from_texture(void)
 
     /* NULL load_info argument, gets default load_info values. */
     hr = D3DX10LoadTextureFromTexture(src_rsrc, NULL, dst_rsrc);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        check_test_resource_data(dst_rsrc, &dds_2d_array_4_4[0x94]);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_test_resource_data(dst_rsrc, &dds_2d_array_4_4[0x94]);
 
     ID3D10Resource_Release(src_rsrc);
     ID3D10Resource_Release(dst_rsrc);

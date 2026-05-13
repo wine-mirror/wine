@@ -914,6 +914,53 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     return hr;
 }
 
+static void init_d3d10_box(D3D10_BOX *box, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t front,
+        uint32_t back)
+{
+    box->left = left;
+    box->top = top;
+    box->right = max(right, left + 1);
+    box->bottom = max(bottom, top + 1);
+    box->front = front;
+    box->back = max(back, front + 1);
+}
+
+static void d3d10_box_get_next_level(D3D10_BOX *box)
+{
+    init_d3d10_box(box, box->left >> 1, box->top >> 1, box->right >> 1, box->bottom >> 1,
+            box->front >> 1, box->back >> 1);
+}
+
+static BOOL d3d10_box_clamp(D3D10_BOX *box, unsigned int level, struct volume *size)
+{
+    struct volume level_size = *size;
+    BOOL clamped;
+
+    if (level)
+        d3dx_get_mip_level_size(&level_size, level);
+
+    clamped = (box->right > level_size.width) || (box->bottom > level_size.height) || (box->back > level_size.depth);
+    if (box->right > level_size.width)
+    {
+        box->right = level_size.width;
+        box->left = min(box->right - 1, box->left);
+    }
+
+    if (box->bottom > level_size.height)
+    {
+        box->bottom = level_size.height;
+        box->top = min(box->bottom - 1, box->top);
+    }
+
+    if (box->back > level_size.depth)
+    {
+        box->back = level_size.depth;
+        box->front = min(box->back - 1, box->front);
+    }
+
+    return clamped;
+}
+
 static BOOL d3d10_box_is_valid(const D3D10_BOX *box)
 {
     return (box->left <= box->right) && (box->top <= box->bottom) && (box->front <= box->back);
@@ -969,6 +1016,153 @@ static HRESULT d3dx_texture_info_from_d3d10_resource(ID3D10Resource *rsrc, struc
     return S_OK;
 }
 
+static HRESULT d3d10_staging_resource_from_d3dx_texture_info(ID3D10Device *device, struct d3dx_texture_info *info,
+        BOOL is_dst, ID3D10Resource **rsrc)
+{
+    const UINT cpu_flags = is_dst ? (D3D10_CPU_ACCESS_READ | D3D10_CPU_ACCESS_WRITE) : D3D10_CPU_ACCESS_READ;
+
+    *rsrc = NULL;
+    switch (info->resource_type)
+    {
+        case D3DX_RESOURCE_TYPE_TEXTURE_2D:
+        {
+            D3D10_TEXTURE2D_DESC desc = { info->size.width, info->size.height, 1, 1, 0, { 1, 0 }, D3D10_USAGE_STAGING,
+                                          0, cpu_flags };
+
+            desc.Format = dxgi_format_from_d3dx_pixel_format_id(info->fmt->format);
+            return ID3D10Device_CreateTexture2D(device, &desc, NULL, (ID3D10Texture2D **)rsrc);
+        }
+
+        default:
+            return E_NOTIMPL;
+    }
+}
+
+static HRESULT d3dx_subresource_data_from_d3d10_staging_resource_map(ID3D10Resource *rsrc,
+        enum d3dx_resource_type rtype, BOOL is_dst, struct d3dx_subresource_data *out_data)
+{
+    const D3D10_MAP map_type = is_dst ? D3D10_MAP_READ_WRITE : D3D10_MAP_READ;
+    HRESULT hr;
+
+    memset(out_data, 0, sizeof(*out_data));
+    switch (rtype)
+    {
+        case D3DX_RESOURCE_TYPE_TEXTURE_2D:
+        {
+            ID3D10Texture2D *tex = (ID3D10Texture2D *)rsrc;
+            D3D10_MAPPED_TEXTURE2D map;
+
+            hr = ID3D10Texture2D_Map(tex, 0, map_type, 0, &map);
+            if (SUCCEEDED(hr))
+            {
+                out_data->data = map.pData;
+                out_data->row_pitch = map.RowPitch;
+            }
+            break;
+        }
+
+        default:
+            hr = E_NOTIMPL;
+            break;
+    }
+
+    return hr;
+}
+
+static void d3d10_staging_resource_unmap(ID3D10Resource *rsrc, enum d3dx_resource_type rtype)
+{
+    switch (rtype)
+    {
+        case D3DX_RESOURCE_TYPE_TEXTURE_2D:
+            ID3D10Texture2D_Unmap((ID3D10Texture2D *)rsrc, 0);
+            break;
+
+        default:
+            break;
+    }
+}
+
+static HRESULT d3d10_load_texture_from_texture(struct d3dx_texture_info *src_info, ID3D10Resource *src_rsrc,
+        const D3D10_BOX *src_box, uint32_t src_first_layer, uint32_t src_first_level,
+        struct d3dx_texture_info *dst_info, ID3D10Resource *dst_rsrc, const D3D10_BOX *dst_box,
+        uint32_t dst_first_layer, uint32_t dst_first_level, uint32_t layer_load_count, uint32_t level_load_count,
+        uint32_t filter)
+{
+    ID3D10Resource *src_staging, *dst_staging;
+    ID3D10Device *device = NULL;
+    unsigned int i, j;
+    HRESULT hr;
+
+    if (FAILED(hr = d3dx_validate_filter(filter)))
+    {
+        WARN("Invalid filter argument %#x.\n", filter);
+        return hr;
+    }
+
+    src_staging = dst_staging = NULL;
+    ID3D10Resource_GetDevice(src_rsrc, &device);
+    hr = d3d10_staging_resource_from_d3dx_texture_info(device, src_info, FALSE, &src_staging);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = d3d10_staging_resource_from_d3dx_texture_info(device, dst_info, TRUE, &dst_staging);
+    if (FAILED(hr))
+        goto exit;
+
+    for (i = 0; i < layer_load_count; ++i)
+    {
+        unsigned int src_sub_rsrc_idx = (src_first_layer + i) * src_info->levels + src_first_level;
+        unsigned int dst_sub_rsrc_idx = (dst_first_layer + i) * dst_info->levels + dst_first_level;
+        D3D10_BOX src_level_box = *src_box;
+        D3D10_BOX dst_level_box = *dst_box;
+
+        for (j = 0; j < level_load_count; ++j)
+        {
+            struct d3dx_subresource_data src_sub_rsrc, dst_sub_rsrc;
+            struct d3dx_pixels src_pixels, dst_pixels;
+
+            ID3D10Device_CopySubresourceRegion(device, src_staging, 0, 0, 0, 0, src_rsrc, src_sub_rsrc_idx + j, NULL);
+            hr = d3dx_subresource_data_from_d3d10_staging_resource_map(src_staging, src_info->resource_type, FALSE,
+                    &src_sub_rsrc);
+            if (FAILED(hr))
+                goto exit;
+
+            ID3D10Device_CopySubresourceRegion(device, dst_staging, 0, 0, 0, 0, dst_rsrc, dst_sub_rsrc_idx + j, NULL);
+            hr = d3dx_subresource_data_from_d3d10_staging_resource_map(dst_staging, dst_info->resource_type, TRUE,
+                    &dst_sub_rsrc);
+            if (FAILED(hr))
+                goto exit;
+
+            /* Account for source/destination box offsets. */
+            d3dx_pixels_init(src_sub_rsrc.data, src_sub_rsrc.row_pitch, src_sub_rsrc.slice_pitch, NULL,
+                    src_info->fmt->format, src_level_box.left, src_level_box.top, src_level_box.right,
+                    src_level_box.bottom, src_level_box.front, src_level_box.back, &src_pixels);
+            d3dx_pixels_init(dst_sub_rsrc.data, dst_sub_rsrc.row_pitch, dst_sub_rsrc.slice_pitch, NULL,
+                    dst_info->fmt->format, dst_level_box.left, dst_level_box.top, dst_level_box.right,
+                    dst_level_box.bottom, dst_level_box.front, dst_level_box.back, &dst_pixels);
+
+            hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_info->fmt, &src_pixels, src_info->fmt, filter, 0);
+            d3d10_staging_resource_unmap(src_staging, src_info->resource_type);
+            d3d10_staging_resource_unmap(dst_staging, dst_info->resource_type);
+            if (FAILED(hr))
+                goto exit;
+
+            ID3D10Device_CopySubresourceRegion(device, dst_rsrc, dst_sub_rsrc_idx + j, 0, 0, 0, dst_staging, 0, &dst_level_box);
+            d3d10_box_get_next_level(&src_level_box);
+            d3d10_box_get_next_level(&dst_level_box);
+        }
+    }
+
+exit:
+    if (device)
+        ID3D10Device_Release(device);
+    if (src_staging)
+        ID3D10Resource_Release(src_staging);
+    if (dst_staging)
+        ID3D10Resource_Release(dst_staging);
+    return hr;
+}
+
 HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_TEXTURE_LOAD_INFO *load_info,
         ID3D10Resource *dst_texture)
 {
@@ -976,9 +1170,11 @@ HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_
                                                                 D3DX10_DEFAULT, D3DX10_DEFAULT };
     D3DX10_TEXTURE_LOAD_INFO info = (load_info) ? *load_info : default_load_info;
     struct d3dx_texture_info src_info, dst_info;
+    uint32_t loaded_level_count;
+    D3D10_BOX src_box, dst_box;
     HRESULT hr;
 
-    FIXME("src_texture %p, load_info %p, dst_texture %p stub!\n", src_texture, load_info, dst_texture);
+    TRACE("src_texture %p, load_info %p, dst_texture %p.\n", src_texture, load_info, dst_texture);
 
     if (!src_texture || !dst_texture)
         return D3DERR_INVALIDCALL;
@@ -1014,5 +1210,54 @@ HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_
             || (info.DstFirstElement >= dst_info.layers))
         return S_OK;
 
-    return E_NOTIMPL;
+    /*
+     * Native doesn't validate the SrcFirstMip argument, and will read OOB if
+     * passed a value higher than the actual number of levels.
+     */
+    if (info.SrcFirstMip >= src_info.levels)
+    {
+        WARN("Attempted to load first mip from source beyond total number of mips, clamping.\n");
+        info.SrcFirstMip = src_info.levels - 1;
+    }
+
+    if (!info.NumElements)
+        info.NumElements = D3DX10_DEFAULT;
+    info.NumElements = min(info.NumElements, min(src_info.layers - info.SrcFirstElement,
+                dst_info.layers - info.DstFirstElement));
+
+    if (!info.NumMips)
+        info.NumMips = D3DX10_DEFAULT;
+    info.NumMips = min(dst_info.levels - info.DstFirstMip, info.NumMips);
+    loaded_level_count = min(src_info.levels - info.SrcFirstMip, info.NumMips);
+
+    if (loaded_level_count < info.NumMips)
+    {
+        FIXME("Mipmap generation is currently unimplemented.\n");
+        return E_NOTIMPL;
+    }
+
+    if (info.pSrcBox)
+        init_d3d10_box(&src_box, info.pSrcBox->left, info.pSrcBox->top, info.pSrcBox->right, info.pSrcBox->bottom,
+                info.pSrcBox->front, info.pSrcBox->back);
+    else
+        init_d3d10_box(&src_box, 0, 0, src_info.size.width, src_info.size.height, 0, src_info.size.depth);
+    /* Native will do an OOB access in this case, we'll just clamp instead. */
+    if (d3d10_box_clamp(&src_box, info.SrcFirstMip, &src_info.size) && info.pSrcBox)
+        WARN("Clamped passed in pSrcBox values.\n");
+
+    if (info.pDstBox)
+        init_d3d10_box(&dst_box, info.pDstBox->left, info.pDstBox->top, info.pDstBox->right, info.pDstBox->bottom,
+                info.pDstBox->front, info.pDstBox->back);
+    else
+        init_d3d10_box(&dst_box, 0, 0, dst_info.size.width, dst_info.size.height, 0, dst_info.size.depth);
+    /* Native will do an OOB access in this case, we'll just clamp instead. */
+    if (d3d10_box_clamp(&dst_box, info.DstFirstMip, &dst_info.size) && info.pDstBox)
+        WARN("Clamped passed in pDstBox values.\n");
+
+    if (!info.Filter || info.Filter == D3DX10_DEFAULT)
+        info.Filter = D3DX10_FILTER_LINEAR;
+
+    return d3d10_load_texture_from_texture(&src_info, src_texture, &src_box, info.SrcFirstElement, info.SrcFirstMip,
+            &dst_info, dst_texture, &dst_box, info.DstFirstElement, info.DstFirstMip, info.NumElements,
+            loaded_level_count, info.Filter);
 }
