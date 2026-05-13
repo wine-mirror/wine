@@ -283,7 +283,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 {
     WCHAR nameW[MAX_ATOM_LEN + 1];
     UNICODE_STRING class = RTL_CONSTANT_STRING(nameW), version, window_name = {0};
-    struct client_menu_name menu_name;
+    struct client_menu_name *menu_name;
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;

@@ -1552,7 +1552,7 @@ BOOL SYSCALL_API NtUserGetCaretPos( POINT *pt )
 }
 
 ATOM SYSCALL_API NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                       struct client_menu_name *menu_name, BOOL ansi )
+                                       struct client_menu_name **menu_name, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserGetClassInfoEx );
 }
@@ -2075,8 +2075,7 @@ BOOL SYSCALL_API NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UIN
 }
 
 ATOM SYSCALL_API NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
-                                           struct client_menu_name *client_menu_name, DWORD fnid,
-                                           DWORD flags, DWORD *wow )
+                                           struct client_menu_name *menu_name, DWORD fnid, DWORD flags, DWORD *wow )
 {
     SYSCALL_FUNC( NtUserRegisterClassExWOW );
 }
@@ -2491,8 +2490,7 @@ BOOL SYSCALL_API NtUserUnhookWindowsHookEx( HHOOK handle )
     SYSCALL_FUNC( NtUserUnhookWindowsHookEx );
 }
 
-BOOL SYSCALL_API NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
-                                        struct client_menu_name *client_menu_name )
+BOOL SYSCALL_API NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance, struct client_menu_name **menu_name )
 {
     SYSCALL_FUNC( NtUserUnregisterClass );
 }

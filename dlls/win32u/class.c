@@ -54,7 +54,7 @@ typedef struct tagCLASS
     HICON        hIconSmIntern; /* Internal small icon, derived from hIcon */
     HCURSOR      hCursor;       /* Default cursor */
     HBRUSH       hbrBackground; /* Default background */
-    struct client_menu_name menu_name; /* Default menu name */
+    struct client_menu_name *menu_name; /* Default menu name */
     const shared_object_t *shared; /* class object in session shared memory */
 } CLASS;
 
@@ -510,8 +510,7 @@ struct dce *set_class_dce( CLASS *class, struct dce *dce )
  *	     NtUserRegisterClassExWOW   (win32u.@)
  */
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
-                                      struct client_menu_name *client_menu_name, DWORD fnid,
-                                      DWORD flags, DWORD *wow )
+                                      struct client_menu_name *menu_name, DWORD fnid, DWORD flags, DWORD *wow )
 {
     const BOOL is_builtin = fnid, ansi = flags;
     const shared_object_t *shared;
@@ -599,7 +598,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
-    if (client_menu_name) class->menu_name = *client_menu_name;
+    class->menu_name     = menu_name;
     class->shared        = shared;
     release_class_ptr( class );
     return atom;
@@ -615,8 +614,7 @@ failed:
 /***********************************************************************
  *	     NtUserUnregisterClass   (win32u.@)
  */
-BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
-                                   struct client_menu_name *client_menu_name )
+BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance, struct client_menu_name **menu_name )
 {
     struct list drawables = LIST_INIT( drawables );
     CLASS *class = NULL;
@@ -645,7 +643,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
     list_remove( &class->entry );
     if (class->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         NtGdiDeleteObjectApp( class->hbrBackground );
-    *client_menu_name = class->menu_name;
+    *menu_name = class->menu_name;
     NtUserDestroyCursor( class->hIconSmIntern, 0 );
     free( class );
     user_unlock();
@@ -658,7 +656,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
  *	     NtUserGetClassInfo   (win32u.@)
  */
 ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                  struct client_menu_name *menu_name, BOOL ansi )
+                                  struct client_menu_name **menu_name, BOOL ansi )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const class_shm_t *class_shm;
@@ -684,14 +682,14 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
             wc->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
             wc->hCursor       = class->hCursor;
             wc->hbrBackground = class->hbrBackground;
-            wc->lpszMenuName  = class->menu_name.nameW;
+            wc->lpszMenuName  = (WCHAR *)class->menu_name;
             wc->lpszClassName = name->Buffer;
         }
         atom = class_shm->atom;
     }
     if (status) return 0;
 
-    if (menu_name) *menu_name = class->menu_name;
+    *menu_name = class->menu_name;
     release_class_ptr( class );
     return atom;
 }
@@ -836,14 +834,9 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
     switch(offset)
     {
     case GCLP_MENUNAME:
-        {
-            struct client_menu_name *menu_name = (void *)newval;
-            struct client_menu_name prev = class->menu_name;
-            class->menu_name = *menu_name;
-            *menu_name = prev;
-            retval = 0;  /* Old value is now meaningless anyway */
-            break;
-        }
+        retval = (ULONG_PTR)class->menu_name;
+        class->menu_name = (void *)newval;
+        break;
     case GCLP_WNDPROC:
         retval = (ULONG_PTR)get_winproc( class->winproc, ansi );
         class->winproc = alloc_winproc( (WNDPROC)newval, ansi );
@@ -1065,7 +1058,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         retvalue = (ULONG_PTR)get_winproc( class->winproc, ansi );
         break;
     case GCLP_MENUNAME:
-        retvalue = (ULONG_PTR)class->menu_name.nameW;
+        retvalue = (ULONG_PTR)class->menu_name;
         break;
     default:
         RtlSetLastWin32Error( ERROR_INVALID_INDEX );
@@ -1203,7 +1196,6 @@ static const struct builtin_class_descr builtin_classes[] =
 static void register_builtin( const struct builtin_class_descr *descr )
 {
     UNICODE_STRING name, version = { .Length = 0 };
-    struct client_menu_name menu_name = { 0 };
     WCHAR nameW[64];
     WNDCLASSEXW class = {
         .cbSize = sizeof(class),
@@ -1221,7 +1213,7 @@ static void register_builtin( const struct builtin_class_descr *descr )
     asciiz_to_unicode( nameW, descr->name );
     RtlInitUnicodeString( &name, nameW );
 
-    if (!NtUserRegisterClassExWOW( &class, &name, &version, &menu_name, 1, 0, NULL ) && class.hCursor)
+    if (!NtUserRegisterClassExWOW( &class, &name, &version, NULL, 1, 0, NULL ) && class.hCursor)
         NtUserDestroyCursor( class.hCursor, 0 );
 }
 

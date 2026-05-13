@@ -2374,7 +2374,6 @@ static void test_class_name(void)
     ok(!wcscmp(nameW, L"menu name"), "unexpected class name %s\n", debugstr_w(nameW));
 
     res = SetClassLongPtrA(hwnd, GCLP_MENUNAME, (LONG_PTR)"nameA");
-    todo_wine
     ok(res, "SetClassLongPtrA returned 0\n");
     nameA = (const char *)GetClassLongPtrA(hwnd, GCLP_MENUNAME);
     ok(!strcmp(nameA, "nameA"), "unexpected class name %s\n", debugstr_a(nameA));
@@ -2382,7 +2381,6 @@ static void test_class_name(void)
     ok(!wcscmp(nameW, L"nameA"), "unexpected class name %s\n", debugstr_w(nameW));
 
     res = SetClassLongPtrW(hwnd, GCLP_MENUNAME, (LONG_PTR)L"nameW");
-    todo_wine
     ok(res, "SetClassLongPtrW returned 0\n");
     nameA = (const char *)GetClassLongPtrA(hwnd, GCLP_MENUNAME);
     ok(!strcmp(nameA, "nameW"), "unexpected class name %s\n", debugstr_a(nameA));

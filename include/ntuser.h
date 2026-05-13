@@ -562,12 +562,8 @@ struct cursoricon_desc
     HRSRC rsrc;
 };
 
-struct client_menu_name
-{
-    char  *nameA;
-    WCHAR *nameW;
-    UNICODE_STRING *nameUS;
-};
+/* WCHAR[] unicode name, followed by char[] ansi name */
+struct client_menu_name;
 
 /* NtUserGetClipboardData params, not compatible with Windows */
 struct get_clipboard_params
@@ -849,7 +845,7 @@ W32KAPI ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
 W32KAPI UINT    WINAPI NtUserGetCaretBlinkTime(void);
 W32KAPI BOOL    WINAPI NtUserGetCaretPos( POINT *point );
 W32KAPI ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                             struct client_menu_name *menu_name, BOOL ansi );
+                                             struct client_menu_name **menu_name, BOOL ansi );
 W32KAPI INT     WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name );
 W32KAPI BOOL    WINAPI NtUserGetClipCursor( RECT *rect );
 W32KAPI HANDLE  WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params );
@@ -964,8 +960,7 @@ W32KAPI HWND    WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG
 W32KAPI UINT    WINAPI NtUserRealizePalette( HDC hdc );
 W32KAPI BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
 W32KAPI ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
-                                                 struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
-                                                 DWORD *wow );
+                                                 struct client_menu_name *menu_name, DWORD fnid, DWORD flags, DWORD *wow );
 W32KAPI BOOL    WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk );
 W32KAPI BOOL    WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT size );
 W32KAPI BOOL    WINAPI NtUserRegisterTouchPadCapable( BOOL capable );
@@ -1055,8 +1050,7 @@ W32KAPI BOOL    WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags );
 W32KAPI BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );
 W32KAPI BOOL    WINAPI NtUserUnhookWindowsHook( INT id, HOOKPROC proc );
 W32KAPI BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
-W32KAPI BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
-                                              struct client_menu_name *client_menu_name );
+W32KAPI BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance, struct client_menu_name **menu_name );
 W32KAPI BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 W32KAPI BOOL    WINAPI NtUserUpdateInputContext( HIMC handle, UINT attr, UINT_PTR value );
 W32KAPI BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
