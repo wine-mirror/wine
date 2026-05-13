@@ -283,6 +283,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 {
     WCHAR nameW[MAX_ATOM_LEN + 1];
     UNICODE_STRING class = RTL_CONSTANT_STRING(nameW), version, window_name = {0};
+    struct client_menu_name menu_name;
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;
@@ -292,7 +293,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     init_class_name( &class, className );
     get_class_version( &class, &version, TRUE );
 
-    if (!NtUserGetClassInfoEx( module, &class, &info, NULL, FALSE ))
+    if (!NtUserGetClassInfoEx( module, &class, &info, &menu_name, FALSE ))
     {
         TRACE( "%s %p -> not found\n", debugstr_us(&class), module );
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );

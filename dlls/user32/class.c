@@ -124,6 +124,19 @@ void init_class_name( UNICODE_STRING *str, const WCHAR *name )
     }
 }
 
+static const WCHAR *menu_nameW( const WCHAR *menu_name )
+{
+    if (IS_INTRESOURCE(menu_name)) return (const WCHAR *)menu_name;
+    return (const WCHAR *)(menu_name);
+}
+
+static const char *menu_nameA( const WCHAR *menu_name )
+{
+    const WCHAR *nameW = menu_nameW( menu_name );
+    if (IS_INTRESOURCE(nameW)) return (const char *)nameW;
+    return (const char *)(nameW + wcslen( nameW ) + 1);
+}
+
 static BOOL alloc_menu_nameA( struct client_menu_name *ret, const char *menu_name )
 {
     if (!IS_INTRESOURCE(menu_name))
@@ -185,6 +198,20 @@ static ULONG_PTR set_menu_nameA( HWND hwnd, INT offset, ULONG_PTR newval )
     NtUserSetClassLongPtr( hwnd, offset, (ULONG_PTR)&menu_name, TRUE );
     free_menu_name( &menu_name );
     return 0;
+}
+
+static ULONG_PTR get_menu_nameW( HWND hwnd )
+{
+    const WCHAR *menu_name;
+    if (!(menu_name = (void *)NtUserGetClassLongPtrW( hwnd, GCLP_MENUNAME ))) return 0;
+    return (ULONG_PTR)menu_nameW( menu_name );
+}
+
+static ULONG_PTR get_menu_nameA( HWND hwnd )
+{
+    const WCHAR *menu_name;
+    if (!(menu_name = (void *)NtUserGetClassLongPtrW( hwnd, GCLP_MENUNAME ))) return 0;
+    return (ULONG_PTR)menu_nameA( menu_name );
 }
 
 void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load )
@@ -406,6 +433,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR class_name, HINSTANCE instance )
  */
 WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 {
+    if (offset == GCLP_MENUNAME) return get_menu_nameA( hwnd );
     return NtUserGetClassWord( hwnd, offset );
 }
 
@@ -415,6 +443,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
  */
 DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
+    if (offset == GCLP_MENUNAME) return get_menu_nameW( hwnd );
     return NtUserGetClassLongW( hwnd, offset );
 }
 
@@ -425,6 +454,7 @@ DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
  */
 DWORD WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
+    if (offset == GCLP_MENUNAME) return get_menu_nameA( hwnd );
     return NtUserGetClassLongA( hwnd, offset );
 }
 
@@ -547,6 +577,7 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
  */
 BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
 {
+    struct client_menu_name menu_name;
     WCHAR nameW[MAX_ATOM_LEN + 1];
     UNICODE_STRING name_str = RTL_CONSTANT_STRING(nameW), version;
     ATOM atom;
@@ -563,13 +594,14 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
     init_class_name_ansi( &name_str, name );
     get_class_version( &name_str, &version, TRUE );
 
-    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, (WNDCLASSEXW *)wc, NULL, TRUE )))
+    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, (WNDCLASSEXW *)wc, &menu_name, TRUE )))
     {
         TRACE( "%s %p -> not found\n", debugstr_us(&name_str), hInstance );
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return 0;
     }
 
+    wc->lpszMenuName = menu_nameA( menu_name.nameW );
     wc->lpszClassName = name;
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;
@@ -581,6 +613,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name, WNDCLASSEXA *wc )
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc )
 {
+    struct client_menu_name menu_name;
     WCHAR nameW[MAX_ATOM_LEN + 1];
     UNICODE_STRING name_str = RTL_CONSTANT_STRING(nameW), version;
     ATOM atom;
@@ -597,13 +630,14 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
     init_class_name( &name_str, name );
     get_class_version( &name_str, &version, TRUE );
 
-    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, wc, NULL, FALSE )))
+    if (!(atom = NtUserGetClassInfoEx( hInstance, &name_str, wc, &menu_name, FALSE )))
     {
         TRACE( "%s %p -> not found\n", debugstr_us(&name_str), hInstance );
         SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
         return 0;
     }
 
+    wc->lpszMenuName = menu_nameW( menu_name.nameW );
     wc->lpszClassName = name;
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;
@@ -624,6 +658,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSEXW *wc 
  */
 ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
 {
+    if (offset == GCLP_MENUNAME) return get_menu_nameA( hwnd );
     return NtUserGetClassLongPtrA( hwnd, offset );
 }
 
@@ -632,6 +667,7 @@ ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
  */
 ULONG_PTR WINAPI GetClassLongPtrW( HWND hwnd, INT offset )
 {
+    if (offset == GCLP_MENUNAME) return get_menu_nameW( hwnd );
     return NtUserGetClassLongPtrW( hwnd, offset );
 }
 

@@ -684,7 +684,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
             wc->hIconSm       = class->hIconSm ? class->hIconSm : class->hIconSmIntern;
             wc->hCursor       = class->hCursor;
             wc->hbrBackground = class->hbrBackground;
-            wc->lpszMenuName  = ansi ? (const WCHAR *)class->menu_name.nameA : class->menu_name.nameW;
+            wc->lpszMenuName  = class->menu_name.nameW;
             wc->lpszClassName = name->Buffer;
         }
         atom = class_shm->atom;
@@ -1065,7 +1065,7 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         retvalue = (ULONG_PTR)get_winproc( class->winproc, ansi );
         break;
     case GCLP_MENUNAME:
-        retvalue = ansi ? (ULONG_PTR)class->menu_name.nameA : (ULONG_PTR)class->menu_name.nameW;
+        retvalue = (ULONG_PTR)class->menu_name.nameW;
         break;
     default:
         RtlSetLastWin32Error( ERROR_INVALID_INDEX );
