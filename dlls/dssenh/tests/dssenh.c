@@ -84,13 +84,7 @@ static void test_acquire_context(void)
     result = CryptReleaseContext(hProv, 0);
     ok(result, "CryptReleaseContext failed.\n");
 
-    result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
-    if(!result)
-    {
-        skip("DSS csp is currently not available, skipping tests.\n");
-        return;
-    }
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     result = CryptReleaseContext(hProv, 0);
@@ -211,30 +205,30 @@ struct keylength_test {
 static const struct keylength_test baseDSS_keylength[] = {
     /* AT_KEYEXCHANGE is not supported by the base DSS provider */
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {AT_KEYEXCHANGE, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {AT_KEYEXCHANGE, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {AT_KEYEXCHANGE, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 1, 1},
+    {AT_KEYEXCHANGE, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 1, 1},
     {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* min 512 max 1024 increment by 64 */
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     /* CALG_DH_EPHEM is not supported by the base DSS provider */
     {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {CALG_DH_EPHEM, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {CALG_DH_EPHEM, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_EPHEM, 512 << 16, FALSE, NTE_BAD_ALGID},
+    {CALG_DH_EPHEM, 1024 << 16, FALSE, NTE_BAD_ALGID},
     {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* CALG_DH_SF is not supported by the base DSS provider */
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {CALG_DH_SF, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
-    {CALG_DH_SF, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_SF, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 1, 1},
+    {CALG_DH_SF, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 1, 1},
     {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* min 512 max 1024, increment by 64 */
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -243,14 +237,14 @@ static const struct keylength_test baseDSS_keylength[] = {
 static const struct keylength_test dssDH_keylength[] = {
     /* min 512 max 1024, increment by 64 */
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 512 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE},
     {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
-    {AT_KEYEXCHANGE, 768 << 16, TRUE, 0, 0, 1},
-    {AT_KEYEXCHANGE, 1024 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 768 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
     {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
@@ -261,14 +255,14 @@ static const struct keylength_test dssDH_keylength[] = {
     {CALG_DH_EPHEM, 1024 << 16, TRUE, 0, 0, 1},
     {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 512 << 16, TRUE},
     {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
-    {CALG_DH_SF, 768 << 16, TRUE, 0, 0, 1},
-    {CALG_DH_SF, 1024 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 768 << 16, TRUE},
+    {CALG_DH_SF, 1024 << 16, TRUE},
     {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -277,10 +271,10 @@ static const struct keylength_test dssDH_keylength[] = {
 static const struct keylength_test dssENH_keylength[] = {
     /* min 512 max 1024 (AT_KEYEXCHANGE, CALG_DH_EPHEM, CALG_DH_SF max 4096), increment by 64*/
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 512 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE},
     {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
-    {AT_KEYEXCHANGE, 768 << 16, TRUE, 0, 0, 1},
-    {AT_KEYEXCHANGE, 1024 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 768 << 16, TRUE},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
     {AT_KEYEXCHANGE, 1088 << 16, TRUE, 0, 0, 1},
     {AT_KEYEXCHANGE, 2048 << 16, TRUE, 0, 0, 1},
     /* Keylength too large - test bot timeout.
@@ -289,7 +283,7 @@ static const struct keylength_test dssENH_keylength[] = {
     {AT_KEYEXCHANGE, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {AT_SIGNATURE, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1032 << 16, FALSE, NTE_BAD_FLAGS},
@@ -302,16 +296,16 @@ static const struct keylength_test dssENH_keylength[] = {
     {CALG_DH_EPHEM, 1088 << 16, TRUE, 0, 0, 1},
     {CALG_DH_EPHEM, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 512 << 16, TRUE},
     {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
-    {CALG_DH_SF, 768 << 16, TRUE, 0, 0, 1},
-    {CALG_DH_SF, 1024 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 768 << 16, TRUE},
+    {CALG_DH_SF, 1024 << 16, TRUE},
     {CALG_DH_SF, 1032 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 1088 << 16, TRUE, 0, 0, 1},
     {CALG_DH_SF, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL},
+    {CALG_DSS_SIGN, 513 << 16, FALSE, STATUS_INVALID_PARAMETER, NTE_FAIL, 0, 1},
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -355,13 +349,7 @@ static void test_keylength(void)
     BOOL result;
 
     /* acquire base dss provider */
-    result = CryptAcquireContextA(
-        &hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
-    if(!result)
-    {
-        skip("DSSENH is currently not available, skipping key length tests.\n");
-        return;
-    }
+    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     result = CryptGenKey(hProv, AT_SIGNATURE, 0, &key);
@@ -452,13 +440,7 @@ static void test_hash(const struct hash_test *tests, int testLen)
     BOOL result;
     int i;
 
-    result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
-    if(!result)
-    {
-        skip("DSSENH is currently not available, skipping hashing tests.\n");
-        return;
-    }
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     for(i = 0; i < testLen; i++)
@@ -485,8 +467,10 @@ static void test_hash(const struct hash_test *tests, int testLen)
         ok(dataLen == hashLen, "Expected hash length to match.\n");
 
         hashLen = 0xdeadbeef;
+        memset(hashValue, 0, sizeof(hashValue));
         result = CryptGetHashParam(hHash, HP_HASHVAL, hashValue, &hashLen, 0);
         ok(result, "Expected hash value return.\n");
+        ok(dataLen == hashLen, "Expected hash length to match.\n");
 
         ok(dataLen == hashLen, "Expected hash length to match.\n");
         ok(!memcmp(hashValue, tests[i].hash, tests[i].hashLen), "Incorrect hash output.\n");
@@ -613,13 +597,7 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
 
     /* acquire dss enhanced provider */
     SetLastError(0xdeadbeef);
-    result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
-    if (!result)
-    {
-        skip("DSSENH is currently not available, skipping encryption tests.\n");
-        return;
-    }
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     /* testing various encryption algorithms */
@@ -709,13 +687,7 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
 
     /* acquire dss enhanced provider */
     SetLastError(0xdeadbeef);
-    result = CryptAcquireContextA(
-        &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
-    if (!result)
-    {
-        skip("DSSENH is currently not available, skipping block cipher mode tests.\n");
-        return;
-    }
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
     ok(result, "Expected no errors.\n");
 
     SetLastError(0xdeadbeef);
@@ -1063,18 +1035,23 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
     ok(result, "Failed to destroy private key, got %lx\n", GetLastError());
 }
 
+#define MAGIC_DSS1 ('D' | ('S' << 8) | ('S' << 16) | ('1' << 24))
+
 static void test_exportkey(HCRYPTPROV hProv, const struct signature_test *test)
 {
     HCRYPTKEY privKey = 0;
     BYTE pubKeyBuffer[512];
     DWORD pubKeyLen;
     BOOL result;
+    const BLOBHEADER *hdr = (const BLOBHEADER *)pubKeyBuffer;
+    const DSSPUBKEY *dsskey = (const DSSPUBKEY *)(hdr + 1);
 
     /* Get a private key of array specified ALG_ID */
     SetLastError(0xdeadbeef);
     result = CryptImportKey(hProv, test->privateKey, test->privateKeyLen, 0, 0, &privKey);
     ok(result, "Failed to imported key, got %lx\n", GetLastError());
 
+    pubKeyLen = 0;
     SetLastError(0xdeadbeef);
     result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
     ok(result, "Failed to acquire public key length, got %lx\n", GetLastError());
@@ -1086,6 +1063,7 @@ static void test_exportkey(HCRYPTPROV hProv, const struct signature_test *test)
     SetLastError(0xdeadbeef);
     result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, pubKeyBuffer, &pubKeyLen);
     ok(result, "Failed to export public key, got %lx\n", GetLastError());
+    ok(dsskey->magic == MAGIC_DSS1, "got %lx\n", dsskey->magic);
 
     ok(memcmp(test->publicKey, pubKeyBuffer, test->publicKeyLen) == 0,
         "The exported public key doesn't match the expected public key\n");
@@ -1140,11 +1118,6 @@ static void test_signature(void)
     /* acquire base dss provider */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv[0], NULL, MS_DEF_DSS_PROV_A, PROV_DSS, 0);
-    if(!result)
-    {
-        skip("DSSENH is currently not available, skipping signature verification tests.\n");
-        return;
-    }
     ok(result, "Failed to acquire CSP, got %lx\n", GetLastError());
 
     /* acquire diffie hellman dss provider */
@@ -1273,20 +1246,20 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
 
         /* Generate key exchange keys for user1 and user2 */
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
+        todo_wine ok(!result && GetLastError() == NTE_BAD_ALGID,
+           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
+
+        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
+        todo_wine ok(!result && GetLastError() == NTE_BAD_ALGID,
+           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
+
+        /* Set the prime and generator values, which are agreed upon */
+        result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
         if (!result)
         {
             skip("skipping key exchange tests\n");
             return;
         }
-        ok(!result && GetLastError() == NTE_BAD_ALGID,
-           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
-
-        result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
-        ok(!result && GetLastError() == NTE_BAD_ALGID,
-           "Expected NTE_BAD_ALGID, got %lx\n", GetLastError());
-
-        /* Set the prime and generator values, which are agreed upon */
-        result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
         ok(!result && GetLastError() == ERROR_INVALID_PARAMETER,
            "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
@@ -1427,11 +1400,6 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
 
         /* Generate key exchange keys for user1 and user2 */
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
-        if (!result)
-        {
-            skip("skipping key exchange tests\n");
-            return;
-        }
         ok(result, "Failed to generate a key for user1, got %lx\n", GetLastError());
 
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
@@ -1439,6 +1407,11 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
 
         /* Set the prime and generator values, which are agreed upon */
         result = CryptSetKeyParam(privKey1, KP_P, (BYTE *)&Prime, 0);
+        if (!result)
+        {
+            skip("skipping key exchange tests\n");
+            return;
+        }
         ok(result, "Failed to set prime for user 1's key, got %lx\n", GetLastError());
 
         result = CryptSetKeyParam(privKey2, KP_P, (BYTE *)&Prime, 0);
@@ -1532,11 +1505,6 @@ static void test_key_exchange(void)
 
     /* acquire base dss provider */
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
-    if(!result)
-    {
-        skip("DSSENH is currently not available, skipping shared key tests.\n");
-        return;
-    }
     ok(result, "Failed to acquire CSP.\n");
 
     test_keyExchange_baseDSS(hProv, baseDSSkey_data, ARRAY_SIZE(baseDSSkey_data));
