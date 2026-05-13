@@ -58,8 +58,6 @@
 #define IAsyncHandler_IInspectable_iface IAsyncOperationCompletedHandler_IInspectable_iface
 
 HRESULT (WINAPI *pDllGetActivationFactory)(HSTRING, IActivationFactory **);
-static BOOL is_win10_1507 = FALSE;
-static BOOL is_win10_1709 = FALSE;
 
 static inline LONG get_ref(IUnknown *obj)
 {
@@ -795,7 +793,6 @@ static void test_ActivationFactory(void)
             ref = ISpeechRecognizerStatics2_Release(recognizer_statics2);
             ok(ref == 2, "Got unexpected refcount: %lu.\n", ref);
         }
-        else is_win10_1507 = TRUE;
 
         check_interface(factory3, &IID_IInstalledVoicesStatic, FALSE);
 
@@ -1262,8 +1259,6 @@ skip_voices:
                 ref = ISpeechSynthesizerOptions3_Release(options3);
                 ok(ref == 2, "Got unexpected ref %lu.\n", ref);
             }
-            else
-                is_win10_1709 = TRUE;
 
             ref = ISpeechSynthesizerOptions_Release(options);
             ok(ref == 1, "Got unexpected ref %lu.\n", ref);
