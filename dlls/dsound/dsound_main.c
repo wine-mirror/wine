@@ -63,16 +63,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-struct list DSOUND_renderers = LIST_INIT(DSOUND_renderers);
-CRITICAL_SECTION DSOUND_renderers_lock;
-static CRITICAL_SECTION_DEBUG DSOUND_renderers_lock_debug =
-{
-    0, 0, &DSOUND_renderers_lock,
-    { &DSOUND_renderers_lock_debug.ProcessLocksList, &DSOUND_renderers_lock_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": DSOUND_renderers_lock") }
-};
-CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 0, 0, 0 };
-
 /* Some applications expect the GUID pointers emitted from DirectSoundCaptureEnumerate to remain
  * valid at least until the next time DirectSoundCaptureEnumerate is called, so we store them in
  * these dynamically allocated arrays. */
@@ -789,8 +779,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
-        if (lpvReserved) break;
-        DeleteCriticalSection(&DSOUND_renderers_lock);
         break;
     }
     return TRUE;
