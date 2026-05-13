@@ -6328,7 +6328,7 @@ static void test_load_texture_from_texture(void)
         {
             { NULL, NULL, 0, 0, D3DX10_DEFAULT, 0, 0, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT },
             dds_2d_array_4_4, sizeof(dds_2d_array_4_4), { 0 }, FALSE,
-            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, D3DERR_INVALIDCALL, .todo_hr = TRUE
+            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, D3DERR_INVALIDCALL
         },
         /* Invalid pSrcBox dimensions. */
         {
@@ -6341,7 +6341,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 2, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, D3DERR_INVALIDCALL, .broken_below_version = 40, .todo_hr = TRUE
+            }, { 0 }, FALSE, D3DERR_INVALIDCALL, .broken_below_version = 40
         },
         /* Invalid pDstBox dimensions. */
         {
@@ -6354,7 +6354,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 2, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0, 1, 0, 0, 0, 0 }, TRUE, D3DERR_INVALIDCALL, .broken_below_version = 40, .todo_hr = TRUE
+            }, { 0, 1, 0, 0, 0, 0 }, TRUE, D3DERR_INVALIDCALL, .broken_below_version = 40
         },
         /*
          * Invalid filter flags. Still validated even if SrcFirstMip is higher
@@ -6665,13 +6665,13 @@ static void test_load_texture_from_texture(void)
 
     /* Test NULL arguments for source/dest resource. */
     hr = D3DX10LoadTextureFromTexture(src_rsrc, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DX10LoadTextureFromTexture(NULL, NULL, dst_rsrc);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DX10LoadTextureFromTexture(NULL, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     /* NULL load_info argument, gets default load_info values. */
     hr = D3DX10LoadTextureFromTexture(src_rsrc, NULL, dst_rsrc);

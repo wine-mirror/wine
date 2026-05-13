@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+#define D3DERR_INVALIDCALL  0x8876086c
+
 /*
  * These are mappings from legacy DDS header formats to DXGI formats. Some
  * don't map to a DXGI_FORMAT at all, and some only map to the default format.
@@ -910,4 +912,35 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     if (hresult)
         *hresult = hr;
     return hr;
+}
+
+static BOOL d3d10_box_is_valid(const D3D10_BOX *box)
+{
+    return (box->left <= box->right) && (box->top <= box->bottom) && (box->front <= box->back);
+}
+
+HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_TEXTURE_LOAD_INFO *load_info,
+        ID3D10Resource *dst_texture)
+{
+    static const D3DX10_TEXTURE_LOAD_INFO default_load_info = { NULL, NULL, 0, 0, D3DX10_DEFAULT, 0, 0, D3DX10_DEFAULT,
+                                                                D3DX10_DEFAULT, D3DX10_DEFAULT };
+    D3DX10_TEXTURE_LOAD_INFO info = (load_info) ? *load_info : default_load_info;
+
+    FIXME("src_texture %p, load_info %p, dst_texture %p stub!\n", src_texture, load_info, dst_texture);
+
+    if (!src_texture || !dst_texture)
+        return D3DERR_INVALIDCALL;
+
+    if ((info.pSrcBox && !d3d10_box_is_valid(info.pSrcBox)) || (info.pDstBox && !d3d10_box_is_valid(info.pDstBox)))
+        return D3DERR_INVALIDCALL;
+
+    /*
+     * If the source and destination texture are the same, we can't load into
+     * the same subresource.
+     */
+    if (src_texture == dst_texture && info.SrcFirstMip == info.DstFirstMip
+            && info.SrcFirstElement == info.DstFirstElement)
+        return D3DERR_INVALIDCALL;
+
+    return E_NOTIMPL;
 }
