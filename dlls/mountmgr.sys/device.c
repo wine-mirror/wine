@@ -1994,6 +1994,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     }
     else
     {
+        assert( driver == parallel_driver );
         dos_name_format = L"LPT%u";
         nt_name_format = L"\\Device\\Parallel%u";
         reg_value_format = L"\\DosDevices\\LPT%u";
