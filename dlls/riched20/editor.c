@@ -3806,13 +3806,31 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int start_ofs, end_ofs;
     ME_Cursor cursor;
 
-    if (wParam > ME_GetTextLength(editor))
-      return 0;
     if (wParam == -1)
     {
-      FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
-      return 0;
+      LONG from, to;
+      int line_start, line_end, line_len, result;
+
+      ME_GetSelectionOfs( editor, &from, &to );
+
+      cursor_from_char_ofs( editor, from, &cursor );
+      row = row_from_cursor( &cursor );
+      row_first_cursor( row, &cursor );
+      line_start = ME_GetCursorOfs( &cursor );
+
+      cursor_from_char_ofs( editor, to, &cursor );
+      row = row_from_cursor( &cursor );
+      row_first_cursor( row, &cursor );
+      line_end = ME_GetCursorOfs( &cursor );
+      row_end_cursor( row, &cursor, FALSE );
+      line_len = ME_GetCursorOfs( &cursor ) - line_end;
+
+      result = (from - line_start) + (line_end + line_len - to);
+      TRACE( "EM_LINELENGTH(-1): sel=%ld..%ld result=%d\n", from, to, result );
+      return result;
     }
+    if (wParam > ME_GetTextLength(editor))
+      return 0;
     cursor_from_char_ofs( editor, wParam, &cursor );
     row = row_from_cursor( &cursor );
     row_first_cursor( row, &cursor );
