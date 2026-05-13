@@ -39,9 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
-static ULONG ntlm_package_id;
-static LSA_DISPATCH_TABLE lsa_dispatch;
-
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
 {
     WINE_UNIX_CALL( unix_cleanup, ctx );
@@ -111,9 +108,6 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
     ptr = (char *)(str + 1);
     memcpy( ptr, "NTLM", sizeof("NTLM") );
     RtlInitString( str, ptr );
-
-    ntlm_package_id = package_id;
-    lsa_dispatch = *dispatch;
 
     *package_name = str;
     return STATUS_SUCCESS;
