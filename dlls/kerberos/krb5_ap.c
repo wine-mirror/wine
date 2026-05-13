@@ -69,7 +69,6 @@ static const SecPkgInfoW infoW =
     kerberos_comment_W
 };
 
-static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
 struct cred_handle
@@ -135,7 +134,6 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
             ERR( "no Kerberos support, expect problems\n" );
     }
 
-    kerberos_package_id = package_id;
     lsa_dispatch = *dispatch;
 
     kerberos_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
