@@ -6432,7 +6432,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 3, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, D3DERR_INVALIDCALL, .todo_hr = TRUE
+            }, { 0 }, FALSE, D3DERR_INVALIDCALL
         },
         /*
          * Invalid mip filter flags. If no mips are generated, no validation is
@@ -6548,7 +6548,7 @@ static void test_load_texture_from_texture(void)
         {
             { NULL, NULL, 3, 0, 4, 0, 0, D3DX10_DEFAULT, D3DX10_FILTER_POINT, D3DX10_FILTER_POINT },
             dds_dxt10_8_8, sizeof(dds_dxt10_8_8), { 0 }, FALSE,
-            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_16_expected, .todo_hr = TRUE
+            { D3D10_RESOURCE_DIMENSION_UNKNOWN }, { 0 }, FALSE, S_OK, test_16_expected
         },
         /*
          * Argument of 0 for NumElements/NumMips matches behavior of

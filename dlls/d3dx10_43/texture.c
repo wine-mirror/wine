@@ -925,6 +925,12 @@ static void init_d3d10_box(D3D10_BOX *box, uint32_t left, uint32_t top, uint32_t
     box->back = max(back, front + 1);
 }
 
+static void d3d10_box_get_level(D3D10_BOX *box, unsigned int level)
+{
+    init_d3d10_box(box, box->left >> level, box->top >> level, box->right >> level, box->bottom >> level,
+            box->front >> level, box->back >> level);
+}
+
 static void d3d10_box_get_next_level(D3D10_BOX *box)
 {
     init_d3d10_box(box, box->left >> 1, box->top >> 1, box->right >> 1, box->bottom >> 1,
@@ -1230,12 +1236,6 @@ HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_
     info.NumMips = min(dst_info.levels - info.DstFirstMip, info.NumMips);
     loaded_level_count = min(src_info.levels - info.SrcFirstMip, info.NumMips);
 
-    if (loaded_level_count < info.NumMips)
-    {
-        FIXME("Mipmap generation is currently unimplemented.\n");
-        return E_NOTIMPL;
-    }
-
     if (info.pSrcBox)
         init_d3d10_box(&src_box, info.pSrcBox->left, info.pSrcBox->top, info.pSrcBox->right, info.pSrcBox->bottom,
                 info.pSrcBox->front, info.pSrcBox->back);
@@ -1257,7 +1257,23 @@ HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_
     if (!info.Filter || info.Filter == D3DX10_DEFAULT)
         info.Filter = D3DX10_FILTER_LINEAR;
 
-    return d3d10_load_texture_from_texture(&src_info, src_texture, &src_box, info.SrcFirstElement, info.SrcFirstMip,
+    hr = d3d10_load_texture_from_texture(&src_info, src_texture, &src_box, info.SrcFirstElement, info.SrcFirstMip,
             &dst_info, dst_texture, &dst_box, info.DstFirstElement, info.DstFirstMip, info.NumElements,
             loaded_level_count, info.Filter);
+    if (SUCCEEDED(hr) && loaded_level_count < info.NumMips)
+    {
+        const uint32_t base_level = loaded_level_count - 1;
+        D3D10_BOX src_level_box, dst_level_box;
+
+        src_level_box = dst_level_box = dst_box;
+        d3d10_box_get_level(&src_level_box, base_level);
+        d3d10_box_get_level(&dst_level_box, base_level + 1);
+        if (!info.MipFilter || info.MipFilter == D3DX10_DEFAULT)
+            info.MipFilter = D3DX10_FILTER_LINEAR;
+        hr = d3d10_load_texture_from_texture(&dst_info, dst_texture, &src_level_box, info.DstFirstElement, base_level,
+                &dst_info, dst_texture, &dst_level_box, info.DstFirstElement, base_level + 1, info.NumElements,
+                (info.NumMips - loaded_level_count), info.MipFilter);
+    }
+
+    return hr;
 }
