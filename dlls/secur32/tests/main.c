@@ -30,45 +30,6 @@
 
 #include "wine/test.h"
 
-static HMODULE secdll;
-static PSecurityFunctionTableA (SEC_ENTRY * pInitSecurityInterfaceA)(void);
-static SECURITY_STATUS (SEC_ENTRY * pEnumerateSecurityPackagesA)(PULONG, PSecPkgInfoA*);
-static SECURITY_STATUS (SEC_ENTRY * pFreeContextBuffer)(PVOID pv);
-static SECURITY_STATUS (SEC_ENTRY * pQuerySecurityPackageInfoA)(SEC_CHAR*, PSecPkgInfoA*);
-static SECURITY_STATUS (SEC_ENTRY * pAcquireCredentialsHandleA)(SEC_CHAR*, SEC_CHAR*,
-                            ULONG, PLUID, PVOID, SEC_GET_KEY_FN, PVOID, PCredHandle, PTimeStamp);
-static SECURITY_STATUS (SEC_ENTRY * pInitializeSecurityContextA)(PCredHandle, PCtxtHandle,
-                            SEC_CHAR*, ULONG, ULONG, ULONG, PSecBufferDesc, ULONG, 
-                            PCtxtHandle, PSecBufferDesc, PULONG, PTimeStamp);
-static SECURITY_STATUS (SEC_ENTRY * pCompleteAuthToken)(PCtxtHandle, PSecBufferDesc);
-static SECURITY_STATUS (SEC_ENTRY * pAcceptSecurityContext)(PCredHandle, PCtxtHandle,
-                            PSecBufferDesc, ULONG, ULONG, PCtxtHandle, PSecBufferDesc,
-                            PULONG, PTimeStamp);
-static SECURITY_STATUS (SEC_ENTRY * pFreeCredentialsHandle)(PCredHandle);
-static SECURITY_STATUS (SEC_ENTRY * pDeleteSecurityContext)(PCtxtHandle);
-static SECURITY_STATUS (SEC_ENTRY * pQueryContextAttributesA)(PCtxtHandle, ULONG, PVOID);
-
-static void InitFunctionPtrs(void)
-{
-    secdll = LoadLibraryA("secur32.dll");
-    if(!secdll)
-        secdll = LoadLibraryA("security.dll");
-    if(secdll)
-    {
-        pInitSecurityInterfaceA = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceA");
-        pEnumerateSecurityPackagesA = (PVOID)GetProcAddress(secdll, "EnumerateSecurityPackagesA");
-        pFreeContextBuffer = (PVOID)GetProcAddress(secdll, "FreeContextBuffer");
-        pQuerySecurityPackageInfoA = (PVOID)GetProcAddress(secdll, "QuerySecurityPackageInfoA");
-        pAcquireCredentialsHandleA = (PVOID)GetProcAddress(secdll, "AcquireCredentialsHandleA");
-        pInitializeSecurityContextA = (PVOID)GetProcAddress(secdll, "InitializeSecurityContextA");
-        pCompleteAuthToken = (PVOID)GetProcAddress(secdll, "CompleteAuthToken");
-        pAcceptSecurityContext = (PVOID)GetProcAddress(secdll, "AcceptSecurityContext");
-        pFreeCredentialsHandle = (PVOID)GetProcAddress(secdll, "FreeCredentialsHandle");
-        pDeleteSecurityContext = (PVOID)GetProcAddress(secdll, "DeleteSecurityContext");
-        pQueryContextAttributesA = (PVOID)GetProcAddress(secdll, "QueryContextAttributesA");
-    }
-}
-
 /*---------------------------------------------------------*/
 /* General helper functions */
 
@@ -113,7 +74,7 @@ static SECURITY_STATUS setupPackageA(SEC_CHAR *p_package_name,
 {
     SECURITY_STATUS ret;
     
-    ret = pQuerySecurityPackageInfoA( p_package_name, p_pkg_info);
+    ret = QuerySecurityPackageInfoA( p_package_name, p_pkg_info);
     return ret;
 }
 
@@ -124,7 +85,7 @@ static void testInitSecurityInterface(void)
 {
     PSecurityFunctionTableA sec_fun_table = NULL;
 
-    sec_fun_table = pInitSecurityInterfaceA();
+    sec_fun_table = InitSecurityInterfaceA();
     ok(sec_fun_table != NULL, "InitSecurityInterface() returned NULL.\n");
 
 }
@@ -138,7 +99,7 @@ static void testEnumerateSecurityPackages(void)
 
     trace("Running testEnumerateSecurityPackages\n");
     
-    sec_status = pEnumerateSecurityPackagesA(&num_packages, &pkg_info);
+    sec_status = EnumerateSecurityPackagesA(&num_packages, &pkg_info);
 
     ok(sec_status == SEC_E_OK, 
             "EnumerateSecurityPackages() should return %ld, not %08lx\n",
@@ -196,7 +157,7 @@ static void testEnumerateSecurityPackages(void)
         trace("\n");
     }
 
-    pFreeContextBuffer(pkg_info);
+    FreeContextBuffer(pkg_info);
 }
 
 
@@ -227,7 +188,7 @@ static void testQuerySecurityPackageInfo(void)
          * between implementations.
          */
 
-        sec_status = pFreeContextBuffer(pkg_info);
+        sec_status = FreeContextBuffer(pkg_info);
         ok( sec_status == SEC_E_OK,
             "Return value of FreeContextBuffer() shouldn't be %s\n",
             getSecError(sec_status) );
@@ -236,7 +197,7 @@ static void testQuerySecurityPackageInfo(void)
     /* Test with a nonexistent package, test should fail */
 
     pkg_info = (void *)0xdeadbeef;
-    sec_status = pQuerySecurityPackageInfoA(winetest, &pkg_info);
+    sec_status = QuerySecurityPackageInfoA(winetest, &pkg_info);
 
     ok( sec_status == SEC_E_SECPKG_NOT_FOUND,
         "Return value of QuerySecurityPackageInfo() should be %s for a nonexistent package\n",
@@ -283,20 +244,9 @@ cleanup:
 
 START_TEST(main)
 {
-    InitFunctionPtrs();
-    if(pInitSecurityInterfaceA)
-        testInitSecurityInterface();
-    if(pFreeContextBuffer)
-    {
-        if(pEnumerateSecurityPackagesA)
-            testEnumerateSecurityPackages();
-        if(pQuerySecurityPackageInfoA)
-        {
-            testQuerySecurityPackageInfo();
-        }
-    }
-    if(secdll)
-        FreeLibrary(secdll);
+    testInitSecurityInterface();
+    testEnumerateSecurityPackages();
+    testQuerySecurityPackageInfo();
 
     test_get_logon_session_data();
 }
