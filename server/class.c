@@ -52,8 +52,7 @@ struct window_class
 
 C_ASSERT( sizeof(class_shm_t) == offsetof(class_shm_t, extra[0]) );
 
-static struct window_class *create_class( struct process *process, int local, struct unicode_str *name, unsigned int name_offset,
-                                          atom_t atom, mod_handle_t instance, unsigned int style, int cls_extra, int win_extra )
+static struct window_class *create_class( struct process *process, int local, int cls_extra )
 {
     struct window_class *class;
 
@@ -64,19 +63,6 @@ static struct window_class *create_class( struct process *process, int local, st
     class->local = local;
 
     if (!(class->shared = alloc_shared_object( offsetof(class_shm_t, extra[cls_extra]) ))) goto failed;
-    SHARED_WRITE_BEGIN( class->shared, class_shm_t )
-    {
-        memcpy( (void *)shared->name, name->str, name->len );
-        shared->name_offset  = name_offset;
-        shared->name_len     = name->len;
-        shared->atom         = atom;
-        shared->instance     = instance;
-        shared->style        = style;
-        shared->win_extra    = win_extra;
-        shared->cls_extra    = cls_extra;
-        memset( (void *)shared->extra, 0, cls_extra );
-    }
-    SHARED_WRITE_END;
 
     /* other fields are initialized by caller */
 
@@ -196,7 +182,7 @@ DECL_HANDLER(create_class)
     struct unicode_str name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom, base_atom;
-    unsigned int offset = 0;
+    unsigned int name_offset = 0;
     WCHAR buffer[16];
 
     if (atom && !name.len) name = integral_atom_name( buffer, atom );
@@ -206,9 +192,9 @@ DECL_HANDLER(create_class)
     {
         struct unicode_str base = name;
 
-        offset = req->name_offset;
-        base.str += offset;
-        base.len -= offset * sizeof(WCHAR);
+        name_offset = req->name_offset;
+        base.str += name_offset;
+        base.len -= name_offset * sizeof(WCHAR);
 
         if (!(base_atom = add_atom( table, &base )))
         {
@@ -238,8 +224,7 @@ DECL_HANDLER(create_class)
         return;
     }
 
-    if (!(class = create_class( current->process, req->local, &name, offset, base_atom,
-                                req->instance, req->style, req->cls_extra, req->win_extra )))
+    if (!(class = create_class( current->process, req->local, req->cls_extra )))
     {
         release_atom( table, atom );
         release_atom( table, base_atom );
@@ -247,6 +232,21 @@ DECL_HANDLER(create_class)
     }
     class->atom       = atom;
     class->client_ptr = req->client_ptr;
+
+    SHARED_WRITE_BEGIN( class->shared, class_shm_t )
+    {
+        memcpy( (void *)shared->name, name.str, name.len );
+        shared->name_offset  = name_offset;
+        shared->name_len     = name.len;
+        shared->atom         = base_atom;
+        shared->instance     = req->instance;
+        shared->style        = req->style;
+        shared->win_extra    = req->win_extra;
+        shared->cls_extra    = req->cls_extra;
+        memset( (void *)shared->extra, 0, req->cls_extra );
+    }
+    SHARED_WRITE_END;
+
     reply->locator   = get_shared_object_locator( class->shared );
     reply->atom      = base_atom;
 }
