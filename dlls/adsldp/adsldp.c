@@ -1495,6 +1495,27 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             prefs[i].dwStatus = ADS_STATUS_S_OK;
             break;
 
+        case ADS_SEARCHPREF_CHASE_REFERRALS:
+        {
+            VARIANT var;
+
+            if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
+            {
+                FIXME("ADS_SEARCHPREF_CHASE_REFERRALS: unsupported dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            TRACE("CHASE_REFERRALS: %ld\n", prefs[i].vValue.Integer);
+            V_VT(&var) = VT_I4;
+            V_I4(&var) = prefs[i].vValue.Integer;
+            if (IADsObjectOptions_SetOption(&ldap->IADsObjectOptions_iface, ADS_OPTION_REFERRALS, var) == S_OK)
+                prefs[i].dwStatus = ADS_STATUS_S_OK;
+            else
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+            break;
+        }
+
         default:
             FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
             prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
