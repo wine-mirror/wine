@@ -305,6 +305,22 @@ static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext )
 #endif
 }
 
+/***********************************************************************
+ *           init_handler
+ */
+static inline struct thread_data *init_handler( ucontext_t *sigcontext )
+{
+    return get_thread_data();
+}
+
+
+/***********************************************************************
+ *           leave_handler
+ */
+static inline void leave_handler( struct thread_data *data, ucontext_t *sigcontext )
+{
+}
+
 
 /***********************************************************************
  *           save_context
@@ -357,6 +373,7 @@ static void restore_context( struct thread_data *data, const CONTEXT *context, u
     PSTATE_sig(sigcontext) = (PSTATE_sig(sigcontext) & ~cpsr_user_mask) | (context->Cpsr & cpsr_user_mask);
     for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->X[i];
     restore_fpu( context, sigcontext );
+    leave_handler( data, sigcontext );
 }
 
 
@@ -839,6 +856,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
     SP_sig(sigcontext) = (ULONG_PTR)stack;
     PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
     REGn_sig(18, sigcontext) = (ULONG_PTR)data->teb;
+    leave_handler( data, sigcontext );
 }
 
 
@@ -1173,7 +1191,7 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context,
 static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)PC_sig(sigcontext) };
     DWORD64 esr = get_fault_esr( sigcontext );
@@ -1207,7 +1225,11 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
     rec.NumberParameters = 2;
 
-    if (!virtual_handle_fault( data, &rec, (void *)SP_sig(sigcontext) )) return;
+    if (!virtual_handle_fault( data, &rec, (void *)SP_sig(sigcontext) ))
+    {
+        leave_handler( data, sigcontext );
+        return;
+    }
     if (handle_syscall_fault( data, sigcontext, &rec )) return;
 
     save_context( &context, sigcontext );
@@ -1223,7 +1245,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void ill_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION,
                              .ExceptionAddress = (void *)PC_sig(sigcontext) };
@@ -1238,6 +1260,7 @@ static void ill_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
             /* ignore writes to xzr */
             if (reg != 31) REGn_sig(reg, sigcontext) = 0;
             PC_sig(sigcontext) += 4;
+            leave_handler( data, sigcontext );
             return;
         }
     }
@@ -1255,7 +1278,7 @@ static void ill_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION,
                              .ExceptionAddress = (void *)PC_sig(sigcontext) };
@@ -1322,7 +1345,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)PC_sig(sigcontext) };
 
@@ -1382,12 +1405,17 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
+    ucontext_t *sigcontext = _sigcontext;
+    struct thread_data *data = init_handler( sigcontext );
     HANDLE handle;
 
-    if (!p__wine_ctrl_routine) return;
-    if (!NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL, NtCurrentProcess(),
-                           p__wine_ctrl_routine, 0 /* CTRL_C_EVENT */, 0, 0, 0, 0, NULL ))
-        NtClose( handle );
+    if (p__wine_ctrl_routine)
+    {
+        if (!NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL, NtCurrentProcess(),
+                               p__wine_ctrl_routine, 0 /* CTRL_C_EVENT */, 0, 0, 0, 0, NULL ))
+            NtClose( handle );
+    }
+    leave_handler( data, sigcontext );
 }
 
 
@@ -1399,7 +1427,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CONTEXT context;
     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_WINE_ASSERTION,
                              .ExceptionFlags = EXCEPTION_NONCONTINUABLE,
@@ -1418,7 +1446,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void quit_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
 
     if (is_inside_syscall( data, SP_sig(sigcontext) )) abort_thread(0);
     user_mode_abort_thread( 0, get_syscall_frame( data ));
@@ -1458,7 +1486,7 @@ static void save_syscall_entry_frame( ucontext_t *sigcontext )
 static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     CHPE_V2_CPU_AREA_INFO *chpe;
     CONTEXT context;
 
@@ -1521,7 +1549,9 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
         wait_suspend( &context );
         restore_context( data, &context, sigcontext );
+        return;
     }
+    leave_handler( data, sigcontext );
 }
 
 
@@ -1533,12 +1563,16 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 static void usr2_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
+    struct thread_data *data = init_handler( sigcontext );
     struct syscall_frame *frame = get_syscall_frame( data );
     DWORD i;
 
-    if (!is_inside_syscall( data, SP_sig(sigcontext) )) return;
-    if (!frame) return;
+    if (!is_inside_syscall( data, SP_sig(sigcontext) ) ||
+        !frame)
+    {
+        leave_handler( data, sigcontext );
+        return;
+    }
 
     if (is_emulated_code( frame->pc ))
     {
@@ -1575,6 +1609,7 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     sigcontext->uc_mcontext->__ns.__fpsr = frame->fpsr;
     memcpy( sigcontext->uc_mcontext->__ns.__v, frame->v, sizeof(frame->v) );
 #endif
+    leave_handler( data, sigcontext );
 }
 
 
