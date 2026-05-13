@@ -426,14 +426,19 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
 static enum loadorder version_heuristics( const UNICODE_STRING *nt_name,
                                           const struct pe_mapping_info *pe_mapping )
 {
+    static const struct { WCHAR name[32]; enum loadorder lo; } vendors[] =
+    {
+        { {'M','i','c','r','o','s','o','f','t',0}, LO_DEFAULT },
+        { {'T','w','a','i','n',' ','W','o','r','k','i','n','g',' ','G','r','o','u','p',0}, LO_BUILTIN },
+        { {0}, LO_NATIVE_BUILTIN }
+    };
     static const WCHAR fileinfoW[] = {'S','t','r','i','n','g','F','i','l','e','I','n','f','o',0};
     static const WCHAR companyW[] = {'C','o','m','p','a','n','y','N','a','m','e',0};
-    static const WCHAR microsoftW[] = {'M','i','c','r','o','s','o','f','t'};
 
     struct version_entry entry;
     const VS_FIXEDFILEINFO *fileinfo;
     const WCHAR *name;
-    ULONG len;
+    ULONG i, len;
 
     if (!pe_mapping) return LO_INVALID;
     if (pe_mapping->image.wine_builtin || pe_mapping->image.wine_fakedll) return LO_INVALID;
@@ -457,10 +462,16 @@ static enum loadorder version_heuristics( const UNICODE_STRING *nt_name,
     name = entry.value;
     len = entry.info->val_len;
     if (!name[len - 1]) len--;
-    if (len >= ARRAY_SIZE(microsoftW) && !wcsnicmp( name, microsoftW, ARRAY_SIZE(microsoftW) ))
-        return LO_INVALID;
-    TRACE( "preferring native from %s for %s\n", debugstr_wn( name, len ), debugstr_us( nt_name ));
-    return LO_NATIVE_BUILTIN;
+
+    for (i = 0; i < vendors[i].name[0]; i++)
+    {
+        if (len < wcslen(vendors[i].name)) continue;
+        if (wcsnicmp( name, vendors[i].name, wcslen(vendors[i].name) )) continue;
+        break;
+    }
+    TRACE( "got %s vendor %s for %s\n", debugstr_loadorder( vendors[i].lo ),
+           debugstr_wn( name, len ), debugstr_us( nt_name ));
+    return vendors[i].lo;
 }
 
 
