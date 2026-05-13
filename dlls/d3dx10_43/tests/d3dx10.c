@@ -6486,7 +6486,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x94], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x94]
         },
         /* Load a 3D texture into a 2D texture with a source box offset. */
         {
@@ -6499,7 +6499,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0xd4], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0xd4]
         },
         /* Load a 3D texture into a 3D texture with identical dimensions. */
         {
@@ -6512,7 +6512,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 4, 2, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x94], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x94]
         },
         /* Load a 3D texture into a 3D texture with a first mip offset. */
         {
@@ -6525,7 +6525,7 @@ static void test_load_texture_from_texture(void)
                     2, 2, 2, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x194], .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK, &dds_dxt10_3d_texture_4_4[0x194]
         },
         /*
          * 15.
@@ -6690,9 +6690,8 @@ static void test_load_texture_from_texture(void)
     ok(!!dst_rsrc, "Got unexpected dst_rsrc %p.\n", dst_rsrc);
 
     hr = D3DX10LoadTextureFromTexture(src_rsrc, NULL, dst_rsrc);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        check_test_resource_data(dst_rsrc, &dds_dxt10_3d_texture_4_4[0x94]);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_test_resource_data(dst_rsrc, &dds_dxt10_3d_texture_4_4[0x94]);
 
     ID3D10Resource_Release(src_rsrc);
     ID3D10Resource_Release(dst_rsrc);

@@ -1014,6 +1014,28 @@ static HRESULT d3dx_texture_info_from_d3d10_resource(ID3D10Resource *rsrc, struc
             break;
         }
 
+        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+        {
+            D3D10_TEXTURE3D_DESC desc_3d;
+            ID3D10Texture3D *tex_3d;
+
+            hr = ID3D10Resource_QueryInterface(rsrc, &IID_ID3D10Texture3D, (void **)&tex_3d);
+            if (FAILED(hr))
+                return hr;
+            ID3D10Texture3D_GetDesc(tex_3d, &desc_3d);
+            ID3D10Texture3D_Release(tex_3d);
+
+            info->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_3D;
+            info->fmt = get_d3dx_pixel_format_info(d3dx_pixel_format_id_from_dxgi_format(desc_3d.Format));
+            if (is_unknown_format(info->fmt))
+                return E_NOTIMPL;
+            set_volume_struct(&info->size, desc_3d.Width, desc_3d.Height, desc_3d.Depth);
+            info->levels = desc_3d.MipLevels;
+            info->layers = 1;
+            info->usage = desc_3d.Usage;
+            break;
+        }
+
         default:
             FIXME("Unhandled resource type %d.\n", rsrc_dim);
             return E_NOTIMPL;
@@ -1037,6 +1059,15 @@ static HRESULT d3d10_staging_resource_from_d3dx_texture_info(ID3D10Device *devic
 
             desc.Format = dxgi_format_from_d3dx_pixel_format_id(info->fmt->format);
             return ID3D10Device_CreateTexture2D(device, &desc, NULL, (ID3D10Texture2D **)rsrc);
+        }
+
+        case D3DX_RESOURCE_TYPE_TEXTURE_3D:
+        {
+            D3D10_TEXTURE3D_DESC desc = { info->size.width, info->size.height, info->size.depth, 1, 0,
+                                          D3D10_USAGE_STAGING, 0, cpu_flags };
+
+            desc.Format = dxgi_format_from_d3dx_pixel_format_id(info->fmt->format);
+            return ID3D10Device_CreateTexture3D(device, &desc, NULL, (ID3D10Texture3D **)rsrc);
         }
 
         default:
@@ -1067,6 +1098,21 @@ static HRESULT d3dx_subresource_data_from_d3d10_staging_resource_map(ID3D10Resou
             break;
         }
 
+        case D3DX_RESOURCE_TYPE_TEXTURE_3D:
+        {
+            ID3D10Texture3D *tex = (ID3D10Texture3D *)rsrc;
+            D3D10_MAPPED_TEXTURE3D map;
+
+            hr = ID3D10Texture3D_Map(tex, 0, map_type, 0, &map);
+            if (SUCCEEDED(hr))
+            {
+                out_data->data = map.pData;
+                out_data->row_pitch = map.RowPitch;
+                out_data->slice_pitch = map.DepthPitch;
+            }
+            break;
+        }
+
         default:
             hr = E_NOTIMPL;
             break;
@@ -1081,6 +1127,10 @@ static void d3d10_staging_resource_unmap(ID3D10Resource *rsrc, enum d3dx_resourc
     {
         case D3DX_RESOURCE_TYPE_TEXTURE_2D:
             ID3D10Texture2D_Unmap((ID3D10Texture2D *)rsrc, 0);
+            break;
+
+        case D3DX_RESOURCE_TYPE_TEXTURE_3D:
+            ID3D10Texture3D_Unmap((ID3D10Texture3D *)rsrc, 0);
             break;
 
         default:
