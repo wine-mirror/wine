@@ -6386,7 +6386,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK
         },
         /*
          * 5.
@@ -6403,7 +6403,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK
         },
         /*
          * Filter flags aren't validated if DstFirstElement is higher than the
@@ -6419,7 +6419,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, S_OK, .todo_hr = TRUE
+            }, { 0 }, FALSE, S_OK
         },
         /* Invalid mip filter flags. */
         {
@@ -6461,7 +6461,7 @@ static void test_load_texture_from_texture(void)
                     4, 4, 2, 2, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_IMMUTABLE, D3D10_BIND_SHADER_RESOURCE,
                     0, 0,
                 }
-            }, { 0 }, FALSE, D3DERR_INVALIDCALL, .todo_hr = TRUE
+            }, { 0 }, FALSE, D3DERR_INVALIDCALL
         },
         /*
          * 10.

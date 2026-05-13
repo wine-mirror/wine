@@ -919,12 +919,64 @@ static BOOL d3d10_box_is_valid(const D3D10_BOX *box)
     return (box->left <= box->right) && (box->top <= box->bottom) && (box->front <= box->back);
 }
 
+struct d3dx_texture_info
+{
+    enum d3dx_resource_type resource_type;
+    const struct pixel_format_desc *fmt;
+
+    struct volume size;
+    uint32_t levels;
+    uint32_t layers;
+
+    D3D10_USAGE usage;
+};
+
+static HRESULT d3dx_texture_info_from_d3d10_resource(ID3D10Resource *rsrc, struct d3dx_texture_info *info)
+{
+    D3D10_RESOURCE_DIMENSION rsrc_dim;
+    HRESULT hr;
+
+    ID3D10Resource_GetType(rsrc, &rsrc_dim);
+    switch (rsrc_dim)
+    {
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            D3D10_TEXTURE2D_DESC desc_2d;
+            ID3D10Texture2D *tex_2d;
+
+            hr = ID3D10Resource_QueryInterface(rsrc, &IID_ID3D10Texture2D, (void **)&tex_2d);
+            if (FAILED(hr))
+                return hr;
+            ID3D10Texture2D_GetDesc(tex_2d, &desc_2d);
+            ID3D10Texture2D_Release(tex_2d);
+
+            info->resource_type = D3DX_RESOURCE_TYPE_TEXTURE_2D;
+            info->fmt = get_d3dx_pixel_format_info(d3dx_pixel_format_id_from_dxgi_format(desc_2d.Format));
+            if (is_unknown_format(info->fmt))
+                return E_NOTIMPL;
+            set_volume_struct(&info->size, desc_2d.Width, desc_2d.Height, 1);
+            info->levels = desc_2d.MipLevels;
+            info->layers = desc_2d.ArraySize;
+            info->usage = desc_2d.Usage;
+            break;
+        }
+
+        default:
+            FIXME("Unhandled resource type %d.\n", rsrc_dim);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_TEXTURE_LOAD_INFO *load_info,
         ID3D10Resource *dst_texture)
 {
     static const D3DX10_TEXTURE_LOAD_INFO default_load_info = { NULL, NULL, 0, 0, D3DX10_DEFAULT, 0, 0, D3DX10_DEFAULT,
                                                                 D3DX10_DEFAULT, D3DX10_DEFAULT };
     D3DX10_TEXTURE_LOAD_INFO info = (load_info) ? *load_info : default_load_info;
+    struct d3dx_texture_info src_info, dst_info;
+    HRESULT hr;
 
     FIXME("src_texture %p, load_info %p, dst_texture %p stub!\n", src_texture, load_info, dst_texture);
 
@@ -941,6 +993,26 @@ HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_
     if (src_texture == dst_texture && info.SrcFirstMip == info.DstFirstMip
             && info.SrcFirstElement == info.DstFirstElement)
         return D3DERR_INVALIDCALL;
+
+    hr = d3dx_texture_info_from_d3d10_resource(src_texture, &src_info);
+    if (FAILED(hr))
+        return hr;
+
+    hr = d3dx_texture_info_from_d3d10_resource(dst_texture, &dst_info);
+    if (FAILED(hr))
+        return hr;
+
+    /* Destination cannot be immutable. */
+    if (dst_info.usage == D3D10_USAGE_IMMUTABLE)
+        return D3DERR_INVALIDCALL;
+
+    /*
+     * Attempting to load beyond the number of levels/layers in the passed in
+     * textures, nothing to load, return early.
+     */
+    if ((info.DstFirstMip >= dst_info.levels) || (info.SrcFirstElement >= src_info.layers)
+            || (info.DstFirstElement >= dst_info.layers))
+        return S_OK;
 
     return E_NOTIMPL;
 }
