@@ -45,7 +45,6 @@
 #define ntohl(x) RtlUlongByteSwap(x)
 #define ntohs(x) RtlUshortByteSwap(x)
 
-static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *device_obj;
 
 static const WCHAR driver_link[] = L"\\DosDevices\\winetest_netio";
@@ -551,8 +550,6 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
         return status;
 
     DbgPrint("Loading driver.\n");
-
-    driver_obj = driver;
 
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_CREATE]            = driver_create;
