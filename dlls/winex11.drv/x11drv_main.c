@@ -82,6 +82,7 @@ int copy_default_colors = 128;
 int alloc_system_colors = 256;
 int xrender_error_base = 0;
 char *process_name = NULL;
+pthread_key_t x11drv_thread_data_key = 0;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -649,6 +650,7 @@ NTSTATUS __wine_unix_lib_init(void)
     gdi_display = display;
     old_error_handler = XSetErrorHandler( error_handler );
 
+    pthread_key_create( &x11drv_thread_data_key, NULL );
     init_pixmap_formats( display );
     init_visuals( display, DefaultScreen( display ));
     screen_bpp = pixmap_formats[default_visual.depth]->bits_per_pixel;
@@ -697,7 +699,7 @@ void X11DRV_ThreadDetach(void)
         XCloseDisplay( data->display );
         free( data );
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        NtUserGetThreadInfo()->driver_data = 0;
+        pthread_setspecific( x11drv_thread_data_key, NULL );
     }
 }
 
@@ -755,7 +757,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
 
     set_queue_display_fd( data->display );
-    NtUserGetThreadInfo()->driver_data = (UINT_PTR)data;
+    pthread_setspecific( x11drv_thread_data_key, data );
 
     XSelectInput( data->display, DefaultRootWindow( data->display ), PropertyChangeMask );
     if (use_xim) xim_thread_attach( data );

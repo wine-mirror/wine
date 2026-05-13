@@ -427,10 +427,11 @@ struct x11drv_thread_data
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
+extern pthread_key_t x11drv_thread_data_key;
 
 static inline struct x11drv_thread_data *x11drv_thread_data(void)
 {
-    return (struct x11drv_thread_data *)(UINT_PTR)NtUserGetThreadInfo()->driver_data;
+    return pthread_getspecific( x11drv_thread_data_key );
 }
 
 /* retrieve the thread display, or NULL if not created yet */

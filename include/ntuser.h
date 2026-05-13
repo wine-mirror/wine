@@ -121,7 +121,6 @@ static inline NTSTATUS KeUserDispatchCallback( const struct dispatch_callback_pa
 /* TEB thread info, not compatible with Windows */
 struct ntuser_thread_info
 {
-    UINT64         driver_data;       /* driver-specific data */
     DWORD          message_time;      /* value for GetMessageTime */
     DWORD          message_pos;       /* value for GetMessagePos */
     UINT64         message_extra;     /* value for GetMessageExtraInfo */
