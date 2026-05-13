@@ -5057,6 +5057,17 @@ static HRESULT WINAPI MediaFilter_GetClassID(IMediaFilter *iface, CLSID * pClass
     return E_NOTIMPL;
 }
 
+static void graph_update_positions(struct filter_graph *graph)
+{
+    if (graph->state == State_Running && !graph->needs_async_run && graph->refClock)
+    {
+        REFERENCE_TIME time;
+        IReferenceClock_GetTime(graph->refClock, &time);
+        graph->stream_elapsed += time - graph->stream_start;
+        graph->current_pos += graph->stream_elapsed;
+    }
+}
+
 static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
 {
     struct filter_graph *graph = impl_from_IMediaFilter(iface);
@@ -5075,6 +5086,8 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     }
 
     sort_filters(graph);
+
+    graph_update_positions(graph);
 
     if (graph->state == State_Running)
     {
@@ -5135,13 +5148,7 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
 
-    if (graph->state == State_Running && !graph->needs_async_run && graph->refClock)
-    {
-        REFERENCE_TIME time;
-        IReferenceClock_GetTime(graph->refClock, &time);
-        graph->stream_elapsed += time - graph->stream_start;
-        graph->current_pos += graph->stream_elapsed;
-    }
+    graph_update_positions(graph);
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {

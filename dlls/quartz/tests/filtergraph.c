@@ -5120,7 +5120,7 @@ static void test_graph_seeking(void)
     {
         todo_wine ok(compare_time(filter1.seek_current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %I64d.\n", filter1.seek_current);
-        todo_wine ok(compare_time(filter2.seek_current, 1334 * 10000, 80 * 10000),
+        ok(compare_time(filter2.seek_current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %I64d.\n", filter2.seek_current);
     }
 
