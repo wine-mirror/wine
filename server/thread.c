@@ -2089,7 +2089,7 @@ DECL_HANDLER(queue_apc)
             release_object( apc );
             return;
         }
-        thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT );
+        if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) break;
         if (thread->is_system)
         {
             release_object( apc );
@@ -2097,7 +2097,7 @@ DECL_HANDLER(queue_apc)
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
-        if (thread && call && call->user.flags & SERVER_USER_APC_SPECIAL && is_wow64_process( thread->process ))
+        if (call && call->user.flags & SERVER_USER_APC_SPECIAL && is_wow64_process( thread->process ))
         {
             release_object( apc );
             release_object( thread );
