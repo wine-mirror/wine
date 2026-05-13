@@ -54,15 +54,11 @@ static NTSTATUS (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVO
 static NTSTATUS (WINAPI *pNtTerminateProcess)(HANDLE, DWORD);
 static void (WINAPI *pLdrShutdownProcess)(void);
 static BOOLEAN (WINAPI *pRtlDllShutdownInProgress)(void);
-static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG_PTR, SIZE_T *, ULONG, ULONG);
-static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 static NTSTATUS (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG *, ULONG_PTR *);
-static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
 static NTSTATUS (WINAPI *pLdrLoadDll)(LPCWSTR,DWORD *,const UNICODE_STRING *,HMODULE*);
 static NTSTATUS (WINAPI *pLdrUnloadDll)(HMODULE);
 static void (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING,LPCWSTR);
 static void (WINAPI *pRtlAcquirePebLock)(void);
-static void (WINAPI *pRtlReleasePebLock)(void);
 static PVOID    (WINAPI *pResolveDelayLoadedAPI)(PVOID, PCIMAGE_DELAYLOAD_DESCRIPTOR,
                                                  PDELAYLOAD_FAILURE_DLL_CALLBACK,
                                                  PDELAYLOAD_FAILURE_SYSTEM_ROUTINE,
@@ -79,6 +75,13 @@ static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
 static HMODULE (WINAPI *pLoadPackagedLibrary)(LPCWSTR lpwLibFileName, DWORD Reserved);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
 static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
+
+#ifndef __arm__
+static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG_PTR, SIZE_T *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
+static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
+static void (WINAPI *pRtlReleasePebLock)(void);
+#endif
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -4847,19 +4850,21 @@ START_TEST(loader)
     pNtSetInformationProcess = (void *)GetProcAddress(ntdll, "NtSetInformationProcess");
     pLdrShutdownProcess = (void *)GetProcAddress(ntdll, "LdrShutdownProcess");
     pRtlDllShutdownInProgress = (void *)GetProcAddress(ntdll, "RtlDllShutdownInProgress");
-    pNtAllocateVirtualMemory = (void *)GetProcAddress(ntdll, "NtAllocateVirtualMemory");
-    pNtFreeVirtualMemory = (void *)GetProcAddress(ntdll, "NtFreeVirtualMemory");
     pLdrLockLoaderLock = (void *)GetProcAddress(ntdll, "LdrLockLoaderLock");
-    pLdrUnlockLoaderLock = (void *)GetProcAddress(ntdll, "LdrUnlockLoaderLock");
     pLdrLoadDll = (void *)GetProcAddress(ntdll, "LdrLoadDll");
     pLdrUnloadDll = (void *)GetProcAddress(ntdll, "LdrUnloadDll");
     pRtlInitUnicodeString = (void *)GetProcAddress(ntdll, "RtlInitUnicodeString");
     pRtlAcquirePebLock = (void *)GetProcAddress(ntdll, "RtlAcquirePebLock");
-    pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
     pRtlImageDirectoryEntryToData = (void *)GetProcAddress(ntdll, "RtlImageDirectoryEntryToData");
     pRtlImageNtHeader = (void *)GetProcAddress(ntdll, "RtlImageNtHeader");
     pLdrRegisterDllNotification = (void *)GetProcAddress(ntdll, "LdrRegisterDllNotification");
     pLdrUnregisterDllNotification = (void *)GetProcAddress(ntdll, "LdrUnregisterDllNotification");
+#ifndef __arm__
+    pNtAllocateVirtualMemory = (void *)GetProcAddress(ntdll, "NtAllocateVirtualMemory");
+    pNtFreeVirtualMemory = (void *)GetProcAddress(ntdll, "NtFreeVirtualMemory");
+    pLdrUnlockLoaderLock = (void *)GetProcAddress(ntdll, "LdrUnlockLoaderLock");
+    pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
+#endif
     pFlsAlloc = (void *)GetProcAddress(kernel32, "FlsAlloc");
     pFlsSetValue = (void *)GetProcAddress(kernel32, "FlsSetValue");
     pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
