@@ -477,20 +477,6 @@ static WCHAR *alsa_get_card_name(int card)
     return ret;
 }
 
-static NTSTATUS alsa_process_attach(void *args)
-{
-#ifdef _WIN64
-    if (NtCurrentTeb()->WowTebOffset)
-    {
-        SYSTEM_BASIC_INFORMATION info;
-
-        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    }
-#endif
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS alsa_main_loop(void *args)
 {
     struct main_loop_params *params = args;
@@ -2422,7 +2408,7 @@ static NTSTATUS alsa_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    alsa_process_attach,
+    alsa_not_implemented,
     alsa_not_implemented,
     alsa_main_loop,
     alsa_get_endpoint_ids,
@@ -2466,6 +2452,15 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 #ifdef _WIN64
 
 typedef UINT PTR32;
+
+static NTSTATUS alsa_wow64_process_attach(void *args)
+{
+    SYSTEM_BASIC_INFORMATION info;
+
+    NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+    zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    return STATUS_SUCCESS;
+}
 
 static NTSTATUS alsa_wow64_main_loop(void *args)
 {
@@ -2879,7 +2874,7 @@ static NTSTATUS alsa_wow64_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    alsa_process_attach,
+    alsa_wow64_process_attach,
     alsa_not_implemented,
     alsa_wow64_main_loop,
     alsa_wow64_get_endpoint_ids,
