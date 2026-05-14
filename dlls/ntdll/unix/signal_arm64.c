@@ -207,6 +207,8 @@ C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 #define ESR_ELx_EC_BRK64                0x3c
 #define ESR_ELx_ISS_DABT_WNR(esr)       (((esr) >> 6) & 0x01)
 #define ESR_ELx_ISS_BRK_COMMENT(esr)    ((esr) & 0xffff)
+#define ESR_ELx_ISS_DFSC(esr)           ((esr) & 0x3f)
+#define ESR_ELx_ISS_DFSC_ALIGN_FAULT    0x21
 
 static DWORD64 make_esr( ULONG ec, ULONG info )
 {
@@ -1098,7 +1100,7 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *context,
 /**********************************************************************
  *		segv_handler
  *
- * Handler for SIGSEGV.
+ * Handler for SIGSEGV and related errors.
  */
 static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
@@ -1117,6 +1119,14 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         break;
     case ESR_ELx_EC_DABT_LOW:
     case ESR_ELx_EC_DABT_CUR:
+        if (ESR_ELx_ISS_DFSC(esr) == ESR_ELx_ISS_DFSC_ALIGN_FAULT)
+        {
+            rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+            save_context( &context, sigcontext );
+            setup_raise_exception( data, sigcontext, &rec, &context );
+            return;
+        }
+
         if (ESR_ELx_ISS_DABT_WNR(esr))
             rec.ExceptionInformation[0] = EXCEPTION_WRITE_FAULT;
         else
@@ -1163,24 +1173,6 @@ static void ill_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
             return;
         }
     }
-
-    save_context( &context, sigcontext );
-    setup_raise_exception( data, sigcontext, &rec, &context );
-}
-
-
-/**********************************************************************
- *		bus_handler
- *
- * Handler for SIGBUS.
- */
-static void bus_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
-{
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = get_thread_data();
-    CONTEXT context;
-    EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT,
-                             .ExceptionAddress = (void *)PC_sig(sigcontext) };
 
     save_context( &context, sigcontext );
     setup_raise_exception( data, sigcontext, &rec, &context );
@@ -1502,11 +1494,10 @@ void signal_init_process( TEB *teb )
     sig_act.sa_sigaction = trap_handler;
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
     sig_act.sa_sigaction = segv_handler;
+    if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
     sig_act.sa_sigaction = ill_handler;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
-    sig_act.sa_sigaction = bus_handler;
-    if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
     return;
 
  error:
