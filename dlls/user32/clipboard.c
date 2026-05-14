@@ -1295,12 +1295,12 @@ DWORD drag_drop_drop( HWND hwnd )
             RECT rect;
 
             drop->pt = object->target_pos;
-            drop->fNC = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
-            TRACE( "Sending WM_DROPFILES: hwnd %p, pt %s, fNC %u, files %p (%s)\n", hwnd,
+            drop->fNC = !ScreenToClient( hwnd_drop, &drop->pt ) || !GetClientRect( hwnd_drop, &rect ) || !PtInRect( &rect, drop->pt );
+            TRACE( "Sending WM_DROPFILES: hwnd_drop %p, pt %s, fNC %u, files %p (%s)\n", hwnd_drop,
                    wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
             GlobalUnlock( medium.hGlobal );
 
-            PostMessageW( hwnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 );
+            PostMessageW( hwnd_drop, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 );
             accept = 1;
             effect = DROPEFFECT_COPY;
         }
