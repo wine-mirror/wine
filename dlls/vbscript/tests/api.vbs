@@ -347,25 +347,25 @@ sub testLBoundError()
     call ok(Err.number = 13, "Err.number = " & Err.number)
     call Err.clear()
     call LBound(42)
-    todo_wine_ok Err.number = 13, "LBound(int) Err.number = " & Err.number
+    call ok(Err.number = 13, "LBound(int) Err.number = " & Err.number)
     call Err.clear()
     call LBound("str")
-    todo_wine_ok Err.number = 13, "LBound(string) Err.number = " & Err.number
+    call ok(Err.number = 13, "LBound(string) Err.number = " & Err.number)
     call Err.clear()
     call LBound(True)
-    todo_wine_ok Err.number = 13, "LBound(bool) Err.number = " & Err.number
+    call ok(Err.number = 13, "LBound(bool) Err.number = " & Err.number)
     call Err.clear()
     call LBound(3.14)
-    todo_wine_ok Err.number = 13, "LBound(double) Err.number = " & Err.number
+    call ok(Err.number = 13, "LBound(double) Err.number = " & Err.number)
     call Err.clear()
     call LBound(nothingObj)
-    todo_wine_ok Err.number = 91, "LBound(Nothing) Err.number = " & Err.number
+    call ok(Err.number = 91, "LBound(Nothing) Err.number = " & Err.number)
     call Err.clear()
     call LBound(emptyObj)
-    todo_wine_ok Err.number = 438, "LBound(no-default-object) Err.number = " & Err.number
+    call ok(Err.number = 438, "LBound(no-default-object) Err.number = " & Err.number)
     call Err.clear()
     call LBound(dictObj)
-    todo_wine_ok Err.number = 450, "LBound(default-needs-arg) Err.number = " & Err.number
+    call ok(Err.number = 450, "LBound(default-needs-arg) Err.number = " & Err.number)
     call Err.clear()
     call LBound(arr, 1, 2)
     call ok(Err.number = 450, "Err.number = " & Err.number)
@@ -389,25 +389,25 @@ sub testUBoundError()
     call ok(Err.number = 13, "Err.number = " & Err.number)
     call Err.clear()
     call UBound(42)
-    todo_wine_ok Err.number = 13, "UBound(int) Err.number = " & Err.number
+    call ok(Err.number = 13, "UBound(int) Err.number = " & Err.number)
     call Err.clear()
     call UBound("str")
-    todo_wine_ok Err.number = 13, "UBound(string) Err.number = " & Err.number
+    call ok(Err.number = 13, "UBound(string) Err.number = " & Err.number)
     call Err.clear()
     call UBound(True)
-    todo_wine_ok Err.number = 13, "UBound(bool) Err.number = " & Err.number
+    call ok(Err.number = 13, "UBound(bool) Err.number = " & Err.number)
     call Err.clear()
     call UBound(3.14)
-    todo_wine_ok Err.number = 13, "UBound(double) Err.number = " & Err.number
+    call ok(Err.number = 13, "UBound(double) Err.number = " & Err.number)
     call Err.clear()
     call UBound(nothingObj)
-    todo_wine_ok Err.number = 91, "UBound(Nothing) Err.number = " & Err.number
+    call ok(Err.number = 91, "UBound(Nothing) Err.number = " & Err.number)
     call Err.clear()
     call UBound(emptyObj)
-    todo_wine_ok Err.number = 438, "UBound(no-default-object) Err.number = " & Err.number
+    call ok(Err.number = 438, "UBound(no-default-object) Err.number = " & Err.number)
     call Err.clear()
     call UBound(dictObj)
-    todo_wine_ok Err.number = 450, "UBound(default-needs-arg) Err.number = " & Err.number
+    call ok(Err.number = 450, "UBound(default-needs-arg) Err.number = " & Err.number)
     call Err.clear()
     call UBound(arr, 1, 2)
     call ok(Err.number = 450, "Err.number = " & Err.number)
@@ -433,21 +433,16 @@ End Class
 sub testBoundDispatchDefault()
     Dim arrObj    : Set arrObj    = new ArrayDefaultClass
     Dim scalarObj : Set scalarObj = new ScalarDefaultClass
-    Dim r
+
+    call ok(LBound(arrObj) = 0, "LBound(array-default) = " & LBound(arrObj))
+    call ok(UBound(arrObj) = 2, "UBound(array-default) = " & UBound(arrObj))
+
     on error resume next
-
-    r = -1 : r = LBound(arrObj)
-    todo_wine_ok r = 0 and Err.number = 0, "LBound(array-default) r=" & r & " err=" & Err.number
-    Err.Clear()
-    r = -1 : r = UBound(arrObj)
-    todo_wine_ok r = 2 and Err.number = 0, "UBound(array-default) r=" & r & " err=" & Err.number
-
-    Err.Clear()
     call LBound(scalarObj)
-    todo_wine_ok Err.number = 13, "LBound(scalar-default) Err.number = " & Err.number
+    call ok(Err.number = 13, "LBound(scalar-default) Err.number = " & Err.number)
     Err.Clear()
     call UBound(scalarObj)
-    todo_wine_ok Err.number = 13, "UBound(scalar-default) Err.number = " & Err.number
+    call ok(Err.number = 13, "UBound(scalar-default) Err.number = " & Err.number)
 end sub
 
 call testBoundDispatchDefault()

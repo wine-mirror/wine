@@ -1209,6 +1209,8 @@ static HRESULT Global_Timer(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    VARIANT default_value;
+    VARIANT *array_arg = arg;
     SAFEARRAY *sa;
     HRESULT hres;
     LONG lbound;
@@ -1218,41 +1220,56 @@ static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
 
-    switch(V_VT(arg)) {
-    case VT_VARIANT|VT_ARRAY:
-        sa = V_ARRAY(arg);
-        break;
-    case VT_VARIANT|VT_ARRAY|VT_BYREF:
-        sa = *V_ARRAYREF(arg);
-        break;
-    case VT_EMPTY:
-    case VT_NULL:
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    default:
-        FIXME("arg %s not supported\n", debugstr_variant(arg));
-        return E_NOTIMPL;
+    V_VT(&default_value) = VT_EMPTY;
+
+    if(V_VT(arg) == VT_DISPATCH) {
+        DISPPARAMS dp = {0};
+        if(!V_DISPATCH(arg))
+            return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
+        hres = disp_call(This->ctx, V_DISPATCH(arg), DISPID_VALUE, TRUE, &dp, &default_value);
+        if(FAILED(hres))
+            return hres;
+        array_arg = &default_value;
     }
 
-    if(!sa)
-        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+    switch(V_VT(array_arg)) {
+    case VT_VARIANT|VT_ARRAY:
+        sa = V_ARRAY(array_arg);
+        break;
+    case VT_VARIANT|VT_ARRAY|VT_BYREF:
+        sa = *V_ARRAYREF(array_arg);
+        break;
+    default:
+        VariantClear(&default_value);
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    if(!sa) {
+        hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+        goto done;
+    }
 
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }else {
         dim = 1;
     }
 
     hres = SafeArrayGetLBound(sa, dim, &lbound);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres))
+        hres = return_int(res, lbound);
 
-    return return_int(res, lbound);
+done:
+    VariantClear(&default_value);
+    return hres;
 }
 
 static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    VARIANT default_value;
+    VARIANT *array_arg = arg;
     SAFEARRAY *sa;
     HRESULT hres;
     LONG ubound;
@@ -1262,37 +1279,50 @@ static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
 
-    switch(V_VT(arg)) {
-    case VT_VARIANT|VT_ARRAY:
-        sa = V_ARRAY(arg);
-        break;
-    case VT_VARIANT|VT_ARRAY|VT_BYREF:
-        sa = *V_ARRAYREF(arg);
-        break;
-    case VT_EMPTY:
-    case VT_NULL:
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    default:
-        FIXME("arg %s not supported\n", debugstr_variant(arg));
-        return E_NOTIMPL;
+    V_VT(&default_value) = VT_EMPTY;
+
+    if(V_VT(arg) == VT_DISPATCH) {
+        DISPPARAMS dp = {0};
+        if(!V_DISPATCH(arg))
+            return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
+        hres = disp_call(This->ctx, V_DISPATCH(arg), DISPID_VALUE, TRUE, &dp, &default_value);
+        if(FAILED(hres))
+            return hres;
+        array_arg = &default_value;
     }
 
-    if(!sa)
-        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+    switch(V_VT(array_arg)) {
+    case VT_VARIANT|VT_ARRAY:
+        sa = V_ARRAY(array_arg);
+        break;
+    case VT_VARIANT|VT_ARRAY|VT_BYREF:
+        sa = *V_ARRAYREF(array_arg);
+        break;
+    default:
+        VariantClear(&default_value);
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    if(!sa) {
+        hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+        goto done;
+    }
 
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }else {
         dim = 1;
     }
 
     hres = SafeArrayGetUBound(sa, dim, &ubound);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres))
+        hres = return_int(res, ubound);
 
-    return return_int(res, ubound);
+done:
+    VariantClear(&default_value);
+    return hres;
 }
 
 static HRESULT Global_RGB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
