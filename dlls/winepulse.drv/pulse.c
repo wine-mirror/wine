@@ -248,16 +248,6 @@ static NTSTATUS pulse_process_attach(void *args)
     if (pthread_mutex_init(&pulse_mutex, &attr) != 0)
         pthread_mutex_init(&pulse_mutex, NULL);
 
-#ifdef _WIN64
-    if (NtCurrentTeb()->WowTebOffset)
-    {
-        SYSTEM_BASIC_INFORMATION info;
-
-        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    }
-#endif
-
     return STATUS_SUCCESS;
 }
 
@@ -2557,6 +2547,16 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 typedef UINT PTR32;
 
+static NTSTATUS pulse_wow64_process_attach(void *args)
+{
+    SYSTEM_BASIC_INFORMATION info;
+
+    NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+    zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+
+    return pulse_process_attach( args );
+}
+
 static NTSTATUS pulse_wow64_main_loop(void *args)
 {
     struct
@@ -3009,7 +3009,7 @@ static NTSTATUS pulse_wow64_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    pulse_process_attach,
+    pulse_wow64_process_attach,
     pulse_process_detach,
     pulse_wow64_main_loop,
     pulse_wow64_get_endpoint_ids,
