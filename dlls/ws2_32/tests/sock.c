@@ -4477,7 +4477,7 @@ static void test_select(void)
     SetLastError(0);
     ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    todo_wine ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
     ok ( FD_ISSET((SOCKET)file, &readfds), "FD should be set\n");
 
     FD_ZERO(&readfds);
@@ -4496,7 +4496,7 @@ static void test_select(void)
     SetLastError(0);
     ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
-    todo_wine ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
 
     /* Test with duplicated handle of valid socket. */
     FD_ZERO_ALL();
