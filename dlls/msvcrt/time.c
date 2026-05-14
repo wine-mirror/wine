@@ -780,11 +780,12 @@ int CDECL _ftime32_s(struct __timeb32 *buf)
 __time64_t CDECL _time64(__time64_t *buf)
 {
     __time64_t curtime;
-    struct __timeb64 tb;
+    FILETIME ft;
+    ULONGLONG time;
 
-    _ftime64(&tb);
-
-    curtime = tb.time;
+    GetSystemTimeAsFileTime(&ft);
+    time = ((ULONGLONG)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+    curtime = time / TICKSPERSEC - SECS_1601_TO_1970;
     return buf ? *buf = curtime : curtime;
 }
 
@@ -794,11 +795,10 @@ __time64_t CDECL _time64(__time64_t *buf)
 __time32_t CDECL _time32(__time32_t *buf)
 {
     __time32_t curtime;
-    struct __timeb64 tb;
+    __time64_t time;
 
-    _ftime64(&tb);
-
-    curtime = (tb.time == (__time32_t)tb.time) ? tb.time : -1;
+    time = _time64(NULL);
+    curtime = (time == (__time32_t)time) ? time : -1;
     return buf ? *buf = curtime : curtime;
 }
 
