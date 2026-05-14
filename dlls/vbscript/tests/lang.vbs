@@ -4055,6 +4055,15 @@ Sub TestExecuteReDim
 End Sub
 Call TestExecuteReDim
 
+' Execute: fixed-size Dim array in caller's scope
+Sub TestExecuteFixedDim
+    Execute "Dim fixedArr(2) : fixedArr(0) = 1 : fixedArr(1) = 2 : fixedArr(2) = 3"
+    Call ok(fixedArr(0) = 1, "Execute Dim fixedArr(0) = " & fixedArr(0))
+    Call ok(fixedArr(2) = 3, "Execute Dim fixedArr(2) = " & fixedArr(2))
+    Call ok(UBound(fixedArr) = 2, "Execute Dim UBound(fixedArr) = " & UBound(fixedArr))
+End Sub
+Call TestExecuteFixedDim
+
 ' Option Explicit is per-compilation-unit in Execute/ExecuteGlobal
 On Error Resume Next
 

@@ -1400,6 +1400,14 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
 
     if(ctx->func->type == FUNC_GLOBAL) {
         dynamic_var_t *var = script_disp_find_var(script_obj, ident);
+        if(!var && ctx->caller) {
+            /* Execute() called from a local scope pre-registers Dim
+             * variables in the caller's dynamic_vars, not the script object. */
+            for(var = ctx->caller->dynamic_vars; var; var = var->next) {
+                if(!vbs_wcsicmp(var->name, ident))
+                    break;
+            }
+        }
         assert(var != NULL);
         v = &var->v;
         array_ref = &var->array;
