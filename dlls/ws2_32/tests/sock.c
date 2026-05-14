@@ -4360,6 +4360,8 @@ static void test_select(void)
     unsigned int apc_count;
     unsigned int maxfd, i;
     char *page_pair;
+    char path[MAX_PATH];
+    HANDLE file, hdup;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
@@ -4459,7 +4461,67 @@ static void test_select(void)
     maxfd = fdRead;
     if(fdWrite > maxfd) maxfd = fdWrite;
 
+    GetSystemWindowsDirectoryA(path, ARRAY_SIZE(path));
+    strcat(path, "\\system.ini");
+
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0x0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %lu\n", GetLastError());
+
+    if ((SOCKET)file > maxfd) maxfd = (SOCKET)file;
+    ret = DuplicateHandle(GetCurrentProcess(), (HANDLE)fdRead, GetCurrentProcess(), &hdup, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "got %d.\n", ret);
+
+    /* Test with valid but non socket handle which also supports some ioctls. */
+    FD_ZERO_ALL();
+    FD_SET((SOCKET)file, &readfds);
+    SetLastError(0);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    todo_wine ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
+    ok ( FD_ISSET((SOCKET)file, &readfds), "FD should be set\n");
+
     FD_ZERO(&readfds);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdRead, &exceptfds);
+    FD_SET((SOCKET)file, &writefds);
+    SetLastError(0);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
+
+    FD_ZERO_ALL();
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdWrite, &writefds);
+    FD_SET((SOCKET)file, &exceptfds);
+    SetLastError(0);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    todo_wine ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
+
+    /* Test with duplicated handle of valid socket. */
+    FD_ZERO_ALL();
+    FD_SET((SOCKET)hdup, &readfds);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok( !ret, "select returned %d\n", ret );
+
+    FD_ZERO(&readfds);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdRead, &exceptfds);
+    FD_SET((SOCKET)hdup, &writefds);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok( ret == 1, "select returned %d\n", ret );
+
+    FD_ZERO_ALL();
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdWrite, &writefds);
+    FD_SET((SOCKET)hdup, &exceptfds);
+    ret = select(maxfd + 1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok( ret == 1, "select returned %d\n", ret );
+
+    CloseHandle(hdup);
+    CloseHandle(file);
+
+    FD_ZERO_ALL();
     FD_SET(fdRead, &readfds);
     apc_count = 0;
     ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
