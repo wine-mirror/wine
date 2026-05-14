@@ -1134,14 +1134,15 @@ static SIZE_T get_machine_context_size( USHORT machine )
  */
 void *get_cpu_area( USHORT machine )
 {
+    struct thread_data *data = get_thread_data();
     WOW64_CPURESERVED *cpu;
     ULONG align;
 
     if (!is_wow64()) return NULL;
 #ifdef _WIN64
-    cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
+    cpu = data->teb->TlsSlots[WOW64_TLS_CPURESERVED];
 #else
-    cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
+    cpu = ULongToPtr( get_teb64(data->teb)->TlsSlots[WOW64_TLS_CPURESERVED] );
 #endif
     if (cpu->Machine != machine) return NULL;
     switch (cpu->Machine)

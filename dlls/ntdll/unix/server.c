@@ -1743,10 +1743,10 @@ size_t server_init_process(void)
  */
 void server_init_process_done(void)
 {
-    void *teb;
     unsigned int status;
     FILE_FS_DEVICE_INFORMATION info;
     struct thread_data *data = get_thread_data();
+    TEB64 *teb64 = get_teb64( data->teb );
 
     if (!get_device_info( initial_cwd, &info ) && (info.Characteristics & FILE_REMOVABLE_MEDIA))
         chdir( "/" );
@@ -1762,14 +1762,11 @@ void server_init_process_done(void)
     signal_init_process( data->teb );
     init_teb_data( data );
 
-    /* always send the native TEB */
-    if (!(teb = NtCurrentTeb64())) teb = data->teb;
-
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
-        req->teb = wine_server_client_ptr( teb );
-        req->peb = NtCurrentTeb64() ? NtCurrentTeb64()->Peb : wine_server_client_ptr( peb );
+        req->teb = wine_server_client_ptr( teb64 ? (void *)teb64 : (void *)data->teb );
+        req->peb = teb64 ? teb64->Peb : wine_server_client_ptr( peb );
         status = wine_server_call( req );
         data->suspend = reply->suspend;
     }
@@ -1787,20 +1784,17 @@ void server_init_process_done(void)
  */
 void server_init_thread( struct thread_data *data )
 {
-    void *teb;
     int reply_pipe;
+    TEB64 *teb64 = get_teb64( data->teb );
 
     data->pthread_id = pthread_self();
     pthread_setspecific( thread_data_key, data );
-
-    /* always send the native TEB */
-    if (!(teb = NtCurrentTeb64())) teb = data->teb;
 
     reply_pipe = init_thread_pipe( data );
     SERVER_START_REQ( init_thread )
     {
         req->unix_tid  = get_unix_tid();
-        req->teb       = wine_server_client_ptr( teb );
+        req->teb       = wine_server_client_ptr( teb64 ? (void *)teb64 : (void *)data->teb );
         req->reply_fd  = reply_pipe;
         req->wait_fd   = data->wait_fd[1];
         if (data->teb) req->entry = wine_server_client_ptr( data->start );

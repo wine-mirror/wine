@@ -3529,11 +3529,13 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     {
         SECTION_IMAGE_INFORMATION info;
         ULONG64 prev = 0;
+        struct thread_data *data = get_thread_data();
+        TEB64 *teb64 = get_teb64( data->teb );
 
-        if (NtCurrentTeb64())
+        if (teb64)
         {
-            prev = NtCurrentTeb64()->Tib.ArbitraryUserPointer;
-            NtCurrentTeb64()->Tib.ArbitraryUserPointer = PtrToUlong(NtCurrentTeb()->Tib.ArbitraryUserPointer);
+            prev = teb64->Tib.ArbitraryUserPointer;
+            teb64->Tib.ArbitraryUserPointer = PtrToUlong(data->teb->Tib.ArbitraryUserPointer);
         }
         /* check if we can replace that mapping with the builtin */
         res = load_builtin( pe_mapping, machine, &info, addr_ptr, size_ptr,
@@ -3542,7 +3544,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
             res = virtual_map_image( handle, addr_ptr, size_ptr, limit_low, limit_high,
                                      alloc_type, pe_mapping, machine, FALSE, offset.QuadPart );
         free_pe_mapping_info( pe_mapping );
-        if (NtCurrentTeb64()) NtCurrentTeb64()->Tib.ArbitraryUserPointer = prev;
+        if (teb64) teb64->Tib.ArbitraryUserPointer = prev;
         return res;
     }
 

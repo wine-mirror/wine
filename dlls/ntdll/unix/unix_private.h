@@ -65,11 +65,11 @@ static inline BOOL is_machine_64bit( WORD machine )
 #ifdef _WIN64
 typedef TEB32 WOW_TEB;
 typedef PEB32 WOW_PEB;
-static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
+static inline TEB64 *get_teb64( TEB *teb ) { return NULL; }
 #else
 typedef TEB64 WOW_TEB;
 typedef PEB64 WOW_PEB;
-static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
+static inline TEB64 *get_teb64( TEB *teb ) { return teb ? (TEB64 *)(ULONG_PTR)teb->GdiBatchCount : NULL; }
 #endif
 
 extern WOW_PEB *wow_peb;

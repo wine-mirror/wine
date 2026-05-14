@@ -1891,8 +1891,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     WCHAR *curdir = get_initial_directory();
     UNICODE_STRING nt_name;
     NTSTATUS status;
+    TEB64 *teb64 = get_teb64( NtCurrentTeb() );
 
-    if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
+    if (teb64) teb64->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
 
     /* store the initial PATH value */
     path = get_env_var( env, env_pos, pathW, 4 );
@@ -1947,7 +1948,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     else
     {
         rebuild_argv();
-        if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
+        if (teb64) teb64->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
     }
 
     main_wargv = build_wargv( get_dos_path( nt_name.Buffer ));
