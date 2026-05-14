@@ -566,19 +566,19 @@ Call ok(getVT(Not Empty) = "VT_I4",          "getVT(Not Empty) = " & getVT(Not E
 ' Logical/bitwise ops with BSTR operands coerce the string to a number when
 ' parseable (matching VarXor), giving a Long result instead of treating the
 ' string as a Boolean.
-todo_wine_ok 0 = ("1" And "2"),              """1"" And ""2"" is not 0"
-todo_wine_ok 1 = ("5" And "3"),              """5"" And ""3"" is not 1"
-todo_wine_ok getVT("1" And "2") = "VT_I4",   "getVT(""1"" And ""2"") = " & getVT("1" And "2")
-todo_wine_ok 3 = ("1" Or "2"),               """1"" Or ""2"" is not 3"
-todo_wine_ok 7 = ("5" Or "3"),               """5"" Or ""3"" is not 7"
-todo_wine_ok getVT("1" Or "2") = "VT_I4",    "getVT(""1"" Or ""2"") = " & getVT("1" Or "2")
-todo_wine_ok -2 = ("1" Imp "2"),             """1"" Imp ""2"" is not -2"
-todo_wine_ok getVT("1" Imp "2") = "VT_I4",   "getVT(""1"" Imp ""2"") = " & getVT("1" Imp "2")
+Call ok(("1" And "2") = 0,                   """1"" And ""2"" is not 0")
+Call ok(("5" And "3") = 1,                   """5"" And ""3"" is not 1")
+Call ok(getVT("1" And "2") = "VT_I4",        "getVT(""1"" And ""2"") = " & getVT("1" And "2"))
+Call ok(("1" Or "2") = 3,                    """1"" Or ""2"" is not 3")
+Call ok(("5" Or "3") = 7,                    """5"" Or ""3"" is not 7")
+Call ok(getVT("1" Or "2") = "VT_I4",         "getVT(""1"" Or ""2"") = " & getVT("1" Or "2"))
+Call ok(("1" Imp "2") = -2,                  """1"" Imp ""2"" is not -2")
+Call ok(getVT("1" Imp "2") = "VT_I4",        "getVT(""1"" Imp ""2"") = " & getVT("1" Imp "2"))
 
 ' Mixed BSTR + numeric stays Long.
 Call ok((5 And "3") = 1,                     "5 And ""3"" is not 1")
 Call ok(("5" And 3) = 1,                     """5"" And 3 is not 1")
-todo_wine_ok getVT(5 And "3") = "VT_I4",     "getVT(5 And ""3"") = " & getVT(5 And "3")
+Call ok(getVT(5 And "3") = "VT_I4",          "getVT(5 And ""3"") = " & getVT(5 And "3"))
 
 ' BSTR with non-numeric content falls back to Boolean conversion, which
 ' fails with type mismatch for arbitrary text.
