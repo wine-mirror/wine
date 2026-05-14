@@ -888,24 +888,19 @@ DWORD CALLBACK DSOUND_mixthread(void *p)
 	SetThreadDescription(GetCurrentThread(), L"wine_dsound_mixer");
         _controlfp_s(NULL, _DN_FLUSH, _MCW_DN);
 
-	while (dev->ref) {
-		DWORD ret;
+        for (;;)
+        {
+            DWORD ret = WaitForSingleObject(dev->sleepev, dev->sleeptime);
+            if (ret == WAIT_FAILED)
+                WARN("wait returned error %lu %08lx!\n", GetLastError(), GetLastError());
+            else if (ret != WAIT_OBJECT_0)
+                WARN("wait returned %08lx!\n", ret);
+            if (dev->terminated)
+                break;
 
-		/*
-		 * Some audio drivers are retarded and won't fire after being
-		 * stopped, add a timeout to handle this.
-		 */
-		ret = WaitForSingleObject(dev->sleepev, dev->sleeptime);
-		if (ret == WAIT_FAILED)
-			WARN("wait returned error %lu %08lx!\n", GetLastError(), GetLastError());
-		else if (ret != WAIT_OBJECT_0)
-			WARN("wait returned %08lx!\n", ret);
-		if (!dev->ref)
-			break;
-
-		AcquireSRWLockShared(&dev->buffer_list_lock);
-		DSOUND_PerformMix(dev);
-		ReleaseSRWLockShared(&dev->buffer_list_lock);
-	}
+            AcquireSRWLockShared(&dev->buffer_list_lock);
+            DSOUND_PerformMix(dev);
+            ReleaseSRWLockShared(&dev->buffer_list_lock);
+        }
 	return 0;
 }

@@ -70,14 +70,13 @@ typedef struct DSFilter {
  */
 struct DirectSoundDevice
 {
-    LONG                        ref;
-
     GUID                        guid;
     DSCAPS                      drvcaps;
     DWORD                       priolevel, sleeptime;
     PWAVEFORMATEX               pwfx, primary_pwfx;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, ac_frames, frag_frames, playpos, pad, stopped;
+    LONG                        terminated;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
     SRWLOCK                     buffer_list_lock;
