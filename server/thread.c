@@ -132,6 +132,7 @@ struct context
     struct object           obj;        /* object header */
     struct object          *sync;       /* sync object for wait/signal */
     unsigned int            status;     /* status of the context */
+    int                     cooperative;/* waiting for the cooperative suspend */
     struct context_data     regs[2];    /* context data */
 };
 #define CTX_NATIVE  0  /* context for native machine */
@@ -445,6 +446,7 @@ static inline void init_thread_structure( struct thread *thread )
 
 static inline int is_thread_suspended( struct thread *thread )
 {
+    if (thread->context && thread->context->cooperative) return 0;
     if (thread->suspend) return 1;
     return !thread->bypass_proc_suspend && thread->process->suspend;
 }
@@ -485,8 +487,9 @@ static struct context *create_thread_context( struct thread *thread )
 {
     struct context *context;
     if (!(context = alloc_object( &context_ops ))) return NULL;
-    context->sync   = NULL;
-    context->status = STATUS_PENDING;
+    context->sync        = NULL;
+    context->status      = STATUS_PENDING;
+    context->cooperative = 0;
     memset( &context->regs, 0, sizeof(context->regs) );
     context->regs[CTX_NATIVE].machine = native_machine;
 
@@ -1166,6 +1169,12 @@ static int check_wait( struct thread *thread )
 
     if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
         return STATUS_KERNEL_APC;
+
+    if ((wait->flags & SELECT_COOPERATIVE_SUSPEND) && thread->context)
+    {
+        thread->context->cooperative = 1;
+        return STATUS_THREAD_WAS_SUSPENDED;
+    }
 
     /* Suspended threads may not acquire locks, but they can run system APCs */
     if (is_thread_suspended( thread )) return -1;
@@ -1988,6 +1997,7 @@ DECL_HANDLER(select)
             copy_context( &ctx->regs[CTX_WOW], wow_context, wow_context->flags & ~ctx->regs[CTX_WOW].flags );
         }
         ctx->status = STATUS_SUCCESS;
+        ctx->cooperative = 0;
         current->suspend_cookie = req->cookie;
         signal_sync( ctx->sync );
     }

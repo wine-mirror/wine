@@ -64,6 +64,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 #define NTDLL_DWARF_H_NO_UNWINDER
 #include "dwarf.h"
 
+struct arm64_thread_data
+{
+    BOOL suspend_pending;
+};
+
+C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
+
+static inline struct arm64_thread_data *arm64_thread_data( struct thread_data *data )
+{
+    return (struct arm64_thread_data *)get_teb_data(data)->cpu_data;
+}
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -320,7 +332,20 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
 {
     struct thread_data *data = get_thread_data();
     struct syscall_frame *frame = get_syscall_frame( data );
-    NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
+    struct arm64_thread_data *arm64_data = arm64_thread_data( data );
+    NTSTATUS status;
+
+    if (arm64_data->suspend_pending)
+    {
+        sigset_t old_set;
+        pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
+        *data->teb->ChpeV2CpuAreaInfo->SuspendDoorbell = 0;
+        arm64_data->suspend_pending = FALSE;
+        wait_suspend( context );
+        status = NtSetContextThread( GetCurrentThread(), context );
+        pthread_sigmask( SIG_SETMASK, &old_set, NULL );
+    }
+    else status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
         frame->restore_flags |= CONTEXT_INTEGER;
@@ -1321,11 +1346,22 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
 {
     ucontext_t *sigcontext = _sigcontext;
     struct thread_data *data = get_thread_data();
+    CHPE_V2_CPU_AREA_INFO *chpe;
     CONTEXT context;
 
     if (!data->teb)
     {
         server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL, NULL );
+    }
+    else if ((chpe = data->teb->ChpeV2CpuAreaInfo) && chpe->InSimulation && chpe->SuspendDoorbell)
+    {
+        NTSTATUS status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_COOPERATIVE_SUSPEND,
+                                         0, NULL, NULL );
+        if (status == STATUS_THREAD_WAS_SUSPENDED)
+        {
+            *chpe->SuspendDoorbell = -1;
+            arm64_thread_data( data )->suspend_pending = TRUE;
+        }
     }
     else if (is_inside_syscall( data, SP_sig(sigcontext) ))
     {
