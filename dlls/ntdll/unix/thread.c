@@ -1132,9 +1132,8 @@ static SIZE_T get_machine_context_size( USHORT machine )
  *
  * cf. RtlWow64GetCurrentCpuArea
  */
-void *get_cpu_area( USHORT machine )
+void *get_cpu_area( struct thread_data *data, USHORT machine )
 {
-    struct thread_data *data = get_thread_data();
     WOW64_CPURESERVED *cpu;
     ULONG align;
 

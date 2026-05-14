@@ -997,7 +997,7 @@ void *get_native_context( CONTEXT *context )
 void *get_wow_context( CONTEXT *context )
 {
     if (context->SegCs != cs64_sel) return NULL;
-    return get_cpu_area( IMAGE_FILE_MACHINE_I386 );
+    return get_cpu_area( get_thread_data(), IMAGE_FILE_MACHINE_I386 );
 }
 
 
@@ -1288,7 +1288,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         if (!(flags & ~CONTEXT_I386_DEBUG_REGISTERS)) return ret;
     }
 
-    if (!(wow_frame = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) return STATUS_INVALID_PARAMETER;
+    if (!(wow_frame = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 ))) return STATUS_INVALID_PARAMETER;
 
     if (flags & CONTEXT_I386_INTEGER)
     {
@@ -1390,7 +1390,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         if (!(needed_flags & ~CONTEXT_I386_DEBUG_REGISTERS)) return ret;
     }
 
-    if (!(wow_frame = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) return STATUS_INVALID_PARAMETER;
+    if (!(wow_frame = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 ))) return STATUS_INVALID_PARAMETER;
 
     if (needed_flags & CONTEXT_I386_INTEGER)
     {
@@ -2569,7 +2569,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
             context->c.ContextFlags &= ~0x40;
             frame->restore_flags |= 0x40;
         }
-        if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))
+        if ((wow_context = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 ))
              && (wow_context->ContextFlags & CONTEXT_I386_CONTROL) == CONTEXT_I386_CONTROL)
         {
             WOW64_CPURESERVED *cpu = data->teb->TlsSlots[WOW64_TLS_CPURESERVED];
@@ -2893,7 +2893,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     context.FltSave.ControlWord = 0x27f;
     context.FltSave.MxCsr = context.MxCsr = 0x1f80;
 
-    if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
+    if ((wow_context = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 )))
     {
         wow_context->ContextFlags = CONTEXT_I386_ALL;
         wow_context->Eax = (ULONG_PTR)entry;

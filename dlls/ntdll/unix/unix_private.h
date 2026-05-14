@@ -278,7 +278,7 @@ extern void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 
 
 extern void set_process_instrumentation_callback( void *callback );
 
-extern void *get_cpu_area( USHORT machine );
+extern void *get_cpu_area( struct thread_data *data, USHORT machine );
 extern void set_thread_id( struct thread_data *data );
 extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size );
 extern void DECLSPEC_NORETURN abort_thread( int status );

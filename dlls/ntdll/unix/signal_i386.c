@@ -2466,7 +2466,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     context.FloatSave.ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
-    if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
+    if ((ctx = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
 
     if (data->suspend)
     {

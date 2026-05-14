@@ -352,7 +352,7 @@ void *get_native_context( CONTEXT *context )
  */
 void *get_wow_context( CONTEXT *context )
 {
-    return get_cpu_area( main_image_info.Machine );
+    return get_cpu_area( get_thread_data(), main_image_info.Machine );
 }
 
 
@@ -458,6 +458,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
 {
     BOOL self = (handle == GetCurrentThread());
+    struct thread_data *data = get_thread_data();
     USHORT machine;
     void *frame;
 
@@ -474,7 +475,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         if (ret || !self) return ret;
     }
 
-    if (!(frame = get_cpu_area( machine ))) return STATUS_INVALID_PARAMETER;
+    if (!(frame = get_cpu_area( data, machine ))) return STATUS_INVALID_PARAMETER;
 
     switch (machine)
     {
@@ -495,7 +496,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         }
         if (flags & CONTEXT_I386_CONTROL)
         {
-            WOW64_CPURESERVED *cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
+            WOW64_CPURESERVED *cpu = data->teb->TlsSlots[WOW64_TLS_CPURESERVED];
 
             wow_frame->Esp    = context->Esp;
             wow_frame->Ebp    = context->Ebp;
@@ -582,6 +583,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
 NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 {
     BOOL self = (handle == GetCurrentThread());
+    struct thread_data *data = get_thread_data();
     USHORT machine;
     void *frame;
 
@@ -598,7 +600,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         if (ret || !self) return ret;
     }
 
-    if (!(frame = get_cpu_area( machine ))) return STATUS_INVALID_PARAMETER;
+    if (!(frame = get_cpu_area( data, machine ))) return STATUS_INVALID_PARAMETER;
 
     switch (machine)
     {
@@ -1474,7 +1476,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     context.Sp  = (DWORD64)teb->Tib.StackBase;
     context.Pc  = (DWORD64)pRtlUserThreadStart;
 
-    if ((i386_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
+    if ((i386_context = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 )))
     {
         XMM_SAVE_AREA32 *fpu = (XMM_SAVE_AREA32 *)i386_context->ExtendedRegisters;
         i386_context->ContextFlags = CONTEXT_I386_ALL;
@@ -1493,7 +1495,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
         fpu->MxCsr = 0x1f80;
         fpux_to_fpu( &i386_context->FloatSave, fpu );
     }
-    else if ((arm_context = get_cpu_area( IMAGE_FILE_MACHINE_ARMNT )))
+    else if ((arm_context = get_cpu_area( data, IMAGE_FILE_MACHINE_ARMNT )))
     {
         arm_context->ContextFlags = CONTEXT_ARM_ALL;
         arm_context->R0 = (ULONG_PTR)entry;
