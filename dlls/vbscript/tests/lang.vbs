@@ -4321,6 +4321,29 @@ Dim nullResult
 nullResult = CLng(Null)
 todo_wine_ok Err.Number = 94, "CLng(Null): err.number = " & Err.Number
 
+' Each Cxxx coercion raises err 94 on Null and err 91 on Nothing.
+Sub testCoerceNullNothing
+    Dim nothingObj : Set nothingObj = Nothing
+    on error resume next
+
+    Err.Clear : call CInt(Null)        : todo_wine_ok Err.Number = 94, "CInt(Null) err=" & Err.Number
+    Err.Clear : call CInt(nothingObj)  : todo_wine_ok Err.Number = 91, "CInt(Nothing) err=" & Err.Number
+    Err.Clear : call CLng(nothingObj)  : todo_wine_ok Err.Number = 91, "CLng(Nothing) err=" & Err.Number
+    Err.Clear : call CBool(Null)       : todo_wine_ok Err.Number = 94, "CBool(Null) err=" & Err.Number
+    Err.Clear : call CBool(nothingObj) : todo_wine_ok Err.Number = 91, "CBool(Nothing) err=" & Err.Number
+    Err.Clear : call CByte(Null)       : todo_wine_ok Err.Number = 94, "CByte(Null) err=" & Err.Number
+    Err.Clear : call CByte(nothingObj) : todo_wine_ok Err.Number = 91, "CByte(Nothing) err=" & Err.Number
+    Err.Clear : call CDbl(Null)        : todo_wine_ok Err.Number = 94, "CDbl(Null) err=" & Err.Number
+    Err.Clear : call CDbl(nothingObj)  : todo_wine_ok Err.Number = 91, "CDbl(Nothing) err=" & Err.Number
+    Err.Clear : call CSng(Null)        : todo_wine_ok Err.Number = 94, "CSng(Null) err=" & Err.Number
+    Err.Clear : call CSng(nothingObj)  : todo_wine_ok Err.Number = 91, "CSng(Nothing) err=" & Err.Number
+    Err.Clear : call CCur(Null)        : todo_wine_ok Err.Number = 94, "CCur(Null) err=" & Err.Number
+    Err.Clear : call CCur(nothingObj)  : todo_wine_ok Err.Number = 91, "CCur(Nothing) err=" & Err.Number
+    Err.Clear : call CDate(nothingObj) : todo_wine_ok Err.Number = 91, "CDate(Nothing) err=" & Err.Number
+    Err.Clear : call CStr(nothingObj)  : todo_wine_ok Err.Number = 91, "CStr(Nothing) err=" & Err.Number
+End Sub
+Call testCoerceNullNothing
+
 ' Error 429: ActiveX component can't create object
 Err.Clear
 Dim badObj
