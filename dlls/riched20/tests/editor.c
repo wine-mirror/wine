@@ -535,6 +535,31 @@ static void test_EM_LINELENGTH(void)
         offset_test[i][0], result, offset_test[i][1]);
   }
 
+  /* EM_LINELENGTH with wParam == -1 returns the count of unselected
+   * characters on the line(s) containing the selection. */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, 0);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret at start: got %Id, expected 9\n", result);
+
+  SendMessageA(hwndRichEdit, EM_SETSEL, 5, 5);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret mid-line: got %Id, expected 9\n", result);
+
+  /* Selection entirely within one line: unselected chars on that line */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 2, 5);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 6, "EM_LINELENGTH(-1) with sel 2..5 on line 1: got %Id, expected 6\n", result);
+
+  /* Selection spanning two lines: unselected chars on first + last line */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 13);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 10, "EM_LINELENGTH(-1) with sel 4..13: got %Id, expected 10\n", result);
+
+  /* Caret at end of text */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 39, 39);
+  result = SendMessageA(hwndRichEdit, EM_LINELENGTH, -1, 0);
+  ok(result == 9, "EM_LINELENGTH(-1) with caret at end: got %Id, expected 9\n", result);
+
   /* Test with multibyte character */
   if (!is_lang_japanese)
     skip("Skip multibyte character tests on non-Japanese platform\n");
