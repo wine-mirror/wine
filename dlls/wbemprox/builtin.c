@@ -154,7 +154,9 @@ static const struct column col_diskdrive[] =
     { L"Model",         CIM_STRING },
     { L"PNPDeviceID",   CIM_STRING },
     { L"SerialNumber",  CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"Signature",     CIM_UINT32 },
     { L"Size",          CIM_UINT64 },
+    { L"TotalHeads",    CIM_UINT32 },
 };
 static const struct column col_diskdrivetodiskpartition[] =
 {
@@ -734,7 +736,9 @@ struct record_diskdrive
     const WCHAR *model;
     const WCHAR *pnpdevice_id;
     const WCHAR *serialnumber;
+    UINT32       signature;
     UINT64       size;
+    UINT32       total_heads;
 };
 struct record_diskdrivetodiskpartition
 {
@@ -2685,8 +2689,10 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             rec->model         = L"Wine Disk Drive";
             rec->pnpdevice_id  = L"IDE\\Disk\\VEN_WINE";
             rec->serialnumber  = get_diskdrive_serialnumber( root[0] );
+            rec->signature     = 0;
             get_freespace( root, &size );
             rec->size          = size;
+            rec->total_heads   = 255;
             if (!match_row( table, row, cond, &status ))
             {
                 free_row_values( table, row );
