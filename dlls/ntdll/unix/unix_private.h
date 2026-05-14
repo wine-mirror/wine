@@ -485,6 +485,12 @@ static inline BOOL is_ec_code( ULONG_PTR ptr )
     return (map[page / 64] >> (page & 63)) & 1;
 }
 
+static inline CLIENT_ID make_client_id( ULONG pid, ULONG tid )
+{
+    CLIENT_ID id = { .UniqueProcess = ULongToHandle(pid), .UniqueThread = ULongToHandle(tid) };
+    return id;
+}
+
 static inline void mutex_lock( pthread_mutex_t *mutex )
 {
     if (!process_exiting) pthread_mutex_lock( mutex );

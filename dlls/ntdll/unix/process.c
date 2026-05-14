@@ -697,7 +697,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     ULONG startup_info_size, env_size;
     int unixdir, socketfd[2] = { -1, -1 };
     struct pe_image_info pe_info;
-    CLIENT_ID id;
+    ULONG process_id, thread_id;
     USHORT machine = 0;
     HANDLE parent = 0, debug = 0, token = 0;
     UNICODE_STRING nt_name, path = {0};
@@ -837,7 +837,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         if (!(status = wine_server_call( req )))
         {
             process_handle = wine_server_ptr_handle( reply->handle );
-            id.UniqueProcess = ULongToHandle( reply->pid );
+            process_id     = reply->pid;
         }
         process_info = wine_server_ptr_handle( reply->info );
     }
@@ -874,7 +874,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         if (!(status = wine_server_call( req )))
         {
             thread_handle = wine_server_ptr_handle( reply->handle );
-            id.UniqueThread = ULongToHandle( reply->tid );
+            thread_id     = reply->tid;
         }
     }
     SERVER_END_REQ;
@@ -907,8 +907,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     }
 
     TRACE( "%s pid %04x tid %04x handles %p/%p\n", debugstr_us(&path),
-           HandleToULong(id.UniqueProcess), HandleToULong(id.UniqueThread),
-           process_handle, thread_handle );
+           process_id, thread_id, process_handle, thread_handle );
 
     /* update output attributes */
 
@@ -918,6 +917,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         {
         case PS_ATTRIBUTE_CLIENT_ID:
         {
+            CLIENT_ID id = make_client_id( process_id, thread_id );
             SIZE_T size = min( ps_attr->Attributes[i].Size, sizeof(id) );
             memcpy( ps_attr->Attributes[i].ValuePtr, &id, size );
             if (ps_attr->Attributes[i].ReturnLength) *ps_attr->Attributes[i].ReturnLength = size;

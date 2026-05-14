@@ -1164,9 +1164,7 @@ void set_thread_id( struct thread_data *data )
     TEB *teb = data->teb;
     WOW_TEB *wow_teb = get_wow_teb( teb );
 
-    teb->ClientId.UniqueProcess = ULongToHandle( pid );
-    teb->ClientId.UniqueThread  = ULongToHandle( data->tid );
-    teb->RealClientId = teb->ClientId;
+    teb->RealClientId = teb->ClientId = make_client_id( pid, data->tid );
     if (wow_teb)
     {
         wow_teb->ClientId.UniqueProcess = pid;
@@ -1430,11 +1428,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
         if (!(status = result.create_thread.status))
         {
-            CLIENT_ID client_id;
+            CLIENT_ID client_id = make_client_id( result.create_thread.pid, result.create_thread.tid );
             TEB *teb = wine_server_get_ptr( result.create_thread.teb );
             *handle = wine_server_ptr_handle( result.create_thread.handle );
-            client_id.UniqueProcess = ULongToHandle( result.create_thread.pid );
-            client_id.UniqueThread  = ULongToHandle( result.create_thread.tid );
             if (attr_list) status = update_attr_list( attr_list, *handle, &client_id, teb );
         }
         return status;
@@ -1495,11 +1491,7 @@ NTSTATUS WINAPI PsCreateSystemThread( HANDLE *handle, ACCESS_MASK access, OBJECT
         return status;
     }
 
-    if (id)
-    {
-        id->UniqueProcess = ULongToHandle( pid );
-        id->UniqueThread  = ULongToHandle( data->tid );
-    }
+    if (id) *id = make_client_id( pid, data->tid );
     return status;
 }
 
@@ -2176,8 +2168,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             {
                 info.ExitStatus             = reply->exit_code;
                 info.TebBaseAddress         = wine_server_get_ptr( reply->teb );
-                info.ClientId.UniqueProcess = ULongToHandle(reply->pid);
-                info.ClientId.UniqueThread  = ULongToHandle(reply->tid);
+                info.ClientId               = make_client_id( reply->pid, reply->tid );
                 info.AffinityMask           = reply->affinity & affinity_mask;
                 info.Priority               = reply->priority;
                 info.BasePriority           = reply->base_priority;

@@ -3218,8 +3218,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
             {
                 ti = (SYSTEM_EXTENDED_THREAD_INFORMATION *)((BYTE *)nt_process->ti + j * thread_info_size);
                 ti->ThreadInfo.CreateTime.QuadPart = server_thread->start_time;
-                ti->ThreadInfo.ClientId.UniqueProcess = UlongToHandle(server_process->pid);
-                ti->ThreadInfo.ClientId.UniqueThread = UlongToHandle(server_thread->tid);
+                ti->ThreadInfo.ClientId = make_client_id( server_process->pid, server_thread->tid );
                 ti->ThreadInfo.dwCurrentPriority = server_thread->current_priority;
                 ti->ThreadInfo.dwBasePriority = server_thread->base_priority;
                 get_thread_times( server_process->unix_pid, server_thread->unix_tid,

@@ -1838,8 +1838,7 @@ NTSTATUS WINAPI NtWaitForDebugEvent( HANDLE handle, BOOLEAN alertable, LARGE_INT
             {
                 ret = event_data_to_state_change( &data, state );
                 state->NewState = data.code;
-                state->AppClientId.UniqueProcess = ULongToHandle( reply->pid );
-                state->AppClientId.UniqueThread  = ULongToHandle( reply->tid );
+                state->AppClientId = make_client_id( reply->pid, reply->tid );
             }
         }
         SERVER_END_REQ;
