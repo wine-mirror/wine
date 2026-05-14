@@ -50,6 +50,9 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
+#ifdef __APPLE__
+# include <os/arch/arm64.h>
+#endif
 
 #include "ntstatus.h"
 #include "windef.h"
@@ -310,6 +313,14 @@ static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext )
  */
 static inline struct thread_data *init_handler( ucontext_t *sigcontext )
 {
+#ifdef __APPLE__
+    /* If enabled, disable the custom x18 ABI and set the low bit of uc_link for later reference. */
+    if (os_custom_x18_abi_enabled())
+    {
+        os_set_custom_x18_abi_enabled( false );
+        sigcontext->uc_link = (void *)((uintptr_t)sigcontext->uc_link | 0x1);
+    }
+#endif
     return get_thread_data();
 }
 
@@ -319,6 +330,20 @@ static inline struct thread_data *init_handler( ucontext_t *sigcontext )
  */
 static inline void leave_handler( struct thread_data *data, ucontext_t *sigcontext )
 {
+#ifdef __APPLE__
+    if (!is_inside_signal_stack( data, (void *)SP_sig(sigcontext )) &&
+        !is_inside_syscall( data, SP_sig(sigcontext )))
+    {
+        os_set_custom_x18_abi_enabled( true );
+    }
+    else
+    {
+        /* Could be returning to PE or not: restore the x18 ABI state from when the signal was raised. */
+        if ((uintptr_t)sigcontext->uc_link & 0x1)
+            os_set_custom_x18_abi_enabled( true );
+    }
+    sigcontext->uc_link = (void *)((uintptr_t)sigcontext->uc_link & ~0x1);
+#endif
 }
 
 
@@ -964,6 +989,16 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp d12, d13, [x29, #0x80]\n\t"
                    "stp d14, d15, [x29, #0x90]\n\t"
                    "stp x1, x2, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+#ifdef __APPLE__
+                   "mov x20, x0\n\t"
+                   "mov x21, x3\n\t"
+                   "mov x22, x4\n\t"
+                   "mov x0, #1\n\t"
+                   "bl " __ASM_NAME("os_set_custom_x18_abi_enabled") "\n\t"
+                   "mov x4,  x22\n\t"
+                   "mov x3,  x21\n\t"
+                   "mov x0,  x20\n\t"
+#endif
                    "mov x18, x4\n\t"              /* teb */
                    "mrs x1, fpcr\n\t"
                    "mrs x2, fpsr\n\t"
@@ -1684,6 +1719,9 @@ void signal_init_process( TEB *teb )
  */
 void syscall_dispatcher_return_slowpath(void)
 {
+#ifdef __APPLE__
+    os_set_custom_x18_abi_enabled( false );
+#endif
     raise( SIGUSR2 );
 }
 
@@ -1850,6 +1888,20 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mov x22, sp\n\t"
                    "mov x24, x18\n\t"
                    __ASM_CFI_CFA_IS_AT2(x22, 0x98, 0x02) /* frame->syscall_cfa */
+#ifdef __APPLE__
+                   "stp x0, x1, [sp, #-0x50]!\n\t"
+                   "stp x2, x3, [sp, #0x10]\n\t"
+                   "stp x4, x5, [sp, #0x20]\n\t"
+                   "stp x6, x7, [sp, #0x30]\n\t"
+                   "str x8,     [sp, #0x40]\n\t"
+                   "mov x0, xzr\n\t"
+                   "bl " __ASM_NAME("os_set_custom_x18_abi_enabled") "\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldr x8,     [sp, #0x40]\n\t"
+                   "ldp x0, x1, [sp], #0x50\n\t"
+#endif
                    "and x20, x8, #0xfff\n\t"    /* syscall number */
                    "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
                    "ldr x16, [x24, #0x370]\n\t" /* thread_data->syscall_table */
@@ -1876,6 +1928,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mov sp, x22\n"
                    __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
+#ifdef __APPLE__
+                   "mov x21, x0\n\t"
+                   "mov x0, #1\n\t"
+                   "bl " __ASM_NAME("os_set_custom_x18_abi_enabled") "\n\t"
+                   "mov x0, x21\n\t"
+#endif
                    "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "tbz x16, #16, 1f\n\t"       /* RESTORE_FLAGS_EMULATION */
                    "bl " __ASM_NAME("syscall_dispatcher_return_slowpath") "\n"
@@ -2006,10 +2064,25 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_CFA_IS_AT2(x19, 0x98, 0x02) /* frame->syscall_cfa */
                    "ldr x16, [x0, x1, lsl 3]\n\t"
                    "mov x0, x2\n\t"             /* args */
+#ifdef __APPLE__
+                   "mov x20, x0\n\t"
+                   "mov x21, x16\n\t"
+                   "mov x0, xzr\n\t"
+                   "bl " __ASM_NAME("os_set_custom_x18_abi_enabled") "\n\t"
+                   "mov x16, x21\n\t"
+                   "mov x0,  x20\n\t"
+#endif
                    "blr x16\n\t"
                    "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "cbnz w16, " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
+#ifdef __APPLE__
+                   "mov x20, x0\n\t"
+                   "mov x0, #1\n\t"
+                   "bl " __ASM_NAME("os_set_custom_x18_abi_enabled") "\n\t"
+                   "mov x0,  x20\n\t"
+                   "ldp x20, x21, [sp, #0xa0]\n\t"
+#endif
                    "ldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x16, x17, [sp, #0xf8]\n\t"
                    /* switch to user stack */
