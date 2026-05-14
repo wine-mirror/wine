@@ -3213,6 +3213,83 @@ static void test_exception_dispatcher(void)
 
 #endif  /* _WIN64 */
 
+#ifdef __arm64ec__
+
+static ULONG *doorbell;
+static ULONG64 suspend_rip;
+
+static DWORD WINAPI doorbell_thread( void *arg )
+{
+    CHPE_V2_CPU_AREA_INFO *chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
+    ULONG signaled_doorbell = -1;
+    NTSTATUS status;
+    HANDLE event;
+    CONTEXT ctx;
+    LONG i = 0;
+
+    RtlCaptureContext( &ctx );
+
+    if (InterlockedIncrement( &i ) == 1)
+    {
+        suspend_rip = ctx.Rip;
+
+        chpe->InSimulation = 1;
+        doorbell = chpe->SuspendDoorbell;
+        ok( doorbell != NULL, "doorbell is not available\n" );
+        while (!(signaled_doorbell = *doorbell)) YieldProcessor();
+        chpe->InSimulation = 0;
+
+        /* syscalls, including waits, continue working */
+        event = CreateEventW( NULL, FALSE, TRUE, NULL );
+        ok( event != NULL, "CreateEvent failed\n" );
+        status = NtWaitForSingleObject( event, FALSE, NULL );
+        ok( !status, "NtWaitForSingleObject failed\n" );
+        status = NtClose( event );
+        ok( !status, "NtClose failed\n" );
+
+        NtContinue( &ctx, FALSE );
+        ok( 0, "NtContinue failed\n" );
+    }
+
+    ok( !*doorbell, "doorbell = %lx\n", *doorbell );
+    ok( signaled_doorbell == -1, "signaled_doorbell = %lx\n", signaled_doorbell );
+    doorbell = NULL;
+    return 0;
+}
+
+static void test_suspend_doorbell(void)
+{
+    HANDLE thread;
+    CONTEXT ctx;
+    int suspend;
+
+    for (suspend = 0; suspend < 2; suspend++)
+    {
+        doorbell = NULL;
+        suspend_rip = 0;
+
+        thread = CreateThread( NULL, 0, doorbell_thread, NULL, 0, NULL );
+        ok( thread != NULL, "CreateThread failed\n" );
+
+        while (!doorbell) YieldProcessor();
+        ok( !*doorbell, "doorbell = %lx\n", *doorbell );
+
+        if (suspend) SuspendThread( thread );
+
+        memset( &ctx, 0xcc, sizeof(ctx) );
+        ctx.ContextFlags = CONTEXT_FULL;
+        GetThreadContext( thread, &ctx );
+        ok( ctx.Rip == suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, suspend_rip );
+
+        if (suspend) ResumeThread( thread );
+
+        WaitForSingleObject( thread, INFINITE );
+        ok( !doorbell, "thread did not reset doorbell\n" );
+    }
+}
+
+#endif /* __arm64ec__ */
+
 static void test_arm64ec(void)
 {
 #ifdef __aarch64__
@@ -3254,6 +3331,9 @@ START_TEST(wow64)
     test_init_block();
     test_iosb();
     test_syscalls();
+#endif
+#ifdef __arm64ec__
+    test_suspend_doorbell();
 #endif
     test_memory_notifications();
     test_cpu_area();
