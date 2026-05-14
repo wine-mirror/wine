@@ -4063,6 +4063,8 @@ struct wined3d_decoder_output_view
 
 void wined3d_decoder_output_view_cleanup(struct wined3d_decoder_output_view *view);
 
+HRESULT wined3d_swapchain_desc_validate_flags(const struct wined3d_swapchain_desc *desc);
+
 struct wined3d_swapchain_state
 {
     struct wined3d *wined3d;

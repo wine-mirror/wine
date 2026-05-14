@@ -4987,7 +4987,7 @@ static void update_swapchain_flags(struct wined3d_texture *texture)
 {
     unsigned int flags = texture->swapchain->state.desc.flags;
 
-    if (flags & WINED3D_SWAPCHAIN_LOCKABLE_BACKBUFFER)
+    if (flags & WINED3D_SWAPCHAIN_LOCKABLE_BACKBUFFER && !texture->swapchain->state.desc.multisample_type)
         texture->resource.access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     else
         texture->resource.access &= ~(WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W);
@@ -5081,6 +5081,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     TRACE("flags %#x\n", swapchain_desc->flags);
     TRACE("refresh_rate %u\n", swapchain_desc->refresh_rate);
     TRACE("auto_restore_display_mode %#x\n", swapchain_desc->auto_restore_display_mode);
+
+    if (FAILED(hr = wined3d_swapchain_desc_validate_flags(swapchain_desc)))
+        return hr;
 
     if (swapchain_desc->backbuffer_bind_flags && swapchain_desc->backbuffer_bind_flags != WINED3D_BIND_RENDER_TARGET)
         FIXME("Got unexpected backbuffer bind flags %#x.\n", swapchain_desc->backbuffer_bind_flags);

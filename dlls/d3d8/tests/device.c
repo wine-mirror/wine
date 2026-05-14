@@ -9431,10 +9431,7 @@ static void test_lockable_backbuffer(void)
 
         /* But locking multisampled is not allowed. */
         hr = IDirect3DSurface8_LockRect(surface, &lockrect, NULL, D3DLOCK_READONLY);
-        todo_wine
         ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            IDirect3DSurface8_UnlockRect(surface);
 
         IDirect3DSurface8_Release(surface);
 
@@ -9446,10 +9443,7 @@ static void test_lockable_backbuffer(void)
         ok(hr == D3D_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
 
         hr = IDirect3DSurface8_LockRect(surface, &lockrect, NULL, D3DLOCK_READONLY);
-        todo_wine
         ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            IDirect3DSurface8_UnlockRect(surface);
 
         IDirect3DSurface8_Release(surface);
         IDirect3DSwapChain8_Release(swapchain);
@@ -9610,10 +9604,7 @@ static void test_swapchain_multisample_reset(void)
 
     /* But locking is not allowed. */
     hr = IDirect3DSurface8_LockRect(surface, &lr, NULL, 0);
-    todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        IDirect3DSurface8_UnlockRect(surface);
 
     IDirect3DSurface8_Release(surface);
 

@@ -920,6 +920,8 @@ enum wined3d_memory_segment_group
 #define WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES                     0x00040000u
 #define WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE                  0x00080000u
 #define WINED3D_SWAPCHAIN_REGISTER_TOPMOST_TIMER                0x00100000u
+/* Allow the swapchain flag, but not actual locking */
+#define WINED3D_SWAPCHAIN_ALLOW_MS_LOCKABLE_BACKBUFFER          0x00200000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 
