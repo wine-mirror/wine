@@ -1930,12 +1930,6 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC c
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (context->format != format)
-    {
-        WARN( "Mismatched draw_hdc %p format %u, context %p format %u\n", draw_hdc, format, context, context->format );
-        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
-        return FALSE;
-    }
 
     created = create_memory_pbuffer( draw_hdc );
     if (!context_sync_drawables( context, draw_hdc, read_hdc )) return FALSE;

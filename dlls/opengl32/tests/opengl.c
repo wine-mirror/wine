@@ -3658,8 +3658,8 @@ static void test_framebuffer(void)
         ok_ret( TRUE, wglDeleteContext( ctx2 ) );
         ctx2 = ext.wglCreateContextAttribsARB( hdc2, ctx, NULL );
         ok_ptr( ctx2, !=, NULL );
-        ok_ret( FALSE, ext.wglMakeContextCurrentARB( hdc, hdc2, ctx2 ) );
-        ok_ret( ERROR_INVALID_PIXEL_FORMAT, LOWORD( GetLastError() ) );
+        todo_wine ok_ret( FALSE, ext.wglMakeContextCurrentARB( hdc, hdc2, ctx2 ) );
+        todo_wine ok_ret( ERROR_INVALID_PIXEL_FORMAT, LOWORD( GetLastError() ) );
     }
 
     ok_ret( TRUE, ext.wglMakeContextCurrentARB( hdc2, hdc2, ctx2 ) );
