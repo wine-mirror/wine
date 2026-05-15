@@ -129,8 +129,6 @@ extern BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow 
 extern HRESULT load_devices_from_reg(void);
 extern HRESULT load_driver_devices(EDataFlow flow);
 
-extern void main_loop_stop(void);
-
 extern const WCHAR drv_keyW[];
 
 extern HRESULT get_audio_session(const GUID *sessionguid, IMMDevice *device, UINT channels,

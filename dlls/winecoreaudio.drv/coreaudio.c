@@ -199,13 +199,6 @@ static BOOL device_has_channels(AudioDeviceID device, EDataFlow flow)
     return ret;
 }
 
-static NTSTATUS unix_main_loop(void *args)
-{
-    struct main_loop_params *params = args;
-    NtSetEvent(params->event, NULL);
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS unix_get_endpoint_ids(void *args)
 {
     struct get_endpoint_ids_params *params = args;
@@ -1774,7 +1767,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     unix_not_implemented,
     unix_not_implemented,
-    unix_main_loop,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_get_endpoint_ids,
     unix_create_stream,
     unix_release_stream,
@@ -1824,19 +1818,6 @@ static NTSTATUS unix_wow64_process_attach(void *args)
     NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
     zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     return STATUS_SUCCESS;
-}
-
-static NTSTATUS unix_wow64_main_loop(void *args)
-{
-    struct
-    {
-        PTR32 event;
-    } *params32 = args;
-    struct main_loop_params params =
-    {
-        .event = ULongToHandle(params32->event)
-    };
-    return unix_main_loop(&params);
 }
 
 static NTSTATUS unix_wow64_get_endpoint_ids(void *args)
@@ -2239,7 +2220,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     unix_wow64_process_attach,
     unix_not_implemented,
-    unix_wow64_main_loop,
+    unix_not_implemented,
+    unix_not_implemented,
     unix_wow64_get_endpoint_ids,
     unix_wow64_create_stream,
     unix_wow64_release_stream,

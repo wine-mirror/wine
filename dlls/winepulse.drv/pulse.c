@@ -273,19 +273,47 @@ static void pulse_main_loop_thread_cleanup(void *context)
     pulse_broadcast();
 }
 
-static NTSTATUS pulse_main_loop(void *args)
+static void pulse_main_loop(void *args)
 {
-    struct main_loop_params *params = args;
+    HANDLE event = args;
     int ret;
     pulse_lock();
     pulse_ml = pa_mainloop_new();
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
-    NtSetEvent(params->event, NULL);
+    NtSetEvent(event, NULL);
     pthread_cleanup_push(pulse_main_loop_thread_cleanup, NULL);
     pa_mainloop_run(pulse_ml, &ret);
     pthread_cleanup_pop(0);
     pa_mainloop_free(pulse_ml);
     pulse_unlock();
+    PsTerminateSystemThread( 0 );
+}
+
+static HANDLE main_loop_thread;
+
+static NTSTATUS pulse_main_loop_start(void *args)
+{
+    static const WCHAR name[] = {'a','u','d','i','o','_','c','l','i','e','n','t','_','m','a','i','n',0};
+    HANDLE event;
+    NTSTATUS status;
+
+    if (main_loop_thread) return STATUS_SUCCESS;
+
+    NtCreateEvent( &event, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
+    if (!(status = create_unix_thread( &main_loop_thread, name, pulse_main_loop, event )))
+        NtWaitForSingleObject( event, FALSE, NULL );
+    NtClose( event );
+    return status;
+}
+
+static NTSTATUS pulse_main_loop_stop(void *args)
+{
+    if (main_loop_thread)
+    {
+        NtWaitForSingleObject( main_loop_thread, FALSE, NULL );
+        NtClose( main_loop_thread );
+        main_loop_thread = 0;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -2504,7 +2532,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     pulse_process_attach,
     pulse_process_detach,
-    pulse_main_loop,
+    pulse_main_loop_start,
+    pulse_main_loop_stop,
     pulse_get_endpoint_ids,
     pulse_create_stream,
     pulse_release_stream,
@@ -2555,19 +2584,6 @@ static NTSTATUS pulse_wow64_process_attach(void *args)
     zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
 
     return pulse_process_attach( args );
-}
-
-static NTSTATUS pulse_wow64_main_loop(void *args)
-{
-    struct
-    {
-        PTR32 event;
-    } *params32 = args;
-    struct main_loop_params params =
-    {
-        .event = ULongToHandle(params32->event)
-    };
-    return pulse_main_loop(&params);
 }
 
 static NTSTATUS pulse_wow64_get_endpoint_ids(void *args)
@@ -3011,7 +3027,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     pulse_wow64_process_attach,
     pulse_process_detach,
-    pulse_wow64_main_loop,
+    pulse_main_loop_start,
+    pulse_main_loop_stop,
     pulse_wow64_get_endpoint_ids,
     pulse_wow64_create_stream,
     pulse_wow64_release_stream,

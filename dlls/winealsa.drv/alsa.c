@@ -477,13 +477,6 @@ static WCHAR *alsa_get_card_name(int card)
     return ret;
 }
 
-static NTSTATUS alsa_main_loop(void *args)
-{
-    struct main_loop_params *params = args;
-    NtSetEvent(params->event, NULL);
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS alsa_get_endpoint_ids(void *args)
 {
     static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
@@ -2410,7 +2403,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     alsa_not_implemented,
     alsa_not_implemented,
-    alsa_main_loop,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_get_endpoint_ids,
     alsa_create_stream,
     alsa_release_stream,
@@ -2460,19 +2454,6 @@ static NTSTATUS alsa_wow64_process_attach(void *args)
     NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
     zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     return STATUS_SUCCESS;
-}
-
-static NTSTATUS alsa_wow64_main_loop(void *args)
-{
-    struct
-    {
-        PTR32 event;
-    } *params32 = args;
-    struct main_loop_params params =
-    {
-        .event = ULongToHandle(params32->event)
-    };
-    return alsa_main_loop(&params);
 }
 
 static NTSTATUS alsa_wow64_get_endpoint_ids(void *args)
@@ -2876,7 +2857,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     alsa_wow64_process_attach,
     alsa_not_implemented,
-    alsa_wow64_main_loop,
+    alsa_not_implemented,
+    alsa_not_implemented,
     alsa_wow64_get_endpoint_ids,
     alsa_wow64_create_stream,
     alsa_wow64_release_stream,

@@ -211,7 +211,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             }
             if (lpvReserved) break;
 
-            main_loop_stop();
+            wine_unix_call( main_loop_stop, NULL );
             if (drvs.module_unixlib)
             {
                 __wine_unload_unix_lib( drvs.module );

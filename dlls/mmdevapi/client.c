@@ -42,16 +42,6 @@ typedef struct tagLANGANDCODEPAGE
     WORD wCodePage;
 } LANGANDCODEPAGE;
 
-static HANDLE main_loop_thread;
-
-void main_loop_stop(void)
-{
-    if (main_loop_thread) {
-        WaitForSingleObject(main_loop_thread, INFINITE);
-        CloseHandle(main_loop_thread);
-    }
-}
-
 void set_stream_volumes(struct audio_client *This)
 {
     struct set_volumes_params params;
@@ -200,37 +190,6 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
         TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
         TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
     }
-}
-
-static DWORD CALLBACK main_loop_func(void *event)
-{
-    struct main_loop_params params;
-
-    SetThreadDescription(GetCurrentThread(), L"audio_client_main");
-
-    params.event = event;
-
-    wine_unix_call(main_loop, &params);
-
-    return 0;
-}
-
-HRESULT main_loop_start(void)
-{
-    if (!main_loop_thread) {
-        HANDLE event = CreateEventW(NULL, TRUE, FALSE, NULL);
-        if (!(main_loop_thread = CreateThread(NULL, 0, main_loop_func, event, 0, NULL))) {
-            ERR("Failed to create main loop thread\n");
-            CloseHandle(event);
-            return E_FAIL;
-        }
-
-        SetThreadPriority(main_loop_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        WaitForSingleObject(event, INFINITE);
-        CloseHandle(event);
-    }
-
-    return S_OK;
 }
 
 static DWORD CALLBACK timer_loop_func(void *user)
@@ -503,10 +462,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    if (FAILED(params.result = main_loop_start())) {
-        sessions_unlock();
-        return params.result;
-    }
+    wine_unix_call( main_loop_start, NULL );
 
     if (flags & AUDCLNT_STREAMFLAGS_LOOPBACK) {
         struct get_loopback_capture_device_params params;
