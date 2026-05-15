@@ -76,7 +76,7 @@ Call ok(&h0 = 0, "&h0 <> 0")
 ' &H8000 (INT16_MIN bit pattern) is the one 16-bit value parsed as Long, not
 ' Integer: -32768 has no positive Int16 representation, so native promotes it.
 Call ok(&H8000 = -32768, "&H8000 <> -32768")
-todo_wine_ok getVT(&H8000) = "VT_I4", "getVT(&H8000) is not VT_I4"
+Call ok(getVT(&H8000) = "VT_I4", "getVT(&H8000) is not VT_I4")
 Call ok(&H8001 = -32767, "&H8001 <> -32767")
 Call ok(getVT(&H8001) = "VT_I2", "getVT(&H8001) is not VT_I2")
 Call ok(&H7FFF = 32767, "&H7FFF <> 32767")

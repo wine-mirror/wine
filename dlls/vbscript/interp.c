@@ -2001,7 +2001,11 @@ static HRESULT interp_int(exec_ctx_t *ctx)
 
     TRACE("%ld\n", arg);
 
-    if(arg == (INT16)arg) {
+    /* INT16_MIN is the one I2-fitting value native always parses as Long: it
+     * has no positive Int16 representation, so &H8000 / decimal 32768 etc.
+     * produce a Long literal. The only OP_int call site that emits this value
+     * is the hex/oct lexer; unary `-32768` is two ops (push 32768, then neg). */
+    if(arg == (INT16)arg && arg != INT16_MIN) {
         V_VT(&v) = VT_I2;
         V_I2(&v) = arg;
     }else {
