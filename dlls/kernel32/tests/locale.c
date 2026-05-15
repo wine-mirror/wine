@@ -6283,6 +6283,21 @@ static void test_GetGeoInfo(void)
     ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
 
+    if (GetUserDefaultLangID() == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ))
+    {
+        GetLocaleInfoA( 0x419, LOCALE_SENGCOUNTRY, expect, sizeof(expect) );
+        buffA[0] = 0;
+        ret = pGetGeoInfoA(203, GEO_FRIENDLYNAME, buffA, 20, 0);
+        ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
+        ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
+        GetLocaleInfoA( 0x411, LOCALE_SENGCOUNTRY, expect, sizeof(expect) );
+        buffA[0] = 0;
+        ret = pGetGeoInfoA(122, GEO_FRIENDLYNAME, buffA, 20, 0);
+        ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
+        ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
+    }
+    else skip( "localized geo names not tested\n" );
+
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoA(203, GEO_TIMEZONES, buffA, 20, 0);
     ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);

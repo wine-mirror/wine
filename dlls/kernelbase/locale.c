@@ -658,6 +658,21 @@ static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid 
 }
 
 
+static const NLS_LOCALE_DATA *find_locale_from_geoid( GEOID id )
+{
+    const NLS_LOCALE_DATA *locale;
+
+    for (unsigned int i = 0; i < locale_table->nb_lcnames; i++)
+    {
+        if (!lcnames_index[i].name) continue;  /* skip invariant locale */
+        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
+        locale = get_locale_data( lcnames_index[i].idx );
+        if (locale->igeoid == id) return locale;
+    }
+    return NULL;
+}
+
+
 static const struct sortguid *get_language_sort( const WCHAR *name )
 {
     const NLS_LOCALE_LCNAME_INDEX *entry;
@@ -1778,6 +1793,7 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
 {
     WCHAR tmp[12], tmp2[12];
     const WCHAR *str = tmp;
+    const NLS_LOCALE_DATA *locale;
     ULONG id;
     int ret;
 
@@ -1828,6 +1844,13 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
         swprintf( tmp, ARRAY_SIZE(tmp), L"%08X", id );
         break;
     case GEO_FRIENDLYNAME:
+        if ((locale = find_locale_from_geoid( geo->id )))
+        {
+            str = locale_strings + locale->sengcountry + 1; /* FIXME: localization */
+            break;
+        }
+        FIXME( "no GEO_FRIENDLYNAME found for id %lu\n", geo->id );
+        return 0;
     case GEO_OFFICIALNAME:
         FIXME( "type %u is not supported\n", type );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
