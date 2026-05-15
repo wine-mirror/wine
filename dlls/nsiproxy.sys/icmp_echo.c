@@ -751,6 +751,7 @@ static int SOCKADDR_INET_to_sockaddr( const SOCKADDR_INET *in, struct sockaddr *
         struct sockaddr_in *sa = (struct sockaddr_in *)out;
 
         if (len < sizeof(*sa)) return 0;
+        memset( sa, 0, sizeof(*sa) );
         sa->sin_family = AF_INET;
         sa->sin_port = in->Ipv4.sin_port;
         sa->sin_addr.s_addr = in->Ipv4.sin_addr.WS_s_addr;
@@ -761,6 +762,7 @@ static int SOCKADDR_INET_to_sockaddr( const SOCKADDR_INET *in, struct sockaddr *
         struct sockaddr_in6 *sa = (struct sockaddr_in6 *)out;
 
         if (len < sizeof(*sa)) return 0;
+        memset( sa, 0, sizeof(*sa) );
         sa->sin6_family = AF_INET6;
         sa->sin6_port = in->Ipv6.sin6_port;
         sa->sin6_flowinfo = in->Ipv6.sin6_flowinfo;
@@ -853,71 +855,94 @@ static void init_listen(void)
         NtClose( thread );
 }
 
-static NTSTATUS icmp_data_create( struct icmp_send_echo_params *params, struct icmp_data **icmp_data )
+static NTSTATUS icmp_get_socket( struct icmp_send_echo_params *params, struct icmp_socket **ret_socket )
 {
-    struct sockaddr *src, *dst;
-    struct icmp_data *data;
     const struct family_ops *ops;
+    struct icmp_socket *s;
+    struct sockaddr *src;
+    int src_len;
+    struct sockaddr_storage src_storage;
 
-    pthread_once( &init_once, init_listen );
+    src = (struct sockaddr *)&src_storage;
+    src_len = SOCKADDR_INET_to_sockaddr( params->src, src, sizeof(src_storage) );
 
     if (params->dst->si_family == WS_AF_INET6)     ops = &ipv6;
     else if (params->dst->si_family == WS_AF_INET) ops = &ipv4;
     else return STATUS_INVALID_PARAMETER;
 
-    data = calloc( 1, sizeof(*data) );
-    if (!data) return STATUS_NO_MEMORY;
-    if (!(data->s = calloc( 1, sizeof(*data->s) )))
+    *ret_socket = NULL;
+    pthread_mutex_lock( &listen_lock );
+    LIST_FOR_EACH_ENTRY( s, &socket_list, struct icmp_socket, entry )
     {
-        free( data );
+        assert( s->polling );
+        if (params->dst->si_family == WS_AF_INET6 && ops->family != AF_INET6) continue;
+        if (params->dst->si_family == WS_AF_INET && ops->family != AF_INET) continue;
+        if (s->hop_limit != params->hop_limit || s->ttl != params->ttl || s->tos != params->tos) continue;
+        if (s->src_len != src_len) continue;
+        if (memcmp( src, &s->src_storage, src_len )) continue;
+
+        icmp_grab_socket( s );
+        pthread_mutex_unlock( &listen_lock );
+        *ret_socket = s;
+        TRACE( "Using socket %p.\n", s );
+        return STATUS_SUCCESS;
+    }
+
+    pthread_once( &init_once, init_listen );
+
+    if (!(s = calloc( 1, sizeof(*s) )))
+    {
+        pthread_mutex_unlock( &listen_lock );
         return STATUS_NO_MEMORY;
     }
-    data->s->ref = 1;
-    list_init( &data->s->request_list );
-    data->s->id = getpid() & 0xffff; /* will be overwritten for linux ping socks */
-    data->s->ping_socket = FALSE;
-    data->s->socket = socket( ops->family, SOCK_RAW, ops->icmp_protocol );
-    if (data->s->socket < 0) /* Try a ping-socket */
+    s->ref = 1;
+    list_init( &s->request_list );
+    s->socket = -1;
+    s->id = getpid() & 0xffff; /* will be overwritten for linux ping socks */
+    s->ping_socket = FALSE;
+
+    s->socket = socket( ops->family, SOCK_RAW, ops->icmp_protocol );
+    if (s->socket < 0) /* Try a ping-socket */
     {
+        int value = 1;
+
         TRACE( "failed to open raw sock, trying a dgram sock\n" );
-        data->s->socket = socket( ops->family, SOCK_DGRAM, ops->icmp_protocol );
-        if (data->s->socket < 0)
+        s->socket = socket( ops->family, SOCK_DGRAM, ops->icmp_protocol );
+        if (s->socket < 0)
         {
             WARN( "Unable to create socket\n" );
-            icmp_release_socket( data->s );
-            free( data );
+            pthread_mutex_unlock( &listen_lock );
+            icmp_release_socket( s );
             return STATUS_ACCESS_DENIED;
         }
+        setsockopt( s->socket, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value) );
 #ifdef __linux__
         if (ops->family == AF_INET) ops = &ipv4_linux_ping;
-        data->s->ping_socket = TRUE;
+        s->ping_socket = TRUE;
 #endif
     }
 
-    data->s->hop_limit = params->hop_limit;
-    data->s->ttl = params->ttl;
-    data->s->tos = params->tos;
-    src = (struct sockaddr *)&data->s->src_storage;
-    dst = (struct sockaddr *)&data->dst_storage;
-    data->s->src_len = SOCKADDR_INET_to_sockaddr( params->src, src, sizeof(data->s->src_storage) );
-    data->dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(data->dst_storage) );
+    s->hop_limit = params->hop_limit;
+    s->ttl = params->ttl;
+    s->tos = params->tos;
+    s->src_len = src_len;
+    s->src_storage = src_storage;
 
-    if (bind( data->s->socket, src, data->s->src_len ))
+    if (bind( s->socket, src, s->src_len ))
     {
-        icmp_data_free( data );
+        pthread_mutex_unlock( &listen_lock );
+        icmp_release_socket( s );
         return STATUS_INVALID_ADDRESS_COMPONENT;
     }
 
-    data->s->ops = ops;
-    data->s->ops->set_socket_opts( data->s );
-    pthread_mutex_lock( &listen_lock );
-    list_add_tail( &socket_list, &data->s->entry );
-    data->s->polling = TRUE;
-    write( socket_list_update_pipe[1], "x", 1 );
+    s->ops = ops;
+    s->ops->set_socket_opts( s );
+    list_add_tail( &socket_list, &s->entry );
+    s->polling = TRUE;
     pthread_mutex_unlock( &listen_lock );
-
-    *icmp_data = data;
-    data->completion_event = params->completion_event;
+    write( socket_list_update_pipe[1], "x", 1 );
+    *ret_socket = s;
+    TRACE( "created socket %p.\n", s );
     return STATUS_SUCCESS;
 }
 
@@ -926,12 +951,22 @@ NTSTATUS icmp_send_echo( void *args )
     struct icmp_send_echo_params *params = args;
     struct icmp_hdr *icmp_hdr; /* this is the same for both ipv4 and ipv6 */
     struct icmp_data *data;
+    struct sockaddr *dst;
     int ret, err;
 
     NTSTATUS status;
 
-    status = icmp_data_create( params, &data );
-    if (status) return status;
+    data = calloc( 1, sizeof(*data) );
+    if (!data) return STATUS_NO_MEMORY;
+    if ((status = icmp_get_socket( params, &data->s )))
+    {
+        free( data );
+        return status;
+    }
+    data->completion_event = params->completion_event;
+
+    dst = (struct sockaddr *)&data->dst_storage;
+    data->dst_len = SOCKADDR_INET_to_sockaddr( params->dst, dst, sizeof(data->dst_storage) );
 
     icmp_hdr = malloc( sizeof(*icmp_hdr) + params->request_size );
     if (!icmp_hdr)
@@ -942,6 +977,8 @@ NTSTATUS icmp_send_echo( void *args )
     data->s->ops->init_icmp_hdr( data, icmp_hdr );
     memcpy( icmp_hdr + 1, params->request, params->request_size );
     icmp_hdr->checksum = data->s->ops->chksum( data, (BYTE *)icmp_hdr, sizeof(*icmp_hdr) + params->request_size );
+
+    TRACE( "data %p, seq %d.\n", data, data->seq );
 
     pthread_mutex_lock( &listen_lock );
     list_add_tail( &data->s->request_list, &data->entry );
