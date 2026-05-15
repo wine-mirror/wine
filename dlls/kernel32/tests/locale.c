@@ -3362,66 +3362,20 @@ static void test_LocaleNameToLCID(void)
 
 static const char * const strings_sorted[] =
 {
-"'",
-"-",
-"!",
-"\"",
-".",
-":",
-"\\",
-"_",
-"`",
-"{",
-"}",
-"+",
-"0",
-"1",
-"2",
-"3",
-"4",
-"5",
-"6",
-"7",
-"8",
-"9",
-"a",
-"A",
-"b",
-"B",
-"c",
-"C"
+    "'", "-", "!", "\"", ".", ":", "\\", "_", "`", "{", "}", "+",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "A", "b", "B", "c", "C"
+};
+
+static const char * const strings_sorted_ja[] =
+{
+    "'", "-", "!", "\"", ".", ":", "_", "`", "{", "}", "\\", "+",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "A", "b", "B", "c", "C"
 };
 
 static const char * const strings[] =
 {
-"C",
-"\"",
-"9",
-"'",
-"}",
-"-",
-"7",
-"+",
-"`",
-"1",
-"a",
-"5",
-"\\",
-"8",
-"B",
-"3",
-"_",
-"6",
-"{",
-"2",
-"c",
-"4",
-"!",
-"0",
-"A",
-":",
-"b",
-"."
+    "C", "\"", "9", "'", "}", "-", "7", "+", "`", "1", "a", "5", "\\", "8",
+    "B", "3", "_", "6", "{", "2", "c", "4", "!", "0", "A", ":", "b", "."
 };
 
 static int compare_string1(const void *e1, const void *e2)
@@ -3457,33 +3411,38 @@ static void test_sorting(void)
 {
     char buf[256];
     char **str_buf = (char **)buf;
+    const char * const *expect = strings_sorted;
     int i;
 
     assert(sizeof(buf) >= sizeof(strings));
+
+    if (GetUserDefaultLangID() == MAKELANGID( LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN ) ||
+        GetUserDefaultLangID() == MAKELANGID( LANG_KOREAN, SUBLANG_KOREAN ))
+        expect = strings_sorted_ja;
 
     /* 1. sort using lstrcmpA */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string1);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(strings_sorted[i], str_buf[i]),
-           "qsort using lstrcmpA failed for element %d\n", i);
+        ok(!strcmp(expect[i], str_buf[i]),
+           "qsort using lstrcmpA failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
     }
     /* 2. sort using CompareStringA */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string2);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(strings_sorted[i], str_buf[i]),
-           "qsort using CompareStringA failed for element %d\n", i);
+        ok(!strcmp(expect[i], str_buf[i]),
+           "qsort using CompareStringA failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
     }
     /* 3. sort using sort keys */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string3);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(strings_sorted[i], str_buf[i]),
-           "qsort using sort keys failed for element %d\n", i);
+        ok(!strcmp(expect[i], str_buf[i]),
+           "qsort using sort keys failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
     }
 }
 
