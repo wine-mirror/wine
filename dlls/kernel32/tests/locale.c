@@ -6194,10 +6194,12 @@ static void test_GetGeoInfo(void)
     ok(ret == 4, "GEO_NATION of nation: expected 4, got %d\n", ret);
     ok(!strcmp(buffA, "203"), "GEO_NATION of nation: expected 203, got %s\n", buffA);
 
+    SetLastError(0xdeadbeef);
     buffA[0] = 0;
     ret = pGetGeoInfoA(39070, GEO_NATION, buffA, 20, 0); /* GEOCLASS_REGION */
     ok(ret == 0, "GEO_NATION of region: expected 0, got %d\n", ret);
     ok(*buffA == 0, "GEO_NATION of region: expected empty string, got %s\n", buffA);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError());
 
     buffA[0] = 0;
     ret = pGetGeoInfoA(333, GEO_NATION, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
@@ -6246,6 +6248,30 @@ static void test_GetGeoInfo(void)
     {
         ok(ret == 4, "got %d\n", ret);
         ok(!strcmp(buffA, "643"), "got %s\n", buffA);
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_TIMEZONES, buffA, 20, 0);
+    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_OFFICIALLANGUAGES, buffA, 20, 0);
+    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError() );
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_NAME, buffA, 20, 0);
+    if (ret == 0) win_skip("GEO_NAME not supported.\n");
+    else
+    {
+        ok(ret == 3, "got %d\n", ret);
+        ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
+
+        buffA[0] = 0;
+        ret = pGetGeoInfoA(47610, GEO_NAME, buffA, 20, 0);
+        ok(ret == 4, "got %d\n", ret);
+        ok(!strcmp(buffA, "039"), "got %s\n", buffA);
     }
 
     /* try invalid type value */

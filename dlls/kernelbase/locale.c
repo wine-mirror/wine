@@ -1819,12 +1819,17 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
     case GEO_LCID:
     case GEO_FRIENDLYNAME:
     case GEO_OFFICIALNAME:
-    case GEO_TIMEZONES:
-    case GEO_OFFICIALLANGUAGES:
-    case GEO_NAME:
         FIXME( "type %u is not supported\n", type );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
+    case GEO_TIMEZONES:
+        return 0;  /* not supported on Windows */
+    case GEO_OFFICIALLANGUAGES:
+        return 0;  /* not supported on Windows */
+    case GEO_NAME:
+        if (geo->class == GEOCLASS_NATION) str = geo->iso2;
+        else swprintf( tmp, ARRAY_SIZE(tmp), L"%03u", geo->uncode );
+        break;
     default:
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
