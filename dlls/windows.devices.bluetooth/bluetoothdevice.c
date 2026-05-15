@@ -236,8 +236,9 @@ static HRESULT WINAPI ble_device_GetTrustLevel( IBluetoothLEDevice *iface, Trust
 
 static HRESULT WINAPI ble_device_get_DeviceId( IBluetoothLEDevice *iface, HSTRING *value )
 {
-    FIXME( "(%p, %p): stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct ble_device *impl = impl_from_IBluetoothLEDevice( iface );
+    TRACE( "(%p, %p)\n", iface, value );
+    return WindowsDuplicateString( impl->id, value );
 }
 
 static HRESULT WINAPI ble_device_get_Name( IBluetoothLEDevice *iface, HSTRING *value )

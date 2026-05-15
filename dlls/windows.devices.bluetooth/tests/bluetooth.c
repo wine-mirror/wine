@@ -537,10 +537,9 @@ static void test_IBluetoothLEDevice( int line, IBluetoothLEDevice *device, UINT6
     HRESULT hr;
 
     hr = IBluetoothLEDevice_get_DeviceId( device, &str );
-    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok_( __FILE__, line )( !WindowsIsStringEmpty( str ), "got empty DeviceId value.\n" );
-    if (hr == S_OK)
-        trace( "DeviceId: %s\n", debugstr_hstring( str ) );
+    ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    ok_( __FILE__, line )( !WindowsIsStringEmpty( str ), "got empty DeviceId value.\n" );
+    trace( "DeviceId: %s\n", debugstr_hstring( str ) );
     WindowsDeleteString( str );
 
     hr = IBluetoothLEDevice_get_BluetoothAddress( device, &addr2 );
