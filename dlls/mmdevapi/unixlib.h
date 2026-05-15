@@ -83,7 +83,6 @@ struct create_stream_params
 struct release_stream_params
 {
     stream_handle stream;
-    HANDLE timer_thread;
     HRESULT result;
 };
 
@@ -103,11 +102,6 @@ struct reset_params
 {
     stream_handle stream;
     HRESULT result;
-};
-
-struct timer_loop_params
-{
-    stream_handle stream;
 };
 
 struct get_render_buffer_params
@@ -337,7 +331,6 @@ enum unix_funcs
     start,
     stop,
     reset,
-    timer_loop,
     get_render_buffer,
     release_render_buffer,
     get_capture_buffer,

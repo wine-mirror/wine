@@ -75,8 +75,6 @@ struct audio_client {
     UINT32 channel_count;
     stream_handle stream;
 
-    HANDLE timer_thread;
-
     struct audio_session *session;
     struct audio_session_wrapper *session_wrapper;
 

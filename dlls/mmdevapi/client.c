@@ -192,27 +192,11 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
     }
 }
 
-static DWORD CALLBACK timer_loop_func(void *user)
-{
-    struct timer_loop_params params;
-    struct audio_client *This = user;
-
-    SetThreadDescription(GetCurrentThread(), L"audio_client_timer");
-
-    params.stream = This->stream;
-
-    wine_unix_call(timer_loop, &params);
-
-    return 0;
-}
-
-HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
+static HRESULT stream_release(stream_handle stream)
 {
     struct release_stream_params params;
 
-    params.stream       = stream;
-    params.timer_thread = timer_thread;
-
+    params.stream = stream;
     wine_unix_call(release_stream, &params);
 
     return params.result;
@@ -533,7 +517,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
 
 exit:
     if (FAILED(params.result)) {
-        stream_release(stream, NULL);
+        stream_release(stream);
         free(client->vols);
         client->vols = NULL;
     } else {
@@ -721,7 +705,7 @@ static ULONG WINAPI client_Release(IAudioClient3 *iface)
         free(This->vols);
 
         if (This->stream)
-            stream_release(This->stream, This->timer_thread);
+            stream_release(This->stream);
 
         free(This->device_name);
         free(This);
@@ -934,15 +918,6 @@ static HRESULT WINAPI client_Start(IAudioClient3 *iface)
 
     params.stream = This->stream;
     wine_unix_call(start, &params);
-
-    if (SUCCEEDED(params.result) && !This->timer_thread) {
-        if ((This->timer_thread = CreateThread(NULL, 0, timer_loop_func, This, 0, NULL)))
-            SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        else {
-            IAudioClient3_Stop(&This->IAudioClient3_iface);
-            params.result = E_FAIL;
-        }
-    }
 
     sessions_unlock();
 
