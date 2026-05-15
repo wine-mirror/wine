@@ -24,6 +24,7 @@
 #include "devpkey.h"
 #include "bthledef.h"
 #include "ddk/bthguid.h"
+#include "bluetoothleapis.h"
 
 #include "wine/debug.h"
 
@@ -167,6 +168,7 @@ struct ble_device
     IBluetoothLEDevice IBluetoothLEDevice_iface;
     HSTRING id;
     UINT64 addr;
+    HANDLE device;
     LONG ref;
 };
 
@@ -211,6 +213,7 @@ static ULONG WINAPI ble_device_Release( IBluetoothLEDevice *iface )
     if (!ref)
     {
         WindowsDeleteString( impl->id );
+        CloseHandle( impl->device );
         free( impl );
     }
     return ref;
@@ -249,8 +252,58 @@ static HRESULT WINAPI ble_device_get_Name( IBluetoothLEDevice *iface, HSTRING *v
 
 static HRESULT WINAPI ble_device_get_GattServices( IBluetoothLEDevice *iface, IVectorView_GattDeviceService **services )
 {
-    FIXME( "(%p, %p): stub!\n", iface, services );
-    return E_NOTIMPL;
+    static const struct vector_iids iids = {
+        .vector = &IID_IVector_IInspectable,
+        .view = &IID_IVectorView_GattDeviceService,
+        .iterable = &IID_IIterable_GattDeviceService,
+        .iterator = &IID_IIterator_GattDeviceService,
+    };
+    struct ble_device *impl = impl_from_IBluetoothLEDevice( iface );
+    BTH_LE_GATT_SERVICE *buf = NULL;
+    IVector_IInspectable *vector;
+    USHORT actual = 0, i;
+    HRESULT hr;
+
+    TRACE( "(%p, %p)\n", iface, services );
+
+    *services = NULL;
+    if (FAILED(hr = vector_create( &iids, (void **)&vector ))) return hr;
+    hr = BluetoothGATTGetServices( impl->device, 0, NULL, &actual, 0 );
+    if (SUCCEEDED( hr ) || hr != HRESULT_FROM_WIN32( ERROR_MORE_DATA )) goto done;
+
+    for (;;)
+    {
+        UINT32 size = actual;
+        void *tmp;
+
+        if (!(tmp = realloc( buf, sizeof( *buf ) * size )))
+        {
+            hr = E_OUTOFMEMORY;
+            goto done;
+        }
+        buf = tmp;
+        if (SUCCEEDED(hr = BluetoothGATTGetServices( impl->device, size, buf, &actual, 0 ))) break;
+        if (hr != HRESULT_FROM_WIN32( ERROR_INVALID_USER_BUFFER )) goto done;
+    }
+    for (i = 0; i < actual; i++)
+    {
+        IGattDeviceService *service;
+
+        if (FAILED(hr = gatt_service_create( &buf[i], &service ))) goto done;
+        hr = IVector_IInspectable_Append( vector, (IInspectable *)service );
+        IGattDeviceService_Release( service );
+        if (FAILED( hr )) goto done;
+    }
+done:
+    free( buf );
+    if (FAILED( hr ))
+    {
+        IVector_IInspectable_Release( vector );
+        return hr;
+    }
+    hr = IVector_IInspectable_GetView( vector, (IVectorView_IInspectable **)services );
+    IVector_IInspectable_Release( vector );
+    return hr;
 }
 
 static HRESULT WINAPI ble_device_get_ConnectionStatus( IBluetoothLEDevice *iface, BluetoothConnectionStatus *value )
@@ -349,6 +402,13 @@ static HRESULT ble_device_create( IBluetoothLEDevice **device, const WCHAR *id, 
     {
         free( impl );
         return hr;
+    }
+    impl->device = CreateFileW( id, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    if (impl->device == INVALID_HANDLE_VALUE)
+    {
+        WindowsDeleteString( impl->id );
+        free( impl );
+        return HRESULT_FROM_WIN32( GetLastError() );
     }
     impl->ref = 1;
     impl->addr = addr;

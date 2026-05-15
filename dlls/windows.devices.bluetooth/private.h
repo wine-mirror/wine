@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winstring.h"
+#include "bthledef.h"
 
 #include "activation.h"
 #include "bthdef.h"
@@ -57,6 +58,17 @@ extern IActivationFactory *advertisement_watcher_factory;
 
 HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param,
                                             async_operation_callback callback, IAsyncOperation_IInspectable **out );
+
+struct vector_iids
+{
+    const GUID *iterable;
+    const GUID *iterator;
+    const GUID *vector;
+    const GUID *view;
+};
+HRESULT vector_create( const struct vector_iids *iids, void **out );
+
+HRESULT gatt_service_create( const BTH_LE_GATT_SERVICE *svc, IGattDeviceService **service );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

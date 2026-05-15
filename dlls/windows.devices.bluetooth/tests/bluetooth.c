@@ -529,6 +529,31 @@ static void test_BluetoothDeviceStatics( void )
     IBluetoothDeviceStatics_Release( statics );
 }
 
+static void test_IGattDeviceService( int line, IGattDeviceService *service )
+{
+    HSTRING str = NULL;
+    UINT16 handle;
+    HRESULT hr;
+    GUID uuid;
+
+    hr = IGattDeviceService_get_DeviceId( service, &str );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok_( __FILE__, line )( !WindowsIsStringEmpty( str ), "got empty DeviceId value.\n" );
+    if (hr == S_OK)
+        trace( "DeviceId: %s\n", debugstr_hstring( str ) );
+    WindowsDeleteString( str );
+
+    hr = IGattDeviceService_get_Uuid( service, &uuid );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK)
+        trace( "UUID: %s\n", debugstr_guid( &uuid ) );
+
+    hr = IGattDeviceService_get_AttributeHandle( service, &handle );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK)
+        trace( "Attribute handle: %#x\n", handle );
+}
+
 static void test_IBluetoothLEDevice( int line, IBluetoothLEDevice *device, UINT64 addr )
 {
     BluetoothConnectionStatus status;
@@ -610,8 +635,10 @@ static void test_BluetoothLEDeviceStatics( void )
     iface_data.cbSize = sizeof( iface_data );
     while (SetupDiEnumDeviceInterfaces( devinfo, NULL, &GUID_BLUETOOTHLE_DEVICE_INTERFACE, idx++, &iface_data ))
     {
+        IVectorView_GattDeviceService *services;
         SP_DEVINFO_DATA devinfo_data;
         WCHAR addr_str[13];
+        UINT32 i, len = 0;
         DEVPROPTYPE type;
         UINT64 addr = 0;
         BOOL success;
@@ -635,6 +662,20 @@ static void test_BluetoothLEDeviceStatics( void )
         IAsyncOperation_BluetoothLEDevice_Release( async_op );
 
         test_IBluetoothLEDevice( __LINE__, device, addr );
+        hr = IBluetoothLEDevice_get_GattServices( device, &services );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+        IVectorView_GattDeviceService_get_Size( services, &len );
+        for (i = 0; i < len; i++)
+        {
+            IGattDeviceService *service;
+
+            winetest_push_context( "GATT service %u", i );
+            IVectorView_GattDeviceService_GetAt( services, i, &service );
+            test_IGattDeviceService( __LINE__, service );
+            winetest_pop_context();
+            IGattDeviceService_Release( service );
+        }
+
         IBluetoothLEDevice_Release( device );
         winetest_pop_context();
     }
