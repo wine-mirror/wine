@@ -544,8 +544,8 @@ static void test_IBluetoothLEDevice( int line, IBluetoothLEDevice *device, UINT6
     WindowsDeleteString( str );
 
     hr = IBluetoothLEDevice_get_BluetoothAddress( device, &addr2 );
-    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok_( __FILE__, line )( addr == addr2, "%I64x != %I64x\n", addr, addr2 );
+    ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    ok_( __FILE__, line )( addr == addr2, "%I64x != %I64x\n", addr, addr2 );
 
     hr = IBluetoothLEDevice_get_Name( device, &str );
     todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
@@ -597,15 +597,12 @@ static void test_BluetoothLEDeviceStatics( void )
 
     /* Use an invalid Bluetooth address. */
     hr = IBluetoothLEDeviceStatics_FromBluetoothAddressAsync( statics, 0, &async_op );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
 
-    if (hr == S_OK)
-    {
-        await_bluetoothledevice( __LINE__, async_op );
-        check_bluetoothledevice_async( __LINE__, async_op, 1, Completed, S_OK, TRUE, &device );
-        ok( !device, "got device %p != NULL\n", device );
-        if (device) IBluetoothLEDevice_Release( device );
-    }
+    await_bluetoothledevice( __LINE__, async_op );
+    check_bluetoothledevice_async( __LINE__, async_op, 1, Completed, S_OK, TRUE, &device );
+    ok( !device, "got device %p != NULL\n", device );
+    if (device) IBluetoothLEDevice_Release( device );
 
     /* Enumerate through all known LE devices on this system. */
     devinfo = SetupDiGetClassDevsW( &GUID_BLUETOOTHLE_DEVICE_INTERFACE, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE );
@@ -632,13 +629,7 @@ static void test_BluetoothLEDeviceStatics( void )
 
         winetest_push_context( "device %lu (%s)", idx - 1, debugstr_w( addr_str ) );
         hr = IBluetoothLEDeviceStatics_FromBluetoothAddressAsync( statics, addr, &async_op );
-        todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-        if (hr != S_OK)
-        {
-            skip( "FromBluetoothAddressAsync failed.\n" );
-            winetest_pop_context();
-            continue;
-        }
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
 
         await_bluetoothledevice( __LINE__, async_op );
         check_bluetoothledevice_async( __LINE__, async_op, 1, Completed, S_OK, FALSE, &device );

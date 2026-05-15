@@ -41,6 +41,8 @@
 #define WIDL_using_Windows_Devices_Radios
 #include "windows.devices.radios.h"
 #define WIDL_using_Windows_Devices_Bluetooth
+#define WIDL_using_Windows_Devices_Bluetooth_GenericAttributeProfile
+#include "windows.devices.bluetooth.genericattributeprofile.h"
 #include "windows.devices.bluetooth.rfcomm.h"
 #include "windows.devices.bluetooth.h"
 #define WIDL_using_Windows_Devices_Bluetooth_Advertisement
