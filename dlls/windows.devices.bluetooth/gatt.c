@@ -112,8 +112,17 @@ static HRESULT WINAPI gatt_service_get_DeviceId( IGattDeviceService *iface, HSTR
 
 static HRESULT WINAPI gatt_service_get_Uuid( IGattDeviceService *iface, GUID *value )
 {
-    FIXME( "(%p, %p): stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct gatt_service *impl = impl_from_IGattDeviceService( iface );
+    TRACE( "(%p, %p)\n", iface, value );
+
+    if (impl->service.ServiceUuid.IsShortUuid)
+    {
+        *value = BTH_LE_ATT_BLUETOOTH_BASE_GUID;
+        value->Data1 = impl->service.ServiceUuid.Value.ShortUuid;
+    }
+    else
+        *value = impl->service.ServiceUuid.Value.LongUuid;
+    return S_OK;
 }
 
 static HRESULT WINAPI gatt_service_get_AttributeHandle( IGattDeviceService *iface, UINT16 *value )

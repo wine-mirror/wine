@@ -544,9 +544,8 @@ static void test_IGattDeviceService( int line, IGattDeviceService *service )
     WindowsDeleteString( str );
 
     hr = IGattDeviceService_get_Uuid( service, &uuid );
-    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
-    if (hr == S_OK)
-        trace( "UUID: %s\n", debugstr_guid( &uuid ) );
+    ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    trace( "UUID: %s\n", debugstr_guid( &uuid ) );
 
     hr = IGattDeviceService_get_AttributeHandle( service, &handle );
     todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
