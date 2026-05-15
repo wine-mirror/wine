@@ -72,6 +72,17 @@ Call ok(&H000000031& = 49, "&H000000031& <> 49")
 Call ok(getVT(&H00000000000000FF) = "VT_I2", "getVT(&H00000000000000FF) is not VT_I2")
 Call ok(getVT(&H007FFFFFFF) = "VT_I4", "getVT(&H007FFFFFFF) is not VT_I4")
 Call ok(&h0 = 0, "&h0 <> 0")
+
+' &H8000 (INT16_MIN bit pattern) is the one 16-bit value parsed as Long, not
+' Integer: -32768 has no positive Int16 representation, so native promotes it.
+Call ok(&H8000 = -32768, "&H8000 <> -32768")
+todo_wine_ok getVT(&H8000) = "VT_I4", "getVT(&H8000) is not VT_I4"
+Call ok(&H8001 = -32767, "&H8001 <> -32767")
+Call ok(getVT(&H8001) = "VT_I2", "getVT(&H8001) is not VT_I2")
+Call ok(&H7FFF = 32767, "&H7FFF <> 32767")
+Call ok(getVT(&H7FFF) = "VT_I2", "getVT(&H7FFF) is not VT_I2")
+Call ok(&H8000& = 32768, "&H8000& <> 32768")
+Call ok(getVT(&H8000&) = "VT_I4", "getVT(&H8000&) is not VT_I4")
 Call ok(&h0& = 0, "&h0& <> 0")
 Call ok(&h00 = 0, "&h00 <> 0")
 Call ok(&h000000000 = 0, "&h000000000 <> 0")
