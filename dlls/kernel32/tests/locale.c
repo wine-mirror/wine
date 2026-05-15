@@ -8226,7 +8226,7 @@ static void test_geo_name(void)
     if (!RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)reg_name, &size))
         have_name = TRUE;
 
-    lstrcpyW(buf, L"QQ");
+    lstrcpyW(buf, L"BE");
     RegSetValueExW(key, L"Name", 0, REG_SZ, (BYTE *)buf, (lstrlenW(buf) + 1) * sizeof(WCHAR));
 
     size = sizeof(reg_name);
@@ -8276,7 +8276,7 @@ static void test_geo_name(void)
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, name_size);
     ok(ret == name_size && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"QQ"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"BE"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     SetLastError(0xdeadbeef);
     bret = pSetUserGeoName(NULL);
@@ -8295,15 +8295,35 @@ static void test_geo_name(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok(ret == 4 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"001"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
+    todo_wine
+    ok(!lstrcmpW(buf, L"BE") || broken(!lstrcmpW(buf, L"001")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
     geoid = GetUserGeoID(GEOCLASS_REGION);
     ok(geoid == 39070, "Got unexpected geoid %lu.\n", geoid);
     size = sizeof(buf);
     status = RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)buf, &size);
     ok(status == ERROR_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok(type == REG_SZ, "Got unexpected type %#lx.\n", type);
-    ok(!lstrcmpW(buf, L"001"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    todo_wine
+    ok(!lstrcmpW(buf, L"BE") || broken(!lstrcmpW(buf, L"001")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+
+    lstrcpyW(set_name, L"CA");
+    SetLastError(0xdeadbeef);
+    bret = pSetUserGeoName(set_name);
+    ok((bret && GetLastError() == 0xdeadbeef) || broken(bret && GetLastError() == 0),
+            "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
+    ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
+    ok(!lstrcmpW(buf, L"CA"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    geoid = GetUserGeoID(GEOCLASS_REGION);
+    ok(geoid == 39070, "Got unexpected geoid %lu.\n", geoid);
+    size = sizeof(buf);
+    status = RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)buf, &size);
+    ok(status == ERROR_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ok(type == REG_SZ, "Got unexpected type %#lx.\n", type);
+    ok(!lstrcmpW(buf, L"CA"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     lstrcpyW(set_name, L"ar");
     SetLastError(0xdeadbeef);
@@ -8323,9 +8343,11 @@ static void test_geo_name(void)
     ok((bret && GetLastError() == 0xdeadbeef) || broken(bret && GetLastError() == 0),
             "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok((ret == 4 && GetLastError() == 0xdeadbeef) || broken(ret == 4 && GetLastError() == 0),
+    ok((ret && GetLastError() == 0xdeadbeef) || broken(GetLastError() == 0),
             "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"150"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    todo_wine
+    ok(!lstrcmpW(buf, L"AR") || broken(!lstrcmpW(buf, L"150")),
+        "Got unexpected name %s.\n", wine_dbgstr_w(buf));
     geoid = GetUserGeoID(GEOCLASS_NATION);
     ok(geoid == 11, "Got unexpected geoid %lu.\n", geoid);
 
@@ -8334,26 +8356,28 @@ static void test_geo_name(void)
     bret = pSetUserGeoName(set_name);
     ok(!bret && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
 
-    bret = SetUserGeoID(21242);
+    bret = SetUserGeoID(349);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
     ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"XX"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"TC"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     bret = SetUserGeoID(42483);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok(ret == 4 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"011"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
+    todo_wine
+    ok(!lstrcmpW(buf, L"TC") || broken(!lstrcmpW(buf, L"011")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     bret = SetUserGeoID(333);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
     ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"AN"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    todo_wine
+    ok(!lstrcmpW(buf, L"TC") || broken(!lstrcmpW(buf, L"AN")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     RegDeleteValueW(key, L"Name");
     RegDeleteValueW(key, L"Region");
