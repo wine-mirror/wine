@@ -703,23 +703,10 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
 	return primary_done;
 }
 
-/**
- * For a DirectSoundDevice, go through all the currently playing buffers and
- * mix them in to the device buffer.
- *
- * frames = the maximum amount to mix into the primary buffer
- * all_stopped = reports back if all buffers have stopped
- *
- * Returns:  the length beyond the writepos that was mixed to.
- */
-
-static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buffer, DWORD frames, BOOL *all_stopped)
+static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buffer, DWORD frames)
 {
 	INT i;
 	IDirectSoundBufferImpl	*dsb;
-
-	/* unless we find a running buffer, all have stopped */
-	*all_stopped = TRUE;
 
 	TRACE("(frames %ld)\n", frames);
 	for (i = 0; i < device->nrofbuffers; i++) {
@@ -738,8 +725,6 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buff
 
 				/* mix next buffer into the main buffer */
 				DSOUND_MixOne(dsb, mix_buffer, frames);
-
-				*all_stopped = FALSE;
 			}
 			ReleaseSRWLockShared(&dsb->lock);
 		}
@@ -826,7 +811,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		frames = device->frag_frames * 3;
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
-		BOOL all_stopped = FALSE;
 		int nfiller;
 		void *buffer = NULL;
 
@@ -848,12 +832,12 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		memset(buffer, nfiller, frames * block);
 
 		if (!device->normfunction)
-			DSOUND_MixToPrimary(device, buffer, frames, &all_stopped);
+			DSOUND_MixToPrimary(device, buffer, frames);
 		else {
 			memset(device->buffer, nfiller, device->buflen);
 
 			/* do the mixing */
-			DSOUND_MixToPrimary(device, (float*)device->buffer, frames, &all_stopped);
+			DSOUND_MixToPrimary(device, (float*)device->buffer, frames);
 
 			device->normfunction(device->buffer, buffer, frames * device->pwfx->nChannels);
 		}
