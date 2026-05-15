@@ -6267,6 +6267,22 @@ static void test_GetGeoInfo(void)
     ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
 
+    sprintf( expect, "%08X", GetUserDefaultLangID() );
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0);
+    ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0x143b);
+    ok(ret == 9, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(!strcmp(buffA, "0000143B"), "got %s\n", buffA);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0x2c3b);
+    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
+
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoA(203, GEO_TIMEZONES, buffA, 20, 0);
     ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);

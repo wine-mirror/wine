@@ -1778,6 +1778,7 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
 {
     WCHAR tmp[12], tmp2[12];
     const WCHAR *str = tmp;
+    ULONG id;
     int ret;
 
     switch (type)
@@ -1822,6 +1823,10 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
         wcslwr( tmp );
         break;
     case GEO_LCID:
+        if (!lang) lang = GetUserDefaultLangID();
+        if (!GetLocaleInfoW( lang, LOCALE_ILANGUAGE | LOCALE_RETURN_NUMBER, (WCHAR *)&id, 2 )) return 0;
+        swprintf( tmp, ARRAY_SIZE(tmp), L"%08X", id );
+        break;
     case GEO_FRIENDLYNAME:
     case GEO_OFFICIALNAME:
         FIXME( "type %u is not supported\n", type );
