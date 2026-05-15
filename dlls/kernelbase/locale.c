@@ -1776,7 +1776,7 @@ invalid:
 static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
                          WCHAR *buffer, int len, LANGID lang )
 {
-    WCHAR tmp[12];
+    WCHAR tmp[12], tmp2[12];
     const WCHAR *str = tmp;
     int ret;
 
@@ -1816,6 +1816,11 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
         str = geo->currsymbol;
         break;
     case GEO_RFC1766:
+        if (!lang) lang = GetUserDefaultLangID();
+        if (!GetLocaleInfoW( lang, LOCALE_SISO639LANGNAME, tmp2, ARRAY_SIZE(tmp2) )) return 0;
+        swprintf( tmp, ARRAY_SIZE(tmp), L"%s-%s", tmp2, geo->iso2 );
+        wcslwr( tmp );
+        break;
     case GEO_LCID:
     case GEO_FRIENDLYNAME:
     case GEO_OFFICIALNAME:

@@ -6143,7 +6143,7 @@ static void test_CompareStringOrdinal(void)
 
 static void test_GetGeoInfo(void)
 {
-    char buffA[20];
+    char buffA[20], expect[20];
     WCHAR buffW[20];
     INT ret;
 
@@ -6249,6 +6249,23 @@ static void test_GetGeoInfo(void)
         ok(ret == 4, "got %d\n", ret);
         ok(!strcmp(buffA, "643"), "got %s\n", buffA);
     }
+
+    GetLocaleInfoA( GetUserDefaultLangID(), LOCALE_SISO639LANGNAME, expect, sizeof(expect) );
+    strcat( expect, "-ru" );
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0);
+    ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0x143b);
+    ok(ret == 7, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(!strcmp(buffA, "smj-ru"), "got %s\n", buffA);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0x2c3b);
+    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoA(203, GEO_TIMEZONES, buffA, 20, 0);
