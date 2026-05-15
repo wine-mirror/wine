@@ -1549,12 +1549,6 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     wined3d_mutex_lock();
 
-    if (desc->backbuffer_count > 1)
-    {
-        FIXME("The application requested more than one back buffer, this is not properly supported.\n"
-                "Please configure the application to use double buffering (1 back buffer) if possible.\n");
-    }
-
     if (desc->swap_effect != WINED3D_SWAP_EFFECT_DISCARD
             && desc->swap_effect != WINED3D_SWAP_EFFECT_SEQUENTIAL
             && desc->swap_effect != WINED3D_SWAP_EFFECT_COPY)
