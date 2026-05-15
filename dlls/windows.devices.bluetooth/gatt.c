@@ -127,8 +127,10 @@ static HRESULT WINAPI gatt_service_get_Uuid( IGattDeviceService *iface, GUID *va
 
 static HRESULT WINAPI gatt_service_get_AttributeHandle( IGattDeviceService *iface, UINT16 *value )
 {
-    FIXME( "(%p, %p): stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct gatt_service *impl = impl_from_IGattDeviceService( iface );
+    TRACE( "(%p, %p)\n", iface, value );
+    *value = impl->service.AttributeHandle;
+    return S_OK;
 }
 
 static const IGattDeviceServiceVtbl gatt_service_vtbl =
