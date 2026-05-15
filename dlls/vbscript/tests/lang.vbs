@@ -346,6 +346,24 @@ Call ok((Len("ab") < (" " & ctl_nul)), "Len(""ab"") < "" ""&Chr(0) should be tru
 
 Call ok((Len("ab") > ""),                     "Len(""ab"") > """" should be true")
 
+' --- BSTR vs numeric/bool with NEITHER side literal: native treats BSTR
+'     as greater than the numeric/boolean, regardless of values. ---
+Sub testNonLitBstrCmp
+    Dim s : s = "5"
+    Dim n : n = CInt(5)
+    Dim b : b = True
+    Dim sb : sb = "True"
+    todo_wine_ok not (s = n),       "var ""5"" = var 5 should be false"
+    todo_wine_ok s > n,             "var ""5"" > var 5 should be true (BSTR > num)"
+    call ok(not (s < n),       "var ""5"" < var 5 should be false")
+    todo_wine_ok not (sb = b),      "var ""True"" = var True should be false"
+    todo_wine_ok sb > b,            "var ""True"" > var True should be true (BSTR > bool)"
+    Dim e : e = ""
+    call ok(not (e = n),       "var """" = var 5 should be false")
+    todo_wine_ok e > n,             "var """" > var 5 should be true (BSTR > num)"
+End Sub
+Call testNonLitBstrCmp
+
 Dim guard_str : guard_str = "ab"
 Dim guard_err, guard_r
 On Error Resume Next
