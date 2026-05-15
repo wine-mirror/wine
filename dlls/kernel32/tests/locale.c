@@ -3746,7 +3746,7 @@ static const struct sorting_test_entry unicode_sorting_tests[] =
     { L"en-US", -1, CSTR_LESS_THAN,    0, L"\x013a", L"\x013f" },
     { L"vi-VN", -1, CSTR_LESS_THAN,    0, L"\x1d8f", L"\x1ea8" },
     { L"vi-VN", -1, CSTR_LESS_THAN,    0, L"\x0323", L"\xfe26" },
-    { L"vi-VN",  1, CSTR_GREATER_THAN, 0, L"R",      L"\xff32" },
+ /* { L"vi-VN",  1, CSTR_GREATER_THAN, 0, L"R",      L"\xff32" }, changed in Windows 11 */
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\x1d8f", L"\x1ea8" },
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\x0323", L"\xfe26" },
     { L"en-US", -1, CSTR_LESS_THAN,    0, L"R",      L"\xff32" },
