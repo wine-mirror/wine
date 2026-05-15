@@ -24,22 +24,26 @@
 #ifndef __WINE_IMPLGLUE_H
 #define __WINE_IMPLGLUE_H
 
-#include "tomcrypt.h"
 #include "symcrypt.h"
+#include "symcrypt_low_level.h"
 
 #define RSAENH_MAX_HASH_SIZE        104
 
-typedef union tagKEY_CONTEXT {
+struct rsa_key
+{
+    SYMCRYPT_RSAKEY *key;
+    UINT32           flags;
+};
+
+typedef union tagKEY_CONTEXT
+{
     SYMCRYPT_DES_EXPANDED_KEY  des;
     SYMCRYPT_3DES_EXPANDED_KEY des3;
     SYMCRYPT_RC2_EXPANDED_KEY  rc2;
+    SYMCRYPT_RC4_STATE         rc4;
     SYMCRYPT_AES_EXPANDED_KEY  aes;
-    prng_state prng;
-    rsa_key rsa;
+    struct rsa_key             rsa;
 } KEY_CONTEXT;
-
-extern prng_state prng;
-extern int wprng;
 
 struct hash
 {
@@ -59,27 +63,22 @@ static inline void finalize_hash_impl(struct hash *hash, BYTE *hash_value, DWORD
     SymCryptHashResult( hash->desc, &hash->state, hash_value, hash_size );
 }
 
-BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen);
-BOOL free_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext);
-BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                    DWORD dwEffectiveKeyLen, DWORD dwSaltLen, BYTE *abKeyValue);
-BOOL duplicate_key_impl(ALG_ID aiAlgid, const KEY_CONTEXT *pSrcKeyContext,
-                        KEY_CONTEXT *pDestKeyContext);
+BOOL new_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen);
+BOOL free_key_impl(ALG_ID algid, KEY_CONTEXT *ctx);
+BOOL setup_key_impl(ALG_ID algid, KEY_CONTEXT *ctx, DWORD keylen, DWORD effective_keylen, DWORD saltlen,
+                    const BYTE *keyvalue);
+BOOL duplicate_key_impl(ALG_ID algid, const KEY_CONTEXT *src, KEY_CONTEXT *dst);
 
-/* dwKeySpec is optional for symmetric key algorithms */
-BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
-                        BYTE *pbOut);
-BOOL decrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
-                        BYTE *pbOut);
-BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *pbInOut, DWORD dwLen);
+BOOL encrypt_block_impl(ALG_ID algid, KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL decrypt_block_impl(ALG_ID algid, KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL encrypt_stream_impl(ALG_ID algid, KEY_CONTEXT *ctx, BYTE *inout, DWORD len);
 
-BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                            DWORD *pdwPubExp);
-BOOL import_public_key_impl(const BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                            DWORD dwPubExp);
-BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                             DWORD *pdwPubExp);
-BOOL import_private_key_impl(const BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
-                             DWORD dwDataLen, DWORD dwPubExp);
+BOOL sign_hash_impl(KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+BOOL verify_signature_impl(KEY_CONTEXT *ctx, const BYTE *in, BYTE *out);
+
+BOOL export_public_key_impl(const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp);
+BOOL import_public_key_impl(ALG_ID algid, const BYTE *src, DWORD keylen, DWORD pubexp, KEY_CONTEXT *ctx);
+BOOL export_private_key_impl(const KEY_CONTEXT *ctx, BYTE *dst, DWORD *pubexp);
+BOOL import_private_key_impl(ALG_ID algid, const BYTE *src, DWORD keylen, DWORD pubexp, KEY_CONTEXT *ctx);
 
 #endif /* __WINE_IMPLGLUE_H */
