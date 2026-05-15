@@ -7264,11 +7264,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetUserGeoID( GEOID id )
         swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", geo->id );
         RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
 
-        if (geo->class == GEOCLASS_NATION || wcscmp( geo->iso2, L"XX" ))
-            lstrcpyW( bufferW, geo->iso2 );
-        else
-            swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03u", geo->uncode );
-        RegSetValueExW( hkey, L"Name", 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+        if (geo->class == GEOCLASS_NATION && wcscmp( geo->iso2, L"XX" ))
+            RegSetValueExW( hkey, L"Name", 0, REG_SZ,
+                            (BYTE *)geo->iso2, (lstrlenW(geo->iso2) + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
     return TRUE;
