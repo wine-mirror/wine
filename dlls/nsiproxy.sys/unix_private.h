@@ -179,5 +179,5 @@ static inline int ascii_strcasecmp( const char *s1, const char *s2 )
 
 NTSTATUS icmp_cancel_listen( void *args );
 NTSTATUS icmp_close( void *args );
-NTSTATUS icmp_listen( void *args );
+NTSTATUS icmp_get_reply( void *args );
 NTSTATUS icmp_send_echo( void *args );

@@ -289,14 +289,14 @@ static void ipv4_linux_ping_set_socket_opts( struct icmp_socket *s )
 }
 #endif
 
-static int ipv4_reply_buffer_len( struct icmp_listen_params *params )
+static int ipv4_reply_buffer_len( struct icmp_get_reply_params *params )
 {
     int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
     return sizeof(struct ip_hdr) + sizeof(struct icmp_hdr) + params->reply_len - struct_len;
 }
 
 #ifdef __linux__
-static int ipv4_linux_ping_reply_buffer_len( struct icmp_listen_params *params )
+static int ipv4_linux_ping_reply_buffer_len( struct icmp_get_reply_params *params )
 {
     int struct_len = (params->bits == 32) ? sizeof(struct icmp_echo_reply_32) : sizeof(struct icmp_echo_reply_64);
     return sizeof(struct icmp_hdr) + params->reply_len - struct_len;
@@ -434,7 +434,7 @@ static int ipv4_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp, i
     return 0;
 }
 
-static void ipv4_fill_reply( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx)
+static void ipv4_fill_reply( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx)
 {
     void *options_data;
     ULONG data_offset;
@@ -489,10 +489,10 @@ struct family_ops
     unsigned short (*chksum)( struct icmp_data *icmp_data, BYTE *data, unsigned int count );
     int (*set_reply_ip_status)( IP_STATUS ip_status, unsigned int bits, void *out );
     void (*set_socket_opts)( struct icmp_socket *s );
-    int (*reply_buffer_len)( struct icmp_listen_params *params );
+    int (*reply_buffer_len)( struct icmp_get_reply_params *params );
     BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
     int (*parse_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_len, struct icmp_reply_ctx *ctx );
-    void (*fill_reply)( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx );
+    void (*fill_reply)( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx );
 };
 
 static const struct family_ops ipv4 =
@@ -606,7 +606,7 @@ static void ipv6_set_socket_opts( struct icmp_socket *s )
 #endif
 }
 
-static int ipv6_reply_buffer_len( struct icmp_listen_params *params )
+static int ipv6_reply_buffer_len( struct icmp_get_reply_params *params )
 {
     return sizeof(struct icmp_hdr) + params->reply_len - sizeof(ICMPV6_ECHO_REPLY);
 }
@@ -695,7 +695,7 @@ static int ipv6_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp,
     return 0;
 }
 
-static void ipv6_fill_reply( struct icmp_listen_params *params, struct icmp_reply_ctx *ctx)
+static void ipv6_fill_reply( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx)
 {
     ICMPV6_ECHO_REPLY *reply = params->reply;
 
@@ -928,7 +928,7 @@ static ULONG get_rtt( LARGE_INTEGER start )
     return (now.QuadPart - start.QuadPart) / 10000;
 }
 
-static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *params )
+static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_get_reply_params *params )
 {
     struct sockaddr_storage addr;
     struct icmp_reply_ctx ctx;
@@ -979,9 +979,9 @@ skip:
     return STATUS_RETRY;
 }
 
-NTSTATUS icmp_listen( void *args )
+NTSTATUS icmp_get_reply( void *args )
 {
-    struct icmp_listen_params *params = args;
+    struct icmp_get_reply_params *params = args;
     struct icmp_data *data;
     struct pollfd fds[2];
     NTSTATUS status;

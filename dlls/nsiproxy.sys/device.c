@@ -63,7 +63,7 @@ enum unix_calls
 {
     icmp_cancel_listen,
     icmp_close,
-    icmp_listen,
+    icmp_get_reply,
     icmp_send_echo,
     nsi_enumerate_all_ex,
     nsi_get_all_parameters_ex,
@@ -225,13 +225,13 @@ static int icmp_echo_reply_struct_len( ULONG family, ULONG bits )
     return 0;
 }
 
-static DWORD WINAPI listen_thread_proc( void *arg )
+static DWORD WINAPI icmp_wait_reply( void *arg )
 {
     IRP *irp = arg;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
     struct icmp_close_params close_params;
-    struct icmp_listen_params params;
+    struct icmp_get_reply_params params;
     NTSTATUS status;
 
     TRACE( "\n" );
@@ -243,8 +243,8 @@ static DWORD WINAPI listen_thread_proc( void *arg )
     params.reply = irp->AssociatedIrp.SystemBuffer;
     params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
 
-    status = nsiproxy_call( icmp_listen, &params );
-    TRACE( "icmp_listen rets %08lx\n", status );
+    status = nsiproxy_call( icmp_get_reply, &params );
+    TRACE( "icmp_get_reply rets %08lx\n", status );
 
     EnterCriticalSection( &icmp_echo_completion_cs );
     close_params.handle = irp_set_icmp_handle( irp, 0 );
@@ -297,7 +297,7 @@ static NTSTATUS handle_send_echo( IRP *irp )
     }
     IoMarkIrpPending( irp );
     irp_set_icmp_handle( irp, handle );
-    RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
+    RtlQueueWorkItem( icmp_wait_reply, irp, WT_EXECUTELONGFUNCTION );
     return STATUS_PENDING;
 }
 

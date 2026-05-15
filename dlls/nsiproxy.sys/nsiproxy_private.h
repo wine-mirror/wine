@@ -30,7 +30,7 @@ struct icmp_close_params
     icmp_handle handle;
 };
 
-struct icmp_listen_params
+struct icmp_get_reply_params
 {
     icmp_handle handle;
     void *reply;
