@@ -16,7 +16,7 @@ AC_PREREQ([2.69d],[AC_CONFIG_AUX_DIR(tools)],
 
 dnl **** Command-line arguments ****
 
-AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64}],[enable multiple architectures for PE compilation]))
+AC_ARG_ENABLE(archs, AS_HELP_STRING([--enable-archs={i386,x86_64,arm,aarch64,arm64ec,none}],[enable multiple architectures for PE compilation]))
 AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--disable-tests],[do not build the regression tests]))

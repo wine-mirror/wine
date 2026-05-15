@@ -2582,7 +2582,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-archs={i386,x86_64,arm,aarch64}
+  --enable-archs={i386,x86_64,arm,aarch64,arm64ec,none}
                           enable multiple architectures for PE compilation
   --disable-win16         do not include Win16 support
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
