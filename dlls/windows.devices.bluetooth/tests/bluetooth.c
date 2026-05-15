@@ -24,8 +24,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winstring.h"
+#include "setupapi.h"
 #include "bthsdpdef.h"
 #include "bluetoothapis.h"
+#include "bthledef.h"
+#include "devpkey.h"
+#include "ddk/bthguid.h"
 
 #include "roapi.h"
 
@@ -37,6 +41,7 @@
 #include "windows.networking.h"
 #define WIDL_using_Windows_Devices_Bluetooth_Advertisement
 #define WIDL_using_Windows_Devices_Bluetooth
+#define WIDL_using_Windows_Devices_Bluetooth_GenericAttributeProfile
 #include "windows.devices.bluetooth.advertisement.h"
 #include "windows.devices.bluetooth.rfcomm.h"
 #include "windows.devices.bluetooth.h"
@@ -524,15 +529,48 @@ static void test_BluetoothDeviceStatics( void )
     IBluetoothDeviceStatics_Release( statics );
 }
 
+static void test_IBluetoothLEDevice( int line, IBluetoothLEDevice *device, UINT64 addr )
+{
+    BluetoothConnectionStatus status;
+    HSTRING str = NULL;
+    UINT64 addr2 = 0;
+    HRESULT hr;
+
+    hr = IBluetoothLEDevice_get_DeviceId( device, &str );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok_( __FILE__, line )( !WindowsIsStringEmpty( str ), "got empty DeviceId value.\n" );
+    if (hr == S_OK)
+        trace( "DeviceId: %s\n", debugstr_hstring( str ) );
+    WindowsDeleteString( str );
+
+    hr = IBluetoothLEDevice_get_BluetoothAddress( device, &addr2 );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok_( __FILE__, line )( addr == addr2, "%I64x != %I64x\n", addr, addr2 );
+
+    hr = IBluetoothLEDevice_get_Name( device, &str );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK)
+        trace( "Name: %s\n", debugstr_hstring( str ) );
+    WindowsDeleteString( str );
+
+    hr = IBluetoothLEDevice_get_ConnectionStatus( device, &status );
+    todo_wine ok_( __FILE__, line )( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK)
+        trace( "ConnectionStatus: %d\n", status );
+}
+
 static void test_BluetoothLEDeviceStatics( void )
 {
     static const WCHAR *class_name = RuntimeClass_Windows_Devices_Bluetooth_BluetoothLEDevice;
     IAsyncOperation_BluetoothLEDevice *async_op;
+    SP_DEVICE_INTERFACE_DATA iface_data;
     IBluetoothLEDeviceStatics *statics;
     IActivationFactory *factory;
     IBluetoothLEDevice *device = NULL;
+    HDEVINFO devinfo;
     HSTRING str;
     HRESULT hr;
+    DWORD err, idx = 0;
 
     WindowsCreateString( class_name, wcslen( class_name ), &str );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void *)&factory );
@@ -569,6 +607,49 @@ static void test_BluetoothLEDeviceStatics( void )
         if (device) IBluetoothLEDevice_Release( device );
     }
 
+    /* Enumerate through all known LE devices on this system. */
+    devinfo = SetupDiGetClassDevsW( &GUID_BLUETOOTHLE_DEVICE_INTERFACE, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE );
+    err = GetLastError();
+    ok( devinfo != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed: %lu\n", err );
+    iface_data.cbSize = sizeof( iface_data );
+    while (SetupDiEnumDeviceInterfaces( devinfo, NULL, &GUID_BLUETOOTHLE_DEVICE_INTERFACE, idx++, &iface_data ))
+    {
+        SP_DEVINFO_DATA devinfo_data;
+        WCHAR addr_str[13];
+        DEVPROPTYPE type;
+        UINT64 addr = 0;
+        BOOL success;
+
+        devinfo_data.cbSize = sizeof( devinfo_data );
+        success = SetupDiGetDeviceInterfaceDetailW( devinfo, &iface_data, NULL, 0, NULL, &devinfo_data );
+        err = GetLastError();
+        ok( !success && err == ERROR_INSUFFICIENT_BUFFER, "SetupDiGetDeviceInterfaceDetailW failed: %lu\n", err );
+        addr_str[0] = '\0';
+        success = SetupDiGetDevicePropertyW( devinfo, &devinfo_data, &DEVPKEY_Bluetooth_DeviceAddress, &type, (BYTE *)addr_str, sizeof( addr_str ), NULL, 0 );
+        err = GetLastError();
+        ok( success, "SetupDiGetDevicePropertyW failed: %lu\n", err );
+        swscanf( addr_str, L"%I64x", &addr );
+
+        winetest_push_context( "device %lu (%s)", idx - 1, debugstr_w( addr_str ) );
+        hr = IBluetoothLEDeviceStatics_FromBluetoothAddressAsync( statics, addr, &async_op );
+        todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+        if (hr != S_OK)
+        {
+            skip( "FromBluetoothAddressAsync failed.\n" );
+            winetest_pop_context();
+            continue;
+        }
+
+        await_bluetoothledevice( __LINE__, async_op );
+        check_bluetoothledevice_async( __LINE__, async_op, 1, Completed, S_OK, FALSE, &device );
+        IAsyncOperation_BluetoothLEDevice_Release( async_op );
+
+        test_IBluetoothLEDevice( __LINE__, device, addr );
+        IBluetoothLEDevice_Release( device );
+        winetest_pop_context();
+    }
+
+    SetupDiDestroyDeviceInfoList( devinfo );
     IBluetoothLEDeviceStatics_Release( statics );
 }
 
