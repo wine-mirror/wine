@@ -608,20 +608,21 @@ static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *
     return push_instr(ctx, op) ? S_OK : E_OUTOFMEMORY;
 }
 
-/* Bare numeric literals at a comparison site take a different code path on
- * native VBScript: BSTR vs literal numeric coerces to a number (error 13 on
- * parse failure), while BSTR vs anything else (variable, arithmetic result,
- * function return, Const, ...) uses string comparison. Detect "bare numeric
- * literal" syntactically; parens are transparent, but a Const reference is an
- * EXPR_MEMBER and thus correctly treated as non-literal even if its expansion
- * is itself an EXPR_INT. */
+/* Bare literals at a comparison site take a different code path on native
+ * VBScript: BSTR vs literal numeric coerces to a number (error 13 on parse
+ * failure), literal BSTR vs non-literal numeric/bool uses string comparison,
+ * and non-literal BSTR vs non-literal numeric/bool treats the BSTR as
+ * always greater. Detect "bare literal" syntactically; parens are
+ * transparent, but a Const reference is an EXPR_MEMBER and thus correctly
+ * treated as non-literal even if its expansion is itself an EXPR_INT. */
 static BOOL is_literal_expr(expression_t *expr)
 {
     while(expr->type == EXPR_BRACKETS)
         expr = ((unary_expression_t*)expr)->subexpr;
     return expr->type == EXPR_INT
         || expr->type == EXPR_DOUBLE
-        || expr->type == EXPR_DATE;
+        || expr->type == EXPR_DATE
+        || expr->type == EXPR_STRING;
 }
 
 static BOOL is_compare_op(vbsop_t op)

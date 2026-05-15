@@ -353,14 +353,14 @@ Sub testNonLitBstrCmp
     Dim n : n = CInt(5)
     Dim b : b = True
     Dim sb : sb = "True"
-    todo_wine_ok not (s = n),       "var ""5"" = var 5 should be false"
-    todo_wine_ok s > n,             "var ""5"" > var 5 should be true (BSTR > num)"
+    call ok(not (s = n),       "var ""5"" = var 5 should be false")
+    call ok(s > n,             "var ""5"" > var 5 should be true (BSTR > num)")
     call ok(not (s < n),       "var ""5"" < var 5 should be false")
-    todo_wine_ok not (sb = b),      "var ""True"" = var True should be false"
-    todo_wine_ok sb > b,            "var ""True"" > var True should be true (BSTR > bool)"
+    call ok(not (sb = b),      "var ""True"" = var True should be false")
+    call ok(sb > b,            "var ""True"" > var True should be true (BSTR > bool)")
     Dim e : e = ""
     call ok(not (e = n),       "var """" = var 5 should be false")
-    todo_wine_ok e > n,             "var """" > var 5 should be true (BSTR > num)"
+    call ok(e > n,             "var """" > var 5 should be true (BSTR > num)")
 End Sub
 Call testNonLitBstrCmp
 
