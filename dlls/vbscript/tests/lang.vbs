@@ -2807,20 +2807,20 @@ sub TestExecuteGlobalRedim
     call ok(err.number = 0, "first Dim egDynArr() err=" & err.number)
 
     err.clear : ExecuteGlobal "Dim egDynArr()"
-    todo_wine_ok err.number = 13, "second Dim egDynArr() err=" & err.number
+    call ok(err.number = 13, "second Dim egDynArr() err=" & err.number)
 
     err.clear : ExecuteGlobal "Dim egDynArr() : ReDim egDynArr(5)"
-    todo_wine_ok err.number = 13, "Dim+ReDim egDynArr() err=" & err.number
+    call ok(err.number = 13, "Dim+ReDim egDynArr() err=" & err.number)
 
     ' Dim arr(N) already declared as a fixed array in a prior compile unit.
     err.clear : ExecuteGlobal "Dim egFixArr(2)"
     call ok(err.number = 0, "first Dim egFixArr(2) err=" & err.number)
 
     err.clear : ExecuteGlobal "Dim egFixArr(2)"
-    todo_wine_ok err.number = 13, "second Dim egFixArr(2) err=" & err.number
+    call ok(err.number = 13, "second Dim egFixArr(2) err=" & err.number)
 
     err.clear : ExecuteGlobal "Dim egFixArr()"
-    todo_wine_ok err.number = 13, "second Dim egFixArr() err=" & err.number
+    call ok(err.number = 13, "second Dim egFixArr() err=" & err.number)
 
     ' Re-Dim'ing a previously scalar Dim is allowed.
     err.clear : ExecuteGlobal "Dim egScalar"

@@ -1411,6 +1411,13 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
         assert(var != NULL);
         v = &var->v;
         array_ref = &var->array;
+
+        /* A separate ExecuteGlobal can re-encounter a name that was already
+         * Dim'd as an array in an earlier compile unit. Native rejects this
+         * with err 13 regardless of whether the existing array is fixed or
+         * dynamic. Re-Dim'ing an existing scalar (V_VT_EMPTY) is allowed. */
+        if(V_ISARRAY(v))
+            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
     }else {
         ref_t ref;
 
