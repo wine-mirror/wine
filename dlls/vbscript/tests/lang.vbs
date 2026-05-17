@@ -2906,13 +2906,13 @@ End Class
 
 dim cFix : Set cFix = New FixedClassArr
 cFix.Resize 5
-todo_wine_ok cFix.LastErr = 10, "ReDim fixed class member err = " & cFix.LastErr
+call ok(cFix.LastErr = 10, "ReDim fixed class member err = " & cFix.LastErr)
 cFix.ResizePreserve 5
-todo_wine_ok cFix.LastErr = 10, "ReDim Preserve fixed class member err = " & cFix.LastErr
+call ok(cFix.LastErr = 10, "ReDim Preserve fixed class member err = " & cFix.LastErr)
 
 dim cFix2D : Set cFix2D = New FixedClassArr2D
 cFix2D.Resize 5, 7
-todo_wine_ok cFix2D.LastErr = 10, "ReDim fixed 2D class member err = " & cFix2D.LastErr
+call ok(cFix2D.LastErr = 10, "ReDim fixed 2D class member err = " & cFix2D.LastErr)
 
 dim cDyn : Set cDyn = New DynamicClassArr
 cDyn.Resize 5

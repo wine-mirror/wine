@@ -741,6 +741,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
                     hres = E_OUTOFMEMORY;
                     break;
                 }
+                vbdisp->arrays[i]->fFeatures |= FADF_FIXEDSIZE | FADF_STATIC;
             }
 
             if(SUCCEEDED(hres)) {
