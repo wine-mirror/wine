@@ -2862,6 +2862,68 @@ sub TestExecuteGlobalRedim
 end sub
 Call TestExecuteGlobalRedim
 
+Class FixedClassArr
+    Private mArr(2)
+    Public LastErr
+    Public Sub Resize(n)
+        On Error Resume Next
+        Err.Clear : ReDim mArr(n) : LastErr = Err.Number
+    End Sub
+    Public Sub ResizePreserve(n)
+        On Error Resume Next
+        Err.Clear : ReDim Preserve mArr(n) : LastErr = Err.Number
+    End Sub
+End Class
+
+Class FixedClassArr2D
+    Private mArr(2, 3)
+    Public LastErr
+    Public Sub Resize(a, b)
+        On Error Resume Next
+        Err.Clear : ReDim mArr(a, b) : LastErr = Err.Number
+    End Sub
+End Class
+
+Class DynamicClassArr
+    Private mArr()
+    Public LastErr
+    Public Function UB : UB = UBound(mArr) : End Function
+    Public Sub Resize(n)
+        On Error Resume Next
+        Err.Clear : ReDim mArr(n) : LastErr = Err.Number
+    End Sub
+End Class
+
+Class ScalarClassMember
+    Private mArr
+    Public LastErr
+    Public Function UB : UB = UBound(mArr) : End Function
+    Public Sub Resize(n)
+        On Error Resume Next
+        Err.Clear : ReDim mArr(n) : LastErr = Err.Number
+    End Sub
+End Class
+
+dim cFix : Set cFix = New FixedClassArr
+cFix.Resize 5
+todo_wine_ok cFix.LastErr = 10, "ReDim fixed class member err = " & cFix.LastErr
+cFix.ResizePreserve 5
+todo_wine_ok cFix.LastErr = 10, "ReDim Preserve fixed class member err = " & cFix.LastErr
+
+dim cFix2D : Set cFix2D = New FixedClassArr2D
+cFix2D.Resize 5, 7
+todo_wine_ok cFix2D.LastErr = 10, "ReDim fixed 2D class member err = " & cFix2D.LastErr
+
+dim cDyn : Set cDyn = New DynamicClassArr
+cDyn.Resize 5
+call ok(cDyn.LastErr = 0, "ReDim dynamic class member err = " & cDyn.LastErr)
+call ok(cDyn.UB = 5, "ReDim dynamic class member UB = " & cDyn.UB)
+
+dim cScalar : Set cScalar = New ScalarClassMember
+cScalar.Resize 5
+call ok(cScalar.LastErr = 0, "ReDim scalar->array class member err = " & cScalar.LastErr)
+call ok(cScalar.UB = 5, "ReDim scalar->array class member UB = " & cScalar.UB)
+
 sub TestReDimList
     dim x, y
 
