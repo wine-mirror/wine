@@ -22,7 +22,6 @@
 #include "ole2.h"
 #include "oleauto.h"
 #include "olectl.h"
-#include "dispex.h"
 
 #include "wine/test.h"
 
@@ -40,6 +39,7 @@ static void test_policy2_rules(INetFwPolicy2 *policy2)
     HRESULT hr;
     INetFwRules *rules, *rules2;
     INetFwServiceRestriction *restriction;
+    IUnknown *rulesenum;
 
     hr = INetFwPolicy2_QueryInterface(policy2, &IID_INetFwRules, (void**)&rules);
     ok(hr == E_NOINTERFACE, "got 0x%08lx\n", hr);
@@ -68,6 +68,19 @@ static void test_policy2_rules(INetFwPolicy2 *policy2)
 
     hr = INetFwRules_get__NewEnum(rules, NULL);
     ok(hr == E_POINTER, "got %08lx\n", hr);
+
+    hr = INetFwRules_get__NewEnum(rules, &rulesenum);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    if(rulesenum)
+    {
+        IEnumVARIANT *enumvar;
+
+        hr = IUnknown_QueryInterface(rulesenum, &IID_IEnumVARIANT, (void**)&enumvar);
+        ok(hr == S_OK, "got %08lx\n", hr);
+        IEnumVARIANT_Release(enumvar);
+
+        IUnknown_Release(rulesenum);
+    }
 
     INetFwRules_Release(rules);
     INetFwRules_Release(rules2);

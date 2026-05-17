@@ -783,18 +783,136 @@ static HRESULT WINAPI netfw_rules_Item(
     return E_NOTIMPL;
 }
 
+static HRESULT NewEnum_create(fw_rules *rules, IUnknown **obj);
+
+typedef struct
+{
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref, pos;
+    fw_rules *rules;
+} EnumVARIANT;
+
+static inline EnumVARIANT *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, EnumVARIANT, IEnumVARIANT_iface);
+}
+
+static HRESULT WINAPI enumvar_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IEnumVARIANT) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IEnumVARIANT_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enumvar_AddRef(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+    return InterlockedIncrement(&enumvar->ref);
+}
+
+static ULONG WINAPI enumvar_Release(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedDecrement(&enumvar->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        INetFwRules_Release(&enumvar->rules->INetFwRules_iface);
+        free(enumvar);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI enumvar_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched)
+{
+    FIXME("%p,%lu,%p,%p\n", iface, celt, var, fetched);
+
+    return  S_FALSE;
+}
+
+static HRESULT WINAPI enumvar_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    FIXME("%p,%lu\n", iface, celt);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI enumvar_Reset(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+
+    TRACE("%p\n", iface);
+
+    enumvar->pos = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enumvar_Clone(IEnumVARIANT *iface, IEnumVARIANT **penum)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+
+    FIXME("%p,%p\n", iface, penum);
+
+    return NewEnum_create(enumvar->rules, (IUnknown **)penum);
+}
+
+static const struct IEnumVARIANTVtbl EnumVARIANT_vtbl =
+{
+    enumvar_QueryInterface,
+    enumvar_AddRef,
+    enumvar_Release,
+    enumvar_Next,
+    enumvar_Skip,
+    enumvar_Reset,
+    enumvar_Clone
+};
+
+static HRESULT NewEnum_create(fw_rules *rules, IUnknown **obj)
+{
+    EnumVARIANT *enumvar;
+
+    enumvar = malloc(sizeof(*enumvar));
+    if (!enumvar) return E_OUTOFMEMORY;
+
+    enumvar->IEnumVARIANT_iface.lpVtbl = &EnumVARIANT_vtbl;
+    enumvar->ref = 1;
+    enumvar->pos = 0;
+    enumvar->rules = rules;
+    INetFwRules_AddRef(&rules->INetFwRules_iface);
+
+    *obj = (IUnknown *)&enumvar->IEnumVARIANT_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI netfw_rules_get__NewEnum(
     INetFwRules *iface,
     IUnknown **newEnum)
 {
     fw_rules *This = impl_from_INetFwRules( iface );
 
-    FIXME("%p, %p\n", This, newEnum);
+    TRACE("%p, %p\n", This, newEnum);
 
     if (!newEnum) return E_POINTER;
-    *newEnum = NULL;
 
-    return E_NOTIMPL;
+    return NewEnum_create(This, newEnum);
 }
 
 static const struct INetFwRulesVtbl fw_rules_vtbl =
