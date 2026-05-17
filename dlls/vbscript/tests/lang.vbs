@@ -2799,6 +2799,41 @@ sub TestRedimInputArg
 end sub
 Call TestRedimInputArg
 
+sub TestExecuteGlobalRedim
+    on error resume next
+
+    ' Dim arr() already declared as a dynamic array in a prior compile unit.
+    err.clear : ExecuteGlobal "Dim egDynArr()"
+    call ok(err.number = 0, "first Dim egDynArr() err=" & err.number)
+
+    err.clear : ExecuteGlobal "Dim egDynArr()"
+    todo_wine_ok err.number = 13, "second Dim egDynArr() err=" & err.number
+
+    err.clear : ExecuteGlobal "Dim egDynArr() : ReDim egDynArr(5)"
+    todo_wine_ok err.number = 13, "Dim+ReDim egDynArr() err=" & err.number
+
+    ' Dim arr(N) already declared as a fixed array in a prior compile unit.
+    err.clear : ExecuteGlobal "Dim egFixArr(2)"
+    call ok(err.number = 0, "first Dim egFixArr(2) err=" & err.number)
+
+    err.clear : ExecuteGlobal "Dim egFixArr(2)"
+    todo_wine_ok err.number = 13, "second Dim egFixArr(2) err=" & err.number
+
+    err.clear : ExecuteGlobal "Dim egFixArr()"
+    todo_wine_ok err.number = 13, "second Dim egFixArr() err=" & err.number
+
+    ' Re-Dim'ing a previously scalar Dim is allowed.
+    err.clear : ExecuteGlobal "Dim egScalar"
+    call ok(err.number = 0, "first Dim egScalar err=" & err.number)
+
+    err.clear : ExecuteGlobal "Dim egScalar"
+    call ok(err.number = 0, "second Dim egScalar (scalar) err=" & err.number)
+
+    err.clear : ExecuteGlobal "Dim egScalar()"
+    call ok(err.number = 0, "second Dim egScalar() (array) err=" & err.number)
+end sub
+Call TestExecuteGlobalRedim
+
 sub TestReDimList
     dim x, y
 
