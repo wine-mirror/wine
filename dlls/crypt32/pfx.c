@@ -385,7 +385,7 @@ BOOL WINAPI PFXExportCertStoreEx( HCERTSTORE store, CRYPT_DATA_BLOB *pfx, const 
         else if (key_ctx.dwKeySpec == CERT_NCRYPT_KEY_SPEC)
         {
             /* Query key blob size first. */
-            sec_status = NCryptExportKey( key_ctx.hCryptProv, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
+            sec_status = NCryptExportKey( key_ctx.hNCryptKey, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
                                           NULL, 0, &key_blob_size, 0 );
             if (sec_status)
             {
@@ -403,7 +403,7 @@ BOOL WINAPI PFXExportCertStoreEx( HCERTSTORE store, CRYPT_DATA_BLOB *pfx, const 
                 return FALSE;
             }
 
-            sec_status = NCryptExportKey( key_ctx.hCryptProv, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
+            sec_status = NCryptExportKey( key_ctx.hNCryptKey, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
                                           key_blob, key_blob_size, &key_blob_size, 0 );
             if (sec_status)
             {

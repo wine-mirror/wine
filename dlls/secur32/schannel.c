@@ -648,7 +648,7 @@ static BYTE *get_key_blob_ncrypt(const CERT_CONTEXT *ctx, DWORD *size)
     if (keyctx.dwKeySpec != CERT_NCRYPT_KEY_SPEC)
         return NULL;
 
-    key = keyctx.hCryptProv;
+    key = keyctx.hNCryptKey;
 
     status = NCryptExportKey(key, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL, NULL, 0, &blob_size, 0);
     if (status)
