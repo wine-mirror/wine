@@ -3866,7 +3866,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest

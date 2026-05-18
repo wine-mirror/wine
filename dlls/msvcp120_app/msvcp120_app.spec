@@ -3729,7 +3729,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr) msvcp120._Getwctypes
 @ extern _Hugeval msvcp120._Hugeval
 @ extern _Inf msvcp120._Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) msvcp120._LCosh
 @ extern _LDenorm msvcp120._LDenorm
 @ stub _LDint
 @ cdecl _LDscale(ptr long) msvcp120._LDscale

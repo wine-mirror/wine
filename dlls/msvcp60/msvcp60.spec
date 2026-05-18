@@ -2576,7 +2576,7 @@
 @ cdecl -arch=win64 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAX_K@Z(ptr long) basic_string_wchar__Copy
 @ cdecl ?_Cosh@?$_Ctr@M@std@@SAMMM@Z(float float) _FCosh
 @ cdecl ?_Cosh@?$_Ctr@N@std@@SANNN@Z(double double) _Cosh
-@ stub ?_Cosh@?$_Ctr@O@std@@SAOOO@Z
+@ cdecl ?_Cosh@?$_Ctr@O@std@@SAOOO@Z(double double) _Cosh
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
@@ -5658,7 +5658,7 @@
 @ cdecl -norelay _Getcvt()
 @ extern _Hugeval _Hugeval
 @ extern _Inf _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest

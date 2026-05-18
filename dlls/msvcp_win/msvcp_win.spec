@@ -3658,7 +3658,7 @@
 @ stub _Hard_links
 @ extern _Hugeval msvcp140._Hugeval
 @ extern _Inf msvcp140._Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) msvcp140._LCosh
 @ extern _LDenorm msvcp140._LDenorm
 @ cdecl _LDtest(ptr) msvcp140._LDtest
 @ stub _LExp

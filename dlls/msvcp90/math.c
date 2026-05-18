@@ -2364,7 +2364,9 @@ short __cdecl _FExp(float *x, float y, short scale)
 }
 
 /* ?_Cosh@?$_Ctr@N@std@@SANNN@Z
-   ?_Cosh@?$_Ctraits@N@std@@SANNN@Z*/
+   ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
+   ?_Cosh@?$_Ctr@O@std@@SAOOO@Z
+   ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z*/
 double __cdecl _Cosh(double x, double y)
 {
     return y * cosh(x);

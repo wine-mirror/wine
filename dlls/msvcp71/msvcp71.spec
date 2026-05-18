@@ -2623,7 +2623,7 @@
 @ cdecl -arch=win64 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z(ptr long long) basic_string_wchar__Copy
 @ cdecl ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FCosh
 @ cdecl ?_Cosh@?$_Ctraits@N@std@@SANNN@Z(double double) _Cosh
-@ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z(double double) _Cosh
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
@@ -7065,7 +7065,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
-@ stub _LCosh
+@ cdecl _LCosh(double double) _Cosh
 @ extern _LDenorm
 @ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest
