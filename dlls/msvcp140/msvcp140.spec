@@ -3641,7 +3641,7 @@
 @ cdecl _Dtest(ptr)
 @ cdecl _Equivalent(wstr wstr) _Equivalent
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ cdecl _FDtest(ptr)
 @ cdecl _FExp(ptr float long)

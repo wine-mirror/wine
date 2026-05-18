@@ -3640,7 +3640,7 @@
 @ cdecl _Dtest(ptr) msvcp140._Dtest
 @ cdecl _Equivalent(wstr wstr) msvcp140._Equivalent
 @ cdecl _Exp(ptr double long) msvcp140._Exp
-@ stub _FCosh
+@ cdecl _FCosh(float float) msvcp140._FCosh
 @ extern _FDenorm msvcp140._FDenorm
 @ cdecl _FDtest(ptr) msvcp140._FDtest
 @ cdecl _FExp(ptr float long) msvcp140._FExp

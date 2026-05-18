@@ -3844,7 +3844,7 @@
 @ cdecl _Dtest(ptr)
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)

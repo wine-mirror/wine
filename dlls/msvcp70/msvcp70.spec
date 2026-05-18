@@ -2399,7 +2399,7 @@
 @ stub -arch=i386 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEXII@Z
 @ stub -arch=arm ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAAXII@Z
 @ stub -arch=i386 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAEXII@Z
-@ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
+@ cdecl ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FCosh
 @ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
@@ -6923,7 +6923,7 @@
 @ cdecl _Dtest(ptr)
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)

@@ -3690,7 +3690,7 @@
 @ stub _Dunscale
 @ extern _Eps msvcp120._Eps
 @ cdecl _Exp(ptr double long) msvcp120._Exp
-@ stub _FCosh
+@ cdecl _FCosh(float float) msvcp120._FCosh
 @ extern _FDenorm msvcp120._FDenorm
 @ stub _FDint
 @ stub _FDnorm

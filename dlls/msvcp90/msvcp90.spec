@@ -2903,7 +2903,7 @@
 @ cdecl -arch=win64 ?_Copy_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z(ptr long ptr long) MSVCP_char_traits_short__Copy_s
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z(ptr long ptr long) MSVCP_char_traits_wchar__Copy_s
 @ cdecl -arch=win64 ?_Copy_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z(ptr long ptr long) MSVCP_char_traits_wchar__Copy_s
-@ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
+@ cdecl ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FCosh
 @ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
 @ cdecl -arch=win32 ?_Cout_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ() _Cout_func
@@ -7868,7 +7868,7 @@
 @ cdecl _Dtest(ptr)
 @ extern _Eps
 @ cdecl _Exp(ptr double long)
-@ stub _FCosh
+@ cdecl _FCosh(float float)
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)
