@@ -1158,6 +1158,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
                                                 in.pvBuffer ? &in_desc : NULL,
                                                 0, &pAuthInfo->ctx, &out_desc,
                                                 &pAuthInfo->attr, &pAuthInfo->exp);
+        free(in.pvBuffer);
         if (sec_status == SEC_E_OK)
         {
             pAuthInfo->finished = TRUE;
