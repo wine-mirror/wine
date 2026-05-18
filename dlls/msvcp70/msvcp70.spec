@@ -2400,7 +2400,7 @@
 @ stub -arch=arm ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAAXII@Z
 @ stub -arch=i386 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAEXII@Z
 @ cdecl ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FCosh
-@ stub ?_Cosh@?$_Ctraits@N@std@@SANNN@Z
+@ cdecl ?_Cosh@?$_Ctraits@N@std@@SANNN@Z(double double) _Cosh
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@QAAPAV123@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
@@ -6916,7 +6916,7 @@
 @ thiscall -arch=i386 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPB_WH@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ stub _Atexit
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ extern _Denorm
 @ stub _Dnorm
 @ cdecl _Dscale(ptr long)

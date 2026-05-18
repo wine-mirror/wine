@@ -3634,7 +3634,7 @@
 @ cdecl _Cnd_unregister_at_thread_exit(ptr)
 @ cdecl _Cnd_wait(ptr ptr)
 @ cdecl _Copy_file(wstr wstr)
-@ stub _Cosh
+@ cdecl _Cosh(double double)
 @ cdecl _Current_get(ptr)
 @ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar
 @ extern _Denorm

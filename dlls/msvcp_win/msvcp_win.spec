@@ -3633,7 +3633,7 @@
 @ cdecl _Cnd_unregister_at_thread_exit(ptr) msvcp140._Cnd_unregister_at_thread_exit
 @ cdecl _Cnd_wait(ptr ptr) msvcp140._Cnd_wait
 @ cdecl _Copy_file(wstr wstr) msvcp140._Copy_file
-@ stub _Cosh
+@ cdecl _Cosh(double double) msvcp140._Cosh
 @ cdecl _Current_get(ptr) msvcp140._Current_get
 @ cdecl _Current_set(wstr) msvcp140._Current_set
 @ extern _Denorm msvcp140._Denorm

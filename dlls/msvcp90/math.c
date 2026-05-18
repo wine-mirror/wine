@@ -2363,6 +2363,13 @@ short __cdecl _FExp(float *x, float y, short scale)
     return dclass(*x);
 }
 
+/* ?_Cosh@?$_Ctr@N@std@@SANNN@Z
+   ?_Cosh@?$_Ctraits@N@std@@SANNN@Z*/
+double __cdecl _Cosh(double x, double y)
+{
+    return y * cosh(x);
+}
+
 /* ?_Cosh@?$_Ctr@M@std@@SAMMM@Z
    ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z*/
 float __cdecl _FCosh(float x, float y)
