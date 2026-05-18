@@ -83,7 +83,16 @@ static inline BOOL enter_syscall_callback(void)
 
 static inline void leave_syscall_callback(void)
 {
-    get_arm64ec_cpu_area()->InSyscallCallback = 0;
+    CHPE_V2_CPU_AREA_INFO *cpu_area = get_arm64ec_cpu_area();
+    CONTEXT ctx;
+
+    cpu_area->InSyscallCallback = 0;
+
+    if (cpu_area->SuspendDoorbell && *cpu_area->SuspendDoorbell)
+    {
+        RtlCaptureContext( &ctx );
+        if (*cpu_area->SuspendDoorbell) NtContinue( &ctx, FALSE );
+    }
 }
 
 /**********************************************************************

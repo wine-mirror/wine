@@ -1373,7 +1373,8 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     {
         server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL, NULL );
     }
-    else if ((chpe = data->teb->ChpeV2CpuAreaInfo) && chpe->InSimulation && chpe->SuspendDoorbell)
+    else if ((chpe = data->teb->ChpeV2CpuAreaInfo) && chpe->SuspendDoorbell &&
+             (chpe->InSimulation || chpe->InSyscallCallback))
     {
         NTSTATUS status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_COOPERATIVE_SUSPEND,
                                          0, NULL, NULL );
