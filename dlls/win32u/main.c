@@ -1720,6 +1720,11 @@ BOOL SYSCALL_API NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
     SYSCALL_FUNC( NtUserGetMessage );
 }
 
+DWORD SYSCALL_API NtUserGetMessagePos(void)
+{
+    SYSCALL_FUNC( NtUserGetMessagePos );
+}
+
 int SYSCALL_API NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOVEPOINT *ptout,
                                             int count, DWORD resolution )
 {

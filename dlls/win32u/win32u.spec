@@ -1051,7 +1051,7 @@
 @ stub -syscall NtUserGetMenuIndex
 @ stdcall -syscall NtUserGetMenuItemRect(long long long ptr)
 @ stdcall -syscall NtUserGetMessage(ptr long long long)
-@ stub -syscall NtUserGetMessagePos
+@ stdcall -syscall NtUserGetMessagePos()
 @ stub -syscall NtUserGetMinuserIdForBaseWindow
 @ stub -syscall NtUserGetModernAppWindow
 @ stdcall -syscall NtUserGetMouseMovePointsEx(long ptr ptr long long)

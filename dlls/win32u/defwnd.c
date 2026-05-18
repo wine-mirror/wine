@@ -674,7 +674,7 @@ static BOOL on_bottom_border( int hit )
  */
 static void sys_command_size_move( HWND hwnd, WPARAM wparam )
 {
-    DWORD msg_pos = NtUserGetThreadInfo()->message_pos;
+    DWORD msg_pos = NtUserGetMessagePos();
     BOOL thickframe, drag_full_windows = TRUE, moved = FALSE;
     RECT sizing_rect, mouse_rect, orig_rect;
     UINT hittest = wparam & 0x0f;
@@ -800,7 +800,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
              * WM_LBUTTONUP. Detect that and terminate the loop as if we'd gotten it. */
             if (!(NtUserGetKeyState( VK_LBUTTON ) & 0x8000))
             {
-                DWORD last_pos = NtUserGetThreadInfo()->message_pos;
+                DWORD last_pos = NtUserGetMessagePos();
                 pt.x = ((int)(short)LOWORD( last_pos ));
                 pt.y = ((int)(short)HIWORD( last_pos ));
                 break;
@@ -959,6 +959,7 @@ static void track_nc_scroll_bar( HWND hwnd, WPARAM wparam, POINT pt )
 
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
+    DWORD msgpos;
     POINT pos;
     RECT rect;
 
@@ -969,8 +970,9 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, 0 ))
         return 0;
 
-    pos.x = (short)LOWORD( NtUserGetThreadInfo()->message_pos );
-    pos.y = (short)HIWORD( NtUserGetThreadInfo()->message_pos );
+    msgpos = NtUserGetMessagePos();
+    pos.x = (short)LOWORD( msgpos );
+    pos.y = (short)HIWORD( msgpos );
     NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, &pos );
     SetRect( &rect, pos.x, pos.y, pos.x, pos.y );
     rect = map_rect_virt_to_raw( rect, 0 );

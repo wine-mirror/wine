@@ -871,6 +871,14 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
     return ret;
 }
 
+/***********************************************************************
+ *           NtUserGetMessagePos (win32u.@)
+ */
+DWORD WINAPI NtUserGetMessagePos(void)
+{
+    return NtUserGetThreadInfo()->message_pos;
+}
+
 /*******************************************************************
  *           NtUserGetThreadInfo (win32u.@)
  */

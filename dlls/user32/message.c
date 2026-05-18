@@ -894,34 +894,6 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
 
 
 /***********************************************************************
- *		GetMessagePos (USER.119)
- *		GetMessagePos (USER32.@)
- *
- * The GetMessagePos() function returns a long value representing a
- * cursor position, in screen coordinates, when the last message
- * retrieved by the GetMessage() function occurs. The x-coordinate is
- * in the low-order word of the return value, the y-coordinate is in
- * the high-order word. The application can use the MAKEPOINT()
- * macro to obtain a POINT structure from the return value.
- *
- * For the current cursor position, use GetCursorPos().
- *
- * RETURNS
- *
- * Cursor position of last message on success, zero on failure.
- *
- * CONFORMANCE
- *
- * ECMA-234, Win32
- *
- */
-DWORD WINAPI GetMessagePos(void)
-{
-    return NtUserGetThreadInfo()->message_pos;
-}
-
-
-/***********************************************************************
  *		GetMessageTime (USER.120)
  *		GetMessageTime (USER32.@)
  *

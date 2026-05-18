@@ -3820,7 +3820,6 @@
     SYSCALL_STUB( NtUserGetKeyboardType ) \
     SYSCALL_STUB( NtUserGetListBoxInfo ) \
     SYSCALL_STUB( NtUserGetMenuIndex ) \
-    SYSCALL_STUB( NtUserGetMessagePos ) \
     SYSCALL_STUB( NtUserGetMinuserIdForBaseWindow ) \
     SYSCALL_STUB( NtUserGetModernAppWindow ) \
     SYSCALL_STUB( NtUserGetOemBitmapSize ) \

@@ -2748,6 +2748,11 @@ NTSTATUS WINAPI wow64_NtUserGetMessage( UINT *args )
     return ret;
 }
 
+NTSTATUS WINAPI wow64_NtUserGetMessagePos( UINT *args )
+{
+    return NtUserGetMessagePos();
+}
+
 NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
 {
     UINT size = get_ulong( &args );

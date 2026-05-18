@@ -859,7 +859,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     POINT capturePoint;
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     BOOL moved = FALSE;
-    DWORD dwPoint = NtUserGetThreadInfo()->message_pos;
+    DWORD dwPoint = NtUserGetMessagePos();
     INT captionHeight;
     HMONITOR mon = 0;
     MONITORINFO info;

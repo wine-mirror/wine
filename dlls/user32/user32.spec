@@ -613,7 +613,7 @@
 @ stdcall GetMenuStringW(long long ptr long long)
 @ stdcall GetMessageA(ptr long long long)
 @ stdcall GetMessageExtraInfo()
-@ stdcall GetMessagePos()
+@ stdcall GetMessagePos() NtUserGetMessagePos
 @ stdcall GetMessageTime()
 @ stdcall GetMessageW(ptr long long long)
 @ stdcall GetMonitorInfoA(long ptr)
