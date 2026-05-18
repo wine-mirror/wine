@@ -3204,7 +3204,7 @@
 # extern -arch=win64 ?_Root2@?CA@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB
 @ cdecl ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FSinh
 @ cdecl ?_Sinh@?$_Ctraits@N@std@@SANNN@Z(double double) _Sinh
-@ stub ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z(double double) _Sinh
 @ extern -arch=arm ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAAXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
 @ extern -arch=i386 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
 @ extern -arch=win64 ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
@@ -7075,7 +7075,7 @@
 @ extern _LNan
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan
 # extern _LXbig
 @ extern _LZero

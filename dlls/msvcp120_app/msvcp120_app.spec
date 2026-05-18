@@ -3744,7 +3744,7 @@
 @ stub _LPmsw
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) msvcp120._LSinh
 @ extern _LSnan msvcp120._LSnan
 # extern _LXbig
 @ stub _LXp_addh

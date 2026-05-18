@@ -3005,7 +3005,7 @@
 @ stub -arch=win64 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@G_K@Z
 @ cdecl ?_Sinh@?$_Ctr@M@std@@SAMMM@Z(float float) _FSinh
 @ cdecl ?_Sinh@?$_Ctr@N@std@@SANNN@Z(double double) _Sinh
-@ stub ?_Sinh@?$_Ctr@O@std@@SAOOO@Z
+@ cdecl ?_Sinh@?$_Ctr@O@std@@SAOOO@Z(double double) _Sinh
 @ cdecl -arch=arm ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAAXXZ(ptr) basic_string_char__Split
 @ thiscall -arch=i386 ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXXZ(ptr) basic_string_char__Split
 @ cdecl -arch=win64 ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAXXZ(ptr) basic_string_char__Split
@@ -5668,7 +5668,7 @@
 @ extern _LNan _LNan
 @ stub _LPoly
 # extern _LRteps
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan _LSnan
 # extern _LXbig
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)

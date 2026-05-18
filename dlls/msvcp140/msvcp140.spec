@@ -3665,7 +3665,7 @@
 @ stub _LExp
 @ extern _LInf
 @ extern _LNan
-@ stub _LSinh
+@ cdecl _LSinh(double double) _Sinh
 @ extern _LSnan
 @ cdecl _Last_write_time(int64)
 @ cdecl _Link(wstr wstr) tr2_sys__Link_wchar

@@ -3664,7 +3664,7 @@
 @ stub _LExp
 @ extern _LInf msvcp140._LInf
 @ extern _LNan msvcp140._LNan
-@ stub _LSinh
+@ cdecl _LSinh(double double) msvcp140._LSinh
 @ extern _LSnan msvcp140._LSnan
 @ cdecl _Last_write_time(int64) msvcp140._Last_write_time
 @ cdecl _Link(wstr wstr) msvcp140._Link

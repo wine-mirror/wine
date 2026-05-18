@@ -2380,7 +2380,9 @@ float __cdecl _FCosh(float x, float y)
 }
 
 /* ?_Sinh@?$_Ctr@N@std@@SANNN@Z
-   ?_Sinh@?$_Ctraits@N@std@@SANNN@Z */
+   ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
+   ?_Sinh@?$_Ctr@O@std@@SAOOO@Z
+   ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z */
 double __cdecl _Sinh(double x, double y)
 {
     return y * sinh(x);
