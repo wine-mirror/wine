@@ -3698,7 +3698,7 @@
 @ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
 @ cdecl _Resize(wstr int64)
 @ cdecl _Set_last_write_time(wstr int64)
-@ stub _Sinh
+@ cdecl _Sinh(double double)
 @ extern _Snan
 @ cdecl _Stat(wstr ptr)
 @ stub _Statvfs

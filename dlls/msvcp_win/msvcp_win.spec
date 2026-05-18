@@ -3697,7 +3697,7 @@
 @ cdecl _Rename(wstr wstr) msvcp140._Rename
 @ cdecl _Resize(wstr int64) msvcp140._Resize
 @ cdecl _Set_last_write_time(wstr int64) msvcp140._Set_last_write_time
-@ stub _Sinh
+@ cdecl _Sinh(double double) msvcp140._Sinh
 @ extern _Snan msvcp140._Snan
 @ cdecl _Stat(wstr ptr) msvcp140._Stat
 @ stub _Statvfs

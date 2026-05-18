@@ -3782,7 +3782,7 @@
 @ stub _Pmsw
 @ stub _Poly
 # extern _Rteps
-@ stub _Sinh
+@ cdecl _Sinh(double double) msvcp120._Sinh
 @ extern _Snan msvcp120._Snan
 @ cdecl _Stod(ptr ptr long) msvcp120._Stod
 @ cdecl _Stodx(ptr ptr long ptr) msvcp120._Stodx

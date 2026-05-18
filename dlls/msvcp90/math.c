@@ -2363,6 +2363,13 @@ short __cdecl _FExp(float *x, float y, short scale)
     return dclass(*x);
 }
 
+/* ?_Sinh@?$_Ctr@N@std@@SANNN@Z
+   ?_Sinh@?$_Ctraits@N@std@@SANNN@Z */
+double __cdecl _Sinh(double x, double y)
+{
+    return y * sinh(x);
+}
+
 /* ?_Sinh@?$_Ctr@M@std@@SAMMM@Z
    ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z */
 float __cdecl _FSinh(float x, float y)
