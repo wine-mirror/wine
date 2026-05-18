@@ -394,6 +394,35 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
     return tInt;
 }
 
+static int oct_to_int(WCHAR c)
+{
+    if('0' <= c && c <= '7')
+        return c-'0';
+    return -1;
+}
+
+static int parse_oct_literal(parser_ctx_t *ctx, LONG *ret)
+{
+    ULONGLONG l = 0;
+    int d;
+
+    while((d = oct_to_int(*++ctx->ptr)) != -1) {
+        l = l*8 + d;
+        if(l > UINT_MAX) {
+            WARN("overflow in oct literal\n");
+            return 0;
+        }
+    }
+
+    if(*ctx->ptr == '&') {
+        ctx->ptr++;
+        *ret = (LONG)l;
+    }else {
+        *ret = l == (UINT16)l ? (INT16)l : (LONG)l;
+    }
+    return tInt;
+}
+
 static void skip_spaces(parser_ctx_t *ctx)
 {
     while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\v' || *ctx->ptr == '\f')
@@ -537,6 +566,8 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
     case '&':
         if((*++ctx->ptr == 'h' || *ctx->ptr == 'H') && hex_to_int(ctx->ptr[1]) != -1)
             return parse_hex_literal(ctx, lval);
+        if((*ctx->ptr == 'o' || *ctx->ptr == 'O') && oct_to_int(ctx->ptr[1]) != -1)
+            return parse_oct_literal(ctx, lval);
         return '&';
     case '=':
         switch(*++ctx->ptr) {

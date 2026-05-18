@@ -87,6 +87,29 @@ Call ok(&h0& = 0, "&h0& <> 0")
 Call ok(&h00 = 0, "&h00 <> 0")
 Call ok(&h000000000 = 0, "&h000000000 <> 0")
 
+' Octal literals (&O...)
+Call ok(&O0 = 0, "&O0 <> 0")
+Call ok(&O17 = 15, "&O17 <> 15")
+Call ok(&o17 = 15, "&o17 (lowercase) <> 15")
+Call ok(&O77 = 63, "&O77 <> 63")
+Call ok(&O777 = 511, "&O777 <> 511")
+Call ok(&O177777 = -1, "&O177777 <> -1")
+Call ok(&O200000 = 65536, "&O200000 <> 65536")
+Call ok(&O17777777777 = 2147483647, "&O17777777777 <> 2147483647")
+Call ok(&O37777777777 = -1, "&O37777777777 <> -1")
+Call ok(&O17& = 15, "&O17& <> 15")
+Call ok(&O177777& = 65535, "&O177777& <> 65535")
+Call ok(getVT(&O77) = "VT_I2", "getVT(&O77) is not VT_I2")
+Call ok(getVT(&O200000) = "VT_I4", "getVT(&O200000) is not VT_I4")
+Call ok(getVT(&O177777&) = "VT_I4", "getVT(&O177777&) is not VT_I4")
+
+sub testOctalLiteralErrors()
+    Dim oct
+    on error resume next
+    Err.Clear : oct = Eval("&O8") : call ok(Err.number = 1002, "&O8 should be syntax error, got err=" & Err.number)
+end sub
+call testOctalLiteralErrors()
+
 ' Test concat when no space and var begins with h
 hi = "y"
 x = "x" &hi
