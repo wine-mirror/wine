@@ -436,6 +436,7 @@ HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*);
 HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret);
 
 void release_regexp_typelib(void);
+void release_c_locale(void);
 HRESULT get_dispatch_typeinfo(ITypeInfo**);
 
 static inline BOOL is_int32(double d)

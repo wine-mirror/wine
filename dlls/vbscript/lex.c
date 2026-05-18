@@ -17,7 +17,9 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <math.h>
 
 #include "vbscript.h"
@@ -266,90 +268,108 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
     return tDate;
 }
 
+/* Cached C locale, lazily created and reused for the lifetime of the process.
+ * Used by parse_numeric_literal to feed _wcstod_l for double conversion that
+ * is locale-invariant regardless of the host's runtime locale. */
+static _locale_t c_locale;
+
+static _locale_t get_c_locale(void)
+{
+    _locale_t l;
+
+    if(c_locale)
+        return c_locale;
+
+    if(!(l = _create_locale(LC_ALL, "C")))
+        return NULL;
+    if(InterlockedCompareExchangePointer((void **)&c_locale, l, NULL))
+        _free_locale(l);
+    return c_locale;
+}
+
+void release_c_locale(void)
+{
+    if(c_locale) {
+        _free_locale(c_locale);
+        c_locale = NULL;
+    }
+}
+
 static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 {
-    BOOL use_int = TRUE;
+    const WCHAR *start = ctx->ptr;
+    BOOL is_double = FALSE, overflow = FALSE;
     LONGLONG d = 0, hlp;
-    int exp = 0;
+    _locale_t locale;
+    WCHAR stackbuf[64];
+    WCHAR *buf, *endptr;
+    size_t len;
     double r;
 
     if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
         return *ctx->ptr++;
 
+    /* Walk integer digits, accumulating into d while it fits. */
     while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
-        hlp = d*10 + *(ctx->ptr++) - '0';
-        if(d>MAXLONGLONG/10 || hlp<0) {
-            exp++;
-            break;
+        if(!overflow) {
+            hlp = d*10 + *ctx->ptr - '0';
+            if(d > MAXLONGLONG/10 || hlp < 0)
+                overflow = TRUE;
+            else
+                d = hlp;
         }
-        else
-            d = hlp;
-    }
-    while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
-        exp++;
         ctx->ptr++;
     }
 
     if(*ctx->ptr == '.') {
-        use_int = FALSE;
+        is_double = TRUE;
         ctx->ptr++;
-
-        while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
-            hlp = d*10 + *(ctx->ptr++) - '0';
-            if(d>MAXLONGLONG/10 || hlp<0)
-                break;
-
-            d = hlp;
-            exp--;
-        }
         while(ctx->ptr < ctx->end && is_digit(*ctx->ptr))
             ctx->ptr++;
     }
 
     if(*ctx->ptr == 'e' || *ctx->ptr == 'E') {
-        int e = 0, sign = 1;
-
+        is_double = TRUE;
         ctx->ptr++;
-        if(*ctx->ptr == '-') {
+        if(*ctx->ptr == '+' || *ctx->ptr == '-')
             ctx->ptr++;
-            sign = -1;
-        }else if(*ctx->ptr == '+') {
-            ctx->ptr++;
-        }
-
-        if(!is_digit(*ctx->ptr)) {
+        if(!is_digit(*ctx->ptr))
             return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
-        }
-
-        use_int = FALSE;
-
-        do {
-            e = e*10 + *(ctx->ptr++) - '0';
-            if(sign == -1 && -e+exp < -(INT_MAX/100)) {
-                /* The literal will be rounded to 0 anyway. */
-                while(is_digit(*ctx->ptr))
-                    ctx->ptr++;
-                *(double*)ret = 0;
-                return tDouble;
-            }
-
-            if(sign*e + exp > INT_MAX/100) {
-                return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
-            }
-        } while(is_digit(*ctx->ptr));
-
-        exp += sign*e;
+        while(is_digit(*ctx->ptr))
+            ctx->ptr++;
     }
 
-    if(use_int && (LONG)d == d) {
+    if(!is_double && !overflow && (LONG)d == d) {
         *(LONG*)ret = d;
         return tInt;
     }
 
-    r = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
-    if(isinf(r)) {
-        return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
+    /* Delegate the real-number conversion to ucrtbase's locale-aware parser
+     * with a C locale, which handles rounding, subnormals, and overflow per
+     * IEEE 754. The lexer above has already determined the literal span; we
+     * just need to hand wcstod a null-terminated copy. Number literals have no
+     * upper length limit (e.g. trailing fractional zeroes), so fall back to a
+     * heap buffer when the stack buffer is too small. */
+    len = ctx->ptr - start;
+    if(len < ARRAY_SIZE(stackbuf)) {
+        buf = stackbuf;
+    }else if(!(buf = malloc((len + 1) * sizeof(WCHAR)))) {
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_OUT_OF_MEMORY));
     }
+    memcpy(buf, start, len * sizeof(WCHAR));
+    buf[len] = 0;
+
+    locale = get_c_locale();
+    if(!locale) {
+        if(buf != stackbuf) free(buf);
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_OUT_OF_MEMORY));
+    }
+    errno = 0;
+    r = _wcstod_l(buf, &endptr, locale);
+    if(buf != stackbuf) free(buf);
+
+    if(errno == ERANGE && isinf(r))
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
 
     *(double*)ret = r;
     return tDouble;

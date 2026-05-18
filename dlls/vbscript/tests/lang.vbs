@@ -462,6 +462,36 @@ Call ok(getVT(# 1/1/2011 #) = "VT_DATE", "getVT(# 1/1/2011 #) is not VT_DATE")
 Call ok(getVT(1e2) = "VT_R8", "getVT(1e2) is not VT_R8")
 Call ok(getVT(1e0) = "VT_R8", "getVT(1e0) is not VT_R8")
 Call ok(getVT(0.1e2) = "VT_R8", "getVT(0.1e2) is not VT_R8")
+' Subnormal doubles: literals smaller than DBL_MIN (~1e-308) parse as positive
+' subnormals down to ~5e-324; anything smaller rounds to zero.
+Call ok(1e-309 > 0, "1e-309 should be subnormal positive, got " & 1e-309)
+Call ok(1e-320 > 0, "1e-320 should be subnormal positive, got " & 1e-320)
+Call ok(5e-324 > 0, "5e-324 should be subnormal positive, got " & 5e-324)
+Call ok(-1e-309 < 0, "-1e-309 should be subnormal negative, got " & -1e-309)
+Call ok(getVT(1e-309) = "VT_R8", "getVT(1e-309) = " & getVT(1e-309))
+Call ok(1e-400 = 0, "1e-400 should round to 0, got " & 1e-400)
+' Boundary at DBL_MAX: the parser must not collapse e308 to infinity.
+Call ok(1e308 > 0, "1e308 should be finite positive, got " & 1e308)
+Call ok(1.7976931348623157e308 > 1e307, "DBL_MAX should be larger than 1e307")
+Call ok(getVT(1.7976931348623157e308) = "VT_R8", "getVT(DBL_MAX) is not VT_R8")
+Call ok(1.00000000000000000000000000000000000000000000000000000000000000000000000000000000 = 1, "long 1.0 literal should equal 1")
+Call ok(0.00000000000000000000000000000000000000000000000000000000000000000000000000000001 > 0, "long fractional literal should be positive subnormal/small")
+Call ok(00000000000000000000000000000000000000000000000000000000000000000000000000000001 = 1, "long leading-zero integer literal should equal 1")
+Call ok(getVT(00000000000000000000000000000000000000000000000000000000000000000000000000000001) = "VT_I2", "long leading-zero integer literal should stay VT_I2")
+Call ok(00000000000000000000000000000000000000000000000000000000000000000000000000000000.5 = 0.5, "long leading-zero decimal literal should equal 0.5")
+
+' Above DBL_MAX must raise err 1031 (Invalid number) at compile time, not
+' silently overflow to infinity.
+Sub TestNumericOverflow
+    On Error Resume Next
+    Err.Clear : Execute "Dim r : r = 1e309"
+    Call ok(Err.Number = 1031, "1e309 should err 1031, got " & Err.Number)
+    Err.Clear : Execute "Dim r : r = -1e309"
+    Call ok(Err.Number = 1031, "-1e309 should err 1031, got " & Err.Number)
+    Err.Clear : Execute "Dim r : r = 1.8e308"
+    Call ok(Err.Number = 1031, "1.8e308 should err 1031, got " & Err.Number)
+End Sub
+Call TestNumericOverflow
 Call ok(getVT(1 & 100000) = "VT_BSTR", "getVT(1 & 100000) is not VT_BSTR")
 Call ok(getVT(-empty) = "VT_I2", "getVT(-empty) = " & getVT(-empty))
 Call ok(getVT(-null) = "VT_NULL", "getVT(-null) = " & getVT(-null))
