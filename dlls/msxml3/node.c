@@ -1076,10 +1076,23 @@ static bool domnode_has_namespace_declaration_name(const struct domnode *node)
     return false;
 }
 
+static void domnode_insert_attribute(struct domnode *parent, struct domnode *node, struct domnode *ref_node)
+{
+    domnode_unlink_attribute(node);
+
+    if (ref_node)
+        list_add_before(&ref_node->entry, &node->entry);
+    else
+        list_add_tail(&parent->attributes, &node->entry);
+    node->parent = parent;
+    domnode_add_refs(node->parent, node->refcount);
+    domnode_set_owner(node, parent);
+}
+
 HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const WCHAR *uri, int uri_len,
         struct domnode *owner, struct domnode **node)
 {
-    struct domnode *object;
+    struct domnode *object, *xmlns_xml;
     WCHAR *p;
 
     *node = NULL;
@@ -1141,6 +1154,13 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
             if (domnode_has_namespace_declaration_name(object))
                 object->flags |= DOMNODE_NS_DECL;
             break;
+        case NODE_DOCUMENT:
+            /* Stash implicit namespace as a document attribute, without a parent. */
+            domnode_create(NODE_ATTRIBUTE, L"xmlns:xml", 9, NULL, 0, object, &xmlns_xml);
+            node_put_data(xmlns_xml, L"http://www.w3.org/XML/1998/namespace");
+            xmlns_xml->flags |= DOMNODE_READONLY_VALUE;
+            domnode_insert_attribute(object, xmlns_xml, NULL);
+            break;
         default:
             ;
     }
@@ -1148,19 +1168,6 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
     *node = object;
 
     return S_OK;
-}
-
-static void domnode_insert_attribute(struct domnode *parent, struct domnode *node, struct domnode *ref_node)
-{
-    domnode_unlink_attribute(node);
-
-    if (ref_node)
-        list_add_before(&ref_node->entry, &node->entry);
-    else
-        list_add_tail(&parent->attributes, &node->entry);
-    node->parent = parent;
-    domnode_add_refs(node->parent, node->refcount);
-    domnode_set_owner(node, parent);
 }
 
 static HRESULT parse_xml_decl_append_attribute(struct domnode *pi, const WCHAR *name, BSTR value)
