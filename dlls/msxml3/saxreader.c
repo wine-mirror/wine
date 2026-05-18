@@ -3580,15 +3580,25 @@ static bool saxreader_is_namechar(WCHAR ch)
 }
 
 /* [5] NCNameChar ::= NameChar - ':' */
-static bool saxreader_is_ncnamechar(WCHAR ch)
+bool xml_is_ncnamechar(WCHAR ch)
 {
     return saxreader_is_namechar(ch) && ch != ':';
 }
 
+static bool saxreader_is_ncnamechar(WCHAR ch)
+{
+    return xml_is_ncnamechar(ch);
+}
+
 /* [6] NCNameStartChar ::= Letter | '_' */
-static bool saxreader_is_ncname_startchar(WCHAR ch)
+bool xml_is_ncname_startchar(WCHAR ch)
 {
     return saxreader_is_letter(ch) || ch == '_';
+}
+
+static bool saxreader_is_ncname_startchar(WCHAR c)
+{
+    return xml_is_ncname_startchar(c);
 }
 
 static void *saxreader_calloc(struct saxlocator *locator, size_t count, size_t size)

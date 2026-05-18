@@ -5382,8 +5382,6 @@ static void test_XPath(void)
             IXMLDOMNodeList_Release(list);
     }
 
-if (!winetest_platform_is_wine)
-{
     /* namespace:: axis test is disabled until namespace definitions
        are supported as attribute nodes, currently it's another node type.
 
@@ -5446,7 +5444,6 @@ if (!winetest_platform_is_wine)
     IXMLDOMNode_Release(node);
 
     IXMLDOMNodeList_Release(list);
-}
 
     hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root//c"), &list);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -8753,7 +8750,6 @@ static void test_selectSingleNode(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_nodeType(node, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(type == NODE_ELEMENT, "Unexpected node %d.\n", type);
     IXMLDOMNode_Release(node);
 
@@ -8769,7 +8765,6 @@ static void test_selectSingleNode(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_nodeType(node, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(type == NODE_ATTRIBUTE, "Unexpected node %d.\n", type);
     IXMLDOMNode_Release(node);
     hr = IXMLDOMAttribute_selectSingleNode(attr, _bstr_(".."), &node);

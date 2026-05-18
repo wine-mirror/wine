@@ -42,6 +42,7 @@
 #include "wine/debug.h"
 
 #include "msxml_private.h"
+#include "xpath.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -138,29 +139,18 @@ static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *ifac
     return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
 }
 
-int registerNamespaces(struct domnode *node, xmlXPathContextPtr ctxt)
+void domdoc_properties_clear_selection_namespaces(struct domdoc_properties *properties)
 {
-    struct domnode *doc = node->owner ? node->owner : node;
-    const select_ns_entry* ns = NULL;
-    int n = 0;
+    struct xpath_namespace *ns, *next;
 
-    LIST_FOR_EACH_ENTRY( ns, &doc->properties->selectNsList, select_ns_entry, entry )
+    LIST_FOR_EACH_ENTRY_SAFE(ns, next, &properties->namespaces.entries, struct xpath_namespace, entry)
     {
-        xmlXPathRegisterNs(ctxt, ns->prefix, ns->href);
-        ++n;
-    }
-
-    return n;
-}
-
-void domdoc_properties_clear_selection_namespaces(struct list *pNsList)
-{
-    select_ns_entry *ns, *ns2;
-    LIST_FOR_EACH_ENTRY_SAFE( ns, ns2, pNsList, select_ns_entry, entry )
-    {
+        SysFreeString(ns->prefix);
+        SysFreeString(ns->uri);
         free(ns);
     }
-    list_init(pNsList);
+
+    list_init(&properties->namespaces.entries);
 }
 
 static void release_namespaces(domdoc *doc)
@@ -1844,131 +1834,19 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
         VariantClear(&varStr);
         return hr;
     }
-    else if (!wcsicmp(p, L"SelectionNamespaces"))
+
+    if (!wcscmp(p, L"SelectionNamespaces"))
     {
-        xmlChar *nsStr = (xmlChar *)properties->selectNsStr;
-        struct list *pNsList;
-        VARIANT varStr;
-        BSTR bstr;
-
-        V_VT(&varStr) = VT_EMPTY;
         if (V_VT(&value) != VT_BSTR)
-        {
-            if (FAILED(hr = VariantChangeType(&varStr, &value, 0, VT_BSTR)))
-                return hr;
-            bstr = V_BSTR(&varStr);
-        }
-        else
-            bstr = V_BSTR(&value);
+            return E_FAIL;
 
-        hr = S_OK;
-
-        pNsList = &properties->selectNsList;
-        domdoc_properties_clear_selection_namespaces(pNsList);
-        free(nsStr);
-        nsStr = xmlchar_from_wchar(bstr);
-
-        TRACE("property value: \"%s\"\n", debugstr_w(bstr));
-
-        properties->selectNsStr = nsStr;
-        properties->selectNsStr_len = xmlStrlen(nsStr);
-        if (bstr && *bstr)
-        {
-            xmlChar *pTokBegin, *pTokEnd, *pTokInner;
-            select_ns_entry* ns_entry = NULL;
-
-            pTokBegin = nsStr;
-
-            /* skip leading spaces */
-            while (*pTokBegin == ' '  || *pTokBegin == '\n' ||
-                   *pTokBegin == '\t' || *pTokBegin == '\r')
-                ++pTokBegin;
-
-            for (; *pTokBegin; pTokBegin = pTokEnd)
-            {
-                if (ns_entry)
-                    memset(ns_entry, 0, sizeof(select_ns_entry));
-                else
-                    ns_entry = calloc(1, sizeof(select_ns_entry));
-
-                while (*pTokBegin == ' ')
-                    ++pTokBegin;
-                pTokEnd = pTokBegin;
-                while (*pTokEnd != ' ' && *pTokEnd != 0)
-                    ++pTokEnd;
-
-                /* so it failed to advance which means we've got some trailing spaces */
-                if (pTokEnd == pTokBegin) break;
-
-                if (xmlStrncmp(pTokBegin, (xmlChar const*)"xmlns", 5) != 0)
-                {
-                    hr = E_FAIL;
-                    WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                          debugstr_w(bstr), debugstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
-                    continue;
-                }
-
-                pTokBegin += 5;
-                if (*pTokBegin == '=')
-                {
-                    /*valid for XSLPattern?*/
-                    FIXME("Setting default xmlns not supported - skipping.\n");
-                    continue;
-                }
-                else if (*pTokBegin == ':')
-                {
-                    ns_entry->prefix = ++pTokBegin;
-                    for (pTokInner = pTokBegin; pTokInner != pTokEnd && *pTokInner != '='; ++pTokInner)
-                        ;
-
-                    if (pTokInner == pTokEnd)
-                    {
-                        hr = E_FAIL;
-                        WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                              debugstr_w(bstr), debugstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
-                        continue;
-                    }
-
-                    ns_entry->prefix_end = *pTokInner;
-                    *pTokInner = 0;
-                    ++pTokInner;
-
-                    if (pTokEnd-pTokInner > 1 &&
-                        ((*pTokInner == '\'' && *(pTokEnd-1) == '\'') ||
-                         (*pTokInner == '"' && *(pTokEnd-1) == '"')))
-                    {
-                        ns_entry->href = ++pTokInner;
-                        ns_entry->href_end = *(pTokEnd-1);
-                        *(pTokEnd-1) = 0;
-                        list_add_tail(pNsList, &ns_entry->entry);
-
-                        ns_entry = NULL;
-                        continue;
-                    }
-                    else
-                    {
-                        WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
-                              debugstr_w(bstr), debugstr_an((const char*)pTokInner, pTokEnd-pTokInner));
-                        list_add_tail(pNsList, &ns_entry->entry);
-
-                        ns_entry = NULL;
-                        hr = E_FAIL;
-                        continue;
-                    }
-                }
-                else
-                {
-                    hr = E_FAIL;
-                    continue;
-                }
-            }
-            free(ns_entry);
-        }
-
-        VariantClear(&varStr);
-        return hr;
+        domdoc_properties_clear_selection_namespaces(properties);
+        SysFreeString(properties->namespaces.value);
+        properties->namespaces.value = SysAllocString(V_BSTR(&value));
+        return xpath_parse_selection_namespaces(properties->namespaces.value, properties);
     }
-    else if (wcsicmp(p, L"ValidateOnParse") == 0)
+
+    if (wcsicmp(p, L"ValidateOnParse") == 0)
     {
         if (properties->version < MSXML4)
             return E_FAIL;
@@ -2044,41 +1922,6 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
         V_BSTR(var) = SysAllocString(properties->XPath ? L"XPath" : L"XSLPattern");
         return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
     }
-    else if (!wcsicmp(p, L"SelectionNamespaces"))
-    {
-        int lenA, lenW;
-        BSTR rebuiltStr, cur;
-        const xmlChar *nsStr;
-        struct list *pNsList;
-        select_ns_entry* pNsEntry;
-
-        V_VT(var) = VT_BSTR;
-        nsStr = properties->selectNsStr;
-        pNsList = &properties->selectNsList;
-        lenA = properties->selectNsStr_len;
-        lenW = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, NULL, 0);
-        rebuiltStr = malloc(lenW * sizeof(WCHAR));
-        MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, rebuiltStr, lenW);
-        cur = rebuiltStr;
-        /* this is fine because all of the chars that end tokens are ASCII*/
-        LIST_FOR_EACH_ENTRY(pNsEntry, pNsList, select_ns_entry, entry)
-        {
-            while (*cur != 0) ++cur;
-            if (pNsEntry->prefix_end)
-            {
-                *cur = pNsEntry->prefix_end;
-                while (*cur != 0) ++cur;
-            }
-
-            if (pNsEntry->href_end)
-            {
-                *cur = pNsEntry->href_end;
-            }
-        }
-        V_BSTR(var) = SysAllocString(rebuiltStr);
-        free(rebuiltStr);
-        return S_OK;
-    }
     else if (!wcsicmp(p, L"ValidateOnParse"))
     {
         if (properties->version < MSXML4)
@@ -2089,6 +1932,14 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
             V_BOOL(var) = properties->validating;
             return S_OK;
         }
+    }
+
+    if (!wcscmp(p, L"SelectionNamespaces"))
+    {
+        V_VT(var) = VT_BSTR;
+        V_BSTR(var) = SysAllocString(properties->namespaces.value ?
+                properties->namespaces.value : L"");
+        return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
     }
 
     if (!wcscmp(p, L"ProhibitDTD"))

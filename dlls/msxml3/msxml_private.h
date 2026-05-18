@@ -88,7 +88,6 @@ enum error_codes
     E_SAX_MAX_ELEMENT_DEPTH = 0xc00cee92,
 };
 
-
 static inline bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     size_t new_capacity, max_capacity;
@@ -194,16 +193,8 @@ enum domnode_flags
     DOMNODE_IGNORED_WS = 0x4,
     DOMNODE_PARSED_VALUE = 0x8,
     DOMNODE_NS_DECL = 0x10,
+    DOMNODE_NO_PARENT = 0x20,
 };
-
-typedef struct _select_ns_entry
-{
-    struct list entry;
-    xmlChar const* prefix;
-    xmlChar prefix_end;
-    xmlChar const* href;
-    xmlChar href_end;
-} select_ns_entry;
 
 struct domdoc_properties
 {
@@ -211,9 +202,13 @@ struct domdoc_properties
     VARIANT_BOOL preserving;
     VARIANT_BOOL validating;
     IXMLDOMSchemaCollection2* schemaCache;
-    struct list selectNsList;
-    xmlChar const* selectNsStr;
-    LONG selectNsStr_len;
+
+    struct
+    {
+        struct list entries;
+        BSTR value;
+    } namespaces;
+
     bool XPath;
     bool prohibit_dtd;
     bool normalize_attribute_values;
@@ -252,7 +247,7 @@ struct domnode
 extern IXMLDOMSchemaCollection2 *doc_properties_get_schema(struct domdoc_properties *properties);
 extern MSXML_VERSION doc_properties_get_version(struct domdoc_properties *properties);
 
-extern void domdoc_properties_clear_selection_namespaces(struct list *);
+extern void domdoc_properties_clear_selection_namespaces(struct domdoc_properties *);
 extern struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version);
 extern MSXML_VERSION domdoc_version(const struct domnode *doc);
 extern HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len,
@@ -261,6 +256,8 @@ extern void domnode_destroy_tree(struct domnode *tree);
 extern struct domnode *domnode_addref(struct domnode *node);
 extern void domnode_release(struct domnode *node);
 extern struct domnode *domnode_get_root_element(struct domnode *doc);
+extern struct domnode *domnode_get_first_attribute(struct domnode *node);
+extern struct domnode *domnode_get_next_attribute_sibling(struct domnode *node);
 extern struct domnode *domnode_get_first_child(struct domnode *node);
 extern struct domnode *domnode_get_last_child(struct domnode *node);
 extern struct domnode *domnode_get_next_sibling(struct domnode *node);
@@ -288,6 +285,8 @@ static inline bool xml_is_space(WCHAR ch)
 {
     return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
 }
+bool xml_is_ncname_startchar(WCHAR ch);
+bool xml_is_ncnamechar(WCHAR ch);
 
 /* IXMLDOMNamedNodeMap custom function table */
 struct nodemap_funcs
