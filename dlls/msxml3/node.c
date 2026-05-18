@@ -1059,6 +1059,23 @@ HRESULT node_remove_attribute(struct domnode *node, const WCHAR *name, IXMLDOMNo
     return hr;
 }
 
+static bool is_same_namespace_prefix(const struct domnode *node, const WCHAR *prefix)
+{
+    if (node->prefix)
+        return prefix && !wcscmp(node->prefix, prefix);
+
+    return !prefix;
+}
+
+static bool domnode_has_namespace_declaration_name(const struct domnode *node)
+{
+    if (!wcscmp(node->qname, L"xmlns"))
+        return true;
+    if (is_same_namespace_prefix(node, L"xmlns"))
+        return true;
+    return false;
+}
+
 HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const WCHAR *uri, int uri_len,
         struct domnode *owner, struct domnode **node)
 {
@@ -1119,6 +1136,10 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
         case NODE_PROCESSING_INSTRUCTION:
             if (!wcscmp(object->name, L"xml"))
                 object->flags |= DOMNODE_READONLY_VALUE;
+            break;
+        case NODE_ATTRIBUTE:
+            if (domnode_has_namespace_declaration_name(object))
+                object->flags |= DOMNODE_NS_DECL;
             break;
         default:
             ;
@@ -1905,21 +1926,9 @@ static void node_dump_qualified_name(struct node_dump_context *context, struct d
     node_dump_append(context, node->qname, SysStringLen(node->qname));
 }
 
-static bool is_same_namespace_prefix(const struct domnode *node, const WCHAR *prefix)
+bool domnode_is_namespace_declaration(const struct domnode *node)
 {
-    if (node->prefix)
-        return prefix && !wcscmp(node->prefix, prefix);
-
-    return !prefix;
-}
-
-static bool is_namespace_definition(struct domnode *node)
-{
-    if (!wcscmp(node->qname, L"xmlns"))
-        return true;
-    if (is_same_namespace_prefix(node, L"xmlns"))
-        return true;
-    return false;
+    return node->flags & DOMNODE_NS_DECL;
 }
 
 static bool is_namespace_defined(struct node_dump_context *context, struct domnode *node)
@@ -1969,7 +1978,7 @@ static void node_dump_element_attributes(struct node_dump_context *context, stru
     /* Collect explicitly defined namespaces */
     LIST_FOR_EACH_ENTRY(attr, &node->attributes, struct domnode, entry)
     {
-        if (is_namespace_definition(attr))
+        if (domnode_is_namespace_declaration(attr))
         {
             node_get_text(attr, &text);
             node_dump_push_namespace(context, node_dump_get_namespace_prefix(attr), text, true);
@@ -1984,7 +1993,7 @@ static void node_dump_element_attributes(struct node_dump_context *context, stru
 
     LIST_FOR_EACH_ENTRY(attr, &node->attributes, struct domnode, entry)
     {
-        if (is_namespace_definition(attr))
+        if (domnode_is_namespace_declaration(attr))
             continue;
 
         if (!is_namespace_defined(context, attr))
@@ -3541,8 +3550,8 @@ HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const 
         hr = node_put_data(attr, attr_value);
     VariantClear(&v);
 
-    /* Allow setting namespace definition node once. */
-    if (attr && is_namespace_definition(attr))
+    /* Allow setting namespace declaration node once. */
+    if (attr && domnode_is_namespace_declaration(attr))
         attr->flags |= DOMNODE_READONLY_VALUE;
 
     return hr;
@@ -3839,7 +3848,7 @@ static HRESULT WINAPI parse_content_handler_startElement(ISAXContentHandler *ifa
             if (attr)
             {
                 attr->flags |= DOMNODE_PARSED_VALUE;
-                if (is_namespace_definition(attr))
+                if (domnode_is_namespace_declaration(attr))
                     attr->flags |= DOMNODE_READONLY_VALUE;
             }
         }

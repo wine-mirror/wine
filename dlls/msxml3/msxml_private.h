@@ -193,6 +193,7 @@ enum domnode_flags
     DOMNODE_IGNORED_WS_AFTER_STARTTAG = 0x2,
     DOMNODE_IGNORED_WS = 0x4,
     DOMNODE_PARSED_VALUE = 0x8,
+    DOMNODE_NS_DECL = 0x10,
 };
 
 typedef struct _select_ns_entry
@@ -265,6 +266,7 @@ extern struct domnode *domnode_get_last_child(struct domnode *node);
 extern struct domnode *domnode_get_next_sibling(struct domnode *node);
 extern struct domnode *domnode_get_previous_sibling(struct domnode *node);
 extern HRESULT domnode_get_attribute(const struct domnode *node, const WCHAR *name, struct domnode **attr);
+extern bool domnode_is_namespace_declaration(const struct domnode *node);
 extern HRESULT node_clone_domnode(struct domnode *, bool, struct domnode **);
 extern HRESULT parse_stream(ISequentialStream *stream, bool utf16, const struct domdoc_properties *properties,
         struct domnode **tree);
