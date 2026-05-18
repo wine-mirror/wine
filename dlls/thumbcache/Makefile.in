@@ -1,4 +1,5 @@
 MODULE    = thumbcache.dll
+IMPORTS   = uuid
 
 SOURCES = \
 	thumbcache.c \
