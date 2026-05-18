@@ -3215,12 +3215,18 @@ static void test_exception_dispatcher(void)
 
 #ifdef __arm64ec__
 
-static ULONG *doorbell;
-static ULONG64 suspend_rip;
+struct doorbell_params
+{
+    ULONG *doorbell;
+    ULONG64 suspend_rip;
+    BOOL syscall;
+    BOOL suspend;
+};
 
 static DWORD WINAPI doorbell_thread( void *arg )
 {
     CHPE_V2_CPU_AREA_INFO *chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
+    struct doorbell_params *params = arg;
     ULONG signaled_doorbell = -1;
     NTSTATUS status;
     HANDLE event;
@@ -3231,13 +3237,14 @@ static DWORD WINAPI doorbell_thread( void *arg )
 
     if (InterlockedIncrement( &i ) == 1)
     {
-        suspend_rip = ctx.Rip;
+        params->suspend_rip = ctx.Rip;
 
-        chpe->InSimulation = 1;
-        doorbell = chpe->SuspendDoorbell;
-        ok( doorbell != NULL, "doorbell is not available\n" );
-        while (!(signaled_doorbell = *doorbell)) YieldProcessor();
-        chpe->InSimulation = 0;
+        if (params->syscall) chpe->InSyscallCallback = 1;
+        else chpe->InSimulation = 1;
+        params->doorbell = chpe->SuspendDoorbell;
+        ok( params->doorbell != NULL, "doorbell is not available\n" );
+        while (!(signaled_doorbell = *params->doorbell)) YieldProcessor();
+        chpe->InSyscallCallback = chpe->InSimulation = 0;
 
         /* syscalls, including waits, continue working */
         event = CreateEventW( NULL, FALSE, TRUE, NULL );
@@ -3251,40 +3258,108 @@ static DWORD WINAPI doorbell_thread( void *arg )
         ok( 0, "NtContinue failed\n" );
     }
 
-    ok( !*doorbell, "doorbell = %lx\n", *doorbell );
+    ok( !*params->doorbell, "doorbell = %lx\n", *params->doorbell );
     ok( signaled_doorbell == -1, "signaled_doorbell = %lx\n", signaled_doorbell );
-    doorbell = NULL;
+    params->doorbell = NULL;
+    return 0;
+}
+
+struct pipe_read_params
+{
+    CHPE_V2_CPU_AREA_INFO *chpe;
+    HANDLE pipe;
+    HANDLE event;
+    int flush;
+};
+
+static DWORD WINAPI pipe_read_thread( void *arg )
+{
+    struct pipe_read_params *params = arg;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    char c;
+
+    params->chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
+    NtSetEvent( params->event, NULL );
+    if (params->flush)
+    {
+        int i;
+        for (i = 0; i < 100; i++) NtFlushInstructionCache( GetCurrentProcess, pipe_read_thread, 4 );
+    }
+    status = NtReadFile( params->pipe, NULL, NULL, NULL, &iosb, &c, sizeof(c), NULL, 0 );
+    ok( !status, "NtReadFile failed: %lx\n", status );
     return 0;
 }
 
 static void test_suspend_doorbell(void)
 {
-    HANDLE thread;
+    struct pipe_read_params read_params;
+    struct doorbell_params params;
+    HANDLE thread, pipe;
     CONTEXT ctx;
-    int suspend;
+    DWORD ret, pass;
+    char c = 0;
 
-    for (suspend = 0; suspend < 2; suspend++)
+    for (pass = 0; pass < 4; pass++)
     {
-        doorbell = NULL;
-        suspend_rip = 0;
+        memset( &params, 0, sizeof(params) );
+        params.suspend = (pass & 1) != 0;
+        params.syscall = (pass & 2) != 0;
 
-        thread = CreateThread( NULL, 0, doorbell_thread, NULL, 0, NULL );
+        thread = CreateThread( NULL, 0, doorbell_thread, &params, 0, NULL );
         ok( thread != NULL, "CreateThread failed\n" );
 
-        while (!doorbell) YieldProcessor();
-        ok( !*doorbell, "doorbell = %lx\n", *doorbell );
+        while (!params.doorbell) YieldProcessor();
+        ok( !*params.doorbell, "doorbell = %lx\n", *params.doorbell );
 
-        if (suspend) SuspendThread( thread );
+        if (params.suspend) SuspendThread( thread );
 
         memset( &ctx, 0xcc, sizeof(ctx) );
         ctx.ContextFlags = CONTEXT_FULL;
         GetThreadContext( thread, &ctx );
-        ok( ctx.Rip == suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, suspend_rip );
+        ok( ctx.Rip == params.suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, params.suspend_rip );
 
-        if (suspend) ResumeThread( thread );
+        if (params.suspend) ResumeThread( thread );
 
         WaitForSingleObject( thread, INFINITE );
-        ok( !doorbell, "thread did not reset doorbell\n" );
+        ok( !params.doorbell, "thread did not reset doorbell\n" );
+
+        CloseHandle( thread );
+    }
+
+    for (read_params.flush = 0; read_params.flush < 2; read_params.flush++)
+    {
+        CreatePipe( &read_params.pipe, &pipe, NULL, 0 );
+        read_params.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+        thread = CreateThread( NULL, 0, pipe_read_thread, &read_params, 0, NULL );
+
+        ret = WaitForSingleObject( read_params.event, 10000 );
+        ok( ret == 0, "wait failed %lx\n", ret );
+
+        /* hammer the thread with suspend requests, making sure we never hit a syscall callback */
+        for (pass = 0; pass < 100; pass++)
+        {
+            ret = SuspendThread( thread );
+            ok( !ret, "SuspendThread failed: %lu\n", GetLastError() );
+            ctx.ContextFlags = CONTEXT_FULL;
+            ret = GetThreadContext( thread, &ctx );
+            ok( ret, "GetThreadContext failed: %lu\n", GetLastError() );
+
+            ok( !read_params.chpe->InSyscallCallback, "InSyscallCallback = %x\n",
+                read_params.chpe->InSyscallCallback );
+
+            ret = ResumeThread( thread );
+            ok( ret == 1, "ResumeThread failed: %lu\n", GetLastError() );
+        }
+
+        WriteFile( pipe, &c, sizeof(c), NULL, NULL );
+        ret = WaitForSingleObject( thread, 10000 );
+        ok( ret == 0, "wait failed %lx\n", ret );
+
+        CloseHandle( thread );
+        CloseHandle( pipe );
+        CloseHandle( read_params.pipe );
+        CloseHandle( read_params.event );
     }
 }
 
