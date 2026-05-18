@@ -1,0 +1,4 @@
+MODULE    = ndfapi.dll
+
+SOURCES = \
+	ndfapi_main.c

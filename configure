@@ -1368,6 +1368,7 @@ enable_msxml6
 enable_mtxdm
 enable_ncrypt
 enable_nddeapi
+enable_ndfapi
 enable_ndis_sys
 enable_netapi32
 enable_netcfgx
@@ -23512,6 +23513,7 @@ wine_fn_config_makefile dlls/mtxdm enable_mtxdm
 wine_fn_config_makefile dlls/ncrypt enable_ncrypt
 wine_fn_config_makefile dlls/ncrypt/tests enable_tests
 wine_fn_config_makefile dlls/nddeapi enable_nddeapi
+wine_fn_config_makefile dlls/ndfapi enable_ndfapi
 wine_fn_config_makefile dlls/ndis.sys enable_ndis_sys
 wine_fn_config_makefile dlls/ndis.sys/tests enable_tests
 wine_fn_config_makefile dlls/netapi32 enable_netapi32
