@@ -1002,6 +1002,7 @@ W32KAPI BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key
 W32KAPI BOOL    WINAPI NtUserSetMenu( HWND hwnd, HMENU menu );
 W32KAPI BOOL    WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id );
 W32KAPI BOOL    WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos );
+W32KAPI LPARAM  WINAPI NtUserSetMessageExtraInfo( LPARAM lparam );
 W32KAPI BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 W32KAPI HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 W32KAPI BOOL    WINAPI NtUserSetProcessDefaultLayout( ULONG layout );

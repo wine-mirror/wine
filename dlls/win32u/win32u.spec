@@ -1388,7 +1388,7 @@
 @ stdcall -syscall NtUserSetMenuContextHelpId(long long)
 @ stdcall -syscall NtUserSetMenuDefaultItem(long long long)
 @ stub -syscall NtUserSetMenuFlagRtoL
-@ stub -syscall NtUserSetMessageExtraInfo
+@ stdcall -syscall NtUserSetMessageExtraInfo(long)
 @ stub -syscall NtUserSetMirrorRendering
 @ stub -syscall NtUserSetModernAppWindow
 @ stub -syscall NtUserSetMonitorWorkArea

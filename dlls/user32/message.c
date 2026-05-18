@@ -925,18 +925,6 @@ LPARAM WINAPI GetMessageExtraInfo(void)
 
 
 /***********************************************************************
- *		SetMessageExtraInfo (USER32.@)
- */
-LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
-{
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    LONG old_value = thread_info->message_extra;
-    thread_info->message_extra = lParam;
-    return old_value;
-}
-
-
-/***********************************************************************
  *		MsgWaitForMultipleObjects (USER32.@)
  */
 DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,

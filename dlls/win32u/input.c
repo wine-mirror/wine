@@ -932,6 +932,17 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
 }
 
 /***********************************************************************
+ *           NtUserSetMessageExtraInfo (win32u.@)
+ */
+LPARAM WINAPI NtUserSetMessageExtraInfo( LPARAM lparam )
+{
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    LPARAM old_value = thread_info->message_extra;
+    thread_info->message_extra = lparam;
+    return old_value;
+}
+
+/***********************************************************************
  *           get_input_state
  */
 DWORD get_input_state(void)

@@ -2269,6 +2269,11 @@ BOOL SYSCALL_API NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos )
     SYSCALL_FUNC( NtUserSetMenuDefaultItem );
 }
 
+LPARAM SYSCALL_API NtUserSetMessageExtraInfo( LPARAM lp )
+{
+    SYSCALL_FUNC( NtUserSetMessageExtraInfo );
+}
+
 BOOL SYSCALL_API NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len )
 {
     SYSCALL_FUNC( NtUserSetObjectInformation );

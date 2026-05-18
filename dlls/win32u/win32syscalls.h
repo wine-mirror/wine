@@ -1390,7 +1390,7 @@
     SYSCALL_ENTRY( 0x156a, NtUserSetMenuContextHelpId, 8 ) \
     SYSCALL_ENTRY( 0x156b, NtUserSetMenuDefaultItem, 12 ) \
     SYSCALL_ENTRY( 0x156c, NtUserSetMenuFlagRtoL, 0 ) \
-    SYSCALL_ENTRY( 0x156d, NtUserSetMessageExtraInfo, 0 ) \
+    SYSCALL_ENTRY( 0x156d, NtUserSetMessageExtraInfo, 4 ) \
     SYSCALL_ENTRY( 0x156e, NtUserSetMirrorRendering, 0 ) \
     SYSCALL_ENTRY( 0x156f, NtUserSetModernAppWindow, 0 ) \
     SYSCALL_ENTRY( 0x1570, NtUserSetMonitorWorkArea, 0 ) \
@@ -2932,7 +2932,7 @@
     SYSCALL_ENTRY( 0x156a, NtUserSetMenuContextHelpId, 16 ) \
     SYSCALL_ENTRY( 0x156b, NtUserSetMenuDefaultItem, 24 ) \
     SYSCALL_ENTRY( 0x156c, NtUserSetMenuFlagRtoL, 0 ) \
-    SYSCALL_ENTRY( 0x156d, NtUserSetMessageExtraInfo, 0 ) \
+    SYSCALL_ENTRY( 0x156d, NtUserSetMessageExtraInfo, 8 ) \
     SYSCALL_ENTRY( 0x156e, NtUserSetMirrorRendering, 0 ) \
     SYSCALL_ENTRY( 0x156f, NtUserSetModernAppWindow, 0 ) \
     SYSCALL_ENTRY( 0x1570, NtUserSetMonitorWorkArea, 0 ) \
@@ -4050,7 +4050,6 @@
     SYSCALL_STUB( NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated ) \
     SYSCALL_STUB( NtUserSetManipulationInputTarget ) \
     SYSCALL_STUB( NtUserSetMenuFlagRtoL ) \
-    SYSCALL_STUB( NtUserSetMessageExtraInfo ) \
     SYSCALL_STUB( NtUserSetMirrorRendering ) \
     SYSCALL_STUB( NtUserSetModernAppWindow ) \
     SYSCALL_STUB( NtUserSetMonitorWorkArea ) \
