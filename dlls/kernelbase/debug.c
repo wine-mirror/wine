@@ -281,6 +281,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
     STRING strA;
 
     WARN( "%s\n", debugstr_w(str) );
+    if (!str) return;
 
     RtlInitUnicodeString( &strW, str );
     if (!RtlUnicodeStringToAnsiString( &strA, &strW, TRUE ))

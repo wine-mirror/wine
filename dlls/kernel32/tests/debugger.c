@@ -2436,6 +2436,10 @@ static void test_OutputDebugString(void)
     ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    OutputDebugStringW(NULL);
+    ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     OutputDebugStringW(L"test");
     ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
 }
