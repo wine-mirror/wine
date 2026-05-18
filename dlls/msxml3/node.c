@@ -376,6 +376,11 @@ struct domnode *domnode_get_first_child(struct domnode *node)
     return node_from_entry(list_head(&node->children));
 }
 
+struct domnode *domnode_get_last_child(struct domnode *node)
+{
+    return node_from_entry(list_tail(&node->children));
+}
+
 static struct domnode *domnode_get_previous_sibling(struct domnode *node)
 {
     if (node->parent)
@@ -391,7 +396,7 @@ HRESULT node_get_first_child(struct domnode *node, IXMLDOMNode **ret)
 
 HRESULT node_get_last_child(struct domnode *node, IXMLDOMNode **ret)
 {
-    return get_node(node_from_entry(list_tail(&node->children)), ret);
+    return get_node(domnode_get_last_child(node), ret);
 }
 
 HRESULT node_get_previous_sibling(struct domnode *node, IXMLDOMNode **ret)
