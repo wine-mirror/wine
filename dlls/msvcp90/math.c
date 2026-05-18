@@ -2363,6 +2363,13 @@ short __cdecl _FExp(float *x, float y, short scale)
     return dclass(*x);
 }
 
+/* ?_Sinh@?$_Ctr@M@std@@SAMMM@Z
+   ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z */
+float __cdecl _FSinh(float x, float y)
+{
+    return y * sinh(x);
+}
+
 /* ?_XLgamma@std@@YANN@Z */
 double __cdecl std__XLgamma_double(double z)
 {

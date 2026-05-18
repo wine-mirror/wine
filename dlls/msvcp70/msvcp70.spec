@@ -2951,7 +2951,7 @@
 # extern -arch=win32 ?_Root2@?CA@??_Fabs@std@@YAMABV?$complex@M@2@PAH@Z@4MB
 # extern -arch=win32 ?_Root2@?CA@??_Fabs@std@@YANABV?$complex@N@2@PAH@Z@4NB
 # extern -arch=win32 ?_Root2@?CA@??_Fabs@std@@YAOABV?$complex@O@2@PAH@Z@4OB
-@ stub ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z
+@ cdecl ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FSinh
 @ stub ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z
 @ extern -arch=arm ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAAXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
@@ -6933,7 +6933,7 @@
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 # extern _FZero

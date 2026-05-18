@@ -3646,7 +3646,7 @@
 @ cdecl _FExp(ptr float long) msvcp140._FExp
 @ extern _FInf msvcp140._FInf
 @ extern _FNan msvcp140._FNan
-@ stub _FSinh
+@ cdecl _FSinh(float float) msvcp140._FSinh
 @ extern _FSnan msvcp140._FSnan
 @ cdecl _File_size(wstr) msvcp140._File_size
 @ cdecl -norelay _Getcoll() msvcp140._Getcoll

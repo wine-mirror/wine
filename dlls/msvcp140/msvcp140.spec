@@ -3647,7 +3647,7 @@
 @ cdecl _FExp(ptr float long)
 @ extern _FInf
 @ extern _FNan
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 @ cdecl _File_size(wstr)
 @ cdecl -norelay _Getcoll()

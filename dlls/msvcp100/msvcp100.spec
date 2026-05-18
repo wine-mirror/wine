@@ -3854,7 +3854,7 @@
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 @ stub _GetLocaleForCP

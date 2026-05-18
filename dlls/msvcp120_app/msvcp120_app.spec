@@ -3705,7 +3705,7 @@
 @ stub _FPlsw
 @ stub _FPmsw
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float) msvcp120._FSinh
 @ extern _FSnan msvcp120._FSnan
 # extern _FXbig
 @ stub _FXp_addh

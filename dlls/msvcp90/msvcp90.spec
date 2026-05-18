@@ -3692,7 +3692,7 @@
 @ cdecl -arch=arm ?_Sgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAAHPA_WIH@Z(ptr ptr long long) basic_streambuf_wchar__Sgetn_s
 @ thiscall -arch=i386 ?_Sgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHPA_WIH@Z(ptr ptr long long) basic_streambuf_wchar__Sgetn_s
 @ cdecl -arch=win64 ?_Sgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JPEA_W_K_J@Z(ptr ptr long long) basic_streambuf_wchar__Sgetn_s
-@ stub ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z
+@ cdecl ?_Sinh@?$_Ctraits@M@std@@SAMMM@Z(float float) _FSinh
 @ stub ?_Sinh@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?_Sinh@?$_Ctraits@O@std@@SAOOO@Z
 @ extern -arch=arm ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAAXPAU_iobuf@@W4_Initfl@23@@Z@4HA basic_filebuf_char__Init__Stinit
@@ -7878,7 +7878,7 @@
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan
 # extern _FXbig
 @ cdecl -norelay _Getcoll()

@@ -3003,7 +3003,7 @@
 @ stub -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z
 @ stub -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z
 @ stub -arch=win64 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@G_K@Z
-@ stub ?_Sinh@?$_Ctr@M@std@@SAMMM@Z
+@ cdecl ?_Sinh@?$_Ctr@M@std@@SAMMM@Z(float float) _FSinh
 @ stub ?_Sinh@?$_Ctr@N@std@@SANNN@Z
 @ stub ?_Sinh@?$_Ctr@O@std@@SAOOO@Z
 @ cdecl -arch=arm ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAAXXZ(ptr) basic_string_char__Split
@@ -5650,7 +5650,7 @@
 @ extern _FInf _FInf
 @ extern _FNan _FNan
 # extern _FRteps
-@ stub _FSinh
+@ cdecl _FSinh(float float)
 @ extern _FSnan _FSnan
 # extern _FXbig
 @ cdecl -norelay _Getcoll()
