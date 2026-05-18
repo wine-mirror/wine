@@ -4472,10 +4472,10 @@ static void test_ReplaceFileW(void)
     ok(ret, "CreateDirectoryW error %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
-    todo_wine ok(!ret, "expected failure\n");
+    ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
     ret = RemoveDirectoryW(replaced);
-    todo_wine ok(ret, "RemoveDirectoryW error %ld\n", GetLastError());
+    ok(ret, "RemoveDirectoryW error %ld\n", GetLastError());
     DeleteFileW(replacement);
 
     if (removeBackup)
