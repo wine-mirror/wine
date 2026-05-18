@@ -1,0 +1,5 @@
+MODULE    = thumbcache.dll
+
+SOURCES = \
+	thumbcache.c \
+	thumbcache_reg.idl

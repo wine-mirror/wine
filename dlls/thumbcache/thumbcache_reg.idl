@@ -1,0 +1,41 @@
+/*
+ * Copyright 2026 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+import "unknwn.idl";
+import "objidl.idl";
+import "oaidl.idl";
+
+[
+    uuid(50ef4544-ac9f-4a8e-b21b-8a26180db13f),
+    threading(both)
+]
+coclass LocalThumbnailCache
+{
+    interface IThumbnailCache;
+}
+
+[
+    uuid(4db26476-6787-4046-b836-e8412a9e8a27),
+    threading(both)
+]
+coclass SharedBitmap
+{
+    interface ISharedBitmap;
+}
