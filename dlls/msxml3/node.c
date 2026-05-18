@@ -381,7 +381,7 @@ struct domnode *domnode_get_last_child(struct domnode *node)
     return node_from_entry(list_tail(&node->children));
 }
 
-static struct domnode *domnode_get_previous_sibling(struct domnode *node)
+struct domnode *domnode_get_previous_sibling(struct domnode *node)
 {
     if (node->parent)
         return node_from_entry(list_prev(&node->parent->children, &node->entry));
