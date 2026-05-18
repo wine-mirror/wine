@@ -1120,7 +1120,7 @@ NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher_ctx, st
                                          IRP *irp )
 {
     DBusMessageIter args_iter, dict_iter = DBUS_MESSAGE_ITER_INIT_CLOSED;
-    struct bluez_async_req_data *data = NULL;
+    struct bluez_async_req_data *data;
     DBusPendingCall *pending_call = NULL;
     DBusMessage *request;
     NTSTATUS status;
@@ -1132,14 +1132,7 @@ NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher_ctx, st
                                               "ReadValue" );
     if (!request)
         return STATUS_NO_MEMORY;
-    if (!(data = malloc( sizeof( *data ) )))
-    {
-        status = STATUS_NO_MEMORY;
-        goto failed;
-    }
 
-    data->irp = irp;
-    data->watcher_ctx = watcher_ctx;
     p_dbus_message_iter_init_append( request, &args_iter );
     if (!p_dbus_message_iter_open_container( &args_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter ))
     {
@@ -1162,8 +1155,16 @@ NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher_ctx, st
         status = STATUS_INTERNAL_ERROR;
         goto failed;
     }
+    if (!(data = malloc( sizeof( *data ) )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+    data->irp = irp;
+    data->watcher_ctx = watcher_ctx;
     if (!p_dbus_pending_call_set_notify( pending_call, bluez_gatt_characteristic_read_callback, data, free ))
     {
+        free( data );
         p_dbus_pending_call_cancel( pending_call );
         p_dbus_pending_call_unref( pending_call );
         status = STATUS_NO_MEMORY;
