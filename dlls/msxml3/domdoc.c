@@ -840,19 +840,6 @@ static HRESULT WINAPI domdoc_get_implementation(IXMLDOMDocument3 *iface, IXMLDOM
     return create_dom_implementation(impl);
 }
 
-static struct domnode * domdoc_get_document_element(struct domdoc *doc)
-{
-    struct domnode *node;
-
-    LIST_FOR_EACH_ENTRY(node, &doc->node->children, struct domnode, entry)
-    {
-        if (node->type == NODE_ELEMENT)
-            return node;
-    }
-
-    return NULL;
-}
-
 static HRESULT WINAPI domdoc_get_documentElement(IXMLDOMDocument3 *iface, IXMLDOMElement **ret)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
@@ -867,7 +854,7 @@ static HRESULT WINAPI domdoc_get_documentElement(IXMLDOMDocument3 *iface, IXMLDO
 
     *ret = NULL;
 
-    if ((element = domdoc_get_document_element(doc)))
+    if ((element = domnode_get_root_element(doc->node)))
     {
         if (SUCCEEDED(hr = create_node(element, &node)))
         {
@@ -889,7 +876,7 @@ static HRESULT WINAPI domdoc_putref_documentElement(IXMLDOMDocument3 *iface, IXM
 
     TRACE("%p, %p.\n", iface, element);
 
-    if ((current = domdoc_get_document_element(doc)))
+    if ((current = domnode_get_root_element(doc->node)))
     {
         if (SUCCEEDED(hr = create_node(current, &node)))
         {

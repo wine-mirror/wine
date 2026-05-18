@@ -358,6 +358,19 @@ static struct domnode *node_from_entry(struct list *entry)
     return entry ? LIST_ENTRY(entry, struct domnode, entry) : NULL;
 }
 
+struct domnode * domnode_get_root_element(struct domnode *doc)
+{
+    struct domnode *node;
+
+    LIST_FOR_EACH_ENTRY(node, &doc->children, struct domnode, entry)
+    {
+        if (node->type == NODE_ELEMENT)
+            return node;
+    }
+
+    return NULL;
+}
+
 struct domnode *domnode_get_first_child(struct domnode *node)
 {
     return node_from_entry(list_head(&node->children));

@@ -259,6 +259,7 @@ extern HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len,
 extern void domnode_destroy_tree(struct domnode *tree);
 extern struct domnode *domnode_addref(struct domnode *node);
 extern void domnode_release(struct domnode *node);
+extern struct domnode *domnode_get_root_element(struct domnode *doc);
 extern struct domnode *domnode_get_first_child(struct domnode *node);
 extern struct domnode *domnode_get_next_sibling(struct domnode *node);
 extern HRESULT domnode_get_attribute(const struct domnode *node, const WCHAR *name, struct domnode **attr);
