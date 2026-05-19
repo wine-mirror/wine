@@ -615,11 +615,6 @@ public class WineActivity extends Activity
             if (content_view != null) return content_view;
             content_view = new WineView( WineActivity.this, win, is_client );
             addView( content_view );
-            if (!is_client)
-            {
-                content_view.setFocusable( true );
-                content_view.setFocusableInTouchMode( true );
-            }
             return content_view;
         }
 
@@ -656,8 +651,8 @@ public class WineActivity extends Activity
             setSurfaceTextureListener( this );
             setVisibility( VISIBLE );
             setOpaque( false );
-            setFocusable( true );
-            setFocusableInTouchMode( true );
+            setFocusable( !client );
+            setFocusableInTouchMode( !client );
         }
 
         public WineWindow get_window()
