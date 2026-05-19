@@ -1,0 +1,5 @@
+MODULE    = dsrole.dll
+IMPORTS   = advapi32
+
+SOURCES = \
+	dsrole.c

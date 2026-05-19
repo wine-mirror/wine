@@ -1152,6 +1152,7 @@ enable_drmclien
 enable_dsdmo
 enable_dsound
 enable_dsquery
+enable_dsrole
 enable_dssenh
 enable_dsuiext
 enable_dswave
@@ -22972,6 +22973,7 @@ wine_fn_config_makefile dlls/dsdmo/tests enable_tests
 wine_fn_config_makefile dlls/dsound enable_dsound
 wine_fn_config_makefile dlls/dsound/tests enable_tests
 wine_fn_config_makefile dlls/dsquery enable_dsquery
+wine_fn_config_makefile dlls/dsrole enable_dsrole
 wine_fn_config_makefile dlls/dssenh enable_dssenh
 wine_fn_config_makefile dlls/dssenh/tests enable_tests
 wine_fn_config_makefile dlls/dsuiext enable_dsuiext
