@@ -2094,6 +2094,15 @@ static void copy_user_result( void *buffer, size_t size, LRESULT result, UINT me
 }
 
 /***********************************************************************
+ *           get_send_message_flags
+ */
+UINT get_send_message_flags(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    return thread_info->receive_info ? thread_info->receive_info->flags : ISMEX_NOSEND;
+}
+
+/***********************************************************************
  *           reply_message
  *
  * Send a reply to a sent message.
@@ -2109,8 +2118,6 @@ static void reply_message( struct received_message_info *info, LRESULT result, M
 
     memset( &data, 0, sizeof(data) );
     info->flags |= ISMEX_REPLIED;
-    if (info == get_user_thread_info()->receive_info)
-        NtUserGetThreadInfo()->receive_flags = info->flags;
 
     if (info->type == MSG_OTHER_PROCESS && !replied)
     {
@@ -2163,7 +2170,6 @@ static BOOL reply_winproc_result( LRESULT result, HWND hwnd, UINT message, WPARA
     reply_message( info, result, &msg );
 
     thread_info->receive_info = info->prev;
-    thread_info->client_info.receive_flags = info->prev ? info->prev->flags : ISMEX_NOSEND;
     return TRUE;
 }
 
@@ -3224,7 +3230,6 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
         info.prev = thread_info->receive_info;
         thread_info->receive_info = &info;
         thread_info->client_info.msg_source = msg_source_unavailable;
-        thread_info->client_info.receive_flags = info.flags;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, info.type, FALSE, WMCHAR_MAP_RECVMESSAGE,
                                    info.type == MSG_ASCII );

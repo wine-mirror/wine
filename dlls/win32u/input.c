@@ -919,7 +919,7 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
         return NtUserGetThreadInfo()->message_extra;
 
     case UserThreadStateInSendMessage:
-        return NtUserGetThreadInfo()->receive_flags;
+        return get_send_message_flags();
 
     case UserThreadStateMessageTime:
         return NtUserGetThreadInfo()->message_time;
