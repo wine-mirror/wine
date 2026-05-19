@@ -41,6 +41,11 @@
 #include <netinet/ip.h>
 #endif
 
+#ifdef HAVE_LINUX_ERRQUEUE_H
+#include <linux/errqueue.h>
+#define USE_ERRQUEUE
+#endif
+
 #include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
@@ -307,15 +312,16 @@ static void ipv4_linux_ping_set_socket_opts( struct icmp_socket *s )
 
     setsockopt( s->socket, IPPROTO_IP, IP_RECVTTL, &val, sizeof(val) );
     setsockopt( s->socket, IPPROTO_IP, IP_RECVTOS, &val, sizeof(val) );
+    setsockopt( s->socket, IPPROTO_IP, IP_RECVERR, &val, sizeof(val) );
 }
 #endif
 
-static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
+static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
                                struct icmp_reply_ctx *ctx )
 {
     struct ip_hdr *ip_hdr;
 
-    if (recvd < sizeof(*ip_hdr)) return FALSE;
+    if (*recvd < sizeof(*ip_hdr)) return FALSE;
     ip_hdr = msg->msg_iov[0].iov_base;
     if (ip_hdr->v_hl >> 4 != 4 || ip_hdr->protocol != IPPROTO_ICMP) return FALSE;
     *ip_hdr_len = (ip_hdr->v_hl & 0xf) << 2;
@@ -330,7 +336,7 @@ static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
 }
 
 #ifdef __linux__
-static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
+static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
                                           struct icmp_reply_ctx *ctx )
 {
     struct cmsghdr *cmsg;
@@ -353,6 +359,25 @@ static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip
         case IP_TOS:
             ctx->tos = *(BYTE *)CMSG_DATA( cmsg );
             break;
+#ifdef HAVE_LINUX_ERRQUEUE_H
+        case IP_RECVERR:
+        {
+            struct sock_extended_err *e;
+            struct icmp_hdr *icmp_h;
+
+            e = (struct sock_extended_err *)CMSG_DATA( cmsg );
+            icmp_h = msg->msg_iov[0].iov_base;
+            if (e->ee_origin != SO_EE_ORIGIN_ICMP) break;
+            if (*recvd + sizeof(*icmp_h) > ARRAY_SIZE(ctx->packet)) break;
+            memmove( ctx->packet + sizeof(*icmp_h), ctx->packet, *recvd );
+            *recvd += sizeof(*icmp_h);
+            memset( icmp_h, 0, sizeof(*icmp_h) );
+            icmp_h->type = e->ee_type;
+            icmp_h->code = e->ee_code;
+            TRACE( "got error packet type %d, code %d.\n", icmp_h->type, icmp_h->code );
+            break;
+        }
+#endif
         }
     }
     return TRUE;
@@ -420,19 +445,22 @@ static int ipv4_parse_icmp_hdr( struct icmp_socket *s, struct icmp_hdr *icmp, in
         return -1;
     }
 
+    icmp_size -= sizeof(*icmp);
     if (s->ping_socket)
     {
-        /* Ping sockets only return echo reply through normal recvmsg() received data, should not get here. */
-        return -1;
+        orig_ip_hdr_len = 0;
+        orig_icmp_hdr = icmp + 1;
     }
-
-    /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
-    if (icmp_size < sizeof(*icmp) + sizeof(*orig_ip_hdr)) return -1;
-    orig_ip_hdr = (struct ip_hdr *)(icmp + 1);
-    if (orig_ip_hdr->v_hl >> 4 != 4 || orig_ip_hdr->protocol != IPPROTO_ICMP) return -1;
-    orig_ip_hdr_len = (orig_ip_hdr->v_hl & 0xf) << 2;
-    if (icmp_size < sizeof(*icmp) + orig_ip_hdr_len + sizeof(*orig_icmp_hdr)) return -1;
-    orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + orig_ip_hdr_len);
+    else
+    {
+        /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
+        if (icmp_size < sizeof(*orig_ip_hdr)) return -1;
+        orig_ip_hdr = (struct ip_hdr *)(icmp + 1);
+        if (orig_ip_hdr->v_hl >> 4 != 4 || orig_ip_hdr->protocol != IPPROTO_ICMP) return -1;
+        orig_ip_hdr_len = (orig_ip_hdr->v_hl & 0xf) << 2;
+        orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + orig_ip_hdr_len);
+    }
+    if (icmp_size < orig_ip_hdr_len + sizeof(*orig_icmp_hdr)) return -1;
     if (orig_icmp_hdr->type != ICMP4_ECHO_REQUEST ||
         orig_icmp_hdr->code != 0) return -1;
 
@@ -502,7 +530,7 @@ struct family_ops
     unsigned short (*chksum)( struct icmp_data *icmp_data, BYTE *data, unsigned int count );
     int (*set_reply_ip_status)( IP_STATUS ip_status, unsigned int bits, void *out );
     void (*set_socket_opts)( struct icmp_socket *s );
-    BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
+    BOOL (*parse_ip_hdr)( struct msghdr *msg, int *recvd, int *ip_hdr_len, struct icmp_reply_ctx *ctx );
     int (*parse_icmp_hdr)( struct icmp_socket *s, struct icmp_hdr *icmp, int icmp_len, struct icmp_reply_ctx *ctx );
     BOOL (*fill_reply)( struct icmp_get_reply_params *params, struct icmp_reply_ctx *ctx );
 };
@@ -614,9 +642,17 @@ static void ipv6_set_socket_opts( struct icmp_socket *s )
     setsockopt( s->socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val, sizeof(val) );
 }
 #endif
+#ifdef IP_RECVERR
+{
+    int val = 1;
+
+    if (s->ping_socket)
+        setsockopt( s->socket, IPPROTO_IPV6, IPV6_RECVERR, &val, sizeof(val) );
+}
+#endif
 }
 
-static BOOL ipv6_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
+static BOOL ipv6_parse_ip_hdr( struct msghdr *msg, int *recvd, int *ip_hdr_len,
                                           struct icmp_reply_ctx *ctx )
 {
     *ip_hdr_len = 0;
@@ -625,6 +661,34 @@ static BOOL ipv6_parse_ip_hdr( struct msghdr *msg, int recvd, int *ip_hdr_len,
     ctx->tos = 0;
     ctx->flags = 0;
     ctx->options_size = 0;
+
+#ifdef HAVE_LINUX_ERRQUEUE_H
+{
+    struct sock_extended_err *e;
+    struct icmp_hdr *icmp_h;
+    struct cmsghdr *cmsg;
+
+    for (cmsg = CMSG_FIRSTHDR( msg ); cmsg; cmsg = CMSG_NXTHDR( msg, cmsg ))
+    {
+        if (cmsg->cmsg_level != IPPROTO_IPV6) continue;
+        switch (cmsg->cmsg_type)
+        {
+        case IPV6_RECVERR:
+            e = (struct sock_extended_err *)CMSG_DATA( cmsg );
+            icmp_h = msg->msg_iov[0].iov_base;
+            if (e->ee_origin != SO_EE_ORIGIN_ICMP6) break;
+            if (*recvd + sizeof(*icmp_h) > ARRAY_SIZE(ctx->packet)) break;
+            TRACE( "got error packet.\n" );
+            memmove( ctx->packet + sizeof(*icmp_h), ctx->packet, *recvd );
+            *recvd += sizeof(*icmp_h);
+            memset( icmp_h, 0, sizeof(*icmp_h) );
+            icmp_h->type = e->ee_type;
+            icmp_h->code = e->ee_code;
+            break;
+        }
+    }
+}
+#endif
     return TRUE;
 }
 
@@ -682,18 +746,18 @@ static int ipv6_parse_icmp_hdr( struct icmp_socket *s, struct icmp_hdr *icmp,
         return -1;
     }
 
-    if (s->ping_socket)
+    icmp_size -= sizeof(*icmp);
+    if (s->ping_socket) orig_icmp_hdr = icmp + 1;
+    else
     {
-        /* Ping sockets only return echo reply through normal recvmsg() received data, should not get here. */
-        return -1;
+        /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
+        if (icmp_size < sizeof(*orig_ip_hdr)) return -1;
+        icmp_size -= sizeof(*orig_ip_hdr);
+        orig_ip_hdr = (struct ipv6_hdr *)(icmp + 1);
+        if ((orig_ip_hdr->v_prio >> 4) != 6 || orig_ip_hdr->next_hdr != IPPROTO_ICMPV6) return -1;
+        orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + sizeof(*orig_ip_hdr));
     }
-
-    /* All handled icmp replies have an 8-byte header followed by the original ip hdr. */
-    if (icmp_size < sizeof(*icmp) + sizeof(*orig_ip_hdr)) return -1;
-    orig_ip_hdr = (struct ipv6_hdr *)(icmp + 1);
-    if ((orig_ip_hdr->v_prio >> 4) != 6 || orig_ip_hdr->next_hdr != IPPROTO_ICMPV6) return -1;
-    if (icmp_size < sizeof(*icmp) + sizeof(*orig_ip_hdr) + sizeof(*orig_icmp_hdr)) return -1;
-    orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + sizeof(*orig_ip_hdr));
+    if (icmp_size < sizeof(*orig_icmp_hdr)) return -1;
     if (orig_icmp_hdr->type != ICMP6_ECHO_REQUEST ||
         orig_icmp_hdr->code != 0) return -1;
 
@@ -1073,7 +1137,7 @@ static void icmp_listen( void *args )
         i = 0;
         LIST_FOR_EACH_ENTRY( s, &listen_list, struct icmp_socket, listen_entry )
         {
-            if (!(fds[i].revents & POLLIN)) goto skip;
+            if (!(fds[i].revents & (POLLIN | POLLERR))) goto skip;
             msg.msg_name = &addr;
             msg.msg_namelen = sizeof(addr);
             msg.msg_control = cmsg_buf;
@@ -1081,8 +1145,20 @@ static void icmp_listen( void *args )
             recvd = recvmsg( s->socket, &msg, 0 );
             TRACE( "s %p, recvmsg() rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
                    s, recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
+#ifdef __linux__
+            if (recvd < 0 && s->ping_socket && fds[i].revents & POLLERR)
+            {
+                msg.msg_name = &addr;
+                msg.msg_namelen = sizeof(addr);
+                msg.msg_control = cmsg_buf;
+                msg.msg_controllen = sizeof(cmsg_buf);
+                recvd = recvmsg( s->socket, &msg, MSG_ERRQUEUE );
+                TRACE( "s %p, recvmsg(MSG_ERRQUEUE) rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
+                       s, recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
+            }
+#endif
             if (recvd < 0) goto skip;
-            if (!s->ops->parse_ip_hdr( &msg, recvd, &ip_hdr_len, &ctx )) goto skip;
+            if (!s->ops->parse_ip_hdr( &msg, &recvd, &ip_hdr_len, &ctx )) goto skip;
             if (recvd < ip_hdr_len + sizeof(*icmp_hdr)) goto skip;
             ctx.packet_size = recvd;
             icmp_hdr = (struct icmp_hdr *)(ctx.packet + ip_hdr_len);
