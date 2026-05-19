@@ -1069,6 +1069,9 @@ IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_BROWSER ICON resources/internet.ico
 
+/* @makedep: resources/info.ico */
+IDI_SHELL_INFO ICON resources/info.ico
+
 /* @makedep: resources/idb_sort_incr.bmp */
 IDB_SORT_INCR BITMAP resources/idb_sort_incr.bmp
 

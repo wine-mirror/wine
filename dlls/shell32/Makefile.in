@@ -45,6 +45,7 @@ SOURCES = \
 	resources/folder_open.svg \
 	resources/help.svg \
 	resources/image.svg \
+	resources/info.svg \
 	resources/internet.svg \
 	resources/log_off.svg \
 	resources/menu.svg \
