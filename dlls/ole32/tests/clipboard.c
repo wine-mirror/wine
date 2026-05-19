@@ -1990,9 +1990,8 @@ static void test_sta_clipboard_reuse(void)
     }
     CloseClipboard();
 
-    /* Second STA thread sets clipboard to "second". The first thread's
-       OLE clipboard window has been destroyed, but Wine caches the stale
-       HWND and the second OleSetClipboard fails with CLIPBRD_E_CANT_OPEN. */
+    /* Regression test: second STA thread should be able to set the
+       clipboard after the first thread's clipboard window is destroyed. */
     data.text = "second";
     data.hr_set = E_FAIL;
     thread = CreateThread(NULL, 0, sta_clipboard_set_thread, &data, 0, NULL);
@@ -2000,7 +1999,7 @@ static void test_sta_clipboard_reuse(void)
     ret = WaitForSingleObject(thread, 5000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", ret);
     CloseHandle(thread);
-    todo_wine ok(data.hr_set == S_OK, "second OleSetClipboard returned %#lx\n", data.hr_set);
+    ok(data.hr_set == S_OK, "second OleSetClipboard returned %#lx\n", data.hr_set);
 
     ok(OpenClipboard(NULL), "OpenClipboard failed\n");
     hdata = GetClipboardData(CF_TEXT);
@@ -2008,7 +2007,7 @@ static void test_sta_clipboard_reuse(void)
     if (hdata)
     {
         text = GlobalLock(hdata);
-        todo_wine ok(!strcmp(text, "second"), "expected \"second\", got \"%s\"\n", text);
+        ok(!strcmp(text, "second"), "expected \"second\", got \"%s\"\n", text);
         GlobalUnlock(hdata);
     }
     CloseClipboard();
