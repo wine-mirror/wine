@@ -687,11 +687,9 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
         }
         atom = class_shm->atom;
     }
-    if (status) return 0;
-
     *menu_name = class->menu_name;
     release_class_ptr( class );
-    return atom;
+    return status ? 0 : atom;
 }
 
 /***********************************************************************
