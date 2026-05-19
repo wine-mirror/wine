@@ -671,7 +671,7 @@ BOOL WINAPI InSendMessage(void)
  */
 DWORD WINAPI InSendMessageEx( LPVOID reserved )
 {
-    return NtUserGetThreadInfo()->receive_flags;
+    return NtUserGetThreadState( UserThreadStateInSendMessage );
 }
 
 
