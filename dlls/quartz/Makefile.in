@@ -1,6 +1,7 @@
 MODULE       = quartz.dll
 IMPORTLIB    = quartz
-IMPORTS      = strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 rpcrt4 user32 gdi32 advapi32 winmm msvcrt
+IMPORTS      = $(FFMPEG_PE_LIBS) strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 rpcrt4 user32 gdi32 advapi32 winmm
+EXTRAINCL    = $(FFMPEG_PE_CFLAGS)
 DELAYIMPORTS = ddraw
 
 VER_PRODUCTVERSION  = 6,5,1,902

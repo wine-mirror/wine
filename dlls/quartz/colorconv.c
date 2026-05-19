@@ -20,6 +20,10 @@
 
 #include "quartz_private.h"
 
+#include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
+#include <libswscale/swscale.h>
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
@@ -32,6 +36,8 @@ struct color_converter
     struct strmbase_passthrough passthrough;
 
     struct strmbase_sink sink;
+
+    struct SwsContext *sws_ctx;
 };
 
 struct subtype
@@ -40,16 +46,19 @@ struct subtype
     DWORD compression;
     WORD bitcount;
     ULONG cbFormat;
+    enum AVPixelFormat ff_fmt;
 };
 
 static const struct subtype subtypes[] =
 {
-    { &MEDIASUBTYPE_ARGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
-    { &MEDIASUBTYPE_RGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
-    { &MEDIASUBTYPE_RGB24, BI_RGB, 24, sizeof(VIDEOINFOHEADER) },
-    { &MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
-    { &MEDIASUBTYPE_RGB555, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
-    { &MEDIASUBTYPE_RGB8, BI_RGB, 8, sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[256]) /* bmiColors */ },
+    { &MEDIASUBTYPE_ARGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER), AV_PIX_FMT_BGR0 },
+    { &MEDIASUBTYPE_RGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER), AV_PIX_FMT_BGR0 },
+    { &MEDIASUBTYPE_RGB24, BI_RGB, 24, sizeof(VIDEOINFOHEADER), AV_PIX_FMT_BGR24 },
+    { &MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */,
+            AV_PIX_FMT_RGB565 },
+    { &MEDIASUBTYPE_RGB555, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */,
+            AV_PIX_FMT_RGB555 },
+    { &MEDIASUBTYPE_RGB8, BI_RGB, 8, sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[256]) /* bmiColors */, AV_PIX_FMT_RGB8 },
 };
 
 static const struct subtype *get_subtype(const AM_MEDIA_TYPE *mt)
@@ -133,12 +142,44 @@ static HRESULT color_sink_connect(struct strmbase_sink *iface, IPin *peer, const
         return VFW_E_INVALIDMEDIATYPE;
 }
 
-static const struct strmbase_sink_ops sink_ops =
+static HRESULT create_context(struct color_converter *filter)
 {
-    .base.pin_query_interface = color_sink_query_interface,
-    .base.pin_query_accept = color_sink_query_accept,
-    .sink_connect = color_sink_connect,
-};
+    const struct subtype *sink_subtype, *source_subtype;
+    BITMAPINFOHEADER *sink_header, *source_header;
+    struct SwsContext *sws_ctx;
+    LONG width, height;
+    int ret;
+
+    sink_subtype = get_subtype(&filter->sink.pin.mt);
+    sink_header = &((VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat)->bmiHeader;
+    source_subtype = get_subtype(&filter->source.pin.mt);
+    source_header = &((VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat)->bmiHeader;
+    height = min(labs(sink_header->biHeight), labs(source_header->biHeight));
+    width = min(sink_header->biWidth, source_header->biWidth);
+
+    sws_ctx = filter->sws_ctx = sws_alloc_context();
+    if (!sws_ctx)
+        return E_OUTOFMEMORY;
+
+    av_opt_set(sws_ctx, "sws_flags", "neighbor", 0);
+    av_opt_set_int(sws_ctx, "threads", 0, 0);
+    av_opt_set_int(sws_ctx, "srcw", width, 0);
+    av_opt_set_int(sws_ctx, "srch", height, 0);
+    av_opt_set_pixel_fmt(sws_ctx, "src_format", sink_subtype->ff_fmt, 0);
+    av_opt_set_int(sws_ctx, "dstw", width, 0);
+    av_opt_set_int(sws_ctx, "dsth", height, 0);
+    av_opt_set_pixel_fmt(sws_ctx, "dst_format", source_subtype->ff_fmt, 0);
+
+    ret = sws_init_context(sws_ctx, NULL, NULL);
+
+    if (ret < 0)
+    {
+        ERR("sws_init_context %d\n", ret);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
 
 static HRESULT WINAPI color_source_DecideBufferSize(
         struct strmbase_source *iface, IMemAllocator *alloc, ALLOCATOR_PROPERTIES *props)
@@ -161,6 +202,180 @@ static HRESULT WINAPI color_source_DecideBufferSize(
 
     return IMemAllocator_SetProperties(alloc, props, &actual);
 }
+
+static void media_sample_release(void *opaque, uint8_t *data)
+{
+    IMediaSample_Release((IMediaSample *)opaque);
+}
+
+static AVBufferRef *buffer_from_media_sample(IMediaSample *media_sample, int flags)
+{
+    BYTE *buff;
+    LONG size;
+
+    if (FAILED(IMediaSample_GetPointer(media_sample, (BYTE **)&buff)))
+        return NULL;
+
+    size = IMediaSample_GetSize(media_sample);
+    IMediaSample_AddRef(media_sample);
+    return av_buffer_create(buff, size, media_sample_release, media_sample, flags);
+}
+
+static HRESULT create_av_frame(AVFrame **ret_frame, IMediaSample *media_sample, int flags,
+        const AM_MEDIA_TYPE *media_type, LONG height)
+{
+    const struct subtype *subtype;
+    BITMAPINFOHEADER *header;
+    AVBufferRef *buffer;
+    AVFrame *frame;
+    int ret;
+
+    frame = av_frame_alloc();
+    if (!frame)
+        return E_OUTOFMEMORY;
+
+    *ret_frame = frame;
+
+    if (!(buffer = buffer_from_media_sample(media_sample, flags)))
+    {
+        av_frame_free(ret_frame);
+        return E_OUTOFMEMORY;
+    }
+
+    header = &((VIDEOINFOHEADER *)media_type->pbFormat)->bmiHeader;
+    subtype = get_subtype(media_type);
+
+    frame->buf[0] = buffer;
+    frame->format = subtype->ff_fmt;
+    frame->width = header->biWidth;
+    frame->height = height;
+
+    if ((ret = av_image_fill_arrays((uint8_t **)frame->data, (int *)frame->linesize, frame->buf[0]->data, frame->format,
+            frame->width, frame->height, 4)) < 0)
+    {
+        av_frame_free(ret_frame);
+        ERR("av_image_fill_arrays returned %d.\n", ret);
+        return E_FAIL;
+    }
+
+    /* Move to first scan line, as Windows always blits from/to the top left rect */
+    if (header->biHeight > 0)
+    {
+        frame->data[0] += frame->linesize[0] * (header->biHeight - 1);
+        frame->linesize[0] = -frame->linesize[0];
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI color_sink_Receive(struct strmbase_sink *iface, IMediaSample *src_sample)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    BITMAPINFOHEADER *sink_header, *source_header;
+    LONG output_image_size, dst_stride, height;
+    AVFrame *input_frame, *output_frame;
+    IMediaSample *dst_sample;
+    LONGLONG start, stop;
+    BYTE *dst_buff;
+    LONG dst_size;
+    HRESULT hr;
+    int ret;
+
+    input_frame = output_frame = NULL;
+
+    /* We do not expect pin connection state to change while the filter is
+     * running. This guarantee is necessary, since otherwise we would have to
+     * take the filter lock, and we can't take the filter lock from a streaming
+     * thread. */
+    if (!filter->source.pMemInputPin)
+    {
+        WARN("Source is not connected, returning VFW_E_NOT_CONNECTED.\n");
+        return VFW_E_NOT_CONNECTED;
+    }
+
+    if (filter->filter.state == State_Stopped)
+        return VFW_E_WRONG_STATE;
+
+    if (filter->sink.flushing)
+        return S_FALSE;
+
+    if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &dst_sample, NULL, NULL, 0)))
+    {
+        ERR("Failed to get sample, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IMediaSample_GetPointer(dst_sample, (BYTE **)&dst_buff)))
+    {
+        ERR("Failed to get output buffer pointer, hr %#lx.\n", hr);
+        goto out;
+    }
+
+    sink_header = &((VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat)->bmiHeader;
+    source_header = &((VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat)->bmiHeader;
+    height = min(labs(sink_header->biHeight), labs(source_header->biHeight));
+    dst_stride = calculate_stride(source_header);
+    output_image_size = dst_stride * labs(source_header->biHeight);
+    dst_size = IMediaSample_GetSize(dst_sample);
+    if (dst_size < output_image_size)
+    {
+        ERR("Sample size is too small (%ld < %lu).\n", dst_size, output_image_size);
+        hr = E_FAIL;
+        goto out;
+    }
+
+    hr = IMediaSample_GetTime(src_sample, &start, &stop);
+
+    if (hr == S_OK)
+        IMediaSample_SetTime(dst_sample, &start, &stop);
+    else if (hr == VFW_S_NO_STOP_TIME)
+        IMediaSample_SetTime(dst_sample, &start, NULL);
+    else
+        IMediaSample_SetTime(dst_sample, NULL, NULL);
+
+    if (FAILED(hr = create_av_frame(&input_frame, src_sample, AV_BUFFER_FLAG_READONLY, &filter->sink.pin.mt, height)))
+        goto out;
+
+    if (FAILED(hr = create_av_frame(&output_frame, dst_sample, 0, &filter->source.pin.mt, height)))
+        goto out;
+
+    ret = sws_scale_frame(filter->sws_ctx, output_frame, input_frame);
+
+    av_frame_free(&input_frame);
+    av_frame_free(&output_frame);
+
+    if (ret < 0)
+    {
+        ERR("sws_scale_frame returned %d.\n", ret);
+        hr = E_FAIL;
+        goto out;
+    }
+
+    IMediaSample_SetActualDataLength(dst_sample, output_image_size);
+
+    IMediaSample_SetPreroll(dst_sample, (IMediaSample_IsPreroll(src_sample) == S_OK));
+    IMediaSample_SetDiscontinuity(dst_sample, (IMediaSample_IsDiscontinuity(src_sample) == S_OK));
+    IMediaSample_SetSyncPoint(dst_sample, TRUE);
+
+    hr = IMemInputPin_Receive(filter->source.pMemInputPin, dst_sample);
+    if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
+        ERR("Failed to send sample, hr %#lx.\n", hr);
+
+out:
+    IMediaSample_Release(dst_sample);
+    av_frame_free(&input_frame);
+    av_frame_free(&output_frame);
+
+    return hr;
+}
+
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = color_sink_query_interface,
+    .base.pin_query_accept = color_sink_query_accept,
+    .sink_connect = color_sink_connect,
+    .pfnReceive = color_sink_Receive,
+};
 
 static HRESULT color_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
@@ -321,6 +536,12 @@ static HRESULT color_init_stream(struct strmbase_filter *iface)
     if (!filter->source.pin.peer)
         return S_OK;
 
+    if (FAILED(hr = create_context(filter)))
+    {
+        ERR("Failed create context %#lx.\n", hr);
+        return hr;
+    }
+
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
         ERR("Failed to commit allocator, hr %#lx.\n", hr);
 
@@ -333,6 +554,8 @@ static HRESULT color_cleanup_stream(struct strmbase_filter *iface)
 
     if (!filter->source.pin.peer)
         return S_OK;
+
+    sws_freeContext(filter->sws_ctx);
 
     IMemAllocator_Decommit(filter->source.pAllocator);
 

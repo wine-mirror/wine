@@ -1992,7 +1992,7 @@ skip_test:
 #define EXP_DISCONTINUITY      (1 << 4)
 #define EXP_UNDEFINED_TIME_END (1 << 5)
 
-#define TODO_TIME           (1 << 0)
+#define TODO_TIME_END       (1 << 0)
 #define TODO_MEDIA_TIME     (1 << 1)
 #define TODO_SYNC_POINT     (1 << 2)
 #define TODO_PREROLL        (1 << 3)
@@ -2011,7 +2011,7 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     tests[] =
     {
         {
-            .todo_flags = TODO_SYNC_POINT | TODO_TIME
+            .todo_flags = TODO_SYNC_POINT
         },
         {
             .flags = SET_TIME_START | SET_MEDIA_TIME | SET_SYNC_POINT,
@@ -2020,7 +2020,7 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
             .media_time_end = 20000,
             .sync_point = TRUE,
             .expected_flags = EXP_TIME | EXP_UNDEFINED_TIME_END | EXP_MEDIA_TIME | EXP_SYNC_POINT,
-            .todo_flags = TODO_MEDIA_TIME
+            .todo_flags = TODO_MEDIA_TIME | TODO_TIME_END
         },
         {
             .flags = SET_TIME,
@@ -2185,13 +2185,7 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
         sink_allocator->expect_get_media_type = TRUE;
         sink_allocator->media_type_checked = FALSE;
         hr = IMemInputPin_Receive(input, sample);
-        todo_wine
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr != S_OK)
-        {
-            winetest_pop_context();
-            continue;
-        }
 
         ok(sink_allocator->sample_refcount == 1, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
         todo_wine
@@ -2201,10 +2195,10 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
         sink_allocator->expect_set_time = FALSE;
         sink_allocator->expect_get_media_type = FALSE;
 
-        todo_wine_if(tests[i].todo_flags & TODO_TIME)
         if (tests[i].expected_flags & EXP_TIME)
         {
             ok(sink_allocator->ts_set, "Time start should be set.\n");
+            todo_wine_if(tests[i].todo_flags & TODO_TIME_END)
             ok(sink_allocator->te_set, "Time end should be set.\n");
             ok(sink_allocator->time_start == tests[i].time_start, "Got start time %I64d.\n",
                     sink_allocator->time_start);
@@ -2290,7 +2284,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     sink_allocator->expect_get_media_type = TRUE;
     sink_allocator->media_type_checked = FALSE;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
@@ -2302,10 +2295,7 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     sample = testsink->sample;
     testsink->sample = NULL;
 
-    todo_wine
     ok(sample != NULL, "Expected out peer sample.\n");
-    if (sample == NULL)
-        goto skip_test;
 
     hr = IMediaSample_GetPointer(sample, &buff);
     ok(hr == S_OK, "Get hr %#lx.\n", hr);
@@ -2372,7 +2362,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     sink_allocator->expect_get_media_type = TRUE;
     sink_allocator->media_type_checked = FALSE;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
@@ -2479,9 +2468,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     sink_allocator->media_type_checked = FALSE;
     sink_allocator->expect_get_media_type = TRUE;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(testsink->sample != NULL, "Expected to receive sample.\n");
     todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
@@ -2510,9 +2497,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     sink_allocator->expect_get_media_type = TRUE;
     sink_allocator->expect_get_buffer = TRUE;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(testsink->sample != NULL, "Expected to receive sample.\n");
     todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
