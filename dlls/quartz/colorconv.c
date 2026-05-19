@@ -144,12 +144,20 @@ static HRESULT WINAPI color_source_DecideBufferSize(
         struct strmbase_source *iface, IMemAllocator *alloc, ALLOCATOR_PROPERTIES *props)
 {
     ALLOCATOR_PROPERTIES actual;
+    BITMAPINFOHEADER *header;
+    LONG min_image_size;
 
     if (!props->cbAlign)
         props->cbAlign = 1;
 
     if (!props->cBuffers)
         props->cBuffers = 1;
+
+    header = &((VIDEOINFOHEADER *)iface->pin.mt.pbFormat)->bmiHeader;
+    min_image_size = calculate_stride(header) * labs(header->biHeight);
+
+    if (props->cbBuffer < min_image_size)
+        props->cbBuffer = min_image_size;
 
     return IMemAllocator_SetProperties(alloc, props, &actual);
 }
