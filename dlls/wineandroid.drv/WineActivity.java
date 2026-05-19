@@ -796,6 +796,7 @@ public class WineActivity extends Activity
                 desktop_window = win;
                 top_view.addView( desktop_window.create_whole_view() );
                 desktop_window.client_group.bringToFront();
+                desktop_window.window_group.get_content_view().requestFocus();
             }
         }
         if (opengl) win.create_client_view();
