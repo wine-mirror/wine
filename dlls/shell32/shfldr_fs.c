@@ -1409,7 +1409,6 @@ IFSFldr_PersistFolder3_Initialize (IPersistFolder3 * iface, LPCITEMIDLIST pidl)
         if (IsEqualCLSID( This->pclsid, &CLSID_MyDocuments ))
         {
             if (!SHGetSpecialFolderPathW( 0, wszTemp, CSIDL_PERSONAL, FALSE )) return E_FAIL;
-            PathAddBackslashW( wszTemp );
         }
         else lstrcpyW( wszTemp, L"\\\\?\\unix\\" );
     }

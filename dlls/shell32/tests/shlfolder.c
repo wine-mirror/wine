@@ -1501,6 +1501,34 @@ static void test_SHGetPathFromIDList(void)
     ok(result, "SHGetPathFromIDListW failed\n");
 }
 
+static void test_SHGetPathFromIDList_personal(void)
+{
+    WCHAR personal[MAX_PATH], path[MAX_PATH];
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+    BOOL ret;
+    int len;
+
+    ret = SHGetSpecialFolderPathW(NULL, personal, CSIDL_PERSONAL, FALSE);
+    ok(ret, "SHGetSpecialFolderPathW(CSIDL_PERSONAL) failed, error %lu.\n", GetLastError());
+    if (!ret) return;
+
+    hr = SHGetSpecialFolderLocation(NULL, CSIDL_PERSONAL, &pidl);
+    ok(hr == S_OK, "SHGetSpecialFolderLocation(CSIDL_PERSONAL) failed, hr %#lx.\n", hr);
+    if (hr != S_OK) return;
+
+    ret = SHGetPathFromIDListW(pidl, path);
+    ILFree(pidl);
+    ok(ret, "SHGetPathFromIDListW(CSIDL_PERSONAL) failed, error %lu.\n", GetLastError());
+    if (!ret) return;
+    ok(!lstrcmpiW(path, personal), "got %s, expected %s.\n", wine_dbgstr_w(path),
+       wine_dbgstr_w(personal));
+
+    len = lstrlenW(path);
+    ok(len && path[len - 1] != '\\', "CSIDL_PERSONAL path has trailing backslash: %s.\n",
+       wine_dbgstr_w(path));
+}
+
 static void test_EnumObjects_and_CompareIDs(void)
 {
     ITEMIDLIST *newPIDL;
@@ -6291,6 +6319,7 @@ START_TEST(shlfolder)
     test_GetDisplayName();
     test_GetAttributesOf();
     test_SHGetPathFromIDList();
+    test_SHGetPathFromIDList_personal();
     test_CallForAttributes();
     test_FolderShortcut();
     test_ITEMIDLIST_format();
