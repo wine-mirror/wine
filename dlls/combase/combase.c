@@ -395,39 +395,6 @@ HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data)
     return S_OK;
 }
 
-static void com_cleanup_tlsdata(void)
-{
-    struct tlsdata *tlsdata = NtCurrentTeb()->ReservedForOle;
-    struct init_spy *cursor, *cursor2;
-
-    if (!tlsdata)
-        return;
-
-    if (tlsdata->apt)
-        apartment_release(tlsdata->apt);
-    if (tlsdata->implicit_mta_cookie)
-        apartment_decrement_mta_usage(tlsdata->implicit_mta_cookie);
-
-    if (tlsdata->errorinfo)
-        IErrorInfo_Release(tlsdata->errorinfo);
-    if (tlsdata->state)
-        IUnknown_Release(tlsdata->state);
-
-    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &tlsdata->spies, struct init_spy, entry)
-    {
-        list_remove(&cursor->entry);
-        if (cursor->spy)
-            IInitializeSpy_Release(cursor->spy);
-        free(cursor);
-    }
-
-    if (tlsdata->context_token)
-        IObjContext_Release(tlsdata->context_token);
-
-    free(tlsdata);
-    NtCurrentTeb()->ReservedForOle = NULL;
-}
-
 struct global_options
 {
     IGlobalOptions IGlobalOptions_iface;
@@ -2436,13 +2403,24 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
     return S_OK;
 }
 
-struct thread_context
+static CRITICAL_SECTION context_cs;
+static CRITICAL_SECTION_DEBUG context_cs_debug =
+{
+    0, 0, &context_cs,
+    { &context_cs_debug.ProcessLocksList, &context_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": context_cs") }
+};
+static CRITICAL_SECTION context_cs = { &context_cs_debug, -1, 0, 0, 0, 0 };
+
+
+static struct thread_context
 {
     IComThreadingInfo IComThreadingInfo_iface;
     IContextCallback IContextCallback_iface;
     IObjContext IObjContext_iface;
-    LONG refcount;
-};
+    LONG ref;
+    LONG reported_ref;
+} *mta_context;
 
 static inline struct thread_context *impl_from_IComThreadingInfo(IComThreadingInfo *iface)
 {
@@ -2492,22 +2470,36 @@ static HRESULT WINAPI thread_context_info_QueryInterface(IComThreadingInfo *ifac
 static ULONG WINAPI thread_context_info_AddRef(IComThreadingInfo *iface)
 {
     struct thread_context *context = impl_from_IComThreadingInfo(iface);
-    return InterlockedIncrement(&context->refcount);
+    InterlockedIncrement(&context->ref);
+    return InterlockedIncrement(&context->reported_ref);
+}
+
+static void context_token_release(IObjContext *iface)
+{
+    struct thread_context *context = impl_from_IObjContext(iface);
+
+    if (!InterlockedDecrement(&context->ref))
+    {
+        EnterCriticalSection(&context_cs);
+        if (context->ref)
+        {
+            LeaveCriticalSection(&context_cs);
+            return;
+        }
+        if (context == mta_context) mta_context = NULL;
+        LeaveCriticalSection(&context_cs);
+
+        free(context);
+    }
 }
 
 static ULONG WINAPI thread_context_info_Release(IComThreadingInfo *iface)
 {
     struct thread_context *context = impl_from_IComThreadingInfo(iface);
+    ULONG ret = InterlockedDecrement(&context->reported_ref);
 
-    /* Context instance is initially created with CoGetContextToken() with refcount set to 0,
-       releasing context while refcount is at 0 destroys it. */
-    if (!context->refcount)
-    {
-        free(context);
-        return 0;
-    }
-
-    return InterlockedDecrement(&context->refcount);
+    context_token_release(&context->IObjContext_iface);
+    return ret;
 }
 
 static HRESULT WINAPI thread_context_info_GetCurrentApartmentType(IComThreadingInfo *iface, APTTYPE *apttype)
@@ -2708,15 +2700,10 @@ static const IObjContextVtbl thread_object_context_vtbl =
 HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
 {
     struct tlsdata *tlsdata;
+    struct apartment *apt;
     HRESULT hr;
 
     TRACE("%p\n", token);
-
-    if (!InternalIsProcessInitialized())
-    {
-        ERR("apartment not initialised\n");
-        return CO_E_NOTINITIALIZED;
-    }
 
     if (FAILED(hr = com_get_tlsdata(&tlsdata)))
         return hr;
@@ -2724,20 +2711,64 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
     if (!token)
         return E_POINTER;
 
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    if (tlsdata->context_token)
+    {
+        struct thread_context *context = impl_from_IObjContext(tlsdata->context_token);
+        if ((apt->multi_threaded && context != mta_context) ||
+            (!apt->multi_threaded && context == mta_context))
+        {
+            context_token_release(tlsdata->context_token);
+            tlsdata->context_token = NULL;
+        }
+    }
+
+    if (!tlsdata->context_token && apt->multi_threaded && mta_context)
+    {
+        EnterCriticalSection(&context_cs);
+        if (mta_context)
+        {
+            tlsdata->context_token = &mta_context->IObjContext_iface;
+            InterlockedIncrement(&mta_context->ref);
+        }
+        LeaveCriticalSection(&context_cs);
+    }
+
     if (!tlsdata->context_token)
     {
         struct thread_context *context;
 
         context = calloc(1, sizeof(*context));
         if (!context)
+        {
+            apartment_release(apt);
             return E_OUTOFMEMORY;
+        }
 
         context->IComThreadingInfo_iface.lpVtbl = &thread_context_info_vtbl;
         context->IContextCallback_iface.lpVtbl = &thread_context_callback_vtbl;
         context->IObjContext_iface.lpVtbl = &thread_object_context_vtbl;
-        /* Context token does not take a reference, it's always zero until the
-           interface is explicitly requested with CoGetObjectContext(). */
-        context->refcount = 0;
+        context->ref = 1;
+        context->reported_ref = 0;
+
+        if (apt->multi_threaded)
+        {
+            EnterCriticalSection(&context_cs);
+            if (!mta_context)
+                mta_context = context;
+            else
+            {
+                context_token_release(&context->IObjContext_iface);
+                context = mta_context;
+                InterlockedIncrement(&context->ref);
+            }
+            LeaveCriticalSection(&context_cs);
+        }
 
         tlsdata->context_token = &context->IObjContext_iface;
     }
@@ -2745,6 +2776,7 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
     *token = (ULONG_PTR)tlsdata->context_token;
     TRACE("context_token %p\n", tlsdata->context_token);
 
+    apartment_release(apt);
     return S_OK;
 }
 
@@ -3433,6 +3465,39 @@ HRESULT WINAPI CoRegisterActivationFilter(IActivationFilter *filter)
     FIXME("%p stub\n", filter);
 
     return E_NOTIMPL;
+}
+
+static void com_cleanup_tlsdata(void)
+{
+    struct tlsdata *tlsdata = NtCurrentTeb()->ReservedForOle;
+    struct init_spy *cursor, *cursor2;
+
+    if (!tlsdata)
+        return;
+
+    if (tlsdata->apt)
+        apartment_release(tlsdata->apt);
+    if (tlsdata->implicit_mta_cookie)
+        apartment_decrement_mta_usage(tlsdata->implicit_mta_cookie);
+
+    if (tlsdata->errorinfo)
+        IErrorInfo_Release(tlsdata->errorinfo);
+    if (tlsdata->state)
+        IUnknown_Release(tlsdata->state);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &tlsdata->spies, struct init_spy, entry)
+    {
+        list_remove(&cursor->entry);
+        if (cursor->spy)
+            IInitializeSpy_Release(cursor->spy);
+        free(cursor);
+    }
+
+    if (tlsdata->context_token)
+        context_token_release(tlsdata->context_token);
+
+    free(tlsdata);
+    NtCurrentTeb()->ReservedForOle = NULL;
 }
 
 /***********************************************************************
