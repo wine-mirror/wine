@@ -2545,9 +2545,17 @@ static HRESULT WINAPI thread_context_info_GetCurrentLogicalThreadId(IComThreadin
 
 static HRESULT WINAPI thread_context_info_SetCurrentLogicalThreadId(IComThreadingInfo *iface, REFGUID logical_thread_id)
 {
-    FIXME("%s stub\n", debugstr_guid(logical_thread_id));
+    struct tlsdata *tlsdata;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%s\n", debugstr_guid(logical_thread_id));
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    tlsdata->causality_id = *logical_thread_id;
+    tlsdata->flags |= OLETLS_UUIDINITIALIZED;
+    return S_OK;
 }
 
 static const IComThreadingInfoVtbl thread_context_info_vtbl =
@@ -2794,7 +2802,7 @@ HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id)
     if (FAILED(hr = com_get_tlsdata(&tlsdata)))
         return hr;
 
-    if (IsEqualGUID(&tlsdata->causality_id, &GUID_NULL))
+    if (!(tlsdata->flags & OLETLS_UUIDINITIALIZED))
     {
         CoCreateGuid(&tlsdata->causality_id);
         tlsdata->flags |= OLETLS_UUIDINITIALIZED;

@@ -2044,6 +2044,21 @@ static void test_CoGetObjectContext(void)
     hr = CoGetCurrentLogicalThreadId(&id2);
     ok(IsEqualGUID(&id, &id2), "got %s, expected %s\n", wine_dbgstr_guid(&id), wine_dbgstr_guid(&id2));
 
+    id = GUID_NULL;
+    hr = IComThreadingInfo_SetCurrentLogicalThreadId(pComThreadingInfo, &id);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+    hr = IComThreadingInfo_GetCurrentLogicalThreadId(pComThreadingInfo, &id);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(IsEqualGUID(&id, &GUID_NULL), "id = %s\n", wine_dbgstr_guid(&id));
+
+    hr = CoGetCurrentLogicalThreadId(&id);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(IsEqualGUID(&id, &GUID_NULL), "id = %s\n", wine_dbgstr_guid(&id));
+
+    hr = IComThreadingInfo_SetCurrentLogicalThreadId(pComThreadingInfo, &id2);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
     hr = IComThreadingInfo_GetCurrentApartmentType(pComThreadingInfo, &apttype);
     ok_ole_success(hr, "IComThreadingInfo_GetCurrentApartmentType");
     ok(apttype == APTTYPE_MAINSTA, "apartment type should be APTTYPE_MAINSTA instead of %d\n", apttype);
