@@ -1037,7 +1037,7 @@ static INT stock_icon_id_to_resource_id(SHSTOCKICONID id)
     MISSING_ICON(SIID_FOLDERFRONT);
     case SIID_SHIELD:             return IDI_SHELL_SHIELD;
     MISSING_ICON(SIID_WARNING);
-    MISSING_ICON(SIID_INFO);
+    case SIID_INFO:               return IDI_SHELL_INFO;
     case SIID_ERROR:              return IDI_SHELL_RESTRICTED;
     MISSING_ICON(SIID_KEY);
     MISSING_ICON(SIID_SOFTWARE);
