@@ -2966,6 +2966,12 @@ static void test_parse_errors(void)
             NULL, S_OK, 1041
         },
         {
+            /* A global Sub collides with a global Dim of the same name - error 1041 */
+            L"Dim s\nSub S\nEnd Sub\n",
+            1, 4,
+            NULL, S_OK, 1041
+        },
+        {
             /* Expected identifier - error 1010 */
             L"Dim If\n",
             0, 4,
@@ -3512,6 +3518,28 @@ static void test_parse_errors(void)
     }
     SysFreeString(error_source_line);
     error_source_line = NULL;
+}
+
+static void test_redefine_scope(void)
+{
+    static const WCHAR *valid[] = {
+        /* a local Dim may shadow a global Sub */
+        L"Sub S\nEnd Sub\nSub Other\nDim s\nEnd Sub\n",
+        /* a local Const may shadow a global Sub */
+        L"Sub S\nEnd Sub\nSub Other\nConst s = 1\nEnd Sub\n",
+        /* a Class name does not collide with a local Dim of another Sub */
+        L"Class S\nEnd Class\nSub Other\nDim s\nEnd Sub\n",
+        L"Sub Other\nDim s\nEnd Sub\nClass S\nEnd Class\n",
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(valid); i++) {
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(valid[i]);
+        todo_wine ok(hres == S_OK, "[%u] parse returned %08lx\n", i, hres);
+        CLEAR_CALLED(OnScriptError);
+    }
 }
 
 static void test_msgbox(void)
@@ -4210,6 +4238,7 @@ static void run_tests(void)
     test_isexpression();
     test_option_explicit_errors();
     test_parse_errors();
+    test_redefine_scope();
     test_parse_context();
     test_callbacks();
     test_multiple_parse();
