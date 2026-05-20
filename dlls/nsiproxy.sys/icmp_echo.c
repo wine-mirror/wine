@@ -241,8 +241,8 @@ static void ipv4_init_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp_hd
     icmp_hdr->type = ICMP4_ECHO_REQUEST;
     icmp_hdr->code = 0;
     icmp_hdr->checksum = 0;
-    icmp_hdr->un.echo.id = data->s->id = getpid() & 0xffff; /* will be overwritten for linux ping socks */
-    icmp_hdr->un.echo.sequence = data->seq = InterlockedIncrement( &icmp_sequence ) & 0xffff;
+    icmp_hdr->un.echo.id = data->s->id = htons( 1 ); /* will be overwritten for linux ping socks */
+    icmp_hdr->un.echo.sequence = data->seq = htons( InterlockedIncrement( &icmp_sequence ) & 0xffff );
 }
 
 /* rfc 1071 checksum */
