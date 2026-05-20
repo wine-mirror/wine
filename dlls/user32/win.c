@@ -551,9 +551,6 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-
-    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
     return NtUserGetDesktopWindow();
 }
 

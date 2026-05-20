@@ -117,6 +117,8 @@ struct user_thread_info
     HANDLE                        server_queue;           /* Handle to server-side queue */
     HANDLE                        idle_event;             /* Handle to the process idle event */
     LONGLONG                      last_driver_time;       /* Get/PeekMessage driver event time */
+    HWND                          top_window;             /* desktop window */
+    HWND                          msg_window;             /* HWND_MESSAGE parent window */
     WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     WORD                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */

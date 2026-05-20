@@ -578,8 +578,8 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
         struct session_thread_data *data = get_session_thread_data();
         data->shared_desktop = find_shared_session_object( locator.id, locator.offset );
         memset( &data->shared_foreground, 0, sizeof(data->shared_foreground) );
-        thread_info->client_info.top_window = 0;
-        thread_info->client_info.msg_window = 0;
+        thread_info->top_window = 0;
+        thread_info->msg_window = 0;
         if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( TRUE );
     }
     return ret;
@@ -789,10 +789,10 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 
 HWND get_desktop_window(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
     BOOL is_service;
 
-    if (thread_info->top_window) return UlongToHandle( thread_info->top_window );
+    if (thread_info->top_window) return thread_info->top_window;
 
     /* don't create an actual explorer desktop window for services */
     is_service = is_service_process();
@@ -802,8 +802,8 @@ HWND get_desktop_window(void)
         req->force = is_service;
         if (!wine_server_call( req ))
         {
-            thread_info->top_window = reply->top_window;
-            thread_info->msg_window = reply->msg_window;
+            thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+            thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
         }
     }
     SERVER_END_REQ;
@@ -884,18 +884,17 @@ HWND get_desktop_window(void)
             req->force = 1;
             if (!wine_server_call( req ))
             {
-                thread_info->top_window = reply->top_window;
-                thread_info->msg_window = reply->msg_window;
+                thread_info->top_window = wine_server_ptr_handle( reply->top_window );
+                thread_info->msg_window = wine_server_ptr_handle( reply->msg_window );
             }
         }
         SERVER_END_REQ;
     }
-
     if (!thread_info->top_window) ERR_(win)( "failed to create desktop window\n" );
-    else user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
+    else user_driver->pSetDesktopWindow( thread_info->top_window );
 
     register_builtin_classes();
-    return UlongToHandle( thread_info->top_window );
+    return thread_info->top_window;
 }
 
 static HANDLE get_winstations_dir_handle(void)

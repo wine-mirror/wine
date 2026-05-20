@@ -410,10 +410,10 @@ BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )
  */
 HWND get_hwnd_message_parent(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
 
     if (!thread_info->msg_window) get_desktop_window(); /* trigger creation */
-    return UlongToHandle( thread_info->msg_window );
+    return thread_info->msg_window;
 }
 
 /***********************************************************************
@@ -442,11 +442,11 @@ HWND get_full_window_handle( HWND hwnd )
  */
 BOOL is_desktop_window( HWND hwnd )
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
 
     if (!hwnd) return FALSE;
-    if (hwnd == UlongToHandle( thread_info->top_window )) return TRUE;
-    if (hwnd == UlongToHandle( thread_info->msg_window )) return TRUE;
+    if (hwnd == thread_info->top_window) return TRUE;
+    if (hwnd == thread_info->msg_window) return TRUE;
 
     if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
     {
@@ -5600,20 +5600,19 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     if (!parent)  /* if parent is 0 we don't have a desktop window yet */
     {
-        struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+        struct user_thread_info *thread_info = get_user_thread_info();
 
         if (is_desktop_class( name ))
         {
-            if (!thread_info->top_window) thread_info->top_window = HandleToUlong( full_parent ? full_parent : handle );
-            else assert( full_parent == UlongToHandle( thread_info->top_window ));
+            if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
+            else assert( full_parent == thread_info->top_window );
             if (!thread_info->top_window) ERR_(win)( "failed to create desktop window\n" );
-            else user_driver->pSetDesktopWindow( UlongToHandle( thread_info->top_window ));
+            else user_driver->pSetDesktopWindow( thread_info->top_window );
             register_builtin_classes();
         }
         else  /* HWND_MESSAGE parent */
         {
-            if (!thread_info->msg_window && !full_parent)
-                thread_info->msg_window = HandleToUlong( handle );
+            if (!thread_info->msg_window && !full_parent) thread_info->msg_window = handle;
         }
     }
 
