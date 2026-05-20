@@ -171,7 +171,6 @@ void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
 struct scroll_info *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc );
 
 /* Window functions */
-BOOL is_desktop_window( HWND hwnd );
 HWND WIN_GetFullHandle( HWND hwnd );
 HWND WIN_IsCurrentProcess( HWND hwnd );
 HWND WIN_IsCurrentThread( HWND hwnd );

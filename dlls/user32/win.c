@@ -94,28 +94,6 @@ static BOOL enum_windows( HDESK desktop, HWND hwnd, DWORD tid, BOOL children,
 }
 
 
-/*******************************************************************
- *           is_desktop_window
- *
- * Check if window is the desktop or the HWND_MESSAGE top parent.
- */
-BOOL is_desktop_window( HWND hwnd )
-{
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-
-    if (!hwnd) return FALSE;
-    if (hwnd == UlongToHandle( thread_info->top_window )) return TRUE;
-    if (hwnd == UlongToHandle( thread_info->msg_window )) return TRUE;
-
-    if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
-    {
-        if (LOWORD(thread_info->top_window) == LOWORD(hwnd)) return TRUE;
-        if (LOWORD(thread_info->msg_window) == LOWORD(hwnd)) return TRUE;
-    }
-    return FALSE;
-}
-
-
 /* check if hwnd is a broadcast magic handle */
 static inline BOOL is_broadcast( HWND hwnd )
 {

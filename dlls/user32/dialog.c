@@ -1157,8 +1157,8 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
     if (NtUserCallMsgFilter( msg, MSGF_DIALOGBOX )) return TRUE;
 
     hwndDlg = WIN_GetFullHandle( hwndDlg );
-    if (is_desktop_window(hwndDlg)) return FALSE;
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
+    if (!NtUserGetAncestor( hwndDlg, GA_PARENT )) return FALSE;
 
     hwndDlg = DIALOG_FindMsgDestination(hwndDlg);
 
