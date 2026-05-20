@@ -1707,9 +1707,9 @@ static DWORD klid_from_xkb_layout( const char *layout, const char *variant )
 }
 
 /* fuzzy layout detection through keysym / keycode matching, kbd_section must be held */
-static void detect_keyboard_layout( Display *display, XModifierKeymap *modmap, unsigned int xkb_group )
+static unsigned int detect_keyboard_layout( Display *display, XModifierKeymap *modmap, unsigned int xkb_group )
 {
-  unsigned current, match, mismatch, seq, i, syms;
+  unsigned current, match, mismatch, seq, i, syms, best_layout = 0;
   int score, keyc, key, pkey, ok;
   KeySym keysym;
   const char (*lkey)[MAIN_LEN][4];
@@ -1814,7 +1814,7 @@ static void detect_keyboard_layout( Display *display, XModifierKeymap *modmap, u
 	   match, mismatch, seq, score);
     if (score + (int)seq > max_score + (int)max_seq) {
       /* best match so far */
-      kbd_layout = current;
+      best_layout = current;
       max_score = score;
       max_seq = seq;
       ismatch = !mismatch;
@@ -1823,9 +1823,10 @@ static void detect_keyboard_layout( Display *display, XModifierKeymap *modmap, u
   /* we're done, report results if necessary */
   if (!ismatch)
     WARN("Using closest match (%s) for scan/virtual codes mapping.\n",
-        main_key_tab[kbd_layout].comment);
+        main_key_tab[best_layout].comment);
 
-  TRACE("detected layout is \"%s\"\n", main_key_tab[kbd_layout].comment);
+  TRACE("detected layout is \"%s\"\n", main_key_tab[best_layout].comment);
+  return best_layout;
 }
 
 
@@ -2173,7 +2174,7 @@ void init_keyboard_layouts( Display *display )
         XkbFreeKeyboard( xkb_desc, 0, True );
     }
 
-    detect_keyboard_layout( display, mmp, xkb_group );
+    kbd_layout = detect_keyboard_layout( display, mmp, xkb_group );
     XFreeModifiermap( mmp );
 
     if (xkb_lang && xkb_lang != main_key_tab[kbd_layout].lcid)
