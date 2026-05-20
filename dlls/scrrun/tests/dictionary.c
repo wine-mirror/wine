@@ -1134,6 +1134,141 @@ static void test_Add(void)
     IDictionary_Release(dict);
 }
 
+static void add_str_item(IDictionary *dict, const WCHAR *name, int value)
+{
+    VARIANT key, item;
+    HRESULT hr;
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(name);
+    V_VT(&item) = VT_I2;
+    V_I2(&item) = value;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "Add %s: %#lx.\n", wine_dbgstr_w(name), hr);
+    VariantClear(&key);
+}
+
+static void check_key_at(IDictionary *dict, LONG index, const WCHAR *expect, BOOL todo)
+{
+    VARIANT keys, key;
+    HRESULT hr;
+
+    VariantInit(&keys);
+    hr = IDictionary_Keys(dict, &keys);
+    ok(hr == S_OK, "Keys: %#lx.\n", hr);
+
+    VariantInit(&key);
+    hr = SafeArrayGetElement(V_ARRAY(&keys), &index, &key);
+    ok(hr == S_OK, "GetElement %ld: %#lx.\n", index, hr);
+    todo_wine_if(todo) ok(V_VT(&key) == VT_BSTR && !lstrcmpW(V_BSTR(&key), expect),
+            "key at %ld: got %s, expected %s.\n", index, wine_dbgstr_variant(&key), wine_dbgstr_w(expect));
+    VariantClear(&key);
+    VariantClear(&keys);
+}
+
+static BOOL exists_str(IDictionary *dict, const WCHAR *name)
+{
+    VARIANT_BOOL exists = VARIANT_FALSE;
+    VARIANT key;
+    HRESULT hr;
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(name);
+    hr = IDictionary_Exists(dict, &key, &exists);
+    ok(hr == S_OK, "Exists %s: %#lx.\n", wine_dbgstr_w(name), hr);
+    VariantClear(&key);
+    return exists == VARIANT_TRUE;
+}
+
+static void test_put_Key(void)
+{
+    VARIANT key, newkey, item;
+    IDictionary *dict;
+    BOOL has_y;
+    LONG count;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    add_str_item(dict, L"a", 1);
+    add_str_item(dict, L"b", 2);
+    add_str_item(dict, L"c", 3);
+
+    /* Renaming an existing key keeps its value and enumeration position. */
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"b");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"x");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    ok(hr == S_OK, "put_Key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    ok(!exists_str(dict, L"b"), "old key 'b' should be gone\n");
+    ok(exists_str(dict, L"x"), "new key 'x' should exist\n");
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"x");
+    VariantInit(&item);
+    hr = IDictionary_get_Item(dict, &key, &item);
+    ok(hr == S_OK, "get_Item: %#lx.\n", hr);
+    ok(V_VT(&item) == VT_I2 && V_I2(&item) == 2, "renamed item: %s.\n", wine_dbgstr_variant(&item));
+    VariantClear(&key);
+    VariantClear(&item);
+
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    ok(count == 3, "Unexpected count %ld.\n", count);
+
+    check_key_at(dict, 0, L"a", FALSE);
+    check_key_at(dict, 1, L"x", TRUE);
+    check_key_at(dict, 2, L"c", TRUE);
+
+    /* Renaming a key that does not exist fails and changes nothing. */
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"zzz");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"y");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    todo_wine ok(hr == CTL_E_ELEMENT_NOT_FOUND, "put_Key of missing key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    todo_wine ok(count == 3, "Unexpected count %ld.\n", count);
+    has_y = exists_str(dict, L"y");
+    todo_wine ok(!has_y, "missing-key rename should not create 'y'\n");
+
+    IDictionary_Release(dict);
+
+    /* Renaming onto an existing key fails and leaves the dictionary intact. */
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    add_str_item(dict, L"a", 1);
+    add_str_item(dict, L"b", 2);
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = SysAllocString(L"b");
+    V_VT(&newkey) = VT_BSTR;
+    V_BSTR(&newkey) = SysAllocString(L"a");
+    hr = IDictionary_put_Key(dict, &key, &newkey);
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "put_Key onto existing key: %#lx.\n", hr);
+    VariantClear(&key);
+    VariantClear(&newkey);
+
+    ok(exists_str(dict, L"b"), "key 'b' should be intact after failed rename\n");
+    hr = IDictionary_get_Count(dict, &count);
+    ok(hr == S_OK, "get_Count: %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %ld.\n", count);
+
+    IDictionary_Release(dict);
+}
+
 static void test_IEnumVARIANT(void)
 {
     IUnknown *enum1, *enum2;
@@ -1315,6 +1450,7 @@ START_TEST(dictionary)
     test_Item();
     test_Add();
     test_object_key_hashfail();
+    test_put_Key();
     test_IEnumVARIANT();
     test_putref_Item();
 
