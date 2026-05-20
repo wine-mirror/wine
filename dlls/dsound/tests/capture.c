@@ -290,6 +290,59 @@ static BOOL capture_buffer_service(capture_state_t* state)
     if (rc!=DS_OK)
         return FALSE;
 
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,(DWORD)-32,0,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() failed: %08lx\n", rc);
+    ok(!ptr1 && !ptr2 && !len1 && !len2, "got %p, %lu, %p, %lu.\n", ptr1, len1, ptr2, len2);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,(DWORD)-32,64,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    ok(!ptr1 && !ptr2 && !len1 && !len2, "got %p, %lu, %p, %lu.\n", ptr1, len1, ptr2, len2);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,0,0,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    ok(!ptr1 && !ptr2 && !len1 && !len2, "got %p, %lu, %p, %lu.\n", ptr1, len1, ptr2, len2);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,0,0,&ptr1,&len1,NULL,NULL,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    ok(!ptr1 && !len1, "got %p, %lu.\n", ptr1, len1);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->buffer_size,1,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    ok(!ptr1 && !ptr2 && !len1 && !len2, "got %p, %lu, %p, %lu.\n", ptr1, len1, ptr2, len2);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,0,state->buffer_size + 1,&ptr1,&len1,&ptr2,&len2,0);
+    ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    ok(!ptr1 && !ptr2 && !len1 && !len2, "got %p, %lu, %p, %lu.\n", ptr1, len1, ptr2, len2);
+
+    ptr1 = ptr2 = (void *)0xdeadbeef;
+    len1 = len2 = 0xdeadbeef;
+    rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,state->buffer_size,
+                                      &ptr1,&len1,&ptr2,&len2,0);
+    ok(!rc,"IDirectSoundCaptureBuffer_Lock() returned: %08lx\n", rc);
+    if (state->offset)
+        ok(ptr1 == (char *)ptr2 + state->offset, "got %p, %p, buffer_size %ld, offset %ld.\n",
+           ptr1, ptr2, state->buffer_size, state->offset);
+    else
+        ok(!ptr2, "got %p.\n", ptr2);
+    ok(len1 == state->buffer_size - state->offset, "got %ld, buffer_size %ld, offset %ld.\n",
+       len1, state->buffer_size, state->offset);
+    ok(len2 == state->offset, "got %ld, buffer_size %ld, offset %ld.\n",
+       len2, state->buffer_size, state->offset);
+    rc=IDirectSoundCaptureBuffer_Unlock(state->dscbo,ptr1,len1,ptr2,len2);
+    ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Unlock() returned: %08lx\n", rc);
+
     rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,state->size,
                                       &ptr1,&len1,&ptr2,&len2,0);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Lock() failed: %08lx\n", rc);
