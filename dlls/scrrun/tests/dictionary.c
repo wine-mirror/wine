@@ -1223,8 +1223,8 @@ static void test_put_Key(void)
     ok(count == 3, "Unexpected count %ld.\n", count);
 
     check_key_at(dict, 0, L"a", FALSE);
-    check_key_at(dict, 1, L"x", TRUE);
-    check_key_at(dict, 2, L"c", TRUE);
+    check_key_at(dict, 1, L"x", FALSE);
+    check_key_at(dict, 2, L"c", FALSE);
 
     /* Renaming a key that does not exist fails and changes nothing. */
     V_VT(&key) = VT_BSTR;
@@ -1232,15 +1232,15 @@ static void test_put_Key(void)
     V_VT(&newkey) = VT_BSTR;
     V_BSTR(&newkey) = SysAllocString(L"y");
     hr = IDictionary_put_Key(dict, &key, &newkey);
-    todo_wine ok(hr == CTL_E_ELEMENT_NOT_FOUND, "put_Key of missing key: %#lx.\n", hr);
+    ok(hr == CTL_E_ELEMENT_NOT_FOUND, "put_Key of missing key: %#lx.\n", hr);
     VariantClear(&key);
     VariantClear(&newkey);
 
     hr = IDictionary_get_Count(dict, &count);
     ok(hr == S_OK, "get_Count: %#lx.\n", hr);
-    todo_wine ok(count == 3, "Unexpected count %ld.\n", count);
+    ok(count == 3, "Unexpected count %ld.\n", count);
     has_y = exists_str(dict, L"y");
-    todo_wine ok(!has_y, "missing-key rename should not create 'y'\n");
+    ok(!has_y, "missing-key rename should not create 'y'\n");
 
     IDictionary_Release(dict);
 

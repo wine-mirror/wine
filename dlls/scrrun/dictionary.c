@@ -241,10 +241,19 @@ static HRESULT get_keyitem_pair(struct dictionary *dict, VARIANT *key, struct ke
     return S_OK;
 }
 
+static void link_keyitem_to_bucket(struct dictionary *dict, struct keyitem_pair *pair)
+{
+    struct list *head = get_bucket_head(dict, pair->hash);
+
+    if (!head->next)
+        /* this only happens once per bucket */
+        list_init(head);
+    list_add_tail(head, &pair->bucket);
+}
+
 static HRESULT add_keyitem_pair(struct dictionary *dict, VARIANT *key, VARIANT *item)
 {
     struct keyitem_pair *pair;
-    struct list *head;
     VARIANT hash;
     HRESULT hr;
 
@@ -267,13 +276,8 @@ static HRESULT add_keyitem_pair(struct dictionary *dict, VARIANT *key, VARIANT *
     if (FAILED(hr))
         goto failed;
 
-    head = get_bucket_head(dict, pair->hash);
-    if (!head->next)
-        /* this only happens once per bucket */
-        list_init(head);
-
     /* link to bucket list and to full list */
-    list_add_tail(head, &pair->bucket);
+    link_keyitem_to_bucket(dict, pair);
     list_add_tail(&dict->pairs, &pair->entry);
     dict->count++;
     return S_OK;
@@ -705,29 +709,41 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
 static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *key, VARIANT *newkey)
 {
     struct dictionary *dictionary = impl_from_IDictionary(iface);
-    struct keyitem_pair *pair;
-    VARIANT empty;
+    struct keyitem_pair *pair, *existing;
+    VARIANT new_key, hash;
     HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_variant(key), debugstr_variant(newkey));
 
     if (FAILED(hr = get_keyitem_pair(dictionary, key, &pair)))
         return hr;
+    if (!pair)
+        return CTL_E_ELEMENT_NOT_FOUND;
 
-    if (pair)
-    {
-        /* found existing pair for a key, add new pair with new key
-           and old item and remove old pair after that */
+    /* The key is renamed in place, preserving its value and enumeration
+       position; only collisions with a different pair are rejected. */
+    if (FAILED(hr = get_keyitem_pair(dictionary, newkey, &existing)))
+        return hr;
+    if (existing && existing != pair)
+        return CTL_E_KEY_ALREADY_EXISTS;
 
-        hr = IDictionary_Add(iface, newkey, &pair->item);
-        if (FAILED(hr))
-            return hr;
+    hr = IDictionary_get_HashVal(iface, newkey, &hash);
+    if (FAILED(hr))
+        return hr;
 
-        return IDictionary_Remove(iface, key);
-    }
+    VariantInit(&new_key);
+    hr = VariantCopyInd(&new_key, newkey);
+    if (FAILED(hr))
+        return hr;
 
-    VariantInit(&empty);
-    return IDictionary_Add(iface, newkey, &empty);
+    VariantClear(&pair->key);
+    pair->key = new_key;
+    pair->hash = V_I4(&hash);
+
+    list_remove(&pair->bucket);
+    link_keyitem_to_bucket(dictionary, pair);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
