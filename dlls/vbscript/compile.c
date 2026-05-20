@@ -1398,7 +1398,7 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
             }
         }
 
-        if(lookup_func_decls(ctx, decl->name)) {
+        if(ctx->func->type == FUNC_GLOBAL && lookup_func_decls(ctx, decl->name)) {
             ctx->loc = decl->loc;
             WARN("%s redefined\n", debugstr_w(decl->name));
             return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
@@ -2355,6 +2355,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     function_decl_t *func_decl;
     named_item_t *item = NULL;
     class_decl_t *class_decl;
+    dim_decl_t *global_dims;
     function_t *new_func;
     compile_ctx_t ctx;
     vbscode_t *code;
@@ -2399,8 +2400,15 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     ctx.global_consts = ctx.const_decls;
     code->option_explicit = ctx.parser.option_explicit;
 
+    /* compile_func() repurposes ctx.dim_decls and ctx.const_decls for each
+       function's locals, so capture the global dims now and restore the global
+       scope before each top-level redefinition check: a function or class name
+       collides only with a global Dim/Const, not another function's local one. */
+    global_dims = ctx.dim_decls;
 
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
+        ctx.dim_decls = global_dims;
+        ctx.const_decls = ctx.global_consts;
         hres = create_function(&ctx, func_decl, &new_func);
         if(FAILED(hres)) {
             hres = compile_error(script, &ctx, hres);
@@ -2413,6 +2421,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     }
 
     for(class_decl = ctx.parser.class_decls; class_decl; class_decl = class_decl->next) {
+        ctx.dim_decls = global_dims;
+        ctx.const_decls = ctx.global_consts;
         hres = compile_class(&ctx, class_decl);
         if(FAILED(hres)) {
             hres = compile_error(script, &ctx, hres);

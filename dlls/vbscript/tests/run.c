@@ -3535,10 +3535,8 @@ static void test_redefine_scope(void)
     unsigned i;
 
     for (i = 0; i < ARRAY_SIZE(valid); i++) {
-        SET_EXPECT(OnScriptError);
         hres = parse_script_wr(valid[i]);
-        todo_wine ok(hres == S_OK, "[%u] parse returned %08lx\n", i, hres);
-        CLEAR_CALLED(OnScriptError);
+        ok(hres == S_OK, "[%u] parse returned %08lx\n", i, hres);
     }
 }
 
