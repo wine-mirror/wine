@@ -1316,14 +1316,14 @@ static void test_empty_key(void)
             V_R4(&b) = 0.0f;
         else
             V_I4(&b) = 0;
-        todo_wine ok(keys_match(&a, &b), "Empty should match zero key vt %d\n", zero_keys[i]);
+        ok(keys_match(&a, &b), "Empty should match zero key vt %d\n", zero_keys[i]);
     }
 
     /* Empty matches the empty string, but not a non-empty one. */
     V_VT(&a) = VT_EMPTY;
     V_VT(&b) = VT_BSTR;
     V_BSTR(&b) = SysAllocString(L"");
-    todo_wine ok(keys_match(&a, &b), "Empty should match empty string\n");
+    ok(keys_match(&a, &b), "Empty should match empty string\n");
     VariantClear(&b);
 
     V_VT(&b) = VT_BSTR;
@@ -1367,10 +1367,10 @@ static void test_empty_key(void)
     exists = VARIANT_FALSE;
     hr = IDictionary_Exists(dict, &b, &exists);
     ok(hr == S_OK, "Exists with Empty key: %#lx.\n", hr);
-    todo_wine ok(exists == VARIANT_TRUE, "Empty should find I2 0, got %x\n", exists);
+    ok(exists == VARIANT_TRUE, "Empty should find I2 0, got %x\n", exists);
 
     hr = IDictionary_Remove(dict, &b);
-    todo_wine ok(hr == S_OK, "Remove with Empty key: %#lx.\n", hr);
+    ok(hr == S_OK, "Remove with Empty key: %#lx.\n", hr);
 
     IDictionary_Release(dict);
 }
