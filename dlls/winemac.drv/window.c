@@ -1178,6 +1178,20 @@ BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface 
         release_win_data(data);
         surface->metal_swapchain = macdrv_create_view_swapchain(surface->cocoa_view);
     }
+    else
+    {
+        RECT rect;
+
+        if (NtUserGetAncestor(hwnd, GA_ROOT) != hwnd)
+        {
+            FIXME("Cross-process child window Metal swapchains are not implemented\n");
+            return FALSE;
+        }
+
+        if (!NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI))) return FALSE;
+        surface->metal_swapchain = macdrv_create_offscreen_swapchain(hwnd, cgrect_from_rect(rect));
+    }
+
     return surface->metal_swapchain != NULL;
 }
 
@@ -1545,10 +1559,38 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         activate_on_following_focus();
         TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
         return 0;
+    case WM_MACDRV_CREATE_REMOTE_LAYER:
+        if ((data = get_win_data(hwnd)))
+        {
+            TRACE("WM_MACDRV_CREATE_REMOTE_LAYER context_id %u\n", (unsigned int)lp);
+            if (data->cocoa_window) macdrv_window_create_ca_layer_host_view(data->cocoa_window, (unsigned int)lp);
+            release_win_data(data);
+        }
+        return 0;
+    case WM_MACDRV_RELEASE_REMOTE_LAYER:
+        if ((data = get_win_data(hwnd)))
+        {
+            TRACE("WM_MACDRV_RELEASE_REMOTE_LAYER context_id %u\n", (unsigned int)lp);
+            if (data->cocoa_window) macdrv_window_release_ca_layer_host_view(data->cocoa_window, (unsigned int)lp);
+            release_win_data(data);
+        }
+        return 0;
     }
 
     FIXME("unrecognized window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (unsigned long)wp, lp);
     return 0;
+}
+
+
+void macdrv_create_remote_layer(void* hwnd_ptr, unsigned int context_id)
+{
+    NtUserPostMessage((HWND)hwnd_ptr, WM_MACDRV_CREATE_REMOTE_LAYER, 0, context_id);
+}
+
+
+void macdrv_release_remote_layer(void* hwnd_ptr, unsigned int context_id)
+{
+    NtUserPostMessage((HWND)hwnd_ptr, WM_MACDRV_RELEASE_REMOTE_LAYER, 0, context_id);
 }
 
 
