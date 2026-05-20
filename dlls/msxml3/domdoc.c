@@ -145,8 +145,8 @@ void domdoc_properties_clear_selection_namespaces(struct domdoc_properties *prop
 
     LIST_FOR_EACH_ENTRY_SAFE(ns, next, &properties->namespaces.entries, struct xpath_namespace, entry)
     {
-        SysFreeString(ns->prefix);
-        SysFreeString(ns->uri);
+        free(ns->prefix);
+        free(ns->uri);
         free(ns);
     }
 
