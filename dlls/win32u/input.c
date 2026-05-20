@@ -876,7 +876,7 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
  */
 DWORD WINAPI NtUserGetMessagePos(void)
 {
-    return NtUserGetThreadInfo()->message_pos;
+    return get_user_thread_info()->message_pos;
 }
 
 /*******************************************************************
@@ -916,13 +916,13 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
         return (ULONG_PTR)NtUserGetCursor();
 
     case UserThreadStateExtraInfo:
-        return NtUserGetThreadInfo()->message_extra;
+        return get_user_thread_info()->message_extra;
 
     case UserThreadStateInSendMessage:
         return get_send_message_flags();
 
     case UserThreadStateMessageTime:
-        return NtUserGetThreadInfo()->message_time;
+        return get_user_thread_info()->message_time;
 
     case UserThreadStateIsForeground:
     default:
@@ -936,7 +936,7 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
  */
 LPARAM WINAPI NtUserSetMessageExtraInfo( LPARAM lparam )
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
     LPARAM old_value = thread_info->message_extra;
     thread_info->message_extra = lparam;
     return old_value;

@@ -3150,9 +3150,9 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
                     continue;  /* ignore it */
                 }
                 *msg = info.msg;
-                thread_info->client_info.message_pos   = MAKELONG( info.msg.pt.x, info.msg.pt.y );
-                thread_info->client_info.message_time  = info.msg.time;
-                thread_info->client_info.message_extra = msg_data->hardware.info;
+                thread_info->message_pos   = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+                thread_info->message_time  = info.msg.time;
+                thread_info->message_extra = msg_data->hardware.info;
                 if (buffer != buffer_init) free( buffer );
                 call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
                 return 1;
@@ -3217,9 +3217,9 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
             }
             *msg = info.msg;
             msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
-            thread_info->client_info.message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
-            thread_info->client_info.message_time  = info.msg.time;
-            thread_info->client_info.message_extra = 0;
+            thread_info->message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
+            thread_info->message_time  = info.msg.time;
+            thread_info->message_extra = 0;
             thread_info->client_info.msg_source = msg_source_unavailable;
             if (buffer != buffer_init) free( buffer );
             call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
