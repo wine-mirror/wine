@@ -128,6 +128,7 @@ struct ntuser_thread_info
     UINT64         wmchar_data;       /* client data for WM_CHAR mappings */
 };
 
+#ifndef WINE_UNIX_LIB
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
 {
 #ifndef _WIN64
@@ -139,6 +140,7 @@ static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
 #endif
     return (struct ntuser_thread_info *)NtCurrentTeb()->Win32ClientInfo;
 }
+#endif
 
 /* NtUserCallEnumDisplayMonitor params */
 struct enum_display_monitor_params

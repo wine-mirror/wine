@@ -193,9 +193,23 @@ struct user_thread_info *get_user_thread_info(void)
 
     if (!info)
     {
+        TEB *teb = NtCurrentTeb();
+
         info = calloc( 1, sizeof(*info) );
-        info->client_info = NtUserGetThreadInfo();
         pthread_setspecific( user_thread_info_key, info );
+
+        if (teb)
+        {
+#ifndef _WIN64
+            if (teb->GdiBatchCount)
+            {
+                TEB64 *teb64 = (TEB64 *)(UINT_PTR)teb->GdiBatchCount;
+                info->client_info = (struct ntuser_thread_info *)teb64->Win32ClientInfo;
+            }
+            else
+#endif
+            info->client_info = (struct ntuser_thread_info *)teb->Win32ClientInfo;
+        }
     }
     return info;
 }

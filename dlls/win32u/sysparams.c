@@ -3173,10 +3173,11 @@ static BOOL is_valid_dpi_awareness_context( UINT context, UINT dpi )
 
 UINT get_thread_dpi_awareness_context(void)
 {
-    struct ntuser_thread_info *info = NtUserGetThreadInfo();
+    struct user_thread_info *info = get_user_thread_info();
     UINT context;
 
-    if (!(context = info->dpi_context)) context = ReadNoFence( &dpi_context );
+    if (!(context = info->client_info->dpi_context))
+        context = ReadNoFence( &dpi_context );
     return context ? context : NTUSER_DPI_UNAWARE;
 }
 
@@ -3209,7 +3210,7 @@ UINT get_system_dpi(void)
 /* keep in sync with user32 */
 UINT set_thread_dpi_awareness_context( UINT context )
 {
-    struct ntuser_thread_info *info = NtUserGetThreadInfo();
+    struct user_thread_info *info = get_user_thread_info();
     UINT prev;
 
     if (!is_valid_dpi_awareness_context( context, system_dpi ))
@@ -3218,9 +3219,10 @@ UINT set_thread_dpi_awareness_context( UINT context )
         return 0;
     }
 
-    if (!(prev = info->dpi_context)) prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) | NTUSER_DPI_CONTEXT_FLAG_PROCESS;
-    if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_PROCESS) info->dpi_context = 0;
-    else info->dpi_context = context;
+    if (!(prev = info->client_info->dpi_context))
+        prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) | NTUSER_DPI_CONTEXT_FLAG_PROCESS;
+    if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_PROCESS) info->client_info->dpi_context = 0;
+    else info->client_info->dpi_context = context;
 
     return prev;
 }

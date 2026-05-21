@@ -2860,13 +2860,13 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
                                       HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
     RECT rect = {msg->pt.x, msg->pt.y, msg->pt.x, msg->pt.y};
     UINT context;
     BOOL ret = FALSE;
 
-    thread_info->msg_source.deviceType = msg_data->source.device;
-    thread_info->msg_source.originId   = msg_data->source.origin;
+    thread_info->client_info->msg_source.deviceType = msg_data->source.device;
+    thread_info->client_info->msg_source.originId   = msg_data->source.origin;
 
     /* hardware messages are always in raw physical coords */
     context = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
@@ -4872,6 +4872,6 @@ BOOL WINAPI NtUserGetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    *source = NtUserGetThreadInfo()->msg_source;
+    *source = get_user_thread_info()->client_info->msg_source;
     return TRUE;
 }
