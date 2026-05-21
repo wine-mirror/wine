@@ -1,0 +1,196 @@
+/*
+ * Copyright 2026 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "msinkaut.idl";
+import "tpcshrd.idl";
+
+interface IRealTimeStylus;
+
+typedef DWORD CURSOR_ID;
+typedef CURSOR_ID STYLUS_ID;
+
+typedef enum StylusQueue
+{
+    SyncStylusQueue           = 0x1,
+    AsyncStylusQueueImmediate = 0x2,
+    AsyncStylusQueue          = 0x3
+} StylusQueue;
+
+typedef struct StylusInfo
+{
+    TABLET_CONTEXT_ID tcid;
+    STYLUS_ID cid;
+    BOOL bIsInvertedCursor;
+} StylusInfo;
+
+typedef
+enum RealTimeStylusDataInterest
+{
+    RTSDI_AllData                = 0xffffffff,
+    RTSDI_None                   = 0,
+    RTSDI_Error                  = 0x1,
+    RTSDI_RealTimeStylusEnabled  = 0x2,
+    RTSDI_RealTimeStylusDisabled = 0x4,
+    RTSDI_StylusNew	             = 0x8,
+    RTSDI_StylusInRange          = 0x10,
+    RTSDI_InAirPackets           = 0x20,
+    RTSDI_StylusOutOfRange       = 0x40,
+    RTSDI_StylusDown             = 0x80,
+    RTSDI_Packets                = 0x100,
+    RTSDI_StylusUp               = 0x200,
+    RTSDI_StylusButtonUp         = 0x400,
+    RTSDI_StylusButtonDown       = 0x800,
+    RTSDI_SystemEvents           = 0x1000,
+    RTSDI_TabletAdded            = 0x2000,
+    RTSDI_TabletRemoved          = 0x4000,
+    RTSDI_CustomStylusDataAdded  = 0x8000,
+    RTSDI_UpdateMapping          = 0x10000,
+    RTSDI_DefaultEvents          = RTSDI_RealTimeStylusEnabled | RTSDI_RealTimeStylusDisabled | RTSDI_StylusDown |
+                RTSDI_Packets | RTSDI_StylusUp | RTSDI_SystemEvents | RTSDI_CustomStylusDataAdded
+} RealTimeStylusDataInterest;
+
+[
+    object,
+    uuid (a81436d8-4757-4fd1-a185-133f97c6c545)
+]
+interface IStylusPlugin : IUnknown
+{
+   HRESULT RealTimeStylusEnabled( [in] IRealTimeStylus *piRtsSrc, [in, range(0,8)] ULONG cTcidCount,
+        [in, size_is(cTcidCount)] const TABLET_CONTEXT_ID *pTcids);
+    HRESULT RealTimeStylusDisabled( [in] IRealTimeStylus *piRtsSrc, [in, range(0,8)] ULONG cTcidCount,
+        [in, size_is(cTcidCount)] const TABLET_CONTEXT_ID *pTcids);
+    HRESULT StylusInRange( [in] IRealTimeStylus *piRtsSrc, [in] TABLET_CONTEXT_ID tcid, [in] STYLUS_ID sid);
+    HRESULT StylusOutOfRange( [in] IRealTimeStylus *piRtsSrc, [in] TABLET_CONTEXT_ID tcid, [in] STYLUS_ID sid);
+    HRESULT StylusDown( [in] IRealTimeStylus *piRtsSrc, [in] const StylusInfo *pStylusInfo,
+        [in, range(0,32)] ULONG cPropCountPerPkt, [in, size_is(cPropCountPerPkt)] LONG *pPacket, [out, in] LONG **ppInOutPkt);
+    HRESULT StylusUp( [in] IRealTimeStylus *piRtsSrc, [in] const StylusInfo *pStylusInfo,
+        [in, range(0,32)] ULONG cPropCountPerPkt, [in, size_is(cPropCountPerPkt)] LONG *pPacket, [out, in] LONG **ppInOutPkt);
+    HRESULT StylusButtonDown( [in] IRealTimeStylus *piRtsSrc, [in] STYLUS_ID sid, [in] const GUID *pGuidStylusButton,
+        [out, in] POINT *pStylusPos);
+    HRESULT StylusButtonUp( [in] IRealTimeStylus *piRtsSrc, [in] STYLUS_ID sid, [in] const GUID *pGuidStylusButton,
+        [out, in] POINT *pStylusPos);
+    HRESULT InAirPackets( [in] IRealTimeStylus *piRtsSrc, [in] const StylusInfo *pStylusInfo, [in] ULONG cPktCount,
+        [in, range(0,0x7fff)] ULONG cPktBuffLength, [in, size_is(cPktBuffLength)] LONG *pPackets,
+        [out, in] ULONG *pcInOutPkts, [out, in] LONG **ppInOutPkts);
+    HRESULT Packets( [in] IRealTimeStylus *piRtsSrc, [in] const StylusInfo *pStylusInfo, [in] ULONG cPktCount,
+        [in, range(0,0x7fff)] ULONG cPktBuffLength, [in, size_is(cPktBuffLength)] LONG *pPackets,
+        [out, in] ULONG *pcInOutPkts, [out, in] LONG **ppInOutPkts);
+    HRESULT CustomStylusDataAdded( [in] IRealTimeStylus *piRtsSrc, [in] const GUID *pGuidId,
+        [in, range(0,0x7fff)] ULONG cbData, [unique, in, size_is(cbData)] const BYTE *pbData);
+    HRESULT SystemEvent( [in] IRealTimeStylus *piRtsSrc, [in] TABLET_CONTEXT_ID tcid, [in] STYLUS_ID sid,
+        [in] SYSTEM_EVENT event, [in] SYSTEM_EVENT_DATA eventdata);
+    HRESULT TabletAdded( [in] IRealTimeStylus *piRtsSrc, [in] IInkTablet *piTablet);
+    HRESULT TabletRemoved( [in] IRealTimeStylus *piRtsSrc, [in] LONG iTabletIndex);
+    HRESULT Error( [in] IRealTimeStylus *piRtsSrc, [in] IStylusPlugin *piPlugin, [in] RealTimeStylusDataInterest dataInterest,
+        [in] HRESULT hrErrorCode, [out, in] LONG_PTR *lptrKey);
+    HRESULT UpdateMapping( [in] IRealTimeStylus *piRtsSrc);
+    HRESULT DataInterest(  [retval, out] RealTimeStylusDataInterest *pDataInterest);
+}
+
+[
+    object,
+    uuid (a157b174-482f-4d71-a3f6-3a41ddd11be9)
+]
+interface IStylusSyncPlugin : IStylusPlugin
+{
+    /* Has no functions */
+}
+
+[
+    object,
+    uuid (a7cca85a-31bc-4cd2-aadc-3289a3af11c8)
+]
+interface IStylusAsyncPlugin : IStylusPlugin
+{
+    /* Has no functions */
+}
+
+[
+    object,
+    uuid (a8bb5d22-3144-4a7b-93cd-f34a16be513a)
+]
+interface IRealTimeStylus : IUnknown
+{
+    [propget]
+    HRESULT Enabled( [retval, out] BOOL *pfEnable );
+
+    [propput]
+    HRESULT Enabled( [in] BOOL fEnable );
+
+    [propget]
+    HRESULT HWND( [retval, out]  HANDLE_PTR *phwnd );
+
+    [propput]
+    HRESULT HWND( [in] HANDLE_PTR hwnd );
+
+    [propget]
+    HRESULT WindowInputRectangle( [retval, out] RECT *prcWndInputRect );
+
+    [propput]
+    HRESULT WindowInputRectangle([in] const RECT *prcWndInputRect );
+
+    HRESULT AddStylusSyncPlugin( [in] ULONG iIndex, [in] IStylusSyncPlugin *piPlugin );
+    HRESULT RemoveStylusSyncPlugin( [in] ULONG iIndex, [out, in] IStylusSyncPlugin **ppiPlugin );
+    HRESULT RemoveAllStylusSyncPlugins( void );
+    HRESULT GetStylusSyncPlugin([in] ULONG iIndex, [out] IStylusSyncPlugin **ppiPlugin );
+    HRESULT GetStylusSyncPluginCount( [out] ULONG *pcPlugins );
+    HRESULT AddStylusAsyncPlugin( [in] ULONG iIndex, [in] IStylusAsyncPlugin *piPlugin );
+    HRESULT RemoveStylusAsyncPlugin( [in] ULONG iIndex, [out, in] IStylusAsyncPlugin **ppiPlugin );
+    HRESULT RemoveAllStylusAsyncPlugins( void );
+    HRESULT GetStylusAsyncPlugin( [in] ULONG iIndex, [out] IStylusAsyncPlugin **ppiPlugin);
+    HRESULT GetStylusAsyncPluginCount( [out] ULONG *pcPlugins );
+
+    [propget]
+    HRESULT ChildRealTimeStylusPlugin( [retval, out] IRealTimeStylus **ppiRTS );
+
+    [propputref]
+    HRESULT ChildRealTimeStylusPlugin( [unique, in] IRealTimeStylus *piRTS);
+
+    HRESULT AddCustomStylusDataToQueue( [in] StylusQueue sq, [in] const GUID *pGuidId,
+                [range(0,0x7fff), in] ULONG cbData,
+                [unique, size_is(cbData), in] BYTE *pbData );
+    HRESULT ClearStylusQueues( void );
+    HRESULT SetAllTabletsMode( [in] BOOL fUseMouseForInput );
+    HRESULT SetSingleTabletMode( [in] IInkTablet *piTablet);
+    HRESULT GetTablet( [retval, out] IInkTablet **ppiSingleTablet );
+    HRESULT GetTabletContextIdFromTablet( [in] IInkTablet *piTablet, [retval, out]  TABLET_CONTEXT_ID *ptcid);
+    HRESULT GetTabletFromTabletContextId([in] TABLET_CONTEXT_ID tcid, [retval, out] IInkTablet **ppiTablet);
+
+    HRESULT GetAllTabletContextIds( [out, in] ULONG *pcTcidCount, [size_is(*pcTcidCount), out] TABLET_CONTEXT_ID **ppTcids);
+
+    HRESULT GetStyluses( [retval, out] IInkCursors **ppiInkCursors );
+    HRESULT GetStylusForId( [in] STYLUS_ID sid, [retval, out] IInkCursor **ppiInkCursor );
+    HRESULT SetDesiredPacketDescription( [in, range(0,32)] ULONG cProperties, [in, size_is(cProperties)] const GUID *pPropertyGuids);
+
+    HRESULT GetDesiredPacketDescription( [out, in] ULONG *pcProperties,
+                [size_is(*pcProperties), out] GUID **ppPropertyGuids);
+
+    HRESULT GetPacketDescriptionData( [in] TABLET_CONTEXT_ID tcid, [unique, out, in] FLOAT *pfInkToDeviceScaleX,
+                [unique, out, in] FLOAT *pfInkToDeviceScaleY, [out, in] ULONG *pcPacketProperties,
+                [size_is(*pcPacketProperties), out] PACKET_PROPERTY **ppPacketProperties);
+};
+
+[
+    uuid(e26b366d-f998-43ce-836f-cb6d904432b0),
+    threading(both)
+]
+coclass RealTimeStylus
+{
+    [default] interface IRealTimeStylus;
+}

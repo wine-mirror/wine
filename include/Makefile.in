@@ -863,6 +863,7 @@ SOURCES = \
 	rstvw.idl \
 	rstxsc.idl \
 	rtlsupportapi.h \
+	rtscom.idl \
 	rtutils.h \
 	rtworkq.idl \
 	sal.h \
