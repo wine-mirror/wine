@@ -1718,15 +1718,15 @@ static void BackBufferAttachmentFlipTest(void)
         ok(hr==DD_OK, "Got hr %#lx.\n", hr);
 
         hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
-        todo_wine ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+        ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
            "Attaching a back buffer to a front buffer returned %#lx\n", hr);
         if(SUCCEEDED(hr))
         {
             /* Try flipping the surfaces */
             hr = IDirectDrawSurface_Flip(surface1, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DD_OK, "Got hr %#lx.\n", hr);
+            ok(hr == DD_OK, "Got hr %#lx.\n", hr);
             hr = IDirectDrawSurface_Flip(surface2, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
+            ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
 
             /* Try the reverse without detaching first */
             hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
@@ -1735,15 +1735,15 @@ static void BackBufferAttachmentFlipTest(void)
             ok(hr == DD_OK, "Got hr %#lx.\n", hr);
         }
         hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
-        todo_wine ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+        ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
            "Attaching a front buffer to a back buffer returned %#lx\n", hr);
         if(SUCCEEDED(hr))
         {
             /* Try flipping the surfaces */
             hr = IDirectDrawSurface_Flip(surface1, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DD_OK, "Got hr %#lx.\n", hr);
+            ok(hr == DD_OK, "Got hr %#lx.\n", hr);
             hr = IDirectDrawSurface_Flip(surface2, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
+            ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
 
             /* Try to detach reversed */
             hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
@@ -1753,15 +1753,15 @@ static void BackBufferAttachmentFlipTest(void)
             ok(hr == DD_OK, "Got hr %#lx.\n", hr);
         }
         hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3);
-        todo_wine ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+        ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
            "Attaching a back buffer to another back buffer returned %#lx\n", hr);
         if(SUCCEEDED(hr))
         {
             /* Try flipping the surfaces */
             hr = IDirectDrawSurface_Flip(surface3, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DD_OK, "Got hr %#lx.\n", hr);
+            ok(hr == DD_OK, "Got hr %#lx.\n", hr);
             hr = IDirectDrawSurface_Flip(surface2, NULL, DDFLIP_WAIT);
-            todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
+            ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
             hr = IDirectDrawSurface_Flip(surface1, NULL, DDFLIP_WAIT);
             ok(hr == DDERR_NOTFLIPPABLE, "Got hr %#lx.\n", hr);
 

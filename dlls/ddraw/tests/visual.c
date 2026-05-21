@@ -1540,7 +1540,7 @@ static void DX1_BackBufferFlipTest(void)
     if(FAILED(hr)) goto out;
 
     hr = IDirectDrawSurface_AddAttachedSurface(Primary, Backbuffer);
-    todo_wine ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE), "Got hr %#lx.\n", hr);
+    ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE), "Got hr %#lx.\n", hr);
     if (FAILED(hr)) goto out;
 
     attached = TRUE;
@@ -1567,7 +1567,7 @@ static void DX1_BackBufferFlipTest(void)
             GetRValue(color), GetGValue(color), GetBValue(color));
 
     hr = IDirectDrawSurface_Flip(Primary, NULL, DDFLIP_WAIT);
-    todo_wine ok(hr == DD_OK, "Got hr %#lx.\n", hr);
+    ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     if (hr == DD_OK)
     {
