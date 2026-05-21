@@ -3356,43 +3356,6 @@ static void saxreader_parse_sddecl(struct saxlocator *locator, const struct pars
         saxreader_set_error(locator, E_SAX_INVALID_STANDALONE);
 }
 
-/*
-static bool saxreader_parse_xmldecl(struct saxlocator *locator)
-{
-    WCHAR ch;
-
-    saxreader_more(locator);
-
-    ch = saxreader_get_char(locator, 5);
-    if (!saxreader_peek(locator, L"<?xml", 5) || !saxreader_is_space(ch))
-        return false;
-    saxreader_skip(locator, 5);
-    saxreader_skipspaces(locator);
-
-    saxreader_parse_versioninfo(locator);
-
-    if (saxreader_cmp(locator, L"?>"))
-        return true;
-
-    saxreader_parse_encdecl(locator);
-
-    if (locator->saxreader->xmldecl_encoding)
-    {
-        if (saxreader_cmp(locator, L"?>"))
-            return true;
-        saxreader_skip_required_spaces(locator);
-    }
-
-    saxreader_skipspaces(locator);
-    saxreader_parse_sddecl(locator);
-    saxreader_skipspaces(locator);
-
-    if (!saxreader_cmp(locator, L"?>"))
-        saxreader_set_error(locator, E_SAX_BAD_XMLDECL);
-
-    return true;
-}
-*/
 static BSTR saxreader_parse_xmldecl_attribute(struct saxlocator *locator, struct parsed_name *name);
 
 /* [85] BaseChar ::= ... */
