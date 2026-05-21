@@ -1547,35 +1547,6 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     return TRUE;
 }
 
-static BOOL find_xkb_layout_variant( const char *name, const char **layout, const char **variant )
-{
-#ifdef SONAME_LIBXKBREGISTRY
-    struct rxkb_layout *iter;
-
-    if (rxkb_context)
-    {
-        for (iter = p_rxkb_layout_first( rxkb_context ); iter; iter = p_rxkb_layout_next( iter ))
-        {
-            const char *desc = p_rxkb_layout_get_description( iter );
-
-            if (desc && !strcmp( name, desc ))
-            {
-                *layout = p_rxkb_layout_get_name( iter );
-                *variant = p_rxkb_layout_get_variant( iter );
-                return TRUE;
-            }
-        }
-
-        WARN( "Unknown Xkb layout name %s\n", debugstr_a(name) );
-    }
-    else
-        WARN( "libxkbregistry not available, falling back to fuzzy layout detection\n" );
-#else
-    WARN( "libxkbregistry support not compiled in, falling back to fuzzy layout detection\n" );
-#endif
-    return FALSE;
-}
-
 static const struct layout_id_map_entry
 {
     const char *name;
@@ -2090,6 +2061,34 @@ static void init_keycode_mappings( Display *display )
       }
 }
 
+static BOOL find_xkb_layout_variant( const char *name, const char **layout, const char **variant )
+{
+#ifdef SONAME_LIBXKBREGISTRY
+    struct rxkb_layout *iter;
+
+    if (rxkb_context)
+    {
+        for (iter = p_rxkb_layout_first( rxkb_context ); iter; iter = p_rxkb_layout_next( iter ))
+        {
+            const char *desc = p_rxkb_layout_get_description( iter );
+
+            if (desc && !strcmp( name, desc ))
+            {
+                *layout = p_rxkb_layout_get_name( iter );
+                *variant = p_rxkb_layout_get_variant( iter );
+                return TRUE;
+            }
+        }
+
+        WARN( "Unknown Xkb layout name %s\n", debugstr_a(name) );
+    }
+    else
+        WARN( "libxkbregistry not available, falling back to fuzzy layout detection\n" );
+#else
+    WARN( "libxkbregistry support not compiled in, falling back to fuzzy layout detection\n" );
+#endif
+    return FALSE;
+}
 
 /* initialize or update keyboard layouts */
 void init_keyboard_layouts( Display *display )
