@@ -1034,6 +1034,7 @@ struct class_info
     user_handle_t        icon_small;
     mod_handle_t         instance;
     client_ptr_t         wndproc;
+    client_ptr_t         menu_name;
 };
 
 typedef volatile struct
@@ -4545,6 +4546,7 @@ struct destroy_class_reply
     client_ptr_t   client_ptr;
     user_handle_t  background;
     char __pad_20[4];
+    client_ptr_t   menu_name;
 };
 
 
@@ -7110,6 +7112,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 938
+#define SERVER_PROTOCOL_VERSION 939
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

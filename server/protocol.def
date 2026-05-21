@@ -1050,6 +1050,7 @@ struct class_info
     user_handle_t        icon_small;         /* default cursor (small) */
     mod_handle_t         instance;           /* module instance */
     client_ptr_t         wndproc;            /* class window proc */
+    client_ptr_t         menu_name;          /* pointer to menu name in client address space */
 };
 
 typedef volatile struct
@@ -3296,6 +3297,7 @@ enum caret_state
 @REPLY
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
     user_handle_t  background;     /* class default background */
+    client_ptr_t   menu_name;      /* pointer to menu name in client address space */
 @END
 
 

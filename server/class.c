@@ -332,6 +332,10 @@ DECL_HANDLER(set_class_info)
             reply->old_info = shared->info.icon_small;
             shared->info.icon_small = req->new_info;
             break;
+        case GCLP_MENUNAME:
+            reply->old_info = shared->info.menu_name;
+            shared->info.menu_name = req->new_info;
+            break;
         default:
             if (req->size > sizeof(req->new_info) || req->offset < 0 ||
                 req->offset > class->shared->info.cls_extra - (int)req->size)

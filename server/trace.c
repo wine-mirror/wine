@@ -1663,6 +1663,7 @@ static void dump_varargs_class_info( const char *prefix, data_size_t size )
              info->background, info->icon, info->icon_small );
     dump_uint64( ",instance=", &info->instance );
     dump_uint64( ",wndproc=", &info->wndproc );
+    dump_uint64( ",menu_name=", &info->menu_name );
     fputc( '}', stderr );
     remove_data( sizeof(*info) );
 }
