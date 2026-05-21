@@ -777,7 +777,10 @@ static HRESULT source_reader_push_transform_samples(struct source_reader *reader
                 && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
             return hr;
         if (SUCCEEDED(hr = IMFTransform_ProcessInput(entry->transform, 0, sample, 0)))
-            return source_reader_pull_transform_samples(reader, stream, entry);
+        {
+            hr = source_reader_pull_transform_samples(reader, stream, entry);
+            return hr == MF_E_TRANSFORM_NEED_MORE_INPUT ? S_OK : hr;
+        }
     }
     while (hr == MF_E_NOTACCEPTING);
 
@@ -1008,8 +1011,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
     entry = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
-    if (SUCCEEDED(hr = source_reader_push_transform_samples(reader, stream, entry, sample))
-            || hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+    if (SUCCEEDED(hr = source_reader_push_transform_samples(reader, stream, entry, sample)))
         hr = stream->requests ? source_reader_request_sample(reader, stream) : S_OK;
     else
         WARN("Transform failed to process output, hr %#lx.\n", hr);
