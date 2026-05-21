@@ -3,8 +3,6 @@ IMPORTLIB = wmvcore
 IMPORTS   = kernel32 combase
 DELAYIMPORTS = winegstreamer
 
-EXTRADLLFLAGS = -Wb,--prefer-native
-
 VER_FILEDESCRIPTION_STR = "Wine Media Playback dll"
 VER_PRODUCTVERSION      = 12,0,7601,17514
 
