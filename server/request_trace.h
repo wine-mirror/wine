@@ -2418,6 +2418,7 @@ static void dump_destroy_class_request( const struct destroy_class_request *req 
 static void dump_destroy_class_reply( const struct destroy_class_reply *req )
 {
     dump_uint64( " client_ptr=", &req->client_ptr );
+    fprintf( stderr, ", background=%08x", req->background );
 }
 
 static void dump_set_class_info_request( const struct set_class_info_request *req )

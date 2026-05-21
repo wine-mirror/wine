@@ -68,7 +68,7 @@ my %formats =
     "struct thread_info"       => [ 40, 8 ],
     "union udp_endpoint"       => [ 32, 4 ],
     "struct user_apc"          => [ 40, 8 ],
-    "struct class_info"        => [ 32, 8 ],
+    "struct class_info"        => [ 40, 8 ],
 );
 
 my $file_header =

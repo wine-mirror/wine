@@ -1028,6 +1028,8 @@ struct class_info
     unsigned int         style;
     unsigned int         cls_extra;
     unsigned int         win_extra;
+    user_handle_t        cursor;
+    user_handle_t        background;
     mod_handle_t         instance;
     client_ptr_t         wndproc;
 };
@@ -4539,6 +4541,8 @@ struct destroy_class_reply
 {
     struct reply_header __header;
     client_ptr_t   client_ptr;
+    user_handle_t  background;
+    char __pad_20[4];
 };
 
 
@@ -7104,6 +7108,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 936
+#define SERVER_PROTOCOL_VERSION 937
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1044,6 +1044,8 @@ struct class_info
     unsigned int         style;              /* class style */
     unsigned int         cls_extra;          /* number of class extra bytes */
     unsigned int         win_extra;          /* number of window extra bytes */
+    user_handle_t        cursor;             /* default cursor */
+    user_handle_t        background;         /* default background */
     mod_handle_t         instance;           /* module instance */
     client_ptr_t         wndproc;            /* class window proc */
 };
@@ -3291,6 +3293,7 @@ enum caret_state
     VARARG(name,unicode_str);      /* class name */
 @REPLY
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
+    user_handle_t  background;     /* class default background */
 @END
 
 
