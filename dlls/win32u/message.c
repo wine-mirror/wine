@@ -461,16 +461,16 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
 static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t size,
                                          void **client_ret, size_t *client_ret_size )
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    struct user_thread_info *thread_info = get_user_thread_info();
     LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
     NTSTATUS status;
 
-    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return 0;
-    thread_info->recursion_count++;
+    if (thread_info->msg_call_depth > MAX_WINPROC_RECURSION) return 0;
+    thread_info->msg_call_depth++;
     status = KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
-    thread_info->recursion_count--;
+    thread_info->msg_call_depth--;
 
     if (status) return result;
 
@@ -4385,8 +4385,8 @@ static LRESULT call_messageAtoW( winproc_callback_t callback, HWND hwnd, UINT ms
  */
 static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL ansi )
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
+    struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
     DWORD dest_pid;
     BOOL ret;
     LRESULT result = 0;
@@ -4398,7 +4398,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
 
     if (info->params && info->dest_tid == GetCurrentThreadId() &&
         !is_hooked( WH_CALLWNDPROC ) && !is_hooked( WH_CALLWNDPROCRET ) &&
-        thread_info->recursion_count <= MAX_WINPROC_RECURSION)
+        thread_info->msg_call_depth <= MAX_WINPROC_RECURSION)
     {
         /* if we're called from client side and need just a simple winproc call,
          * just fill dispatch params and let user32 do the rest */
@@ -4406,7 +4406,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
                                         ansi, info->wm_char );
     }
 
-    thread_info->msg_source = msg_source_unavailable;
+    thread_info->client_info.msg_source = msg_source_unavailable;
     spy_enter_message( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
 
     if (info->dest_tid != GetCurrentThreadId() ||
@@ -4433,7 +4433,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
     }
 
     spy_exit_message( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
-    thread_info->msg_source = prev_source;
+    thread_info->client_info.msg_source = prev_source;
     if (ret && res_ptr) *res_ptr = result;
     return ret;
 }
