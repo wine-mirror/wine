@@ -43,7 +43,6 @@ typedef struct {
 } uninst_entry;
 static uninst_entry *entries = NULL;
 static unsigned int numentries = 0;
-static int oldsel = -1;
 static WCHAR *sFilter;
 static BOOL silent;
 
@@ -281,7 +280,6 @@ static int FetchUninstallInformation(void)
     HKEY root;
 
     numentries = 0;
-    oldsel = -1;
     if (!entries)
         entries = malloc(sizeof(uninst_entry));
 
