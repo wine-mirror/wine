@@ -109,11 +109,10 @@ struct mouse_tracking_info
     POINT last_mouse_message_pos;
 };
 
-/* this is the structure stored in TEB->Win32ClientInfo */
-/* no attempt is made to keep the layout compatible with the Windows one */
+/* internal per-thread data */
 struct user_thread_info
 {
-    struct ntuser_thread_info     client_info;            /* Data shared with client */
+    struct ntuser_thread_info    *client_info;            /* Data shared with client */
     HANDLE                        server_queue;           /* Handle to server-side queue */
     HANDLE                        idle_event;             /* Handle to the process idle event */
     LONGLONG                      last_driver_time;       /* Get/PeekMessage driver event time */
@@ -139,12 +138,7 @@ struct user_thread_info
     struct mouse_tracking_info   *mouse_tracking_info;    /* NtUserTrackMouseEvent handling */
 };
 
-C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
-
-static inline struct user_thread_info *get_user_thread_info(void)
-{
-    return CONTAINING_RECORD( NtUserGetThreadInfo(), struct user_thread_info, client_info );
-}
+extern struct user_thread_info *get_user_thread_info(void);
 
 struct hook_extra_info
 {

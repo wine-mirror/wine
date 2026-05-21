@@ -168,6 +168,8 @@ static const char *usercall_names[NtUserCallCount] =
 #undef USER32_CALLBACK_ENTRY
 };
 
+static pthread_key_t user_thread_info_key;
+
 NTSTATUS __wine_unix_lib_init(void)
 {
 #ifdef _WIN64
@@ -181,5 +183,19 @@ NTSTATUS __wine_unix_lib_init(void)
 #endif
     KeAddSystemServiceTable( syscalls, NULL, ARRAY_SIZE(syscalls), arguments, 1 );
     ntdll_add_syscall_debug_info( 1, syscall_names, usercall_names );
+    pthread_key_create( &user_thread_info_key, NULL );
     return STATUS_SUCCESS;
+}
+
+struct user_thread_info *get_user_thread_info(void)
+{
+    struct user_thread_info *info = pthread_getspecific( user_thread_info_key );
+
+    if (!info)
+    {
+        info = calloc( 1, sizeof(*info) );
+        info->client_info = NtUserGetThreadInfo();
+        pthread_setspecific( user_thread_info_key, info );
+    }
+    return info;
 }

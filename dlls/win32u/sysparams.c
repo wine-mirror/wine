@@ -7467,6 +7467,7 @@ static void thread_detach(void)
     if (thread_info->idle_event) NtClose( thread_info->idle_event );
     free( thread_info->session_data );
     free( thread_info->mouse_tracking_info );
+    free( thread_info );
 
     exiting_thread_id = 0;
 }

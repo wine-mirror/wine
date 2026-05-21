@@ -2940,7 +2940,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
     HWND hwnd = filter->hwnd;
     UINT first = filter->first, last = filter->last, flags = filter->flags;
     struct user_thread_info *thread_info = get_user_thread_info();
-    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info->msg_source;
     HANDLE idle_event = thread_info->idle_event;
     struct received_message_info info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
@@ -2972,7 +2972,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
         /* if filter includes QS_RAWINPUT we have to translate hardware messages */
         if (signal_bits & QS_RAWINPUT) signal_bits |= QS_KEY | QS_MOUSEMOVE | QS_MOUSEBUTTON;
 
-        thread_info->client_info.msg_source = prev_source;
+        thread_info->client_info->msg_source = prev_source;
         wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
         if (check_queue_bits( wake_mask, filter->mask, wake_mask | signal_bits, filter->mask | clear_bits,
@@ -3220,7 +3220,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
             thread_info->message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
             thread_info->message_time  = info.msg.time;
             thread_info->message_extra = 0;
-            thread_info->client_info.msg_source = msg_source_unavailable;
+            thread_info->client_info->msg_source = msg_source_unavailable;
             if (buffer != buffer_init) free( buffer );
             call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
             return 1;
@@ -3229,7 +3229,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
         /* if we get here, we have a sent message; call the window procedure */
         info.prev = thread_info->receive_info;
         thread_info->receive_info = &info;
-        thread_info->client_info.msg_source = msg_source_unavailable;
+        thread_info->client_info->msg_source = msg_source_unavailable;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, info.type, FALSE, WMCHAR_MAP_RECVMESSAGE,
                                    info.type == MSG_ASCII );
@@ -4386,7 +4386,7 @@ static LRESULT call_messageAtoW( winproc_callback_t callback, HWND hwnd, UINT ms
 static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL ansi )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info->msg_source;
     DWORD dest_pid;
     BOOL ret;
     LRESULT result = 0;
@@ -4406,7 +4406,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
                                         ansi, info->wm_char );
     }
 
-    thread_info->client_info.msg_source = msg_source_unavailable;
+    thread_info->client_info->msg_source = msg_source_unavailable;
     spy_enter_message( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
 
     if (info->dest_tid != GetCurrentThreadId() ||
@@ -4433,7 +4433,7 @@ static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr,
     }
 
     spy_exit_message( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
-    thread_info->client_info.msg_source = prev_source;
+    thread_info->client_info->msg_source = prev_source;
     if (ret && res_ptr) *res_ptr = result;
     return ret;
 }
