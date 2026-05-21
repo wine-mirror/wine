@@ -657,7 +657,7 @@ static int convert_utf16be(UINT cp, const char *src, int src_size, WCHAR *buffer
     if (!buffer) return src_size / 2;
 
     for (int i = 0; i < size; ++i)
-        buffer[i] = src[i + 1] | src[i];
+        buffer[i] = src[2 * i + 1] | (src[2 * i] << 8);
 
     return size;
 }
