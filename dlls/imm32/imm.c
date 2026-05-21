@@ -760,8 +760,9 @@ static void input_context_init( INPUTCONTEXT *ctx )
 static void IMM_FreeThreadData(void)
 {
     struct coinit_spy *spy;
+    HIMC default_imc = (HIMC)NtUserGetThreadState( UserThreadStateDefaultInputContext );
 
-    free_input_context_data( UlongToHandle( NtUserGetThreadInfo()->default_imc ) );
+    free_input_context_data( default_imc );
     if ((spy = get_thread_coinit_spy())) IInitializeSpy_Release( &spy->IInitializeSpy_iface );
 }
 
@@ -932,9 +933,8 @@ static struct imc *get_imc_data( HIMC handle )
 
 static struct imc *default_input_context(void)
 {
-    UINT *himc = &NtUserGetThreadInfo()->default_imc;
-    if (!*himc) *himc = (UINT_PTR)NtUserCreateInputContext( 0 );
-    return get_imc_data( (HIMC)(UINT_PTR)*himc );
+    HIMC himc = (HIMC)NtUserGetThreadState( UserThreadStateDefaultInputContext );
+    return get_imc_data( himc );
 }
 
 static HWND get_ime_ui_window(void)
@@ -984,7 +984,9 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
  */
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
-    if ((UINT_PTR)hIMC == NtUserGetThreadInfo()->default_imc) return FALSE;
+    HIMC default_imc = (HIMC)NtUserGetThreadState( UserThreadStateDefaultInputContext );
+
+    if (hIMC == default_imc) return FALSE;
     if (NtUserQueryInputContext( hIMC, NtUserInputContextThreadId ) != GetCurrentThreadId()) return FALSE;
     return IMM_DestroyContext(hIMC);
 }

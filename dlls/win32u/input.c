@@ -907,7 +907,7 @@ ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
         return (ULONG_PTR)get_default_ime_window( 0 );
 
     case UserThreadStateDefaultInputContext:
-        return NtUserGetThreadInfo()->default_imc;
+        return (ULONG_PTR)get_default_input_context();
 
     case UserThreadStateInputState:
         return get_input_state();
