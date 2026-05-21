@@ -1661,6 +1661,7 @@ static void dump_varargs_class_info( const char *prefix, data_size_t size )
     fprintf( stderr, "%s{atom=%#x,style=%#x,cls_extra=%u,win_extra=%u",
              prefix, info->atom, info->style, info->cls_extra, info->win_extra );
     dump_uint64( ",instance=", &info->instance );
+    dump_uint64( ",wndproc=", &info->wndproc );
     fputc( '}', stderr );
     remove_data( sizeof(*info) );
 }

@@ -1045,6 +1045,7 @@ struct class_info
     unsigned int         cls_extra;          /* number of class extra bytes */
     unsigned int         win_extra;          /* number of window extra bytes */
     mod_handle_t         instance;           /* module instance */
+    client_ptr_t         wndproc;            /* class window proc */
 };
 
 typedef volatile struct

@@ -47,7 +47,6 @@ typedef struct tagCLASS
 {
     struct list  entry;         /* Entry in class list */
     BOOL         local;         /* Local class? */
-    WNDPROC      winproc;       /* Window procedure */
     struct dce  *dce;           /* Opaque pointer to class DCE */
     HICON        hIcon;         /* Default icon */
     HICON        hIconSm;       /* Default small icon */
@@ -485,7 +484,15 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
  */
 WNDPROC get_class_winproc( CLASS *class )
 {
-    return class->winproc;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const class_shm_t *class_shm;
+    WNDPROC wndproc = NULL;
+    NTSTATUS status;
+
+    while ((status = get_shared_class( class, &lock, &class_shm )) == STATUS_PENDING)
+        wndproc = wine_server_get_ptr( class_shm->info.wndproc );
+    if (status) return 0;
+    return wndproc;
 }
 
 /***********************************************************************
@@ -517,6 +524,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     struct obj_locator locator;
     HICON icon_internal;
     HINSTANCE instance;
+    WNDPROC wndproc;
     CLASS *class;
     ATOM atom;
     BOOL ret;
@@ -531,6 +539,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
          return 0;
     }
     if (!(instance = wc->hInstance)) instance = RtlGetCurrentPeb()->ImageBaseAddress;
+    wndproc = alloc_winproc( wc->lpfnWndProc, ansi );
 
     TRACE( "name=%s hinst=%p style=0x%x clExtr=0x%x winExtr=0x%x\n",
            debugstr_us(name), instance, wc->style, wc->cbClsExtra, wc->cbWndExtra );
@@ -555,9 +564,10 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         struct class_info info =
         {
             .style      = wc->style,
-            .instance   = wine_server_client_ptr( instance ),
             .cls_extra  = wc->cbClsExtra,
             .win_extra  = wc->cbWndExtra,
+            .instance   = wine_server_client_ptr( instance ),
+            .wndproc    = wine_server_client_ptr( wndproc ),
         };
         wine_server_add_data( req, &info, sizeof(info) );
         req->local      = class->local;
@@ -597,7 +607,6 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->icon_internal = icon_internal;
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
-    class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     class->menu_name     = menu_name;
     class->shared        = shared;
     release_class_ptr( class );
@@ -674,7 +683,7 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
         if (wc)
         {
             wc->style         = class_shm->info.style;
-            wc->lpfnWndProc   = get_winproc( class->winproc, ansi );
+            wc->lpfnWndProc   = get_winproc( wine_server_get_ptr( class_shm->info.wndproc ), ansi );
             wc->cbClsExtra    = class_shm->info.cls_extra;
             wc->cbWndExtra    = class_shm->info.win_extra;
             wc->hInstance     = (instance == user32_module) ? 0 : instance;
@@ -836,8 +845,9 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
         class->menu_name = (void *)newval;
         break;
     case GCLP_WNDPROC:
-        retval = (ULONG_PTR)get_winproc( class->winproc, ansi );
-        class->winproc = alloc_winproc( (WNDPROC)newval, ansi );
+        newval = (ULONG_PTR)alloc_winproc( (WNDPROC)newval, ansi );
+        if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
+        retval = (ULONG_PTR)get_winproc( (WNDPROC)retval, ansi );
         break;
     case GCLP_HBRBACKGROUND:
         retval = (ULONG_PTR)class->hbrBackground;
@@ -924,6 +934,7 @@ static ULONG_PTR get_class_long_shm( HWND hwnd, INT offset, UINT size, BOOL ansi
         {
         case GCW_ATOM:           ret = class_shm->info.atom; break;
         case GCL_STYLE:          ret = class_shm->info.style; break;
+        case GCLP_WNDPROC:       ret = class_shm->info.wndproc; break;
         case GCL_CBCLSEXTRA:     ret = class_shm->info.cls_extra; break;
         case GCL_CBWNDEXTRA:     ret = class_shm->info.win_extra; break;
         case GCLP_HMODULE:       ret = class_shm->info.instance; break;
@@ -945,6 +956,7 @@ static ULONG_PTR get_class_long_shm( HWND hwnd, INT offset, UINT size, BOOL ansi
         return 0;
     }
 
+    if (offset == GCLP_WNDPROC) return (ULONG_PTR)get_winproc( (WNDPROC)ret, ansi );
     return ret;
 }
 
@@ -956,7 +968,6 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     switch (offset)
     {
     case GCLP_HICONSM:
-    case GCLP_WNDPROC:
     case GCLP_HICON:
     case GCLP_HCURSOR:
     case GCLP_HBRBACKGROUND:
@@ -983,7 +994,6 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                 case GCLP_HCURSOR:
                 case GCLP_HICON:
                 case GCLP_HICONSM:
-                case GCLP_WNDPROC:
                 case GCLP_MENUNAME:
                     FIXME( "offset %d not supported on other process window %p\n", offset, hwnd );
                     break;
@@ -1010,9 +1020,6 @@ static ULONG_PTR get_class_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         break;
     case GCLP_HICONSM:
         retvalue = (ULONG_PTR)(class->hIconSm ? class->hIconSm : class->icon_internal);
-        break;
-    case GCLP_WNDPROC:
-        retvalue = (ULONG_PTR)get_winproc( class->winproc, ansi );
         break;
     case GCLP_MENUNAME:
         retvalue = (ULONG_PTR)class->menu_name;

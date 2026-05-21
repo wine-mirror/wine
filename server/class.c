@@ -312,6 +312,10 @@ DECL_HANDLER(set_class_info)
             reply->old_info = shared->info.instance;
             shared->info.instance = req->new_info;
             break;
+        case GCLP_WNDPROC:
+            reply->old_info = shared->info.wndproc;
+            shared->info.wndproc = req->new_info;
+            break;
         default:
             if (req->size > sizeof(req->new_info) || req->offset < 0 ||
                 req->offset > class->shared->info.cls_extra - (int)req->size)

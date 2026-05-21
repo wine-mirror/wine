@@ -1029,6 +1029,7 @@ struct class_info
     unsigned int         cls_extra;
     unsigned int         win_extra;
     mod_handle_t         instance;
+    client_ptr_t         wndproc;
 };
 
 typedef volatile struct
@@ -7103,6 +7104,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 935
+#define SERVER_PROTOCOL_VERSION 936
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
