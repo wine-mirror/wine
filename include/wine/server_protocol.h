@@ -1030,6 +1030,8 @@ struct class_info
     unsigned int         win_extra;
     user_handle_t        cursor;
     user_handle_t        background;
+    user_handle_t        icon;
+    user_handle_t        icon_small;
     mod_handle_t         instance;
     client_ptr_t         wndproc;
 };
@@ -7108,6 +7110,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 937
+#define SERVER_PROTOCOL_VERSION 938
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

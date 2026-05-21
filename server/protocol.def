@@ -1046,6 +1046,8 @@ struct class_info
     unsigned int         win_extra;          /* number of window extra bytes */
     user_handle_t        cursor;             /* default cursor */
     user_handle_t        background;         /* default background */
+    user_handle_t        icon;               /* default icon */
+    user_handle_t        icon_small;         /* default cursor (small) */
     mod_handle_t         instance;           /* module instance */
     client_ptr_t         wndproc;            /* class window proc */
 };
