@@ -1022,17 +1022,22 @@ typedef volatile struct
     unsigned __int64     keystate_serial;
 } input_shm_t;
 
-typedef volatile struct
+struct class_info
 {
     atom_t               atom;
     unsigned int         style;
     unsigned int         cls_extra;
     unsigned int         win_extra;
     mod_handle_t         instance;
+};
+
+typedef volatile struct
+{
     data_size_t          name_offset;
     data_size_t          name_len;
     WCHAR                name[MAX_ATOM_LEN];
     unsigned short       __pad;
+    struct class_info    info;
     char                 extra[];
 } class_shm_t;
 
@@ -4505,13 +4510,12 @@ struct create_class_request
     struct request_header __header;
     int            local;
     atom_t         atom;
-    unsigned int   style;
-    mod_handle_t   instance;
+    char __pad_20[4];
     client_ptr_t   client_ptr;
-    short int      cls_extra;
-    short int      win_extra;
     data_size_t    name_offset;
+    /* VARARG(info,class_info); */
     /* VARARG(name,unicode_str); */
+    char __pad_36[4];
 };
 struct create_class_reply
 {
@@ -7099,6 +7103,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 934
+#define SERVER_PROTOCOL_VERSION 935
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

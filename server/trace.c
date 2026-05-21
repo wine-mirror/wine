@@ -1654,6 +1654,17 @@ static void dump_varargs_monitor_infos( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_class_info( const char *prefix, data_size_t size )
+{
+    const struct class_info *info = cur_data;
+
+    fprintf( stderr, "%s{atom=%#x,style=%#x,cls_extra=%u,win_extra=%u",
+             prefix, info->atom, info->style, info->cls_extra, info->win_extra );
+    dump_uint64( ",instance=", &info->instance );
+    fputc( '}', stderr );
+    remove_data( sizeof(*info) );
+}
+
 void trace_request(void)
 {
     enum request req = current->req.request_header.req;

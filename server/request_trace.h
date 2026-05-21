@@ -21,6 +21,7 @@ static void dump_varargs_acl( const char *prefix, data_size_t size );
 static void dump_varargs_apc_call( const char *prefix, data_size_t size );
 static void dump_varargs_apc_result( const char *prefix, data_size_t size );
 static void dump_varargs_bytes( const char *prefix, data_size_t size );
+static void dump_varargs_class_info( const char *prefix, data_size_t size );
 static void dump_varargs_contexts( const char *prefix, data_size_t size );
 static void dump_varargs_cursor_positions( const char *prefix, data_size_t size );
 static void dump_varargs_debug_event( const char *prefix, data_size_t size );
@@ -2395,12 +2396,9 @@ static void dump_create_class_request( const struct create_class_request *req )
 {
     fprintf( stderr, " local=%d", req->local );
     fprintf( stderr, ", atom=%04x", req->atom );
-    fprintf( stderr, ", style=%08x", req->style );
-    dump_uint64( ", instance=", &req->instance );
     dump_uint64( ", client_ptr=", &req->client_ptr );
-    fprintf( stderr, ", cls_extra=%d", req->cls_extra );
-    fprintf( stderr, ", win_extra=%d", req->win_extra );
     fprintf( stderr, ", name_offset=%u", req->name_offset );
+    dump_varargs_class_info( ", info=", cur_size );
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 

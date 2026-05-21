@@ -452,7 +452,7 @@ static UINT_PTR get_class_instance( CLASS *class )
     NTSTATUS status;
 
     while ((status = get_shared_class( class, &lock, &class_shm )) == STATUS_PENDING)
-        instance = class_shm->instance;
+        instance = class_shm->info.instance;
     if (status) return 0;
     return instance;
 }
@@ -552,11 +552,15 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     user_lock();
     SERVER_START_REQ( create_class )
     {
+        struct class_info info =
+        {
+            .style      = wc->style,
+            .instance   = wine_server_client_ptr( instance ),
+            .cls_extra  = wc->cbClsExtra,
+            .win_extra  = wc->cbWndExtra,
+        };
+        wine_server_add_data( req, &info, sizeof(info) );
         req->local      = class->local;
-        req->style      = wc->style;
-        req->instance   = wine_server_client_ptr( instance );
-        req->cls_extra  = wc->cbClsExtra;
-        req->win_extra  = wc->cbWndExtra;
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );
         req->name_offset = version->Length / sizeof(WCHAR);
@@ -669,10 +673,10 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
     {
         if (wc)
         {
-            wc->style         = class_shm->style;
+            wc->style         = class_shm->info.style;
             wc->lpfnWndProc   = get_winproc( class->winproc, ansi );
-            wc->cbClsExtra    = class_shm->cls_extra;
-            wc->cbWndExtra    = class_shm->win_extra;
+            wc->cbClsExtra    = class_shm->info.cls_extra;
+            wc->cbWndExtra    = class_shm->info.win_extra;
             wc->hInstance     = (instance == user32_module) ? 0 : instance;
             wc->hIcon         = class->hIcon;
             wc->hIconSm       = class->hIconSm;
@@ -681,9 +685,9 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
             wc->lpszMenuName  = (WCHAR *)class->menu_name;
             wc->lpszClassName = name->Buffer;
         }
-        atom = class_shm->atom;
+        atom = class_shm->info.atom;
     }
-    if (!wc->hIconSm) wc->hIconSm = class->icon_internal;
+    if (wc && !wc->hIconSm) wc->hIconSm = class->icon_internal;
     *menu_name = class->menu_name;
     release_class_ptr( class );
     return status ? 0 : atom;
@@ -918,13 +922,13 @@ static ULONG_PTR get_class_long_shm( HWND hwnd, INT offset, UINT size, BOOL ansi
     {
         switch (offset)
         {
-        case GCW_ATOM:           ret = class_shm->atom; break;
-        case GCL_STYLE:          ret = class_shm->style; break;
-        case GCL_CBCLSEXTRA:     ret = class_shm->cls_extra; break;
-        case GCL_CBWNDEXTRA:     ret = class_shm->win_extra; break;
-        case GCLP_HMODULE:       ret = class_shm->instance; break;
+        case GCW_ATOM:           ret = class_shm->info.atom; break;
+        case GCL_STYLE:          ret = class_shm->info.style; break;
+        case GCL_CBCLSEXTRA:     ret = class_shm->info.cls_extra; break;
+        case GCL_CBWNDEXTRA:     ret = class_shm->info.win_extra; break;
+        case GCLP_HMODULE:       ret = class_shm->info.instance; break;
         default:
-            valid = offset >= 0 && offset <= (INT)(class_shm->cls_extra - size);
+            valid = offset >= 0 && offset <= (INT)(class_shm->info.cls_extra - size);
             if (valid) memcpy( &ret, (char *)class_shm->extra + offset, size );
             break;
         }
