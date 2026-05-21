@@ -225,10 +225,9 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
 
 HIMC get_default_input_context(void)
 {
-    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
-    if (!thread_info->default_imc)
-        thread_info->default_imc = HandleToUlong( NtUserCreateInputContext( 0 ));
-    return UlongToHandle( thread_info->default_imc );
+    struct user_thread_info *thread_info = get_user_thread_info();
+    if (!thread_info->default_imc) thread_info->default_imc = NtUserCreateInputContext( 0 );
+    return thread_info->default_imc ;
 }
 
 HIMC get_window_input_context( HWND hwnd )
@@ -415,7 +414,7 @@ void cleanup_imm_thread(void)
         thread_info->imm_thread_data = NULL;
     }
 
-    NtUserDestroyInputContext( UlongToHandle( thread_info->client_info.default_imc ));
+    NtUserDestroyInputContext( thread_info->default_imc );
 }
 
 /*****************************************************************************

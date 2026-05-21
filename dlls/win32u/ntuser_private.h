@@ -127,6 +127,7 @@ struct user_thread_info
     UINT                          message_pos;            /* value for GetMessagePos */
     LPARAM                        message_extra;          /* value for GetMessageExtraInfo */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */
+    HIMC                          default_imc;            /* default input context */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
     struct hardware_msg_data     *rawinput;               /* Current rawinput message data */

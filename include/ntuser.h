@@ -124,7 +124,6 @@ struct ntuser_thread_info
     INPUT_MESSAGE_SOURCE msg_source;  /* Message source for current message */
     WORD           recursion_count;   /* SendMessage recursion counter */
     UINT           dpi_context;       /* DPI awareness context */
-    UINT           default_imc;       /* default input context */
     UINT64         client_imm;        /* client IMM thread info */
     UINT64         wmchar_data;       /* client data for WM_CHAR mappings */
 };
