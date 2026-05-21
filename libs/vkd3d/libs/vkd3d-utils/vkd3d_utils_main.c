@@ -16,7 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include <unistd.h>
+#ifdef _WIN32
+#include <direct.h>     /* For getcwd() */
+#endif
 #include "vkd3d_utils_private.h"
+#include "vkd3d_shader_utils.h"
+
 #undef D3D12CreateDevice
 
 static const char *debug_d3d_blob_part(D3D_BLOB_PART part)
@@ -157,6 +164,93 @@ HRESULT WINAPI D3D12SerializeVersionedRootSignature(const D3D12_VERSIONED_ROOT_S
     return vkd3d_serialize_versioned_root_signature(desc, blob, error_blob);
 }
 
+struct standard_include_ctx
+{
+    char *initial_dir;
+    size_t len;
+};
+
+static enum vkd3d_result standard_include_init(struct standard_include_ctx *ctx, const char *initial_filename)
+{
+    const char *last_slash = NULL;
+    const char *ptr;
+
+    for (ptr = initial_filename; *ptr; ++ptr)
+    {
+#ifdef _WIN32
+        if (*ptr == '/' || *ptr == '\\')
+#else
+        if (*ptr == '/')
+#endif
+            last_slash = ptr;
+    }
+
+    if (last_slash)
+    {
+        ctx->len = last_slash - initial_filename + 1;
+        if (!(ctx->initial_dir = vkd3d_malloc(ctx->len)))
+            return VKD3D_ERROR_OUT_OF_MEMORY;
+
+        memcpy(ctx->initial_dir, initial_filename, ctx->len);
+
+        /* Normalize. */
+        ctx->initial_dir[ctx->len - 1] = '/';
+
+        return VKD3D_OK;
+    }
+
+    if ((ctx->initial_dir = getcwd(NULL, 0)))
+    {
+        ctx->len = strlen(ctx->initial_dir);
+
+        /* Check for empty or / cwd. */
+        if (ctx->len && ctx->initial_dir[ctx->len - 1] != '/')
+        {
+            /* Append, overwriting the null terminator intentionally. */
+            ctx->initial_dir[ctx->len] = '/';
+            ctx->len++;
+        }
+
+        return VKD3D_OK;
+    }
+
+    /* Fallback to relative path. */
+    ctx->len = 2;
+    if (!(ctx->initial_dir = vkd3d_malloc(ctx->len)))
+        return VKD3D_ERROR_OUT_OF_MEMORY;
+    ctx->initial_dir[0] = '.';
+    ctx->initial_dir[1] = '/';
+
+    return VKD3D_OK;
+}
+
+static enum vkd3d_result standard_include_open(const char *filename, bool local,
+        const char *parent_data, void *context, struct vkd3d_shader_code *out)
+{
+    struct standard_include_ctx *ctx = context;
+    enum vkd3d_result res;
+    char *full_path;
+    size_t len;
+    FILE *file;
+
+    len = strlen(filename);
+    if (!(full_path = vkd3d_malloc(ctx->len + len + 1)))
+        return VKD3D_ERROR_OUT_OF_MEMORY;
+    memcpy(full_path, ctx->initial_dir, ctx->len);
+    memcpy(&full_path[ctx->len], filename, len + 1);
+    file = fopen(full_path, "rb");
+    vkd3d_free(full_path);
+
+    /* d3dcompiler tries with the prefix path and direct filename. */
+    if (!file && !(file = fopen(filename, "rb")))
+        return VKD3D_ERROR;
+
+    res = vkd3d_shader_code_from_file(out, file);
+    fclose(file);
+
+    return res;
+}
+
 static int open_include(const char *filename, bool local, const char *parent_data, void *context,
         struct vkd3d_shader_code *code)
 {
@@ -179,7 +273,8 @@ static void close_include(const struct vkd3d_shader_code *code, void *context)
 {
     ID3DInclude *iface = context;
 
-    ID3DInclude_Close(iface, code->code);
+    if (code->code)
+        ID3DInclude_Close(iface, code->code);
 }
 
 static enum vkd3d_shader_target_type get_target_for_profile(const char *profile)
@@ -244,6 +339,7 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
     struct vkd3d_shader_compile_option options[7];
     struct vkd3d_shader_compile_info compile_info;
     struct vkd3d_shader_compile_option *option;
+    struct standard_include_ctx ctx = { 0 };
     struct vkd3d_shader_code byte_code;
     const D3D_SHADER_MACRO *macro;
     char *messages;
@@ -291,9 +387,22 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
         for (macro = macros; macro->Name; ++macro)
             ++preprocess_info.macro_count;
     }
-    preprocess_info.pfn_open_include = open_include;
-    preprocess_info.pfn_close_include = close_include;
-    preprocess_info.include_context = include;
+
+    if (include == D3D_COMPILE_STANDARD_FILE_INCLUDE)
+    {
+        if ((ret = standard_include_init(&ctx, filename)) != VKD3D_OK)
+            return hresult_from_vkd3d_result(ret);
+
+        preprocess_info.pfn_open_include = standard_include_open;
+        preprocess_info.pfn_close_include = NULL;
+        preprocess_info.include_context = &ctx;
+    }
+    else
+    {
+        preprocess_info.pfn_open_include = open_include;
+        preprocess_info.pfn_close_include = close_include;
+        preprocess_info.include_context = include;
+    }
 
     hlsl_info.type = VKD3D_SHADER_STRUCTURE_TYPE_HLSL_SOURCE_INFO;
     hlsl_info.next = NULL;
@@ -320,12 +429,13 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
             option->value |= VKD3D_SHADER_COMPILE_OPTION_PACK_MATRIX_COLUMN_MAJOR;
     }
 
+    option = &options[compile_info.option_count++];
+    option->name = VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY;
+    option->value = 0;
     if (flags & D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY)
-    {
-        option = &options[compile_info.option_count++];
-        option->name = VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY;
         option->value = VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_MAP_SEMANTIC_NAMES;
-    }
+    else if (compiler_version >= 37)
+        option->value = VKD3D_SHADER_COMPILE_OPTION_CONST_GLOBAL_UNIFORMS;
 
     if (effect_flags & D3DCOMPILE_EFFECT_CHILD_EFFECT)
     {
@@ -349,6 +459,9 @@ HRESULT WINAPI D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *
     }
 
     ret = vkd3d_shader_compile(&compile_info, &byte_code, &messages);
+
+    if (ctx.initial_dir)
+        vkd3d_free(ctx.initial_dir);
 
     if (messages && messages_blob)
     {
@@ -426,6 +539,7 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
     struct vkd3d_shader_preprocess_info preprocess_info;
     struct vkd3d_shader_compile_info compile_info;
     struct vkd3d_shader_code preprocessed_code;
+    struct standard_include_ctx ctx = { 0 };
     const D3D_SHADER_MACRO *macro;
     char *messages;
     HRESULT hr;
@@ -462,11 +576,27 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
         for (macro = macros; macro->Name; ++macro)
             ++preprocess_info.macro_count;
     }
-    preprocess_info.pfn_open_include = open_include;
-    preprocess_info.pfn_close_include = close_include;
-    preprocess_info.include_context = include;
+
+    if (include == D3D_COMPILE_STANDARD_FILE_INCLUDE)
+    {
+        if ((ret = standard_include_init(&ctx, filename)) != VKD3D_OK)
+            return hresult_from_vkd3d_result(ret);
+
+        preprocess_info.pfn_open_include = standard_include_open;
+        preprocess_info.pfn_close_include = NULL;
+        preprocess_info.include_context = &ctx;
+    }
+    else
+    {
+        preprocess_info.pfn_open_include = open_include;
+        preprocess_info.pfn_close_include = close_include;
+        preprocess_info.include_context = include;
+    }
 
     ret = vkd3d_shader_preprocess(&compile_info, &preprocessed_code, &messages);
+
+    if (ctx.initial_dir)
+        vkd3d_free(ctx.initial_dir);
 
     if (messages && messages_blob)
     {

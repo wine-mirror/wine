@@ -62,6 +62,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_17,
     VKD3D_SHADER_API_VERSION_1_18,
     VKD3D_SHADER_API_VERSION_1_19,
+    VKD3D_SHADER_API_VERSION_2_0,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -132,6 +133,11 @@ enum vkd3d_shader_structure_type
      * \since 1.18
      */
     VKD3D_SHADER_STRUCTURE_TYPE_D3DBC_SOURCE_INFO,
+    /**
+     * The structure is a vkd3d_shader_scan_denormal_mode_info structure.
+     * \since 2.0
+     */
+    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DENORMAL_MODE_INFO,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_STRUCTURE_TYPE),
 };
@@ -208,7 +214,9 @@ enum vkd3d_shader_compile_option_backward_compatibility
      *  - POSITION to SV_Position for vertex shader outputs, pixel shader inputs,
      *    and geometry shader inputs and outputs;
      *  - COLORN to SV_TargetN for pixel shader outputs;
-     *  - DEPTH to SV_Depth for pixel shader outputs.
+     *  - DEPTH to SV_Depth for pixel shader outputs;
+     *  - VFACE to SV_IsFrontFace for pixel shader inputs;
+     *  - VPOS to SV_Position for pixel shader inputs.
      */
     VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_MAP_SEMANTIC_NAMES = 0x00000001,
     /**
@@ -222,6 +230,16 @@ enum vkd3d_shader_compile_option_backward_compatibility
      *  \since 1.14
      */
     VKD3D_SHADER_COMPILE_OPTION_DOUBLE_AS_FLOAT_ALIAS = 0x00000002,
+    /**
+     *  Causes all uniform variables in global scope to be const.
+     *  This includes variables declared without either 'uniform' or 'static',
+     *  but does not include uniforms declared as arguments to the entry point.
+     *
+     *  This option is disabled by default.
+     *
+     *  \since 2.0
+     */
+    VKD3D_SHADER_COMPILE_OPTION_CONST_GLOBAL_UNIFORMS = 0x00000004,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY),
 };
@@ -382,6 +400,27 @@ enum vkd3d_shader_compile_option_name
      * \since 1.12
      */
     VKD3D_SHADER_COMPILE_OPTION_INCLUDE_EMPTY_BUFFERS_IN_EFFECTS = 0x0000000d,
+    /**
+     * Override the denormal mode for f16 (half) numbers. \a value is a member
+     * of enum vkd3d_shader_denormal_mode.
+     *
+     * \since 2.0
+     */
+    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F16 = 0x0000000e,
+    /**
+     * Override the denormal mode for f32 (float) numbers. \a value is a member
+     * of enum vkd3d_shader_denormal_mode.
+     *
+     * \since 2.0
+     */
+    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F32 = 0x0000000f,
+    /**
+     * Override the denormal mode for f64 (double) numbers. \a value is a member
+     * of enum vkd3d_shader_denormal_mode.
+     *
+     * \since 2.0
+     */
+    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F64 = 0x00000010,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
@@ -1689,6 +1728,8 @@ enum vkd3d_shader_spirv_extension
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_VIEWPORT_INDEX_LAYER,
     /** \since 1.12 */
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_FRAGMENT_SHADER_INTERLOCK,
+    /** \since 2.0 */
+    VKD3D_SHADER_SPIRV_EXTENSION_KHR_FLOAT_CONTROLS,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SPIRV_EXTENSION),
 };
@@ -2416,6 +2457,46 @@ struct vkd3d_shader_scan_thread_group_size_info
 };
 
 /**
+ * Specifies how denormal floating-point numbers should be treated.
+ *
+ * \since 2.0
+ */
+enum vkd3d_shader_denormal_mode
+{
+    /** No particular denormal mode is requested. */
+    VKD3D_SHADER_DENORMAL_MODE_ANY = 0,
+    /** Denormal values should be preserved. */
+    VKD3D_SHADER_DENORMAL_MODE_PRESERVE = 1,
+    /** Denormal values should be flushed to zero. */
+    VKD3D_SHADER_DENORMAL_MODE_FLUSH_TO_ZERO = 2,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_DENORMAL_MODE),
+};
+
+/**
+ * A chained structure describing how a shader expects denormal floating-point
+ * values to be handled.
+ *
+ * This structure extends vkd3d_shader_compile_info.
+ *
+ * \since 2.0
+ */
+struct vkd3d_shader_scan_denormal_mode_info
+{
+    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DENORMAL_MODE_INFO. */
+    enum vkd3d_shader_structure_type type;
+    /** Optional pointer to a structure containing further parameters. */
+    const void *next;
+
+    /** The denormal mode for f16 (half) numbers. */
+    enum vkd3d_shader_denormal_mode f16_denormal_mode;
+    /** The denormal mode for f32 (float) numbers. */
+    enum vkd3d_shader_denormal_mode f32_denormal_mode;
+    /** The denormal mode for f64 (double) numbers. */
+    enum vkd3d_shader_denormal_mode f64_denormal_mode;
+};
+
+/**
  * A chained structure containing legacy Direct3D bytecode compilation parameters.
  * This structure specifies some information about the source environment that
  * is not specified in the source shader format, but may be necessary for the
@@ -2970,6 +3051,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - vkd3d_shader_parameter_info
  * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
+ * - vkd3d_shader_scan_denormal_mode_info
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
@@ -3169,6 +3251,7 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  * - vkd3d_shader_parameter_info
  * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
+ * - vkd3d_shader_scan_denormal_mode_info
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info

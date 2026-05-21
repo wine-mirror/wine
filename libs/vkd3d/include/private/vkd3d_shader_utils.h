@@ -20,6 +20,14 @@
 #define __VKD3D_SHADER_UTILS_H
 
 #include "vkd3d_shader.h"
+#include <sys/stat.h>
+
+/* S_ISREG may not be defined when building for Windows. MinGW provides a more
+ * POSIX-like environment that does define S_ISREG, but the Wine/msvcrt
+ * headers do not. */
+#ifndef S_ISREG
+# define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 
 static inline enum vkd3d_result vkd3d_shader_parse_dxbc_source_type(const struct vkd3d_shader_code *dxbc,
         enum vkd3d_shader_source_type *type, char **messages)
@@ -52,6 +60,54 @@ static inline enum vkd3d_result vkd3d_shader_parse_dxbc_source_type(const struct
 
     if (*type == VKD3D_SHADER_SOURCE_NONE)
         return VKD3D_ERROR_INVALID_SHADER;
+
+    return VKD3D_OK;
+}
+
+static inline enum vkd3d_result vkd3d_shader_code_from_file(struct vkd3d_shader_code *shader, FILE *f)
+{
+    size_t size = 4096;
+    struct stat st;
+    size_t pos = 0;
+    uint8_t *data;
+    size_t ret;
+
+    memset(shader, 0, sizeof(*shader));
+
+    if (fstat(fileno(f), &st) == -1)
+        return VKD3D_ERROR;
+
+    if (S_ISREG(st.st_mode))
+        size = st.st_size;
+
+    if (!(data = malloc(size)))
+        return VKD3D_ERROR_OUT_OF_MEMORY;
+
+    for (;;)
+    {
+        if (pos >= size)
+        {
+            if (size > SIZE_MAX / 2 || !(data = realloc(data, size * 2)))
+            {
+                free(data);
+                return VKD3D_ERROR_OUT_OF_MEMORY;
+            }
+            size *= 2;
+        }
+
+        if (!(ret = fread(&data[pos], 1, size - pos, f)))
+            break;
+        pos += ret;
+    }
+
+    if (!feof(f))
+    {
+        free(data);
+        return VKD3D_ERROR;
+    }
+
+    shader->code = data;
+    shader->size = pos;
 
     return VKD3D_OK;
 }

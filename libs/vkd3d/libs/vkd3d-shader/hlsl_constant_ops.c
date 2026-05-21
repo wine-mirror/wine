@@ -18,9 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <math.h>
-
 #include "hlsl.h"
+#include <math.h>
 
 static bool fold_abs(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
@@ -1286,6 +1285,7 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 {
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
+    float x, y;
 
     VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
     VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
@@ -1294,6 +1294,22 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     {
         switch (type)
         {
+            /* Explicitly disable floating-point contraction on Clang to
+             * prevent it from fusing the multiplication and the
+             * addition/subtraction below. Current versions of GCC
+             * unfortunately do no support the FP_CONTRACT pragma, but don't
+             * contract the expression either. */
+#ifdef __clang__
+#pragma STDC FP_CONTRACT OFF
+#endif
+            case HLSL_TYPE_FLOAT:
+            case HLSL_TYPE_HALF:
+                x = src1->value.u[k].f;
+                y = src2->value.u[k].f;
+                /* Explicit cast to float to avoid x87 excess precision. */
+                dst->u[k].f = x - (float)(truncf(x / y) * y);
+                break;
+
             case HLSL_TYPE_INT:
                 if (src2->value.u[k].i == 0)
                 {

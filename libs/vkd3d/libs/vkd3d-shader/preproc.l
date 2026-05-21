@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+%top{
+#include "config.h"
+}
+
 %{
 
 #include "preproc.tab.h"
@@ -211,19 +215,23 @@ INT_SUFFIX      [uUlL]{0,2}
 
 %%
 
-static void preproc_func_state_cleanup_arg_values(struct preproc_func_state *f)
+static void preproc_func_state_cleanup(struct preproc_func_state *f)
 {
-    const struct preproc_macro *m;
+    const struct preproc_macro *m = f->macro;
     size_t i;
 
-    if (!(m = f->macro))
-        return;
-
-    for (i = 0; i < m->arg_count; ++i)
+    if (f->arg_values)
     {
-        vkd3d_string_buffer_cleanup(&f->arg_values[i].text);
+        for (i = 0; i < m->arg_count; ++i)
+        {
+            vkd3d_string_buffer_cleanup(&f->arg_values[i].text);
+        }
+        free(f->arg_values);
+        f->arg_values = NULL;
     }
-    free(f->arg_values);
+    f->state = STATE_NONE;
+    f->arg_count = 0;
+    f->macro = NULL;
 }
 
 static void update_location(struct preproc_ctx *ctx)
@@ -265,7 +273,7 @@ static bool preproc_is_writing(struct preproc_ctx *ctx)
  * function-like macro bodies and their arguments. */
 static bool should_concat(struct preproc_ctx *ctx)
 {
-    struct preproc_macro *macro;
+    const struct preproc_macro *macro;
 
     if (!ctx->expansion_count)
         return false;
@@ -368,7 +376,7 @@ static void preproc_text_add(struct preproc_text *text, const char *string)
 }
 
 static bool preproc_push_expansion(struct preproc_ctx *ctx,
-        const struct preproc_text *text, struct preproc_macro *macro, struct preproc_text *arg_values)
+        const struct preproc_text *text, const struct preproc_macro *macro, struct preproc_text *arg_values)
 {
     struct preproc_expansion *exp;
 
@@ -674,8 +682,7 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
                     const char *name = func_state->macro->name;
 
                     ctx->lookahead_token = token;
-                    func_state->macro = NULL;
-                    func_state->state = STATE_NONE;
+                    preproc_func_state_cleanup(func_state);
 
                     if (ctx->current_directive)
                         return return_token(T_IDENTIFIER, lval, name);
@@ -740,31 +747,34 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
                     case '}':
                         if (!--func_state->paren_depth)
                         {
+                            const struct preproc_macro *macro = func_state->macro;
+
                             /* Not only can you end a macro with ] or }, if
                              * you do, it's treated as part of the last
                              * argument. */
                             if (token != ')' && current_arg)
                                 preproc_text_add(current_arg, text);
 
-                            if (++func_state->arg_count == func_state->macro->arg_count)
+                            if (++func_state->arg_count == macro->arg_count)
                             {
-                                preproc_push_expansion(ctx, &func_state->macro->body,
-                                        func_state->macro, func_state->arg_values);
+                                preproc_push_expansion(ctx, &macro->body, macro, func_state->arg_values);
+                                func_state->arg_values = NULL;
                             }
                             else
                             {
                                 preproc_warning(ctx, lloc, VKD3D_SHADER_WARNING_PP_ARGUMENT_COUNT_MISMATCH,
                                         "Wrong number of arguments to macro \"%s\": expected %zu, got %zu.",
-                                        func_state->macro->name, func_state->macro->arg_count, func_state->arg_count);
+                                        macro->name, macro->arg_count, func_state->arg_count);
 
                                 if (ctx->current_directive)
-                                    return return_token(T_IDENTIFIER, lval, func_state->macro->name);
+                                {
+                                    preproc_func_state_cleanup(func_state);
+                                    return return_token(T_IDENTIFIER, lval, macro->name);
+                                }
 
-                                vkd3d_string_buffer_printf(&ctx->buffer, "%s ", func_state->macro->name);
-                                preproc_func_state_cleanup_arg_values(func_state);
+                                vkd3d_string_buffer_printf(&ctx->buffer, "%s ", macro->name);
                             }
-                            func_state->macro = NULL;
-                            func_state->state = STATE_NONE;
+                            preproc_func_state_cleanup(func_state);
                         }
                         else
                         {
@@ -887,6 +897,18 @@ int preproc_lexer_parse(const struct vkd3d_shader_compile_info *compile_info,
 
     preproc_yyparse(ctx.scanner, &ctx);
 
+    switch (ctx.directive_func.state)
+    {
+        case STATE_NONE:
+        case STATE_IDENTIFIER:
+            break;
+
+        case STATE_ARGS:
+            preproc_warning(&ctx, &loc, VKD3D_SHADER_WARNING_PP_UNTERMINATED_MACRO,
+                    "Unterminated macro invocation.");
+            break;
+    }
+
     switch (ctx.text_func.state)
     {
         case STATE_NONE:
@@ -902,7 +924,8 @@ int preproc_lexer_parse(const struct vkd3d_shader_compile_info *compile_info,
             break;
     }
 
-    preproc_func_state_cleanup_arg_values(&ctx.text_func);
+    preproc_func_state_cleanup(&ctx.directive_func);
+    preproc_func_state_cleanup(&ctx.text_func);
     while (ctx.file_count)
         preproc_pop_buffer(&ctx);
     yylex_destroy(ctx.scanner);

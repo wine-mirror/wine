@@ -186,7 +186,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
     if (data_size < VKD3D_DXBC_HEADER_SIZE)
     {
-        WARN("Invalid data size %zu.\n", data_size);
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_SIZE,
                 "DXBC size %zu is smaller than the DXBC header size.", data_size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -197,7 +196,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
     if (tag != TAG_DXBC)
     {
-        WARN("Wrong tag.\n");
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_MAGIC, "Invalid DXBC magic.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
     }
@@ -226,7 +224,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
     TRACE("version: %#x.\n", version);
     if (version != 0x00000001)
     {
-        WARN("Got unexpected DXBC version %#x.\n", version);
         vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_VERSION,
                 "DXBC version %#x is not supported.", version);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -255,7 +252,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
         if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(uint32_t), data_size))
         {
-            WARN("Invalid chunk offset %#x (data size %zu).\n", chunk_offset, data_size);
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_OFFSET,
                     "DXBC chunk %u has invalid offset %#x (data size %#zx).", i, chunk_offset, data_size);
             vkd3d_free(sections);
@@ -269,8 +265,6 @@ static int parse_dxbc(const struct vkd3d_shader_code *dxbc, struct vkd3d_shader_
 
         if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
         {
-            WARN("Invalid chunk size %#x (data size %zu, chunk offset %#x).\n",
-                    chunk_size, data_size, chunk_offset);
             vkd3d_shader_error(message_context, &location, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
                     "DXBC chunk %u has invalid size %#x (data size %#zx, chunk offset %#x).",
                     i, chunk_offset, data_size, chunk_offset);
@@ -381,7 +375,6 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
 
     if (!require_space(0, 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
                 "Section size %zu is smaller than the minimum signature header size.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -395,7 +388,6 @@ static int shader_parse_signature(const struct vkd3d_shader_dxbc_section_desc *s
     if (align(header_size, sizeof(uint32_t)) != header_size || i < 2
             || !require_space(2, i - 2, sizeof(uint32_t), section->data.size))
     {
-        WARN("Invalid header size %#x.\n", header_size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_SIGNATURE,
                 "Signature header size %#x is invalid.", header_size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -524,7 +516,6 @@ static int shdr_parse_features(const struct vkd3d_shader_dxbc_section_desc *sect
 
     if (!require_space(0, 1, sizeof(uint64_t), section->data.size))
     {
-        WARN("Invalid data size %#zx.\n", section->data.size);
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
                 "SFI0 section size %zu is too small to contain flags.", section->data.size);
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1323,7 +1314,6 @@ static int shader_write_root_parameters(struct root_signature_writer_context *co
                     shader_write_root_descriptor1(buffer, &desc->u.v_1_1.parameters[i].u.descriptor);
                 break;
             default:
-                FIXME("Unrecognized type %#x.\n", versioned_root_signature_get_parameter_type(desc, i));
                 vkd3d_shader_error(&context->message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_ROOT_PARAMETER_TYPE,
                         "Invalid/unrecognised root signature root parameter type %#x.",
                         versioned_root_signature_get_parameter_type(desc, i));
@@ -1403,7 +1393,6 @@ static int validate_descriptor_table_v_1_0(const struct vkd3d_shader_root_descri
         }
         else
         {
-            WARN("Invalid descriptor range type %#x.\n", r->range_type);
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_DESCRIPTOR_RANGE_TYPE,
                     "Invalid root signature descriptor range type %#x.", r->range_type);
             return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1412,7 +1401,6 @@ static int validate_descriptor_table_v_1_0(const struct vkd3d_shader_root_descri
 
     if (have_srv_uav_cbv && have_sampler)
     {
-        WARN("Samplers cannot be mixed with CBVs/SRVs/UAVs in descriptor tables.\n");
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_MIXED_DESCRIPTOR_RANGE_TYPES,
                 "Encountered both CBV/SRV/UAV and sampler descriptor ranges in the same root descriptor table.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1444,7 +1432,6 @@ static int validate_descriptor_table_v_1_1(const struct vkd3d_shader_root_descri
         }
         else
         {
-            WARN("Invalid descriptor range type %#x.\n", r->range_type);
             vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_DESCRIPTOR_RANGE_TYPE,
                     "Invalid root signature descriptor range type %#x.", r->range_type);
             return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1453,7 +1440,6 @@ static int validate_descriptor_table_v_1_1(const struct vkd3d_shader_root_descri
 
     if (have_srv_uav_cbv && have_sampler)
     {
-        WARN("Samplers cannot be mixed with CBVs/SRVs/UAVs in descriptor tables.\n");
         vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_RS_MIXED_DESCRIPTOR_RANGE_TYPES,
                 "Encountered both CBV/SRV/UAV and sampler descriptor ranges in the same root descriptor table.");
         return VKD3D_ERROR_INVALID_ARGUMENT;
@@ -1509,7 +1495,6 @@ int vkd3d_shader_serialize_root_signature(const struct vkd3d_shader_versioned_ro
             && root_signature->version != VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1)
     {
         ret = VKD3D_ERROR_INVALID_ARGUMENT;
-        WARN("Root signature version %#x not supported.\n", root_signature->version);
         vkd3d_shader_error(&context.message_context, NULL, VKD3D_SHADER_ERROR_RS_INVALID_VERSION,
                 "Root signature version %#x is not supported.", root_signature->version);
         goto done;

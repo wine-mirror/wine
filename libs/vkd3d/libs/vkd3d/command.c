@@ -4158,6 +4158,7 @@ static void STDMETHODCALLTYPE d3d12_command_list_CopyResource(ID3D12GraphicsComm
     struct d3d12_resource *dst_resource, *src_resource;
     const struct vkd3d_format *dst_format, *src_format;
     const struct vkd3d_vk_device_procs *vk_procs;
+    VkImageAspectFlags vk_aspect_mask;
     VkBufferCopy vk_buffer_copy;
     VkImageCopy vk_image_copy;
     unsigned int layer_count;
@@ -4197,7 +4198,11 @@ static void STDMETHODCALLTYPE d3d12_command_list_CopyResource(ID3D12GraphicsComm
         VKD3D_ASSERT(dst_resource->desc.MipLevels == src_resource->desc.MipLevels);
         VKD3D_ASSERT(layer_count == d3d12_resource_desc_get_layer_count(&src_resource->desc));
 
-        if (src_format->vk_aspect_mask != dst_format->vk_aspect_mask)
+        /* E.g., for D32_FLOAT_S8X24_UINT -> X32_TYPELESS_G8X24_UINT we just
+         * need to copy the STENCIL aspect. For D32_FLOAT -> R32_FLOAT we need
+         * to do a DEPTH -> COLOR copy. */
+        vk_aspect_mask = src_format->vk_aspect_mask & dst_format->vk_aspect_mask;
+        if (vk_aspect_mask != dst_format->vk_aspect_mask)
         {
             for (i = 0; i < dst_resource->desc.MipLevels; ++i)
             {
@@ -4212,8 +4217,10 @@ static void STDMETHODCALLTYPE d3d12_command_list_CopyResource(ID3D12GraphicsComm
         {
             vk_image_copy_from_d3d12(&vk_image_copy, i, i, &src_resource->desc, &dst_resource->desc,
                     src_format, dst_format, NULL, 0, 0, 0);
-            vk_image_copy.dstSubresource.layerCount = layer_count;
+            vk_image_copy.srcSubresource.aspectMask = vk_aspect_mask;
             vk_image_copy.srcSubresource.layerCount = layer_count;
+            vk_image_copy.dstSubresource.aspectMask = vk_aspect_mask;
+            vk_image_copy.dstSubresource.layerCount = layer_count;
             VK_CALL(vkCmdCopyImage(list->vk_command_buffer, src_resource->u.vk_image,
                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_resource->u.vk_image,
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &vk_image_copy));

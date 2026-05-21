@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+%top{
+#include "config.h"
+}
+
 %{
 #define YY_NO_UNISTD_H
 #include "hlsl.h"
@@ -238,15 +242,18 @@ while                   {return KW_WHILE;               }
                         }
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
-                            yylval->floatval = atof(yytext);
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
                             return C_FLOAT;
                         }
 [0-9]+\.([eE][+-]?[0-9]+)?[h|H|f|F]? {
-                            yylval->floatval = atof(yytext);
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
                             return C_FLOAT;
                         }
 [0-9]+[eE][+-]?[0-9]+[h|H|f|F]? {
-                            yylval->floatval = atof(yytext);
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
                             return C_FLOAT;
                         }
 0x[0-9a-fA-F]+[lL]?     {
