@@ -1,8 +1,6 @@
 MODULE    = qdvd.dll
 IMPORTS   = strmbase strmiids uuid ole32 msvcrt
 
-EXTRADLLFLAGS = -Wb,--prefer-native
-
 VER_PRODUCTVERSION = 6,5,1,904
 
 SOURCES = \
