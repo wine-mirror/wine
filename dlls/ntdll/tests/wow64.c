@@ -3291,8 +3291,45 @@ static DWORD WINAPI pipe_read_thread( void *arg )
     return 0;
 }
 
+struct nested_continue_params
+{
+    HANDLE event;
+    ULONG64 suspend_rip;
+    LONG pass;
+};
+
+static DWORD WINAPI nested_continue_thread( void *arg )
+{
+    CHPE_V2_CPU_AREA_INFO *chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
+    struct nested_continue_params *params = arg;
+    CONTEXT ctx, nested_ctx;
+
+    RtlCaptureContext( &ctx );
+    if (InterlockedIncrement( &params->pass ) != 1) return 0;
+
+    params->suspend_rip = ctx.Rip;
+    chpe->InSyscallCallback = 1;
+    NtSetEvent( params->event, NULL );
+    while (!*chpe->SuspendDoorbell) YieldProcessor();
+
+    /* with InSyscallCallback set, NtContinue does not suspend */
+    RtlCaptureContext( &nested_ctx );
+    if (InterlockedIncrement( &params->pass ) == 2) NtContinue( &nested_ctx, FALSE );
+    chpe->InSyscallCallback = 0;
+
+    /* with InSimulation set, NtContinue does not suspend */
+    chpe->InSimulation = 1;
+    RtlCaptureContext( &nested_ctx );
+    if (InterlockedIncrement( &params->pass ) == 4) NtContinue( &nested_ctx, FALSE );
+    chpe->InSimulation = 0;
+
+    NtContinue( &ctx, FALSE );
+    return 0;
+}
+
 static void test_suspend_doorbell(void)
 {
+    struct nested_continue_params nested_params;
     struct pipe_read_params read_params;
     struct doorbell_params params;
     HANDLE thread, pipe;
@@ -3361,6 +3398,24 @@ static void test_suspend_doorbell(void)
         CloseHandle( read_params.pipe );
         CloseHandle( read_params.event );
     }
+
+    nested_params.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    nested_params.pass = 0;
+    thread = CreateThread( NULL, 0, nested_continue_thread, &nested_params, 0, NULL );
+
+    ret = WaitForSingleObject( nested_params.event, 10000 );
+    ok( ret == 0, "wait failed %lx\n", ret );
+
+    ctx.ContextFlags = CONTEXT_FULL;
+    GetThreadContext( thread, &ctx );
+    ok( ctx.Rip == nested_params.suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, params.suspend_rip );
+
+    ret = WaitForSingleObject( thread, 10000 );
+    ok( ret == 0, "wait failed %lx\n", ret );
+    ok( nested_params.pass == 6, "pass = %lu\n", nested_params.pass );
+
+    CloseHandle( nested_params.event );
+    CloseHandle( thread );
 }
 
 #endif /* __arm64ec__ */
