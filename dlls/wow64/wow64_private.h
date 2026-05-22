@@ -194,6 +194,27 @@ static inline OBJECT_ATTRIBUTES *objattr_32to64_redirect( struct object_attr64 *
     return attr;
 }
 
+static inline ALPC_PORT_ATTRIBUTES *alpc_port_attributes_32to64( ALPC_PORT_ATTRIBUTES *out,
+                                                                 const ALPC_PORT_ATTRIBUTES32 *in )
+{
+    if (!in) return NULL;
+
+    out->Flags = in->Flags;
+    out->SecurityQos.Length = in->SecurityQos.Length;
+    out->SecurityQos.ImpersonationLevel = in->SecurityQos.ImpersonationLevel;
+    out->SecurityQos.ContextTrackingMode = in->SecurityQos.ContextTrackingMode;
+    out->SecurityQos.EffectiveOnly = in->SecurityQos.EffectiveOnly;
+    out->MaxMessageLength = in->MaxMessageLength + (sizeof(ALPC_PORT_MESSAGE) - sizeof(ALPC_PORT_MESSAGE32));
+    out->MemoryBandwidth = in->MemoryBandwidth;
+    out->MaxPoolUsage = in->MaxPoolUsage;
+    out->MaxSectionSize = in->MaxSectionSize;
+    out->MaxViewSize = in->MaxViewSize;
+    out->MaxTotalSectionSize = in->MaxTotalSectionSize;
+    out->DupObjectTypes = in->DupObjectTypes;
+    out->Reserved = 0;
+    return out;
+}
+
 static inline TOKEN_USER *token_user_32to64( TOKEN_USER *out, const TOKEN_USER32 *in )
 {
     out->User.Sid = ULongToPtr( in->User.Sid );

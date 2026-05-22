@@ -463,6 +463,27 @@ NTSTATUS WINAPI wow64_NtAllocateUuids( UINT *args )
     return NtAllocateUuids( time, delta, sequence, seed );
 }
 
+/**********************************************************************
+ *           wow64_NtAlpcCreatePort
+ */
+NTSTATUS WINAPI wow64_NtAlpcCreatePort( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ALPC_PORT_ATTRIBUTES32 *port_attr32 = get_ptr( &args );
+    NTSTATUS status;
+
+    struct object_attr64 attr;
+    ALPC_PORT_ATTRIBUTES port_attr;
+    HANDLE handle = 0;
+
+    if (!handle_ptr) return STATUS_ACCESS_VIOLATION;
+
+    status = NtAlpcCreatePort( &handle, objattr_32to64( &attr, attr32 ),
+                               alpc_port_attributes_32to64( &port_attr, port_attr32 ) );
+    if (!status) put_handle( handle_ptr, handle );
+    return status;
+}
 
 /***********************************************************************
  *           wow64_NtCallbackReturn

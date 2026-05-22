@@ -749,4 +749,58 @@ typedef struct
     LARGE_INTEGER TimeLimit;
 } QUOTA_LIMITS32;
 
+typedef struct
+{
+    DWORD Length;
+    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+    SECURITY_CONTEXT_TRACKING_MODE ContextTrackingMode;
+    BOOLEAN EffectiveOnly;
+} SECURITY_QUALITY_OF_SERVICE32;
+
+typedef struct
+{
+    ULONG Flags;
+    SECURITY_QUALITY_OF_SERVICE32 SecurityQos;
+    ULONG MaxMessageLength;
+    ULONG MemoryBandwidth;
+    ULONG MaxPoolUsage;
+    ULONG MaxSectionSize;
+    ULONG MaxViewSize;
+    ULONG MaxTotalSectionSize;
+    ULONG DupObjectTypes;
+} ALPC_PORT_ATTRIBUTES32;
+
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            USHORT DataLength;
+            USHORT TotalLength;
+        } DUMMYSTRUCTNAME1;
+        ULONG Length;
+    } DUMMYUNIONNAME1;
+    union
+    {
+        struct
+        {
+            USHORT Type;
+            USHORT DataInfoOffset;
+        } DUMMYSTRUCTNAME2;
+        ULONG ZeroInit;
+    } DUMMYUNIONNAME2;
+    union
+    {
+        CLIENT_ID32 ClientId;
+        double DoNotUseThisField;
+    } DUMMYUNIONNAME3;
+    ULONG MessageId;
+    union
+    {
+        ULONG ClientViewSize;
+        ULONG CallbackId;
+    } DUMMYUNIONNAME4;
+} ALPC_PORT_MESSAGE32, *PALPC_PORT_MESSAGE32, ALPC_PORT_MESSAGE_HEADER32, *PALPC_PORT_MESSAGE_HEADER32;
+
 #endif /* __WOW64_STRUCT32_H */
