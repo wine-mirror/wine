@@ -58,6 +58,12 @@ NTSTATUS WINAPI NtAlpcCreatePort( HANDLE *port_handle, OBJECT_ATTRIBUTES *obj_at
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS WINAPI NtAlpcDisconnectPort( HANDLE port_handle, ULONG flags )
+{
+    FIXME( "%p, %#x stub!\n", port_handle, (unsigned int)flags );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI NtAlpcSendWaitReceivePort( HANDLE port_handle, ULONG flags,
                                            ALPC_PORT_MESSAGE *send_msg,
                                            ALPC_MESSAGE_ATTRIBUTES *send_msg_attr,
