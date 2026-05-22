@@ -5153,24 +5153,87 @@ static LRESULT WINAPI msg_source_proc( HWND hwnd, UINT message, WPARAM wp, LPARA
         ok( source.originId == expect_src.originId ||
             (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
             "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        ok( !PeekMessageW( &msg, hwnd, WM_USER, WM_USER, PM_REMOVE ), "got pending WM_USER\n" );
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
         break;
     default:
         ok( source.deviceType == IMDT_UNAVAILABLE, "%x: wrong deviceType %x\n",
             message, source.deviceType );
-        ok( source.originId == 0, "%x: wrong originId %x\n", message, source.originId );
+        ok( source.originId == IMO_UNAVAILABLE, "%x: wrong originId %x\n", message, source.originId );
         break;
     }
 
     return DefWindowProcA( hwnd, message, wp, lp );
 }
 
+static LRESULT WINAPI get_message_hook( int code, WPARAM wp, LPARAM lp )
+{
+    INPUT_MESSAGE_SOURCE source;
+    MSG *msg = (MSG *)lp;
+    UINT message = msg->message;
+
+    if (code < 0) return CallNextHookEx( 0, code, wp, lp );
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    switch (message)
+    {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        break;
+    default:
+        ok( source.deviceType == IMDT_UNAVAILABLE, "%x: wrong deviceType %x\n",
+            message, source.deviceType );
+        ok( source.originId == IMO_UNAVAILABLE, "%x: wrong originId %x\n",
+            message, source.originId );
+        break;
+    }
+    return CallNextHookEx( 0, code, wp, lp );
+}
+
+static LRESULT WINAPI keyboard_hook( int code, WPARAM wp, LPARAM lp )
+{
+    INPUT_MESSAGE_SOURCE source;
+
+    if (code < 0) return CallNextHookEx( 0, code, wp, lp );
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == expect_src.deviceType ||
+        broken( source.deviceType == IMDT_UNAVAILABLE ), /* <= win10 1507 */
+        "wrong deviceType %x/%x\n", source.deviceType, expect_src.deviceType );
+    ok( source.originId == expect_src.originId ||
+        broken( source.originId == IMO_UNAVAILABLE), /* <= win10 1507 */
+        "wrong originId %x/%x\n", source.originId, expect_src.originId );
+
+    return CallNextHookEx( 0, code, wp, lp );
+}
+
 static void test_input_message_source(void)
 {
+    INPUT_MESSAGE_SOURCE source;
     WNDCLASSA cls;
     INPUT inputs[2];
     HWND hwnd;
     RECT rc;
     MSG msg;
+    HHOOK msg_hook, kbd_hook;
 
     cls.style = 0;
     cls.lpfnWndProc = msg_source_proc;
@@ -5190,6 +5253,11 @@ static void test_input_message_source(void)
     SetForegroundWindow( hwnd );
     SetFocus( hwnd );
 
+    msg_hook = SetWindowsHookExW( WH_GETMESSAGE, get_message_hook, NULL, GetCurrentThreadId() );
+    ok( msg_hook != NULL, "SetWindowsHookEx failed\n" );
+    kbd_hook = SetWindowsHookExW( WH_KEYBOARD, keyboard_hook, NULL, GetCurrentThreadId() );
+    ok( kbd_hook != NULL, "SetWindowsHookEx failed\n" );
+
     inputs[0].type = INPUT_KEYBOARD;
     inputs[0].ki.dwExtraInfo = 0;
     inputs[0].ki.time = 0;
@@ -5204,24 +5272,28 @@ static void test_input_message_source(void)
     SendMessageA( hwnd, WM_KEYDOWN, 0, 0 );
     SendMessageA( hwnd, WM_MOUSEMOVE, 0, 0 );
 
+    expect_src.deviceType = IMDT_KEYBOARD;
+    expect_src.originId = IMO_INJECTED;
     SendInput( 2, inputs, sizeof(INPUT) );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
-        expect_src.deviceType = IMDT_KEYBOARD;
-        expect_src.originId = IMO_INJECTED;
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
     GetWindowRect( hwnd, &rc );
     simulate_click( TRUE, (rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2 );
     simulate_click( FALSE, (rc.left + rc.right) / 2 + 1, (rc.top + rc.bottom) / 2 + 1 );
+    expect_src.deviceType = IMDT_MOUSE;
+    expect_src.originId = IMO_INJECTED;
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
-        expect_src.deviceType = IMDT_MOUSE;
-        expect_src.originId = IMO_INJECTED;
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
 
     expect_src.deviceType = IMDT_UNAVAILABLE;
     expect_src.originId = IMO_UNAVAILABLE;
@@ -5235,6 +5307,10 @@ static void test_input_message_source(void)
         DispatchMessageW( &msg );
     }
 
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
+
     expect_src.deviceType = IMDT_UNAVAILABLE;
     expect_src.originId = IMO_SYSTEM;
     SetCursorPos( (rc.left + rc.right) / 2 - 1, (rc.top + rc.bottom) / 2 - 1 );
@@ -5244,8 +5320,14 @@ static void test_input_message_source(void)
         DispatchMessageW( &msg );
     }
 
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
+
     DestroyWindow( hwnd );
     UnregisterClassA( cls.lpszClassName, GetModuleHandleA(0) );
+    UnhookWindowsHookEx( msg_hook );
+    UnhookWindowsHookEx( kbd_hook );
 }
 
 static void test_UnregisterDeviceNotification(void)
