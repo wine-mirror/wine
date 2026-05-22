@@ -326,6 +326,90 @@ static IUnknown test_unk = { &test_unk_vtbl };
 static IUnknown test_unk2 = { &test_unk_no_vtbl };
 static IDispatch test_disp = { &test_disp_vtbl };
 
+/* A dispatch object whose QueryInterface(IID_IUnknown) can be made to fail,
+ * modelling a COM object that has been logically destroyed while still
+ * referenced as a dictionary key. */
+struct degen_disp
+{
+    IDispatch IDispatch_iface;
+    BOOL qi_unknown_fails;
+};
+
+static HRESULT WINAPI degen_QI(IDispatch *iface, REFIID riid, void **obj)
+{
+    struct degen_disp *d = CONTAINING_RECORD(iface, struct degen_disp, IDispatch_iface);
+
+    if (IsEqualIID(riid, &IID_IDispatch)) {
+        *obj = iface;
+        return S_OK;
+    }
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        if (d->qi_unknown_fails) {
+            *obj = NULL;
+            return E_NOINTERFACE;
+        }
+        *obj = iface;
+        return S_OK;
+    }
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI degen_AddRef(IDispatch *iface) { return 2; }
+static ULONG WINAPI degen_Release(IDispatch *iface) { return 1; }
+
+static const IDispatchVtbl degen_disp_vtbl = {
+    degen_QI,
+    degen_AddRef,
+    degen_Release,
+    test_disp_GetTypeInfoCount,
+    test_disp_GetTypeInfo,
+    test_disp_GetIDsOfNames,
+    test_disp_Invoke
+};
+
+static void test_object_key_hashfail(void)
+{
+    struct degen_disp obj = { { &degen_disp_vtbl }, FALSE };
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT key, item;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key) = VT_DISPATCH;
+    V_DISPATCH(&key) = &obj.IDispatch_iface;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 42;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "Add: %#lx.\n", hr);
+
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &key, &exists);
+    ok(hr == S_OK, "Exists (live): %#lx.\n", hr);
+    ok(exists == VARIANT_TRUE, "expected the key to exist\n");
+
+    /* The object is now degenerate: hashing the key fails. Exists and Remove
+     * must surface that failure rather than report the key as absent. */
+    obj.qi_unknown_fails = TRUE;
+
+    hr = IDictionary_Exists(dict, &key, &exists);
+    todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Exists (degenerate): %#lx.\n", hr);
+
+    hr = IDictionary_Remove(dict, &key);
+    todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Remove (degenerate): %#lx.\n", hr);
+
+    /* Restore the object and confirm the key is still present and removable. */
+    obj.qi_unknown_fails = FALSE;
+    hr = IDictionary_Remove(dict, &key);
+    ok(hr == S_OK, "Remove (restored): %#lx.\n", hr);
+
+    IDictionary_Release(dict);
+}
+
 static void test_hash_value(void)
 {
     /* string test data */
@@ -1230,6 +1314,7 @@ START_TEST(dictionary)
     test_Remove();
     test_Item();
     test_Add();
+    test_object_key_hashfail();
     test_IEnumVARIANT();
     test_putref_Item();
 
