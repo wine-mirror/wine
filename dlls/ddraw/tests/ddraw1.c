@@ -5724,7 +5724,7 @@ static void test_flip(void)
     if (have_3ddevice)
     {
         hr = IDirectDrawSurface_QueryInterface(backbuffer1, &IID_IDirect3DHALDevice, (void **)&device);
-        todo_wine ok(hr == DD_OK || broken(hr == E_FAIL), "got %#lx.\n", hr);
+        ok(hr == DD_OK || broken(hr == E_FAIL), "got %#lx.\n", hr);
         if (SUCCEEDED(hr))
             IDirect3DDevice_Release(device);
     }
