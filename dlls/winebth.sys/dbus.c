@@ -964,7 +964,7 @@ bluez_gatt_characteristic_props_from_dict_entry( DBusMessage *msg, const char *p
         const char *path;
 
         p_dbus_message_iter_get_basic( variant, &path );
-        return !(chrc->service.handle = (UINT_PTR)unix_name_get_or_create( path ));
+        return !!(chrc->service.handle = (UINT_PTR)unix_name_get_or_create( path ));
     }
     else if (!strcmp( prop_name, "UUID" )
              && p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_STRING)
@@ -2017,7 +2017,7 @@ static BOOL bluez_handle_new_object( DBusMessage *msg, const char *path, DBusMes
                     if (!(event.device_added.radio.handle = (UINT_PTR)unix_name_get_or_create( path )))
                     {
                         oom = TRUE;
-                        break;
+                        goto done;
                     }
                 }
                 else
