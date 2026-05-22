@@ -28,6 +28,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(alpc);
 
+NTSTATUS WINAPI NtAlpcAcceptConnectPort( HANDLE *communication_port, HANDLE connection_port,
+                                         DWORD flags, OBJECT_ATTRIBUTES *obj_attr,
+                                         ALPC_PORT_ATTRIBUTES *port_attr, void *port_context,
+                                         ALPC_PORT_MESSAGE *send_msg,
+                                         ALPC_MESSAGE_ATTRIBUTES *send_msg_attr, BOOLEAN accept )
+{
+    FIXME( "%p, %p, %#x, %p, %p, %p, %p, %p, %d stub!\n", communication_port, connection_port,
+           (unsigned int)flags, obj_attr, port_attr, port_context, send_msg, send_msg_attr, accept );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI NtAlpcConnectPort( HANDLE *port_handle, UNICODE_STRING *port_name,
                                    OBJECT_ATTRIBUTES *obj_attr, ALPC_PORT_ATTRIBUTES *port_attr,
                                    DWORD flags, PSID required_server_sid,

@@ -464,6 +464,39 @@ NTSTATUS WINAPI wow64_NtAllocateUuids( UINT *args )
 }
 
 /**********************************************************************
+ *           wow64_NtAlpcAcceptConnectPort
+ */
+NTSTATUS WINAPI wow64_NtAlpcAcceptConnectPort( UINT *args )
+{
+    ULONG *communication_port_ptr = get_ptr( &args );
+    HANDLE connection_port = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ALPC_PORT_ATTRIBUTES32 *port_attr32 = get_ptr( &args );
+    void *context = get_ptr( &args );
+    ALPC_PORT_MESSAGE32 *msg32 = get_ptr( &args );
+    ALPC_MESSAGE_ATTRIBUTES32 *msg_attr32 = get_ptr( &args );
+    BOOLEAN accept = get_ulong( &args );
+    NTSTATUS status;
+
+    HANDLE communication_port = 0;
+    struct object_attr64 attr;
+    ALPC_PORT_ATTRIBUTES port_attr;
+    ALPC_PORT_MESSAGE *msg;
+    ALPC_MESSAGE_ATTRIBUTES *msg_attr;
+
+    status = NtAlpcAcceptConnectPort( communication_port_ptr ? &communication_port : NULL,
+                                      connection_port, flags, objattr_32to64( &attr, attr32 ),
+                                      alpc_port_attributes_32to64( &port_attr, port_attr32 ), context,
+                                      alpc_port_message_32to64( &msg, msg32 ? (sizeof(*msg) + msg32->DataLength) : 0, msg32, TRUE ),
+                                      alpc_port_message_attributes_32to64( &msg_attr, msg_attr32, TRUE ),
+                                      accept);
+    if (status == STATUS_SUCCESS && accept && communication_port_ptr)
+        put_handle( communication_port_ptr, communication_port );
+    return status;
+}
+
+/**********************************************************************
  *           wow64_NtAlpcConnectPort
  */
 NTSTATUS WINAPI wow64_NtAlpcConnectPort( UINT *args )
