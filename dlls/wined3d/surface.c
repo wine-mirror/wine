@@ -826,9 +826,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
                     memcpy(dbuf, sbuf, row_byte_count);
                     dbuf += dst_map.row_pitch;
                 }
-
-                if (same_sub_resource)
-                    free(tmp_buffer);
             }
         }
         else
@@ -904,9 +901,6 @@ do { \
                 dbuf += dst_map.row_pitch;
                 last_sy = sy;
             }
-
-            if (same_sub_resource)
-                free(tmp_buffer);
         }
     }
     else
@@ -963,6 +957,19 @@ do { \
             dTopRight    = dbuf + ((dst_width - 1) * bpp);
             dBottomLeft  = dTopLeft + ((dst_height - 1) * dst_map.row_pitch);
             dBottomRight = dBottomLeft + ((dst_width - 1) * bpp);
+
+            if (same_sub_resource &&
+                    !(dst_box->bottom <= src_box->top || src_box->bottom <= dst_box->top
+                    || dst_box->right <= src_box->left || src_box->right <= dst_box->left)
+                    && fx->fx & (WINEDDBLTFX_MIRRORLEFTRIGHT | WINEDDBLTFX_MIRRORUPDOWN | WINEDDBLTFX_ROTATE180
+                    | WINEDDBLTFX_ROTATE270 | WINEDDBLTFX_ROTATE90))
+            {
+                if ((tmp_buffer = malloc(src_height * src_map.row_pitch)))
+                {
+                    memcpy(tmp_buffer, sbase, src_height * src_map.row_pitch);
+                    sbase = tmp_buffer;
+                }
+            }
 
             if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
             {
@@ -1112,6 +1119,8 @@ error:
         FIXME("    Unsupported flags %#x.\n", flags);
 
 release:
+    free(tmp_buffer);
+
     if (upload && hr == WINED3D_OK)
     {
         struct wined3d_bo_address data;
