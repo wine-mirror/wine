@@ -32,7 +32,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#define USE_COM_CONTEXT_DEF
 #include "objbase.h"
+#include "comsvcs.h"
 #include "rpc.h"
 
 #include "wine/debug.h"
@@ -831,16 +833,72 @@ static HRESULT WINAPI Rundown_RemChangeRef(IRundown *iface, DWORD flags,
     return E_NOTIMPL;
 }
 
+static BOOL WINAPI init_process_secret(PINIT_ONCE init_once, void *param, void **ctx)
+{
+    GUID *secret = param;
+    return SUCCEEDED(UuidCreate(secret));
+}
+
+void get_process_secret(GUID *process_secret)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    static GUID secret;
+
+    InitOnceExecuteOnce(&init_once, init_process_secret, &secret, NULL);
+    *process_secret = secret;
+}
+
 static HRESULT WINAPI Rundown_DoCallback(IRundown *iface, XAptCallback *pCallbackData)
 {
-    FIXME("%p, %p\n", iface, pCallbackData);
-    return E_NOTIMPL;
+    HRESULT (WINAPI *callback)(void *) = (void*)(ULONG_PTR)pCallbackData->pfnCallback;
+    void *param = (void *)(ULONG_PTR)pCallbackData->pParam;
+    IComThreadingInfo *cti = NULL;
+    GUID thread_id, secret;
+    IObjContext *context;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, pCallbackData);
+
+    get_process_secret(&secret);
+    if (!IsEqualIID(&secret, &pCallbackData->guidProcessSecret))
+        return E_FAIL;
+    if (FAILED((hr = CoGetContextToken((ULONG_PTR *)&context))))
+        return hr;
+    if (pCallbackData->pServerCtx != (ULONG_PTR)context)
+    {
+        ERR("context token doesn't match\n");
+        return E_FAIL;
+    }
+
+    if (IsEqualIID(&IID_IEnterActivityWithNoLock, &pCallbackData->iid))
+    {
+        hr = IObjContext_QueryInterface(context, &IID_IComThreadingInfo, (void **)&cti);
+        if (FAILED(hr))
+            return hr;
+        hr = IComThreadingInfo_GetCurrentLogicalThreadId(cti, &thread_id);
+        if (SUCCEEDED(hr))
+            hr = IComThreadingInfo_SetCurrentLogicalThreadId(cti, &IID_IEnterActivityWithNoLock);
+        if (FAILED(hr))
+        {
+            IComThreadingInfo_Release(cti);
+            return hr;
+        }
+    }
+
+    hr = callback(param);
+
+    if (cti)
+    {
+        IComThreadingInfo_SetCurrentLogicalThreadId(cti, &thread_id);
+        IComThreadingInfo_Release(cti);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI Rundown_DoNonreentrantCallback(IRundown *iface, XAptCallback *pCallbackData)
 {
     FIXME("%p, %p\n", iface, pCallbackData);
-    return E_NOTIMPL;
+    return IRundown_DoCallback(iface, pCallbackData);
 }
 
 static HRESULT WINAPI Rundown_GetInterfaceNameFromIPID(IRundown *iface,

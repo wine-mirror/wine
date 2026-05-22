@@ -21,14 +21,17 @@
 #include "ntstatus.h"
 #define USE_COM_CONTEXT_DEF
 #include "objbase.h"
+#include "comsvcs.h"
 #include "ctxtcall.h"
 #include "oleauto.h"
 #include "dde.h"
 #include "winternl.h"
 
+#include "dcom.h"
 #include "combase_private.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -2420,6 +2423,7 @@ static struct thread_context
     IObjContext IObjContext_iface;
     LONG ref;
     LONG reported_ref;
+    OXID oxid;
 } *mta_context;
 
 static inline struct thread_context *impl_from_IComThreadingInfo(IComThreadingInfo *iface)
@@ -2590,9 +2594,93 @@ static ULONG WINAPI thread_context_callback_Release(IContextCallback *iface)
 static HRESULT WINAPI thread_context_callback_ContextCallback(IContextCallback *iface,
         PFNCONTEXTCALL callback, ComCallData *param, REFIID riid, int method, IUnknown *punk)
 {
-    FIXME("%p, %p, %p, %s, %d, %p\n", iface, callback, param, debugstr_guid(riid), method, punk);
+    struct thread_context *context = impl_from_IContextCallback(iface);
+    IObjContext *current_context;
+    XAptCallback apt_callback;
+    struct apartment *apt;
+    STDOBJREF stdobjref;
+    OXID_INFO oxid_info;
+    IRundown *rundown;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %s, %d, %p\n", iface, callback, param, debugstr_guid(riid), method, punk);
+
+    if (!callback)
+        return E_INVALIDARG;
+
+    hr = CoGetContextToken((ULONG_PTR *)&current_context);
+    if (FAILED(hr))
+        return hr;
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+    rpc_start_remoting(apt);
+
+    if (&context->IObjContext_iface == current_context)
+    {
+        IComThreadingInfo *cti = NULL;
+        GUID thread_id;
+
+        apartment_release(apt);
+
+        if (IsEqualIID(riid, &IID_IEnterActivityWithNoLock))
+        {
+            cti = &context->IComThreadingInfo_iface;
+            if (FAILED((hr = IComThreadingInfo_GetCurrentLogicalThreadId(cti, &thread_id))))
+                return hr;
+            if (FAILED((hr = IComThreadingInfo_SetCurrentLogicalThreadId(cti, riid))))
+                return hr;
+        }
+
+        __TRY
+        {
+            hr = callback(param);
+        }
+        __EXCEPT_ALL
+        {
+            hr = RPC_E_SERVERFAULT;
+        }
+        __ENDTRY
+
+        if (cti)
+            IComThreadingInfo_SetCurrentLogicalThreadId(cti, &thread_id);
+
+        TRACE("callback returned %lx\n", hr);
+        return hr;
+    }
+
+    hr = rpc_resolve_oxid(context->oxid, &oxid_info);
+    if (SUCCEEDED(hr))
+    {
+        stdobjref.flags = SORFP_NOLIFETIMEMGMT | SORF_NOPING;
+        stdobjref.cPublicRefs = 1;
+        stdobjref.oxid = context->oxid;
+        stdobjref.oid = -1;
+        stdobjref.ipid = oxid_info.ipidRemUnknown;
+        hr = unmarshal_object(&stdobjref, apt, MSHCTX_INPROC, NULL, &IID_IRundown, &oxid_info, (void**)&rundown);
+        apartment_release(apt);
+    }
+    if (FAILED(hr))
+        return hr;
+
+    apt_callback.pfnCallback = (ULONG_PTR)callback;
+    apt_callback.pParam = (ULONG_PTR)param;
+    apt_callback.pServerCtx = (ULONG_PTR)&context->IObjContext_iface;
+    apt_callback.pUnk = (ULONG_PTR)punk;
+    apt_callback.iid = *riid;
+    apt_callback.iMethod = method;
+    get_process_secret(&apt_callback.guidProcessSecret);
+    if (IsEqualIID(riid, &IID_ICallbackWithNoReentrancyToApplicationSTA))
+        hr = IRundown_DoNonreentrantCallback(rundown, &apt_callback);
+    else
+        hr = IRundown_DoCallback(rundown, &apt_callback);
+    IRundown_Release(rundown);
+
+    TRACE("callback returned %lx\n", hr);
+    return hr;
 }
 
 static const IContextCallbackVtbl thread_context_callback_vtbl =
@@ -2763,6 +2851,7 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
         context->IObjContext_iface.lpVtbl = &thread_object_context_vtbl;
         context->ref = 1;
         context->reported_ref = 0;
+        context->oxid = apt->oxid;
 
         if (apt->multi_threaded)
         {
