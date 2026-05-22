@@ -397,10 +397,10 @@ static void test_object_key_hashfail(void)
     obj.qi_unknown_fails = TRUE;
 
     hr = IDictionary_Exists(dict, &key, &exists);
-    todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Exists (degenerate): %#lx.\n", hr);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Exists (degenerate): %#lx.\n", hr);
 
     hr = IDictionary_Remove(dict, &key);
-    todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Remove (degenerate): %#lx.\n", hr);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "Remove (degenerate): %#lx.\n", hr);
 
     /* Restore the object and confirm the key is still present and removable. */
     obj.qi_unknown_fails = FALSE;
