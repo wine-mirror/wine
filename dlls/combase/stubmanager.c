@@ -638,50 +638,36 @@ BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
 
 /*****************************************************************************
  *
- * IRemUnknown implementation
+ * IRundown / IRemUnknown implementation
  *
  *
  * Note: this object is not related to the lifetime of a stub_manager, but it
  * interacts with stub managers.
  */
 
-typedef struct rem_unknown
+typedef struct
 {
-    IRemUnknown IRemUnknown_iface;
+    IRundown IRundown_iface;
     LONG refs;
-} RemUnknown;
+} Rundown;
 
-static const IRemUnknownVtbl RemUnknown_Vtbl;
-
-static inline RemUnknown *impl_from_IRemUnknown(IRemUnknown *iface)
+static inline Rundown *impl_from_IRundown(IRundown *iface)
 {
-    return CONTAINING_RECORD(iface, RemUnknown, IRemUnknown_iface);
+    return CONTAINING_RECORD(iface, Rundown, IRundown_iface);
 }
 
-/* construct an IRemUnknown object with one outstanding reference */
-static HRESULT RemUnknown_Construct(IRemUnknown **ppRemUnknown)
-{
-    RemUnknown *object = malloc(sizeof(*object));
-
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    object->IRemUnknown_iface.lpVtbl = &RemUnknown_Vtbl;
-    object->refs = 1;
-
-    *ppRemUnknown = &object->IRemUnknown_iface;
-    return S_OK;
-}
-
-static HRESULT WINAPI RemUnknown_QueryInterface(IRemUnknown *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI Rundown_QueryInterface(IRundown *iface, REFIID riid, void **ppv)
 {
     TRACE("%p, %s, %p\n", iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IRemUnknown))
+        IsEqualIID(riid, &IID_IRemUnknown) ||
+        IsEqualIID(riid, &IID_IRemUnknown2) ||
+        IsEqualIID(riid, &IID_IRemUnknownN) ||
+        IsEqualIID(riid, &IID_IRundown))
     {
         *ppv = iface;
-        IRemUnknown_AddRef(iface);
+        IRundown_AddRef(iface);
         return S_OK;
     }
 
@@ -692,31 +678,31 @@ static HRESULT WINAPI RemUnknown_QueryInterface(IRemUnknown *iface, REFIID riid,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI RemUnknown_AddRef(IRemUnknown *iface)
+static ULONG WINAPI Rundown_AddRef(IRundown *iface)
 {
     ULONG refs;
-    RemUnknown *remunk = impl_from_IRemUnknown(iface);
+    Rundown *rundown = impl_from_IRundown(iface);
 
-    refs = InterlockedIncrement(&remunk->refs);
+    refs = InterlockedIncrement(&rundown->refs);
 
     TRACE("%p before: %ld\n", iface, refs-1);
     return refs;
 }
 
-static ULONG WINAPI RemUnknown_Release(IRemUnknown *iface)
+static ULONG WINAPI Rundown_Release(IRundown *iface)
 {
     ULONG refs;
-    RemUnknown *remunk = impl_from_IRemUnknown(iface);
+    Rundown *rundown = impl_from_IRundown(iface);
 
-    refs = InterlockedDecrement(&remunk->refs);
+    refs = InterlockedDecrement(&rundown->refs);
     if (!refs)
-        free(remunk);
+        free(rundown);
 
     TRACE("%p after: %ld\n", iface, refs);
     return refs;
 }
 
-static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
+static HRESULT WINAPI Rundown_RemQueryInterface(IRundown *iface,
     REFIPID ripid, ULONG cRefs, USHORT cIids, IID *iids /* [size_is(cIids)] */,
     REMQIRESULT **ppQIResults /* [size_is(,cIids)] */)
 {
@@ -758,7 +744,7 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
         return S_FALSE; /* we got some interfaces */
 }
 
-static HRESULT WINAPI RemUnknown_RemAddRef(IRemUnknown *iface,
+static HRESULT WINAPI Rundown_RemAddRef(IRundown *iface,
     USHORT cInterfaceRefs,
     REMINTERFACEREF* InterfaceRefs /* [size_is(cInterfaceRefs)] */,
     HRESULT *pResults /* [size_is(cInterfaceRefs)] */)
@@ -791,7 +777,7 @@ static HRESULT WINAPI RemUnknown_RemAddRef(IRemUnknown *iface,
     return hr;
 }
 
-static HRESULT WINAPI RemUnknown_RemRelease(IRemUnknown *iface,
+static HRESULT WINAPI Rundown_RemRelease(IRundown *iface,
     USHORT cInterfaceRefs,
     REMINTERFACEREF* InterfaceRefs /* [size_is(cInterfaceRefs)] */)
 {
@@ -824,35 +810,104 @@ static HRESULT WINAPI RemUnknown_RemRelease(IRemUnknown *iface,
     return hr;
 }
 
-static const IRemUnknownVtbl RemUnknown_Vtbl =
+static HRESULT WINAPI Rundown_RemQueryInterface2(IRundown *iface, REFIPID ripid,
+        unsigned short cIids, IID *iids, HRESULT *phr, MInterfacePointer **ppMIF)
 {
-    RemUnknown_QueryInterface,
-    RemUnknown_AddRef,
-    RemUnknown_Release,
-    RemUnknown_RemQueryInterface,
-    RemUnknown_RemAddRef,
-    RemUnknown_RemRelease
+    FIXME("%p, %p, %hu, %p, %p, %p\n", iface, ripid, cIids, iids, phr, ppMIF);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_AcknowledgeMarshalingSets(IRundown *iface,
+        WORD cMarshalingSets, DWORD64 *pMarshalingSets)
+{
+    FIXME("%p, %hu, %p\n", iface, cMarshalingSets, pMarshalingSets);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_RemChangeRef(IRundown *iface, DWORD flags,
+        WORD cInterfaceRefs, REMINTERFACEREF InterfaceRefs[])
+{
+    FIXME("%p, %lu, %hu, %p\n", iface, flags, cInterfaceRefs, InterfaceRefs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_DoCallback(IRundown *iface, XAptCallback *pCallbackData)
+{
+    FIXME("%p, %p\n", iface, pCallbackData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_DoNonreentrantCallback(IRundown *iface, XAptCallback *pCallbackData)
+{
+    FIXME("%p, %p\n", iface, pCallbackData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_GetInterfaceNameFromIPID(IRundown *iface,
+        REFIPID ripid, HSTRING *interfaceName)
+{
+    FIXME("%p, %p %p\n", iface, ripid, interfaceName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Rundown_RundownOid(IRundown *iface,
+        DWORD cOid, OID aOid[], BYTE aRundownStatus[])
+{
+    FIXME("%p, %lu, %p %p\n", iface, cOid, aOid, aRundownStatus);
+    return E_NOTIMPL;
+}
+
+static const IRundownVtbl Rundown_Vtbl =
+{
+    Rundown_QueryInterface,
+    Rundown_AddRef,
+    Rundown_Release,
+    Rundown_RemQueryInterface,
+    Rundown_RemAddRef,
+    Rundown_RemRelease,
+    Rundown_RemQueryInterface2,
+    Rundown_AcknowledgeMarshalingSets,
+    Rundown_RemChangeRef,
+    Rundown_DoCallback,
+    Rundown_DoNonreentrantCallback,
+    Rundown_GetInterfaceNameFromIPID,
+    Rundown_RundownOid
 };
+
+/* construct an IRundown object with one outstanding reference */
+static HRESULT Rundown_Construct(IRundown **rundown)
+{
+    Rundown *object = malloc(sizeof(*object));
+
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IRundown_iface.lpVtbl = &Rundown_Vtbl;
+    object->refs = 1;
+
+    *rundown = &object->IRundown_iface;
+    return S_OK;
+}
 
 /* starts the IRemUnknown listener for the current apartment */
 HRESULT start_apartment_remote_unknown(struct apartment *apt)
 {
-    IRemUnknown *pRemUnknown;
+    IRundown *pRundown;
     HRESULT hr = S_OK;
 
     EnterCriticalSection(&apt->cs);
     if (!apt->remunk_exported)
     {
-        /* create the IRemUnknown object */
-        hr = RemUnknown_Construct(&pRemUnknown);
+        /* create the IRundown object */
+        hr = Rundown_Construct(&pRundown);
         if (hr == S_OK)
         {
             STDOBJREF stdobjref; /* dummy - not used */
             /* register it with the stub manager */
-            hr = marshal_object(apt, &stdobjref, &IID_IRemUnknown, (IUnknown *)pRemUnknown,
+            hr = marshal_object(apt, &stdobjref, &IID_IRundown, (IUnknown *)pRundown,
                     MSHCTX_DIFFERENTMACHINE, NULL, MSHLFLAGS_NORMAL|MSHLFLAGSP_REMUNKNOWN);
             /* release our reference to the object as the stub manager will manage the life cycle for us */
-            IRemUnknown_Release(pRemUnknown);
+            IRundown_Release(pRundown);
             if (hr == S_OK)
                 apt->remunk_exported = TRUE;
         }

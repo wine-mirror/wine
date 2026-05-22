@@ -1873,7 +1873,7 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
 
         /* do the unmarshal */
         hr = unmarshal_object(&stdobjref, apt, This->dest_context,
-                              This->dest_context_data, &IID_IRemUnknown,
+                              This->dest_context_data, &IID_IRundown,
                               &This->oxid_info, (void**)remunk);
         if (hr == S_OK && called_in_original_apt)
         {
