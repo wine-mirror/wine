@@ -75,3 +75,9 @@ NTSTATUS WINAPI NtAlpcSendWaitReceivePort( HANDLE port_handle, ULONG flags,
            send_msg_attr, recv_msg, recv_buffer_size, recv_msg_attr, timeout );
     return STATUS_NOT_IMPLEMENTED;
 }
+
+NTSTATUS WINAPI NtAlpcImpersonateClientOfPort( HANDLE port_handle, ALPC_PORT_MESSAGE *msg, void *reserved )
+{
+    FIXME( "%p, %p, %p stub!\n", port_handle, msg, reserved );
+    return STATUS_NOT_IMPLEMENTED;
+}

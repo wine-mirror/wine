@@ -159,6 +159,7 @@
 @ stdcall -syscall NtAlpcConnectPort(ptr ptr ptr ptr long ptr ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtAlpcCreatePort(ptr ptr ptr)
 @ stdcall -syscall NtAlpcDisconnectPort(ptr long)
+@ stdcall -syscall NtAlpcImpersonateClientOfPort(ptr ptr ptr)
 @ stdcall -syscall NtAlpcSendWaitReceivePort(ptr long ptr ptr ptr ptr ptr ptr)
 @ stub -syscall=0x004c NtApphelpCacheControl
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
