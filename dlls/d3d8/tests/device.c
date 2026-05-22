@@ -9341,6 +9341,7 @@ static void test_lockable_backbuffer(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     struct device_desc device_desc;
+    IDirect3DSwapChain8 *swapchain;
     IDirect3DSurface8 *surface;
     IDirect3DDevice8 *device;
     D3DLOCKED_RECT lockrect;
@@ -9415,6 +9416,51 @@ static void test_lockable_backbuffer(void)
     IDirect3DSurface8_Release(surface);
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    if (SUCCEEDED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_4_SAMPLES)))
+    {
+        /* Multisampling is allowed. */
+        present_parameters.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
+        hr = IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+                D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+        ok(hr == D3D_OK, "Failed to create device, hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+        ok(hr == D3D_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+        /* But locking multisampled is not allowed. */
+        hr = IDirect3DSurface8_LockRect(surface, &lockrect, NULL, D3DLOCK_READONLY);
+        todo_wine
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            IDirect3DSurface8_UnlockRect(surface);
+
+        IDirect3DSurface8_Release(surface);
+
+        present_parameters.hDeviceWindow = NULL;
+        hr = IDirect3DDevice8_CreateAdditionalSwapChain(device, &present_parameters, &swapchain);
+        ok(hr == D3D_OK, "Failed to create swapchain, hr %#lx.\n", hr);
+
+        hr = IDirect3DSwapChain8_GetBackBuffer(swapchain, 0, 0, &surface);
+        ok(hr == D3D_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+        hr = IDirect3DSurface8_LockRect(surface, &lockrect, NULL, D3DLOCK_READONLY);
+        todo_wine
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            IDirect3DSurface8_UnlockRect(surface);
+
+        IDirect3DSurface8_Release(surface);
+        IDirect3DSwapChain8_Release(swapchain);
+
+        IDirect3DDevice8_Release(device);
+    }
+    else
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8.\n");
+    }
+
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 }
@@ -9507,7 +9553,9 @@ static void test_clip_planes_limits(void)
 static void test_swapchain_multisample_reset(void)
 {
     D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DSurface8 *surface;
     IDirect3DDevice8 *device;
+    D3DLOCKED_RECT lr;
     IDirect3D8 *d3d;
     ULONG refcount;
     HWND window;
@@ -9551,6 +9599,23 @@ static void test_swapchain_multisample_reset(void)
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
     ok(hr == D3D_OK, "Failed to clear, hr %#lx.\n", hr);
+
+    /* Lockable back buffer flag is allowed. */
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    hr = IDirect3DDevice8_Reset(device, &present_parameters);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+    ok(hr == D3D_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+    /* But locking is not allowed. */
+    hr = IDirect3DSurface8_LockRect(surface, &lr, NULL, 0);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DSurface8_UnlockRect(surface);
+
+    IDirect3DSurface8_Release(surface);
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
