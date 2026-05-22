@@ -2352,6 +2352,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         return handle_internal_message( hwnd, msg, wparam, lparam );
 
     if (!is_current_thread_window( hwnd )) return 0;
+    if (!thread_info->client_info) return 0;
 
     prev_source = thread_info->client_info->msg_source;
     thread_info->client_info->msg_source = msg_source_unavailable;
@@ -2873,6 +2874,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     UINT context;
     BOOL ret = FALSE;
 
+    if (!thread_info->client_info) return FALSE;
     prev_source = thread_info->client_info->msg_source;
     thread_info->client_info->msg_source.deviceType = msg_data->source.device;
     thread_info->client_info->msg_source.originId   = msg_data->source.origin;
@@ -3228,8 +3230,9 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
             thread_info->message_pos   = MAKELONG( msg->pt.x, msg->pt.y );
             thread_info->message_time  = info.msg.time;
             thread_info->message_extra = 0;
-            thread_info->client_info->msg_source = msg_source_unavailable;
             if (buffer != buffer_init) free( buffer );
+            if (!thread_info->client_info) return 1;
+            thread_info->client_info->msg_source = msg_source_unavailable;
             call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, sizeof(*msg) );
             return 1;
         }
