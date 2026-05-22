@@ -803,4 +803,59 @@ typedef struct
     } DUMMYUNIONNAME4;
 } ALPC_PORT_MESSAGE32, *PALPC_PORT_MESSAGE32, ALPC_PORT_MESSAGE_HEADER32, *PALPC_PORT_MESSAGE_HEADER32;
 
+typedef struct
+{
+    ULONG AllocatedAttributes;
+    ULONG ValidAttributes;
+} ALPC_MESSAGE_ATTRIBUTES32, *PALPC_MESSAGE_ATTRIBUTES32;
+
+typedef struct
+{
+    ULONG Flags;
+    ULONG QoSPointer;
+    ULONG ContextHandle;
+} ALPC_SECURITY_ATTR32, *PALPC_SECURITY_ATTR32;
+
+typedef struct
+{
+    ULONG Flags;
+    ULONG SectionHandle;
+    ULONG ViewBase;
+    ULONG ViewSize;
+} ALPC_VIEW_ATTR32, *PALPC_VIEW_ATTR32;
+
+typedef struct
+{
+    ULONG PortContext;
+    ULONG MessageContext;
+    ULONG Sequence;
+    ULONG MessageId;
+    ULONG CallbackId;
+} ALPC_CONTEXT_ATTR32, *PALPC_CONTEXT_ATTR32;
+
+typedef struct
+{
+    ULONG Flags;
+    ULONG Handle;
+    ULONG ObjectType;
+    ULONG DesiredAccess;
+} ALPC_HANDLE_ATTR32, *PALPC_HANDLE_ATTR32;
+
+typedef struct
+{
+    ULONGLONG TokenId;
+    ULONGLONG AuthenticationId;
+    ULONGLONG ModifiedId;
+} ALPC_TOKEN_ATTR32, *PALPC_TOKEN_ATTR32;
+
+typedef struct
+{
+    ULONG Event;
+} ALPC_DIRECT_ATTR32, *PALPC_DIRECT_ATTR32;
+
+typedef struct
+{
+    ULONGLONG Ticket;
+} ALPC_WORK_ON_BEHALF_ATTR32, *PALPC_WORK_ON_BEHALF_ATTR32;
+
 #endif /* __WOW64_STRUCT32_H */

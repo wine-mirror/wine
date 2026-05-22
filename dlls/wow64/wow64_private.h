@@ -215,6 +215,278 @@ static inline ALPC_PORT_ATTRIBUTES *alpc_port_attributes_32to64( ALPC_PORT_ATTRI
     return out;
 }
 
+static inline ALPC_PORT_MESSAGE *alpc_port_message_32to64( ALPC_PORT_MESSAGE **out, SIZE_T out_msg_size,
+                                                           const ALPC_PORT_MESSAGE32 *in, BOOL copy_msg )
+{
+    ALPC_PORT_MESSAGE *msg;
+
+    if (!in || !(msg = Wow64AllocateTemp( out_msg_size )))
+    {
+        *out = NULL;
+        return NULL;
+    }
+
+    if (!copy_msg) goto done;
+
+    msg->DataLength = in->DataLength;
+    msg->TotalLength = sizeof(*msg) + msg->DataLength;
+    msg->Type = in->Type;
+    msg->DataInfoOffset = in->DataInfoOffset;
+    client_id_32to64( &msg->ClientId, &in->ClientId );
+    msg->MessageId = in->MessageId;
+    msg->ClientViewSize = in->ClientViewSize;
+    memcpy( (unsigned char *)msg + sizeof(*msg), (const unsigned char *)in + sizeof(*in), in->DataLength );
+done:
+    *out = msg;
+    return msg;
+}
+
+static inline ALPC_MESSAGE_ATTRIBUTES *alpc_port_message_attributes_32to64( ALPC_MESSAGE_ATTRIBUTES **out,
+                                                                            const ALPC_MESSAGE_ATTRIBUTES32 *in,
+                                                                            BOOL copy_attributes )
+{
+    ALPC_MESSAGE_ATTRIBUTES *attr;
+    const unsigned char *current_from_attr;
+
+    if (!in || !(attr = Wow64AllocateTemp( AlpcGetHeaderSize( in->AllocatedAttributes ) )))
+    {
+        *out = NULL;
+        return NULL;
+    }
+
+    attr->AllocatedAttributes = in->AllocatedAttributes;
+
+    if (!copy_attributes)
+    {
+        attr->ValidAttributes = 0;
+        *out = attr;
+        return attr;
+    }
+
+    attr->ValidAttributes = in->ValidAttributes;
+    current_from_attr = (const unsigned char *)in + sizeof(*in);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_SECURITY_ATTRIBUTE)
+    {
+        const ALPC_SECURITY_ATTR32 *from_attr = (const ALPC_SECURITY_ATTR32 *)current_from_attr;
+        ALPC_SECURITY_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_SECURITY_ATTRIBUTE );
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->ContextHandle = UlongToHandle( from_attr->ContextHandle );
+        if (from_attr->QoSPointer)
+        {
+            SECURITY_QUALITY_OF_SERVICE32 *qos32 = (SECURITY_QUALITY_OF_SERVICE32 *)ULongToPtr( from_attr->QoSPointer );
+            SECURITY_QUALITY_OF_SERVICE *qos = Wow64AllocateTemp( sizeof(*qos) );
+
+            to_attr->QoS = qos;
+            qos->Length = qos32->Length;
+            qos->ImpersonationLevel = qos32->ImpersonationLevel;
+            qos->ContextTrackingMode = qos32->ContextTrackingMode;
+            qos->EffectiveOnly = qos32->EffectiveOnly;
+        }
+        else
+        {
+            to_attr->QoS = NULL;
+        }
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_SECURITY_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_SECURITY_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_VIEW_ATTRIBUTE)
+    {
+        const ALPC_VIEW_ATTR32 *from_attr = (const ALPC_VIEW_ATTR32 *)current_from_attr;
+        ALPC_VIEW_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_VIEW_ATTRIBUTE );
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->SectionHandle = UlongToHandle( from_attr->SectionHandle );
+        to_attr->ViewBase = UlongToPtr( from_attr->ViewBase );
+        to_attr->ViewSize = from_attr->ViewSize;
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_VIEW_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_VIEW_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_CONTEXT_ATTRIBUTE)
+    {
+        const ALPC_CONTEXT_ATTR32 *from_attr = (const ALPC_CONTEXT_ATTR32 *)current_from_attr;
+        ALPC_CONTEXT_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_CONTEXT_ATTRIBUTE );
+
+        to_attr->PortContext = UlongToPtr( from_attr->PortContext );
+        to_attr->MessageContext = UlongToPtr( from_attr->MessageContext );
+        to_attr->Sequence = from_attr->Sequence;
+        to_attr->MessageId = from_attr->MessageId;
+        to_attr->CallbackId = from_attr->CallbackId;
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_CONTEXT_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_CONTEXT_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_HANDLE_ATTRIBUTE)
+    {
+        const ALPC_HANDLE_ATTR32 *from_attr = (const ALPC_HANDLE_ATTR32 *)current_from_attr;
+        ALPC_HANDLE_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_HANDLE_ATTRIBUTE );
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->Handle = UlongToHandle( from_attr->Handle );
+        to_attr->ObjectType = from_attr->ObjectType;
+        to_attr->DesiredAccess = from_attr->DesiredAccess;
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_HANDLE_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_HANDLE_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_TOKEN_ATTRIBUTE)
+    {
+        const ALPC_TOKEN_ATTR32 *from_attr = (const ALPC_TOKEN_ATTR32 *)current_from_attr;
+        ALPC_TOKEN_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_TOKEN_ATTRIBUTE );
+
+        to_attr->TokenId = from_attr->TokenId;
+        to_attr->AuthenticationId = from_attr->AuthenticationId;
+        to_attr->ModifiedId = from_attr->ModifiedId;
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_TOKEN_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_TOKEN_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_DIRECT_ATTRIBUTE)
+    {
+        const ALPC_DIRECT_ATTR32 *from_attr = (const ALPC_DIRECT_ATTR32 *)current_from_attr;
+        ALPC_DIRECT_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_DIRECT_ATTRIBUTE );
+
+        to_attr->Event = UlongToHandle( from_attr->Event );
+    }
+    if (in->AllocatedAttributes & ALPC_MESSAGE_DIRECT_ATTRIBUTE)
+        current_from_attr += sizeof(ALPC_DIRECT_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE)
+    {
+        const ALPC_WORK_ON_BEHALF_ATTR32 *from_attr = (const ALPC_WORK_ON_BEHALF_ATTR32 *)current_from_attr;
+        ALPC_WORK_ON_BEHALF_ATTR *to_attr = AlpcGetMessageAttribute( attr, ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE );
+
+        to_attr->Ticket = from_attr->Ticket;
+    }
+
+    *out = attr;
+    return attr;
+}
+
+static inline ALPC_PORT_MESSAGE32 *alpc_port_message_64to32( ALPC_PORT_MESSAGE32 *out,
+                                                             const ALPC_PORT_MESSAGE *in )
+{
+    if (!in) return NULL;
+
+    out->DataLength = in->DataLength;
+    out->TotalLength = sizeof(*out) + in->DataLength;
+    out->Type = in->Type;
+    out->DataInfoOffset = in->DataInfoOffset;
+    out->ClientId.UniqueProcess = HandleToUlong( in->ClientId.UniqueProcess );
+    out->ClientId.UniqueThread = HandleToUlong( in->ClientId.UniqueThread );
+    out->MessageId = in->MessageId;
+    out->ClientViewSize = in->ClientViewSize;
+    memcpy( (unsigned char *)out + sizeof(*out), (const unsigned char *)in + sizeof(*in), in->DataLength );
+    return out;
+}
+
+static inline ALPC_MESSAGE_ATTRIBUTES32 *alpc_port_message_attributes_64to32( ALPC_MESSAGE_ATTRIBUTES32 *out,
+                                                                              ALPC_MESSAGE_ATTRIBUTES *in )
+{
+    unsigned char *current_to_attr;
+
+    if (!in) return NULL;
+
+    out->AllocatedAttributes = in->AllocatedAttributes;
+    out->ValidAttributes = in->ValidAttributes;
+
+    current_to_attr = (unsigned char *)out + sizeof(*out);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_SECURITY_ATTRIBUTE)
+    {
+        const ALPC_SECURITY_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_SECURITY_ATTRIBUTE );
+        ALPC_SECURITY_ATTR32 *to_attr = (ALPC_SECURITY_ATTR32 *)current_to_attr;
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->ContextHandle = HandleToUlong( from_attr->ContextHandle );
+        if (to_attr->QoSPointer && from_attr->QoS)
+        {
+            SECURITY_QUALITY_OF_SERVICE32 *qos32 = ULongToPtr( to_attr->QoSPointer );
+            qos32->ImpersonationLevel = from_attr->QoS->ImpersonationLevel;
+            qos32->ContextTrackingMode = from_attr->QoS->ContextTrackingMode;
+            qos32->EffectiveOnly = from_attr->QoS->EffectiveOnly;
+        }
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_SECURITY_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_SECURITY_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_VIEW_ATTRIBUTE)
+    {
+        const ALPC_VIEW_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_VIEW_ATTRIBUTE );
+        ALPC_VIEW_ATTR32 *to_attr = (ALPC_VIEW_ATTR32 *)current_to_attr;
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->SectionHandle = HandleToUlong( from_attr->SectionHandle );
+        to_attr->ViewBase = PtrToUlong( from_attr->ViewBase );
+        to_attr->ViewSize = from_attr->ViewSize;
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_VIEW_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_VIEW_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_CONTEXT_ATTRIBUTE)
+    {
+        const ALPC_CONTEXT_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_CONTEXT_ATTRIBUTE );
+        ALPC_CONTEXT_ATTR32 *to_attr = (ALPC_CONTEXT_ATTR32 *)current_to_attr;
+
+        to_attr->PortContext = PtrToUlong( from_attr->PortContext );
+        to_attr->MessageContext = PtrToUlong( from_attr->MessageContext );
+        to_attr->Sequence = from_attr->Sequence;
+        /* Should be from_attr->MessageId. But tests show that it's always 0 on 32-bit */
+        to_attr->MessageId = 0;
+        to_attr->CallbackId = from_attr->CallbackId;
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_CONTEXT_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_CONTEXT_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_HANDLE_ATTRIBUTE)
+    {
+        const ALPC_HANDLE_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_HANDLE_ATTRIBUTE );
+        ALPC_HANDLE_ATTR32 *to_attr = (ALPC_HANDLE_ATTR32 *)current_to_attr;
+
+        to_attr->Flags = from_attr->Flags;
+        to_attr->Handle = HandleToUlong( from_attr->Handle );
+        to_attr->ObjectType = from_attr->ObjectType;
+        to_attr->DesiredAccess = from_attr->DesiredAccess;
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_HANDLE_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_HANDLE_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_TOKEN_ATTRIBUTE)
+    {
+        const ALPC_TOKEN_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_TOKEN_ATTRIBUTE );
+        ALPC_TOKEN_ATTR32 *to_attr = (ALPC_TOKEN_ATTR32 *)current_to_attr;
+
+        to_attr->TokenId = from_attr->TokenId;
+        to_attr->AuthenticationId = from_attr->AuthenticationId;
+        to_attr->ModifiedId = from_attr->ModifiedId;
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_TOKEN_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_TOKEN_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_DIRECT_ATTRIBUTE)
+    {
+        const ALPC_DIRECT_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_DIRECT_ATTRIBUTE );
+        ALPC_DIRECT_ATTR32 *to_attr = (ALPC_DIRECT_ATTR32 *)current_to_attr;
+
+        to_attr->Event = HandleToUlong( from_attr->Event );
+    }
+    if (out->AllocatedAttributes & ALPC_MESSAGE_DIRECT_ATTRIBUTE)
+        current_to_attr += sizeof(ALPC_DIRECT_ATTR32);
+
+    if (in->ValidAttributes & ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE)
+    {
+        const ALPC_WORK_ON_BEHALF_ATTR *from_attr = AlpcGetMessageAttribute( in, ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE );
+        ALPC_WORK_ON_BEHALF_ATTR32 *to_attr = (ALPC_WORK_ON_BEHALF_ATTR32 *)current_to_attr;
+
+        to_attr->Ticket = from_attr->Ticket;
+    }
+
+    return out;
+}
+
 static inline TOKEN_USER *token_user_32to64( TOKEN_USER *out, const TOKEN_USER32 *in )
 {
     out->User.Sid = ULongToPtr( in->User.Sid );

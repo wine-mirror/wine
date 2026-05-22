@@ -464,6 +464,57 @@ NTSTATUS WINAPI wow64_NtAllocateUuids( UINT *args )
 }
 
 /**********************************************************************
+ *           wow64_NtAlpcConnectPort
+ */
+NTSTATUS WINAPI wow64_NtAlpcConnectPort( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ALPC_PORT_ATTRIBUTES32 *port_attr32 = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+    SID *sid = get_ptr( &args );
+    ALPC_PORT_MESSAGE32 *msg32 = get_ptr( &args );
+    ULONG *size32 = get_ptr( &args );
+    ALPC_MESSAGE_ATTRIBUTES32 *send_msg_attr32 = get_ptr( &args );
+    ALPC_MESSAGE_ATTRIBUTES32 *recv_msg_attr32 = get_ptr( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+    NTSTATUS status;
+
+    HANDLE handle = 0;
+    UNICODE_STRING str;
+    struct object_attr64 attr;
+    ALPC_PORT_ATTRIBUTES port_attr;
+    ALPC_PORT_MESSAGE *msg;
+    SIZE_T size = size32 ? (*size32 + sizeof(ALPC_PORT_MESSAGE) - sizeof(ALPC_PORT_MESSAGE32)) : 65535;
+    ALPC_MESSAGE_ATTRIBUTES *send_msg_attr;
+    ALPC_MESSAGE_ATTRIBUTES *recv_msg_attr;
+
+    if (!handle_ptr) return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    if (port_attr32 && (!port_attr32->MaxMessageLength
+                        || port_attr32->MaxMessageLength > (65535 - (sizeof(ALPC_PORT_MESSAGE) - sizeof(ALPC_PORT_MESSAGE32)))))
+        return STATUS_INVALID_PARAMETER;
+
+    status = NtAlpcConnectPort( &handle, unicode_str_32to64( &str, str32 ), objattr_32to64( &attr, attr32 ),
+                                alpc_port_attributes_32to64( &port_attr, port_attr32 ), flags, sid,
+                                alpc_port_message_32to64( &msg, size, msg32, TRUE ), &size,
+                                alpc_port_message_attributes_32to64( &send_msg_attr, send_msg_attr32, TRUE ),
+                                alpc_port_message_attributes_32to64( &recv_msg_attr, recv_msg_attr32, FALSE ), timeout);
+    if (status == STATUS_SUCCESS)
+    {
+        put_handle( handle_ptr, handle );
+        alpc_port_message_64to32( msg32, msg );
+        alpc_port_message_attributes_64to32( recv_msg_attr32, recv_msg_attr );
+    }
+    else if (status == STATUS_BUFFER_TOO_SMALL && size32)
+    {
+        put_size( size32, size - (sizeof(ALPC_PORT_MESSAGE) - sizeof(ALPC_PORT_MESSAGE32)));
+    }
+    return status;
+}
+
+/**********************************************************************
  *           wow64_NtAlpcCreatePort
  */
 NTSTATUS WINAPI wow64_NtAlpcCreatePort( UINT *args )
