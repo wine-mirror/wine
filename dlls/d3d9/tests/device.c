@@ -13047,6 +13047,7 @@ static void test_lockable_backbuffer(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     struct device_desc device_desc;
+    IDirect3DSwapChain9 *swapchain;
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
     D3DLOCKED_RECT lockrect;
@@ -13125,8 +13126,26 @@ static void test_lockable_backbuffer(void)
     ok(SUCCEEDED(hr), "Failed to unlock rect, hr %#lx.\n", hr);
 
     IDirect3DSurface9_Release(surface);
+
+    present_parameters.hDeviceWindow = NULL;
+    present_parameters.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &present_parameters, &swapchain);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DSwapChain9_Release(swapchain);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    present_parameters.hDeviceWindow = window;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DDevice9_Release(device);
+
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
@@ -13268,6 +13287,15 @@ static void test_swapchain_multisample_reset(void)
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
     ok(hr == D3D_OK, "Failed to clear, hr %#lx.\n", hr);
+
+    /* Lockable back buffer flag is not allowed. */
+    d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    hr = IDirect3DDevice9_Reset(device, &d3dpp);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device);
+    todo_wine
+    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned hr %#lx.\n", hr);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
