@@ -495,6 +495,7 @@ static void test_spvoice(void)
     LONG rate;
     USHORT volume;
     SPVOICESTATUS status;
+    SPVPRIORITY priority;
     ULONG stream_num;
     DWORD regid;
     WAVEFORMATEX wfx;
@@ -663,6 +664,29 @@ static void test_spvoice(void)
     ok(status.ulCurrentStream == 0, "got %lu.\n", status.ulCurrentStream);
     ok(status.hrLastResult == S_OK, "got %#lx.\n", status.hrLastResult);
 
+    priority = 0xdead;
+    hr = ISpVoice_GetPriority(voice, &priority);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(priority == SPVPRI_NORMAL, "got %d.\n", priority);
+
+    hr = ISpVoice_SetPriority(voice, SPVPRI_ALERT);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    priority = 0xdead;
+    hr = ISpVoice_GetPriority(voice, &priority);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(priority == SPVPRI_ALERT, "got %d.\n", priority);
+
+    hr = ISpVoice_SetPriority(voice, SPVPRI_OVER);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    priority = 0xdead;
+    hr = ISpVoice_GetPriority(voice, &priority);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(priority == SPVPRI_OVER, "got %d.\n", priority);
+
+    hr = ISpVoice_SetPriority(voice, SPVPRI_NORMAL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     hr = CoRegisterClassObject(&CLSID_TestEngine, (IUnknown *)&test_engine_cf,
                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
     ok(hr == S_OK, "got %#lx.\n", hr);

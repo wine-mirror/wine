@@ -60,6 +60,7 @@ struct speech_voice
     struct async_queue queue;
     ULONG last_stream_num;
     HRESULT last_hr;
+    SPVPRIORITY priority;
     CRITICAL_SECTION cs;
 };
 
@@ -1004,11 +1005,9 @@ done:
         ISpAudio_Release(audio);
     }
     CoTaskMemFree(wfx);
-
     EnterCriticalSection(&This->cs);
     This->last_hr = hr;
     LeaveCriticalSection(&This->cs);
-
     ISpTTSEngine_Release(speak_task->engine);
     free_frag_list(speak_task->frag_list);
     ISpTTSEngineSite_Release(speak_task->site);
@@ -1254,16 +1253,33 @@ static HRESULT WINAPI spvoice_Skip(ISpVoice *iface, const WCHAR *type, LONG item
 
 static HRESULT WINAPI spvoice_SetPriority(ISpVoice *iface, SPVPRIORITY priority)
 {
-    FIXME("(%p, %d): stub.\n", iface, priority);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %d).\n", iface, priority);
+
+    if (priority != SPVPRI_NORMAL && priority != SPVPRI_ALERT && priority != SPVPRI_OVER)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&This->cs);
+    This->priority = priority;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_GetPriority(ISpVoice *iface, SPVPRIORITY *priority)
 {
-    FIXME("(%p, %p): stub.\n", iface, priority);
+    struct speech_voice *This = impl_from_ISpVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, priority);
+
+    if (!priority) return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+    *priority = This->priority;
+    LeaveCriticalSection(&This->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spvoice_SetAlertBoundary(ISpVoice *iface, SPEVENTENUM boundary)
@@ -1740,6 +1756,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->rate = 0;
     This->last_stream_num = 0;
     This->last_hr = S_OK;
+    This->priority = SPVPRI_NORMAL;
 
     memset(&This->state, 0, sizeof(This->state));
     This->state.Volume = 100;
