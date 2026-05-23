@@ -90,7 +90,7 @@ int main()
     printf("#define FIR_WIDTH %d\n", fir_width);
     printf("#define FIR_STEP_SHIFT %d\n", fir_step_shift);
     printf("#define FIR_STEP %d\n", fir_step);
-    printf("static const float fir[] = {");
+    printf("static const float DECLSPEC_ALIGN(16) fir[] = {");
     // Print the FIR array with an additional row at the end. This simplifies
     // calculation of the interpolated value by allowing the index to overflow
     // into the extra row. It just repeats the first row, starting from its
@@ -118,7 +118,7 @@ int main()
 #define FIR_WIDTH 64
 #define FIR_STEP_SHIFT 7
 #define FIR_STEP 128
-static const float fir[] = {
+static const float DECLSPEC_ALIGN(16) fir[] = {
      0.0000000000e+00, -2.4830013102e-06,  1.9318705150e-06,  2.6614854151e-06,
     -1.5313785194e-05,  4.2076214553e-05, -9.1417167945e-05,  1.7455895136e-04,
     -3.0567859821e-04,  5.0191365396e-04, -7.8311909082e-04,  1.1713337628e-03,
