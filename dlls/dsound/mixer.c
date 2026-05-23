@@ -287,6 +287,50 @@ static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
     return dsb->get(dsb, buffer + (mixpos % buflen), channel);
 }
 
+#ifdef __SSE__
+
+/**
+ * Note that this function will overwrite up to FIR_WIDTH - 1 frames before and
+ * after output[].
+ */
+void downsample_sse(LONG64 opos_num, DWORD opos_num_step, float rem_float, float rem_step_float,
+        float firgain_float, UINT required_input, float *input, float *output)
+{
+    __m128 rem = _mm_set1_ps(rem_float);
+    __m128 rem_step = _mm_set1_ps(rem_step_float);
+    __m128 firgain = _mm_set_ss(firgain_float);
+    __m128 one = _mm_set1_ps(1.0f);
+    int j;
+
+    for (j = 0; j < required_input; ++j) {
+        /* opos is in the range [-(fir_width - 1), count) */
+        int opos = (int)(opos_num >> FREQ_ADJUST_SHIFT) - FIR_WIDTH;
+        UINT idx = ~(DWORD)opos_num >> (FREQ_ADJUST_SHIFT - FIR_STEP_SHIFT) << FIR_WIDTH_SHIFT;
+        __m128 rem_inv = _mm_sub_ps(one, rem);
+
+        __m128 input_value_ss = _mm_mul_ss(_mm_load_ss(&input[j]), firgain);
+        __m128 input_value = _mm_shuffle_ps(input_value_ss, input_value_ss, 0);
+        __m128 input_value0 = _mm_mul_ps(rem_inv, input_value);
+        __m128 input_value1 = _mm_mul_ps(rem, input_value);
+
+        int i;
+        C_ASSERT(!(FIR_WIDTH % 4));
+        for (i = 0; i < FIR_WIDTH; i += 4) {
+            __m128 value0 = _mm_mul_ps(_mm_load_ps(&fir[idx + i]), input_value0);
+            __m128 value1 = _mm_mul_ps(_mm_load_ps(&fir[idx + FIR_WIDTH + i]), input_value1);
+            __m128 value = _mm_add_ps(value0, value1);
+            _mm_storeu_ps(&output[opos + i], _mm_add_ps(_mm_loadu_ps(&output[opos + i]), value));
+        }
+
+        rem = _mm_add_ps(rem, rem_step);
+        rem = _mm_sub_ps(rem, _mm_and_ps(one, _mm_cmple_ps(one, rem)));
+
+        opos_num += opos_num_step;
+    }
+}
+
+#endif
+
 /**
  * Note that this function will overwrite up to FIR_WIDTH - 1 frames before and
  * after output[].
@@ -320,8 +364,11 @@ static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgai
      * remain cleared. */
     float rem = FIXED_0_32_TO_FLOAT(((DWORD)opos_num ^ (DWORD)opos_num_mask) << FIR_STEP_SHIFT);
     float rem_step = FIXED_0_32_TO_FLOAT(-opos_num_step << FIR_STEP_SHIFT);
-    int j;
 
+#ifdef __SSE__
+    downsample_sse(opos_num, opos_num_step, rem, rem_step, firgain, required_input, input, output);
+#else
+    int j;
     for (j = 0; j < required_input; ++j) {
         /* opos is in the range [-(fir_width - 1), count) */
         int opos = (int)(opos_num >> FREQ_ADJUST_SHIFT) - FIR_WIDTH;
@@ -340,6 +387,7 @@ static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgai
 
         opos_num += opos_num_step;
     }
+#endif
 }
 
 #ifdef __SSE__
