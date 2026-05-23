@@ -494,6 +494,7 @@ static void test_spvoice(void)
     ISpDataKey *attrs_key;
     LONG rate;
     USHORT volume;
+    SPVOICESTATUS status;
     ULONG stream_num;
     DWORD regid;
     WAVEFORMATEX wfx;
@@ -651,6 +652,17 @@ static void test_spvoice(void)
     hr = ISpVoice_SetVolume(voice, 101);
     ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
+    hr = ISpVoice_GetStatus(voice, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&status, 0xcc, sizeof(status));
+    hr = ISpVoice_GetStatus(voice, &status, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(status.dwRunningState == SPRS_DONE, "got %#lx.\n", status.dwRunningState);
+    ok(status.ulLastStreamQueued == 0, "got %lu.\n", status.ulLastStreamQueued);
+    ok(status.ulCurrentStream == 0, "got %lu.\n", status.ulCurrentStream);
+    ok(status.hrLastResult == S_OK, "got %#lx.\n", status.hrLastResult);
+
     hr = CoRegisterClassObject(&CLSID_TestEngine, (IUnknown *)&test_engine_cf,
                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -732,6 +744,16 @@ static void test_spvoice(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(duration < 200, "took %lu ms.\n", duration);
 
+    memset(&status, 0xcc, sizeof(status));
+    hr = ISpVoice_GetStatus(voice, &status, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(status.dwRunningState == SPRS_DONE, "got %#lx.\n", status.dwRunningState);
+    ok(status.ulLastStreamQueued == stream_num, "got %lu vs %lu.\n",
+       status.ulLastStreamQueued, stream_num);
+    ok(status.ulCurrentStream == stream_num, "got %lu vs %lu.\n",
+       status.ulCurrentStream, stream_num);
+    ok(status.hrLastResult == S_OK, "got %#lx.\n", status.hrLastResult);
+
     reset_engine_params(&test_engine);
     test_engine.output_data = wave_data;
     test_engine.output_len = wave_len;
@@ -744,6 +766,16 @@ static void test_spvoice(void)
     todo_wine ok(stream_num == 1, "got %lu.\n", stream_num);
     ok(duration < 500, "took %lu ms.\n", duration);
 
+    memset(&status, 0xcc, sizeof(status));
+    hr = ISpVoice_GetStatus(voice, &status, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    /* dwRunningState may be 0 transiently on Windows before the worker
+     * picks up the queued task. */
+    ok(status.dwRunningState == SPRS_IS_SPEAKING || status.dwRunningState == 0,
+       "got %#lx.\n", status.dwRunningState);
+    ok(status.ulLastStreamQueued == stream_num, "got %lu vs %lu.\n",
+       status.ulLastStreamQueued, stream_num);
+
     hr = ISpVoice_WaitUntilDone(voice, 100);
     ok(hr == S_FALSE, "got %#lx.\n", hr);
 
@@ -751,6 +783,14 @@ static void test_spvoice(void)
     duration = GetTickCount() - start;
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(duration > 800 && duration < 3500, "took %lu ms.\n", duration);
+
+    memset(&status, 0xcc, sizeof(status));
+    hr = ISpVoice_GetStatus(voice, &status, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(status.dwRunningState == SPRS_DONE, "got %#lx.\n", status.dwRunningState);
+    ok(status.ulCurrentStream == stream_num, "got %lu vs %lu.\n",
+       status.ulCurrentStream, stream_num);
+    ok(status.hrLastResult == S_OK, "got %#lx.\n", status.hrLastResult);
 
     ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
     ok(test_engine.flags == SPF_NLP_SPEAK_PUNC, "got %#lx.\n", test_engine.flags);
