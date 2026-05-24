@@ -1689,7 +1689,7 @@ static int layout_id_map_cmp( const void *key, const void *element )
 
 static LANGID langid_from_xkb_layout( const char *layout )
 {
-    struct layout_id_map_entry *entry;
+    const struct layout_id_map_entry *entry;
 
     entry = bsearch( layout, layout_ids, ARRAY_SIZE(layout_ids), sizeof(*layout_ids), layout_id_map_cmp );
     if (entry) return entry->langid;
