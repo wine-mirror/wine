@@ -590,9 +590,6 @@ IDI_SHELL_BLANK4 ICON resources/blank.ico
 /* @makedep: resources/drive.ico */
 IDI_SHELL_UNKNOWN_DRIVE ICON resources/drive.ico
 
-/* @makedep: resources/shield.ico */
-IDI_SHELL_SHIELD ICON resources/shield.ico
-
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/document.ico */
 IDI_SHELL_FILES ICON resources/document.ico
@@ -1075,6 +1072,9 @@ IDI_SHELL_INFO ICON resources/info.ico
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/mycomputer.ico */
 IDI_SHELL_COMPUTER_OFF ICON resources/mycomputer.ico
+
+/* @makedep: resources/shield.ico */
+IDI_SHELL_SHIELD ICON resources/shield.ico
 
 /* @makedep: resources/idb_sort_incr.bmp */
 IDB_SORT_INCR BITMAP resources/idb_sort_incr.bmp
