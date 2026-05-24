@@ -1,1 +1,6 @@
 MODULE    = wkscli.dll
+IMPORTLIB = wkscli
+IMPORTS   = netutils
+
+SOURCES = \
+	wkscli.c

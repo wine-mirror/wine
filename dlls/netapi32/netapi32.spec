@@ -99,7 +99,7 @@
 @ stdcall NetGetAnyDCName(wstr wstr ptr)
 @ stdcall NetGetDCName(wstr wstr ptr)
 @ stub NetGetDisplayInformationIndex
-@ stdcall NetGetJoinInformation(wstr ptr ptr)
+@ stdcall NetGetJoinInformation(wstr ptr ptr) wkscli.NetGetJoinInformation
 @ stub NetGroupAdd
 @ stdcall NetGroupAddUser(wstr wstr wstr)
 @ stub NetGroupDel
@@ -203,10 +203,10 @@
 @ stdcall NetShareGetInfo(wstr wstr long ptr)
 @ stub NetShareSetInfo
 @ stdcall NetStatisticsGet(wstr wstr long long ptr)
-@ stdcall NetUseAdd(wstr long ptr ptr)
-@ stdcall NetUseDel(wstr wstr long)
-@ stdcall NetUseEnum(wstr long ptr long ptr ptr ptr)
-@ stdcall NetUseGetInfo(ptr ptr long ptr)
+@ stdcall NetUseAdd(wstr long ptr ptr) wkscli.NetUseAdd
+@ stdcall NetUseDel(wstr wstr long) wkscli.NetUseDel
+@ stdcall NetUseEnum(wstr long ptr long ptr ptr ptr) wkscli.NetUseEnum
+@ stdcall NetUseGetInfo(ptr ptr long ptr) wkscli.NetUseGetInfo
 @ stdcall NetUserAdd(wstr long ptr ptr)
 @ stdcall NetUserChangePassword(wstr wstr wstr wstr)
 @ stdcall NetUserDel(wstr wstr)
