@@ -643,7 +643,7 @@ IDI_SHELL_FOLDER_OVERWRITE ICON resources/delete.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/rename.ico */
-IDI_SHELL_RENAME_FOLDER ICON resources/rename.ico
+IDI_SHELL_FOLDER_RENAME ICON resources/rename.ico
 
 /* @makedep: resources/update.ico */
 IDI_SHELL_INSTALL ICON resources/update.ico
