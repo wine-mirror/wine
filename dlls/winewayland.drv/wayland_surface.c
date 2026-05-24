@@ -688,7 +688,7 @@ static void wayland_surface_reconfigure_subsurface(struct wayland_surface *surfa
         TRACE("hwnd=%p pos=%d,%d\n", surface->hwnd, x, y);
 
         wl_subsurface_set_position(surface->wl_subsurface, x, y);
-        if (toplevel_data->client_surface)
+        if (toplevel_data->client_surface && toplevel_data->client_surface->wl_subsurface)
             wl_subsurface_place_above(surface->wl_subsurface, toplevel_data->client_surface->wl_surface);
         else
             wl_subsurface_place_above(surface->wl_subsurface, toplevel_surface->wl_surface);
