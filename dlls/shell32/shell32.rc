@@ -606,7 +606,7 @@ IDI_SHELL_FILE_SEARCH ICON resources/search.ico
 IDI_SHELL_SYSTEM_SEARCH ICON resources/search.ico
 
 /* @makedep: resources/control.ico */
-IDI_SHELL_OPTIONS ICON resources/control.ico
+IDI_SHELL_CONTROL_PANEL_XP ICON resources/control.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
