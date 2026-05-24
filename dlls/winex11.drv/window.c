@@ -1588,6 +1588,10 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state, B
      * to WithdrawnState first, then to NormalState */
     if (data->managed && MAKELONG(old_state, new_state) == MAKELONG(IconicState, NormalState))
     {
+        /* Previous IconicState request is still pending, wait for it to complete so that there is no
+         * unexpected IconicState WM_STATE notify that will override the NormalState soon to be queued */
+        if (data->wm_state_serial) return;
+
         WARN( "window %p/%lx is iconic, remapping to workaround Mutter issues.\n", data->hwnd, data->whole_window );
         window_set_wm_state( data, WithdrawnState, FALSE );
         window_set_wm_state( data, NormalState, activate );
