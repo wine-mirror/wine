@@ -1456,6 +1456,7 @@ const char *gpu_device_name( UINT16 vendor, UINT16 device, const char *default_n
     case MAKELONG(0x8086, 0x193d): return "Intel(R) Iris(TM) Pro Graphics P580";
     case MAKELONG(0x8086, 0x87c0): return "Intel(R) UHD Graphics 617";
     case MAKELONG(0x8086, 0x3ea0): return "Intel(R) UHD Graphics 620";
+    case MAKELONG(0x8086, 0x5917): return "Intel(R) UHD Graphics 620";
     case MAKELONG(0x8086, 0x591e): return "Intel(R) HD Graphics 615";
     case MAKELONG(0x8086, 0x5916): return "Intel(R) HD Graphics 620";
     case MAKELONG(0x8086, 0x5912): return "Intel(R) HD Graphics 630";
