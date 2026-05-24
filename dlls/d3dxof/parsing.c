@@ -1362,10 +1362,21 @@ BOOL parse_object(parse_buffer * buf)
 {
   ULONG i;
 
+  buf->pxo->root = buf->pxo_tab;
+
+  /* Applications have been known to depend on the presence of padding before
+   * the object data.
+   * Specifically, Space Empires V reinterprets the returned object as a
+   * Delphi dynamic array and updates the value at (DWORD *)ptr - 1 for
+   * refcounting and allocation decisions. Must be >= 2. */
+  if (!check_buffer(buf, sizeof(DWORD)))
+    return FALSE;
+  *(DWORD *)(buf->pdata + buf->cur_pos_data) = 0x55555555;
+  buf->cur_pos_data += sizeof(DWORD);
+
   buf->pxo->pos_data = buf->cur_pos_data;
   buf->pxo->ptarget = NULL;
   buf->pxo->binary = FALSE;
-  buf->pxo->root = buf->pxo_tab;
 
   if (get_TOKEN(buf) != TOKEN_NAME)
     return FALSE;

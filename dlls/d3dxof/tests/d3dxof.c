@@ -366,6 +366,8 @@ static char object_complex[] =
 "3;;;, 0;;;, 1;;;, 2;;;,\n"
 "3;;;, 1;;;, 2;;;, 3;;;,\n"
 "3;;;, 3;;;, 1;;;, 2;;;,\n"
+/* child object for memory layout test */
+"Vector{0.0;;;, 0.0;;;, 0.0;;;}\n"
 "}\n";
 
 static char template_using_index_color_lower[] =
@@ -1005,6 +1007,119 @@ static void test_complex_object(void)
     IDirectXFile_Release(dxfile);
 }
 
+static void test_getdata_memory_layout(void)
+{
+    IDirectXFile *dxfile = NULL;
+    IDirectXFileEnumObject *enum_object, *enum_object2;
+    IDirectXFileData *root_data, *root_data2, *child_data, *child_data2;
+    IDirectXFileObject *child_obj, *child_obj2;
+    DXFILELOADMEMORY load_info;
+    HRESULT hr;
+    size_t distance;
+    DWORD root_size, child_size;
+    void *root_ptr, *child_ptr;
+    void *root_ptr2, *child_ptr2;
+    DWORD *pre_data;
+    ULONG ref;
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_complex_object, sizeof(templates_complex_object) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+
+    load_info.lpMemory = object_complex;
+    load_info.dSize = sizeof(object_complex) - 1;
+    hr = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &root_data);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirectXFileData_GetData(root_data, NULL, &root_size, &root_ptr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(root_size == 104, "Unexpected root size %lu.\n", root_size);
+
+    hr = IDirectXFileData_GetNextObject(root_data, &child_obj);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirectXFileObject_QueryInterface(child_obj, &IID_IDirectXFileData, (void** )&child_data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirectXFileData_GetData(child_data, NULL, &child_size, &child_ptr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(child_size == 12, "Unexpected child size %lu.\n", child_size);
+
+    distance = root_ptr > child_ptr ? (BYTE *)root_ptr - (BYTE *)child_ptr : (BYTE *)child_ptr - (BYTE *)root_ptr;
+    todo_wine ok(distance > root_size + child_size, "Unexpected distance %Iu.\n", distance);
+
+    pre_data = (DWORD *)root_ptr - 1;
+    ok(*pre_data >= 2, "Unexpected value %#lx at root_ptr - 4.\n", *pre_data);
+    pre_data = (DWORD *)child_ptr - 1;
+    ok(*pre_data >= 2, "Unexpected value %#lx at child_ptr - 4.\n", *pre_data);
+
+    hr = IDirectXFileData_GetData(root_data, NULL, &root_size, &root_ptr2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirectXFileData_GetData(child_data, NULL, &child_size, &child_ptr2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(root_ptr == root_ptr2, "Unexpected root_ptr %p, root_ptr2 %p\n", root_ptr, root_ptr2);
+    ok(child_ptr == child_ptr2, "Unexpected child_ptr %p, child_ptr2 %p\n", child_ptr, child_ptr2);
+
+    hr = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(enum_object != enum_object2, "Unexpected enum_object %p, enum_object2 %p\n", enum_object, enum_object2);
+
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object2, &root_data2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(root_data != root_data2, "Unexpected root_data %p, root_data2 %p\n", root_data, root_data2);
+    hr = IDirectXFileData_GetData(root_data2, NULL, &root_size, &root_ptr2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(root_ptr != root_ptr2, "Unexpected root_ptr %p, root_ptr2 %p\n", root_ptr, root_ptr2);
+    ok(!memcmp(root_ptr, root_ptr2, root_size), "root node contents differ\n");
+
+    hr = IDirectXFileData_GetNextObject(root_data2, &child_obj2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(child_obj != child_obj2, "child_obj %p, child_obj2 %p\n", child_obj, child_obj2);
+    hr = IDirectXFileObject_QueryInterface(child_obj2, &IID_IDirectXFileData, (void** )&child_data2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(child_data != child_data2, "child_data %p, child_data2 %p\n", child_data, child_data2);
+    hr = IDirectXFileData_GetData(child_data2, NULL, &child_size, &child_ptr2);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(child_ptr, child_ptr2, child_size), "child node contents differ\n");
+
+    *(DWORD *)child_ptr = 0x12345678;
+    ok(!memcmp(root_ptr, root_ptr2, root_size), "root node contents differ\n");
+    ok(memcmp(child_ptr, child_ptr2, child_size), "child node contents match\n");
+
+    todo_wine
+    {
+        ref = IDirectXFileData_Release(child_data2);
+        ok(ref == 3, "Unexpected refcount %lu.\n", ref);
+        ref = IDirectXFileData_Release(child_obj2);
+        ok(ref == 2, "Unexpected refcount %lu.\n", ref);
+    }
+    ref = IDirectXFileData_Release(root_data2);
+    ok(ref == 1, "Unexpected refcount %lu.\n", ref);
+    ref = IDirectXFileEnumObject_Release(enum_object2);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
+
+    ref = IDirectXFileEnumObject_Release(enum_object);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
+    ref = IDirectXFileData_Release(root_data);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
+    ref = IDirectXFileData_Release(child_data);
+    ok(ref == 1, "Unexpected refcount %lu.\n", ref);
+    ref = IDirectXFileObject_Release(child_obj);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
+    ref = IDirectXFile_Release(dxfile);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
+}
+
 static void test_standard_templates(void)
 {
     IDirectXFile *dxfile = NULL;
@@ -1061,6 +1176,7 @@ START_TEST(d3dxof)
     test_syntax();
     test_syntax_semicolon_comma();
     test_complex_object();
+    test_getdata_memory_layout();
     test_standard_templates();
     test_type_index_color();
 
