@@ -4513,7 +4513,7 @@ static void test_presentation_clock(void)
         callback_order_end += sprintf(callback_order_end, i ? ",%lu" : "%lu", w - WAIT_OBJECT_0);
     }
     ok(i == ARRAY_SIZE(events), "got %u callbacks.\n", i);
-    todo_wine ok(!strcmp(callback_order, "0,1,2,3,4,5,6,7,8,9"), "got callback order %s.\n", callback_order);
+    ok(!strcmp(callback_order, "0,1,2,3,4,5,6,7,8,9"), "got callback order %s.\n", callback_order);
 
     duration /= 10;
     /* All overdue timers are fired at once. */

@@ -549,24 +549,11 @@ static HRESULT clock_call_state_change(MFTIME system_time, struct clock_state_ch
     return hr;
 }
 
-static struct clock_timer *presentation_clock_next_timer(struct presentation_clock *clock, LONGLONG time)
-{
-    struct clock_timer *timer;
-
-    LIST_FOR_EACH_ENTRY(timer, &clock->timers, struct clock_timer, entry)
-    {
-        if (timer->time <= time + 50000)
-            return timer;
-    }
-
-    return NULL;
-}
-
 static void CALLBACK presentation_clock_timer_callback(IUnknown *context)
 {
     struct presentation_clock *clock = impl_from_IMFPresentationClock((IMFPresentationClock*)context);
     IMFPresentationTimeSource *time_source;
-    struct clock_timer *timer;
+    struct clock_timer *timer, *next;
     LONGLONG time, systime;
 
     EnterCriticalSection(&clock->cs);
@@ -579,8 +566,11 @@ static void CALLBACK presentation_clock_timer_callback(IUnknown *context)
             SUCCEEDED(IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &time, &systime)))
     {
         EnterCriticalSection(&clock->cs);
-        while ( (timer = presentation_clock_next_timer(clock, time)) )
+        LIST_FOR_EACH_ENTRY_SAFE(timer, next, &clock->timers, struct clock_timer, entry)
         {
+            if (timer->time > time + 50000)
+                break;
+
             list_remove(&timer->entry);
             MFInvokeCallback(timer->result);
             IUnknown_Release(&timer->IUnknown_iface);
@@ -885,7 +875,7 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
         IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_key)
 {
     struct presentation_clock *clock = impl_from_IMFTimer(iface);
-    struct clock_timer *clock_timer;
+    struct clock_timer *clock_timer, *cur;
     HRESULT hr;
 
     TRACE("%p, %#lx, %s, %p, %p, %p.\n", iface, flags, debugstr_time(time), callback, state, cancel_key);
@@ -909,7 +899,13 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
 
     if (SUCCEEDED(hr))
     {
-        list_add_tail(&clock->timers, &clock_timer->entry);
+        LIST_FOR_EACH_ENTRY_REV(cur, &clock->timers, struct clock_timer, entry)
+        {
+            if (cur->time <= time)
+                break;
+        }
+        list_add_after(&cur->entry, &clock_timer->entry);
+
         if (cancel_key)
         {
             *cancel_key = &clock_timer->IUnknown_iface;
