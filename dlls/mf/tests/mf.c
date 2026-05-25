@@ -30,6 +30,7 @@
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
+#include "mmsystem.h"
 #include "uuids.h"
 #include "wmcodecdsp.h"
 #include "nserror.h"
@@ -3919,6 +3920,9 @@ struct test_time_source
     IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
     LONGLONG time;
+    UINT64 gettime_call_count;
+    MFTIME gettime_first_call_time;
+    MFTIME gettime_last_call_time;
 };
 
 static struct test_time_source *test_time_source_from_IMFPresentationTimeSource(IMFPresentationTimeSource *iface)
@@ -3982,6 +3986,11 @@ static HRESULT WINAPI test_time_source_GetCorrelatedTime(IMFPresentationTimeSour
 
     *clock_time = test_time_source->time;
     *system_time = MFGetSystemTime();
+
+    test_time_source->gettime_last_call_time = *system_time;
+    if (!test_time_source->gettime_call_count)
+        test_time_source->gettime_first_call_time = *system_time;
+    ++test_time_source->gettime_call_count;
 
     return S_OK;
 }
@@ -4128,17 +4137,20 @@ static void test_presentation_clock(void)
     IMFClockStateSink test_sink = { &test_clock_sink_vtbl };
     struct test_time_source *test_time_source;
     IMFPresentationTimeSource *time_source;
-    struct test_callback *timer_callback;
     MFCLOCK_PROPERTIES props, props2;
+    IMFAsyncCallback *callbacks[10];
+    char callback_order[32] = { 0 };
+    MFTIME systime, time, duration;
+    LONGLONG callback_interval_us;
     IMFRateControl *rate_control;
     IMFPresentationClock *clock;
-    IMFAsyncCallback *callback;
     IUnknown *timer_cancel_key;
+    char *callback_order_end;
     MFSHUTDOWN_STATUS status;
     IMFShutdown *shutdown;
-    MFTIME systime, time;
     LONGLONG clock_time;
     MFCLOCK_STATE state;
+    HANDLE events[10];
     IMFTimer *timer;
     unsigned int i;
     DWORD t1, t2;
@@ -4146,6 +4158,8 @@ static void test_presentation_clock(void)
     float rate;
     HRESULT hr;
     BOOL thin;
+
+    timeBeginPeriod(1);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -4365,6 +4379,11 @@ static void test_presentation_clock(void)
 
     IMFRateControl_Release(rate_control);
 
+    for (i = 0; i < ARRAY_SIZE(callbacks); ++i)
+    {
+        callbacks[i] = create_test_callback(FALSE);
+        events[i] = impl_from_IMFAsyncCallback(callbacks[i])->event;
+    }
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
@@ -4375,20 +4394,17 @@ static void test_presentation_clock(void)
     hr = IMFPresentationClock_GetCorrelatedTime(clock, 0, &time, &systime);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 
-    callback = create_test_callback(FALSE);
-    timer_callback = impl_from_IMFAsyncCallback(callback);
-    hr = IMFTimer_SetTimer(timer, 0, 100000, callback, NULL, &timer_cancel_key);
+    hr = IMFTimer_SetTimer(timer, 0, 100000, callbacks[0], NULL, &timer_cancel_key);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 
     t1 = GetTickCount();
-    ok(WaitForSingleObject(timer_callback->event, 4000) == WAIT_OBJECT_0, "WaitForSingleObject failed.\n");
+    ok(WaitForSingleObject(events[0], 4000) == WAIT_OBJECT_0, "WaitForSingleObject failed.\n");
     t2 = GetTickCount();
 
     ok(t2 - t1 < 200, "unexpected time difference %lu.\n", t2 - t1);
 
     IUnknown_Release(timer_cancel_key);
     IMFTimer_Release(timer);
-    IMFAsyncCallback_Release(callback);
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
     ok(hr == S_OK, "Failed to get shutdown interface, hr %#lx.\n", hr);
@@ -4451,28 +4467,69 @@ static void test_presentation_clock(void)
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 
-    callback = create_test_callback(FALSE);
-    timer_callback = impl_from_IMFAsyncCallback(callback);
-    hr = IMFTimer_SetTimer(timer, 0, 1000000, callback, NULL, &timer_cancel_key);
+    hr = IMFTimer_SetTimer(timer, 0, 1000000, callbacks[0], NULL, &timer_cancel_key);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    ok(WaitForSingleObject(timer_callback->event, 4000) == WAIT_TIMEOUT, "WaitForSingleObject should timeout.\n");
+    ok(WaitForSingleObject(events[0], 4000) == WAIT_TIMEOUT, "WaitForSingleObject should timeout.\n");
 
     /* the timer will only trigger when the time of the time source is within 5ms of the target time */
     test_time_source->time = 1000000-50001;
-    ok(WaitForSingleObject(timer_callback->event, 4000) == WAIT_TIMEOUT, "WaitForSingleObject should timeout.\n");
+    ok(WaitForSingleObject(events[0], 4000) == WAIT_TIMEOUT, "WaitForSingleObject should timeout.\n");
 
     test_time_source->time = 1000000-50000;
-    ok(WaitForSingleObject(timer_callback->event, 4000) == WAIT_OBJECT_0, "WaitForSingleObject failed.\n");
+    ok(WaitForSingleObject(events[0], 4000) == WAIT_OBJECT_0, "WaitForSingleObject failed.\n");
 
     IUnknown_Release(timer_cancel_key);
-    IMFTimer_Release(timer);
-    IMFAsyncCallback_Release(callback);
 
+    /* Check the frequency of the periodic timer of the presentation clock. */
+    test_time_source->gettime_call_count = 0;
+    Sleep(500);
+    duration = test_time_source->gettime_last_call_time - test_time_source->gettime_first_call_time;
+    callback_interval_us = duration / (test_time_source->gettime_call_count - 1) / 10;
+    ok(llabs(callback_interval_us - 15625) < 2500
+            || llabs(callback_interval_us - 10000) < 2500 /* <= w1064v1909 */,
+            "got callback interval %lld us.\n", callback_interval_us);
+
+    /* Timers fire in time order, not insertion order. */
+    callback_order_end = callback_order;
+    duration = 0;
+
+    test_time_source->time = 0;
+    for (i = ARRAY_SIZE(callbacks); i > 0; --i)
+    {
+        hr = IMFTimer_SetTimer(timer, 0, 1000000 + i * 200000, callbacks[i - 1], NULL, NULL);
+        ok(hr == S_OK, "got hr %#lx.\n", hr);
+    }
+
+    time = MFGetSystemTime();
+    test_time_source->time = 1000000 + ARRAY_SIZE(callbacks) * 200000;
+    for (i = 0; i < ARRAY_SIZE(events) && duration < 1000000; ++i)
+    {
+        DWORD w = WaitForMultipleObjects(ARRAY_SIZE(events), events, FALSE, 100);
+
+        duration = MFGetSystemTime() - time;
+
+        if (w >= WAIT_OBJECT_0 + ARRAY_SIZE(events))
+            break;
+        callback_order_end += sprintf(callback_order_end, i ? ",%lu" : "%lu", w - WAIT_OBJECT_0);
+    }
+    ok(i == ARRAY_SIZE(events), "got %u callbacks.\n", i);
+    todo_wine ok(!strcmp(callback_order, "0,1,2,3,4,5,6,7,8,9"), "got callback order %s.\n", callback_order);
+
+    duration /= 10;
+    /* All overdue timers are fired at once. */
+    ok(duration < 20000, "took %lld us.\n", duration);
+
+    for (i = 0; i < ARRAY_SIZE(callbacks); ++i)
+        IMFAsyncCallback_Release(callbacks[i]);
+
+    IMFTimer_Release(timer);
     IMFPresentationTimeSource_Release(time_source);
     IMFPresentationClock_Release(clock);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    timeEndPeriod(1);
 }
 
 static void test_sample_grabber(void)
