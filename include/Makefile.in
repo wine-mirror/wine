@@ -108,6 +108,7 @@ SOURCES = \
 	cryptdlg.h \
 	cryptuiapi.h \
 	cryptxml.h \
+	ctffunc.idl \
 	ctfutb.idl \
 	ctxtcall.idl \
 	custcntl.h \

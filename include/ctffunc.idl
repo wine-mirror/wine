@@ -1,0 +1,80 @@
+/*
+ * Copyright 2026 Paul Gofman for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifndef DO_NO_IMPORTS
+import "oaidl.idl";
+import "msctf.idl";
+#endif
+
+interface IEnumTfCandidates;
+
+[
+  object,
+  uuid(581f317e-fd9d-443f-b972-ed00467c5d40),
+  pointer_default(unique)
+]
+interface ITfCandidateString : IUnknown
+{
+    HRESULT GetString([out] BSTR *bstr);
+    HRESULT GetIndex([out] ULONG *index);
+}
+
+[
+  object,
+  uuid(defb1926-6c80-4ce8-87d4-d6b72b812bde),
+  pointer_default(unique)
+]
+interface IEnumTfCandidates : IUnknown
+{
+    HRESULT Clone([out] IEnumTfCandidates **ret_enum);
+    HRESULT Next([in] ULONG count, [out] ITfCandidateString **cand, [out] ULONG *fetched);
+    HRESULT Reset();
+    HRESULT Skip([in] ULONG count);
+}
+
+typedef [uuid(baa898f2-0207-4643-92ca-f3f7b0cf6f80)] enum
+{
+    CAND_FINALIZED = 0x0,
+    CAND_SELECTED  = 0x1,
+    CAND_CANCELED  = 0x2,
+} TfCandidateResult;
+
+[
+  object,
+  uuid(a3ad50fb-9bdb-49e3-a843-6c76520fbf5d),
+  pointer_default(unique)
+]
+interface ITfCandidateList : IUnknown
+{
+    HRESULT EnumCandidates([out] IEnumTfCandidates **ret_enum);
+    HRESULT GetCandidate([in] ULONG index, [out] ITfCandidateString **cand);
+    HRESULT GetCandidateNum([out] ULONG *count);
+    HRESULT SetResult([in] ULONG nIndex, [in] TfCandidateResult imcr);
+}
+
+[
+  object,
+  uuid(4cea93c0-0a58-11d3-8df0-00105a2799b5),
+  pointer_default(unique)
+]
+interface ITfFnReconversion : ITfFunction
+{
+    HRESULT QueryRange([in] ITfRange *range, ITfRange **new_range, BOOL *convertable);
+    HRESULT GetReconversion(ITfRange *range, ITfCandidateList **cand_list);
+    HRESULT Reconvert([in] ITfRange *range);
+}
