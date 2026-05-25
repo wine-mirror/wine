@@ -943,7 +943,7 @@ SOURCES = \
 	tlogstg.idl \
 	tmschema.h \
 	tom.idl \
-	tpcshrd.h \
+	tpcshrd.idl \
 	traffic.h \
 	transact.idl \
 	trnjoi.idl \
