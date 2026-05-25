@@ -2281,6 +2281,20 @@ static void test_pnp_devices(void)
         SetupDiDestroyDeviceInfoList(bus_set);
     }
 
+    /* DEVPKEY_Device_Siblings — set on each child after bus enumeration.
+     * The test setup registers exactly one child, so the siblings list
+     * is empty. handle_bus_relations() writes the empty list as a single
+     * trailing NUL (one WCHAR). */
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_Siblings, &prop_type,
+                                    (BYTE *)buffer_w, sizeof(buffer_w), &size, 0);
+    ok(ret, "DEVPKEY_Device_Siblings missing, error %#lx\n", GetLastError());
+    ok(prop_type == DEVPROP_TYPE_STRING_LIST, "got type %#lx\n", prop_type);
+    ok(size == sizeof(WCHAR), "got size %lu, expected %Iu\n", size, sizeof(WCHAR));
+    ok(buffer_w[0] == 0, "got non-empty siblings %s\n", debugstr_w(buffer_w));
+
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &child_class),
