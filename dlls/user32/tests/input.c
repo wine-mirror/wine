@@ -1313,6 +1313,27 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_keyboard_test pause_scan[] =
+    {
+        {.scan = 0x21d, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0x21d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_LCONTROL] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_LCONTROL] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
+         .expect = {KEY_HOOK_(WM_KEYDOWN, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0x11d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_RCONTROL] = 0x01},
+         .expect = {KEY_HOOK_(WM_KEYUP, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0x11d, VK_CONTROL), {0}}},
+        {.vkey = VK_PAUSE, .expect_state = {[VK_PAUSE] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x7, VK_PAUSE), KEY_MSG(WM_KEYDOWN, 0x7, VK_PAUSE), {0}}},
+        {.vkey = VK_PAUSE, .flags = KEYEVENTF_KEYUP, .expect_state = {[VK_PAUSE] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x8, VK_PAUSE), KEY_MSG(WM_KEYUP, 0x8, VK_PAUSE), {0}}},
+        {0},
+    };
+
 #undef WIN_MSG
 #undef KBD_HOOK
 #undef KEY_HOOK_
@@ -1397,6 +1418,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode_vkey_packet, TRUE );
     check_send_input_keyboard_test( numpad_scan, TRUE );
     check_send_input_keyboard_test( numpad_scan_numlock, TRUE );
+    check_send_input_keyboard_test( pause_scan, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -1444,6 +1466,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode_vkey_packet, FALSE );
     check_send_input_keyboard_test( numpad_scan, FALSE );
     check_send_input_keyboard_test( numpad_scan_numlock, FALSE );
+    check_send_input_keyboard_test( pause_scan, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
