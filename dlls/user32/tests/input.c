@@ -1479,6 +1479,36 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 
 static void test_keynames(void)
 {
+    static const struct
+    {
+        LONG lparam;
+        const char *expected_name;
+        BOOL todo;
+        BOOL todo_value;
+    } tests[] =
+    {
+        {0x00370000, "Num *", .todo_value = TRUE},
+        {0x01370000, "Prnt Scrn", .todo_value = TRUE},
+        {0x02370000, "Num *", .todo_value = TRUE},
+        {0xe0370000, "Num *", .todo_value = TRUE},
+        {0xe1370000, "Prnt Scrn", .todo_value = TRUE},
+        {0x00450000, "Pause", .todo_value = TRUE},
+        {0x01450000, "Num Lock"},
+        {0x02450000, "Pause", .todo_value = TRUE},
+        {0xe0450000, "Pause", .todo_value = TRUE},
+        {0xe1450000, "Num Lock"},
+        {0x00460000, "Scroll Lock", .todo_value = TRUE},
+        {0x01460000, "Break", .todo_value = TRUE},
+        {0xe0460000, "Scroll Lock", .todo_value = TRUE},
+        {0xe1460000, "Break", .todo_value = TRUE},
+        {0x01480000, "Up"},
+        {0x001d0000, "Ctrl", .todo_value = TRUE},
+        {0x011d0000, "Right Ctrl", .todo_value = TRUE},
+        {0x021d0000, "Ctrl", .todo_value = TRUE},
+        {0xe01d0000, "Ctrl", .todo_value = TRUE},
+        {0xe11d0000, "Right Ctrl", .todo_value = TRUE},
+    };
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
     int i, len;
     char buff[256];
 
@@ -1487,6 +1517,18 @@ static void test_keynames(void)
         strcpy(buff, "----");
         len = GetKeyNameTextA(i << 16, buff, sizeof(buff));
         ok(len || !buff[0], "%d: Buffer is not zeroed\n", i);
+    }
+
+    if (!us_kbd) skip("skipping test with inconsistent results on non-us keyboard\n");
+    else for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("scancode %04x", (unsigned int)tests[i].lparam >> 16);
+        len = GetKeyNameTextA(tests[i].lparam, buff, sizeof(buff));
+        todo_wine_if(tests[i].todo) ok(len, "No key name\n");
+        todo_wine_if(tests[i].todo_value)
+        ok(!strcmp(buff, tests[i].expected_name), "Unexpected key name %s\n", debugstr_a(buff));
+        trace("name %s\n", debugstr_a(buff));
+        winetest_pop_context();
     }
 }
 
