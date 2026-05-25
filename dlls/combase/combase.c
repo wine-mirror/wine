@@ -2103,6 +2103,9 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
     apt = com_get_current_apt();
     message_loop = apt && !apt->multi_threaded;
 
+    if (message_loop)
+        rpc_start_remoting(apt);
+
     if (flags & COWAIT_WAITALL)
         wait_flags |= MWMO_WAITALL;
     if (flags & COWAIT_ALERTABLE)
