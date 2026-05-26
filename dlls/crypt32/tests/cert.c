@@ -549,7 +549,7 @@ static void testCertProperties(void)
         HCRYPTPROV_OR_NCRYPT_KEY_HANDLE retrievedHandle = 0;
 
         ret = CertSetCertificateContextProperty(context,
-         CERT_NCRYPT_KEY_HANDLE_PROP_ID, 0, &ncryptHandle);
+         CERT_NCRYPT_KEY_HANDLE_PROP_ID, 0, (void *)ncryptHandle);
         ok(ret, "CertSetCertificateContextProperty failed: %08lx\n", GetLastError());
 
         /* Verify the key context was set with CERT_NCRYPT_KEY_SPEC */
@@ -558,8 +558,8 @@ static void testCertProperties(void)
         ret = CertGetCertificateContextProperty(context,
          CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
         ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
-        ok(keyContext.hNCryptKey != 0,
-         "Expected non-zero hNCryptKey, got 0\n");
+        ok(keyContext.hNCryptKey == ncryptHandle,
+         "Expected key context to now be hNCryptKey, got something else\n");
         ok(keyContext.dwKeySpec == CERT_NCRYPT_KEY_SPEC,
          "Expected dwKeySpec CERT_NCRYPT_KEY_SPEC, got %lx\n", keyContext.dwKeySpec);
 

@@ -880,7 +880,7 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
                 break;
             }
             keyContext.cbSize = sizeof(keyContext);
-            keyContext.hNCryptKey = *(const NCRYPT_KEY_HANDLE *)pvData;
+            keyContext.hNCryptKey = (NCRYPT_KEY_HANDLE)pvData;
             keyContext.dwKeySpec = CERT_NCRYPT_KEY_SPEC;
             ret = CertContext_SetKeyContextProperty(cert->base.properties, &keyContext);
             break;
