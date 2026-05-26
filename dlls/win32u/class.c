@@ -889,6 +889,8 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
     WCHAR buffer[MAX_ATOM_LEN];
     NTSTATUS status;
     UINT len = 0;
+    ATOM atom;
+    WORD fnid;
     int ret;
 
     TRACE( "%p %x %p\n", hwnd, real, name );
@@ -897,6 +899,13 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
     {
         RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
         return 0;
+    }
+
+    if (real && (fnid = get_window_fnid( hwnd )) && (fnid & 0x7fff) < ARRAY_SIZE(builtin_classes))
+    {
+        get_desktop_window(); /* create the desktop window to trigger builtin class registration */
+        atom = builtin_classes[fnid & 0x7fff].atom;
+        return NtUserGetAtomName( atom, name );
     }
 
     while ((status = get_shared_window_class( hwnd, &lock, &class_shm )) == STATUS_PENDING)

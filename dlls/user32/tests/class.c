@@ -2525,7 +2525,7 @@ static const struct real_class_test class_tests[] =
     { "Edit",              "Edit",             FALSE, FALSE, TRUE,  TRUE,  TRUE },
     { "ListBox",           "ListBox",          FALSE, TRUE,  TRUE,  TRUE,  TRUE },
     { "ScrollBar",         "ScrollBar",        FALSE, TRUE,  FALSE, TRUE,  TRUE },
-    { "Static",            "Static",           TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
+    { "Static",            "Static",           TRUE,  TRUE,  TRUE,  TRUE,  FALSE },
     { "ComboLBox",         "ListBox",          FALSE, TRUE,  TRUE,  TRUE,  TRUE },
     { "MDIClient",         "MDIClient",        TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
     { "#32768",            "#32768",           FALSE, FALSE, TRUE,  TRUE,  TRUE },

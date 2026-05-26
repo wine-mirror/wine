@@ -1531,6 +1531,7 @@ C_ASSERT( offsetof(struct set_window_info_reply, old_info) == 8 );
 C_ASSERT( sizeof(struct set_window_info_reply) == 16 );
 C_ASSERT( offsetof(struct set_window_fnid_request, handle) == 12 );
 C_ASSERT( offsetof(struct set_window_fnid_request, atom) == 16 );
+C_ASSERT( offsetof(struct set_window_fnid_request, fnid) == 20 );
 C_ASSERT( sizeof(struct set_window_fnid_request) == 24 );
 C_ASSERT( offsetof(struct set_parent_request, handle) == 12 );
 C_ASSERT( offsetof(struct set_parent_request, parent) == 16 );

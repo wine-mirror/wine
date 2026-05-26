@@ -1051,6 +1051,7 @@ typedef volatile struct
 {
     struct obj_locator   class;
     unsigned int         dpi_context;
+    unsigned int         fnid;
     data_size_t          private_size;
 } window_shm_t;
 
@@ -3603,7 +3604,7 @@ struct set_window_fnid_request
     struct request_header __header;
     user_handle_t  handle;
     atom_t         atom;
-    char __pad_20[4];
+    unsigned int   fnid;
 };
 struct set_window_fnid_reply
 {
@@ -7130,6 +7131,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 941
+#define SERVER_PROTOCOL_VERSION 942
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

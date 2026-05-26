@@ -325,6 +325,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     LONG style = full_style & SS_TYPEMASK;
 
     if (!IsWindow( hwnd )) return 0;
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_STATIC) );
 
     switch (uMsg)
     {
@@ -398,8 +399,6 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_NCCREATE:
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-
-            NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_STATIC) );
 
             if (full_style & SS_SUNKEN || style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT)
                 SetWindowLongW( hwnd, GWL_EXSTYLE,

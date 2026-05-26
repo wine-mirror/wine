@@ -1772,6 +1772,7 @@ static void dump_set_window_fnid_request( const struct set_window_fnid_request *
 {
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", atom=%04x", req->atom );
+    fprintf( stderr, ", fnid=%08x", req->fnid );
 }
 
 static void dump_set_parent_request( const struct set_parent_request *req )

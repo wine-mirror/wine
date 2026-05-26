@@ -689,6 +689,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     {
         shared->class           = class_locator;
         shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
+        shared->fnid            = 0;
         shared->private_size    = 0;
     }
     SHARED_WRITE_END;
@@ -2285,12 +2286,13 @@ DECL_HANDLER(set_window_fnid)
 
     if (!(win = get_window( req->handle ))) return;
     if (is_desktop_window( win ) && win->thread != current) return set_error( STATUS_ACCESS_DENIED );
-    if (win->shared->private_size) return set_error( STATUS_INVALID_PARAMETER );
+    if (win->shared->fnid && win->shared->fnid != req->fnid) return set_error( STATUS_INVALID_PARAMETER );
 
     if (!(class = grab_class( current->process, req->atom, 0, &extra_bytes, &class_locator ))) return;
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->private_size = extra_bytes;
+        shared->fnid            = req->fnid;
+        shared->private_size    = extra_bytes;
     }
     SHARED_WRITE_END;
     release_class( class );

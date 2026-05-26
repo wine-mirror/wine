@@ -448,10 +448,10 @@ static void test_class(void)
     name.Length = 0xdead;
     name.MaximumLength = sizeof(buf);
     ret = NtUserGetClassName( hwnd, TRUE, &name );
-    todo_wine ok( ret == 6, "NtUserGetClassName returned %lu\n", ret );
+    ok( ret == 6, "NtUserGetClassName returned %lu\n", ret );
     ok( name.Length == 0xdead, "Length = %u\n", name.Length );
     ok( name.MaximumLength == sizeof(buf), "MaximumLength = %u\n", name.MaximumLength );
-    todo_wine ok( !wcscmp( buf, L"Static" ), "buf = %s\n", debugstr_w(buf) );
+    ok( !wcscmp( buf, L"Static" ), "buf = %s\n", debugstr_w(buf) );
 
     /* Get normal class instead of real class. */
     memset( buf, 0xcc, sizeof(buf) );

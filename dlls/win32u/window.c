@@ -1161,6 +1161,17 @@ BOOL is_zoomed( HWND hwnd )
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MAXIMIZE) != 0;
 }
 
+UINT get_window_fnid( HWND hwnd )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const window_shm_t *window_shm = NULL;
+    UINT status, fnid = 0;
+
+    while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
+        fnid = window_shm->fnid;
+    return status ? 0 : fnid;
+}
+
 static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi, BOOL internal )
 {
     LONG_PTR retval = 0;
@@ -1577,11 +1588,13 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+    if (fnid == get_window_fnid( hwnd )) return TRUE;
 
     SERVER_START_REQ( set_window_fnid )
     {
         req->handle = wine_server_user_handle( hwnd );
         req->atom = get_builtin_class_atom( fnid & 0x7fff );
+        req->fnid = fnid;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

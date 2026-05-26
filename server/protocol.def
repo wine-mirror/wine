@@ -1067,6 +1067,7 @@ typedef volatile struct
 {
     struct obj_locator   class;            /* object locator for the window class shared object */
     unsigned int         dpi_context;      /* DPI awareness context */
+    unsigned int         fnid;             /* builtin class FNID, or 0 */
     data_size_t          private_size;     /* length of private extra bytes range */
 } window_shm_t;
 
@@ -2698,6 +2699,7 @@ enum message_type
 @REQ(set_window_fnid)
     user_handle_t  handle;        /* handle to the window */
     atom_t         atom;          /* class atom */
+    unsigned int   fnid;          /* builtin class FNID */
 @END
 
 
