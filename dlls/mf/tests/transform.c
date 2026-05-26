@@ -10265,12 +10265,51 @@ static void test_video_processor(BOOL use_2d_buffer)
         ok(hr == S_OK, "IsEqual returned %#lx.\n", hr);
         IMFMediaType_Release(media_type2);
 
+        j = k = 0;
+        while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++j, &media_type2)))
+        {
+            UINT64 tmp = 0xdeadbeef;
+            winetest_push_context("out %lu", j);
+            ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+            check_media_type(media_type2, expect_available_common, -1);
+
+            hr = IMFMediaType_GetGUID(media_type2, &MF_MT_SUBTYPE, &guid);
+            ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
+
+            hr = IMFMediaType_GetUINT64(media_type2, &MF_MT_FRAME_SIZE, &tmp);
+            todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
+
+            for (; k < ARRAY_SIZE(expect_available_outputs); k++)
+                if (IsEqualGUID(&expect_available_outputs[k], &guid))
+                    break;
+            todo_wine_if(IsEqualGUID(&guid, &MFVideoFormat_ABGR32)) /* enumerated on purpose on Wine */
+            ok(k < ARRAY_SIZE(expect_available_outputs), "got subtype %s\n", debugstr_guid(&guid));
+
+            ret = IMFMediaType_Release(media_type2);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            winetest_pop_context();
+        }
+        ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+
+        /* How does video processor react to pixel aspect ratio? */
+        hr = IMFMediaType_SetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, (UINT64)3 << 32 | 4);
+        ok(hr == S_OK, "SetUINT64 returned %#lx.\n", hr);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+
+        hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type2);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx.\n", hr);
+        hr = IMFMediaType_IsEqual(media_type, media_type2, &flags);
+        ok(hr == S_OK, "IsEqual returned %#lx.\n", hr);
+        IMFMediaType_Release(media_type2);
+
         ret = IMFMediaType_Release(media_type);
         ok(ret == 1, "Release returned %lu\n", ret);
 
-        j = k = 0;
+        j = 0;
         while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++j, &media_type)))
         {
+            UINT64 tmp = 0xdeadbeef;
             winetest_push_context("out %lu", j);
             ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
             check_media_type(media_type, expect_available_common, -1);
@@ -10278,11 +10317,11 @@ static void test_video_processor(BOOL use_2d_buffer)
             hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
             ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
 
-            for (; k < ARRAY_SIZE(expect_available_outputs); k++)
-                if (IsEqualGUID(&expect_available_outputs[k], &guid))
-                    break;
-            todo_wine_if(IsEqualGUID(&guid, &MFVideoFormat_ABGR32)) /* enumerated on purpose on Wine */
-            ok(k < ARRAY_SIZE(expect_available_outputs), "got subtype %s\n", debugstr_guid(&guid));
+            hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &tmp);
+            todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
+
+            hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &tmp);
+            ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected PAR: %#lx %#I64x\n", hr, tmp);
 
             ret = IMFMediaType_Release(media_type);
             ok(ret == 0, "Release returned %lu\n", ret);
