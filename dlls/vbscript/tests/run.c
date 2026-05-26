@@ -148,6 +148,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_THROWEXCEPTION  1027
 #define DISPID_GLOBAL_ISARRAYFIXED    1028
 #define DISPID_GLOBAL_MAXCHARSIZE     1029
+#define DISPID_GLOBAL_INVOKEDISP      1030
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -1237,6 +1238,7 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"MaxCharSize",     DISPID_GLOBAL_MAXCHARSIZE },
         { L"firstDayOfWeek",  DISPID_GLOBAL_WEEKSTARTDAY },
         { L"globalCallback",  DISPID_GLOBAL_GLOBALCALLBACK },
+        { L"invokeDisp",      DISPID_GLOBAL_INVOKEDISP },
         { L"testObj",         DISPID_GLOBAL_TESTOBJ },
         { L"collectionObj" ,  DISPID_GLOBAL_COLLOBJ },
         { L"vbvar",           DISPID_GLOBAL_VBVAR, REF_EXPECT(global_vbvar_d) },
@@ -1361,6 +1363,29 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = MaxCharSize;
         return S_OK;
+
+    case DISPID_GLOBAL_INVOKEDISP: {
+        DISPPARAMS params = { NULL, NULL, 0, 0 };
+        VARIANT *arg = pdp->rgvarg;
+        EXCEPINFO ei;
+        HRESULT hr;
+
+        ok(wFlags == INVOKE_FUNC || wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        if(V_VT(arg) == (VT_VARIANT|VT_BYREF))
+            arg = V_VARIANTREF(arg);
+        ok(V_VT(arg) == VT_DISPATCH, "V_VT(arg) = %d\n", V_VT(arg));
+
+        /* Mimic an external object invoking a function reference back into the
+         * engine while a script frame is still on the stack. The result is
+         * dropped so the test observes only how the engine reports the error. */
+        memset(&ei, 0, sizeof(ei));
+        hr = IDispatch_Invoke(V_DISPATCH(arg), DISPID_VALUE, &IID_NULL, 0,
+                              DISPATCH_METHOD, &params, NULL, &ei, NULL);
+        trace("invokeDisp: inner Invoke returned %08lx\n", hr);
+        return S_OK;
+    }
 
     case DISPID_GLOBAL_WEEKSTARTDAY:
         V_VT(pvarRes) = VT_I4;
@@ -3540,6 +3565,48 @@ static void test_redefine_scope(void)
     }
 }
 
+static void test_getref_error_reporting(void)
+{
+    /* An error raised inside a function reference obtained from GetRef, when
+     * the reference is called from script under the caller's On Error Resume
+     * Next, must propagate to that caller rather than be reported to the host. */
+    static const WCHAR *src =
+        L"Dim cb : Set cb = GetRef(\"RaisesError\")\n"
+        L"Sub CallIndirect\n"
+        L"    On Error Resume Next\n"
+        L"    cb\n"
+        L"    On Error Goto 0\n"
+        L"End Sub\n"
+        L"Sub RaisesError\n"
+        L"    Err.Raise 5\n"
+        L"End Sub\n"
+        L"CallIndirect\n";
+    HRESULT hres;
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(src);
+    ok(hres == S_OK, "parse_script_wr returned %08lx\n", hres);
+    ok(!called_OnScriptError,
+        "error in a GetRef reference under the caller's On Error Resume Next was reported to the host\n");
+    CLEAR_CALLED(OnScriptError);
+}
+
+static void test_getref_external_caller_error(void)
+{
+    static const WCHAR *src =
+        L"Dim cb : Set cb = GetRef(\"RaisesError\")\n"
+        L"Sub RaisesError\n"
+        L"    Err.Raise 5\n"
+        L"End Sub\n"
+        L"Call invokeDisp(cb)\n";
+    HRESULT hres;
+
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(src);
+    ok(hres == S_OK, "parse_script_wr returned %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -4237,6 +4304,8 @@ static void run_tests(void)
     test_option_explicit_errors();
     test_parse_errors();
     test_redefine_scope();
+    test_getref_error_reporting();
+    test_getref_external_caller_error();
     test_parse_context();
     test_callbacks();
     test_multiple_parse();
