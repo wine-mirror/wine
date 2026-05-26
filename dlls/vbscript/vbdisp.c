@@ -857,6 +857,10 @@ static HRESULT WINAPI FuncRef_Invoke(IDispatch *iface, DISPID dispIdMember, REFI
     if(dispIdMember != DISPID_VALUE)
         return DISP_E_MEMBERNOTFOUND;
 
+    /* The engine runs its own references through disp_call as internal calls;
+     * reaching this vtable entry means the caller is outside the engine, so the
+     * reference is entered as an external caller and errors are reported to the
+     * host rather than propagated as an HRESULT. */
     return exec_script(This->ctx, TRUE, This->func, NULL, pDispParams, pVarResult);
 }
 
@@ -869,6 +873,11 @@ static const IDispatchVtbl FuncRefVtbl = {
     FuncRef_GetIDsOfNames,
     FuncRef_Invoke
 };
+
+static inline FuncRef *unsafe_funcref_from_IDispatch(IDispatch *iface)
+{
+    return iface->lpVtbl == &FuncRefVtbl ? FuncRef_from_IDispatch(iface) : NULL;
+}
 
 HRESULT create_func_ref(script_ctx_t *ctx, function_t *func, IDispatch **ret)
 {
@@ -2009,6 +2018,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, BOOL is_call, D
     const WORD flags = DISPATCH_METHOD|(retv ? DISPATCH_PROPERTYGET : 0);
     IDispatchEx *dispex;
     vbdisp_t *vbdisp;
+    FuncRef *funcref;
     EXCEPINFO ei;
     HRESULT hres;
 
@@ -2019,6 +2029,10 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, BOOL is_call, D
     vbdisp = unsafe_impl_from_IDispatch(disp);
     if(vbdisp && vbdisp->desc && vbdisp->desc->ctx == ctx)
         return invoke_vbdisp(vbdisp, id, flags, FALSE, is_call, dp, retv);
+
+    funcref = unsafe_funcref_from_IDispatch(disp);
+    if(funcref && funcref->ctx == ctx && id == DISPID_VALUE)
+        return exec_script(ctx, FALSE, funcref->func, NULL, dp, retv);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
