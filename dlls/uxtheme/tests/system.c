@@ -1741,6 +1741,14 @@ static void test_DrawThemeParentBackground(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     ReleaseDC(child, hdc);
+
+    hdc = GetDC(parent);
+    hr = DrawThemeParentBackground(parent, hdc, NULL);
+    ok(SUCCEEDED(hr), "DrawThemeParentBackground failed, hr %#lx.\n", hr);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, EmptySeq, "DrawThemeParentBackground", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ReleaseDC(parent, hdc);
+
     DestroyWindow(parent);
     UnregisterClassA("TestDrawThemeParentBackgroundClass", GetModuleHandleA(0));
 }
