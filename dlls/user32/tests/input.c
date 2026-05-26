@@ -3261,10 +3261,65 @@ static void test_DefRawInputProc(void)
     ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
 }
 
+static const char *debug_map_type(UINT map_type)
+{
+#define MAP_TO_STR(x) case x: return #x
+    switch (map_type)
+    {
+        MAP_TO_STR(MAPVK_VK_TO_VSC);
+        MAP_TO_STR(MAPVK_VSC_TO_VK);
+        MAP_TO_STR(MAPVK_VK_TO_CHAR);
+        MAP_TO_STR(MAPVK_VSC_TO_VK_EX);
+        MAP_TO_STR(MAPVK_VK_TO_VSC_EX);
+    default:
+        return "<unknown>";
+    }
+#undef MAP_TO_STR
+}
+
 static void test_key_map(void)
 {
+    static const struct
+    {
+        UINT input;
+        UINT map_type;
+        UINT expected;
+        BOOL todo;
+    } tests[] =
+    {
+        {0x136, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe036, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe136, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x37, MAPVK_VSC_TO_VK_EX, VK_MULTIPLY, TRUE},
+        {0x137, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x237, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe037, MAPVK_VSC_TO_VK_EX, VK_SNAPSHOT},
+        {0xe137, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x45, MAPVK_VSC_TO_VK_EX, VK_NUMLOCK},
+        {0x145, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe045, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe145, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x1d, MAPVK_VSC_TO_VK_EX, VK_LCONTROL},
+        {0x011d, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x021d, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe01d, MAPVK_VSC_TO_VK_EX, VK_RCONTROL, TRUE},
+        {0xe11d, MAPVK_VSC_TO_VK_EX, VK_PAUSE, TRUE},
+        {0x46, MAPVK_VSC_TO_VK_EX, VK_SCROLL},
+        {0xe046, MAPVK_VSC_TO_VK_EX, VK_CANCEL, TRUE},
+
+        {VK_RSHIFT, MAPVK_VK_TO_VSC_EX, 0x36},
+        {VK_MULTIPLY, MAPVK_VK_TO_VSC_EX, 0x37},
+        {VK_NUMLOCK, MAPVK_VK_TO_VSC_EX, 0x45},
+        {VK_UP, MAPVK_VK_TO_VSC_EX, 0x48},
+        {VK_LCONTROL, MAPVK_VK_TO_VSC_EX, 0x1d},
+        {VK_RCONTROL, MAPVK_VK_TO_VSC_EX, 0xe01d},
+        {VK_PAUSE, MAPVK_VK_TO_VSC_EX, 0xe11d, TRUE},
+        {VK_SCROLL, MAPVK_VK_TO_VSC_EX, 0x46},
+        {VK_CANCEL, MAPVK_VK_TO_VSC_EX, 0xe046, TRUE},
+        {VK_SNAPSHOT, MAPVK_VK_TO_VSC_EX, 0x54},
+    };
     HKL kl = GetKeyboardLayout(0);
-    UINT kL, kR, s, sL;
+    UINT kL, kR, s, sL, r;
     int i;
     static const UINT numpad_collisions[][2] = {
         { VK_NUMPAD0, VK_INSERT },
@@ -3321,6 +3376,13 @@ static void test_key_map(void)
     ok(s >> 8 == 0xE0 || broken(s == 0), "Scan code prefix for VK_RMENU should be 0xE0 when MAPVK_VK_TO_VSC_EX is set, was %#1x\n", s >> 8);
     s = MapVirtualKeyExA(VK_RSHIFT, MAPVK_VK_TO_VSC_EX, kl);
     ok(s >> 8 == 0x00 || broken(s == 0), "The scan code shouldn't have a prefix, got %#1x\n", s >> 8);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = MapVirtualKeyExA(tests[i].input, tests[i].map_type, kl);
+        todo_wine_if(tests[i].todo) ok(r == tests[i].expected, "Unexpected %s %x -> %x\n",
+                                       debug_map_type(tests[i].map_type), tests[i].input, r);
+    }
 }
 
 #define shift 1
