@@ -10277,7 +10277,7 @@ static void test_video_processor(BOOL use_2d_buffer)
             ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
 
             hr = IMFMediaType_GetUINT64(media_type2, &MF_MT_FRAME_SIZE, &tmp);
-            todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
+            ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
 
             for (; k < ARRAY_SIZE(expect_available_outputs); k++)
                 if (IsEqualGUID(&expect_available_outputs[k], &guid))
@@ -10318,7 +10318,7 @@ static void test_video_processor(BOOL use_2d_buffer)
             ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
 
             hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &tmp);
-            todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
+            ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected frame size: %#lx %#I64x\n", hr, tmp);
 
             hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &tmp);
             ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected PAR: %#lx %#I64x\n", hr, tmp);

@@ -436,8 +436,6 @@ static HRESULT WINAPI video_processor_GetOutputAvailableType(IMFTransform *iface
         goto done;
     if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
         goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, frame_size)))
-        goto done;
 
     IMFMediaType_AddRef((*type = media_type));
 
