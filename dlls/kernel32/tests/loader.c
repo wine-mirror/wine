@@ -2117,6 +2117,100 @@ static void test_section_access(void)
     }
 }
 
+static void test_security_cookie_readonly(void)
+{
+    /* a PE whose load-config SecurityCookie points into a
+     * read-only section (e.g. .rdata) must still load successfully.  The
+     * loader is expected to temporarily make the page writable, initialize
+     * the cookie and restore the original protection. */
+#ifdef _WIN64
+    static const ULONG_PTR default_cookie = (((ULONG_PTR)0x00002b99 << 32) | 0x2ddfa232);
+    static const WORD reloc_type = IMAGE_REL_BASED_DIR64;
+#else
+    static const ULONG_PTR default_cookie = 0xbb40e64e;
+    static const WORD reloc_type = IMAGE_REL_BASED_HIGHLOW;
+#endif
+    IMAGE_NT_HEADERS nt_header;
+    IMAGE_SECTION_HEADER sections[1];
+    BYTE section_data[0x200];
+    IMAGE_LOAD_CONFIG_DIRECTORY *cfg = (IMAGE_LOAD_CONFIG_DIRECTORY *)section_data;
+    const DWORD cookie_offset = 0x100;  /* inside .rdata, past cfg */
+    const DWORD reloc_offset = 0x180;   /* inside .rdata, past the cookie */
+    ULONG_PTR *cookie_slot = (ULONG_PTR *)(section_data + cookie_offset);
+    IMAGE_BASE_RELOCATION *base_reloc = (IMAGE_BASE_RELOCATION *)(section_data + reloc_offset);
+    WORD *reloc_entries = (WORD *)(section_data + reloc_offset + sizeof(*base_reloc));
+    char dll_name[MAX_PATH];
+    HMODULE hlib;
+    MEMORY_BASIC_INFORMATION info;
+    SIZE_T size;
+    ULONG_PTR final_cookie;
+
+    memset(section_data, 0, sizeof(section_data));
+
+    nt_header = nt_header_template;
+    nt_header.FileHeader.NumberOfSections = 1;
+    nt_header.OptionalHeader.SectionAlignment = page_size;
+    nt_header.OptionalHeader.FileAlignment = 0x200;
+    nt_header.OptionalHeader.SizeOfImage = page_size * 2;
+    nt_header.OptionalHeader.SizeOfHeaders = nt_header.OptionalHeader.FileAlignment;
+
+    memset(sections, 0, sizeof(sections));
+    memcpy(sections[0].Name, ".rdata", 7);
+    sections[0].Misc.VirtualSize = sizeof(section_data);
+    sections[0].VirtualAddress = page_size;
+    sections[0].SizeOfRawData = sizeof(section_data);
+    sections[0].PointerToRawData = nt_header.OptionalHeader.FileAlignment;
+    /* READ only, so no IMAGE_SCN_MEM_WRITE */
+    sections[0].Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+
+    /* place the cookie inside .rdata so the loader decides to write it */
+    *cookie_slot = default_cookie;
+
+    /* fill in the load-config directory at the start of .rdata */
+    cfg->Size = sizeof(*cfg);
+    cfg->SecurityCookie = (ULONG_PTR)nt_header.OptionalHeader.ImageBase
+                          + sections[0].VirtualAddress + cookie_offset;
+
+    /* embed the base-reloc block inside .rdata
+     * One fix-up entry rewrites cfg->SecurityCookie when the loader relocates
+     * the DLL, plus a zero terminator entry (WORD-aligned). */
+    base_reloc->VirtualAddress = sections[0].VirtualAddress;
+    base_reloc->SizeOfBlock = sizeof(*base_reloc) + 2 * sizeof(WORD);
+    reloc_entries[0] = (reloc_type << 12)
+                       | (offsetof(IMAGE_LOAD_CONFIG_DIRECTORY, SecurityCookie) & 0xfff);
+    reloc_entries[1] = 0;
+
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress = sections[0].VirtualAddress;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size = sizeof(*cfg);
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = sections[0].VirtualAddress + reloc_offset;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = base_reloc->SizeOfBlock;
+
+    create_test_dll_sections(&dos_header, &nt_header, sections, section_data, dll_name);
+
+    SetLastError(0xdeadbeef);
+    hlib = LoadLibraryA(dll_name);
+    ok(hlib != NULL, "LoadLibrary failed err %lu\n", GetLastError());
+    if (!hlib)
+    {
+        DeleteFileA(dll_name);
+        return;
+    }
+
+    final_cookie = *(ULONG_PTR *)((char *)hlib + sections[0].VirtualAddress + cookie_offset);
+    ok(final_cookie != default_cookie,
+       "security cookie was not initialized (still %#Ix)\n", final_cookie);
+
+    /* page protection should be restored to PAGE_READONLY after cookie init */
+    size = VirtualQuery((char *)hlib + sections[0].VirtualAddress, &info, sizeof(info));
+    ok(size == sizeof(info), "VirtualQuery error %lu\n", GetLastError());
+    ok(info.Protect == PAGE_READONLY,
+       "section protection not restored: got %#lx, expected PAGE_READONLY\n",
+       info.Protect);
+
+    FreeLibrary(hlib);
+    DeleteFileA(dll_name);
+}
+
 static void check_tls_index(HANDLE dll, BOOL tls_initialized)
 {
     BOOL found_dll = FALSE;
@@ -4913,6 +5007,7 @@ START_TEST(loader)
     test_ResolveDelayLoadedAPI();
     test_ImportDescriptors();
     test_section_access();
+    test_security_cookie_readonly();
     test_import_resolution();
     test_export_forwarder_dep_chain();
     test_ExitProcess();
