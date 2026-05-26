@@ -2105,26 +2105,41 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 static void set_security_cookie( ULONG_PTR *cookie )
 {
     static ULONG seed;
+    ULONG_PTR new_cookie;
+    SIZE_T size;
+    void *addr;
+    ULONG old_prot;
 
     TRACE( "initializing security cookie %p\n", cookie );
 
     if (!seed) seed = NtGetTickCount() ^ GetCurrentProcessId();
+    new_cookie = *cookie;
     for (;;)
     {
-        if (*cookie == DEFAULT_SECURITY_COOKIE_16)
-            *cookie = RtlRandom( &seed ) >> 16; /* leave the high word clear */
-        else if (*cookie == DEFAULT_SECURITY_COOKIE_32)
-            *cookie = RtlRandom( &seed );
+        if (new_cookie == DEFAULT_SECURITY_COOKIE_16)
+            new_cookie = RtlRandom( &seed ) >> 16; /* leave the high word clear */
+        else if (new_cookie == DEFAULT_SECURITY_COOKIE_32)
+            new_cookie = RtlRandom( &seed );
 #ifdef DEFAULT_SECURITY_COOKIE_64
-        else if (*cookie == DEFAULT_SECURITY_COOKIE_64)
+        else if (new_cookie == DEFAULT_SECURITY_COOKIE_64)
         {
-            *cookie = RtlRandom( &seed );
+            new_cookie = RtlRandom( &seed );
             /* fill up, but keep the highest word clear */
-            *cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
+            new_cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
         }
 #endif
         else
             break;
+    }
+
+    if (new_cookie == *cookie) return;  /* already initialized */
+
+    addr = cookie;
+    size = sizeof(*cookie);
+    if (!NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot ))
+    {
+        *cookie = new_cookie;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, old_prot, &old_prot );
     }
 }
 
