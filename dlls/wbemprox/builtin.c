@@ -1929,7 +1929,7 @@ static UINT64 get_total_virtual_memory(void)
 
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
-    return status.ullTotalVirtual;
+    return status.ullTotalPageFile;
 }
 
 static UINT64 get_available_virtual_memory(void)
