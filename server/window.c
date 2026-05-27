@@ -621,6 +621,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     struct desktop *desktop;
     struct window_class *class;
     struct obj_locator class_locator;
+    unsigned int fnid;
 
     if (!(desktop = get_thread_desktop( current, DESKTOP_CREATEWINDOW ))) return NULL;
 
@@ -629,7 +630,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         release_object( desktop );
         return NULL;
     }
-    get_class_fnid( class, &extra_bytes, &private_size );
+    fnid = get_class_fnid( class, &extra_bytes, &private_size );
 
     if (!parent)  /* null parent is only allowed for desktop or HWND_MESSAGE top window */
     {
@@ -690,8 +691,8 @@ static struct window *create_window( struct window *parent, struct window *owner
     {
         shared->class           = class_locator;
         shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
-        shared->fnid            = 0;
-        shared->private_size    = 0;
+        shared->fnid            = fnid;
+        shared->private_size    = private_size;
     }
     SHARED_WRITE_END;
 
