@@ -1164,11 +1164,6 @@ BOOL is_zoomed( HWND hwnd )
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MAXIMIZE) != 0;
 }
 
-static BOOL in_private_data_range( const WND *win, INT offset, UINT size )
-{
-    return offset < win->private_off + win->private_len && offset + size >= win->private_off;
-}
-
 static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi, BOOL internal )
 {
     LONG_PTR retval = 0;
@@ -1233,7 +1228,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     if (offset >= 0)
     {
         if (offset > (int)(win->cbWndExtra - size) ||
-            (!internal && in_private_data_range( win, offset, size )))
+            (!internal && offset < win->private_len))
         {
             WARN("Invalid offset %d\n", offset );
             release_win_ptr( win );
@@ -1492,7 +1487,7 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
         break;
     default:
         if (offset < 0 || offset > (int)(win->cbWndExtra - size) ||
-            (!internal && in_private_data_range( win, offset, size )))
+            (!internal && offset < win->private_len))
         {
             WARN("Invalid offset %d\n", offset );
             release_win_ptr( win );
@@ -1607,8 +1602,7 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
 
     if (win->private_len)
     {
-        ret = win->private_off == 0 && win->private_len == len;
-
+        ret = win->private_len == len;
         release_win_ptr( win );
         if (!ret) RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return ret;
@@ -1619,11 +1613,7 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
         req->handle = wine_server_user_handle( hwnd );
         req->offset = GWLP_FNID_INTERNAL;
         req->new_info = len;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            win->private_off = 0;
-            win->private_len = len;
-        }
+        if ((ret = !wine_server_call_err( req ))) win->private_len = len;
     }
     SERVER_END_REQ;
     release_win_ptr( win );
