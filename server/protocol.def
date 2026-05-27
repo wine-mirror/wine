@@ -2694,6 +2694,13 @@ enum message_type
 @END
 
 
+/* Set the window builtin class FNID */
+@REQ(set_window_fnid)
+    user_handle_t  handle;        /* handle to the window */
+    atom_t         atom;          /* class atom */
+@END
+
+
 /* Set the parent of a window */
 @REQ(set_parent)
     user_handle_t  handle;      /* handle to the window */

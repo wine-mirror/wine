@@ -1768,6 +1768,12 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
     dump_uint64( " old_info=", &req->old_info );
 }
 
+static void dump_set_window_fnid_request( const struct set_window_fnid_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+    fprintf( stderr, ", atom=%04x", req->atom );
+}
+
 static void dump_set_parent_request( const struct set_parent_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
@@ -3667,6 +3673,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_window_info_request,
     (dump_func)dump_init_window_info_request,
     (dump_func)dump_set_window_info_request,
+    (dump_func)dump_set_window_fnid_request,
     (dump_func)dump_set_parent_request,
     (dump_func)dump_get_window_parents_request,
     (dump_func)dump_get_window_list_request,
@@ -3977,6 +3984,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_get_window_info_reply,
     NULL,
     (dump_func)dump_set_window_info_reply,
+    NULL,
     (dump_func)dump_set_parent_reply,
     (dump_func)dump_get_window_parents_reply,
     (dump_func)dump_get_window_list_reply,
@@ -4287,6 +4295,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "get_window_info",
     "init_window_info",
     "set_window_info",
+    "set_window_fnid",
     "set_parent",
     "get_window_parents",
     "get_window_list",

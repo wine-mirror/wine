@@ -2275,6 +2275,28 @@ DECL_HANDLER(create_window)
 }
 
 
+/* Set the window builtin class FNID */
+DECL_HANDLER(set_window_fnid)
+{
+    struct obj_locator class_locator;
+    struct window_class *class;
+    struct window *win;
+    int extra_bytes;
+
+    if (!(win = get_window( req->handle ))) return;
+    if (is_desktop_window( win ) && win->thread != current) return set_error( STATUS_ACCESS_DENIED );
+    if (win->shared->private_size) return set_error( STATUS_INVALID_PARAMETER );
+
+    if (!(class = grab_class( current->process, req->atom, 0, &extra_bytes, &class_locator ))) return;
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        shared->private_size = extra_bytes;
+    }
+    SHARED_WRITE_END;
+    release_class( class );
+}
+
+
 /* set the parent of a window */
 DECL_HANDLER(set_parent)
 {
@@ -2464,14 +2486,6 @@ DECL_HANDLER(set_window_info)
     case GWLP_USERDATA:
         reply->old_info = win->user_data;
         win->user_data = req->new_info;
-        break;
-    case GWLP_FNID_INTERNAL:
-        if (win->shared->private_size) set_error( STATUS_INVALID_PARAMETER );
-        else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
-        {
-            shared->private_size = req->new_info;
-        }
-        SHARED_WRITE_END;
         break;
     default:
         if (req->size > sizeof(req->new_info) || req->offset < 0 ||

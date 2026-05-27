@@ -3598,6 +3598,20 @@ struct set_window_info_reply
 
 
 
+struct set_window_fnid_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    atom_t         atom;
+    char __pad_20[4];
+};
+struct set_window_fnid_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct set_parent_request
 {
     struct request_header __header;
@@ -6330,6 +6344,7 @@ enum request
     REQ_get_window_info,
     REQ_init_window_info,
     REQ_set_window_info,
+    REQ_set_window_fnid,
     REQ_set_parent,
     REQ_get_window_parents,
     REQ_get_window_list,
@@ -6643,6 +6658,7 @@ union generic_request
     struct get_window_info_request get_window_info_request;
     struct init_window_info_request init_window_info_request;
     struct set_window_info_request set_window_info_request;
+    struct set_window_fnid_request set_window_fnid_request;
     struct set_parent_request set_parent_request;
     struct get_window_parents_request get_window_parents_request;
     struct get_window_list_request get_window_list_request;
@@ -6954,6 +6970,7 @@ union generic_reply
     struct get_window_info_reply get_window_info_reply;
     struct init_window_info_reply init_window_info_reply;
     struct set_window_info_reply set_window_info_reply;
+    struct set_window_fnid_reply set_window_fnid_reply;
     struct set_parent_reply set_parent_reply;
     struct get_window_parents_reply get_window_parents_reply;
     struct get_window_list_reply get_window_list_reply;
@@ -7113,6 +7130,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 940
+#define SERVER_PROTOCOL_VERSION 941
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -658,7 +658,6 @@ enum wine_internal_message
 #define IMN_WINE_SET_COMP_STRING  0x0010
 
 /* not compatible with Windows */
-#define GWLP_FNID_INTERNAL (-1000)
 #define MAKE_FNID(index) ((WORD)(0x8000 | (index)))
 
 /* builtin IME driver calls */

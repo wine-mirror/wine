@@ -1568,33 +1568,23 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
  */
 BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
 {
-    DWORD len = get_builtin_class_extra( fnid & 0x7fff );
-    WND *win;
     BOOL ret;
 
     TRACE( "%p %x\n", hwnd, fnid );
 
-    if (!(win = get_win_ptr( hwnd )))
+    if (!(fnid & 0x8000) || (fnid & 0x7fff) >= NTUSER_NB_PROCS)
     {
-        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS)
-    {
-        RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-
-    SERVER_START_REQ( set_window_info )
+    SERVER_START_REQ( set_window_fnid )
     {
         req->handle = wine_server_user_handle( hwnd );
-        req->offset = GWLP_FNID_INTERNAL;
-        req->new_info = len;
+        req->atom = get_builtin_class_atom( fnid & 0x7fff );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
-    release_win_ptr( win );
     return ret;
 }
 

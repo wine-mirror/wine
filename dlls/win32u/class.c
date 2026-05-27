@@ -1073,10 +1073,10 @@ WORD get_class_word( HWND hwnd, INT offset )
     return get_class_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
-DWORD get_builtin_class_extra( enum ntuser_client_procs proc )
+ATOM get_builtin_class_atom( enum ntuser_client_procs proc )
 {
     get_desktop_window(); /* create the desktop window to trigger builtin class registration */
-    return builtin_classes[proc].extra;
+    return builtin_classes[proc].atom;
 }
 
 /***********************************************************************
