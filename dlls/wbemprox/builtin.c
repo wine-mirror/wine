@@ -1938,7 +1938,7 @@ static UINT64 get_available_virtual_memory(void)
 
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
-    return status.ullAvailVirtual;
+    return status.ullAvailPageFile;
 }
 
 static WCHAR *get_computername(void)
