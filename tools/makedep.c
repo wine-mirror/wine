@@ -3748,6 +3748,7 @@ static const struct
     { "l", output_source_l },
     { "h", output_source_h },
     { "rh", output_source_h },
+    { "inc", output_source_h },
     { "inl", output_source_h },
     { "ver", output_source_ver },
     { "rc", output_source_rc },

@@ -712,6 +712,8 @@ TOMCRYPT_PE_LIBS
 TOMCRYPT_PE_CFLAGS
 TIFF_PE_LIBS
 TIFF_PE_CFLAGS
+SYMCRYPT_PE_LIBS
+SYMCRYPT_PE_CFLAGS
 SQLITE3_PE_LIBS
 SQLITE3_PE_CFLAGS
 PNG_PE_LIBS
@@ -1691,6 +1693,7 @@ enable_sqlite3
 enable_strmbase
 enable_strmiids
 enable_strsafe
+enable_symcrypt
 enable_tiff
 enable_tomcrypt
 enable_unwind
@@ -1875,6 +1878,8 @@ PNG_PE_CFLAGS
 PNG_PE_LIBS
 SQLITE3_PE_CFLAGS
 SQLITE3_PE_LIBS
+SYMCRYPT_PE_CFLAGS
+SYMCRYPT_PE_LIBS
 TIFF_PE_CFLAGS
 TIFF_PE_LIBS
 TOMCRYPT_PE_CFLAGS
@@ -2723,6 +2728,11 @@ Some influential environment variables:
               version
   SQLITE3_PE_LIBS
               Linker flags for the PE sqlite3, overriding the bundled version
+  SYMCRYPT_PE_CFLAGS
+              C compiler flags for the PE symcrypt, overriding the bundled
+              version
+  SYMCRYPT_PE_LIBS
+              Linker flags for the PE symcrypt, overriding the bundled version
   TIFF_PE_CFLAGS
               C compiler flags for the PE tiff, overriding the bundled version
   TIFF_PE_LIBS
@@ -14732,6 +14742,23 @@ fi
 printf '%s\n' "$as_me:${as_lineno-$LINENO}: sqlite3 cflags: $SQLITE3_PE_CFLAGS" >&5
 printf '%s\n' "$as_me:${as_lineno-$LINENO}: sqlite3 libs: $SQLITE3_PE_LIBS" >&5
 
+if ${SYMCRYPT_PE_LIBS:+false} :
+then :
+  SYMCRYPT_PE_LIBS=symcrypt
+   if ${SYMCRYPT_PE_CFLAGS:+false} :
+then :
+  SYMCRYPT_PE_CFLAGS="-I\$(top_srcdir)/libs/symcrypt/inc"
+else case e in #(
+  e) enable_symcrypt=no ;;
+esac
+fi
+else case e in #(
+  e) enable_symcrypt=no ;;
+esac
+fi
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: symcrypt cflags: $SYMCRYPT_PE_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: symcrypt libs: $SYMCRYPT_PE_LIBS" >&5
+
 if ${TIFF_PE_LIBS:+false} :
 then :
   TIFF_PE_LIBS="tiff \$(ZLIB_PE_LIBS)"
@@ -23883,6 +23910,7 @@ wine_fn_config_makefile libs/sqlite3 enable_sqlite3
 wine_fn_config_makefile libs/strmbase enable_strmbase
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/strsafe enable_strsafe
+wine_fn_config_makefile libs/symcrypt enable_symcrypt
 wine_fn_config_makefile libs/tiff enable_tiff
 wine_fn_config_makefile libs/tomcrypt enable_tomcrypt
 wine_fn_config_makefile libs/unwind enable_unwind
@@ -24111,7 +24139,7 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 	mv dlls/wineandroid.drv/build/outputs/apk/debug/wine-debug.apk \$@"
 
 
-EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/icucommon libs/icui18n libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/sqlite3 libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
+EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/icucommon libs/icui18n libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/sqlite3 libs/symcrypt libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
@@ -24986,6 +25014,8 @@ PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
 SQLITE3_PE_CFLAGS = $SQLITE3_PE_CFLAGS
 SQLITE3_PE_LIBS = $SQLITE3_PE_LIBS
+SYMCRYPT_PE_CFLAGS = $SYMCRYPT_PE_CFLAGS
+SYMCRYPT_PE_LIBS = $SYMCRYPT_PE_LIBS
 TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
 TIFF_PE_LIBS = $TIFF_PE_LIBS
 TOMCRYPT_PE_CFLAGS = $TOMCRYPT_PE_CFLAGS

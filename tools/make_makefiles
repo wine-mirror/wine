@@ -303,6 +303,11 @@ sub assign_sources_to_makefiles(@)
         {
             next;
         }
+        else
+        {
+            my %flags = get_makedep_flags($file);
+            next if defined $flags{header};
+        }
         push @{${$make}{"=SOURCES"}}, $name;
     }
 
