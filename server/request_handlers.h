@@ -1847,6 +1847,7 @@ C_ASSERT( offsetof(struct get_hook_info_reply, unicode) == 32 );
 C_ASSERT( sizeof(struct get_hook_info_reply) == 40 );
 C_ASSERT( offsetof(struct create_class_request, local) == 12 );
 C_ASSERT( offsetof(struct create_class_request, atom) == 16 );
+C_ASSERT( offsetof(struct create_class_request, fnid) == 20 );
 C_ASSERT( offsetof(struct create_class_request, client_ptr) == 24 );
 C_ASSERT( offsetof(struct create_class_request, name_offset) == 32 );
 C_ASSERT( sizeof(struct create_class_request) == 40 );

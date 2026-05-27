@@ -46,6 +46,7 @@ struct window_class
     int                 count;           /* reference count */
     int                 local;           /* local class? */
     atom_t              atom;            /* class atom for versioned class */
+    unsigned int        fnid;            /* builtin control FNID, or 0 */
     client_ptr_t        client_ptr;      /* pointer to class in client address space */
     class_shm_t        *shared;          /* class in session shared memory */
 };
@@ -237,6 +238,7 @@ DECL_HANDLER(create_class)
         return;
     }
     class->atom       = atom;
+    class->fnid       = req->fnid;
     class->client_ptr = req->client_ptr;
 
     SHARED_WRITE_BEGIN( class->shared, class_shm_t )

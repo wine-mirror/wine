@@ -4532,7 +4532,7 @@ struct create_class_request
     struct request_header __header;
     int            local;
     atom_t         atom;
-    char __pad_20[4];
+    unsigned int   fnid;
     client_ptr_t   client_ptr;
     data_size_t    name_offset;
     /* VARARG(info,class_info); */
@@ -7131,6 +7131,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 942
+#define SERVER_PROTOCOL_VERSION 943
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

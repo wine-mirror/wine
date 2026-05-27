@@ -614,7 +614,7 @@ struct dce *set_class_dce( CLASS *class, struct dce *dce )
 ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
                                       struct client_menu_name *menu_name, DWORD fnid, DWORD flags, DWORD *wow )
 {
-    const BOOL is_builtin = fnid, ansi = flags;
+    const BOOL ansi = flags;
     const shared_object_t *shared;
     struct obj_locator locator;
     HICON icon_internal;
@@ -625,10 +625,10 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     BOOL ret;
 
     /* create the desktop window to trigger builtin class registration */
-    if (!is_builtin) get_desktop_window();
+    if (!fnid) get_desktop_window();
 
     if (wc->cbSize != sizeof(*wc) || wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
-        (!is_builtin && wc->hInstance == user32_module))  /* we can't register a class for user32 */
+        (!fnid && wc->hInstance == user32_module))  /* we can't register a class for user32 */
     {
          RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
          return 0;
@@ -648,7 +648,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     if (!(class = calloc( 1, sizeof(*class) ))) return 0;
 
-    class->local      = !is_builtin && !(wc->style & CS_GLOBALCLASS);
+    class->local      = !fnid && !(wc->style & CS_GLOBALCLASS);
 
     /* Other non-null values must be set by caller */
     icon_internal = wc->hIconSm ? 0 : create_small_icon( wc->hIcon );
@@ -673,6 +673,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         req->local      = class->local;
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );
+        req->fnid       = fnid;
         req->name_offset = version->Length / sizeof(WCHAR);
         ret = !wine_server_call_err( req );
         locator = reply->locator;
@@ -1109,6 +1110,7 @@ static void register_builtin( enum ntuser_client_procs proc )
         .lpfnWndProc = BUILTIN_WINPROC( proc ),
     };
 
+    if (descr->atom) return; /* already registered */
     if (descr->cursor)
         class.hCursor = LoadImageW( 0, (const WCHAR *)descr->cursor, IMAGE_CURSOR,
                                     0, 0, LR_SHARED | LR_DEFAULTSIZE );
@@ -1116,7 +1118,7 @@ static void register_builtin( enum ntuser_client_procs proc )
     asciiz_to_unicode( nameW, descr->name );
     RtlInitUnicodeString( &name, nameW );
 
-    if ((descr->atom = NtUserRegisterClassExWOW( &class, &name, &version, NULL, 1, 0, NULL ))) return;
+    if ((descr->atom = NtUserRegisterClassExWOW( &class, &name, &version, NULL, MAKE_FNID(proc), 0, NULL ))) return;
     if (class.hCursor) NtUserDestroyCursor( class.hCursor, 0 );
 }
 
