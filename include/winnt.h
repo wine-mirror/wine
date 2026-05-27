@@ -7127,26 +7127,240 @@ typedef enum _FIRMWARE_TYPE
 #define BitScanReverse _BitScanReverse
 #define BitScanReverse64 _BitScanReverse64
 #define InterlockedAdd _InlineInterlockedAdd
+#define InterlockedAdd64 _InlineInterlockedAdd64
 #define InterlockedAnd _InterlockedAnd
+#define InterlockedAnd8 _InterlockedAnd8
+#define InterlockedAnd16 _InterlockedAnd16
 #define InterlockedAnd64 _InterlockedAnd64
 #define InterlockedCompareExchange _InterlockedCompareExchange
+#define InterlockedCompareExchange8 _InterlockedCompareExchange8
+#define InterlockedCompareExchange16 _InterlockedCompareExchange16
 #define InterlockedCompareExchange64 _InterlockedCompareExchange64
 #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
 #define InterlockedDecrement _InterlockedDecrement
 #define InterlockedDecrement16 _InterlockedDecrement16
 #define InterlockedDecrement64 _InterlockedDecrement64
 #define InterlockedExchange _InterlockedExchange
+#define InterlockedExchange8 _InterlockedExchange8
+#define InterlockedExchange16 _InterlockedExchange16
+#define InterlockedExchange64 _InterlockedExchange64
+#define InterlockedExchangePointer _InterlockedExchangePointer
 #define InterlockedExchangeAdd _InterlockedExchangeAdd
+#define InterlockedExchangeAdd8 _InterlockedExchangeAdd8
 #define InterlockedExchangeAdd16 _InterlockedExchangeAdd16
 #define InterlockedExchangeAdd64 _InterlockedExchangeAdd64
-#define InterlockedExchangePointer _InterlockedExchangePointer
 #define InterlockedIncrement _InterlockedIncrement
 #define InterlockedIncrement16 _InterlockedIncrement16
 #define InterlockedIncrement64 _InterlockedIncrement64
 #define InterlockedOr _InterlockedOr
+#define InterlockedOr8 _InterlockedOr8
+#define InterlockedOr16 _InterlockedOr16
 #define InterlockedOr64 _InterlockedOr64
 #define InterlockedXor _InterlockedXor
+#define InterlockedXor8 _InterlockedXor8
+#define InterlockedXor16 _InterlockedXor16
 #define InterlockedXor64 _InterlockedXor64
+
+#if defined(__arm__) || defined(__aarch64__) || defined(__arm64ec__)
+#define InterlockedAddAcquire _InterlockedAdd_acq
+#define InterlockedAddNoFence _InterlockedAdd_nf
+#define InterlockedAddRelease _InterlockedAdd_rel
+#define InterlockedAddAcquire64 _InterlockedAdd64_acq
+#define InterlockedAddNoFence64 _InterlockedAdd64_nf
+#define InterlockedAddRelease64 _InterlockedAdd64_rel
+#define InterlockedAndAcquire _InterlockedAnd_acq
+#define InterlockedAndNoFence _InterlockedAnd_nf
+#define InterlockedAndRelease _InterlockedAnd_rel
+#define InterlockedAndAcquire8 _InterlockedAnd8_acq
+#define InterlockedAndNoFence8 _InterlockedAnd8_nf
+#define InterlockedAndRelease8 _InterlockedAnd8_rel
+#define InterlockedAndAcquire16 _InterlockedAnd16_acq
+#define InterlockedAndNoFence16 _InterlockedAnd16_nf
+#define InterlockedAndRelease16 _InterlockedAnd16_rel
+#define InterlockedAndAcquire64 _InterlockedAnd64_acq
+#define InterlockedAndRelease64 _InterlockedAnd64_rel
+#define InterlockedAndNoFence64 _InterlockedAnd64_nf
+#define InterlockedAnd64Acquire _InterlockedAnd64_acq
+#define InterlockedAnd64NoFence _InterlockedAnd64_nf
+#define InterlockedAnd64Release _InterlockedAnd64_rel
+#define InterlockedCompareExchangeAcquire _InterlockedCompareExchange_acq
+#define InterlockedCompareExchangeNoFence _InterlockedCompareExchange_nf
+#define InterlockedCompareExchangeRelease _InterlockedCompareExchange_rel
+#define InterlockedCompareExchangeAcquire8 _InterlockedCompareExchange8_acq
+#define InterlockedCompareExchangeNoFence8 _InterlockedCompareExchange8_nf
+#define InterlockedCompareExchangeRelease8 _InterlockedCompareExchange8_rel
+#define InterlockedCompareExchangeAcquire16 _InterlockedCompareExchange16_acq
+#define InterlockedCompareExchangeNoFence16 _InterlockedCompareExchange16_nf
+#define InterlockedCompareExchangeRelease16 _InterlockedCompareExchange16_rel
+#define InterlockedCompareExchangeAcquire64 _InterlockedCompareExchange64_acq
+#define InterlockedCompareExchangeNoFence64 _InterlockedCompareExchange64_nf
+#define InterlockedCompareExchangeRelease64 _InterlockedCompareExchange64_rel
+#ifdef _WIN64
+#define InterlockedCompareExchange128 _InterlockedCompareExchange128
+#define InterlockedCompareExchangeAcquire128 _InterlockedCompareExchange128_acq
+#define InterlockedCompareExchangeNoFence128 _InterlockedCompareExchange128_nf
+#define InterlockedCompareExchangeRelease128 _InterlockedCompareExchange128_rel
+#endif
+#define InterlockedCompareExchangePointerAcquire _InterlockedCompareExchangePointer_acq
+#define InterlockedCompareExchangePointerNoFence _InterlockedCompareExchangePointer_nf
+#define InterlockedCompareExchangePointerRelease _InterlockedCompareExchangePointer_rel
+#define InterlockedDecrementAcquire _InterlockedDecrement_acq
+#define InterlockedDecrementNoFence _InterlockedDecrement_nf
+#define InterlockedDecrementRelease _InterlockedDecrement_rel
+#define InterlockedDecrementAcquire16 _InterlockedDecrement16_acq
+#define InterlockedDecrementNoFence16 _InterlockedDecrement16_nf
+#define InterlockedDecrementRelease16 _InterlockedDecrement16_rel
+#define InterlockedDecrementAcquire64 _InterlockedDecrement64_acq
+#define InterlockedDecrementNoFence64 _InterlockedDecrement64_nf
+#define InterlockedDecrementRelease64 _InterlockedDecrement64_rel
+#define InterlockedExchangeAcquire _InterlockedExchange_acq
+#define InterlockedExchangeNoFence _InterlockedExchange_nf
+#define InterlockedExchangeAcquire8 _InterlockedExchange8_acq
+#define InterlockedExchangeNoFence8 _InterlockedExchange8_nf
+#define InterlockedExchangeAcquire16 _InterlockedExchange16_acq
+#define InterlockedExchangeNoFence16 _InterlockedExchange16_nf
+#define InterlockedExchangeAcquire64 _InterlockedExchange64_acq
+#define InterlockedExchangeNoFence64 _InterlockedExchange64_nf
+#define InterlockedExchangePointerAcquire _InterlockedExchangePointer_acq
+#define InterlockedExchangePointerNoFence _InterlockedExchangePointer_nf
+#define InterlockedExchangeAddAcquire _InterlockedExchangeAdd_acq
+#define InterlockedExchangeAddNoFence _InterlockedExchangeAdd_nf
+#define InterlockedExchangeAddRelease _InterlockedExchangeAdd_rel
+#define InterlockedExchangeAddAcquire64 _InterlockedExchangeAdd64_acq
+#define InterlockedExchangeAddNoFence64 _InterlockedExchangeAdd64_nf
+#define InterlockedExchangeAddRelease64 _InterlockedExchangeAdd64_rel
+#define InterlockedIncrementAcquire _InterlockedIncrement_acq
+#define InterlockedIncrementNoFence _InterlockedIncrement_nf
+#define InterlockedIncrementRelease _InterlockedIncrement_rel
+#define InterlockedIncrementAcquire16 _InterlockedIncrement16_acq
+#define InterlockedIncrementNoFence16 _InterlockedIncrement16_nf
+#define InterlockedIncrementRelease16 _InterlockedIncrement16_rel
+#define InterlockedIncrementAcquire64 _InterlockedIncrement64_acq
+#define InterlockedIncrementNoFence64 _InterlockedIncrement64_nf
+#define InterlockedIncrementRelease64 _InterlockedIncrement64_rel
+#define InterlockedOrAcquire _InterlockedOr_acq
+#define InterlockedOrNoFence _InterlockedOr_nf
+#define InterlockedOrRelease _InterlockedOr_rel
+#define InterlockedOrAcquire8 _InterlockedOr8_acq
+#define InterlockedOrNoFence8 _InterlockedOr8_nf
+#define InterlockedOrRelease8 _InterlockedOr8_rel
+#define InterlockedOrAcquire16 _InterlockedOr16_acq
+#define InterlockedOrNoFence16 _InterlockedOr16_nf
+#define InterlockedOrRelease16 _InterlockedOr16_rel
+#define InterlockedOrAcquire64 _InterlockedOr64_acq
+#define InterlockedOrNoFence64 _InterlockedOr64_nf
+#define InterlockedOrRelease64 _InterlockedOr64_rel
+#define InterlockedXorAcquire _InterlockedXor_acq
+#define InterlockedXorNoFence _InterlockedXor_nf
+#define InterlockedXorRelease _InterlockedXor_rel
+#define InterlockedXorAcquire8 _InterlockedXor8_acq
+#define InterlockedXorNoFence8 _InterlockedXor8_nf
+#define InterlockedXorRelease8 _InterlockedXor8_rel
+#define InterlockedXorAcquire16 _InterlockedXor16_acq
+#define InterlockedXorNoFence16 _InterlockedXor16_nf
+#define InterlockedXorRelease16 _InterlockedXor16_rel
+#define InterlockedXorAcquire64 _InterlockedXor64_acq
+#define InterlockedXorNoFence64 _InterlockedXor64_nf
+#define InterlockedXorRelease64 _InterlockedXor64_rel
+#else
+#define InterlockedAddAcquire _InlineInterlockedAdd
+#define InterlockedAddNoFence _InlineInterlockedAdd
+#define InterlockedAddRelease _InlineInterlockedAdd
+#define InterlockedAddAcquire64 _InlineInterlockedAdd64
+#define InterlockedAddNoFence64 _InlineInterlockedAdd64
+#define InterlockedAddRelease64 _InlineInterlockedAdd64
+#define InterlockedAndAcquire _InterlockedAnd
+#define InterlockedAndNoFence _InterlockedAnd
+#define InterlockedAndRelease _InterlockedAnd
+#define InterlockedAndAcquire8 _InterlockedAnd8
+#define InterlockedAndNoFence8 _InterlockedAnd8
+#define InterlockedAndRelease8 _InterlockedAnd8
+#define InterlockedAndAcquire16 InterlockedAnd16
+#define InterlockedAndNoFence16 InterlockedAnd16
+#define InterlockedAndRelease16 InterlockedAnd16
+#define InterlockedAnd64Acquire _InterlockedAnd64
+#define InterlockedAnd64NoFence _InterlockedAnd64
+#define InterlockedAnd64Release _InterlockedAnd64
+#define InterlockedCompareExchangeAcquire _InterlockedCompareExchange
+#define InterlockedCompareExchangeNoFence _InterlockedCompareExchange
+#define InterlockedCompareExchangeRelease _InterlockedCompareExchange
+#define InterlockedCompareExchangeAcquire8 _InterlockedCompareExchange8
+#define InterlockedCompareExchangeNoFence8 _InterlockedCompareExchange8
+#define InterlockedCompareExchangeRelease8 _InterlockedCompareExchange8
+#define InterlockedCompareExchangeAcquire16 _InterlockedCompareExchange16
+#define InterlockedCompareExchangeNoFence16 _InterlockedCompareExchange16
+#define InterlockedCompareExchangeRelease16 _InterlockedCompareExchange16
+#define InterlockedCompareExchangeAcquire64 InterlockedCompareExchange64
+#define InterlockedCompareExchangeNoFence64 InterlockedCompareExchange64
+#define InterlockedCompareExchangeRelease64 InterlockedCompareExchange64
+#ifdef _WIN64
+#define InterlockedCompareExchange128 _InterlockedCompareExchange128
+#define InterlockedCompareExchangeAcquire128 _InterlockedCompareExchange128
+#define InterlockedCompareExchangeNoFence128 _InterlockedCompareExchange128
+#define InterlockedCompareExchangeRelease128 _InterlockedCompareExchange128
+#endif
+#define InterlockedCompareExchangePointerAcquire _InterlockedCompareExchangePointer
+#define InterlockedCompareExchangePointerNoFence _InterlockedCompareExchangePointer
+#define InterlockedCompareExchangePointerRelease _InterlockedCompareExchangePointer
+#define InterlockedDecrementAcquire _InterlockedDecrement
+#define InterlockedDecrementNoFence _InterlockedDecrement
+#define InterlockedDecrementRelease _InterlockedDecrement
+#define InterlockedDecrementAcquire16 _InterlockedDecrement16
+#define InterlockedDecrementNoFence16 _InterlockedDecrement16
+#define InterlockedDecrementRelease16 _InterlockedDecrement16
+#define InterlockedDecrementAcquire64 _InterlockedDecrement64
+#define InterlockedDecrementNoFence64 _InterlockedDecrement64
+#define InterlockedDecrementRelease64 _InterlockedDecrement64
+#define InterlockedExchangeAcquire _InterlockedExchange
+#define InterlockedExchangeNoFence _InterlockedExchange
+#define InterlockedExchangeAcquire8 InterlockedExchange8
+#define InterlockedExchangeNoFence8 InterlockedExchange8
+#define InterlockedExchangeAcquire16 InterlockedExchange16
+#define InterlockedExchangeNoFence16 InterlockedExchange16
+#define InterlockedExchangeAcquire64 InterlockedExchange64
+#define InterlockedExchangeNoFence64 InterlockedExchange64
+#define InterlockedExchangePointerNoFence _InterlockedExchangePointer
+#define InterlockedExchangePointerAcquire _InterlockedExchangePointer
+#define InterlockedExchangeAddAcquire _InterlockedExchangeAdd
+#define InterlockedExchangeAddNoFence _InterlockedExchangeAdd
+#define InterlockedExchangeAddRelease _InterlockedExchangeAdd
+#define InterlockedExchangeAddAcquire64 _InterlockedExchangeAdd64
+#define InterlockedExchangeAddNoFence64 _InterlockedExchangeAdd64
+#define InterlockedExchangeAddRelease64 _InterlockedExchangeAdd64
+#define InterlockedIncrementAcquire _InterlockedIncrement
+#define InterlockedIncrementNoFence _InterlockedIncrement
+#define InterlockedIncrementRelease _InterlockedIncrement
+#define InterlockedIncrementAcquire16 _InterlockedIncrement16
+#define InterlockedIncrementNoFence16 _InterlockedIncrement16
+#define InterlockedIncrementRelease16 _InterlockedIncrement16
+#define InterlockedIncrementAcquire64 _InterlockedIncrement64
+#define InterlockedIncrementNoFence64 _InterlockedIncrement64
+#define InterlockedIncrementRelease64 _InterlockedIncrement64
+#define InterlockedOrAcquire _InterlockedOr
+#define InterlockedOrNoFence _InterlockedOr
+#define InterlockedOrRelease _InterlockedOr
+#define InterlockedOrAcquire8 _InterlockedOr8
+#define InterlockedOrNoFence8 _InterlockedOr8
+#define InterlockedOrRelease8 _InterlockedOr8
+#define InterlockedOrAcquire16 InterlockedOr16
+#define InterlockedOrNoFence16 InterlockedOr16
+#define InterlockedOrRelease16 InterlockedOr16
+#define InterlockedOr64Acquire _InterlockedOr64
+#define InterlockedOr64NoFence _InterlockedOr64
+#define InterlockedOr64Release _InterlockedOr64
+#define InterlockedXorAcquire _InterlockedXor
+#define InterlockedXorNoFence _InterlockedXor
+#define InterlockedXorRelease _InterlockedXor
+#define InterlockedXorAcquire8 _InterlockedXor8
+#define InterlockedXorNoFence8 _InterlockedXor8
+#define InterlockedXorRelease8 _InterlockedXor8
+#define InterlockedXorAcquire16 _InterlockedXor16
+#define InterlockedXorNoFence16 _InterlockedXor16
+#define InterlockedXorRelease16 _InterlockedXor16
+#define InterlockedXor64Acquire _InterlockedXor64
+#define InterlockedXor64NoFence _InterlockedXor64
+#define InterlockedXor64Release _InterlockedXor64
+#endif
 
 #ifdef _MSC_VER
 
@@ -7460,12 +7674,32 @@ static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
     return __sync_fetch_and_and( dest, val );
 }
 
+static FORCEINLINE char WINAPI InterlockedAnd8( char volatile *dest, char val )
+{
+    return __sync_fetch_and_and( dest, val );
+}
+
+static FORCEINLINE short WINAPI InterlockedAnd16( short volatile *dest, short val )
+{
+    return __sync_fetch_and_and( dest, val );
+}
+
 static FORCEINLINE LONGLONG WINAPI InterlockedAnd64( LONGLONG volatile *dest, LONGLONG val )
 {
     return __sync_fetch_and_and( dest, val );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+
+static FORCEINLINE char WINAPI InterlockedCompareExchange8( char volatile *dest, char xchg, char compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+
+static FORCEINLINE short WINAPI InterlockedCompareExchange16( short volatile *dest, short xchg, short compare )
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
@@ -7494,7 +7728,40 @@ static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG va
     return ret;
 }
 
+static FORCEINLINE char WINAPI InterlockedExchange8( char volatile *dest, char val )
+{
+    char ret;
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+    ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
+#elif defined(__i386__) || defined(__x86_64__)
+    __asm__ __volatile__( "lock; xchgb %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+#else
+    do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
+#endif
+    return ret;
+}
+
+static FORCEINLINE short WINAPI InterlockedExchange16( short volatile *dest, short val )
+{
+    short ret;
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+    ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
+#elif defined(__i386__) || defined(__x86_64__)
+    __asm__ __volatile__( "lock; xchgw %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+#else
+    do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
+#endif
+    return ret;
+}
+
 static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+{
+    return __sync_fetch_and_add( dest, incr );
+}
+
+static FORCEINLINE char WINAPI InterlockedExchangeAdd8( char volatile *dest, char incr )
 {
     return __sync_fetch_and_add( dest, incr );
 }
@@ -7559,12 +7826,32 @@ static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
     return __sync_fetch_and_or( dest, val );
 }
 
+static FORCEINLINE char WINAPI InterlockedOr8( char volatile *dest, char val )
+{
+    return __sync_fetch_and_or( dest, val );
+}
+
+static FORCEINLINE short WINAPI InterlockedOr16( short volatile *dest, short val )
+{
+    return __sync_fetch_and_or( dest, val );
+}
+
 static FORCEINLINE LONGLONG WINAPI InterlockedOr64( LONGLONG volatile *dest, LONGLONG val )
 {
     return __sync_fetch_and_or( dest, val );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedXor( LONG volatile *dest, LONG val )
+{
+    return __sync_fetch_and_xor( dest, val );
+}
+
+static FORCEINLINE char WINAPI InterlockedXor8( char volatile *dest, char val )
+{
+    return __sync_fetch_and_xor( dest, val );
+}
+
+static FORCEINLINE short WINAPI InterlockedXor16( short volatile *dest, short val )
 {
     return __sync_fetch_and_xor( dest, val );
 }
@@ -7578,6 +7865,107 @@ static FORCEINLINE void MemoryBarrier(void)
 {
     __sync_synchronize();
 }
+
+#if defined(__arm__) || defined(__aarch64__)
+
+static FORCEINLINE LONG WINAPI InterlockedAddAcquire( LONG volatile *dest, LONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedAddNoFence( LONG volatile *dest, LONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedAddRelease( LONG volatile *dest, LONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAddAcquire64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAddNoFence64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAddRelease64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_add_fetch( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedAndAcquire( LONG volatile *dest, LONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedAndNoFence( LONG volatile *dest, LONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedAndRelease( LONG volatile *dest, LONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE char WINAPI InterlockedAndAcquire8( char volatile *dest, char val ) { return __atomic_fetch_and( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE char WINAPI InterlockedAndNoFence8( char volatile *dest, char val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE char WINAPI InterlockedAndRelease8( char volatile *dest, char val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE short WINAPI InterlockedAndAcquire16( short volatile *dest, short val ) { return __atomic_fetch_and( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedAndNoFence16( short volatile *dest, short val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedAndRelease16( short volatile *dest, short val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAndAcquire64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAndNoFence64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedAndRelease64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_and( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedCompareExchangeAcquire( LONG volatile *dest, LONG xchg, LONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONG WINAPI InterlockedCompareExchangeNoFence( LONG volatile *dest, LONG xchg, LONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONG WINAPI InterlockedCompareExchangeRelease( LONG volatile *dest, LONG xchg, LONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE char WINAPI InterlockedCompareExchangeAcquire8( char volatile *dest, char xchg, char compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE char WINAPI InterlockedCompareExchangeNoFence8( char volatile *dest, char xchg, char compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE char WINAPI InterlockedCompareExchangeRelease8( char volatile *dest, char xchg, char compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE short WINAPI InterlockedCompareExchangeAcquire16( short volatile *dest, short xchg, short compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE short WINAPI InterlockedCompareExchangeNoFence16( short volatile *dest, short xchg, short compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE short WINAPI InterlockedCompareExchangeRelease16( short volatile *dest, short xchg, short compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchangeAcquire64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchangeNoFence64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchangeRelease64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); return compare; }
+#ifdef _WIN64
+static FORCEINLINE unsigned char InterlockedCompareExchangeAcquire128( volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare ) { return __atomic_compare_exchange_n( (__int128 *)dest, (__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); }
+static FORCEINLINE unsigned char InterlockedCompareExchangeNoFence128( volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare ) { return __atomic_compare_exchange_n( (__int128 *)dest, (__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); }
+static FORCEINLINE unsigned char InterlockedCompareExchangeRelease128( volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare ) { return __atomic_compare_exchange_n( (__int128 *)dest, (__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); }
+#endif
+static FORCEINLINE void * WINAPI InterlockedCompareExchangePointerAcquire( void *volatile *dest, void *xchg, void *compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE void * WINAPI InterlockedCompareExchangePointerNoFence( void *volatile *dest, void *xchg, void *compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE void * WINAPI InterlockedCompareExchangePointerRelease( void *volatile *dest, void *xchg, void *compare ) { __atomic_compare_exchange_n( dest, &compare, xchg, 0, __ATOMIC_RELEASE, __ATOMIC_RELAXED ); return compare; }
+static FORCEINLINE LONG WINAPI InterlockedDecrementAcquire( LONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedDecrementNoFence( LONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedDecrementRelease( LONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELEASE ); }
+static FORCEINLINE short WINAPI InterlockedDecrementAcquire16( short volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedDecrementNoFence16( short volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedDecrementRelease16( short volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedDecrementAcquire64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedDecrementNoFence64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedDecrementRelease64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, -1, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedExchangeAcquire( LONG volatile *dest, LONG val ) { return __atomic_exchange_n( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedExchangeNoFence( LONG volatile *dest, LONG val ) { return __atomic_exchange_n( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE char WINAPI InterlockedExchangeAcquire8( char volatile *dest, char val ) { return __atomic_exchange_n( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE char WINAPI InterlockedExchangeNoFence8( char volatile *dest, char val ) { return __atomic_exchange_n( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedExchangeAcquire16( short volatile *dest, short val ) { return __atomic_exchange_n( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedExchangeNoFence16( short volatile *dest, short val ) { return __atomic_exchange_n( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAcquire64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_exchange_n( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeNoFence64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_exchange_n( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE void * WINAPI InterlockedExchangePointerAcquire( void *volatile *dest, void *val ) { return __atomic_exchange_n( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE void * WINAPI InterlockedExchangePointerNoFence( void *volatile *dest, void *val ) { return __atomic_exchange_n( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedExchangeAddAcquire( LONG volatile *dest, LONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedExchangeAddNoFence( LONG volatile *dest, LONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedExchangeAddRelease( LONG volatile *dest, LONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAddAcquire64( LONGLONG volatile *dest, LONGLONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAddNoFence64( LONGLONG volatile *dest, LONGLONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedExchangeAddRelease64( LONGLONG volatile *dest, LONGLONG incr ) { return __atomic_fetch_add( dest, incr, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedIncrementAcquire( LONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedIncrementNoFence( LONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedIncrementRelease( LONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELEASE ); }
+static FORCEINLINE short WINAPI InterlockedIncrementAcquire16( short volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedIncrementNoFence16( short volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedIncrementRelease16( short volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedIncrementAcquire64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedIncrementNoFence64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedIncrementRelease64( LONGLONG volatile *dest ) { return __atomic_add_fetch( dest, 1, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedOrAcquire( LONG volatile *dest, LONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedOrNoFence( LONG volatile *dest, LONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedOrRelease( LONG volatile *dest, LONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE char WINAPI InterlockedOrAcquire8( char volatile *dest, char val ) { return __atomic_fetch_or( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE char WINAPI InterlockedOrNoFence8( char volatile *dest, char val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE char WINAPI InterlockedOrRelease8( char volatile *dest, char val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE short WINAPI InterlockedOrAcquire16( short volatile *dest, short val ) { return __atomic_fetch_or( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedOrNoFence16( short volatile *dest, short val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedOrRelease16( short volatile *dest, short val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedOrAcquire64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedOrNoFence64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedOrRelease64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_or( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONG WINAPI InterlockedXorAcquire( LONG volatile *dest, LONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONG WINAPI InterlockedXorNoFence( LONG volatile *dest, LONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONG WINAPI InterlockedXorRelease( LONG volatile *dest, LONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE char WINAPI InterlockedXorAcquire8( char volatile *dest, char val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE char WINAPI InterlockedXorNoFence8( char volatile *dest, char val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE char WINAPI InterlockedXorRelease8( char volatile *dest, char val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE short WINAPI InterlockedXorAcquire16( short volatile *dest, short val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE short WINAPI InterlockedXorNoFence16( short volatile *dest, short val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE short WINAPI InterlockedXorRelease16( short volatile *dest, short val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELEASE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedXorAcquire64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_ACQUIRE ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedXorNoFence64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELAXED ); }
+static FORCEINLINE LONGLONG WINAPI InterlockedXorRelease64( LONGLONG volatile *dest, LONGLONG val ) { return __atomic_fetch_xor( dest, val, __ATOMIC_RELEASE ); }
+
+#endif  /* defined(__arm__) || defined(__aarch64__) */
 
 #if defined(__x86_64__) || defined(__i386__)
 /* On x86, Support old GCC with either no or buggy (GCC BZ#81316) __atomic_* support */
@@ -7672,8 +8060,6 @@ static FORCEINLINE DECLSPEC_NORETURN void __fastfail(unsigned int code)
 #endif  /* __GNUC__ */
 
 #ifdef _WIN64
-
-#define InterlockedCompareExchange128 _InterlockedCompareExchange128
 
 #if defined(_MSC_VER) && (!defined(__clang__) || !defined(__aarch64__) || __has_builtin(_InterlockedCompareExchange128))
 
