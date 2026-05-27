@@ -1487,7 +1487,108 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
 
 static void add_enum_typeinfo(struct sltg_typelib *typelib, type_t *type)
 {
-    error("add_enum_typeinfo: %s not implemented\n", type->name);
+    struct sltg_data data, *var_data = NULL;
+    struct sltg_hrefmap hrefmap;
+    const char *index_name;
+    struct sltg_typeinfo_header ti;
+    struct sltg_member_header member;
+    struct sltg_tail tail;
+    int member_offset, var_count = 0;
+    short *type_desc_offset = NULL;
+
+    if (type->typelib_idx != -1) return;
+
+    chat("add_enum_typeinfo: type %p, type->name %s\n", type, type->name);
+
+    type->typelib_idx = typelib->block_count;
+
+    hrefmap.href_count = 0;
+    hrefmap.href = NULL;
+
+    if (type_enum_get_values(type))
+    {
+        int i = 0;
+        var_t *var;
+
+        var_count = list_count(type_enum_get_values(type));
+
+        var_data = xmalloc(var_count * sizeof(*var_data));
+        type_desc_offset = xmalloc(var_count * sizeof(*type_desc_offset));
+
+        LIST_FOR_EACH_ENTRY(var, type_enum_get_values(type), var_t, entry)
+        {
+            short base_offset;
+
+            chat("add_enum_typeinfo: var %p (%s), type %p (%s)\n",
+                 var, var->name, var->declspec.type, var->declspec.type->name);
+
+            init_sltg_data(&var_data[i]);
+
+            base_offset = (i + 1) * (sizeof(struct sltg_variable) + sizeof(int));
+            type_desc_offset[i] = write_var_desc(typelib, &var_data[i], var->declspec.type, 0, 0,
+                                                 base_offset, NULL, &hrefmap);
+            dump_var_desc(var_data[i].data, var_data[i].size);
+            i++;
+        }
+    }
+
+    init_sltg_data(&data);
+
+    index_name = add_typeinfo_block(typelib, type, TKIND_ENUM);
+
+    init_typeinfo(&ti, type, TKIND_ENUM, &hrefmap);
+    append_data(&data, &ti, sizeof(ti));
+
+    write_hrefmap(&data, &hrefmap);
+
+    member_offset = data.size;
+
+    member.res00 = 0x0001;
+    member.res02 = 0xffff;
+    member.res04 = 0x01;
+    member.extra = var_count * (sizeof(struct sltg_variable) + sizeof(int));
+    append_data(&data, &member, sizeof(member));
+
+    if (type_enum_get_values(type))
+    {
+        int i = 0;
+        short next = member_offset;
+        var_t *var;
+
+        LIST_FOR_EACH_ENTRY(var, type_enum_get_values(type), var_t, entry)
+        {
+            struct sltg_variable variable;
+
+            next += sizeof(variable);
+
+            variable.magic = 0x2a; /* always write flags to simplify calculations */
+            variable.name = add_name(&typelib->name_table, var->name);
+            variable.byte_offs = next - member_offset;
+            variable.flags = 0x12;
+            variable.type = VT_INT;
+            variable.next = i < var_count - 1 ? variable.byte_offs + sizeof(int) : -1;
+            variable.memid = 0x40000000 + i;
+            variable.helpcontext = -2; /* 0xfffe */
+            variable.helpstring = -1;
+            variable.varflags = 0;
+
+            append_data(&data, &variable, sizeof(variable));
+            append_data(&data, &var->eval->cval, sizeof(var->eval->cval));
+
+            next += sizeof(int);
+            i++;
+        }
+    }
+
+    init_sltg_tail(&tail);
+    tail.cVars = var_count;
+    tail.vars_off = 0;
+    tail.vars_bytes = 0;
+    tail.cbSizeInstance = sizeof(int);
+    tail.type_bytes = data.size - member_offset - sizeof(member);
+    append_data(&data, &tail, sizeof(tail));
+
+    add_block(typelib, data.data, data.size, index_name);
 }
 
 static void add_union_typeinfo(struct sltg_typelib *typelib, type_t *type)
