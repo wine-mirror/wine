@@ -2821,7 +2821,7 @@
 @ stub -arch=win64 ?_Iput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEAD_K@Z
 @ stub -arch=win32 ?_Iput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPADI@Z
 @ cdecl ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isinf
-@ stub ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z
+@ cdecl ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isinf
 @ stub ?_Isinf@?$_Ctraits@O@std@@SA_NO@Z
 @ cdecl ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isnan
 @ cdecl ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isnan
