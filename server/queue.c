@@ -2419,24 +2419,24 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     }
 
     /* send numpad vkeys if NumLock is active */
-    if ((input->kbd.vkey & KBDNUMPAD) && (desktop->keystate[VK_NUMLOCK] & 0x01) &&
-        !(desktop->keystate[VK_SHIFT] & 0x80))
+    if ((input->kbd.vkey & KBDNUMPAD) && (desktop_shm->keystate[VK_NUMLOCK] & 0x01) &&
+        !(desktop_shm->keystate[VK_SHIFT] & 0x80))
     {
-       switch (vkey)
-       {
-       case VK_INSERT: hook_vkey = vkey = VK_NUMPAD0; break;
-       case VK_END:    hook_vkey = vkey = VK_NUMPAD1; break;
-       case VK_DOWN:   hook_vkey = vkey = VK_NUMPAD2; break;
-       case VK_NEXT:   hook_vkey = vkey = VK_NUMPAD3; break;
-       case VK_LEFT:   hook_vkey = vkey = VK_NUMPAD4; break;
-       case VK_CLEAR:  hook_vkey = vkey = VK_NUMPAD5; break;
-       case VK_RIGHT:  hook_vkey = vkey = VK_NUMPAD6; break;
-       case VK_HOME:   hook_vkey = vkey = VK_NUMPAD7; break;
-       case VK_UP:     hook_vkey = vkey = VK_NUMPAD8; break;
-       case VK_PRIOR:  hook_vkey = vkey = VK_NUMPAD9; break;
-       case VK_DELETE: hook_vkey = vkey = VK_DECIMAL; break;
-       default: break;
-       }
+        switch (vkey)
+        {
+        case VK_INSERT: hook_vkey = vkey = VK_NUMPAD0; break;
+        case VK_END:    hook_vkey = vkey = VK_NUMPAD1; break;
+        case VK_DOWN:   hook_vkey = vkey = VK_NUMPAD2; break;
+        case VK_NEXT:   hook_vkey = vkey = VK_NUMPAD3; break;
+        case VK_LEFT:   hook_vkey = vkey = VK_NUMPAD4; break;
+        case VK_CLEAR:  hook_vkey = vkey = VK_NUMPAD5; break;
+        case VK_RIGHT:  hook_vkey = vkey = VK_NUMPAD6; break;
+        case VK_HOME:   hook_vkey = vkey = VK_NUMPAD7; break;
+        case VK_UP:     hook_vkey = vkey = VK_NUMPAD8; break;
+        case VK_PRIOR:  hook_vkey = vkey = VK_NUMPAD9; break;
+        case VK_DELETE: hook_vkey = vkey = VK_DECIMAL; break;
+        default: break;
+        }
     }
 
     if (origin == IMO_HARDWARE)
