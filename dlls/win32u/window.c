@@ -1587,8 +1587,7 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
  */
 BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
 {
-    int off = FNID_OFF(fnid);
-    int len = FNID_LEN(fnid);
+    DWORD len = get_builtin_class_extra( fnid & 0x7fff );
     WND *win;
     BOOL ret;
 
@@ -1608,7 +1607,7 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
 
     if (win->private_len)
     {
-        ret = win->private_off == off && win->private_len == len;
+        ret = win->private_off == 0 && win->private_len == len;
 
         release_win_ptr( win );
         if (!ret) RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
@@ -1619,10 +1618,10 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
     {
         req->handle = wine_server_user_handle( hwnd );
         req->offset = GWLP_FNID_INTERNAL;
-        req->new_info = fnid;
+        req->new_info = len;
         if ((ret = !wine_server_call_err( req )))
         {
-            win->private_off = off;
+            win->private_off = 0;
             win->private_len = len;
         }
     }

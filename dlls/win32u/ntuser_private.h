@@ -199,6 +199,7 @@ struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce );
 extern atom_t wine_server_add_atom( void *req, UNICODE_STRING *str );
 extern BOOL is_desktop_class( UNICODE_STRING *name );
 extern BOOL is_message_class( UNICODE_STRING *name );
+extern DWORD get_builtin_class_extra( enum ntuser_client_procs proc );
 extern void register_builtin_classes(void);
 extern void register_desktop_class(void);
 

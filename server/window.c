@@ -679,6 +679,8 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
+    win->private_off    = 0;
+    win->private_len    = 0;
     win->nb_extra_bytes = 0;
     win->extra_bytes    = NULL;
     win->shared         = NULL;
@@ -2472,8 +2474,8 @@ DECL_HANDLER(set_window_info)
         win->user_data = req->new_info;
         break;
     case GWLP_FNID_INTERNAL:
-        win->private_off = FNID_OFF(req->new_info);
-        win->private_len = FNID_LEN(req->new_info);
+        win->private_off = 0;
+        win->private_len = req->new_info;
         break;
     default:
         if (req->size > sizeof(req->new_info) || req->offset < 0 ||

@@ -399,7 +399,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
 
-            NtUserSetWindowFNID( hwnd, MAKE_FNID(0, HICON_GWL_OFFSET + sizeof(HANDLE)) );
+            NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_STATIC) );
 
             if (full_style & SS_SUNKEN || style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT)
                 SetWindowLongW( hwnd, GWL_EXSTYLE,
