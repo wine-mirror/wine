@@ -2073,6 +2073,11 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         return E_OUTOFMEMORY;
     memset(class_desc->funcs, 0, class_desc->func_cnt*sizeof(*class_desc->funcs));
 
+    /* Class members have their own namespace: drop the global Dim/Const scope
+       before compiling the methods. Same-class collisions are caught below. */
+    ctx->dim_decls = ctx->dim_decls_tail = NULL;
+    ctx->const_decls = NULL;
+
     for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
             if(func_prop_decl->is_default) {

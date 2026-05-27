@@ -3610,10 +3610,8 @@ static void test_redefine_scope(void)
     }
 
     for (i = 0; i < ARRAY_SIZE(valid_class_member); i++) {
-        SET_EXPECT(OnScriptError); /* Wine wrongly rejects the script; tolerate the error callback */
         hres = parse_script_wr(valid_class_member[i]);
-        todo_wine ok(hres == S_OK, "[%u] class member parse returned %08lx\n", i, hres);
-        CLEAR_CALLED(OnScriptError);
+        ok(hres == S_OK, "[%u] class member parse returned %08lx\n", i, hres);
     }
 }
 
