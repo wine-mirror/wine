@@ -1067,6 +1067,7 @@ typedef volatile struct
 {
     struct obj_locator   class;            /* object locator for the window class shared object */
     unsigned int         dpi_context;      /* DPI awareness context */
+    data_size_t          private_size;     /* length of private extra bytes range */
 } window_shm_t;
 
 typedef volatile union

@@ -1113,26 +1113,23 @@ static HWND get_last_active_popup( HWND hwnd )
     return retval;
 }
 
-static LONG_PTR get_win_data( const void *ptr, UINT size )
+static BOOL get_window_extra( HWND hwnd, WND *win, UINT offset, UINT size, LONG_PTR *ret, BOOL internal )
 {
-    if (size == sizeof(WORD))
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const window_shm_t *window_shm = NULL;
+    BOOL valid = FALSE;
+    UINT status;
+
+    while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
     {
-        WORD ret;
-        memcpy( &ret, ptr, sizeof(ret) );
-        return ret;
+        valid = size <= win->cbWndExtra && offset <= win->cbWndExtra - size &&
+                (internal || offset >= window_shm->private_size);
+        if (valid) memcpy( ret, (char *)win->wExtra + offset, size );
     }
-    else if (size == sizeof(DWORD))
-    {
-        DWORD ret;
-        memcpy( &ret, ptr, sizeof(ret) );
-        return ret;
-    }
-    else
-    {
-        LONG_PTR ret;
-        memcpy( &ret, ptr, sizeof(ret) );
-        return ret;
-    }
+
+    if (status) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+    else if (!valid) RtlSetLastWin32Error( ERROR_INVALID_INDEX );
+    return valid;
 }
 
 /* helper for set_window_long */
@@ -1227,15 +1224,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
 
     if (offset >= 0)
     {
-        if (offset > (int)(win->cbWndExtra - size) ||
-            (!internal && offset < win->private_len))
-        {
-            WARN("Invalid offset %d\n", offset );
-            release_win_ptr( win );
-            RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-            return 0;
-        }
-        retval = get_win_data( (char *)win->wExtra + offset, size );
+        if (!get_window_extra( hwnd, win, offset, size, &retval, internal )) retval = 0;
         release_win_ptr( win );
         return retval;
     }
@@ -1486,15 +1475,12 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
     case GWLP_USERDATA:
         break;
     default:
-        if (offset < 0 || offset > (int)(win->cbWndExtra - size) ||
-            (!internal && offset < win->private_len))
+        if (!get_window_extra( hwnd, win, offset, size, &retval, internal ))
         {
-            WARN("Invalid offset %d\n", offset );
             release_win_ptr( win );
-            RtlSetLastWin32Error( ERROR_INVALID_INDEX );
             return 0;
         }
-        else if (get_win_data( (char *)win->wExtra + offset, size ) == newval)
+        if (retval == newval)
         {
             /* already set to the same value */
             release_win_ptr( win );
@@ -1600,20 +1586,12 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
         return FALSE;
     }
 
-    if (win->private_len)
-    {
-        ret = win->private_len == len;
-        release_win_ptr( win );
-        if (!ret) RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
-        return ret;
-    }
-
     SERVER_START_REQ( set_window_info )
     {
         req->handle = wine_server_user_handle( hwnd );
         req->offset = GWLP_FNID_INTERNAL;
         req->new_info = len;
-        if ((ret = !wine_server_call_err( req ))) win->private_len = len;
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     release_win_ptr( win );

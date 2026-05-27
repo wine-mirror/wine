@@ -1051,6 +1051,7 @@ typedef volatile struct
 {
     struct obj_locator   class;
     unsigned int         dpi_context;
+    data_size_t          private_size;
 } window_shm_t;
 
 typedef volatile union
@@ -7112,6 +7113,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 939
+#define SERVER_PROTOCOL_VERSION 940
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

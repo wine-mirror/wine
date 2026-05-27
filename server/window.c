@@ -92,7 +92,6 @@ struct window
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
-    int              private_len;     /* length of private extra bytes range */
     int              nb_extra_bytes;  /* number of extra bytes */
     char            *extra_bytes;     /* extra bytes storage */
     window_shm_t    *shared;          /* window in session shared memory */
@@ -678,7 +677,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
-    win->private_len    = 0;
     win->nb_extra_bytes = 0;
     win->extra_bytes    = NULL;
     win->shared         = NULL;
@@ -689,8 +687,9 @@ static struct window *create_window( struct window *parent, struct window *owner
     if (!(win->shared = alloc_shared_object( sizeof(*win->shared) ))) goto failed;
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->class       = class_locator;
-        shared->dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
+        shared->class           = class_locator;
+        shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
+        shared->private_size    = 0;
     }
     SHARED_WRITE_END;
 
@@ -2399,7 +2398,7 @@ DECL_HANDLER(get_window_info)
     default:
         if (req->size > sizeof(reply->info) || req->offset < 0 ||
             req->offset > win->nb_extra_bytes - (int)req->size ||
-            req->offset < win->private_len)
+            req->offset < win->shared->private_size)
         {
             set_win32_error( ERROR_INVALID_INDEX );
             break;
@@ -2467,7 +2466,12 @@ DECL_HANDLER(set_window_info)
         win->user_data = req->new_info;
         break;
     case GWLP_FNID_INTERNAL:
-        win->private_len = req->new_info;
+        if (win->shared->private_size) set_error( STATUS_INVALID_PARAMETER );
+        else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+        {
+            shared->private_size = req->new_info;
+        }
+        SHARED_WRITE_END;
         break;
     default:
         if (req->size > sizeof(req->new_info) || req->offset < 0 ||
