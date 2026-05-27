@@ -3592,12 +3592,28 @@ static void test_redefine_scope(void)
         L"Class S\nEnd Class\nSub Other\nDim s\nEnd Sub\n",
         L"Sub Other\nDim s\nEnd Sub\nClass S\nEnd Class\n",
     };
+    /* A class member lives in a separate namespace, so its name may collide
+     * with a global Dim or Const. Each script also calls the member to prove
+     * it stays usable. */
+    static const WCHAR *valid_class_member[] = {
+        L"Class C\nPublic Function M\nM = 42\nEnd Function\nEnd Class\n"
+        L"Dim M\nDim o : Set o = New C\nCall ok(o.M = 42, \"o.M = \" & o.M)\n",
+        L"Class C\nPublic Function M\nM = 42\nEnd Function\nEnd Class\n"
+        L"Const M = 7\nDim o : Set o = New C\nCall ok(o.M = 42, \"o.M = \" & o.M)\n",
+    };
     HRESULT hres;
     unsigned i;
 
     for (i = 0; i < ARRAY_SIZE(valid); i++) {
         hres = parse_script_wr(valid[i]);
         ok(hres == S_OK, "[%u] parse returned %08lx\n", i, hres);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(valid_class_member); i++) {
+        SET_EXPECT(OnScriptError); /* Wine wrongly rejects the script; tolerate the error callback */
+        hres = parse_script_wr(valid_class_member[i]);
+        todo_wine ok(hres == S_OK, "[%u] class member parse returned %08lx\n", i, hres);
+        CLEAR_CALLED(OnScriptError);
     }
 }
 
