@@ -60,8 +60,108 @@ struct builtin_class_descr
     INT        extra;     /* window extra bytes */
     ULONG_PTR  cursor;    /* cursor id */
     HBRUSH     brush;     /* brush or system color */
-    enum ntuser_client_procs proc;
+    ATOM       atom;      /* class atom */
 };
+
+static struct builtin_class_descr builtin_classes[] =
+{
+    [NTUSER_WNDPROC_SCROLLBAR] =
+    {
+        .name = "ScrollBar",
+        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
+        .extra = sizeof(struct scroll_bar_win_data),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_MESSAGE] =
+    {
+        .name = "Message",
+    },
+    [NTUSER_WNDPROC_MENU] =
+    {
+        .name = "#32768", /* POPUPMENU_CLASS_ATOM */
+        .style = CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,
+        .extra = sizeof(HMENU),
+        .cursor = IDC_ARROW,
+        .brush = (HBRUSH)(COLOR_MENU + 1),
+    },
+    [NTUSER_WNDPROC_DESKTOP] =
+    {
+        .name = "#32769", /* DESKTOP_CLASS_ATOM */
+        .style = CS_DBLCLKS,
+        .brush = (HBRUSH)(COLOR_BACKGROUND + 1),
+    },
+    [NTUSER_WNDPROC_DEFWND] = {0},
+    [NTUSER_WNDPROC_ICONTITLE] =
+    {
+        .name = "#32772", /* ICONTITLE_CLASS_ATOM */
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_UNKNOWN] = {0},
+    [NTUSER_WNDPROC_BUTTON] =
+    {
+        .name = "Button",
+        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
+        .extra = sizeof(UINT) + 2 * sizeof(HANDLE),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_COMBO] =
+    {
+        .name = "ComboBox",
+        .style = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_COMBOLBOX] =
+    {
+        .name = "ComboLBox",
+        .style = CS_DBLCLKS | CS_SAVEBITS,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_DIALOG] =
+    {
+        .name = "#32770", /* DIALOG_CLASS_ATOM */
+        .style = CS_SAVEBITS | CS_DBLCLKS,
+        .extra = DLGWINDOWEXTRA,
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_EDIT] =
+    {
+        .name = "Edit",
+        .style = CS_DBLCLKS | CS_PARENTDC,
+        .extra = sizeof(UINT64),
+        .cursor = IDC_IBEAM,
+    },
+    [NTUSER_WNDPROC_LISTBOX] =
+    {
+        .name = "ListBox",
+        .style = CS_DBLCLKS,
+        .extra = sizeof(void *),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_MDICLIENT] =
+    {
+        .name = "MDIClient",
+        .extra = 2 * sizeof(void *),
+        .cursor = IDC_ARROW,
+        .brush = (HBRUSH)(COLOR_APPWORKSPACE + 1),
+    },
+    [NTUSER_WNDPROC_STATIC] =
+    {
+        .name = "Static",
+        .style = CS_DBLCLKS | CS_PARENTDC,
+        .extra = 2 * sizeof(HANDLE),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_IME] =
+    {
+        .name = "IME",
+        .extra = 2 * sizeof(LONG_PTR),
+        .cursor = IDC_ARROW,
+    },
+    [NTUSER_WNDPROC_GHOST] = {0},
+};
+C_ASSERT( ARRAY_SIZE(builtin_classes) == NTUSER_NB_PROCS );
 
 typedef struct tagWINDOWPROC
 {
@@ -973,127 +1073,25 @@ WORD get_class_word( HWND hwnd, INT offset )
     return get_class_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
-static const struct builtin_class_descr desktop_builtin_class =
-{
-    .name = "#32769", /* DESKTOP_CLASS_ATOM */
-    .style = CS_DBLCLKS,
-    .proc = NTUSER_WNDPROC_DESKTOP,
-    .brush = (HBRUSH)(COLOR_BACKGROUND + 1),
-};
-
-static const struct builtin_class_descr message_builtin_class =
-{
-    .name = "Message",
-    .proc = NTUSER_WNDPROC_MESSAGE,
-};
-
-static const struct builtin_class_descr builtin_classes[] =
-{
-    /* button */
-    {
-        .name = "Button",
-        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-        .proc = NTUSER_WNDPROC_BUTTON,
-        .extra = sizeof(UINT) + 2 * sizeof(HANDLE),
-        .cursor = IDC_ARROW,
-    },
-    /* combo  */
-    {
-        .name = "ComboBox",
-        .style = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
-        .proc = NTUSER_WNDPROC_COMBO,
-        .extra = sizeof(void *),
-        .cursor = IDC_ARROW,
-    },
-    /* combolbox */
-    {
-        .name = "ComboLBox",
-        .style = CS_DBLCLKS | CS_SAVEBITS,
-        .proc = NTUSER_WNDPROC_COMBOLBOX,
-        .extra = sizeof(void *),
-        .cursor = IDC_ARROW,
-    },
-    /* dialog */
-    {
-        .name = "#32770", /* DIALOG_CLASS_ATOM */
-        .style = CS_SAVEBITS | CS_DBLCLKS,
-        .proc = NTUSER_WNDPROC_DIALOG,
-        .extra = DLGWINDOWEXTRA,
-        .cursor = IDC_ARROW,
-    },
-    /* icon title */
-    {
-        .name = "#32772", /* ICONTITLE_CLASS_ATOM */
-        .proc = NTUSER_WNDPROC_ICONTITLE,
-        .cursor = IDC_ARROW,
-    },
-    /* IME */
-    {
-        .name = "IME",
-        .proc = NTUSER_WNDPROC_IME,
-        .extra = 2 * sizeof(LONG_PTR),
-        .cursor = IDC_ARROW,
-    },
-    /* listbox  */
-    {
-        .name = "ListBox",
-        .style = CS_DBLCLKS,
-        .proc = NTUSER_WNDPROC_LISTBOX,
-        .extra = sizeof(void *),
-        .cursor = IDC_ARROW,
-    },
-    /* menu */
-    {
-        .name = "#32768", /* POPUPMENU_CLASS_ATOM */
-        .style = CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,
-        .proc = NTUSER_WNDPROC_MENU,
-        .extra = sizeof(HMENU),
-        .cursor = IDC_ARROW,
-        .brush = (HBRUSH)(COLOR_MENU + 1),
-    },
-    /* MDIClient */
-    {
-        .name = "MDIClient",
-        .proc = NTUSER_WNDPROC_MDICLIENT,
-        .extra = 2 * sizeof(void *),
-        .cursor = IDC_ARROW,
-        .brush = (HBRUSH)(COLOR_APPWORKSPACE + 1),
-    },
-    /* scrollbar */
-    {
-        .name = "ScrollBar",
-        .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-        .proc = NTUSER_WNDPROC_SCROLLBAR,
-        .extra = sizeof(struct scroll_bar_win_data),
-        .cursor = IDC_ARROW,
-    },
-    /* static */
-    {
-        .name = "Static",
-        .style = CS_DBLCLKS | CS_PARENTDC,
-        .proc = NTUSER_WNDPROC_STATIC,
-        .extra = 2 * sizeof(HANDLE),
-        .cursor = IDC_ARROW,
-    },
-};
-
 /***********************************************************************
  *           register_builtin
  *
  * Register a builtin control class.
  * This allows having both ANSI and Unicode winprocs for the same class.
  */
-static void register_builtin( const struct builtin_class_descr *descr )
+static void register_builtin( enum ntuser_client_procs proc )
 {
+    struct builtin_class_descr *descr = builtin_classes + proc;
     UNICODE_STRING name, version = { .Length = 0 };
     WCHAR nameW[64];
-    WNDCLASSEXW class = {
+    WNDCLASSEXW class =
+    {
         .cbSize = sizeof(class),
         .hInstance = user32_module,
         .style = descr->style,
         .cbWndExtra = descr->extra,
         .hbrBackground = descr->brush,
-        .lpfnWndProc = BUILTIN_WINPROC( descr->proc ),
+        .lpfnWndProc = BUILTIN_WINPROC( proc ),
     };
 
     if (descr->cursor)
@@ -1103,28 +1101,21 @@ static void register_builtin( const struct builtin_class_descr *descr )
     asciiz_to_unicode( nameW, descr->name );
     RtlInitUnicodeString( &name, nameW );
 
-    if (!NtUserRegisterClassExWOW( &class, &name, &version, NULL, 1, 0, NULL ) && class.hCursor)
-        NtUserDestroyCursor( class.hCursor, 0 );
+    if ((descr->atom = NtUserRegisterClassExWOW( &class, &name, &version, NULL, 1, 0, NULL ))) return;
+    if (class.hCursor) NtUserDestroyCursor( class.hCursor, 0 );
 }
 
 static void register_builtins(void)
 {
+    struct builtin_class_descr *edit_class = builtin_classes + NTUSER_WNDPROC_EDIT;
     ULONG ret_len, i;
     void *ret_ptr;
 
     /* 64-bit Windows use sizeof(UINT64) for all processes, while 32-bit Windows use 6 for extra
      * bytes size. Civilization II depends on the size being 6, so we use that even in wow64. */
-    const struct builtin_class_descr edit_class =
-    {
-        .name = "Edit",
-        .style = CS_DBLCLKS | CS_PARENTDC,
-        .proc = NTUSER_WNDPROC_EDIT,
-        .extra = sizeof(void *) == 4 || NtCurrentTeb()->WowTebOffset ? 6 : sizeof(UINT64),
-        .cursor = IDC_IBEAM,
-    };
+    if (sizeof(void *) == 4 || NtCurrentTeb()->WowTebOffset) edit_class->extra = 6;
 
-    for (i = 0; i < ARRAYSIZE(builtin_classes); i++) register_builtin( &builtin_classes[i] );
-    register_builtin( &edit_class );
+    for (i = 0; i < ARRAY_SIZE(builtin_classes); i++) if (builtin_classes[i].name) register_builtin( i );
     KeUserModeCallback( NtUserInitBuiltinClasses, NULL, 0, &ret_ptr, &ret_len );
 }
 
@@ -1142,6 +1133,6 @@ void register_builtin_classes(void)
  */
 void register_desktop_class(void)
 {
-    register_builtin( &desktop_builtin_class );
-    register_builtin( &message_builtin_class );
+    register_builtin( NTUSER_WNDPROC_DESKTOP );
+    register_builtin( NTUSER_WNDPROC_MESSAGE );
 }
