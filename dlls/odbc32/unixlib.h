@@ -217,6 +217,13 @@ struct environment
     BOOL   sources_system;
 };
 
+struct driver_attribute
+{
+    UINT32 id;
+    void  *value;
+    UINT32 len;
+};
+
 struct connection
 {
     struct object hdr;
@@ -228,6 +235,9 @@ struct connection
     UINT32 attr_con_timeout;
     BOOL login_timeout_set;
     UINT32 attr_login_timeout;
+    /* driver attributes */
+    struct driver_attribute *driver_attr;
+    UINT32 driver_attr_count;
 };
 
 struct statement

@@ -73,6 +73,7 @@ DEFINE_EXPECT( driver_SQLGetInfo );
 DEFINE_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
 DEFINE_EXPECT( driver_SQLConnect );
 DEFINE_EXPECT( driver_SQLGetConnectAttr );
+DEFINE_EXPECT( driver_SQLSetConnectAttr );
 DEFINE_EXPECT( driver_SQLDisconnect );
 DEFINE_EXPECT( driver_SQLDriverConnect );
 DEFINE_EXPECT( driver_SQLBrowseConnect );
@@ -176,8 +177,12 @@ static SQLRETURN WINAPI driver_SQLGetConnectAttr( SQLHDBC con, SQLINTEGER attr,
 static SQLRETURN WINAPI driver_SQLSetConnectAttr( SQLHDBC con, SQLINTEGER attr,
         SQLPOINTER val, SQLINTEGER len )
 {
-    ok( 0, "unexpected call\n" );
-    return SQL_ERROR;
+    CHECK_EXPECT( driver_SQLSetConnectAttr );
+    ok( attr == 1000, "attr = %d\n", attr );
+    ok( val != NULL, "val = %p\n", val );
+    ok( *(SQLUINTEGER *)val == 0xdeadbeef, "*val = %u\n", *(SQLUINTEGER *)val );
+    ok( len == sizeof(SQLUINTEGER), "len = %d\n", len );
+    return SQL_SUCCESS;
 }
 
 static SQLRETURN WINAPI driver_SQLGetInfo( SQLHDBC con, SQLUSMALLINT type,
@@ -730,7 +735,7 @@ static void test_SQLConnect( void )
     SQLHDBC con;
     SQLRETURN ret;
     SQLINTEGER size, version, pooling;
-    SQLUINTEGER timeout;
+    SQLUINTEGER timeout, driver_attr;
     SQLSMALLINT len;
     char str[32];
 
@@ -776,6 +781,10 @@ static void test_SQLConnect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ok( timeout == SQL_LOGIN_TIMEOUT_DEFAULT, "wrong timeout %d\n", timeout );
 
+    driver_attr = 0xdeadbeef;
+    ret = SQLSetConnectAttr( con, 1000, &driver_attr, sizeof(driver_attr) );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
     SET_EXPECT( driver_SQLAllocHandle_env );
     SET_EXPECT( driver_SQLSetEnvAttr );
     SET_EXPECT( driver_SQLAllocHandle_con );
@@ -783,6 +792,7 @@ static void test_SQLConnect( void )
     SET_EXPECT( driver_SQLConnect );
     SET_EXPECT( driver_SQLGetDiagRec );
     SET_EXPECT( driver_SQLGetInfo );
+    SET_EXPECT( driver_SQLSetConnectAttr );
     ret = SQLConnect( con, (SQLCHAR *)"winetest_dsn", SQL_NTS, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest",
                       SQL_NTS );
     CHECK_CALLED( driver_SQLAllocHandle_env );
@@ -790,6 +800,7 @@ static void test_SQLConnect( void )
     CHECK_CALLED( driver_SQLAllocHandle_con );
     CHECK_CALLED( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
     CHECK_CALLED( driver_SQLConnect );
+    CHECK_CALLED( driver_SQLSetConnectAttr);
     todo_wine CHECK_CALLED( driver_SQLGetDiagRec );
     todo_wine CHECK_CALLED( driver_SQLGetInfo );
     ok (ret == SQL_SUCCESS, "got %d\n", ret );

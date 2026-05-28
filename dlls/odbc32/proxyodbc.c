@@ -1591,7 +1591,7 @@ static SQLRETURN alloc_con_handle( struct connection *con )
 static SQLRETURN create_con( struct connection *con )
 {
     WCHAR odbc_ver[6];
-    SQLSMALLINT len;
+    SQLSMALLINT len, i;
     SQLRETURN ret;
 
     if ((ret = alloc_con_handle( con ))) return ret;
@@ -1602,6 +1602,10 @@ static SQLRETURN create_con( struct connection *con )
     if (con->login_timeout_set &&
             set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
         WARN( "failed to set login timeout\n" );
+
+    for (i = 0; i < con->driver_attr_count; i++)
+        if ((ret = set_con_attr( con, con->driver_attr[i].id, con->driver_attr[i].value, con->driver_attr[i].len )))
+            WARN( "failed to set driver attribute %u error %u\n", con->driver_attr[i].id, ret );
 
     if (con->hdr.win32_handle)
     {
@@ -2470,6 +2474,7 @@ static void cleanup_object( struct object *obj )
     case SQL_HANDLE_ENV:
     {
         struct environment *env = (struct environment *)obj;
+
         RegCloseKey( env->drivers_key );
         RegCloseKey( env->sources_key );
         env->drivers_key = env->sources_key = NULL;
@@ -2479,6 +2484,12 @@ static void cleanup_object( struct object *obj )
     case SQL_HANDLE_DBC:
     {
         struct connection *con = (struct connection *)obj;
+        UINT32 i;
+
+        for (i = 0; i < con->driver_attr_count; i++) free( con->driver_attr[i].value );
+        free( con->driver_attr );
+        con->driver_attr = NULL;
+        con->driver_attr_count = 0;
         release_env( con->env );
         con->env = NULL;
         break;
@@ -2486,6 +2497,7 @@ static void cleanup_object( struct object *obj )
     case SQL_HANDLE_STMT:
     {
         struct statement *stmt = (struct statement *)obj;
+
         free_col_bindings( stmt );
         free_param_bindings( stmt );
         free_descriptors( stmt );
@@ -3877,6 +3889,27 @@ static SQLRETURN set_connect_attr_win32_a( struct connection *con, SQLINTEGER at
     return ret;
 }
 
+#ifndef SQL_CONNECT_OPT_DRVR_START
+#define SQL_CONNECT_OPT_DRVR_START  1000
+#endif
+
+static SQLRETURN store_driver_attribute( struct connection *con, SQLINTEGER id, SQLPOINTER value, SQLINTEGER len )
+{
+    struct driver_attribute *tmp, *attr;
+
+    if (!(tmp = realloc( con->driver_attr, (con->driver_attr_count + 1) * sizeof(*attr) ))) return SQL_ERROR;
+    con->driver_attr = tmp;
+
+    attr = &con->driver_attr[con->driver_attr_count];
+    attr->id = id;
+    if (!(attr->value = malloc( len ))) return SQL_ERROR;
+    memcpy( attr->value, value, len );
+    attr->len = len;
+
+    con->driver_attr_count++;
+    return SQL_SUCCESS;
+}
+
 /*************************************************************************
  *				SQLSetConnectAttr           [ODBC32.039]
  */
@@ -3914,8 +3947,13 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
             break;
 
         default:
-            FIXME( "unhandled attribute %d\n", Attribute );
-            ret = SQL_ERROR;
+            if (Attribute >= SQL_CONNECT_OPT_DRVR_START)
+                ret = store_driver_attribute( con, Attribute, Value, StringLength );
+            else
+            {
+                FIXME( "unhandled attribute %d\n", Attribute );
+                ret = SQL_ERROR;
+            }
             break;
         }
     }
@@ -7272,8 +7310,13 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
             break;
 
         default:
-            FIXME( "unhandled attribute %d\n", Attribute );
-            ret = SQL_ERROR;
+            if (Attribute >= SQL_CONNECT_OPT_DRVR_START)
+                ret = store_driver_attribute( con, Attribute, Value, StringLength );
+            else
+            {
+                FIXME( "unhandled attribute %d\n", Attribute );
+                ret = SQL_ERROR;
+            }
             break;
         }
     }
