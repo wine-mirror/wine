@@ -69,6 +69,16 @@ static UINT	CBitHeight, CBitWidth;
 static void CBCalcPlacement(HEADCOMBO *combo);
 static void CBResetPos(HEADCOMBO *combo, BOOL redraw);
 
+static HEADCOMBO *get_control_state( HWND hwnd )
+{
+    return (HEADCOMBO *)NtUserGetPrivateData( hwnd, 0, sizeof(HEADCOMBO *) );
+}
+
+static HEADCOMBO *set_control_state( HWND hwnd, HEADCOMBO *state )
+{
+    return (HEADCOMBO *)NtUserSetPrivateData( hwnd, 0, sizeof(HEADCOMBO *), (LONG_PTR)state );
+}
+
 /***********************************************************************
  *           COMBO_Init
  *
@@ -116,7 +126,7 @@ static LRESULT COMBO_NCCreate(HWND hwnd, LONG style)
     if( COMBO_Init() && (lphc = calloc( 1, sizeof(HEADCOMBO) )) )
     {
         lphc->self = hwnd;
-        SetWindowLongPtrW( hwnd, 0, (LONG_PTR)lphc );
+        set_control_state( hwnd, lphc );
 
        /* some braindead apps do try to use scrollbar/border flags */
 
@@ -154,7 +164,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
            NtUserDestroyWindow( lphc->hWndLBox );
 
-       SetWindowLongPtrW( lphc->self, 0, 0 );
+       set_control_state( lphc->self, NULL );
        free( lphc );
    }
    return 0;
@@ -1685,12 +1695,13 @@ static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
  */
 LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-      LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongPtrW( hwnd, 0 );
+      LPHEADCOMBO lphc = get_control_state( hwnd );
 
       TRACE("[%p]: msg %s wp %08Ix lp %08Ix\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
       if (!IsWindow(hwnd)) return 0;
+      if (message == WM_NCCREATE || message == WM_CREATE) NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_COMBO) );
 
       if( lphc || message == WM_NCCREATE )
       switch(message)
