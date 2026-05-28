@@ -162,7 +162,7 @@ void WINAPI WRITE_PORT_ULONG(ULONG *port, ULONG value)
 {
     FIXME("(%p %ld) stub!\n", port, value);
 }
-#endif /* __i386__ || __arm__ || __arm64__ */
+#endif /* __i386__ || __arm__ || __aarch64__ */
 
 ULONG WINAPI HalGetBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, PVOID Buffer, ULONG Length)
 {
