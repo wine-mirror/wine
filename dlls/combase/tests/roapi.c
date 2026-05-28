@@ -484,11 +484,11 @@ static void test_apartment_context_(int line, const struct unk_ctx_impl *impl)
     ok_(__FILE__, line)(hr == S_OK, "CoGetContextToken failed, got hr %#lx\n", hr);
     /* As this object has apartment-affinity, its methods can only be called from the apartment and context it was
      * created in. */
-    todo_wine_if(impl->todo) ok_(__FILE__, line)(cur_ctx == impl->context, "got cur_ctx %#Ix != %#Ix\n", cur_ctx, impl->context);
+    ok_(__FILE__, line)(cur_ctx == impl->context, "got cur_ctx %#Ix != %#Ix\n", cur_ctx, impl->context);
 
     hr = CoGetApartmentType(&type, &qualifier);
     ok_(__FILE__, line)(hr == S_OK, "CoGetApartmentType failed, got hr %#lx\n", hr);
-    todo_wine_if(impl->todo) ok_(__FILE__, line)(type == impl->type, "got type %d\n", type);
+    ok_(__FILE__, line)(type == impl->type, "got type %d\n", type);
 
     hr = RoGetApartmentIdentifier(&cur_id);
     /* win10 and below fail with ERROR_API_UNAVAILABLE */
@@ -519,7 +519,7 @@ static void test_apartment_context_(int line, const struct unk_ctx_impl *impl)
         /* If this object belongs to an STA, we should now be in the same thread that the object was created in. */
         if (impl->type == APTTYPE_STA || impl->type == APTTYPE_MAINSTA)
         {
-            todo_wine ok(cur_tid == impl->thread_id, "Got cur_tid %lu != %lu\n", cur_tid, impl->thread_id);
+            ok(cur_tid == impl->thread_id, "Got cur_tid %lu != %lu\n", cur_tid, impl->thread_id);
             ok(!IsEqualGUID(&ctx_com_tid, &impl->com_thread_id), "Got cur_com_tid %s != %s\n",
                debugstr_guid(&ctx_com_tid), debugstr_guid(&impl->com_thread_id));
         }
@@ -678,7 +678,7 @@ static DWORD CALLBACK test_agile_resolve_context(void *arg)
 
     winetest_push_context("from_type=%d, to_type=%d", params->from_type, params->to_type);
     hr = IAgileReference_Resolve(params->ref, &IID_IUnknown, (void **)&unknown);
-    todo_wine_if(params->to_type == RO_INIT_MULTITHREADED) ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unknown);
     winetest_pop_context();
