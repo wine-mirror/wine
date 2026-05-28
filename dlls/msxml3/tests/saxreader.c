@@ -3417,10 +3417,15 @@ static void test_saxreader_encoding(void)
     static const char xml_shift_jis_test2[] =
         "<?xml version=\"1.0\" encoding=\"shift-jis\" ?><a>" "\x83\x89" "</a>";
 
+    static const char utf8_ws_test[] =
+        "    \r\n    <a>text</a>";
+
     const struct enc_test_entry_t *entry = encoding_test_data;
     static const CHAR testXmlA[] = "test.xml";
     DWORD ucs4_be_test[ARRAYSIZE(ucs4_le_test)];
     ISAXXMLReader *reader;
+    LARGE_INTEGER li = { 0 };
+    IStream* stream;
     HRESULT hr;
 
     for (int i = 0; i < ARRAYSIZE(ucs4_le_test); ++i)
@@ -3463,6 +3468,20 @@ static void test_saxreader_encoding(void)
         V_BSTR(&input) = _bstr_("<element></element>");
         hr = ISAXXMLReader_parse(reader, input);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        /* UTF-8 with leading white-spaces */
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IStream_Write(stream, utf8_ws_test, sizeof(utf8_ws_test) - 1, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IStream_Seek(stream, li, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        V_VT(&input) = VT_UNKNOWN;
+        V_UNKNOWN(&input) = (IUnknown*)stream;
+        hr = ISAXXMLReader_parse(reader, input);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        VariantClear(&input);
 
         ISAXXMLReader_Release(reader);
 

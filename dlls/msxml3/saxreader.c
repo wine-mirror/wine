@@ -5879,10 +5879,6 @@ static enum xmlencoding saxreader_match_encoding(const char *data, size_t size, 
         return XML_ENCODING_UTF16LE;
     if (b[0] == 0 && b[1] == '<' && b[2] == 0 && b[3] == '?')
         return XML_ENCODING_UTF16BE;
-    if (b[0] == '<' && b[1] == '?' && b[2] == 'x' && b[3] == 'm')
-        return XML_ENCODING_UTF8;
-    if (b[0] == '<' && b[1] && b[1] != '?')
-        return XML_ENCODING_UTF8;
 
     if (b[0] == 0xef && b[1] == 0xbb && b[2] == 0xbf)
     {
@@ -5902,7 +5898,7 @@ static enum xmlencoding saxreader_match_encoding(const char *data, size_t size, 
         return XML_ENCODING_UTF16LE;
     }
 
-    return XML_ENCODING_UNKNOWN;
+    return XML_ENCODING_UTF8;
 }
 
 static void saxreader_detect_encoding(struct saxlocator *locator, bool force_utf16)
