@@ -163,7 +163,11 @@ unsigned int get_class_fnid( struct window_class *class, data_size_t *extra_size
     *extra_size = class->shared->info.win_extra;
 
     if ((class->fnid & ~0x7fff) != 0x8000) *private_size = 0;
-    else *private_size = *extra_size;
+    else switch (class->fnid & 0x7fff)
+    {
+    case NTUSER_WNDPROC_MDICLIENT: *private_size = 0; break;
+    default: *private_size = *extra_size; break;
+    }
 
     return class->fnid;
 }

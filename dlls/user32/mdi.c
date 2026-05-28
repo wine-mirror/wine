@@ -993,6 +993,8 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     TRACE("%p %04x (%s) %08Ix %08Ix\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_MDICLIENT) );
+
     if (!(ci = get_client_info( hwnd )))
     {
         if (message == WM_NCCREATE)
