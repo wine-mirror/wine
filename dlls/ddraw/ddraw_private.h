@@ -199,10 +199,7 @@ struct ddraw_surface
      */
 #define MAX_COMPLEX_ATTACHED 6
     struct ddraw_surface *complex_array[MAX_COMPLEX_ATTACHED];
-    /* You can't traverse the tree upwards. Only a flag for Surface::Release because it's needed there,
-     * but no pointer to prevent temptations to traverse it in the wrong direction.
-     */
-    unsigned int is_root : 1;
+    unsigned int is_implicit : 1;
     unsigned int is_lost : 1;
     unsigned int sysmem_fallback : 1;
 

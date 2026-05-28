@@ -596,7 +596,7 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
         surf = surface->complex_array[i];
         surface->complex_array[i] = NULL;
-        if (!surf->is_root)
+        if (surf->is_implicit)
         {
             struct ddraw_texture *texture = wined3d_texture_get_parent(surf->wined3d_texture);
             struct wined3d_device *wined3d_device = texture->wined3d_device;
@@ -646,7 +646,7 @@ static ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 
         /* Complex attached surfaces are destroyed implicitly when the root is released */
         wined3d_mutex_lock();
-        if (!This->is_root)
+        if (This->is_implicit)
         {
             WARN("(%p) Attempt to destroy a surface that is not a complex root\n", This);
             wined3d_mutex_unlock();
@@ -2659,9 +2659,9 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
         WARN("Called on offscreenplain surface, returning DDERR_INVALIDOBJECT.\n");
         hr = DDERR_INVALIDOBJECT;
     }
-    else if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed) || !surface->is_root)
+    else if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed) || surface->is_implicit)
     {
-        WARN("Called on non-managed texture or non-root surface, returning DDERR_INVALIDPARAMS.\n");
+        WARN("Called on non-managed texture implicit surface, returning DDERR_INVALIDPARAMS.\n");
         hr = DDERR_INVALIDPARAMS;
     }
     else
@@ -5173,7 +5173,7 @@ static HRESULT ddraw_surface_set_color_key(struct ddraw_surface *surface, DWORD 
         }
     }
 
-    if (surface->is_root)
+    if (!surface->is_implicit)
         hr = ddraw_surface_set_wined3d_textures_colour_key(surface, flags,
                 color_key ? (struct wined3d_color_key *)&fixed_color_key : NULL);
 
@@ -6117,6 +6117,7 @@ static void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddra
     surface->iface_count = 1;
     surface->version = version;
     surface->ddraw = ddraw;
+    surface->is_implicit = 1;
 
     if (version == 7)
     {
@@ -6979,7 +6980,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     }
 
     root = texture->root;
-    root->is_root = TRUE;
+    root->is_implicit = 0;
 
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
