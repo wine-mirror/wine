@@ -2618,7 +2618,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->cdata = FALSE;
     This->indent = 0;
     This->text = FALSE;
-    This->newline = FALSE;
+    This->newline = TRUE;
 
     This->dest = NULL;
 
