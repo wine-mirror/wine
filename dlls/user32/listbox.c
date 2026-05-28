@@ -123,6 +123,16 @@ static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 
 static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect );
 
+static LB_DESCR *get_control_state( HWND hwnd )
+{
+    return (LB_DESCR *)NtUserGetPrivateData( hwnd, 0, sizeof(LB_DESCR *) );
+}
+
+static LB_DESCR *set_control_state( HWND hwnd, LB_DESCR *state )
+{
+    return (LB_DESCR *)NtUserSetPrivateData( hwnd, 0, sizeof(LB_DESCR *), (LONG_PTR)state );
+}
+
 /*
    For listboxes without LBS_NODATA, an array of LB_ITEMDATA is allocated
    to store the states of each item into descr->u.items.
@@ -2601,7 +2611,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
         descr->owner = lphc->self;
     }
 
-    SetWindowLongPtrW( descr->self, 0, (LONG_PTR)descr );
+    set_control_state( descr->self, descr );
 
 /*    if (wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) descr->style &= ~LBS_NOTIFY;
  */
@@ -2646,7 +2656,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 {
     LISTBOX_ResetContent( descr );
-    SetWindowLongPtrW( descr->self, 0, 0 );
+    set_control_state( descr->self, NULL );
     HeapFree( GetProcessHeap(), 0, descr );
     return TRUE;
 }
@@ -2657,9 +2667,11 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
  */
 LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-    LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
+    LB_DESCR *descr = get_control_state( hwnd );
     HEADCOMBO *lphc = NULL;
     LRESULT ret;
+
+    if (msg == WM_CREATE || msg == WM_NCCREATE) NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_LISTBOX) );
 
     if (!descr)
     {
@@ -2670,7 +2682,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	    CREATESTRUCTW *lpcs = (CREATESTRUCTW *)lParam;
             if (lpcs->style & LBS_COMBOBOX) lphc = lpcs->lpCreateParams;
             if (!LISTBOX_Create( hwnd, lphc )) return -1;
-            TRACE("creating hwnd %p descr %p\n", hwnd, (void *)GetWindowLongPtrW( hwnd, 0 ) );
+            TRACE("creating hwnd %p descr %p\n", hwnd, get_control_state( hwnd ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */
