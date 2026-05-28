@@ -5300,7 +5300,7 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
 
     if (required_size) *required_size = size;
 
-    if (dest)
+    if (dest && (ret || GetLastError() == ERROR_FILE_EXISTS))
     {
         if (buffer_size >= size)
         {

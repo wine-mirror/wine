@@ -4654,6 +4654,13 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
 
+    /* try a relative nonexistent SourceInfFileName, with dest parameter */
+    memset(dest, 0xcc, sizeof(dest));
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+
     /* try an absolute nonexistent SourceInfFileName */
     GetCurrentDirectoryA(sizeof(path), path);
     strcat(path, "\\nonexistent");
