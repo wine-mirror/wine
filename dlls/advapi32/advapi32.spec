@@ -837,7 +837,7 @@
 # @ stub UsePinForEncryptedFilesW
 # @ stub WaitServiceState
 @ stub WdmWmiServiceMain
-@ stub WmiCloseBlock
+@ stdcall WmiCloseBlock(long)
 # @ stub WmiCloseTraceWithCursor
 # @ stub WmiConvertTimestamp
 # @ stub WmiDevInstToInstanceNameA

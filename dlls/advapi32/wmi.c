@@ -178,3 +178,12 @@ ULONG WMIAPI WmiSetSingleItemW(WMIHANDLE handle, const WCHAR *name, ULONG id, UL
     FIXME("%p %s %lu %lu %lu %p: stub\n", handle, debugstr_w(name), id, reserved, size, buffer);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * WmiCloseBlock [ADVAPI32.@]
+ */
+ULONG WINAPI WmiCloseBlock(WMIHANDLE handle)
+{
+    FIXME("%p: stub\n", handle);
+    return ERROR_SUCCESS;
+}
