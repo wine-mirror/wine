@@ -1427,6 +1427,7 @@ enable_rpcrt4
 enable_rsabase
 enable_rsaenh
 enable_rstrtmgr
+enable_rtscom
 enable_rtutils
 enable_rtworkq
 enable_samlib
@@ -22835,6 +22836,7 @@ wine_fn_config_makefile dlls/rsabase enable_rsabase
 wine_fn_config_makefile dlls/rsaenh enable_rsaenh
 wine_fn_config_makefile dlls/rsaenh/tests enable_tests
 wine_fn_config_makefile dlls/rstrtmgr enable_rstrtmgr
+wine_fn_config_makefile dlls/rtscom enable_rtscom
 wine_fn_config_makefile dlls/rtutils enable_rtutils
 wine_fn_config_makefile dlls/rtworkq enable_rtworkq
 wine_fn_config_makefile dlls/rtworkq/tests enable_tests
