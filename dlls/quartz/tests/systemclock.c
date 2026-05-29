@@ -173,23 +173,20 @@ static void test_get_time(void)
 
     hr = IReferenceClock_GetTime(clock, &time1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
-            wine_dbgstr_longlong(time1));
+    ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %I64d.\n", time1);
 
     ticks = (REFERENCE_TIME)timeGetTime() * 10000;
 
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#lx.\n", hr);
-    ok(time2 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
-            wine_dbgstr_longlong(time1));
+    ok(time2 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %I64d.\n", time1);
 
     ok(time2 >= ticks && ticks >= time1, "Got timestamps %I64d, %I64d, %I64d.\n", time1, ticks, time2);
 
     Sleep(100);
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
-            wine_dbgstr_longlong(time1 + 80 * 10000), wine_dbgstr_longlong(time2));
+    ok(time2 - time1 > 80 * 10000, "Expected about %I64d, but got %I64d.\n", time1 + 80 * 10000, time2);
 
     ref = IReferenceClock_Release(clock);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);

@@ -3277,8 +3277,8 @@ static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter *iface, DWORD_PT
     ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
     ok(info->dwFlags == VMRSample_TimeValid, "Got flags %#lx.\n", info->dwFlags);
     todo_wine ok(info->lpSurf == presenter->surfaces[5 - presenter->got_PresentImage], "Got unexpected surface.\n");
-    ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
-    ok(info->rtEnd == 10000000, "Got end time %s.\n", wine_dbgstr_longlong(info->rtEnd));
+    ok(!info->rtStart, "Got start time %I64d.\n", info->rtStart);
+    ok(info->rtEnd == 10000000, "Got end time %I64d.\n", info->rtEnd);
     todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %ld.\n", info->szAspectRatio.cx);
     todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %ld.\n", info->szAspectRatio.cy);
     ok(EqualRect(&info->rcSrc, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&info->rcSrc));

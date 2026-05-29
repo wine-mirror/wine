@@ -934,37 +934,34 @@ static void test_seeking(void)
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(stop == duration, "Expected time %s, got %s.\n",
-            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
+    ok(stop == duration, "Expected time %I64d, got %I64d.\n", duration, stop);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(!current, "Got time %I64d.\n", current);
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == duration, "Expected time %s, got %s.\n",
-            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
+    ok(!current, "Got time %I64d.\n", current);
+    ok(stop == duration, "Expected time %I64d, got %I64d.\n", duration, stop);
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x123456789a, "Got time %I64d.\n", time);
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x123456789a, "Got time %I64d.\n", time);
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 441, &TIME_FORMAT_SAMPLE);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(time == 100000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    todo_wine ok(time == 100000, "Got time %I64d.\n", time);
 
     earliest = latest = 0xdeadbeef;
     hr = IMediaSeeking_GetAvailable(seeking, &earliest, &latest);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!earliest, "Got time %s.\n", wine_dbgstr_longlong(earliest));
-    ok(latest == duration, "Expected time %s, got %s.\n",
-            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(latest));
+    ok(!earliest, "Got time %I64d.\n", earliest);
+    ok(latest == duration, "Expected time %I64d, got %I64d.\n", duration, latest);
 
     rate = 0;
     hr = IMediaSeeking_GetRate(seeking, &rate);
@@ -989,30 +986,30 @@ static void test_seeking(void)
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 200 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 400 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(current == 200 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 400 * 10000, "Got time %I64d.\n", stop);
 
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 200 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 400 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(current == 200 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 400 * 10000, "Got time %I64d.\n", stop);
 
     current = 200 * 10000;
     stop = 400 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 200 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 400 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(current == 200 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 400 * 10000, "Got time %I64d.\n", stop);
 
     current = 100 * 10000;
     stop = 200 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 100 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 200 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(current == 100 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 200 * 10000, "Got time %I64d.\n", stop);
 
     current = 50 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
@@ -1022,8 +1019,8 @@ static void test_seeking(void)
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 50 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 200 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(current == 50 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 200 * 10000, "Got time %I64d.\n", stop);
 
     IMediaSeeking_Release(seeking);
     IPin_Release(pin);

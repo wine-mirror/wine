@@ -1012,8 +1012,8 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (filter->got_sample == 1)
     {
-        ok(start == filter->expected_start_time, "Got start time %s.\n", wine_dbgstr_longlong(start));
-        ok(stop == filter->expected_stop_time, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+        ok(start == filter->expected_start_time, "Got start time %I64d.\n", start);
+        ok(stop == filter->expected_stop_time, "Got stop time %I64d.\n", stop);
     }
 
     return S_OK;
@@ -1024,8 +1024,8 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
     ++filter->got_new_segment;
-    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
-    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(start == 10000, "Got start %I64d.\n", start);
+    ok(stop == 20000, "Got stop %I64d.\n", stop);
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
     return S_OK;
 }

@@ -1012,8 +1012,8 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
     ++filter->got_new_segment;
-    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
-    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(start == 10000, "Got start %I64d.\n", start);
+    ok(stop == 20000, "Got stop %I64d.\n", stop);
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
     return S_OK;
 }
@@ -1341,10 +1341,9 @@ static void test_sample_processing(IMediaControl *control,
             "Got size %lu.\n", testsink->sample_size);
     ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
             "Got valid size %lu.\n", testsink->sample_actual);
-    ok(testsink->sample_start_time == 0, "Got start time %s.\n",
-            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_start_time == 0, "Got start time %I64d.\n", testsink->sample_start_time);
     ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 360000 : 720000),
-            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
+            "Got stop time %I64d.\n", testsink->sample_stop_time);
     testsink->got_sample = 0;
 
     hr = IMediaControl_Stop(control);
@@ -1367,10 +1366,10 @@ static void test_sample_processing(IMediaControl *control,
             "Got size %lu.\n", testsink->sample_size);
     ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
             "Got valid size %lu.\n", testsink->sample_actual);
-    ok(testsink->sample_start_time == 22222, "Got start time %s.\n",
-            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_start_time == 22222, "Got start time %I64d.\n",
+            testsink->sample_start_time);
     ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 382222 : 742222),
-            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
+            "Got stop time %I64d.\n", testsink->sample_stop_time);
     testsink->got_sample = 0;
 
     hr = IMediaControl_Stop(control);
@@ -1394,10 +1393,10 @@ static void test_sample_processing(IMediaControl *control,
             "Got size %lu.\n", testsink->sample_size);
     ok(testsink->sample_actual == 2304 || testsink->sample_actual == 4608,
             "Got valid size %lu.\n", testsink->sample_actual);
-    ok(testsink->sample_start_time == 22222, "Got start time %s.\n",
-            wine_dbgstr_longlong(testsink->sample_start_time));
+    ok(testsink->sample_start_time == 22222, "Got start time %I64d.\n",
+            testsink->sample_start_time);
     ok(testsink->sample_stop_time == (testsink->sample_actual == 2304 ? 382222 : 742222),
-            "Got stop time %s.\n", wine_dbgstr_longlong(testsink->sample_stop_time));
+            "Got stop time %I64d.\n", testsink->sample_stop_time);
     testsink->got_sample = 0;
 
     hr = IMediaControl_Stop(control);

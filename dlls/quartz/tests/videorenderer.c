@@ -1044,7 +1044,7 @@ static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 10000000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 10000000, "Got time %I64d.\n", time);
 
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
