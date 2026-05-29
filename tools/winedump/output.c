@@ -217,7 +217,7 @@ void  output_c_preamble (void)
   fprintf (cfile,
            "/*\n * %s.dll\n *\n * Generated from %s by winedump.\n *\n"
            " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n *\n */"
-           "\n\n#include \"config.h\"\n\n#include <stdarg.h>\n\n"
+           "\n\n#include <stdarg.h>\n\n"
            "#include \"windef.h\"\n#include \"winbase.h\"\n",
            OUTPUT_DLL_NAME, globals.input_name);
 
@@ -440,7 +440,7 @@ void  output_makefile (void)
   if (globals.forward_dll)
     fprintf (makefile, "IMPORTS   = %s", globals.forward_dll);
 
-  fprintf (makefile, "\n\nC_SRCS = \\\n\t%s_main.c\n", OUTPUT_DLL_NAME);
+  fprintf (makefile, "\n\nSOURCES = \\\n\t%s_main.c\n", OUTPUT_DLL_NAME);
 
   if (globals.forward_dll)
     fprintf (specfile,"#import %s.dll\n", globals.forward_dll);
