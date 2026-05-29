@@ -71,17 +71,6 @@ static const char *a_very_long_env_string =
  "/usr/lib/mingw32/3.4.2/;"
  "/usr/lib/";
 
-static char ***(__cdecl *p__p__environ)(void);
-static WCHAR ***(__cdecl *p__p__wenviron)(void);
-static char** (__cdecl *p_get_initial_narrow_environment)(void);
-static wchar_t** (__cdecl *p_get_initial_wide_environment)(void);
-static errno_t (__cdecl *p_putenv_s)(const char*, const char*);
-static errno_t (__cdecl *p_wputenv_s)(const wchar_t*, const wchar_t*);
-static errno_t (__cdecl *p_getenv_s)(size_t*, char*, size_t, const char*);
-
-static char ***p_environ;
-static WCHAR ***p_wenviron;
-
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
                                                    const wchar_t *function, const wchar_t *file,
                                                    unsigned line, uintptr_t arg)
@@ -92,30 +81,6 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
     ok(arg == 0, "arg = %Ix\n", arg);
-}
-
-static BOOL init(void)
-{
-    HMODULE hmod = GetModuleHandleA( "ucrtbase.dll" );
-
-    p__p__environ = (void *)GetProcAddress( hmod, "__p__environ" );
-    p__p__wenviron = (void *)GetProcAddress( hmod, "__p__wenviron" );
-    p_get_initial_narrow_environment = (void *)GetProcAddress( hmod, "_get_initial_narrow_environment" );
-    p_get_initial_wide_environment = (void *)GetProcAddress( hmod, "_get_initial_wide_environment" );
-    p_putenv_s = (void *)GetProcAddress( hmod, "_putenv_s" );
-    p_wputenv_s = (void *)GetProcAddress( hmod, "_wputenv_s" );
-    p_getenv_s = (void *)GetProcAddress( hmod, "getenv_s" );
-
-    ok(p__p__environ != NULL, "Unexecped NULL pointer to environ\n" );
-    ok(p__p__wenviron != NULL, "Unexecped NULL pointer to environ\n" );
-    if (!p__p__environ || !p__p__wenviron)
-    {
-        skip( "NULL pointers for environment\n" );
-        return FALSE;
-    }
-    p_environ = p__p__environ();
-    p_wenviron = p__p__wenviron();
-    return TRUE;
 }
 
 static unsigned env_get_entry_countA( char **env )
@@ -129,15 +94,13 @@ static unsigned env_get_entry_countA( char **env )
 
 static void test_initial_environ( void )
 {
-    ok( p__p__environ() != NULL, "Unexpected NULL _environ[]\n" );
-    ok( *p__p__environ() != NULL, "Unexpected empty _environ[]\n" );
-    ok( p_get_initial_narrow_environment() != NULL, "Unexpected empty narrow initial environment\n" );
-    ok( p_get_initial_narrow_environment() == *p__p__environ(), "Expecting _environ[] to match initial narrow environment\n" );
+    ok( _environ != NULL, "Unexpected empty _environ[]\n" );
+    ok( _get_initial_narrow_environment() != NULL, "Unexpected empty narrow initial environment\n" );
+    ok( _get_initial_narrow_environment() == _environ, "Expecting _environ[] to match initial narrow environment\n" );
 
-    ok( p__p__wenviron() != NULL, "Unexpected NULL _wenviron[]\n" );
-    ok( *p__p__wenviron() == NULL, "Unexpected non empty _wenviron[]\n" );
-    ok( p_get_initial_wide_environment() != NULL, "Unexpected empty wide initial environment\n" );
-    ok( p_get_initial_wide_environment() == *p__p__wenviron(), "Expecting _wenviron[] to match initial wide environment\n" );
+    ok( _wenviron == NULL, "Unexpected non empty _wenviron[]\n" );
+    ok( _get_initial_wide_environment() != NULL, "Unexpected empty wide initial environment\n" );
+    ok( _get_initial_wide_environment() == _wenviron, "Expecting _wenviron[] to match initial wide environment\n" );
 }
 
 static void test_environment_manipulation(void)
@@ -152,13 +115,12 @@ static void test_environment_manipulation(void)
     ok( _putenv( "cat=" ) == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv( "cat=dog" ) == 0, "failed setting cat=dog\n" );
     ok( strcmp( getenv( "cat" ), "dog" ) == 0, "getenv did not return 'dog'\n" );
-    if (p_getenv_s)
-    {
-        ret = p_getenv_s( &len, buf, sizeof(buf), "cat" );
-        ok( !ret, "getenv_s returned %d\n", ret );
-        ok( len == 4, "getenv_s returned length is %Id\n", len);
-        ok( !strcmp(buf, "dog"), "getenv_s did not return 'dog'\n" );
-    }
+
+    ret = getenv_s( &len, buf, sizeof(buf), "cat" );
+    ok( !ret, "getenv_s returned %d\n", ret );
+    ok( len == 4, "getenv_s returned length is %Id\n", len);
+    ok( !strcmp(buf, "dog"), "getenv_s did not return 'dog'\n" );
+
     ok( _putenv("cat=") == 0, "failed deleting cat\n" );
 
     ok( _putenv("=") == -1, "should not accept '=' as input\n" );
@@ -167,95 +129,86 @@ static void test_environment_manipulation(void)
 
     ok( getenv("nonexistent") == NULL, "getenv should fail with nonexistent var name\n" );
 
-    if (p_putenv_s)
-    {
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_putenv_s( NULL, "dog" );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_putenv_s( "cat", NULL );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_putenv_s( "a=b", NULL );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
-        ret = p_putenv_s( "cat", "a=b" );
-        ok( !ret, "_putenv_s returned %d\n", ret );
-        ret = p_putenv_s( "cat", "" );
-        ok( !ret, "_putenv_s returned %d\n", ret );
-    }
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _putenv_s( NULL, "dog" );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _putenv_s( "cat", NULL );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _putenv_s( "a=b", NULL );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_putenv_s returned %d\n", ret );
+    ret = _putenv_s( "cat", "a=b" );
+    ok( !ret, "_putenv_s returned %d\n", ret );
+    ret = _putenv_s( "cat", "" );
+    ok( !ret, "_putenv_s returned %d\n", ret );
 
-    if (p_wputenv_s)
-    {
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_wputenv_s( NULL, L"dog" );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_wputenv_s( L"cat", NULL );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
-        SET_EXPECT(invalid_parameter_handler);
-        ret = p_wputenv_s( L"a=b", NULL );
-        CHECK_CALLED(invalid_parameter_handler);
-        ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
-        ret = p_wputenv_s( L"cat", L"a=b" );
-        ok( !ret, "_wputenv_s returned %d\n", ret );
-        ret = p_wputenv_s( L"cat", L"" );
-        ok( !ret, "_wputenv_s returned %d\n", ret );
-    }
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _wputenv_s( NULL, L"dog" );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _wputenv_s( L"cat", NULL );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
+    SET_EXPECT(invalid_parameter_handler);
+    ret = _wputenv_s( L"a=b", NULL );
+    CHECK_CALLED(invalid_parameter_handler);
+    ok( ret == EINVAL, "_wputenv_s returned %d\n", ret );
+    ret = _wputenv_s( L"cat", L"a=b" );
+    ok( !ret, "_wputenv_s returned %d\n", ret );
+    ret = _wputenv_s( L"cat", L"" );
+    ok( !ret, "_wputenv_s returned %d\n", ret );
 
-    if (p_getenv_s)
-    {
-        buf[0] = 'x';
-        len = 1;
-        errno = 0xdeadbeef;
-        ret = p_getenv_s( &len, buf, sizeof(buf), "nonexistent" );
-        ok( !ret, "_getenv_s returned %d\n", ret );
-        ok( !len, "getenv_s returned length is %Id\n", len );
-        ok( !buf[0], "buf = %s\n", buf );
-        ok( errno == 0xdeadbeef, "errno = %d\n", errno );
+    buf[0] = 'x';
+    len = 1;
+    errno = 0xdeadbeef;
+    ret = getenv_s( &len, buf, sizeof(buf), "nonexistent" );
+    ok( !ret, "getenv_s returned %d\n", ret );
+    ok( !len, "getenv_s returned length is %Id\n", len );
+    ok( !buf[0], "buf = %s\n", buf );
+    ok( errno == 0xdeadbeef, "errno = %d\n", errno );
 
-        buf[0] = 'x';
-        len = 1;
-        errno = 0xdeadbeef;
-        ret = p_getenv_s( &len, buf, sizeof(buf), NULL );
-        ok( !ret, "_getenv_s returned %d\n", ret );
-        ok( !len, "getenv_s returned length is %Id\n", len );
-        ok( !buf[0], "buf = %s\n", buf );
-        ok( errno == 0xdeadbeef, "errno = %d\n", errno );
-    }
+    buf[0] = 'x';
+    len = 1;
+    errno = 0xdeadbeef;
+    ret = getenv_s( &len, buf, sizeof(buf), NULL );
+    ok( !ret, "getenv_s returned %d\n", ret );
+    ok( !len, "getenv_s returned length is %Id\n", len );
+    ok( !buf[0], "buf = %s\n", buf );
+    ok( errno == 0xdeadbeef, "errno = %d\n", errno );
 
     /* test stability of _environ[] pointers */
     ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env var\n" );
     ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
-    count = env_get_entry_countA( *p_environ );
+    count = env_get_entry_countA( _environ );
     ok( _putenv( "__winetest_cat=mew") == 0, "Couldn't set env var\n" );
-    ok( !strcmp( (*p_environ)[count], "__winetest_cat=mew"), "Unexpected env var value\n" );
-    first = (*p_environ)[count];
-    ok( getenv("__winetest_cat") == strchr( (*p_environ)[count], '=') + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( !strcmp( _environ[count], "__winetest_cat=mew"), "Unexpected env var value\n" );
+    first = _environ[count];
+    ok( getenv("__winetest_cat") == strchr( _environ[count], '=') + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
     ok( _putenv( "__winetest_dog=bark" ) == 0, "Couldn't set env var\n" );
-    ok( !strcmp( (*p_environ)[count + 1], "__winetest_dog=bark" ), "Unexpected env var value\n" );
-    ok( getenv( "__winetest_dog" ) == strchr( (*p_environ)[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
-    ok( first == (*p_environ)[count], "Expected stability of _environ[count] pointer\n" );
-    second = (*p_environ)[count + 1];
-    ok( count + 2 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( !strcmp( _environ[count + 1], "__winetest_dog=bark" ), "Unexpected env var value\n" );
+    ok( getenv( "__winetest_dog" ) == strchr( _environ[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( first == _environ[count], "Expected stability of _environ[count] pointer\n" );
+    second = _environ[count + 1];
+    ok( count + 2 == env_get_entry_countA( _environ ), "Unexpected count\n" );
 
     ok( _putenv( "__winetest_cat=purr" ) == 0, "Couldn't set env var\n" );
-    ok( !strcmp( (*p_environ)[count], "__winetest_cat=purr" ), "Unexpected env var value\n" );
-    ok( getenv( "__winetest_cat" ) == strchr( (*p_environ)[count], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
-    ok( second == (*p_environ)[count + 1], "Expected stability of _environ[count] pointer\n" );
-    ok( !strcmp( (*p_environ)[count + 1], "__winetest_dog=bark" ), "Couldn't get env var value\n" );
-    ok( getenv( "__winetest_dog" ) == strchr( (*p_environ)[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
-    ok( count + 2 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( !strcmp( _environ[count], "__winetest_cat=purr" ), "Unexpected env var value\n" );
+    ok( getenv( "__winetest_cat" ) == strchr( _environ[count], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( second == _environ[count + 1], "Expected stability of _environ[count] pointer\n" );
+    ok( !strcmp( _environ[count + 1], "__winetest_dog=bark" ), "Couldn't get env var value\n" );
+    ok( getenv( "__winetest_dog" ) == strchr( _environ[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( count + 2 == env_get_entry_countA( _environ ), "Unexpected count\n" );
     ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env vat\n" );
-    ok( second == (*p_environ)[count], "Expected _environ[count] to be second\n" );
-    ok( !strcmp( (*p_environ)[count], "__winetest_dog=bark" ), "Unexpected env var value\n" );
-    ok( count + 1 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( second == _environ[count], "Expected _environ[count] to be second\n" );
+    ok( !strcmp( _environ[count], "__winetest_dog=bark" ), "Unexpected env var value\n" );
+    ok( count + 1 == env_get_entry_countA( _environ ), "Unexpected count\n" );
     ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
-    ok( count == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( count == env_get_entry_countA( _environ ), "Unexpected count\n" );
 
     /* in putenv, only changed variable is updated (no other reload of kernel info is done) */
     ret = SetEnvironmentVariableA( "__winetest_cat", "meow" );
@@ -266,7 +219,7 @@ static void test_environment_manipulation(void)
     ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
 
     /* test setting unicode bits */
-    count = env_get_entry_countA( *p_environ );
+    count = env_get_entry_countA( _environ );
     ret = WideCharToMultiByte( CP_ACP, 0, L"\u263a", -1, buf, ARRAY_SIZE(buf), 0, 0 );
     ok( ret, "WideCharToMultiByte failed: %lu\n", GetLastError() );
     ok( _wputenv( L"__winetest_cat=\u263a" ) == 0, "Couldn't set env var\n" );
@@ -280,7 +233,7 @@ static void test_environment_manipulation(void)
     ok( _wgetenv( L"__winetest_\u263a" ) && !wcscmp( _wgetenv( L"__winetest_\u263a" ), L"bark"), "Couldn't retrieve env var\n" );
     ok( getenv( buf ) && !strcmp( getenv( buf ), "bark"), "Couldn't retrieve env var %s\n", wine_dbgstr_a(buf) );
     ok( _wputenv( L"__winetest_\u263a=" ) == 0, "Couldn't reset env var\n" );
-    ok( count == env_get_entry_countA( *p_environ ), "Unexpected modification of _environ[]\n" );
+    ok( count == env_get_entry_countA( _environ ), "Unexpected modification of _environ[]\n" );
 }
 
 static void test_child_env(char** argv)
@@ -320,8 +273,6 @@ START_TEST(environ)
 {
     char **argv;
     int argc;
-
-    if (!init()) return;
 
     ok( _set_invalid_parameter_handler( test_invalid_parameter_handler ) == NULL,
        "Invalid parameter handler was already set\n" );

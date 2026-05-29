@@ -30,6 +30,7 @@ _ACRTIMP void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*
 _ACRTIMP int           __cdecl _wmakepath_s(wchar_t*,size_t,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 _ACRTIMP void          __cdecl _wperror(const wchar_t*);
 _ACRTIMP int           __cdecl _wputenv(const wchar_t*);
+_ACRTIMP errno_t       __cdecl _wputenv_s(const wchar_t*,const wchar_t*);
 _ACRTIMP void          __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
 _ACRTIMP void          __cdecl _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
 _ACRTIMP errno_t       __cdecl _wsplitpath_s(const wchar_t*,wchar_t*,size_t,wchar_t*,size_t,
