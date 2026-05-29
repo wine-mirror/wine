@@ -621,7 +621,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
     ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
-    ok(duration == 0xdeadbeefdeadbeefULL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 0xdeadbeefdeadbeefULL, "Got duration %I64d.\n", duration);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -638,12 +638,12 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     if (audio_hr == S_OK)
     {
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(duration == 1000000LL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+        ok(duration == 1000000LL, "Got duration %I64d.\n", duration);
     }
     else
     {
         ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-        ok(!duration, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+        ok(!duration, "Got duration %I64d.\n", duration);
     }
 
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -656,7 +656,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 0, "Got duration %I64d.\n", duration);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -669,7 +669,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 0, "Got duration %I64d.\n", duration);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -684,7 +684,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 0, "Got duration %I64d.\n", duration);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -4858,8 +4858,8 @@ static void test_audiostream_new_segment(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 23456789, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 23459057, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 23456789, "Got start time %I64d.\n", start_time);
+    ok(end_time == 23459057, "Got end time %I64d.\n", end_time);
 
     hr = IPin_NewSegment(pin, 11111111, 22222222, 2.0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -4880,8 +4880,8 @@ static void test_audiostream_new_segment(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 23456789, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 23459057, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 23456789, "Got start time %I64d.\n", start_time);
+    ok(end_time == 23459057, "Got end time %I64d.\n", end_time);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5424,7 +5424,7 @@ static void test_audiostreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+    ok(current_time == 0, "Got current time %I64d.\n", current_time);
 
     hr = IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5432,7 +5432,7 @@ static void test_audiostreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+    ok(current_time == 0, "Got current time %I64d.\n", current_time);
 
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5447,31 +5447,31 @@ static void test_audiostreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0xdeadbeefddf15da1 + filter_start_time, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(0xdeadbeefddf15da1 + filter_start_time), wine_dbgstr_longlong(current_time));
+    ok(current_time == 0xdeadbeefddf15da1 + filter_start_time, "Expected current time %I64d, got %I64d.\n",
+            0xdeadbeefddf15da1 + filter_start_time, current_time);
 
     clock.get_time_hr = S_OK;
 
     current_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == filter_start_time, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(filter_start_time), wine_dbgstr_longlong(current_time));
+    ok(current_time == filter_start_time, "Expected current time %I64d, got %I64d.\n",
+            filter_start_time, current_time);
 
     clock.time = 23456789;
 
     current_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == filter_start_time + 11111111, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(filter_start_time + 11111111), wine_dbgstr_longlong(current_time));
+    ok(current_time == filter_start_time + 11111111, "Expected current time %I64d, got %I64d.\n",
+            filter_start_time + 11111111, current_time);
 
     start_time = 0xdeadbeefdeadbeef;
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 0, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 0, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 0, "Got start time %I64d.\n", start_time);
+    ok(end_time == 0, "Got end time %I64d.\n", end_time);
 
     media_sample = ammediastream_allocate_sample(&source, test_data, 8);
     start_time = 12345678;
@@ -5489,8 +5489,8 @@ static void test_audiostreamsample_get_sample_times(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 12345678, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 12347946, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 12345678, "Got start time %I64d.\n", start_time);
+    ok(end_time == 12347946, "Got end time %I64d.\n", end_time);
 
     media_sample = ammediastream_allocate_sample(&source, test_data, 6);
     start_time = 12345678;
@@ -5508,8 +5508,8 @@ static void test_audiostreamsample_get_sample_times(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 12347946, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 12346585, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 12347946, "Got start time %I64d.\n", start_time);
+    ok(end_time == 12346585, "Got end time %I64d.\n", end_time);
 
     hr = IPin_EndOfStream(pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5521,8 +5521,8 @@ static void test_audiostreamsample_get_sample_times(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 12346585, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 12348399, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 12346585, "Got start time %I64d.\n", start_time);
+    ok(end_time == 12348399, "Got end time %I64d.\n", end_time);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -6536,8 +6536,8 @@ static void test_ddrawstream_new_segment(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 23456789, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 34567900, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 23456789, "Got start time %I64d.\n", start_time);
+    ok(end_time == 34567900, "Got end time %I64d.\n", end_time);
 
     hr = IPin_NewSegment(pin, 11111111, 22222222, 2.0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -6558,8 +6558,8 @@ static void test_ddrawstream_new_segment(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 23456789, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 34567900, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 23456789, "Got start time %I64d.\n", start_time);
+    ok(end_time == 34567900, "Got end time %I64d.\n", end_time);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -6625,7 +6625,7 @@ static void test_ddrawstream_get_time_per_frame(void)
     frame_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawMediaStream_GetTimePerFrame(ddraw_stream, &frame_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(frame_time == 12345678, "Got frame time %s.\n", wine_dbgstr_longlong(frame_time));
+    ok(frame_time == 12345678, "Got frame time %I64d.\n", frame_time);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -7341,21 +7341,21 @@ static void check_mediastreamfilter_set_positions(IMediaSeeking *seeking, struct
     hr = IMediaSeeking_SetPositions(seeking, &current_position, AM_SEEKING_AbsolutePositioning,
             &stop_position, AM_SEEKING_AbsolutePositioning);
     ok(hr == expected_hr, "Got hr %#lx.\n", hr);
-    ok(source1->current_position == 0xdeadbeefdeadbeefULL, "Got current position %s.\n",
-            wine_dbgstr_longlong(source1->current_position));
-    ok(source1->stop_position == 0xdeadbeefdeadbeefULL, "Got stop position %s.\n",
-            wine_dbgstr_longlong(source1->stop_position));
+    ok(source1->current_position == 0xdeadbeefdeadbeefULL, "Got current position %I64d.\n",
+            source1->current_position);
+    ok(source1->stop_position == 0xdeadbeefdeadbeefULL, "Got stop position %I64d.\n",
+            source1->stop_position);
     if (SUCCEEDED(expected_hr))
     {
-        ok(source2->current_position == 12345678, "Got current position %s.\n",
-                wine_dbgstr_longlong(source2->current_position));
-        ok(source2->stop_position == 87654321, "Got stop position %s.\n",
-                wine_dbgstr_longlong(source2->stop_position));
+        ok(source2->current_position == 12345678, "Got current position %I64d.\n",
+                source2->current_position);
+        ok(source2->stop_position == 87654321, "Got stop position %I64d.\n",
+                source2->stop_position);
     }
-    ok(source3->current_position == 0xdeadbeefdeadbeefULL, "Got current position %s.\n",
-            wine_dbgstr_longlong(source3->current_position));
-    ok(source3->stop_position == 0xdeadbeefdeadbeefULL, "Got stop position %s.\n",
-            wine_dbgstr_longlong(source3->stop_position));
+    ok(source3->current_position == 0xdeadbeefdeadbeefULL, "Got current position %I64d.\n",
+            source3->current_position);
+    ok(source3->stop_position == 0xdeadbeefdeadbeefULL, "Got stop position %I64d.\n",
+            source3->stop_position);
 }
 
 static void check_mediastreamfilter_get_duration(IMediaSeeking *seeking, struct testfilter *source1,
@@ -7368,9 +7368,9 @@ static void check_mediastreamfilter_get_duration(IMediaSeeking *seeking, struct 
     hr = IMediaSeeking_GetDuration(seeking, &duration);
     ok(hr == expected_hr, "Got hr %#lx.\n", hr);
     if (SUCCEEDED(expected_hr))
-        ok(duration == 0x8000000000000000ULL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+        ok(duration == 0x8000000000000000ULL, "Got duration %I64d.\n", duration);
     else
-        ok(duration == 0xdeadbeefdeadbeefULL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+        ok(duration == 0xdeadbeefdeadbeefULL, "Got duration %I64d.\n", duration);
 }
 
 static void check_mediastreamfilter_get_stop_position(IMediaSeeking *seeking, struct testfilter *source1,
@@ -7383,9 +7383,9 @@ static void check_mediastreamfilter_get_stop_position(IMediaSeeking *seeking, st
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
     ok(hr == expected_hr, "Got hr %#lx.\n", hr);
     if (SUCCEEDED(expected_hr))
-        ok(stop == 0x8000000000000000ULL, "Got stop position %s.\n", wine_dbgstr_longlong(stop));
+        ok(stop == 0x8000000000000000ULL, "Got stop position %I64d.\n", stop);
     else
-        ok(stop == 0xdeadbeefdeadbeefULL, "Got stop position %s.\n", wine_dbgstr_longlong(stop));
+        ok(stop == 0xdeadbeefdeadbeefULL, "Got stop position %I64d.\n", stop);
 }
 
 static void check_mediastreamfilter_is_format_supported(IMediaSeeking *seeking, struct testfilter *source1,
@@ -7444,11 +7444,11 @@ static void test_mediastreamfilter_get_current_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0, "Got time %I64d.\n", time);
     time = 0xdeadbeefdeadbeef;
     hr = IAMMultiMediaStream_GetTime(mmstream, &time);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0, "Got time %I64d.\n", time);
 
     hr = IMediaFilter_SetSyncSource(media_filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -7458,11 +7458,11 @@ static void test_mediastreamfilter_get_current_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0, "Got time %I64d.\n", time);
     time = 0xdeadbeefdeadbeef;
     hr = IAMMultiMediaStream_GetTime(mmstream, &time);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0, "Got time %I64d.\n", time);
 
     clock.time = 23456789;
     clock.get_time_hr = S_OK;
@@ -7478,11 +7478,11 @@ static void test_mediastreamfilter_get_current_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 11111101 + filter_start_time, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 11111101 + filter_start_time, "Got time %I64d.\n", time);
     time = 0xdeadbeefdeadbeef;
     hr = IAMMultiMediaStream_GetTime(mmstream, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 11111101 + filter_start_time, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 11111101 + filter_start_time, "Got time %I64d.\n", time);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -7512,7 +7512,7 @@ static void test_mediastreamfilter_reference_time_to_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(time == 0xdeadbeefdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0xdeadbeefdeadbeef, "Got time %I64d.\n", time);
 
     hr = IMediaStreamFilter_SetSyncSource(filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -7529,7 +7529,7 @@ static void test_mediastreamfilter_reference_time_to_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0xdeadbeefdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0xdeadbeefdeadbeef, "Got time %I64d.\n", time);
 
     hr = IMediaStreamFilter_Run(filter, 23456789);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -7537,7 +7537,7 @@ static void test_mediastreamfilter_reference_time_to_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0xdeadbeefdd47d2da, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0xdeadbeefdd47d2da, "Got time %I64d.\n", time);
 
     clock.time = 34567890;
     clock.get_time_hr = S_OK;
@@ -7545,7 +7545,7 @@ static void test_mediastreamfilter_reference_time_to_stream_time(void)
     time = 0xdeadbeefdeadbeef;
     hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0xdeadbeefdd47d2da, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0xdeadbeefdd47d2da, "Got time %I64d.\n", time);
 
     ref = IMediaStreamFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -7610,8 +7610,8 @@ static void test_mediastreamfilter_wait_until(void)
     ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
 
-    ok(cookie1.base == 23456789, "Got base %s.\n", wine_dbgstr_longlong(cookie1.base));
-    ok(cookie1.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie1.offset));
+    ok(cookie1.base == 23456789, "Got base %I64d.\n", cookie1.base);
+    ok(cookie1.offset == 12345678, "Got offset %I64d.\n", cookie1.offset);
     ok(!!cookie1.event, "Expected non-NULL event.\n");
 
     SetEvent(cookie1.event);
@@ -7635,8 +7635,8 @@ static void test_mediastreamfilter_wait_until(void)
     ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
 
-    ok(cookie1.base == 23456789, "Got base %s.\n", wine_dbgstr_longlong(cookie1.base));
-    ok(cookie1.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie1.offset));
+    ok(cookie1.base == 23456789, "Got base %I64d.\n", cookie1.base);
+    ok(cookie1.offset == 12345678, "Got offset %I64d.\n", cookie1.offset);
     ok(!!cookie1.event, "Expected non-NULL event.\n");
 
     clock.advise_time_cookie = &cookie2;
@@ -7648,8 +7648,8 @@ static void test_mediastreamfilter_wait_until(void)
     ok(!WaitForSingleObject(cookie2.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
 
-    ok(cookie2.base == 11111111, "Got base %s.\n", wine_dbgstr_longlong(cookie2.base));
-    ok(cookie2.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie2.offset));
+    ok(cookie2.base == 11111111, "Got base %I64d.\n", cookie2.base);
+    ok(cookie2.offset == 12345678, "Got offset %I64d.\n", cookie2.offset);
     ok(!!cookie2.event, "Expected non-NULL event.\n");
 
     SetEvent(cookie1.event);
@@ -8713,9 +8713,9 @@ static void test_ddrawstream_qc(void)
     ok(source.qc_notify_quality.Proportion == 0xdeadbeef, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
     ok(source.qc_notify_quality.Late == 0xdeadbeef,
-            "Got late %s.\n", wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
+            "Got late %I64d.\n", source.qc_notify_quality.Late);
+    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %I64d.\n",
+            source.qc_notify_quality.TimeStamp);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -8762,9 +8762,9 @@ static void test_ddrawstream_qc(void)
     ok(source.qc_notify_quality.Proportion == 0xdeadbeef, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
     ok(source.qc_notify_quality.Late == 0xdeadbeef,
-            "Got late %s.\n", wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
+            "Got late %I64d.\n", source.qc_notify_quality.Late);
+    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %I64d.\n",
+            source.qc_notify_quality.TimeStamp);
 
     clock.time = 12345678 - filter_start_time + 11111111 + 200000;
 
@@ -8782,10 +8782,10 @@ static void test_ddrawstream_qc(void)
             source.qc_notify_quality.Type);
     ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
-    ok(source.qc_notify_quality.Late == 0, "Got late %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
+    ok(source.qc_notify_quality.Late == 0, "Got late %I64d.\n",
+            source.qc_notify_quality.Late);
+    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %I64d.\n",
+            source.qc_notify_quality.TimeStamp);
 
     /* Test Update() after Reveive(). */
     source.qc_notify_sender = (IBaseFilter *)0xdeadbeef;
@@ -8815,9 +8815,9 @@ static void test_ddrawstream_qc(void)
     ok(source.qc_notify_quality.Proportion == 0xdeadbeef, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
     ok(source.qc_notify_quality.Late == 0xdeadbeef,
-            "Got late %s.\n", wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
+            "Got late %I64d.\n", source.qc_notify_quality.Late);
+    ok(source.qc_notify_quality.TimeStamp == 0xdeadbeef, "Got time stamp %I64d.\n",
+            source.qc_notify_quality.TimeStamp);
 
     clock.time = 12345678 - filter_start_time + 11111111 + 500000;
 
@@ -8833,10 +8833,10 @@ static void test_ddrawstream_qc(void)
             source.qc_notify_quality.Type);
     ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
-    ok(source.qc_notify_quality.Late == 100000, "Got late %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
-            wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
+    ok(source.qc_notify_quality.Late == 100000, "Got late %I64d.\n",
+            source.qc_notify_quality.Late);
+    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %I64d.\n",
+            source.qc_notify_quality.TimeStamp);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -10671,8 +10671,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
 
-    ok(cookie.base == 11111111 + 10000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
-    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+    ok(cookie.base == 11111111 + 10000, "Got base %I64d.\n", cookie.base);
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %I64d.\n", cookie.offset);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
@@ -10698,8 +10698,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
 
-    ok(cookie.base == 11111111 + 20000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
-    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+    ok(cookie.base == 11111111 + 20000, "Got base %I64d.\n", cookie.base);
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %I64d.\n", cookie.offset);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK, 0);
     ok(hr == MS_S_NOUPDATE, "Got hr %#lx.\n", hr);
@@ -10727,8 +10727,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
 
-    ok(cookie.base == 11111111 + 30000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
-    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+    ok(cookie.base == 11111111 + 30000, "Got base %I64d.\n", cookie.base);
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %I64d.\n", cookie.offset);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK | COMPSTAT_WAIT, INFINITE);
     ok(hr == MS_S_NOUPDATE, "Got hr %#lx.\n", hr);
@@ -10756,8 +10756,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
 
-    ok(cookie.base == 11111111 + 40000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
-    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+    ok(cookie.base == 11111111 + 40000, "Got base %I64d.\n", cookie.base);
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %I64d.\n", cookie.offset);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_ABORT, 0);
     ok(hr == MS_S_NOUPDATE, "Got hr %#lx.\n", hr);
@@ -10784,8 +10784,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
 
-    ok(cookie.base == 11111111 + 50000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
-    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+    ok(cookie.base == 11111111 + 50000, "Got base %I64d.\n", cookie.base);
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %I64d.\n", cookie.offset);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -10880,7 +10880,7 @@ static void test_ddrawstreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+    ok(current_time == 0, "Got current time %I64d.\n", current_time);
 
     hr = IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -10888,7 +10888,7 @@ static void test_ddrawstreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+    ok(current_time == 0, "Got current time %I64d.\n", current_time);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -10901,31 +10901,31 @@ static void test_ddrawstreamsample_get_sample_times(void)
     current_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == 0xdeadbeefddf15da1 + filter_start_time, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(0xdeadbeefddf15da1 + filter_start_time), wine_dbgstr_longlong(current_time));
+    ok(current_time == 0xdeadbeefddf15da1 + filter_start_time, "Expected current time %I64d, got %I64d.\n",
+            0xdeadbeefddf15da1 + filter_start_time, current_time);
 
     clock.get_time_hr = S_OK;
 
     current_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == filter_start_time, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(filter_start_time), wine_dbgstr_longlong(current_time));
+    ok(current_time == filter_start_time, "Expected current time %I64d, got %I64d.\n",
+            filter_start_time, current_time);
 
     clock.time = 23456789;
 
     current_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current_time == filter_start_time + 11111111, "Expected current time %s, got %s.\n",
-            wine_dbgstr_longlong(filter_start_time + 11111111), wine_dbgstr_longlong(current_time));
+    ok(current_time == filter_start_time + 11111111, "Expected current time %I64d, got %I64d.\n",
+            filter_start_time + 11111111, current_time);
 
     start_time = 0xdeadbeefdeadbeef;
     end_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 0, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 0, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 0, "Got start time %I64d.\n", start_time);
+    ok(end_time == 0, "Got end time %I64d.\n", end_time);
 
     hr = IDirectDrawStreamSample_Update(stream_sample, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
@@ -10943,8 +10943,8 @@ static void test_ddrawstreamsample_get_sample_times(void)
     end_time = 0xdeadbeefdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(start_time == 12345678, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
-    ok(end_time == 23456789, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+    ok(start_time == 12345678, "Got start time %I64d.\n", start_time);
+    ok(end_time == 23456789, "Got end time %I64d.\n", end_time);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
