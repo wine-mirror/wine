@@ -872,8 +872,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     HRESULT hr;
     BOOL ret;
 
-    TRACE("filter %p, offset %s, length %ld, buffer %p.\n",
-            filter, wine_dbgstr_longlong(offset), length, buffer);
+    TRACE("filter %p, offset %#I64x, length %ld, buffer %p.\n", filter, offset, length, buffer);
 
     ret = sync_read(filter->file, offset, length, buffer, &read_len);
     if (ret)
