@@ -29,8 +29,6 @@
 #include "d3d.h"
 #include "unknwn.h"
 
-static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *, void **, REFIID, IUnknown *);
-
 static IDirectDraw *lpDD;
 static DDCAPS ddcaps;
 
@@ -2465,9 +2463,6 @@ START_TEST(dsurface)
 {
     HRESULT ret;
     IDirectDraw4 *dd4;
-
-    HMODULE ddraw_mod = GetModuleHandleA("ddraw.dll");
-    pDirectDrawCreateEx = (void *) GetProcAddress(ddraw_mod, "DirectDrawCreateEx");
 
     if (!CreateDirectDraw())
         return;
