@@ -498,7 +498,6 @@ static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
 static void * (WINAPI *call_thiscall_func3)( void *func, void *this, void *a, void *b );
 static void * (WINAPI *call_thiscall_func4)( void *func, void *this, void *a, void *b, void *c );
-static void * (WINAPI *call_thiscall_func5)( void *func, void *this, void *a, void *b, void *c, void *d );
 
 /* to silence compiler errors */
 static void * (WINAPI *call_thiscall_func2_ptr_dbl)( void *func, void *this, double a );
@@ -519,7 +518,6 @@ static void init_thiscall_thunk(void)
     call_thiscall_func2 = (void *)thunk;
     call_thiscall_func3 = (void *)thunk;
     call_thiscall_func4 = (void *)thunk;
-    call_thiscall_func5 = (void *)thunk;
 
     call_thiscall_func2_ptr_dbl  = (void *)thunk;
     call_thiscall_func2_ptr_fpos = (void *)thunk;
@@ -529,8 +527,6 @@ static void init_thiscall_thunk(void)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(void*)(a))
 #define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(void*)(a),(void*)(b))
 #define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(void*)(a),(void*)(b),(void*)(c))
-#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(void*)(a),(void*)(b), \
-        (void*)(c), (void *)(d))
 
 #define call_func2_ptr_dbl(func,_this,a)  call_thiscall_func2_ptr_dbl(func,_this,a)
 #define call_func2_ptr_fpos(func,_this,a) call_thiscall_func2_ptr_fpos(func,_this,a)
