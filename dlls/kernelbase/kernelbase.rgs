@@ -4144,6 +4144,7 @@ HKLM
                             val 'es-ES_tradnl' = s '{0000002a-57ee-1e5c-00b4-d0000bb1e11e}'
                             val 'et' = s '{00000027-57ee-1e5c-00b4-d0000bb1e11e}'
                             val 'fa' = s '{00000041-57ee-1e5c-00b4-d0000bb1e11e}'
+                            val 'fa-AF' = s '{00000016-57ee-1e5c-00b4-d0000bb1e11e}'
                             val 'fi' = s '{0000001a-57ee-1e5c-00b4-d0000bb1e11e}'
                             val 'fr' = s '{00000003-57ee-1e5c-00b4-d0000bb1e11e}'
                             val 'fy' = s '{0000003e-57ee-1e5c-00b4-d0000bb1e11e}'
