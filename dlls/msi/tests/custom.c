@@ -1411,6 +1411,22 @@ UINT WINAPI async2(MSIHANDLE hinst)
     return ERROR_SUCCESS;
 }
 
+UINT WINAPI page_fault(MSIHANDLE hinst)
+{
+    UINT *p = NULL;
+
+    *(volatile UINT *)p = 0xdeadbeef;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI raise_exception(MSIHANDLE hinst)
+{
+    RaiseException(0xdeadbeef, 0, 0, NULL);
+
+    return ERROR_SUCCESS;
+}
+
 static BOOL pf_exists(const char *file)
 {
     char path[MAX_PATH];

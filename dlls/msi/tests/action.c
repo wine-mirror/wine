@@ -1970,6 +1970,24 @@ static const char rep_install_exec_seq_dat[] =
     "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
+static const char exception_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "page_fault\tPAGEFAULT AND NOT REMOVE\t601\n"
+    "page_fault_ignore\tPAGEFAULT_IGNORE AND NOT REMOVE\t602\n"
+    "raise_exception\tEXCEPTION AND NOT REMOVE\t603\n"
+    "raise_exception_ignore\tEXCEPTION_IGNORE AND NOT REMOVE\t604\n";
+
+static const char exception_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\n"
+    "s72\ti2\tS64\tS0\n"
+    "CustomAction\tAction\n"
+    "page_fault\t1\tcustom.dll\tpage_fault\n"
+    "page_fault_ignore\t65\tcustom.dll\tpage_fault\n"
+    "raise_exception\t1\tcustom.dll\traise_exception\n"
+    "raise_exception_ignore\t65\tcustom.dll\traise_exception\n";
+
 static const msi_table env_tables[] =
 {
     ADD_TABLE(component),
@@ -2369,6 +2387,19 @@ static const msi_table rep_tables[] =
     ADD_TABLE(rep_property),
     ADD_TABLE(rep_install_exec_seq),
     ADD_TABLE(media)
+};
+
+static const msi_table exception_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(exception_install_exec_seq),
+    ADD_TABLE(exception_custom_action),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
 };
 
 /* cabinet definitions */
@@ -6541,6 +6572,41 @@ error:
     DeleteFileA(msifile);
 }
 
+static void test_custom_action_exception(void)
+{
+    UINT r;
+
+    if (!is_process_elevated())
+    {
+        skip("Process is limited\n");
+        return;
+    }
+
+    create_database(msifile, exception_tables, ARRAY_SIZE(exception_tables));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "PAGEFAULT=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto done;
+    }
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "PAGEFAULT_IGNORE=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "EXCEPTION=1");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "EXCEPTION_IGNORE=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+done:
+    DeleteFileA(msifile);
+}
+
 static HANDLE get_admin_token(void)
 {
     TOKEN_ELEVATION_TYPE type;
@@ -6647,6 +6713,7 @@ START_TEST(action)
     test_register_mime_info();
     test_publish_assemblies();
     test_remove_existing_products();
+    test_custom_action_exception();
 
     DeleteFileA(log_file);
     SetCurrentDirectoryA(prev_path);

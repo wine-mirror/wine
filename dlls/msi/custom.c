@@ -557,7 +557,7 @@ UINT CDECL __wine_msi_call_dll_function(DWORD client_pid, const GUID *guid)
         {
             ERR( "Custom action (%s:%s) caused an exception: %#lx\n",
                  debugstr_w(dll), debugstr_a(proc), GetExceptionCode() );
-            r = ERROR_SUCCESS;
+            r = ERROR_INSTALL_FAILURE;
         }
         __ENDTRY;
     }
