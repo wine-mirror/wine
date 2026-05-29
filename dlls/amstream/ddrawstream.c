@@ -1456,8 +1456,7 @@ static HRESULT WINAPI ddraw_sink_NewSegment(IPin *iface, REFERENCE_TIME start, R
 {
     struct ddraw_stream *stream = impl_from_IPin(iface);
 
-    TRACE("stream %p, start %s, stop %s, rate %0.16e\n",
-            stream, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
+    TRACE("stream %p, start %I64d, stop %I64d, rate %0.16e.\n", stream, start, stop, rate);
 
     EnterCriticalSection(&stream->cs);
 
