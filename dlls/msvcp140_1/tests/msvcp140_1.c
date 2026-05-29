@@ -50,7 +50,6 @@ struct thiscall_thunk
 };
 #pragma pack(pop)
 
-static void* (WINAPI *call_thiscall_func1)(void *func, void *this);
 static void* (WINAPI *call_thiscall_func2)(void *func, void *this, const void *a);
 static void* (WINAPI *call_thiscall_func3)(void *func,
         void *this, const void *a, const void *b);
@@ -66,13 +65,11 @@ static void init_thiscall_thunk(void)
     thunk->pop_ecx  = 0x59;   /* popl  %ecx */
     thunk->push_eax = 0x50;   /* pushl %eax */
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
-    call_thiscall_func1 = (void*)thunk;
     call_thiscall_func2 = (void*)thunk;
     call_thiscall_func3 = (void*)thunk;
     call_thiscall_func4 = (void*)thunk;
 }
 
-#define call_func1(func,_this) call_thiscall_func1(func,_this)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
 #define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,\
         (const void*)(a),(const void*)(b))
