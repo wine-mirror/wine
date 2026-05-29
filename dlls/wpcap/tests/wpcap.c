@@ -75,7 +75,6 @@ struct pcap_pkthdr
 };
 
 static int (CDECL *ppcap_activate)( pcap_t * );
-static void (CDECL *ppcap_breakloop)( pcap_t * );
 static int (CDECL *ppcap_bufsize)( pcap_t * );
 static int (CDECL *ppcap_can_set_rfmon)( pcap_t * );
 static void (CDECL *ppcap_close)( pcap_t * );
@@ -106,9 +105,6 @@ static int (CDECL *ppcap_list_datalinks)( pcap_t *, int ** );
 static int (CDECL *ppcap_list_tstamp_types)( pcap_t *, int ** );
 static char * (CDECL *ppcap_lookupdev)( char * );
 static int (CDECL *ppcap_lookupnet)( const char *, unsigned int *, unsigned int *, char * );
-static int (CDECL *ppcap_loop)( pcap_t *, int,
-                                void (CDECL *)(unsigned char *, const struct pcap_pkthdr *, const unsigned char *),
-                                unsigned char * );
 static int (CDECL *ppcap_set_buffer_size)( pcap_t *, int );
 static int (CDECL *ppcap_set_datalink)( pcap_t *, int );
 static int (CDECL *ppcap_set_immediate_mode)( pcap_t *, int );
@@ -118,9 +114,6 @@ static int (CDECL *ppcap_set_tstamp_precision)( pcap_t *, int );
 static int (CDECL *ppcap_setfilter)( pcap_t *, struct bpf_program * );
 static int (CDECL *ppcap_snapshot)( pcap_t * );
 static int (CDECL *ppcap_stats)( pcap_t *, struct pcap_stat * );
-static int CDECL (*ppcap_tstamp_type_name_to_val)( const char * );
-static const char * (CDECL *ppcap_tstamp_type_val_to_description)( int );
-static const char * (CDECL *ppcap_tstamp_type_val_to_name)( int );
 
 static void CDECL capture_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
 {
@@ -333,7 +326,6 @@ START_TEST( wpcap )
         return;
     }
     ppcap_activate = (void *)GetProcAddress( module, "pcap_activate" );
-    ppcap_breakloop = (void *)GetProcAddress( module, "pcap_breakloop" );
     ppcap_bufsize = (void *)GetProcAddress( module, "pcap_bufsize" );
     ppcap_can_set_rfmon = (void *)GetProcAddress( module, "pcap_can_set_rfmon" );
     ppcap_close = (void *)GetProcAddress( module, "pcap_close" );
@@ -362,7 +354,6 @@ START_TEST( wpcap )
     ppcap_list_tstamp_types = (void *)GetProcAddress( module, "pcap_list_tstamp_types" );
     ppcap_lookupdev = (void *)GetProcAddress( module, "pcap_lookupdev" );
     ppcap_lookupnet = (void *)GetProcAddress( module, "pcap_lookupnet" );
-    ppcap_loop = (void *)GetProcAddress( module, "pcap_loop" );
     ppcap_set_buffer_size = (void *)GetProcAddress( module, "pcap_set_buffer_size" );
     ppcap_set_datalink = (void *)GetProcAddress( module, "pcap_set_datalink" );
     ppcap_set_immediate_mode = (void *)GetProcAddress( module, "pcap_set_immediate_mode" );
@@ -372,9 +363,6 @@ START_TEST( wpcap )
     ppcap_setfilter = (void *)GetProcAddress( module, "pcap_setfilter" );
     ppcap_snapshot = (void *)GetProcAddress( module, "pcap_snapshot" );
     ppcap_stats = (void *)GetProcAddress( module, "pcap_stats" );
-    ppcap_tstamp_type_name_to_val = (void *)GetProcAddress( module, "pcap_tstamp_type_name_to_val" );
-    ppcap_tstamp_type_val_to_description = (void *)GetProcAddress( module, "pcap_tstamp_type_val_to_description" );
-    ppcap_tstamp_type_val_to_name = (void *)GetProcAddress( module, "pcap_tstamp_type_val_to_name" );
 
     trace( "lib version %s\n", ppcap_lib_version() );
     trace( "supports PCAP_MMAP_32BIT: %s\n", (ppcap_init(PCAP_MMAP_32BIT, errbuf) < 0) ? "no" : "yes" );
