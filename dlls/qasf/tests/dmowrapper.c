@@ -324,27 +324,27 @@ static HRESULT WINAPI dmo_ProcessInput(IMediaObject *iface, DWORD index,
     if (testmode == 0 || testmode == 12 || testmode == 100)
     {
         ok(!flags, "Got flags %#lx.\n", flags);
-        ok(!timestamp, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
-        ok(!timelength, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+        ok(!timestamp, "Got timestamp %I64d.\n", timestamp);
+        ok(!timelength, "Got length %I64d.\n", timelength);
     }
     else if (testmode == 1)
     {
         ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH), "Got flags %#lx.\n", flags);
-        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
-        ok(timelength == 1, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+        ok(timestamp == 20000, "Got timestamp %I64d.\n", timestamp);
+        ok(timelength == 1, "Got length %I64d.\n", timelength);
     }
     else if (testmode == 6)
     {
         ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH
                 | DMO_INPUT_DATA_BUFFERF_SYNCPOINT), "Got flags %#lx.\n", flags);
-        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
-        ok(timelength == 10000, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+        ok(timestamp == 20000, "Got timestamp %I64d.\n", timestamp);
+        ok(timelength == 10000, "Got length %I64d.\n", timelength);
     }
     else
     {
         ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH), "Got flags %#lx.\n", flags);
-        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
-        ok(timelength == 10000, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+        ok(timestamp == 20000, "Got timestamp %I64d.\n", timestamp);
+        ok(timelength == 10000, "Got length %I64d.\n", timelength);
     }
 
     testdmo_buffer = buffer;
@@ -1259,15 +1259,15 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     if (testmode == 8)
     {
         ok(hr == VFW_S_NO_STOP_TIME, "Got hr %#lx.\n", hr);
-        ok(start == 5000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+        ok(start == 5000, "Got start time %I64d.\n", start);
     }
     else if (testmode == 9)
         ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#lx.\n", hr);
     else
     {
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(start == 5000, "Got start time %s.\n", wine_dbgstr_longlong(start));
-        ok(stop == 6000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+        ok(start == 5000, "Got start time %I64d.\n", start);
+        ok(stop == 6000, "Got stop time %I64d.\n", stop);
     }
 
     hr = IMediaSample_GetMediaTime(sample, &start, &stop);
@@ -1307,8 +1307,8 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
     ++filter->got_new_segment;
-    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
-    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(start == 10000, "Got start %I64d.\n", start);
+    ok(stop == 20000, "Got stop %I64d.\n", stop);
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
     return 0xdeadbeef;
 }
