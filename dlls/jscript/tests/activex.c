@@ -86,7 +86,6 @@ DEFINE_EXPECT(ProcessUrlAction);
 DEFINE_EXPECT(QueryCustomPolicy);
 DEFINE_EXPECT(reportSuccess);
 DEFINE_EXPECT(Host_QS_SecMgr);
-DEFINE_EXPECT(Caller_QS_SecMgr);
 DEFINE_EXPECT(QI_IObjectWithSite);
 DEFINE_EXPECT(SetSite);
 
@@ -532,10 +531,8 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return E_NOINTERFACE;
 
     if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
-        if(iface == &ServiceProvider)
-            CHECK_EXPECT(Host_QS_SecMgr);
-        else
-            CHECK_EXPECT(Caller_QS_SecMgr);
+        ok(iface == &ServiceProvider, "called on non-host iface\n");
+        CHECK_EXPECT(Host_QS_SecMgr);
         ok(IsEqualGUID(&IID_IInternetHostSecurityManager, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
         if(SUCCEEDED(QS_SecMgr_hres))
             *ppv = &InternetHostSecurityManager;
