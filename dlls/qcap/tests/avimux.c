@@ -783,12 +783,12 @@ static void test_seeking(void)
     hr = IMediaSeeking_GetDuration(seeking, &time);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
-        ok(!time, "Got duration %s.\n", wine_dbgstr_longlong(time));
+        ok(!time, "Got duration %I64d.\n", time);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
-        ok(!time, "Got duration %s.\n", wine_dbgstr_longlong(time));
+        ok(!time, "Got duration %I64d.\n", time);
 
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
