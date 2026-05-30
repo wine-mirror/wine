@@ -1146,6 +1146,13 @@ static const char * const WINEMessageTypeNames[SPY_MAX_WINEMSGNUM + 1] =
     "WM_WINE_SETPIXELFORMAT",
 };
 
+#define SPY_MAX_WINE_DRIVER_MSGNUM (WM_WINE_SETCURSOR - WM_WINE_CLIPCURSOR)
+static const char * const wine_driver_message_type_names[SPY_MAX_WINE_DRIVER_MSGNUM + 1] =
+{
+    "WM_WINE_CLIPCURSOR",
+    "WM_WINE_SETCURSOR",
+};
+
 /* Virtual key names */
 #define SPY_MAX_VKKEYSNUM 255
 static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
@@ -2073,6 +2080,9 @@ static const char *SPY_GetMsgInternal( UINT msg )
 
     if (msg >= WM_WINE_DESTROYWINDOW && msg <= WM_WINE_DESTROYWINDOW + SPY_MAX_WINEMSGNUM)
         return WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW];
+
+    if (msg >= WM_WINE_CLIPCURSOR && msg <= WM_WINE_CLIPCURSOR + SPY_MAX_WINE_DRIVER_MSGNUM)
+        return wine_driver_message_type_names[msg-WM_WINE_CLIPCURSOR];
 
     return NULL;
 }
