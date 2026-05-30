@@ -841,6 +841,10 @@ static void dump_buffer_desc(SecBufferDesc *desc)
 
 #define HEADER_SIZE_TLS  5
 #define HEADER_SIZE_DTLS 13
+#define TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC 20
+#define TLS_CONTENT_TYPE_APPLICATION_DATA   23
+#define TLS_RECORD_TYPE_OFFSET          0
+#define TLS_RECORD_VERSION_MAJOR_OFFSET 1
 
 static inline SIZE_T read_record_size(const BYTE *buf, SIZE_T header_size)
 {
@@ -850,6 +854,13 @@ static inline SIZE_T read_record_size(const BYTE *buf, SIZE_T header_size)
 static inline BOOL is_dtls_context(const struct schan_context *ctx)
 {
     return ctx->header_size == HEADER_SIZE_DTLS;
+}
+
+static inline BOOL is_tls_record_header(BYTE *ptr)
+{
+    return ptr[TLS_RECORD_TYPE_OFFSET] >= TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC &&
+           ptr[TLS_RECORD_TYPE_OFFSET] <= TLS_CONTENT_TYPE_APPLICATION_DATA &&
+           ptr[TLS_RECORD_VERSION_MAJOR_OFFSET] == 3;
 }
 
 static void fill_missing_sec_buffer(SecBufferDesc *input, DWORD size)
@@ -1015,6 +1026,14 @@ static SECURITY_STATUS establish_context(
                       ctx->header_size, buffer->cbBuffer);
                 fill_missing_sec_buffer(pInput, ctx->header_size - buffer->cbBuffer);
                 return SEC_E_INCOMPLETE_MESSAGE;
+            }
+
+            if (!is_dtls_context(ctx) && !is_tls_record_header(ptr))
+            {
+                WARN("Invalid TLS record header: %02x %02x %02x %02x %02x.\n",
+                     ptr[0], ptr[1], ptr[2], ptr[3], ptr[4]);
+                pOutput->pBuffers[idx].cbBuffer = 0;
+                return SEC_E_INVALID_TOKEN;
             }
 
             while (buffer->cbBuffer >= expected_size + ctx->header_size)
