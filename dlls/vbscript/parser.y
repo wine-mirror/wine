@@ -185,8 +185,13 @@ SourceElements
     : /* empty */
     | SourceElements GlobalDimDeclaration StSep
                                             { source_add_statement(ctx, $2); }
-    | SourceElements StatementNl            { source_add_statement(ctx, $2); }
-    | SourceElements ClassDeclaration       { source_add_class(ctx, $2); }
+    | SourceElements SimpleStatement StSep  { source_add_statement(ctx, $2); }
+    | SourceElements ClassDeclaration StSep { source_add_class(ctx, $2); }
+
+/* A Class declaration is reachable only here at script global scope, not from
+   the shared SimpleStatement used by every body, so a Class anywhere else is
+   rejected as a syntax error (see the tCLASS rule in SimpleStatement), while
+   still being allowed after another statement, e.g. Dim x : Class C. */
 
 GlobalDimDeclaration
     : tPRIVATE tCONST ConstDeclList         { $$ = new_const_statement(ctx, @$, $3); CHECK_ERROR; }
@@ -267,6 +272,12 @@ SimpleStatement
     | tDO StSep StatementsNl_opt error      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LOOP); YYABORT; }
     | tDO error                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WHILE_UNTIL_EOS); YYABORT; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, @$, $1); CHECK_ERROR; }
+    | tCLASS                                { /* A Class is only valid at global scope (see SourceElements). The real
+                                                ClassDeclaration wins the shift there, so this rule only matches in a
+                                                body, where it reports the syntax error native reports. It is needed:
+                                                without it, error recovery surfaces a different, context-dependent
+                                                error code instead of the plain syntax error. */
+                                              ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR); YYABORT; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0, @2); CHECK_ERROR; }
     | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0, @2); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @2); CHECK_ERROR; }
@@ -574,7 +585,7 @@ PrimaryExpression
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
-    : tCLASS Identifier StSep ClassBody tEND tCLASS StSep       { $4->name = $2; $4->loc = @2; $$ = $4; }
+    : tCLASS Identifier StSep ClassBody tEND tCLASS             { $4->name = $2; $4->loc = @2; $$ = $4; }
     | tCLASS Identifier tEND tCLASS         { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
     | tCLASS Identifier StSep ClassBody tEND error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CLASS); YYABORT; }
 
@@ -733,8 +744,12 @@ static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
 
 static void source_add_class(parser_ctx_t *ctx, class_decl_t *class_decl)
 {
-    class_decl->next = ctx->class_decls;
-    ctx->class_decls = class_decl;
+    class_decl_t **iter;
+
+    /* Append to keep classes in source order, so a redefinition is reported at the later declaration. */
+    class_decl->next = NULL;
+    for(iter = &ctx->class_decls; *iter; iter = &(*iter)->next);
+    *iter = class_decl;
 }
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr)

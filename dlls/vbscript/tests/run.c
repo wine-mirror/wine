@@ -3681,16 +3681,14 @@ static void test_class_decl_scope(void)
         BOOL expect_ok;     /* whether the script should compile */
         USHORT error_code;  /* expected error number when it should not */
         ULONG error_line;   /* expected 0-based error line when it should not */
-        BOOL todo;
     } tests[] = {
-        { L"Dim x : Class C\nPublic v\nEnd Class\n", TRUE, 0, 0, TRUE },
-        { L"Sub S\nClass C\nEnd Class\nEnd Sub\n", FALSE, 1002, 1, TRUE },
-        { L"If True Then\nClass C\nEnd Class\nEnd If\n", FALSE, 1002, 1, TRUE },
-        { L"Class C\nEnd Class\nDim x : Class C\nEnd Class\n", FALSE, 1041, 2, TRUE },
+        { L"Dim x : Class C\nPublic v\nEnd Class\n", TRUE },
+        { L"Sub S\nClass C\nEnd Class\nEnd Sub\n", FALSE, 1002, 1 },
+        { L"If True Then\nClass C\nEnd Class\nEnd If\n", FALSE, 1002, 1 },
+        { L"Class C\nEnd Class\nDim x : Class C\nEnd Class\n", FALSE, 1041, 2 },
     };
     HRESULT hres;
     unsigned i;
-    BOOL pass;
 
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         error_line = ~0;
@@ -3701,14 +3699,11 @@ static void test_class_decl_scope(void)
         CLEAR_CALLED(OnScriptError);
 
         if (tests[i].expect_ok)
-            pass = hres == S_OK;
+            ok(hres == S_OK, "[%u] %s: hres=%08lx\n", i, wine_dbgstr_w(tests[i].src), hres);
         else
-            pass = FAILED(hres) && error_code == tests[i].error_code
-                && error_line == tests[i].error_line;
-
-        todo_wine_if(tests[i].todo)
-        ok(pass, "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
-           hres, error_code, error_line);
+            ok(FAILED(hres) && error_code == tests[i].error_code && error_line == tests[i].error_line,
+               "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+               hres, error_code, error_line);
     }
 }
 
