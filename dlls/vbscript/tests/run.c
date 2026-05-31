@@ -3674,6 +3674,44 @@ static void test_external_caller_method_error(void)
     CHECK_CALLED(OnScriptError);
 }
 
+static void test_class_decl_scope(void)
+{
+    static const struct {
+        const WCHAR *src;
+        BOOL expect_ok;     /* whether the script should compile */
+        USHORT error_code;  /* expected error number when it should not */
+        ULONG error_line;   /* expected 0-based error line when it should not */
+        BOOL todo;
+    } tests[] = {
+        { L"Dim x : Class C\nPublic v\nEnd Class\n", TRUE, 0, 0, TRUE },
+        { L"Sub S\nClass C\nEnd Class\nEnd Sub\n", FALSE, 1002, 1, TRUE },
+        { L"If True Then\nClass C\nEnd Class\nEnd If\n", FALSE, 1002, 1, TRUE },
+        { L"Class C\nEnd Class\nDim x : Class C\nEnd Class\n", FALSE, 1041, 2, TRUE },
+    };
+    HRESULT hres;
+    unsigned i;
+    BOOL pass;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+
+        if (tests[i].expect_ok)
+            pass = hres == S_OK;
+        else
+            pass = FAILED(hres) && error_code == tests[i].error_code
+                && error_line == tests[i].error_line;
+
+        todo_wine_if(tests[i].todo)
+        ok(pass, "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+           hres, error_code, error_line);
+    }
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -4370,6 +4408,7 @@ static void run_tests(void)
     test_isexpression();
     test_option_explicit_errors();
     test_parse_errors();
+    test_class_decl_scope();
     test_redefine_scope();
     test_getref_error_reporting();
     test_getref_external_caller_error();
