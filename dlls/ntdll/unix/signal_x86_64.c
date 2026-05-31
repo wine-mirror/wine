@@ -536,14 +536,12 @@ static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
 static UINT64 xstate_extended_features;
 static LONG syscall_dispatch_enabled = TRUE;
 
-#if defined(__linux__) || defined(__APPLE__)
 static inline struct thread_data *get_current_thread_data(void)
 {
     unsigned long rsp;
     __asm__( "movq %%rsp,%0" : "=r" (rsp) );
     return (struct thread_data *)(rsp & ~signal_stack_mask);
 }
-#endif
 
 extern void __wine_syscall_dispatcher_instrumentation(void);
 static void *instrumentation_callback;
