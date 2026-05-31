@@ -3707,6 +3707,44 @@ static void test_class_decl_scope(void)
     }
 }
 
+/* Like a Class, a Sub or Function is only valid at script global scope (a
+   global If/Select block hoists it, a loop or procedure body does not). Native
+   rejects the disallowed cases; the parser does not yet, so these are todo. */
+static void test_sub_decl_scope(void)
+{
+    static const struct {
+        const WCHAR *src;
+        BOOL expect_ok;     /* whether the script should compile */
+        USHORT error_code;  /* expected native error number when it should not */
+        ULONG error_line;   /* expected 0-based native error line when it should not */
+        BOOL todo;          /* the parser does not yet reject this case */
+    } tests[] = {
+        { L"If False Then\nSub S\nEnd Sub\nEnd If\nCall S\n", TRUE, 0, 0, FALSE },
+        { L"Select Case 1\nCase 1\nSub S\nEnd Sub\nEnd Select\nCall S\n", TRUE, 0, 0, FALSE },
+        { L"Sub S\nSub T\nEnd Sub\nEnd Sub\n", FALSE, 1002, 1, TRUE },
+        { L"For i = 1 To 1\nSub S\nEnd Sub\nNext\n", FALSE, 1002, 1, TRUE },
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+
+        if (tests[i].expect_ok)
+            ok(hres == S_OK, "[%u] %s: hres=%08lx\n", i, wine_dbgstr_w(tests[i].src), hres);
+        else
+            todo_wine_if(tests[i].todo)
+            ok(FAILED(hres) && error_code == tests[i].error_code && error_line == tests[i].error_line,
+               "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+               hres, error_code, error_line);
+    }
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -4404,6 +4442,7 @@ static void run_tests(void)
     test_option_explicit_errors();
     test_parse_errors();
     test_class_decl_scope();
+    test_sub_decl_scope();
     test_redefine_scope();
     test_getref_error_reporting();
     test_getref_external_caller_error();
