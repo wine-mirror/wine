@@ -198,6 +198,7 @@ LRESULT WINAPI PopupMenuWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM
     case WM_ERASEBKGND:
     case WM_SHOWWINDOW:
     case MN_GETHMENU:
+    case WM_NCCREATE:
         return NtUserMessageCall( hwnd, message, wParam, lParam,
                                   NULL, NtUserPopupMenuWndProc, TRUE );
 
@@ -223,6 +224,7 @@ LRESULT WINAPI PopupMenuWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM
     case WM_ERASEBKGND:
     case WM_SHOWWINDOW:
     case MN_GETHMENU:
+    case WM_NCCREATE:
         return NtUserMessageCall( hwnd, message, wParam, lParam,
                                   NULL, NtUserPopupMenuWndProc, FALSE );
 

@@ -2528,7 +2528,7 @@ static const struct real_class_test class_tests[] =
     { "Static",            "Static",           TRUE,  TRUE,  TRUE,  TRUE,  FALSE },
     { "ComboLBox",         "ListBox",          FALSE, TRUE,  TRUE,  TRUE,  FALSE },
     { "MDIClient",         "MDIClient",        TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
-    { "#32768",            "#32768",           FALSE, FALSE, TRUE,  TRUE,  TRUE },
+    { "#32768",            "#32768",           FALSE, FALSE, TRUE,  TRUE,  FALSE },
     { "#32770",            "#32770",           TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
     /* Not all built-in classes set real window class. */
     { "Message",           NULL,               FALSE, FALSE, FALSE, FALSE, FALSE },
