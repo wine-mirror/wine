@@ -31,60 +31,29 @@
 
 #include "implglue.h"
 
+SYMCRYPT_ENVIRONMENT_DEFS( WindowsUsermodeWin8_1nLater );
+
 prng_state prng = { 0 };
 int wprng = 0;
 
 BOOL init_hash_impl( ALG_ID algid, struct hash *hash )
 {
-    memset( hash, 0, sizeof(*hash) );
-
-    switch (algid)
+    const SYMCRYPT_HASH *algorithms[] =
     {
-    case CALG_MD2:
-        hash->desc = &md2_desc;
-        break;
+        [ALG_SID_MD2] = SymCryptMd2Algorithm,
+        [ALG_SID_MD4] = SymCryptMd4Algorithm,
+        [ALG_SID_MD5] = SymCryptMd5Algorithm,
+        [ALG_SID_SHA] = SymCryptSha1Algorithm,
+        [ALG_SID_SHA_256] = SymCryptSha256Algorithm,
+        [ALG_SID_SHA_384] = SymCryptSha384Algorithm,
+        [ALG_SID_SHA_512] = SymCryptSha512Algorithm,
+    };
 
-    case CALG_MD4:
-        hash->desc = &md4_desc;
-        break;
-
-    case CALG_MD5:
-        hash->desc = &md5_desc;
-        break;
-
-    case CALG_SHA:
-        hash->desc = &sha1_desc;
-        break;
-
-    case CALG_SHA_256:
-        hash->desc = &sha256_desc;
-        break;
-
-    case CALG_SHA_384:
-        hash->desc = &sha384_desc;
-        break;
-
-    case CALG_SHA_512:
-        hash->desc = &sha512_desc;
-        break;
-
-    default:
-        return TRUE;
-    }
-
-    hash->desc->init( &hash->state );
-    return TRUE;
-}
-
-BOOL update_hash_impl( struct hash *hash, const BYTE *data, DWORD len )
-{
-    hash->desc->process( &hash->state, data, len );
-    return TRUE;
-}
-
-BOOL finalize_hash_impl( struct hash *hash, BYTE *hash_value, DWORD hash_size )
-{
-    hash->desc->done( &hash->state, hash_value );
+    memset( hash, 0, sizeof(*hash) );
+    if (GET_ALG_CLASS(algid) != ALG_CLASS_HASH) return TRUE;
+    if (GET_ALG_SID(algid) >= ARRAY_SIZE(algorithms)) return TRUE;
+    if (!(hash->desc = algorithms[GET_ALG_SID(algid)])) return TRUE;
+    SymCryptHashInit( hash->desc, &hash->state );
     return TRUE;
 }
 
