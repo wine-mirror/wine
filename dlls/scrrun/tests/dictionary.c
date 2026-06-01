@@ -828,6 +828,22 @@ if (0) { /* crashes on native */
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == expected, "got hash %#lx, expected %#lx\n", V_I4(&hash), expected);
 
+    V_VT(&key) = VT_BOOL;
+    V_BOOL(&key) = VARIANT_FALSE;
+    V_I4(&hash) = 5678;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
+    todo_wine ok(V_I4(&hash) == get_num_hash(0.0f), "Unexpected hash value %#lx.\n", V_I4(&hash));
+
+    V_VT(&key) = VT_BOOL;
+    V_BOOL(&key) = VARIANT_TRUE;
+    V_I4(&hash) = 5678;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
+    todo_wine ok(V_I4(&hash) == get_num_hash((FLOAT)VARIANT_TRUE), "Unexpected hash value %#lx.\n", V_I4(&hash));
+
     V_VT(&key) = VT_EMPTY;
     V_I4(&key) = 1234;
     V_I4(&hash) = 5678;
@@ -1375,6 +1391,65 @@ static void test_empty_key(void)
     IDictionary_Release(dict);
 }
 
+static void test_bool_key(void)
+{
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT a, b, item;
+    HRESULT hr;
+
+    /* Boolean keys match the equal numeric value across types: True is -1,
+     * False is 0. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_TRUE;
+    V_VT(&b) = VT_I2;
+    V_I2(&b) = -1;
+    todo_wine ok(keys_match(&a, &b), "True should match I2 -1\n");
+
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_FALSE;
+    V_VT(&b) = VT_I2;
+    V_I2(&b) = 0;
+    todo_wine ok(keys_match(&a, &b), "False should match I2 0\n");
+
+    /* False is the zero/default value, so it matches an Empty key. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_FALSE;
+    V_VT(&b) = VT_EMPTY;
+    todo_wine ok(keys_match(&a, &b), "False should match Empty\n");
+
+    /* True and False are distinct keys. */
+    V_VT(&a) = VT_BOOL;
+    V_BOOL(&a) = VARIANT_TRUE;
+    V_VT(&b) = VT_BOOL;
+    V_BOOL(&b) = VARIANT_FALSE;
+    ok(!keys_match(&a, &b), "True should not match False\n");
+
+    /* A script can use a comparison result (a Boolean) as the key to Exists
+     * and Remove. */
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&a) = VT_I2;
+    V_I2(&a) = -1;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &a, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&b) = VT_BOOL;
+    V_BOOL(&b) = VARIANT_TRUE;
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &b, &exists);
+    todo_wine ok(hr == S_OK, "Exists with Boolean key: %#lx.\n", hr);
+    todo_wine ok(exists == VARIANT_TRUE, "True should find I2 -1, got %x\n", exists);
+
+    hr = IDictionary_Remove(dict, &b);
+    todo_wine ok(hr == S_OK, "Remove with Boolean key: %#lx.\n", hr);
+
+    IDictionary_Release(dict);
+}
+
 static void test_IEnumVARIANT(void)
 {
     IUnknown *enum1, *enum2;
@@ -1558,6 +1633,7 @@ START_TEST(dictionary)
     test_object_key_hashfail();
     test_put_Key();
     test_empty_key();
+    test_bool_key();
     test_IEnumVARIANT();
     test_putref_Item();
 
