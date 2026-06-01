@@ -3347,7 +3347,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     return !ret;
 }
 
-#define RECURSION_LIMIT 5
+#define RECURSION_LIMIT 3
 static BOOL skip_async_queue( struct request *request, BOOL *wont_block, DWORD to_read )
 {
     to_read = min( to_read, request->content_length - request->content_read );
