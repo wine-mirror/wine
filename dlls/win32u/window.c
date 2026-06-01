@@ -1594,7 +1594,6 @@ BOOL WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid )
     {
         req->handle = wine_server_user_handle( hwnd );
         req->atom = get_builtin_class_atom( fnid & 0x7fff );
-        req->fnid = fnid;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;

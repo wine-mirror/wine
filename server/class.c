@@ -116,14 +116,12 @@ static struct window_class *find_class( struct process *process, atom_t atom, mo
     return NULL;
 }
 
-struct window_class *grab_class( struct process *process, atom_t atom, mod_handle_t instance,
-                                 int *extra_bytes, struct obj_locator *locator )
+struct window_class *grab_class( struct process *process, atom_t atom, mod_handle_t instance, struct obj_locator *locator )
 {
     struct window_class *class = find_class( process, atom, instance );
     if (class)
     {
         class->count++;
-        *extra_bytes = class->shared->info.win_extra;
         *locator = get_shared_object_locator( class->shared );
     }
     else set_error( STATUS_INVALID_HANDLE );
@@ -158,6 +156,16 @@ int get_class_style( struct window_class *class )
 atom_t get_class_atom( struct window_class *class )
 {
     return class->shared->info.atom;
+}
+
+unsigned int get_class_fnid( struct window_class *class, data_size_t *extra_size, data_size_t *private_size )
+{
+    *extra_size = class->shared->info.win_extra;
+
+    if ((class->fnid & ~0x7fff) != 0x8000) *private_size = 0;
+    else *private_size = *extra_size;
+
+    return class->fnid;
 }
 
 client_ptr_t get_class_client_ptr( struct window_class *class )

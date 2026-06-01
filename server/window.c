@@ -616,7 +616,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
                                      mod_handle_t class_instance, mod_handle_t instance )
 {
-    int extra_bytes;
+    data_size_t extra_bytes, private_size;
     struct window *win = NULL;
     struct desktop *desktop;
     struct window_class *class;
@@ -624,11 +624,12 @@ static struct window *create_window( struct window *parent, struct window *owner
 
     if (!(desktop = get_thread_desktop( current, DESKTOP_CREATEWINDOW ))) return NULL;
 
-    if (!(class = grab_class( current->process, atom, class_instance, &extra_bytes, &class_locator )))
+    if (!(class = grab_class( current->process, atom, class_instance, &class_locator )))
     {
         release_object( desktop );
         return NULL;
     }
+    get_class_fnid( class, &extra_bytes, &private_size );
 
     if (!parent)  /* null parent is only allowed for desktop or HWND_MESSAGE top window */
     {
@@ -2279,20 +2280,23 @@ DECL_HANDLER(create_window)
 /* Set the window builtin class FNID */
 DECL_HANDLER(set_window_fnid)
 {
+    data_size_t extra_bytes, private_size;
     struct obj_locator class_locator;
     struct window_class *class;
     struct window *win;
-    int extra_bytes;
+    unsigned int fnid;
 
     if (!(win = get_window( req->handle ))) return;
     if (is_desktop_window( win ) && win->thread != current) return set_error( STATUS_ACCESS_DENIED );
-    if (win->shared->fnid && win->shared->fnid != req->fnid) return set_error( STATUS_INVALID_PARAMETER );
 
-    if (!(class = grab_class( current->process, req->atom, 0, &extra_bytes, &class_locator ))) return;
-    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    if (!(class = grab_class( current->process, req->atom, 0, &class_locator ))) return;
+    fnid = get_class_fnid( class, &extra_bytes, &private_size );
+
+    if (win->shared->fnid && win->shared->fnid != fnid) set_error( STATUS_INVALID_PARAMETER );
+    else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->fnid            = req->fnid;
-        shared->private_size    = extra_bytes;
+        shared->fnid            = fnid;
+        shared->private_size    = private_size;
     }
     SHARED_WRITE_END;
     release_class( class );
