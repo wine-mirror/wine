@@ -3937,6 +3937,120 @@ static void test_custom_lockbytes(void)
     DeleteTestLockBytes(lockbytes);
 }
 
+static void test_MoveElementTo(void)
+{
+    WCHAR temp[MAX_PATH], src_name[MAX_PATH], dst_name[MAX_PATH];
+    IStorage *src, *dst, *stg;
+    IStream *stream;
+    HRESULT hr;
+
+    GetTempPathW(MAX_PATH, temp);
+    GetTempFileNameW(temp, L"stg", 0, src_name);
+    GetTempFileNameW(temp, L"stg", 0, dst_name);
+
+    hr = StgCreateDocfile(src_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &src);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = create_test_file(src);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = StgCreateDocfile(dst_name, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &dst);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGTY_STREAM */
+
+    hr = IStorage_MoveElementTo(src, NULL, NULL, NULL, 0);
+    todo_wine
+    ok(hr == STG_E_INVALIDNAME, "got %#lx\n", hr);
+    if (hr != STG_E_INVALIDNAME) goto next;
+
+    hr = IStorage_MoveElementTo(src, strmA_name, dst, strmC_name, ~0);
+    ok(hr == STG_E_INVALIDFLAG, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmA_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, NULL, 0);
+    ok(hr == STG_E_INVALIDNAME, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, NULL, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_INVALIDPOINTER, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, NULL, strmC_name, ~0);
+    ok(hr == STG_E_INVALIDFLAG, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, src, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_ACCESSDENIED, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_COPY doesn't fail if the target already exsists */
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_MOVE fails if the target already exsists */
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_MOVE);
+    ok(hr == STG_E_FILEALREADYEXISTS, "got %#lx\n", hr);
+
+    hr = IStorage_DestroyElement(dst, strmC_name);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStream(src, strmC_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStream(dst, strmC_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IStream_Release(stream);
+
+    hr = IStorage_MoveElementTo(src, strmC_name, dst, strmC_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    /* STGTY_STORAGE */
+
+next:
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr != S_OK) goto done;
+
+    /* STGMOVE_COPY doesn't fail if the target already exsists */
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* STGMOVE_MOVE fails if the target already exsists */
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_MOVE);
+    ok(hr == STG_E_FILEALREADYEXISTS, "got %#lx\n", hr);
+
+    hr = IStorage_DestroyElement(dst, stgB_name);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgB_name, dst, stgA_name, STGMOVE_MOVE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IStorage_MoveElementTo(src, stgB_name, dst, stgA_name, STGMOVE_COPY);
+    ok(hr == STG_E_FILENOTFOUND, "got %#lx\n", hr);
+
+    hr = IStorage_OpenStorage(dst, stgB_name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IStorage_Release(stg);
+
+done:
+    IStorage_Release(src);
+    IStorage_Release(dst);
+    DeleteFileW(src_name);
+    DeleteFileW(dst_name);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3986,4 +4100,5 @@ START_TEST(storage32)
     test_transacted_shared();
     test_overwrite();
     test_custom_lockbytes();
+    test_MoveElementTo();
 }
