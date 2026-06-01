@@ -107,34 +107,27 @@ BOOL setup_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
             break;
 
         case CALG_RC2:
-            rc2_setup_ex(abKeyValue, dwKeyLen + dwSaltLen, dwEffectiveKeyLen ?
-                         dwEffectiveKeyLen : dwKeyLen << 3, 0, &pKeyContext->key);
+            SymCryptRc2ExpandKeyEx( &pKeyContext->rc2, abKeyValue, dwKeyLen + dwSaltLen,
+                                    dwEffectiveKeyLen ? dwEffectiveKeyLen : dwKeyLen << 3 );
             break;
-
         case CALG_3DES:
-            des3_setup(abKeyValue, 24, 0, &pKeyContext->key);
+            SymCrypt3DesExpandKey( &pKeyContext->des3, abKeyValue, 24 );
             break;
-
         case CALG_3DES_112:
-            memcpy(abKeyValue+16, abKeyValue, 8);
-            des3_setup(abKeyValue, 24, 0, &pKeyContext->key);
+            SymCrypt3DesExpandKey( &pKeyContext->des3, abKeyValue, 16 );
             break;
-
         case CALG_DES:
-            des_setup(abKeyValue, 8, 0, &pKeyContext->key);
+            SymCryptDesExpandKey( &pKeyContext->des, abKeyValue, 8 );
             break;
-
         case CALG_AES:
         case CALG_AES_128:
-            aes_setup(abKeyValue, 16, 0, &pKeyContext->key);
+            SymCryptAesExpandKey( &pKeyContext->aes, abKeyValue, 16 );
             break;
-
         case CALG_AES_192:
-            aes_setup(abKeyValue, 24, 0, &pKeyContext->key);
+            SymCryptAesExpandKey( &pKeyContext->aes, abKeyValue, 24 );
             break;
-
         case CALG_AES_256:
-            aes_setup(abKeyValue, 32, 0, &pKeyContext->key);
+            SymCryptAesExpandKey( &pKeyContext->aes, abKeyValue, 32 );
             break;
     }
 
@@ -196,23 +189,20 @@ BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContex
 
     switch (aiAlgid) {
         case CALG_RC2:
-            rc2_ecb_encrypt(in, out, &pKeyContext->key);
+            SymCryptRc2Encrypt( &pKeyContext->rc2, in, out );
             break;
-
         case CALG_3DES:
         case CALG_3DES_112:
-            des3_ecb_encrypt(in, out, &pKeyContext->key);
+            SymCrypt3DesEncrypt( &pKeyContext->des3, in, out );
             break;
-
         case CALG_DES:
-            des_ecb_encrypt(in, out, &pKeyContext->key);
+            SymCryptDesEncrypt( &pKeyContext->des, in, out );
             break;
-
         case CALG_AES:
         case CALG_AES_128:
         case CALG_AES_192:
         case CALG_AES_256:
-            aes_ecb_encrypt(in, out, &pKeyContext->key);
+            SymCryptAesEncrypt( &pKeyContext->aes, in, out );
             break;
 
         case CALG_RSA_KEYX:
@@ -242,23 +232,20 @@ BOOL decrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContex
 
     switch (aiAlgid) {
         case CALG_RC2:
-            rc2_ecb_decrypt(in, out, &pKeyContext->key);
+            SymCryptRc2Decrypt( &pKeyContext->rc2, in, out );
             break;
-
         case CALG_3DES:
         case CALG_3DES_112:
-            des3_ecb_decrypt(in, out, &pKeyContext->key);
+            SymCrypt3DesDecrypt( &pKeyContext->des3, in, out );
             break;
-
         case CALG_DES:
-            des_ecb_decrypt(in, out, &pKeyContext->key);
+            SymCryptDesDecrypt( &pKeyContext->des, in, out );
             break;
-
         case CALG_AES:
         case CALG_AES_128:
         case CALG_AES_192:
         case CALG_AES_256:
-            aes_ecb_decrypt(in, out, &pKeyContext->key);
+            SymCryptAesDecrypt( &pKeyContext->aes, in, out );
             break;
 
         case CALG_RSA_KEYX:

@@ -30,7 +30,10 @@
 #define RSAENH_MAX_HASH_SIZE        104
 
 typedef union tagKEY_CONTEXT {
-    symmetric_key key;
+    SYMCRYPT_DES_EXPANDED_KEY  des;
+    SYMCRYPT_3DES_EXPANDED_KEY des3;
+    SYMCRYPT_RC2_EXPANDED_KEY  rc2;
+    SYMCRYPT_AES_EXPANDED_KEY  aes;
     prng_state prng;
     rsa_key rsa;
 } KEY_CONTEXT;
