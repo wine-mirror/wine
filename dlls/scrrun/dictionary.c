@@ -119,6 +119,7 @@ static inline BOOL is_numeric_key(const VARIANT *key)
         case VT_DATE:
         case VT_R4:
         case VT_R8:
+        case VT_BOOL:
             return TRUE;
         default:
             return FALSE;
@@ -995,6 +996,10 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_R8|VT_BYREF:
     case VT_R8:
         return get_flt_hash(V_VT(key) & VT_BYREF ? *V_R8REF(key) : V_R8(key), &V_I4(hash));
+    case VT_BOOL|VT_BYREF:
+    case VT_BOOL:
+        V_I4(hash) = get_num_hash(V_VT(key) & VT_BYREF ? *V_BOOLREF(key) : V_BOOL(key));
+        break;
     case VT_EMPTY:
     case VT_NULL:
         V_I4(hash) = 0;

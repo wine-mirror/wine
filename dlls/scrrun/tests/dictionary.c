@@ -832,17 +832,17 @@ if (0) { /* crashes on native */
     V_BOOL(&key) = VARIANT_FALSE;
     V_I4(&hash) = 5678;
     hr = IDictionary_get_HashVal(dict, &key, &hash);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
-    todo_wine ok(V_I4(&hash) == get_num_hash(0.0f), "Unexpected hash value %#lx.\n", V_I4(&hash));
+    ok(V_I4(&hash) == get_num_hash(0.0f), "Unexpected hash value %#lx.\n", V_I4(&hash));
 
     V_VT(&key) = VT_BOOL;
     V_BOOL(&key) = VARIANT_TRUE;
     V_I4(&hash) = 5678;
     hr = IDictionary_get_HashVal(dict, &key, &hash);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
-    todo_wine ok(V_I4(&hash) == get_num_hash((FLOAT)VARIANT_TRUE), "Unexpected hash value %#lx.\n", V_I4(&hash));
+    ok(V_I4(&hash) == get_num_hash((FLOAT)VARIANT_TRUE), "Unexpected hash value %#lx.\n", V_I4(&hash));
 
     V_VT(&key) = VT_EMPTY;
     V_I4(&key) = 1234;
@@ -1404,19 +1404,19 @@ static void test_bool_key(void)
     V_BOOL(&a) = VARIANT_TRUE;
     V_VT(&b) = VT_I2;
     V_I2(&b) = -1;
-    todo_wine ok(keys_match(&a, &b), "True should match I2 -1\n");
+    ok(keys_match(&a, &b), "True should match I2 -1\n");
 
     V_VT(&a) = VT_BOOL;
     V_BOOL(&a) = VARIANT_FALSE;
     V_VT(&b) = VT_I2;
     V_I2(&b) = 0;
-    todo_wine ok(keys_match(&a, &b), "False should match I2 0\n");
+    ok(keys_match(&a, &b), "False should match I2 0\n");
 
     /* False is the zero/default value, so it matches an Empty key. */
     V_VT(&a) = VT_BOOL;
     V_BOOL(&a) = VARIANT_FALSE;
     V_VT(&b) = VT_EMPTY;
-    todo_wine ok(keys_match(&a, &b), "False should match Empty\n");
+    ok(keys_match(&a, &b), "False should match Empty\n");
 
     /* True and False are distinct keys. */
     V_VT(&a) = VT_BOOL;
@@ -1441,11 +1441,11 @@ static void test_bool_key(void)
     V_BOOL(&b) = VARIANT_TRUE;
     exists = VARIANT_FALSE;
     hr = IDictionary_Exists(dict, &b, &exists);
-    todo_wine ok(hr == S_OK, "Exists with Boolean key: %#lx.\n", hr);
-    todo_wine ok(exists == VARIANT_TRUE, "True should find I2 -1, got %x\n", exists);
+    ok(hr == S_OK, "Exists with Boolean key: %#lx.\n", hr);
+    ok(exists == VARIANT_TRUE, "True should find I2 -1, got %x\n", exists);
 
     hr = IDictionary_Remove(dict, &b);
-    todo_wine ok(hr == S_OK, "Remove with Boolean key: %#lx.\n", hr);
+    ok(hr == S_OK, "Remove with Boolean key: %#lx.\n", hr);
 
     IDictionary_Release(dict);
 }
