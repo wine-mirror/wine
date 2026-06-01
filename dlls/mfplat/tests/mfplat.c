@@ -29,6 +29,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "pathcch.h"
 #include "ks.h"
 #include "ksmedia.h"
 #include "amvideo.h"
@@ -270,6 +271,13 @@ static void check_platform_lock_count_(unsigned int line, unsigned int expected)
         count = -1;
 
     ok_(__FILE__, line)(count == expected, "Unexpected lock count %d.\n", count);
+}
+
+static void path_copy_replace_filename(WCHAR *dst_path, size_t size, const WCHAR *src_path, const WCHAR *filename)
+{
+    lstrcpyW(dst_path, src_path);
+    PathCchRemoveFileSpec(dst_path, size);
+    PathCchAppend(dst_path, size, filename);
 }
 
 struct d3d9_surface_readback
@@ -1397,6 +1405,66 @@ static void test_source_resolver(void)
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    path_copy_replace_filename(pathW, ARRAY_SIZE(pathW), filename, L"noextension");
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        IMFMediaSource_Shutdown(mediasource);
+        IMFMediaSource_Release(mediasource);
+    }
+    IMFByteStream_Release(stream);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE is not required if mime mismatches. */
+    hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"video/avi");
+    ok(hr == S_OK, "Failed to set string value, hr %#lx.\n", hr);
+    IMFAttributes_Release(attributes);
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSource_Shutdown(mediasource);
+    IMFMediaSource_Release(mediasource);
+    IMFByteStream_Release(stream);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    path_copy_replace_filename(pathW, ARRAY_SIZE(pathW), filename, L"temp.foo");
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    todo_wine
+    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        IMFMediaSource_Shutdown(mediasource);
+        IMFMediaSource_Release(mediasource);
+    }
+    IMFByteStream_Release(stream);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW,
+            MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE,
+            NULL, &obj_type, (IUnknown **)&mediasource);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSource_Shutdown(mediasource);
+    IMFMediaSource_Release(mediasource);
+    IMFByteStream_Release(stream);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"video/mp4");
@@ -1750,6 +1818,8 @@ static void test_source_resolver(void)
             (void **)&scheme_handler);
     ok(hr == S_OK, "Failed to create handler object, hr %#lx.\n", hr);
 
+    lstrcpyW(pathW, fileschemeW);
+    lstrcatW(pathW, filename);
     cancel_cookie = NULL;
     hr = IMFSchemeHandler_BeginCreateObject(scheme_handler, pathW, MF_RESOLUTION_MEDIASOURCE, NULL, &cancel_cookie,
             &callback2->IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
