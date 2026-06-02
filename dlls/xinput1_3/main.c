@@ -470,15 +470,19 @@ static BOOL open_device_at_index(const WCHAR *device_path, int index)
     return TRUE;
 }
 
-static BOOL find_opened_device(const WCHAR *device_path, int *free_slot)
+static BOOL find_opened_device(const WCHAR *device_path, int *slot)
 {
     int i;
 
-    *free_slot = XUSER_MAX_COUNT;
+    *slot = XUSER_MAX_COUNT;
     for (i = XUSER_MAX_COUNT; i > 0; i--)
     {
-        if (!controllers[i - 1].device) *free_slot = i - 1;
-        else if (!wcsicmp(device_path, controllers[i - 1].device_path)) return TRUE;
+        if (!controllers[i - 1].device) *slot = i - 1;
+        else if (!wcsicmp(device_path, controllers[i - 1].device_path))
+        {
+            *slot = i - 1;
+            return TRUE;
+        }
     }
     return FALSE;
 }
