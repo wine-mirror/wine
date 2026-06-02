@@ -1106,6 +1106,34 @@ static void test_compressed_media_types(IMFSourceResolver *resolver)
             },
         },
         {
+            L"test-h264-par.mp4",
+            L"video/mp4",
+            {
+                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+                ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .todo_value = TRUE),
+                ATTR_GUID(MF_MT_AM_FORMAT_TYPE, FORMAT_MPEG2Video, .todo = TRUE),
+                ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 96),
+                ATTR_RATIO(MF_MT_FRAME_RATE, 25, 1),
+                ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4, .todo = TRUE),
+                ATTR_UINT32(MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_High, .todo = TRUE),
+                ATTR_UINT32(MF_MT_MPEG2_LEVEL, eAVEncH264VLevel1, .todo = TRUE),
+            },
+        },
+        {
+            L"test-h264-wrong-par.mp4",
+            L"video/mp4",
+            {
+                ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+                ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .todo_value = TRUE),
+                ATTR_GUID(MF_MT_AM_FORMAT_TYPE, FORMAT_MPEG2Video, .todo = TRUE),
+                ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 96),
+                ATTR_RATIO(MF_MT_FRAME_RATE, 25, 1),
+                ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 15, 16, .todo = TRUE),
+                ATTR_UINT32(MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_High, .todo = TRUE),
+                ATTR_UINT32(MF_MT_MPEG2_LEVEL, eAVEncH264VLevel1, .todo = TRUE),
+            },
+        },
+        {
             L"test-aac.mp4",
             L"video/mp4",
             {

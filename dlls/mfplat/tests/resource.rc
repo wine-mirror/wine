@@ -27,6 +27,16 @@ test.mp4 RCDATA test.mp4
 /* @makedep: test-h264.mp4 */
 test-h264.mp4 RCDATA test-h264.mp4
 
+/* ffmpeg -filter_complex "nullsrc=s=128x96,geq=random(1)*255:128:128[vout]" -map "[vout]" -t 0.25 -r 25 -vcodec h264  -aspect 1 -brand mp42 -an sar_test.mp4 */
+/* ... then knock out the PASP atom in the mp4 file. */
+/* @makedep: test-h264-par.mp4 */
+test-h264-par.mp4 RCDATA test-h264-par.mp4
+
+/* ffmpeg -filter_complex "nullsrc=s=128x96,geq=random(1)*255:128:128[vout]" -map "[vout]" -t 0.25 -r 25 -vcodec h264  -aspect 1 -brand mp42 -an sar_test.mp4 */
+/* ... then replace the PASP atom in the mp4 file with wrong aspect ratio. */
+/* @makedep: test-h264-wrong-par.mp4 */
+test-h264-wrong-par.mp4 RCDATA test-h264-wrong-par.mp4
+
 /* gst-launch-1.0 audiotestsrc num-buffers=5 ! audioconvert ! avenc_aac ! mp4mux ! filesink location=test-aac.mp4 */
 /* @makedep: test-aac.mp4 */
 test-aac.mp4 RCDATA test-aac.mp4
