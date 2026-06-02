@@ -912,6 +912,26 @@ static void create_volatile_environment_registry_key(void)
     RegCloseKey( hkey );
 }
 
+static void create_sqmclient_registry_key(void)
+{
+    HKEY hkey;
+    LONG r;
+    UUID uuid;
+    RPC_WSTR uuid_str;
+
+    r = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\SQMClient", 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL );
+    if (r) return;
+
+    r = RegQueryValueExW( hkey, L"MachineId", NULL, NULL, NULL, NULL );
+    if (r == ERROR_FILE_NOT_FOUND && UuidCreate( &uuid ) == S_OK && UuidToStringW( &uuid, &uuid_str ) == RPC_S_OK)
+    {
+        set_reg_value( hkey, L"MachineId", uuid_str );
+        RpcStringFreeW( &uuid_str );
+    }
+    RegCloseKey( hkey );
+}
+
 static const WCHAR *get_known_dll_ntdir( WORD machine )
 {
     switch (machine)
@@ -1904,6 +1924,7 @@ int __cdecl main( int argc, char *argv[] )
     create_volatile_environment_registry_key();
     create_known_dlls();
     initialize_internet();
+    create_sqmclient_registry_key();
 
     ProcessRunKeys( HKEY_LOCAL_MACHINE, L"RunOnce", TRUE, TRUE );
 
