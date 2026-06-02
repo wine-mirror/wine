@@ -1409,7 +1409,6 @@ static void test_source_resolver(void)
 
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW, MF_RESOLUTION_MEDIASOURCE, NULL,
             &obj_type, (IUnknown **)&mediasource);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
     {

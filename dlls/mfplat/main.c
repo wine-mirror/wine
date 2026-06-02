@@ -6351,7 +6351,7 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     if (SUCCEEDED(hr))
         return hr;
 
-    if (!(flags & MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE))
+    if (url_ext && !(flags & MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE))
         return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
 
     if (FAILED(hr = resolver_get_bytestream_url_hint(stream, &url_ext)))
