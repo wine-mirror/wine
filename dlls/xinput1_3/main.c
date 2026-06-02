@@ -332,7 +332,6 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
 
     ret = HidD_SetOutputReport(controller->device, report_buf, report_len);
     if (!ret) WARN("HidD_SetOutputReport failed with error %lu\n", GetLastError());
-    return 0;
 
     return ERROR_SUCCESS;
 }
