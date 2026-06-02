@@ -1750,8 +1750,10 @@ static HRESULT WINAPI testseek_SetPositions(IMediaSeeking *iface, LONGLONG *curr
     if (winetest_debug > 1) trace("%p->SetPositions(%I64d, %#lx, %I64d, %#lx)\n",
             iface, *current, current_flags, *stop, stop_flags);
     ok(filter->state != State_Running, "Filter should be paused or stopped while seeking.\n");
-    filter->seek_current = *current;
-    filter->seek_stop = *stop;
+    if (current_flags & AM_SEEKING_AbsolutePositioning)
+        filter->seek_current = *current;
+    if (stop_flags & AM_SEEKING_AbsolutePositioning)
+        filter->seek_stop = *stop;
     *current = 12340000;
     *stop = 43210000;
     return filter->seek_hr;
@@ -5104,6 +5106,24 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(time == 12340000, "Got time %I64d.\n", time);
 
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    Sleep(100);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(time == 12340000, "Got time %I64d.\n", time);
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+    {
+        todo_wine ok(compare_time(filter1.seek_current, 1334 * 10000, 80 * 10000),
+                "Expected about 1334ms, got %I64d.\n", filter1.seek_current);
+        todo_wine ok(compare_time(filter2.seek_current, 1334 * 10000, 80 * 10000),
+                "Expected about 1334ms, got %I64d.\n", filter2.seek_current);
+    }
+
     hr = IMediaFilter_SetSyncSource(filter, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -5113,12 +5133,12 @@ static void test_graph_seeking(void)
     Sleep(100);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!time, "Got time %I64d.\n", time);
+    todo_wine ok(time == 8000 * 10000, "Got time %I64d.\n", time);
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!current, "Got time %I64d.\n", current);
-    ok(!stop, "Got time %I64d.\n", stop);
+    todo_wine ok(current == 8000 * 10000, "Got time %I64d.\n", current);
+    ok(stop == 8000 * 10000, "Got time %I64d.\n", stop);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
