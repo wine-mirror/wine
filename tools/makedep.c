@@ -635,7 +635,6 @@ static bool is_subdir_other_arch( const char *name, unsigned int arch )
     if (!p || p == name) return false;
     dir = get_basename( strmake( "%.*s", (int)(p - name), name ));
     if ((cpu = get_cpu_from_name( dir )) == -1) return false;
-    if (native_archs[arch] && cpu == get_cpu_from_name( archs.str[native_archs[arch]] )) return false;
     return cpu != get_cpu_from_name( archs.str[arch] );
 }
 

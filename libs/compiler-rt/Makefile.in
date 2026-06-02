@@ -8,6 +8,7 @@ SOURCES = \
 	lib/builtins/arm/aeabi_uldivmod.S \
 	lib/builtins/arm/divmodsi4.S \
 	lib/builtins/arm/udivmodsi4.S \
+	lib/builtins/arm64ec/chkstk.S \
 	lib/builtins/ctzdi2.c \
 	lib/builtins/divdi3.c \
 	lib/builtins/divmoddi4.c \
