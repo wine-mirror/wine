@@ -60,6 +60,7 @@ struct xinput_controller
     XINPUT_VIBRATION vibration;
     HANDLE device;
     WCHAR device_path[MAX_PATH];
+    HANDLE read_event;
     BOOL enabled;
 
     struct
@@ -73,7 +74,6 @@ struct xinput_controller
         HIDP_VALUE_CAPS ry_caps;
         HIDP_VALUE_CAPS rt_caps;
 
-        HANDLE read_event;
         OVERLAPPED read_ovl;
 
         char *input_report_buf;
@@ -350,7 +350,7 @@ static void controller_enable(struct xinput_controller *controller)
     controller->enabled = TRUE;
 
     memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
-    controller->hid.read_ovl.hEvent = controller->hid.read_event;
+    controller->hid.read_ovl.hEvent = controller->read_event;
     ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
     if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
     else SetEvent(update_event);
@@ -372,17 +372,13 @@ static void controller_disable(struct xinput_controller *controller)
 static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, const WCHAR *device_path)
 {
-    HANDLE event = NULL;
-
     controller->hid.caps = *caps;
     if (!(controller->hid.feature_report_buf = calloc(1, controller->hid.caps.FeatureReportByteLength))) goto failed;
     if (!controller_check_caps(controller, device, preparsed)) goto failed;
-    if (!(event = CreateEventW(NULL, TRUE, FALSE, NULL))) goto failed;
 
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
     controller->hid.preparsed = preparsed;
-    controller->hid.read_event = event;
     if (!(controller->hid.input_report_buf = calloc(1, controller->hid.caps.InputReportByteLength))) goto failed;
     if (!(controller->hid.output_report_buf = calloc(1, controller->hid.caps.OutputReportByteLength))) goto failed;
 
@@ -402,7 +398,6 @@ failed:
     free(controller->hid.output_report_buf);
     free(controller->hid.feature_report_buf);
     memset(&controller->hid, 0, sizeof(controller->hid));
-    CloseHandle(event);
     return FALSE;
 }
 
@@ -656,7 +651,7 @@ static void read_controller_state(struct xinput_controller *controller)
         state.dwPacketNumber = controller->state.dwPacketNumber + 1;
         controller->state = state;
         memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
-        controller->hid.read_ovl.hEvent = controller->hid.read_event;
+        controller->hid.read_ovl.hEvent = controller->read_event;
         ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
         if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
     }
@@ -721,7 +716,7 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
             if (controllers[i].enabled)
             {
                 devices[count] = controllers + i;
-                events[count] = controllers[i].hid.read_event;
+                events[count] = controllers[i].read_event;
                 count++;
             }
             LeaveCriticalSection(&controllers[i].crit);
@@ -744,6 +739,7 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
 {
     HANDLE thread;
     HMODULE module;
+    int i;
 
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (void*)hid_update_thread_proc, &module))
         WARN("Failed to increase module's reference count, error: %lu\n", GetLastError());
@@ -753,6 +749,12 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
 
     update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (!update_event) ERR("failed to create update event, error %lu\n", GetLastError());
+
+    for (i = 0; i < XUSER_MAX_COUNT; i++)
+    {
+        controllers[i].read_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+        if (!controllers[i].read_event) ERR("failed to create read event for controller %d, error %lu\n", i, GetLastError());
+    }
 
     thread = CreateThread(NULL, 0, hid_update_thread_proc, NULL, 0, NULL);
     if (!thread) ERR("failed to create update thread, error %lu\n", GetLastError());
