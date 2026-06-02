@@ -26,6 +26,8 @@ library MSINKAUTLib
 {
     importlib("stdole2.tlb");
 
+    interface IInkRecognizerContext;
+
     typedef float single;
 
     typedef enum InkBoundingBoxMode {
@@ -140,6 +142,114 @@ library MSINKAUTLib
         SHR_S         = 8,
         SHR_Selection = 9
     } SelectionHitResult;
+
+    typedef enum
+    {
+        IRCACM_Full   = 0,
+        IRCACM_Prefix = 1,
+        IRCACM_Random = 2
+    } InkRecognizerCharacterAutoCompletionMode;
+
+    typedef struct tagtagRECT
+    {
+        LONG left;
+        LONG top;
+        LONG right;
+        LONG bottom;
+    } tagRECT;
+
+    typedef struct tag_InkRecoGuide
+    {
+        tagRECT rectWritingBox;
+        tagRECT rectDrawnBox;
+        long cRows;
+        long cColumns;
+        long Midline;
+    } _InkRecoGuide;
+
+    typedef enum
+    {
+        IRM_None                   = 0x00,
+        IRM_WordModeOnly           = 0x01,
+        IRM_Coerce                 = 0x02,
+        IRM_TopInkBreaksOnly       = 0x04,
+        IRM_PrefixOk               = 0x08,
+        IRM_LineMode               = 0x10,
+        IRM_DisablePersonalization = 0x20,
+        IRM_AutoSpace              = 0x40,
+        IRM_Max                    = 0x80
+    } InkRecognitionModes;
+
+    typedef [public] _InkRecoGuide InkRecoGuide;
+
+    typedef enum
+    {
+        IRC_DontCare                     = 0x00000001,
+        IRC_Object                       = 0x00000002,
+        IRC_FreeInput                    = 0x00000004,
+        IRC_LinedInput                   = 0x00000008,
+        IRC_BoxedInput                   = 0x00000010,
+        IRC_CharacterAutoCompletionInput = 0x00000020,
+        IRC_RightAndDown                 = 0x00000040,
+        IRC_LeftAndDown                  = 0x00000080,
+        IRC_DownAndLeft                  = 0x00000100,
+        IRC_DownAndRight                 = 0x00000200,
+        IRC_ArbitraryAngle               = 0x00000400,
+        IRC_Lattice                      = 0x00000800,
+        IRC_AdviseInkChange              = 0x00001000,
+        IRC_StrokeReorder                = 0x00002000,
+        IRC_Personalizable               = 0x00004000,
+        IRC_PrefersArbitraryAngle        = 0x00008000,
+        IRC_PrefersParagraphBreaking     = 0x00010000,
+        IRC_PrefersSegmentation          = 0x00020000,
+        IRC_Cursive                      = 0x00040000,
+        IRC_TextPrediction               = 0x00080000,
+        IRC_Alpha                        = 0x00100000,
+        IRC_Beta                         = 0x00200000
+    } InkRecognizerCapabilities;
+
+    typedef enum
+    {
+        IRS_NoError                     = 0x0000,
+        IRS_Interrupted                 = 0x0001,
+        IRS_ProcessFailed               = 0x0002,
+        IRS_InkAddedFailed              = 0x0004,
+        IRS_SetAutoCompletionModeFailed = 0x0008,
+        IRS_SetStrokesFailed            = 0x0010,
+        IRS_SetGuideFailed              = 0x0020,
+        IRS_SetFlagsFailed              = 0x0040,
+        IRS_SetFactoidFailed            = 0x0080,
+        IRS_SetPrefixSuffixFailed       = 0x0100,
+        IRS_SetWordListFailed           = 0x0200
+    } InkRecognitionStatus;
+
+     typedef enum
+     {
+        IMF_Left   = 1,
+        IMF_Right  = 2,
+        IMF_Middle = 4
+    } InkMouseButton;
+
+    typedef enum
+    {
+        IKM_Shift   = 1,
+        IKM_Control = 2,
+        IKM_Alt     = 4
+    } InkShiftKeyModifierFlags;
+
+    typedef enum
+    {
+        ISG_Tap        = 16,
+        ISG_DoubleTap  = 17,
+        ISG_RightTap   = 18,
+        ISG_Drag       = 19,
+        ISG_RightDrag  = 20,
+        ISG_HoldEnter  = 21,
+        ISG_HoldLeave  = 22,
+        ISG_HoverEnter = 23,
+        ISG_HoverLeave = 24,
+        ISG_Flick      = 31
+    } InkSystemGesture;
 
     [
         odl,
@@ -1191,6 +1301,234 @@ cpp_quote("#endif /* _WINGDI_ */")
     }
 
     [
+        odl,
+        dual,
+        oleautomation,
+        uuid(76ba3491-cb2f-406b-9961-0e0c4cdaaef2),
+    ]
+    interface IInkWordList : IDispatch
+    {
+        [id(00000000)]
+        HRESULT AddWord([in] BSTR NewWord);
+        [id(0x00000001)]
+        HRESULT RemoveWord([in] BSTR RemoveWord);
+        [id(0x00000002)]
+        HRESULT Merge([in] IInkWordList* MergeWordList);
+    };
+
+    [
+        uuid(17bce92f-2e21-47fd-9d33-3c6afbfd8c59)
+    ]
+    dispinterface _IInkRecognitionEvents
+    {
+        properties:
+        methods:
+            [id(0x00000001)]
+            void RecognitionWithAlternates( [in] IInkRecognitionResult* RecognitionResult,
+                            [in] VARIANT CustomData, [in] InkRecognitionStatus RecognitionStatus);
+            [id(0x00000002)]
+            void Recognition( [in] BSTR RecognizedString, [in] VARIANT CustomData, [in] InkRecognitionStatus RecognitionStatus);
+    };
+
+    [
+        uuid(11a583f2-712d-4fea-abcf-ab4af38ea06b)
+    ]
+    dispinterface _IInkCollectorEvents
+    {
+        properties:
+        methods:
+            [id(0x00000001)]
+            void Stroke([in] IInkCursor* Cursor, [in] IInkStrokeDisp* Stroke, [in, out] VARIANT_BOOL* Cancel);
+            [id(0x00000002)]
+            void CursorDown([in] IInkCursor* Cursor, [in] IInkStrokeDisp* Stroke);
+            [id(0x00000003)]
+            void NewPackets([in] IInkCursor* Cursor, [in] IInkStrokeDisp* Stroke, [in] long PacketCount,
+                            [in, out] VARIANT* PacketData);
+            [id(0x00000019)]
+            void DblClick([in, out] VARIANT_BOOL* Cancel);
+            [id(0x0000001f)]
+            void MouseMove([in] InkMouseButton Button, [in] InkShiftKeyModifierFlags Shift, [in] long pX,
+                            [in] long pY, [in, out] VARIANT_BOOL* Cancel);
+            [id(0x0000001b)]
+            void MouseDown([in] InkMouseButton Button, [in] InkShiftKeyModifierFlags Shift, [in] long pX, [in] long pY,
+                            [in, out] VARIANT_BOOL* Cancel);
+            [id(0x00000020)]
+            void MouseUp([in] InkMouseButton Button, [in] InkShiftKeyModifierFlags Shift, [in] long pX,
+                            [in] long pY, [in, out] VARIANT_BOOL* Cancel);
+            [id(0x00000021)]
+            void MouseWheel([in] InkMouseButton Button, [in] InkShiftKeyModifierFlags Shift, [in] long Delta,
+                            [in] long x, [in] long y, [in, out] VARIANT_BOOL* Cancel);
+            [id(0x00000004)]
+            void NewInAirPackets([in] IInkCursor* Cursor, [in] long lPacketCount, [in, out] VARIANT* PacketData);
+            [id(0x00000005)]
+            void CursorButtonDown([in] IInkCursor* Cursor, [in] IInkCursorButton* Button);
+            [id(0x00000006)]
+            void CursorButtonUp([in] IInkCursor* Cursor, [in] IInkCursorButton* Button);
+            [id(0x00000007)]
+            void CursorInRange([in] IInkCursor* Cursor, [in] VARIANT_BOOL NewCursor, [in] VARIANT ButtonsState);
+            [id(0x00000008)]
+            void CursorOutOfRange([in] IInkCursor* Cursor);
+            [id(0x00000009)]
+            void SystemGesture([in] IInkCursor* Cursor, [in] InkSystemGesture Id, [in] long x, [in] long y,
+                            [in] long Modifier, [in] BSTR Character, [in] long CursorMode);
+            [id(0x0000000a)]
+            void Gesture([in] IInkCursor* Cursor, [in] IInkStrokes* Strokes, [in] VARIANT Gestures,
+                            [in, out] VARIANT_BOOL* Cancel);
+            [id(0x0000000b)]
+            void TabletAdded([in] IInkTablet* Tablet);
+            [id(0x0000000c)]
+            void TabletRemoved([in] long TabletId);
+    };
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(782bf7cf-034b-4396-8a32-3a1833cf6b56)
+    ]
+    interface IInkRecognizer : IDispatch
+    {
+        [id(0x00000002), propget]
+        HRESULT Name([out, retval] BSTR* Name);
+        [id(0x00000003), propget]
+        HRESULT Vendor([out, retval] BSTR* Vendor);
+        [id(0x00000004), propget]
+        HRESULT Capabilities([out, retval] InkRecognizerCapabilities* CapabilitiesFlags);
+        [id(0x00000005), propget]
+        HRESULT Languages([out, retval] VARIANT* Languages);
+        [id(0x00000008), propget]
+        HRESULT SupportedProperties([out, retval] VARIANT* SupportedProperties);
+        [id(0x00000006), propget]
+        HRESULT PreferredPacketDescription([out, retval] VARIANT* PreferredPacketDescription);
+        [id(0x00000007)]
+        HRESULT CreateRecognizerContext([out, retval] IInkRecognizerContext** Context);
+    };
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(6110118A-3A75-4AD6-B2AA-04B2B72BBE65)
+    ]
+    interface IInkRecognizer2 : IDispatch
+    {
+        [id(00000000), propget]
+        HRESULT Id([out, retval] BSTR* pbstrId);
+        [id(0x00000001), propget]
+        HRESULT UnicodeRanges([out, retval] VARIANT* UnicodeRanges);
+    };
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(d934be07-7b84-4208-9136-83c20994e905)
+    ]
+    interface IInkRecognizerGuide : IDispatch
+    {
+        [id(0x00000001), propget]
+        HRESULT WritingBox([out, retval] IInkRectangle** Rectangle);
+        [id(0x00000001), propput]
+        HRESULT WritingBox([in] IInkRectangle* Rectangle);
+        [id(0x00000002), propget]
+        HRESULT DrawnBox([out, retval] IInkRectangle** Rectangle);
+        [id(0x00000002), propput]
+        HRESULT DrawnBox([in] IInkRectangle* Rectangle);
+        [id(0x00000003), propget]
+        HRESULT Rows([out, retval] long* Units);
+        [id(0x00000003), propput]
+        HRESULT Rows([in] long Units);
+        [id(0x00000004), propget]
+        HRESULT Columns([out, retval] long* Units);
+        [id(0x00000004), propput]
+        HRESULT Columns([in] long Units);
+        [id(0x00000005), propget]
+        HRESULT Midline([out, retval] long* Units);
+        [id(0x00000005), propput]
+        HRESULT Midline([in] long Units);
+        [id(0x00000006), propget, hidden]
+        HRESULT GuideData([out, retval] InkRecoGuide* pRecoGuide);
+        [id(0x00000006), propput, hidden]
+        HRESULT GuideData([in] InkRecoGuide pRecoGuide);
+    };
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(c68f52f9-32a3-4625-906c-44fc23b40958)
+    ]
+    interface IInkRecognizerContext : IDispatch
+    {
+        [id(0x00000001), propget]
+        HRESULT Strokes([out, retval] IInkStrokes** Strokes);
+        [id(0x00000001), propputref]
+        HRESULT Strokes([in] IInkStrokes* Strokes);
+        [id(0x00000002), propget]
+        HRESULT CharacterAutoCompletionMode([out, retval] InkRecognizerCharacterAutoCompletionMode* Mode);
+        [id(0x00000002), propput]
+        HRESULT CharacterAutoCompletionMode([in] InkRecognizerCharacterAutoCompletionMode Mode);
+        [id(0x00000003), propget]
+        HRESULT Factoid([out, retval] BSTR* Factoid);
+        [id(0x00000003), propput]
+        HRESULT Factoid([in] BSTR Factoid);
+        [id(0x00000006), propget]
+        HRESULT Guide([out, retval] IInkRecognizerGuide** RecognizerGuide);
+        [id(0x00000006), propputref]
+        HRESULT Guide([in] IInkRecognizerGuide* RecognizerGuide);
+        [id(0x00000008), propget]
+        HRESULT PrefixText([out, retval] BSTR* Prefix);
+        [id(0x00000008), propput]
+        HRESULT PrefixText([in] BSTR Prefix);
+        [id(0x00000009), propget]
+        HRESULT SuffixText([out, retval] BSTR* Suffix);
+        [id(0x00000009), propput]
+        HRESULT SuffixText([in] BSTR Suffix);
+        [id(0x00000007), propget]
+        HRESULT RecognitionFlags([out, retval] InkRecognitionModes* Modes);
+        [id(0x00000007), propput]
+        HRESULT RecognitionFlags([in] InkRecognitionModes Modes);
+        [id(0x00000004), propget]
+        HRESULT WordList([out, retval] IInkWordList** WordList);
+        [id(0x00000004), propputref]
+        HRESULT WordList([in] IInkWordList* WordList);
+        [id(0x00000005), propget]
+        HRESULT Recognizer([out, retval] IInkRecognizer** Recognizer);
+        [id(0x0000000c)]
+        HRESULT Recognize([in, out] InkRecognitionStatus* RecognitionStatus, [out, retval] IInkRecognitionResult** RecognitionResult);
+        [id(0x0000000d)]
+        HRESULT StopBackgroundRecognition();
+        [id(0x0000000e)]
+        HRESULT EndInkInput();
+        [id(0x0000000f)]
+        HRESULT BackgroundRecognize([in, optional] VARIANT CustomData);
+        [id(0x00000010)]
+        HRESULT BackgroundRecognizeWithAlternates([in, optional] VARIANT CustomData);
+        [id(0x0000000b)]
+        HRESULT Clone([out, retval] IInkRecognizerContext** RecoContext);
+        [id(0x00000011)]
+        HRESULT IsStringSupported( [in] BSTR String, [out, retval] VARIANT_BOOL* Supported);
+    }
+
+    [
+        odl,
+        dual,
+        oleautomation,
+        uuid(9ccc4f12-b0b7-4a8b-bf58-4aeca4e8cefd)
+    ]
+    interface IInkRecognizers : IDispatch
+    {
+        [id(0x00000001)]
+        HRESULT Count([out, retval] long* Count);
+        [id(DISPID_NEWENUM)]
+        HRESULT _NewEnum([out, retval] IUnknown** _NewEnum);
+        [id(0x00000002)]
+        HRESULT GetDefaultRecognizer( [in, optional, defaultvalue(0)] long lcid, [out, retval] IInkRecognizer** DefaultRecognizer);
+        [id(DISPID_VALUE)]
+        HRESULT Item([in] long Index, [out, retval] IInkRecognizer** InkRecognizer);
+    };
+
+    [
         progid("msinkaut.InkObject.1"),
         vi_progid("msinkaut.InkObject"),
         threading(both),
@@ -1211,4 +1549,35 @@ cpp_quote("#endif /* _WINGDI_ */")
     {
         [default] interface IInkOverlay;
     }
+
+    [
+        progid("msinkaut.InkRecognizerContext.1"),
+        vi_progid("msinkaut.InkRecognizerContext"),
+        threading(both),
+        uuid(aac46a37-9229-4fc0-8cce-4497569bf4d1)
+    ]
+    coclass InkRecognizerContext
+    {
+        [default] interface IInkRecognizerContext;
+        [default, source] dispinterface _IInkRecognitionEvents;
+    }
+
+    [
+        progid("msinkaut.InkRecognizers.1"),
+        vi_progid("msinkaut.InkRecognizers"),
+        uuid(9fd4e808-f6e6-4e65-98d3-aa39054c1255)
+    ]
+    coclass InkRecognizers
+    {
+        [default] interface IInkRecognizers;
+    }
+
+    [
+        uuid(43fb1553-ad74-4ee8-88e4-3e6daac915db)
+    ]
+    coclass InkCollector
+    {
+        [default] interface IInkCollector;
+        [default, source] dispinterface _IInkCollectorEvents;
+    };
 }
