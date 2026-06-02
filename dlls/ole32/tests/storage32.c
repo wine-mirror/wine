@@ -4010,9 +4010,7 @@ static void test_MoveElementTo(void)
     /* STGTY_STORAGE */
 
     hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) goto done;
 
     /* STGMOVE_COPY doesn't fail if the target already exsists */
     hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
@@ -4041,7 +4039,6 @@ static void test_MoveElementTo(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IStorage_Release(stg);
 
-done:
     IStorage_Release(src);
     IStorage_Release(dst);
     DeleteFileW(src_name);

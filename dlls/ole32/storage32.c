@@ -2387,7 +2387,6 @@ static HRESULT WINAPI StorageBaseImpl_MoveElementTo(IStorage *iface,
     create_mode = STGM_WRITE | STGM_SHARE_EXCLUSIVE;
     create_mode |= (mode == STGMOVE_MOVE) ? STGM_FAILIFTHERE : STGM_CREATE;
 
-    /* FIXME: Handle STGTY_STORAGE */
     hr = IStorage_OpenStream(iface, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &src);
     if (hr == S_OK)
     {
@@ -2408,6 +2407,23 @@ static HRESULT WINAPI StorageBaseImpl_MoveElementTo(IStorage *iface,
         }
 
         IStream_Release(src);
+    }
+    else if (hr == STG_E_FILENOTFOUND)
+    {
+        IStorage *src_stg, *dst_stg;
+
+        hr = IStorage_OpenStorage(iface, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, NULL, 0, &src_stg);
+        if (hr == S_OK)
+        {
+            hr = IStorage_CreateStorage(dest, new_name, create_mode, 0, 0, &dst_stg);
+            if (hr == S_OK)
+            {
+                hr = IStorage_CopyTo(src_stg, 0, NULL, NULL, dst_stg);
+                IStorage_Release(dst_stg);
+            }
+
+            IStorage_Release(src_stg);
+        }
     }
 
     if (hr == S_OK && mode == STGMOVE_MOVE)
