@@ -12,10 +12,10 @@
 #if SYMCRYPT_CPU_X86 | SYMCRYPT_CPU_AMD64
 
 #ifdef __clang__
-#pragma clang attribute push (__attribute__((target("avx2,vaes,vpclmulqdq"))), apply_to=function)
+#pragma clang attribute push (__attribute__((target("avx2,pclmul,vaes,vpclmulqdq"))), apply_to=function)
 #else
 #pragma GCC push_options
-#pragma GCC target("avx2,vaes,vpclmulqdq")
+#pragma GCC target("avx2,pclmul,vaes,vpclmulqdq")
 #endif
 
 #include "xtsaes_definitions.h"
