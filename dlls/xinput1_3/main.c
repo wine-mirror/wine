@@ -543,7 +543,9 @@ static void controller_destroy(struct xinput_controller *controller, BOOL alread
 
     if (controller->device)
     {
-        if (!already_removed) controller_disable(controller);
+        if (already_removed) controller->enabled = FALSE;
+        else controller_disable(controller);
+
         CloseHandle(controller->device);
         controller->device = NULL;
 
