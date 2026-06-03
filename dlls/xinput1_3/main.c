@@ -351,8 +351,8 @@ static void controller_disable(struct xinput_controller *controller)
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
     controller->enabled = FALSE;
 
-    CancelIoEx(controller->device, &controller->hid.read_ovl);
-    WaitForSingleObject(controller->hid.read_ovl.hEvent, INFINITE);
+    if (CancelIoEx(controller->device, &controller->hid.read_ovl))
+        WaitForSingleObject(controller->hid.read_ovl.hEvent, INFINITE);
     SetEvent(update_event);
 }
 
