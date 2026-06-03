@@ -31,7 +31,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "ntuser.h"
-#include "tomcrypt.h"
+#include "zlib.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
@@ -883,10 +883,7 @@ void WINAPI RtlAssert(void *assertion, void *filename, ULONG linenumber, char *m
  */
 DWORD WINAPI RtlComputeCrc32(DWORD dwInitial, const BYTE *pData, INT iLen)
 {
-    crc32_state state = { .crc = ~dwInitial };
-
-    crc32_update( &state, pData, iLen );
-    return ~state.crc;
+    return crc32( dwInitial, pData, iLen );
 }
 
 
