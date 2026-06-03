@@ -841,6 +841,7 @@ static HRESULT WINAPI enumvar_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var
 {
     FIXME("%p,%lu,%p,%p\n", iface, celt, var, fetched);
 
+    if (fetched) *fetched = 0;
     return  S_FALSE;
 }
 
