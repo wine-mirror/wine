@@ -507,7 +507,7 @@ static void try_remove_device(const WCHAR *device_path)
     int i;
 
     if (find_opened_device(device_path, &i))
-        controller_destroy(&controllers[i], TRUE);
+        controller_destroy(&controllers[i], FALSE);
 }
 
 static void update_controller_list(void)
