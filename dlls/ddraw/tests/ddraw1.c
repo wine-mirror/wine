@@ -6507,8 +6507,7 @@ static void test_surface_attachment(void)
         ref = IDirectDrawSurface_Release(backbuffer1);
     ref = IDirectDrawSurface_Release(surface1);
     ok(!ref, "got %ld.\n", ref);
-    ref = IDirectDrawSurface_Release(backbuffer1);
-    ok(!ref, "got %ld.\n", ref);
+    /* backbuffer1 is auto-generated attachemnt for surface1 and is supposed to be released during surface1 destruction. */
     ref = IDirectDrawSurface_Release(backbuffer2);
     ok(!ref, "got %ld.\n", ref);
     ref = IDirectDrawSurface_Release(surface2);
