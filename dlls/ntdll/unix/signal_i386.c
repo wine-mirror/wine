@@ -1922,9 +1922,11 @@ static BOOL handle_syscall_trap( struct thread_data *data, ucontext_t *sigcontex
         EIP_sig( sigcontext ) = (ULONG)__wine_unix_call_dispatcher_prolog_end;
         fixup_frame_fpu_state( frame, sigcontext );
     }
-    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ && is_inside_syscall( data, ESP_sig(sigcontext) ))
+    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ &&
+             (is_inside_syscall( data, ESP_sig(sigcontext) ) ||
+              is_inside_signal_stack( data, (void *)ESP_sig(sigcontext) )))
     {
-        TRACE_(seh)( "ignoring HWBKPT in syscall eip=%p\n", (void *)EIP_sig(sigcontext) );
+        TRACE_(seh)( "ignoring HWBKPT eip=%p\n", (void *)EIP_sig(sigcontext) );
         return TRUE;
     }
     else return FALSE;
