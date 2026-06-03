@@ -1142,6 +1142,15 @@ static void parse_c_file( struct file *source, FILE *file )
 
 
 /*******************************************************************
+ *         parse_asm_file
+ */
+static void parse_asm_file( struct file *source, FILE *file )
+{
+    parse_c_file( source, file );
+}
+
+
+/*******************************************************************
  *         parse_cxx_file
  */
 static void parse_cxx_file( struct file *source, FILE *file )
@@ -1260,12 +1269,14 @@ static const struct
 {
     { ".c",   parse_c_file },
     { ".h",   parse_c_file },
+    { ".inc", parse_c_file },
     { ".inl", parse_c_file },
     { ".l",   parse_c_file },
     { ".m",   parse_c_file },
     { ".rh",  parse_c_file },
     { ".x",   parse_c_file },
     { ".y",   parse_c_file },
+    { ".S",   parse_asm_file },
     { ".idl", parse_idl_file },
     { ".cpp", parse_cxx_file },
     { ".hpp", parse_cxx_file },
