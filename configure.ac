@@ -1219,15 +1219,6 @@ then
     then
         WINE_NOTICE([libvkd3d ${notice_platform}MinGW development files not found (or too old); using bundled version.])
     fi
-
-    WINE_MINGW_PACKAGE_FLAGS(ZLIB,[zlib],[-lz],
-        [WINE_CHECK_MINGW_HEADER(zlib.h,
-            [WINE_CHECK_MINGW_LIB(z,inflate,[:],[ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""],[$ZLIB_PE_LIBS])],
-            [ZLIB_PE_CFLAGS=""; ZLIB_PE_LIBS=""])])
-    if test "x$ZLIB_PE_LIBS" = "x"
-    then
-        WINE_NOTICE([zlib ${notice_platform}MinGW development files not found; using bundled version.])
-    fi
 fi
 
 WINE_EXTLIB_FLAGS(CAPSTONE, capstone, capstone, "-I\$(top_srcdir)/libs/capstone/include")
