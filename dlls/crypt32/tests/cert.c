@@ -545,7 +545,8 @@ static void testCertProperties(void)
 
     /* Set an NCrypt key handle via property 78 */
     {
-        HCRYPTPROV_OR_NCRYPT_KEY_HANDLE ncryptHandle = 0xBEEF1234;
+        char buf[100] = {0};
+        HCRYPTPROV_OR_NCRYPT_KEY_HANDLE ncryptHandle = (HCRYPTPROV_OR_NCRYPT_KEY_HANDLE)buf;
         HCRYPTPROV_OR_NCRYPT_KEY_HANDLE retrievedHandle = 0;
 
         ret = CertSetCertificateContextProperty(context,
