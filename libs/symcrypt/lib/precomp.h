@@ -29,7 +29,7 @@
     #endif
 #endif
 
-#if !defined(__WINE_PE_BUILD) || SYMCRYPT_CPU_X86
+#ifndef __WINE_PE_BUILD
 #define SymCryptSha256AppendBlocks_xmm_ssse3_asm SymCryptSha256AppendBlocks_ul1
 #define SymCryptXtsAesEncryptInternalAsm SymCryptXtsAesEncryptInternalC
 #define SymCryptXtsAesDecryptInternalAsm SymCryptXtsAesDecryptInternalC

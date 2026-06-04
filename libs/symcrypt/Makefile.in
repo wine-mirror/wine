@@ -84,6 +84,9 @@ SOURCES = \
 	lib/hmacsha512.c \
 	lib/hmacsha512_224.c \
 	lib/hmacsha512_256.c \
+	lib/i386/aesasm.S \
+	lib/i386/fdef_asm.S \
+	lib/i386/wipe.S \
 	lib/kmac.c \
 	lib/libmain.c \
 	lib/lms.c \

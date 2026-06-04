@@ -66,6 +66,11 @@
 
     #if defined(SYMCRYPT_CPU_AMD64)
         .intel_syntax noprefix
+    #elif defined(SYMCRYPT_CPU_X86)
+        .intel_syntax noprefix
+	.def @feat.00; .scl 3; .type 0; .endef
+        .globl @feat.00
+        .set @feat.00, 1  /* safeseh */
     #endif
 
     #define FILE_END()
