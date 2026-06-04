@@ -1332,7 +1332,7 @@ SymCryptFdefModMulMontgomery(
     SymCryptFdefMontgomeryReduce( pmMod, pTmp, &peDst->d.uint32[0] );
 }
 
-#if 0 && SYMCRYPT_CPU_AMD64
+#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
 VOID
 SYMCRYPT_CALL
 SymCryptFdefModMulMontgomeryMulx(
@@ -1395,7 +1395,7 @@ SymCryptFdefModSquareMontgomery(
 }
 
 
-#if 0 && SYMCRYPT_CPU_AMD64
+#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
 VOID
 SYMCRYPT_CALL
 SymCryptFdefModSquareMontgomeryMulx(
@@ -1470,7 +1470,7 @@ SymCryptFdefModInvMontgomery(
     return scError;
 }
 
-#if 0 && SYMCRYPT_CPU_AMD64
+#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
 
 //=====================================
 // 256-bit Montgomery modulus code
@@ -1686,7 +1686,7 @@ SymCryptFdefModSquareMontgomery1024(
 
 #endif
 
-/* Wine hack: asm not supported yet */
+#if !defined(__WINE_PE_BUILD) || !SYMCRYPT_CPU_AMD64
 
 VOID
 SYMCRYPT_CALL
@@ -1729,3 +1729,5 @@ SymCryptFdefModDivSmallPow2Asm(
 {
     SymCryptFdefModDivSmallPow2Generic( pmMod, peSrc, exp, peDst );
 }
+
+#endif

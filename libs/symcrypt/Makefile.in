@@ -1,5 +1,5 @@
 STATICLIB = libsymcrypt.a
-EXTRAINCL = $(SYMCRYPT_PE_CFLAGS) -DSYMCRYPT_PLATFORM_WINE=1
+EXTRAINCL = $(SYMCRYPT_PE_CFLAGS) -I$(srcdir)/lib -DSYMCRYPT_PLATFORM_WINE=1
 
 SOURCES = \
 	lib/3des.c \
@@ -9,6 +9,7 @@ SOURCES = \
 	lib/IEEE802_11SaeCustom.c \
 	lib/ScsTable.c \
 	lib/a_dispatch.c \
+	lib/aes-asm.c \
 	lib/aes-c.c \
 	lib/aes-default-bc.c \
 	lib/aes-default.c \
@@ -19,6 +20,12 @@ SOURCES = \
 	lib/aesCtrDrbg.c \
 	lib/aescmac.c \
 	lib/aeskw.c \
+	lib/amd64/aesasm.S \
+	lib/amd64/fdef369_asm.S \
+	lib/amd64/fdef_asm.S \
+	lib/amd64/fdef_mulx.S \
+	lib/amd64/sha256xmm_asm.S \
+	lib/amd64/wipe.S \
 	lib/blockciphermodes.c \
 	lib/ccm.c \
 	lib/chacha20.c \
@@ -46,6 +53,7 @@ SOURCES = \
 	lib/ecurve.c \
 	lib/env_windowsUserModeWin8_1.c \
 	lib/equal.c \
+	lib/fdef369_mod.c \
 	lib/fdef_general.c \
 	lib/fdef_int.c \
 	lib/fdef_mod.c \

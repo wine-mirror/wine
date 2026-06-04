@@ -22,7 +22,7 @@ const SYMCRYPT_MODULAR_FUNCTIONS g_SymCryptModFns[] = {
     SYMCRYPT_MOD_FUNCTIONS_FDEF_GENERIC,                // Handles any type of modulus
     SYMCRYPT_MOD_FUNCTIONS_FDEF_MONTGOMERY,             // Montgomery, only for odd parity-public moduli
 
-#if 0 && SYMCRYPT_CPU_AMD64
+#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
 
     SYMCRYPT_MOD_FUNCTIONS_FDEF369_MONTGOMERY,          // optimized for 384 and 576-bit moduli
     SYMCRYPT_MOD_FUNCTIONS_FDEF_MONTGOMERY_MULX256,     // Special faster code for 256-bit Montgomery moduli, MULX-based code
@@ -76,7 +76,7 @@ const UINT32 g_SymCryptModFnsMask = sizeof( g_SymCryptModFns ) - sizeof( g_SymCr
 //
 const SYMCRYPT_MODULUS_TYPE_SELECTION_ENTRY SymCryptModulusTypeSelections[] =
 {
-#if 0 && SYMCRYPT_CPU_AMD64
+#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
     // Mulx used for 0-512 and 577-... bits
     {SymCryptModFntableMontgomeryMulxP384,  SYMCRYPT_CPU_FEATURES_FOR_MULX,  384,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY | SYMCRYPT_MODULUS_FEATURE_NISTP384 },
     {SymCryptModFntableMontgomeryMulx256,   SYMCRYPT_CPU_FEATURES_FOR_MULX,  256,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY },

@@ -1250,7 +1250,7 @@ SymCryptFdefIntDivMod(
     }
 }
 
-/* Wine hack: asm not supported yet */
+#if !defined(__WINE_PE_BUILD) || !SYMCRYPT_CPU_AMD64
 
 UINT32
 SYMCRYPT_CALL
@@ -1296,8 +1296,6 @@ SymCryptFdefRawSquareAsm(
     SymCryptFdefRawSquareC( pSrc, nDigits, pDst );
 }
 
-/* Wine hack: asm not supported yet */
-
 VOID
 SYMCRYPT_CALL
 SymCryptFdefRawSquareMulx(
@@ -1319,3 +1317,5 @@ SymCryptFdefRawMulMulx(
 {
     SymCryptFdefRawMulC( pSrc1, nDigits1, pSrc2, nDigits2, pDst );
 }
+
+#endif
