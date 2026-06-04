@@ -1058,7 +1058,7 @@ typedef volatile struct
     data_size_t          name_offset;        /* offset in WCHAR of the unversioned class name, constant */
     data_size_t          name_len;           /* len in bytes of the class name, constant */
     WCHAR                name[MAX_ATOM_LEN]; /* class name, constant */
-    unsigned short       __pad;
+    unsigned short       local;              /* class is local, constant */
     struct class_info    info;               /* class info (GCLP_*) */
     char                 extra[];            /* extra bytes storage */
 } class_shm_t;
@@ -3296,7 +3296,6 @@ enum caret_state
 
 /* Create a window class */
 @REQ(create_class)
-    int            local;          /* is it a local class? */
     atom_t         atom;           /* class atom */
     unsigned int   fnid;           /* FNID for builtin classes, or 0 */
     client_ptr_t   client_ptr;     /* pointer to class in client address space */

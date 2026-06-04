@@ -46,7 +46,6 @@ SYSTEM_BASIC_INFORMATION system_info;
 typedef struct tagCLASS
 {
     struct list  entry;         /* Entry in class list */
-    BOOL         local;         /* Local class? */
     struct dce  *dce;           /* Opaque pointer to class DCE */
     HICON        icon_internal; /* internal small icon, derived from hIcon */
     const shared_object_t *shared; /* class object in session shared memory */
@@ -538,6 +537,12 @@ static BOOL class_name_matches( CLASS *class, UNICODE_STRING *name )
     return name->Length == len && !wcsnicmp( class_name, name->Buffer, len / sizeof(WCHAR) );
 }
 
+static BOOL is_local_class( CLASS *class )
+{
+    /* class local flag is safe to read without shared object locking as it is constant */
+    return class->shared->shm.class.local;
+}
+
 static UINT_PTR get_class_instance( CLASS *class )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
@@ -563,7 +568,7 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
         UINT_PTR class_instance = get_class_instance( class );
         if (!class_name_matches( class, name )) continue;
         is_win16 = !(class_instance >> 16);
-        if (!instance || !class->local || class_instance == instance ||
+        if (!instance || !is_local_class( class ) || class_instance == instance ||
             (!is_win16 && ((class_instance & ~0xffff) == (instance & ~0xffff))))
         {
             TRACE( "%s %lx -> %p\n", debugstr_us(name), instance, class );
@@ -648,8 +653,6 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     if (!(class = calloc( 1, sizeof(*class) ))) return 0;
 
-    class->local      = !fnid && !(wc->style & CS_GLOBALCLASS);
-
     /* Other non-null values must be set by caller */
     icon_internal = wc->hIconSm ? 0 : create_small_icon( wc->hIcon );
 
@@ -670,7 +673,6 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
             .menu_name  = wine_server_client_ptr( menu_name ),
         };
         wine_server_add_data( req, &info, sizeof(info) );
-        req->local      = class->local;
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );
         req->fnid       = fnid;
@@ -696,15 +698,16 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         goto failed;
     }
 
-    if (class->local) list_add_head( &class_list, &class->entry );
-    else list_add_tail( &class_list, &class->entry );
-
     TRACE( "name=%s->%s atom=%04x wndproc=%p hinst=%p bg=%p style=%08x clsExt=%d winExt=%d class=%p\n",
            debugstr_w(wc->lpszClassName), debugstr_us(name), atom, wc->lpfnWndProc, instance,
            wc->hbrBackground, wc->style, wc->cbClsExtra, wc->cbWndExtra, class );
 
     class->icon_internal = icon_internal;
     class->shared        = shared;
+
+    if (is_local_class( class )) list_add_head( &class_list, &class->entry );
+    else list_add_tail( &class_list, &class->entry );
+
     release_class_ptr( class );
     return atom;
 

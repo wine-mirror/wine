@@ -1042,7 +1042,7 @@ typedef volatile struct
     data_size_t          name_offset;
     data_size_t          name_len;
     WCHAR                name[MAX_ATOM_LEN];
-    unsigned short       __pad;
+    unsigned short       local;
     struct class_info    info;
     char                 extra[];
 } class_shm_t;
@@ -4542,9 +4542,9 @@ struct get_hook_info_reply
 struct create_class_request
 {
     struct request_header __header;
-    int            local;
     atom_t         atom;
     unsigned int   fnid;
+    char __pad_20[4];
     client_ptr_t   client_ptr;
     data_size_t    name_offset;
     /* VARARG(info,class_info); */
@@ -7143,6 +7143,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 948
+#define SERVER_PROTOCOL_VERSION 949
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
