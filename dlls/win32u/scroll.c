@@ -29,8 +29,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
+static struct scroll_info *get_control_state( HWND hwnd )
+{
+    return (struct scroll_info *)NtUserGetPrivateData( hwnd, 0, sizeof(struct scroll_info *) );
+}
 
-#define SCROLLBAR_MAGIC 0x5c6011ba
+static struct scroll_info *set_control_state( HWND hwnd, struct scroll_info *state )
+{
+    return (struct scroll_info *)NtUserSetPrivateData( hwnd, 0, sizeof(struct scroll_info *), (LONG_PTR)state );
+}
 
 /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4
@@ -72,8 +79,6 @@ struct win_scroll_bar_info
     struct scroll_info vert;
 };
 
-#define SCROLLBAR_MAGIC 0x5c6011ba
-
 
 static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
 {
@@ -91,12 +96,7 @@ static struct scroll_info *get_scroll_info_ptr( HWND hwnd, int bar, BOOL alloc )
         if (win->pScroll) info = &win->pScroll->vert;
         break;
     case SB_CTL:
-        if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
-        {
-            struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
-            if (data->magic == SCROLLBAR_MAGIC) info = &data->info;
-        }
-        if (!info) WARN( "window is not a scrollbar control\n" );
+        if (!(info = get_control_state( hwnd ))) WARN( "window is not a scrollbar control\n" );
         break;
     case SB_BOTH:
         WARN( "with SB_BOTH\n" );
@@ -1130,21 +1130,12 @@ static BOOL get_scroll_bar_info( HWND hwnd, LONG id, SCROLLBARINFO *info )
 
 static void create_scroll_bar( HWND hwnd, CREATESTRUCTW *create )
 {
-    struct scroll_info *info = NULL;
-    WND *win;
+    struct scroll_info *info;
 
     TRACE( "hwnd=%p create=%p\n", hwnd, create );
 
-    win = get_win_ptr( hwnd );
-    if (win->cbWndExtra >= sizeof(struct scroll_bar_win_data))
-    {
-        struct scroll_bar_win_data *data = (struct scroll_bar_win_data *)win->wExtra;
-        data->magic = SCROLLBAR_MAGIC;
-        info = &data->info;
-    }
-    else WARN( "Not enough extra data\n" );
-    release_win_ptr( win );
-    if (!info) return;
+    if (!(info = calloc( 1, sizeof(*info) ))) return;
+    set_control_state( hwnd, info );
 
     if (create->style & WS_DISABLED)
     {

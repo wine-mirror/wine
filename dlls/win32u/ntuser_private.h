@@ -157,12 +157,6 @@ struct scroll_info
     BOOL  painted;  /* Whether the scroll bar is painted by DefWinProc() */
 };
 
-struct scroll_bar_win_data
-{
-    DWORD magic;
-    struct scroll_info info;
-};
-
 #define WINPROC_HANDLE (~0u >> 16)
 #define BUILTIN_WINPROC(index) ((WNDPROC)(ULONG_PTR)((index) | (WINPROC_HANDLE << 16)))
 

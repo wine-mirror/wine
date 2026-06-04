@@ -69,7 +69,7 @@ static struct builtin_class_descr builtin_classes[] =
     {
         .name = "ScrollBar",
         .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-        .extra = sizeof(struct scroll_bar_win_data),
+        .extra = sizeof(struct scroll_info *),
         .cursor = IDC_ARROW,
     },
     [NTUSER_WNDPROC_MESSAGE] =
