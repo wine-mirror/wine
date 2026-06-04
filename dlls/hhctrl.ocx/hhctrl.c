@@ -377,6 +377,15 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         free(window);
         return 0;
     }
+    case HH_INITIALIZE:
+        /* Return a non-zero cookie that is later passed back to
+         * HH_UNINITIALIZE.  Applications check this value and treat a NULL
+         * cookie as an initialization failure. */
+        if (data)
+            *(DWORD *)data = 1;
+        return 0;
+    case HH_UNINITIALIZE:
+        return 0;
     default:
         FIXME("HH case %s not handled.\n", command_to_string( command ));
     }
