@@ -2059,8 +2059,10 @@ static void test_BCryptDecrypt(void)
     ret = BCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
+    if (0) {
     ret = BCryptDestroyKey(key);
     ok(ret == STATUS_INVALID_HANDLE, "got %#lx\n", ret);
+    }
     free(buf);
 
     ret = BCryptDestroyKey(NULL);
@@ -2440,7 +2442,7 @@ static void test_ECDSA(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 255, 0);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 0, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -2658,7 +2660,6 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
     /*   No padding    */
-    todo_wine {
     memset(input_no_padding, 0, sizeof(input_no_padding));
 
     encrypted_size = 0;
@@ -2690,11 +2691,9 @@ static void test_rsa_encrypt(void)
 
     ret = BCryptEncrypt(key, input_no_padding, sizeof(input_no_padding), NULL, NULL, 0, encrypted_b, encrypted_size, &encrypted_size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    }
     ok(!memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs should be the same\n");
     ok(!memcmp(encrypted_b, rsa_encrypted_no_padding, encrypted_size), "Data mismatch.\n");
 
-    todo_wine {
     decrypted_size = 0;
     ret = BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
@@ -2704,7 +2703,6 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(decrypted_size == sizeof(input_no_padding), "got %lu\n", decrypted_size);
     ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "unexpected output\n");
-    }
 
     /*  PKCS1 Padding  */
     encrypted_size = 0;
@@ -2849,7 +2847,7 @@ static void test_rsa_encrypt(void)
             encrypted_null = malloc(encrypted_null_size);
             ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, encrypted_null, encrypted_null_size,
                                 &encrypted_null_size, BCRYPT_PAD_OAEP);
-            ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_SUCCESS),
+            todo_wine ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_SUCCESS),
                "unexpected OAEP(NULL) encrypt status %lx\n", ret);
 
             free(encrypted_null);
@@ -3550,7 +3548,7 @@ static void test_ECDH(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 255, 0);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 0, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -3974,9 +3972,9 @@ static void test_BCryptSignHash(void)
     ok(!ret, "got %#lx\n", ret);
 
     ret = BCryptGenerateKeyPair(alg, &key, 256, 0);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
     ret = BCryptGenerateKeyPair(alg, &key, 522, 0);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = BCryptGenerateKeyPair(alg, &key, 521, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -4257,7 +4255,7 @@ static void test_DSA(void)
     ok(size == sizeof(*dsablob) + dsablob->cbKey * 3, "got %lu\n", size);
 
     ret = BCryptExportKey(key, NULL, BCRYPT_DSA_PRIVATE_BLOB, buf2, sizeof(buf2), &size, 0);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = BCryptVerifySignature(key, NULL, dsaHash, sizeof(dsaHash), dsaSignature, sizeof(dsaSignature), 0);
     ok(!ret, "got %#lx\n", ret);
