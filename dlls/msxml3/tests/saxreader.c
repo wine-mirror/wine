@@ -2530,8 +2530,6 @@ static void test_saxreader_cdata(void)
         ISAXXMLReader_Release(reader);
         table++;
     }
-
-    free_bstrs();
 }
 
 static void test_saxreader_pi(void)
@@ -2579,8 +2577,6 @@ static void test_saxreader_pi(void)
         ISAXXMLReader_Release(reader);
         table++;
     }
-
-    free_bstrs();
 }
 
 static void test_saxreader_characters(void)
@@ -2639,8 +2635,6 @@ static void test_saxreader_characters(void)
         ISAXXMLReader_Release(reader);
         table++;
     }
-
-    free_bstrs();
 }
 
 static void test_saxreader_properties(void)
@@ -4122,8 +4116,6 @@ static void test_mxwriter_startenddocument(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_writer_output(writer, L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n<a>");
-
-    free_bstrs();
 }
 
 enum startendtype
@@ -4292,8 +4284,6 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
         table++;
         i++;
     }
-
-    free_bstrs();
 }
 
 /* point of these test is to start/end element with different names and name lengths */
@@ -4361,8 +4351,6 @@ static void test_mxwriter_startendelement_batch2(const struct writer_startendele
 
         table++;
         i++;
-
-        free_bstrs();
     }
 }
 
@@ -5358,7 +5346,6 @@ static void test_mxwriter_comment(void)
     ISAXLexicalHandler_Release(lexical);
     IVBSAXLexicalHandler_Release(vblexical);
     IMXWriter_Release(writer);
-    free_bstrs();
 }
 
 static void test_mxwriter_cdata(void)
@@ -5412,7 +5399,6 @@ static void test_mxwriter_cdata(void)
     ISAXLexicalHandler_Release(lexical);
     IVBSAXLexicalHandler_Release(vblexical);
     IMXWriter_Release(writer);
-    free_bstrs();
 }
 
 static void test_mxwriter_pi(void)
@@ -5463,13 +5449,13 @@ static void test_mxwriter_pi(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output(writer, L"<?t1 d1?>\r\n");
 
-    hr = ISAXContentHandler_startElement(content, L"", 0, L"", 0, _bstr_("a"), -1, NULL);
+    hr = ISAXContentHandler_startElement(content, L"", 0, L"", 0, L"a", -1, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output(writer, L"<?t1 d1?>\r\n<a>");
 
     hr = ISAXContentHandler_processingInstruction(content, L"t2", 2, L"d2", 2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = ISAXContentHandler_endElement(content, L"", 0, L"", 0, _bstr_("a"), -1);
+    hr = ISAXContentHandler_endElement(content, L"", 0, L"", 0, L"a", -1);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = ISAXContentHandler_processingInstruction(content, L"t3", 2, L"d3", 2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5489,13 +5475,13 @@ static void test_mxwriter_pi(void)
     hr = ISAXContentHandler_processingInstruction(content, L"t1", 2, L"d1", 2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output_todo(writer, L"<?t1 d1?>");
-    hr = ISAXContentHandler_startElement(content, L"", 0, L"", 0, _bstr_("a"), -1, NULL);
+    hr = ISAXContentHandler_startElement(content, L"", 0, L"", 0, L"a", -1, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output(writer, L"<?t1 d1?>\r\n<a>");
     hr = ISAXContentHandler_processingInstruction(content, L"t2", 2, L"d2", 2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output_todo(writer, L"<?t1 d1?>\r\n<a>\r\n\t<?t2 d2?>");
-    hr = ISAXContentHandler_endElement(content, L"", 0, L"", 0, _bstr_("a"), -1);
+    hr = ISAXContentHandler_endElement(content, L"", 0, L"", 0, L"a", -1);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_writer_output(writer, L"<?t1 d1?>\r\n<a>\r\n\t<?t2 d2?>\r\n</a>");
     hr = ISAXContentHandler_processingInstruction(content, L"t3", 2, L"d3", 2);
@@ -5751,7 +5737,6 @@ static void test_mxwriter_dtd(void)
     IVBSAXDeclHandler_Release(vbdecl);
     ISAXDeclHandler_Release(decl);
     IMXWriter_Release(writer);
-    free_bstrs();
 }
 
 typedef struct {
@@ -6235,8 +6220,6 @@ static void test_mxwriter_indent(void)
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
-
-    free_bstrs();
 }
 
 static void test_saxreader_vb_content_handler(void)
@@ -6423,34 +6406,34 @@ static void test_saxreader_max_element_depth(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&v, 0, sizeof(v));
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    hr = ISAXXMLReader_getProperty(reader, L"max-element-depth", &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_I4, "Unexpected type %d.\n", V_VT(&v));
     ok(V_I4(&v) == 5000, "Unexpected value %ld.\n", V_I4(&v));
 
     V_UI4(&v) = 2147483648;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    hr = ISAXXMLReader_putProperty(reader, L"max-element-depth", v);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     V_I4(&v) = 2147483647;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    hr = ISAXXMLReader_putProperty(reader, L"max-element-depth", v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    hr = ISAXXMLReader_getProperty(reader, L"max-element-depth", &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_I4, "Unexpected type %d.\n", V_VT(&v));
     ok(V_I4(&v) == 2147483647, "Unexpected value %ld.\n", V_I4(&v));
 
     V_I4(&v) = 0;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    hr = ISAXXMLReader_putProperty(reader, L"max-element-depth", v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    hr = ISAXXMLReader_getProperty(reader, L"max-element-depth", &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_I4(&v) == 0, "Unexpected value %ld.\n", V_I4(&v));
 
     V_I4(&v) = 1;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    hr = ISAXXMLReader_putProperty(reader, L"max-element-depth", v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     V_VT(&v) = VT_BSTR;
