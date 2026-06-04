@@ -1382,7 +1382,9 @@ static HRESULT WINAPI SAXContentHandler_characters(ISAXContentHandler *iface, co
 
     if (nchars)
     {
-        if (writer->cdata || writer->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
+        if (writer->cdata)
+            write_string_with_crlf(writer, chars, nchars);
+        else if (writer->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
             write_output_buffer(writer, chars, nchars);
         else
             write_escaped_string(writer, chars, nchars, EscapeText);

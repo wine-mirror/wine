@@ -4847,7 +4847,6 @@ static void test_mxwriter_cdata(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    todo_wine
     ok(!lstrcmpW(L"<![CDATA[<![CDATA[< > & \"\r\na\r\nb\r\n]]>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 

@@ -5393,7 +5393,7 @@ static void test_mxwriter_cdata(void)
     hr = ISAXLexicalHandler_endCDATA(lexical);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    check_writer_output_todo(writer, L"<![CDATA[<![CDATA[< > & \"\r\na\r\nb\r\n]]>");
+    check_writer_output(writer, L"<![CDATA[<![CDATA[< > & \"\r\na\r\nb\r\n]]>");
 
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
