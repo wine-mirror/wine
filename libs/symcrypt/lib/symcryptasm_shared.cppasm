@@ -23,7 +23,15 @@
 // Platform-specific name mangling
 // ARM64EC needs to use a modified function name as the code can co-exist with equivalent ARM64 code.
 // macOS (Mach-O) needs to prefix all C symbols with an underscore.
-#ifdef _M_ARM64EC
+#if defined __arm64ec__ && defined SYMCRYPT_GAS
+    /* from compiler-rt assembly.h */
+    #define GLUE2_(a, b) a##b
+    #define GLUE2(a, b) GLUE2_(a, b)
+    #define QUOTE(a) #a
+    #define STR(a) QUOTE(a)
+    #define HASH #
+    #define PLATFORM_NAME_MANGLE(name) STR(GLUE2(HASH, name))
+#elif defined _M_ARM64EC
     // ARM64EC name mangling for Windows
     #define ARM64EC_NAME_DECORATION_SYMBOL() #
     #define ARM64EC_NAME_DECORATE(FuncName) ARM64EC_NAME_DECORATION_SYMBOL() ## FuncName

@@ -26,6 +26,12 @@ SOURCES = \
 	lib/amd64/fdef_mulx.S \
 	lib/amd64/sha256xmm_asm.S \
 	lib/amd64/wipe.S \
+	lib/arm64/fdef369_asm.S \
+	lib/arm64/fdef_asm.S \
+	lib/arm64/wipe.S \
+	lib/arm64ec/fdef369_asm.S \
+	lib/arm64ec/fdef_asm.S \
+	lib/arm64ec/wipe.S \
 	lib/blockciphermodes.c \
 	lib/ccm.c \
 	lib/chacha20.c \

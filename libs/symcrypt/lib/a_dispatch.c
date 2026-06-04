@@ -37,7 +37,7 @@ const SYMCRYPT_MODULAR_FUNCTIONS g_SymCryptModFns[] = {
     // SYMCRYPT_MOD_FUNCTIONS_FDEF_MONTGOMERY512,          // Special faster code for 512-bit Montgomery moduli
     // SYMCRYPT_MOD_FUNCTIONS_FDEF_MONTGOMERY1024,         // Special faster code for 1024-bit Montgomery moduli
 
-#elif 0 && SYMCRYPT_CPU_ARM64
+#elif SYMCRYPT_CPU_ARM64
 
     SYMCRYPT_MOD_FUNCTIONS_FDEF369_MONTGOMERY,
     SYMCRYPT_MOD_FUNCTIONS_FDEF_MONTGOMERY_ARM64256,
@@ -87,7 +87,7 @@ const SYMCRYPT_MODULUS_TYPE_SELECTION_ENTRY SymCryptModulusTypeSelections[] =
     {SymCryptModFntableMontgomeryMulx1024,  SYMCRYPT_CPU_FEATURES_FOR_MULX, 1024,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY },
     {SymCryptModFntableMontgomeryMulx,      SYMCRYPT_CPU_FEATURES_FOR_MULX,    0,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY },
 
-#elif 0 && SYMCRYPT_CPU_ARM64
+#elif SYMCRYPT_CPU_ARM64
 
     {SymCryptModFntableMontgomeryArm64P384, 0,                               384,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY | SYMCRYPT_MODULUS_FEATURE_NISTP384 },
     {SymCryptModFntableMontgomeryArm64256,  0,                               256,   SYMCRYPT_MODULUS_FEATURE_MONTGOMERY },

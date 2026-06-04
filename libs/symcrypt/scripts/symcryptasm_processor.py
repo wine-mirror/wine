@@ -747,6 +747,30 @@ def gen_prologue_arm64_gas(self, arg_count, reg_count, stack_alloc_size, xmm_reg
 
     return prologue
 
+def gen_prologue_arm64_gas_pe(self, arg_count, reg_count, stack_alloc_size, xmm_reg_count):
+    prologue = ""
+
+    if reg_count > self.volatile_registers:
+        # Calculate required stack space
+        # If we allocate stack space we must spill fp and lr, so we always spill at least 2 registers
+        registers_to_spill = 2 + reg_count - self.volatile_registers
+        # Stack pointer remain 16B aligned, so round up to the nearest multiple of 16B
+        required_stack_space = 16 * ((registers_to_spill + 1) // 2)
+        prologue += "    stp fp, lr, [sp, #-%d]! // allocate %d bytes of stack; store FP/LR\n" % (required_stack_space, required_stack_space)
+        prologue += "    .seh_save_fplr_x %d\n" % required_stack_space
+
+        stack_offset = 16
+        for i in range(self.volatile_registers, reg_count-1, 2):
+            prologue += "    stp X_%d, X_%d, [sp, #%d]\n" % (i, i+1, stack_offset)
+            prologue += "    .seh_save_regp X_%d, %d\n" % (i, stack_offset)
+            stack_offset += 16
+        if registers_to_spill % 2 == 1:
+            prologue += "    str      X_%d, [sp, #%d]\n" % (reg_count-1, stack_offset)
+            prologue += "    .seh_save_reg X_%d, %d\n" % (reg_count-1, stack_offset)
+
+    prologue += "    .seh_endprologue\n"
+    return prologue
+
 def gen_epilogue_arm64_gas(self, arg_count, reg_count, stack_alloc_size, xmm_reg_count):
     epilogue = ""
 
@@ -780,6 +804,14 @@ CALLING_CONVENTION_ARM64_AAPCS64_ARMASM64 = CallingConvention(
 CALLING_CONVENTION_ARM64_AAPCS64_GAS = CallingConvention(
     "arm64_aapcs64", "arm64", MAPPING_ARM64_AAPCS64, 8, 8, 18,
     gen_prologue_arm64_gas, gen_epilogue_arm64_gas, gen_get_memslot_offset_arm64)
+
+CALLING_CONVENTION_ARM64_AAPCS64_GAS_PE = CallingConvention(
+    "arm64_aapcs64", "arm64", MAPPING_ARM64_AAPCS64, 8, 8, 18,
+    gen_prologue_arm64_gas_pe, gen_epilogue_arm64_gas, gen_get_memslot_offset_arm64)
+
+CALLING_CONVENTION_ARM64EC_GAS_PE = CallingConvention(
+    "arm64ec_msft", "arm64", MAPPING_ARM64_ARM64ECMSFT, 8, 8, 16,
+    gen_prologue_arm64_gas_pe, gen_epilogue_arm64_gas, gen_get_memslot_offset_arm64)
 
 CALLING_CONVENTION_ARM64EC_MSFT = CallingConvention(
     "arm64ec_msft", "arm64", MAPPING_ARM64_ARM64ECMSFT, 8, 8, 16,
@@ -1229,6 +1261,14 @@ def process_file(assembler, architecture, calling_convention, infilename, outfil
             normal_calling_convention = CALLING_CONVENTION_AMD64_MSFT
             mul_calling_convention = CALLING_CONVENTION_AMD64_MSFT_MUL
             nested_calling_convention = CALLING_CONVENTION_AMD64_MSFT_NESTED
+        elif architecture == "arm64" and calling_convention == "aapcs64":
+            normal_calling_convention = CALLING_CONVENTION_ARM64_AAPCS64_GAS_PE
+            mul_calling_convention = None
+            nested_calling_convention = None
+        elif architecture == "arm64" and calling_convention == "arm64ec":
+            normal_calling_convention = CALLING_CONVENTION_ARM64EC_GAS_PE
+            mul_calling_convention = None
+            nested_calling_convention = None
     elif assembler in [ASSEMBLER_GAS, ASSEMBLER_GAS_MACHO]:
         if architecture == "amd64" and calling_convention == "systemv":
             normal_calling_convention = CALLING_CONVENTION_AMD64_SYSTEMV

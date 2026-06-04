@@ -40,6 +40,11 @@ do
     then
         python3 scripts/symcryptasm_processor.py gas-pe amd64 msft lib/amd64/$i.symcryptasm lib/amd64/$i.S
     fi
+    if test -f lib/arm64/$i.symcryptasm
+    then
+        python3 scripts/symcryptasm_processor.py gas-pe arm64 aapcs64 lib/arm64/$i.symcryptasm lib/arm64/$i.S
+        python3 scripts/symcryptasm_processor.py gas-pe arm64 arm64ec lib/arm64/$i.symcryptasm lib/arm64ec/$i.S
+    fi
 done
 
 exit 0

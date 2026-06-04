@@ -1686,7 +1686,7 @@ SymCryptFdefModSquareMontgomery1024(
 
 #endif
 
-#if !defined(__WINE_PE_BUILD) || !SYMCRYPT_CPU_AMD64
+#if !defined(__WINE_PE_BUILD) || !(SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64)
 
 VOID
 SYMCRYPT_CALL
