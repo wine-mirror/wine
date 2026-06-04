@@ -388,6 +388,7 @@
 @ cdecl vkd3d_shader_free_messages(ptr)
 @ cdecl vkd3d_shader_free_root_signature(ptr)
 @ cdecl vkd3d_shader_free_scan_descriptor_info(ptr)
+@ cdecl vkd3d_shader_free_scan_signature_info(ptr)
 @ cdecl vkd3d_shader_free_shader_code(ptr)
 @ cdecl vkd3d_shader_free_shader_signature(ptr)
 @ cdecl vkd3d_shader_get_supported_source_types(ptr)
