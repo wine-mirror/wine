@@ -1536,7 +1536,7 @@ cleanup:
     return res;
 }
 
-#if !defined(__WINE_PE_BUILD) || !(SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64)
+#if !defined(__WINE_PE_BUILD) || SYMCRYPT_CPU_X86
 
 VOID
 SYMCRYPT_CALL

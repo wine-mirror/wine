@@ -45,6 +45,10 @@ do
         python3 scripts/symcryptasm_processor.py gas-pe arm64 aapcs64 lib/arm64/$i.symcryptasm lib/arm64/$i.S
         python3 scripts/symcryptasm_processor.py gas-pe arm64 arm64ec lib/arm64/$i.symcryptasm lib/arm64ec/$i.S
     fi
+    if test -f lib/arm/$i.symcryptasm
+    then
+        python3 scripts/symcryptasm_processor.py gas-pe arm aapcs32 lib/arm/$i.symcryptasm lib/arm/$i.S
+    fi
 done
 
 exit 0

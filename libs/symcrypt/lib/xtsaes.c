@@ -98,7 +98,7 @@ SymCryptXtsAesKeyCopy(
 #undef SYMCRYPT_AesEcbEncryptXxx
 
 
-#if (SYMCRYPT_CPU_AMD64 /* | SYMCRYPT_CPU_X86 | SYMCRYPT_CPU_ARM*/) && defined(__WINE_PE_BUILD)
+#if (SYMCRYPT_CPU_AMD64 /* | SYMCRYPT_CPU_X86*/ | SYMCRYPT_CPU_ARM) && defined(__WINE_PE_BUILD)
 #define SYMCRYPT_AesEcbEncryptXxx SymCryptAesEcbEncryptAsm
 
 #define SYMCRYPT_XtsAesXxx SymCryptXtsAesEncryptInternalAsm

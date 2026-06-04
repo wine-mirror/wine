@@ -1250,7 +1250,7 @@ SymCryptFdefIntDivMod(
     }
 }
 
-#if !defined(__WINE_PE_BUILD) || !(SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64)
+#if !defined(__WINE_PE_BUILD) || SYMCRYPT_CPU_X86
 
 UINT32
 SYMCRYPT_CALL

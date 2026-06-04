@@ -666,6 +666,11 @@ def gen_prologue_aapcs32(self, arg_count, reg_count, stack_alloc_size, xmm_reg_c
         # required_stack_space = 4 * len(registers_to_spill)
     registers_to_spill.append('lr')
     prologue += "push {" + ",".join(registers_to_spill) + "}\n"
+    if reg_count > 7:
+        prologue += ".seh_save_regs_w {" + ",".join(registers_to_spill) + "}\n"
+    else:
+        prologue += ".seh_save_regs {" + ",".join(registers_to_spill) + "}\n"
+    prologue += ".seh_endprologue\n"
     return prologue
 
 def gen_epilogue_aapcs32(self, arg_count, reg_count, stack_alloc_size, xmm_reg_count):
@@ -1267,6 +1272,10 @@ def process_file(assembler, architecture, calling_convention, infilename, outfil
             nested_calling_convention = None
         elif architecture == "arm64" and calling_convention == "arm64ec":
             normal_calling_convention = CALLING_CONVENTION_ARM64EC_GAS_PE
+            mul_calling_convention = None
+            nested_calling_convention = None
+        elif architecture == "arm" and calling_convention == "aapcs32":
+            normal_calling_convention = CALLING_CONVENTION_ARM32_AAPCS32
             mul_calling_convention = None
             nested_calling_convention = None
     elif assembler in [ASSEMBLER_GAS, ASSEMBLER_GAS_MACHO]:
