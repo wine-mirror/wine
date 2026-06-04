@@ -1,8 +1,8 @@
 /* FAudio WMADEC implementation over Win32 MF */
 
-#ifdef HAVE_WMADEC
-
 #include "FAudio_internal.h"
+
+#ifdef HAVE_WMADEC
 
 #include <stddef.h>
 
@@ -28,7 +28,20 @@ struct FAudioWMADEC
 	size_t output_size;
 	size_t input_pos;
 	size_t input_size;
+	bool eos;
 };
+
+static void send_eos(struct FAudioWMADEC *decoder)
+{
+	HRESULT hr;
+
+	if (decoder->eos)
+		return;
+
+	hr = IMFTransform_ProcessMessage(decoder->decoder, MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
+	FAudio_assert(!FAILED(hr) && "Failed to send EOS!");
+	decoder->eos = true;
+}
 
 static HRESULT FAudio_WMAMF_ProcessInput(
 	FAudioVoice *voice,
@@ -141,12 +154,8 @@ static HRESULT FAudio_WMAMF_ProcessOutput(
 	return S_OK;
 };
 
-static void FAudio_INTERNAL_DecodeWMAMF(
-	FAudioVoice *voice,
-	FAudioBuffer *buffer,
-	float *decodeCache,
-	uint32_t samples
-) {
+void decode_wma(FAudioVoice *voice, struct queued_buffer *buffer, float *decodeCache, uint32_t samples)
+{
 	const FAudioWaveFormatExtensible *wfx = (FAudioWaveFormatExtensible *)voice->src.format;
 	size_t samples_pos, samples_size, copy_size = 0;
 	struct FAudioWMADEC *impl = voice->src.wmadec;
@@ -158,7 +167,7 @@ static void FAudio_INTERNAL_DecodeWMAMF(
 	{
 		if (wfx->Format.wFormatTag == FAUDIO_FORMAT_EXTENSIBLE)
 		{
-			const FAudioBufferWMA *wma = &voice->src.bufferList->bufferWMA;
+			const FAudioBufferWMA *wma = &buffer->bufferWMA;
 			const UINT32 *output_sizes = wma->pDecodedPacketCumulativeBytes;
 
 			impl->input_size = wfx->Format.nBlockAlign;
@@ -193,7 +202,7 @@ static void FAudio_INTERNAL_DecodeWMAMF(
 			0
 		);
 		FAudio_assert(!FAILED(hr) && "Failed to notify decoder stream start!");
-		FAudio_WMAMF_ProcessInput(voice, buffer);
+		FAudio_WMAMF_ProcessInput(voice, &buffer->buffer);
 	}
 
 	samples_pos = voice->src.curBufferOffset * voice->src.format->nChannels * sizeof(float);
@@ -201,24 +210,18 @@ static void FAudio_INTERNAL_DecodeWMAMF(
 
 	while (impl->output_pos < samples_pos + samples_size)
 	{
-		hr = FAudio_WMAMF_ProcessOutput(voice, buffer);
+		hr = FAudio_WMAMF_ProcessOutput(voice, &buffer->buffer);
 		if (FAILED(hr)) goto error;
 		if (hr == S_OK) continue;
 
-		hr  = FAudio_WMAMF_ProcessInput(voice, buffer);
+		hr  = FAudio_WMAMF_ProcessInput(voice, &buffer->buffer);
 		if (FAILED(hr)) goto error;
 		if (hr == S_OK) continue;
 
-		if (!impl->input_size) break;
+		if (impl->eos)
+			break;
 
-		LOG_INFO(voice->audio, "sending EOS to %p", impl->decoder);
-		hr = IMFTransform_ProcessMessage(
-			impl->decoder,
-			MFT_MESSAGE_NOTIFY_END_OF_STREAM,
-			0
-		);
-		FAudio_assert(!FAILED(hr) && "Failed to send EOS!");
-		impl->input_size = 0;
+		send_eos(impl);
 	}
 
 	if (impl->output_pos > samples_pos)
@@ -545,7 +548,6 @@ next:
 	FAudio_assert(!FAILED(hr) && "Failed to start decoder stream!");
 
 	voice->src.wmadec = impl;
-	voice->src.decode = FAudio_INTERNAL_DecodeWMAMF;
 
 	LOG_FUNC_EXIT(voice->audio);
 	return 0;
@@ -560,17 +562,7 @@ void FAudio_WMADEC_free(FAudioSourceVoice *voice)
 	FAudio_PlatformLockMutex(voice->audio->sourceLock);
 	LOG_MUTEX_LOCK(voice->audio, voice->audio->sourceLock)
 
-	if (impl->input_size)
-	{
-		LOG_INFO(voice->audio, "sending EOS to %p", impl->decoder);
-		hr = IMFTransform_ProcessMessage(
-			impl->decoder,
-			MFT_MESSAGE_NOTIFY_END_OF_STREAM,
-			0
-		);
-		FAudio_assert(!FAILED(hr) && "Failed to send EOS!");
-		impl->input_size = 0;
-	}
+	send_eos(impl);
 	if (impl->output_pos)
 	{
 		LOG_INFO(voice->audio, "sending DRAIN to %p", impl->decoder);
@@ -602,20 +594,22 @@ void FAudio_WMADEC_end_buffer(FAudioSourceVoice *voice)
 
 	LOG_FUNC_ENTER(voice->audio)
 
-	if (impl->input_size)
-	{
-		LOG_INFO(voice->audio, "sending EOS to %p", impl->decoder);
-		hr = IMFTransform_ProcessMessage(
-			impl->decoder,
-			MFT_MESSAGE_NOTIFY_END_OF_STREAM,
-			0
-		);
-		FAudio_assert(!FAILED(hr) && "Failed to send EOS!");
-		impl->input_size = 0;
-	}
+	send_eos(impl);
+
 	impl->output_pos = 0;
 	impl->input_pos = 0;
+	impl->eos = false;
 
+	LOG_FUNC_EXIT(voice->audio)
+}
+
+#else /* HAVE_WMADEC */
+
+void decode_wma(FAudioVoice *voice, struct queued_buffer *buffer, float *dst, uint32_t sample_count)
+{
+	LOG_FUNC_ENTER(voice->audio)
+	LOG_ERROR(voice->audio, "%s", "WMA IS NOT SUPPORTED IN THIS BUILD!")
+	FAudio_zero(dst, sample_count * voice->src.format->nChannels * sizeof(float));
 	LOG_FUNC_EXIT(voice->audio)
 }
 

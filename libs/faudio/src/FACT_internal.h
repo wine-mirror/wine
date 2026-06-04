@@ -571,6 +571,7 @@ struct FACTWaveBank
 	char *waveBankNames;
 
 	/* I/O information */
+	uint32_t file_offset;
 	uint32_t packetSize;
 	bool streaming;
 	uint8_t *packetBuffer;
