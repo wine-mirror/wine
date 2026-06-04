@@ -1135,6 +1135,7 @@ static void create_scroll_bar( HWND hwnd, CREATESTRUCTW *create )
     TRACE( "hwnd=%p create=%p\n", hwnd, create );
 
     if (!(info = calloc( 1, sizeof(*info) ))) return;
+    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_SCROLLBAR) );
     set_control_state( hwnd, info );
 
     if (create->style & WS_DISABLED)
