@@ -1289,10 +1289,29 @@ static WORD get_window_word( HWND hwnd, INT offset )
     return get_window_long_size( hwnd, offset, sizeof(WORD), TRUE, FALSE );
 }
 
+/* Set window info with the wine server. */
+static BOOL server_set_window_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, LONG_PTR *oldval )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->offset = offset;
+        req->size = size;
+        req->new_info = newval;
+        ret = !wine_server_call_err( req );
+        *oldval = reply->old_info;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
 {
     BOOL ok, made_visible = FALSE;
     STYLESTRUCT style;
+    LONG_PTR oldval;
     WND *win = get_win_ptr( hwnd );
 
     if (!win || win == WND_DESKTOP) return 0;
@@ -1309,18 +1328,11 @@ UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
         release_win_ptr( win );
         return style.styleNew;
     }
-    SERVER_START_REQ( set_window_info )
+    if ((ok = server_set_window_info( hwnd, GWL_STYLE, style.styleNew, 0, &oldval )))
     {
-        req->handle = wine_server_user_handle( hwnd );
-        req->offset = GWL_STYLE;
-        req->new_info = style.styleNew;
-        if ((ok = !wine_server_call( req )))
-        {
-            style.styleOld = reply->old_info;
-            win->dwStyle = style.styleNew;
-        }
+        style.styleOld = oldval;
+        win->dwStyle = style.styleNew;
     }
-    SERVER_END_REQ;
 
     if (ok && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
     {
@@ -1390,7 +1402,7 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
                                           LONG_PTR newval, BOOL ansi, BOOL internal )
 {
     BOOL ok, made_visible = FALSE, layered = FALSE;
-    LONG_PTR retval = 0;
+    LONG_PTR retval = 0, oldval;
     STYLESTRUCT style;
     WND *win;
 
@@ -1503,47 +1515,39 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
     if (offset == GWLP_WNDPROC) newval = !!(win->flags & WIN_ISUNICODE);
     if (offset == GWLP_USERDATA && size == sizeof(WORD)) newval = MAKELONG( newval, win->userdata >> 16 );
 
-    SERVER_START_REQ( set_window_info )
+    if ((ok = server_set_window_info( hwnd, offset, newval, size, &oldval )))
     {
-        req->handle = wine_server_user_handle( hwnd );
-        req->offset = offset;
-        req->new_info = newval;
-        req->size = size;
-        if ((ok = !wine_server_call_err( req )))
+        switch (offset)
         {
-            switch (offset)
-            {
-            case GWL_STYLE:
-                win->dwStyle = newval;
-                win->dwExStyle = fix_exstyle(win->dwStyle, win->dwExStyle);
-                retval = reply->old_info;
-                break;
-            case GWL_EXSTYLE:
-                win->dwExStyle = newval;
-                retval = reply->old_info;
-                break;
-            case GWLP_ID:
-                win->wIDmenu = newval;
-                retval = reply->old_info;
-                break;
-            case GWLP_HINSTANCE:
-                win->hInstance = (HINSTANCE)newval;
-                retval = reply->old_info;
-                break;
-            case GWLP_WNDPROC:
-                break;
-            case GWLP_USERDATA:
-                win->userdata = newval;
-                retval = reply->old_info;
-                break;
-            default:
-                set_win_data( (char *)win->wExtra + offset, newval, size );
-                retval = reply->old_info;
-                break;
-            }
+        case GWL_STYLE:
+            win->dwStyle = newval;
+            win->dwExStyle = fix_exstyle(win->dwStyle, win->dwExStyle);
+            retval = oldval;
+            break;
+        case GWL_EXSTYLE:
+            win->dwExStyle = newval;
+            retval = oldval;
+            break;
+        case GWLP_ID:
+            win->wIDmenu = newval;
+            retval = oldval;
+            break;
+        case GWLP_HINSTANCE:
+            win->hInstance = (HINSTANCE)newval;
+            retval = oldval;
+            break;
+        case GWLP_WNDPROC:
+            break;
+        case GWLP_USERDATA:
+            win->userdata = newval;
+            retval = oldval;
+            break;
+        default:
+            set_win_data( (char *)win->wExtra + offset, newval, size );
+            retval = oldval;
+            break;
         }
     }
-    SERVER_END_REQ;
 
     if (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)) layered = TRUE;
     if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) || layered)

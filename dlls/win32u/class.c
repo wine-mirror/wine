@@ -922,7 +922,7 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
 }
 
 /* Set class info with the wine server. */
-static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, ULONG_PTR *oldval )
+static BOOL server_set_class_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, ULONG_PTR *oldval )
 {
     BOOL ret;
 
@@ -956,18 +956,18 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
     case GCLP_HICONSM:
     case GCLP_HMODULE:
     case GCLP_MENUNAME:
-        set_server_info( hwnd, offset, newval, size, &retval );
+        server_set_class_info( hwnd, offset, newval, size, &retval );
         break;
     case GCLP_WNDPROC:
         newval = (ULONG_PTR)alloc_winproc( (WNDPROC)newval, ansi );
-        if (!set_server_info( hwnd, offset, newval, size, &retval )) break;
+        if (!server_set_class_info( hwnd, offset, newval, size, &retval )) break;
         retval = (ULONG_PTR)get_winproc( (WNDPROC)retval, ansi );
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         break;
     default:
-        if (offset >= 0) set_server_info( hwnd, offset, newval, size, &retval );
+        if (offset >= 0) server_set_class_info( hwnd, offset, newval, size, &retval );
         else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         break;
     }
