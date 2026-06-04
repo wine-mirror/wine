@@ -23,7 +23,7 @@
  */
 #define MPG123_API_VERSION 49
 /** library patch level at client build time */
-#define MPG123_PATCHLEVEL  3
+#define MPG123_PATCHLEVEL  4
 
 #ifndef MPG123_EXPORT
 /** Defines needed for MS Visual Studio(tm) DLL builds.
@@ -338,7 +338,11 @@ enum mpg123_param_flags
 	 *  the stream is assumed as non-seekable unless overridden.
 	 */
 	,MPG123_FORCE_SEEKABLE = 0x40000 /**< 19th bit: Force the stream to be seekable. */
-	,MPG123_STORE_RAW_ID3  = 0x80000 /**< store raw ID3 data (even if skipping) */
+	,MPG123_STORE_RAW_ID3  = 0x80000 /**< Store raw ID3 data (even if skipping).
+	 *  Before mpg123 1.33.2 (libmpg123 API 49, patchlevel 4), this has to be combined with
+	 *  MPG123_SKIP_ID3 to avoid getting corrupted data due to the ID3 parser inserting
+	 *  encoding bytes for its own convenience.
+	 */
 	,MPG123_FORCE_ENDIAN   = 0x100000 /**< Enforce endianess of output samples.
 	 *  This is not reflected in the format codes. If this flag is set along with
 	 *  MPG123_BIG_ENDIAN, MPG123_ENC_SIGNED16 means s16be, without

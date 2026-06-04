@@ -14,9 +14,11 @@ out ovbious syntax errors that make compilers cry do not land here.
 
 Current maintainers with various sorts of contributions:
 	Thomas Orgis <thomas@orgis.org>
+	Taihei Momma <tmkk@mac.com>
+
+Past maintainers mainly for MS Windows platform:
 	Patrick Dehne <patrick@steidle.net>
 	Jonathan Yong <10walls@gmail.com>
-	Taihei Momma <tmkk@mac.com>
 
 Co-initiator of the revived mpg123 project, but not that involved anymore:
 	Nicholas J Humfrey <njh@ecs.soton.ac.uk>

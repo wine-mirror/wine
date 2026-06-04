@@ -16,7 +16,7 @@
 // only single spaces as separator to ease parsing by build scripts
 #define MPG123_MAJOR 1
 #define MPG123_MINOR 33
-#define MPG123_PATCH 0
+#define MPG123_PATCH 5
 // Don't get too wild with that to avoid confusing m4. No brackets.
 // Also, it should fit well into a sane file name for the tarball.
 #define MPG123_SUFFIX ""
