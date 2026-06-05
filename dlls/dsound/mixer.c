@@ -137,10 +137,9 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 		dsb->freqAccNum = (dsb->freqAccNum * (LONG64)dsb->freqAdjustDen +
 				oldFreqAdjustDen / 2) / oldFreqAdjustDen;
 
-	dsb->get_aux = ieee ? getieee32 : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
 	dsb->put_aux = putieee32;
 
-	dsb->get = dsb->get_aux;
+	dsb->get = ieee ? getieee32 : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
 	dsb->put = dsb->put_aux;
 
 	if (ichannels == ochannels)

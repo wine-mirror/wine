@@ -162,7 +162,7 @@ struct IDirectSoundBufferImpl
     BOOL                        ds3db_need_recalc;
     /* Used for bit depth conversion */
     int                         mix_channels;
-    bitsgetfunc get, get_aux;
+    bitsgetfunc get;
     bitsputfunc put, put_aux;
     int                         num_filters;
     DSFilter*                   filters;
