@@ -36,7 +36,7 @@ SYMCRYPT_ENVIRONMENT_DEFS( WindowsUsermodeWin8_1nLater );
 
 void * SYMCRYPT_CALL SymCryptCallbackAlloc( SIZE_T size )
 {
-    return malloc( size );
+    return _aligned_malloc( size, SYMCRYPT_ASYM_ALIGN_VALUE );
 }
 
 void SYMCRYPT_CALL SymCryptCallbackFree( void *ptr )
