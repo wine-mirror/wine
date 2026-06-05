@@ -291,6 +291,9 @@ static void IDirectSound_tests(void)
         IDirectSound_Release(dso);
 }
 
+#define AUDCLNT_ERR(n) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_AUDCLNT, n)
+#define AUDCLNT_E_DEVICE_IN_USE AUDCLNT_ERR(0x0a)
+
 static HRESULT test_dsound(LPGUID lpGuid)
 {
     HRESULT rc;
@@ -327,7 +330,11 @@ static HRESULT test_dsound(LPGUID lpGuid)
 
         /* Create a second DirectSound object */
         rc = DirectSoundCreate(lpGuid, &dso1, NULL);
-        ok(rc==DS_OK,"DirectSoundCreate() failed: %08lx\n",rc);
+        /* Running without pulseaudio can't open twice. */
+        if (rc==AUDCLNT_E_DEVICE_IN_USE)
+            skip("Failed to open device a second time, skipping test.\n");
+        else
+            ok(rc==DS_OK,"DirectSoundCreate() failed: %08lx\n",rc);
         if (rc==DS_OK) {
             /* Release the second DirectSound object */
             ref=IDirectSound_Release(dso1);
