@@ -1863,7 +1863,6 @@ static void dump_set_window_pos_request( const struct set_window_pos_request *re
 {
     fprintf( stderr, " swp_flags=%04x", req->swp_flags );
     fprintf( stderr, ", paint_flags=%04x", req->paint_flags );
-    dump_ratio( ", monitor_dpi=", &req->monitor_dpi );
     fprintf( stderr, ", handle=%08x", req->handle );
     fprintf( stderr, ", previous=%08x", req->previous );
     dump_rectangle( ", window=", &req->window );

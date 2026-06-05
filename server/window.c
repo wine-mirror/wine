@@ -83,7 +83,6 @@ struct window
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
-    struct ratio     monitor_dpi;     /* DPI of the window monitor */
     WCHAR           *text;            /* window caption text */
     data_size_t      text_len;        /* length of window caption */
     unsigned int     paint_flags;     /* various painting flags */
@@ -324,7 +323,7 @@ static void map_point_raw_to_virt( struct desktop *desktop, int *x, int *y )
 static struct ratio get_monitor_dpi( struct window *win )
 {
     while (win->parent && !is_desktop_window( win->parent )) win = win->parent;
-    return win->monitor_dpi;
+    return win->shared->dpi;
 }
 
 static struct ratio get_window_dpi( struct window *win )
@@ -394,6 +393,20 @@ static int link_window( struct window *win, struct window *previous )
     return old_prev != win->entry.prev;
 }
 
+static void set_window_monitor_dpi( struct window *win )
+{
+    struct monitor_info *info;
+
+    if (!(info = get_monitor_from_rect( win->desktop->winstation, &win->window_rect, 0 ))) return;
+
+    SHARED_WRITE_BEGIN( win->shared, window_shm_t )
+    {
+        shared->dpi     = info->dpi;
+        shared->raw_dpi = info->raw_dpi;
+    }
+    SHARED_WRITE_END;
+}
+
 /* change the parent of a window (or unlink the window if the new parent is NULL) */
 static int set_parent_window( struct window *win, struct window *parent )
 {
@@ -415,14 +428,12 @@ static int set_parent_window( struct window *win, struct window *parent )
         win->parent = (struct window *)grab_object( parent );
         link_window( win, WINPTR_TOP );
 
-        if (!is_desktop_window( parent ))
+        if (is_desktop_window( parent )) set_window_monitor_dpi( win );
+        else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
         {
-            SHARED_WRITE_BEGIN( win->shared, window_shm_t )
-            {
-                shared->dpi_context = parent->shared->dpi_context;
-            }
-            SHARED_WRITE_END;
+            shared->dpi_context = parent->shared->dpi_context;
         }
+        SHARED_WRITE_END;
 
         /* if parent belongs to a different thread and the window isn't */
         /* top-level, attach the two threads */
@@ -662,8 +673,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_layered     = 0;
     win->is_orphan      = 0;
     win->set_foreground = 0;
-    win->monitor_dpi.num = USER_DEFAULT_SCREEN_DPI;
-    win->monitor_dpi.den = 1;
     win->text           = NULL;
     win->text_len       = 0;
     win->paint_flags    = 0;
@@ -682,6 +691,10 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
         shared->fnid            = fnid;
         shared->private_size    = private_size;
+        shared->dpi.num         = USER_DEFAULT_SCREEN_DPI;
+        shared->dpi.den         = 1;
+        shared->raw_dpi.num     = USER_DEFAULT_SCREEN_DPI;
+        shared->raw_dpi.den     = 1;
         shared->extra_size      = extra_size;
         memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
@@ -1951,6 +1964,9 @@ static void set_window_pos( struct window *win, struct window *previous,
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
 
+    /* update window monitor dpi for toplevel windows */
+    if (!win->parent || is_desktop_window( win->parent )) set_window_monitor_dpi( win );
+
     /* keep children at the same position relative to top right corner when the parent is mirrored */
     if (win->ex_style & WS_EX_LAYOUTRTL)
     {
@@ -2737,7 +2753,6 @@ DECL_HANDLER(set_window_pos)
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
-    win->monitor_dpi = req->monitor_dpi;
     old_style = win->style;
     old_window = win->window_rect;
     old_client = win->client_rect;

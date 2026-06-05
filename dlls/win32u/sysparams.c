@@ -2465,14 +2465,18 @@ static void set_winstation_monitors( BOOL increment )
     if (!(count = list_count( &monitors ))) return;
     if (!(info = infos = calloc( count, sizeof(*infos) ))) return;
 
+    TRACE( "increment %u\n", increment );
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (is_monitor_primary( monitor )) info->flags |= MONITOR_FLAG_PRIMARY;
         if (!is_monitor_active( monitor )) info->flags |= MONITOR_FLAG_INACTIVE;
         if (monitor->is_clone) info->flags |= MONITOR_FLAG_CLONE;
         info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y );
+        info->raw_dpi = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
         info->virt = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_EFFECTIVE_DPI ) );
         info->raw = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_RAW_DPI ) );
+        TRACE( "  flags %#x virt %s dpi %s raw %s raw_dpi %s\n", info->flags, wine_dbgstr_rect( (RECT *)&info->virt ),
+               debugstr_ratio( info->dpi ), wine_dbgstr_rect( (RECT *)&info->raw ), debugstr_ratio( info->raw_dpi ) );
         info++;
     }
 
@@ -3138,42 +3142,6 @@ static struct ratio get_monitor_dpi( HMONITOR handle, UINT type, struct ratio *x
     unlock_display_devices();
 
     return dpi;
-}
-
-/**********************************************************************
- *              get_win_monitor_dpi
- */
-struct ratio get_win_monitor_dpi( HWND hwnd, struct ratio *raw_dpi )
-{
-    struct ratio dpi = {NTUSER_DPI_CONTEXT_GET_DPI( get_window_dpi_awareness_context( hwnd ) ), 1};
-    HWND parent = get_parent( hwnd );
-    RECT rect = {0};
-    WND *win;
-
-    if (!(win = get_win_ptr( hwnd )))
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
-        return no_dpi;
-    }
-
-    if (win == WND_DESKTOP) return monitor_dpi_from_rect( rect, get_thread_dpi(), raw_dpi );
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (!get_window_rect( hwnd, &rect, dpi )) return no_dpi;
-    }
-    /* avoid recursive calls from get_window_rects for the process windows */
-    else if ((parent = win->parent) && parent != get_desktop_window())
-    {
-        release_win_ptr( win );
-        return get_win_monitor_dpi( parent, raw_dpi );
-    }
-    else
-    {
-        rect = is_iconic( hwnd ) ? win->normal_rect : win->rects.window;
-        release_win_ptr( win );
-    }
-
-    return monitor_dpi_from_rect( rect, dpi, raw_dpi );
 }
 
 /* keep in sync with user32 */

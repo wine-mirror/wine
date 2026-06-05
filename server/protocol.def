@@ -913,7 +913,8 @@ struct monitor_info
     struct rectangle raw;     /* host / physical position of the monitor rect */
     struct rectangle virt;    /* client / virtual position of the monitor rect */
     unsigned int     flags;   /* MONITOR_FLAG_* flags for the monitor */
-    struct ratio     dpi;     /* physical DPI for the monitor */
+    struct ratio     dpi;     /* effective DPI for the monitor */
+    struct ratio     raw_dpi; /* raw DPI for the monitor */
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -1084,6 +1085,8 @@ typedef volatile struct
     unsigned int         fnid;             /* builtin class FNID, or 0 */
     unsigned int         ansi;             /* window wndproc is ansi */
     int                  __pad;
+    struct ratio         dpi;              /* effective DPI of the window monitor */
+    struct ratio         raw_dpi;          /* raw DPI of the window monitor */
     data_size_t          private_size;     /* length of private extra bytes range */
     data_size_t          extra_size;       /* size of the extra info */
     struct window_info   info;             /* window info (GWLP_*) */
@@ -2796,7 +2799,6 @@ enum message_type
 @REQ(set_window_pos)
     unsigned short swp_flags;     /* SWP_* flags */
     unsigned short paint_flags;   /* paint flags (see below) */
-    struct ratio   monitor_dpi;   /* DPI of the window's monitor */
     user_handle_t  handle;        /* handle to the window */
     user_handle_t  previous;      /* previous window in Z order */
     struct rectangle window;      /* window rectangle (in parent coords) */

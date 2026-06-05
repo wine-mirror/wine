@@ -898,6 +898,7 @@ struct monitor_info
     struct rectangle virt;
     unsigned int     flags;
     struct ratio     dpi;
+    struct ratio     raw_dpi;
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -1068,6 +1069,8 @@ typedef volatile struct
     unsigned int         fnid;
     unsigned int         ansi;
     int                  __pad;
+    struct ratio         dpi;
+    struct ratio         raw_dpi;
     data_size_t          private_size;
     data_size_t          extra_size;
     struct window_info   info;
@@ -3746,13 +3749,11 @@ struct set_window_pos_request
     struct request_header __header;
     unsigned short swp_flags;
     unsigned short paint_flags;
-    struct ratio   monitor_dpi;
     user_handle_t  handle;
     user_handle_t  previous;
     struct rectangle window;
     struct rectangle client;
     /* VARARG(valid,rectangles); */
-    char __pad_60[4];
 };
 struct set_window_pos_reply
 {
@@ -7155,6 +7156,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 954
+#define SERVER_PROTOCOL_VERSION 955
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

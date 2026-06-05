@@ -458,4 +458,9 @@ static inline UINT round_dpi( struct ratio dpi )
     return (dpi.num + dpi.den / 2) / dpi.den;
 }
 
+static inline const char *debugstr_ratio( struct ratio q )
+{
+    return wine_dbg_sprintf( "%d:%d", q.num, q.den );
+}
+
 #endif /* __WINE_WIN32U_PRIVATE */

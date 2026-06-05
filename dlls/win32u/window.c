@@ -1112,6 +1112,27 @@ BOOL is_window_enabled( HWND hwnd )
     return !(ret & WS_DISABLED);
 }
 
+struct ratio get_win_monitor_dpi( HWND hwnd, struct ratio *raw_dpi )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const window_shm_t *window_shm;
+    struct ratio dpi = no_dpi;
+    NTSTATUS status;
+
+    while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
+    {
+        *raw_dpi = window_shm->raw_dpi;
+        dpi = window_shm->dpi;
+    }
+    if (status)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return no_dpi;
+    }
+
+    return dpi;
+}
+
 /* see GetWindowDpiAwarenessContext */
 UINT get_window_dpi_awareness_context( HWND hwnd )
 {
@@ -2214,7 +2235,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     struct window_rects monitor_rects;
     WND *win;
     HWND owner_hint, surface_win = 0, toplevel;
-    struct ratio raw_dpi, monitor_dpi, dpi = get_thread_dpi();
+    struct ratio raw_dpi, dpi = get_thread_dpi();
     BOOL ret, is_layered, is_child, need_icons = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
@@ -2226,8 +2247,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     is_layered = new_surface && new_surface->alpha_mask;
     is_child = toplevel && toplevel != hwnd;
 
-    if (is_child) monitor_dpi = get_win_monitor_dpi( toplevel, &raw_dpi );
-    else monitor_dpi = monitor_dpi_from_rect( new_rects->window, dpi, &raw_dpi );
+    if (is_child) get_win_monitor_dpi( toplevel, &raw_dpi );
+    else monitor_dpi_from_rect( new_rects->window, dpi, &raw_dpi );
 
     get_window_rects( hwnd, COORDS_PARENT, &old_rects, dpi );
     if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
@@ -2248,7 +2269,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         req->handle        = wine_server_user_handle( hwnd );
         req->previous      = wine_server_user_handle( insert_after );
         req->swp_flags     = swp_flags;
-        req->monitor_dpi   = monitor_dpi;
         req->window        = wine_server_rectangle( new_rects->window );
         req->client        = wine_server_rectangle( new_rects->client );
         if (!EqualRect( &new_rects->window, &new_rects->visible ) || new_surface || valid_rects)
