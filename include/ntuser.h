@@ -1618,12 +1618,11 @@ struct expose_window_surface_params
     UINT flags;
     BOOL whole;
     RECT rect;
-    UINT dpi;
 };
 
-static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT *rect, UINT dpi )
+static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT *rect )
 {
-    struct expose_window_surface_params params = {.flags = flags, .whole = !rect, .dpi = dpi};
+    struct expose_window_surface_params params = {.flags = flags, .whole = !rect};
     if (rect) params.rect = *rect;
     return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_ExposeWindowSurface );
 }

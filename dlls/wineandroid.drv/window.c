@@ -1181,7 +1181,7 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         }
         else
         {
-            NtUserExposeWindowSurface( hwnd, 0, NULL, 0 );
+            NtUserExposeWindowSurface( hwnd, 0, NULL );
         }
         return 0;
     default:

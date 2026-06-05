@@ -2390,7 +2390,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     return ret;
 }
 
-static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT dpi )
+static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect )
 {
     struct window_surface *surface;
     struct window_rects rects;
@@ -2402,7 +2402,12 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
     rects = win->rects;
     release_win_ptr( win );
 
-    if (rect) exposed_rect = map_dpi_rect( *rect, dpi, get_dpi_for_window( hwnd ) );
+    if (rect)
+    {
+        UINT raw_dpi;
+        get_win_monitor_dpi( hwnd, &raw_dpi );
+        exposed_rect = map_dpi_rect( *rect, raw_dpi, get_dpi_for_window( hwnd ) );
+    }
 
     if (!surface || surface == &dummy_surface)
     {
@@ -6228,7 +6233,7 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_ExposeWindowSurface:
     {
         struct expose_window_surface_params *params = (void *)param;
-        return expose_window_surface( hwnd, params->flags, params->whole ? NULL : &params->rect, params->dpi );
+        return expose_window_surface( hwnd, params->flags, params->whole ? NULL : &params->rect );
     }
 
     case NtUserCallHwndParam_GetWinMonitorDpi:
