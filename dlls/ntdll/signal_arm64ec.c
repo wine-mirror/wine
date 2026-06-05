@@ -2042,8 +2042,12 @@ void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
          "add x0, sp, #0x20\n\t"
          "bl \"#RtlCaptureContext\"\n\t"
          "add x1, sp, #0x20\n\t"       /* context pointer */
+         "add x0, x1, #0x4d0\n\t"      /* orig stack pointer */
+         "str x0, [x1, #0x98]\n\t"     /* context->Rsp */
          "ldr x0, [sp, #0x10]\n\t"     /* rec */
-         "ldr x2, [x1, #0xf8]\n\t"     /* context->Rip */
+         "str x0, [x1, #0x80]\n\t"     /* context->Rcx */
+         "ldr x2, [sp, #0x08]\n\t"     /* return address */
+         "str x2, [x1, #0xf8]\n\t"     /* context->Rip */
          "str x2, [x0, #0x10]\n\t"     /* rec->ExceptionAddress */
          "ldr w2, [x1, #0x30]\n\t"     /* context->ContextFlags */
          "orr w2, w2, #0x20000000\n\t" /* CONTEXT_UNWOUND_TO_CALL */
