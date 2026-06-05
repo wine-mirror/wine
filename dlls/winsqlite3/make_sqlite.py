@@ -23,6 +23,9 @@ REPLACE_STRINGS = [
     #compiler warnings, unique cases which are harder to fix up in general code
     ("(sqlite3_uint64)pFile->h", "(sqlite3_uint64)(ULONG_PTR)pFile->h"),
     ("((int(*)(void *))(ap[0]))==xBusyHandler", "((int(SQLITE_APICALL *)(void *))(ap[0]))==xBusyHandler"),
+    #missing extern when debug code is disabled
+    ("SQLITE_API int sqlite3_fts3_may_be_corrupt = 1;",
+     "#endif\nSQLITE_API int sqlite3_fts3_may_be_corrupt = 1;\n#if 0"),
 ]
 
 EXPORTS = [
@@ -438,7 +441,7 @@ out.write("/* Fixed up with dlls/winsqlite/make_sqlite.py */\n")
 args = [];
 args += ['-target', 'x86_64-pc-windows-gnu'];
 args += ['-Iinclude/msvcrt', '-Iinclude'];
-args += ["-DSQLITE_ENABLE_RTREE=1", "-DSQLITE_ENABLE_FTS4=1", "-DSQLITE_ENABLE_COLUMN_METADATA=1", "-DSQLITE_DEBUG=1", "-DSQLITE_SYSTEM_MALLOC=1", "-DSQLITE_OMIT_LOCALTIME=1" ];
+args += ["-DSQLITE_ENABLE_RTREE=1", "-DSQLITE_ENABLE_FTS4=1", "-DSQLITE_ENABLE_COLUMN_METADATA=1", "-DSQLITE_SYSTEM_MALLOC=1", "-DSQLITE_OMIT_LOCALTIME=1" ];
 args += ["-DSQLITE_ENABLE_MATH_FUNCTIONS", "-DSQLITE_ENABLE_PERCENTILE" ];
 
 index = Index.create()
