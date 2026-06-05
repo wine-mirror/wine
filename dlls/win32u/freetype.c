@@ -3149,6 +3149,14 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT 
         TEXTMETRICW *ptm = &base_font->otm.otmTextMetrics;
         INT top = min( metrics.horiBearingY, ptm->tmAscent << 6 );
         INT bottom = max( metrics.horiBearingY - metrics.height, -(ptm->tmDescent << 6) );
+
+        if (top < bottom)
+        {
+            INT t = top;
+            top = bottom;
+            bottom = t;
+        }
+
         metrics.horiBearingY = top;
         metrics.height = top - bottom;
 
