@@ -41,7 +41,7 @@ void * SYMCRYPT_CALL SymCryptCallbackAlloc( SIZE_T size )
 
 void SYMCRYPT_CALL SymCryptCallbackFree( void *ptr )
 {
-    free( ptr );
+    _aligned_free( ptr );
 }
 
 void SYMCRYPT_CALL SymCryptRsaSelftest( void )
