@@ -90,7 +90,7 @@ void * SYMCRYPT_CALL SymCryptCallbackAlloc( SIZE_T size )
 
 void SYMCRYPT_CALL SymCryptCallbackFree( void *ptr )
 {
-    free( ptr );
+    _aligned_free( ptr );
 }
 
 SYMCRYPT_ERROR SYMCRYPT_CALL SymCryptCallbackRandom( BYTE *buf, SIZE_T size )
