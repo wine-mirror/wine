@@ -30,14 +30,67 @@ import "windows.devices.geolocation.idl";
 import "windows.storage.streams.idl";
 
 namespace Windows.Storage.FileProperties {
+    typedef enum PhotoOrientation PhotoOrientation;
+    typedef enum VideoOrientation VideoOrientation;
+
     interface IBasicProperties;
+    interface IDocumentProperties;
+    interface IImageProperties;
+    interface IMusicProperties;
+    interface IStorageItemExtraProperties;
+    interface IStorageItemContentProperties;
+    interface IVideoProperties;
 
     runtimeclass BasicProperties;
+    runtimeclass DocumentProperties;
+    runtimeclass ImageProperties;
+    runtimeclass MusicProperties;
+    runtimeclass StorageItemContentProperties;
+    runtimeclass VideoProperties;
 
     declare {
+        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IMap<HSTRING, IInspectable *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.FileProperties.BasicProperties *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.FileProperties.DocumentProperties *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.FileProperties.ImageProperties *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.FileProperties.MusicProperties *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.FileProperties.VideoProperties *>;
+        interface Windows.Foundation.Collections.IIterable<HSTRING>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMap<HSTRING, IInspectable *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.BasicProperties *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.DocumentProperties *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.ImageProperties *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.MusicProperties *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.VideoProperties *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum PhotoOrientation
+    {
+        Unspecified    = 0,
+        Normal         = 1,
+        FlipHorizontal = 2,
+        Rotate180      = 3,
+        FlipVertical   = 4,
+        Transpose      = 5,
+        Rotate270      = 6,
+        Transverse     = 7,
+        Rotate90       = 8
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum VideoOrientation
+    {
+        Normal    = 0,
+        Rotate90  = 90,
+        Rotate180 = 180,
+        Rotate270 = 270
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -52,11 +105,201 @@ namespace Windows.Storage.FileProperties {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.FileProperties.DocumentProperties),
+        uuid(7eab19bc-1821-4923-b4a9-0aea404d0070)
+    ]
+    interface IDocumentProperties : IInspectable
+        requires Windows.Storage.FileProperties.IStorageItemExtraProperties
+    {
+        [propget] HRESULT Author([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Keywords([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Comment([out, retval] HSTRING *value);
+        [propput] HRESULT Comment([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.FileProperties.ImageProperties),
+        uuid(523c9424-fcff-4275-afee-ecdb9ab47973)
+    ]
+    interface IImageProperties : IInspectable
+        requires Windows.Storage.FileProperties.IStorageItemExtraProperties
+    {
+        [propget] HRESULT Rating([out, retval] UINT32 *value);
+        [propput] HRESULT Rating([in] UINT32 value);
+        [propget] HRESULT Keywords([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT DateTaken([out, retval] Windows.Foundation.DateTime *value);
+        [propput] HRESULT DateTaken([in] Windows.Foundation.DateTime value);
+        [propget] HRESULT Width([out, retval] UINT32 *value);
+        [propget] HRESULT Height([out, retval] UINT32 *value);
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Latitude([out, retval] Windows.Foundation.IReference<DOUBLE> **value);
+        [propget] HRESULT Longitude([out, retval] Windows.Foundation.IReference<DOUBLE> **value);
+        [propget] HRESULT CameraManufacturer([out, retval] HSTRING *value);
+        [propput] HRESULT CameraManufacturer([in] HSTRING value);
+        [propget] HRESULT CameraModel([out, retval] HSTRING *value);
+        [propput] HRESULT CameraModel([in] HSTRING value);
+        [propget] HRESULT Orientation([out, retval] Windows.Storage.FileProperties.PhotoOrientation *value);
+        [propget] HRESULT PeopleNames([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.FileProperties.MusicProperties),
+        uuid(bc8aab62-66ec-419a-bc5d-ca65a4cb46da)
+    ]
+    interface IMusicProperties : IInspectable
+        requires Windows.Storage.FileProperties.IStorageItemExtraProperties
+    {
+        [propget] HRESULT Album([out, retval] HSTRING *value);
+        [propput] HRESULT Album([in] HSTRING value);
+        [propget] HRESULT Artist([out, retval] HSTRING *value);
+        [propput] HRESULT Artist([in] HSTRING value);
+        [propget] HRESULT Genre([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT TrackNumber([out, retval] UINT32 *value);
+        [propput] HRESULT TrackNumber([in] UINT32 value);
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Rating([out, retval] UINT32 *value);
+        [propput] HRESULT Rating([in] UINT32 value);
+        [propget] HRESULT Duration([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT Bitrate([out, retval] UINT32 *value);
+        [propget] HRESULT AlbumArtist([out, retval] HSTRING *value);
+        [propput] HRESULT AlbumArtist([in] HSTRING value);
+        [propget] HRESULT Composers([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Conductors([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
+        [propput] HRESULT Subtitle([in] HSTRING value);
+        [propget] HRESULT Producers([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Publisher([out] [retval] HSTRING *value);
+        [propput] HRESULT Publisher([in] HSTRING value);
+        [propget] HRESULT Writers([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Year([out, retval] UINT32 *value);
+        [propput] HRESULT Year([in] UINT32 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(c54361b2-54cd-432b-bdbc-4b19c4b470d7)
+    ]
+    interface IStorageItemExtraProperties : IInspectable
+    {
+        HRESULT RetrievePropertiesAsync(
+            [in] Windows.Foundation.Collections.IIterable<HSTRING> *propertiesToRetrieve,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMap<HSTRING, IInspectable *> *> **operation);
+        [overload("SavePropertiesAsync")]
+        HRESULT SavePropertiesAsync(
+            [in] Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *> *propertiesToSave,
+            [out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("SavePropertiesAsync")]
+        HRESULT SavePropertiesAsyncOverloadDefault(
+            [out, retval] Windows.Foundation.IAsyncAction **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.FileProperties.StorageItemContentProperties),
+        uuid(05294bad-bc38-48bf-85d7-770e0e2ae0ba)
+    ]
+    interface IStorageItemContentProperties : IInspectable
+        requires Windows.Storage.FileProperties.IStorageItemExtraProperties
+    {
+        HRESULT GetMusicPropertiesAsync(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.MusicProperties *> **operation);
+        HRESULT GetVideoPropertiesAsync(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.VideoProperties *> **operation);
+        HRESULT GetImagePropertiesAsync(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.ImageProperties *> **operation);
+        HRESULT GetDocumentPropertiesAsync(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.DocumentProperties *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.FileProperties.VideoProperties),
+        uuid(719ae507-68de-4db8-97de-49998c059f2f)
+    ]
+    interface IVideoProperties : IInspectable
+        requires Windows.Storage.FileProperties.IStorageItemExtraProperties
+    {
+        [propget] HRESULT Rating([out, retval] UINT32 *value);
+        [propput] HRESULT Rating([in] UINT32 value);
+        [propget] HRESULT Keywords([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Width([out, retval] UINT32 *value);
+        [propget] HRESULT Height([out, retval] UINT32 *value);
+        [propget] HRESULT Duration([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT Latitude([out, retval] Windows.Foundation.IReference<DOUBLE> **value);
+        [propget] HRESULT Longitude([out, retval] Windows.Foundation.IReference<DOUBLE> **value);
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
+        [propput] HRESULT Subtitle([in] HSTRING value);
+        [propget] HRESULT Producers([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Publisher([out, retval] HSTRING *value);
+        [propput] HRESULT Publisher([in] HSTRING value);
+        [propget] HRESULT Writers([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Year([out, retval] UINT32 *value);
+        [propput] HRESULT Year([in] UINT32 value);
+        [propget] HRESULT Bitrate([out, retval] UINT32 *value);
+        [propget] HRESULT Directors([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT Orientation([out, retval] Windows.Storage.FileProperties.VideoOrientation *value);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
     ]
     runtimeclass BasicProperties
     {
         [default] interface Windows.Storage.FileProperties.IBasicProperties;
-        /* interface Windows.Storage.FileProperties.IStorageItemExtraProperties; */
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass DocumentProperties
+    {
+        [default] interface Windows.Storage.FileProperties.IDocumentProperties;
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass ImageProperties
+    {
+        [default] interface Windows.Storage.FileProperties.IImageProperties;
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass MusicProperties
+    {
+        [default] interface Windows.Storage.FileProperties.IMusicProperties;
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass StorageItemContentProperties
+    {
+        [default] interface Windows.Storage.FileProperties.IStorageItemContentProperties;
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass VideoProperties
+    {
+        [default] interface Windows.Storage.FileProperties.IVideoProperties;
+        interface Windows.Storage.FileProperties.IStorageItemExtraProperties;
     }
 }
