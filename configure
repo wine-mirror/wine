@@ -736,6 +736,8 @@ GSM_PE_LIBS
 GSM_PE_CFLAGS
 FLUIDSYNTH_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
+FFMPEG_PE_LIBS
+FFMPEG_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
 CXXABI_PE_LIBS
@@ -1676,6 +1678,7 @@ enable_dxerr8
 enable_dxerr9
 enable_dxguid
 enable_faudio
+enable_ffmpeg
 enable_fluidsynth
 enable_gsm
 enable_icucommon
@@ -1852,6 +1855,8 @@ CXXABI_PE_CFLAGS
 CXXABI_PE_LIBS
 FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS
+FFMPEG_PE_CFLAGS
+FFMPEG_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
 FLUIDSYNTH_PE_LIBS
 GSM_PE_CFLAGS
@@ -2671,6 +2676,11 @@ Some influential environment variables:
               version
   FAUDIO_PE_LIBS
               Linker flags for the PE faudio, overriding the bundled version
+  FFMPEG_PE_CFLAGS
+              C compiler flags for the PE ffmpeg, overriding the bundled
+              version
+  FFMPEG_PE_LIBS
+              Linker flags for the PE ffmpeg, overriding the bundled version
   FLUIDSYNTH_PE_CFLAGS
               C compiler flags for the PE fluidsynth, overriding the bundled
               version
@@ -14444,6 +14454,23 @@ fi
 printf '%s\n' "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_PE_CFLAGS" >&5
 printf '%s\n' "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_PE_LIBS" >&5
 
+if ${FFMPEG_PE_LIBS:+false} :
+then :
+  FFMPEG_PE_LIBS="ffmpeg bcrypt"
+   if ${FFMPEG_PE_CFLAGS:+false} :
+then :
+  FFMPEG_PE_CFLAGS="-I\$(top_srcdir)/libs/ffmpeg"
+else case e in #(
+  e) enable_ffmpeg=no ;;
+esac
+fi
+else case e in #(
+  e) enable_ffmpeg=no ;;
+esac
+fi
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: ffmpeg cflags: $FFMPEG_PE_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: ffmpeg libs: $FFMPEG_PE_LIBS" >&5
+
 if ${FLUIDSYNTH_PE_LIBS:+false} :
 then :
   FLUIDSYNTH_PE_LIBS="fluidsynth"
@@ -23784,6 +23811,7 @@ wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/faudio enable_faudio
+wine_fn_config_makefile libs/ffmpeg enable_ffmpeg
 wine_fn_config_makefile libs/fluidsynth enable_fluidsynth
 wine_fn_config_makefile libs/gsm enable_gsm
 wine_fn_config_makefile libs/icucommon enable_icucommon
@@ -24028,7 +24056,7 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 	mv dlls/wineandroid.drv/build/outputs/apk/debug/wine-debug.apk \$@"
 
 
-EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/icucommon libs/icui18n libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/sqlite3 libs/symcrypt libs/tiff libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
+EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/ffmpeg libs/fluidsynth libs/gsm libs/icucommon libs/icui18n libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/sqlite3 libs/symcrypt libs/tiff libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
@@ -24879,6 +24907,8 @@ CXXABI_PE_CFLAGS = $CXXABI_PE_CFLAGS
 CXXABI_PE_LIBS = $CXXABI_PE_LIBS
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
+FFMPEG_PE_CFLAGS = $FFMPEG_PE_CFLAGS
+FFMPEG_PE_LIBS = $FFMPEG_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS = $FLUIDSYNTH_PE_CFLAGS
 FLUIDSYNTH_PE_LIBS = $FLUIDSYNTH_PE_LIBS
 GSM_PE_CFLAGS = $GSM_PE_CFLAGS
