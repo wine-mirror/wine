@@ -3899,7 +3899,15 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
 	    /* *(pType+1) is offset to a SAFEARRAY, *(pType+2) is type of
 	       array */
 
-	    SAFEARRAY *pSA = (SAFEARRAY *)(pBlk + *(++pType));
+	    struct SLTG_SAFEARRAY
+	    {
+	        short cDims;
+	        short fFetures;
+	        int cbElements;
+	        int cLocks;
+	        int pvData;
+	        SAFEARRAYBOUND rgsabound[1];
+	    } *pSA = (struct SLTG_SAFEARRAY *)(pBlk + *(++pType));
 
 	    pTD->vt = VT_CARRAY;
 	    pTD->lpadesc = calloc(1, sizeof(ARRAYDESC) + (pSA->cDims - 1) * sizeof(SAFEARRAYBOUND));
