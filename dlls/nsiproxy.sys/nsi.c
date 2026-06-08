@@ -343,8 +343,6 @@ static NTSTATUS unix_nsi_get_notification( void *args )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    icmp_cancel_listen,
-    icmp_close,
     icmp_get_reply,
     icmp_send_echo,
     unix_nsi_enumerate_all_ex,

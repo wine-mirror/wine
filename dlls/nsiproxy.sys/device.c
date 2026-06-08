@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #include "ntstatus.h"
 #include "windef.h"
@@ -61,8 +62,6 @@ static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 
 enum unix_calls
 {
-    icmp_cancel_listen,
-    icmp_close,
     icmp_get_reply,
     icmp_send_echo,
     nsi_enumerate_all_ex,
@@ -184,35 +183,41 @@ static NTSTATUS nsiproxy_get_parameter( IRP *irp )
     return status;
 }
 
-static inline icmp_handle irp_get_icmp_handle( IRP *irp )
+struct icmp_data
 {
-    return PtrToUlong( irp->Tail.Overlay.DriverContext[0] );
+    icmp_handle handle;
+    HANDLE completion_event;
+    HANDLE wait_object;
+};
+
+static void free_icmp_data( struct icmp_data *data )
+{
+    UnregisterWait( data->wait_object );
+    CloseHandle( data->completion_event );
+    free( data );
 }
 
-static inline icmp_handle irp_set_icmp_handle( IRP *irp, icmp_handle handle )
+static struct icmp_data *irp_get_icmp_data( IRP *irp )
 {
-    return PtrToUlong( InterlockedExchangePointer( irp->Tail.Overlay.DriverContext,
-                                                   ULongToPtr( handle ) ) );
+    return irp->Tail.Overlay.DriverContext[0];
+}
+
+static struct icmp_data *irp_set_icmp_data( IRP *irp, struct icmp_data *data )
+{
+    return InterlockedExchangePointer( irp->Tail.Overlay.DriverContext, data );
 }
 
 DECLARE_CRITICAL_SECTION( icmp_echo_completion_cs );
 
 static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
 {
-    struct icmp_cancel_listen_params params;
+    struct icmp_data *data;
 
     TRACE( "device %p, irp %p.\n", device, irp );
 
     IoReleaseCancelSpinLock( irp->CancelIrql );
     EnterCriticalSection( &icmp_echo_completion_cs );
-
-    /* If the handle is not set, either the irp is still
-       in the request queue, in which case the request thread will
-       cancel it, or the irp has already finished.  If the handle
-       does exist then notify the listen thread.  In all cases the irp
-       will be completed elsewhere. */
-    params.handle = irp_get_icmp_handle( irp );
-    if (params.handle) nsiproxy_call( icmp_cancel_listen, &params );
+    if ((data = irp_get_icmp_data( irp ))) SetEvent( data->completion_event );
     LeaveCriticalSection( &icmp_echo_completion_cs );
 }
 
@@ -225,47 +230,55 @@ static int icmp_echo_reply_struct_len( ULONG family, ULONG bits )
     return 0;
 }
 
-static DWORD WINAPI icmp_wait_reply( void *arg )
+static void CALLBACK icmp_wait_complete( void *arg, BOOLEAN timed_out )
 {
     IRP *irp = arg;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
-    struct icmp_close_params close_params;
     struct icmp_get_reply_params params;
+    struct icmp_data *data;
     NTSTATUS status;
 
-    TRACE( "\n" );
+    TRACE( "irp %p, timed_out %d.\n", irp, timed_out );
 
+    EnterCriticalSection( &icmp_echo_completion_cs );
+    data = irp_set_icmp_data( irp, NULL );
+    assert( data );
     params.user_reply_ptr = in->user_reply_ptr;
-    params.handle = irp_get_icmp_handle( irp );
-    params.timeout = in->timeout;
+    params.handle = data->handle;
     params.bits = in->bits;
     params.reply = irp->AssociatedIrp.SystemBuffer;
     params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
 
     status = nsiproxy_call( icmp_get_reply, &params );
-    TRACE( "icmp_get_reply rets %08lx\n", status );
 
-    EnterCriticalSection( &icmp_echo_completion_cs );
-    close_params.handle = irp_set_icmp_handle( irp, 0 );
-    nsiproxy_call( icmp_close, &close_params );
-
-    irp->IoStatus.Status = status;
-    if (status == STATUS_SUCCESS)
-        irp->IoStatus.Information = params.reply_len;
+    irp->IoStatus.Information = 0;
+    if (irp->Cancel)
+    {
+        TRACE( "irp %p cancelled.\n", irp );
+        irp->IoStatus.Status = STATUS_CANCELLED;
+    }
     else
-        irp->IoStatus.Information = 0;
+    {
+        irp->IoStatus.Status = status;
+        if (status == STATUS_SUCCESS)
+            irp->IoStatus.Information = params.reply_len;
+    }
     LeaveCriticalSection( &icmp_echo_completion_cs );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return 0;
+    free_icmp_data( data );
 }
 
 static NTSTATUS handle_send_echo( IRP *irp )
 {
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
     struct icmp_send_echo_params params;
-    icmp_handle handle;
+    struct icmp_data *data;
     NTSTATUS status;
+
+    data = calloc( 1, sizeof(*data) );
+    data->completion_event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    irp_set_icmp_data( irp, data );
 
     TRACE( "\n" );
     params.request = in->data + ((in->opt_size + 3) & ~3);
@@ -277,7 +290,8 @@ static NTSTATUS handle_send_echo( IRP *irp )
     params.tos = in->tos;
     params.src = &in->src;
     params.dst = &in->dst;
-    params.handle = &handle;
+    params.completion_event = data->completion_event;
+    params.handle = &data->handle;
 
     status = nsiproxy_call( icmp_send_echo, &params );
     TRACE( "icmp_send_echo status %#lx\n", status );
@@ -287,17 +301,24 @@ static NTSTATUS handle_send_echo( IRP *irp )
         irp->IoStatus.Status = status;
         if (status == STATUS_SUCCESS)
             irp->IoStatus.Information = params.reply_len;
+        free_icmp_data( data );
         return status;
     }
     IoSetCancelRoutine( irp, icmp_echo_cancel );
     if (irp->Cancel && IoSetCancelRoutine( irp, NULL ))
     {
         /* IRP was canceled before we set cancel routine */
+        icmp_wait_complete( irp, FALSE );
         return STATUS_CANCELLED;
     }
     IoMarkIrpPending( irp );
-    irp_set_icmp_handle( irp, handle );
-    RtlQueueWorkItem( icmp_wait_reply, irp, WT_EXECUTELONGFUNCTION );
+    if (in->dst.si_family == AF_INET6 && !in->hop_limit)
+    {
+        /* This should fail at once but asynchronously. */
+        SetEvent( data->completion_event );
+    }
+    RegisterWaitForSingleObject( &data->wait_object, data->completion_event, icmp_wait_complete, irp, in->timeout,
+                                 WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD );
     return STATUS_PENDING;
 }
 
