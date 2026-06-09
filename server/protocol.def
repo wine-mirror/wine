@@ -1069,6 +1069,8 @@ typedef volatile struct
     unsigned int         dpi_context;      /* DPI awareness context */
     unsigned int         fnid;             /* builtin class FNID, or 0 */
     data_size_t          private_size;     /* length of private extra bytes range */
+    data_size_t          extra_size;       /* size of the extra info */
+    char                 extra[];          /* extra bytes storage */
 } window_shm_t;
 
 typedef volatile union
@@ -2632,7 +2634,6 @@ enum message_type
     user_handle_t  handle;      /* created window */
     user_handle_t  parent;      /* full handle of parent */
     user_handle_t  owner;       /* full handle of owner */
-    int            extra;       /* number of extra bytes */
     client_ptr_t   class_ptr;   /* pointer to class in client address space */
 @END
 
@@ -2690,6 +2691,7 @@ enum message_type
     int            offset;        /* offset of the info */
     data_size_t    size;          /* size of the info value to write */
     lparam_t       new_info;      /* new window info value */
+    unsigned int   internal;      /* set internal control info */
 @REPLY
     lparam_t       old_info;      /* previous window info value */
 @END

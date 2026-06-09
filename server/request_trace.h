@@ -1701,7 +1701,6 @@ static void dump_create_window_reply( const struct create_window_reply *req )
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", parent=%08x", req->parent );
     fprintf( stderr, ", owner=%08x", req->owner );
-    fprintf( stderr, ", extra=%d", req->extra );
     dump_uint64( ", class_ptr=", &req->class_ptr );
 }
 
@@ -1761,6 +1760,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, ", offset=%d", req->offset );
     fprintf( stderr, ", size=%u", req->size );
     dump_uint64( ", new_info=", &req->new_info );
+    fprintf( stderr, ", internal=%08x", req->internal );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
