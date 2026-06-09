@@ -74,7 +74,6 @@ struct window
     struct region   *update_region;   /* update region (relative to window rect) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
-    lparam_t         id;              /* window id */
     mod_handle_t     instance;        /* creator instance */
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
@@ -658,7 +657,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->update_region  = NULL;
     win->style          = 0;
     win->ex_style       = 0;
-    win->id             = 0;
     win->instance       = instance;
     win->is_unicode     = 1;
     win->is_linked      = 0;
@@ -686,6 +684,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->fnid            = fnid;
         shared->private_size    = private_size;
         shared->extra_size      = extra_size;
+        memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
     }
     SHARED_WRITE_END;
@@ -2407,7 +2406,6 @@ DECL_HANDLER(get_window_info)
     {
     case GWL_STYLE:       reply->info = win->style;  break;
     case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
-    case GWLP_ID:         reply->info = win->id;  break;
     case GWLP_HINSTANCE:  reply->info = win->instance;  break;
     case GWLP_WNDPROC:    reply->info = win->is_unicode;  break;
     case GWLP_USERDATA:   reply->info = win->user_data;  break;
@@ -2461,8 +2459,8 @@ DECL_HANDLER(set_window_info)
             set_window_ex_style( win, req->new_info );
             break;
         case GWLP_ID:
-            reply->old_info = win->id;
-            win->id = req->new_info;
+            reply->old_info = shared->info.id;
+            shared->info.id = req->new_info;
             break;
         case GWLP_HINSTANCE:
             reply->old_info = win->instance;

@@ -1117,15 +1117,21 @@ static LONG_PTR get_window_long_shm( HWND hwnd, UINT offset, UINT size, BOOL int
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const window_shm_t *window_shm = NULL;
-    BOOL valid = FALSE;
+    BOOL valid = TRUE;
     LONG_PTR ret = 0;
     NTSTATUS status;
 
     while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
     {
-        valid = size <= window_shm->extra_size && offset <= window_shm->extra_size - size &&
-                (internal || offset >= window_shm->private_size);
-        if (valid) memcpy( &ret, (char *)window_shm->extra + offset, size );
+        switch (offset)
+        {
+        case GWLP_ID:        ret = window_shm->info.id; break;
+        default:
+            valid = size <= window_shm->extra_size && offset <= window_shm->extra_size - size &&
+                    (internal || offset >= window_shm->private_size);
+            if (valid) memcpy( &ret, (char *)window_shm->extra + offset, size );
+            break;
+        }
     }
     if (status)
     {
@@ -1172,6 +1178,8 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     {
     default:
         if (offset < 0) break;
+        /* fallthrough */
+    case GWLP_ID:
         return get_window_long_shm( hwnd, offset, size, internal );
     case GWLP_HWNDPARENT:
     {
@@ -1199,7 +1207,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
             return retval;
         case GWL_EXSTYLE:
         case GWLP_USERDATA:
-        case GWLP_ID:
         case GWLP_HINSTANCE:
             return 0;
         case GWLP_WNDPROC:
@@ -1235,7 +1242,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     case GWLP_USERDATA:  retval = win->userdata; break;
     case GWL_STYLE:      retval = win->dwStyle; break;
     case GWL_EXSTYLE:    retval = win->dwExStyle; break;
-    case GWLP_ID:        retval = win->wIDmenu; break;
     case GWLP_HINSTANCE: retval = (ULONG_PTR)win->hInstance; break;
     case GWLP_WNDPROC:
         /* This looks like a hack only for the edit control (see tests). This makes these controls
@@ -1266,6 +1272,11 @@ DWORD get_window_long( HWND hwnd, INT offset )
 ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi )
 {
     return get_window_long_size( hwnd, offset, sizeof(LONG_PTR), ansi, FALSE );
+}
+
+static HMENU get_window_menu( HWND hwnd )
+{
+    return (HMENU)get_window_long_ptr( hwnd, GWLP_ID, FALSE );
 }
 
 /* see GetWindowWord */
@@ -1500,10 +1511,6 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
             break;
         case GWL_EXSTYLE:
             win->dwExStyle = newval;
-            retval = oldval;
-            break;
-        case GWLP_ID:
-            win->wIDmenu = newval;
             retval = oldval;
             break;
         case GWLP_HINSTANCE:
@@ -5295,7 +5302,7 @@ LRESULT destroy_window( HWND hwnd )
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) return 0;
     if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-        menu = (HMENU)win->wIDmenu;
+        menu = get_window_menu( hwnd );
     sys_menu = win->hSysMenu;
     free_dce( win->dce, hwnd, &drawables );
     win->dce = NULL;
@@ -5447,7 +5454,7 @@ void destroy_thread_windows(void)
         /* recycle the WND struct as a destroy_entry struct */
         entry = (struct destroy_entry *)win;
         tmp.handle = win->handle;
-        if (!is_child) tmp.menu = (HMENU)win->wIDmenu;
+        if (!is_child) tmp.menu = get_window_menu( handle );
         tmp.sys_menu = win->hSysMenu;
         tmp.current_drawable = win->current_drawable;
         tmp.unused_drawable = win->unused_drawable;
@@ -5744,7 +5751,6 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     win->text        = NULL;
     win->dwStyle     = style;
     win->dwExStyle   = ex_style;
-    win->wIDmenu     = 0;
     win->helpContext = 0;
     win->pScroll     = NULL;
     win->userdata    = 0;

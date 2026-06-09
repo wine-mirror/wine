@@ -1063,6 +1063,11 @@ typedef volatile struct
     char                 extra[];            /* extra bytes storage */
 } class_shm_t;
 
+struct window_info
+{
+    lparam_t             id;               /* window id */
+};
+
 typedef volatile struct
 {
     struct obj_locator   class;            /* object locator for the window class shared object */
@@ -1070,6 +1075,7 @@ typedef volatile struct
     unsigned int         fnid;             /* builtin class FNID, or 0 */
     data_size_t          private_size;     /* length of private extra bytes range */
     data_size_t          extra_size;       /* size of the extra info */
+    struct window_info   info;             /* window info (GWLP_*) */
     char                 extra[];          /* extra bytes storage */
 } window_shm_t;
 

@@ -1047,6 +1047,11 @@ typedef volatile struct
     char                 extra[];
 } class_shm_t;
 
+struct window_info
+{
+    lparam_t             id;
+};
+
 typedef volatile struct
 {
     struct obj_locator   class;
@@ -1054,6 +1059,7 @@ typedef volatile struct
     unsigned int         fnid;
     data_size_t          private_size;
     data_size_t          extra_size;
+    struct window_info   info;
     char                 extra[];
 } window_shm_t;
 
@@ -7135,6 +7141,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 945
+#define SERVER_PROTOCOL_VERSION 946
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
