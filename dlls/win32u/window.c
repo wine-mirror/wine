@@ -308,6 +308,7 @@ void detach_client_surfaces( HWND hwnd )
         client_surface_add_ref( surface );
 
         surface->funcs->detach( surface );
+        surface->toplevel = NULL;
         surface->hwnd = NULL;
     }
 
@@ -320,6 +321,13 @@ void detach_client_surfaces( HWND hwnd )
     }
 }
 
+static void client_surface_update_locked( struct client_surface *surface )
+{
+    surface->toplevel = NtUserGetAncestor( surface->hwnd, GA_ROOT );
+    surface->funcs->update( surface );
+    InterlockedExchange( &surface->updated, 1 );
+}
+
 void update_client_surfaces( HWND hwnd )
 {
     struct client_surface *surface, *next;
@@ -329,8 +337,7 @@ void update_client_surfaces( HWND hwnd )
     LIST_FOR_EACH_ENTRY_SAFE( surface, next, &client_surfaces, struct client_surface, entry )
     {
         if (NtUserGetAncestor( surface->hwnd, GA_ROOT ) != hwnd) continue;
-        surface->funcs->update( surface );
-        InterlockedExchange( &surface->updated, 1 );
+        client_surface_update_locked( surface );
     }
 
     pthread_mutex_unlock( &surfaces_lock );
@@ -338,12 +345,14 @@ void update_client_surfaces( HWND hwnd )
 
 void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd )
 {
+    HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     struct client_surface *surface;
 
     if (!(surface = calloc( 1, size ))) return NULL;
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
+    surface->toplevel = toplevel;
     list_init( &surface->entry );
 
     TRACE( "created %s\n", debugstr_client_surface( surface ) );
@@ -394,7 +403,7 @@ void client_surface_present( struct client_surface *surface )
 void client_surface_update( struct client_surface *surface )
 {
     pthread_mutex_lock( &surfaces_lock );
-    if (surface->hwnd) surface->funcs->update( surface );
+    if (surface->hwnd) client_surface_update_locked( surface );
     pthread_mutex_unlock( &surfaces_lock );
 }
 
@@ -404,7 +413,7 @@ void add_window_client_surface( HWND hwnd, struct client_surface *surface )
 
     surface->hwnd = hwnd;
     list_add_tail( &client_surfaces, &surface->entry );
-    surface->funcs->update( surface );
+    client_surface_update_locked( surface );
 
     pthread_mutex_unlock( &surfaces_lock );
 }

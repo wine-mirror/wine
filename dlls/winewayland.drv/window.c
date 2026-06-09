@@ -807,7 +807,7 @@ void WAYLAND_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags)
 
 void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
 {
-    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    HWND toplevel = new_client->client.toplevel;
     struct wayland_client_surface *old_client;
     struct wayland_win_data *data;
 

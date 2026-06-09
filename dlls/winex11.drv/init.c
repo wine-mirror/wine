@@ -297,7 +297,7 @@ static void x11drv_client_surface_detach( struct client_surface *client )
 static void client_surface_update_geometry( HWND hwnd, struct x11drv_client_surface *surface )
 {
     UINT dpi = NtUserGetDpiForWindow( hwnd ); /* use window DPI here, DPI scaling is handled through offscreen presentation */
-    HWND origin = hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    HWND origin = hwnd, toplevel = surface->client.toplevel;
     XWindowChanges changes = surface->changes;
     struct x11drv_win_data *data;
     int mask = 0;
@@ -400,7 +400,7 @@ static void x11drv_client_surface_update( struct client_surface *client )
 static void X11DRV_client_surface_present( struct client_surface *client, HDC hdc )
 {
     struct x11drv_client_surface *surface = impl_from_client_surface( client );
-    HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    HWND hwnd = client->hwnd, toplevel = client->toplevel;
     struct x11drv_win_data *data;
     RECT rect_dst, rect;
     Drawable window;

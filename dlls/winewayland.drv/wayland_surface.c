@@ -1181,8 +1181,10 @@ static void wayland_client_surface_detach(struct client_surface *client)
 static void wayland_client_surface_update(struct client_surface *client)
 {
     struct wayland_client_surface *surface = impl_from_client_surface(client);
-    HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    HWND hwnd = client->hwnd, toplevel = client->toplevel;
     struct wayland_win_data *data;
+
+    TRACE("%s\n", debugstr_client_surface(client));
 
     if (!(data = wayland_win_data_get(hwnd))) return;
 
@@ -1197,7 +1199,7 @@ static void wayland_client_surface_update(struct client_surface *client)
 static void wayland_client_surface_present(struct client_surface *client, HDC hdc)
 {
     struct wayland_client_surface *surface = impl_from_client_surface(client);
-    HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    HWND hwnd = client->hwnd, toplevel = client->toplevel;
     struct wayland_surface *wayland_surface;
     struct wayland_win_data *data;
 

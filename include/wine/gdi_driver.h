@@ -265,6 +265,7 @@ struct client_surface
     LONG                               ref;            /* reference count */
     HWND                               hwnd;           /* window the surface was created for */
     LONG                               updated;        /* has been moved / resized / reparented */
+    HWND                               toplevel;       /* toplevel window of the surface */
     LONG                               offscreen;      /* client window is offscreen */
 };
 
