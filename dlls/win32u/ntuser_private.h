@@ -72,7 +72,6 @@ typedef struct tagWND
     int                swap_interval; /* OpenGL surface swap interval */
     int                pixel_format;  /* Pixel format set by the graphics driver */
     int                clip_clients;  /* Has client surfaces that needs to be clipped out */
-    DWORD_PTR          userdata;      /* User private data */
 } WND;
 
 /* WND flags values */

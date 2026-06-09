@@ -83,7 +83,6 @@ struct window
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
     unsigned int     monitor_dpi;     /* DPI of the window monitor */
-    lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     data_size_t      text_len;        /* length of window caption */
     unsigned int     paint_flags;     /* various painting flags */
@@ -662,7 +661,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_orphan      = 0;
     win->set_foreground = 0;
     win->monitor_dpi    = USER_DEFAULT_SCREEN_DPI;
-    win->user_data      = 0;
     win->text           = NULL;
     win->text_len       = 0;
     win->paint_flags    = 0;
@@ -2406,7 +2404,6 @@ DECL_HANDLER(get_window_info)
     case GWL_STYLE:       reply->info = win->style;  break;
     case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
     case GWLP_WNDPROC:    reply->info = win->is_unicode;  break;
-    case GWLP_USERDATA:   reply->info = win->user_data;  break;
     default:
         if (req->size) set_win32_error( ERROR_INVALID_INDEX );
         break;
@@ -2469,8 +2466,9 @@ DECL_HANDLER(set_window_info)
             win->is_unicode = req->new_info;
             break;
         case GWLP_USERDATA:
-            reply->old_info = win->user_data;
-            win->user_data = req->new_info;
+            reply->old_info = shared->info.user_data;
+            if (req->size > sizeof(WORD)) shared->info.user_data = req->new_info;
+            else shared->info.user_data = MAKELONG(req->new_info, shared->info.user_data >> 16);
             break;
         default:
             if (req->size > sizeof(req->new_info) || req->offset < 0 ||

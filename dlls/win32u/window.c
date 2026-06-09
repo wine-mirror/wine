@@ -1127,6 +1127,7 @@ static LONG_PTR get_window_long_shm( HWND hwnd, UINT offset, UINT size, BOOL int
         {
         case GWLP_ID:        ret = window_shm->info.id; break;
         case GWLP_HINSTANCE: ret = window_shm->info.instance; break;
+        case GWLP_USERDATA:  memcpy( &ret, (void *)&window_shm->info.user_data, size ); break;
         default:
             valid = size <= window_shm->extra_size && offset <= window_shm->extra_size - size &&
                     (internal || offset >= window_shm->private_size);
@@ -1182,6 +1183,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         /* fallthrough */
     case GWLP_ID:
     case GWLP_HINSTANCE:
+    case GWLP_USERDATA:
         return get_window_long_shm( hwnd, offset, size, internal );
     case GWLP_HWNDPARENT:
     {
@@ -1208,7 +1210,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
                 retval |= WS_VISIBLE;
             return retval;
         case GWL_EXSTYLE:
-        case GWLP_USERDATA:
             return 0;
         case GWLP_WNDPROC:
             RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
@@ -1240,7 +1241,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
 
     switch(offset)
     {
-    case GWLP_USERDATA:  retval = win->userdata; break;
     case GWL_STYLE:      retval = win->dwStyle; break;
     case GWL_EXSTYLE:    retval = win->dwExStyle; break;
     case GWLP_WNDPROC:
@@ -1498,7 +1498,6 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
     }
 
     if (offset == GWLP_WNDPROC) newval = !!(win->flags & WIN_ISUNICODE);
-    if (offset == GWLP_USERDATA && size == sizeof(WORD)) newval = MAKELONG( newval, win->userdata >> 16 );
 
     if ((ok = server_set_window_info( hwnd, offset, newval, size, &oldval, internal )))
     {
@@ -1514,10 +1513,6 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
             retval = oldval;
             break;
         case GWLP_WNDPROC:
-            break;
-        case GWLP_USERDATA:
-            win->userdata = newval;
-            retval = oldval;
             break;
         default:
             retval = oldval;
@@ -5748,7 +5743,6 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     win->dwExStyle   = ex_style;
     win->helpContext = 0;
     win->pScroll     = NULL;
-    win->userdata    = 0;
     win->hIcon       = 0;
     win->hIconSmall  = 0;
     win->hIconSmall2 = 0;
