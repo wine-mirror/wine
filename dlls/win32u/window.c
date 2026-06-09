@@ -1113,23 +1113,33 @@ static HWND get_last_active_popup( HWND hwnd )
     return retval;
 }
 
-static BOOL get_window_extra( HWND hwnd, UINT offset, UINT size, LONG_PTR *ret, BOOL internal )
+static LONG_PTR get_window_long_shm( HWND hwnd, UINT offset, UINT size, BOOL internal )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const window_shm_t *window_shm = NULL;
     BOOL valid = FALSE;
-    UINT status;
+    LONG_PTR ret = 0;
+    NTSTATUS status;
 
     while ((status = get_shared_window( hwnd, &lock, &window_shm )) == STATUS_PENDING)
     {
         valid = size <= window_shm->extra_size && offset <= window_shm->extra_size - size &&
                 (internal || offset >= window_shm->private_size);
-        if (valid) memcpy( ret, (char *)window_shm->extra + offset, size );
+        if (valid) memcpy( &ret, (char *)window_shm->extra + offset, size );
+    }
+    if (status)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (!valid)
+    {
+        WARN( "Invalid window %p offset %d size %u\n", hwnd, offset, size );
+        RtlSetLastWin32Error( ERROR_INVALID_INDEX );
+        return 0;
     }
 
-    if (status) RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
-    else if (!valid) RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-    return valid;
+    return ret;
 }
 
 BOOL is_iconic( HWND hwnd )
@@ -1162,8 +1172,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     {
     default:
         if (offset < 0) break;
-        if (!get_window_extra( hwnd, offset, size, &retval, internal )) return 0;
-        return retval;
+        return get_window_long_shm( hwnd, offset, size, internal );
     case GWLP_HWNDPARENT:
     {
         HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
