@@ -3,7 +3,6 @@ EXTRAINCL = $(ICUCOMMON_PE_CFLAGS)
 EXTRADEFS = -DU_DISABLE_RENAMING=1 -DU_STATIC_IMPLEMENTATION -DU_I18N_IMPLEMENTATION -DU_ATTRIBUTE_DEPRECATED=
 
 SOURCES = \
-	alphaindex.cpp \
 	anytrans.cpp \
 	astro.cpp \
 	basictz.cpp \
@@ -48,7 +47,6 @@ SOURCES = \
 	csrucode.cpp \
 	csrutf8.cpp \
 	curramt.cpp \
-	currfmt.cpp \
 	currpinf.cpp \
 	currunit.cpp \
 	dangical.cpp \
@@ -75,7 +73,6 @@ SOURCES = \
 	esctrn.cpp \
 	ethpccal.cpp \
 	fmtable.cpp \
-	fmtable_cnv.cpp \
 	format.cpp \
 	formatted_string_builder.cpp \
 	formattedval_iterimpl.cpp \
@@ -93,7 +90,6 @@ SOURCES = \
 	islamcal.cpp \
 	japancal.cpp \
 	listformatter.cpp \
-	measfmt.cpp \
 	measunit.cpp \
 	measunit_extra.cpp \
 	measure.cpp \
@@ -169,9 +165,7 @@ SOURCES = \
 	remtrans.cpp \
 	repattrn.cpp \
 	rulebasedcollator.cpp \
-	scientificnumberformatter.cpp \
 	scriptset.cpp \
-	search.cpp \
 	selfmt.cpp \
 	sharedbreakiterator.cpp \
 	simpletz.cpp \
@@ -182,13 +176,9 @@ SOURCES = \
 	string_segment.cpp \
 	strmatch.cpp \
 	strrepl.cpp \
-	stsearch.cpp \
 	taiwncal.cpp \
 	timezone.cpp \
 	titletrn.cpp \
-	tmunit.cpp \
-	tmutamt.cpp \
-	tmutfmt.cpp \
 	tolowtrn.cpp \
 	toupptrn.cpp \
 	translit.cpp \
@@ -236,11 +226,7 @@ SOURCES = \
 	utf8collationiterator.cpp \
 	utmscale.cpp \
 	utrans.cpp \
-	vtzone.cpp \
-	vzone.cpp \
 	windtfmt.cpp \
 	winnmfmt.cpp \
 	wintzimpl.cpp \
-	zonemeta.cpp \
-	zrule.cpp \
-	ztrans.cpp
+	zonemeta.cpp
