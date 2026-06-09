@@ -408,9 +408,6 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
 
     TRACE( "%s\n", debugstr_client_surface( client ) );
 
-    client_surface_update_geometry( hwnd, surface );
-    client_surface_update_offscreen( hwnd, surface );
-
     if (!hdc) return;
     window = X11DRV_get_whole_window( toplevel );
 

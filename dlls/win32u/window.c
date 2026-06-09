@@ -393,6 +393,7 @@ void client_surface_present( struct client_surface *surface )
     pthread_mutex_lock( &surfaces_lock );
     if ((hwnd = surface->hwnd))
     {
+        client_surface_update_locked( surface );
         if (surface->offscreen) hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
         surface->funcs->present( surface, hdc );
         if (hdc) NtUserReleaseDC( hwnd, hdc );
