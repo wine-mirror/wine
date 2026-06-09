@@ -452,11 +452,13 @@ static void test_window_extra_data_proc(char *arg)
     SetLastError(0xdeadbeef);
     v = SetWindowLongA(hwnd, 0, 1);
     ok(!v, "v = %ld\n", v);
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef || broken(GetLastError() == ERROR_INVALID_INDEX) /* <= Win1607 */,
+       "GetLastError() = %ld\n", GetLastError());
 
     v = SetWindowLongA(hwnd, 0, 1);
     ok(!v, "v = %ld\n", v);
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef || broken(GetLastError() == ERROR_INVALID_INDEX) /* <= Win1607 */,
+       "GetLastError() = %ld\n", GetLastError());
 
     PostMessageA(hwnd, WM_QUIT, 0, 0);
 }
