@@ -416,20 +416,23 @@ static BOOL set_surface_shape( struct window_surface *surface, const RECT *rect,
     char shape_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *shape_info = (BITMAPINFO *)shape_buf;
     COLORREF color_key = surface->color_key;
-    void *shape_bits, *old_shape;
+    void *shape_bits, *old_shape = NULL;
     RECT *shape_rect, tmp_rect;
     WINEREGION *data;
-    BOOL ret;
+    BOOL ret, is_new;
 
     width = color_info->bmiHeader.biWidth;
     height = abs( color_info->bmiHeader.biHeight );
     assert( !(width & 7) ); /* expect 1bpp bitmap to be aligned on bytes */
 
-    if (!surface->shape_bitmap) surface->shape_bitmap = NtGdiCreateBitmap( width, height, 1, 1, NULL );
+    if ((is_new = !surface->shape_bitmap)) surface->shape_bitmap = NtGdiCreateBitmap( width, height, 1, 1, NULL );
     if (!(shape_bits = window_surface_get_shape( surface, shape_info ))) return FALSE;
 
-    old_shape = malloc( shape_info->bmiHeader.biSizeImage );
-    memcpy( old_shape, shape_bits, shape_info->bmiHeader.biSizeImage );
+    if (!is_new)
+    {
+        old_shape = malloc( shape_info->bmiHeader.biSizeImage );
+        memcpy( old_shape, shape_bits, shape_info->bmiHeader.biSizeImage );
+    }
 
     color_stride = color_info->bmiHeader.biSizeImage / height;
     shape_stride = shape_info->bmiHeader.biSizeImage / abs( shape_info->bmiHeader.biHeight );
@@ -499,7 +502,7 @@ static BOOL set_surface_shape( struct window_surface *surface, const RECT *rect,
     }
     }
 
-    ret = memcmp( old_shape, shape_bits, shape_info->bmiHeader.biSizeImage );
+    ret = is_new || memcmp( old_shape, shape_bits, shape_info->bmiHeader.biSizeImage );
     free( old_shape );
     return ret;
 }
