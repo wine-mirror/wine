@@ -488,6 +488,22 @@ static const char *get_base_name( const char *name )
 
 
 /*******************************************************************
+ *         skip_initial_dir
+ */
+static const char *skip_initial_dir( const char *name, const char *dir )
+{
+    unsigned int len = strlen( dir );
+
+    if (!strncmp( name, dir, len ) && (!name[len] || name[len] == '/'))
+    {
+        while (name[len] == '/') len++;
+        return name + len;
+    }
+    return NULL;
+}
+
+
+/*******************************************************************
  *         replace_filename
  */
 static char *replace_filename( const char *path, const char *name )
@@ -553,6 +569,7 @@ static char *concat_paths( const char *base, const char *path )
 {
     int i, len;
     char *ret;
+    const char *p;
 
     if (!base || !base[0]) return xstrdup( path && path[0] ? path : "." );
     if (!path || !path[0]) return xstrdup( base );
@@ -560,15 +577,11 @@ static char *concat_paths( const char *base, const char *path )
 
     len = strlen( base );
     while (len && base[len - 1] == '/') len--;
-    while (len && !strncmp( path, "..", 2 ) && (!path[2] || path[2] == '/'))
+    while (len && (p = skip_initial_dir( path, ".." )))
     {
         for (i = len; i > 0; i--) if (base[i - 1] == '/') break;
         if (i == len - 2 && !memcmp( base + i, "..", 2 )) break;  /* we can't go up if we already have ".." */
-        if (i != len - 1 || base[i] != '.')
-        {
-            path += 2;
-            while (*path == '/') path++;
-        }
+        if (i != len - 1 || base[i] != '.') path = p;
         /* else ignore "." element */
         while (i > 0 && base[i - 1] == '/') i--;
         len = i;
@@ -1538,10 +1551,11 @@ static struct makefile *find_importlib_module( const char *name )
 
     for (i = 0; i < subdirs.count; i++)
     {
-        if (strncmp( submakes[i]->obj_dir, "dlls/", 5 )) continue;
-        len = strlen(submakes[i]->obj_dir);
-        if (strncmp( submakes[i]->obj_dir + 5, name, len - 5 )) continue;
-        if (!name[len - 5] || !strcmp( name + len - 5, ".dll" )) return submakes[i];
+        const char *dir = skip_initial_dir( submakes[i]->obj_dir, "dlls" );
+        if (!dir) continue;
+        len = strlen(dir);
+        if (strncmp( dir, name, len )) continue;
+        if (!name[len] || !strcmp( name + len, ".dll" )) return submakes[i];
     }
     return NULL;
 }
@@ -1553,7 +1567,6 @@ static struct makefile *find_importlib_module( const char *name )
 static struct file *open_include_file( const struct makefile *make, struct incl_file *source )
 {
     struct file *file = NULL;
-    unsigned int len;
 
     errno = ENOENT;
 
@@ -1611,12 +1624,8 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     {
         if (root_src_dir)
         {
-            len = strlen( root_src_dir );
-            if (!strncmp( dir, root_src_dir, len ) && (!dir[len] || dir[len] == '/'))
-            {
-                while (dir[len] == '/') len++;
-                file = open_global_file( concat_paths( dir + len, source->name ), &source->filename );
-            }
+            const char *relpath = skip_initial_dir( dir, root_src_dir );
+            if (relpath) file = open_global_file( concat_paths( relpath, source->name ), &source->filename );
         }
         else
         {
@@ -4841,12 +4850,8 @@ static void load_sources( struct makefile *make )
     {
         if (!strncmp( arg, "-I", 2 ))
         {
-            const char *dir = arg + 2;
-            if (!strncmp( dir, "./", 2 ))
-            {
-                dir += 2;
-                while (*dir == '/') dir++;
-            }
+            const char *dir = skip_initial_dir( arg + 2, "." );
+            if (!dir) dir = arg + 2;
             strarray_add_uniq( &make->include_paths, dir );
         }
         else if (!strncmp( arg, "-D", 2 ) || !strncmp( arg, "-U", 2 ))
