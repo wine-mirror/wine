@@ -10,15 +10,12 @@ SOURCES = \
 	bytestream.cpp \
 	bytestrie.cpp \
 	bytestriebuilder.cpp \
-	bytestrieiterator.cpp \
 	caniter.cpp \
 	characterproperties.cpp \
 	chariter.cpp \
 	charstr.cpp \
 	cmemory.cpp \
-	cstr.cpp \
 	cstring.cpp \
-	cwchar.cpp \
 	dictbe.cpp \
 	dictionarydata.cpp \
 	dtintrv.cpp \
@@ -28,7 +25,6 @@ SOURCES = \
 	filteredbrk.cpp \
 	filterednormalizer2.cpp \
 	icudataver.cpp \
-	icuplug.cpp \
 	loadednormalizer2impl.cpp \
 	localebuilder.cpp \
 	localematcher.cpp \
@@ -49,10 +45,8 @@ SOURCES = \
 	messagepattern.cpp \
 	normalizer2.cpp \
 	normalizer2impl.cpp \
-	normlzr.cpp \
 	parsepos.cpp \
 	patternprops.cpp \
-	pluralmap.cpp \
 	propname.cpp \
 	propsvec.cpp \
 	punycode.cpp \
@@ -67,9 +61,7 @@ SOURCES = \
 	rbbistbl.cpp \
 	rbbitblb.cpp \
 	resbund.cpp \
-	resbund_cnv.cpp \
 	resource.cpp \
-	restrace.cpp \
 	ruleiter.cpp \
 	schriter.cpp \
 	serv.cpp \
@@ -134,7 +126,6 @@ SOURCES = \
 	uenum.cpp \
 	uhash.cpp \
 	uhash_us.cpp \
-	uidna.cpp \
 	uinit.cpp \
 	uinvchar.cpp \
 	uiter.cpp \
@@ -160,7 +151,6 @@ SOURCES = \
 	unistr_cnv.cpp \
 	unistr_props.cpp \
 	unistr_titlecase_brkiter.cpp \
-	unorm.cpp \
 	unormcmp.cpp \
 	uobject.cpp \
 	uprefs.cpp \
@@ -168,7 +158,6 @@ SOURCES = \
 	ures_cnv.cpp \
 	uresbund.cpp \
 	uresdata.cpp \
-	usc_impl.cpp \
 	uscript.cpp \
 	uscript_props.cpp \
 	uset.cpp \
