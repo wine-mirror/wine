@@ -5,7 +5,6 @@ EXTRADEFS = -DHAVE_VA_COPY
 SOURCES = \
 	HTMLparser.c \
 	HTMLtree.c \
-	SAX.c \
 	SAX2.c \
 	buf.c \
 	catalog.c \
