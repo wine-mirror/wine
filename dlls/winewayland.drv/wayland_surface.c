@@ -690,9 +690,10 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
                                                const RECT *client_rect)
 {
     struct wayland_window_config *window = &surface->window;
-    RECT rect = *client_rect;
+    RECT rect = client->rect;
 
     /* The offset of the client area origin relatively to the window origin. */
+    if (client_rect) rect = *client_rect;
     OffsetRect(&rect, window->client_rect.left - window->rect.left,
                window->client_rect.top - window->rect.top);
     rect = map_rect_to_surface(surface, rect);
@@ -709,6 +710,8 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
         wp_viewport_set_destination(client->wp_viewport, rect.right - rect.left, rect.bottom - rect.top);
     else /* We can't have a 0x0 destination, use 1x1 instead. */
         wp_viewport_set_destination(client->wp_viewport, 1, 1);
+
+    client->rect = *client_rect;
 }
 
 /**********************************************************************
@@ -1173,7 +1176,7 @@ static void wayland_client_surface_detach(struct client_surface *client)
     if ((data = wayland_win_data_get(client->hwnd)))
     {
         if (data->client_surface == surface) data->client_surface = NULL;
-        wayland_client_surface_attach(surface, NULL);
+        wayland_client_surface_attach(surface, NULL, NULL);
         wayland_win_data_release(data);
     }
 }
@@ -1189,9 +1192,9 @@ static void wayland_client_surface_update(struct client_surface *client)
     if (!(data = wayland_win_data_get(hwnd))) return;
 
     if (toplevel && NtUserIsWindowVisible(hwnd))
-        wayland_client_surface_attach(surface, toplevel);
+        wayland_client_surface_attach(surface, toplevel, &client->monitor_rect);
     else
-        wayland_client_surface_attach(surface, NULL);
+        wayland_client_surface_attach(surface, NULL, NULL);
 
     wayland_win_data_release(data);
 }
@@ -1280,12 +1283,10 @@ err:
     return NULL;
 }
 
-void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel)
+void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel, const RECT *rect)
 {
     struct wayland_win_data *toplevel_data;
     struct wayland_surface *surface;
-    HWND hwnd = client->client.hwnd;
-    RECT client_rect;
 
     if (!toplevel)
     {
@@ -1302,12 +1303,12 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, HWND t
     if (!(toplevel_data = wayland_win_data_get(toplevel)) || !(surface = toplevel_data->wayland_surface))
     {
         if (toplevel_data) wayland_win_data_release(toplevel_data);
-        return wayland_client_surface_attach(client, NULL);
+        return wayland_client_surface_attach(client, NULL, NULL);
     }
 
     if (client->toplevel != toplevel)
     {
-        wayland_client_surface_attach(client, NULL);
+        wayland_client_surface_attach(client, NULL, NULL);
 
         client->wl_subsurface =
             wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
@@ -1321,10 +1322,7 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, HWND t
         client->toplevel = toplevel;
     }
 
-    NtUserGetClientRect(hwnd, &client_rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
-    NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&client_rect, 2, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
-
-    wayland_surface_reconfigure_client(surface, client, &client_rect);
+    wayland_surface_reconfigure_client(surface, client, rect);
     /* Commit to apply subsurface positioning. */
     wl_surface_commit(surface->wl_surface);
 

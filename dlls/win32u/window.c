@@ -321,9 +321,34 @@ void detach_client_surfaces( HWND hwnd )
     }
 }
 
+static RECT get_client_surface_rects( HWND toplevel, HWND hwnd, RECT *monitor_rect )
+{
+    UINT dpi = get_dpi_for_window( hwnd ), raw_dpi;
+    struct window_rects rects, monitor_rects;
+    RECT rect = {0};
+
+    if (!toplevel) toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    get_window_rects( toplevel, COORDS_PARENT, &rects, dpi );
+    monitor_rects = map_window_rects_virt_to_raw( rects, dpi );
+
+    if (get_present_rect( hwnd, &rect, dpi )) OffsetRect( &rect, -rects.client.left, -rects.client.top );
+    else if (get_client_rect( hwnd, &rect, dpi )) map_window_points( hwnd, toplevel, (POINT *)&rect, 2, dpi );
+
+    get_win_monitor_dpi( hwnd, &raw_dpi );
+    *monitor_rect = map_dpi_rect( rect, dpi, raw_dpi );
+    OffsetRect( monitor_rect, monitor_rects.client.left - monitor_rects.visible.left,
+                monitor_rects.client.top - monitor_rects.visible.top );
+
+    return rect;
+}
+
 static void client_surface_update_locked( struct client_surface *surface )
 {
     surface->toplevel = NtUserGetAncestor( surface->hwnd, GA_ROOT );
+    surface->virtual_rect = get_client_surface_rects( surface->toplevel, surface->hwnd, &surface->monitor_rect );
+
+    TRACE( "updating %s, toplevel %p, virtual_rect %s, monitor_rect %s\n", debugstr_client_surface( surface ), surface->toplevel,
+           wine_dbgstr_rect( &surface->virtual_rect ), wine_dbgstr_rect( &surface->monitor_rect ) );
     surface->funcs->update( surface );
     InterlockedExchange( &surface->updated, 1 );
 }
@@ -353,9 +378,11 @@ void *client_surface_create( UINT size, const struct client_surface_funcs *funcs
     surface->ref = 1;
     surface->hwnd = hwnd;
     surface->toplevel = toplevel;
+    surface->virtual_rect = get_client_surface_rects( toplevel, hwnd, &surface->monitor_rect );
     list_init( &surface->entry );
 
-    TRACE( "created %s\n", debugstr_client_surface( surface ) );
+    TRACE( "created %s, toplevel %p, virtual_rect %s, monitor_rect %s\n", debugstr_client_surface( surface ), toplevel,
+           wine_dbgstr_rect( &surface->virtual_rect ), wine_dbgstr_rect( &surface->monitor_rect ) );
     return surface;
 }
 

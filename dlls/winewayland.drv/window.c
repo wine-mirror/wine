@@ -808,6 +808,7 @@ void WAYLAND_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags)
 void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
 {
     HWND toplevel = new_client->client.toplevel;
+    RECT rect = new_client->client.monitor_rect;
     struct wayland_client_surface *old_client;
     struct wayland_win_data *data;
 
@@ -819,14 +820,14 @@ void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
     if (new_client != data->client_surface)
     {
         if ((old_client = data->client_surface))
-            wayland_client_surface_attach(old_client, NULL);
+            wayland_client_surface_attach(old_client, NULL, NULL);
 
         if ((data->client_surface = new_client))
         {
             if (toplevel && NtUserIsWindowVisible(hwnd))
-                wayland_client_surface_attach(new_client, toplevel);
+                wayland_client_surface_attach(new_client, toplevel, &rect);
             else
-                wayland_client_surface_attach(new_client, NULL);
+                wayland_client_surface_attach(new_client, NULL, NULL);
         }
     }
 

@@ -267,6 +267,8 @@ struct client_surface
     LONG                               updated;        /* has been moved / resized / reparented */
     HWND                               toplevel;       /* toplevel window of the surface */
     LONG                               offscreen;      /* client window is offscreen */
+    RECT                               virtual_rect;   /* virtual size and position in the toplevel ancestor */
+    RECT                               monitor_rect;   /* raw physical size and position in the toplevel ancestor */
 };
 
 W32KAPI void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd );

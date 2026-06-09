@@ -371,7 +371,6 @@ struct x11drv_client_surface
     XWindowChanges changes;
     Colormap colormap;
     Window window;
-    RECT rect;
 
     HDC hdc_src;
     HDC hdc_dst;

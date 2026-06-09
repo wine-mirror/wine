@@ -1105,16 +1105,11 @@ static void macdrv_client_surface_update(struct client_surface *client)
     struct macdrv_client_surface *surface = impl_from_client_surface(client);
     HWND hwnd = client->hwnd, toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct macdrv_win_data *data;
-    RECT rect;
 
     TRACE("%s\n", debugstr_client_surface(client));
 
-    NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
-    NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
-
     if (!(data = get_win_data(toplevel))) return;
-    OffsetRect(&rect, data->rects.client.left - data->rects.visible.left, data->rects.client.top - data->rects.visible.top);
-    macdrv_set_view_frame(surface->cocoa_view, cgrect_from_rect(rect));
+    macdrv_set_view_frame(surface->cocoa_view, cgrect_from_rect(client->monitor_rect));
     macdrv_set_view_superview(surface->cocoa_view, toplevel == hwnd ? NULL : data->client_view, data->cocoa_window, NULL, NULL);
     release_win_data(data);
 }
@@ -1152,15 +1147,10 @@ struct macdrv_client_surface *impl_from_client_surface(struct client_surface *cl
 
 struct client_surface *macdrv_CreateClientSurface(HWND hwnd, int pixel_format)
 {
-    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct macdrv_client_surface *surface;
-    RECT rect;
-
-    NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
-    NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
 
     surface = client_surface_create(sizeof(*surface), &macdrv_client_surface_funcs, hwnd);
-    surface->cocoa_view = macdrv_create_view(cgrect_from_rect(rect));
+    surface->cocoa_view = macdrv_create_view(cgrect_from_rect(surface->client.monitor_rect));
     macdrv_set_view_hidden(surface->cocoa_view, TRUE);
 
     if (surface)
