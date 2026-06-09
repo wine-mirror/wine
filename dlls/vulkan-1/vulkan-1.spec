@@ -4,7 +4,6 @@
 # by the following copyright and permission notice:
 #
 # Copyright 2015-2026 The Khronos Group Inc.
-#
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
 # and from Vulkan video.xml file covered

@@ -4,7 +4,6 @@
  * by the following copyright and permission notice:
  *
  * Copyright 2015-2026 The Khronos Group Inc.
- *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
@@ -50,6 +49,8 @@ enum unix_call
     unix_vkCmdBeginConditionalRenderingEXT,
     unix_vkCmdBeginCustomResolveEXT,
     unix_vkCmdBeginDebugUtilsLabelEXT,
+    unix_vkCmdBeginGpaSampleAMD,
+    unix_vkCmdBeginGpaSessionAMD,
     unix_vkCmdBeginPerTileExecutionQCOM,
     unix_vkCmdBeginQuery,
     unix_vkCmdBeginQueryIndexedEXT,
@@ -109,6 +110,7 @@ enum unix_call
     unix_vkCmdCopyBufferToImage,
     unix_vkCmdCopyBufferToImage2,
     unix_vkCmdCopyBufferToImage2KHR,
+    unix_vkCmdCopyGpaSessionResultsAMD,
     unix_vkCmdCopyImage,
     unix_vkCmdCopyImage2,
     unix_vkCmdCopyImage2KHR,
@@ -176,6 +178,8 @@ enum unix_call
     unix_vkCmdEncodeVideoKHR,
     unix_vkCmdEndConditionalRenderingEXT,
     unix_vkCmdEndDebugUtilsLabelEXT,
+    unix_vkCmdEndGpaSampleAMD,
+    unix_vkCmdEndGpaSessionAMD,
     unix_vkCmdEndPerTileExecutionQCOM,
     unix_vkCmdEndQuery,
     unix_vkCmdEndQueryIndexedEXT,
@@ -388,6 +392,7 @@ enum unix_call
     unix_vkCreateEvent,
     unix_vkCreateFence,
     unix_vkCreateFramebuffer,
+    unix_vkCreateGpaSessionAMD,
     unix_vkCreateGraphicsPipelines,
     unix_vkCreateImage,
     unix_vkCreateImageView,
@@ -445,6 +450,7 @@ enum unix_call
     unix_vkDestroyEvent,
     unix_vkDestroyFence,
     unix_vkDestroyFramebuffer,
+    unix_vkDestroyGpaSessionAMD,
     unix_vkDestroyImage,
     unix_vkDestroyImageView,
     unix_vkDestroyIndirectCommandsLayoutEXT,
@@ -554,6 +560,9 @@ enum unix_call
     unix_vkGetFramebufferTilePropertiesQCOM,
     unix_vkGetGeneratedCommandsMemoryRequirementsEXT,
     unix_vkGetGeneratedCommandsMemoryRequirementsNV,
+    unix_vkGetGpaDeviceClockInfoAMD,
+    unix_vkGetGpaSessionResultsAMD,
+    unix_vkGetGpaSessionStatusAMD,
     unix_vkGetImageMemoryRequirements,
     unix_vkGetImageMemoryRequirements2,
     unix_vkGetImageMemoryRequirements2KHR,
@@ -707,12 +716,14 @@ enum unix_call
     unix_vkResetDescriptorPool,
     unix_vkResetEvent,
     unix_vkResetFences,
+    unix_vkResetGpaSessionAMD,
     unix_vkResetQueryPool,
     unix_vkResetQueryPoolEXT,
     unix_vkSetDebugUtilsObjectNameEXT,
     unix_vkSetDebugUtilsObjectTagEXT,
     unix_vkSetDeviceMemoryPriorityEXT,
     unix_vkSetEvent,
+    unix_vkSetGpaDeviceClockModeAMD,
     unix_vkSetHdrMetadataEXT,
     unix_vkSetLatencyMarkerNV,
     unix_vkSetLatencySleepModeNV,
@@ -961,6 +972,22 @@ struct vkCmdBeginDebugUtilsLabelEXT_params
 {
     VkCommandBuffer commandBuffer;
     const VkDebugUtilsLabelEXT *pLabelInfo;
+};
+
+struct vkCmdBeginGpaSampleAMD_params
+{
+    VkCommandBuffer commandBuffer;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    const VkGpaSampleBeginInfoAMD *pGpaSampleBeginInfo;
+    uint32_t *pSampleID;
+    VkResult result;
+};
+
+struct vkCmdBeginGpaSessionAMD_params
+{
+    VkCommandBuffer commandBuffer;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    VkResult result;
 };
 
 struct vkCmdBeginPerTileExecutionQCOM_params
@@ -1414,6 +1441,12 @@ struct vkCmdCopyBufferToImage2KHR_params
 {
     VkCommandBuffer commandBuffer;
     const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo;
+};
+
+struct vkCmdCopyGpaSessionResultsAMD_params
+{
+    VkCommandBuffer commandBuffer;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
 };
 
 struct vkCmdCopyImage_params
@@ -1944,6 +1977,20 @@ struct vkCmdEndConditionalRenderingEXT_params
 struct vkCmdEndDebugUtilsLabelEXT_params
 {
     VkCommandBuffer commandBuffer;
+};
+
+struct vkCmdEndGpaSampleAMD_params
+{
+    VkCommandBuffer commandBuffer;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    uint32_t sampleID;
+};
+
+struct vkCmdEndGpaSessionAMD_params
+{
+    VkCommandBuffer commandBuffer;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    VkResult result;
 };
 
 struct vkCmdEndPerTileExecutionQCOM_params
@@ -3494,6 +3541,15 @@ struct vkCreateFramebuffer_params
     VkResult result;
 };
 
+struct vkCreateGpaSessionAMD_params
+{
+    VkDevice device;
+    const VkGpaSessionCreateInfoAMD *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkGpaSessionAMD *pGpaSession;
+    VkResult result;
+};
+
 struct vkCreateGraphicsPipelines_params
 {
     VkDevice device;
@@ -3969,6 +4025,13 @@ struct vkDestroyFramebuffer_params
 {
     VkDevice device;
     VkFramebuffer DECLSPEC_ALIGN(8) framebuffer;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyGpaSessionAMD_params
+{
+    VkDevice device;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -4787,6 +4850,30 @@ struct vkGetGeneratedCommandsMemoryRequirementsNV_params
     VkDevice device;
     const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo;
     VkMemoryRequirements2 *pMemoryRequirements;
+};
+
+struct vkGetGpaDeviceClockInfoAMD_params
+{
+    VkDevice device;
+    VkGpaDeviceGetClockInfoAMD *pInfo;
+    VkResult result;
+};
+
+struct vkGetGpaSessionResultsAMD_params
+{
+    VkDevice device;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    uint32_t sampleID;
+    size_t *pSizeInBytes;
+    void *pData;
+    VkResult result;
+};
+
+struct vkGetGpaSessionStatusAMD_params
+{
+    VkDevice device;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    VkResult result;
 };
 
 struct vkGetImageMemoryRequirements_params
@@ -6003,6 +6090,13 @@ struct vkResetFences_params
     VkResult result;
 };
 
+struct vkResetGpaSessionAMD_params
+{
+    VkDevice device;
+    VkGpaSessionAMD DECLSPEC_ALIGN(8) gpaSession;
+    VkResult result;
+};
+
 struct vkResetQueryPool_params
 {
     VkDevice device;
@@ -6044,6 +6138,13 @@ struct vkSetEvent_params
 {
     VkDevice device;
     VkEvent DECLSPEC_ALIGN(8) event;
+    VkResult result;
+};
+
+struct vkSetGpaDeviceClockModeAMD_params
+{
+    VkDevice device;
+    VkGpaDeviceClockModeInfoAMD *pInfo;
     VkResult result;
 };
 
