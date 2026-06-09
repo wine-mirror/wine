@@ -28,7 +28,6 @@ SOURCES = \
 	src/sfloader/fluid_sffile.c \
 	src/sfloader/fluid_sfont.c \
 	src/synth/fluid_chan.c \
-	src/synth/fluid_event.c \
 	src/synth/fluid_gen.c \
 	src/synth/fluid_mod.c \
 	src/synth/fluid_synth.c \
