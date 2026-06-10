@@ -1966,6 +1966,7 @@ static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs
         regs[regidx++] = (struct smbios_wine_id_reg_value_arm64){ 0x4000, value };
     }
 
+#ifdef HWCAP_CPUID
     if (!(getauxval(AT_HWCAP) & HWCAP_CPUID))
     {
         WARN( "Skipping ID register population as kernel is missing emulation support.\n" );
@@ -1998,6 +1999,9 @@ static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs
     READ_ID_REG( 0x5801 ); /* CTR_EL0 */
     /* Windows exposes SCTLR_EL1, ACTLR_EL1, TTBR0_EL1 and MAIR_EL1, but these are inaccessible under
      * linux so leave them unpopulated. */
+#else
+    WARN( "Skipping ID register population as HWCAP_CPUID isn't supported.\n" );
+#endif
 
 #undef READ_ID_REG
 #undef STR
