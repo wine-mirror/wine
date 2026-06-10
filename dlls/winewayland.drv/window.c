@@ -818,6 +818,22 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT 
     return ret;
 }
 
+/***********************************************************************
+ *          WAYLAND_UpdateLayeredWindow
+ */
+void WAYLAND_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags)
+{
+    struct wayland_win_data *data;
+    struct wayland_surface *surface;
+
+    if (!(data = wayland_win_data_get(hwnd))) return;
+
+    if ((surface = data->wayland_surface))
+        wayland_surface_set_opacity(surface, alpha, flags);
+
+    wayland_win_data_release(data);
+}
+
 void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
