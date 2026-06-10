@@ -1,7 +1,8 @@
 MODULE    = winegstreamer.dll
 UNIXLIB   = winegstreamer.so
 IMPORTLIB = winegstreamer
-IMPORTS   = strmbase ole32 oleaut32 msdmo user32
+IMPORTS   = $(FFMPEG_PE_LIBS) bcrypt strmbase ole32 oleaut32 msdmo user32
+EXTRAINCL = $(FFMPEG_PE_CFLAGS)
 DELAYIMPORTS = mfplat mf
 UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
 UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)

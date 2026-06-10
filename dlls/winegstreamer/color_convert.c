@@ -15,18 +15,247 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "windef.h"
+#include "winbase.h"
+
 #include "gst_private.h"
 
+#include "dmort.h"
+#include "mediaerr.h"
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfobjects.h"
 #include "mftransform.h"
 #include "wmcodecdsp.h"
 
+#include <libavutil/avutil.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
+#include <libswscale/swscale.h>
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
+
+static const AVRational USER_TIME_BASE_Q = {1, 10000000};
+
+static const char *debugstr_avtime(INT64 time, AVRational time_base)
+{
+    time = av_rescale_q_rnd(time, time_base, USER_TIME_BASE_Q, AV_ROUND_PASS_MINMAX);
+    if (time == AV_NOPTS_VALUE)
+        return "(none)";
+    return wine_dbg_sprintf("%I64d", time);
+}
+
+static const char *debugstr_avframe(AVFrame *frame)
+{
+    return wine_dbg_sprintf("fmt %s %dx%d stride %d", av_get_pix_fmt_name(frame->format),
+            frame->width, frame->height, frame->linesize[0]);
+}
+
+static enum AVPixelFormat pixel_format_from_video_subtype(const GUID *subtype)
+{
+    switch (subtype->Data1)
+    {
+    /* MEDIASUBTYPE_AYUV */   case MAKEFOURCC('A','Y','U','V'): return AV_PIX_FMT_AYUV;
+    /* MEDIASUBTYPE_I420 */   case MAKEFOURCC('I','4','2','0'): return AV_PIX_FMT_YUV420P;
+    /* MEDIASUBTYPE_IYUV */   case MAKEFOURCC('I','Y','U','V'): return AV_PIX_FMT_YUV420P;
+    /* MEDIASUBTYPE_NV11 */   case MAKEFOURCC('N','V','1','1'): return AV_PIX_FMT_YUV411P;
+    /* MEDIASUBTYPE_NV12 */   case MAKEFOURCC('N','V','1','2'): return AV_PIX_FMT_NV12;
+    /* MEDIASUBTYPE_UYVY */   case MAKEFOURCC('U','Y','V','Y'): return AV_PIX_FMT_UYVY422;
+    /* MEDIASUBTYPE_V216 */   case MAKEFOURCC('V','2','1','6'): break;
+    /* MEDIASUBTYPE_V410 */   case MAKEFOURCC('V','4','1','0'): break;
+    /* MEDIASUBTYPE_Y41P */   case MAKEFOURCC('Y','4','1','P'): break;
+    /* MEDIASUBTYPE_Y41T */   case MAKEFOURCC('Y','4','1','T'): break;
+    /* MEDIASUBTYPE_Y42T */   case MAKEFOURCC('Y','4','2','T'): break;
+    /* MEDIASUBTYPE_YUY2 */   case MAKEFOURCC('Y','U','Y','2'): return AV_PIX_FMT_YUYV422;
+    /* MEDIASUBTYPE_YV12 */   case MAKEFOURCC('Y','V','1','2'): return AV_PIX_FMT_YUV420P;
+    /* MEDIASUBTYPE_YVU9 */   case MAKEFOURCC('Y','V','U','9'): break;
+    /* MEDIASUBTYPE_YVYU */   case MAKEFOURCC('Y','V','Y','U'): return AV_PIX_FMT_YVYU422;
+    /* MEDIASUBTYPE_RGB24 */  case 0xe436eb7d:                  return AV_PIX_FMT_BGR24;
+    /* MEDIASUBTYPE_RGB32 */  case 0xe436eb7e:                  return AV_PIX_FMT_BGR0;
+    /* MEDIASUBTYPE_RGB555 */ case 0xe436eb7c:                  return AV_PIX_FMT_RGB555;
+    /* MEDIASUBTYPE_RGB565 */ case 0xe436eb7b:                  return AV_PIX_FMT_RGB565;
+    /* MEDIASUBTYPE_RGB8 */   case 0xe436eb7a:                  return AV_PIX_FMT_RGB8;
+    }
+
+    FIXME("Unsupported subtype %s (%s)\n", debugstr_guid(subtype), debugstr_fourcc(subtype->Data1));
+    return AV_PIX_FMT_NONE;
+}
+
+static void video_frame_init_aperture(AVFrame *frame, const MFVIDEOFORMAT *format)
+{
+    /* unlike the video processor, color converter doesn't really support aperture */
+    frame->width = format->videoInfo.dwWidth;
+    frame->height = format->videoInfo.dwHeight;
+}
+
+static void media_buffer_release(void *opaque, uint8_t *data)
+{
+    IMediaBuffer *media_buffer = opaque;
+    IMF2DBuffer2 *buffer2;
+
+    if (SUCCEEDED(IMediaBuffer_QueryInterface(media_buffer, &IID_IMF2DBuffer2, (void **)&buffer2)))
+    {
+        IMF2DBuffer2_Unlock2D(buffer2);
+        IMF2DBuffer2_Release(buffer2);
+    }
+    IMediaBuffer_Release(media_buffer);
+}
+
+static AVBufferRef *buffer_from_media_buffer(IMediaBuffer *media_buffer, int flags, LONG *pitch)
+{
+    BYTE *data, *scanline0;
+    IMF2DBuffer2 *buffer2;
+    AVBufferRef *buffer;
+    HRESULT hr;
+    DWORD size;
+
+    if (SUCCEEDED(hr = IMediaBuffer_QueryInterface(media_buffer, &IID_IMF2DBuffer2, (void **)&buffer2)))
+    {
+        MF2DBuffer_LockFlags lock_flags = (flags & AV_BUFFER_FLAG_READONLY) ? MF2DBuffer_LockFlags_Read
+                : MF2DBuffer_LockFlags_Write;
+        hr = IMF2DBuffer2_Lock2DSize(buffer2, lock_flags, &scanline0, pitch, &data, &size);
+        IMF2DBuffer2_Release(buffer2);
+    }
+    if (FAILED(hr))
+    {
+        if (FAILED(hr = IMediaBuffer_GetBufferAndLength(media_buffer, &data, &size)))
+            return NULL;
+        if (!flags && FAILED(hr = IMediaBuffer_GetMaxLength(media_buffer, &size)))
+            return NULL;
+        *pitch = 0;
+    }
+
+    if (!(buffer = av_buffer_create(data, size, media_buffer_release, media_buffer, flags)))
+        return NULL;
+    IMediaBuffer_AddRef(media_buffer);
+    return buffer;
+}
+
+static void video_frame_init_from_format(AVFrame *frame, const MFVIDEOFORMAT *format)
+{
+    frame->format = pixel_format_from_video_subtype(&format->guidFormat);
+    frame->width = format->videoInfo.dwWidth;
+    frame->height = format->videoInfo.dwHeight;
+    frame->color_range = AVCOL_RANGE_UNSPECIFIED;
+    frame->color_primaries = AVCOL_PRI_UNSPECIFIED;
+    frame->color_trc = AVCOL_TRC_UNSPECIFIED;
+    frame->colorspace = AVCOL_SPC_UNSPECIFIED;
+    frame->chroma_location = AVCHROMA_LOC_UNSPECIFIED;
+}
+
+static int fill_arrays_with_format(uint8_t *planes[4], int strides[4], AVBufferRef *buffer,
+        const MFVIDEOFORMAT *format, LONG pitch)
+{
+    enum AVPixelFormat pix_fmt = pixel_format_from_video_subtype(&format->guidFormat);
+    UINT width = format->videoInfo.dwWidth, height = format->videoInfo.dwHeight;
+    int size;
+
+    size = av_image_fill_arrays(planes, strides, buffer->data, pix_fmt, width, height, 1);
+    TRACE("buffer %p / %#Ix size %d pitch %ld, planes %p,%p,%p strides %d,%d,%d\n", buffer->data, buffer->size,
+            size, pitch, planes[0], planes[1], planes[2], strides[0], strides[1], strides[2]);
+    if (size > buffer->size)
+    {
+        ERR("stride %lu linesize %u,%u,%u,%u size %#x buffer %#Ix\n", pitch, strides[0], strides[1],
+                strides[2], strides[3], size, buffer->size);
+        return -1;
+    }
+
+    if (pitch && abs(pitch) != strides[0])
+    {
+        int new_strides[4] = {0};
+        for (int i = 0; i < 4; i++) new_strides[i] = (abs(pitch) * strides[i]) / strides[0];
+        for (int i = 1; i < 4 && planes[i]; i++)
+        {
+            size_t height = (planes[i] - planes[i - 1]) / strides[i - 1];
+            planes[i] = planes[i - 1] + height * new_strides[i - 1];
+        }
+        memcpy(strides, new_strides, sizeof(new_strides));
+    }
+
+    /* unlike the video processor, color converter doesn't care about 2D buffer pitch */
+    if (format->videoInfo.VideoFlags & MFVideoFlag_BottomUpLinearRep)
+    {
+        planes[0] = planes[0] + strides[0] * (height - 1);
+        strides[0] = -strides[0];
+    }
+
+    TRACE("buffer %p / %#Ix size %d stride %ld, planes %p,%p,%p strides %d,%d,%d\n", buffer->data, buffer->size,
+            size, pitch, planes[0], planes[1], planes[2], strides[0], strides[1], strides[2]);
+    return size;
+}
+
+static BOOL check_arrays_alignment(uint8_t *planes[4], int strides[4], int size, int align)
+{
+    if (size % align)
+        return FALSE;
+    for (int i = 0; i < 4; i++)
+        if ((UINT_PTR)planes[i] % align)
+            return FALSE;
+    for (int i = 0; i < 4; i++)
+        if (strides[i] % align)
+            return FALSE;
+    return TRUE;
+}
+
+static BOOL video_frame_wrap_buffer(AVFrame *frame, const MFVIDEOFORMAT *format, AVBufferRef *buffer, LONG pitch)
+{
+    int size;
+
+    TRACE("frame %p, info %p, buffer %p\n", frame, format, buffer);
+
+    video_frame_init_from_format(frame, format);
+    video_frame_init_aperture(frame, format);
+
+    if ((size = fill_arrays_with_format(frame->data, frame->linesize, buffer, format, pitch)) < 0)
+        return size;
+    /* swscale requires 16byte alignment for data pointers when SSE2 optimizations are used. */
+    if (!check_arrays_alignment(frame->data, frame->linesize, size, 16))
+    {
+        ERR("frame %s isn't aligned to 16 bytes\n", debugstr_avframe(frame));
+        return -1;
+    }
+
+    frame->opaque = (void *)-1;
+    frame->buf[0] = av_buffer_ref(buffer);
+    frame->extended_data = frame->data;
+    return size;
+}
+
+static int video_frame_copy_from_buffer(AVFrame *frame, const MFVIDEOFORMAT *format, AVBufferRef *buffer,
+        LONG pitch)
+{
+    int size, input_strides[4];
+    UINT8 *input_planes[4];
+
+    ERR("frame %s, format %p, buffer %p\n", debugstr_avframe(frame), format, buffer);
+
+    size = fill_arrays_with_format(input_planes, input_strides, buffer, format, pitch);
+    av_image_copy(frame->data, frame->linesize, (const UINT8 **)input_planes, input_strides,
+            frame->format, format->videoInfo.dwWidth, format->videoInfo.dwHeight);
+    return size;
+}
+
+static int video_frame_copy_to_buffer(AVFrame *frame, const MFVIDEOFORMAT *format, AVBufferRef *buffer,
+        LONG pitch)
+{
+    int size, output_strides[4];
+    UINT8 *output_planes[4];
+
+    ERR("frame %s, format %p, buffer %p\n", debugstr_avframe(frame), format, buffer);
+
+    size = fill_arrays_with_format(output_planes, output_strides, buffer, format, pitch);
+    av_image_copy(output_planes, output_strides, (const UINT8 **)frame->data, frame->linesize,
+            frame->format, format->videoInfo.dwWidth, format->videoInfo.dwHeight);
+    return size;
+}
 
 static const GUID *const input_types[] =
 {
@@ -82,13 +311,254 @@ struct color_convert
     LONG refcount;
 
     IMFMediaType *input_type;
+    DMO_MEDIA_TYPE input_mt;
+    MFVIDEOFORMAT input_format;
     MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *output_type;
+    DMO_MEDIA_TYPE output_mt;
+    MFVIDEOFORMAT output_format;
     MFT_OUTPUT_STREAM_INFO output_info;
 
     wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
+
+    SwsContext *context;
+    AVFrame input_frame;
+    AVFrame output_frame;
+    AVFrame current_frame;
 };
+
+static HRESULT color_convert_process_frame(struct color_convert *impl, AVFrame *input_frame,
+        DMO_OUTPUT_DATA_BUFFER *output)
+{
+    AVFrame output_frame = {0};
+    AVBufferRef *buffer;
+    IMFSample *sample;
+    int size, ret;
+    HRESULT hr;
+    LONG pitch;
+
+    if (!(buffer = buffer_from_media_buffer(output->pBuffer, 0, &pitch)))
+        return E_OUTOFMEMORY;
+    if ((size = video_frame_wrap_buffer(&output_frame, &impl->output_format, buffer, pitch)) < 0)
+        av_frame_move_ref(&output_frame, &impl->output_frame);
+
+    TRACE("input %s output %s\n", debugstr_avframe(input_frame), debugstr_avframe(&output_frame));
+
+    if ((ret = sws_scale_frame(impl->context, &output_frame, input_frame)) < 0)
+        ERR("error ret %d (%s)\n", -ret, av_err2str(ret));
+    else if ((ret = size) < 0)
+        ret = video_frame_copy_to_buffer(&output_frame, &impl->output_format, buffer, pitch);
+
+    av_buffer_unref(&buffer);
+
+    if (!output_frame.opaque)
+        av_frame_move_ref(&impl->output_frame, &output_frame);
+    else
+        av_frame_unref(&output_frame);
+
+    output->dwStatus = 0;
+    IMediaBuffer_SetLength(output->pBuffer, ret >= 0 ? ret : 0);
+    if (ret < 0)
+        return E_FAIL;
+    if (!ret)
+        return S_FALSE;
+
+    if (input_frame->flags & AV_FRAME_FLAG_KEY)
+        output->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT;
+    output->rtTimestamp = input_frame->pts;
+    if (output->rtTimestamp != INT64_MIN)
+        output->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIME;
+    output->rtTimelength = input_frame->duration;
+    if (output->rtTimelength != INT64_MIN)
+        output->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+
+    if (SUCCEEDED(hr = IMediaBuffer_QueryInterface(output->pBuffer, &IID_IMFSample, (void **)&sample)))
+    {
+        if (output->rtTimestamp != INT64_MIN)
+            IMFSample_SetSampleTime(sample, output->rtTimestamp);
+        if (output->rtTimelength != INT64_MIN)
+            IMFSample_SetSampleDuration(sample, output->rtTimelength);
+        if (output->dwStatus & DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT)
+            IMFSample_SetUINT32(sample, &MFSampleExtension_CleanPoint, 1);
+        IMFSample_Release(sample);
+    }
+
+    TRACE("returning output size %#x, pts %s, duration %s status %#lx\n", ret,
+            debugstr_avtime(output->rtTimestamp, USER_TIME_BASE_Q),
+            debugstr_avtime(output->rtTimelength, USER_TIME_BASE_Q), output->dwStatus);
+    return S_OK;
+}
+
+static HRESULT color_convert_process_input(struct color_convert *impl, const DMO_OUTPUT_DATA_BUFFER *input)
+{
+    LONGLONG pts = input->rtTimestamp, duration = input->rtTimelength;
+    AVBufferRef *buffer;
+    IMFSample *sample;
+    HRESULT hr;
+    LONG pitch;
+    int ret;
+
+    if (!impl->context)
+        return DMO_E_TYPE_NOT_SET;
+    if (impl->current_frame.width)
+        return DMO_E_NOTACCEPTING;
+
+    if (!(buffer = buffer_from_media_buffer(input->pBuffer, AV_BUFFER_FLAG_READONLY, &pitch)))
+        return E_OUTOFMEMORY;
+    if ((ret = video_frame_wrap_buffer(&impl->current_frame, &impl->input_format, buffer, pitch)) < 0)
+    {
+        ret = video_frame_copy_from_buffer(&impl->input_frame, &impl->input_format, buffer, pitch);
+        av_frame_move_ref(&impl->current_frame, &impl->input_frame);
+    }
+    av_buffer_unref(&buffer);
+
+    if (SUCCEEDED(hr = IMediaBuffer_QueryInterface(input->pBuffer, &IID_IMFSample, (void **)&sample)))
+    {
+        if (FAILED(IMFSample_GetSampleTime(sample, &pts)))
+            pts = INT64_MIN;
+        if (FAILED(IMFSample_GetSampleDuration(sample, &duration)))
+            duration = INT64_MIN;
+        IMFSample_Release(sample);
+    }
+
+    impl->current_frame.pts = pts;
+    impl->current_frame.duration = duration;
+    TRACE("input frame size %ux%u, time %s, duration %s\n", impl->current_frame.width,
+            impl->current_frame.height, debugstr_avtime(impl->current_frame.pts, USER_TIME_BASE_Q),
+            debugstr_avtime(impl->current_frame.duration, USER_TIME_BASE_Q));
+    return S_OK;
+}
+
+static HRESULT color_convert_process_output(struct color_convert *impl, DMO_OUTPUT_DATA_BUFFER *output)
+{
+    HRESULT hr;
+
+    if (!impl->context)
+        return DMO_E_TYPE_NOT_SET;
+    if (!impl->current_frame.width)
+        return S_FALSE;
+
+    hr = color_convert_process_frame(impl, &impl->current_frame, output);
+    if (!impl->current_frame.opaque)
+        av_frame_move_ref(&impl->input_frame, &impl->current_frame);
+    else
+        av_frame_unref(&impl->current_frame);
+
+    return hr;
+}
+
+static void color_convert_cleanup(struct color_convert *impl)
+{
+    memset(&impl->input_format, 0, sizeof(impl->input_format));
+    memset(&impl->output_format, 0, sizeof(impl->output_format));
+    av_frame_unref(&impl->current_frame);
+    av_frame_unref(&impl->output_frame);
+    av_frame_unref(&impl->input_frame);
+    sws_free_context(&impl->context);
+}
+
+static BOOL get_default_stride_sign(const BITMAPINFOHEADER *header)
+{
+    return header->biCompression == BI_RGB || header->biCompression == BI_BITFIELDS ? -1 : 1;
+}
+
+static const GUID *get_dmo_subtype(const GUID *subtype)
+{
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB8))
+        return &MEDIASUBTYPE_RGB8;
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB555))
+        return &MEDIASUBTYPE_RGB555;
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB565))
+        return &MEDIASUBTYPE_RGB565;
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB24))
+        return &MEDIASUBTYPE_RGB24;
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB32))
+        return &MEDIASUBTYPE_RGB32;
+    return subtype;
+}
+
+static HRESULT init_video_format(const DMO_MEDIA_TYPE *type, MFVIDEOFORMAT *format)
+{
+    if (IsEqualGUID(&type->formattype, &FORMAT_VideoInfo))
+    {
+        const VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)type->pbFormat;
+        memset(format, 0, sizeof(*format));
+        format->videoInfo.dwWidth = vih->bmiHeader.biWidth;
+        format->videoInfo.dwHeight = abs(vih->bmiHeader.biHeight);
+        if (get_default_stride_sign(&vih->bmiHeader) < 0 && vih->bmiHeader.biHeight > 0)
+            format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+        format->guidFormat = type->subtype;
+        return S_OK;
+    }
+    if (IsEqualGUID(&type->formattype, &FORMAT_VideoInfo2))
+    {
+        const VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2 *)type->pbFormat;
+        memset(format, 0, sizeof(*format));
+        format->videoInfo.dwWidth = vih->bmiHeader.biWidth;
+        format->videoInfo.dwHeight = abs(vih->bmiHeader.biHeight);
+        if (get_default_stride_sign(&vih->bmiHeader) < 0 && vih->bmiHeader.biHeight > 0)
+            format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+        format->guidFormat = type->subtype;
+        return S_OK;
+    }
+    if (IsEqualGUID(&type->formattype, &FORMAT_MFVideoFormat))
+    {
+        *format = *(MFVIDEOFORMAT *)type->pbFormat;
+        format->guidFormat = *get_dmo_subtype(&format->guidFormat);
+        return S_OK;
+    }
+
+    FIXME("Format %s not implemented\n", debugstr_guid(&type->formattype));
+    return E_NOTIMPL;
+}
+
+static HRESULT color_convert_init(struct color_convert *impl)
+{
+    HRESULT hr;
+    int ret;
+
+    color_convert_cleanup(impl);
+
+    if (!(impl->context = sws_alloc_context()))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = init_video_format(&impl->input_mt, &impl->input_format))
+            || FAILED(hr = init_video_format(&impl->output_mt, &impl->output_format)))
+    {
+        color_convert_cleanup(impl);
+        return hr;
+    }
+
+    video_frame_init_from_format(&impl->input_frame, &impl->input_format);
+    if ((ret = av_frame_get_buffer(&impl->input_frame, 0)) < 0)
+        goto failed;
+    video_frame_init_aperture(&impl->input_frame, &impl->input_format);
+
+    video_frame_init_from_format(&impl->output_frame, &impl->output_format);
+    if ((ret = av_frame_get_buffer(&impl->output_frame, 0)) < 0)
+        goto failed;
+    video_frame_init_aperture(&impl->output_frame, &impl->output_format);
+
+    av_opt_set(impl->context, "sws_flags", "neighbor", 0);
+    av_opt_set_int(impl->context, "threads", 0, 0);
+    av_opt_set_int(impl->context, "srcw", impl->input_frame.width, 0);
+    av_opt_set_int(impl->context, "srch", impl->input_frame.height, 0);
+    av_opt_set_pixel_fmt(impl->context, "src_format", impl->input_frame.format, 0);
+    av_opt_set_int(impl->context, "dstw", impl->output_frame.width, 0);
+    av_opt_set_int(impl->context, "dsth", impl->output_frame.height, 0);
+    av_opt_set_pixel_fmt(impl->context, "dst_format", impl->output_frame.format, 0);
+
+    if ((ret = sws_init_context(impl->context, NULL, NULL)) < 0)
+        goto failed;
+
+    TRACE("input %s -> output %s\n", debugstr_avframe(&impl->input_frame), debugstr_avframe(&impl->output_frame));
+    return S_OK;
+
+failed:
+    ERR("ret %d\n", ret);
+    color_convert_cleanup(impl);
+    return E_FAIL;
+}
 
 static struct color_convert *impl_from_IUnknown(IUnknown *iface)
 {
@@ -210,6 +680,7 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        color_convert_cleanup(impl);
         if (impl->wg_transform)
             wg_transform_destroy(impl->wg_transform);
         if (impl->input_type)
@@ -740,44 +1211,195 @@ static HRESULT WINAPI media_object_GetOutputStreamInfo(IMediaObject *iface, DWOR
     return E_NOTIMPL;
 }
 
+static HRESULT get_available_dmo_media_type(const GUID *subtype, DMO_MEDIA_TYPE *type, BOOL output)
+{
+    VIDEOINFOHEADER *vih;
+
+    if (!(vih = CoTaskMemAlloc(sizeof(*vih))))
+        return E_OUTOFMEMORY;
+    memset(vih, 0, sizeof(*vih));
+
+    memset(type, 0, sizeof(*type));
+    type->majortype = MEDIATYPE_Video;
+    type->formattype = FORMAT_VideoInfo;
+    type->subtype = *subtype;
+    type->pbFormat = (BYTE *)vih;
+    type->cbFormat = sizeof(*vih);
+    return S_OK;
+}
+
 static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
     FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
-    return E_NOTIMPL;
+
+    if (index > 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (type_index >= ARRAY_SIZE(input_types))
+        return DMO_E_NO_MORE_ITEMS;
+    return get_available_dmo_media_type(input_types[type_index], type, FALSE);
 }
 
 static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
     FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
-    return E_NOTIMPL;
+
+    if (index > 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (type_index >= ARRAY_SIZE(output_types))
+        return DMO_E_NO_MORE_ITEMS;
+    return get_available_dmo_media_type(output_types[type_index], type, TRUE);
+}
+
+static HRESULT check_dmo_media_type(const DMO_MEDIA_TYPE *type, UINT32 *image_size,
+        const GUID *const *formats, UINT format_count)
+{
+    ULONG i;
+
+    if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Video))
+        return DMO_E_INVALIDTYPE;
+    for (i = 0; i < format_count; ++i)
+        if (IsEqualGUID(get_dmo_subtype(&type->subtype), get_dmo_subtype(formats[i])))
+            break;
+    if (i == format_count)
+        return DMO_E_INVALIDTYPE;
+
+    if (IsEqualGUID(&type->formattype, &FORMAT_VideoInfo)
+            && type->cbFormat >= sizeof(VIDEOINFOHEADER))
+    {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)type->pbFormat;
+        if (!vih->bmiHeader.biWidth || !vih->bmiHeader.biHeight)
+            return DMO_E_INVALIDTYPE;
+        *image_size = vih->bmiHeader.biSizeImage;
+        return S_OK;
+    }
+    if (IsEqualGUID(&type->formattype, &FORMAT_VideoInfo2)
+            && type->cbFormat >= sizeof(VIDEOINFOHEADER2))
+    {
+        VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2 *)type->pbFormat;
+        if (!vih->bmiHeader.biWidth || !vih->bmiHeader.biHeight)
+            return DMO_E_INVALIDTYPE;
+        *image_size = vih->bmiHeader.biSizeImage;
+        return S_OK;
+    }
+    if (IsEqualGUID(&type->formattype, &FORMAT_MFVideoFormat)
+            && type->cbFormat >= sizeof(MFVIDEOFORMAT))
+    {
+        MFVIDEOFORMAT *fmt = (MFVIDEOFORMAT *)type->pbFormat;
+        if (!fmt->videoInfo.dwWidth || !fmt->videoInfo.dwHeight)
+            return DMO_E_INVALIDTYPE;
+        return MFCalculateImageSize(&type->subtype, fmt->videoInfo.dwWidth, fmt->videoInfo.dwHeight,
+            (UINT32 *)image_size);
+    }
+
+    return DMO_E_INVALIDTYPE;
+}
+
+static void clear_dmo_media_type(DMO_MEDIA_TYPE *mt)
+{
+    MoFreeMediaType(mt);
+    memset(mt, 0, sizeof(*mt));
 }
 
 static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %lu, type %p, flags %#lx stub!\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+    UINT32 image_size;
+    HRESULT hr;
+
+    TRACE("converter %p, index %#lx, type %p, flags %#lx.\n", impl, index, type, flags);
+
+    if (index != 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (!type)
+    {
+        clear_dmo_media_type(&impl->input_mt);
+        color_convert_cleanup(impl);
+        return S_OK;
+    }
+
+    if (FAILED(hr = check_dmo_media_type(type, &image_size, input_types, ARRAY_SIZE(input_types))))
+        return hr;
+    if (flags & DMO_SET_TYPEF_TEST_ONLY)
+        return S_OK;
+
+    clear_dmo_media_type(&impl->input_mt);
+    if (FAILED(hr = MoCopyMediaType(&impl->input_mt, type)))
+        return hr;
+    impl->input_info.cbSize = image_size;
+
+    if (!IsEqualGUID(&impl->output_mt.majortype, &GUID_NULL)
+            && FAILED(hr = color_convert_init(impl)))
+    {
+        clear_dmo_media_type(&impl->input_mt);
+        impl->input_info.cbSize = 0;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %lu, type %p, flags %#lx stub!\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+    UINT32 image_size;
+    HRESULT hr;
+
+    TRACE("converter %p, index %#lx, type %p, flags %#lx.\n", impl, index, type, flags);
+
+    if (index != 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (!type)
+    {
+        clear_dmo_media_type(&impl->output_mt);
+        color_convert_cleanup(impl);
+        return S_OK;
+    }
+
+    if (FAILED(hr = check_dmo_media_type(type, &image_size, output_types, ARRAY_SIZE(output_types))))
+        return hr;
+    if (flags & DMO_SET_TYPEF_TEST_ONLY)
+        return S_OK;
+
+    clear_dmo_media_type(&impl->output_mt);
+    if (FAILED(hr = MoCopyMediaType(&impl->output_mt, type)))
+        return hr;
+    impl->output_info.cbSize = image_size;
+
+    if (!IsEqualGUID(&impl->input_mt.majortype, &GUID_NULL)
+            && FAILED(hr = color_convert_init(impl)))
+    {
+        clear_dmo_media_type(&impl->output_mt);
+        impl->output_info.cbSize = 0;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
-    return E_NOTIMPL;
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %#lx, type %p.\n", iface, index, type);
+
+    if (index != 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (IsEqualGUID(&impl->input_mt.majortype, &GUID_NULL))
+        return DMO_E_TYPE_NOT_SET;
+    return MoCopyMediaType(type, &impl->input_mt);
 }
 
 static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
-    return E_NOTIMPL;
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %#lx, type %p.\n", iface, index, type);
+
+    if (index != 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (IsEqualGUID(&impl->output_mt.majortype, &GUID_NULL))
+        return DMO_E_TYPE_NOT_SET;
+    return MoCopyMediaType(type, &impl->output_mt);
 }
 
 static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size,
@@ -839,16 +1461,30 @@ static HRESULT WINAPI media_object_GetInputStatus(IMediaObject *iface, DWORD ind
 static HRESULT WINAPI media_object_ProcessInput(IMediaObject *iface, DWORD index,
         IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    FIXME("iface %p, index %lu, buffer %p, flags %#lx, timestamp %s, timelength %s stub!\n", iface,
-            index, buffer, flags, wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
-    return E_NOTIMPL;
+    DMO_OUTPUT_DATA_BUFFER input = {.pBuffer = buffer, .dwStatus = flags, .rtTimestamp = timestamp,
+            .rtTimelength = timelength};
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("converter %p, index %lu, buffer %p, flags %#lx, timestamp %I64d, timelength %I64d\n",
+            impl, index, buffer, flags, timestamp, timelength);
+
+    return color_convert_process_input(impl, &input);
 }
 
 static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count,
-        DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
+        DMO_OUTPUT_DATA_BUFFER *output, DWORD *output_status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, buffers %p, status %p stub!\n", iface, flags, count, buffers, status);
-    return E_NOTIMPL;
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("converter %p, flags %#lx, count %lu, output %p, output_status %p\n", impl, flags, count,
+            output, output_status);
+
+    if (count != 1)
+        return E_INVALIDARG;
+    if (flags)
+        FIXME("Unimplemented flags %#lx\n", flags);
+
+    return color_convert_process_output(impl, output);
 }
 
 static HRESULT WINAPI media_object_Lock(IMediaObject *iface, LONG lock)
@@ -989,6 +1625,12 @@ static const IPropertyStoreVtbl property_store_vtbl =
     property_store_Commit,
 };
 
+static const char *debugstr_version(UINT version)
+{
+    return wine_dbg_sprintf("%u.%u.%u", AV_VERSION_MAJOR(version), AV_VERSION_MINOR(version),
+            AV_VERSION_MICRO(version));
+}
+
 HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
 {
     const MFVIDEOFORMAT input_format =
@@ -1008,6 +1650,9 @@ HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
 
     TRACE("outer %p, out %p.\n", outer, out);
 
+    TRACE("avutil version %s\n", debugstr_version(avutil_version()));
+    TRACE("swscale version %s\n", debugstr_version(swscale_version()));
+
     if (FAILED(hr = check_video_transform_support(&input_format, &output_format)))
     {
         ERR_(winediag)("GStreamer doesn't support video conversion, please install appropriate plugins.\n");
@@ -1016,7 +1661,6 @@ HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
-
     if (FAILED(hr = wg_sample_queue_create(&impl->wg_sample_queue)))
     {
         free(impl);
