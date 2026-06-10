@@ -156,15 +156,18 @@ static void test_CoreTextServicesManager(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ICoreTextServicesManagerStatics_GetForCurrentView(core_text_manager_stat, &core_text_manager);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == RPC_E_WRONG_THREAD) /* <= Win10 2009 */, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        check_interface(core_text_manager, &IID_IUnknown, TRUE);
+        check_interface(core_text_manager, &IID_IInspectable, TRUE);
+        check_interface(core_text_manager, &IID_IAgileObject, TRUE);
+        check_interface(core_text_manager, &IID_ICoreTextServicesManagerStatics, FALSE);
+        check_interface(core_text_manager, &IID_ICoreTextServicesManager, TRUE);
 
-    check_interface(core_text_manager, &IID_IUnknown, TRUE);
-    check_interface(core_text_manager, &IID_IInspectable, TRUE);
-    check_interface(core_text_manager, &IID_IAgileObject, TRUE);
-    check_interface(core_text_manager, &IID_ICoreTextServicesManagerStatics, FALSE);
-    check_interface(core_text_manager, &IID_ICoreTextServicesManager, TRUE);
+        ICoreTextServicesManager_Release(core_text_manager);
+    }
 
-    ICoreTextServicesManager_Release(core_text_manager);
     ref = ICoreTextServicesManagerStatics_Release(core_text_manager_stat);
     ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
     ref = IActivationFactory_Release(factory);
