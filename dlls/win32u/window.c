@@ -1126,6 +1126,7 @@ static LONG_PTR get_window_long_shm( HWND hwnd, UINT offset, UINT size, BOOL int
         switch (offset)
         {
         case GWLP_ID:        ret = window_shm->info.id; break;
+        case GWLP_HINSTANCE: ret = window_shm->info.instance; break;
         default:
             valid = size <= window_shm->extra_size && offset <= window_shm->extra_size - size &&
                     (internal || offset >= window_shm->private_size);
@@ -1180,6 +1181,7 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
         if (offset < 0) break;
         /* fallthrough */
     case GWLP_ID:
+    case GWLP_HINSTANCE:
         return get_window_long_shm( hwnd, offset, size, internal );
     case GWLP_HWNDPARENT:
     {
@@ -1207,7 +1209,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
             return retval;
         case GWL_EXSTYLE:
         case GWLP_USERDATA:
-        case GWLP_HINSTANCE:
             return 0;
         case GWLP_WNDPROC:
             RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
@@ -1242,7 +1243,6 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
     case GWLP_USERDATA:  retval = win->userdata; break;
     case GWL_STYLE:      retval = win->dwStyle; break;
     case GWL_EXSTYLE:    retval = win->dwExStyle; break;
-    case GWLP_HINSTANCE: retval = (ULONG_PTR)win->hInstance; break;
     case GWLP_WNDPROC:
         /* This looks like a hack only for the edit control (see tests). This makes these controls
          * more tolerant to A/W mismatches. The lack of W->A->W conversion for such a mismatch suggests
@@ -1511,10 +1511,6 @@ static LONG_PTR set_window_long_internal( HWND hwnd, INT offset, UINT size,
             break;
         case GWL_EXSTYLE:
             win->dwExStyle = newval;
-            retval = oldval;
-            break;
-        case GWLP_HINSTANCE:
-            win->hInstance = (HINSTANCE)newval;
             retval = oldval;
             break;
         case GWLP_WNDPROC:
@@ -5574,7 +5570,6 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->owner      = full_owner;
     win->class      = class;
     win->winproc    = get_class_winproc( class );
-    win->hInstance  = instance;
     set_user_handle_ptr( handle, win );
     if (is_winproc_unicode( win->winproc, !ansi )) win->flags |= WIN_ISUNICODE;
     return win;

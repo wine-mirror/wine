@@ -74,7 +74,6 @@ struct window
     struct region   *update_region;   /* update region (relative to window rect) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
-    mod_handle_t     instance;        /* creator instance */
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
@@ -607,7 +606,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     mod_handle_t class_instance, mod_handle_t instance )
+                                     mod_handle_t class_instance )
 {
     data_size_t extra_size, private_size;
     struct window *win = NULL;
@@ -657,7 +656,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->update_region  = NULL;
     win->style          = 0;
     win->ex_style       = 0;
-    win->instance       = instance;
     win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;
@@ -2239,7 +2237,7 @@ DECL_HANDLER(create_window)
 
     if (!atom) atom = find_atom( table, &cls_name );
 
-    if (!(win = create_window( parent, owner, atom, req->class_instance, req->instance ))) return;
+    if (!(win = create_window( parent, owner, atom, req->class_instance ))) return;
 
     if (parent && !is_desktop_window( parent ))
         dpi_context = parent->shared->dpi_context;
@@ -2250,7 +2248,8 @@ DECL_HANDLER(create_window)
 
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->dpi_context = dpi_context;
+        shared->dpi_context     = dpi_context;
+        shared->info.instance   = req->instance;
     }
     SHARED_WRITE_END;
 
@@ -2336,7 +2335,7 @@ DECL_HANDLER(get_desktop_window)
 
     if (!desktop->top_window && req->force)  /* create it */
     {
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, 0 )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2349,7 +2348,7 @@ DECL_HANDLER(get_desktop_window)
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         struct atom_table *table = get_user_atom_table();
         atom_t atom = add_atom( table, &name );
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, 0 )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0 )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2406,7 +2405,6 @@ DECL_HANDLER(get_window_info)
     {
     case GWL_STYLE:       reply->info = win->style;  break;
     case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
-    case GWLP_HINSTANCE:  reply->info = win->instance;  break;
     case GWLP_WNDPROC:    reply->info = win->is_unicode;  break;
     case GWLP_USERDATA:   reply->info = win->user_data;  break;
     default:
@@ -2463,8 +2461,8 @@ DECL_HANDLER(set_window_info)
             shared->info.id = req->new_info;
             break;
         case GWLP_HINSTANCE:
-            reply->old_info = win->instance;
-            win->instance = req->new_info;
+            reply->old_info = shared->info.instance;
+            shared->info.instance = req->new_info;
             break;
         case GWLP_WNDPROC:
             reply->old_info = win->is_unicode;

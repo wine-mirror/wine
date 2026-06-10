@@ -1066,6 +1066,7 @@ typedef volatile struct
 struct window_info
 {
     lparam_t             id;               /* window id */
+    mod_handle_t         instance;         /* creator instance */
 };
 
 typedef volatile struct
