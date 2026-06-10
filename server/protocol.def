@@ -3298,6 +3298,7 @@ enum caret_state
 @REQ(create_class)
     atom_t         atom;           /* class atom */
     unsigned int   fnid;           /* FNID for builtin classes, or 0 */
+    unsigned int   ansi;           /* class wndproc is ansi */
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
     data_size_t    name_offset;    /* base class name offset for specified atom */
     VARARG(info,class_info);       /* class info */
@@ -3326,6 +3327,7 @@ enum caret_state
     int            offset;        /* offset of the info */
     data_size_t    size;          /* size of the info value to write */
     lparam_t       new_info;      /* new class info value */
+    unsigned int   ansi;          /* new class info is ansi */
 @REPLY
     lparam_t       old_info;      /* previous class info value */
 @END

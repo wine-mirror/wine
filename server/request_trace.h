@@ -2402,6 +2402,7 @@ static void dump_create_class_request( const struct create_class_request *req )
 {
     fprintf( stderr, " atom=%04x", req->atom );
     fprintf( stderr, ", fnid=%08x", req->fnid );
+    fprintf( stderr, ", ansi=%08x", req->ansi );
     dump_uint64( ", client_ptr=", &req->client_ptr );
     fprintf( stderr, ", name_offset=%u", req->name_offset );
     dump_varargs_class_info( ", info=", cur_size );
@@ -2434,6 +2435,7 @@ static void dump_set_class_info_request( const struct set_class_info_request *re
     fprintf( stderr, ", offset=%d", req->offset );
     fprintf( stderr, ", size=%u", req->size );
     dump_uint64( ", new_info=", &req->new_info );
+    fprintf( stderr, ", ansi=%08x", req->ansi );
 }
 
 static void dump_set_class_info_reply( const struct set_class_info_reply *req )

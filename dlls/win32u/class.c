@@ -676,6 +676,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
         req->client_ptr = wine_server_client_ptr( class );
         req->atom       = wine_server_add_atom( req, name );
         req->fnid       = fnid;
+        req->ansi       = ansi;
         req->name_offset = version->Length / sizeof(WCHAR);
         ret = !wine_server_call_err( req );
         locator = reply->locator;
@@ -925,7 +926,7 @@ INT WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
 }
 
 /* Set class info with the wine server. */
-static BOOL server_set_class_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, ULONG_PTR *oldval )
+static BOOL server_set_class_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size, ULONG_PTR *oldval, BOOL ansi )
 {
     BOOL ret;
 
@@ -935,6 +936,7 @@ static BOOL server_set_class_info( HWND hwnd, INT offset, LONG_PTR newval, UINT 
         req->offset = offset;
         req->size = size;
         req->new_info = newval;
+        req->ansi = ansi;
         ret = !wine_server_call_err( req );
         *oldval = reply->old_info;
     }
@@ -959,18 +961,18 @@ static ULONG_PTR set_class_long_size( HWND hwnd, INT offset, LONG_PTR newval, UI
     case GCLP_HICONSM:
     case GCLP_HMODULE:
     case GCLP_MENUNAME:
-        server_set_class_info( hwnd, offset, newval, size, &retval );
+        server_set_class_info( hwnd, offset, newval, size, &retval, ansi );
         break;
     case GCLP_WNDPROC:
         newval = (ULONG_PTR)alloc_winproc( (WNDPROC)newval, ansi );
-        if (!server_set_class_info( hwnd, offset, newval, size, &retval )) break;
+        if (!server_set_class_info( hwnd, offset, newval, size, &retval, ansi )) break;
         retval = (ULONG_PTR)get_winproc( (WNDPROC)retval, ansi );
         break;
     case GCL_CBCLSEXTRA:  /* cannot change this one */
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         break;
     default:
-        if (offset >= 0) server_set_class_info( hwnd, offset, newval, size, &retval );
+        if (offset >= 0) server_set_class_info( hwnd, offset, newval, size, &retval, ansi );
         else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
         break;
     }

@@ -47,6 +47,7 @@ struct window_class
     atom_t              atom;            /* class atom for versioned class */
     unsigned int        fnid;            /* builtin control FNID, or 0 */
     client_ptr_t        client_ptr;      /* pointer to class in client address space */
+    bool                ansi;            /* class wndproc is ansi */
     class_shm_t        *shared;          /* class in session shared memory */
 };
 
@@ -60,6 +61,7 @@ static struct window_class *create_class( struct process *process, int local, in
 
     class->process = (struct process *)grab_object( process );
     class->count = 0;
+    class->ansi = false;
 
     if (!(class->shared = alloc_shared_object( offsetof(class_shm_t, extra[cls_extra]) ))) goto failed;
 
@@ -252,6 +254,7 @@ DECL_HANDLER(create_class)
     class->atom       = atom;
     class->fnid       = req->fnid;
     class->client_ptr = req->client_ptr;
+    class->ansi       = !!req->ansi;
 
     SHARED_WRITE_BEGIN( class->shared, class_shm_t )
     {
@@ -330,6 +333,7 @@ DECL_HANDLER(set_class_info)
         case GCLP_WNDPROC:
             reply->old_info = shared->info.wndproc;
             shared->info.wndproc = req->new_info;
+            class->ansi = !!req->ansi;
             break;
         case GCLP_HCURSOR:
             reply->old_info = shared->info.cursor;
