@@ -110,8 +110,10 @@ static struct fpsimd_context *get_fpsimd_context( const ucontext_t *sigcontext )
 
 static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 {
+#ifdef ESR_MAGIC
     struct esr_context *esr = (struct esr_context *)get_extended_sigcontext( sigcontext, ESR_MAGIC );
     if (esr) return esr->esr;
+#endif
     return 0;
 }
 
