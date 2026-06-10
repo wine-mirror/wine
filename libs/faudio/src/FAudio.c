@@ -337,7 +337,7 @@ static uint32_t fixup_wma_bitrate(FAudio *audio, const FAudioWaveFormatEx *forma
 
 			for (unsigned int j = 0; j < 5 && rates[i].bytes_per_second[j]; ++j)
 			{
-				if (format->nAvgBytesPerSec > rates[i].bytes_per_second[j])
+				if (format->nAvgBytesPerSec >= rates[i].bytes_per_second[j])
 					ret = rates[i].bytes_per_second[j];
 			}
 
