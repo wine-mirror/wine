@@ -3900,6 +3900,9 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
         IHTMLDocument2_Release(doc2);
         IHTMLDocument2_Release(doc);
 
+        hres = IWebBrowser2_Navigate(webbrowser, NULL, NULL, NULL, NULL, NULL);
+        ok(hres == S_FALSE, "Navigate returned: %08lx\n", hres);
+
         if(!do_close) {
             trace("Navigate2 http URL...\n");
             test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
