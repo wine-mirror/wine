@@ -677,7 +677,7 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     mod_handle_t class_instance, bool ansi, unsigned int dpi_context,
+                                     mod_handle_t class_instance, unsigned int dpi_context,
                                      unsigned int dpi, struct ratio scale )
 {
     data_size_t extra_size, private_size;
@@ -751,10 +751,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->dpi             = dpi;
         shared->scale           = scale;
         shared->extra_size      = extra_size;
-        memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
-        shared->info.wndproc    = get_class_wndproc( win->class, &ansi );
-        shared->ansi            = ansi;
     }
     SHARED_WRITE_END;
 
@@ -2282,6 +2279,17 @@ DECL_HANDLER(create_window)
     struct unicode_str cls_name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
+    struct window_info info;
+    bool ansi = req->ansi;
+
+    if (cls_name.len < sizeof(info))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    memcpy( &info, cls_name.str, sizeof(info) );
+    cls_name.str += sizeof(info) / sizeof(WCHAR);
+    cls_name.len -= sizeof(info);
 
     reply->handle = 0;
     if (req->parent)
@@ -2311,20 +2319,21 @@ DECL_HANDLER(create_window)
 
     if (!atom) atom = find_atom( table, cls_name );
 
-    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi,
+    if (!(win = create_window( parent, owner, atom, req->class_instance,
                                req->dpi_context, req->dpi, req->scale )))
         return;
+    info.wndproc = get_class_wndproc( win->class, &ansi );
 
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->info.instance   = req->instance;
+        memcpy( (void *)&shared->info, &info, sizeof(info) );
+        shared->ansi = ansi;
+
         if (parent && !is_desktop_window( parent ))
         {
             shared->dpi         = parent->shared->dpi;
             shared->scale       = parent->shared->scale;
         }
-        shared->info.style.ws = req->style;
-        shared->info.style.ex = req->ex_style;
     }
     SHARED_WRITE_END;
 
@@ -2423,14 +2432,18 @@ DECL_HANDLER(get_desktop_window)
     if (!desktop->top_window && req->force)  /* create it */
     {
         if (!(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
         {
-            detach_window_thread( desktop->top_window );
             SHARED_WRITE_BEGIN( desktop->top_window->shared, window_shm_t )
             {
+                bool ansi = false;
+                memset( (void *)&shared->info, 0, sizeof(info) );
                 shared->info.style.ws = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+                shared->info.wndproc = get_class_wndproc( desktop->top_window->class, &ansi );
+                shared->ansi = ansi;
             }
             SHARED_WRITE_END;
+            detach_window_thread( desktop->top_window );
         }
     }
 
@@ -2442,14 +2455,18 @@ DECL_HANDLER(get_desktop_window)
         atom_t atom = add_atom( table, name );
 
         if (!info && !(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->scale )))
         {
-            detach_window_thread( desktop->msg_window );
             SHARED_WRITE_BEGIN( desktop->msg_window->shared, window_shm_t )
             {
+                bool ansi = false;
+                memset( (void *)&shared->info, 0, sizeof(info) );
                 shared->info.style.ws = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+                shared->info.wndproc = get_class_wndproc( desktop->msg_window->class, &ansi );
+                shared->ansi = ansi;
             }
             SHARED_WRITE_END;
+            detach_window_thread( desktop->msg_window );
         }
     }
 

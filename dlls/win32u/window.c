@@ -5763,13 +5763,16 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     SERVER_START_REQ( create_window )
     {
+        struct window_info info =
+        {
+            .instance   = wine_server_client_ptr( cs->hInstance ),
+            .style      = { .ws = style, .ex = ex_style },
+        };
+        wine_server_add_data( req, &info, sizeof(info) );
         req->parent          = wine_server_user_handle( parent );
         req->owner           = wine_server_user_handle( owner );
         req->class_instance  = wine_server_client_ptr( class_instance );
-        req->instance        = wine_server_client_ptr( cs->hInstance );
         req->dpi_context     = dpi_context;
-        req->style           = style;
-        req->ex_style        = ex_style;
         req->ansi            = ansi;
         req->atom            = wine_server_add_atom( req, name );
         req->dpi             = dpi;

@@ -1717,6 +1717,18 @@ static void dump_varargs_class_info( const char *prefix, data_size_t size )
     remove_data( sizeof(*info) );
 }
 
+static void dump_varargs_window_info( const char *prefix, data_size_t size )
+{
+    const struct window_info *info = cur_data;
+
+    fprintf( stderr, "%s{", prefix );
+    dump_uint64( "id=", &info->id );
+    dump_uint64( ",instance=", &info->instance );
+    dump_uint64( ",user_data=", &info->user_data );
+    fprintf( stderr, ",style={ws=%08x,ex=%08x}}", info->style.ws, info->style.ex );
+    remove_data( sizeof(*info) );
+}
+
 void trace_request(void)
 {
     enum request req = current->req.request_header.req;

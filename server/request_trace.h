@@ -57,6 +57,7 @@ static void dump_varargs_unicode_strings( const char *prefix, data_size_t size )
 static void dump_varargs_user_handles( const char *prefix, data_size_t size );
 static void dump_varargs_ushorts( const char *prefix, data_size_t size );
 static void dump_varargs_version_res( const char *prefix, data_size_t size );
+static void dump_varargs_window_info( const char *prefix, data_size_t size );
 
 static const void *cur_data;
 static data_size_t cur_size;
@@ -1708,13 +1709,11 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", atom=%04x", req->atom );
     dump_uint64( ", class_instance=", &req->class_instance );
-    dump_uint64( ", instance=", &req->instance );
     fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
-    fprintf( stderr, ", style=%08x", req->style );
-    fprintf( stderr, ", ex_style=%08x", req->ex_style );
     fprintf( stderr, ", ansi=%08x", req->ansi );
     fprintf( stderr, ", dpi=%08x", req->dpi );
     dump_ratio( ", scale=", &req->scale );
+    dump_varargs_window_info( ", info=", cur_size );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
 
