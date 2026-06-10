@@ -1528,6 +1528,8 @@ static void test_filename(void)
 
     /* No extension */
     test_filename_savedlg(filename_noextW, NULL, NULL, NULL, 0, 0, filename_noextW);
+    /* Empty extension */
+    test_filename_savedlg(filename_noextW, NULL, L"", NULL, 0, 0, filename_noextW);
     /* Default extension */
     test_filename_savedlg(filename_noextW, NULL, defextW, NULL, 0, 0, filename_defextW);
     /* Default extension on filename ending with a . */

@@ -2876,7 +2876,7 @@ static HRESULT WINAPI IFileDialog2_fnSetDefaultExtension(IFileDialog2 *iface, LP
     TRACE("%p (%s)\n", This, debugstr_w(pszDefaultExtension));
 
     LocalFree(This->default_ext);
-    This->default_ext = StrDupW(pszDefaultExtension);
+    This->default_ext = (pszDefaultExtension && pszDefaultExtension[0]) ? StrDupW(pszDefaultExtension) : NULL;
 
     return S_OK;
 }
