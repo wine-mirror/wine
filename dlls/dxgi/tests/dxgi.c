@@ -878,6 +878,20 @@ static void get_factory_(unsigned int line, IUnknown *device, BOOL is_d3d12, IDX
     }
 }
 
+static BOOL dxgi_1_4_supported(IUnknown *device, BOOL is_d3d12)
+{
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    HRESULT hr;
+
+    get_factory(device, is_d3d12, &factory);
+    if (SUCCEEDED(hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void**)&factory4)))
+        IDXGIFactory4_Release(factory4);
+    IDXGIFactory_Release(factory);
+
+    return SUCCEEDED(hr);
+}
+
 #define get_adapter(a, b) get_adapter_(__LINE__, a, b)
 static IDXGIAdapter *get_adapter_(unsigned int line, IUnknown *device, BOOL is_d3d12)
 {
@@ -7254,15 +7268,18 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     HRESULT hr;
     BOOL ret;
 
+    /* DXGI_SWAP_EFFECT_FLIP_DISCARD requires DXGI 1.4. */
+    if (!dxgi_1_4_supported(device, is_d3d12))
+    {
+        win_skip("DXGI 1.4 is not supported, skipping tests.\n");
+        return;
+    }
+
     get_factory(device, is_d3d12, &factory);
 
     hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory2, (void**)&factory2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IDXGIFactory_Release(factory);
-    if (FAILED(hr))
-    {
-        win_skip("IDXGIFactory2 not available.\n");
-        return;
-    }
 
     window = create_window();
 
@@ -7987,10 +8004,15 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
     IDXGISwapChain *swapchain;
     ID3D12Fence *fence;
     unsigned int i;
+    BOOL dxgi_1_4;
     HWND window;
     HRESULT hr;
 
     window = create_window();
+
+    /* DXGI_SWAP_EFFECT_FLIP_DISCARD requires DXGI 1.4. */
+    if (!(dxgi_1_4 = dxgi_1_4_supported(device, is_d3d12)))
+        win_skip("DXGI 1.4 is not supported, skipping DXGI_SWAP_EFFECT_FLIP_DISCARD tests.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -7999,6 +8021,8 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
 
         /* D3D12 only supports flip swap effects. */
         if (is_d3d12 && (swap_effect == DXGI_SWAP_EFFECT_DISCARD))
+            continue;
+        if (!dxgi_1_4 && swap_effect == DXGI_SWAP_EFFECT_FLIP_DISCARD)
             continue;
 
         winetest_push_context("test %u", i);
