@@ -126,6 +126,7 @@ typedef enum {
     SCRIPTDISP_VAR,
     SCRIPTDISP_FUNC,
     SCRIPTDISP_HOSTPROP,
+    SCRIPTDISP_BUILTIN,
 } scriptdisp_entry_type_t;
 
 /* A single named member of a ScriptDisp. A global name resolves to exactly
@@ -173,6 +174,7 @@ scriptdisp_entry_t *script_disp_find_member(ScriptDisp *disp, const WCHAR *name)
 scriptdisp_entry_t *script_disp_add_var(ScriptDisp *disp, dynamic_var_t *var);
 scriptdisp_entry_t *script_disp_add_func(ScriptDisp *disp, function_t *func);
 scriptdisp_entry_t *script_disp_add_hostprop(ScriptDisp *disp, const WCHAR *name, IDispatch *disp_obj, DISPID id);
+scriptdisp_entry_t *script_disp_add_builtin(ScriptDisp *disp, const WCHAR *name, IDispatch *disp_obj, DISPID id);
 dynamic_var_t *script_disp_find_var(ScriptDisp *disp, const WCHAR *name);
 
 typedef struct _builtin_prop_t builtin_prop_t;

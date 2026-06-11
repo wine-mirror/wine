@@ -109,6 +109,7 @@ static void ref_from_entry(scriptdisp_entry_t *member, ref_t *ref)
         ref->u.f = member->u.func;
         break;
     case SCRIPTDISP_HOSTPROP:
+    case SCRIPTDISP_BUILTIN:
         ref->type = REF_DISP;
         ref->u.d.disp = member->u.host.disp;
         ref->u.d.id = member->u.host.id;
@@ -231,18 +232,23 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     if(lookup_global_member(script_obj, name, ref))
         return S_OK;
 
-    hres = get_builtin_id(ctx->script->global_obj, name, &id);
-    if(SUCCEEDED(hres)) {
-        ref->type = REF_DISP;
-        ref->u.d.disp = &ctx->script->global_obj->IDispatch_iface;
-        ref->u.d.id = id;
-        return S_OK;
-    }
-
+    /* A visible named item shadows a builtin function of the same name (global
+       members of host objects do not), so it is resolved first. */
     item = lookup_named_item(ctx->script, name, SCRIPTITEM_ISVISIBLE);
     if(item && item->disp) {
         ref->type = REF_OBJ;
         ref->u.obj = item->disp;
+        return S_OK;
+    }
+
+    hres = get_builtin_id(ctx->script->global_obj, name, &id);
+    if(SUCCEEDED(hres)) {
+        /* Cache the builtin in the global tree; subsequent lookups find it
+           there and skip the named item and builtin lookups entirely. */
+        script_disp_add_builtin(script_obj, name, &ctx->script->global_obj->IDispatch_iface, id);
+        ref->type = REF_DISP;
+        ref->u.d.disp = &ctx->script->global_obj->IDispatch_iface;
+        ref->u.d.id = id;
         return S_OK;
     }
 

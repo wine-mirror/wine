@@ -112,6 +112,33 @@ scriptdisp_entry_t *script_disp_add_hostprop(ScriptDisp *disp, const WCHAR *name
     return member;
 }
 
+/* Cache a builtin function resolved through the global object, so subsequent
+   lookups find it in the tree instead of querying the builtins again. */
+scriptdisp_entry_t *script_disp_add_builtin(ScriptDisp *disp, const WCHAR *name, IDispatch *disp_obj, DISPID id)
+{
+    scriptdisp_entry_t *member = script_disp_find_member(disp, name);
+
+    if (member) {
+        if (member->type != SCRIPTDISP_BUILTIN)
+            return NULL;
+    } else {
+        WCHAR *str;
+        size_t size = (lstrlenW(name) + 1) * sizeof(WCHAR);
+
+        if (!(str = heap_pool_alloc(&disp->heap, size)))
+            return NULL;
+        memcpy(str, name, size);
+
+        if (!(member = script_disp_add_member(disp, str)))
+            return NULL;
+    }
+
+    member->type = SCRIPTDISP_BUILTIN;
+    member->u.host.disp = disp_obj;
+    member->u.host.id = id;
+    return member;
+}
+
 function_t *script_disp_find_func(ScriptDisp *disp, const WCHAR *name)
 {
     scriptdisp_entry_t *member = script_disp_find_member(disp, name);

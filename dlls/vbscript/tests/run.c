@@ -1242,6 +1242,8 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"invokeDisp",      DISPID_GLOBAL_INVOKEDISP },
         { L"invokeMethod",    DISPID_GLOBAL_INVOKEMETHOD },
         { L"testObj",         DISPID_GLOBAL_TESTOBJ },
+        /* host property sharing its name with a builtin function */
+        { L"InputBox",        DISPID_GLOBAL_TESTOBJ },
         { L"collectionObj" ,  DISPID_GLOBAL_COLLOBJ },
         { L"vbvar",           DISPID_GLOBAL_VBVAR, REF_EXPECT(global_vbvar_d) },
         { L"letobj",          DISPID_GLOBAL_LETOBJ },
@@ -2079,6 +2081,8 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
         *ppiunkItem = (IUnknown*)&Global;
     }else if(!lstrcmpW(pstrName, L"indexedObj")) {
         *ppiunkItem = (IUnknown*)&indexedObj;
+    }else if(!lstrcmpW(pstrName, L"Trim")) {
+        *ppiunkItem = (IUnknown*)&testObj;
     }else {
         ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
         *ppiunkItem = NULL;
@@ -3745,6 +3749,39 @@ static void test_sub_decl_scope(void)
     }
 }
 
+static void test_named_item_builtin_shadowing(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR str;
+    HRESULT hres;
+
+    strict_dispid_check = FALSE;
+
+    engine = create_and_init_script(SCRIPTITEM_GLOBALMEMBERS, TRUE);
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, L"Trim", SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
+    str = SysAllocString(L"Call ok(getVT(Trim) = \"VT_DISPATCH\", \"getVT(Trim) = \" & getVT(Trim))\n"
+                         L"Trim.propput = 1\n");
+    SET_EXPECT(testobj_propput_d);
+    SET_EXPECT(testobj_propput_i);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(testobj_propput_d);
+    CHECK_CALLED(testobj_propput_i);
+    SysFreeString(str);
+
+    IActiveScriptParse_Release(parser);
+    close_script(engine);
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -4240,6 +4277,12 @@ static void run_tests(void)
     CHECK_CALLED(testobj_propput_d);
     CHECK_CALLED(testobj_propput_i);
 
+    /* the builtin function wins over a global-members host property of the same name */
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"InputBox.propput = 1");
+    ok(hres == MAKE_VBSERROR(450), "InputBox.propput = 1 returned: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+
     SET_EXPECT(global_propargput_d);
     SET_EXPECT(global_propargput_i);
     parse_script_w(L"propargput(counter(), counter()) = counter()");
@@ -4438,6 +4481,7 @@ static void run_tests(void)
     test_procedures();
     test_gc();
     test_msgbox();
+    test_named_item_builtin_shadowing();
     test_isexpression();
     test_option_explicit_errors();
     test_parse_errors();
