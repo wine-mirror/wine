@@ -843,7 +843,7 @@ void *get_builtin_so_handle( void *module )
 static NTSTATUS get_unixlib_funcs( void *so_handle, BOOL wow, const void **funcs, NTSTATUS (**entry)(void) )
 {
     *funcs = dlsym( so_handle, wow ? "__wine_unix_call_wow64_funcs" : "__wine_unix_call_funcs" );
-    *entry = dlsym( so_handle, "__wine_unix_lib_init" );
+    if (!*funcs) *entry = dlsym( so_handle, "__wine_unix_lib_init" );
     return *funcs || *entry ? STATUS_SUCCESS : STATUS_ENTRYPOINT_NOT_FOUND;
 }
 
@@ -6182,7 +6182,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             {
                 UINT64 res[2];
                 const UNICODE_STRING *name = addr;
-                NTSTATUS (*entry)(void);
+                NTSTATUS (*entry)(void) = NULL;
                 const void *funcs;
                 void *handle;
 
