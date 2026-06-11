@@ -4888,6 +4888,40 @@ static void test_PBKDF2(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }
 
+static void test_CHACHA20_POLY1305(void)
+{
+    BCRYPT_ALG_HANDLE alg;
+    NTSTATUS status;
+    ULONG len, size;
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_CHACHA20_POLY1305_ALGORITHM, NULL, 0);
+    if (status == STATUS_NOT_FOUND)
+    {
+        win_skip("CHACHA20_POLY1305 not supported\n");
+        return;
+    }
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    len = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(len, "expected non-zero len\n");
+    ok(size == sizeof(len), "got %lu\n", size);
+
+    len = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(len == 1, "got %lu\n", len);
+    ok(size == sizeof(len), "got %lu\n", size);
+
+    size = sizeof(BCRYPT_CHAIN_MODE_NA);
+    status = BCryptSetProperty(alg, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_NA, size, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -4928,6 +4962,7 @@ START_TEST(bcrypt)
     test_rsa_encrypt();
     test_RC4();
     test_PBKDF2();
+    test_CHACHA20_POLY1305();
 
     FreeLibrary(module);
 }

@@ -94,6 +94,7 @@ extern "C" {
 
 #define BCRYPT_3DES_ALGORITHM       L"3DES"
 #define BCRYPT_AES_ALGORITHM        L"AES"
+#define BCRYPT_CHACHA20_POLY1305_ALGORITHM L"CHACHA20_POLY1305"
 #define BCRYPT_DES_ALGORITHM        L"DES"
 #define BCRYPT_DH_ALGORITHM         L"DH"
 #define BCRYPT_DSA_ALGORITHM        L"DSA"
@@ -108,6 +109,7 @@ extern "C" {
 #define BCRYPT_MD2_ALGORITHM        L"MD2"
 #define BCRYPT_MD4_ALGORITHM        L"MD4"
 #define BCRYPT_MD5_ALGORITHM        L"MD5"
+#define BCRYPT_PBKDF2_ALGORITHM     L"PBKDF2"
 #define BCRYPT_RC2_ALGORITHM        L"RC2"
 #define BCRYPT_RC4_ALGORITHM        L"RC4"
 #define BCRYPT_RNG_ALGORITHM        L"RNG"
@@ -117,7 +119,6 @@ extern "C" {
 #define BCRYPT_SHA256_ALGORITHM     L"SHA256"
 #define BCRYPT_SHA384_ALGORITHM     L"SHA384"
 #define BCRYPT_SHA512_ALGORITHM     L"SHA512"
-#define BCRYPT_PBKDF2_ALGORITHM     L"PBKDF2"
 
 #define BCRYPT_CHAIN_MODE_NA        L"ChainingModeN/A"
 #define BCRYPT_CHAIN_MODE_CBC       L"ChainingModeCBC"
@@ -188,6 +189,7 @@ static const WCHAR MS_PLATFORM_CRYPTO_PROVIDER[] = \
 
 static const WCHAR BCRYPT_3DES_ALGORITHM[] = {'3','D','E','S',0};
 static const WCHAR BCRYPT_AES_ALGORITHM[] = {'A','E','S',0};
+static const WCHAR BCRYPT_CHACHA20_POLY1305_ALGORITHM[] = {'C','H','A','C','H','A','2','0','_','P','O','L','Y','1','3','0','5',0};
 static const WCHAR BCRYPT_DES_ALGORITHM[] = {'D','E','S',0};
 static const WCHAR BCRYPT_DH_ALGORITHM[] = {'D','H',0};
 static const WCHAR BCRYPT_DSA_ALGORITHM[] = {'D','S','A',0};
@@ -202,6 +204,7 @@ static const WCHAR BCRYPT_ECDSA_P521_ALGORITHM[] = {'E','C','D','S','A','_','P',
 static const WCHAR BCRYPT_MD2_ALGORITHM[] = {'M','D','2',0};
 static const WCHAR BCRYPT_MD4_ALGORITHM[] = {'M','D','4',0};
 static const WCHAR BCRYPT_MD5_ALGORITHM[] = {'M','D','5',0};
+static const WCHAR BCRYPT_PBKDF2_ALGORITHM[] = {'P','B','K','D','F','2',0};
 static const WCHAR BCRYPT_RC2_ALGORITHM[] = {'R','C','2',0};
 static const WCHAR BCRYPT_RC4_ALGORITHM[] = {'R','C','4',0};
 static const WCHAR BCRYPT_RNG_ALGORITHM[] = {'R','N','G',0};
@@ -211,7 +214,6 @@ static const WCHAR BCRYPT_SHA1_ALGORITHM[] = {'S','H','A','1',0};
 static const WCHAR BCRYPT_SHA256_ALGORITHM[] = {'S','H','A','2','5','6',0};
 static const WCHAR BCRYPT_SHA384_ALGORITHM[] = {'S','H','A','3','8','4',0};
 static const WCHAR BCRYPT_SHA512_ALGORITHM[] = {'S','H','A','5','1','2',0};
-static const WCHAR BCRYPT_PBKDF2_ALGORITHM[] = {'P','B','K','D','F','2',0};
 
 static const WCHAR BCRYPT_CHAIN_MODE_NA[] = {'C','h','a','i','n','i','n','g','M','o','d','e','N','/','A',0};
 static const WCHAR BCRYPT_CHAIN_MODE_CBC[] = {'C','h','a','i','n','i','n','g','M','o','d','e','C','B','C',0};
@@ -552,6 +554,7 @@ typedef PVOID BCRYPT_SECRET_HANDLE;
 #define BCRYPT_TLS1_2_KDF_ALG_HANDLE        ((BCRYPT_ALG_HANDLE)0x00000371)
 #define BCRYPT_XTS_AES_ALG_HANDLE           ((BCRYPT_ALG_HANDLE)0x00000381)
 #define BCRYPT_HKDF_ALG_HANDLE              ((BCRYPT_ALG_HANDLE)0x00000391)
+#define BCRYPT_CHACHA20_POLY1305_ALG_HANDLE ((BCRYPT_ALG_HANDLE)0x000003a1)
 
 /* Flags for BCryptGenRandom */
 #define BCRYPT_RNG_USE_ENTROPY_IN_BUFFER 0x00000001
