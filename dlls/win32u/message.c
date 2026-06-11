@@ -3934,28 +3934,29 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
             req->input.mouse.info  = input->mi.dwExtraInfo;
             break;
         case INPUT_KEYBOARD:
-            if (input->ki.dwFlags & KEYEVENTF_SCANCODE)
+            req->input.kbd.vkey  = input->ki.wVk;
+            req->input.kbd.scan  = input->ki.wScan;
+            req->input.kbd.flags = input->ki.dwFlags;
+            req->input.kbd.time  = input->ki.time;
+            req->input.kbd.info  = input->ki.dwExtraInfo;
+
+            /* Handle the scancode resolution before sending data to wineserver, as it doesn't
+             * have access to keyboard layout tables and needs the vkey to start hook chain.
+             */
+            if (req->input.kbd.flags & KEYEVENTF_SCANCODE)
             {
                 UINT scan = input->ki.wScan;
                 /* TODO: Use the keyboard layout of the target hwnd, once
                  * NtUserGetKeyboardLayout supports non-current threads. */
                 HKL layout = NtUserGetKeyboardLayout( 0 );
-                if (flags & SEND_HWMSG_INJECTED)
-                {
-                    scan = scan & 0xff;
-                    if (input->ki.dwFlags & KEYEVENTF_EXTENDEDKEY) scan |= 0xe000;
-                }
+
+                if (flags & SEND_HWMSG_INJECTED) scan = scan & 0xff;
+                if (req->input.kbd.flags & KEYEVENTF_EXTENDEDKEY) scan |= 0xe000;
+
                 req->input.kbd.vkey = map_scan_to_kbd_vkey( scan, layout );
-                req->input.kbd.scan = input->ki.wScan & 0xff;
+                req->input.kbd.scan &= 0xff;
+                req->input.kbd.flags &= ~KEYEVENTF_SCANCODE;
             }
-            else
-            {
-                req->input.kbd.vkey = input->ki.wVk;
-                req->input.kbd.scan = input->ki.wScan;
-            }
-            req->input.kbd.flags = input->ki.dwFlags & ~KEYEVENTF_SCANCODE;
-            req->input.kbd.time  = input->ki.time;
-            req->input.kbd.info  = input->ki.dwExtraInfo;
             break;
         case INPUT_HARDWARE:
             req->input.hw.msg    = input->hi.uMsg;
