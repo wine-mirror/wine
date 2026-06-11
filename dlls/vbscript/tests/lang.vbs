@@ -2957,6 +2957,50 @@ sub TestExecuteGlobalRedim
 end sub
 Call TestExecuteGlobalRedim
 
+' A Dim in a later compile unit may shadow a global Const from a prior one:
+' it creates a fresh variable that later compile units resolve to, while the
+' defining compile unit keeps the inlined const value.
+Dim egCrossVal
+Const egConst = 26
+ExecuteGlobal "Dim egConst"
+ExecuteGlobal "egCrossVal = IsEmpty(egConst) & "" "" & TypeName(egConst)"
+Call ok(egCrossVal = "True Empty", "dimmed-over-const fresh read: " & egCrossVal)
+ExecuteGlobal "egConst = 5"
+ExecuteGlobal "egCrossVal = egConst"
+Call ok(egCrossVal = 5, "dimmed-over-const after assign = " & egCrossVal)
+Call ok(egConst = 26, "egConst in defining compile unit = " & egConst)
+Call ok(Eval("egConst") = 5, "Eval from defining compile unit = " & Eval("egConst"))
+Execute "egCrossVal = egConst"
+Call ok(egCrossVal = 5, "Execute read from defining compile unit = " & egCrossVal)
+
+Const egConst2 = 7
+ExecuteGlobal "Dim egConst2 : egConst2 = 8 : egCrossVal = egConst2"
+Call ok(egCrossVal = 8, "dim+assign+read in one compile unit = " & egCrossVal)
+Call ok(egConst2 = 7, "egConst2 in defining compile unit = " & egConst2)
+
+Const egConstArr = 2
+ExecuteGlobal "Dim egConstArr(3)"
+ExecuteGlobal "egConstArr(0) = 11 : egCrossVal = egConstArr(0)"
+Call ok(egCrossVal = 11, "array dimmed over const element = " & egCrossVal)
+Call ok(egConstArr = 2, "egConstArr in defining compile unit = " & egConstArr)
+
+Sub TestDimOverConstErrors
+    on error resume next
+
+    err.clear : ExecuteGlobal "Const egConst = 27"
+    call ok(err.number = 1041, "Const over dimmed-over-const err=" & err.number)
+
+    err.clear : ExecuteGlobal "Const egCrossVal = 1"
+    call ok(err.number = 1041, "Const over prior Dim err=" & err.number)
+
+    err.clear : ExecuteGlobal "Const egSameParse = 1 : Dim egSameParse"
+    call ok(err.number = 1041, "same-unit Const+Dim err=" & err.number)
+
+    err.clear : ExecuteGlobal "Dim egSameParse2 : Const egSameParse2 = 1"
+    call ok(err.number = 1041, "same-unit Dim+Const err=" & err.number)
+end sub
+Call TestDimOverConstErrors
+
 Class FixedClassArr
     Private mArr(2)
     Public LastErr

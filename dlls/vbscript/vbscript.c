@@ -140,7 +140,12 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
 
     for (i = 0; i < code->main_code.var_cnt; i++)
     {
-        if (script_disp_find_var(obj, code->main_code.vars[i].name))
+        dynamic_var_t *existing = script_disp_find_var(obj, code->main_code.vars[i].name);
+
+        /* A Dim may shadow a const from a previous compile unit: it creates a
+           fresh variable that name lookups resolve to from now on, while the
+           defining compile unit keeps using the inlined const value. */
+        if (existing && !existing->is_const)
             continue;
 
         if (!(var = heap_pool_alloc(&obj->heap, sizeof(*var))))
@@ -153,6 +158,8 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
         var->is_const = FALSE;
         var->array = NULL;
         var->index = obj->global_vars_cnt;
+        if (existing)
+            rb_remove(&obj->var_tree, &existing->entry);
         rb_put(&obj->var_tree, var->name, &var->entry);
 
         obj->global_vars[obj->global_vars_cnt++] = var;
