@@ -534,7 +534,12 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
          * We need to distinguish between '.' used as part of a member expression and
          * a beginning of a dot expression (a member expression accessing with statement
          * expression) and a floating point number like ".2" .
+         *
+         * A dot immediately followed by a digit is always a numeric literal, even
+         * right after an identifier: obj.method.5 parses as obj.method(0.5).
          */
+        if('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9')
+            return parse_numeric_literal(ctx, lval);
         c = ctx->ptr > ctx->code ? ctx->ptr[-1] : '\n';
         if (is_identifier_char(c) || c == ')') {
             ctx->ptr++;
@@ -548,9 +553,6 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
             ctx->ptr++;
             return '.';
         }
-        c = ctx->ptr[1];
-        if('0' <= c && c <= '9')
-            return parse_numeric_literal(ctx, lval);
         ctx->ptr++;
         return tDOT;
     case '-':

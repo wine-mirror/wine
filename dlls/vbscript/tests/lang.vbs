@@ -1907,6 +1907,17 @@ Set npObj = New NpCls
 CheckNpS "npObj.Check(10)+5",        15
 CheckNpS "npObj.Check(10)*3",        30
 
+' A dot immediately followed by a digit is a numeric literal, not member access.
+CheckNpS "NpS.5",                    0.5
+CheckNpS "NpS.0",                    0
+CheckNpS "NpS.5E1",                  5
+CheckNpS "npObj.Check.5",            0.5
+CheckNpS "npObj.Check.0",            0
+CheckNpS "With npObj : .Check.5 : End With", 0.5
+CheckNpT "NpT.5,.25",                0.5,    0.25
+NpS.5
+Call ok(getVT(npArg) = "VT_R8*", "NpS.5: getVT(npArg) = " & getVT(npArg))
+
 Function ParenId(a)
     ParenId = a
 End Function
