@@ -244,13 +244,64 @@ static HRESULT retrieve_named_item_disp(IActiveScriptSite *site, named_item_t *i
     return S_OK;
 }
 
+typedef struct {
+    struct rb_entry entry;
+    struct list items;
+} named_item_bucket_t;
+
+static int named_item_bucket_cmp(const void *key, const struct rb_entry *entry)
+{
+    named_item_bucket_t *bucket = RB_ENTRY_VALUE(entry, named_item_bucket_t, entry);
+    named_item_t *item = LIST_ENTRY(list_head(&bucket->items), named_item_t, bucket_entry);
+    return vbs_wcsicmp(key, item->name);
+}
+
+static HRESULT insert_named_item(script_ctx_t *ctx, named_item_t *item)
+{
+    struct rb_entry *entry = rb_get(&ctx->named_item_tree, item->name);
+    named_item_bucket_t *bucket;
+
+    if(entry) {
+        bucket = RB_ENTRY_VALUE(entry, named_item_bucket_t, entry);
+        list_add_tail(&bucket->items, &item->bucket_entry);
+    }else {
+        if(!(bucket = malloc(sizeof(*bucket))))
+            return E_OUTOFMEMORY;
+        list_init(&bucket->items);
+        list_add_tail(&bucket->items, &item->bucket_entry);
+        rb_put(&ctx->named_item_tree, item->name, &bucket->entry);
+    }
+
+    list_add_tail(&ctx->named_items, &item->entry);
+    return S_OK;
+}
+
+static void unlink_named_item(script_ctx_t *ctx, named_item_t *item)
+{
+    struct rb_entry *entry = rb_get(&ctx->named_item_tree, item->name);
+    named_item_bucket_t *bucket = RB_ENTRY_VALUE(entry, named_item_bucket_t, entry);
+
+    list_remove(&item->bucket_entry);
+    if(list_empty(&bucket->items)) {
+        rb_remove(&ctx->named_item_tree, &bucket->entry);
+        free(bucket);
+    }
+    list_remove(&item->entry);
+}
+
 named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flags)
 {
+    struct rb_entry *entry = rb_get(&ctx->named_item_tree, name);
+    named_item_bucket_t *bucket;
     named_item_t *item;
     HRESULT hres;
 
-    LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
-        if((item->flags & flags) == flags && !vbs_wcsicmp(item->name, name)) {
+    if(!entry)
+        return NULL;
+
+    bucket = RB_ENTRY_VALUE(entry, named_item_bucket_t, entry);
+    LIST_FOR_EACH_ENTRY(item, &bucket->items, named_item_t, bucket_entry) {
+        if((item->flags & flags) == flags) {
             if(!item->script_obj && !(item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
                 hres = create_script_disp(ctx, &item->script_obj);
                 if(FAILED(hres)) return NULL;
@@ -318,7 +369,7 @@ static void release_script(script_ctx_t *ctx)
         release_named_item_script_obj(item);
         if(!(item->flags & SCRIPTITEM_ISPERSISTENT))
         {
-            list_remove(&item->entry);
+            unlink_named_item(ctx, item);
             release_named_item(item);
         }
     }
@@ -356,7 +407,7 @@ static void release_named_item_list(script_ctx_t *ctx)
 {
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
-        list_remove(&iter->entry);
+        unlink_named_item(ctx, iter);
         release_named_item(iter);
     }
 }
@@ -906,7 +957,14 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
         return E_OUTOFMEMORY;
     }
 
-    list_add_tail(&This->ctx->named_items, &item->entry);
+    hres = insert_named_item(This->ctx, item);
+    if(FAILED(hres)) {
+        if(disp)
+            IDispatch_Release(disp);
+        free(item->name);
+        free(item);
+        return hres;
+    }
     return S_OK;
 }
 
@@ -1325,6 +1383,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     list_init(&ctx->objects);
     list_init(&ctx->code_list);
     list_init(&ctx->named_items);
+    rb_init(&ctx->named_item_tree, named_item_bucket_cmp);
 
     hres = init_global(ctx);
     if(FAILED(hres)) {

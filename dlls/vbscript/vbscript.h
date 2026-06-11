@@ -165,6 +165,7 @@ typedef struct named_item_t {
     LPWSTR name;
 
     struct list entry;
+    struct list bucket_entry;
 } named_item_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
@@ -232,6 +233,10 @@ struct _script_ctx_t {
     struct list objects;
     struct list code_list;
     struct list named_items;
+
+    /* named items indexed by name, each tree entry listing the items
+       sharing that name in registration order */
+    struct rb_tree named_item_tree;
 };
 
 HRESULT init_global(script_ctx_t*);
