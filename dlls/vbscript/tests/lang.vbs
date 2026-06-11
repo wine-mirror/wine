@@ -1696,6 +1696,34 @@ x = false
 Call testsub_one_line
 Call ok(x, "x is false, testsub_one_line not called?")
 
+x = false
+Sub testsub_header_stmt() x = 1
+    x = x + 1
+End Sub
+Call ok(x = false, "testsub_header_stmt body executed at definition? x = " & x)
+Call testsub_header_stmt
+Call ok(x = 2, "testsub_header_stmt: x = " & x)
+
+Sub testsub_header_nospace()x = 3:x = x + 1
+    x = x + 1
+End Sub
+Call testsub_header_nospace
+Call ok(x = 5, "testsub_header_nospace: x = " & x)
+
+Sub testsub_header_set() Set x = Nothing : End Sub
+Call testsub_header_set
+Call ok(x Is Nothing, "testsub_header_set: TypeName(x) = " & TypeName(x))
+
+Sub testsub_header_colon_end() x = 6 : x = x + 1: End Sub
+Call testsub_header_colon_end
+Call ok(x = 7, "testsub_header_colon_end: x = " & x)
+
+Function testfunc_header_stmt() x = 8
+    x = x + 1
+End Function
+Call testfunc_header_stmt
+Call ok(x = 9, "testfunc_header_stmt: x = " & x)
+
 Sub SubSetTrue(v)
     Call ok(not v, "v is not true")
     v = true
