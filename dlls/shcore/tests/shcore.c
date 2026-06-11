@@ -60,7 +60,6 @@ static const char * test_envvar1 = "bar";
 static const char * test_envvar2 = "ImARatherLongButIndeedNeededString";
 static char test_exp_path1[MAX_PATH];
 static char test_exp_path2[MAX_PATH];
-static DWORD exp_len1;
 static DWORD exp_len2;
 static const char * initial_buffer ="0123456789";
 
@@ -378,7 +377,6 @@ static HKEY create_test_entries(void)
 {
     HKEY hKey;
     DWORD ret;
-    DWORD nExpectedLen1, nExpectedLen2;
 
     SetEnvironmentVariableA("LONGSYSTEMVAR", test_envvar1);
     SetEnvironmentVariableA("FOO", test_envvar2);
@@ -393,15 +391,10 @@ static HKEY create_test_entries(void)
         ok(!RegSetValueExA(hKey, "Test3", 0, REG_EXPAND_SZ, (BYTE *)test_path2, strlen(test_path2)+1), "RegSetValueExA failed\n");
     }
 
-    exp_len1 = ExpandEnvironmentStringsA(test_path1, test_exp_path1, sizeof(test_exp_path1));
-    exp_len2 = ExpandEnvironmentStringsA(test_path2, test_exp_path2, sizeof(test_exp_path2));
+    ExpandEnvironmentStringsA(test_path1, test_exp_path1, sizeof(test_exp_path1));
+    ExpandEnvironmentStringsA(test_path2, test_exp_path2, sizeof(test_exp_path2));
 
-    nExpectedLen1 = strlen(test_path1) - strlen("%LONGSYSTEMVAR%") + strlen(test_envvar1) + 1;
-    nExpectedLen2 = strlen(test_path2) - strlen("%FOO%") + strlen(test_envvar2) + 1;
-
-    /* Make sure we carry on with correct values */
-    exp_len1 = nExpectedLen1;
-    exp_len2 = nExpectedLen2;
+    exp_len2 = strlen(test_path2) - strlen("%FOO%") + strlen(test_envvar2) + 1;
 
     return hKey;
 }
