@@ -180,6 +180,35 @@ void put_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float
     dsb->put_aux(dsb, pos, 0, value);
 }
 
+void put_mono2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    dsb->put_aux(dsb, pos, 2, value); /* Front centre */
+
+    dsb->put_aux(dsb, pos, 0, 0.0f); /* Mute front left */
+    dsb->put_aux(dsb, pos, 1, 0.0f); /* Mute front right */
+    dsb->put_aux(dsb, pos, 3, 0.0f); /* Mute LFE */
+    dsb->put_aux(dsb, pos, 4, 0.0f); /* Mute back left */
+    dsb->put_aux(dsb, pos, 5, 0.0f); /* Mute back right */
+    dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+    dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+}
+
+void put_stereo2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    if (channel == 0) { /* Left */
+        dsb->put_aux(dsb, pos, 0, value); /* Front left */
+
+        dsb->put_aux(dsb, pos, 2, 0.0f); /* Mute front centre */
+        dsb->put_aux(dsb, pos, 3, 0.0f); /* Mute LFE */
+        dsb->put_aux(dsb, pos, 4, 0.0f); /* Mute back left */
+        dsb->put_aux(dsb, pos, 5, 0.0f); /* Mute back right */
+        dsb->put_aux(dsb, pos, 6, 0.0f); /* Mute side left */
+        dsb->put_aux(dsb, pos, 7, 0.0f); /* Mute side right */
+    } else if (channel == 1) { /* Right */
+        dsb->put_aux(dsb, pos, 1, value); /* Front right */
+    }
+}
+
 void put_quad2surround71(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     if (channel == 0) { /* Front left */
