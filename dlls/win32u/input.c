@@ -1217,13 +1217,13 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
  *
  * Map a scancode to a virtual key with KBD information.
  */
-USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout )
+USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout, UINT *mapped )
 {
     const KBDTABLES *kbd_tables;
     USHORT vsc2vk[0x300];
     UINT vkey;
 
-    if ((vkey = user_driver->pMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout )) != -1) return vkey;
+    if ((vkey = user_driver->pMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout )) != -1) goto done;
 
     if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
 
@@ -1234,6 +1234,15 @@ USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout )
 
     if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
+    /* remap some scancodes as native does */
+done:
+    switch (vkey & 0xff)
+    {
+    case VK_PAUSE: *mapped = 0x45; break;
+    case VK_RSHIFT: *mapped = 0x136; break;
+    case VK_NUMLOCK: *mapped = 0x145; break;
+    default: *mapped = scan; break;
+    }
     return vkey;
 }
 
