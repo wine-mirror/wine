@@ -22,6 +22,10 @@
 # include <windef.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __RPC_WIN64__
 # pragma pack(push,8)
 #endif
@@ -163,10 +167,6 @@ typedef struct _RPC_ASYNC_STATE
 
 #ifdef __RPC_WIN64__
 # pragma pack(pop)
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 RPCRTAPI RPC_STATUS RPC_ENTRY RpcAsyncInitializeHandle(PRPC_ASYNC_STATE,unsigned int);
