@@ -26,6 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(unsigned*,parser_ctx_t*,const char*);
+static void override_generic_error(parser_ctx_t*,HRESULT);
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr);
 
@@ -311,6 +312,8 @@ SimpleStatement
     | tFOR tEACH MemberExpression error     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
     | tFOR tEACH MemberExpression tIN Expression StSep StatementsNl_opt error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
+    | tFOR tEACH error                      { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    | tFOR error                            { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, @$, $3, $5); }
     | tSELECT tCASE Expression StSep CaseClausules tEND error
@@ -327,8 +330,10 @@ SimpleStatement
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+    | CallExpression '.' error              { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
     | tDOT tIdentifier                      { expression_t *dot_expr = new_expression(ctx, EXPR_DOT, sizeof(*dot_expr)); CHECK_ERROR;
                                               $$ = new_member_expression(ctx, dot_expr, $2); CHECK_ERROR; }
+    | tDOT error                            { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 Preserve_opt
     : /* empty */                           { $$ = FALSE; }
@@ -349,14 +354,13 @@ ReDimDecl
 ReDimDeclList
     : ReDimDecl                             { $$ = $1; }
     | ReDimDecl ',' ReDimDeclList           { $1->next = $3; $$ = $1; }
+    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
     | DimDecl ',' DimDeclList               { $1->next = $3; $$ = $1; }
-    | error                                 { if(ctx->hres == MAKE_VBSERROR(VBSE_SYNTAX_ERROR))
-                                                 ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER);
-                                               YYABORT; }
+    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 DimDecl
     : Identifier                            { $$ = new_dim_decl(ctx, $1, @1, FALSE, NULL); CHECK_ERROR; }
@@ -371,6 +375,7 @@ DimList
 ConstDeclList
     : ConstDecl                             { $$ = $1; }
     | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
+    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 ConstDecl
     : Identifier '=' Expression             { $$ = new_const_decl(ctx, @1, $1, $3); CHECK_ERROR; }
@@ -588,6 +593,7 @@ ClassDeclaration
     : tCLASS Identifier StSep ClassBody tEND tCLASS             { $4->name = $2; $4->loc = @2; $$ = $4; }
     | tCLASS Identifier tEND tCLASS         { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
     | tCLASS Identifier StSep ClassBody tEND error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CLASS); YYABORT; }
+    | tCLASS error                          { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
@@ -642,6 +648,8 @@ FunctionDecl
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
     | Storage_opt tFUNCTION Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
+    | Storage_opt tSUB error        { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    | Storage_opt tFUNCTION error   { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 Storage_opt
     : /* empty*/                    { $$ = 0; }
@@ -714,6 +722,14 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
         case tNEXT:
             ctx->hres = MAKE_VBSERROR(VBSE_UNEXPECTED_NEXT);
             break;
+        case tInt:
+        case tDouble:
+        case tString:
+            /* A literal can only start an expression, so a misplaced literal
+               means the statement should have ended before it. Error
+               productions override this in contexts expecting an identifier. */
+            ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT);
+            break;
         default:
             WARN("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
             ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR);
@@ -722,6 +738,15 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
         WARN("%s: %08lx\n", debugstr_w(ctx->code + *loc), ctx->hres);
     }
     return 0;
+}
+
+/* Replace the generic code chosen by parser_error with a context-specific
+   one, keeping specific errors reported by the lexer or other productions. */
+static void override_generic_error(parser_ctx_t *ctx, HRESULT hres)
+{
+    if(ctx->hres == MAKE_VBSERROR(VBSE_SYNTAX_ERROR)
+            || ctx->hres == MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT))
+        ctx->hres = hres;
 }
 
 static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)

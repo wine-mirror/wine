@@ -1918,6 +1918,37 @@ CheckNpT "NpT.5,.25",                0.5,    0.25
 NpS.5
 Call ok(getVT(npArg) = "VT_R8*", "NpS.5: getVT(npArg) = " & getVT(npArg))
 
+Sub CheckParseErr(src, expected)
+    On Error Resume Next
+    Err.Clear
+    Execute src
+    Dim e : e = Err.Number
+    On Error GoTo 0
+    Call ok(e = expected, "parse error for " & src & ": err = " & e & " expected " & expected)
+End Sub
+
+CheckParseErr "npArg = npObj.Check.5",      1025
+CheckParseErr "NpS.5.5",                    1025
+CheckParseErr "npArg = (1).5",              1025
+CheckParseErr "npArg = 1.5.5",              1025
+CheckParseErr "npArg = 1 2",                1025
+CheckParseErr "NpS 1 2",                    1025
+CheckParseErr "npArg = 1 ""x""",            1025
+CheckParseErr "npObj.Check. 5",             1010
+CheckParseErr "npObj.Check .",              1010
+CheckParseErr "npArg = npObj.",             1010
+CheckParseErr "npArg = .",                  1010
+CheckParseErr "With npObj : . : End With",  1010
+CheckParseErr "Sub 5 : End Sub",            1010
+CheckParseErr "Function 5 : End Function",  1010
+CheckParseErr "Class 5 : End Class",        1010
+CheckParseErr "Const 5 = 1",                1010
+CheckParseErr "For 5 = 1 To 2 : Next",      1010
+CheckParseErr "For Each 5 In npArg : Next", 1010
+CheckParseErr "ReDim 5",                    1010
+CheckParseErr "Dim 5",                      1010
+CheckParseErr "Dim 1.5",                    1010
+
 Function ParenId(a)
     ParenId = a
 End Function
