@@ -2046,7 +2046,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, BOOL is_call, D
     }
 
     if(hres == DISP_E_EXCEPTION) {
-        clear_ei(&ctx->ei);
+        clear_error(ctx);
         ctx->ei = ei;
         hres = SCRIPT_E_RECORDED;
     }
@@ -2084,7 +2084,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, 
     }
 
     if(hres == DISP_E_EXCEPTION) {
-        clear_ei(&ctx->ei);
+        clear_error(ctx);
         ctx->ei = ei;
         hres = SCRIPT_E_RECORDED;
     }

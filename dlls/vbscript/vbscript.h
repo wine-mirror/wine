@@ -225,6 +225,7 @@ struct _script_ctx_t {
     unsigned call_depth;
 
     EXCEPINFO ei;
+    BSTR ei_identifier;
     vbscode_t *error_loc_code;
     unsigned error_loc_offset;
 
@@ -438,6 +439,7 @@ named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
 void release_named_item(named_item_t*);
 void clear_error_loc(script_ctx_t*);
 void clear_ei(EXCEPINFO*);
+void clear_error(script_ctx_t*);
 HRESULT report_script_error(script_ctx_t*,vbscode_t*,unsigned,BOOL);
 void detach_global_objects(script_ctx_t*);
 HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*);

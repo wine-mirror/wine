@@ -492,6 +492,22 @@ end sub
 
 call testDivisionByZero
 
+sub testUndefinedVarDescription()
+    on error resume next
+
+    Err.Clear()
+    ExecuteGlobal "Option Explicit" & vbCrLf & "Dim q : q = undefinedReadVar"
+    call ok(Err.Number = 500, "read undefined Err.Number = " & Err.Number)
+    call ok(Err.Description = "Variable is undefined", "read undefined Err.Description = " & Err.Description)
+
+    Err.Clear()
+    ExecuteGlobal "Option Explicit" & vbCrLf & "undefinedAssignVar = 1"
+    call ok(Err.Number = 500, "assign undefined Err.Number = " & Err.Number)
+    call ok(Err.Description = "Variable is undefined", "assign undefined Err.Description = " & Err.Description)
+end sub
+
+call testUndefinedVarDescription
+
 on error resume next
 
 throwWithDesc

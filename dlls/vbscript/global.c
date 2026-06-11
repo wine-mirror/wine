@@ -5058,7 +5058,7 @@ static HRESULT Err_Clear(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
 {
     TRACE("\n");
 
-    clear_ei(&This->ctx->ei);
+    clear_error(This->ctx);
     return S_OK;
 }
 
@@ -5087,6 +5087,9 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
 
     if(SUCCEEDED(hres)) {
         script_ctx_t *ctx = This->ctx;
+
+        SysFreeString(ctx->ei_identifier);
+        ctx->ei_identifier = NULL;
 
         if(source) {
             SysFreeString(ctx->ei.bstrSource);

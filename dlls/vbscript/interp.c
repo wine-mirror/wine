@@ -316,6 +316,13 @@ void clear_ei(EXCEPINFO *ei)
     memset(ei, 0, sizeof(*ei));
 }
 
+void clear_error(script_ctx_t *ctx)
+{
+    clear_ei(&ctx->ei);
+    SysFreeString(ctx->ei_identifier);
+    ctx->ei_identifier = NULL;
+}
+
 void clear_error_loc(script_ctx_t *ctx)
 {
     if(ctx->error_loc_code) {
@@ -324,34 +331,17 @@ void clear_error_loc(script_ctx_t *ctx)
     }
 }
 
+/* The identifier is not part of the error description visible to scripts
+   through the Err object; report_script_error appends it to the description
+   passed to the host. */
 static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *identifier)
 {
-    BSTR desc, source;
-
-    desc = get_vbscript_string(HRESULT_CODE(error));
-    if(desc && identifier) {
-        unsigned desc_len = SysStringLen(desc);
-        unsigned ident_len = lstrlenW(identifier);
-        /* format: "Error text: 'identifier'" */
-        BSTR new_desc = SysAllocStringLen(NULL, desc_len + 3 + ident_len + 1);
-        if(new_desc) {
-            memcpy(new_desc, desc, desc_len * sizeof(WCHAR));
-            new_desc[desc_len] = ':';
-            new_desc[desc_len + 1] = ' ';
-            new_desc[desc_len + 2] = '\'';
-            memcpy(new_desc + desc_len + 3, identifier, ident_len * sizeof(WCHAR));
-            new_desc[desc_len + 3 + ident_len] = '\'';
-            SysFreeString(desc);
-            desc = new_desc;
-        }
-    }
-
-    source = get_vbscript_string(VBS_RUNTIME_ERROR);
-
-    clear_ei(&ctx->ei);
+    clear_error(ctx);
     ctx->ei.scode = error;
-    ctx->ei.bstrDescription = desc;
-    ctx->ei.bstrSource = source;
+    ctx->ei.bstrDescription = get_vbscript_string(HRESULT_CODE(error));
+    ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
+    if(identifier)
+        ctx->ei_identifier = SysAllocString(identifier);
     return SCRIPT_E_RECORDED;
 }
 
@@ -1845,7 +1835,7 @@ static HRESULT interp_step(exec_ctx_t *ctx)
      * and exit the loop. */
     if(V_VT(stack_top(ctx, 0)) == VT_EMPTY && V_VT(stack_top(ctx, 1)) == VT_EMPTY) {
         WARN("For loop not initialized\n");
-        clear_ei(&ctx->script->ei);
+        clear_error(ctx->script);
         ctx->script->ei.scode = MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
         map_vbs_exception(&ctx->script->ei);
         stack_popn(ctx, 3);
@@ -1876,7 +1866,7 @@ static HRESULT interp_step_local(exec_ctx_t *ctx)
 
     if(V_VT(stack_top(ctx, 0)) == VT_EMPTY && V_VT(stack_top(ctx, 1)) == VT_EMPTY) {
         WARN("For loop not initialized\n");
-        clear_ei(&ctx->script->ei);
+        clear_error(ctx->script);
         ctx->script->ei.scode = MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
         map_vbs_exception(&ctx->script->ei);
         stack_popn(ctx, 3);
@@ -2123,7 +2113,7 @@ static HRESULT interp_errmode(exec_ctx_t *ctx)
     TRACE("%d\n", err_mode);
 
     ctx->resume_next = err_mode;
-    clear_ei(&ctx->script->ei);
+    clear_error(ctx->script);
     return S_OK;
 }
 
@@ -3245,7 +3235,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         if(FAILED(hres)) {
             if(hres != SCRIPT_E_RECORDED) {
                 /* SCRIPT_E_RECORDED means ctx->ei is already populated */
-                clear_ei(&ctx->ei);
+                clear_error(ctx);
                 ctx->ei.scode = hres;
             }
 
