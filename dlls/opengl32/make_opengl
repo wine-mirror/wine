@@ -707,6 +707,9 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_PROGRAM"             if $class eq "program";
     return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
     return "OBJ_TYPE_SAMPLER"             if $class eq "sampler";
+    return "OBJ_TYPE_SEMAPHORE"           if $class eq "semaphore";
+    return "OBJ_TYPE_SEMAPHORE"           if $ptype =~ /GLuint \*/ and $pname =~ /^(waitS|signalS|s)emaphore(s|Array)$/;
+    return "OBJ_TYPE_SEMAPHORE"           if $ptype =~ /GLuint/ and $pname =~ /^semaphore$/;
     return "OBJ_TYPE_SHADER_ATI"          if $class eq "shader_ati" and $func =~ /^gl(Bind|GenFragment|Delete)/ and $pname =~ /^(id|ret)$/;
     return "OBJ_TYPE_SHADER_EXT"          if $class eq "shader_ext" and $func =~ /^gl(Bind|GenVertex|Delete)/ and $pname =~ /^(id|ret)$/;
     return "OBJ_TYPE_TEXTURE"             if $class eq "texture";
@@ -752,6 +755,7 @@ sub get_object_type($$$$)
     print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
     print "Missing possible program: $func $ptype $pname $class\n" if lc( $pname ) =~ /program/;
     print "Missing possible sampler: $func $ptype $pname $class\n" if lc( $pname ) =~ /sampler/;
+    print "Missing possible semaphore: $func $ptype $pname $class\n" if lc( $pname ) =~ /semaphore/;
     print "Missing possible texture: $func $ptype $pname $class\n" if lc( $pname ) =~ /texture/;
     print "Missing possible list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
     return 0;
@@ -771,6 +775,7 @@ sub allocate_object_names($)
     return $ret if $name =~ /^glBindTexture/;
     return $ret if $name =~ /^glBindFragmentShader/;
     return $ret if $name =~ /^glBindVertexShader/;
+    return $ret if $name =~ /^glImportSemaphore/;
     return $ret if $name =~ /^glNewList/;
 
     return 0;

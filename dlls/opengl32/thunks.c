@@ -2934,23 +2934,39 @@ static void WINAPI glArrayObjectATI( GLenum array, GLint size, GLenum type, GLsi
 
 static GLuint WINAPI glAsyncCopyBufferSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *fenceValueArray, GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray )
 {
-    struct glAsyncCopyBufferSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitSemaphoreArray = waitSemaphoreArray, .fenceValueArray = fenceValueArray, .readGpu = readGpu, .writeGpuMask = writeGpuMask, .readOffset = readOffset, .writeOffset = writeOffset, .size = size, .signalSemaphoreCount = signalSemaphoreCount, .signalSemaphoreArray = signalSemaphoreArray, .signalValueArray = signalValueArray };
+    GLuint waitSemaphoreArray_buf[64], *waitSemaphoreArray_tmp;
+    GLuint signalSemaphoreArray_buf[64], *signalSemaphoreArray_tmp;
+    struct glAsyncCopyBufferSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .fenceValueArray = fenceValueArray, .readGpu = readGpu, .writeGpuMask = writeGpuMask, .readOffset = readOffset, .writeOffset = writeOffset, .size = size, .signalSemaphoreCount = signalSemaphoreCount, .signalValueArray = signalValueArray };
     NTSTATUS status;
     TRACE( "waitSemaphoreCount %d, waitSemaphoreArray %p, fenceValueArray %p, readGpu %d, writeGpuMask %d, readBuffer %d, writeBuffer %d, readOffset %Id, writeOffset %Id, size %Id, signalSemaphoreCount %d, signalSemaphoreArray %p, signalValueArray %p\n", waitSemaphoreCount, waitSemaphoreArray, fenceValueArray, readGpu, writeGpuMask, readBuffer, writeBuffer, readOffset, writeOffset, size, signalSemaphoreCount, signalSemaphoreArray, signalValueArray );
+    waitSemaphoreArray_tmp = waitSemaphoreCount > 0 ? memdup_objects( waitSemaphoreCount, waitSemaphoreArray, waitSemaphoreArray_buf, ARRAY_SIZE(waitSemaphoreArray_buf) ) : NULL;
+    args.waitSemaphoreArray = waitSemaphoreCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, waitSemaphoreCount, waitSemaphoreArray_tmp ) : NULL;
     args.readBuffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &readBuffer );
     args.writeBuffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &writeBuffer );
+    signalSemaphoreArray_tmp = signalSemaphoreCount > 0 ? memdup_objects( signalSemaphoreCount, signalSemaphoreArray, signalSemaphoreArray_buf, ARRAY_SIZE(signalSemaphoreArray_buf) ) : NULL;
+    args.signalSemaphoreArray = signalSemaphoreCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, signalSemaphoreCount, signalSemaphoreArray_tmp ) : NULL;
     if ((status = UNIX_CALL( glAsyncCopyBufferSubDataNVX, &args ))) WARN( "glAsyncCopyBufferSubDataNVX returned %#lx\n", status );
+    if (waitSemaphoreArray_tmp != waitSemaphoreArray_buf) free( waitSemaphoreArray_tmp );
+    if (signalSemaphoreArray_tmp != signalSemaphoreArray_buf) free( signalSemaphoreArray_tmp );
     return args.ret;
 }
 
 static GLuint WINAPI glAsyncCopyImageSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *waitValueArray, GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray )
 {
-    struct glAsyncCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitSemaphoreArray = waitSemaphoreArray, .waitValueArray = waitValueArray, .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth, .signalSemaphoreCount = signalSemaphoreCount, .signalSemaphoreArray = signalSemaphoreArray, .signalValueArray = signalValueArray };
+    GLuint waitSemaphoreArray_buf[64], *waitSemaphoreArray_tmp;
+    GLuint signalSemaphoreArray_buf[64], *signalSemaphoreArray_tmp;
+    struct glAsyncCopyImageSubDataNVX_params args = { .teb = NtCurrentTeb(), .waitSemaphoreCount = waitSemaphoreCount, .waitValueArray = waitValueArray, .srcGpu = srcGpu, .dstGpuMask = dstGpuMask, .srcTarget = srcTarget, .srcLevel = srcLevel, .srcX = srcX, .srcY = srcY, .srcZ = srcZ, .dstTarget = dstTarget, .dstLevel = dstLevel, .dstX = dstX, .dstY = dstY, .dstZ = dstZ, .srcWidth = srcWidth, .srcHeight = srcHeight, .srcDepth = srcDepth, .signalSemaphoreCount = signalSemaphoreCount, .signalValueArray = signalValueArray };
     NTSTATUS status;
     TRACE( "waitSemaphoreCount %d, waitSemaphoreArray %p, waitValueArray %p, srcGpu %d, dstGpuMask %d, srcName %d, srcTarget %d, srcLevel %d, srcX %d, srcY %d, srcZ %d, dstName %d, dstTarget %d, dstLevel %d, dstX %d, dstY %d, dstZ %d, srcWidth %d, srcHeight %d, srcDepth %d, signalSemaphoreCount %d, signalSemaphoreArray %p, signalValueArray %p\n", waitSemaphoreCount, waitSemaphoreArray, waitValueArray, srcGpu, dstGpuMask, srcName, srcTarget, srcLevel, srcX, srcY, srcZ, dstName, dstTarget, dstLevel, dstX, dstY, dstZ, srcWidth, srcHeight, srcDepth, signalSemaphoreCount, signalSemaphoreArray, signalValueArray );
+    waitSemaphoreArray_tmp = waitSemaphoreCount > 0 ? memdup_objects( waitSemaphoreCount, waitSemaphoreArray, waitSemaphoreArray_buf, ARRAY_SIZE(waitSemaphoreArray_buf) ) : NULL;
+    args.waitSemaphoreArray = waitSemaphoreCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, waitSemaphoreCount, waitSemaphoreArray_tmp ) : NULL;
     args.srcName = *map_context_objects( srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &srcName );
     args.dstName = *map_context_objects( dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE, 1, &dstName );
+    signalSemaphoreArray_tmp = signalSemaphoreCount > 0 ? memdup_objects( signalSemaphoreCount, signalSemaphoreArray, signalSemaphoreArray_buf, ARRAY_SIZE(signalSemaphoreArray_buf) ) : NULL;
+    args.signalSemaphoreArray = signalSemaphoreCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, signalSemaphoreCount, signalSemaphoreArray_tmp ) : NULL;
     if ((status = UNIX_CALL( glAsyncCopyImageSubDataNVX, &args ))) WARN( "glAsyncCopyImageSubDataNVX returned %#lx\n", status );
+    if (waitSemaphoreArray_tmp != waitSemaphoreArray_buf) free( waitSemaphoreArray_tmp );
+    if (signalSemaphoreArray_tmp != signalSemaphoreArray_buf) free( signalSemaphoreArray_tmp );
     return args.ret;
 }
 
@@ -4340,10 +4356,14 @@ static void WINAPI glClientAttribDefaultEXT( GLbitfield mask )
 
 static void WINAPI glClientWaitSemaphoreui64NVX( GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
 {
-    struct glClientWaitSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .fenceObjectCount = fenceObjectCount, .semaphoreArray = semaphoreArray, .fenceValueArray = fenceValueArray };
+    GLuint semaphoreArray_buf[64], *semaphoreArray_tmp;
+    struct glClientWaitSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .fenceObjectCount = fenceObjectCount, .fenceValueArray = fenceValueArray };
     NTSTATUS status;
     TRACE( "fenceObjectCount %d, semaphoreArray %p, fenceValueArray %p\n", fenceObjectCount, semaphoreArray, fenceValueArray );
+    semaphoreArray_tmp = fenceObjectCount > 0 ? memdup_objects( fenceObjectCount, semaphoreArray, semaphoreArray_buf, ARRAY_SIZE(semaphoreArray_buf) ) : NULL;
+    args.semaphoreArray = fenceObjectCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, fenceObjectCount, semaphoreArray_tmp ) : NULL;
     if ((status = UNIX_CALL( glClientWaitSemaphoreui64NVX, &args ))) WARN( "glClientWaitSemaphoreui64NVX returned %#lx\n", status );
+    if (semaphoreArray_tmp != semaphoreArray_buf) free( semaphoreArray_tmp );
 }
 
 static GLenum WINAPI glClientWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
@@ -5595,6 +5615,7 @@ static void WINAPI glCreateSemaphoresNV( GLsizei n, GLuint *semaphores )
     NTSTATUS status;
     TRACE( "n %d, semaphores %p\n", n, semaphores );
     if ((status = UNIX_CALL( glCreateSemaphoresNV, &args ))) WARN( "glCreateSemaphoresNV returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_SEMAPHORE, n, semaphores );
 }
 
 static GLuint WINAPI glCreateShader( GLenum type )
@@ -6058,10 +6079,14 @@ static void WINAPI glDeleteSamplers( GLsizei count, const GLuint *samplers )
 
 static void WINAPI glDeleteSemaphoresEXT( GLsizei n, const GLuint *semaphores )
 {
-    struct glDeleteSemaphoresEXT_params args = { .teb = NtCurrentTeb(), .n = n, .semaphores = semaphores };
+    GLuint semaphores_buf[64], *semaphores_tmp;
+    struct glDeleteSemaphoresEXT_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, semaphores %p\n", n, semaphores );
+    semaphores_tmp = n > 0 ? memdup_objects( n, semaphores, semaphores_buf, ARRAY_SIZE(semaphores_buf) ) : NULL;
+    args.semaphores = n > 0 ? del_context_objects( OBJ_TYPE_SEMAPHORE, n, semaphores_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteSemaphoresEXT, &args ))) WARN( "glDeleteSemaphoresEXT returned %#lx\n", status );
+    if (semaphores_tmp != semaphores_buf) free( semaphores_tmp );
 }
 
 static void WINAPI glDeleteShader( GLuint shader )
@@ -7907,6 +7932,7 @@ static void WINAPI glGenSemaphoresEXT( GLsizei n, GLuint *semaphores )
     NTSTATUS status;
     TRACE( "n %d, semaphores %p\n", n, semaphores );
     if ((status = UNIX_CALL( glGenSemaphoresEXT, &args ))) WARN( "glGenSemaphoresEXT returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_SEMAPHORE, n, semaphores );
 }
 
 static GLuint WINAPI glGenSymbolsEXT( GLenum datatype, GLenum storagetype, GLenum range, GLuint components )
@@ -10293,17 +10319,19 @@ static void WINAPI glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint 
 
 static void WINAPI glGetSemaphoreParameterivNV( GLuint semaphore, GLenum pname, GLint *params )
 {
-    struct glGetSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    struct glGetSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glGetSemaphoreParameterivNV, &args ))) WARN( "glGetSemaphoreParameterivNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, GLuint64 *params )
 {
-    struct glGetSemaphoreParameterui64vEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    struct glGetSemaphoreParameterui64vEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glGetSemaphoreParameterui64vEXT, &args ))) WARN( "glGetSemaphoreParameterui64vEXT returned %#lx\n", status );
 }
 
@@ -11840,17 +11868,21 @@ static void WINAPI glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLe
 
 static void WINAPI glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum handleType, void *handle )
 {
-    struct glImportSemaphoreWin32HandleEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .handleType = handleType, .handle = handle };
+    struct glImportSemaphoreWin32HandleEXT_params args = { .teb = NtCurrentTeb(), .handleType = handleType, .handle = handle };
     NTSTATUS status;
     TRACE( "semaphore %d, handleType %d, handle %p\n", semaphore, handleType, handle );
+    if (!alloc_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore, TRUE )) return;
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glImportSemaphoreWin32HandleEXT, &args ))) WARN( "glImportSemaphoreWin32HandleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum handleType, const void *name )
 {
-    struct glImportSemaphoreWin32NameEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .handleType = handleType, .name = name };
+    struct glImportSemaphoreWin32NameEXT_params args = { .teb = NtCurrentTeb(), .handleType = handleType, .name = name };
     NTSTATUS status;
     TRACE( "semaphore %d, handleType %d, name %p\n", semaphore, handleType, name );
+    if (!alloc_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore, TRUE )) return;
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glImportSemaphoreWin32NameEXT, &args ))) WARN( "glImportSemaphoreWin32NameEXT returned %#lx\n", status );
 }
 
@@ -12304,9 +12336,10 @@ static GLboolean WINAPI glIsSampler( GLuint sampler )
 
 static GLboolean WINAPI glIsSemaphoreEXT( GLuint semaphore )
 {
-    struct glIsSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore };
+    struct glIsSemaphoreEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "semaphore %d\n", semaphore );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glIsSemaphoreEXT, &args ))) WARN( "glIsSemaphoreEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -18999,17 +19032,19 @@ static void WINAPI glSelectTextureSGIS( GLenum target )
 
 static void WINAPI glSemaphoreParameterivNV( GLuint semaphore, GLenum pname, const GLint *params )
 {
-    struct glSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    struct glSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glSemaphoreParameterivNV, &args ))) WARN( "glSemaphoreParameterivNV returned %#lx\n", status );
 }
 
 static void WINAPI glSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, const GLuint64 *params )
 {
-    struct glSemaphoreParameterui64vEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    struct glSemaphoreParameterui64vEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     if ((status = UNIX_CALL( glSemaphoreParameterui64vEXT, &args ))) WARN( "glSemaphoreParameterui64vEXT returned %#lx\n", status );
 }
 
@@ -19193,9 +19228,10 @@ static void WINAPI glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarri
 {
     GLuint buffers_buf[64], *buffers_tmp;
     GLuint textures_buf[64], *textures_tmp;
-    struct glSignalSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .dstLayouts = dstLayouts };
+    struct glSignalSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .dstLayouts = dstLayouts };
     NTSTATUS status;
     TRACE( "semaphore %d, numBufferBarriers %d, buffers %p, numTextureBarriers %d, textures %p, dstLayouts %p\n", semaphore, numBufferBarriers, buffers, numTextureBarriers, textures, dstLayouts );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     buffers_tmp = numBufferBarriers > 0 ? memdup_objects( numBufferBarriers, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
     args.buffers = numBufferBarriers > 0 ? map_context_objects( OBJ_TYPE_BUFFER, numBufferBarriers, buffers_tmp ) : NULL;
     textures_tmp = numTextureBarriers > 0 ? memdup_objects( numTextureBarriers, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
@@ -19207,10 +19243,14 @@ static void WINAPI glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarri
 
 static void WINAPI glSignalSemaphoreui64NVX( GLuint signalGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
 {
-    struct glSignalSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .signalGpu = signalGpu, .fenceObjectCount = fenceObjectCount, .semaphoreArray = semaphoreArray, .fenceValueArray = fenceValueArray };
+    GLuint semaphoreArray_buf[64], *semaphoreArray_tmp;
+    struct glSignalSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .signalGpu = signalGpu, .fenceObjectCount = fenceObjectCount, .fenceValueArray = fenceValueArray };
     NTSTATUS status;
     TRACE( "signalGpu %d, fenceObjectCount %d, semaphoreArray %p, fenceValueArray %p\n", signalGpu, fenceObjectCount, semaphoreArray, fenceValueArray );
+    semaphoreArray_tmp = fenceObjectCount > 0 ? memdup_objects( fenceObjectCount, semaphoreArray, semaphoreArray_buf, ARRAY_SIZE(semaphoreArray_buf) ) : NULL;
+    args.semaphoreArray = fenceObjectCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, fenceObjectCount, semaphoreArray_tmp ) : NULL;
     if ((status = UNIX_CALL( glSignalSemaphoreui64NVX, &args ))) WARN( "glSignalSemaphoreui64NVX returned %#lx\n", status );
+    if (semaphoreArray_tmp != semaphoreArray_buf) free( semaphoreArray_tmp );
 }
 
 static void WINAPI glSignalVkFenceNV( GLuint64 vkFence )
@@ -24994,9 +25034,10 @@ static void WINAPI glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarrier
 {
     GLuint buffers_buf[64], *buffers_tmp;
     GLuint textures_buf[64], *textures_tmp;
-    struct glWaitSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .srcLayouts = srcLayouts };
+    struct glWaitSemaphoreEXT_params args = { .teb = NtCurrentTeb(), .numBufferBarriers = numBufferBarriers, .numTextureBarriers = numTextureBarriers, .srcLayouts = srcLayouts };
     NTSTATUS status;
     TRACE( "semaphore %d, numBufferBarriers %d, buffers %p, numTextureBarriers %d, textures %p, srcLayouts %p\n", semaphore, numBufferBarriers, buffers, numTextureBarriers, textures, srcLayouts );
+    args.semaphore = *map_context_objects( OBJ_TYPE_SEMAPHORE, 1, &semaphore );
     buffers_tmp = numBufferBarriers > 0 ? memdup_objects( numBufferBarriers, buffers, buffers_buf, ARRAY_SIZE(buffers_buf) ) : NULL;
     args.buffers = numBufferBarriers > 0 ? map_context_objects( OBJ_TYPE_BUFFER, numBufferBarriers, buffers_tmp ) : NULL;
     textures_tmp = numTextureBarriers > 0 ? memdup_objects( numTextureBarriers, textures, textures_buf, ARRAY_SIZE(textures_buf) ) : NULL;
@@ -25008,10 +25049,14 @@ static void WINAPI glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarrier
 
 static void WINAPI glWaitSemaphoreui64NVX( GLuint waitGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
 {
-    struct glWaitSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .waitGpu = waitGpu, .fenceObjectCount = fenceObjectCount, .semaphoreArray = semaphoreArray, .fenceValueArray = fenceValueArray };
+    GLuint semaphoreArray_buf[64], *semaphoreArray_tmp;
+    struct glWaitSemaphoreui64NVX_params args = { .teb = NtCurrentTeb(), .waitGpu = waitGpu, .fenceObjectCount = fenceObjectCount, .fenceValueArray = fenceValueArray };
     NTSTATUS status;
     TRACE( "waitGpu %d, fenceObjectCount %d, semaphoreArray %p, fenceValueArray %p\n", waitGpu, fenceObjectCount, semaphoreArray, fenceValueArray );
+    semaphoreArray_tmp = fenceObjectCount > 0 ? memdup_objects( fenceObjectCount, semaphoreArray, semaphoreArray_buf, ARRAY_SIZE(semaphoreArray_buf) ) : NULL;
+    args.semaphoreArray = fenceObjectCount > 0 ? map_context_objects( OBJ_TYPE_SEMAPHORE, fenceObjectCount, semaphoreArray_tmp ) : NULL;
     if ((status = UNIX_CALL( glWaitSemaphoreui64NVX, &args ))) WARN( "glWaitSemaphoreui64NVX returned %#lx\n", status );
+    if (semaphoreArray_tmp != semaphoreArray_buf) free( semaphoreArray_tmp );
 }
 
 static void WINAPI glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
