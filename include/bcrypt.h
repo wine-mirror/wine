@@ -130,6 +130,7 @@ extern "C" {
 #define BCRYPT_ECC_CURVE_NAME             L"ECCCurveName"
 #define BCRYPT_ECC_CURVE_25519            L"curve25519"
 #define BCRYPT_ECC_CURVE_BRAINPOOLP256R1  L"brainpoolP256r1"
+#define BCRYPT_ECC_CURVE_BRAINPOOLP384R1  L"brainpoolP384r1"
 #define BCRYPT_ECC_CURVE_SECP256R1        L"secP256r1"
 #define BCRYPT_ECC_CURVE_SECP384R1        L"secP384r1"
 #define BCRYPT_ECC_CURVE_SECP521R1        L"secP521r1"
@@ -225,6 +226,7 @@ static const WCHAR BCRYPT_CHAIN_MODE_GCM[] = {'C','h','a','i','n','i','n','g','M
 static const WCHAR BCRYPT_ECC_CURVE_NAME[] = {'E','C','C','C','u','r','v','e','N','a','m','e',0};
 static const WCHAR BCRYPT_ECC_CURVE_25519[] = {'c','u','r','v','e','2','5','5','1','9',0};
 static const WCHAR BCRYPT_ECC_CURVE_BRAINPOOLP256R1[] = {'b','r','a','i','n','p','o','o','l','P','2','5','6','r','1',0};
+static const WCHAR BCRYPT_ECC_CURVE_BRAINPOOLP384R1[] = {'b','r','a','i','n','p','o','o','l','P','3','8','4','r','1',0};
 static const WCHAR BCRYPT_ECC_CURVE_SECP256R1[] = {'s','e','c','P','2','5','6','r','1',0};
 static const WCHAR BCRYPT_ECC_CURVE_SECP384R1[] = {'s','e','c','P','3','8','4','r','1',0};
 static const WCHAR BCRYPT_ECC_CURVE_SECP521R1[] = {'s','e','c','P','5','2','1','r','1',0};

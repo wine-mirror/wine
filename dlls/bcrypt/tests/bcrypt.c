@@ -2256,6 +2256,9 @@ static BYTE cert521Signature[] =
 
 static void test_ECDSA(void)
 {
+    static UCHAR hash[] =
+        {0x7e, 0xe3, 0x74, 0xe7, 0xc5, 0x0b, 0x6b, 0x70, 0xdb, 0xab, 0x32, 0x6d, 0x1d, 0x51, 0xd6,
+         0x74, 0x79, 0x8e, 0x5b, 0x4b};
     BYTE buffer[sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(ecc521Privkey)];
     BCRYPT_ECCKEY_BLOB *ecckey = (void *)buffer;
     BCRYPT_ALG_HANDLE alg;
@@ -2263,6 +2266,7 @@ static void test_ECDSA(void)
     NTSTATUS status;
     DWORD keylen;
     ULONG size, strength;
+    UCHAR sig[64];
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
     ok(!status, "got %#lx\n", status);
@@ -2462,6 +2466,35 @@ static void test_ECDSA(void)
 
     status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_25519, sizeof(BCRYPT_ECC_CURVE_25519), 0);
     ok(status == STATUS_NOT_SUPPORTED, "got %#lx\n", status);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    /* Brainpool curve */
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_ALGORITHM, NULL, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_BRAINPOOLP256R1,
+                               sizeof(BCRYPT_ECC_CURVE_BRAINPOOLP256R1), 0 );
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    strength = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&strength, sizeof(strength), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(strength == 256, "got %lu\n", strength);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    size = 0;
+    status = BCryptSignHash(key, NULL, hash, sizeof(hash), sig, sizeof(sig), &size, 0);
+    ok (status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok (size == 64, "got %lu\n", size);
+
+    status = BCryptVerifySignature(key, NULL, hash, sizeof(hash), sig, size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    BCryptDestroyKey(key);
     BCryptCloseAlgorithmProvider(alg, 0);
 }
 
@@ -3597,6 +3630,20 @@ static void test_ECDH(void)
 
     free( buf );
     BCryptDestroyKey(key2);
+    BCryptDestroyKey(key);
+    BCryptCloseAlgorithmProvider(alg, 0);
+
+    /* Brainpool curve */
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_ALGORITHM, NULL, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_BRAINPOOLP256R1,
+                               sizeof(BCRYPT_ECC_CURVE_BRAINPOOLP256R1), 0 );
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
     BCryptDestroyKey(key);
     BCryptCloseAlgorithmProvider(alg, 0);
 }
