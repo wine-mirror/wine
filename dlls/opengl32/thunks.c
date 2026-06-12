@@ -3266,9 +3266,11 @@ static void WINAPI glBindFragDataLocationIndexed( GLuint program, GLuint colorNu
 
 static void WINAPI glBindFragmentShaderATI( GLuint id )
 {
-    struct glBindFragmentShaderATI_params args = { .teb = NtCurrentTeb(), .id = id };
+    struct glBindFragmentShaderATI_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "id %d\n", id );
+    if (!alloc_context_objects( OBJ_TYPE_SHADER_ATI, 1, &id, TRUE )) return;
+    args.id = *map_context_objects( OBJ_TYPE_SHADER_ATI, 1, &id );
     if ((status = UNIX_CALL( glBindFragmentShaderATI, &args ))) WARN( "glBindFragmentShaderATI returned %#lx\n", status );
 }
 
@@ -5850,9 +5852,10 @@ static void WINAPI glDeleteFencesNV( GLsizei n, const GLuint *fences )
 
 static void WINAPI glDeleteFragmentShaderATI( GLuint id )
 {
-    struct glDeleteFragmentShaderATI_params args = { .teb = NtCurrentTeb(), .id = id };
+    struct glDeleteFragmentShaderATI_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "id %d\n", id );
+    args.id = *del_context_objects( OBJ_TYPE_SHADER_ATI, 1, &id );
     if ((status = UNIX_CALL( glDeleteFragmentShaderATI, &args ))) WARN( "glDeleteFragmentShaderATI returned %#lx\n", status );
 }
 
@@ -7766,6 +7769,7 @@ static GLuint WINAPI glGenFragmentShadersATI( GLuint range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenFragmentShadersATI, &args ))) WARN( "glGenFragmentShadersATI returned %#lx\n", status );
+    args.ret = put_context_object_range( OBJ_TYPE_SHADER_ATI, range, args.ret );
     return args.ret;
 }
 

@@ -111,6 +111,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_PROGRAM: return "program";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
     case OBJ_TYPE_SAMPLER: return "sampler";
+    case OBJ_TYPE_SHADER_ATI: return "fragment shader";
     case OBJ_TYPE_SHADER_EXT: return "vertex shader";
     case OBJ_TYPE_TEXTURE: return "texture";
     case OBJ_TYPE_COUNT: break;
@@ -398,6 +399,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glGenProgramsARB, .n = 1, .programs = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
     case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
+    case OBJ_TYPE_SHADER_ATI: { MAKE_OBJECT_CALL( glGenFragmentShadersATI, .range = 1 ); return args.ret; }
     case OBJ_TYPE_SHADER_EXT: { MAKE_OBJECT_CALL( glGenVertexShadersEXT, .range = 1 ); return args.ret; }
     case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
     case OBJ_TYPE_COUNT: break;
@@ -610,6 +612,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     case OBJ_TYPE_RENDERBUFFER:
     case OBJ_TYPE_PROGRAM:
     case OBJ_TYPE_SHADER_EXT:
+    case OBJ_TYPE_SHADER_ATI:
         alloc_client = extension;
         break;
     case OBJ_TYPE_SAMPLER:
