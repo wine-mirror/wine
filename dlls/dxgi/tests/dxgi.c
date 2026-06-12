@@ -7107,7 +7107,10 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
             }
             ok(mode_idx < mode_count, "Failed to find a different mode than %ux%u.\n", width, height);
             if (mode_idx >= mode_count)
+            {
+                winetest_pop_context();
                 continue;
+            }
 
             ret = ClipCursor(NULL);
             ok(ret, "ClipCursor failed, error %#lx.\n", GetLastError());
@@ -8248,6 +8251,7 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     if (!(device = create_d3d12_device()))
     {
         skip("Failed to create Direct3D 12 device.\n");
+        winetest_pop_context();
         return;
     }
 
