@@ -108,6 +108,7 @@ static const char *debugstr_object_type( enum object_type type )
     case OBJ_TYPE_BUFFER: return "buffer";
     case OBJ_TYPE_DISPLAY_LIST: return "display list";
     case OBJ_TYPE_FRAMEBUFFER: return "framebuffer";
+    case OBJ_TYPE_PROGRAM: return "program";
     case OBJ_TYPE_RENDERBUFFER: return "renderbuffer";
     case OBJ_TYPE_SAMPLER: return "sampler";
     case OBJ_TYPE_TEXTURE: return "texture";
@@ -393,6 +394,7 @@ static GLuint create_object( enum object_type type )
     case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glGenBuffers, .n = 1, .buffers = &object ); return object; }
     case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glGenLists, .range = 1 ); return args.ret; }
     case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glGenFramebuffers, .n = 1, .framebuffers = &object ); return object; }
+    case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glGenProgramsARB, .n = 1, .programs = &object ); return object; }
     case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glGenRenderbuffers, .n = 1, .renderbuffers = &object ); return object; }
     case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glGenSamplers, .count = 1, .samplers = &object ); return object; }
     case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glGenTextures, .n = 1, .textures = &object ); return object; }
@@ -604,6 +606,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
         break;
     case OBJ_TYPE_FRAMEBUFFER:
     case OBJ_TYPE_RENDERBUFFER:
+    case OBJ_TYPE_PROGRAM:
         alloc_client = extension;
         break;
     case OBJ_TYPE_SAMPLER:
@@ -723,6 +726,10 @@ static GLuint get_pname_object_type( GLenum pname )
         return OBJ_TYPE_SAMPLER;
     case GL_LIST_INDEX:
         return OBJ_TYPE_DISPLAY_LIST;
+    case GL_PROGRAM_BINDING_ARB:
+    case GL_VERTEX_PROGRAM_BINDING_NV:
+    case GL_FRAGMENT_PROGRAM_BINDING_NV:
+        return OBJ_TYPE_PROGRAM;
     }
 
     return OBJ_TYPE_COUNT;

@@ -2891,10 +2891,14 @@ static void WINAPI glApplyTextureEXT( GLenum mode )
 
 static GLboolean WINAPI glAreProgramsResidentNV( GLsizei n, const GLuint *programs, GLboolean *residences )
 {
-    struct glAreProgramsResidentNV_params args = { .teb = NtCurrentTeb(), .n = n, .programs = programs, .residences = residences };
+    GLuint programs_buf[64], *programs_tmp;
+    struct glAreProgramsResidentNV_params args = { .teb = NtCurrentTeb(), .n = n, .residences = residences };
     NTSTATUS status;
     TRACE( "n %d, programs %p, residences %p\n", n, programs, residences );
+    programs_tmp = n > 0 ? memdup_objects( n, programs, programs_buf, ARRAY_SIZE(programs_buf) ) : NULL;
+    args.programs = n > 0 ? map_context_objects( OBJ_TYPE_PROGRAM, n, programs_tmp ) : NULL;
     if ((status = UNIX_CALL( glAreProgramsResidentNV, &args ))) WARN( "glAreProgramsResidentNV returned %#lx\n", status );
+    if (programs_tmp != programs_buf) free( programs_tmp );
     return args.ret;
 }
 
@@ -3357,17 +3361,21 @@ static GLuint WINAPI glBindParameterEXT( GLenum value )
 
 static void WINAPI glBindProgramARB( GLenum target, GLuint program )
 {
-    struct glBindProgramARB_params args = { .teb = NtCurrentTeb(), .target = target, .program = program };
+    struct glBindProgramARB_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, program %d\n", target, program );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glBindProgramARB, &args ))) WARN( "glBindProgramARB returned %#lx\n", status );
 }
 
 static void WINAPI glBindProgramNV( GLenum target, GLuint id )
 {
-    struct glBindProgramNV_params args = { .teb = NtCurrentTeb(), .target = target, .id = id };
+    struct glBindProgramNV_params args = { .teb = NtCurrentTeb(), .target = target };
     NTSTATUS status;
     TRACE( "target %d, id %d\n", target, id );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &id, TRUE )) return;
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glBindProgramNV, &args ))) WARN( "glBindProgramNV returned %#lx\n", status );
 }
 
@@ -5961,18 +5969,26 @@ static void WINAPI glDeleteProgramPipelines( GLsizei n, const GLuint *pipelines 
 
 static void WINAPI glDeleteProgramsARB( GLsizei n, const GLuint *programs )
 {
-    struct glDeleteProgramsARB_params args = { .teb = NtCurrentTeb(), .n = n, .programs = programs };
+    GLuint programs_buf[64], *programs_tmp;
+    struct glDeleteProgramsARB_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, programs %p\n", n, programs );
+    programs_tmp = n > 0 ? memdup_objects( n, programs, programs_buf, ARRAY_SIZE(programs_buf) ) : NULL;
+    args.programs = n > 0 ? del_context_objects( OBJ_TYPE_PROGRAM, n, programs_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteProgramsARB, &args ))) WARN( "glDeleteProgramsARB returned %#lx\n", status );
+    if (programs_tmp != programs_buf) free( programs_tmp );
 }
 
 static void WINAPI glDeleteProgramsNV( GLsizei n, const GLuint *programs )
 {
-    struct glDeleteProgramsNV_params args = { .teb = NtCurrentTeb(), .n = n, .programs = programs };
+    GLuint programs_buf[64], *programs_tmp;
+    struct glDeleteProgramsNV_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, programs %p\n", n, programs );
+    programs_tmp = n > 0 ? memdup_objects( n, programs, programs_buf, ARRAY_SIZE(programs_buf) ) : NULL;
+    args.programs = n > 0 ? del_context_objects( OBJ_TYPE_PROGRAM, n, programs_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteProgramsNV, &args ))) WARN( "glDeleteProgramsNV returned %#lx\n", status );
+    if (programs_tmp != programs_buf) free( programs_tmp );
 }
 
 static void WINAPI glDeleteQueries( GLsizei n, const GLuint *ids )
@@ -7815,6 +7831,7 @@ static void WINAPI glGenProgramsARB( GLsizei n, GLuint *programs )
     NTSTATUS status;
     TRACE( "n %d, programs %p\n", n, programs );
     if ((status = UNIX_CALL( glGenProgramsARB, &args ))) WARN( "glGenProgramsARB returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_PROGRAM, n, programs );
 }
 
 static void WINAPI glGenProgramsNV( GLsizei n, GLuint *programs )
@@ -7823,6 +7840,7 @@ static void WINAPI glGenProgramsNV( GLsizei n, GLuint *programs )
     NTSTATUS status;
     TRACE( "n %d, programs %p\n", n, programs );
     if ((status = UNIX_CALL( glGenProgramsNV, &args ))) WARN( "glGenProgramsNV returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_PROGRAM, n, programs );
 }
 
 static void WINAPI glGenQueries( GLsizei n, GLuint *ids )
@@ -9400,49 +9418,61 @@ static void WINAPI glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLen
 
 static void WINAPI glGetNamedProgramLocalParameterIivEXT( GLuint program, GLenum target, GLuint index, GLint *params )
 {
-    struct glGetNamedProgramLocalParameterIivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glGetNamedProgramLocalParameterIivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramLocalParameterIivEXT, &args ))) WARN( "glGetNamedProgramLocalParameterIivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedProgramLocalParameterIuivEXT( GLuint program, GLenum target, GLuint index, GLuint *params )
 {
-    struct glGetNamedProgramLocalParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glGetNamedProgramLocalParameterIuivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramLocalParameterIuivEXT, &args ))) WARN( "glGetNamedProgramLocalParameterIuivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedProgramLocalParameterdvEXT( GLuint program, GLenum target, GLuint index, GLdouble *params )
 {
-    struct glGetNamedProgramLocalParameterdvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glGetNamedProgramLocalParameterdvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramLocalParameterdvEXT, &args ))) WARN( "glGetNamedProgramLocalParameterdvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedProgramLocalParameterfvEXT( GLuint program, GLenum target, GLuint index, GLfloat *params )
 {
-    struct glGetNamedProgramLocalParameterfvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glGetNamedProgramLocalParameterfvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramLocalParameterfvEXT, &args ))) WARN( "glGetNamedProgramLocalParameterfvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedProgramStringEXT( GLuint program, GLenum target, GLenum pname, void *string )
 {
-    struct glGetNamedProgramStringEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .pname = pname, .string = string };
+    struct glGetNamedProgramStringEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .string = string };
     NTSTATUS status;
     TRACE( "program %d, target %d, pname %d, string %p\n", program, target, pname, string );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramStringEXT, &args ))) WARN( "glGetNamedProgramStringEXT returned %#lx\n", status );
 }
 
 static void WINAPI glGetNamedProgramivEXT( GLuint program, GLenum target, GLenum pname, GLint *params )
 {
-    struct glGetNamedProgramivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .pname = pname, .params = params };
+    struct glGetNamedProgramivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, pname %d, params %p\n", program, target, pname, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glGetNamedProgramivEXT, &args ))) WARN( "glGetNamedProgramivEXT returned %#lx\n", status );
 }
 
@@ -9916,17 +9946,19 @@ static void WINAPI glGetProgramLocalParameterfvARB( GLenum target, GLuint index,
 
 static void WINAPI glGetProgramNamedParameterdvNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble *params )
 {
-    struct glGetProgramNamedParameterdvNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .params = params };
+    struct glGetProgramNamedParameterdvNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .params = params };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, params %p\n", id, len, name, params );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glGetProgramNamedParameterdvNV, &args ))) WARN( "glGetProgramNamedParameterdvNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params )
 {
-    struct glGetProgramNamedParameterfvNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .params = params };
+    struct glGetProgramNamedParameterfvNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .params = params };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, params %p\n", id, len, name, params );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glGetProgramNamedParameterfvNV, &args ))) WARN( "glGetProgramNamedParameterfvNV returned %#lx\n", status );
 }
 
@@ -10033,9 +10065,10 @@ static void WINAPI glGetProgramStringARB( GLenum target, GLenum pname, void *str
 
 static void WINAPI glGetProgramStringNV( GLuint id, GLenum pname, GLubyte *program )
 {
-    struct glGetProgramStringNV_params args = { .teb = NtCurrentTeb(), .id = id, .pname = pname, .program = program };
+    struct glGetProgramStringNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .program = program };
     NTSTATUS status;
     TRACE( "id %d, pname %d, program %p\n", id, pname, program );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glGetProgramStringNV, &args ))) WARN( "glGetProgramStringNV returned %#lx\n", status );
 }
 
@@ -10067,9 +10100,10 @@ static void WINAPI glGetProgramivARB( GLenum target, GLenum pname, GLint *params
 
 static void WINAPI glGetProgramivNV( GLuint id, GLenum pname, GLint *params )
 {
-    struct glGetProgramivNV_params args = { .teb = NtCurrentTeb(), .id = id, .pname = pname, .params = params };
+    struct glGetProgramivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "id %d, pname %d, params %p\n", id, pname, params );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glGetProgramivNV, &args ))) WARN( "glGetProgramivNV returned %#lx\n", status );
 }
 
@@ -12185,18 +12219,20 @@ static GLboolean WINAPI glIsProgram( GLuint program )
 
 static GLboolean WINAPI glIsProgramARB( GLuint program )
 {
-    struct glIsProgramARB_params args = { .teb = NtCurrentTeb(), .program = program };
+    struct glIsProgramARB_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "program %d\n", program );
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glIsProgramARB, &args ))) WARN( "glIsProgramARB returned %#lx\n", status );
     return args.ret;
 }
 
 static GLboolean WINAPI glIsProgramNV( GLuint id )
 {
-    struct glIsProgramNV_params args = { .teb = NtCurrentTeb(), .id = id };
+    struct glIsProgramNV_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "id %d\n", id );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glIsProgramNV, &args ))) WARN( "glIsProgramNV returned %#lx\n", status );
     return args.ret;
 }
@@ -15219,97 +15255,121 @@ static void WINAPI glNamedFramebufferTextureMultiviewOVR( GLuint framebuffer, GL
 
 static void WINAPI glNamedProgramLocalParameter4dEXT( GLuint program, GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
 {
-    struct glNamedProgramLocalParameter4dEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
+    struct glNamedProgramLocalParameter4dEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, x %f, y %f, z %f, w %f\n", program, target, index, x, y, z, w );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameter4dEXT, &args ))) WARN( "glNamedProgramLocalParameter4dEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameter4dvEXT( GLuint program, GLenum target, GLuint index, const GLdouble *params )
 {
-    struct glNamedProgramLocalParameter4dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glNamedProgramLocalParameter4dvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameter4dvEXT, &args ))) WARN( "glNamedProgramLocalParameter4dvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameter4fEXT( GLuint program, GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
-    struct glNamedProgramLocalParameter4fEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
+    struct glNamedProgramLocalParameter4fEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, x %f, y %f, z %f, w %f\n", program, target, index, x, y, z, w );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameter4fEXT, &args ))) WARN( "glNamedProgramLocalParameter4fEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameter4fvEXT( GLuint program, GLenum target, GLuint index, const GLfloat *params )
 {
-    struct glNamedProgramLocalParameter4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glNamedProgramLocalParameter4fvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameter4fvEXT, &args ))) WARN( "glNamedProgramLocalParameter4fvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameterI4iEXT( GLuint program, GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w )
 {
-    struct glNamedProgramLocalParameterI4iEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
+    struct glNamedProgramLocalParameterI4iEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, x %d, y %d, z %d, w %d\n", program, target, index, x, y, z, w );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameterI4iEXT, &args ))) WARN( "glNamedProgramLocalParameterI4iEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameterI4ivEXT( GLuint program, GLenum target, GLuint index, const GLint *params )
 {
-    struct glNamedProgramLocalParameterI4ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glNamedProgramLocalParameterI4ivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameterI4ivEXT, &args ))) WARN( "glNamedProgramLocalParameterI4ivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameterI4uiEXT( GLuint program, GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
 {
-    struct glNamedProgramLocalParameterI4uiEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
+    struct glNamedProgramLocalParameterI4uiEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, x %d, y %d, z %d, w %d\n", program, target, index, x, y, z, w );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameterI4uiEXT, &args ))) WARN( "glNamedProgramLocalParameterI4uiEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameterI4uivEXT( GLuint program, GLenum target, GLuint index, const GLuint *params )
 {
-    struct glNamedProgramLocalParameterI4uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .params = params };
+    struct glNamedProgramLocalParameterI4uivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, params %p\n", program, target, index, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameterI4uivEXT, &args ))) WARN( "glNamedProgramLocalParameterI4uivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameters4fvEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLfloat *params )
 {
-    struct glNamedProgramLocalParameters4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .count = count, .params = params };
+    struct glNamedProgramLocalParameters4fvEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .count = count, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, count %d, params %p\n", program, target, index, count, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParameters4fvEXT, &args ))) WARN( "glNamedProgramLocalParameters4fvEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParametersI4ivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLint *params )
 {
-    struct glNamedProgramLocalParametersI4ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .count = count, .params = params };
+    struct glNamedProgramLocalParametersI4ivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .count = count, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, count %d, params %p\n", program, target, index, count, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParametersI4ivEXT, &args ))) WARN( "glNamedProgramLocalParametersI4ivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParametersI4uivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLuint *params )
 {
-    struct glNamedProgramLocalParametersI4uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .index = index, .count = count, .params = params };
+    struct glNamedProgramLocalParametersI4uivEXT_params args = { .teb = NtCurrentTeb(), .target = target, .index = index, .count = count, .params = params };
     NTSTATUS status;
     TRACE( "program %d, target %d, index %d, count %d, params %p\n", program, target, index, count, params );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramLocalParametersI4uivEXT, &args ))) WARN( "glNamedProgramLocalParametersI4uivEXT returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramStringEXT( GLuint program, GLenum target, GLenum format, GLsizei len, const void *string )
 {
-    struct glNamedProgramStringEXT_params args = { .teb = NtCurrentTeb(), .program = program, .target = target, .format = format, .len = len, .string = string };
+    struct glNamedProgramStringEXT_params args = { .teb = NtCurrentTeb(), .target = target, .format = format, .len = len, .string = string };
     NTSTATUS status;
     TRACE( "program %d, target %d, format %d, len %d, string %p\n", program, target, format, len, string );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glNamedProgramStringEXT, &args ))) WARN( "glNamedProgramStringEXT returned %#lx\n", status );
 }
 
@@ -16502,33 +16562,37 @@ static void WINAPI glProgramLocalParametersI4uivNV( GLenum target, GLuint index,
 
 static void WINAPI glProgramNamedParameter4dNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
 {
-    struct glProgramNamedParameter4dNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .x = x, .y = y, .z = z, .w = w };
+    struct glProgramNamedParameter4dNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, x %f, y %f, z %f, w %f\n", id, len, name, x, y, z, w );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glProgramNamedParameter4dNV, &args ))) WARN( "glProgramNamedParameter4dNV returned %#lx\n", status );
 }
 
 static void WINAPI glProgramNamedParameter4dvNV( GLuint id, GLsizei len, const GLubyte *name, const GLdouble *v )
 {
-    struct glProgramNamedParameter4dvNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .v = v };
+    struct glProgramNamedParameter4dvNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .v = v };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, v %p\n", id, len, name, v );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glProgramNamedParameter4dvNV, &args ))) WARN( "glProgramNamedParameter4dvNV returned %#lx\n", status );
 }
 
 static void WINAPI glProgramNamedParameter4fNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
-    struct glProgramNamedParameter4fNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .x = x, .y = y, .z = z, .w = w };
+    struct glProgramNamedParameter4fNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, x %f, y %f, z %f, w %f\n", id, len, name, x, y, z, w );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glProgramNamedParameter4fNV, &args ))) WARN( "glProgramNamedParameter4fNV returned %#lx\n", status );
 }
 
 static void WINAPI glProgramNamedParameter4fvNV( GLuint id, GLsizei len, const GLubyte *name, const GLfloat *v )
 {
-    struct glProgramNamedParameter4fvNV_params args = { .teb = NtCurrentTeb(), .id = id, .len = len, .name = name, .v = v };
+    struct glProgramNamedParameter4fvNV_params args = { .teb = NtCurrentTeb(), .len = len, .name = name, .v = v };
     NTSTATUS status;
     TRACE( "id %d, len %d, name %p, v %p\n", id, len, name, v );
+    args.id = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &id );
     if ((status = UNIX_CALL( glProgramNamedParameter4fvNV, &args ))) WARN( "glProgramNamedParameter4fvNV returned %#lx\n", status );
 }
 
@@ -16638,9 +16702,11 @@ static void WINAPI glProgramUniform1d( GLuint program, GLint location, GLdouble 
 
 static void WINAPI glProgramUniform1dEXT( GLuint program, GLint location, GLdouble x )
 {
-    struct glProgramUniform1dEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .x = x };
+    struct glProgramUniform1dEXT_params args = { .teb = NtCurrentTeb(), .location = location, .x = x };
     NTSTATUS status;
     TRACE( "program %d, location %d, x %f\n", program, location, x );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1dEXT, &args ))) WARN( "glProgramUniform1dEXT returned %#lx\n", status );
 }
 
@@ -16654,9 +16720,11 @@ static void WINAPI glProgramUniform1dv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform1dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
 {
-    struct glProgramUniform1dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform1dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1dvEXT, &args ))) WARN( "glProgramUniform1dvEXT returned %#lx\n", status );
 }
 
@@ -16670,9 +16738,11 @@ static void WINAPI glProgramUniform1f( GLuint program, GLint location, GLfloat v
 
 static void WINAPI glProgramUniform1fEXT( GLuint program, GLint location, GLfloat v0 )
 {
-    struct glProgramUniform1fEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0 };
+    struct glProgramUniform1fEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %f\n", program, location, v0 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1fEXT, &args ))) WARN( "glProgramUniform1fEXT returned %#lx\n", status );
 }
 
@@ -16686,9 +16756,11 @@ static void WINAPI glProgramUniform1fv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform1fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
 {
-    struct glProgramUniform1fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform1fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1fvEXT, &args ))) WARN( "glProgramUniform1fvEXT returned %#lx\n", status );
 }
 
@@ -16734,9 +16806,11 @@ static void WINAPI glProgramUniform1i64vNV( GLuint program, GLint location, GLsi
 
 static void WINAPI glProgramUniform1iEXT( GLuint program, GLint location, GLint v0 )
 {
-    struct glProgramUniform1iEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0 };
+    struct glProgramUniform1iEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d\n", program, location, v0 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1iEXT, &args ))) WARN( "glProgramUniform1iEXT returned %#lx\n", status );
 }
 
@@ -16750,9 +16824,11 @@ static void WINAPI glProgramUniform1iv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform1ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
 {
-    struct glProgramUniform1ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform1ivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1ivEXT, &args ))) WARN( "glProgramUniform1ivEXT returned %#lx\n", status );
 }
 
@@ -16798,9 +16874,11 @@ static void WINAPI glProgramUniform1ui64vNV( GLuint program, GLint location, GLs
 
 static void WINAPI glProgramUniform1uiEXT( GLuint program, GLint location, GLuint v0 )
 {
-    struct glProgramUniform1uiEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0 };
+    struct glProgramUniform1uiEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d\n", program, location, v0 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1uiEXT, &args ))) WARN( "glProgramUniform1uiEXT returned %#lx\n", status );
 }
 
@@ -16814,9 +16892,11 @@ static void WINAPI glProgramUniform1uiv( GLuint program, GLint location, GLsizei
 
 static void WINAPI glProgramUniform1uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
 {
-    struct glProgramUniform1uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform1uivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform1uivEXT, &args ))) WARN( "glProgramUniform1uivEXT returned %#lx\n", status );
 }
 
@@ -16830,9 +16910,11 @@ static void WINAPI glProgramUniform2d( GLuint program, GLint location, GLdouble 
 
 static void WINAPI glProgramUniform2dEXT( GLuint program, GLint location, GLdouble x, GLdouble y )
 {
-    struct glProgramUniform2dEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .x = x, .y = y };
+    struct glProgramUniform2dEXT_params args = { .teb = NtCurrentTeb(), .location = location, .x = x, .y = y };
     NTSTATUS status;
     TRACE( "program %d, location %d, x %f, y %f\n", program, location, x, y );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2dEXT, &args ))) WARN( "glProgramUniform2dEXT returned %#lx\n", status );
 }
 
@@ -16846,9 +16928,11 @@ static void WINAPI glProgramUniform2dv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform2dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
 {
-    struct glProgramUniform2dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform2dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2dvEXT, &args ))) WARN( "glProgramUniform2dvEXT returned %#lx\n", status );
 }
 
@@ -16862,9 +16946,11 @@ static void WINAPI glProgramUniform2f( GLuint program, GLint location, GLfloat v
 
 static void WINAPI glProgramUniform2fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1 )
 {
-    struct glProgramUniform2fEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1 };
+    struct glProgramUniform2fEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %f, v1 %f\n", program, location, v0, v1 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2fEXT, &args ))) WARN( "glProgramUniform2fEXT returned %#lx\n", status );
 }
 
@@ -16878,9 +16964,11 @@ static void WINAPI glProgramUniform2fv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform2fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
 {
-    struct glProgramUniform2fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform2fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2fvEXT, &args ))) WARN( "glProgramUniform2fvEXT returned %#lx\n", status );
 }
 
@@ -16926,9 +17014,11 @@ static void WINAPI glProgramUniform2i64vNV( GLuint program, GLint location, GLsi
 
 static void WINAPI glProgramUniform2iEXT( GLuint program, GLint location, GLint v0, GLint v1 )
 {
-    struct glProgramUniform2iEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1 };
+    struct glProgramUniform2iEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d\n", program, location, v0, v1 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2iEXT, &args ))) WARN( "glProgramUniform2iEXT returned %#lx\n", status );
 }
 
@@ -16942,9 +17032,11 @@ static void WINAPI glProgramUniform2iv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform2ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
 {
-    struct glProgramUniform2ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform2ivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2ivEXT, &args ))) WARN( "glProgramUniform2ivEXT returned %#lx\n", status );
 }
 
@@ -16990,9 +17082,11 @@ static void WINAPI glProgramUniform2ui64vNV( GLuint program, GLint location, GLs
 
 static void WINAPI glProgramUniform2uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1 )
 {
-    struct glProgramUniform2uiEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1 };
+    struct glProgramUniform2uiEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d\n", program, location, v0, v1 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2uiEXT, &args ))) WARN( "glProgramUniform2uiEXT returned %#lx\n", status );
 }
 
@@ -17006,9 +17100,11 @@ static void WINAPI glProgramUniform2uiv( GLuint program, GLint location, GLsizei
 
 static void WINAPI glProgramUniform2uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
 {
-    struct glProgramUniform2uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform2uivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform2uivEXT, &args ))) WARN( "glProgramUniform2uivEXT returned %#lx\n", status );
 }
 
@@ -17022,9 +17118,11 @@ static void WINAPI glProgramUniform3d( GLuint program, GLint location, GLdouble 
 
 static void WINAPI glProgramUniform3dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z )
 {
-    struct glProgramUniform3dEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .x = x, .y = y, .z = z };
+    struct glProgramUniform3dEXT_params args = { .teb = NtCurrentTeb(), .location = location, .x = x, .y = y, .z = z };
     NTSTATUS status;
     TRACE( "program %d, location %d, x %f, y %f, z %f\n", program, location, x, y, z );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3dEXT, &args ))) WARN( "glProgramUniform3dEXT returned %#lx\n", status );
 }
 
@@ -17038,9 +17136,11 @@ static void WINAPI glProgramUniform3dv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform3dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
 {
-    struct glProgramUniform3dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform3dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3dvEXT, &args ))) WARN( "glProgramUniform3dvEXT returned %#lx\n", status );
 }
 
@@ -17054,9 +17154,11 @@ static void WINAPI glProgramUniform3f( GLuint program, GLint location, GLfloat v
 
 static void WINAPI glProgramUniform3fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2 )
 {
-    struct glProgramUniform3fEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
+    struct glProgramUniform3fEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %f, v1 %f, v2 %f\n", program, location, v0, v1, v2 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3fEXT, &args ))) WARN( "glProgramUniform3fEXT returned %#lx\n", status );
 }
 
@@ -17070,9 +17172,11 @@ static void WINAPI glProgramUniform3fv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform3fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
 {
-    struct glProgramUniform3fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform3fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3fvEXT, &args ))) WARN( "glProgramUniform3fvEXT returned %#lx\n", status );
 }
 
@@ -17118,9 +17222,11 @@ static void WINAPI glProgramUniform3i64vNV( GLuint program, GLint location, GLsi
 
 static void WINAPI glProgramUniform3iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 )
 {
-    struct glProgramUniform3iEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
+    struct glProgramUniform3iEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d, v2 %d\n", program, location, v0, v1, v2 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3iEXT, &args ))) WARN( "glProgramUniform3iEXT returned %#lx\n", status );
 }
 
@@ -17134,9 +17240,11 @@ static void WINAPI glProgramUniform3iv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform3ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
 {
-    struct glProgramUniform3ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform3ivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3ivEXT, &args ))) WARN( "glProgramUniform3ivEXT returned %#lx\n", status );
 }
 
@@ -17182,9 +17290,11 @@ static void WINAPI glProgramUniform3ui64vNV( GLuint program, GLint location, GLs
 
 static void WINAPI glProgramUniform3uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 )
 {
-    struct glProgramUniform3uiEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
+    struct glProgramUniform3uiEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d, v2 %d\n", program, location, v0, v1, v2 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3uiEXT, &args ))) WARN( "glProgramUniform3uiEXT returned %#lx\n", status );
 }
 
@@ -17198,9 +17308,11 @@ static void WINAPI glProgramUniform3uiv( GLuint program, GLint location, GLsizei
 
 static void WINAPI glProgramUniform3uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
 {
-    struct glProgramUniform3uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform3uivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform3uivEXT, &args ))) WARN( "glProgramUniform3uivEXT returned %#lx\n", status );
 }
 
@@ -17214,9 +17326,11 @@ static void WINAPI glProgramUniform4d( GLuint program, GLint location, GLdouble 
 
 static void WINAPI glProgramUniform4dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
 {
-    struct glProgramUniform4dEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .x = x, .y = y, .z = z, .w = w };
+    struct glProgramUniform4dEXT_params args = { .teb = NtCurrentTeb(), .location = location, .x = x, .y = y, .z = z, .w = w };
     NTSTATUS status;
     TRACE( "program %d, location %d, x %f, y %f, z %f, w %f\n", program, location, x, y, z, w );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4dEXT, &args ))) WARN( "glProgramUniform4dEXT returned %#lx\n", status );
 }
 
@@ -17230,9 +17344,11 @@ static void WINAPI glProgramUniform4dv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform4dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
 {
-    struct glProgramUniform4dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform4dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4dvEXT, &args ))) WARN( "glProgramUniform4dvEXT returned %#lx\n", status );
 }
 
@@ -17246,9 +17362,11 @@ static void WINAPI glProgramUniform4f( GLuint program, GLint location, GLfloat v
 
 static void WINAPI glProgramUniform4fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
 {
-    struct glProgramUniform4fEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
+    struct glProgramUniform4fEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %f, v1 %f, v2 %f, v3 %f\n", program, location, v0, v1, v2, v3 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4fEXT, &args ))) WARN( "glProgramUniform4fEXT returned %#lx\n", status );
 }
 
@@ -17262,9 +17380,11 @@ static void WINAPI glProgramUniform4fv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform4fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
 {
-    struct glProgramUniform4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform4fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4fvEXT, &args ))) WARN( "glProgramUniform4fvEXT returned %#lx\n", status );
 }
 
@@ -17310,9 +17430,11 @@ static void WINAPI glProgramUniform4i64vNV( GLuint program, GLint location, GLsi
 
 static void WINAPI glProgramUniform4iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 )
 {
-    struct glProgramUniform4iEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
+    struct glProgramUniform4iEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d, v2 %d, v3 %d\n", program, location, v0, v1, v2, v3 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4iEXT, &args ))) WARN( "glProgramUniform4iEXT returned %#lx\n", status );
 }
 
@@ -17326,9 +17448,11 @@ static void WINAPI glProgramUniform4iv( GLuint program, GLint location, GLsizei 
 
 static void WINAPI glProgramUniform4ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
 {
-    struct glProgramUniform4ivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform4ivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4ivEXT, &args ))) WARN( "glProgramUniform4ivEXT returned %#lx\n", status );
 }
 
@@ -17374,9 +17498,11 @@ static void WINAPI glProgramUniform4ui64vNV( GLuint program, GLint location, GLs
 
 static void WINAPI glProgramUniform4uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 )
 {
-    struct glProgramUniform4uiEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
+    struct glProgramUniform4uiEXT_params args = { .teb = NtCurrentTeb(), .location = location, .v0 = v0, .v1 = v1, .v2 = v2, .v3 = v3 };
     NTSTATUS status;
     TRACE( "program %d, location %d, v0 %d, v1 %d, v2 %d, v3 %d\n", program, location, v0, v1, v2, v3 );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4uiEXT, &args ))) WARN( "glProgramUniform4uiEXT returned %#lx\n", status );
 }
 
@@ -17390,9 +17516,11 @@ static void WINAPI glProgramUniform4uiv( GLuint program, GLint location, GLsizei
 
 static void WINAPI glProgramUniform4uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
 {
-    struct glProgramUniform4uivEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .value = value };
+    struct glProgramUniform4uivEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, value %p\n", program, location, count, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniform4uivEXT, &args ))) WARN( "glProgramUniform4uivEXT returned %#lx\n", status );
 }
 
@@ -17438,9 +17566,11 @@ static void WINAPI glProgramUniformMatrix2dv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix2dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2dvEXT, &args ))) WARN( "glProgramUniformMatrix2dvEXT returned %#lx\n", status );
 }
 
@@ -17454,9 +17584,11 @@ static void WINAPI glProgramUniformMatrix2fv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix2fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2fvEXT, &args ))) WARN( "glProgramUniformMatrix2fvEXT returned %#lx\n", status );
 }
 
@@ -17470,9 +17602,11 @@ static void WINAPI glProgramUniformMatrix2x3dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix2x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix2x3dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2x3dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2x3dvEXT, &args ))) WARN( "glProgramUniformMatrix2x3dvEXT returned %#lx\n", status );
 }
 
@@ -17486,9 +17620,11 @@ static void WINAPI glProgramUniformMatrix2x3fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix2x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix2x3fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2x3fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2x3fvEXT, &args ))) WARN( "glProgramUniformMatrix2x3fvEXT returned %#lx\n", status );
 }
 
@@ -17502,9 +17638,11 @@ static void WINAPI glProgramUniformMatrix2x4dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix2x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix2x4dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2x4dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2x4dvEXT, &args ))) WARN( "glProgramUniformMatrix2x4dvEXT returned %#lx\n", status );
 }
 
@@ -17518,9 +17656,11 @@ static void WINAPI glProgramUniformMatrix2x4fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix2x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix2x4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix2x4fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix2x4fvEXT, &args ))) WARN( "glProgramUniformMatrix2x4fvEXT returned %#lx\n", status );
 }
 
@@ -17534,9 +17674,11 @@ static void WINAPI glProgramUniformMatrix3dv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix3dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3dvEXT, &args ))) WARN( "glProgramUniformMatrix3dvEXT returned %#lx\n", status );
 }
 
@@ -17550,9 +17692,11 @@ static void WINAPI glProgramUniformMatrix3fv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix3fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3fvEXT, &args ))) WARN( "glProgramUniformMatrix3fvEXT returned %#lx\n", status );
 }
 
@@ -17566,9 +17710,11 @@ static void WINAPI glProgramUniformMatrix3x2dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix3x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix3x2dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3x2dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3x2dvEXT, &args ))) WARN( "glProgramUniformMatrix3x2dvEXT returned %#lx\n", status );
 }
 
@@ -17582,9 +17728,11 @@ static void WINAPI glProgramUniformMatrix3x2fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix3x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix3x2fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3x2fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3x2fvEXT, &args ))) WARN( "glProgramUniformMatrix3x2fvEXT returned %#lx\n", status );
 }
 
@@ -17598,9 +17746,11 @@ static void WINAPI glProgramUniformMatrix3x4dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix3x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix3x4dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3x4dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3x4dvEXT, &args ))) WARN( "glProgramUniformMatrix3x4dvEXT returned %#lx\n", status );
 }
 
@@ -17614,9 +17764,11 @@ static void WINAPI glProgramUniformMatrix3x4fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix3x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix3x4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix3x4fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix3x4fvEXT, &args ))) WARN( "glProgramUniformMatrix3x4fvEXT returned %#lx\n", status );
 }
 
@@ -17630,9 +17782,11 @@ static void WINAPI glProgramUniformMatrix4dv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix4dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4dvEXT, &args ))) WARN( "glProgramUniformMatrix4dvEXT returned %#lx\n", status );
 }
 
@@ -17646,9 +17800,11 @@ static void WINAPI glProgramUniformMatrix4fv( GLuint program, GLint location, GL
 
 static void WINAPI glProgramUniformMatrix4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix4fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4fvEXT, &args ))) WARN( "glProgramUniformMatrix4fvEXT returned %#lx\n", status );
 }
 
@@ -17662,9 +17818,11 @@ static void WINAPI glProgramUniformMatrix4x2dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix4x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix4x2dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4x2dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4x2dvEXT, &args ))) WARN( "glProgramUniformMatrix4x2dvEXT returned %#lx\n", status );
 }
 
@@ -17678,9 +17836,11 @@ static void WINAPI glProgramUniformMatrix4x2fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix4x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix4x2fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4x2fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4x2fvEXT, &args ))) WARN( "glProgramUniformMatrix4x2fvEXT returned %#lx\n", status );
 }
 
@@ -17694,9 +17854,11 @@ static void WINAPI glProgramUniformMatrix4x3dv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix4x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
 {
-    struct glProgramUniformMatrix4x3dvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4x3dvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4x3dvEXT, &args ))) WARN( "glProgramUniformMatrix4x3dvEXT returned %#lx\n", status );
 }
 
@@ -17710,9 +17872,11 @@ static void WINAPI glProgramUniformMatrix4x3fv( GLuint program, GLint location, 
 
 static void WINAPI glProgramUniformMatrix4x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
 {
-    struct glProgramUniformMatrix4x3fvEXT_params args = { .teb = NtCurrentTeb(), .program = program, .location = location, .count = count, .transpose = transpose, .value = value };
+    struct glProgramUniformMatrix4x3fvEXT_params args = { .teb = NtCurrentTeb(), .location = location, .count = count, .transpose = transpose, .value = value };
     NTSTATUS status;
     TRACE( "program %d, location %d, count %d, transpose %d, value %p\n", program, location, count, transpose, value );
+    if (!alloc_context_objects( OBJ_TYPE_PROGRAM, 1, &program, TRUE )) return;
+    args.program = *map_context_objects( OBJ_TYPE_PROGRAM, 1, &program );
     if ((status = UNIX_CALL( glProgramUniformMatrix4x3fvEXT, &args ))) WARN( "glProgramUniformMatrix4x3fvEXT returned %#lx\n", status );
 }
 
@@ -18193,10 +18357,14 @@ static void WINAPI glReplacementCodeusvSUN( const GLushort *code )
 
 static void WINAPI glRequestResidentProgramsNV( GLsizei n, const GLuint *programs )
 {
-    struct glRequestResidentProgramsNV_params args = { .teb = NtCurrentTeb(), .n = n, .programs = programs };
+    GLuint programs_buf[64], *programs_tmp;
+    struct glRequestResidentProgramsNV_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, programs %p\n", n, programs );
+    programs_tmp = n > 0 ? memdup_objects( n, programs, programs_buf, ARRAY_SIZE(programs_buf) ) : NULL;
+    args.programs = n > 0 ? map_context_objects( OBJ_TYPE_PROGRAM, n, programs_tmp ) : NULL;
     if ((status = UNIX_CALL( glRequestResidentProgramsNV, &args ))) WARN( "glRequestResidentProgramsNV returned %#lx\n", status );
+    if (programs_tmp != programs_buf) free( programs_tmp );
 }
 
 static void WINAPI glResetHistogram( GLenum target )

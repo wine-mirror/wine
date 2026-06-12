@@ -686,6 +686,12 @@ sub get_object_type($$$$)
 {
     my ($func, $ptype, $pname, $class) = @_;
 
+    $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_ARB_fragment_program" );
+    $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_ARB_vertex_program" );
+    $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_NV_fragment_program" );
+    $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_NV_vertex_program" );
+    $class = "program" if $class eq "program/shader" and has_extension( $func, "GL_EXT_direct_state_access" );
+
     return "srcTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE" if $pname eq "srcName";
     return "dstTarget == GL_RENDERBUFFER ? OBJ_TYPE_RENDERBUFFER : OBJ_TYPE_TEXTURE" if $pname eq "dstName";
 
@@ -695,11 +701,13 @@ sub get_object_type($$$$)
     return "OBJ_TYPE_DISPLAY_LIST"        if $class eq "display list";
     return "OBJ_TYPE_FRAMEBUFFER"         if $class eq "framebuffer";
     return "OBJ_TYPE_FRAMEBUFFER"         if $pname =~ "fbo";
+    return "OBJ_TYPE_PROGRAM"             if $class eq "program";
     return "OBJ_TYPE_RENDERBUFFER"        if $class eq "renderbuffer";
     return "OBJ_TYPE_SAMPLER"             if $class eq "sampler";
     return "OBJ_TYPE_TEXTURE"             if $class eq "texture";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^glVDPAURegister/ and $pname eq "textureNames";
     return "OBJ_TYPE_TEXTURE"             if $func =~ /^gl(LGPU|Multicast|Async|)CopyImageSubData/ and $pname =~ /^(src|dst)Name$/;
+    return 0                              if $class eq "program/shader";
 
     return 0 if $class eq "Color";
     return 0 if $class eq "ColorIndexMask";
@@ -737,6 +745,7 @@ sub get_object_type($$$$)
     print "Missing possible buffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /buffer/;
     print "Missing possible display list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
     print "Missing possible framebuffer: $func $ptype $pname $class\n" if lc( $pname ) =~ /fbo/;
+    print "Missing possible program: $func $ptype $pname $class\n" if lc( $pname ) =~ /program/;
     print "Missing possible sampler: $func $ptype $pname $class\n" if lc( $pname ) =~ /sampler/;
     print "Missing possible texture: $func $ptype $pname $class\n" if lc( $pname ) =~ /texture/;
     print "Missing possible list: $func $ptype $pname $class\n" if lc( $pname ) =~ /list/;
@@ -751,6 +760,7 @@ sub allocate_object_names($)
     return "TRUE" if has_extension( $name, "GL_EXT_direct_state_access" );
     return $ret if $name =~ /^glBindBuffer/;
     return $ret if $name =~ /^glBindFramebuffer/;
+    return $ret if $name =~ /^glBindProgram/;
     return $ret if $name =~ /^glBindRenderbuffer/;
     return $ret if $name =~ /^glBindSampler/;
     return $ret if $name =~ /^glBindTexture/;
@@ -845,6 +855,7 @@ sub generate_win_thunk($$)
     if (my $map_type = get_object_type( $name, $func_ret, "ret", get_arg_class( $func->[0] ) ))
     {
         $post_call .= "    args.ret = put_context_object_range( $map_type, range, args.ret );\n" if $name =~ /^glGen/;
+        $post_call .= "    put_context_objects( $map_type, 1, &args.ret );\n" if $name =~ /^glCreate/;
     }
     $ret .= "    struct $name\_params args = {$params };\n";
     $ret .= "    NTSTATUS status;\n";
@@ -961,6 +972,7 @@ sub get_arg_name($)
 sub get_arg_class($)
 {
     my $p = shift;
+    return "program/shader" if defined $p->{class} and $p->{class} eq "program";
     return $p->{class} || $p->{kind} || "";
 }
 
