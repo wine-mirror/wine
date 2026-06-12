@@ -86,7 +86,7 @@
 @ stdcall UnregisterCMMW(wstr long)
 @ stub WcsAssociateColorProfileWithDevice
 @ stub WcsCheckColors
-@ stub WcsCreateIccProfile
+@ stdcall WcsCreateIccProfile(ptr long)
 @ stub WcsDisassociateColorProfileFromDevice
 @ stub WcsEnumColorProfiles
 @ stdcall WcsEnumColorProfilesSize(long ptr ptr)
