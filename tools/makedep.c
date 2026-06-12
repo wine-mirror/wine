@@ -3588,6 +3588,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     struct strarray cflags = empty_strarray;
 
     if (make->disabled[arch] && !(source->file->flags & FLAG_C_IMPLIB)) return;
+    if (is_subdir_other_arch( source->name, arch )) return;
 
     if (arch)
     {
@@ -3595,7 +3596,6 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         if (!is_multiarch( arch )) return;
         if (!is_using_msvcrt( make ) && !make->staticlib && !(source->file->flags & FLAG_C_IMPLIB)) return;
         if ((source->file->flags & FLAG_C_CXX) && !get_expanded_arch_var( make, "CXX", arch )) return;
-        if ((source->file->flags & FLAG_C_ASM) && is_subdir_other_arch( source->name, arch )) return;
     }
     else if (source->file->flags & FLAG_C_UNIX)
     {
