@@ -3091,7 +3091,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
         basic_string_wchar__Grow(this, this->size-len+count, FALSE);
     ptr = this->ptr;
 
-    memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(char));
+    memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
     MSVCP_char_traits_wchar_assignn(ptr+off, count, ch);
     basic_string_wchar__Eos(this, this->size-len+count);
 
