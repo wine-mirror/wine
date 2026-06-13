@@ -3014,27 +3014,27 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
     ptr = this->ptr;
 
     if(inside_pos == -1) {
-        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(char));
-        memcpy(ptr+off, str, str_len*sizeof(char));
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
+        memcpy(ptr+off, str, str_len*sizeof(wchar_t));
     } else if(len >= str_len) {
-        memmove(ptr+off, ptr+inside_pos, str_len*sizeof(char));
-        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(char));
+        memmove(ptr+off, ptr+inside_pos, str_len*sizeof(wchar_t));
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
     } else {
         size_t size;
 
-        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(char));
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
 
         if(inside_pos < off+len) {
             size = off+len-inside_pos;
             if(size > str_len)
                 size = str_len;
-            memmove(ptr+off, ptr+inside_pos, size*sizeof(char));
+            memmove(ptr+off, ptr+inside_pos, size*sizeof(wchar_t));
         } else {
             size = 0;
         }
 
         if(str_len > size)
-            memmove(ptr+off+size, ptr+off+str_len, (str_len-size)*sizeof(char));
+            memmove(ptr+off+size, ptr+off+str_len, (str_len-size)*sizeof(wchar_t));
     }
 
     if(this->ptr)
