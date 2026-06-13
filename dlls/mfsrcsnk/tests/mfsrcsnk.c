@@ -903,7 +903,7 @@ static void test_mp4_extra_metadata(void)
     hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
     todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* pasp takes precedence */
-    todo_wine ok(value64 == 0xf00000010, "Unexpected aspect ratio: %#I64x.\n", value64);
+    todo_wine ok(value64 == 0xf00000010 || broken(value64 == 0x300000004) /* <= Win10 1809 */, "Unexpected aspect ratio: %#I64x.\n", value64);
     IMFMediaType_Release(media_type);
     IMFMediaTypeHandler_Release(type_handler);
     IMFStreamDescriptor_Release(stream_descriptor);
