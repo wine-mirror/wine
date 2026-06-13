@@ -1430,8 +1430,11 @@ static void test_source_resolver(void)
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, pathW, MF_RESOLUTION_MEDIASOURCE, NULL,
             &obj_type, (IUnknown **)&mediasource);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMFMediaSource_Shutdown(mediasource);
-    IMFMediaSource_Release(mediasource);
+    if (SUCCEEDED(hr))
+    {
+        IMFMediaSource_Shutdown(mediasource);
+        IMFMediaSource_Release(mediasource);
+    }
     IMFByteStream_Release(stream);
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
@@ -1457,8 +1460,11 @@ static void test_source_resolver(void)
             MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE,
             NULL, &obj_type, (IUnknown **)&mediasource);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMFMediaSource_Shutdown(mediasource);
-    IMFMediaSource_Release(mediasource);
+    if (SUCCEEDED(hr))
+    {
+        IMFMediaSource_Shutdown(mediasource);
+        IMFMediaSource_Release(mediasource);
+    }
     IMFByteStream_Release(stream);
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
