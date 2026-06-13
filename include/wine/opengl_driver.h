@@ -189,8 +189,6 @@ struct opengl_drawable_funcs
     void (*flush)( struct opengl_drawable *iface, UINT flags );
     /* swap and present the drawable buffers, called from render thread */
     BOOL (*swap)( struct opengl_drawable *iface );
-    /* drawable is being unset or made current, called from render thread */
-    void (*set_context)( struct opengl_drawable *iface, void *private );
 };
 
 /* flags for opengl_drawable flush */

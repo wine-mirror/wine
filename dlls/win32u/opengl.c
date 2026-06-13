@@ -172,12 +172,6 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
     }
 }
 
-static void opengl_drawable_set_context( struct opengl_drawable *drawable, struct opengl_context *context )
-{
-    if (!drawable->funcs->set_context) return;
-    drawable->funcs->set_context( drawable, context ? context->driver_private : NULL );
-}
-
 static void opengl_drawable_flush( struct opengl_drawable *drawable, int interval, UINT flags )
 {
     if (!is_client_surface_window( drawable->client, 0 )) return;
@@ -224,6 +218,13 @@ static BOOL make_null_context_current(void)
 }
 
 #ifdef SONAME_LIBEGL
+
+static void make_client_context_current(void)
+{
+    struct opengl_context *context;
+    if (!(context = NtCurrentTeb()->glContext)) return;
+    driver_funcs->p_make_current( context->draw, context->read, context->driver_private );
+}
 
 struct framebuffer_surface
 {
@@ -381,13 +382,26 @@ static void destroy_framebuffer( struct opengl_drawable *drawable, const struct 
 
 static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 {
+    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
+    read_desc.samples = read_desc.sample_buffers = 0;
+
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
+
+    make_null_context_current();
+
+    if (drawable->draw_fbo != drawable->read_fbo)
+        destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
+    destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
+
+    make_client_context_current();
 }
 
 static void framebuffer_surface_resize( struct opengl_drawable *drawable )
 {
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
     RECT rect;
+
+    make_null_context_current();
 
     NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
     if (!rect.right) rect.right = 1;
@@ -403,36 +417,8 @@ static void framebuffer_surface_resize( struct opengl_drawable *drawable )
         TRACE( "Resizing drawable %p/%u to %ux%u\n", drawable, drawable->draw_fbo, rect.right, rect.bottom );
         resize_framebuffer( drawable, &draw_desc, drawable->draw_fbo, rect.right, rect.bottom );
     }
-}
 
-static void framebuffer_surface_set_context( struct opengl_drawable *drawable, void *private )
-{
-    struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
-    read_desc.samples = read_desc.sample_buffers = 0;
-
-    TRACE( "%s, private %p\n", debugstr_opengl_drawable( drawable ), private );
-
-    if (!private)
-    {
-        if (drawable->draw_fbo != drawable->read_fbo)
-        {
-            destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
-            drawable->draw_fbo = 0;
-        }
-        destroy_framebuffer( drawable, &read_desc, drawable->read_fbo );
-        drawable->read_fbo = 0;
-    }
-    else
-    {
-        drawable->read_fbo = create_framebuffer( drawable, &read_desc );
-        if (!drawable->read_fbo) ERR( "Failed to create read framebuffer object\n" );
-
-        if (!draw_desc.sample_buffers) drawable->draw_fbo = drawable->read_fbo;
-        else drawable->draw_fbo = create_framebuffer( drawable, &draw_desc );
-        if (!drawable->draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
-
-        framebuffer_surface_resize( drawable );
-    }
+    make_client_context_current();
 }
 
 static void framebuffer_surface_flush( struct opengl_drawable *drawable, UINT flags )
@@ -452,12 +438,13 @@ static const struct opengl_drawable_funcs framebuffer_surface_funcs =
     .destroy = framebuffer_surface_destroy,
     .flush = framebuffer_surface_flush,
     .swap = framebuffer_surface_swap,
-    .set_context = framebuffer_surface_set_context,
 };
 
 static struct opengl_drawable *framebuffer_surface_create( int format, struct client_surface *client )
 {
+    struct wgl_pixel_format draw_desc = pixel_formats[format - 1], read_desc = draw_desc;
     struct framebuffer_surface *surface;
+
     if (!(surface = opengl_drawable_create( sizeof(*surface), &framebuffer_surface_funcs, format, client ))) return NULL;
 
     opengl_drawable_map_buffer( &surface->base, GL_FRONT_LEFT, GL_COLOR_ATTACHMENT0 );
@@ -478,6 +465,19 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
         if (surface->base.doublebuffer) opengl_drawable_map_buffer( &surface->base, GL_BACK_RIGHT, GL_COLOR_ATTACHMENT3 );
     }
 
+    make_null_context_current();
+
+    read_desc.samples = read_desc.sample_buffers = 0;
+    surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc );
+    if (!surface->base.read_fbo) ERR( "Failed to create read framebuffer object\n" );
+
+    if (!draw_desc.sample_buffers) surface->base.draw_fbo = surface->base.read_fbo;
+    else surface->base.draw_fbo = create_framebuffer( &surface->base, &draw_desc );
+    if (!surface->base.draw_fbo) ERR( "Failed to create draw framebuffer object\n" );
+
+    make_client_context_current();
+
+    framebuffer_surface_resize( &surface->base );
     return &surface->base;
 }
 
@@ -1822,21 +1822,6 @@ static void context_exchange_drawables( struct opengl_context *context, struct o
     *read = old_read;
 }
 
-static BOOL context_unset_current( struct opengl_context *context )
-{
-    struct opengl_drawable *old_draw = context->draw, *old_read = context->read;
-
-    TRACE( "context %p\n", context );
-
-    opengl_drawable_set_context( old_read, NULL );
-    if (old_read != old_draw) opengl_drawable_set_context( old_draw, NULL );
-    if (make_null_context_current()) return TRUE;
-    opengl_drawable_set_context( old_read, context );
-    if (old_read != old_draw) opengl_drawable_set_context( old_draw, context );
-
-    return FALSE;
-}
-
 /* return an updated drawable, recreating one if the window drawables have been invalidated (mostly wineandroid) */
 static struct opengl_drawable *get_updated_drawable( HDC hdc, int format, struct opengl_drawable *drawable )
 {
@@ -1882,12 +1867,7 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     }
 
     if (previous == context && new_draw == context->draw && new_read == context->read) ret = TRUE;
-    else if (previous)
-    {
-        context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
-        opengl_drawable_set_context( old_read, NULL );
-        if (old_read != old_draw) opengl_drawable_set_context( old_draw, NULL );
-    }
+    else if (previous) context_exchange_drawables( previous, &old_draw, &old_read ); /* take ownership of the previous context drawables */
 
     if (!ret && (ret = driver_funcs->p_make_current( new_draw, new_read, context->driver_private )))
     {
@@ -1902,9 +1882,6 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
         if (old_draw) opengl_drawable_release( old_draw );
         if (old_read) opengl_drawable_release( old_read );
 
-        opengl_drawable_set_context( new_read, context );
-        if (new_read != new_draw) opengl_drawable_set_context( new_draw, context );
-
         opengl_drawable_flush( new_read, new_read->interval, 0 );
         opengl_drawable_flush( new_draw, new_draw->interval, 0 );
     }
@@ -1917,8 +1894,6 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     }
     else if (previous)
     {
-        opengl_drawable_set_context( old_read, context );
-        if (old_read != old_draw) opengl_drawable_set_context( old_draw, context );
         context_exchange_drawables( previous, &old_draw, &old_read ); /* give back ownership of the previous drawables */
         assert( !old_draw && !old_read );
     }
@@ -1960,8 +1935,8 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC c
     {
         struct opengl_drawable *draw = NULL, *read = NULL;
 
-        if (!(context = prev_context)) return make_null_context_current();
-        if (!context_unset_current( context )) return FALSE;
+        if (!make_null_context_current()) return FALSE;
+        if (!(context = prev_context)) return TRUE;
         NtCurrentTeb()->glContext = NULL;
 
         context_exchange_drawables( context, &draw, &read );
