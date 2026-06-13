@@ -16,8 +16,8 @@
 @ stdcall DsGetSiteNameA(str ptr)
 @ stdcall DsGetSiteNameW(wstr ptr)
 @ stub DsMergeForestTrustInformationW
-@ stdcall DsRoleFreeMemory(ptr)
-@ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr)
+@ stdcall DsRoleFreeMemory(ptr) dsrole.DsRoleFreeMemory
+@ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr) dsrole.DsRoleGetPrimaryDomainInformation
 @ stub DsValidateSubnetName
 @ stub I_BrowserDebugCall
 @ stub I_BrowserDebugTrace
