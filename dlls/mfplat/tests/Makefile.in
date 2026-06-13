@@ -1,5 +1,5 @@
 TESTDLL   = mfplat.dll
-IMPORTS   = ole32 mfplat user32 d3d9 dxva2 mfuuid propsys uuid strmiids kernelbase
+IMPORTS   = ole32 mfplat user32 d3d9 dxva2 mfuuid propsys uuid strmiids kernel32 kernelbase
 
 SOURCES = \
 	mfplat.c \
