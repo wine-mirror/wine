@@ -23948,7 +23948,7 @@ wine_fn_config_makefile server enable_server
 test "x$enable_tools" = xno || wine_fn_config_makefile tools enable_tools
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/sfnt2fon enable_sfnt2fon
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/widl enable_widl
-test "x$enable_tools" = xno || wine_fn_config_makefile tools/wine enable_wine
+wine_fn_config_makefile tools/wine enable_wine
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winebuild enable_winebuild
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winedump enable_winedump
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winegcc enable_winegcc

@@ -329,7 +329,9 @@ AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
 AS_VAR_PUSHDEF([ac_enable],[enable_]m4_bpatsubst(m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1]),[.*\.\(.*16\|vxd\)$],[win16]))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
-m4_if(m4_bregexp([$1],[^tools]),[-1],[],[test "x$enable_tools" = xno || ])wine_fn_config_makefile [$1] ac_enable[]dnl
+m4_if(m4_bregexp([$1],[^tools]),[-1],[],
+      m4_if([$1],[tools/wine],[],[test "x$enable_tools" = xno || ]))dnl
+wine_fn_config_makefile [$1] ac_enable[]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Append a file to the .gitignore list ****
