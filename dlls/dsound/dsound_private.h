@@ -43,10 +43,10 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 
 /* dsound_convert.h */
-typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel);
+typedef void (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel);
 typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 extern const bitsgetfunc getbpp[4];
-float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel);
+void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel);
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void putieee32_sum(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void mixieee32(float *src, float *dst, unsigned samples);

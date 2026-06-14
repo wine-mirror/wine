@@ -47,46 +47,68 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-static float get8(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+static void get8(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
 {
+    DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + channel;
-    return (buf[0] - 0x80) / (float)0x80;
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = (buf[i * channels] - 0x80) / (float)0x80;
 }
 
-static float get16(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+static void get16(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
 {
+    DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 2 * channel;
     const SHORT *sbuf = (const SHORT*)(buf);
-    return sbuf[0] / (float)0x8000;
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = sbuf[i * channels] / (float)0x8000;
 }
 
-static float get24(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+static void get24(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
 {
-    LONG sample;
+    DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 3 * channel;
+    int i;
 
-    /* The next expression deliberately has an overflow for buf[2] >= 0x80,
-       this is how negative values are made.
-     */
-    sample = (buf[0] << 8) | (buf[1] << 16) | (buf[2] << 24);
-    return sample / (float)0x80000000U;
+    for (i = 0; i < samples; ++i) {
+        /* The next expression deliberately has an overflow for buf[2] >= 0x80,
+           this is how negative values are made.
+         */
+        LONG sample =
+                (buf[i * channels * 3 + 0] << 8) |
+                (buf[i * channels * 3 + 1] << 16) |
+                (buf[i * channels * 3 + 2] << 24);
+        dst[i] = sample / (float)0x80000000U;
+    }
 }
 
-static float get32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+static void get32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
 {
+    DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 4 * channel;
     const LONG *sbuf = (const LONG*)(buf);
-    return sbuf[0] / (float)0x80000000U;
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = sbuf[i * channels] / (float)0x80000000U;
 }
 
 const bitsgetfunc getbpp[4] = {get8, get16, get24, get32};
 
-float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
 {
+    DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 4 * channel;
     const float *sbuf = (const float*)(buf);
-    /* The value will be clipped later, when put into some non-float buffer */
-    return *sbuf;
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        /* The value will be clipped later, when put into some non-float buffer */
+        dst[i] = sbuf[i * channels];
 }
 
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
