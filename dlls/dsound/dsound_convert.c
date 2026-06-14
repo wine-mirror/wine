@@ -47,14 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-#ifdef WORDS_BIGENDIAN
-#define le16(x) RtlUshortByteSwap((x))
-#define le32(x) RtlUlongByteSwap((x))
-#else
-#define le16(x) (x)
-#define le32(x) (x)
-#endif
-
 static float get8(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
 {
     const BYTE *buf = base + channel;
@@ -65,8 +57,7 @@ static float get16(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
 {
     const BYTE *buf = base + 2 * channel;
     const SHORT *sbuf = (const SHORT*)(buf);
-    SHORT sample = (SHORT)le16(*sbuf);
-    return sample / (float)0x8000;
+    return sbuf[0] / (float)0x8000;
 }
 
 static float get24(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
@@ -85,8 +76,7 @@ static float get32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
 {
     const BYTE *buf = base + 4 * channel;
     const LONG *sbuf = (const LONG*)(buf);
-    LONG sample = le32(*sbuf);
-    return sample / (float)0x80000000U;
+    return sbuf[0] / (float)0x80000000U;
 }
 
 const bitsgetfunc getbpp[4] = {get8, get16, get24, get32};
