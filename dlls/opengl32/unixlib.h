@@ -25666,18 +25666,6 @@ struct wglBindTexImageARB_params
     BOOL ret;
 };
 
-struct wglChoosePixelFormatARB_params
-{
-    TEB *teb;
-    HDC hdc;
-    const int *piAttribIList;
-    const FLOAT *pfAttribFList;
-    UINT nMaxFormats;
-    int *piFormats;
-    UINT *nNumFormats;
-    BOOL ret;
-};
-
 struct wglCreateContextAttribsARB_params
 {
     TEB *teb;
@@ -25716,30 +25704,6 @@ struct wglGetPbufferDCARB_params
     TEB *teb;
     HPBUFFERARB hPbuffer;
     HDC ret;
-};
-
-struct wglGetPixelFormatAttribfvARB_params
-{
-    TEB *teb;
-    HDC hdc;
-    int iPixelFormat;
-    int iLayerPlane;
-    UINT nAttributes;
-    const int *piAttributes;
-    FLOAT *pfValues;
-    BOOL ret;
-};
-
-struct wglGetPixelFormatAttribivARB_params
-{
-    TEB *teb;
-    HDC hdc;
-    int iPixelFormat;
-    int iLayerPlane;
-    UINT nAttributes;
-    const int *piAttributes;
-    int *piValues;
-    BOOL ret;
 };
 
 struct wglGetSwapIntervalEXT_params
@@ -28932,14 +28896,11 @@ enum unix_funcs
     unix_glWriteMaskEXT,
     unix_wglAllocateMemoryNV,
     unix_wglBindTexImageARB,
-    unix_wglChoosePixelFormatARB,
     unix_wglCreateContextAttribsARB,
     unix_wglCreatePbufferARB,
     unix_wglDestroyPbufferARB,
     unix_wglFreeMemoryNV,
     unix_wglGetPbufferDCARB,
-    unix_wglGetPixelFormatAttribfvARB,
-    unix_wglGetPixelFormatAttribivARB,
     unix_wglGetSwapIntervalEXT,
     unix_wglMakeContextCurrentARB,
     unix_wglQueryCurrentRendererIntegerWINE,

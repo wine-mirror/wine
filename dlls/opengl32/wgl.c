@@ -1640,28 +1640,6 @@ BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *attribs_int, const FLOA
 
     wgl_formats = get_pixel_formats( hdc, &num_wgl_formats, &num_wgl_onscreen_formats );
 
-    /* If the driver doesn't yet provide ARB attrib information in
-     * wgl_pixel_format, fall back to an explicit call. */
-    if (num_wgl_formats && !wgl_formats[0].pixel_type)
-    {
-        struct wglChoosePixelFormatARB_params args =
-        {
-            .teb = NtCurrentTeb(),
-            .hdc = hdc,
-            .piAttribIList = attribs_int,
-            .pfAttribFList = attribs_float,
-            .nMaxFormats = max_formats,
-            .piFormats = formats,
-            .nNumFormats = num_formats
-        };
-        NTSTATUS status;
-
-        if ((status = UNIX_CALL( wglChoosePixelFormatARB, &args )))
-            WARN( "wglChoosePixelFormatARB returned %#lx\n", status );
-
-        return args.ret;
-    }
-
     /* Gather, validate and deduplicate all attributes */
     for (i = 0; attribs_int && attribs_int[i]; i += 2)
     {
@@ -1743,28 +1721,6 @@ BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int index, int plane, UINT co
            hdc, index, plane, count, attributes, values );
 
     formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats );
-
-    /* If the driver doesn't yet provide ARB attrib information in
-     * wgl_pixel_format, fall back to an explicit call. */
-    if (num_formats && !formats[0].pixel_type)
-    {
-        struct wglGetPixelFormatAttribivARB_params args =
-        {
-            .teb = NtCurrentTeb(),
-            .hdc = hdc,
-            .iPixelFormat = index,
-            .iLayerPlane = plane,
-            .nAttributes = count,
-            .piAttributes = attributes,
-            .piValues = values
-        };
-        NTSTATUS status;
-
-        if ((status = UNIX_CALL( wglGetPixelFormatAttribivARB, &args )))
-            WARN( "wglGetPixelFormatAttribivARB returned %#lx\n", status );
-
-        return args.ret;
-    }
 
     if (!count) return TRUE;
     if (count == 1 && attributes[0] == WGL_NUMBER_PIXEL_FORMATS_ARB)
