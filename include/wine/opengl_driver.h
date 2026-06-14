@@ -80,6 +80,8 @@ struct opengl_client_context
     GLint                       profile_mask;
     int                         major_version;
     int                         minor_version;
+    char                        vendor_name[64];
+    char                        device_name[64];
     BOOL                        broken_sharing;                         /* context couldn't be shared (for macOS) */
     BOOLEAN                     extensions[GL_EXTENSION_COUNT];         /* exposed client extensions */
     UINT32                      extension_count;                        /* size of supported extensions */

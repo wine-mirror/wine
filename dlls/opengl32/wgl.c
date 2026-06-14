@@ -2973,12 +2973,21 @@ const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
 const GLubyte * WINAPI glGetString( GLenum name )
 {
     struct glGetString_params args = { .teb = NtCurrentTeb(), .name = name };
+    struct context *ctx;
     NTSTATUS status;
 #ifndef _WIN64
     GLubyte *wow64_str = NULL;
 #endif
 
     TRACE( "name %d\n", name );
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+
+    switch (name)
+    {
+    case GL_VENDOR: return (const GLubyte *)ctx->base.vendor_name;
+    case GL_RENDERER: return (const GLubyte *)ctx->base.device_name;
+    }
 
 #ifndef _WIN64
     if (UNIX_CALL( glGetString, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );

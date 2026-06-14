@@ -530,16 +530,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
 
     if ((ret = p_glGetString( name )))
     {
-        if (name == GL_VENDOR && funcs->p_wglQueryCurrentRendererStringWINE)
-        {
-            const char *vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
-            return vendor ? (const GLubyte *)vendor : ret;
-        }
-        if (name == GL_RENDERER && funcs->p_wglQueryCurrentRendererStringWINE)
-        {
-            const char *renderer = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_DEVICE_ID_WINE );
-            return renderer ? (const GLubyte *)renderer : ret;
-        }
         if (name == GL_EXTENSIONS)
         {
             struct context *ctx = get_current_context( teb, NULL, NULL );
@@ -767,7 +757,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
                                   HGLRC client_context, struct context *ctx )
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-    const char *version, *rest = "";
+    const char *vendor, *device, *version, *rest = "";
     size_t count = 0, i;
 
     static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -783,6 +773,16 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (version) rest = parse_gl_version( version, &client->major_version, &client->minor_version );
     if (!client->major_version) client->major_version = 1;
     TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
+
+    if (!funcs->p_wglQueryCurrentRendererStringWINE) vendor = NULL;
+    else vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
+    if (!vendor) vendor = (const char *)funcs->p_glGetString( GL_VENDOR );
+    lstrcpynA( client->vendor_name, vendor, ARRAY_SIZE(client->vendor_name) );
+
+    if (!funcs->p_wglQueryCurrentRendererStringWINE) device = NULL;
+    else device = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_DEVICE_ID_WINE );
+    if (!device) device = (const char *)funcs->p_glGetString( GL_RENDERER );
+    lstrcpynA( client->device_name, device, ARRAY_SIZE(client->device_name) );
 
     funcs->p_init_extensions( client->extensions );
 
