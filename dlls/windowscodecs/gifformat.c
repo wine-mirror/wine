@@ -37,6 +37,7 @@ struct gif_decoder
 {
     struct decoder decoder;
     GifFileType *gif;
+    IStream *stream;  /* kept to allow on-demand frame decoding */
 };
 
 static inline struct gif_decoder *impl_from_decoder(struct decoder *iface)
@@ -646,6 +647,13 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     return bytesread;
 }
 
+static void gif_seek_stream(GifFileType *gif, int offset)
+{
+    LARGE_INTEGER seek;
+    seek.QuadPart = offset;
+    IStream_Seek((IStream *)gif->UserData, seek, STREAM_SEEK_SET, NULL);
+}
+
 static HRESULT CDECL gif_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
 {
     struct gif_decoder *decoder = impl_from_decoder(iface);
@@ -656,17 +664,31 @@ static HRESULT CDECL gif_decoder_initialize(struct decoder *iface, IStream *stre
     seek.QuadPart = 0;
     IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
 
+    /* keep stream for on-demand frame decoding */
+    IStream_AddRef(stream);
+    decoder->stream = stream;
+
     /* read all data from the stream */
     decoder->gif = DGifOpen((void *)stream, _gif_inputfunc);
     if (!decoder->gif)
+    {
+        IStream_Release(stream);
+        decoder->stream = NULL;
         return E_FAIL;
+    }
 
-    ret = DGifSlurp(decoder->gif);
+    /* Set up seek function for on-demand frame decoding */
+    decoder->gif->seekFunc = gif_seek_stream;
+
+    /* Only scan frame headers, skip pixel data for on-demand decoding */
+    ret = DGifSlurpHeaders(decoder->gif);
     if (ret == GIF_ERROR)
+    {
+        DGifCloseFile(decoder->gif);
+        IStream_Release(stream);
+        decoder->stream = NULL;
         return E_FAIL;
-
-    /* make sure we don't use the stream after this method returns */
-    decoder->gif->UserData = NULL;
+    }
 
     st->flags = WICBitmapDecoderCapabilityCanDecodeAllImages |
                 WICBitmapDecoderCapabilityCanDecodeSomeImages |
@@ -758,6 +780,14 @@ static HRESULT CDECL gif_decoder_copy_pixels(struct decoder *iface, UINT frame,
         return E_INVALIDARG;
 
     image = &decoder->gif->SavedImages[frame];
+
+    /* Decode this frame's pixel data on demand */
+    if (!image->RasterBits)
+    {
+        decoder->gif->UserData = (void *)decoder->stream;
+        if (DGifDecodeFrame(decoder->gif, frame) == GIF_ERROR)
+            return E_FAIL;
+    }
 
     if (image->ImageDesc.Interlace)
         return copy_interlaced_pixels(image->RasterBits, image->ImageDesc.Width,
@@ -871,6 +901,8 @@ static void CDECL gif_decoder_destroy(struct decoder *iface)
 {
     struct gif_decoder *decoder = impl_from_decoder(iface);
 
+    if (decoder->stream)
+        IStream_Release(decoder->stream);
     DGifCloseFile(decoder->gif);
     free(decoder);
 }

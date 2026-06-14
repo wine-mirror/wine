@@ -452,9 +452,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
 
     Private->PixelCount = GifFile->Image.Width * GifFile->Image.Height;
 
-    DGifSetupDecompress(GifFile);  /* Reset decompress algorithm parameters. */
-
-    return GIF_OK;
+    return DGifSetupDecompress(GifFile);  /* Reset decompress algorithm parameters. */
 }
 
 /******************************************************************************
@@ -587,6 +585,24 @@ DGifGetCodeNext(GifFileType * GifFile,
         Private->PixelCount = 0;    /* And local info. indicate image read. */
     }
 
+    return GIF_OK;
+}
+
+/******************************************************************************
+ * Skip the LZW image sub-blocks without decoding any pixels.
+ * Called after DGifSetupDecompress has read the code size byte.
+ *****************************************************************************/
+static int
+DGifSkipImageData(GifFileType *GifFile)
+{
+    GifByteType *CodeBlock;
+    do {
+        if (DGifGetCodeNext(GifFile, &CodeBlock) == GIF_ERROR)
+        {
+            WARN("GIF is not properly terminated\n");
+            break;
+        }
+    } while (CodeBlock != NULL);
     return GIF_OK;
 }
 
@@ -891,7 +907,11 @@ DGifSlurp(GifFileType * GifFile) {
               }
               if (DGifGetLine(GifFile, sp->RasterBits, ImageSize) ==
                   GIF_ERROR)
+              {
+                  free(sp->RasterBits);
+                  sp->RasterBits = NULL;
                   return (GIF_ERROR);
+              }
               if (temp_save.ExtensionBlocks) {
                   sp->Extensions.ExtensionBlocks = temp_save.ExtensionBlocks;
                   sp->Extensions.ExtensionBlockCount = temp_save.ExtensionBlockCount;
@@ -973,6 +993,165 @@ DGifSlurp(GifFileType * GifFile) {
         FreeExtension(&temp_save);
 
     return (GIF_OK);
+}
+
+/******************************************************************************
+ * Like DGifSlurp() but skips pixel data of each frame.
+ * Only reads frame headers (ImageDesc, extension blocks) so it is fast.
+ * Use DGifDecodeFrame() to decode individual frames on demand.
+ *****************************************************************************/
+int
+DGifSlurpHeaders(GifFileType *GifFile)
+{
+    GifRecordType RecordType;
+    SavedImage *sp;
+    GifByteType *ExtData;
+    Extensions temp_save;
+
+    temp_save.ExtensionBlocks = NULL;
+    temp_save.ExtensionBlockCount = 0;
+
+    do {
+        if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR)
+            return GIF_ERROR;
+
+        switch (RecordType) {
+          case IMAGE_DESC_RECORD_TYPE:
+              if (DGifGetImageDesc(GifFile) == GIF_ERROR)
+                  return GIF_ERROR;
+
+              sp = &GifFile->SavedImages[GifFile->ImageCount - 1];
+              /* GetFileOffset is past the code size byte read by DGifSetupDecompress
+               * inside DGifGetImageDesc, so subtract 1 to point at the code size byte
+               * itself, so DGifDecodeFrame can re-read it correctly after seeking. */
+              sp->LZWDataOffset = GetFileOffset(GifFile) - 1;
+
+              /* Skip LZW image sub-blocks without decoding */
+              if (DGifSkipImageData(GifFile) == GIF_ERROR)
+                  return GIF_ERROR;
+
+              /* Attach pending extension to this frame */
+              if (temp_save.ExtensionBlocks) {
+                  sp->Extensions.ExtensionBlocks = temp_save.ExtensionBlocks;
+                  sp->Extensions.ExtensionBlockCount = temp_save.ExtensionBlockCount;
+                  temp_save.ExtensionBlocks = NULL;
+                  temp_save.ExtensionBlockCount = 0;
+                  sp->Extensions.Function = sp->Extensions.ExtensionBlocks[0].Function;
+              }
+              break;
+
+          case EXTENSION_RECORD_TYPE:
+          {
+              int Function;
+              Extensions *Extensions;
+
+              if (DGifGetExtension(GifFile, &Function, &ExtData) == GIF_ERROR)
+                  return GIF_ERROR;
+
+              if (GifFile->ImageCount || Function == GRAPHICS_EXT_FUNC_CODE)
+                  Extensions = &temp_save;
+              else
+                  Extensions = &GifFile->Extensions;
+
+              Extensions->Function = Function;
+
+              if (ExtData)
+              {
+                  if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1]) == GIF_ERROR)
+                      return GIF_ERROR;
+              }
+              else
+              {
+                  if (AddExtensionBlock(Extensions, 0, NULL) == GIF_ERROR)
+                      return GIF_ERROR;
+              }
+
+              while (ExtData != NULL) {
+                  int Len;
+                  GifByteType *Data;
+
+                  if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR)
+                      return GIF_ERROR;
+
+                  if (ExtData)
+                  {
+                      Len = ExtData[0];
+                      Data = &ExtData[1];
+                  }
+                  else
+                  {
+                      Len = 0;
+                      Data = NULL;
+                  }
+
+                  if (AppendExtensionBlock(Extensions, Len, Data) == GIF_ERROR)
+                      return GIF_ERROR;
+              }
+              break;
+          }
+
+          case TERMINATE_RECORD_TYPE:
+              break;
+
+          default:
+              break;
+        }
+    } while (RecordType != TERMINATE_RECORD_TYPE);
+
+    if (temp_save.ExtensionBlocks)
+        FreeExtension(&temp_save);
+
+    return GIF_OK;
+}
+
+/******************************************************************************
+ * Decode a specific frame on demand.
+ * Requires DGifSlurpHeaders() to have been called first to populate SavedImages.
+ * On success the frame's RasterBits are allocated and filled; subsequent calls
+ * return immediately if the frame is already decoded.
+ *****************************************************************************/
+int
+DGifDecodeFrame(GifFileType *GifFile, int frame)
+{
+    GifFilePrivateType *Private = GifFile->Private;
+    SavedImage *sp;
+    int ImageSize;
+
+    if (frame < 0 || frame >= GifFile->ImageCount)
+        return GIF_ERROR;
+
+    sp = &GifFile->SavedImages[frame];
+
+    /* Already decoded */
+    if (sp->RasterBits)
+        return GIF_OK;
+
+    /* Seek to this frame's LZW data in the stream */
+    if (GifFile->seekFunc)
+    {
+        ((SeekFunc)GifFile->seekFunc)(GifFile, sp->LZWDataOffset);
+        /* Reset the decoder's byte offset counter so subsequent READ() calls
+         * start from the correct position */
+        Private->Offset = sp->LZWDataOffset;
+    }
+
+    ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
+
+    /* Re-initialize LZW decompress state (reads the code size byte) */
+    Private->PixelCount = ImageSize;
+    DGifSetupDecompress(GifFile);
+
+    sp->RasterBits = malloc(ImageSize * sizeof(GifPixelType));
+    if (!sp->RasterBits)
+        return GIF_ERROR;
+
+    if (DGifGetLine(GifFile, sp->RasterBits, ImageSize) != GIF_OK)
+    {
+        free(sp->RasterBits);
+        sp->RasterBits = NULL;
+        return GIF_ERROR;
+    }
+    return GIF_OK;
 }
 
 /******************************************************************************
