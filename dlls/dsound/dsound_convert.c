@@ -89,15 +89,15 @@ static float get32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
     return sample / (float)0x80000000U;
 }
 
-static float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
+const bitsgetfunc getbpp[4] = {get8, get16, get24, get32};
+
+float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
 {
     const BYTE *buf = base + 4 * channel;
     const float *sbuf = (const float*)(buf);
     /* The value will be clipped later, when put into some non-float buffer */
     return *sbuf;
 }
-
-const bitsgetfunc getbpp[5] = {get8, get16, get24, get32, getieee32};
 
 float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
 {
