@@ -6037,6 +6037,8 @@ static void check_device_hid_serial_( int line, IDirectInputDevice8W *device, co
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
     ok_(__FILE__, line)( hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok_(__FILE__, line)( !!wcsstr(prop_guid_path.wszPath, L"hid"), "Unexpected path %s.\n",
+            debugstr_w(prop_guid_path.wszPath) );
 
     file_handle = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );

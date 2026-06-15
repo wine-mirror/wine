@@ -144,6 +144,7 @@ static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, DWORD joy_id, co
                    debugstr_w( path ), next->joy_id );
             next->instance = *instance;
             wcscpy( next->path, path );
+            CharLowerW( next->path );
             return S_OK;
         }
     }
