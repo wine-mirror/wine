@@ -380,16 +380,16 @@ static void restore_any_reg( int reg, int count, int type, int pos, ARM64_NT_CON
 
 static void do_pac_auth( ARM64_NT_CONTEXT *context )
 {
-    register DWORD64 x17 __asm__( "x17" ) = context->Lr;
-    register DWORD64 x16 __asm__( "x16" ) = context->Sp;
+    register DWORD64 x30 __asm__( "x30" ) = context->Lr;
 
-    /* This is the autib1716 instruction. The hint instruction is used here
-     * as gcc does not assemble autib1716 for pre armv8.3a targets. For
-     * pre-armv8.3a targets, this is just treated as a hint instruction, which
-     * is ignored. */
-    __asm__( "hint 0xe" : "+r"(x17) : "r"(x16) );
+    /* This is the xpaclri instruction. Assemble it through the hint
+     * instruction to make sure it builds with any toolchain, even if it
+     * doesn't support pointer authentication instructions, or if it might not
+     * know to emit them as hint instructions when targeting older versions
+     * than armv8.3. */
+    __asm__( "hint 0x7" : "+r"(x30) );
 
-    context->Lr = x17;
+    context->Lr = x30;
 }
 
 static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *context,
