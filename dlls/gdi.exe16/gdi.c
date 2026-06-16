@@ -1190,11 +1190,12 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
         {
             .Width = info->bmiHeader.biWidth,
             .Height = abs( info->bmiHeader.biHeight ),
-            .Pitch = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight ),
         };
         struct saved_bitmap *bitmap;
         UINT status;
         int color;
+
+        desc.Pitch = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) >> 3) & ~3;
 
         if (info->bmiHeader.biBitCount <= 8)
         {
