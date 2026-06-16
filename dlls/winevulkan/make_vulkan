@@ -884,8 +884,6 @@ class Function(Type):
         thunk += u"{\n"
         thunk += f"    struct {self.name}_params params;\n"
 
-        if not self.is_perf_critical():
-            thunk += u"    NTSTATUS status;\n"
         for p in self.params:
             thunk += f"    params.{p.name} = {p.name};\n"
 
@@ -893,8 +891,7 @@ class Function(Type):
         if self.is_perf_critical():
             thunk += f"    UNIX_CALL({self.name}, &params);\n"
         else:
-            thunk += f"    status = UNIX_CALL({self.name}, &params);\n"
-            thunk += f"    assert(!status && \"{self.name}\");\n"
+            thunk += f"    UNIX_CALL_CHECKED({self.name}, &params);\n"
 
         if self.type != "void":
             thunk += u"    return params.result;\n"

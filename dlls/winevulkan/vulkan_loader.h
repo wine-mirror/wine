@@ -23,7 +23,6 @@
 #include "ntstatus.h"
 #include <stdarg.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -145,5 +144,14 @@ struct is_available_device_function_params
 };
 
 #define UNIX_CALL(code, params) WINE_UNIX_CALL(unix_ ## code, params)
+#define UNIX_CALL_CHECKED(code, params)                           \
+    do {                                                          \
+        NTSTATUS status = UNIX_CALL(code, params);                \
+        if (status)                                               \
+        {                                                         \
+            ERR("Exception %#lx in Unix call.\n", status);        \
+            ExitProcess(3);                                       \
+        }                                                         \
+    } while (0)
 
 #endif /* __WINE_VULKAN_LOADER_H */
