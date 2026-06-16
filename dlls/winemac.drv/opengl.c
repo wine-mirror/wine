@@ -2267,6 +2267,11 @@ static BOOL macdrv_make_current(struct opengl_drawable *draw_base, struct opengl
         NtCurrentTeb()->glReserved2 = NULL;
         return TRUE;
     }
+    if (!draw || !read)
+    {
+        CGLSetCurrentContext(context->cglcontext);
+        return TRUE;
+    }
 
     context->read_hwnd = context->draw_hwnd = NULL;
     context->read_view = context->draw_view = NULL;

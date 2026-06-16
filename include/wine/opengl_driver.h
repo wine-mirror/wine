@@ -252,6 +252,7 @@ struct opengl_driver_funcs
                               GLint max_level, GLsizei *width, GLsizei *height, struct opengl_drawable **drawable );
     BOOL (*p_pbuffer_updated)( HDC hdc, struct opengl_drawable *drawable, GLenum cube_face, GLint mipmap_level );
     UINT (*p_pbuffer_bind)( HDC hdc, struct opengl_drawable *drawable, GLenum buffer );
+    BOOL (*p_null_surface_create)( int format, struct opengl_drawable **drawable );
 };
 
 #endif /* WINE_UNIX_LIB */

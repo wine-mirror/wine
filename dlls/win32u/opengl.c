@@ -39,6 +39,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
+struct opengl_thread_data
+{
+    void                   *null_context;  /* dummy context when no client context is active */
+    struct opengl_drawable *null_surface;  /* dummy surface when no client context is active */
+};
+
+static struct opengl_thread_data *get_opengl_thread_data(void)
+{
+    struct user_thread_info *info = get_user_thread_info();
+    struct opengl_thread_data *data;
+
+    if ((data = info->opengl_data)) return data;
+    return (info->opengl_data = calloc( 1, sizeof(*data) ));
+}
+
 struct pbuffer
 {
     struct opengl_drawable *drawable;
@@ -181,6 +196,30 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     if (!is_client_surface_window( drawable->client, 0 )) return FALSE;
     client_surface_update( drawable->client );
     return drawable->funcs->swap( drawable );
+}
+
+static BOOL make_null_context_current(void)
+{
+    struct opengl_thread_data *data = get_opengl_thread_data();
+    int format;
+
+    if (!data->null_context)
+    {
+        for (format = 1; format <= formats_count; format++)
+        {
+            struct wgl_pixel_format *desc = pixel_formats + format - 1;
+            if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
+            if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
+            if (desc->pfd.cColorBits < 24) continue;
+            break;
+        }
+
+        if (format > formats_count) return FALSE;
+        driver_funcs->p_context_create( format, NULL, NULL, &data->null_context );
+        if (driver_funcs->p_null_surface_create) driver_funcs->p_null_surface_create( format, &data->null_surface );
+    }
+
+    return driver_funcs->p_make_current( data->null_surface, data->null_surface, data->null_context );
 }
 
 #ifdef SONAME_LIBEGL
@@ -842,7 +881,8 @@ static BOOL egldrv_make_current( struct opengl_drawable *draw, struct opengl_dra
 
     TRACE( "draw %s, read %s, context %p\n", debugstr_opengl_drawable( draw ), debugstr_opengl_drawable( read ), context );
 
-    return funcs->p_eglMakeCurrent( egl->display, context ? draw->surface : EGL_NO_SURFACE, context ? read->surface : EGL_NO_SURFACE, context );
+    if (!context) return funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, NULL );
+    return funcs->p_eglMakeCurrent( egl->display, draw ? draw->surface : EGL_NO_SURFACE, read ? read->surface : EGL_NO_SURFACE, context );
 }
 
 static void egldrv_pbuffer_destroy( struct opengl_drawable *drawable )
@@ -1784,7 +1824,7 @@ static BOOL context_unset_current( struct opengl_context *context )
 
     opengl_drawable_set_context( old_read, NULL );
     if (old_read != old_draw) opengl_drawable_set_context( old_draw, NULL );
-    if (driver_funcs->p_make_current( NULL, NULL, NULL )) return TRUE;
+    if (make_null_context_current()) return TRUE;
     opengl_drawable_set_context( old_read, context );
     if (old_read != old_draw) opengl_drawable_set_context( old_draw, context );
 
@@ -1914,7 +1954,7 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC c
     {
         struct opengl_drawable *draw = NULL, *read = NULL;
 
-        if (!(context = prev_context)) return TRUE;
+        if (!(context = prev_context)) return make_null_context_current();
         if (!context_unset_current( context )) return FALSE;
         NtCurrentTeb()->glContext = NULL;
 
@@ -2839,9 +2879,11 @@ BOOL get_opengl_gpus( struct list *gpus )
 void cleanup_opengl_thread(void)
 {
     struct opengl_context *context = NtCurrentTeb()->glContext;
+    struct user_thread_info *info = get_user_thread_info();
+    struct opengl_thread_data *data;
 
     /* unset current context, this is sometimes missing from host drivers and leaks memory */
-    if (context && context_unset_current( context ))
+    if (driver_funcs->p_make_current( NULL, NULL, NULL ) && context)
     {
         struct opengl_drawable *draw = NULL, *read = NULL;
 
@@ -2851,4 +2893,9 @@ void cleanup_opengl_thread(void)
         if (read->client) set_window_opengl_drawable( read->client->hwnd, read, FALSE );
         opengl_drawable_release( read );
     }
+
+    if (!(data = info->opengl_data)) return;
+    if (data->null_context) driver_funcs->p_context_destroy( data->null_context );
+    if (data->null_surface) opengl_drawable_release( data->null_surface );
+    free( data );
 }

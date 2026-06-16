@@ -1329,6 +1329,29 @@ static UINT x11drv_pbuffer_bind( HDC hdc, struct opengl_drawable *base, GLenum b
     return -1; /* use default implementation */
 }
 
+static BOOL x11drv_null_surface_create( int format, struct opengl_drawable **drawable )
+{
+    const struct glx_pixel_format *fmt = glx_pixel_format_from_format( format );
+    int glx_attribs[7], count = 0;
+    struct gl_drawable *gl;
+
+    glx_attribs[count++] = GLX_PBUFFER_WIDTH;
+    glx_attribs[count++] = 1;
+    glx_attribs[count++] = GLX_PBUFFER_HEIGHT;
+    glx_attribs[count++] = 1;
+    glx_attribs[count++] = 0;
+
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, NULL ))) return FALSE;
+    if (!(gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs )))
+    {
+        opengl_drawable_release( &gl->base );
+        return FALSE;
+    }
+
+    *drawable = &gl->base;
+    return TRUE;
+}
+
 static BOOL X11DRV_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
     return pglXQueryCurrentRendererIntegerMESA( attribute, value );
@@ -1505,6 +1528,7 @@ static struct opengl_driver_funcs x11drv_driver_funcs =
     .p_pbuffer_create = x11drv_pbuffer_create,
     .p_pbuffer_updated = x11drv_pbuffer_updated,
     .p_pbuffer_bind = x11drv_pbuffer_bind,
+    .p_null_surface_create = x11drv_null_surface_create,
 };
 
 static const struct opengl_drawable_funcs x11drv_surface_funcs =

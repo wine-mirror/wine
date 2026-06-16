@@ -127,6 +127,7 @@ struct user_thread_info
     DWORD                         clipping_reset;         /* time when clipping was last reset */
     struct session_thread_data   *session_data;           /* shared session thread data */
     struct mouse_tracking_info   *mouse_tracking_info;    /* NtUserTrackMouseEvent handling */
+    struct opengl_thread_data    *opengl_data;            /* OpenGL private thread data */
 };
 
 extern struct user_thread_info *get_user_thread_info(void);
