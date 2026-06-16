@@ -4401,10 +4401,10 @@ static void test_debuggee_process_parameters_flags(int argc, char **argv)
 {
     PEB *peb = NtCurrentTeb()->Peb;
 
-    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
     while (!IsDebuggerPresent())
         Sleep( 10 );
-    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
 }
 
 static void test_process_parameters_flags( int argc, char **argv )
@@ -4426,7 +4426,7 @@ static void test_process_parameters_flags( int argc, char **argv )
 
     sprintf( keyname, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\%s", basename );
     if (!strcmp( keyname + strlen(keyname) - 3, ".so" )) keyname[strlen(keyname) - 3] = 0;
-    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
     sprintf( cmdline, "%s %s %s", argv[0], argv[1], "check_pp_flags" );
 
     si.cb = sizeof(si);
@@ -4441,7 +4441,7 @@ static void test_process_parameters_flags( int argc, char **argv )
     ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi );
     ok( ret, "got error %ld.\n", GetLastError() );
     flags = get_process_parameters_flags( pi.hProcess );
-    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
     TerminateProcess( pi.hProcess, 0 );
     CloseHandle( pi.hThread );
     CloseHandle( pi.hProcess );
@@ -4449,12 +4449,12 @@ static void test_process_parameters_flags( int argc, char **argv )
     ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi );
     ok( ret, "got error %ld.\n", GetLastError() );
     flags = get_process_parameters_flags( pi.hProcess );
-    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
     ResumeThread( pi.hThread );
     ret = DebugActiveProcess( pi.dwProcessId );
     ok( ret, "got error %ld.\n", GetLastError() );
     flags = get_process_parameters_flags( pi.hProcess );
-    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
     for (;;)
     {
         DEBUG_EVENT ev;

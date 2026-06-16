@@ -1744,6 +1744,7 @@ static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
     if (debugged) peb->NtGlobalFlag |= FLG_HEAP_ENABLE_TAIL_CHECK |
                                        FLG_HEAP_ENABLE_FREE_CHECK |
                                        FLG_HEAP_VALIDATE_PARAMETERS;
+    else peb->ProcessParameters->Flags |= PROCESS_PARAMS_IMAGE_KEY_MISSING;
 
     init_unicode_string( &nameW, optionsW );
     if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
@@ -1755,6 +1756,7 @@ static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
         if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
         {
             peb->NtGlobalFlag = get_dword_option( key, globalflagW, peb->NtGlobalFlag );
+            peb->ProcessParameters->Flags &= ~PROCESS_PARAMS_IMAGE_KEY_MISSING;
             NtClose( key );
         }
         NtClose( attr.RootDirectory );
