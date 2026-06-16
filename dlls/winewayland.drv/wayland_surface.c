@@ -170,6 +170,8 @@ void wp_fractional_scale_handle_scale(void* user_data,
         surface->processing.processed = TRUE;
     }
 
+    wayland_win_data_release(data);
+
     NtUserExposeWindowSurface(hwnd, 0, NULL, 0);
 }
 
