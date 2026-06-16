@@ -1026,6 +1026,56 @@ static void test_combo_measureitem(DWORD style)
     winetest_pop_context();
 }
 
+static int got_info;
+static WNDPROC old_combo_proc;
+
+static LRESULT CALLBACK combo_wnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == CB_GETCOMBOBOXINFO) got_info++;
+    return CallWindowProcA( old_combo_proc, hwnd, msg, wparam, lparam );
+}
+
+static DWORD CALLBACK combo_thread( void *arg )
+{
+    unsigned int ret;
+    COMBOBOXINFO info = { .cbSize = sizeof(COMBOBOXINFO) };
+    HWND combo = arg;
+
+    got_info = 0;
+    ret = GetComboBoxInfo(combo, &info);
+    ok( ret, "Failed to get combobox info structure.\n" );
+    ok( !got_info, "CB_GETCOMBOBOXINFO was sent from other thread\n" );
+    return 0;
+}
+
+static void test_combo_info(void)
+{
+    unsigned int ret;
+    COMBOBOXINFO info = { .cbSize = sizeof(COMBOBOXINFO) };
+    HWND combo;
+    HANDLE thread;
+    DWORD id;
+
+    combo = build_combo(CBS_DROPDOWN);
+    ok(!!combo, "Failed to create combo window.\n");
+
+    old_combo_proc = (void *)SetWindowLongPtrA( combo, GWLP_WNDPROC, (ULONG_PTR)combo_wnd_proc );
+
+    got_info = 0;
+    ret = GetComboBoxInfo( combo, &info );
+    ok( ret, "Failed to get combobox info structure.\n" );
+    ok( !got_info, "CB_GETCOMBOBOXINFO was sent\n" );
+    thread = CreateThread( NULL, 0, combo_thread, combo, 0, &id );
+    while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, MWMO_WAITALL ) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+    }
+    CloseHandle( thread );
+    SetWindowLongPtrA( combo, GWLP_WNDPROC, (ULONG_PTR)old_combo_proc );
+    DestroyWindow( combo );
+}
+
 START_TEST(combo)
 {
     brush_red = CreateSolidBrush(RGB(255, 0, 0));
@@ -1054,6 +1104,7 @@ START_TEST(combo)
     test_combo_measureitem(CBS_DROPDOWNLIST | CBS_OWNERDRAWVARIABLE);
     test_combo_measureitem(CBS_DROPDOWNLIST);
     test_combo_measureitem(CBS_DROPDOWN | CBS_OWNERDRAWFIXED);
+    test_combo_info();
 
     DestroyWindow(hMainWnd);
     DeleteObject(brush_red);

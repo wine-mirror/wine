@@ -1672,11 +1672,17 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
    }
 }
 
-static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
-{
-    if (!pcbi || (pcbi->cbSize < sizeof(COMBOBOXINFO)))
-        return FALSE;
 
+/*************************************************************************
+ *           GetComboBoxInfo   (USER32.@)
+ */
+BOOL WINAPI GetComboBoxInfo( HWND hwnd, COMBOBOXINFO *pcbi )
+{
+    HEADCOMBO *lphc = get_control_state( hwnd );
+
+    if (!lphc || !pcbi || (pcbi->cbSize < sizeof(COMBOBOXINFO)))
+        return FALSE;
+    TRACE("(%p, %p)\n", hwnd, pcbi);
     pcbi->rcItem = lphc->textRect;
     pcbi->rcButton = lphc->buttonRect;
     pcbi->stateButton = 0;
@@ -2078,7 +2084,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 	case CB_GETEXTENDEDUI:
 		return (lphc->wState & CBF_EUI) != 0;
 	case CB_GETCOMBOBOXINFO:
-		return COMBO_GetComboBoxInfo(lphc, (COMBOBOXINFO *)lParam);
+		return GetComboBoxInfo(hwnd, (COMBOBOXINFO *)lParam);
 	case CB_LIMITTEXT:
 		if( lphc->wState & CBF_EDIT )
 			return SendMessageW(lphc->hWndEdit, EM_LIMITTEXT, wParam, lParam);
@@ -2091,14 +2097,4 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
       }
       return unicode ? DefWindowProcW(hwnd, message, wParam, lParam) :
                        DefWindowProcA(hwnd, message, wParam, lParam);
-}
-
-/*************************************************************************
- *           GetComboBoxInfo   (USER32.@)
- */
-BOOL WINAPI GetComboBoxInfo(HWND hwndCombo,      /* [in] handle to combo box */
-			    PCOMBOBOXINFO pcbi   /* [in/out] combo box information */)
-{
-    TRACE("(%p, %p)\n", hwndCombo, pcbi);
-    return SendMessageW(hwndCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)pcbi);
 }
