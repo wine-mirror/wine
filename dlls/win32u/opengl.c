@@ -193,7 +193,7 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
-static BOOL make_null_context_current(void)
+static BOOL make_null_context_current( struct opengl_drawable *drawable )
 {
     struct opengl_thread_data *data = get_opengl_thread_data();
     int format;
@@ -214,10 +214,9 @@ static BOOL make_null_context_current(void)
         if (driver_funcs->p_null_surface_create) driver_funcs->p_null_surface_create( format, &data->null_surface );
     }
 
-    return driver_funcs->p_make_current( data->null_surface, data->null_surface, data->null_context );
+    if (!drawable) drawable = data->null_surface;
+    return driver_funcs->p_make_current( drawable, drawable, data->null_context );
 }
-
-#ifdef SONAME_LIBEGL
 
 static void make_client_context_current(void)
 {
@@ -225,6 +224,8 @@ static void make_client_context_current(void)
     if (!(context = NtCurrentTeb()->glContext)) return;
     driver_funcs->p_make_current( context->draw, context->read, context->driver_private );
 }
+
+#ifdef SONAME_LIBEGL
 
 struct framebuffer_surface
 {
@@ -387,7 +388,7 @@ static void framebuffer_surface_destroy( struct opengl_drawable *drawable )
 
     TRACE( "%s\n", debugstr_opengl_drawable( drawable ) );
 
-    make_null_context_current();
+    make_null_context_current( NULL );
 
     if (drawable->draw_fbo != drawable->read_fbo)
         destroy_framebuffer( drawable, &draw_desc, drawable->draw_fbo );
@@ -401,7 +402,7 @@ static void framebuffer_surface_resize( struct opengl_drawable *drawable )
     struct wgl_pixel_format draw_desc = pixel_formats[drawable->format - 1], read_desc = draw_desc;
     RECT rect;
 
-    make_null_context_current();
+    make_null_context_current( NULL );
 
     NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
     if (!rect.right) rect.right = 1;
@@ -465,7 +466,7 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
         if (surface->base.doublebuffer) opengl_drawable_map_buffer( &surface->base, GL_BACK_RIGHT, GL_COLOR_ATTACHMENT3 );
     }
 
-    make_null_context_current();
+    make_null_context_current( NULL );
 
     read_desc.samples = read_desc.sample_buffers = 0;
     surface->base.read_fbo = create_framebuffer( &surface->base, &read_desc );
@@ -1903,25 +1904,6 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     return ret;
 }
 
-static void push_internal_context( struct opengl_context *context, struct opengl_drawable *drawable, int format )
-{
-    TRACE( "context %p, drawable %s\n", context, debugstr_opengl_drawable( drawable ));
-
-    if (!context->internal_context)
-    {
-        driver_funcs->p_context_create( format, global_context, NULL, &context->internal_context );
-        if (!context->internal_context) ERR( "Failed to create internal context\n" );
-    }
-
-    driver_funcs->p_make_current( drawable, drawable, context->internal_context );
-}
-
-static void pop_internal_context( struct opengl_context *context )
-{
-    TRACE( "context %p\n", context );
-    driver_funcs->p_make_current( context->draw, context->read, context->driver_private );
-}
-
 static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC client_context )
 {
     struct opengl_context *context = opengl_context_from_handle( client_context );
@@ -1935,7 +1917,7 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC c
     {
         struct opengl_drawable *draw = NULL, *read = NULL;
 
-        if (!make_null_context_current()) return FALSE;
+        if (!make_null_context_current( NULL )) return FALSE;
         if (!(context = prev_context)) return TRUE;
         NtCurrentTeb()->glContext = NULL;
 
@@ -2188,7 +2170,8 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
         return ret;
 
     funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
-    push_internal_context( NtCurrentTeb()->glContext, pbuffer->drawable, format );
+
+    make_null_context_current( pbuffer->drawable );
 
     /* Make sure that the prev_texture is set as the current texture state isn't shared
      * between contexts. After that copy the pbuffer texture data. */
@@ -2197,7 +2180,7 @@ static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
     funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
                                         pbuffer->width, pbuffer->height, 0 );
 
-    pop_internal_context( NtCurrentTeb()->glContext );
+    make_client_context_current();
     return GL_TRUE;
 }
 
@@ -2317,11 +2300,6 @@ static BOOL win32u_context_destroy( struct opengl_context *context )
 {
     TRACE( "context %p\n", context );
 
-    if (context->internal_context)
-    {
-        driver_funcs->p_context_destroy( context->internal_context );
-        context->internal_context = NULL;
-    }
     if (context->driver_private && !driver_funcs->p_context_destroy( context->driver_private ))
     {
         WARN( "Failed to destroy driver context %p\n", context->driver_private );

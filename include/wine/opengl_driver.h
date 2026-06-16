@@ -120,7 +120,6 @@ struct opengl_context
 {
     HGLRC                       client_context;     /* client side context pointer */
     void                       *driver_private;     /* driver context / private data */
-    void                       *internal_context;   /* driver context for win32u internal use */
     int                         format;             /* pixel format of the context */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
