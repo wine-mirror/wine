@@ -3,6 +3,12 @@ EXTRADEFS = $(FFMPEG_PE_CFLAGS) -DHAVE_AV_CONFIG_H
 
 SOURCES = \
 	config.h \
+	libavutil/aarch64/cpu.c \
+	libavutil/aarch64/crc.S \
+	libavutil/aarch64/float_dsp_init.c \
+	libavutil/aarch64/float_dsp_neon.S \
+	libavutil/aarch64/tx_float_init.c \
+	libavutil/aarch64/tx_float_neon.S \
 	libavutil/adler32.c \
 	libavutil/aes.c \
 	libavutil/aes_ctr.c \
@@ -94,6 +100,10 @@ SOURCES = \
 	libavutil/video_hint.c \
 	libavutil/xga_font_data.c \
 	libavutil/xtea.c \
+	libswresample/aarch64/audio_convert_init.c \
+	libswresample/aarch64/audio_convert_neon.S \
+	libswresample/aarch64/resample.S \
+	libswresample/aarch64/resample_init.c \
 	libswresample/audioconvert.c \
 	libswresample/dither.c \
 	libswresample/options.c \
@@ -103,6 +113,17 @@ SOURCES = \
 	libswresample/swresample.c \
 	libswresample/swresample_frame.c \
 	libswresample/version.c \
+	libswscale/aarch64/hscale.S \
+	libswscale/aarch64/input.S \
+	libswscale/aarch64/output.S \
+	libswscale/aarch64/range_convert_neon.S \
+	libswscale/aarch64/rgb2rgb.c \
+	libswscale/aarch64/rgb2rgb_neon.S \
+	libswscale/aarch64/swscale.c \
+	libswscale/aarch64/swscale_unscaled.c \
+	libswscale/aarch64/swscale_unscaled_neon.S \
+	libswscale/aarch64/xyz2rgb_neon.S \
+	libswscale/aarch64/yuv2rgb_neon.S \
 	libswscale/alphablend.c \
 	libswscale/cms.c \
 	libswscale/csputils.c \
