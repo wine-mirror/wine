@@ -35,16 +35,16 @@
 #define ARCH_X86 0
 #define ARCH_X86_32 0
 #define ARCH_X86_64 0
-#define HAVE_ARMV5TE 0
-#define HAVE_ARMV6 0
-#define HAVE_ARMV6T2 0
+#define HAVE_ARMV5TE 1
+#define HAVE_ARMV6 1
+#define HAVE_ARMV6T2 1
 #define HAVE_ARMV8 1
 #define HAVE_ARM_CRC 1
 #define HAVE_DOTPROD 1
 #define HAVE_I8MM 0
 #define HAVE_NEON 1
-#define HAVE_VFP 0
-#define HAVE_VFPV3 0
+#define HAVE_VFP 1
+#define HAVE_VFPV3 1
 #define HAVE_SETEND 0
 #define HAVE_SVE 0
 #define HAVE_SVE2 0
@@ -97,9 +97,9 @@
 #define HAVE_MMI 0
 #define HAVE_LSX 0
 #define HAVE_LASX 0
-#define HAVE_ARMV5TE_EXTERNAL 0
-#define HAVE_ARMV6_EXTERNAL 0
-#define HAVE_ARMV6T2_EXTERNAL 0
+#define HAVE_ARMV5TE_EXTERNAL 1
+#define HAVE_ARMV6_EXTERNAL 1
+#define HAVE_ARMV6T2_EXTERNAL 1
 #define HAVE_ARMV8_EXTERNAL 0
 #define HAVE_ARM_CRC_EXTERNAL 0
 #define HAVE_DOTPROD_EXTERNAL 0
@@ -159,8 +159,8 @@
 #define HAVE_MMI_EXTERNAL 0
 #define HAVE_LSX_EXTERNAL 0
 #define HAVE_LASX_EXTERNAL 0
-#define HAVE_ARMV5TE_INLINE 0
-#define HAVE_ARMV6_INLINE 0
+#define HAVE_ARMV5TE_INLINE 1
+#define HAVE_ARMV6_INLINE 1
 #define HAVE_ARMV6T2_INLINE 0
 #define HAVE_ARMV8_INLINE 0
 #define HAVE_ARM_CRC_INLINE 0
@@ -404,7 +404,7 @@
 #define HAVE_RSYNC_CONTIMEOUT 1
 #define HAVE_SYMVER_ASM_LABEL 1
 #define HAVE_SYMVER_GNU_ASM 0
-#define HAVE_VFP_ARGS 0
+#define HAVE_VFP_ARGS 1
 #define HAVE_XFORM_ASM 0
 #define HAVE_XMM_CLOBBERS 0
 #define HAVE_DPI_AWARENESS_CONTEXT 1
@@ -843,6 +843,13 @@
 #define HAVE_FAST_FLOAT16 1
 #undef  CONFIG_PIC
 #define CONFIG_PIC 1
+
+#elif defined __arm__
+
+#undef  ARCH_ARM
+#define ARCH_ARM 1
+#undef  HAVE_FAST_FLOAT16
+#define HAVE_FAST_FLOAT16 1
 
 #endif
 #endif /* FFMPEG_CONFIG_H */

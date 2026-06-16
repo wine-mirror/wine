@@ -13,6 +13,12 @@ SOURCES = \
 	libavutil/aes.c \
 	libavutil/aes_ctr.c \
 	libavutil/ambient_viewing_environment.c \
+	libavutil/arm/cpu.c \
+	libavutil/arm/float_dsp_init_arm.c \
+	libavutil/arm/float_dsp_init_neon.c \
+	libavutil/arm/float_dsp_init_vfp.c \
+	libavutil/arm/float_dsp_neon.S \
+	libavutil/arm/float_dsp_vfp.S \
 	libavutil/audio_fifo.c \
 	libavutil/avsscanf.c \
 	libavutil/avstring.c \
@@ -104,6 +110,10 @@ SOURCES = \
 	libswresample/aarch64/audio_convert_neon.S \
 	libswresample/aarch64/resample.S \
 	libswresample/aarch64/resample_init.c \
+	libswresample/arm/audio_convert_init.c \
+	libswresample/arm/audio_convert_neon.S \
+	libswresample/arm/resample.S \
+	libswresample/arm/resample_init.c \
 	libswresample/audioconvert.c \
 	libswresample/dither.c \
 	libswresample/options.c \
@@ -125,6 +135,11 @@ SOURCES = \
 	libswscale/aarch64/xyz2rgb_neon.S \
 	libswscale/aarch64/yuv2rgb_neon.S \
 	libswscale/alphablend.c \
+	libswscale/arm/hscale.S \
+	libswscale/arm/output.S \
+	libswscale/arm/swscale.c \
+	libswscale/arm/swscale_unscaled.c \
+	libswscale/arm/yuv2rgb_neon.S \
 	libswscale/cms.c \
 	libswscale/csputils.c \
 	libswscale/format.c \
