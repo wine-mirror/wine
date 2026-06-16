@@ -919,6 +919,8 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
     if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#lx\n", status );
     if (status || !args.ret) return FALSE;
 
+    /* make sure there's a (dummy) context before releasing and destroying display list objects */
+    if (!teb->glCurrentRC) wglMakeCurrent( NULL, NULL );
     free_client_context( ptr );
     return TRUE;
 }

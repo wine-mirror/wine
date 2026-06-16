@@ -1363,7 +1363,7 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
 
 BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC client_context )
 {
-    struct context *ctx, *prev = get_current_context( teb, NULL, NULL );
+    struct context *ctx;
 
     if (client_context)
     {
@@ -1372,12 +1372,12 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         if (!funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, client_context )) return FALSE;
         make_context_current( teb, funcs, draw_hdc, read_hdc, client_context, ctx );
     }
-    else if (prev)
+    else
     {
         const struct opengl_funcs *funcs = teb->glTable;
         if (!funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL )) return FALSE;
-        teb->glTable = &null_opengl_funcs;
     }
+
     return TRUE;
 }
 
