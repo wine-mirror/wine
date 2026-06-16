@@ -25,6 +25,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "ddk/ntddk.h"
@@ -4378,6 +4379,117 @@ static void test_processor_idle_cycle_time(void)
     ok( size == cpu_count * sizeof(*buffer), "got %#lx.\n", size );
 }
 
+static ULONG get_process_parameters_flags( HANDLE process )
+{
+    RTL_USER_PROCESS_PARAMETERS *params;
+    PROCESS_BASIC_INFORMATION pbi;
+    ULONG flags = 0xdeadbeef;
+    NTSTATUS status;
+    SIZE_T len;
+    BOOL ret;
+
+    status = pNtQueryInformationProcess( process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( !status, "got %#lx.\n", status );
+    ret = ReadProcessMemory( process, (char *)pbi.PebBaseAddress + offsetof(PEB, ProcessParameters), &params, sizeof(params), &len );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    ret = ReadProcessMemory( process, &params->Flags, &flags, sizeof(flags), &len );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    return flags;
+}
+
+static void test_debuggee_process_parameters_flags(int argc, char **argv)
+{
+    PEB *peb = NtCurrentTeb()->Peb;
+
+    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    while (!IsDebuggerPresent())
+        Sleep( 10 );
+    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+}
+
+static void test_process_parameters_flags( int argc, char **argv )
+{
+    SECURITY_ATTRIBUTES sa = { .nLength = sizeof(sa), .bInheritHandle = TRUE };
+    PEB *peb = NtCurrentTeb()->Peb;
+    STARTUPINFOA si = { 0 };
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    char keyname[MAX_PATH];
+    const char *basename;
+    ULONG flags;
+    DWORD err;
+    HKEY hkey;
+    BOOL ret;
+
+    if ((basename = strrchr( argv[0], '\\' ))) basename++;
+    else basename = argv[0];
+
+    sprintf( keyname, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\%s", basename );
+    if (!strcmp( keyname + strlen(keyname) - 3, ".so" )) keyname[strlen(keyname) - 3] = 0;
+    todo_wine ok( peb->ProcessParameters->Flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], "check_pp_flags" );
+
+    si.cb = sizeof(si);
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS | CREATE_SUSPENDED, NULL, NULL, &si, &pi );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    flags = get_process_parameters_flags( pi.hProcess );
+    ok( !(flags & PROCESS_PARAMS_IMAGE_KEY_MISSING), "got %#lx.\n", peb->ProcessParameters->Flags );
+    TerminateProcess( pi.hProcess, 0 );
+    CloseHandle( pi.hThread );
+    CloseHandle( pi.hProcess );
+
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    flags = get_process_parameters_flags( pi.hProcess );
+    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    TerminateProcess( pi.hProcess, 0 );
+    CloseHandle( pi.hThread );
+    CloseHandle( pi.hProcess );
+
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    flags = get_process_parameters_flags( pi.hProcess );
+    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    ResumeThread( pi.hThread );
+    ret = DebugActiveProcess( pi.dwProcessId );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    flags = get_process_parameters_flags( pi.hProcess );
+    todo_wine ok( flags & PROCESS_PARAMS_IMAGE_KEY_MISSING, "got %#lx.\n", peb->ProcessParameters->Flags );
+    for (;;)
+    {
+        DEBUG_EVENT ev;
+
+        ret = WaitForDebugEvent( &ev, INFINITE );
+        ok( ret, "got error %ld.\n", GetLastError() );
+        if (!ret) break;
+        if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT && ev.dwProcessId == pi.dwProcessId) break;
+        ret = ContinueDebugEvent( ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE );
+        ok( ret, "got error %ld.\n", GetLastError() );
+        if (!ret) break;
+    }
+    DebugActiveProcessStop( pi.dwProcessId );
+    wait_child_process( &pi );
+
+    err = RegCreateKeyA( HKEY_LOCAL_MACHINE, keyname, &hkey );
+    if (err == ERROR_ACCESS_DENIED)
+    {
+        skip( "Not authorized to change the image file execution options.\n" );
+        return;
+    }
+    ok( !err, "got %#lx.\n", err );
+
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi );
+    ok( ret, "got error %ld.\n", GetLastError() );
+    flags = get_process_parameters_flags( pi.hProcess );
+    ok( !(flags & PROCESS_PARAMS_IMAGE_KEY_MISSING), "got %#lx.\n", peb->ProcessParameters->Flags );
+    TerminateProcess( pi.hProcess, 0 );
+    CloseHandle( pi.hThread );
+    CloseHandle( pi.hProcess );
+
+    RegCloseKey( hkey );
+    RegDeleteKeyA( HKEY_LOCAL_MACHINE, keyname );
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -4389,6 +4501,7 @@ START_TEST(info)
     if (argc >= 3)
     {
         if (strcmp(argv[2], "debuggee:dbgport") == 0) test_debuggee_dbgport(argc - 2, argv + 2);
+        else if (!strcmp(argv[2], "check_pp_flags"))  test_debuggee_process_parameters_flags(argc - 2, argv + 2);
         return; /* Child */
     }
 
@@ -4459,4 +4572,5 @@ START_TEST(info)
     test_process_token(argc, argv);
     test_process_id();
     test_processor_idle_cycle_time();
+    test_process_parameters_flags(argc, argv);
 }
