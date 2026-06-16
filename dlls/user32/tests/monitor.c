@@ -3755,7 +3755,10 @@ static void test_monitor_dpi(void)
     {
         int min = 0, max = 0, cur = 0;
 
-        set_display_settings( infos[i].handle, 800, 600 );
+        /* native disables DPI scaling when resolution is below 1024x768, but Wine default CI resolution is 1024x768 */
+        if (winetest_platform_is_wine) set_display_settings( infos[i].handle, 800, 600 );
+        else set_display_settings( infos[i].handle, 1024, 768 );
+
         get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
 
         get_monitor_dpi_scale( infos[i].handle, &min, &cur, &max );
