@@ -2835,3 +2835,20 @@ BOOL get_opengl_gpus( struct list *gpus )
 
     return TRUE;
 }
+
+void cleanup_opengl_thread(void)
+{
+    struct opengl_context *context = NtCurrentTeb()->glContext;
+
+    /* unset current context, this is sometimes missing from host drivers and leaks memory */
+    if (context && context_unset_current( context ))
+    {
+        struct opengl_drawable *draw = NULL, *read = NULL;
+
+        context_exchange_drawables( context, &draw, &read );
+        if (draw->client) set_window_opengl_drawable( draw->client->hwnd, draw, FALSE );
+        opengl_drawable_release( draw );
+        if (read->client) set_window_opengl_drawable( read->client->hwnd, read, FALSE );
+        opengl_drawable_release( read );
+    }
+}

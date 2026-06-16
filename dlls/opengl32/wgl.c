@@ -546,6 +546,12 @@ static void free_client_context( struct handle_entry *ptr )
     free( context );
 }
 
+static struct context *get_current_context(void)
+{
+    HGLRC current = NtCurrentTeb()->glCurrentRC;
+    return current ? context_from_handle( current ) : NULL;
+}
+
 void set_gl_error( GLenum error )
 {
     struct opengl_client_context *context;
@@ -564,7 +570,7 @@ void put_context_objects( enum object_type type, UINT n, GLuint *handles )
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
+    if (!(ctx = get_current_context())) return;
     if (!(table = get_object_table( ctx, type, TRUE ))) return;
 
     AcquireSRWLockExclusive( &table->lock );
@@ -578,7 +584,7 @@ GLuint put_context_object_range( enum object_type type, UINT range, GLuint base 
     struct context *ctx;
     GLuint first;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return base;
+    if (!(ctx = get_current_context())) return base;
     if (!(table = get_object_table( ctx, type, TRUE ))) return base;
 
     AcquireSRWLockExclusive( &table->lock );
@@ -612,7 +618,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return TRUE;
+    if (!(ctx = get_current_context())) return TRUE;
     if (!(table = get_object_table( ctx, type, FALSE ))) return TRUE;
 
     /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
@@ -658,7 +664,7 @@ GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return handles;
+    if (!(ctx = get_current_context())) return handles;
     if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
 
     AcquireSRWLockExclusive( &table->lock );
@@ -673,7 +679,7 @@ GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles )
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return handles;
+    if (!(ctx = get_current_context())) return handles;
     if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
 
     AcquireSRWLockShared( &table->lock );
@@ -777,7 +783,7 @@ static BOOL map_client_objects( enum object_type type, GLuint host_id, GLuint *r
     struct context *ctx;
 
     if (!host_id || type == OBJ_TYPE_COUNT) return FALSE;
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return FALSE;
+    if (!(ctx = get_current_context())) return FALSE;
     if (!(table = get_object_table( ctx, type, FALSE ))) return FALSE;
 
     AcquireSRWLockShared( &table->lock );
@@ -1875,7 +1881,7 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
     const enum opengl_extension *ext;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+    if (!(ctx = get_current_context())) return NULL;
 
     if (!(func = get_function_entry( name )))
     {
@@ -2503,7 +2509,7 @@ static GLsync sync_from_handle( GLsync handle )
     struct handle_entry *ptr;
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+    if (!(ctx = get_current_context())) return NULL;
     if (!(ptr = get_handle_ptr( &ctx->lists->syncs, handle ))) return NULL;
     return ptr->user_data;
 }
@@ -2621,7 +2627,7 @@ BOOL get_integer( GLenum name, GLuint index, GLint value, GLint *data )
 {
     struct context *ctx;
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return FALSE;
+    if (!(ctx = get_current_context())) return FALSE;
 
     switch (name)
     {
@@ -2658,7 +2664,7 @@ const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
 
     TRACE( "name %d, index %d\n", name, index );
 
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+    if (!(ctx = get_current_context())) return NULL;
 
     switch (name)
     {
@@ -2785,6 +2791,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
         .call_gl_debug_message_callback = (UINT_PTR)call_gl_debug_message_callback,
     };
+    struct context *context;
     NTSTATUS status;
 
     switch(reason)
@@ -2814,6 +2821,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #endif
         /* fallthrough */
     case DLL_THREAD_DETACH:
+        if ((context = get_current_context())) context->base.current_tid = 0;
         free( NtCurrentTeb()->glReserved1[WINE_GL_RESERVED_FORMATS_PTR] );
         return TRUE;
     }
