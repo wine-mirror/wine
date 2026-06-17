@@ -4348,7 +4348,14 @@ static GpStatus load_wmf(IStream *stream, GpMetafile **metafile)
         return GenericError;
 
     status = GdipCreateMetafileFromWmf(hmf, TRUE, is_placeable ? &pfh : NULL, metafile);
-    if (status != Ok)
+    if (status == Ok)
+    {
+        /* Windows reports raw WMF streams loaded through GdipLoadImageFromStream
+         * as EMF images.  The decoder's format choice is preserved above. */
+        if (!is_placeable)
+            (*metafile)->image.format = ImageFormatEMF;
+    }
+    else
         DeleteMetaFile(hmf);
     return status;
 }
@@ -4609,7 +4616,10 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream *stream, GpImage **image)
     /* take note of the original data format */
     if (stat == Ok)
     {
-        memcpy(&(*image)->format, &codec->info.FormatID, sizeof(GUID));
+        /* Metafile decoders may choose a more specific format (e.g. raw WMF
+         * streams are reported as EMF on Windows).  Respect that choice. */
+        if ((*image)->type != ImageTypeMetafile || IsEqualGUID(&(*image)->format, &GUID_NULL))
+            memcpy(&(*image)->format, &codec->info.FormatID, sizeof(GUID));
         return Ok;
     }
 
@@ -4880,26 +4890,84 @@ static BOOL has_encoder_param_long(GDIPCONST EncoderParameters *params, GUID par
     return FALSE;
 }
 
+static GpStatus rasterize_metafile(GpMetafile *metafile, GpBitmap **bitmap)
+{
+    GpStatus status;
+    GpBitmap *bmp;
+    GpGraphics *graphics;
+    REAL width, height;
+    INT pix_width, pix_height;
+
+    width = metafile->bounds.Width;
+    height = metafile->bounds.Height;
+
+    if (width <= 0.0f) width = 1.0f;
+    if (height <= 0.0f) height = 1.0f;
+
+    /* Cap rasterization size to avoid excessive memory use. */
+    if (width > 4096.0f || height > 4096.0f)
+    {
+        REAL scale = 4096.0f / (width > height ? width : height);
+        width *= scale;
+        height *= scale;
+    }
+
+    pix_width = (INT)width;
+    if (pix_width <= 0) pix_width = 1;
+    pix_height = (INT)height;
+    if (pix_height <= 0) pix_height = 1;
+
+    status = GdipCreateBitmapFromScan0(pix_width, pix_height, 0, PixelFormat32bppARGB, NULL, &bmp);
+    if (status != Ok) return status;
+
+    status = GdipGetImageGraphicsContext((GpImage*)bmp, &graphics);
+    if (status == Ok)
+    {
+        /* Leave the background transparent (the bitmap is already zero-
+         * initialized to 0x00000000); this matches native gdiplus behavior. */
+        status = GdipDrawImageRect(graphics, (GpImage*)metafile, 0.0f, 0.0f,
+            (REAL)pix_width, (REAL)pix_height);
+        GdipDeleteGraphics(graphics);
+    }
+
+    if (status == Ok)
+        *bitmap = bmp;
+    else
+        GdipDisposeImage((GpImage*)bmp);
+
+    return status;
+}
+
 static GpStatus encode_image_wic(GpImage *image, IStream *stream,
     REFGUID container, GDIPCONST EncoderParameters *params)
 {
     GpStatus status, terminate_status;
+    GpBitmap *rasterized = NULL;
+    GpImage *encode_image = image;
 
-    if (image->type != ImageTypeBitmap)
+    if (image->type == ImageTypeMetafile)
+    {
+        status = rasterize_metafile((GpMetafile*)image, &rasterized);
+        if (status != Ok) return status;
+        encode_image = (GpImage*)rasterized;
+    }
+    else if (image->type != ImageTypeBitmap)
         return GenericError;
 
-    status = initialize_encoder_wic(stream, container, image);
+    status = initialize_encoder_wic(stream, container, encode_image);
 
     if (status == Ok)
-        status = encode_frame_wic(image->encoder, image);
+        status = encode_frame_wic(encode_image->encoder, encode_image);
 
     if (!has_encoder_param_long(params, EncoderSaveFlag, EncoderValueMultiFrame))
     {
         /* always try to terminate, but if something already failed earlier, keep the old status. */
-        terminate_status = terminate_encoder_wic(image);
+        terminate_status = terminate_encoder_wic(encode_image);
         if (status == Ok)
             status = terminate_status;
     }
+
+    GdipDisposeImage((GpImage*)rasterized);
 
     return status;
 }
