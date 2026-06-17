@@ -2096,6 +2096,32 @@ static void _test_textarea_type(unsigned line, IUnknown *unk)
     SysFreeString(type);
 }
 
+#define test_textarea_disabled(t,v) _test_textarea_disabled(__LINE__,t,v)
+static void _test_textarea_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL ex)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    VARIANT_BOOL b = 0x100;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_disabled(textarea, &b);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_disabled failed: %08lx\n", hres);
+    ok_(__FILE__,line)(b == ex, "disabled = %x, expected %x\n", b, ex);
+}
+
+#define test_textarea_put_disabled(t,v) _test_textarea_put_disabled(__LINE__,t,v)
+static void _test_textarea_put_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL b)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_put_disabled(textarea, b);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "put_disabled failed: %08lx\n", hres);
+
+    _test_textarea_disabled(line, unk, b);
+}
+
 #define get_textarea_form(t) _get_textarea_form(__LINE__,t)
 static IHTMLFormElement *_get_textarea_form(unsigned line, IUnknown *unk)
 {
@@ -11379,6 +11405,9 @@ static void test_textarea_element(IHTMLDocument2 *doc, IHTMLElement *parent)
     test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
     test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
     test_textarea_type((IUnknown*)elem);
+    test_textarea_disabled((IUnknown*)elem, VARIANT_FALSE);
+    test_textarea_put_disabled((IUnknown*)elem, VARIANT_TRUE);
+    test_textarea_put_disabled((IUnknown*)elem, VARIANT_FALSE);
 
     form = get_textarea_form((IUnknown*)elem);
     ok(!form, "form = %p\n", form);
