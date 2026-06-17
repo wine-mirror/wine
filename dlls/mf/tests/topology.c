@@ -697,10 +697,6 @@ static HRESULT WINAPI test_transform_create(UINT input_count, IMFMediaType **inp
     return S_OK;
 }
 
-DEFINE_EXPECT(test_source_BeginGetEvent);
-DEFINE_EXPECT(test_source_QueueEvent);
-DEFINE_EXPECT(test_source_Start);
-
 struct test_source
 {
     IMFMediaSource IMFMediaSource_iface;
@@ -761,7 +757,7 @@ static HRESULT WINAPI test_source_GetEvent(IMFMediaSource *iface, DWORD flags, I
 static HRESULT WINAPI test_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
     struct test_source *source = impl_from_IMFMediaSource(iface);
-    CHECK_EXPECT(test_source_BeginGetEvent);
+    ok(0, "Unexpected call.\n");
     return source->begin_get_event_res;
 }
 
@@ -774,7 +770,7 @@ static HRESULT WINAPI test_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncRes
 static HRESULT WINAPI test_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
         HRESULT hr, const PROPVARIANT *value)
 {
-    CHECK_EXPECT(test_source_QueueEvent);
+    ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
 
@@ -793,7 +789,7 @@ static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *i
 static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *pd, const GUID *time_format,
         const PROPVARIANT *start_position)
 {
-    CHECK_EXPECT(test_source_Start);
+    ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
 

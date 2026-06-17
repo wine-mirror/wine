@@ -5154,7 +5154,6 @@ static IMFTimerVtbl MFTimerVtbl =
 DEFINE_EXPECT(presentation_clock_AddClockStateSink);
 DEFINE_EXPECT(presentation_clock_RemoveClockStateSink);
 DEFINE_EXPECT(presentation_clock_GetTimeSource);
-DEFINE_EXPECT(presentation_clock_SetTimeSource);
 
 static struct presentation_clock* impl_from_IMFPresentationClock(IMFPresentationClock *iface)
 {
@@ -5242,7 +5241,7 @@ static WINAPI HRESULT presentation_clock_SetTimeSource(IMFPresentationClock *ifa
 {
     struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
 
-    CHECK_EXPECT(presentation_clock_SetTimeSource);
+    ok(0, "Unexpected call.\n");
     if (pc->time_source) IMFPresentationTimeSource_Release(pc->time_source);
     IMFPresentationTimeSource_AddRef(pc->time_source = time_source);
     return S_OK;
