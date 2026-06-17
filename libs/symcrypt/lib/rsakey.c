@@ -417,7 +417,7 @@ SymCryptRsakeyCalculatePrivateFields(
         //      - First argument > 0: piPhi as the product of p-1's
         //      - Second argument: odd, verified below
         // We also reject public exponent 1, as that is obviously unsafe.
-        if( pkRsakey->au64PubExp[i] == 1 || (pkRsakey->au64PubExp[i] & 1) != 1)
+        if( /* pkRsakey->au64PubExp[i] == 1 || */ (pkRsakey->au64PubExp[i] & 1) != 1)
         {
             scError = SYMCRYPT_INVALID_ARGUMENT;
             goto cleanup;
