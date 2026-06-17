@@ -1604,7 +1604,7 @@ BOOL X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     input.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.mi.dwExtraInfo = 0;
 
-    if (!hwnd && is_old_motion_event( event->serial ))
+    if (is_old_motion_event( event->serial ))
     {
         TRACE( "pos %d,%d old serial %lu, ignoring\n", event->x, event->y, event->serial );
         return FALSE;
