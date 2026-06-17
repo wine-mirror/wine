@@ -5108,8 +5108,16 @@ static const WCHAR wmf_codecname[] = L"Built-in WMF";
 static const WCHAR wmf_extension[] = L"*.WMF";
 static const WCHAR wmf_mimetype[] = L"image/x-wmf";
 static const WCHAR wmf_format[] = L"WMF";
-static const BYTE wmf_sig_pattern[] = { 0xd7, 0xcd };
-static const BYTE wmf_sig_mask[] = { 0xFF, 0xFF };
+static const BYTE wmf_sig_pattern[] = {
+    0xd7, 0xcd, 0xc6, 0x9a,   /* placeable WMF */
+    0x01, 0x00, 0x09, 0x00,   /* raw memory metafile */
+    0x02, 0x00, 0x09, 0x00,   /* raw disk metafile */
+};
+static const BYTE wmf_sig_mask[] = {
+    0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF,
+};
 
 static const WCHAR png_codecname[] = L"Built-in PNG";
 static const WCHAR png_extension[] = L"*.PNG";
@@ -5237,8 +5245,8 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* MimeType */           wmf_mimetype,
             /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportVector | ImageCodecFlagsBuiltin,
             /* Version */            1,
-            /* SigCount */           1,
-            /* SigSize */            2,
+            /* SigCount */           3,
+            /* SigSize */            4,
             /* SigPattern */         wmf_sig_pattern,
             /* SigMask */            wmf_sig_mask,
         },
