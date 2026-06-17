@@ -1316,6 +1316,9 @@ static void test_BCryptEncrypt(void)
         ok(tag[i] == expected_tag[i], "%lu: %02x != %02x\n", i, tag[i], expected_tag[i]);
     ok(!memcmp(ivbuf, iv, sizeof(iv)), "wrong iv data.\n");
 
+    ret = BCryptEncrypt(key, data2, 32, &auth_info, ivbuf, 16, ciphertext, 31, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", ret);
+
     /* NULL initialization vector */
     size = 0;
     memset(ciphertext, 0xff, sizeof(ciphertext));
@@ -1915,6 +1918,16 @@ static void test_BCryptDecrypt(void)
     ok(size == 32, "got %lu\n", size);
     ok(!memcmp(plaintext, expected3, sizeof(expected3)), "wrong data\n");
     ok(!memcmp(ivbuf, iv, sizeof(iv)), "wrong iv.\n");
+
+    size = 0;
+    ret = BCryptDecrypt(key, ciphertext4, 32, &auth_info, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(size == 32, "got %lu\n", size);
+
+    size = 0;
+    ret = BCryptDecrypt(key, ciphertext4, 32, &auth_info, ivbuf, 16, plaintext, 31, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", ret);
+    ok(size == 32, "got %lu\n", size);
 
     size = 0;
     memset(plaintext, 0, sizeof(plaintext));

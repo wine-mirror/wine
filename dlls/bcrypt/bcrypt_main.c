@@ -1676,13 +1676,17 @@ static NTSTATUS decrypt_aes_ecb( const struct key *key, const UCHAR *input, ULON
 }
 
 static NTSTATUS decrypt_aes_gcm( struct key *key, const UCHAR *input, ULONG input_len,
-                                 const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output )
+                                 const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output, ULONG output_len,
+                                 ULONG *ret_len )
 {
     SYMCRYPT_ERROR error;
 
     if (!info || !info->pbNonce || !info->pbTag || info->cbTag < 12 || info->cbTag > 16)
         return STATUS_INVALID_PARAMETER;
     if (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG) FIXME( "call chaining not implemented\n" );
+
+    if (!output) return STATUS_SUCCESS;
+    if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     EnterCriticalSection( &key->s.cs );
 
@@ -1774,7 +1778,7 @@ static NTSTATUS decrypt_symmetric( struct key *key, const UCHAR *input, ULONG in
             return decrypt_aes_ecb( key, input, input_len, output, output_len, ret_len, flags );
 
         case CHAIN_MODE_GCM:
-            return decrypt_aes_gcm( key, input, input_len, info, output );
+            return decrypt_aes_gcm( key, input, input_len, info, output, output_len, ret_len );
 
         default:
             if (iv && iv_len != key->s.block_size) return STATUS_INVALID_PARAMETER;
@@ -2031,13 +2035,15 @@ static NTSTATUS encrypt_aes_ecb( const struct key *key, const UCHAR *input, ULON
 }
 
 static NTSTATUS encrypt_aes_gcm( struct key *key, const UCHAR *input, ULONG input_len,
-                                 const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output )
+                                 const BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *info, UCHAR *output, ULONG output_len,
+                                 ULONG *ret_len )
 {
     if (!info || !info->pbNonce || !info->pbTag || info->cbTag < 12 || info->cbTag > 16)
         return STATUS_INVALID_PARAMETER;
     if (info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG) FIXME( "call chaining not implemented\n" );
 
     if (input && !input_len) return STATUS_SUCCESS;
+    if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     EnterCriticalSection( &key->s.cs );
 
@@ -2116,7 +2122,7 @@ static NTSTATUS encrypt_symmetric( struct key *key, const UCHAR *input, ULONG in
             return encrypt_aes_ecb( key, input, input_len, output, output_len, ret_len, flags );
 
         case CHAIN_MODE_GCM:
-            return encrypt_aes_gcm( key, input, input_len, info, output );
+            return encrypt_aes_gcm( key, input, input_len, info, output, output_len, ret_len );
 
         default:
             if (iv && iv_len != key->s.block_size) return STATUS_INVALID_PARAMETER;
