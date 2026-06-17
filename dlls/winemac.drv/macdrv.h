@@ -156,7 +156,7 @@ extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hin
                                     const struct window_rects *new_rects, struct window_surface *surface);
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor);
 extern BOOL macdrv_GetCursorPos(LPPOINT pos);
-extern void macdrv_SetCapture(HWND hwnd, UINT flags);
+extern void macdrv_SetCapture(HWND hwnd, UINT flags, HWND previous);
 extern void macdrv_SetCursor(HWND hwnd, HCURSOR cursor);
 extern BOOL macdrv_SetCursorPos(INT x, INT y);
 extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey);
@@ -238,7 +238,6 @@ extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event);
 extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event);
 extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event);
 extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event);
-extern void macdrv_SetCapture(HWND hwnd, UINT flags);
 
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data);
 extern void macdrv_keyboard_changed(const macdrv_event *event);

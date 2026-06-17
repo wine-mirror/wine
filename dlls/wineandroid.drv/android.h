@@ -111,7 +111,7 @@ extern void ANDROID_DestroyWindow( HWND hwnd );
 extern BOOL ANDROID_ProcessEvents( DWORD mask );
 extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent );
-extern void ANDROID_SetCapture( HWND hwnd, UINT flags );
+extern void ANDROID_SetCapture( HWND hwnd, UINT flags, HWND previous );
 extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );
 extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects );

@@ -1110,7 +1110,7 @@ void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 /***********************************************************************
  *           ANDROID_SetCapture
  */
-void ANDROID_SetCapture( HWND hwnd, UINT flags )
+void ANDROID_SetCapture( HWND hwnd, UINT flags, HWND previous )
 {
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
     ioctl_set_capture( hwnd );

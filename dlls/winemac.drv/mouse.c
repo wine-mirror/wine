@@ -702,13 +702,12 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
 /***********************************************************************
  *              SetCapture (MACDRV.@)
  */
- void macdrv_SetCapture(HWND hwnd, UINT flags)
+ void macdrv_SetCapture(HWND hwnd, UINT flags, HWND previous)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    HWND top = NtUserGetAncestor(hwnd, GA_ROOT);
-    macdrv_window cocoa_window = macdrv_get_cocoa_window(top, FALSE);
+    macdrv_window cocoa_window = macdrv_get_cocoa_window(hwnd, FALSE);
 
-    TRACE("hwnd %p top %p/%p flags 0x%08x\n", hwnd, top, cocoa_window, flags);
+    TRACE("hwnd %p/%p flags 0x%08x previous %p\n", hwnd, cocoa_window, flags, previous);
 
     if (!thread_data) return;
 

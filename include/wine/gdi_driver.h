@@ -218,7 +218,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 109
+#define WINE_GDI_DRIVER_VERSION 110
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -404,7 +404,7 @@ struct user_driver_funcs
     BOOL    (*pProcessEvents)(DWORD);
     void    (*pReleaseDC)(HWND,HDC);
     BOOL    (*pScrollDC)(HDC,INT,INT,HRGN);
-    void    (*pSetCapture)(HWND,UINT);
+    void    (*pSetCapture)(HWND,UINT,HWND);
     void    (*pSetDesktopWindow)(HWND);
     void    (*pActivateWindow)(HWND,HWND);
     void    (*pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);

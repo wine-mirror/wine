@@ -1920,7 +1920,7 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
     if (ret)
     {
-        user_driver->pSetCapture( hwnd, gui_flags );
+        user_driver->pSetCapture( NtUserGetAncestor( hwnd, GA_ROOT ), gui_flags, NtUserGetAncestor( previous, GA_ROOT ) );
 
         if (previous)
             NtUserNotifyWinEvent( EVENT_SYSTEM_CAPTUREEND, previous, OBJID_WINDOW, 0 );

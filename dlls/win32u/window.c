@@ -5264,7 +5264,7 @@ LRESULT destroy_window( HWND hwnd )
 
     send_message( hwnd, WM_NCDESTROY, 0, 0 );
 
-    if (hwnd == get_capture()) user_driver->pSetCapture( NULL, 0 );
+    if (hwnd == get_capture()) user_driver->pSetCapture( NULL, 0, toplevel );
 
     if (toplevel && toplevel != hwnd) update_window_state( toplevel );
 
@@ -5405,7 +5405,7 @@ void destroy_thread_windows(void)
         struct window_surface *surface;
         struct destroy_entry *next;
     } *entry, *free_list = NULL;
-    HWND capture = get_capture();
+    HWND capture = get_capture(), toplevel = NtUserGetAncestor( capture, GA_ROOT );
     struct list drawables = LIST_INIT(drawables);
     HANDLE handle = 0;
     WND *win;
@@ -5455,7 +5455,7 @@ void destroy_thread_windows(void)
         free_list = entry->next;
         TRACE( "destroying %p\n", entry );
 
-        if (entry->handle == capture) user_driver->pSetCapture( NULL, 0 );
+        if (entry->handle == capture) user_driver->pSetCapture( NULL, 0, toplevel );
 
         detach_client_surfaces( entry->handle );
         user_driver->pDestroyWindow( entry->handle );
