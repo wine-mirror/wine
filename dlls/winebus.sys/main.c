@@ -47,9 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static DRIVER_OBJECT *driver_obj;
 
-static DEVICE_OBJECT *mouse_obj;
-static DEVICE_OBJECT *keyboard_obj;
-
 /* The root-enumerated device stack. */
 static DEVICE_OBJECT *bus_pdo;
 static DEVICE_OBJECT *bus_fdo;
@@ -813,7 +810,7 @@ static void mouse_device_create(void)
     struct device_create_params params = {{0}};
 
     if (winebus_call(mouse_create, &params)) return;
-    mouse_obj = bus_create_hid_device(&params.desc, params.device);
+    bus_create_hid_device(&params.desc, params.device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
@@ -822,7 +819,7 @@ static void keyboard_device_create(void)
     struct device_create_params params = {{0}};
 
     if (winebus_call(keyboard_create, &params)) return;
-    keyboard_obj = bus_create_hid_device(&params.desc, params.device);
+    bus_create_hid_device(&params.desc, params.device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
