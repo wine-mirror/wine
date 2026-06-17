@@ -121,6 +121,7 @@
 @ stdcall WSCDeinstallProvider(ptr ptr)
 @ stdcall WSCEnableNSProvider(ptr long)
 @ stdcall WSCEnumProtocols(ptr ptr ptr ptr)
+@ stdcall WSCEnumProtocols32(ptr ptr ptr ptr)
 @ stdcall WSCGetApplicationCategory(wstr long wstr long ptr ptr)
 @ stdcall WSCGetProviderInfo(ptr long ptr ptr long ptr)
 @ stdcall WSCGetProviderPath(ptr ptr ptr ptr)

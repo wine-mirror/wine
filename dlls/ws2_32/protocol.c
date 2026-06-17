@@ -2389,9 +2389,20 @@ int WINAPI WSCSetApplicationCategory( const WCHAR *path, DWORD len, const WCHAR 
  */
 int WINAPI WSCEnumProtocols( int *protocols, WSAPROTOCOL_INFOW *info, DWORD *len, int *err )
 {
-    int ret = WSAEnumProtocolsW( protocols, info, len );
+    int ret;
 
+    TRACE( "protocols %p, info %p, len %p, err %p.\n", protocols, info, len, err );
+
+    ret = WSAEnumProtocolsW( protocols, info, len );
     if (ret == SOCKET_ERROR) *err = WSAENOBUFS;
-
     return ret;
+}
+
+
+/***********************************************************************
+ *      WSCEnumProtocols32   (ws2_32.@)
+ */
+int WINAPI WSCEnumProtocols32( int *protocols, WSAPROTOCOL_INFOW *info, DWORD *len, int *err )
+{
+    return WSCEnumProtocols( protocols, info, len, err );
 }
