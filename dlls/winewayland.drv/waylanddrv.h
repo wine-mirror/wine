@@ -113,6 +113,7 @@ struct wayland_pointer
     struct wp_cursor_shape_device_v1 *wp_cursor_shape_device_v1;
     HWND focused_hwnd;
     HWND constraint_hwnd;
+    BOOL relative_mode;
     BOOL pending_warp;
     uint32_t enter_serial;
     uint32_t button_serial;

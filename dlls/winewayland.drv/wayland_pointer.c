@@ -170,7 +170,7 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
     struct wayland_pointer *pointer = &process_wayland.pointer;
 
     /* Ignore absolute motion events if in relative mode. */
-    if (pointer->zwp_relative_pointer_v1) return;
+    if (pointer->relative_mode) return;
 
     pointer_handle_motion_internal(sx, sy);
 }
@@ -357,7 +357,7 @@ static void relative_pointer_v1_relative_motion(void *private,
                                                 wl_fixed_t dx, wl_fixed_t dy,
                                                 wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel)
 {
-    INPUT input = {0};
+    INPUT input = { .type = INPUT_MOUSE };
     HWND hwnd;
     struct wayland_win_data *data;
     double screen_x = 0.0, screen_y = 0.0;
@@ -374,16 +374,18 @@ static void relative_pointer_v1_relative_motion(void *private,
 
     pthread_mutex_lock(&pointer->mutex);
 
-    pointer->accum_x += screen_x;
-    pointer->accum_y += screen_y;
+    if (pointer->relative_mode)
+    {
+        pointer->accum_x += screen_x;
+        pointer->accum_y += screen_y;
 
-    input.type = INPUT_MOUSE;
-    input.mi.dx = round(pointer->accum_x);
-    input.mi.dy = round(pointer->accum_y);
-    input.mi.dwFlags = MOUSEEVENTF_MOVE;
+        input.mi.dx = round(pointer->accum_x);
+        input.mi.dy = round(pointer->accum_y);
+        input.mi.dwFlags = MOUSEEVENTF_MOVE;
 
-    pointer->accum_x -= input.mi.dx;
-    pointer->accum_y -= input.mi.dy;
+        pointer->accum_x -= input.mi.dx;
+        pointer->accum_y -= input.mi.dy;
+    }
 
     pthread_mutex_unlock(&pointer->mutex);
 
@@ -409,6 +411,18 @@ void wayland_pointer_init(struct wl_pointer *wl_pointer)
     pointer->enter_serial = 0;
     pthread_mutex_unlock(&pointer->mutex);
     wl_pointer_add_listener(pointer->wl_pointer, &pointer_listener, NULL);
+
+    if (!process_wayland.zwp_relative_pointer_manager_v1)
+        ERR("zwp_relative_pointer_manager_v1 isn't supported, skipping relative motion\n");
+    else
+    {
+        pointer->zwp_relative_pointer_v1 =
+            zwp_relative_pointer_manager_v1_get_relative_pointer(
+                process_wayland.zwp_relative_pointer_manager_v1,
+                pointer->wl_pointer);
+        zwp_relative_pointer_v1_add_listener(pointer->zwp_relative_pointer_v1,
+                                             &relative_pointer_v1_listener, NULL);
+    }
 }
 
 void wayland_pointer_deinit(void)
@@ -959,31 +973,18 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
         }
     }
 
-    if (!process_wayland.zwp_relative_pointer_manager_v1)
-    {
-        if (!once++)
-            ERR("zwp_relative_pointer_manager_v1 isn't supported, skipping relative motion\n");
-        return;
-    }
-
     needs_relative = !is_visible && pointer->constraint_hwnd &&
                      pointer->constraint_hwnd == pointer->focused_hwnd;
 
-    if (needs_relative && !pointer->zwp_relative_pointer_v1)
+    if (needs_relative && !pointer->relative_mode && pointer->zwp_relative_pointer_v1)
     {
+        pointer->relative_mode = TRUE;
         pointer->accum_x = pointer->accum_y = 0;
-        pointer->zwp_relative_pointer_v1 =
-            zwp_relative_pointer_manager_v1_get_relative_pointer(
-                process_wayland.zwp_relative_pointer_manager_v1,
-                pointer->wl_pointer);
-        zwp_relative_pointer_v1_add_listener(pointer->zwp_relative_pointer_v1,
-                                             &relative_pointer_v1_listener, NULL);
         TRACE("Enabling relative motion\n");
     }
-    else if (!needs_relative && pointer->zwp_relative_pointer_v1)
+    else if (!needs_relative && pointer->relative_mode)
     {
-        zwp_relative_pointer_v1_destroy(pointer->zwp_relative_pointer_v1);
-        pointer->zwp_relative_pointer_v1 = NULL;
+        pointer->relative_mode = FALSE;
         TRACE("Disabling relative motion\n");
     }
 }
@@ -1011,7 +1012,7 @@ BOOL WAYLAND_SetCursorPos(INT x, INT y)
     struct wayland_pointer *pointer = &process_wayland.pointer;
 
     pthread_mutex_lock(&pointer->mutex);
-    if (pointer->zwp_relative_pointer_v1)
+    if (pointer->relative_mode)
     {
         pthread_mutex_unlock(&pointer->mutex);
         return FALSE;
