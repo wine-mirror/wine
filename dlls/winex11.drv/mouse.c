@@ -535,24 +535,14 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
  */
 static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPUT *input )
 {
-    struct x11drv_win_data *data;
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
-    input->type = INPUT_MOUSE;
-
-    if (!hwnd)
-    {
-        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (!thread_data->clipping_cursor || thread_data->clip_window != window) return;
-        NtUserSendHardwareInput( hwnd, 0, input, 0 );
-        return;
-    }
-
-    if (!(data = get_win_data( hwnd ))) return;
-    release_win_data( data );
+    /* ignore clipping window input when not clipping or wrong clipping window */
+    if (!hwnd && (!thread_data->clipping_cursor || thread_data->clip_window != window)) return;
 
     /* update the wine server Z-order */
 
-    if (hwnd != x11drv_thread_data()->grab_hwnd &&
+    if (hwnd && hwnd != x11drv_thread_data()->grab_hwnd &&
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
@@ -567,6 +557,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         SERVER_END_REQ;
     }
 
+    input->type = INPUT_MOUSE;
     NtUserSendHardwareInput( hwnd, 0, input, 0 );
 }
 
