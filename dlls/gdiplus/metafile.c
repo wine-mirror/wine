@@ -692,6 +692,8 @@ void METAFILE_Free(GpMetafile *metafile)
     DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
     if (!metafile->preserve_hemf)
         DeleteEnhMetaFile(metafile->hemf);
+    if (!metafile->preserve_hwmf)
+        DeleteMetaFile(metafile->hwmf);
     if (metafile->record_graphics)
     {
         WARN("metafile closed while recording\n");
@@ -4315,6 +4317,9 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if (retval == Ok)
     {
+        (*metafile)->hwmf = hwmf;
+        (*metafile)->preserve_hwmf = !delete;
+
         if (placeable)
         {
             (*metafile)->image.xres = (REAL)placeable->Inch;
@@ -4330,11 +4335,12 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
         else
             (*metafile)->metafile_type = MetafileTypeWmf;
         (*metafile)->image.format = ImageFormatWMF;
-
-        if (delete) DeleteMetaFile(hwmf);
     }
     else
+    {
         DeleteEnhMetaFile(hemf);
+    }
+
     return retval;
 }
 

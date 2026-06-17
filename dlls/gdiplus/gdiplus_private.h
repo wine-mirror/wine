@@ -479,7 +479,9 @@ struct GpMetafile{
     GpUnit unit;
     MetafileType metafile_type;
     HENHMETAFILE hemf;
+    HMETAFILE hwmf;
     int preserve_hemf; /* if true, hemf belongs to the app and should not be deleted */
+    int preserve_hwmf; /* if true, hwmf belongs to the app and should not be deleted */
 
     /* recording */
     HDC record_dc;
