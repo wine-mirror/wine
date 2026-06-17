@@ -2668,6 +2668,8 @@ static NTSTATUS import_rsa_key( enum alg_id alg, const UCHAR *input, ULONG input
     else if (blob->Magic != BCRYPT_RSAPUBLIC_MAGIC) return STATUS_NOT_SUPPORTED;
 
     if (blob->cbPublicExp > sizeof(exp64)) return NTE_BAD_DATA;
+    for (i = 0; i < blob->cbPublicExp; i++) exp64 += exp[i] << ((blob->cbPublicExp - i - 1) * 8);
+    if (exp64 == 1) return STATUS_INVALID_PARAMETER;
 
     size = sizeof(*blob) + blob->cbPublicExp + blob->cbModulus;
     if (key_flags & KEY_FLAG_PRIVATE) size += blob->cbPrime1 + blob->cbPrime2;
@@ -2684,7 +2686,6 @@ static NTSTATUS import_rsa_key( enum alg_id alg, const UCHAR *input, ULONG input
     else if (alg == ALG_ID_RSA_SIGN) set_flags |= SYMCRYPT_FLAG_RSAKEY_SIGN;
 
     mod = exp + blob->cbPublicExp;
-    for (i = 0; i < blob->cbPublicExp; i++) exp64 += exp[i] << ((blob->cbPublicExp - i - 1) * 8);
 
     if (key_flags & KEY_FLAG_PRIVATE)
     {
@@ -2733,7 +2734,7 @@ static NTSTATUS import_legacy_rsa_key( enum alg_id alg, const UCHAR *input, ULON
     key_size = len_from_bitlen( rsakey->bitlen );
     size += key_size;
     if (key_flags & KEY_FLAG_PRIVATE) size += key_size; /* prime1 + prime2 */
-    if (input_len < size) return STATUS_INVALID_PARAMETER;
+    if (input_len < size || rsakey->pubexp == 1) return STATUS_INVALID_PARAMETER;
 
     if ((status = alloc_key( alg, key_flags, &key )) || (status = alloc_rsa_key( key, rsakey->bitlen )))
     {
