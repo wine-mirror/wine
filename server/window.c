@@ -3038,6 +3038,11 @@ DECL_HANDLER(update_window_zorder)
 
     if (!win || !win->parent || !is_visible( win )) return;  /* nothing to do */
 
+    map_point_raw_to_virt( win->desktop, &rect.left, &rect.top );
+    map_point_raw_to_virt( win->desktop, &rect.right, &rect.bottom );
+    rect.right = max( rect.left + 1, rect.right );
+    rect.bottom = max( rect.top + 1, rect.bottom );
+
     LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
     {
         if (ptr == win) break;
