@@ -88,6 +88,9 @@ static BOOL g_enablecallchecks;
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = 0
+
 /* object site */
 DEFINE_EXPECT(site_qi_IServiceProvider);
 DEFINE_EXPECT(site_qi_IXMLDOMDocument);
@@ -1403,8 +1406,8 @@ static void set_xhr_site(IXMLHttpRequest *xhr)
     CHECK_CALLED(sp_queryservice_SID_secmgr_htmldoc2);
     todo_wine
     CHECK_CALLED(sp_queryservice_SID_secmgr_xmldomdoc);
-    /* this one isn't very reliable
-    CHECK_CALLED(sp_queryservice_SID_secmgr_secmgr); */
+    /* this one isn't very reliable */
+    CLEAR_CALLED(sp_queryservice_SID_secmgr_secmgr);
 todo_wine {
     CHECK_CALLED(htmldoc2_get_all);
     CHECK_CALLED(collection_get_length);
