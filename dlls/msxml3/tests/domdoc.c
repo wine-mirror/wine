@@ -68,8 +68,6 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
-static int g_unexpectedcall, g_expectedcall;
-
 struct msxmlsupported_data_t
 {
     const GUID *clsid;
@@ -199,7 +197,7 @@ static ULONG WINAPI dispevent_Release(IDispatch *iface)
 
 static HRESULT WINAPI dispevent_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 {
-    g_unexpectedcall++;
+    ok(0, "unexpected call\n");
     *pctinfo = 0;
     return S_OK;
 }
@@ -207,14 +205,14 @@ static HRESULT WINAPI dispevent_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo
 static HRESULT WINAPI dispevent_GetTypeInfo(IDispatch *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
-    g_unexpectedcall++;
+    ok(0, "unexpected call\n");
     return S_OK;
 }
 
 static HRESULT WINAPI dispevent_GetIDsOfNames(IDispatch *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    g_unexpectedcall++;
+    ok(0, "unexpected call\n");
     return S_OK;
 }
 
@@ -222,20 +220,7 @@ static HRESULT WINAPI dispevent_Invoke(IDispatch *iface, DISPID member, REFIID r
         LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result,
         EXCEPINFO *excepInfo, UINT *argErr)
 {
-    ok(member == 0, "expected 0 member, got %ld\n", member);
-    ok(lcid == LOCALE_SYSTEM_DEFAULT, "expected LOCALE_SYSTEM_DEFAULT, got lcid %lx\n", lcid);
-    ok(flags == DISPATCH_METHOD, "expected DISPATCH_METHOD, got %d\n", flags);
-
-    ok(params->cArgs == 0, "got %d\n", params->cArgs);
-    ok(params->cNamedArgs == 0, "got %d\n", params->cNamedArgs);
-    ok(params->rgvarg == NULL, "got %p\n", params->rgvarg);
-    ok(params->rgdispidNamedArgs == NULL, "got %p\n", params->rgdispidNamedArgs);
-
-    ok(result == NULL, "got %p\n", result);
-    ok(excepInfo == NULL, "got %p\n", excepInfo);
-    ok(argErr == NULL, "got %p\n", argErr);
-
-    g_expectedcall++;
+    ok(0, "unexpected call\n");
     return E_FAIL;
 }
 
