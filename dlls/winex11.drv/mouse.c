@@ -542,7 +542,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
 
     /* update the wine server Z-order */
 
-    if (hwnd && hwnd != x11drv_thread_data()->grab_hwnd &&
+    if (hwnd && hwnd != NtUserGetAncestor( get_capture_window(), GA_ROOT ) &&
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
@@ -1618,7 +1618,7 @@ BOOL X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 
     x11drv_thread_data()->keymapnotify_hwnd = hwnd;
 
-    if (hwnd == x11drv_thread_data()->grab_hwnd) return FALSE;
+    if (hwnd == NtUserGetAncestor( get_capture_window(), GA_ROOT )) return FALSE;
 
     /* simulate a mouse motion event */
     input.mi.dx          = event->x;
