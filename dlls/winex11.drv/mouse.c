@@ -267,6 +267,7 @@ void x11drv_xinput2_enable( Display *display, Window window )
 
     if (window == DefaultRootWindow( display ))
     {
+        if (x11drv_thread_data()->root_window_users++) return;
         XISetMask( mask_bits, XI_DeviceChanged );
         XISetMask( mask_bits, XI_RawMotion );
         XISetMask( mask_bits, XI_ButtonPress );
@@ -298,7 +299,10 @@ void x11drv_xinput2_disable( Display *display, Window window )
     memset( mask_bits, 0, sizeof(mask_bits) );
 
     if (window == DefaultRootWindow( display ))
+    {
+        if (--x11drv_thread_data()->root_window_users) return;
         XISetMask( mask_bits, XI_DeviceChanged );
+    }
 
     pXISelectEvents( display, window, &mask, 1 );
 }
@@ -389,9 +393,6 @@ static BOOL grab_clipping_window( const RECT *clip )
         return TRUE;
     }
 
-    /* enable XInput2 unless we are already clipping */
-    if (!data->clipping_cursor) x11drv_xinput2_enable( data->display, DefaultRootWindow( data->display ) );
-
     TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
     if (!data->clipping_cursor) XUnmapWindow( data->display, clip_window );
@@ -421,11 +422,7 @@ static BOOL grab_clipping_window( const RECT *clip )
 
     set_window_cursor( clip_window, cursor );
 
-    if (!clipping_cursor)
-    {
-        x11drv_xinput2_disable( data->display, DefaultRootWindow( data->display ) );
-        return FALSE;
-    }
+    if (!clipping_cursor) return FALSE;
     clip_rect = *clip;
     data->clipping_cursor = TRUE;
     return TRUE;
@@ -452,7 +449,6 @@ void ungrab_clipping_window(void)
     if (clipping_cursor) XUngrabPointer( data->display, CurrentTime );
     clipping_cursor = FALSE;
     data->clipping_cursor = FALSE;
-    x11drv_xinput2_disable( data->display, DefaultRootWindow( data->display ) );
 }
 
 /***********************************************************************
@@ -522,11 +518,7 @@ static POINT map_event_coords( HWND hwnd, Window window, Window event_root, POIN
 
 static void send_mouse_input( HWND hwnd, POINT pos, UINT flags, UINT data, UINT time )
 {
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
     INPUT input = { .type = INPUT_MOUSE };
-
-    /* ignore clipping window input when not clipping */
-    if (!hwnd && !thread_data->clipping_cursor) return;
 
     if ((flags & MOUSEEVENTF_ABSOLUTE) || pos.x || pos.y) flags |= MOUSEEVENTF_MOVE;
 
@@ -1633,6 +1625,13 @@ static POINT map_raw_event_coords( XIRawEvent *event )
             y->value += y_value * y_scale;
         }
         values++;
+    }
+
+    /* when not clipping cursor, we use MotionNotify for absolute mouse position */
+    if (!thread_data->clipping_cursor)
+    {
+        x->value = y->value = 0;
+        return pt;
     }
 
     pt.x = round( x->value );

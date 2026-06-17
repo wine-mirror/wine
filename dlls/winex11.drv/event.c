@@ -786,6 +786,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
+    x11drv_xinput2_enable( event->display, DefaultRootWindow( event->display ) );
     xim_set_focus( hwnd, TRUE );
 
     if (use_take_focus) return TRUE;
@@ -879,6 +880,7 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
+    x11drv_xinput2_disable( event->display, DefaultRootWindow( event->display ) );
     focus_out( event->display, hwnd );
     return TRUE;
 }
