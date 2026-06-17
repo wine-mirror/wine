@@ -2020,7 +2020,7 @@ static int is_current_process_foreground( struct desktop *desktop )
 #define WINE_MOUSE_HANDLE 1
 #define WINE_KEYBOARD_HANDLE 2
 
-static void rawmouse_init( struct rawinput *header, RAWMOUSE *rawmouse, int x, int y, unsigned int flags,
+static bool rawmouse_init( struct rawinput *header, RAWMOUSE *rawmouse, int x, int y, unsigned int flags,
                            unsigned int buttons, lparam_t info )
 {
     static const unsigned int button_flags[] =
@@ -2072,6 +2072,8 @@ static void rawmouse_init( struct rawinput *header, RAWMOUSE *rawmouse, int x, i
     rawmouse->lLastX             = x;
     rawmouse->lLastY             = y;
     rawmouse->ulExtraInformation = info;
+
+    return x || y || rawmouse->usButtonFlags;
 }
 
 static void rawkeyboard_init( struct rawinput *rawinput, RAWKEYBOARD *keyboard, unsigned short scan, unsigned short vkey,
@@ -2142,9 +2144,9 @@ struct rawinput_message
 };
 
 /* check if process is supposed to receive a WM_INPUT message and eventually queue it */
-static void queue_rawinput_message( struct desktop *desktop, struct process *process, void *args )
+static void queue_rawinput_message( struct desktop *desktop, struct process *process,
+                                    const struct rawinput_message *raw_msg )
 {
-    const struct rawinput_message *raw_msg = args;
     const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
     struct message *msg;
@@ -2201,7 +2203,7 @@ static void queue_rawinput_message( struct desktop *desktop, struct process *pro
     queue_hardware_message( desktop, msg, 1 );
 }
 
-static void dispatch_rawinput_message( struct desktop *desktop, struct rawinput_message *raw_msg )
+static void dispatch_rawinput_message( struct desktop *desktop, const struct rawinput_message *raw_msg )
 {
     struct process *process;
 
@@ -2283,16 +2285,22 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 
     if ((foreground = get_foreground_thread( desktop, win )))
     {
+        int raw_x, raw_y;
+
         memset( &raw_msg, 0, sizeof(raw_msg) );
         raw_msg.foreground = foreground;
         raw_msg.source     = source;
         raw_msg.time       = time;
         raw_msg.message    = WM_INPUT;
         raw_msg.flags      = flags;
-        rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, x - desktop_shm->cursor.x, y - desktop_shm->cursor.y,
-                       raw_msg.flags, input->mouse.data, input->mouse.info );
 
-        dispatch_rawinput_message( desktop, &raw_msg );
+        raw_x = x - desktop_shm->cursor.x;
+        raw_y = y - desktop_shm->cursor.y;
+
+        if (rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, raw_x, raw_y,
+                           raw_msg.flags, input->mouse.data, input->mouse.info ))
+            dispatch_rawinput_message( desktop, &raw_msg );
+
         release_object( foreground );
     }
 
