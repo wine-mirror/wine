@@ -1451,30 +1451,20 @@ void move_resize_window( HWND hwnd, int dir, POINT pos )
     /* try to detect the end of the size/move by polling for the mouse button to be released */
     /* (some apps don't like it if we return before the size/move is done) */
 
-    if (!button) return;
+    if (!button--) return;
     send_message( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
     for (;;)
     {
         MSG msg;
-        INPUT input;
         int x, y, rootX, rootY;
+        UINT flags = button_up_flags[button];
 
         if (!XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &x, &y, &xstate )) break;
 
-        if (!(xstate & (Button1Mask << (button - 1))))
-        {
-            /* fake a button release event */
-            pos = root_to_virtual_screen( x, y );
-            input.type = INPUT_MOUSE;
-            input.mi.dx          = pos.x;
-            input.mi.dy          = pos.y;
-            input.mi.mouseData   = button_up_data[button - 1];
-            input.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-            input.mi.time        = NtGetTickCount();
-            input.mi.dwExtraInfo = 0;
-            NtUserSendHardwareInput( hwnd, 0, &input, 0 );
-        }
+        if (!(xstate & (Button1Mask << button))) /* fake a button release event */
+            send_mouse_input( hwnd, root_to_virtual_screen( x, y ), flags,
+                              button_up_data[button], NtGetTickCount() );
 
         while (NtUserPeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
         {
@@ -1485,7 +1475,7 @@ void move_resize_window( HWND hwnd, int dir, POINT pos )
             }
         }
 
-        if (!(xstate & (Button1Mask << (button - 1)))) break;
+        if (!(xstate & (Button1Mask << button))) break;
         NtUserMsgWaitForMultipleObjectsEx( 0, NULL, 100, QS_ALLINPUT, 0 );
     }
 
