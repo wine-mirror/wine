@@ -1279,7 +1279,6 @@ void macdrv_DestroyWindow(HWND hwnd)
 
     if (!(data = get_win_data(hwnd))) return;
 
-    if (hwnd == get_capture()) macdrv_SetCapture(0, 0);
     if (data->drag_event) NtSetEvent(data->drag_event, NULL);
 
     destroy_cocoa_window(data);
