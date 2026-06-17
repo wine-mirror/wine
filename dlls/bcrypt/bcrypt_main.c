@@ -221,8 +221,6 @@ struct secret
     struct object hdr;
     UCHAR        *derived_key;
     ULONG         derived_key_len;
-    struct key   *privkey;
-    struct key   *pubkey;
 };
 
 void * SYMCRYPT_CALL SymCryptCallbackAlloc( SIZE_T size )
