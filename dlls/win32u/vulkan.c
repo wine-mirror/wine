@@ -2559,6 +2559,7 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     VkImportSemaphoreFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR};
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct semaphore *semaphore = semaphore_from_handle( handle_info->semaphore );
+    struct vulkan_instance *instance = device->physical_device->instance;
     D3DKMT_HANDLE local, global = 0;
     VkResult res = VK_SUCCESS;
     HANDLE shared = NULL;
@@ -2591,7 +2592,35 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     }
 
     if ((fd_info.fd = d3dkmt_object_get_fd( local )) < 0) res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
-    else
+    if (!res && handle_info->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT)
+    {
+        /* Recreate semaphore to make sure it has timeline type. */
+        VkSemaphoreTypeCreateInfo type_info =
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+            .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+        };
+        VkSemaphoreCreateInfo create_info =
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = &type_info,
+        };
+        VkSemaphore new_semaphore;
+
+        if ((res = device->p_vkCreateSemaphore( device->host.device, &create_info, NULL, &new_semaphore )))
+        {
+            ERR( "Failed to create timeline semaphore, vr %d.\n", res );
+        }
+        else
+        {
+            instance->p_remove_object( instance, &semaphore->obj.obj );
+            device->p_vkDestroySemaphore( device->host.device, semaphore->obj.host.semaphore, NULL );
+            vulkan_object_init( &semaphore->obj.obj, new_semaphore );
+            instance->p_insert_object( instance, &semaphore->obj.obj );
+        }
+    }
+
+    if (!res)
     {
         fd_info.handleType = get_host_external_semaphore_type();
         fd_info.semaphore = semaphore->obj.host.semaphore;
