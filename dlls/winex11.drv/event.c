@@ -453,7 +453,7 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
 
     XFlush( gdi_display );
     if (count) TRACE( "processed %d events\n", count );
-    NtUserSendHardwareInput( NULL, 0, &input, 0 ); /* flush win32u accumulated motion */
+    NtUserSendHardwareInput( NULL, SEND_HWMSG_RAWINPUT, &input, 0 ); /* flush win32u accumulated motion */
 
     if (mask != QS_ALLINPUT || check_fd_events( ConnectionNumber( data->display ), POLLIN )) return FALSE;
     XFlush( data->display ); /* all events have been processed, flush any pending request */
