@@ -1256,6 +1256,14 @@ WINE_ERROR_WITH(pthread,[test "x$ac_cv_func_pthread_create" != xyes -a "x$PTHREA
 [pthread ${notice_platform}development files not found.
 Wine cannot support threads without libpthread.])
 
+dnl **** Check for nasm ****
+
+case " $PE_ARCHS " in
+  *\ i386\ *|*\ x86_64\ *)
+    AC_CHECK_PROGS(NASM,[nasm],[false])
+    test "$NASM" = false || FFMPEG_PE_CFLAGS="$FFMPEG_PE_CFLAGS -DHAVE_NASM" ;;
+esac
+
 dnl **** Check for EGL ****
 
 if test "x$with_opengl" != "xno"

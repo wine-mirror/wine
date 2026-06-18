@@ -186,7 +186,7 @@ sub get_makedep_flags($)
     {
         while (<FILE>)
         {
-            next unless /^#\s*pragma\s+makedep\s+(.*)/;
+            next unless /^[#%]\s*pragma\s+makedep\s+(.*)/;
             foreach my $flag (split /\s+/, $1)
             {
                 last if $flag eq "depend";
@@ -299,7 +299,7 @@ sub assign_sources_to_makefiles(@)
         {
             next unless $dir eq "include";
         }
-        elsif ($name !~ /\.(S|c|cpp|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|ver|x|y)$/)
+        elsif ($name !~ /\.(S|asm|c|cpp|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|ver|x|y)$/)
         {
             next;
         }
