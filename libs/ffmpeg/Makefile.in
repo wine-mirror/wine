@@ -104,6 +104,19 @@ SOURCES = \
 	libavutil/version.c \
 	libavutil/video_enc_params.c \
 	libavutil/video_hint.c \
+	libavutil/x86/cpu.c \
+	libavutil/x86/cpuid.asm \
+	libavutil/x86/crc.asm \
+	libavutil/x86/fixed_dsp.asm \
+	libavutil/x86/fixed_dsp_init.c \
+	libavutil/x86/float_dsp.asm \
+	libavutil/x86/float_dsp_init.c \
+	libavutil/x86/imgutils.asm \
+	libavutil/x86/imgutils_init.c \
+	libavutil/x86/lls.asm \
+	libavutil/x86/lls_init.c \
+	libavutil/x86/tx_float.asm \
+	libavutil/x86/tx_float_init.c \
 	libavutil/xga_font_data.c \
 	libavutil/xtea.c \
 	libswresample/aarch64/audio_convert_init.c \
@@ -123,6 +136,12 @@ SOURCES = \
 	libswresample/swresample.c \
 	libswresample/swresample_frame.c \
 	libswresample/version.c \
+	libswresample/x86/audio_convert.asm \
+	libswresample/x86/audio_convert_init.c \
+	libswresample/x86/rematrix.asm \
+	libswresample/x86/rematrix_init.c \
+	libswresample/x86/resample.asm \
+	libswresample/x86/resample_init.c \
 	libswscale/aarch64/hscale.S \
 	libswscale/aarch64/input.S \
 	libswscale/aarch64/output.S \
@@ -164,4 +183,19 @@ SOURCES = \
 	libswscale/utils.c \
 	libswscale/version.c \
 	libswscale/vscale.c \
+	libswscale/x86/hscale_fast_bilinear_simd.c \
+	libswscale/x86/input.asm \
+	libswscale/x86/ops.c \
+	libswscale/x86/ops_float.asm \
+	libswscale/x86/ops_int.asm \
+	libswscale/x86/output.asm \
+	libswscale/x86/range_convert.asm \
+	libswscale/x86/rgb2rgb.c \
+	libswscale/x86/rgb_2_rgb.asm \
+	libswscale/x86/scale.asm \
+	libswscale/x86/scale_avx2.asm \
+	libswscale/x86/swscale.c \
+	libswscale/x86/yuv2rgb.c \
+	libswscale/x86/yuv2yuvX.asm \
+	libswscale/x86/yuv_2_rgb.asm \
 	libswscale/yuv2rgb.c
