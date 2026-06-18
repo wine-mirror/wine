@@ -2994,7 +2994,6 @@ static void test_EM_SCROLL(void)
 }
 
 static unsigned int recursionLevel = 0;
-static unsigned int WM_SIZE_recursionLevel = 0;
 static BOOL bailedOutOfRecursion = FALSE;
 static LRESULT (WINAPI *richeditProc)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -3011,11 +3010,9 @@ static LRESULT WINAPI RicheditStupidOverrideProcA(HWND hwnd, UINT message, WPARA
     recursionLevel++;
     switch (message) {
     case WM_SIZE:
-        WM_SIZE_recursionLevel++;
         r = richeditProc(hwnd, message, wParam, lParam);
         /* Because, uhhhh... I never heard of ES_DISABLENOSCROLL */
         ShowScrollBar(hwnd, SB_VERT, TRUE);
-        WM_SIZE_recursionLevel--;
         break;
     default:
         r = richeditProc(hwnd, message, wParam, lParam);
@@ -3684,14 +3681,12 @@ static void test_scrollbar_visibility(void)
     if(!RegisterClassA(&cls)) assert(0);
 
     recursionLevel = 0;
-    WM_SIZE_recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
     hwndRichEdit = new_window(cls.lpszClassName, ES_MULTILINE, NULL);
     ok(!bailedOutOfRecursion,
         "WM_SIZE/scrollbar mutual recursion detected, expected none!\n");
 
     recursionLevel = 0;
-    WM_SIZE_recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
     MoveWindow(hwndRichEdit, 0, 0, 250, 100, TRUE);
     ok(!bailedOutOfRecursion,
@@ -3700,7 +3695,6 @@ static void test_scrollbar_visibility(void)
     /* Unblock window in order to process WM_DESTROY */
     recursionLevel = 0;
     bailedOutOfRecursion = FALSE;
-    WM_SIZE_recursionLevel = 0;
     DestroyWindow(hwndRichEdit);
   }
 }
