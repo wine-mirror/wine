@@ -3890,9 +3890,9 @@ LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
 }
 
 /***********************************************************************
- *		send_hardware_message
+ *		server_send_hardware_message
  */
-NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
+NTSTATUS server_send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
 {
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;

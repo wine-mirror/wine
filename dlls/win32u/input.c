@@ -661,6 +661,27 @@ static void update_mouse_coords( INPUT *input )
     }
 }
 
+static const char *debugstr_mouseinput( const MOUSEINPUT *mi )
+{
+    return wine_dbg_sprintf( "pos %s, flags %#x, data %#x, time %d", wine_dbgstr_point( (POINT *)&mi->dx ),
+                             mi->dwFlags, mi->mouseData, mi->time );
+}
+
+static NTSTATUS send_mouse_motion( HWND hwnd, UINT flags, INPUT input )
+{
+    if (!input.mi.dwFlags && !input.mi.mouseData) return STATUS_SUCCESS; /* ignore empty inputs */
+
+    TRACE( "Sending %s\n", debugstr_mouseinput( &input.mi ) );
+    return server_send_hardware_message( hwnd, flags, &input, 0 );
+}
+
+/* NtUserSendHardwareInput, for user drivers to feed host device input to wineserver */
+NTSTATUS send_hardware_input( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
+{
+    if (input->type == INPUT_MOUSE) return send_mouse_motion( hwnd, flags, *input );
+    return server_send_hardware_message( hwnd, flags, input, lparam );
+}
+
 /***********************************************************************
  *           NtUserSendInput  (win32u.@)
  */
@@ -697,7 +718,7 @@ UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
             update_mouse_coords( &input );
             /* fallthrough */
         case INPUT_KEYBOARD:
-            status = send_hardware_message( 0, SEND_HWMSG_INJECTED, &input, 0 );
+            status = server_send_hardware_message( 0, SEND_HWMSG_INJECTED, &input, 0 );
             break;
         case INPUT_HARDWARE:
             RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );

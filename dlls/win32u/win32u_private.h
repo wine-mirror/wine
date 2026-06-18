@@ -113,6 +113,7 @@ extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout, UINT *mapped );
 extern void destroy_thread_pointers(void);
 extern BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data );
+extern NTSTATUS send_hardware_input( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam );
 
 /* menu.c */
 extern UINT draw_nc_menu_bar( HDC hdc, RECT *rect, HWND hwnd );
@@ -131,7 +132,7 @@ extern void track_keyboard_menu_bar( HWND hwnd, UINT wparam, WCHAR ch );
 extern void track_mouse_menu_bar( HWND hwnd, INT ht, int x, int y );
 
 /* message.c */
-extern NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam );
+extern NTSTATUS server_send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam );
 extern LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid, UINT msg, WPARAM wparam,
                                               LPARAM lparam, UINT flags, UINT timeout,
                                               PDWORD_PTR res_ptr );

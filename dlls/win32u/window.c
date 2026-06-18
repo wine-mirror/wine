@@ -6258,7 +6258,7 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_SendHardwareInput:
     {
         struct send_hardware_input_params *params = (void *)param;
-        return send_hardware_message( hwnd, params->flags, params->input, params->lparam );
+        return send_hardware_input( hwnd, params->flags, params->input, params->lparam );
     }
 
     case NtUserCallHwndParam_ExposeWindowSurface:
