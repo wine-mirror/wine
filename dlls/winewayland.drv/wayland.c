@@ -272,7 +272,7 @@ BOOL wayland_process_init(void)
 
 #if (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR >= 23)
     if (!(process_wayland.wl_event_queue =
-          wl_display_create_queue_with_name(process_wayland.wl_display, "winewayland")))
+          wl_display_create_queue_with_name(process_wayland.wl_display, process_name ? process_name : "winewayland")))
 #else
     if (!(process_wayland.wl_event_queue = wl_display_create_queue(process_wayland.wl_display)))
 #endif
