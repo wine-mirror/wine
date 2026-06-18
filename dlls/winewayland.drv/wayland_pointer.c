@@ -32,6 +32,7 @@
 #define OEMRESOURCE
 
 #include "waylanddrv.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -161,7 +162,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
           hwnd, wl_fixed_to_double(sx), wl_fixed_to_double(sy),
           screen.x, screen.y);
 
-    NtUserSendHardwareInput(hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, SEND_HWMSG_RAWINPUT, &input, 0);
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
@@ -266,7 +267,7 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
 
     TRACE("hwnd=%p button=%#x state=%u\n", hwnd, button, state);
 
-    NtUserSendHardwareInput(hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, SEND_HWMSG_RAWINPUT, &input, 0);
 }
 
 static void pointer_handle_axis(void *data, struct wl_pointer *wl_pointer,
@@ -277,7 +278,7 @@ static void pointer_handle_axis(void *data, struct wl_pointer *wl_pointer,
 static void pointer_handle_frame(void *data, struct wl_pointer *wl_pointer)
 {
     static const INPUT input = { .type = INPUT_MOUSE, .mi.dwFlags = MOUSEEVENTF_MOVE_NOCOALESCE };
-    NtUserSendHardwareInput(NULL, 0, &input, 0); /* flush win32u accumulated motion */
+    NtUserSendHardwareInput(NULL, SEND_HWMSG_RAWINPUT, &input, 0); /* flush win32u accumulated motion */
 }
 
 static void pointer_handle_axis_source(void *data, struct wl_pointer *wl_pointer,
@@ -315,7 +316,7 @@ static void pointer_handle_axis_value120(void *data, struct wl_pointer *wl_point
 
     TRACE("hwnd=%p axis=%u value120=%d\n", hwnd, axis, value120);
 
-    NtUserSendHardwareInput(hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, SEND_HWMSG_RAWINPUT, &input, 0);
 }
 
 static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_pointer,
@@ -359,6 +360,8 @@ static void relative_pointer_v1_relative_motion(void *private,
                                                 wl_fixed_t dx, wl_fixed_t dy,
                                                 wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel)
 {
+    const POINT raw_pos = { .x = wl_fixed_to_double(dx_unaccel), .y = wl_fixed_to_double(dy_unaccel) };
+    struct raw_mouse raw = { .count = 1, .data = { raw_pos } };
     INPUT input = { .type = INPUT_MOUSE };
     HWND hwnd;
     struct wayland_win_data *data;
@@ -391,11 +394,11 @@ static void relative_pointer_v1_relative_motion(void *private,
 
     pthread_mutex_unlock(&pointer->mutex);
 
-    TRACE("hwnd=%p wayland_dxdy=%.2f,%.2f accum_dxdy=%d,%d\n",
-          hwnd, wl_fixed_to_double(dx), wl_fixed_to_double(dy),
-          input.mi.dx, input.mi.dy);
+    TRACE("hwnd=%p wayland_dxdy=%.2f,%.2f accum_dxdy=%d,%d wayland_raw=%.2f,%.2f raw_dxdy=%d,%d\n",
+          hwnd, wl_fixed_to_double(dx), wl_fixed_to_double(dy), input.mi.dx, input.mi.dy,
+          wl_fixed_to_double(dx_unaccel), wl_fixed_to_double(dy_unaccel), raw_pos.x, raw_pos.y);
 
-    NtUserSendHardwareInput(hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, SEND_HWMSG_RAWINPUT, &input, (LPARAM)&raw);
 }
 
 static const struct zwp_relative_pointer_v1_listener relative_pointer_v1_listener =
