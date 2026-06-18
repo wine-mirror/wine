@@ -707,6 +707,12 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 
     if (native_machine == IMAGE_FILE_MACHINE_ARMNT) return;
 
+    features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = TRUE;
+    features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = TRUE;
+    features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = TRUE;
+    features[PF_ARM_64BIT_LOADSTORE_ATOMIC]              = TRUE;
+    features[PF_ARM_FMAC_INSTRUCTIONS_AVAILABLE]         = TRUE;
+
     features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE] = TRUE;
     features[PF_NX_ENABLED]                    = TRUE;
 
@@ -715,11 +721,6 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
     {
         switch (supported_machines[i])
         {
-        case IMAGE_FILE_MACHINE_ARMNT:
-            features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]   = TRUE;
-            features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]  = TRUE;
-            features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE] = TRUE;
-            break;
         case IMAGE_FILE_MACHINE_I386:
             features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
             features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
