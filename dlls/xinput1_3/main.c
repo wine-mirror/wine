@@ -323,6 +323,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
 
 static void controller_destroy(struct xinput_controller *controller, BOOL already_removed);
 
+/* enable an opened controller, xinput_cs must be held */
 static void controller_enable(struct xinput_controller *controller)
 {
     ULONG report_len = controller->hid.caps.InputReportByteLength;
@@ -341,6 +342,7 @@ static void controller_enable(struct xinput_controller *controller)
     else SetEvent(update_event);
 }
 
+/* disable an opened controller, xinput_cs must be held */
 static void controller_disable(struct xinput_controller *controller)
 {
     XINPUT_VIBRATION state = {0};
@@ -354,6 +356,7 @@ static void controller_disable(struct xinput_controller *controller)
     SetEvent(update_event);
 }
 
+/* opened a new controller device, xinput_cs must be held */
 static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, const WCHAR *device_path)
 {
@@ -374,10 +377,8 @@ static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSE
     lstrcpynW(controller->device_path, device_path, MAX_PATH);
     controller->enabled = FALSE;
 
-    EnterCriticalSection(&xinput_cs);
     controller->device = device;
     controller_enable(controller);
-    LeaveCriticalSection(&xinput_cs);
     return TRUE;
 
 failed:
@@ -434,6 +435,7 @@ static BOOL device_is_overridden(HANDLE device)
     return disable;
 }
 
+/* open a device with the given path at the given index, xinput_cs must be held */
 static BOOL open_device_at_index(const WCHAR *device_path, int index)
 {
     PHIDP_PREPARSED_DATA preparsed;
@@ -487,6 +489,7 @@ static BOOL find_opened_device(const WCHAR *device_path, int *slot)
     return FALSE;
 }
 
+/* try opening a new controller device from the given path, xinput_cs must be held */
 static BOOL try_add_device(const WCHAR *device_path)
 {
     int i;
@@ -496,6 +499,7 @@ static BOOL try_add_device(const WCHAR *device_path)
     return open_device_at_index(device_path, i);
 }
 
+/* try closing an open controller device with the given path, xinput_cs must be held */
 static void try_remove_device(const WCHAR *device_path)
 {
     int i;
@@ -509,11 +513,11 @@ static void update_controller_list(void)
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    GUID guid = GUID_DEVINTERFACE_WINEXINPUT;
     HDEVINFO set;
     DWORD idx;
-    GUID guid;
 
-    guid = GUID_DEVINTERFACE_WINEXINPUT;
+    EnterCriticalSection(&xinput_cs);
 
     set = SetupDiGetClassDevsW(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     detail->cbSize = sizeof(*detail);
@@ -528,11 +532,13 @@ static void update_controller_list(void)
     }
 
     SetupDiDestroyDeviceInfoList(set);
+
+    LeaveCriticalSection(&xinput_cs);
 }
 
+/* close a possibly opened controller, xinput_cs must be held */
 static void controller_destroy(struct xinput_controller *controller, BOOL already_removed)
 {
-    EnterCriticalSection(&xinput_cs);
     set_current_state(controller - controllers, NULL);
 
     if (controller->device)
@@ -547,8 +553,6 @@ static void controller_destroy(struct xinput_controller *controller, BOOL alread
         HidD_FreePreparsedData(controller->hid.preparsed);
         memset(&controller->hid, 0, sizeof(controller->hid));
     }
-
-    LeaveCriticalSection(&xinput_cs);
 }
 
 static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
@@ -566,6 +570,7 @@ static LONG scale_value(ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG
     return min + MulDiv(tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin);
 }
 
+/* read the controller state from the HID device, xinput_cs must be held */
 static void read_controller_state(struct xinput_controller *controller)
 {
     ULONG read_len, report_len = controller->hid.caps.InputReportByteLength;
@@ -657,7 +662,6 @@ static void read_controller_state(struct xinput_controller *controller)
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#lx\n", status);
     else state.Gamepad.bLeftTrigger = scale_value(value, &controller->hid.lt_caps, 0, 255);
 
-    EnterCriticalSection(&xinput_cs);
     if (controller->enabled)
     {
         set_current_state(controller - controllers, &state);
@@ -666,7 +670,6 @@ static void read_controller_state(struct xinput_controller *controller)
         ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
         if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
     }
-    LeaveCriticalSection(&xinput_cs);
 }
 
 static LRESULT CALLBACK xinput_devnotify_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -674,8 +677,11 @@ static LRESULT CALLBACK xinput_devnotify_wndproc(HWND hwnd, UINT msg, WPARAM wpa
     if (msg == WM_DEVICECHANGE)
     {
         DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)lparam;
+
+        EnterCriticalSection(&xinput_cs);
         if (wparam == DBT_DEVICEARRIVAL) try_add_device(iface->dbcc_name);
         if (wparam == DBT_DEVICEREMOVECOMPLETE) try_remove_device(iface->dbcc_name);
+        LeaveCriticalSection(&xinput_cs);
     }
 
     return DefWindowProcW(hwnd, msg, wparam, lparam);
@@ -717,22 +723,20 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
     {
         if (ret == count) while (PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)) DispatchMessageW(&msg);
         if (ret == WAIT_TIMEOUT) update_controller_list();
-        if (ret < count - 1) read_controller_state(devices[ret]);
 
-        count = 0;
-        for (i = 0; i < XUSER_MAX_COUNT; ++i)
+        EnterCriticalSection(&xinput_cs);
+        if (ret < count - 1 && devices[ret]->device) read_controller_state(devices[ret]);
+        for (count = 0, i = 0; i < XUSER_MAX_COUNT; ++i)
         {
-            if (!controllers[i].device) continue;
-            EnterCriticalSection(&xinput_cs);
-            if (controllers[i].enabled)
+            if (controllers[i].device && controllers[i].enabled)
             {
                 devices[count] = controllers + i;
                 events[count] = controllers[i].read_event;
                 count++;
             }
-            LeaveCriticalSection(&xinput_cs);
         }
         events[count++] = update_event;
+        LeaveCriticalSection(&xinput_cs);
     }
     while ((ret = MsgWaitForMultipleObjectsEx(count, events, 2000, QS_ALLINPUT, MWMO_ALERTABLE)) <= count ||
             ret == WAIT_TIMEOUT);
