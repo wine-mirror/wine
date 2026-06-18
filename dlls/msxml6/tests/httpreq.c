@@ -84,6 +84,9 @@ static BOOL g_enablecallchecks;
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = 0
+
 /* object site */
 DEFINE_EXPECT(site_qi_IServiceProvider);
 DEFINE_EXPECT(site_qi_IXMLDOMDocument);
@@ -94,10 +97,6 @@ DEFINE_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
 DEFINE_EXPECT(sp_queryservice_SID_secmgr_htmldoc2);
 DEFINE_EXPECT(sp_queryservice_SID_secmgr_xmldomdoc);
 DEFINE_EXPECT(sp_queryservice_SID_secmgr_secmgr);
-
-DEFINE_EXPECT(htmldoc2_get_all);
-DEFINE_EXPECT(htmldoc2_get_url);
-DEFINE_EXPECT(collection_get_length);
 
 static int g_unexpectedcall, g_expectedcall;
 
@@ -137,108 +136,6 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
-
-/* test IHTMLElementCollection */
-static HRESULT WINAPI htmlecoll_QueryInterface(IHTMLElementCollection *iface, REFIID riid, void **ppvObject)
-{
-    ok(0, "unexpected call\n");
-    *ppvObject = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI htmlecoll_AddRef(IHTMLElementCollection *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI htmlecoll_Release(IHTMLElementCollection *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI htmlecoll_GetTypeInfoCount(IHTMLElementCollection *iface, UINT *pctinfo)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_GetTypeInfo(IHTMLElementCollection *iface, UINT iTInfo,
-                                                LCID lcid, ITypeInfo **ppTInfo)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_GetIDsOfNames(IHTMLElementCollection *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames,
-                                                LCID lcid, DISPID *rgDispId)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_Invoke(IHTMLElementCollection *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_toString(IHTMLElementCollection *iface, BSTR *String)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_put_length(IHTMLElementCollection *iface, LONG v)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_get_length(IHTMLElementCollection *iface, LONG *v)
-{
-    CHECK_EXPECT2(collection_get_length);
-    *v = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI htmlecoll_get__newEnum(IHTMLElementCollection *iface, IUnknown **p)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_item(IHTMLElementCollection *iface, VARIANT name, VARIANT index, IDispatch **pdisp)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI htmlecoll_tags(IHTMLElementCollection *iface, VARIANT tagName, IDispatch **pdisp)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static const IHTMLElementCollectionVtbl TestHTMLECollectionVtbl = {
-    htmlecoll_QueryInterface,
-    htmlecoll_AddRef,
-    htmlecoll_Release,
-    htmlecoll_GetTypeInfoCount,
-    htmlecoll_GetTypeInfo,
-    htmlecoll_GetIDsOfNames,
-    htmlecoll_Invoke,
-    htmlecoll_toString,
-    htmlecoll_put_length,
-    htmlecoll_get_length,
-    htmlecoll_get__newEnum,
-    htmlecoll_item,
-    htmlecoll_tags
-};
-
-static IHTMLElementCollection htmlecoll = { &TestHTMLECollectionVtbl };
 
 /* test IHTMLDocument2 */
 static HRESULT WINAPI htmldoc2_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
@@ -294,9 +191,8 @@ static HRESULT WINAPI htmldoc2_get_Script(IHTMLDocument2 *iface, IDispatch **p)
 
 static HRESULT WINAPI htmldoc2_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
-    CHECK_EXPECT2(htmldoc2_get_all);
-    *p = &htmlecoll;
-    return S_OK;
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI htmldoc2_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
@@ -487,7 +383,7 @@ static HRESULT WINAPI htmldoc2_put_URL(IHTMLDocument2 *iface, BSTR v)
 
 static HRESULT WINAPI htmldoc2_get_URL(IHTMLDocument2 *iface, BSTR *p)
 {
-    CHECK_EXPECT2(htmldoc2_get_url);
+    ok(0, "unexpected call\n");
     *p = SysAllocString(L"http://test.winehq.org/");
     return S_OK;
 }
@@ -1356,16 +1252,44 @@ static void set_safety_opt(IUnknown *unk, DWORD mask, DWORD opts)
     IObjectSafety_Release(obj_safety);
 }
 
-static void set_xhr_site(IXMLHTTPRequest *xhr)
+static void set_xhr_site(IXMLHTTPRequest *xhr, BOOL site_domdoc)
 {
     IObjectWithSite *obj_site;
     HRESULT hr;
 
-    hr = IXMLHTTPRequest_QueryInterface(xhr, &IID_IObjectWithSite, (void **)&obj_site);
+    hr = IXMLHTTPRequest_QueryInterface(xhr, &IID_IObjectWithSite, (void**)&obj_site);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    g_enablecallchecks = TRUE;
+
+    SET_EXPECT(site_qi_IServiceProvider);
+    SET_EXPECT(sp_queryservice_SID_SBindHost);
+    SET_EXPECT(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+    SET_EXPECT(sp_queryservice_SID_secmgr_htmldoc2);
+    if (site_domdoc) SET_EXPECT(sp_queryservice_SID_secmgr_xmldomdoc);
+    SET_EXPECT(sp_queryservice_SID_secmgr_secmgr);
+
+    SET_EXPECT(site_qi_IXMLDOMDocument);
+    if (site_domdoc) SET_EXPECT(site_qi_IOleClientSite);
 
     hr = IObjectWithSite_SetSite(obj_site, &testsite);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_CALLED(site_qi_IServiceProvider);
+    todo_wine
+    CHECK_CALLED(sp_queryservice_SID_SBindHost);
+    CHECK_CALLED(sp_queryservice_SID_SContainerDispatch_htmldoc2);
+    CHECK_CALLED(sp_queryservice_SID_secmgr_htmldoc2);
+    if (site_domdoc) todo_wine CHECK_CALLED(sp_queryservice_SID_secmgr_xmldomdoc);
+    /* this one isn't very reliable */
+    CLEAR_CALLED(sp_queryservice_SID_secmgr_secmgr);
+
+todo_wine {
+    CHECK_CALLED(site_qi_IXMLDOMDocument);
+    if (site_domdoc) CHECK_CALLED(site_qi_IOleClientSite);
+}
+
+    g_enablecallchecks = FALSE;
 
     IObjectWithSite_Release(obj_site);
 }
@@ -1694,7 +1618,7 @@ static void test_XMLHTTP60(void)
     ok(obj_site == obj_site2, "got new instance\n");
     IObjectWithSite_Release(obj_site2);
 
-    set_xhr_site(xhr);
+    set_xhr_site(xhr, FALSE);
 
     /* try to set site another time */
     hr = IObjectWithSite_SetSite(obj_site, &testsite);
@@ -1801,7 +1725,7 @@ static void test_safe_httpreq(void)
     xhr = create_xhr();
 
     set_safety_opt((IUnknown*)xhr, INTERFACESAFE_FOR_UNTRUSTED_DATA, -1);
-    set_xhr_site(xhr);
+    set_xhr_site(xhr, TRUE);
 
     /* different scheme */
     test_open(xhr, "GET", "https://test.winehq.org/tests/hello.html", E_ACCESSDENIED);
