@@ -53,7 +53,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
 struct xinput_controller
 {
-    CRITICAL_SECTION crit;
     XINPUT_CAPABILITIES caps;
     XINPUT_VIBRATION vibration;
     HANDLE device;
@@ -84,39 +83,16 @@ struct xinput_controller
     } hid;
 };
 
+static CRITICAL_SECTION_DEBUG xinput_cs_debug;
+static CRITICAL_SECTION xinput_cs = { &xinput_cs_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION_DEBUG xinput_cs_debug =
+{
+    0, 0, &xinput_cs,
+    { &xinput_cs_debug.ProcessLocksList, &xinput_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": xinput_cs") }
+};
+
 static struct xinput_controller controllers[XUSER_MAX_COUNT];
-static CRITICAL_SECTION_DEBUG controller_critsect_debug[XUSER_MAX_COUNT] =
-{
-    {
-        0, 0, &controllers[0].crit,
-        { &controller_critsect_debug[0].ProcessLocksList, &controller_critsect_debug[0].ProcessLocksList },
-          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[0].crit") }
-    },
-    {
-        0, 0, &controllers[1].crit,
-        { &controller_critsect_debug[1].ProcessLocksList, &controller_critsect_debug[1].ProcessLocksList },
-          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[1].crit") }
-    },
-    {
-        0, 0, &controllers[2].crit,
-        { &controller_critsect_debug[2].ProcessLocksList, &controller_critsect_debug[2].ProcessLocksList },
-          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[2].crit") }
-    },
-    {
-        0, 0, &controllers[3].crit,
-        { &controller_critsect_debug[3].ProcessLocksList, &controller_critsect_debug[3].ProcessLocksList },
-          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[3].crit") }
-    },
-};
-
-static struct xinput_controller controllers[XUSER_MAX_COUNT] =
-{
-    {{ &controller_critsect_debug[0], -1, 0, 0, 0, 0 }},
-    {{ &controller_critsect_debug[1], -1, 0, 0, 0, 0 }},
-    {{ &controller_critsect_debug[2], -1, 0, 0, 0, 0 }},
-    {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
-};
-
 static HMODULE xinput_instance;
 static HANDLE start_event;
 static HANDLE update_event;
@@ -398,10 +374,10 @@ static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSE
     lstrcpynW(controller->device_path, device_path, MAX_PATH);
     controller->enabled = FALSE;
 
-    EnterCriticalSection(&controller->crit);
+    EnterCriticalSection(&xinput_cs);
     controller->device = device;
     controller_enable(controller);
-    LeaveCriticalSection(&controller->crit);
+    LeaveCriticalSection(&xinput_cs);
     return TRUE;
 
 failed:
@@ -556,7 +532,7 @@ static void update_controller_list(void)
 
 static void controller_destroy(struct xinput_controller *controller, BOOL already_removed)
 {
-    EnterCriticalSection(&controller->crit);
+    EnterCriticalSection(&xinput_cs);
     set_current_state(controller - controllers, NULL);
 
     if (controller->device)
@@ -572,7 +548,7 @@ static void controller_destroy(struct xinput_controller *controller, BOOL alread
         memset(&controller->hid, 0, sizeof(controller->hid));
     }
 
-    LeaveCriticalSection(&controller->crit);
+    LeaveCriticalSection(&xinput_cs);
 }
 
 static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
@@ -681,7 +657,7 @@ static void read_controller_state(struct xinput_controller *controller)
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#lx\n", status);
     else state.Gamepad.bLeftTrigger = scale_value(value, &controller->hid.lt_caps, 0, 255);
 
-    EnterCriticalSection(&controller->crit);
+    EnterCriticalSection(&xinput_cs);
     if (controller->enabled)
     {
         set_current_state(controller - controllers, &state);
@@ -690,7 +666,7 @@ static void read_controller_state(struct xinput_controller *controller)
         ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
         if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
     }
-    LeaveCriticalSection(&controller->crit);
+    LeaveCriticalSection(&xinput_cs);
 }
 
 static LRESULT CALLBACK xinput_devnotify_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -747,14 +723,14 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
         for (i = 0; i < XUSER_MAX_COUNT; ++i)
         {
             if (!controllers[i].device) continue;
-            EnterCriticalSection(&controllers[i].crit);
+            EnterCriticalSection(&xinput_cs);
             if (controllers[i].enabled)
             {
                 devices[count] = controllers + i;
                 events[count] = controllers[i].read_event;
                 count++;
             }
-            LeaveCriticalSection(&controllers[i].crit);
+            LeaveCriticalSection(&xinput_cs);
         }
         events[count++] = update_event;
     }
@@ -805,26 +781,6 @@ static void start_update_thread(void)
     InitOnceExecuteOnce(&init_once, start_update_thread_once, NULL, NULL);
 }
 
-static BOOL controller_lock(struct xinput_controller *controller)
-{
-    if (!controller->device) return FALSE;
-
-    EnterCriticalSection(&controller->crit);
-
-    if (!controller->device)
-    {
-        LeaveCriticalSection(&controller->crit);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static void controller_unlock(struct xinput_controller *controller)
-{
-    LeaveCriticalSection(&controller->crit);
-}
-
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
     TRACE("inst %p, reason %lu, reserved %p.\n", inst, reason, reserved);
@@ -851,13 +807,14 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
     be sent */
     start_update_thread();
 
+    EnterCriticalSection(&xinput_cs);
     for (index = 0; index < XUSER_MAX_COUNT; index++)
     {
-        if (!controller_lock(&controllers[index])) continue;
-        if (enable) controller_enable(&controllers[index]);
-        else controller_disable(&controllers[index]);
-        controller_unlock(&controllers[index]);
+        if (!controllers[index].device) continue;
+        if (!enable) controller_disable(&controllers[index]);
+        else controller_enable(&controllers[index]);
     }
+    LeaveCriticalSection(&xinput_cs);
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION *vibration)
@@ -869,11 +826,13 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION *vib
     start_update_thread();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
 
-    ret = HID_set_state(&controllers[index], vibration);
-
-    controller_unlock(&controllers[index]);
+    EnterCriticalSection(&xinput_cs);
+    if (!controllers[index].device)
+        ret = ERROR_DEVICE_NOT_CONNECTED;
+    else
+        ret = HID_set_state(&controllers[index], vibration);
+    LeaveCriticalSection(&xinput_cs);
 
     return ret;
 }
@@ -1141,25 +1100,34 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID *render_guid, GUID *capture_guid)
 {
+    DWORD ret;
+
     FIXME("index %lu, render_guid %s, capture_guid %s stub!\n", index, debugstr_guid(render_guid),
           debugstr_guid(capture_guid));
 
     if (index >= XUSER_MAX_COUNT || !render_guid || !capture_guid) return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
 
-    return ERROR_NOT_SUPPORTED;
+    EnterCriticalSection(&xinput_cs);
+    ret = controllers[index].device ? ERROR_NOT_SUPPORTED : ERROR_DEVICE_NOT_CONNECTED;
+    LeaveCriticalSection(&xinput_cs);
+
+    return ret;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
 {
     static int once;
+    DWORD ret;
 
     if (!once++) FIXME("index %lu, type %u, battery %p.\n", index, type, battery);
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
 
-    return ERROR_NOT_SUPPORTED;
+    EnterCriticalSection(&xinput_cs);
+    ret = controllers[index].device ? ERROR_NOT_SUPPORTED : ERROR_DEVICE_NOT_CONNECTED;
+    LeaveCriticalSection(&xinput_cs);
+
+    return ret;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilitiesEx(DWORD unk, DWORD index, DWORD flags, XINPUT_CAPABILITIES_EX *caps)
@@ -1173,9 +1141,11 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilitiesEx(DWORD unk, DWORD index, D
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
 
-    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
+    EnterCriticalSection(&xinput_cs);
 
-    if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
+    if (!controllers[index].device)
+        ret = ERROR_DEVICE_NOT_CONNECTED;
+    else if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
         ret = ERROR_DEVICE_NOT_CONNECTED;
     else if (!HidD_GetAttributes(controllers[index].device, &attr))
         ret = ERROR_DEVICE_NOT_CONNECTED;
@@ -1187,7 +1157,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilitiesEx(DWORD unk, DWORD index, D
         caps->VersionNumber = attr.VersionNumber;
     }
 
-    controller_unlock(&controllers[index]);
+    LeaveCriticalSection(&xinput_cs);
 
     return ret;
 }
