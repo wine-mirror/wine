@@ -56,7 +56,6 @@ struct xinput_controller
     CRITICAL_SECTION crit;
     XINPUT_CAPABILITIES caps;
     XINPUT_STATE state;
-    XINPUT_GAMEPAD last_keystroke;
     XINPUT_VIBRATION vibration;
     HANDLE device;
     WCHAR device_path[MAX_PATH];
@@ -987,7 +986,11 @@ static BOOL trigger_is_on(const BYTE value)
 
 static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
 {
+    static XINPUT_GAMEPAD last_state[XUSER_MAX_COUNT];
+    static SRWLOCK keystroke_lock = SRWLOCK_INIT;
+
     struct xinput_controller *controller = &controllers[index];
+    XINPUT_GAMEPAD *last = last_state + index;
     const XINPUT_GAMEPAD *cur;
     DWORD ret = ERROR_EMPTY;
     int i;
@@ -1015,25 +1018,26 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
     };
 
     if (!controller_lock(controller)) return ERROR_DEVICE_NOT_CONNECTED;
+    AcquireSRWLockExclusive(&keystroke_lock);
 
     cur = &controller->state.Gamepad;
 
     /*** buttons ***/
     for (i = 0; i < ARRAY_SIZE(buttons); ++i)
     {
-        if ((cur->wButtons & buttons[i].mask) ^ (controller->last_keystroke.wButtons & buttons[i].mask))
+        if ((cur->wButtons & buttons[i].mask) ^ (last->wButtons & buttons[i].mask))
         {
             keystroke->VirtualKey = buttons[i].vk;
             keystroke->Unicode = 0; /* unused */
             if (cur->wButtons & buttons[i].mask)
             {
                 keystroke->Flags = XINPUT_KEYSTROKE_KEYDOWN;
-                controller->last_keystroke.wButtons |= buttons[i].mask;
+                last->wButtons |= buttons[i].mask;
             }
             else
             {
                 keystroke->Flags = XINPUT_KEYSTROKE_KEYUP;
-                controller->last_keystroke.wButtons &= ~buttons[i].mask;
+                last->wButtons &= ~buttons[i].mask;
             }
             keystroke->UserIndex = index;
             keystroke->HidCode = 0;
@@ -1043,44 +1047,45 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
     }
 
     /*** triggers ***/
-    if (trigger_is_on(cur->bLeftTrigger) ^ trigger_is_on(controller->last_keystroke.bLeftTrigger))
+    if (trigger_is_on(cur->bLeftTrigger) ^ trigger_is_on(last->bLeftTrigger))
     {
         keystroke->VirtualKey = VK_PAD_LTRIGGER;
         keystroke->Unicode = 0; /* unused */
         keystroke->Flags = trigger_is_on(cur->bLeftTrigger) ? XINPUT_KEYSTROKE_KEYDOWN : XINPUT_KEYSTROKE_KEYUP;
         keystroke->UserIndex = index;
         keystroke->HidCode = 0;
-        controller->last_keystroke.bLeftTrigger = cur->bLeftTrigger;
+        last->bLeftTrigger = cur->bLeftTrigger;
         ret = ERROR_SUCCESS;
         goto done;
     }
 
-    if (trigger_is_on(cur->bRightTrigger) ^ trigger_is_on(controller->last_keystroke.bRightTrigger))
+    if (trigger_is_on(cur->bRightTrigger) ^ trigger_is_on(last->bRightTrigger))
     {
         keystroke->VirtualKey = VK_PAD_RTRIGGER;
         keystroke->Unicode = 0; /* unused */
         keystroke->Flags = trigger_is_on(cur->bRightTrigger) ? XINPUT_KEYSTROKE_KEYDOWN : XINPUT_KEYSTROKE_KEYUP;
         keystroke->UserIndex = index;
         keystroke->HidCode = 0;
-        controller->last_keystroke.bRightTrigger = cur->bRightTrigger;
+        last->bRightTrigger = cur->bRightTrigger;
         ret = ERROR_SUCCESS;
         goto done;
     }
 
     /*** joysticks ***/
     ret = check_joystick_keystroke(index, keystroke, &cur->sThumbLX, &cur->sThumbLY,
-            &controller->last_keystroke.sThumbLX,
-            &controller->last_keystroke.sThumbLY, VK_PAD_LTHUMB_UP);
+            &last->sThumbLX,
+            &last->sThumbLY, VK_PAD_LTHUMB_UP);
     if (ret == ERROR_SUCCESS)
         goto done;
 
     ret = check_joystick_keystroke(index, keystroke, &cur->sThumbRX, &cur->sThumbRY,
-            &controller->last_keystroke.sThumbRX,
-            &controller->last_keystroke.sThumbRY, VK_PAD_RTHUMB_UP);
+            &last->sThumbRX,
+            &last->sThumbRY, VK_PAD_RTHUMB_UP);
     if (ret == ERROR_SUCCESS)
         goto done;
 
 done:
+    ReleaseSRWLockExclusive(&keystroke_lock);
     controller_unlock(controller);
 
     return ret;
