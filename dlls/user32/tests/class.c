@@ -2450,9 +2450,9 @@ static void test_class_name(void)
     todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
 
     nameA = (const char *)GetClassLongPtrA(hwnd, GCLP_MENUNAME);
-    todo_wine ok(!nameA, "unexpected class name %s\n", debugstr_a(nameA));
+    todo_wine ok(!nameA || broken(nameA == (LPCSTR)MAKEINTATOM(2)) /* <= Win10 1709 */, "unexpected class name %s\n", debugstr_a(nameA));
     nameW = (const WCHAR *)GetClassLongPtrW(hwnd, GCLP_MENUNAME);
-    todo_wine ok(!nameW, "unexpected class name %s\n", debugstr_w(nameW));
+    todo_wine ok(!nameW || broken(nameW == (LPCWSTR)MAKEINTATOM(2)) /* <= Win10 1709 */, "unexpected class name %s\n", debugstr_w(nameW));
 
     DestroyWindow(hwnd);
     UnregisterClassW(wcex.lpszClassName, hinst);
