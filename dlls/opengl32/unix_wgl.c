@@ -424,7 +424,7 @@ static void release_buffers( const struct opengl_funcs *funcs )
 static struct buffers *acquire_buffers(void)
 {
     if (buffers) buffers->ref++;
-    else if ((buffers = malloc( sizeof(*buffers ))))
+    else if ((buffers = calloc( 1, sizeof(*buffers ))))
     {
         buffers->ref = 1;
         rb_init( &buffers->map, compare_buffer_name );
