@@ -3132,6 +3132,63 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO devinfo,
         return FALSE;
     }
 
+    if (Property == SPDRP_ENUMERATOR_NAME)
+    {
+        const WCHAR *backslash;
+        DWORD len;
+        int size_needed, size_written;
+
+        if (!device->instanceId || !*device->instanceId)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        backslash = wcschr(device->instanceId, L'\\');
+        len = backslash ? (DWORD)(backslash - device->instanceId) : lstrlenW(device->instanceId);
+        if (len == 0)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        size_needed = WideCharToMultiByte(CP_ACP, 0, device->instanceId, len, NULL, 0, NULL, NULL);
+        if (size_needed <= 0)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        size_needed++;
+
+        if (RequiredSize)
+            *RequiredSize = size_needed;
+
+        if (PropertyRegDataType)
+            *PropertyRegDataType = REG_SZ;
+
+        if (!PropertyBuffer || (int)PropertyBufferSize < size_needed)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        size_written = WideCharToMultiByte(CP_ACP, 0,
+                                           device->instanceId, len,
+                                           (char *)PropertyBuffer,
+                                           PropertyBufferSize - 1,
+                                           NULL, NULL);
+
+        if (size_written <= 0)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        ((char *)PropertyBuffer)[size_written] = 0;
+        return TRUE;
+    }
+
     if (Property < ARRAY_SIZE(PropertyMap) && PropertyMap[Property].nameA)
     {
         DWORD size = PropertyBufferSize;
@@ -3148,6 +3205,10 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO devinfo,
             SetLastError(l);
         if (RequiredSize)
             *RequiredSize = size;
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_DATA);
     }
     return ret;
 }
@@ -3174,6 +3235,44 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(HDEVINFO devinfo,
         return FALSE;
     }
 
+    if (Property == SPDRP_ENUMERATOR_NAME)
+    {
+        const WCHAR *backslash;
+        DWORD len, size_needed;
+
+        if (!device->instanceId || !*device->instanceId)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        backslash = wcschr(device->instanceId, L'\\');
+        len = backslash ? (DWORD)(backslash - device->instanceId) : lstrlenW(device->instanceId);
+        if (len == 0)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        size_needed = (len + 1) * sizeof(WCHAR);
+
+        if (RequiredSize)
+            *RequiredSize = size_needed;
+
+        if (PropertyRegDataType)
+            *PropertyRegDataType = REG_SZ;
+
+        if (!PropertyBuffer || PropertyBufferSize < size_needed)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        memcpy(PropertyBuffer, device->instanceId, len * sizeof(WCHAR));
+        ((WCHAR *)PropertyBuffer)[len] = 0;
+        return TRUE;
+    }
+
     if (Property < ARRAY_SIZE(PropertyMap) && PropertyMap[Property].nameW)
     {
         DWORD size = PropertyBufferSize;
@@ -3190,6 +3289,10 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(HDEVINFO devinfo,
             SetLastError(l);
         if (RequiredSize)
             *RequiredSize = size;
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_DATA);
     }
     return ret;
 }

@@ -2438,6 +2438,46 @@ todo_wine {
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpA(buf, "device_name"), "Got unexpected value %s.\n", buf);
 
+    /* SPDRP_UNUSED0: PropertyMap[3].nameW == NULL, fix returns ERROR_INVALID_DATA */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_UNUSED0, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for SPDRP_UNUSED0.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#lx for SPDRP_UNUSED0.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: enumerator is first segment of instanceId ("ROOT\...\0000" → "ROOT") */
+    memset(buf, 0, sizeof(buf));
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(!strcmp(buf, "ROOT"), "Got unexpected enumerator '%s', expected 'ROOT'.\n", buf);
+
+    /* SPDRP_ENUMERATOR_NAME: test PropertyRegDataType output */
+    memset(buf, 0, sizeof(buf));
+    type = 0xdeadbeef;
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, &type, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(type == REG_SZ, "Got unexpected type %#lx, expected REG_SZ.\n", type);
+
+    /* SPDRP_ENUMERATOR_NAME: test RequiredSize output (PropertyBuffer=NULL, PropertyBufferSize=0) */
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure for NULL buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+    ok(size > 0, "Got unexpected size %lu.\n", size);
+
+    /* SPDRP_ENUMERATOR_NAME: test with buffer too small */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, 3, &size);
+    ok(!ret, "Expected failure for small buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: PropertyBuffer is NULL but PropertyBufferSize > 0 */
+    /* Windows returns ERROR_INVALID_PARAMETER (A) or ERROR_PARTIAL_COPY (W) here,
+     * Wine returns ERROR_INVALID_DATA. Just check for failure. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for NULL buffer with size.\n");
+
     SetupDiDestroyDeviceInfoList(set);
 
     /* Create device from a registered class */
@@ -2597,6 +2637,46 @@ todo_wine {
     ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_DEVICEDESC, NULL, (BYTE *)buf, sizeof(buf), NULL);
     ok(ret, "Failed to get property, error %#lx.\n", GetLastError());
     ok(!lstrcmpW(buf, L"device_name"), "Got unexpected value %s.\n", wine_dbgstr_w(buf));
+
+    /* SPDRP_UNUSED0: PropertyMap[3].nameW == NULL, fix returns ERROR_INVALID_DATA */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_UNUSED0, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for SPDRP_UNUSED0.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#lx for SPDRP_UNUSED0.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: enumerator is first segment of instanceId ("ROOT\...\0000" → "ROOT") */
+    memset(buf, 0, sizeof(buf));
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(!lstrcmpW(buf, L"ROOT"), "Got unexpected enumerator %s.\n", wine_dbgstr_w(buf));
+
+    /* SPDRP_ENUMERATOR_NAME: test PropertyRegDataType output */
+    memset(buf, 0, sizeof(buf));
+    type = 0xdeadbeef;
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, &type, (BYTE *)buf, sizeof(buf), NULL);
+    ok(ret, "Failed to get SPDRP_ENUMERATOR_NAME, error %#lx.\n", GetLastError());
+    ok(type == REG_SZ, "Got unexpected type %#lx, expected REG_SZ.\n", type);
+
+    /* SPDRP_ENUMERATOR_NAME: test RequiredSize output (PropertyBuffer=NULL, PropertyBufferSize=0) */
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, 0, &size);
+    ok(!ret, "Expected failure for NULL buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+    ok(size > 0, "Got unexpected size %lu.\n", size);
+
+    /* SPDRP_ENUMERATOR_NAME: test with buffer too small */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, (BYTE *)buf, 3 * sizeof(WCHAR), &size);
+    ok(!ret, "Expected failure for small buffer.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected error %#lx.\n", GetLastError());
+
+    /* SPDRP_ENUMERATOR_NAME: PropertyBuffer is NULL but PropertyBufferSize > 0 */
+    /* Windows returns ERROR_INVALID_PARAMETER (A) or ERROR_PARTIAL_COPY (W) here,
+     * Wine returns ERROR_INVALID_DATA. Just check for failure. */
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_ENUMERATOR_NAME, NULL, NULL, sizeof(buf), NULL);
+    ok(!ret, "Expected failure for NULL buffer with size.\n");
 
     SetupDiDestroyDeviceInfoList(set);
 
