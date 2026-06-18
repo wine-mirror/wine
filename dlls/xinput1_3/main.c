@@ -55,7 +55,6 @@ struct xinput_controller
 {
     CRITICAL_SECTION crit;
     XINPUT_CAPABILITIES caps;
-    XINPUT_STATE state;
     XINPUT_VIBRATION vibration;
     HANDLE device;
     WCHAR device_path[MAX_PATH];
@@ -121,6 +120,30 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
 static HMODULE xinput_instance;
 static HANDLE start_event;
 static HANDLE update_event;
+
+static SRWLOCK state_lock = SRWLOCK_INIT;
+static XINPUT_STATE current_state[XUSER_MAX_COUNT];
+
+static void set_current_state(UINT index, const XINPUT_STATE *state)
+{
+    AcquireSRWLockExclusive(&state_lock);
+    if (!state) memset(current_state + index, 0, sizeof(*state));
+    else
+    {
+        memcpy(current_state + index, state, sizeof(*state));
+        if (!++current_state[index].dwPacketNumber) ++current_state[index].dwPacketNumber;
+    }
+    ReleaseSRWLockExclusive(&state_lock);
+}
+
+static BOOL get_current_state(UINT index, XINPUT_STATE *state)
+{
+    AcquireSRWLockShared(&state_lock);
+    memcpy(state, current_state + index, sizeof(*state));
+    ReleaseSRWLockShared(&state_lock);
+
+    return state->dwPacketNumber;
+}
 
 static void check_value_caps(struct xinput_controller *controller, USHORT usage, HIDP_VALUE_CAPS *caps)
 {
@@ -358,6 +381,8 @@ static void controller_disable(struct xinput_controller *controller)
 static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, const WCHAR *device_path)
 {
+    XINPUT_STATE state = {0};
+
     controller->hid.caps = *caps;
     if (!(controller->hid.feature_report_buf = calloc(1, controller->hid.caps.FeatureReportByteLength))) goto failed;
     if (!controller_check_caps(controller, device, preparsed)) goto failed;
@@ -368,7 +393,7 @@ static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSE
     if (!(controller->hid.input_report_buf = calloc(1, controller->hid.caps.InputReportByteLength))) goto failed;
     if (!(controller->hid.output_report_buf = calloc(1, controller->hid.caps.OutputReportByteLength))) goto failed;
 
-    memset(&controller->state, 0, sizeof(controller->state));
+    set_current_state(controller - controllers, &state);
     memset(&controller->vibration, 0, sizeof(controller->vibration));
     lstrcpynW(controller->device_path, device_path, MAX_PATH);
     controller->enabled = FALSE;
@@ -532,6 +557,7 @@ static void update_controller_list(void)
 static void controller_destroy(struct xinput_controller *controller, BOOL already_removed)
 {
     EnterCriticalSection(&controller->crit);
+    set_current_state(controller - controllers, NULL);
 
     if (controller->device)
     {
@@ -658,8 +684,7 @@ static void read_controller_state(struct xinput_controller *controller)
     EnterCriticalSection(&controller->crit);
     if (controller->enabled)
     {
-        state.dwPacketNumber = controller->state.dwPacketNumber + 1;
-        controller->state = state;
+        set_current_state(controller - controllers, &state);
         memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
         controller->hid.read_ovl.hEvent = controller->read_event;
         ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
@@ -862,12 +887,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
     start_update_thread();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
-
-    *state = controllers[index].state;
-    controller_unlock(&controllers[index]);
-
-    return ERROR_SUCCESS;
+    return get_current_state(index, state) ? ERROR_SUCCESS : ERROR_DEVICE_NOT_CONNECTED;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE *state)
@@ -989,10 +1009,10 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
     static XINPUT_GAMEPAD last_state[XUSER_MAX_COUNT];
     static SRWLOCK keystroke_lock = SRWLOCK_INIT;
 
-    struct xinput_controller *controller = &controllers[index];
     XINPUT_GAMEPAD *last = last_state + index;
     const XINPUT_GAMEPAD *cur;
     DWORD ret = ERROR_EMPTY;
+    XINPUT_STATE state;
     int i;
 
     static const struct
@@ -1017,10 +1037,10 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
         /* note: guide button does not send an event */
     };
 
-    if (!controller_lock(controller)) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!get_current_state(index, &state)) return ERROR_DEVICE_NOT_CONNECTED;
     AcquireSRWLockExclusive(&keystroke_lock);
 
-    cur = &controller->state.Gamepad;
+    cur = &state.Gamepad;
 
     /*** buttons ***/
     for (i = 0; i < ARRAY_SIZE(buttons); ++i)
@@ -1086,8 +1106,6 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
 
 done:
     ReleaseSRWLockExclusive(&keystroke_lock);
-    controller_unlock(controller);
-
     return ret;
 }
 
