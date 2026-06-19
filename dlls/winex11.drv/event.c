@@ -326,7 +326,6 @@ enum event_merge_action
 {
     MERGE_DISCARD,  /* discard the old event */
     MERGE_HANDLE,   /* handle the old event */
-    MERGE_KEEP,     /* keep the old event for future merging */
 };
 
 /***********************************************************************
@@ -336,24 +335,6 @@ enum event_merge_action
  */
 static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
 {
-    switch (prev->type)
-    {
-    case ConfigureNotify:
-        switch (next->type)
-        {
-        case ConfigureNotify:
-            if (prev->xany.window == next->xany.window)
-            {
-                TRACE( "discarding duplicate ConfigureNotify for window %lx\n", prev->xany.window );
-                return MERGE_DISCARD;
-            }
-            break;
-        case Expose:
-        case PropertyNotify:
-            return MERGE_KEEP;
-        }
-        break;
-    }
     return MERGE_HANDLE;
 }
 
@@ -443,10 +424,6 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
         case MERGE_DISCARD:  /* discard prev, keep new */
             free_event_data( &prev_event );
             prev_event = event;
-            break;
-        case MERGE_KEEP:  /* handle new, keep prev for future merging */
-            call_event_handler( data->display, &event );
-            free_event_data( &event );
             break;
         }
     }
