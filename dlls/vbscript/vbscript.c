@@ -145,8 +145,12 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
         /* Dim is permissive: it keeps an existing variable or function of the
            same name. A const from a previous compile unit is the exception: it
            is shadowed by a fresh variable that name lookups resolve to from now
-           on, while the defining compile unit keeps using the inlined value. */
-        if (existing && (existing->type != SCRIPTDISP_VAR || !existing->u.var->is_const))
+           on, while the defining compile unit keeps using the inlined value. A
+           cached host property is likewise shadowed by the fresh variable, which
+           outranks the host dispatch in the named item scope. */
+        if (existing && existing->type == SCRIPTDISP_FUNC)
+            continue;
+        if (existing && existing->type == SCRIPTDISP_VAR && !existing->u.var->is_const)
             continue;
 
         if (!(var = heap_pool_alloc(&obj->heap, sizeof(*var))))

@@ -125,11 +125,13 @@ typedef struct _dynamic_var_t {
 typedef enum {
     SCRIPTDISP_VAR,
     SCRIPTDISP_FUNC,
+    SCRIPTDISP_HOSTPROP,
 } scriptdisp_entry_type_t;
 
 /* A single named member of a ScriptDisp. A global name resolves to exactly
    one member, so variables and functions share one tree; the payload selected
-   by type can grow to cover further kinds (e.g. cached host properties). */
+   by type also caches a host property resolved through a named item's
+   dispatch, so a name found on the host is looked up only once. */
 typedef struct {
     struct rb_entry entry;
     const WCHAR *name;
@@ -137,6 +139,10 @@ typedef struct {
     union {
         dynamic_var_t *var;
         function_t *func;
+        struct {
+            IDispatch *disp;
+            DISPID id;
+        } host;
     } u;
 } scriptdisp_entry_t;
 
@@ -166,6 +172,7 @@ typedef struct {
 scriptdisp_entry_t *script_disp_find_member(ScriptDisp *disp, const WCHAR *name);
 scriptdisp_entry_t *script_disp_add_var(ScriptDisp *disp, dynamic_var_t *var);
 scriptdisp_entry_t *script_disp_add_func(ScriptDisp *disp, function_t *func);
+scriptdisp_entry_t *script_disp_add_hostprop(ScriptDisp *disp, const WCHAR *name, IDispatch *disp_obj, DISPID id);
 dynamic_var_t *script_disp_find_var(ScriptDisp *disp, const WCHAR *name);
 
 typedef struct _builtin_prop_t builtin_prop_t;

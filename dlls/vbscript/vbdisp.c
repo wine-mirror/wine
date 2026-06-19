@@ -82,6 +82,36 @@ scriptdisp_entry_t *script_disp_add_func(ScriptDisp *disp, function_t *func)
     return member;
 }
 
+/* Cache a host property resolved through a named item's dispatch. Returns NULL
+   without caching when a real variable or function already owns the name, so a
+   later script declaration is never shadowed by a stale host entry. */
+scriptdisp_entry_t *script_disp_add_hostprop(ScriptDisp *disp, const WCHAR *name, IDispatch *disp_obj, DISPID id)
+{
+    scriptdisp_entry_t *member = script_disp_find_member(disp, name);
+
+    if (member) {
+        if (member->type != SCRIPTDISP_HOSTPROP)
+            return NULL;
+    } else {
+        WCHAR *str;
+        size_t size = (lstrlenW(name) + 1) * sizeof(WCHAR);
+
+        /* The name must outlive the entry; the caller's bytecode string may not,
+           so keep a copy in the dispatch's own pool. */
+        if (!(str = heap_pool_alloc(&disp->heap, size)))
+            return NULL;
+        memcpy(str, name, size);
+
+        if (!(member = script_disp_add_member(disp, str)))
+            return NULL;
+    }
+
+    member->type = SCRIPTDISP_HOSTPROP;
+    member->u.host.disp = disp_obj;
+    member->u.host.id = id;
+    return member;
+}
+
 function_t *script_disp_find_func(ScriptDisp *disp, const WCHAR *name)
 {
     scriptdisp_entry_t *member = script_disp_find_member(disp, name);
@@ -1785,11 +1815,15 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     member = script_disp_find_member(This, bstrName);
     if(member) {
-        if(member->type == SCRIPTDISP_FUNC)
+        /* Host properties cached on this dispatch are not script members. */
+        if(member->type == SCRIPTDISP_FUNC) {
             *pid = member->u.func->index + 1 + DISPID_FUNCTION_MASK;
-        else
+            return S_OK;
+        }
+        if(member->type == SCRIPTDISP_VAR) {
             *pid = member->u.var->index + 1;
-        return S_OK;
+            return S_OK;
+        }
     }
 
     *pid = -1;

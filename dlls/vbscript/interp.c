@@ -97,34 +97,40 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
     return FALSE;
 }
 
-static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref)
+static void ref_from_entry(scriptdisp_entry_t *member, ref_t *ref)
 {
-    dynamic_var_t *var = script_disp_find_var(script, name);
-
-    if(!var)
-        return FALSE;
-
-    ref->type = var->is_const ? REF_CONST : REF_VAR;
-    ref->u.v = &var->v;
-    return TRUE;
+    switch(member->type) {
+    case SCRIPTDISP_VAR:
+        ref->type = member->u.var->is_const ? REF_CONST : REF_VAR;
+        ref->u.v = &member->u.var->v;
+        break;
+    case SCRIPTDISP_FUNC:
+        ref->type = REF_FUNC;
+        ref->u.f = member->u.func;
+        break;
+    case SCRIPTDISP_HOSTPROP:
+        ref->type = REF_DISP;
+        ref->u.d.disp = member->u.host.disp;
+        ref->u.d.id = member->u.host.id;
+        break;
+    }
 }
 
-static BOOL lookup_global_funcs(ScriptDisp *script, const WCHAR *name, ref_t *ref)
+/* A global name maps to a single member, so one lookup covers variables,
+   functions and host properties cached through a named item's dispatch. */
+static scriptdisp_entry_t *lookup_global_member(ScriptDisp *script, const WCHAR *name, ref_t *ref)
 {
-    function_t *func = script_disp_find_func(script, name);
+    scriptdisp_entry_t *member = script_disp_find_member(script, name);
 
-    if(func) {
-        ref->type = REF_FUNC;
-        ref->u.f = func;
-        return TRUE;
-    }
-
-    return FALSE;
+    if(member)
+        ref_from_entry(member, ref);
+    return member;
 }
 
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
     ScriptDisp *script_obj = ctx->script->script_obj;
+    scriptdisp_entry_t *member;
     named_item_t *item;
     unsigned i;
     DISPID id;
@@ -202,9 +208,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     }
 
     if(ctx->code->named_item) {
-        if(lookup_global_vars(ctx->code->named_item->script_obj, name, ref))
-            return S_OK;
-        if(lookup_global_funcs(ctx->code->named_item->script_obj, name, ref))
+        if(lookup_global_member(ctx->code->named_item->script_obj, name, ref))
             return S_OK;
     }
 
@@ -213,6 +217,10 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     {
         hres = disp_get_id(ctx->func->code_ctx->named_item->disp, name, invoke_type, TRUE, &id);
         if(SUCCEEDED(hres)) {
+            /* Cache the host property in the item's tree; subsequent lookups
+               find it directly and never query the host dispatch again. */
+            script_disp_add_hostprop(ctx->code->named_item->script_obj, name,
+                    ctx->func->code_ctx->named_item->disp, id);
             ref->type = REF_DISP;
             ref->u.d.disp = ctx->func->code_ctx->named_item->disp;
             ref->u.d.id = id;
@@ -220,9 +228,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
-    if(lookup_global_vars(script_obj, name, ref))
-        return S_OK;
-    if(lookup_global_funcs(script_obj, name, ref))
+    if(lookup_global_member(script_obj, name, ref))
         return S_OK;
 
     hres = get_builtin_id(ctx->script->global_obj, name, &id);
@@ -242,8 +248,17 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
         if((item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
+            if(item->script_obj && (member = script_disp_find_member(item->script_obj, name))
+               && member->type == SCRIPTDISP_HOSTPROP) {
+                ref->type = REF_DISP;
+                ref->u.d.disp = member->u.host.disp;
+                ref->u.d.id = member->u.host.id;
+                return S_OK;
+            }
             hres = disp_get_id(item->disp, name, invoke_type, FALSE, &id);
             if(SUCCEEDED(hres)) {
+                if(item->script_obj)
+                    script_disp_add_hostprop(item->script_obj, name, item->disp, id);
                 ref->type = REF_DISP;
                 ref->u.d.disp = item->disp;
                 ref->u.d.id = id;

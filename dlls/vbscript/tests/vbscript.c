@@ -304,15 +304,19 @@ static const IDispatchVtbl persistent_named_item_vtbl = {
 
 static IDispatch persistent_named_item = { &persistent_named_item_vtbl };
 
+static int shadow_method_dispid_queries, shadow_prop_dispid_queries;
+
 static HRESULT WINAPI shadowing_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
                                               LCID lcid, DISPID *ids)
 {
     ok(name_cnt == 1, "name_cnt = %u\n", name_cnt);
     if(!wcscmp(names[0], L"shadowMethod")) {
+        shadow_method_dispid_queries++;
         *ids = 1;
         return S_OK;
     }
     if(!wcscmp(names[0], L"shadowProp")) {
+        shadow_prop_dispid_queries++;
         *ids = 2;
         return S_OK;
     }
@@ -3080,6 +3084,91 @@ static void test_named_item_no_dim_routes_to_host(void)
     ok(!ref, "ref = %ld\n", ref);
 }
 
+static void test_named_item_dispid_caching(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    HRESULT hres;
+    LONG ref;
+
+    /* The engine resolves a host member name through GetIDsOfNames once and
+     * reuses the DISPID for subsequent lookups, within and across script
+     * chunks. */
+
+    script = create_vbscript();
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    hres = IActiveScript_AddNamedItem(script, L"shadowingItem", SCRIPTITEM_ISVISIBLE);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    shadow_method_dispid_queries = 0;
+    shadow_prop_dispid_queries = 0;
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(host_shadow_propput);
+    SET_EXPECT(host_shadow_propget);
+    SET_EXPECT(host_shadow_method);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"shadowProp = 5\nx = shadowProp\nshadowMethod\n",
+            L"shadowingItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    CHECK_CALLED(host_shadow_propput);
+    CHECK_CALLED(host_shadow_propget);
+    CHECK_CALLED(host_shadow_method);
+
+    ok(shadow_prop_dispid_queries == 1, "shadowProp resolved %d times, expected 1\n", shadow_prop_dispid_queries);
+    ok(shadow_method_dispid_queries == 1, "shadowMethod resolved %d times, expected 1\n", shadow_method_dispid_queries);
+
+    /* a later script chunk reuses the cached ids too */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(host_shadow_propput);
+    SET_EXPECT(host_shadow_method);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"shadowProp = 6\nshadowMethod\n",
+            L"shadowingItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    CHECK_CALLED(host_shadow_propput);
+    CHECK_CALLED(host_shadow_method);
+
+    ok(shadow_prop_dispid_queries == 1, "shadowProp resolved %d times after second chunk, expected 1\n",
+       shadow_prop_dispid_queries);
+    ok(shadow_method_dispid_queries == 1, "shadowMethod resolved %d times after second chunk, expected 1\n",
+       shadow_method_dispid_queries);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08lx\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScriptParse_Release(parse);
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %ld\n", ref);
+}
+
 static void test_const_at_top_level(void)
 {
     IActiveScriptParse *parse;
@@ -3521,6 +3610,7 @@ START_TEST(vbscript)
         test_named_item_sub_shadowing();
         test_named_item_dim_shadowing();
         test_named_item_no_dim_routes_to_host();
+        test_named_item_dispid_caching();
         test_const_at_top_level();
         test_cross_parse_name_redef();
         test_scriptdisp();
