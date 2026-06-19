@@ -93,9 +93,6 @@
 /* Define to 1 if you have the <gettext-po.h> header file. */
 #undef HAVE_GETTEXT_PO_H
 
-/* Define to 1 if you have the 'gnutls_cipher_init' function. */
-#undef HAVE_GNUTLS_CIPHER_INIT
-
 /* Define if we have the libgphoto2_port development environment */
 #undef HAVE_GPHOTO2_PORT
 

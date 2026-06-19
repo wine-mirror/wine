@@ -113,10 +113,13 @@ if test -s conftest.err; then
      cat conftest.err >&AS_MESSAGE_LOG_FD
 fi
 rm -f conftest.err
-AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_CPPFLAGS=$CPPFLAGS
+AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
+LIBS="$ac_libs $LIBS"
 $6
-CPPFLAGS=$ac_save_CPPFLAGS])
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS])
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
