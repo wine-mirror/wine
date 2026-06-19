@@ -785,7 +785,7 @@
 @ stdcall IsGUIThread(long)
 @ stdcall IsHungAppWindow(long)
 @ stdcall IsIconic(long)
-# @ stub IsImmersiveProcess
+@ stdcall IsImmersiveProcess(ptr)
 # @ stub IsInDesktopWindowBand
 @ stdcall IsMenu(long)
 @ stdcall IsMouseInPointerEnabled() NtUserIsMouseInPointerEnabled

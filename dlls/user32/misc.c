@@ -441,6 +441,15 @@ BOOL WINAPI UnregisterSuspendResumeNotification(HPOWERNOTIFY handle)
 }
 
 /**********************************************************************
+ * IsImmersiveProcess [USER32.@]
+ */
+BOOL WINAPI IsImmersiveProcess( HANDLE process )
+{
+    FIXME("(%p): stub\n", process);
+    return FALSE;
+}
+
+/**********************************************************************
  * IsWindowRedirectedForPrint [USER32.@]
  */
 BOOL WINAPI IsWindowRedirectedForPrint( HWND hwnd )
