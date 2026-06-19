@@ -172,7 +172,7 @@ static inline void free_event_data( XEvent *event )
 #endif
 }
 
-static void host_window_send_gravity_events( struct host_window *win, Display *display, unsigned long serial, XEvent *previous )
+static void host_window_send_gravity_events( struct host_window *win, Display *display, unsigned long serial )
 {
     XGravityEvent event = {.type = GravityNotify, .serial = serial, .display = display};
     unsigned int i;
@@ -187,13 +187,12 @@ static void host_window_send_gravity_events( struct host_window *win, Display *d
         event.y = rect.top;
         event.send_event = 0;
 
-        if (previous->type == ConfigureNotify && previous->xconfigure.window == event.window) continue;
         TRACE( "generating GravityNotify for window %lx, rect %s\n", event.window, wine_dbgstr_rect(&rect) );
         XPutBackEvent( event.display, (XEvent *)&event );
     }
 }
 
-static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
+static BOOL host_window_filter_event( XEvent *event )
 {
     struct host_window *win;
 
@@ -210,7 +209,7 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         XReparentEvent *reparent = (XReparentEvent *)event;
         TRACE( "host window %p/%lx ReparentNotify, parent %lx\n", win, win->window, reparent->parent );
         host_window_set_parent( win, reparent->parent );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
         break;
     }
     case GravityNotify:
@@ -219,7 +218,7 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         OffsetRect( &win->rect, gravity->x - win->rect.left, gravity->y - win->rect.top );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, FALSE );
         TRACE( "host window %p/%lx GravityNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
         break;
     }
     case ConfigureNotify:
@@ -228,7 +227,7 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         SetRect( &win->rect, configure->x, configure->y, configure->x + configure->width, configure->y + configure->height );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, configure->send_event );
         TRACE( "host window %p/%lx ConfigureNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
         break;
     }
     }
@@ -322,23 +321,6 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
 }
 
 
-enum event_merge_action
-{
-    MERGE_DISCARD,  /* discard the old event */
-    MERGE_HANDLE,   /* handle the old event */
-};
-
-/***********************************************************************
- *           merge_events
- *
- * Try to merge 2 consecutive events.
- */
-static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
-{
-    return MERGE_HANDLE;
-}
-
-
 /***********************************************************************
  *           call_event_handler
  */
@@ -386,46 +368,18 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
 {
     static const INPUT input = { .type = INPUT_MOUSE, .mi.dwFlags = MOUSEEVENTF_MOVE_NOCOALESCE };
     struct x11drv_thread_data *data = x11drv_thread_data();
-    XEvent event, prev_event;
-    int count = 0;
-    enum event_merge_action action = MERGE_DISCARD;
+    XEvent event;
+    int count;
 
     if (!data) return FALSE;
     if (data->current_event) mask = 0;  /* don't process nested events */
 
-    prev_event.type = 0;
-    for (;;)
+    for (count = 0; XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ); count++)
     {
-        if (!XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ))
-        {
-            if (!prev_event.type) break;
-            call_event_handler( data->display, &prev_event );
-            free_event_data( &prev_event );
-
-            /* Retry after processing delayed event, more events might have been read from the pipe,
-             * this is the case for instance with synchronous requests like when reading a property.
-             */
-            action = MERGE_DISCARD;
-            prev_event.type = 0;
-            continue;
-        }
-
-        count++;
-        if (XFilterEvent( &event, None )) continue;
-        if (host_window_filter_event( &event, &prev_event )) continue;
-
+        if (XFilterEvent( &event, None ) || host_window_filter_event( &event )) continue;
         get_event_data( &event );
-        if (prev_event.type) action = merge_events( &prev_event, &event );
-        switch( action )
-        {
-        case MERGE_HANDLE:  /* handle prev, keep new */
-            call_event_handler( data->display, &prev_event );
-            /* fall through */
-        case MERGE_DISCARD:  /* discard prev, keep new */
-            free_event_data( &prev_event );
-            prev_event = event;
-            break;
-        }
+        call_event_handler( data->display, &event );
+        free_event_data( &event );
     }
 
     XFlush( gdi_display );
