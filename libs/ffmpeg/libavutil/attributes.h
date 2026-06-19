@@ -224,7 +224,7 @@
 #    define av_noreturn
 #endif
 
-#ifdef __clang__
+#if defined __clang__ && !defined __WINESRC__
 #pragma clang diagnostic ignored "-Wimplicit-const-int-float-conversion"
 #pragma clang diagnostic ignored "-Wparentheses"
 #pragma clang diagnostic ignored "-Wpass-failed"
