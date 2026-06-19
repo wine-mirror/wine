@@ -3699,16 +3699,6 @@ struct glBufferStorage_params
     GLbitfield flags;
 };
 
-struct glBufferStorageExternalEXT_params
-{
-    TEB *teb;
-    GLenum target;
-    GLintptr offset;
-    GLsizeiptr size;
-    GLeglClientBufferEXT clientBuffer;
-    GLbitfield flags;
-};
-
 struct glBufferStorageMemEXT_params
 {
     TEB *teb;
@@ -14895,16 +14885,6 @@ struct glNamedBufferStorageEXT_params
     GLuint buffer;
     GLsizeiptr size;
     const void *data;
-    GLbitfield flags;
-};
-
-struct glNamedBufferStorageExternalEXT_params
-{
-    TEB *teb;
-    GLuint buffer;
-    GLintptr offset;
-    GLsizeiptr size;
-    GLeglClientBufferEXT clientBuffer;
     GLbitfield flags;
 };
 
@@ -26293,7 +26273,6 @@ enum unix_funcs
     unix_glBufferParameteriAPPLE,
     unix_glBufferRegionEnabled,
     unix_glBufferStorage,
-    unix_glBufferStorageExternalEXT,
     unix_glBufferStorageMemEXT,
     unix_glBufferSubData,
     unix_glBufferSubDataARB,
@@ -27614,7 +27593,6 @@ enum unix_funcs
     unix_glNamedBufferPageCommitmentMemNV,
     unix_glNamedBufferStorage,
     unix_glNamedBufferStorageEXT,
-    unix_glNamedBufferStorageExternalEXT,
     unix_glNamedBufferStorageMemEXT,
     unix_glNamedBufferSubData,
     unix_glNamedBufferSubDataEXT,

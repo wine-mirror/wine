@@ -301,14 +301,12 @@ my %wow64_invalidate_buffer =
      "glBufferData" => 1,
      "glBufferDataARB" => 1,
      "glBufferStorage" => 1,
-     "glBufferStorageExternalEXT" => 1,
      "glBufferStorageMemEXT" => 1,
      "glNamedBufferAttachMemoryNV" => 1,
      "glNamedBufferData" => 1,
      "glNamedBufferDataEXT" => 1,
      "glNamedBufferStorage" => 1,
      "glNamedBufferStorageEXT" => 1,
-     "glNamedBufferStorageExternalEXT" => 1,
      "glNamedBufferStorageMemEXT" => 1,
     );
 my %pointer_array_count =
@@ -1106,6 +1104,7 @@ my %unsupported_extgroups =
    );
 my %unsupported_extensions =
    (
+    "GL_EXT_external_buffer" => 1,
     "WGL_AMD_gpu_association" => 1,
     "WGL_ARB_buffer_region" => 1,
     "WGL_EXT_display_color_table" => 1,

@@ -4022,14 +4022,6 @@ static void WINAPI glBufferStorage( GLenum target, GLsizeiptr size, const void *
     if ((status = UNIX_CALL( glBufferStorage, &args ))) WARN( "glBufferStorage returned %#lx\n", status );
 }
 
-static void WINAPI glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
-{
-    struct glBufferStorageExternalEXT_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset, .size = size, .clientBuffer = clientBuffer, .flags = flags };
-    NTSTATUS status;
-    TRACE( "target %d, offset %Id, size %Id, clientBuffer %p, flags %d\n", target, offset, size, clientBuffer, flags );
-    if ((status = UNIX_CALL( glBufferStorageExternalEXT, &args ))) WARN( "glBufferStorageExternalEXT returned %#lx\n", status );
-}
-
 static void WINAPI glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset )
 {
     struct glBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .target = target, .size = size, .offset = offset };
@@ -15220,15 +15212,6 @@ static void WINAPI glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, cons
     if ((status = UNIX_CALL( glNamedBufferStorageEXT, &args ))) WARN( "glNamedBufferStorageEXT returned %#lx\n", status );
 }
 
-static void WINAPI glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
-{
-    struct glNamedBufferStorageExternalEXT_params args = { .teb = NtCurrentTeb(), .offset = offset, .size = size, .clientBuffer = clientBuffer, .flags = flags };
-    NTSTATUS status;
-    TRACE( "buffer %d, offset %Id, size %Id, clientBuffer %p, flags %d\n", buffer, offset, size, clientBuffer, flags );
-    args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
-    if ((status = UNIX_CALL( glNamedBufferStorageExternalEXT, &args ))) WARN( "glNamedBufferStorageExternalEXT returned %#lx\n", status );
-}
-
 static void WINAPI glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset )
 {
     struct glNamedBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .size = size, .offset = offset };
@@ -26248,7 +26231,6 @@ const void *extension_procs[] =
     glBufferParameteriAPPLE,
     glBufferRegionEnabled,
     glBufferStorage,
-    glBufferStorageExternalEXT,
     glBufferStorageMemEXT,
     glBufferSubData,
     glBufferSubDataARB,
@@ -27569,7 +27551,6 @@ const void *extension_procs[] =
     glNamedBufferPageCommitmentMemNV,
     glNamedBufferStorage,
     glNamedBufferStorageEXT,
-    glNamedBufferStorageExternalEXT,
     glNamedBufferStorageMemEXT,
     glNamedBufferSubData,
     glNamedBufferSubDataEXT,
@@ -29009,7 +28990,6 @@ const struct registry_entry extension_registry[] =
     { "glBufferParameteriAPPLE", glBufferParameteriAPPLE, 0, 0, { GL_APPLE_flush_buffer_range, GL_EXTENSION_COUNT }},
     { "glBufferRegionEnabled", glBufferRegionEnabled, 0, 0, { GL_KTX_buffer_region, GL_EXTENSION_COUNT }},
     { "glBufferStorage", glBufferStorage, 4, 4, { GL_ARB_buffer_storage, GL_EXTENSION_COUNT }},
-    { "glBufferStorageExternalEXT", glBufferStorageExternalEXT, 0, 0, { GL_EXT_external_buffer, GL_EXTENSION_COUNT }},
     { "glBufferStorageMemEXT", glBufferStorageMemEXT, 0, 0, { GL_EXT_memory_object, GL_EXTENSION_COUNT }},
     { "glBufferSubData", glBufferSubData, 1, 5, { GL_EXTENSION_COUNT }},
     { "glBufferSubDataARB", glBufferSubDataARB, 0, 0, { GL_ARB_vertex_buffer_object, GL_EXTENSION_COUNT }},
@@ -30330,7 +30310,6 @@ const struct registry_entry extension_registry[] =
     { "glNamedBufferPageCommitmentMemNV", glNamedBufferPageCommitmentMemNV, 0, 0, { GL_NV_memory_object_sparse, GL_EXTENSION_COUNT }},
     { "glNamedBufferStorage", glNamedBufferStorage, 4, 5, { GL_ARB_direct_state_access, GL_EXTENSION_COUNT }},
     { "glNamedBufferStorageEXT", glNamedBufferStorageEXT, 0, 0, { GL_EXT_direct_state_access, GL_EXTENSION_COUNT }},
-    { "glNamedBufferStorageExternalEXT", glNamedBufferStorageExternalEXT, 0, 0, { GL_EXT_external_buffer, GL_EXTENSION_COUNT }},
     { "glNamedBufferStorageMemEXT", glNamedBufferStorageMemEXT, 0, 0, { GL_EXT_memory_object, GL_EXTENSION_COUNT }},
     { "glNamedBufferSubData", glNamedBufferSubData, 4, 5, { GL_ARB_direct_state_access, GL_EXTENSION_COUNT }},
     { "glNamedBufferSubDataEXT", glNamedBufferSubDataEXT, 0, 0, { GL_EXT_direct_state_access, GL_EXTENSION_COUNT }},

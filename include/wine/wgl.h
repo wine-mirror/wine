@@ -7880,7 +7880,6 @@ typedef void       (GLAPIENTRY *PFN_glBufferParameteriAPPLE)( GLenum target, GLe
 typedef GLuint     (GLAPIENTRY *PFN_glBufferRegionEnabled)(void);
 typedef void       (GLAPIENTRY *PFN_glBufferStorage)( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );
 typedef void       (GLAPIENTRY *PFN_glBufferStorageEXT)( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );
-typedef void       (GLAPIENTRY *PFN_glBufferStorageExternalEXT)( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags );
 typedef void       (GLAPIENTRY *PFN_glBufferStorageMemEXT)( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset );
 typedef void       (GLAPIENTRY *PFN_glBufferSubData)( GLenum target, GLintptr offset, GLsizeiptr size, const void *data );
 typedef void       (GLAPIENTRY *PFN_glBufferSubDataARB)( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void *data );
@@ -9353,7 +9352,6 @@ typedef void       (GLAPIENTRY *PFN_glNamedBufferPageCommitmentEXT)( GLuint buff
 typedef void       (GLAPIENTRY *PFN_glNamedBufferPageCommitmentMemNV)( GLuint buffer, GLintptr offset, GLsizeiptr size, GLuint memory, GLuint64 memOffset, GLboolean commit );
 typedef void       (GLAPIENTRY *PFN_glNamedBufferStorage)( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
 typedef void       (GLAPIENTRY *PFN_glNamedBufferStorageEXT)( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
-typedef void       (GLAPIENTRY *PFN_glNamedBufferStorageExternalEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags );
 typedef void       (GLAPIENTRY *PFN_glNamedBufferStorageMemEXT)( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset );
 typedef void       (GLAPIENTRY *PFN_glNamedBufferSubData)( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
 typedef void       (GLAPIENTRY *PFN_glNamedBufferSubDataEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
@@ -11444,7 +11442,6 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_EXT_draw_buffers2) \
     USE_GL_EXT(GL_EXT_draw_instanced) \
     USE_GL_EXT(GL_EXT_draw_range_elements) \
-    USE_GL_EXT(GL_EXT_external_buffer) \
     USE_GL_EXT(GL_EXT_float_blend) \
     USE_GL_EXT(GL_EXT_fog_coord) \
     USE_GL_EXT(GL_EXT_frag_depth) \
@@ -12434,7 +12431,6 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glBufferRegionEnabled) \
     USE_GL_FUNC(glBufferStorage) \
     USE_GL_FUNC(glBufferStorageEXT) \
-    USE_GL_FUNC(glBufferStorageExternalEXT) \
     USE_GL_FUNC(glBufferStorageMemEXT) \
     USE_GL_FUNC(glBufferSubData) \
     USE_GL_FUNC(glBufferSubDataARB) \
@@ -13907,7 +13903,6 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glNamedBufferPageCommitmentMemNV) \
     USE_GL_FUNC(glNamedBufferStorage) \
     USE_GL_FUNC(glNamedBufferStorageEXT) \
-    USE_GL_FUNC(glNamedBufferStorageExternalEXT) \
     USE_GL_FUNC(glNamedBufferStorageMemEXT) \
     USE_GL_FUNC(glNamedBufferSubData) \
     USE_GL_FUNC(glNamedBufferSubDataEXT) \
