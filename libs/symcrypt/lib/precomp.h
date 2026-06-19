@@ -28,18 +28,3 @@
         #define _XCR_XFEATURE_ENABLED_MASK 0
     #endif
 #endif
-
-#ifndef __WINE_PE_BUILD
-#define SymCryptSha256AppendBlocks_xmm_ssse3_asm SymCryptSha256AppendBlocks_ul1
-#define SymCryptXtsAesEncryptInternalAsm SymCryptXtsAesEncryptInternalC
-#define SymCryptXtsAesDecryptInternalAsm SymCryptXtsAesDecryptInternalC
-#define SymCryptAesEncryptAsm SymCryptAesEncryptC
-#define SymCryptAesDecryptAsm SymCryptAesDecryptC
-#define SymCryptAesEcbEncryptAsm SymCryptAesEcbEncryptC
-#define SymCryptAesCbcEncryptAsm(key, chain, src, dst, data) \
-    SymCryptCbcEncrypt(&SymCryptAesBlockCipherNoOpt, key, chain, src, dst, data)
-#define SymCryptAesCbcDecryptAsm(key, chain, src, dst, data) \
-    SymCryptCbcDecrypt(&SymCryptAesBlockCipherNoOpt, key, chain, src, dst, data)
-#define SymCryptAesCtrMsb64Asm(key, chain, src, dst, data) \
-    SymCryptCtrMsb64(&SymCryptAesBlockCipherNoOpt, key, chain, src, dst, data)
-#endif

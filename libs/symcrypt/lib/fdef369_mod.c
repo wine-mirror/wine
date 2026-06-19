@@ -6,7 +6,7 @@
 
 #include "precomp.h"
 
-#if (SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64) && defined(__WINE_PE_BUILD)
+#if (SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64)
 
 #if !(SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM64)
 #error code in this file is specific to normal digits being 4 64-bit words, and here 3 64-bit words

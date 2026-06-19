@@ -1332,7 +1332,7 @@ SymCryptFdefModMulMontgomery(
     SymCryptFdefMontgomeryReduce( pmMod, pTmp, &peDst->d.uint32[0] );
 }
 
-#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
+#if SYMCRYPT_CPU_AMD64
 VOID
 SYMCRYPT_CALL
 SymCryptFdefModMulMontgomeryMulx(
@@ -1395,7 +1395,7 @@ SymCryptFdefModSquareMontgomery(
 }
 
 
-#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
+#if SYMCRYPT_CPU_AMD64
 VOID
 SYMCRYPT_CALL
 SymCryptFdefModSquareMontgomeryMulx(
@@ -1470,7 +1470,7 @@ SymCryptFdefModInvMontgomery(
     return scError;
 }
 
-#if SYMCRYPT_CPU_AMD64 && defined(__WINE_PE_BUILD)
+#if SYMCRYPT_CPU_AMD64
 
 //=====================================
 // 256-bit Montgomery modulus code
@@ -1683,51 +1683,5 @@ SymCryptFdefModSquareMontgomery1024(
     SymCryptFdefMontgomeryReduce1024Asm( pmMod, pTmp, &peDst->d.uint32[0] );
 }
 #endif
-
-#endif
-
-#ifndef __WINE_PE_BUILD
-
-VOID
-SYMCRYPT_CALL
-SymCryptFdefMontgomeryReduceAsm(
-    _In_                            PCSYMCRYPT_MODULUS      pmMod,
-    _Inout_                         PUINT32                 pSrc,
-    _Out_                           PUINT32                 pDst )
-{
-    SymCryptFdefMontgomeryReduceC( pmMod, pSrc, pDst );
-}
-
-VOID
-SYMCRYPT_CALL
-SymCryptFdefModDivSmallPow2Mulx(
-    _In_                        PCSYMCRYPT_MODULUS      pmMod,
-    _In_                        PCSYMCRYPT_MODELEMENT   peSrc,
-    _In_range_(1, NATIVE_BITS)  UINT32                  exp,
-    _Out_                       PSYMCRYPT_MODELEMENT    peDst )
-{
-    SymCryptFdefModDivSmallPow2Generic( pmMod, peSrc, exp, peDst );
-}
-
-VOID
-SYMCRYPT_CALL
-SymCryptFdefMontgomeryReduceMulx(
-    _In_                            PCSYMCRYPT_MODULUS      pmMod,
-    _Inout_                         PUINT32                 pSrc,
-    _Out_                           PUINT32                 pDst )
-{
-    SymCryptFdefMontgomeryReduceC( pmMod, pSrc, pDst );
-}
-
-VOID
-SYMCRYPT_CALL
-SymCryptFdefModDivSmallPow2Asm(
-    _In_                        PCSYMCRYPT_MODULUS      pmMod,
-    _In_                        PCSYMCRYPT_MODELEMENT   peSrc,
-    _In_range_(1, NATIVE_BITS)  UINT32                  exp,
-    _Out_                       PSYMCRYPT_MODELEMENT    peDst )
-{
-    SymCryptFdefModDivSmallPow2Generic( pmMod, peSrc, exp, peDst );
-}
 
 #endif

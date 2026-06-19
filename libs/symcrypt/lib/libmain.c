@@ -115,7 +115,7 @@ fatalInfiniteLoop:
     goto fatalInfiniteLoop;
 }
 
-#ifdef __WINE_PE_BUILD
+#if SYMCRYPT_CPU_X86 | SYMCRYPT_CPU_AMD64 | SYMCRYPT_CPU_ARM | SYMCRYPT_CPU_ARM64
 
 VOID
 SYMCRYPT_CALL

@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 SYMCRYPT_CPU_FEATURES SYMCRYPT_CALL SymCryptCpuFeaturesNeverPresent(void) { return 0; }
 void SYMCRYPT_CALL SymCryptFatal( UINT32 fatalCode ) { }
 void SYMCRYPT_CALL SymCryptInjectError( PBYTE pbBuf, SIZE_T cbBuf ) { }
-#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+#if SYMCRYPT_CPU_X86 | SYMCRYPT_CPU_AMD64
 SYMCRYPT_ERROR SYMCRYPT_CALL SymCryptSaveXmm( PSYMCRYPT_EXTENDED_SAVE_DATA pSaveArea ) { return SYMCRYPT_NO_ERROR; }
 void SYMCRYPT_CALL SymCryptRestoreXmm( PSYMCRYPT_EXTENDED_SAVE_DATA pSaveArea ) { }
 #endif

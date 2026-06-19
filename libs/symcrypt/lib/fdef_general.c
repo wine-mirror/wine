@@ -1535,18 +1535,3 @@ SymCryptFdefIntFindSmallDivisor(
 cleanup:
     return res;
 }
-
-#ifndef __WINE_PE_BUILD
-
-VOID
-SYMCRYPT_CALL
-SymCryptFdefMaskedCopyAsm(
-    _In_reads_bytes_( nDigits*SYMCRYPT_FDEF_DIGIT_SIZE )        PCBYTE      pbSrc,
-    _Inout_updates_bytes_( nDigits*SYMCRYPT_FDEF_DIGIT_SIZE )   PBYTE       pbDst,
-                                                                UINT32      nDigits,
-                                                                UINT32      mask )
-{
-    SymCryptFdefMaskedCopyC( pbSrc, pbDst, nDigits, mask );
-}
-
-#endif
