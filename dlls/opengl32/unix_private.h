@@ -81,14 +81,9 @@ static inline TEB *get_teb64( ULONG teb32 )
     return (TEB *)((char *)teb32_ptr + teb32_ptr->WowTebOffset);
 }
 
-extern struct buffer *invalidate_buffer_name( TEB *teb, GLuint name );
-extern struct buffer *invalidate_buffer_target( TEB *teb, GLenum target );
-extern void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer );
 extern NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str );
 
 #endif
-
-extern pthread_mutex_t wgl_lock;
 
 extern NTSTATUS process_attach( void *args );
 extern NTSTATUS thread_attach( void *args );

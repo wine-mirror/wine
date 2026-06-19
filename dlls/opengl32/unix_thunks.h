@@ -39,7 +39,10 @@ extern HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hDC, int iPixelFormat
 extern BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
 
 #ifdef _WIN64
+extern void wow64_glBufferAttachMemoryNV( TEB *teb, GLenum target, GLuint memory, GLuint64 offset, PFN_glBufferAttachMemoryNV func );
+extern void wow64_glBufferData( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLenum usage, PFN_glBufferData func );
 extern void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLbitfield flags, PFN_glBufferStorage func );
+extern void wow64_glBufferStorageMemEXT( TEB *teb, GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset, PFN_glBufferStorageMemEXT func );
 extern void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers, PFN_glDeleteBuffers func );
 extern void wow64_glFlushMappedBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length, PFN_glFlushMappedBufferRange func );
 extern void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, PFN_glFlushMappedNamedBufferRange func );
@@ -49,7 +52,10 @@ extern void *wow64_glMapBuffer( TEB *teb, GLenum target, GLenum access, PFN_glMa
 extern void *wow64_glMapBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, PFN_glMapBufferRange func );
 extern void *wow64_glMapNamedBuffer( TEB *teb, GLuint buffer, GLenum access, PFN_glMapNamedBuffer func );
 extern void *wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access, PFN_glMapNamedBufferRange func );
+extern void wow64_glNamedBufferAttachMemoryNV( TEB *teb, GLuint buffer, GLuint memory, GLuint64 offset, PFN_glNamedBufferAttachMemoryNV func );
+extern void wow64_glNamedBufferData( TEB *teb, GLuint buffer, GLsizeiptr size, const void *data, GLenum usage, PFN_glNamedBufferData func );
 extern void wow64_glNamedBufferStorage( TEB *teb, GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags, PFN_glNamedBufferStorage func );
+extern void wow64_glNamedBufferStorageMemEXT( TEB *teb, GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset, PFN_glNamedBufferStorageMemEXT func );
 extern GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target, PFN_glUnmapBuffer func );
 extern GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer, PFN_glUnmapNamedBuffer func );
 #endif
