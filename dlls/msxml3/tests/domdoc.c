@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "windows.h"
 
@@ -873,6 +874,7 @@ static const CHAR szNodeTypesXML[] =
 "       <b id='4' depth='2'/>"
 "       <c id='5' depth='2'/>"
 "   </x>"
+"   <![CDATA[cdata node 1]]>"
 "   <y id='2' depth='1'>"
 "       <?bar value='PI for y'?>"
 "       <!-- comment node 3 -->"
@@ -881,6 +883,7 @@ static const CHAR szNodeTypesXML[] =
 "       <b id='7' depth='2'/>"
 "       <c id='8' depth='2'/>"
 "   </y>"
+"   <![CDATA[cdata node 2]]>"
 "</root>";
 
 static const CHAR szTransformXML[] =
@@ -1276,6 +1279,9 @@ static void get_str_for_type(DOMNodeType type, char *buf)
             break;
         case NODE_PROCESSING_INSTRUCTION:
             strcpy(buf, "P");
+            break;
+        case NODE_CDATA_SECTION:
+            strcpy(buf, "CD");
             break;
         default:
             wsprintfA(buf, "[%d]", type);
@@ -4801,7 +4807,7 @@ static inline void _check_ws_ignored(int line, const char *ver, IXMLDOMDocument2
 
     helper_ole_check_ver(IXMLDOMNode_get_childNodes(node1, &list));
     helper_expect_list_and_release(list,
-            "[4]1.E1.E5.E1.E2.D1 T2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 "
+            "CD1.E1.E5.E1.E2.D1 T2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 "
             "E4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1 E6.E1.E5.E1.E2.D1");
     helper_ole_check_ver(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
@@ -4839,7 +4845,7 @@ static inline void _check_ws_preserved(int line, const char *ver, IXMLDOMDocumen
 
     helper_ole_check_ver(IXMLDOMNode_get_childNodes(node1, &list));
     helper_expect_list_and_release(list,
-            "T1.E2.E10.E2.E2.D1 [4]2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 "
+            "T1.E2.E10.E2.E2.D1 CD2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 "
             "E4.E2.E10.E2.E2.D1 T5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 "
             "E7.E2.E10.E2.E2.D1 E8.E2.E10.E2.E2.D1 T9.E2.E10.E2.E2.D1");
     helper_ole_check_ver(IXMLDOMNode_get_text(node1, &bstr));
@@ -5259,12 +5265,16 @@ static const selection_ns_t selection_ns_data[] = {
     { NULL }
 };
 
-typedef struct {
+struct query_test
+{
     const char *query;
     const char *list;
-} xpath_test_t;
+    bool todo_result;
+    bool todo_evaluates;
+};
 
-static const xpath_test_t xpath_test[] = {
+static const struct query_test xpath_test[] =
+{
     { "*/a", "E1.E1.E2.D1 E1.E2.E2.D1 E1.E4.E2.D1" },
     { "*/b", "E2.E1.E2.D1 E2.E2.E2.D1 E2.E4.E2.D1" },
     { "*/c", "E3.E1.E2.D1 E3.E2.E2.D1" },
@@ -5274,6 +5284,7 @@ static const xpath_test_t xpath_test[] = {
     { "//c", "E3.E1.E2.D1 E3.E2.E2.D1" },
     { "//d", "E4.E1.E2.D1 E4.E2.E2.D1 E4.E4.E2.D1" },
     { "//c[@type]", "E3.E2.E2.D1" },
+    { "(//c[@type] | //c)", "E3.E1.E2.D1 E3.E2.E2.D1" },
     { "//c[@type]/ancestor::node()[1]", "E2.E2.D1" },
     { "//c[@type]/ancestor-or-self::node()[1]", "E3.E2.E2.D1" },
     { "//c[@type]/attribute::node()[1]", "A'type'.E3.E2.E2.D1" },
@@ -5296,13 +5307,37 @@ static const xpath_test_t xpath_test[] = {
     { "ancestor-or-self::node()[1]", "E2.D1" },
     { "((//a)[1])[last()]", "E1.E1.E2.D1" },
     { "//elem[@*]", "E2.E2.D1" },
+    { "//elem[a > 'a3 field']", "" },
+    { "//elem", "E1.E2.D1 E2.E2.D1 E4.E2.D1" },
+    { "//elem[1]//text()", "T1.E1.E1.E2.D1 T1.E2.E1.E2.D1 T1.E3.E1.E2.D1 T1.E4.E1.E2.D1 "
+            "CD1.E1.E5.E1.E2.D1 T2.E1.E5.E1.E2.D1 T1.E3.E1.E5.E1.E2.D1 T1.E4.E1.E5.E1.E2.D1 "
+            "T1.E5.E1.E5.E1.E2.D1 T1.E2.E5.E1.E2.D1 T1.E2.E2.E5.E1.E2.D1 T3.E2.E5.E1.E2.D1 "
+            "T1.E4.E2.E5.E1.E2.D1 T5.E2.E5.E1.E2.D1 T7.E2.E5.E1.E2.D1" },
+    { "node()", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { NULL }
 };
+
+#define test_query_result(test, list, status) test_query_result_(test, list, status, __LINE__)
+static void test_query_result_(const struct query_test *test, IXMLDOMNodeList *list, HRESULT status, int line)
+{
+    HRESULT hr = test->list ? S_OK : E_FAIL;
+
+    todo_wine_if(test->todo_evaluates)
+    ok_(__FILE__, line)(hr == status, "Unexpected status %#lx, expected %#lx.\n", status, hr);
+
+    if (hr == status && status == S_OK)
+    {
+        char *str = list_to_string(list);
+        todo_wine_if(test->todo_result)
+        ok_(__FILE__, line)(!strcmp(str, test->list), "Unexpected node list %s, expected %s\n",
+                *str ? str : "(empty)", test->list);
+    }
+}
 
 static void test_XPath(void)
 {
     const selection_ns_t *ptr = selection_ns_data;
-    const xpath_test_t *xptest = xpath_test;
+    const struct query_test *xptest = xpath_test;
     IXMLDOMNamedNodeMap *map;
     VARIANT var;
     VARIANT_BOOL b;
@@ -5350,21 +5385,14 @@ static void test_XPath(void)
     /* perform xpath tests */
     for ( ; xptest->query ; xptest++ )
     {
-        char *str;
+        winetest_push_context("Test %s", xptest->query);
 
         hr = IXMLDOMNode_selectNodes(rootNode, _bstr_(xptest->query), &list);
-        ok(hr == S_OK, "query evaluation failed for query=%s\n", xptest->query);
-
-        if (hr != S_OK)
-            continue;
-
-        str = list_to_string(list);
-
-        ok(!strcmp(str, xptest->list), "query=%s, invalid node list: \"%s\", expected \"%s\"\n",
-            xptest->query, str, xptest->list);
-
+        test_query_result(xptest, list, hr);
         if (list)
             IXMLDOMNodeList_Release(list);
+
+        winetest_pop_context();
     }
 
     /* namespace:: axis test is disabled until namespace definitions
@@ -7308,28 +7336,37 @@ static void test_default_properties(void)
     }
 }
 
-typedef struct {
-    const char *query;
-    const char *list;
-    BOOL todo;
-} xslpattern_test_t;
-
-static const xslpattern_test_t xslpattern_test[] = {
+static const struct query_test xslpattern_test[] =
+{
+    { "root//elem[$not$ 0]", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1", false, true },
+    { "root//elem[$any$ 0]", "E1.E2.D1", true },
+    { "root//elem[$all$ 0]", "E1.E2.D1", false, true },
+    { "root//elem[$all$ 1]", "E2.E2.D1", false, true },
+    { "root//(elem)[0]", "E1.E2.D1", false, true},
     { "root//elem[0]", "E1.E2.D1" },
+    { "root//elem[0.0]", "E1.E2.D1" },
     { "root//elem[index()=1]", "E2.E2.D1" },
     { "root//elem[index() $eq$ 1]", "E2.E2.D1" },
     { "root//elem[end()]", "E4.E2.D1" },
+    { "root//elem[$any$ end()]", "E4.E2.D1" },
+    { "root//elem[$not$ $any$ end()]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
+    { "root//elem[not($any$ end())]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
     { "root//elem[$not$ end()]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
     { "root//elem[index() != 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root//elem[$any$ (index() != 0)]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() $ne$ 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
+    { "root//elem[index() $ine$ 0]", "E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() < 2]", "E1.E2.D1 E2.E2.D1" },
     { "root//elem[index() $lt$ 2]", "E1.E2.D1 E2.E2.D1" },
+    { "root//elem[index() $ilt$ 2]", "E1.E2.D1 E2.E2.D1" },
     { "root//elem[index() <= 1]", "E1.E2.D1 E2.E2.D1" },
     { "root//elem[index() $le$ 1]", "E1.E2.D1 E2.E2.D1" },
     { "root//elem[index() > 1]", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() $gt$ 1]", "E3.E2.D1 E4.E2.D1" },
+    { "root//elem[index() $igt$ 1]", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() >= 2]", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[index() $ge$ 2]", "E3.E2.D1 E4.E2.D1" },
+    { "root//elem[index() $ige$ 2]", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[a $ieq$ 'a2 field']", "E2.E2.D1" },
     { "root//elem[a $ine$ 'a2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[a $ilt$ 'a3 field']", "E1.E2.D1 E2.E2.D1" },
@@ -7337,6 +7374,7 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root//elem[a $igt$ 'a2 field']", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[a $ige$ 'a3 field']", "E3.E2.D1 E4.E2.D1" },
     { "root//elem[$any$ *='B2 field']", "E2.E2.D1" },
+    { "root//elem[$not$ $any$ *='B2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[$all$ *!='B2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root//elem[index()=0 or end()]", "E1.E2.D1 E4.E2.D1" },
     { "root//elem[index()=0 $or$ end()]", "E1.E2.D1 E4.E2.D1" },
@@ -7345,6 +7383,10 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root//elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root//elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[0]", "E1.E2.D1" },
+#if 0
+//    { "root/elem[-1]", "" },
+#endif
+    { "(root/elem[0] | root/elem[1])", "E1.E2.D1 E2.E2.D1" },
     { "root/elem[index()=1]", "E2.E2.D1" },
     { "root/elem[index() $eq$ 1]", "E2.E2.D1" },
     { "root/elem[end()]", "E4.E2.D1" },
@@ -7358,7 +7400,10 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root/elem[index() > 1]", "E3.E2.D1 E4.E2.D1" },
     { "root/elem[index() $gt$ 1]", "E3.E2.D1 E4.E2.D1" },
     { "root/elem[index() >= 2]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[(index() >= 2) = 1]", "", true },
     { "root/elem[index() $ge$ 2]", "E3.E2.D1 E4.E2.D1" },
+    { "root/elem[a < 'a3 field']", "E1.E2.D1 E2.E2.D1", true },
+    { "root/elem[a > 'a3 field']", "E3.E2.D1 E4.E2.D1", true },
     { "root/elem[a $ieq$ 'a2 field']", "E2.E2.D1" },
     { "root/elem[a $ine$ 'a2 field']", "E1.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "root/elem[a $ilt$ 'a3 field']", "E1.E2.D1 E2.E2.D1" },
@@ -7372,50 +7417,88 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root/elem[index()=0 || end()]", "E1.E2.D1 E4.E2.D1" },
     { "root/elem[index()>0 and $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
+    { "root/elem[index()>0 $and$ not (end())]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1" },
-    { "root/elem[@*]", "E2.E2.D1 E3.E2.D1", TRUE },
+    { "root/elem[$any$ d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1" },
+    { "root/elem/element('foo:c')", "E3.E4.E2.D1" },
+    { "root/elem[d!value() = 'D1 field']", "E1.E2.D1", false, true },
+    { "root/elem[d ! value ( ) = 'D1 field']", "E1.E2.D1", false, true },
+    { "root/elem[@*]", "E2.E2.D1 E3.E2.D1", true },
+    { "root/elem[(@*)]", "E2.E2.D1 E3.E2.D1", true },
+    { "root/elem[@ *]", "E2.E2.D1 E3.E2.D1", true },
+    { "//@foo:*", "A'foo:b'.E2.D1", false, true },
+    { "//@xmlns:*", "A'xmlns:foo'.E2.D1 A'xmlns:foo'.E5.E1.E2.D1 "
+            "A'xmlns:bar'.E5.E1.E2.D1 A'xmlns'.E1.E5.E1.E2.D1 "
+            "A'xmlns'.E2.E5.E1.E2.D1 A'xmlns'.E3.E2.D1", false, true },
+
+    /* No unary '-' */
+    { "root/elem[-nodeType()]", NULL, false, true },
+    { "root/(elem)[d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1", false, true },
+
+    /* mismatch between zero-based index and proximity */
+    { "root//elem[0][0]", "E1.E2.D1" },
+
     { NULL }
 };
 
-static const xslpattern_test_t xslpattern_test_no_ns[] = {
+static const struct query_test xslpattern_test_no_ns[] =
+{
     /* prefixes don't need to be registered, you may use them as they are in the doc */
     { "//bar:x", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1" },
+    { "//bar:*", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1", false, true },
     /* prefixes must be explicitly specified in the name */
     { "//foo:elem", "" },
     { "//foo:c", "E3.E4.E2.D1" },
+    { "//node()[nodeName()='foo:c']", "E3.E4.E2.D1", false, true },
+    { "//node()[nodeName()='c']", "E3.E1.E2.D1 E3.E2.E2.D1 E3.E3.E2.D1", false, true },
     { NULL }
 };
 
-static const xslpattern_test_t xslpattern_test_func[] = {
+static const struct query_test xslpattern_test_func[] =
+{
     { "attribute()", "" },
     { "attribute('depth')", "" },
     { "root/attribute('depth')", "A'depth'.E3.D1" },
+    { "root/attribute('depth')", "A'depth'.E3.D1" },
     { "//x/attribute()", "A'id'.E3.E3.D1 A'depth'.E3.E3.D1" },
+    { "//x/attribute('*')", "A'id'.E3.E3.D1 A'depth'.E3.E3.D1", true },
     { "//x//attribute(id)", NULL },
     { "//x//attribute('id')", "A'id'.E3.E3.D1 A'id'.E4.E3.E3.D1 A'id'.E5.E3.E3.D1 A'id'.E6.E3.E3.D1" },
     { "comment()", "C2.D1" },
-    { "//comment()", "C2.D1 C1.E3.D1 C2.E3.E3.D1 C2.E4.E3.D1" },
+    { "//comment()", "C2.D1 C1.E3.D1 C2.E3.E3.D1 C2.E5.E3.D1" },
     { "element()", "E3.D1" },
-    { "root/y/element()", "E4.E4.E3.D1 E5.E4.E3.D1 E6.E4.E3.D1" },
+    { "root/y/element()", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1" },
+    { "root/y/element('*')", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", true },
+    { "root/(y)/element()", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", false, true },
     { "//element(a)", NULL },
-    { "//element('a')", "E4.E3.E3.D1 E4.E4.E3.D1" },
+    { "//element('a')", "E4.E3.E3.D1 E4.E5.E3.D1" },
+    { "//element('*')", "E3.D1 E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1 E5.E3.D1 E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", true },
     { "node()", "P1.D1 C2.D1 E3.D1" },
     { "//x/node()", "P1.E3.E3.D1 C2.E3.E3.D1 T3.E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1" },
     { "//x/node()[nodeType()=1]", "E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1" },
     { "//x/node()[nodeType()=3]", "T3.E3.E3.D1" },
     { "//x/node()[nodeType()=7]", "P1.E3.E3.D1" },
     { "//x/node()[nodeType()=8]", "C2.E3.E3.D1" },
+    { "//x/node()[nodeType()='8']", "C2.E3.E3.D1" },
+    { "//x/node()[nodeType()='8.0']", "C2.E3.E3.D1" },
+    { "//x/node()[nodeType()='8.1']", "" },
+    { "//x/node()[nodeName()='a']", "E4.E3.E3.D1", false, true },
     { "pi()", "P1.D1" },
-    { "//y/pi()", "P1.E4.E3.D1" },
-    { "root/textnode()", "T2.E3.D1" },
-    { "root/element()/textnode()", "T3.E3.E3.D1 T3.E4.E3.D1" },
+    { "pi('*')", "P1.D1", false, true },
+    { "pi('xml')", "P1.D1", false, true },
+    { "pi( \"xml\" )", "P1.D1", false, true },
+    { "//y/pi()", "P1.E5.E3.D1" },
+    { "root/textnode()", "T2.E3.D1 CD4.E3.D1 CD6.E3.D1" },
+    { "root/text()", "T2.E3.D1 CD4.E3.D1 CD6.E3.D1" },
+    { "root/cdata()", "CD4.E3.D1 CD6.E3.D1", false, true },
+    { "root/element()/textnode()", "T3.E3.E3.D1 T3.E5.E3.D1" },
     { NULL }
 };
 
 static void test_XSLPattern(void)
 {
-    const xslpattern_test_t *ptr = xslpattern_test;
+    const struct query_test *ptr = xslpattern_test;
     IXMLDOMDocument2 *doc;
     IXMLDOMNodeList *list;
     VARIANT_BOOL b;
@@ -7444,27 +7527,17 @@ static void test_XSLPattern(void)
     ok(len == 3, "expected 3 entries in list, got %ld\n", len);
     IXMLDOMNodeList_Release(list);
 
-    while (ptr->query)
+    for (; ptr->query; ptr++)
     {
+        winetest_push_context("Test %s", ptr->query);
+
         list = NULL;
         hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(ptr->query), &list);
-        ok(hr == S_OK, "query=%s, failed with %#lx\n", ptr->query, hr);
-        len = 0;
-        hr = IXMLDOMNodeList_get_length(list, &len);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(len != 0, "query=%s, empty list\n", ptr->query);
-        if (len) {
-            if (ptr->todo) {
-                char *str = list_to_string(list);
-                todo_wine
-                ok(!strcmp(str, ptr->list), "Invalid node list: %s, expected %s\n", str, ptr->list);
-                IXMLDOMNodeList_Release(list);
-            }
-            else
-                expect_list_and_release(list, ptr->list);
-        }
+        test_query_result(ptr, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
 
-        ptr++;
+        winetest_pop_context();
     }
 
     /* namespace handling */
@@ -7473,30 +7546,17 @@ static void test_XSLPattern(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ptr = xslpattern_test_no_ns;
-    while (ptr->query)
+    for (; ptr->query; ptr++)
     {
+        winetest_push_context("Test %s", ptr->query);
+
         list = NULL;
         hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(ptr->query), &list);
-        ok(hr == S_OK, "query=%s, failed with %#lx.\n", ptr->query, hr);
+        test_query_result(ptr, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
 
-        if (*ptr->list)
-        {
-            len = 0;
-            hr = IXMLDOMNodeList_get_length(list, &len);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(len != 0, "query=%s, empty list\n", ptr->query);
-        }
-        else
-        {
-            len = 1;
-            hr = IXMLDOMNodeList_get_length(list, &len);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(len == 0, "query=%s, empty list\n", ptr->query);
-        }
-        if (len)
-            expect_list_and_release(list, ptr->list);
-
-        ptr++;
+        winetest_pop_context();
     }
 
     /* explicitly register prefix foo */
@@ -7538,27 +7598,17 @@ static void test_XSLPattern(void)
     ptr = xslpattern_test_func;
     while (ptr->query)
     {
+        winetest_push_context("Test %s", ptr->query);
+
         list = NULL;
         hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(ptr->query), &list);
-        if (ptr->list)
-        {
-            ok(hr == S_OK, "query=%s, failed with %#lx.\n", ptr->query, hr);
-            len = 0;
-            hr = IXMLDOMNodeList_get_length(list, &len);
-            ok(hr == S_OK, "Failed to get list length, hr %#lx.\n", hr);
-            if (*ptr->list)
-            {
-                ok(len != 0, "query=%s, empty list\n", ptr->query);
-                if (len)
-                    expect_list_and_release(list, ptr->list);
-            }
-            else
-                ok(len == 0, "query=%s, filled list\n", ptr->query);
-        }
-        else
-            ok(hr == E_FAIL, "query=%s, failed with %#lx.\n", ptr->query, hr);
+        test_query_result(ptr, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
 
         ptr++;
+
+        winetest_pop_context();
     }
 
     IXMLDOMDocument2_Release(doc);
