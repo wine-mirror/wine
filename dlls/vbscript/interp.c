@@ -296,7 +296,8 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
         }
         {
             new_var->index = script_obj->global_vars_cnt;
-            rb_put(&script_obj->var_tree, new_var->name, &new_var->entry);
+            if(!script_disp_add_var(script_obj, new_var))
+                return E_OUTOFMEMORY;
         }
         script_obj->global_vars[script_obj->global_vars_cnt++] = new_var;
     }else {

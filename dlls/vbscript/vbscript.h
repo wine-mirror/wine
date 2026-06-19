@@ -119,9 +119,26 @@ typedef struct _dynamic_var_t {
     const WCHAR *name;
     BOOL is_const;
     SAFEARRAY *array;
-    struct rb_entry entry;
     size_t index;
 } dynamic_var_t;
+
+typedef enum {
+    SCRIPTDISP_VAR,
+    SCRIPTDISP_FUNC,
+} scriptdisp_entry_type_t;
+
+/* A single named member of a ScriptDisp. A global name resolves to exactly
+   one member, so variables and functions share one tree; the payload selected
+   by type can grow to cover further kinds (e.g. cached host properties). */
+typedef struct {
+    struct rb_entry entry;
+    const WCHAR *name;
+    scriptdisp_entry_type_t type;
+    union {
+        dynamic_var_t *var;
+        function_t *func;
+    } u;
+} scriptdisp_entry_t;
 
 typedef struct {
     IDispatchEx IDispatchEx_iface;
@@ -130,12 +147,13 @@ typedef struct {
     dynamic_var_t **global_vars;
     size_t global_vars_cnt;
     size_t global_vars_size;
-    struct rb_tree var_tree;
 
     function_t **global_funcs;
     size_t global_funcs_cnt;
     size_t global_funcs_size;
-    struct rb_tree func_tree;
+
+    /* maps a global name to its scriptdisp_entry_t */
+    struct rb_tree members;
 
     class_desc_t *classes;
 
@@ -145,6 +163,9 @@ typedef struct {
     unsigned int rnd;
 } ScriptDisp;
 
+scriptdisp_entry_t *script_disp_find_member(ScriptDisp *disp, const WCHAR *name);
+scriptdisp_entry_t *script_disp_add_var(ScriptDisp *disp, dynamic_var_t *var);
+scriptdisp_entry_t *script_disp_add_func(ScriptDisp *disp, function_t *func);
 dynamic_var_t *script_disp_find_var(ScriptDisp *disp, const WCHAR *name);
 
 typedef struct _builtin_prop_t builtin_prop_t;
@@ -396,7 +417,6 @@ struct _function_t {
     unsigned code_off;
     vbscode_t *code_ctx;
     function_t *next;
-    struct rb_entry entry;
     size_t index;
 };
 

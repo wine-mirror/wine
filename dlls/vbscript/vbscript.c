@@ -140,12 +140,13 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
 
     for (i = 0; i < code->main_code.var_cnt; i++)
     {
-        dynamic_var_t *existing = script_disp_find_var(obj, code->main_code.vars[i].name);
+        scriptdisp_entry_t *existing = script_disp_find_member(obj, code->main_code.vars[i].name);
 
-        /* A Dim may shadow a const from a previous compile unit: it creates a
-           fresh variable that name lookups resolve to from now on, while the
-           defining compile unit keeps using the inlined const value. */
-        if (existing && !existing->is_const)
+        /* Dim is permissive: it keeps an existing variable or function of the
+           same name. A const from a previous compile unit is the exception: it
+           is shadowed by a fresh variable that name lookups resolve to from now
+           on, while the defining compile unit keeps using the inlined value. */
+        if (existing && (existing->type != SCRIPTDISP_VAR || !existing->u.var->is_const))
             continue;
 
         if (!(var = heap_pool_alloc(&obj->heap, sizeof(*var))))
@@ -158,33 +159,26 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
         var->is_const = FALSE;
         var->array = NULL;
         var->index = obj->global_vars_cnt;
-        if (existing)
-            rb_remove(&obj->var_tree, &existing->entry);
-        rb_put(&obj->var_tree, var->name, &var->entry);
+        if (!script_disp_add_var(obj, var))
+            return E_OUTOFMEMORY;
 
         obj->global_vars[obj->global_vars_cnt++] = var;
     }
 
     for (func_iter = code->funcs; func_iter; func_iter = func_iter->next)
     {
-        struct rb_entry *entry = rb_get(&obj->func_tree, func_iter->name);
+        scriptdisp_entry_t *existing = script_disp_find_member(obj, func_iter->name);
 
-        if (entry)
-        {
-            function_t *old_func = RB_ENTRY_VALUE(entry, function_t, entry);
-            size_t old_index = old_func->index;
-            /* global function already exists, replace it */
-            rb_remove(&obj->func_tree, &old_func->entry);
-            func_iter->index = old_index;
-            obj->global_funcs[old_index] = func_iter;
-            rb_put(&obj->func_tree, func_iter->name, &func_iter->entry);
-        }
+        if (existing && existing->type == SCRIPTDISP_FUNC)
+            /* global function already exists, replace it in its slot */
+            func_iter->index = existing->u.func->index;
         else
-        {
-            func_iter->index = obj->global_funcs_cnt;
-            obj->global_funcs[obj->global_funcs_cnt++] = func_iter;
-            rb_put(&obj->func_tree, func_iter->name, &func_iter->entry);
-        }
+            /* a new function, or one re-declaring a variable of the same name */
+            func_iter->index = obj->global_funcs_cnt++;
+
+        obj->global_funcs[func_iter->index] = func_iter;
+        if (!script_disp_add_func(obj, func_iter))
+            return E_OUTOFMEMORY;
     }
 
     if (code->classes)
