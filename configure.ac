@@ -47,11 +47,10 @@ AC_ARG_WITH(krb5,      AS_HELP_STRING([--without-krb5],[do not use krb5 (Kerbero
 AC_ARG_WITH(mingw,     AS_HELP_STRING([--without-mingw],[do not use the MinGW cross-compiler]))
 AC_ARG_WITH(netapi,    AS_HELP_STRING([--without-netapi],[do not use the Samba NetAPI library]))
 AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
-            [if test "x$withval" = "xno"; then ac_cv_header_CL_cl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi])
+            [if test "x$withval" = "xno"; then ac_cv_header_OpenCL_opencl_h=no; fi])
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
-AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
-            [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
+AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]))
 AC_ARG_WITH(pcsclite,  AS_HELP_STRING([--without-pcsclite],[do not use PCSC lite]))
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]))
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
@@ -724,7 +723,6 @@ m4_ifdef([AC_SYS_YEAR2038],
          [test "$ac_cv_sys_file_offset_bits" = 64 && AC_DEFINE(_TIME_BITS,64,[Define to 64 to enable 64-bit time_t])])
 
 AC_CHECK_HEADERS(\
-	CL/cl.h \
 	OpenCL/opencl.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -763,7 +761,6 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	pcap/pcap.h \
 	port.h \
 	pwd.h \
 	sched.h \
@@ -1031,7 +1028,7 @@ case $host_os in
     if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
     then
         AC_SUBST(OPENCL_LIBS,"-framework OpenCL")
-        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+        ac_cv_func_clGetPlatformInfo=yes
     fi
 
     dnl Check for MTLDevice registryID property
@@ -1489,27 +1486,32 @@ else
 fi
 
 dnl **** Check for OpenCL ****
-if test "$ac_cv_header_CL_cl_h" = "yes"
+if test "x$with_opencl" != "xno"
 then
-    AC_CHECK_LIB(OpenCL,clGetPlatformInfo,[AC_SUBST(OPENCL_LIBS,["-lOpenCL"])])
+    WINE_PACKAGE_FLAGS(OPENCL,[OpenCL],[-lOpenCL],,,
+        [AC_CHECK_HEADERS([CL/cl.h])
+         AC_CHECK_FUNC(clGetPlatformInfo,[:])])
 fi
-WINE_NOTICE_WITH(opencl,[test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes],
+WINE_NOTICE_WITH(opencl,[test "x$ac_cv_func_clGetPlatformInfo" != xyes],
                  [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.],
                  [enable_opencl])
 
 dnl **** Check for libpcap ****
-if test "$ac_cv_header_pcap_pcap_h" = "yes"
+if test "x$with_pcap" != "xno"
 then
-    AC_CHECK_LIB(pcap,pcap_init,[AC_SUBST(PCAP_LIBS,["-lpcap"])])
+    WINE_PACKAGE_FLAGS(PCAP,[libpcap],[-lpcap],,,
+        [AC_CHECK_HEADERS([pcap/pcap.h])
+         AC_CHECK_FUNC(pcap_init,[:],[PCAP_LIBS=""])])
 fi
-WINE_NOTICE_WITH(pcap,[test "x$ac_cv_lib_pcap_pcap_init" != xyes],
+WINE_NOTICE_WITH(pcap,[test "x$ac_cv_func_pcap_init" != xyes],
                  [pcap ${notice_platform}development files not found, wpcap won't be supported.],
                  [enable_wpcap])
 
 dnl **** Check for libpcsclite ****
 if test "x$with_pcsclite" != "xno"
 then
-    AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])],
+    WINE_PACKAGE_FLAGS(PCSCLITE,[libpcsclite],[-lpcsclite],,,
+                 [AC_CHECK_FUNC(SCardEstablishContext,[:],[PCSCLITE_LIBS=""])],
                  [case $host_os in
                     darwin*) AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
                   esac])

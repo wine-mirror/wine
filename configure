@@ -681,7 +681,10 @@ DBUS_CFLAGS
 INOTIFY_LIBS
 INOTIFY_CFLAGS
 PCSCLITE_LIBS
+PCSCLITE_CFLAGS
 PCAP_LIBS
+PCAP_CFLAGS
+OPENCL_CFLAGS
 WAYLAND_EGL_LIBS
 WAYLAND_EGL_CFLAGS
 XKBCOMMON_LIBS
@@ -1909,6 +1912,12 @@ XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS
 WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS
+OPENCL_CFLAGS
+OPENCL_LIBS
+PCAP_CFLAGS
+PCAP_LIBS
+PCSCLITE_CFLAGS
+PCSCLITE_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2787,6 +2796,15 @@ Some influential environment variables:
               C compiler flags for wayland-egl, overriding pkg-config
   WAYLAND_EGL_LIBS
               Linker flags for wayland-egl, overriding pkg-config
+  OPENCL_CFLAGS
+              C compiler flags for OpenCL, overriding pkg-config
+  OPENCL_LIBS Linker flags for OpenCL, overriding pkg-config
+  PCAP_CFLAGS C compiler flags for libpcap, overriding pkg-config
+  PCAP_LIBS   Linker flags for libpcap, overriding pkg-config
+  PCSCLITE_CFLAGS
+              C compiler flags for libpcsclite, overriding pkg-config
+  PCSCLITE_LIBS
+              Linker flags for libpcsclite, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -4434,7 +4452,7 @@ fi
 # Check whether --with-opencl was given.
 if test ${with_opencl+y}
 then :
-  withval=$with_opencl; if test "x$withval" = "xno"; then ac_cv_header_CL_cl_h=no; ac_cv_header_OpenCL_opencl_h=no; fi
+  withval=$with_opencl; if test "x$withval" = "xno"; then ac_cv_header_OpenCL_opencl_h=no; fi
 fi
 
 
@@ -4455,7 +4473,7 @@ fi
 # Check whether --with-pcap was given.
 if test ${with_pcap+y}
 then :
-  withval=$with_pcap; if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi
+  withval=$with_pcap;
 fi
 
 
@@ -10752,12 +10770,6 @@ then :
 printf '%s\n' "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "CL/cl.h" "ac_cv_header_CL_cl_h" "$ac_includes_default"
-if test "x$ac_cv_header_CL_cl_h" = xyes
-then :
-  printf '%s\n' "#define HAVE_CL_CL_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "OpenCL/opencl.h" "ac_cv_header_OpenCL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_OpenCL_opencl_h" = xyes
 then :
@@ -10984,12 +10996,6 @@ ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_fsm.h" "ac_cv_header_netinet
 if test "x$ac_cv_header_netinet_tcp_fsm_h" = xyes
 then :
   printf '%s\n' "#define HAVE_NETINET_TCP_FSM_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "pcap/pcap.h" "ac_cv_header_pcap_pcap_h" "$ac_includes_default"
-if test "x$ac_cv_header_pcap_pcap_h" = xyes
-then :
-  printf '%s\n' "#define HAVE_PCAP_PCAP_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "port.h" "ac_cv_header_port_h" "$ac_includes_default"
@@ -12449,7 +12455,7 @@ fi
     then
         OPENCL_LIBS="-framework OpenCL"
 
-        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+        ac_cv_func_clGetPlatformInfo=yes
     fi
 
         ac_ext=m
@@ -17085,59 +17091,58 @@ enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 fi
 
-if test "$ac_cv_header_CL_cl_h" = "yes"
+if test "x$with_opencl" != "xno"
 then
-    { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
-printf %s "checking for clGetPlatformInfo in -lOpenCL... " >&6; }
-if test ${ac_cv_lib_OpenCL_clGetPlatformInfo+y}
+    rm -f conftest.err
+if ${OPENCL_CFLAGS:+false} :
 then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lOpenCL  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+  if test ${PKG_CONFIG+y}
+then :
+  OPENCL_CFLAGS=`$PKG_CONFIG --cflags OpenCL 2>conftest.err`
+fi
+fi
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clGetPlatformInfo (void);
-int
-main (void)
-{
-return clGetPlatformInfo ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
+if ${OPENCL_LIBS:+false} :
 then :
-  ac_cv_lib_OpenCL_clGetPlatformInfo=yes
-else case e in #(
-  e) ac_cv_lib_OpenCL_clGetPlatformInfo=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_OpenCL_clGetPlatformInfo" >&5
-printf '%s\n' "$ac_cv_lib_OpenCL_clGetPlatformInfo" >&6; }
-if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" = xyes
+  if test ${PKG_CONFIG+y}
 then :
-  OPENCL_LIBS="-lOpenCL"
+  OPENCL_LIBS=`$PKG_CONFIG --libs OpenCL 2>/dev/null`
+fi
+fi
+
+OPENCL_LIBS=${OPENCL_LIBS:-"-lOpenCL"}
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: OpenCL cflags: $OPENCL_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: OpenCL libs: $OPENCL_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: OpenCL errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+if test -n "$OPENCL_CFLAGS$OPENCL_LIBS"
+then :
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
+CPPFLAGS="$CPPFLAGS $OPENCL_CFLAGS"
+LIBS="$OPENCL_LIBS $LIBS"
+ac_fn_c_check_header_compile "$LINENO" "CL/cl.h" "ac_cv_header_CL_cl_h" "$ac_includes_default"
+if test "x$ac_cv_header_CL_cl_h" = xyes
+then :
+  printf '%s\n' "#define HAVE_CL_CL_H 1" >>confdefs.h
 
 fi
 
+         ac_fn_c_check_func "$LINENO" "clGetPlatformInfo" "ac_cv_func_clGetPlatformInfo"
+if test "x$ac_cv_func_clGetPlatformInfo" = xyes
+then :
+  :
 fi
-if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes
+
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
+fi
+
+fi
+if test "x$ac_cv_func_clGetPlatformInfo" != xyes
 then :
   case "x$with_opencl" in
   x)   as_fn_append wine_notices "|OpenCL ${notice_platform}development files not found, OpenCL won't be supported." ;;
@@ -17148,59 +17153,61 @@ esac
 enable_opencl=${enable_opencl:-no}
 fi
 
-if test "$ac_cv_header_pcap_pcap_h" = "yes"
+if test "x$with_pcap" != "xno"
 then
-    { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for pcap_init in -lpcap" >&5
-printf %s "checking for pcap_init in -lpcap... " >&6; }
-if test ${ac_cv_lib_pcap_pcap_init+y}
+    rm -f conftest.err
+if ${PCAP_CFLAGS:+false} :
 then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpcap  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+  if test ${PKG_CONFIG+y}
+then :
+  PCAP_CFLAGS=`$PKG_CONFIG --cflags libpcap 2>conftest.err`
+fi
+fi
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pcap_init (void);
-int
-main (void)
-{
-return pcap_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
+if ${PCAP_LIBS:+false} :
 then :
-  ac_cv_lib_pcap_pcap_init=yes
+  if test ${PKG_CONFIG+y}
+then :
+  PCAP_LIBS=`$PKG_CONFIG --libs libpcap 2>/dev/null`
+fi
+fi
+
+PCAP_LIBS=${PCAP_LIBS:-"-lpcap"}
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libpcap cflags: $PCAP_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libpcap libs: $PCAP_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libpcap errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+if test -n "$PCAP_CFLAGS$PCAP_LIBS"
+then :
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
+CPPFLAGS="$CPPFLAGS $PCAP_CFLAGS"
+LIBS="$PCAP_LIBS $LIBS"
+ac_fn_c_check_header_compile "$LINENO" "pcap/pcap.h" "ac_cv_header_pcap_pcap_h" "$ac_includes_default"
+if test "x$ac_cv_header_pcap_pcap_h" = xyes
+then :
+  printf '%s\n' "#define HAVE_PCAP_PCAP_H 1" >>confdefs.h
+
+fi
+
+         ac_fn_c_check_func "$LINENO" "pcap_init" "ac_cv_func_pcap_init"
+if test "x$ac_cv_func_pcap_init" = xyes
+then :
+  :
 else case e in #(
-  e) ac_cv_lib_pcap_pcap_init=no ;;
+  e) PCAP_LIBS="" ;;
 esac
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcap_pcap_init" >&5
-printf '%s\n' "$ac_cv_lib_pcap_pcap_init" >&6; }
-if test "x$ac_cv_lib_pcap_pcap_init" = xyes
-then :
-  PCAP_LIBS="-lpcap"
 
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
 fi
-if test "x$ac_cv_lib_pcap_pcap_init" != xyes
+if test "x$ac_cv_func_pcap_init" != xyes
 then :
   case "x$with_pcap" in
   x)   as_fn_append wine_notices "|pcap ${notice_platform}development files not found, wpcap won't be supported." ;;
@@ -17213,59 +17220,48 @@ fi
 
 if test "x$with_pcsclite" != "xno"
 then
-    { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for SCardEstablishContext in -lpcsclite" >&5
-printf %s "checking for SCardEstablishContext in -lpcsclite... " >&6; }
-if test ${ac_cv_lib_pcsclite_SCardEstablishContext+y}
+    rm -f conftest.err
+if ${PCSCLITE_CFLAGS:+false} :
 then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpcsclite  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+  if test ${PKG_CONFIG+y}
+then :
+  PCSCLITE_CFLAGS=`$PKG_CONFIG --cflags libpcsclite 2>conftest.err`
+fi
+fi
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char SCardEstablishContext (void);
-int
-main (void)
-{
-return SCardEstablishContext ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
+if ${PCSCLITE_LIBS:+false} :
 then :
-  ac_cv_lib_pcsclite_SCardEstablishContext=yes
+  if test ${PKG_CONFIG+y}
+then :
+  PCSCLITE_LIBS=`$PKG_CONFIG --libs libpcsclite 2>/dev/null`
+fi
+fi
+
+PCSCLITE_LIBS=${PCSCLITE_LIBS:-"-lpcsclite"}
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libpcsclite cflags: $PCSCLITE_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libpcsclite libs: $PCSCLITE_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libpcsclite errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+if test -n "$PCSCLITE_CFLAGS$PCSCLITE_LIBS"
+then :
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
+CPPFLAGS="$CPPFLAGS $PCSCLITE_CFLAGS"
+LIBS="$PCSCLITE_LIBS $LIBS"
+ac_fn_c_check_func "$LINENO" "SCardEstablishContext" "ac_cv_func_SCardEstablishContext"
+if test "x$ac_cv_func_SCardEstablishContext" = xyes
+then :
+  :
 else case e in #(
-  e) ac_cv_lib_pcsclite_SCardEstablishContext=no ;;
+  e) PCSCLITE_LIBS="" ;;
 esac
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcsclite_SCardEstablishContext" >&5
-printf '%s\n' "$ac_cv_lib_pcsclite_SCardEstablishContext" >&6; }
-if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" = xyes
-then :
-  PCSCLITE_LIBS="-lpcsclite"
 
-else case e in #(
-  e) case $host_os in
-                    darwin*) PCSCLITE_LIBS="-framework PCSC"
- ;;
-                  esac ;;
-esac
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
 fi
@@ -24381,7 +24377,10 @@ XKBCOMMON_CFLAGS = $XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS = $XKBCOMMON_LIBS
 WAYLAND_EGL_CFLAGS = $WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS = $WAYLAND_EGL_LIBS
+OPENCL_CFLAGS = $OPENCL_CFLAGS
+PCAP_CFLAGS = $PCAP_CFLAGS
 PCAP_LIBS = $PCAP_LIBS
+PCSCLITE_CFLAGS = $PCSCLITE_CFLAGS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
 INOTIFY_LIBS = $INOTIFY_LIBS
