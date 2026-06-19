@@ -6491,6 +6491,7 @@ static void test_ImmSetCompositionWindow(void)
     hwnd = CreateWindowW( test_class.lpszClassName, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                           100, 100, 100, 100, NULL, NULL, NULL, NULL );
     ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
 
     ok_ret( 1, ImmActivateLayout( hkl ) );
     ok_ret( 1, ImmLoadIME( hkl ) );
