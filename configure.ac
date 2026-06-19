@@ -1138,7 +1138,7 @@ if test "x$with_system_dllpath" != "x" -a -n "$PE_ARCHS"
 then
     WINE_MINGW_PACKAGE_FLAGS(FAUDIO,[FAudio],[-lFAudio],
         [WINE_CHECK_MINGW_HEADER(FAudio.h,
-            [WINE_CHECK_MINGW_LIB(FAudio,FAudio_CommitOperationSet,[:],[FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS=""],[$FAUDIO_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(FAudio_CommitOperationSet,[:],[FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS=""])],
             [FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS=""])])
     if test "x$FAUDIO_PE_LIBS" = "x"
     then
@@ -1147,7 +1147,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(FLUIDSYNTH,[fluidsynth],[-lfluidsynth],
         [WINE_CHECK_MINGW_HEADER(fluidsynth.h,
-            [WINE_CHECK_MINGW_LIB(fluidsynth,new_fluid_synth,[:],[FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""],[$FLUIDSYNTH_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(new_fluid_synth,[:],[FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""])],
             [FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""])])
     if test "x$FLUIDSYNTH_PE_LIBS" = "x"
     then
@@ -1156,7 +1156,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(JPEG,[libjpeg],,
         [WINE_CHECK_MINGW_HEADER(jpeglib.h,
-            [WINE_CHECK_MINGW_LIB(jpeg,jpeg_start_decompress,[:],[JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""],[$JPEG_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(jpeg_start_decompress,[:],[JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""])],
             [JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""],
             [#include <stddef.h>
              #include <stdio.h>])])
@@ -1167,7 +1167,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(LCMS2,[lcms2],[-llcms2],
         [WINE_CHECK_MINGW_HEADER(lcms2.h,
-            [WINE_CHECK_MINGW_LIB(lcms2,cmsOpenProfileFromFile,[:],[LCMS2_PE_CFLAGS=""; LCMS2_PE_LIBS=""],[$LCMS2_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(cmsOpenProfileFromFile,[:],[LCMS2_PE_CFLAGS=""; LCMS2_PE_LIBS=""])],
             [LCMS2_PE_CFLAGS=""; LCMS2_PE_LIBS=""])])
     if test "x$LCMS2_PE_LIBS" = "x"
     then
@@ -1176,7 +1176,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(MPG123,[libmpg123],[-lmpg123],
         [WINE_CHECK_MINGW_HEADER(mpg123.h,
-            [WINE_CHECK_MINGW_LIB(mpg123,mpg123_feed,[:],[MPG123_PE_CFLAGS=""; MPG123_PE_LIBS=""],[$MPG123_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(mpg123_feed,[:],[MPG123_PE_CFLAGS=""; MPG123_PE_LIBS=""])],
             [MPG123_PE_CFLAGS=""; MPG123_PE_LIBS=""])])
     if test "x$MPG123_PE_LIBS" = "x"
     then
@@ -1185,7 +1185,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(PNG,[libpng],,
         [WINE_CHECK_MINGW_HEADER(png.h,
-            [WINE_CHECK_MINGW_LIB(png,png_create_read_struct,[:],[PNG_PE_CFLAGS=""; PNG_PE_LIBS=""],[$PNG_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(png_create_read_struct,[:],[PNG_PE_CFLAGS=""; PNG_PE_LIBS=""])],
             [PNG_PE_CFLAGS=""; PNG_PE_LIBS=""])])
     if test "x$PNG_PE_LIBS" = "x"
     then
@@ -1194,7 +1194,7 @@ then
 
     WINE_MINGW_PACKAGE_FLAGS(TIFF,[libtiff-4],,
         [WINE_CHECK_MINGW_HEADER(tiffio.h,
-            [WINE_CHECK_MINGW_LIB(tiff,TIFFClientOpen,[:],[TIFF_PE_CFLAGS=""; TIFF_PE_LIBS=""],[$TIFF_PE_LIBS])],
+            [WINE_CHECK_MINGW_FUNC(TIFFClientOpen,[:],[TIFF_PE_CFLAGS=""; TIFF_PE_LIBS=""])],
             [TIFF_PE_CFLAGS=""; TIFF_PE_LIBS=""])])
     if test "x$TIFF_PE_LIBS" = "x"
     then
@@ -1206,9 +1206,9 @@ then
         WINE_CHECK_MINGW_HEADER(vkd3d_shader.h)
         if test "$ac_cv_mingw_header_vkd3d_utils_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
         then
-            WINE_CHECK_MINGW_LIB(vkd3d-utils,vkd3d_utils_set_log_callback,[:],[:],[$VKD3D_PE_LIBS])
-            WINE_CHECK_MINGW_LIB(vkd3d-shader,vkd3d_shader_build_varying_map,[:],[:],[$VKD3D_PE_LIBS])
-            if test "$ac_cv_mingw_lib_vkd3d_utils" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
+            WINE_CHECK_MINGW_FUNC(vkd3d_utils_set_log_callback,[:],[:])
+            WINE_CHECK_MINGW_FUNC(vkd3d_shader_build_varying_map,[:],[:])
+            if test "$ac_cv_mingw_func_vkd3d_utils_set_log_callback" = "no" -o "$ac_cv_mingw_func_vkd3d_shader_build_varying_map" = "no"
             then
                 VKD3D_PE_CFLAGS=""
                 VKD3D_PE_LIBS=""

@@ -13304,8 +13304,10 @@ fi
 FAUDIO_PE_LIBS=${FAUDIO_PE_LIBS:-"-lFAudio"}
 if test -n "$FAUDIO_PE_CFLAGS$FAUDIO_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $FAUDIO_PE_CFLAGS"
+LIBS="$FAUDIO_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW FAudio.h" >&5
 printf %s "checking for MinGW FAudio.h... " >&6; }
 if test ${ac_cv_mingw_header_FAudio_h+y}
@@ -13344,18 +13346,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_FAudio_h" >&6; }
 if test "x$ac_cv_mingw_header_FAudio_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for FAudio_CommitOperationSet in MinGW -lFAudio" >&5
-printf %s "checking for FAudio_CommitOperationSet in MinGW -lFAudio... " >&6; }
-if test ${ac_cv_mingw_lib_FAudio+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for FAudio_CommitOperationSet in PE library" >&5
+printf %s "checking for FAudio_CommitOperationSet in PE library... " >&6; }
+if test ${ac_cv_mingw_func_FAudio_CommitOperationSet+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lFAudio $FAUDIO_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13379,21 +13379,20 @@ return FAudio_CommitOperationSet ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_FAudio=yes
+  ac_cv_mingw_func_FAudio_CommitOperationSet=yes
 else case e in #(
-  e) ac_cv_mingw_lib_FAudio=no ;;
+  e) ac_cv_mingw_func_FAudio_CommitOperationSet=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_FAudio" >&5
-printf '%s\n' "$ac_cv_mingw_lib_FAudio" >&6; }
-if test "x$ac_cv_mingw_lib_FAudio" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_FAudio_CommitOperationSet" >&5
+printf '%s\n' "$ac_cv_mingw_func_FAudio_CommitOperationSet" >&6; }
+if test "x$ac_cv_mingw_func_FAudio_CommitOperationSet" = xyes
 then :
   :
 else case e in #(
@@ -13404,7 +13403,8 @@ else case e in #(
   e) FAUDIO_PE_CFLAGS=""; FAUDIO_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$FAUDIO_PE_LIBS" = "x"
@@ -13429,8 +13429,10 @@ fi
 FLUIDSYNTH_PE_LIBS=${FLUIDSYNTH_PE_LIBS:-"-lfluidsynth"}
 if test -n "$FLUIDSYNTH_PE_CFLAGS$FLUIDSYNTH_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $FLUIDSYNTH_PE_CFLAGS"
+LIBS="$FLUIDSYNTH_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW fluidsynth.h" >&5
 printf %s "checking for MinGW fluidsynth.h... " >&6; }
 if test ${ac_cv_mingw_header_fluidsynth_h+y}
@@ -13469,18 +13471,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_fluidsynth_h" >&6; }
 if test "x$ac_cv_mingw_header_fluidsynth_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for new_fluid_synth in MinGW -lfluidsynth" >&5
-printf %s "checking for new_fluid_synth in MinGW -lfluidsynth... " >&6; }
-if test ${ac_cv_mingw_lib_fluidsynth+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for new_fluid_synth in PE library" >&5
+printf %s "checking for new_fluid_synth in PE library... " >&6; }
+if test ${ac_cv_mingw_func_new_fluid_synth+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lfluidsynth $FLUIDSYNTH_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13504,21 +13504,20 @@ return new_fluid_synth ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_fluidsynth=yes
+  ac_cv_mingw_func_new_fluid_synth=yes
 else case e in #(
-  e) ac_cv_mingw_lib_fluidsynth=no ;;
+  e) ac_cv_mingw_func_new_fluid_synth=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_fluidsynth" >&5
-printf '%s\n' "$ac_cv_mingw_lib_fluidsynth" >&6; }
-if test "x$ac_cv_mingw_lib_fluidsynth" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_new_fluid_synth" >&5
+printf '%s\n' "$ac_cv_mingw_func_new_fluid_synth" >&6; }
+if test "x$ac_cv_mingw_func_new_fluid_synth" = xyes
 then :
   :
 else case e in #(
@@ -13529,7 +13528,8 @@ else case e in #(
   e) FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$FLUIDSYNTH_PE_LIBS" = "x"
@@ -13554,8 +13554,10 @@ fi
 
 if test -n "$JPEG_PE_CFLAGS$JPEG_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $JPEG_PE_CFLAGS"
+LIBS="$JPEG_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW jpeglib.h" >&5
 printf %s "checking for MinGW jpeglib.h... " >&6; }
 if test ${ac_cv_mingw_header_jpeglib_h+y}
@@ -13595,18 +13597,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_jpeglib_h" >&6; }
 if test "x$ac_cv_mingw_header_jpeglib_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for jpeg_start_decompress in MinGW -ljpeg" >&5
-printf %s "checking for jpeg_start_decompress in MinGW -ljpeg... " >&6; }
-if test ${ac_cv_mingw_lib_jpeg+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for jpeg_start_decompress in PE library" >&5
+printf %s "checking for jpeg_start_decompress in PE library... " >&6; }
+if test ${ac_cv_mingw_func_jpeg_start_decompress+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-ljpeg $JPEG_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13630,21 +13630,20 @@ return jpeg_start_decompress ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_jpeg=yes
+  ac_cv_mingw_func_jpeg_start_decompress=yes
 else case e in #(
-  e) ac_cv_mingw_lib_jpeg=no ;;
+  e) ac_cv_mingw_func_jpeg_start_decompress=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_jpeg" >&5
-printf '%s\n' "$ac_cv_mingw_lib_jpeg" >&6; }
-if test "x$ac_cv_mingw_lib_jpeg" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_jpeg_start_decompress" >&5
+printf '%s\n' "$ac_cv_mingw_func_jpeg_start_decompress" >&6; }
+if test "x$ac_cv_mingw_func_jpeg_start_decompress" = xyes
 then :
   :
 else case e in #(
@@ -13655,7 +13654,8 @@ else case e in #(
   e) JPEG_PE_CFLAGS=""; JPEG_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$JPEG_PE_LIBS" = "x"
@@ -13680,8 +13680,10 @@ fi
 LCMS2_PE_LIBS=${LCMS2_PE_LIBS:-"-llcms2"}
 if test -n "$LCMS2_PE_CFLAGS$LCMS2_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $LCMS2_PE_CFLAGS"
+LIBS="$LCMS2_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW lcms2.h" >&5
 printf %s "checking for MinGW lcms2.h... " >&6; }
 if test ${ac_cv_mingw_header_lcms2_h+y}
@@ -13720,18 +13722,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_lcms2_h" >&6; }
 if test "x$ac_cv_mingw_header_lcms2_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in MinGW -llcms2" >&5
-printf %s "checking for cmsOpenProfileFromFile in MinGW -llcms2... " >&6; }
-if test ${ac_cv_mingw_lib_lcms2+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for cmsOpenProfileFromFile in PE library" >&5
+printf %s "checking for cmsOpenProfileFromFile in PE library... " >&6; }
+if test ${ac_cv_mingw_func_cmsOpenProfileFromFile+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-llcms2 $LCMS2_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13755,21 +13755,20 @@ return cmsOpenProfileFromFile ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_lcms2=yes
+  ac_cv_mingw_func_cmsOpenProfileFromFile=yes
 else case e in #(
-  e) ac_cv_mingw_lib_lcms2=no ;;
+  e) ac_cv_mingw_func_cmsOpenProfileFromFile=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_lcms2" >&5
-printf '%s\n' "$ac_cv_mingw_lib_lcms2" >&6; }
-if test "x$ac_cv_mingw_lib_lcms2" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_cmsOpenProfileFromFile" >&5
+printf '%s\n' "$ac_cv_mingw_func_cmsOpenProfileFromFile" >&6; }
+if test "x$ac_cv_mingw_func_cmsOpenProfileFromFile" = xyes
 then :
   :
 else case e in #(
@@ -13780,7 +13779,8 @@ else case e in #(
   e) LCMS2_PE_CFLAGS=""; LCMS2_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$LCMS2_PE_LIBS" = "x"
@@ -13805,8 +13805,10 @@ fi
 MPG123_PE_LIBS=${MPG123_PE_LIBS:-"-lmpg123"}
 if test -n "$MPG123_PE_CFLAGS$MPG123_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $MPG123_PE_CFLAGS"
+LIBS="$MPG123_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW mpg123.h" >&5
 printf %s "checking for MinGW mpg123.h... " >&6; }
 if test ${ac_cv_mingw_header_mpg123_h+y}
@@ -13845,18 +13847,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_mpg123_h" >&6; }
 if test "x$ac_cv_mingw_header_mpg123_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for mpg123_feed in MinGW -lmpg123" >&5
-printf %s "checking for mpg123_feed in MinGW -lmpg123... " >&6; }
-if test ${ac_cv_mingw_lib_mpg123+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for mpg123_feed in PE library" >&5
+printf %s "checking for mpg123_feed in PE library... " >&6; }
+if test ${ac_cv_mingw_func_mpg123_feed+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lmpg123 $MPG123_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13880,21 +13880,20 @@ return mpg123_feed ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_mpg123=yes
+  ac_cv_mingw_func_mpg123_feed=yes
 else case e in #(
-  e) ac_cv_mingw_lib_mpg123=no ;;
+  e) ac_cv_mingw_func_mpg123_feed=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_mpg123" >&5
-printf '%s\n' "$ac_cv_mingw_lib_mpg123" >&6; }
-if test "x$ac_cv_mingw_lib_mpg123" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_mpg123_feed" >&5
+printf '%s\n' "$ac_cv_mingw_func_mpg123_feed" >&6; }
+if test "x$ac_cv_mingw_func_mpg123_feed" = xyes
 then :
   :
 else case e in #(
@@ -13905,7 +13904,8 @@ else case e in #(
   e) MPG123_PE_CFLAGS=""; MPG123_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$MPG123_PE_LIBS" = "x"
@@ -13930,8 +13930,10 @@ fi
 
 if test -n "$PNG_PE_CFLAGS$PNG_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $PNG_PE_CFLAGS"
+LIBS="$PNG_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW png.h" >&5
 printf %s "checking for MinGW png.h... " >&6; }
 if test ${ac_cv_mingw_header_png_h+y}
@@ -13970,18 +13972,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_png_h" >&6; }
 if test "x$ac_cv_mingw_header_png_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for png_create_read_struct in MinGW -lpng" >&5
-printf %s "checking for png_create_read_struct in MinGW -lpng... " >&6; }
-if test ${ac_cv_mingw_lib_png+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for png_create_read_struct in PE library" >&5
+printf %s "checking for png_create_read_struct in PE library... " >&6; }
+if test ${ac_cv_mingw_func_png_create_read_struct+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lpng $PNG_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14005,21 +14005,20 @@ return png_create_read_struct ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_png=yes
+  ac_cv_mingw_func_png_create_read_struct=yes
 else case e in #(
-  e) ac_cv_mingw_lib_png=no ;;
+  e) ac_cv_mingw_func_png_create_read_struct=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_png" >&5
-printf '%s\n' "$ac_cv_mingw_lib_png" >&6; }
-if test "x$ac_cv_mingw_lib_png" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_png_create_read_struct" >&5
+printf '%s\n' "$ac_cv_mingw_func_png_create_read_struct" >&6; }
+if test "x$ac_cv_mingw_func_png_create_read_struct" = xyes
 then :
   :
 else case e in #(
@@ -14030,7 +14029,8 @@ else case e in #(
   e) PNG_PE_CFLAGS=""; PNG_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$PNG_PE_LIBS" = "x"
@@ -14055,8 +14055,10 @@ fi
 
 if test -n "$TIFF_PE_CFLAGS$TIFF_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $TIFF_PE_CFLAGS"
+LIBS="$TIFF_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW tiffio.h" >&5
 printf %s "checking for MinGW tiffio.h... " >&6; }
 if test ${ac_cv_mingw_header_tiffio_h+y}
@@ -14095,18 +14097,16 @@ fi
 printf '%s\n' "$ac_cv_mingw_header_tiffio_h" >&6; }
 if test "x$ac_cv_mingw_header_tiffio_h" = xyes
 then :
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for TIFFClientOpen in MinGW -ltiff" >&5
-printf %s "checking for TIFFClientOpen in MinGW -ltiff... " >&6; }
-if test ${ac_cv_mingw_lib_tiff+y}
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for TIFFClientOpen in PE library" >&5
+printf %s "checking for TIFFClientOpen in PE library... " >&6; }
+if test ${ac_cv_mingw_func_TIFFClientOpen+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-ltiff $TIFF_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14130,21 +14130,20 @@ return TIFFClientOpen ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_tiff=yes
+  ac_cv_mingw_func_TIFFClientOpen=yes
 else case e in #(
-  e) ac_cv_mingw_lib_tiff=no ;;
+  e) ac_cv_mingw_func_TIFFClientOpen=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_tiff" >&5
-printf '%s\n' "$ac_cv_mingw_lib_tiff" >&6; }
-if test "x$ac_cv_mingw_lib_tiff" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_TIFFClientOpen" >&5
+printf '%s\n' "$ac_cv_mingw_func_TIFFClientOpen" >&6; }
+if test "x$ac_cv_mingw_func_TIFFClientOpen" = xyes
 then :
   :
 else case e in #(
@@ -14155,7 +14154,8 @@ else case e in #(
   e) TIFF_PE_CFLAGS=""; TIFF_PE_LIBS="" ;;
 esac
 fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$TIFF_PE_LIBS" = "x"
@@ -14180,8 +14180,10 @@ fi
 VKD3D_PE_LIBS=${VKD3D_PE_LIBS:-"-lvkd3d-utils -lvkd3d -lvkd3d-shader"}
 if test -n "$VKD3D_PE_CFLAGS$VKD3D_PE_LIBS"
 then :
-  ac_save_CPPFLAGS=$CPPFLAGS
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $VKD3D_PE_CFLAGS"
+LIBS="$VKD3D_PE_LIBS $LIBS"
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d_utils.h" >&5
 printf %s "checking for MinGW vkd3d_utils.h... " >&6; }
 if test ${ac_cv_mingw_header_vkd3d_utils_h+y}
@@ -14264,18 +14266,16 @@ then :
 fi
         if test "$ac_cv_mingw_header_vkd3d_utils_h" = "yes" -a "$ac_cv_mingw_header_vkd3d_shader_h" = "yes"
         then
-            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for vkd3d_utils_set_log_callback in MinGW -lvkd3d-utils" >&5
-printf %s "checking for vkd3d_utils_set_log_callback in MinGW -lvkd3d-utils... " >&6; }
-if test ${ac_cv_mingw_lib_vkd3d_utils+y}
+            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for vkd3d_utils_set_log_callback in PE library" >&5
+printf %s "checking for vkd3d_utils_set_log_callback in PE library... " >&6; }
+if test ${ac_cv_mingw_func_vkd3d_utils_set_log_callback+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lvkd3d-utils $VKD3D_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14299,39 +14299,36 @@ return vkd3d_utils_set_log_callback ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_vkd3d_utils=yes
+  ac_cv_mingw_func_vkd3d_utils_set_log_callback=yes
 else case e in #(
-  e) ac_cv_mingw_lib_vkd3d_utils=no ;;
+  e) ac_cv_mingw_func_vkd3d_utils_set_log_callback=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_vkd3d_utils" >&5
-printf '%s\n' "$ac_cv_mingw_lib_vkd3d_utils" >&6; }
-if test "x$ac_cv_mingw_lib_vkd3d_utils" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_vkd3d_utils_set_log_callback" >&5
+printf '%s\n' "$ac_cv_mingw_func_vkd3d_utils_set_log_callback" >&6; }
+if test "x$ac_cv_mingw_func_vkd3d_utils_set_log_callback" = xyes
 then :
   :
 else case e in #(
   e) : ;;
 esac
 fi
-            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_build_varying_map in MinGW -lvkd3d-shader" >&5
-printf %s "checking for vkd3d_shader_build_varying_map in MinGW -lvkd3d-shader... " >&6; }
-if test ${ac_cv_mingw_lib_vkd3d_shader+y}
+            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for vkd3d_shader_build_varying_map in PE library" >&5
+printf %s "checking for vkd3d_shader_build_varying_map in PE library... " >&6; }
+if test ${ac_cv_mingw_func_vkd3d_shader_build_varying_map+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 eval CC=\$${wine_arch}_CC
 ac_exeext=".exe"
-LIBS="-lvkd3d-shader $VKD3D_PE_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14355,28 +14352,27 @@ return vkd3d_shader_build_varying_map ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_mingw_lib_vkd3d_shader=yes
+  ac_cv_mingw_func_vkd3d_shader_build_varying_map=yes
 else case e in #(
-  e) ac_cv_mingw_lib_vkd3d_shader=no ;;
+  e) ac_cv_mingw_func_vkd3d_shader_build_varying_map=no ;;
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs ;;
+ac_exeext=$ac_wine_check_headers_saved_exeext ;;
 esac
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_vkd3d_shader" >&5
-printf '%s\n' "$ac_cv_mingw_lib_vkd3d_shader" >&6; }
-if test "x$ac_cv_mingw_lib_vkd3d_shader" = xyes
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_func_vkd3d_shader_build_varying_map" >&5
+printf '%s\n' "$ac_cv_mingw_func_vkd3d_shader_build_varying_map" >&6; }
+if test "x$ac_cv_mingw_func_vkd3d_shader_build_varying_map" = xyes
 then :
   :
 else case e in #(
   e) : ;;
 esac
 fi
-            if test "$ac_cv_mingw_lib_vkd3d_utils" = "no" -o "$ac_cv_mingw_lib_vkd3d_shader" = "no"
+            if test "$ac_cv_mingw_func_vkd3d_utils_set_log_callback" = "no" -o "$ac_cv_mingw_func_vkd3d_shader_build_varying_map" = "no"
             then
                 VKD3D_PE_CFLAGS=""
                 VKD3D_PE_LIBS=""
@@ -14385,7 +14381,8 @@ fi
             VKD3D_PE_CFLAGS=""
             VKD3D_PE_LIBS=""
         fi
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
 fi
 
     if test "x$VKD3D_PE_LIBS" = "x"

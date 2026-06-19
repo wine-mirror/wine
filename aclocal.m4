@@ -138,10 +138,13 @@ AS_VAR_IF([ac_libs],[],
       [AS_VAR_SET_IF([MINGW_PKG_CONFIG],
       [ac_libs=`$MINGW_PKG_CONFIG --libs [$2] 2>/dev/null`])])
 m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
-AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_CPPFLAGS=$CPPFLAGS
+AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
+LIBS="$ac_libs $LIBS"
 $4
-CPPFLAGS=$ac_save_CPPFLAGS])
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS])
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
@@ -239,24 +242,21 @@ ac_exeext=$ac_wine_check_headers_saved_exeext])
 AS_VAR_IF([ac_var],[yes],[$2],[$3])dnl
 AS_VAR_POPDEF([ac_var])])
 
-dnl **** Check whether the given MinGW library is available ****
+dnl **** Check whether the given MinGW library function is available ****
 dnl
-dnl Usage: WINE_CHECK_MINGW_LIB(library,function,[action-if-found],[action-if-not-found],[other-libraries])
+dnl Usage: WINE_CHECK_MINGW_FUNC(library,function,[action-if-found],[action-if-not-found])
 dnl
-AC_DEFUN([WINE_CHECK_MINGW_LIB],
-[AS_VAR_PUSHDEF([ac_var],[ac_cv_mingw_lib_$1])dnl
-AC_CACHE_CHECK([for $2 in MinGW -l$1], ac_var,
+AC_DEFUN([WINE_CHECK_MINGW_FUNC],
+[AS_VAR_PUSHDEF([ac_var],[ac_cv_mingw_func_$1])dnl
+AC_CACHE_CHECK([for $1 in PE library], ac_var,
 [ac_wine_check_headers_saved_cc=$CC
 ac_wine_check_headers_saved_exeext=$ac_exeext
-ac_wine_check_headers_saved_libs=$LIBS
 AS_VAR_COPY([CC],[${wine_arch}_CC])
 ac_exeext=".exe"
-LIBS="-l$1 $5 $LIBS"
-AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
+AC_LINK_IFELSE([AC_LANG_CALL([], [$1])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])])
 CC=$ac_wine_check_headers_saved_cc
-ac_exeext=$ac_wine_check_headers_saved_exeext
-LIBS=$ac_wine_check_headers_saved_libs])
-AS_VAR_IF([ac_var],[yes],[$3],[$4])dnl
+ac_exeext=$ac_wine_check_headers_saved_exeext])
+AS_VAR_IF([ac_var],[yes],[$2],[$3])dnl
 AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check whether we need to define a symbol on the compiler command line ****
