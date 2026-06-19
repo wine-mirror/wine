@@ -379,8 +379,14 @@ static HRESULT WINAPI SAORS_Stop(ISpatialAudioObjectRenderStream *iface)
 static HRESULT WINAPI SAORS_Reset(ISpatialAudioObjectRenderStream *iface)
 {
     SpatialAudioStreamImpl *This = impl_from_ISpatialAudioObjectRenderStream(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->()\n", This);
+
+    hr = IAudioClient_Reset(This->client);
+    if (hr == AUDCLNT_E_NOT_STOPPED)
+        return SPTLAUDCLNT_E_STREAM_NOT_STOPPED;
+    return hr;
 }
 
 static HRESULT WINAPI SAORS_BeginUpdatingAudioObjects(ISpatialAudioObjectRenderStream *iface,
