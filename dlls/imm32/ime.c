@@ -534,7 +534,19 @@ BOOL WINAPI ImeSelect( HIMC himc, BOOL select )
 
 BOOL WINAPI ImeSetActiveContext( HIMC himc, BOOL flag )
 {
+    INPUTCONTEXT *ctx;
+    UINT msg;
+
     TRACE( "himc %p, flag %#x stub!\n", himc, flag );
+    if (!flag && (msg = ime_set_composition_status( himc, FALSE )))
+    {
+        if ((ctx = ImmLockIMC( himc )))
+        {
+            input_context_set_comp_str( ctx, NULL, 0 );
+            ImmUnlockIMC( himc );
+        }
+        ime_send_message( himc, msg, 0, 0 );
+    }
     return TRUE;
 }
 
