@@ -245,6 +245,65 @@ DNS_STATUS WINAPI DnsServiceBrowse( PDNS_SERVICE_BROWSE_REQUEST request, PDNS_SE
 }
 
 /******************************************************************************
+ * DnsServiceConstructInstance              [DNSAPI.@]
+ *
+ */
+PDNS_SERVICE_INSTANCE WINAPI DnsServiceConstructInstance( PCWSTR name, PCWSTR host,
+        PIP4_ADDRESS ip4, PIP6_ADDRESS ip6, WORD port, WORD priority, WORD weight,
+        DWORD count, PCWSTR *keys, PCWSTR *values )
+{
+    DNS_SERVICE_INSTANCE *instance;
+    DWORD i;
+
+    TRACE( "(%s, %s, %p, %p, %u, %u, %u, %lu, %p, %p)\n", debugstr_w(name), debugstr_w(host),
+           ip4, ip6, port, priority, weight, count, keys, values );
+
+    if (!(instance = calloc( 1, sizeof(*instance) ))) return NULL;
+
+    if (name) instance->pszInstanceName = wcsdup( name );
+    if (host) instance->pszHostName = wcsdup( host );
+    if (ip4 && (instance->ip4Address = malloc( sizeof(*ip4) ))) *instance->ip4Address = *ip4;
+    if (ip6 && (instance->ip6Address = malloc( sizeof(*ip6) ))) *instance->ip6Address = *ip6;
+    instance->wPort = port;
+    instance->wPriority = priority;
+    instance->wWeight = weight;
+    instance->dwPropertyCount = count;
+
+    if (count && (instance->keys = calloc( count, sizeof(*keys) )))
+        for (i = 0; i < count; i++) instance->keys[i] = wcsdup( keys[i] );
+    if (count && (instance->values = calloc( count, sizeof(*values) )))
+        for (i = 0; i < count; i++) instance->values[i] = wcsdup( values[i] );
+
+    return instance;
+}
+
+/******************************************************************************
+ * DnsServiceFreeInstance                   [DNSAPI.@]
+ *
+ */
+void WINAPI DnsServiceFreeInstance( PDNS_SERVICE_INSTANCE instance )
+{
+    DWORD i;
+
+    TRACE( "(%p)\n", instance );
+
+    if (!instance) return;
+
+    free( instance->pszInstanceName );
+    free( instance->pszHostName );
+    free( instance->ip4Address );
+    free( instance->ip6Address );
+    for (i = 0; i < instance->dwPropertyCount; i++)
+    {
+        if (instance->keys) free( instance->keys[i] );
+        if (instance->values) free( instance->values[i] );
+    }
+    free( instance->keys );
+    free( instance->values );
+    free( instance );
+}
+
+/******************************************************************************
  * DnsStartMulticastQuery                  [DNSAPI.@]
  *
  */
