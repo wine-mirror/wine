@@ -1,6 +1,9 @@
 MODULE       = iyuv_32.dll
-IMPORTS      = user32 mfplat ole32 winegstreamer
+IMPORTS      = $(FFMPEG_PE_LIBS) user32 combase mfplat msdmo mfuuid dmoguids strmiids wmcodecdspuuid uuid
+EXTRAINCL    = $(FFMPEG_PE_CFLAGS)
+PARENTSRC    = ../colorcnv
 
 SOURCES = \
+	color_converter.c \
 	iyuv.c \
 	iyuv_32.rc

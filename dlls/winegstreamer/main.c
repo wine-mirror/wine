@@ -979,14 +979,12 @@ static struct class_factory mpeg_splitter_cf = {{&class_factory_vtbl}, mpeg_spli
 static struct class_factory wave_parser_cf = {{&class_factory_vtbl}, wave_parser_create};
 static struct class_factory wma_decoder_cf = {{&class_factory_vtbl}, wma_decoder_create};
 static struct class_factory wmv_decoder_cf = {{&class_factory_vtbl}, wmv_decoder_create};
-static struct class_factory color_convert_cf = {{&class_factory_vtbl}, color_convert_create};
 static struct class_factory mp3_sink_class_factory_cf = {{&class_factory_vtbl}, mp3_sink_class_factory_create};
 static struct class_factory mpeg4_sink_class_factory_cf = {{&class_factory_vtbl}, mpeg4_sink_class_factory_create};
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
     static const GUID CLSID_wg_avi_splitter = {0x272bfbfb,0x50d0,0x4078,{0xb6,0x00,0x1e,0x95,0x9c,0x30,0x13,0x37}};
-    static const GUID CLSID_wg_color_converter = {0xf47e2da5,0xe370,0x47b7,{0x90,0x3a,0x07,0x8d,0xdd,0x45,0xa5,0xcc}};
     static const GUID CLSID_wg_mp3_sink_factory = {0x1f302877,0xaaab,0x40a3,{0xb9,0xe0,0x9f,0x48,0xda,0xf3,0x5b,0xc8}};
     static const GUID CLSID_wg_mpeg4_sink_factory = {0x5d5407d9,0xc6ca,0x4770,{0xa7,0xcc,0x27,0xc0,0xcb,0x8a,0x76,0x27}};
     static const GUID CLSID_wg_mpeg_audio_decoder = {0xc9f285f8,0x4380,0x4121,{0x97,0x1f,0x49,0xa9,0x53,0x16,0xc2,0x7b}};
@@ -1025,8 +1023,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &wma_decoder_cf;
     else if (IsEqualGUID(clsid, &CLSID_wg_wmv_decoder))
         factory = &wmv_decoder_cf;
-    else if (IsEqualGUID(clsid, &CLSID_wg_color_converter))
-        factory = &color_convert_cf;
     else if (IsEqualGUID(clsid, &CLSID_wg_mp3_sink_factory))
         factory = &mp3_sink_class_factory_cf;
     else if (IsEqualGUID(clsid, &CLSID_wg_mpeg4_sink_factory))

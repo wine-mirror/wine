@@ -18,12 +18,15 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 
-#include "gst_private.h"
-
+#include "d3d9types.h"
+#include "dmoreg.h"
 #include "dmort.h"
+#include "dshow.h"
+#include "dvdmedia.h"
 #include "mediaerr.h"
 #include "mfapi.h"
 #include "mferror.h"
@@ -38,10 +41,14 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
+WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
+DEFINE_GUID(DMOVideoFormat_RGB32,D3DFMT_X8R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(DMOVideoFormat_RGB24,D3DFMT_R8G8B8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
 static const AVRational USER_TIME_BASE_Q = {1, 10000000};
 
@@ -1434,33 +1441,19 @@ static const char *debugstr_version(UINT version)
             AV_VERSION_MICRO(version));
 }
 
-HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
+static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
 {
-    const MFVIDEOFORMAT input_format =
-    {
-        .dwSize = sizeof(MFVIDEOFORMAT),
-        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
-        .guidFormat = MFVideoFormat_I420,
-    };
-    const MFVIDEOFORMAT output_format =
-    {
-        .dwSize = sizeof(MFVIDEOFORMAT),
-        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
-        .guidFormat = MFVideoFormat_NV12,
-    };
     struct color_convert *impl;
     HRESULT hr;
 
-    TRACE("outer %p, out %p.\n", outer, out);
+    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
+
+    if (outer && !IsEqualGUID(riid, &IID_IUnknown))
+        return E_NOINTERFACE;
 
     TRACE("avutil version %s\n", debugstr_version(avutil_version()));
     TRACE("swscale version %s\n", debugstr_version(swscale_version()));
-
-    if (FAILED(hr = check_video_transform_support(&input_format, &output_format)))
-    {
-        ERR_(winediag)("GStreamer doesn't support video conversion, please install appropriate plugins.\n");
-        return hr;
-    }
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
@@ -1475,23 +1468,38 @@ HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
     impl->input_info.cbAlignment = 1;
     impl->output_info.cbAlignment = 1;
 
-    *out = &impl->IUnknown_inner;
-    TRACE("Created %p\n", *out);
+    TRACE("Created converter %p\n", impl);
+
+    hr = IUnknown_QueryInterface(&impl->IUnknown_inner, riid, out);
+    IUnknown_Release(&impl->IUnknown_inner);
+    return hr;
+}
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
+{
+    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
+    return *out ? S_OK : E_NOINTERFACE;
+}
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
+{
     return S_OK;
 }
 
-HRESULT WINAPI winegstreamer_create_color_converter(IMFTransform **out)
+static const IClassFactoryVtbl color_converter_factory_vtbl =
 {
-    IUnknown *unknown;
-    HRESULT hr;
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    color_converter_factory_CreateInstance,
+    class_factory_LockServer,
+};
 
-    TRACE("out %p.\n", out);
-
-    if (!init_gstreamer())
-        return E_FAIL;
-
-    if (FAILED(hr = color_convert_create(NULL, &unknown)))
-        return hr;
-
-    return IUnknown_QueryInterface(unknown, &IID_IMFTransform, (void**)out);
-}
+IClassFactory color_converter_factory = {&color_converter_factory_vtbl};

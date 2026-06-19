@@ -109,12 +109,6 @@ coclass wg_h264_encoder {}
 
 [
     threading(both),
-    uuid(f47e2da5-e370-47b7-903a-078ddd45a5cc)
-]
-coclass wg_color_converter {}
-
-[
-    threading(both),
     uuid(1f302877-aaab-40a3-b9e0-9f48daf35bc8)
 ]
 coclass wg_mp3_sink_factory {}

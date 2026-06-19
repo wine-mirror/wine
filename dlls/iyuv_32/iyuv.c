@@ -26,9 +26,10 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+#define COBJMACROS
 #include "commdlg.h"
-#include "initguid.h"
 #include "vfw.h"
+#include "unknwn.h"
 #include "wmcodecdsp.h"
 
 #include "iyuv_private.h"
@@ -45,6 +46,9 @@ static HINSTANCE IYUV_32_module;
 
 #define compare_fourcc(fcc1, fcc2) (((fcc1) ^ (fcc2)) & ~0x20202020)
 
+/* in dlls/colorcnv/color_converter.c */
+extern IClassFactory color_converter_factory;
+
 static inline UINT64 make_uint64(UINT32 high, UINT32 low)
 {
     return ((UINT64)high << 32) | low;
@@ -59,7 +63,7 @@ static LRESULT IYUV_Open(const ICINFO *icinfo)
     if (icinfo && compare_fourcc(icinfo->fccType, ICTYPE_VIDEO))
         return 0;
 
-    if (FAILED(winegstreamer_create_color_converter(&transform)))
+    if (FAILED(IClassFactory_CreateInstance(&color_converter_factory, NULL, &IID_IMFTransform, (void **)&transform)))
         transform = NULL;
 
     return (LRESULT)transform;

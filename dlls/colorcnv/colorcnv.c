@@ -25,10 +25,21 @@
 
 #include "d3d9.h"
 #include "dmoreg.h"
+#include "dmort.h"
 #include "dshow.h"
+#include "dvdmedia.h"
+#include "mediaerr.h"
 #include "mfapi.h"
+#include "mferror.h"
+#include "mfobjects.h"
+#include "mftransform.h"
 #include "rpcproxy.h"
 #include "wmcodecdsp.h"
+
+#include <libavutil/avutil.h>
+#include <libavutil/opt.h>
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 
 #include "wine/debug.h"
 
@@ -43,41 +54,7 @@ DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x2
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
-static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
-        REFIID riid, void **out)
-{
-    static const GUID CLSID_wg_color_converter = {0xf47e2da5,0xe370,0x47b7,{0x90,0x3a,0x07,0x8d,0xdd,0x45,0xa5,0xcc}};
-    return CoCreateInstance(&CLSID_wg_color_converter, outer, CLSCTX_INPROC_SERVER, riid, out);
-}
-
-static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
-{
-    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
-    return *out ? S_OK : E_NOINTERFACE;
-}
-static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
-{
-    return 2;
-}
-static ULONG WINAPI class_factory_Release(IClassFactory *iface)
-{
-    return 1;
-}
-static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
-{
-    return S_OK;
-}
-
-static const IClassFactoryVtbl color_converter_factory_vtbl =
-{
-    class_factory_QueryInterface,
-    class_factory_AddRef,
-    class_factory_Release,
-    color_converter_factory_CreateInstance,
-    class_factory_LockServer,
-};
-
-static IClassFactory color_converter_factory = {&color_converter_factory_vtbl};
+extern IClassFactory color_converter_factory;
 
 /***********************************************************************
  *              DllGetClassObject (colorcnv.@)
