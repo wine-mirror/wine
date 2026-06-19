@@ -683,7 +683,10 @@ BOOL WINAPI ImeSetCompositionString( HIMC himc, DWORD index, const void *comp, D
     {
         UINT msg, flags = GCS_COMPSTR | GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART | GCS_CURSORPOS;
         WCHAR wparam = comp && comp_len >= sizeof(WCHAR) ? *(WCHAR *)comp : 0;
-        input_context_set_comp_str( ctx, comp, comp_len / sizeof(WCHAR) );
+        DWORD len = comp_len / sizeof(WCHAR);
+
+        while (len && comp && !((WCHAR *)comp)[len - 1]) --len;
+        input_context_set_comp_str( ctx, comp, len );
         if ((msg = ime_set_composition_status( himc, TRUE ))) ime_send_message( himc, msg, 0, 0 );
         ime_send_message( himc, WM_IME_COMPOSITION, wparam, flags );
     }
