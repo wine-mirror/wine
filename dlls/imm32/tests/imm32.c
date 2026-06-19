@@ -1083,26 +1083,107 @@ static void test_SCS_SETSTR(void)
     LONG alen,wlen;
     BOOL ret;
     DWORD prop;
+    imm_msgs *msg;
+    BOOL ends_comp_in_set, empty_string_fails;
 
     imc = ImmGetContext(hwnd);
+    flush_events();
+    msg_spy_flush_msgs();
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
     if (!ret) {
         win_skip("Composition isn't supported\n");
         ImmReleaseContext(hwnd, imc);
         return;
     }
+    msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+    ok(!!msg, "did not find  WM_IME_STARTCOMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+    ok(!!msg, "did not find WM_IME_COMPOSITION.\n");
+    /* Before Win10 1909 WM_IME_ENDCOMPOSITION arrives after ImmSetCompositionStringW with non-empty string. On the
+     * newer Windows version WM_IME_ENDCOMPOSITION is only sent when the composition string is cleared or context
+     * is deactivated. */
+    ends_comp_in_set = !!msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
 
+    msg_spy_flush_msgs();
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR, NULL, 128, NULL, 128);
     ok(ret, "got error %lu.\n", GetLastError());
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    todo_wine ok(!!msg || broken(ends_comp_in_set && !msg), "did not find WM_IME_ENDCOMPOSITION.\n");
 
     alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
     ok(!alen, "got %ld.\n", alen);
     wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
     ok(!wlen, "got %ld.\n", alen);
 
+    msg_spy_flush_msgs();
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
+    ok(ret, "got error %lu.\n", GetLastError());
+    msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+    todo_wine ok(!!msg, "did not find  WM_IME_STARTCOMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+    ok(!!msg, "did not find WM_IME_COMPOSITION.\n");
+
+    msg_spy_flush_msgs();
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, L"12", 6, NULL, 0);
+    ok(ret, "got error %lu.\n", GetLastError());
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    ok(!msg || broken(ends_comp_in_set && msg), "found WM_IME_ENDCOMPOSITION.\n");
+
+    alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
+    todo_wine ok(alen == 2 || broken(ends_comp_in_set && !alen), "got %ld.\n", alen);
+    wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
+    todo_wine ok(wlen == 4 || broken(ends_comp_in_set && !wlen), "got %ld.\n", wlen);
+
+    msg_spy_flush_msgs();
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, L"", 2, NULL, 0);
+    /* Such SCS_SETSTR on Windows with Korean MS IME. */
+    empty_string_fails = !ret;
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    todo_wine ok(!!msg || broken((ends_comp_in_set || empty_string_fails) && !msg), "did not find WM_IME_ENDCOMPOSITION.\n");
+
+    alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
+    todo_wine ok(!alen || broken(empty_string_fails && alen == 2), "got %ld.\n", alen);
+    wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
+    todo_wine ok(!wlen || broken(empty_string_fails && wlen == 4), "got %ld.\n", wlen);
+
+    msg_spy_flush_msgs();
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL, 2);
     ok(ret, "got error %lu.\n", GetLastError());
+    msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+    todo_wine ok(!!msg || broken(empty_string_fails && !msg), "did not find WM_IME_STARTCOMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+    ok(!!msg, "did not find WM_IME_COMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    ok(!msg || broken(ends_comp_in_set && msg), "found WM_IME_ENDCOMPOSITION.\n");
 
+    msg_spy_flush_msgs();
+    ImmSetActiveContext( hwnd, imc, FALSE );
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    todo_wine ok(!!msg || broken(ends_comp_in_set && !msg), "did not find WM_IME_ENDCOMPOSITION.\n");
+    alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
+    todo_wine ok(!alen, "got %ld.\n", alen);
+    wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
+    todo_wine ok(!wlen, "got %ld.\n", alen);
+
+    msg_spy_flush_msgs();
+    ImmSetActiveContext( hwnd, imc, TRUE );
+    msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+    ok(!msg, "found WM_IME_STARTCOMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+    ok(!msg, "did not find WM_IME_COMPOSITION.\n");
+
+    msg_spy_flush_msgs();
+
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL, 2);
+    ok(ret, "got error %lu.\n", GetLastError());
+    msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+    todo_wine ok(!!msg, "did not find WM_IME_STARTCOMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+    ok(!!msg, "did not find WM_IME_COMPOSITION.\n");
+    msg = msg_spy_find_msg(WM_IME_ENDCOMPOSITION);
+    ok(!msg || broken(ends_comp_in_set && msg), "found WM_IME_ENDCOMPOSITION.\n");
+
+    process_messages();
     msg_spy_flush_msgs();
 
     alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
@@ -1170,9 +1251,19 @@ static void test_SCS_SETSTR(void)
         imc = ImmGetContext(hwnd);
         msg_spy_flush_msgs();
 
+        msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+        ok(!msg, "found WM_IME_COMPOSITION.\n");
+        msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+        ok(!msg, "found WM_IME_STARTCOMPOSITION.\n");
         ret = ImmSetCompositionStringW(imc, SCS_SETSTR,
                                        string, sizeof(string), NULL,0);
         ok(ret, "ImmSetCompositionStringW failed\n");
+
+        msg = msg_spy_find_msg(WM_IME_STARTCOMPOSITION);
+        ok(!msg, "found WM_IME_STARTCOMPOSITION.\n");
+        msg = msg_spy_find_msg(WM_IME_COMPOSITION);
+        ok(!!msg, "did not find WM_IME_COMPOSITION.\n");
+
         wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR,
                                         wstring, sizeof(wstring));
         if (wlen > 0) {
