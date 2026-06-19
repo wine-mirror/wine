@@ -1174,6 +1174,19 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
     }
 }
 
+static void get_usb_interface_info(struct udev_device *dev, struct device_desc *desc)
+{
+    UINT class = 0, subclass = 0, protocol = 0;
+    struct udev_device *iface;
+    const char *tmp;
+
+    if (!(iface = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_interface"))) return;
+    if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceClass"))) sscanf(tmp, "%x", &class);
+    if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceSubClass"))) sscanf(tmp, "%x", &subclass);
+    if ((tmp = udev_device_get_sysattr_value(iface, "bInterfaceProtocol"))) sscanf(tmp, "%x", &protocol);
+    desc->bus_id = ((class & 0xff) << 16) | ((subclass & 0xff) << 8) | (protocol & 0xff);
+}
+
 static NTSTATUS hidraw_device_create(struct udev_device *dev, int fd, const char *devnode, struct device_desc desc)
 {
 #ifdef HAVE_LINUX_HIDRAW_H
@@ -1346,7 +1359,7 @@ static NTSTATUS lnxev_device_create(struct udev_device *dev, int fd, const char 
 
 static void udev_add_device(struct udev_device *dev, int fd)
 {
-    struct device_desc desc = { .input = -1 };
+    struct device_desc desc = { .input = -1, .bus_id = -1 };
     const char *subsystem, *devnode;
     int bus = 0;
 
@@ -1369,6 +1382,8 @@ static void udev_add_device(struct udev_device *dev, int fd)
     get_device_subsystem_info(dev, "usb", "usb_device", &desc, &bus);
     if (bus == BUS_BLUETOOTH) desc.bus_type = BUS_TYPE_BLUETOOTH;
     else if (bus == BUS_USB) desc.bus_type = BUS_TYPE_USB;
+
+    if (desc.bus_type == BUS_TYPE_USB) get_usb_interface_info(dev, &desc);
 
     if (!(subsystem = udev_device_get_subsystem(dev)))
     {
