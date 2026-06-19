@@ -601,6 +601,8 @@ static void read_controller_state(struct xinput_controller *controller)
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, controller->hid.preparsed, report_buf, report_len);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#lx\n", status);
 
+    get_current_state(controller - controllers, &state);
+
     state.Gamepad.wButtons = 0;
     for (i = 0; i < button_length; i++)
     {
