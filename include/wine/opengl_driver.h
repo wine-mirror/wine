@@ -75,6 +75,7 @@ struct opengl_client_context
     UINT64                      unix_funcs;
     DWORD                       current_tid;                            /* thread that the context is current in */
     GLenum                      last_error;
+    GLint                       context_flags;
     GLint                       profile_mask;
     int                         major_version;
     int                         minor_version;

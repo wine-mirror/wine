@@ -639,6 +639,15 @@ static void alloc_client_objects( struct context *ctx, enum object_type type, UI
     ReleaseSRWLockExclusive( &table->lock );
 }
 
+static BOOL is_core_context( struct opengl_client_context *ctx )
+{
+    if (ctx->major_version < 3) return FALSE;
+    if (ctx->major_version > 3) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->minor_version > 1) return !!(ctx->profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+    if (ctx->minor_version == 1) return !ctx->extensions[GL_ARB_compatibility];
+    return !!(ctx->context_flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT);
+}
+
 BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles, BOOL extension )
 {
     BOOL alloc_client, needs_client = FALSE;
@@ -652,7 +661,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     switch (type)
     {
     case OBJ_TYPE_DISPLAY_LIST:
-        if (ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) return FALSE;
+        if (is_core_context( &ctx->base )) return FALSE;
         alloc_client = TRUE;
         break;
     case OBJ_TYPE_FRAMEBUFFER:
@@ -670,7 +679,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
         alloc_client = FALSE;
         break;
     default:
-        alloc_client = !(ctx->base.profile_mask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+        alloc_client = !is_core_context( &ctx->base );
         break;
     }
 
@@ -2653,6 +2662,9 @@ BOOL get_integer( GLenum name, GLuint index, GLint value, GLint *data )
 
     switch (name)
     {
+    case GL_CONTEXT_FLAGS:
+        *data = ctx->base.context_flags;
+        return TRUE;
     case GL_CONTEXT_PROFILE_MASK:
         *data = ctx->base.profile_mask;
         return TRUE;

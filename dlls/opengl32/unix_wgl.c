@@ -1060,7 +1060,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
 
     funcs->p_init_extensions( client->extensions );
-    funcs->p_glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &client->profile_mask );
 
     if (client->major_version >= 3)
     {
@@ -1072,6 +1071,10 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             enum opengl_extension ext = parse_extension( name, strlen( name ) );
             if (ext != GL_EXTENSION_COUNT) client->extensions[ext] = TRUE;
         }
+
+        if (client->major_version > 3 || client->minor_version > 1)
+            funcs->p_glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &client->profile_mask );
+        funcs->p_glGetIntegerv( GL_CONTEXT_FLAGS, &client->context_flags );
     }
     else
     {
