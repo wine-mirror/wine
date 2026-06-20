@@ -26,7 +26,7 @@ typedef enum WIN32_MEMORY_INFORMATION_CLASS
     MemoryRegionInfo
 } WIN32_MEMORY_INFORMATION_CLASS;
 
-typedef struct WIN32_MEMORY_REGION_INFORMATION
+typedef struct DECLSPEC_ALIGN(8) WIN32_MEMORY_REGION_INFORMATION
 {
     PVOID AllocationBase;
     ULONG AllocationProtect;
