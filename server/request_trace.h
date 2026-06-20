@@ -14,6 +14,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *val );
 static void dump_irp_params( const char *prefix, const union irp_params *val );
 static void dump_luid( const char *prefix, const struct luid *val );
 static void dump_obj_locator( const char *prefix, const struct obj_locator *val );
+static void dump_ratio( const char *prefix, const struct ratio *val );
 static void dump_rectangle( const char *prefix, const struct rectangle *val );
 static void dump_timeout( const char *prefix, const timeout_t *val );
 static void dump_uint64( const char *prefix, const unsigned __int64 *val );
@@ -1832,7 +1833,7 @@ static void dump_get_window_children_from_point_request( const struct get_window
     fprintf( stderr, " parent=%08x", req->parent );
     fprintf( stderr, ", x=%d", req->x );
     fprintf( stderr, ", y=%d", req->y );
-    fprintf( stderr, ", dpi=%d", req->dpi );
+    dump_ratio( ", dpi=", &req->dpi );
 }
 
 static void dump_get_window_children_from_point_reply( const struct get_window_children_from_point_reply *req )
@@ -1862,7 +1863,7 @@ static void dump_set_window_pos_request( const struct set_window_pos_request *re
 {
     fprintf( stderr, " swp_flags=%04x", req->swp_flags );
     fprintf( stderr, ", paint_flags=%04x", req->paint_flags );
-    fprintf( stderr, ", monitor_dpi=%08x", req->monitor_dpi );
+    dump_ratio( ", monitor_dpi=", &req->monitor_dpi );
     fprintf( stderr, ", handle=%08x", req->handle );
     fprintf( stderr, ", previous=%08x", req->previous );
     dump_rectangle( ", window=", &req->window );
@@ -1881,7 +1882,7 @@ static void dump_get_window_rectangles_request( const struct get_window_rectangl
 {
     fprintf( stderr, " handle=%08x", req->handle );
     fprintf( stderr, ", relative=%d", req->relative );
-    fprintf( stderr, ", dpi=%d", req->dpi );
+    dump_ratio( ", dpi=", &req->dpi );
 }
 
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )
@@ -1911,7 +1912,7 @@ static void dump_get_windows_offset_request( const struct get_windows_offset_req
 {
     fprintf( stderr, " from=%08x", req->from );
     fprintf( stderr, ", to=%08x", req->to );
-    fprintf( stderr, ", dpi=%d", req->dpi );
+    dump_ratio( ", dpi=", &req->dpi );
 }
 
 static void dump_get_windows_offset_reply( const struct get_windows_offset_reply *req )

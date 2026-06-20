@@ -2442,7 +2442,7 @@ static void set_winstation_monitors( BOOL increment )
         if (is_monitor_primary( monitor )) info->flags |= MONITOR_FLAG_PRIMARY;
         if (!is_monitor_active( monitor )) info->flags |= MONITOR_FLAG_INACTIVE;
         if (monitor->is_clone) info->flags |= MONITOR_FLAG_CLONE;
-        info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y ).num;
+        info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y );
         info->virt = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_EFFECTIVE_DPI ) );
         info->raw = wine_server_rectangle( monitor_get_rect( monitor, no_dpi, MDT_RAW_DPI ) );
         info++;

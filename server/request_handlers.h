@@ -660,6 +660,7 @@ C_ASSERT( sizeof(struct object_type_info) == 44 );
 C_ASSERT( sizeof(struct pe_image_info) == 96 );
 C_ASSERT( sizeof(struct process_info) == 40 );
 C_ASSERT( sizeof(struct property_data) == 16 );
+C_ASSERT( sizeof(struct ratio) == 4 );
 C_ASSERT( sizeof(struct rawinput_device) == 12 );
 C_ASSERT( sizeof(struct rectangle) == 16 );
 C_ASSERT( sizeof(struct startup_info_data) == 96 );

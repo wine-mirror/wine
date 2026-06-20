@@ -173,6 +173,11 @@ static void dump_rectangle( const char *prefix, const struct rectangle *rect )
              rect->left, rect->top, rect->right, rect->bottom );
 }
 
+static void dump_ratio( const char *prefix, const struct ratio *q )
+{
+    fprintf( stderr, "%s{%d:%d}", prefix, q->num, q->den );
+}
+
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
 {
     switch(*code)
@@ -1646,7 +1651,8 @@ static void dump_varargs_monitor_infos( const char *prefix, data_size_t size )
     {
         dump_rectangle( "{raw:", &monitor->virt );
         dump_rectangle( ",virt:", &monitor->virt );
-        fprintf( stderr, ",flags:%#x,dpi:%u", monitor->flags, monitor->dpi );
+        fprintf( stderr, ",flags:%#x", monitor->flags );
+        dump_ratio( ",dpi:", &monitor->dpi );
         fputc( '}', stderr );
         if (--len) fputc( ',', stderr );
     }

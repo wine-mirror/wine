@@ -1895,7 +1895,7 @@ other_process:
     {
         req->handle = wine_server_user_handle( hwnd );
         req->relative = relative;
-        req->dpi = dpi.num;
+        req->dpi = dpi;
         if ((ret = !wine_server_call_err( req )))
         {
             rects->window = wine_server_get_rect( reply->window );
@@ -2248,7 +2248,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         req->handle        = wine_server_user_handle( hwnd );
         req->previous      = wine_server_user_handle( insert_after );
         req->swp_flags     = swp_flags;
-        req->monitor_dpi   = monitor_dpi.num;
+        req->monitor_dpi   = monitor_dpi;
         req->window        = wine_server_rectangle( new_rects->window );
         req->client        = wine_server_rectangle( new_rects->client );
         if (!EqualRect( &new_rects->window, &new_rects->visible ) || new_surface || valid_rects)
@@ -2717,7 +2717,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt, struct ratio dpi )
             req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
-            req->dpi = dpi.num;
+            req->dpi = dpi;
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -3373,7 +3373,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
     {
         req->from = wine_server_user_handle( hwnd_from );
         req->to   = wine_server_user_handle( hwnd_to );
-        req->dpi  = dpi.num;
+        req->dpi  = dpi;
         if ((ret = !wine_server_call_err( req )))
         {
             ret_offset->x = reply->x;

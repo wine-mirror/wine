@@ -897,7 +897,7 @@ struct monitor_info
     struct rectangle raw;
     struct rectangle virt;
     unsigned int     flags;
-    unsigned int     dpi;
+    struct ratio     dpi;
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -3709,7 +3709,7 @@ struct get_window_children_from_point_request
     user_handle_t  parent;
     int            x;
     int            y;
-    int            dpi;
+    struct ratio   dpi;
     char __pad_28[4];
 };
 struct get_window_children_from_point_reply
@@ -3746,7 +3746,7 @@ struct set_window_pos_request
     struct request_header __header;
     unsigned short swp_flags;
     unsigned short paint_flags;
-    unsigned int   monitor_dpi;
+    struct ratio   monitor_dpi;
     user_handle_t  handle;
     user_handle_t  previous;
     struct rectangle window;
@@ -3772,7 +3772,7 @@ struct get_window_rectangles_request
     struct request_header __header;
     user_handle_t  handle;
     int            relative;
-    int            dpi;
+    struct ratio   dpi;
 };
 struct get_window_rectangles_reply
 {
@@ -3823,7 +3823,7 @@ struct get_windows_offset_request
     struct request_header __header;
     user_handle_t  from;
     user_handle_t  to;
-    int            dpi;
+    struct ratio   dpi;
 };
 struct get_windows_offset_reply
 {
@@ -7155,6 +7155,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 953
+#define SERVER_PROTOCOL_VERSION 954
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
