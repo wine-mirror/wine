@@ -1104,7 +1104,16 @@ case $host_os in
           *)
             WINE_TRY_CFLAGS([-static-pie],
                             [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static-pie"])],
-                            [AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d00000000"])])
+            [
+                case $HOST_ARCH in
+                  aarch64)
+                    dnl AArch64 kernels may be limited to 39 bits of address
+                    dnl space; limit the text section load address to that.
+                    AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d000000"]) ;;
+                  *)
+                    AS_VAR_APPEND([WINEPRELOADER_LDFLAGS],[" -static -Wl,-Ttext=0x7d7d00000000"]) ;;
+                esac
+            ])
             ;;
         esac
         ;;

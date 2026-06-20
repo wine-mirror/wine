@@ -13150,7 +13150,14 @@ if test "x$ac_cv_cflags__static_pie" = xyes
 then :
   as_fn_append WINEPRELOADER_LDFLAGS " -static-pie"
 else case e in #(
-  e) as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d00000000" ;;
+  e)
+                case $HOST_ARCH in
+                  aarch64)
+                                                            as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d000000" ;;
+                  *)
+                    as_fn_append WINEPRELOADER_LDFLAGS " -static -Wl,-Ttext=0x7d7d00000000" ;;
+                esac
+             ;;
 esac
 fi
             ;;
