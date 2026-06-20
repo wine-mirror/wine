@@ -105,32 +105,17 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 }
 
 /***********************************************************************
- *           wayland_win_data_get_nolock
- *
- * Return the data structure associated with a window. This function does
- * not lock the win_data_mutex, so it must be externally synchronized.
- */
-struct wayland_win_data *wayland_win_data_get_nolock(HWND hwnd)
-{
-    struct rb_entry *rb_entry;
-
-    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
-        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
-
-    return NULL;
-}
-
-/***********************************************************************
  *           wayland_win_data_get
  *
  * Lock and return the data structure associated with a window.
  */
 struct wayland_win_data *wayland_win_data_get(HWND hwnd)
 {
-    struct wayland_win_data *data;
+    struct rb_entry *entry;
 
     pthread_mutex_lock(&win_data_mutex);
-    if ((data = wayland_win_data_get_nolock(hwnd))) return data;
+    if ((entry = rb_get(&win_data_rb, hwnd)))
+        return RB_ENTRY_VALUE(entry, struct wayland_win_data, entry);
     pthread_mutex_unlock(&win_data_mutex);
 
     return NULL;
@@ -460,7 +445,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     if (!(managed = is_window_managed(hwnd, swp_flags, fullscreen)) && surface) owner = owner_hint;
 
     if (!(data = wayland_win_data_get(hwnd))) return;
-    owner_data = owner && owner != hwnd ? wayland_win_data_get_nolock(owner) : NULL;
+    owner_data = owner && owner != hwnd ? wayland_win_data_get(owner) : NULL;
     owner_surface = owner_data ? owner_data->wayland_surface : NULL;
 
     data->rects = *new_rects;
@@ -489,6 +474,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         wayland_win_data_update_wayland_state(data);
     }
 
+    if (owner_data) wayland_win_data_release(owner_data);
     wayland_win_data_release(data);
 }
 
@@ -923,4 +909,14 @@ void ensure_window_surface_contents(HWND hwnd)
     }
 
     wayland_win_data_release(data);
+}
+
+void wayland_window_init(void)
+{
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&win_data_mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
 }

@@ -117,6 +117,7 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     {
         process_wayland.wl_compositor =
             wl_registry_bind(registry, id, &wl_compositor_interface, 4);
+        wayland_window_init();
     }
     else if (strcmp(interface, "xdg_wm_base") == 0)
     {
