@@ -434,7 +434,6 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 {
     HWND owner = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_surface *owner_surface;
-    struct wayland_client_surface *client;
     struct wayland_win_data *data, *owner_data;
     BOOL managed, fullscreen = swp_flags & WINE_SWP_FULLSCREEN;
 
@@ -456,14 +455,6 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 
     if (!surface)
     {
-        if ((client = data->client_surface))
-        {
-            if (owner && NtUserIsWindowVisible(hwnd))
-                wayland_client_surface_attach(client, owner);
-            else
-                wayland_client_surface_attach(client, NULL);
-        }
-
         if (data->wayland_surface)
         {
             wayland_surface_destroy(data->wayland_surface);
