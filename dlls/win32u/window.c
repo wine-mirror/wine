@@ -320,7 +320,7 @@ void detach_client_surfaces( HWND hwnd )
     }
 }
 
-static void update_client_surfaces( HWND hwnd )
+void update_client_surfaces( HWND hwnd )
 {
     struct client_surface *surface, *next;
 

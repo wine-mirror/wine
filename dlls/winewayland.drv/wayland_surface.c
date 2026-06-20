@@ -142,7 +142,6 @@ void wp_fractional_scale_handle_scale(void* user_data,
                                       uint32_t scale_fixed)
 {
     struct wayland_win_data *data;
-    struct wayland_client_surface *client;
     struct wayland_surface *surface;
     double scale = scale_fixed / 120.0;
     HWND hwnd = user_data;
@@ -158,9 +157,8 @@ void wp_fractional_scale_handle_scale(void* user_data,
 
     surface->window.scale = scale;
 
-    /* reattach the client surface as its rect has changed */
-    if ((client = data->client_surface))
-        wayland_client_surface_attach(client, client->toplevel);
+    /* reattach client surfaces as their rects have changed */
+    update_client_surfaces(hwnd);
 
     /* the subsurface rect has changed */
     if (surface->role == WAYLAND_SURFACE_ROLE_SUBSURFACE)
