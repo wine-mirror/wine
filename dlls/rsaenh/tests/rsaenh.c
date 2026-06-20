@@ -4231,6 +4231,53 @@ static void test_pubexp(void)
     CryptReleaseContext(hprov, 0);
 }
 
+static void test_pp_provtype(void)
+{
+    /* `PP_PROVTYPE` must return the provider type the caller opened the
+     * provider with. This matters because PFXImportCertStore reads
+     * `PP_PROVTYPE` and writes it into the cert's
+     * `CRYPT_KEY_PROV_INFO.dwProvType`; a later `CryptAcquireContext`
+     * using that value must find the same container. */
+    static const struct
+    {
+        const char *prov_name;
+        DWORD       prov_type;
+    } providers[] =
+    {
+        { MS_DEF_PROV_A,             PROV_RSA_FULL },
+        { MS_ENHANCED_PROV_A,        PROV_RSA_FULL },
+        { MS_STRONG_PROV_A,          PROV_RSA_FULL },
+        { MS_ENH_RSA_AES_PROV_A,     PROV_RSA_AES  },
+        { MS_DEF_RSA_SCHANNEL_PROV_A, PROV_RSA_SCHANNEL },
+    };
+    DWORD i;
+
+    for (i = 0; i < ARRAY_SIZE(providers); i++)
+    {
+        HCRYPTPROV hprov;
+        DWORD got, len = sizeof(got);
+        BOOL ret;
+
+        ret = CryptAcquireContextA(&hprov, NULL, providers[i].prov_name,
+                                   providers[i].prov_type, CRYPT_VERIFYCONTEXT);
+        ok(ret, "%s: CryptAcquireContextA failed: %#lx\n",
+           providers[i].prov_name, GetLastError());
+        if (!ret) continue;
+
+        got = 0;
+        ret = CryptGetProvParam(hprov, PP_PROVTYPE, (BYTE *)&got, &len, 0);
+        ok(ret, "%s: CryptGetProvParam(PP_PROVTYPE) failed: %#lx\n",
+           providers[i].prov_name, GetLastError());
+        ok(len == sizeof(got), "%s: wrong PP_PROVTYPE size %lu\n",
+           providers[i].prov_name, len);
+        ok(got == providers[i].prov_type,
+           "%s: PP_PROVTYPE = %lu, expected %lu\n",
+           providers[i].prov_name, got, providers[i].prov_type);
+
+        CryptReleaseContext(hprov, 0);
+    }
+}
+
 START_TEST(rsaenh)
 {
     test_RC4_salt();
@@ -4284,5 +4331,6 @@ START_TEST(rsaenh)
     test_key_derivation("AES");
     test_rc2_import();
     test_pubexp();
+    test_pp_provtype();
     clean_up_aes_environment();
 }

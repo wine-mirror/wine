@@ -4176,7 +4176,11 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
                               strlen(pKeyContainer->szProvName)+1);
 
         case PP_PROVTYPE:
-            dwTemp = PROV_RSA_FULL;
+            switch (pKeyContainer->dwPersonality) {
+            case RSAENH_PERSONALITY_SCHANNEL: dwTemp = PROV_RSA_SCHANNEL; break;
+            case RSAENH_PERSONALITY_AES:      dwTemp = PROV_RSA_AES; break;
+            default:                          dwTemp = PROV_RSA_FULL; break;
+            }
             return copy_param(pbData, pdwDataLen, (const BYTE*)&dwTemp, sizeof(dwTemp));
 
         case PP_KEYSPEC:
