@@ -5339,9 +5339,9 @@ static void test_XPath(void)
     static const char node_value_cmp[] =
         "<?xml version='1.0' encoding='utf-8'?>"
         "<root>"
-        "    <elem min=\"-1\" max=\"100\" />"
-        "    <elem min=\"10\" max=\"20\" />"
-        "    <elem min=\"0\" max=\"0\" />"
+        "    <elem min=\"-1\" max=\"100\" a=\"a\" />"
+        "    <elem min=\"10\" max=\"20\" a=\"b\" />"
+        "    <elem min=\"0\" max=\"0\" a=\"c\" />"
         "    <elem min=\"-10\" max=\"-10\" />"
         "</root>";
 
@@ -5349,6 +5349,15 @@ static void test_XPath(void)
     {
         { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1" },
         { "//elem[0 >= @min and 10 <= @max]", "E1.E2.D1" },
+        { "//elem[@min <= 0.0 and @max >= 0.0]", "E1.E2.D1 E3.E2.D1" },
+        { "//elem[0.0 >= @min and 10.0 <= @max]", "E1.E2.D1" },
+        { "//elem[@min <= \"0\" and @max >= \"0\"]", "E1.E2.D1 E3.E2.D1" },
+        { "//elem[\"0\" >= @min and \"10\" <= @max]", "E1.E2.D1" },
+
+        /* String value could only be compared for equality */
+        { "//elem[@a <= \"c\"]", "" },
+        { "//elem[@a = \"c\"]", "E3.E2.D1" },
+        { "//elem[@a != 0]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
         { NULL },
     };
 
