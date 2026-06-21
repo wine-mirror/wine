@@ -5336,8 +5336,24 @@ static void test_query_result_(const struct query_test *test, IXMLDOMNodeList *l
 
 static void test_XPath(void)
 {
+    static const char node_value_cmp[] =
+        "<?xml version='1.0' encoding='utf-8'?>"
+        "<root>"
+        "    <elem min=\"-1\" max=\"100\" />"
+        "    <elem min=\"10\" max=\"20\" />"
+        "    <elem min=\"0\" max=\"0\" />"
+        "    <elem min=\"-10\" max=\"-10\" />"
+        "</root>";
+
+    static const struct query_test node_value_cmp_test[] =
+    {
+        { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1", true },
+        { "//elem[0 >= @min and 10 <= @max]", "E1.E2.D1" },
+        { NULL },
+    };
+
     const selection_ns_t *ptr = selection_ns_data;
-    const struct query_test *xptest = xpath_test;
+    const struct query_test *xptest;
     IXMLDOMNamedNodeMap *map;
     VARIANT var;
     VARIANT_BOOL b;
@@ -5356,6 +5372,23 @@ static void test_XPath(void)
 
     if (!is_clsid_supported(&CLSID_DOMDocument2, &IID_IXMLDOMDocument2)) return;
     doc = create_document(&IID_IXMLDOMDocument2);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(node_value_cmp), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (xptest = node_value_cmp_test; xptest->query; xptest++)
+    {
+        winetest_push_context("Test %s", xptest->query);
+
+        hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(xptest->query), &list);
+        test_query_result(xptest, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
+
+        winetest_pop_context();
+    }
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5383,7 +5416,7 @@ static void test_XPath(void)
     expect_list_and_release(list, "E2.D1");
 
     /* perform xpath tests */
-    for ( ; xptest->query ; xptest++ )
+    for (xptest = xpath_test; xptest->query ; xptest++)
     {
         winetest_push_context("Test %s", xptest->query);
 
