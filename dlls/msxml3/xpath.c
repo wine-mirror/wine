@@ -4774,7 +4774,6 @@ start:
         default:
             xpath_comp_op_eval(ctxt, op);
             if (ctxt->error != XPATH_EXPRESSION_OK)
-            if (ctxt->error != XPATH_EXPRESSION_OK)
                 return -1;
 
             resObj = xpath_pop_value(ctxt);
