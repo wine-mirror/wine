@@ -5347,7 +5347,7 @@ static void test_XPath(void)
 
     static const struct query_test node_value_cmp_test[] =
     {
-        { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1", true },
+        { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1" },
         { "//elem[0 >= @min and 10 <= @max]", "E1.E2.D1" },
         { NULL },
     };
