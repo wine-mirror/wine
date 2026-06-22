@@ -124,6 +124,7 @@ typedef struct supported_runtime
 {
     struct list entry;
     LPWSTR version;
+    LPWSTR sku;
 } supported_runtime;
 
 extern WCHAR **private_path;

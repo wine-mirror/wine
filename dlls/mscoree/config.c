@@ -376,6 +376,7 @@ static HRESULT parse_supported_runtime(ConfigFileHandler *This, ISAXAttributes *
         entry = malloc(sizeof(supported_runtime));
         if (entry)
         {
+            entry->sku = NULL;
             entry->version = wcsdup(value);
             if (entry->version)
             {
@@ -397,8 +398,14 @@ static HRESULT parse_supported_runtime(ConfigFileHandler *This, ISAXAttributes *
     {
         hr = ISAXAttributes_getValueFromName(pAttr, empty, 0, sku, lstrlenW(sku), &value, &value_size);
         if (SUCCEEDED(hr))
-            FIXME("sku=%s not implemented\n", debugstr_wn(value, value_size));
-        hr = S_OK;
+        {
+            TRACE("sku=%s\n", debugstr_wn(value, value_size));
+            entry->sku = wcsdup(value);
+            if (!entry->sku)
+                hr = E_OUTOFMEMORY;
+        }
+        else
+            hr = S_OK;
     }
 
     return hr;
@@ -700,6 +707,7 @@ void free_parsed_config_file(parsed_config_file *file)
     LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &file->supported_runtimes, supported_runtime, entry)
     {
         free(cursor->version);
+        free(cursor->sku);
         list_remove(&cursor->entry);
         free(cursor);
     }
