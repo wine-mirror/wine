@@ -103,10 +103,19 @@ Call ok(getVT(&O77) = "VT_I2", "getVT(&O77) is not VT_I2")
 Call ok(getVT(&O200000) = "VT_I4", "getVT(&O200000) is not VT_I4")
 Call ok(getVT(&O177777&) = "VT_I4", "getVT(&O177777&) is not VT_I4")
 
+' Bare '&' followed by octal digits (no 'o'/'O') is octal too
+Call ok(&100 = 64, "&100 <> 64")
+Call ok(&777 = 511, "&777 <> 511")
+Call ok(&10000000 = 2097152, "&10000000 <> 2097152")
+Call ok(&010 = 8, "&010 <> 8")
+Call ok(&32 = 26, "&32 <> 26")
+Call ok(&17& = 15, "&17& <> 15")
+
 sub testOctalLiteralErrors()
     Dim oct
     on error resume next
     Err.Clear : oct = Eval("&O8") : call ok(Err.number = 1002, "&O8 should be syntax error, got err=" & Err.number)
+    Err.Clear : oct = Eval("&19") : call ok(Err.number = 1002, "&19 should be syntax error, got err=" & Err.number)
 end sub
 call testOctalLiteralErrors()
 

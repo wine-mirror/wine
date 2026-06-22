@@ -434,6 +434,10 @@ static int parse_oct_literal(parser_ctx_t *ctx, LONG *ret)
         }
     }
 
+    /* A decimal digit (8 or 9) ends the octal run: it is an invalid octal digit. */
+    if(*ctx->ptr == '8' || *ctx->ptr == '9')
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
+
     if(*ctx->ptr == '&') {
         ctx->ptr++;
         *ret = (LONG)l;
@@ -590,6 +594,11 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
             return parse_hex_literal(ctx, lval);
         if((*ctx->ptr == 'o' || *ctx->ptr == 'O') && oct_to_int(ctx->ptr[1]) != -1)
             return parse_oct_literal(ctx, lval);
+        if(oct_to_int(*ctx->ptr) != -1) {
+            /* A bare '&' followed by octal digits (no 'o'/'O') is also octal. */
+            ctx->ptr--;
+            return parse_oct_literal(ctx, lval);
+        }
         return '&';
     case '=':
         switch(*++ctx->ptr) {
