@@ -831,7 +831,7 @@ GLuint WINAPI glGenLists( GLsizei range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenLists, &args ))) WARN( "glGenLists returned %#lx\n", status );
-    args.ret = put_context_object_range( OBJ_TYPE_DISPLAY_LIST, range, args.ret );
+    if (range > 0) args.ret = put_context_object_range( OBJ_TYPE_DISPLAY_LIST, range, args.ret );
     return args.ret;
 }
 
@@ -7844,7 +7844,7 @@ static GLuint WINAPI glGenFragmentShadersATI( GLuint range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenFragmentShadersATI, &args ))) WARN( "glGenFragmentShadersATI returned %#lx\n", status );
-    args.ret = put_context_object_range( OBJ_TYPE_SHADER_ATI, range, args.ret );
+    if (range > 0) args.ret = put_context_object_range( OBJ_TYPE_SHADER_ATI, range, args.ret );
     return args.ret;
 }
 
@@ -7888,7 +7888,7 @@ static GLuint WINAPI glGenPathsNV( GLsizei range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenPathsNV, &args ))) WARN( "glGenPathsNV returned %#lx\n", status );
-    args.ret = put_context_object_range( OBJ_TYPE_PATH, range, args.ret );
+    if (range > 0) args.ret = put_context_object_range( OBJ_TYPE_PATH, range, args.ret );
     return args.ret;
 }
 
@@ -8042,7 +8042,7 @@ static GLuint WINAPI glGenVertexShadersEXT( GLuint range )
     NTSTATUS status;
     TRACE( "range %d\n", range );
     if ((status = UNIX_CALL( glGenVertexShadersEXT, &args ))) WARN( "glGenVertexShadersEXT returned %#lx\n", status );
-    args.ret = put_context_object_range( OBJ_TYPE_SHADER_EXT, range, args.ret );
+    if (range > 0) args.ret = put_context_object_range( OBJ_TYPE_SHADER_EXT, range, args.ret );
     return args.ret;
 }
 

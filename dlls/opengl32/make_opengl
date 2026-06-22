@@ -901,7 +901,7 @@ sub generate_win_thunk($$)
     }
     if (my $map_type = get_object_type( $name, $func_ret, "ret", get_arg_class( $func->[0] ) ))
     {
-        $post_call .= "    args.ret = put_context_object_range( $map_type, range, args.ret );\n" if $name =~ /^glGen/;
+        $post_call .= "    if (range > 0) args.ret = put_context_object_range( $map_type, range, args.ret );\n" if $name =~ /^glGen/;
         $post_call .= "    put_context_objects( $map_type, 1, &args.ret );\n" if $name =~ /^glCreate/;
     }
     $ret .= "    struct $name\_params args = {$params };\n";
