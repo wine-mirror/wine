@@ -552,18 +552,20 @@ static void testInitializeSecurityContextFlags(void)
     {
         ULONG req_attr;
         ULONG flags;
+        ULONG ctxt_attr;
     } test_data[] =
     {
-        { 0, 0 },
-        { ISC_REQ_CONNECTION, 0 },
-        { ISC_REQ_EXTENDED_ERROR, 0 },
-        { ISC_REQ_MUTUAL_AUTH, 0 },
-        { ISC_REQ_USE_DCE_STYLE, 0 },
-        { ISC_REQ_DELEGATE, 0 },
-        { ISC_REQ_INTEGRITY, NTLMSSP_NEGOTIATE_SIGN },
-        { ISC_REQ_REPLAY_DETECT, NTLMSSP_NEGOTIATE_SIGN },
-        { ISC_REQ_SEQUENCE_DETECT, NTLMSSP_NEGOTIATE_SIGN },
-        { ISC_REQ_CONFIDENTIALITY, NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_SEAL }
+        { 0, 0, 0 },
+        { ISC_REQ_CONNECTION, 0, ISC_RET_CONNECTION },
+        { ISC_REQ_EXTENDED_ERROR, 0, 0 },
+        { ISC_REQ_MUTUAL_AUTH, 0, 0 },
+        { ISC_REQ_USE_DCE_STYLE, 0, 0 },
+        { ISC_REQ_DELEGATE, 0, 0 },
+        { ISC_REQ_INTEGRITY, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_INTEGRITY },
+        { ISC_REQ_REPLAY_DETECT, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_REPLAY_DETECT },
+        { ISC_REQ_SEQUENCE_DETECT, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_SEQUENCE_DETECT },
+        { ISC_REQ_CONFIDENTIALITY, NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_SEAL,
+            ISC_RET_CONFIDENTIALITY | ISC_REQ_INTEGRITY }
     };
 
     SECURITY_STATUS         sec_status;
@@ -594,12 +596,14 @@ static void testInitializeSecurityContextFlags(void)
     {
         winetest_push_context("%lx", test_data[i].req_attr);
 
+        ctxt_attr = 0xffffffff;
         sec_status = InitializeSecurityContextA(&client.cred, NULL, NULL, test_data[i].req_attr, 0,
                 SECURITY_NETWORK_DREP, NULL, 0, &client.ctxt, client.out_buf, &ctxt_attr, &ttl);
         ok(sec_status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContext returned %s\n",
             getSecError(sec_status));
         ok((negotiate->negotiate_flags & (NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_SEAL)) == test_data[i].flags,
             "negotiate_flags = %08x\n", negotiate->negotiate_flags);
+        todo_wine ok(ctxt_attr == test_data[i].ctxt_attr, "ctxt_attr = %lx\n", ctxt_attr);
         DeleteSecurityContext(&client.ctxt);
 
         winetest_pop_context();
