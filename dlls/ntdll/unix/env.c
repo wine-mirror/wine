@@ -1706,7 +1706,7 @@ static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
 /*************************************************************************
  *		load_global_options
  */
-static void load_global_options( const UNICODE_STRING *image )
+static void load_global_options( const UNICODE_STRING *image, BOOL debugged )
 {
     static const WCHAR optionsW[] = {'\\','R','e','g','i','s','t','r','y','\\',
         'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
@@ -1740,6 +1740,11 @@ static void load_global_options( const UNICODE_STRING *image )
         peb->HeapDeCommitFreeBlockThreshold = get_dword_option( key, heapdecommitblockW, 0x1000 );
         NtClose( key );
     }
+
+    if (debugged) peb->NtGlobalFlag |= FLG_HEAP_ENABLE_TAIL_CHECK |
+                                       FLG_HEAP_ENABLE_FREE_CHECK |
+                                       FLG_HEAP_VALIDATE_PARAMETERS;
+
     init_unicode_string( &nameW, optionsW );
     if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
     {
@@ -1824,7 +1829,7 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
 /*************************************************************************
  *		init_peb
  */
-static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
+static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module, BOOL debugged )
 {
     peb->ImageBaseAddress           = module;
     peb->ProcessParameters          = params;
@@ -1848,7 +1853,7 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
 #endif
 
     virtual_set_large_address_space();
-    load_global_options( &params->ImagePathName );
+    load_global_options( &params->ImagePathName, debugged );
 
     if (wow_peb)
     {
@@ -2010,11 +2015,12 @@ void init_startup_info(void)
     struct startup_info_data *info;
     UNICODE_STRING nt_name;
     USHORT machine;
+    BOOL debugged;
 
     if (!startup_info_size)
     {
         params = build_initial_params( &module );
-        init_peb( params, module );
+        init_peb( params, module, FALSE );
         return;
     }
 
@@ -2025,6 +2031,7 @@ void init_startup_info(void)
         wine_server_set_reply( req, info, startup_info_size );
         status = wine_server_call( req );
         machine = reply->machine;
+        debugged = reply->debugged;
         info_size = reply->info_size;
         env_size = (wine_server_reply_size( reply ) - info_size) / sizeof(WCHAR);
     }
@@ -2113,7 +2120,7 @@ void init_startup_info(void)
     rebuild_argv();
     main_wargv = build_wargv( params->ImagePathName.Buffer );
     free( nt_name.Buffer );
-    init_peb( params, module );
+    init_peb( params, module, debugged );
 }
 
 

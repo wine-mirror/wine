@@ -1159,6 +1159,7 @@ typedef volatile struct
 @REQ(get_startup_info)
 @REPLY
     data_size_t  info_size;    /* size of startup info */
+    int          debugged;     /* being debugged? */
     unsigned short machine;    /* architecture for the new process */
     VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);   /* environment */

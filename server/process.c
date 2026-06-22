@@ -1468,6 +1468,7 @@ DECL_HANDLER(get_startup_info)
     if (!info) return;
 
     /* we return the data directly without making a copy so this can only be called once */
+    reply->debugged = !!process->debug_obj;
     reply->machine = process->machine;
     reply->info_size = info->info_size;
     size = info->data_size;
