@@ -1088,6 +1088,11 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         }
         arc4_init( &ctx->crypt.ntlm.arc4info, ctx->session_key, 16 );
         ctx->crypt.ntlm.seq_no = 0;
+        create_ntlm2_subkeys( ctx );
+        arc4_init( &ctx->crypt.ntlm2.send_arc4info, ctx->crypt.ntlm2.send_seal_key, 16 );
+        arc4_init( &ctx->crypt.ntlm2.recv_arc4info, ctx->crypt.ntlm2.recv_seal_key, 16 );
+        ctx->crypt.ntlm2.send_seq_no = 0;
+        ctx->crypt.ntlm2.recv_seq_no = 0;
 
         *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
         status = SEC_E_OK;
