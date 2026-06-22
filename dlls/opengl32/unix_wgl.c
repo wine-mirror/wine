@@ -127,7 +127,6 @@ struct context
     struct opengl_context base;
 
     HGLRC client;                  /* client-side context handle */
-    int *attribs;                  /* creation attributes */
     UINT64 debug_callback;         /* client pointer */
     UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
@@ -436,21 +435,6 @@ static struct context *context_from_client_context( HGLRC client_context )
 {
     struct opengl_context *base = opengl_context_from_handle( client_context );
     return base ? CONTAINING_RECORD( base, struct context, base ) : NULL;
-}
-
-static int *memdup_attribs( const int *attribs )
-{
-    const int *attr;
-    size_t size;
-    int *copy;
-
-    if (!(attr = attribs)) return NULL;
-    while (*attr++) { /* nothing */ }
-
-    size = (attr - attribs) * sizeof(*attr);
-    if (!(copy = malloc( size ))) return NULL;
-    memcpy( copy, attribs, size );
-    return copy;
 }
 
 struct extension_entry
@@ -1125,7 +1109,6 @@ static void free_context( const struct opengl_funcs *funcs, struct context *ctx 
     if (ctx->buffers) release_buffers( funcs );
     free( ctx->wow64_version );
     free( ctx->extensions );
-    free( ctx->attribs );
     free( ctx );
 }
 
@@ -1293,7 +1276,6 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
         return 0;
     }
     context->base.client_context = client_context;
-    context->attribs = memdup_attribs( attribs );
 
     if (is_win64 && is_wow64()) context->buffers = acquire_buffers();
 
