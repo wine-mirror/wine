@@ -134,9 +134,13 @@ static void test_ConvertThreadToFiber(void)
     if (pConvertThreadToFiber)
     {
         ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
+        ok( !NtCurrentTeb()->Tib.FiberData || NtCurrentTeb()->Tib.FiberData == (void *)0x1e00,
+            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
         fibers[0] = pConvertThreadToFiber(&testparam);
         ok(fibers[0] != NULL, "ConvertThreadToFiber failed with error %lu\n", GetLastError());
         ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
+        ok( NtCurrentTeb()->Tib.FiberData && NtCurrentTeb()->Tib.FiberData != (void *)0x1e00,
+            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiber(&testparam);
@@ -159,6 +163,8 @@ static void test_ConvertThreadToFiberEx(void)
         fibers[0] = pConvertThreadToFiberEx(&testparam, 0);
         ok(fibers[0] != NULL, "ConvertThreadToFiberEx failed with error %lu\n", GetLastError());
         ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
+        ok( NtCurrentTeb()->Tib.FiberData && NtCurrentTeb()->Tib.FiberData != (void *)0x1e00,
+            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiberEx(&testparam, 0);
@@ -180,6 +186,7 @@ static void test_ConvertFiberToThread(void)
         ret = pConvertFiberToThread();
         ok(ret, "ConvertFiberToThread failed with error %lu\n", GetLastError());
         ok( !NtCurrentTeb()->HasFiberData, "still a fiber\n" );
+        ok( !NtCurrentTeb()->Tib.FiberData, "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
         ret = pConvertFiberToThread();
         ok(!ret, "Got non NULL ret.\n");
         ok(GetLastError() == ERROR_ALREADY_THREAD, "Got unexpected error %lu.\n", GetLastError());
@@ -193,6 +200,8 @@ static void test_ConvertFiberToThread(void)
 static void test_FiberHandling(void)
 {
     ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
+    ok( NtCurrentTeb()->Tib.FiberData == (void *)0x1e00, "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
+
     fiberCount = 0;
     fibers[0] = pCreateFiber(0,FiberMainProc,&testparam);
     ok(fibers[0] != NULL, "CreateFiber failed with error %lu\n", GetLastError());
