@@ -133,8 +133,10 @@ static void test_ConvertThreadToFiber(void)
 
     if (pConvertThreadToFiber)
     {
+        ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
         fibers[0] = pConvertThreadToFiber(&testparam);
         ok(fibers[0] != NULL, "ConvertThreadToFiber failed with error %lu\n", GetLastError());
+        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiber(&testparam);
@@ -153,8 +155,10 @@ static void test_ConvertThreadToFiberEx(void)
 
     if (pConvertThreadToFiberEx)
     {
+        ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
         fibers[0] = pConvertThreadToFiberEx(&testparam, 0);
         ok(fibers[0] != NULL, "ConvertThreadToFiberEx failed with error %lu\n", GetLastError());
+        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiberEx(&testparam, 0);
@@ -171,8 +175,14 @@ static void test_ConvertFiberToThread(void)
 {
     if (pConvertFiberToThread)
     {
-        BOOL ret = pConvertFiberToThread();
+        BOOL ret;
+        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
+        ret = pConvertFiberToThread();
         ok(ret, "ConvertFiberToThread failed with error %lu\n", GetLastError());
+        ok( !NtCurrentTeb()->HasFiberData, "still a fiber\n" );
+        ret = pConvertFiberToThread();
+        ok(!ret, "Got non NULL ret.\n");
+        ok(GetLastError() == ERROR_ALREADY_THREAD, "Got unexpected error %lu.\n", GetLastError());
     }
     else
     {
@@ -182,6 +192,7 @@ static void test_ConvertFiberToThread(void)
 
 static void test_FiberHandling(void)
 {
+    ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
     fiberCount = 0;
     fibers[0] = pCreateFiber(0,FiberMainProc,&testparam);
     ok(fibers[0] != NULL, "CreateFiber failed with error %lu\n", GetLastError());
