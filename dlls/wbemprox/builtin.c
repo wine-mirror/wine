@@ -4681,15 +4681,23 @@ static struct display_adapter *get_display_adapters( UINT *count )
 
     while(SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
     {
-        WCHAR *driver, *hw_ids;
+        WCHAR *driver, *instance_id;
         UINT key_len;
         WCHAR *key_path;
         HKEY key_instance;
+        DWORD size;
 
-        if (!(driver = get_string_devprop( devs, &dev_info, &DEVPKEY_Device_Driver ))) continue;
-        if (!(hw_ids = get_string_devprop( devs, &dev_info, &DEVPKEY_Device_HardwareIds )))
+        SetupDiGetDeviceInstanceIdW( devs, &dev_info, NULL, 0, &size );
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) continue;
+        if (!(instance_id = malloc( size * sizeof(*instance_id) ))) continue;
+        if (!SetupDiGetDeviceInstanceIdW( devs, &dev_info, instance_id, size, NULL ))
         {
-            free( driver );
+            free( instance_id );
+            continue;
+        }
+        if (!(driver = get_string_devprop( devs, &dev_info, &DEVPKEY_Device_Driver )))
+        {
+            free( instance_id );
             continue;
         }
 
@@ -4697,7 +4705,7 @@ static struct display_adapter *get_display_adapters( UINT *count )
         if (!(key_path = calloc( sizeof(WCHAR), key_len )))
         {
             free( driver );
-            free( hw_ids );
+            free( instance_id );
             continue;
         }
 
@@ -4706,7 +4714,7 @@ static struct display_adapter *get_display_adapters( UINT *count )
 
         if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, key_path, 0, KEY_QUERY_VALUE, &key_instance ))
         {
-            free( hw_ids );
+            free( instance_id );
             free( key_path );
             continue;
         }
@@ -4716,9 +4724,7 @@ static struct display_adapter *get_display_adapters( UINT *count )
         ret[i].driver_date = get_reg_value( key_instance, L"DriverDate" );
         ret[i].driver_desc = get_reg_value( key_instance, L"DriverDesc" );
         ret[i].driver_version = get_reg_value( key_instance, L"DriverVersion" );
-        /* DEVPKEY_Device_HardwareIds is actually an array of null-terminated
-           strings, so consumers will only see the first one. */
-        ret[i].pnpdevice_id = hw_ids;
+        ret[i].pnpdevice_id = instance_id;
         ret[i].dac_type = get_reg_value( key_instance, L"HardwareInformation.DacType" );
         ret[i].memory_size = get_reg_value_dword( key_instance, L"HardwareInformation.MemorySize" );
         if (++i >= nb_allocated)

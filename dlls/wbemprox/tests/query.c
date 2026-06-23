@@ -1972,6 +1972,7 @@ static void test_Win32_VideoController( IWbemServices *services )
         check_property( obj, L"DriverDate", VT_BSTR, CIM_DATETIME );
         check_property( obj, L"DriverVersion", VT_BSTR, CIM_STRING );
         check_property_nullable( obj, L"InstalledDisplayDrivers", VT_BSTR, CIM_STRING );
+        check_property( obj, L"PNPDeviceID", VT_BSTR, CIM_STRING );
         check_property( obj, L"Status", VT_BSTR, CIM_STRING );
 
         IWbemClassObject_Release( obj );
