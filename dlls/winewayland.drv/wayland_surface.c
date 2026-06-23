@@ -376,32 +376,32 @@ err:
  * Gives the subsurface role to a plain wayland surface.
  */
 void wayland_surface_make_subsurface(struct wayland_surface *surface,
-                                     struct wayland_surface *parent)
+                                     struct wayland_surface *owner)
 {
     assert(!surface->role || surface->role == WAYLAND_SURFACE_ROLE_SUBSURFACE);
-    if (surface->wl_subsurface && surface->toplevel_hwnd == parent->hwnd) return;
+    if (surface->wl_subsurface && surface->owner_hwnd == owner->hwnd) return;
 
     wayland_surface_clear_role(surface);
     surface->role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
 
-    TRACE("surface=%p parent=%p\n", surface, parent);
+    TRACE("surface=%p owner=%p\n", surface, owner);
 
     surface->wl_subsurface =
         wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
                                         surface->wl_surface,
-                                        parent->wl_surface);
+                                        owner->wl_surface);
     if (!surface->wl_subsurface)
     {
         ERR("Failed to create client wl_subsurface\n");
         goto err;
     }
 
-    wayland_surface_init_fractional_scale(surface, parent->window.scale);
+    wayland_surface_init_fractional_scale(surface, owner->window.scale);
 
     surface->role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
-    surface->toplevel_hwnd = parent->hwnd;
+    surface->owner_hwnd = owner->hwnd;
 
-    /* Present contents independently of the parent surface. */
+    /* Present contents independently of the owner surface. */
     wl_subsurface_set_desync(surface->wl_subsurface);
 
     wl_display_flush(process_wayland.wl_display);
@@ -467,7 +467,7 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
             surface->wl_subsurface = NULL;
         }
 
-        surface->toplevel_hwnd = 0;
+        surface->owner_hwnd = NULL;
         break;
     }
 
@@ -475,7 +475,6 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
     memset(&surface->requested, 0, sizeof(surface->requested));
     memset(&surface->processing, 0, sizeof(surface->processing));
     memset(&surface->current, 0, sizeof(surface->current));
-    surface->toplevel_hwnd = 0;
 
     /* Ensure no buffer is attached, otherwise future role assignments may fail. */
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);
@@ -780,27 +779,27 @@ static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
  */
 static void wayland_surface_reconfigure_subsurface(struct wayland_surface *surface)
 {
-    struct wayland_win_data *toplevel_data;
-    struct wayland_surface *toplevel_surface;
+    struct wayland_win_data *owner_data;
+    struct wayland_surface *owner_surface;
     int local_x, local_y, x, y;
 
     if (surface->processing.serial && surface->processing.processed &&
-        (toplevel_data = wayland_win_data_get_nolock(surface->toplevel_hwnd)) &&
-        (toplevel_surface = toplevel_data->wayland_surface))
+        (owner_data = wayland_win_data_get_nolock(surface->owner_hwnd)) &&
+        (owner_surface = owner_data->wayland_surface))
     {
-        local_x = surface->window.rect.left - toplevel_surface->window.rect.left;
-        local_y = surface->window.rect.top - toplevel_surface->window.rect.top;
+        local_x = surface->window.rect.left - owner_surface->window.rect.left;
+        local_y = surface->window.rect.top - owner_surface->window.rect.top;
 
         wayland_surface_coords_from_window(surface, local_x, local_y, &x, &y);
 
         TRACE("hwnd=%p pos=%d,%d\n", surface->hwnd, x, y);
 
         wl_subsurface_set_position(surface->wl_subsurface, x, y);
-        if (toplevel_data->client_surface && toplevel_data->client_surface->wl_subsurface)
-            wl_subsurface_place_above(surface->wl_subsurface, toplevel_data->client_surface->wl_surface);
+        if (owner_data->client_surface && owner_data->client_surface->wl_subsurface)
+            wl_subsurface_place_above(surface->wl_subsurface, owner_data->client_surface->wl_surface);
         else
-            wl_subsurface_place_above(surface->wl_subsurface, toplevel_surface->wl_surface);
-        wl_surface_commit(toplevel_surface->wl_surface);
+            wl_subsurface_place_above(surface->wl_subsurface, owner_surface->wl_surface);
+        wl_surface_commit(owner_surface->wl_surface);
 
         memset(&surface->processing, 0, sizeof(surface->processing));
     }

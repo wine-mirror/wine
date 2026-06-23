@@ -291,7 +291,7 @@ struct wayland_surface
         struct
         {
             struct wl_subsurface *wl_subsurface;
-            HWND toplevel_hwnd;
+            HWND owner_hwnd;
         };
     };
     struct wp_alpha_modifier_surface_v1 *wp_alpha_modifier_surface_v1;
