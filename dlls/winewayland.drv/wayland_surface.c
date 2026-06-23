@@ -119,8 +119,7 @@ static void xdg_toplevel_handle_configure(void *private,
 
     if ((surface = data->wayland_surface) && wayland_surface_is_toplevel(surface))
     {
-        surface->pending.width = width;
-        surface->pending.height = height;
+        SetRect(&surface->pending.rect, 0, 0, width, height);
         surface->pending.state = config_state;
     }
 
@@ -552,8 +551,7 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
  * Checks whether a wayland_surface_config object is compatible with the
  * the provided arguments.
  */
-BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
-                                          int width, int height,
+BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf, RECT rect,
                                           enum wayland_surface_config_state state)
 {
     static enum wayland_surface_config_state mask =
@@ -574,7 +572,8 @@ BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
      * reconfiguration we can use surface geometry to provide smaller areas
      * from larger sizes, so only smaller sizes are incompatible. */
     if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-        (width < conf->width || height < conf->height))
+        (rect.right - rect.left < conf->rect.right - conf->rect.left ||
+         rect.bottom - rect.top < conf->rect.bottom - conf->rect.top))
     {
         return FALSE;
     }
@@ -611,16 +610,14 @@ static void wayland_surface_get_rect_in_monitor(struct wayland_surface *surface,
  *
  * Sets the xdg_surface geometry
  */
-static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface,
-                                                 int width, int height)
+static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface, RECT rect)
 {
-    RECT rect;
-
     /* If the window size is bigger than the current state accepts, use the
      * largest visible (from Windows' perspective) subregion of the window. */
     if ((surface->current.state & (WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED |
                                    WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN)) &&
-        (width > surface->current.width || height > surface->current.height))
+        (rect.right - rect.left > surface->current.rect.right - surface->current.rect.left ||
+         rect.bottom - rect.top > surface->current.rect.bottom - surface->current.rect.top))
     {
         wayland_surface_get_rect_in_monitor(surface, &rect);
 
@@ -630,21 +627,22 @@ static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface
          * fall back to an appropriately sized rect at the top-left. */
         if ((surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
             !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-            (rect.right - rect.left < surface->current.width ||
-             rect.bottom - rect.top < surface->current.height))
+            (rect.right - rect.left < surface->current.rect.right - surface->current.rect.left ||
+             rect.bottom - rect.top < surface->current.rect.bottom - surface->current.rect.top))
         {
-            SetRect(&rect, 0, 0, surface->current.width, surface->current.height);
+            SetRect(&rect, 0, 0, surface->current.rect.right - surface->current.rect.left,
+                    surface->current.rect.bottom - surface->current.rect.top);
         }
         else
         {
-            rect.right = min(rect.right, rect.left + surface->current.width);
-            rect.bottom = min(rect.bottom, rect.top + surface->current.height);
+            rect.right = min(rect.right, rect.left + surface->current.rect.right - surface->current.rect.left);
+            rect.bottom = min(rect.bottom, rect.top + surface->current.rect.bottom - surface->current.rect.top);
         }
         TRACE("Window is too large for Wayland state, using subregion\n");
     }
     else
     {
-        SetRect(&rect, 0, 0, width, height);
+        OffsetRect(&rect, -rect.left, -rect.top);
     }
 
     TRACE("hwnd=%p geometry=%s\n", surface->hwnd, wine_dbgstr_rect(&rect));
@@ -721,15 +719,13 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
  * Reconfigures the xdg surface as needed to match the latest requested
  * state.
  */
-static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
-                                            int width, int height)
+static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface, RECT rect)
 {
     struct wayland_window_config *window = &surface->window;
 
     /* Acknowledge any compatible processed config. */
     if (surface->processing.serial && surface->processing.processed &&
-        wayland_surface_config_is_compatible(&surface->processing,
-                                             width, height,
+        wayland_surface_config_is_compatible(&surface->processing, rect,
                                              window->state))
     {
         surface->current = surface->processing;
@@ -740,8 +736,7 @@ static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
      * config, use that, in order to draw windows that don't go through the
      * message loop (e.g., some splash screens). */
     else if (!surface->current.serial && surface->requested.serial &&
-             wayland_surface_config_is_compatible(&surface->requested,
-                                                  width, height,
+             wayland_surface_config_is_compatible(&surface->requested, rect,
                                                   window->state))
     {
         surface->current = surface->requested;
@@ -749,14 +744,13 @@ static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
         xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
     }
     else if (!surface->current.serial ||
-             !wayland_surface_config_is_compatible(&surface->current,
-                                                   width, height,
+             !wayland_surface_config_is_compatible(&surface->current, rect,
                                                    window->state))
     {
         return FALSE;
     }
 
-    wayland_surface_reconfigure_geometry(surface, width, height);
+    wayland_surface_reconfigure_geometry(surface, rect);
 
     return TRUE;
 }
@@ -805,11 +799,10 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     struct wayland_window_config *window = &surface->window;
     RECT rect = map_rect_to_surface(surface, surface->window.rect);
 
-    TRACE("hwnd=%p window=%s,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
+    TRACE("hwnd=%p window=%s,%#x processing=%s,%#x current=%s,%#x\n",
           surface->hwnd, wine_dbgstr_rect(&rect), window->state,
-          surface->processing.width, surface->processing.height,
-          surface->processing.state, surface->current.width,
-          surface->current.height, surface->current.state);
+          wine_dbgstr_rect(&surface->processing.rect), surface->processing.state,
+          wine_dbgstr_rect(&surface->current.rect), surface->current.state);
 
     switch (surface->role)
     {
@@ -817,7 +810,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
         break;
     case WAYLAND_SURFACE_ROLE_TOPLEVEL:
         if (!surface->xdg_surface) break; /* surface role has been cleared */
-        if (!wayland_surface_reconfigure_xdg(surface, rect.right - rect.left, rect.bottom - rect.top)) return FALSE;
+        if (!wayland_surface_reconfigure_xdg(surface, rect)) return FALSE;
         break;
     case WAYLAND_SURFACE_ROLE_SUBSURFACE:
         if (!surface->wl_subsurface) break; /* surface role has been cleared */
