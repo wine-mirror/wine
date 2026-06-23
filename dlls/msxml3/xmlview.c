@@ -364,6 +364,19 @@ static inline HRESULT display_error_page(BindStatusCallback *This)
     return report_data(This);
 }
 
+static void dom_document_use_xpath(IXMLDOMDocument3 *doc)
+{
+    BSTR name;
+    VARIANT v;
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"XPath");
+    name = SysAllocString(L"SelectionLanguage");
+    IXMLDOMDocument3_setProperty(doc, name, v);
+    SysFreeString(name);
+    VariantClear(&v);
+}
+
 static inline HRESULT handle_xml_load(BindStatusCallback *This)
 {
     IXMLDOMDocument3 *xml = NULL, *xsl = NULL;
@@ -386,6 +399,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
     hres = dom_document_create(MSXML_DEFAULT, (void **)&xml);
     if(FAILED(hres))
         return display_error_page(This);
+    dom_document_use_xpath(xml);
 
     V_VT(&var) = VT_UNKNOWN;
     V_UNKNOWN(&var) = (IUnknown*)This->stream;
@@ -465,6 +479,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
         IXMLDOMDocument3_Release(xml);
         return display_error_page(This);
     }
+    dom_document_use_xpath(xsl);
 
     /* TODO: do the binding asynchronously */
     hres = IXMLDOMDocument3_load(xsl, var, &succ);
