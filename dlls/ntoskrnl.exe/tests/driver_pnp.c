@@ -693,6 +693,16 @@ static void test_device_properties( DEVICE_OBJECT *device )
         const DEVPROPKEY *key = deviceprops[i].key;
         void *value = &deviceprops[i].value;
 
+        /*
+         * Io{Get,Set}DevicePropertyData() being used with a non-PDO device causes a
+         * BSoD on native with an error code of PNP_DETECTED_FATAL_ERROR.
+         */
+        if (0)
+        {
+            status = IoSetDevicePropertyData( bus_fdo, key, LOCALE_NEUTRAL, 0, type, size, value );
+            ok( status == STATUS_SUCCESS, "Failed to set device property, status %#lx.\n", status );
+        }
+
         status = IoSetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, type, size, value );
         ok( status == STATUS_SUCCESS, "Failed to set device property, status %#lx.\n", status );
         if (status == STATUS_SUCCESS)
@@ -726,6 +736,17 @@ static void test_device_properties( DEVICE_OBJECT *device )
                 if (status == STATUS_SUCCESS)
                     ok( kmemcmp( buf, value, size ) == 0,
                         "Got unexpected device property value.\n" );
+                /* Crashes in the same manner as IoSetDevicePropertyData(). */
+                if (0)
+                {
+                    req_size = 0;
+                    stored_type = DEVPROP_TYPE_EMPTY;
+                    memset( buf, 0, size );
+                    status = IoGetDevicePropertyData( bus_fdo, key, LOCALE_NEUTRAL, 0, size, buf,
+                                                      &req_size, &stored_type );
+                    ok( status == STATUS_SUCCESS, "Failed to get device property, status %#lx.\n",
+                        status );
+                }
                 ExFreePool( buf );
             }
         }
@@ -834,11 +855,13 @@ static void test_enumerator_name(void)
 
     status = IoGetDeviceProperty(bus_fdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
     todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got unexpected status %#lx\n", status);
+    ok(!(bus_fdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_fdo flags %#lx.\n", bus_fdo->Flags);
 
     req_size = 0;
     memset(buffer, 0, sizeof(buffer));
     status = IoGetDeviceProperty(bus_pdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
     ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
+    todo_wine ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
     ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
         ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
@@ -873,9 +896,11 @@ static void test_device_registry_key(void)
 
     status = IoOpenDeviceRegistryKey(bus_fdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
     todo_wine ok(status == STATUS_INVALID_PARAMETER, "got unexpected status %#lx\n", status);
+    ok(!(bus_fdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_fdo flags %#lx.\n", bus_fdo->Flags);
 
     status = IoOpenDeviceRegistryKey(bus_pdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
     ok(status == STATUS_SUCCESS, "IoOpenDeviceRegistryKey failed: %#lx\n", status);
+    todo_wine ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
     if (status == STATUS_SUCCESS)
     {
         RtlInitUnicodeString(&name_str, foobar);
@@ -1146,6 +1171,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
 {
     NTSTATUS ret;
 
+    todo_wine ok(!!(pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected pdo flags %#lx.\n", pdo->Flags);
     if ((ret = IoCreateDevice(driver, 0, NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &bus_fdo)))
         return ret;
 
