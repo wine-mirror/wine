@@ -624,10 +624,7 @@ static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface
     {
         wayland_surface_get_rect_in_monitor(surface, &rect);
 
-        wayland_surface_coords_from_window(surface, rect.left, rect.top,
-                                           (int *)&rect.left, (int *)&rect.top);
-        wayland_surface_coords_from_window(surface, rect.right, rect.bottom,
-                                           (int *)&rect.right, (int *)&rect.bottom);
+        rect = map_rect_to_surface(surface, rect);
 
         /* If the window rect in the monitor is smaller than required,
          * fall back to an appropriately sized rect at the top-left. */
@@ -697,30 +694,23 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
                                                const RECT *client_rect)
 {
     struct wayland_window_config *window = &surface->window;
-    int client_x, client_y, x, y;
-    int client_width, client_height, width, height;
+    RECT rect = *client_rect;
 
     /* The offset of the client area origin relatively to the window origin. */
-    client_x = client_rect->left + window->client_rect.left - window->rect.left;
-    client_y = client_rect->top + window->client_rect.top - window->rect.top;
+    OffsetRect(&rect, window->client_rect.left - window->rect.left,
+               window->client_rect.top - window->rect.top);
+    rect = map_rect_to_surface(surface, rect);
 
-    client_width = client_rect->right - client_rect->left;
-    client_height = client_rect->bottom - client_rect->top;
-
-    wayland_surface_coords_from_window(surface, client_x, client_y, &x, &y);
-    wayland_surface_coords_from_window(surface, client_width, client_height,
-                                       &width, &height);
-
-    TRACE("hwnd=%p subsurface=%d,%d+%dx%d\n", surface->hwnd, x, y, width, height);
+    TRACE("hwnd=%p rect=%s\n", surface->hwnd, wine_dbgstr_rect(&rect));
 
     if (client->wl_subsurface)
     {
-        wl_subsurface_set_position(client->wl_subsurface, x, y);
+        wl_subsurface_set_position(client->wl_subsurface, rect.left, rect.top);
         wl_subsurface_place_above(client->wl_subsurface, surface->wl_surface);
     }
 
-    if (width != 0 && height != 0)
-        wp_viewport_set_destination(client->wp_viewport, width, height);
+    if (rect.left != rect.right && rect.top != rect.bottom)
+        wp_viewport_set_destination(client->wp_viewport, rect.right - rect.left, rect.bottom - rect.top);
     else /* We can't have a 0x0 destination, use 1x1 instead. */
         wp_viewport_set_destination(client->wp_viewport, 1, 1);
 }
@@ -781,20 +771,19 @@ static void wayland_surface_reconfigure_subsurface(struct wayland_surface *surfa
 {
     struct wayland_win_data *owner_data;
     struct wayland_surface *owner_surface;
-    int local_x, local_y, x, y;
 
     if (surface->processing.serial && surface->processing.processed &&
         (owner_data = wayland_win_data_get_nolock(surface->owner_hwnd)) &&
         (owner_surface = owner_data->wayland_surface))
     {
-        local_x = surface->window.rect.left - owner_surface->window.rect.left;
-        local_y = surface->window.rect.top - owner_surface->window.rect.top;
+        RECT rect = surface->window.rect;
 
-        wayland_surface_coords_from_window(surface, local_x, local_y, &x, &y);
+        OffsetRect(&rect, -owner_surface->window.rect.left, -owner_surface->window.rect.top);
+        rect = map_rect_to_surface(surface, rect);
 
-        TRACE("hwnd=%p pos=%d,%d\n", surface->hwnd, x, y);
+        TRACE("hwnd=%p rect=%s\n", surface->hwnd, wine_dbgstr_rect(&rect));
 
-        wl_subsurface_set_position(surface->wl_subsurface, x, y);
+        wl_subsurface_set_position(surface->wl_subsurface, rect.left, rect.top);
         if (owner_data->client_surface && owner_data->client_surface->wl_subsurface)
             wl_subsurface_place_above(surface->wl_subsurface, owner_data->client_surface->wl_surface);
         else
@@ -814,16 +803,10 @@ static void wayland_surface_reconfigure_subsurface(struct wayland_surface *surfa
 BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 {
     struct wayland_window_config *window = &surface->window;
-    int win_width, win_height, width, height;
+    RECT rect = map_rect_to_surface(surface, surface->window.rect);
 
-    win_width = surface->window.rect.right - surface->window.rect.left;
-    win_height = surface->window.rect.bottom - surface->window.rect.top;
-
-    wayland_surface_coords_from_window(surface, win_width, win_height,
-                                       &width, &height);
-
-    TRACE("hwnd=%p window=%dx%d,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
-          surface->hwnd, win_width, win_height, window->state,
+    TRACE("hwnd=%p window=%s,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
+          surface->hwnd, wine_dbgstr_rect(&rect), window->state,
           surface->processing.width, surface->processing.height,
           surface->processing.state, surface->current.width,
           surface->current.height, surface->current.state);
@@ -834,7 +817,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
         break;
     case WAYLAND_SURFACE_ROLE_TOPLEVEL:
         if (!surface->xdg_surface) break; /* surface role has been cleared */
-        if (!wayland_surface_reconfigure_xdg(surface, width, height)) return FALSE;
+        if (!wayland_surface_reconfigure_xdg(surface, rect.right - rect.left, rect.bottom - rect.top)) return FALSE;
         break;
     case WAYLAND_SURFACE_ROLE_SUBSURFACE:
         if (!surface->wl_subsurface) break; /* surface role has been cleared */
@@ -842,7 +825,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
         break;
     }
 
-    wayland_surface_reconfigure_size(surface, width, height);
+    wayland_surface_reconfigure_size(surface, rect.right - rect.left, rect.bottom - rect.top);
 
     return TRUE;
 }
@@ -1123,16 +1106,29 @@ failed:
 }
 
 /**********************************************************************
- *          wayland_surface_coords_from_window
+ *          map_rect_to_surface
  *
  * Converts the window (logical) coordinates to wayland surface-local coordinates.
  */
-void wayland_surface_coords_from_window(struct wayland_surface *surface,
-                                        int window_x, int window_y,
-                                        int *surface_x, int *surface_y)
+RECT map_rect_to_surface(struct wayland_surface *surface, RECT rect)
 {
-    *surface_x = round(window_x / surface->window.scale);
-    *surface_y = round(window_y / surface->window.scale);
+    rect.left = round(rect.left / surface->window.scale);
+    rect.top  = round(rect.top / surface->window.scale);
+    rect.right = round(rect.right / surface->window.scale);
+    rect.bottom  = round(rect.bottom / surface->window.scale);
+    return rect;
+}
+
+/**********************************************************************
+ *          map_point_to_surface
+ *
+ * Converts the window (logical) coordinates to wayland surface-local coordinates.
+ */
+POINT map_point_to_surface(struct wayland_surface *surface, POINT point)
+{
+    point.x = round(point.x / surface->window.scale);
+    point.y  = round(point.y / surface->window.scale);
+    return point;
 }
 
 /**********************************************************************
