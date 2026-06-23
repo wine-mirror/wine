@@ -1,4 +1,5 @@
 /*
+ * Copyright 2010 Adam Martinson for CodeWeavers
  * Copyright 2026 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -66,6 +67,23 @@ enum xpath_global_config
 static const double XPATH_UPPER_DOUBLE = 1e9;
 static const double XPATH_LOWER_DOUBLE = 1e-5;
 
+enum compop
+{
+    COMPOP_NONE = 0,
+    COMPOP_EQ = 0x1,
+    COMPOP_NE = 0x2,
+
+    COMPOP_LT = 0x4,
+    COMPOP_GT = 0x8,
+    COMPOP_NOTSTRICT = 0x1000,
+    COMPOP_LE = COMPOP_LT | COMPOP_NOTSTRICT,
+    COMPOP_GE = COMPOP_GT | COMPOP_NOTSTRICT,
+
+    COMPOP_I = 0x2000,
+
+    COMPOP_EQUALITY = COMPOP_EQ | COMPOP_NE,
+};
+
 enum xpath_axis
 {
     AXIS_UNDEFINED = 0,
@@ -99,6 +117,10 @@ enum xpath_type
     NODE_TYPE_COMMENT = NODE_COMMENT,
     NODE_TYPE_TEXT = NODE_TEXT,
     NODE_TYPE_PI = NODE_PROCESSING_INSTRUCTION,
+    /* Extension */
+    NODE_TYPE_ELEMENT = NODE_ELEMENT,
+    NODE_TYPE_ATTRIBUTE = NODE_ATTRIBUTE,
+    NODE_TYPE_CDATA = NODE_CDATA_SECTION,
 };
 
 struct xpath_parser_context;
@@ -160,6 +182,11 @@ enum xpath_op
     XPATH_OP_PREDICATE,
     XPATH_OP_FILTER,
     XPATH_OP_SORT,
+
+    XPATH_OP_NOT,
+    XPATH_OP_ALL,
+    XPATH_OP_ICMP,
+    XPATH_OP_IEQUAL,
 };
 
 struct xpath_parser_context;
@@ -219,6 +246,15 @@ struct xpath_parser_context
         struct domnode **nodes;
     } namespaces;
 };
+
+/* XSLPattern uses 0-based indexing */
+static int xpath_adjust_nodeset_index(struct xpath_parser_context *ctxt, int index)
+{
+    if (ctxt->context->xpath)
+        return index;
+
+    return index + 1;
+}
 
 /* In XPath data model attributes and namespace nodes have their containing
    element as a parent. One exception for that is implicit "xmlns:xml" namespace which
@@ -326,9 +362,12 @@ static void xpath_debug_dump_step_op(const struct xpath_comp_expr *comp, int idx
         case XPATH_OP_OR:
             MESSAGE("OR"); break;
         case XPATH_OP_EQUAL:
-            MESSAGE("EQUAL %s", op->value ? "=" : "!="); break;
+        case XPATH_OP_IEQUAL:
+            MESSAGE("%sEQUAL %s", op->op == XPATH_OP_IEQUAL ? "I" : "", op->value ? "=" : "!=");
+            break;
         case XPATH_OP_CMP:
-            MESSAGE("CMP %s", op->value ? "<" : ">");
+        case XPATH_OP_ICMP:
+            MESSAGE("%sCMP %s", op->op == XPATH_OP_ICMP ? "I" : "", op->value ? "<" : ">");
             if (!op->value2)
                 MESSAGE("=");
             break;
@@ -423,6 +462,12 @@ static void xpath_debug_dump_step_op(const struct xpath_comp_expr *comp, int idx
                     MESSAGE("'text' "); break;
                 case NODE_TYPE_PI:
                     MESSAGE("'PI' "); break;
+                case NODE_TYPE_ELEMENT:
+                    MESSAGE("'element' "); break;
+                case NODE_TYPE_ATTRIBUTE:
+                    MESSAGE("'attribute' "); break;
+                case NODE_TYPE_CDATA:
+                    MESSAGE("'cdata' "); break;
             }
             if (prefix)
                 MESSAGE("%s:", debugstr_w(prefix));
@@ -464,6 +509,8 @@ static void xpath_debug_dump_step_op(const struct xpath_comp_expr *comp, int idx
         case XPATH_OP_ARG: MESSAGE("ARG"); break;
         case XPATH_OP_PREDICATE: MESSAGE("PREDICATE"); break;
         case XPATH_OP_FILTER: MESSAGE("FILTER"); break;
+        case XPATH_OP_NOT: MESSAGE("NOT"); break;
+        case XPATH_OP_ALL: MESSAGE("ALL"); break;
         default:
         MESSAGE("UNKNOWN %d\n", op->op); return;
     }
@@ -2831,11 +2878,37 @@ static bool xpath_equal_nodeset_float(struct xpath_parser_context *ctxt,
     return ret;
 }
 
+static bool xpath_equal_node_string(struct domnode *node, unsigned int hash, const WCHAR *str, bool neq)
+{
+    WCHAR *str2;
+    bool ret;
+
+    if (xpath_nodeval_hash(node) != hash)
+        return neq;
+
+    str2 = xpath_cast_node_to_string(node);
+    if (str2 && !wcscmp(str, str2))
+    {
+        ret = !neq;
+    }
+    else if (!str2 && !*str)
+    {
+        ret = !neq;
+    }
+    else
+    {
+        ret = neq;
+    }
+
+    free(str2);
+
+    return ret;
+}
+
 static bool xpath_equal_nodeset_string(struct xpath_object *arg, const WCHAR *str, bool neq)
 {
     struct xpath_nodeset *ns;
     unsigned int hash;
-    WCHAR *str2;
     int i;
 
     if (!str || !arg || arg->type != _XPATH_NODESET)
@@ -2845,38 +2918,27 @@ static bool xpath_equal_nodeset_string(struct xpath_object *arg, const WCHAR *st
     if (!ns || ns->count <= 0)
         return false;
     hash = xpath_string_hash(str);
-    for (i = 0; i < ns->count; ++i)
-    {
-        if (xpath_nodeval_hash(ns->nodes[i]) == hash)
-        {
-            str2 = xpath_cast_node_to_string(ns->nodes[i]);
-            if (str2 && !wcscmp(str, str2))
-            {
-                free(str2);
-                if (neq)
-                    continue;
-                return true;
-            }
-            else if (!str2 && !*str)
-            {
-                if (neq)
-                    continue;
-                return true;
-            }
-            else if (neq)
-            {
-                free(str2);
-                return true;
-            }
-            free(str2);
-        }
-        else if (neq)
-        {
-            return true;
-        }
-    }
 
-    return false;
+    if (arg->all)
+    {
+        for (i = 0; i < ns->count; ++i)
+        {
+            if (!xpath_equal_node_string(ns->nodes[i], hash, str, neq))
+                return false;
+        }
+
+        return true;
+    }
+    else
+    {
+        for (i = 0; i < ns->count; ++i)
+        {
+            if (xpath_equal_node_string(ns->nodes[i], hash, str, neq))
+                return true;
+        }
+
+        return false;
+    }
 }
 
 static bool xpath_equal_values(struct xpath_parser_context *ctxt)
@@ -3697,7 +3759,8 @@ static int xpath_node_collect_and_test(struct xpath_parser_context *ctxt,
     if (prefix)
     {
         uri  = xpath_ns_lookup(xpctxt, prefix);
-        if (!uri)
+
+        if (!uri && ctxt->context->xpath)
         {
             xpath_object_release(xpctxt, obj);
             xpath_parser_context_set_error(ctxt, XPATH_UNDEF_PREFIX_ERROR);
@@ -3835,6 +3898,8 @@ static int xpath_node_collect_and_test(struct xpath_parser_context *ctxt,
                 predOp = NULL;
                 hasAxisRange = true;
             }
+
+            maxPos = xpath_adjust_nodeset_index(ctxt, maxPos);
         }
     }
     breakOnFirstHit = ((toBool) && (predOp == NULL)) ? 1 : 0;
@@ -4016,18 +4081,29 @@ static int xpath_node_collect_and_test(struct xpath_parser_context *ctxt,
                         case NODE_ELEMENT:
                             if (!wcscmp(name, cur->name))
                             {
-                                node_uri = xpath_get_node_uri(cur);
-
-                                if (prefix)
+                                /* If namespace is not registered, simply compare prefixes */
+                                if (!ctxt->context->xpath && prefix && !uri)
                                 {
-                                    if (node_uri && !wcscmp(uri, node_uri))
+                                    if (cur->prefix && !wcscmp(cur->prefix, prefix))
                                     {
                                         XP_TEST_HIT
                                     }
                                 }
-                                else if (!node_uri)
+                                else
                                 {
-                                    XP_TEST_HIT
+                                    node_uri = xpath_get_node_uri(cur);
+
+                                    if (prefix)
+                                    {
+                                        if (node_uri && !wcscmp(uri, node_uri))
+                                        {
+                                            XP_TEST_HIT
+                                        }
+                                    }
+                                    else if (!node_uri || (!ctxt->context->xpath && !cur->prefix))
+                                    {
+                                        XP_TEST_HIT
+                                    }
                                 }
                             }
                             break;
@@ -4703,7 +4779,7 @@ static int xpath_evaluate_predicate_result(struct xpath_parser_context *ctxt, st
         case _XPATH_BOOLEAN:
             return res->boolval;
         case _XPATH_NUMBER:
-            return res->floatval == ctxt->context->proximityPosition;
+            return xpath_adjust_nodeset_index(ctxt, res->floatval) == ctxt->context->proximityPosition;
         case _XPATH_NODESET:
             return res->nodesetval && res->nodesetval->count;
         case _XPATH_STRING:
@@ -4906,6 +4982,46 @@ static xpath_function_ptr xpath_lookup_function(struct xpath_context *ctxt, cons
     WARN("Unrecognized function %s, uri %s.\n", debugstr_w(name), debugstr_w(uri));
 
     return NULL;
+}
+
+static void xpath_builtin_not(struct xpath_parser_context *ctxt, int nargs);
+static WCHAR * xpath_pop_string(struct xpath_parser_context *ctxt);
+
+static int xpath_icompare_values(struct xpath_parser_context *ctxt, bool inf, bool strict)
+{
+    WCHAR *arg1, *arg2;
+    int ret;
+
+    arg2 = xpath_pop_string(ctxt);
+    arg1 = xpath_pop_string(ctxt);
+
+    ret = wcsicmp(arg1, arg2);
+
+    if (inf)
+        ret = strict ? ret < 0 : ret <= 0;
+    else
+        ret = strict ? ret > 0 : ret >= 0;
+
+    free(arg1);
+    free(arg2);
+
+    return ret;
+}
+
+static bool xpath_iequal_values(struct xpath_parser_context *ctxt)
+{
+    WCHAR *arg1, *arg2;
+    bool ret;
+
+    arg2 = xpath_pop_string(ctxt);
+    arg1 = xpath_pop_string(ctxt);
+
+    ret = wcsicmp(arg1, arg2) == 0;
+
+    free(arg1);
+    free(arg2);
+
+    return ret;
 }
 
 static int xpath_comp_op_eval(struct xpath_parser_context *ctxt, struct xpath_step_op *op)
@@ -5298,6 +5414,37 @@ static int xpath_comp_op_eval(struct xpath_parser_context *ctxt, struct xpath_st
             if (ctxt->value && ctxt->value->type == _XPATH_NODESET)
                 xpath_nodeset_sort(ctxt->value->nodesetval);
             break;
+        case XPATH_OP_NOT:
+            if (op->ch1 != -1)
+                total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch1]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+
+            xpath_builtin_not(ctxt, 1);
+            break;
+        case XPATH_OP_ICMP:
+            total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch1]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+            total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch2]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+            ret = xpath_icompare_values(ctxt, op->value, op->value2);
+            xpath_push_value(ctxt, xpath_new_boolean(ctxt, ret));
+            break;
+        case XPATH_OP_IEQUAL:
+            total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch1]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+            total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch2]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+            equal = xpath_iequal_values(ctxt);
+            if (!op->value) equal = !equal;
+            xpath_push_value(ctxt, xpath_new_boolean(ctxt, equal));
+            break;
+        case XPATH_OP_ALL:
+            if (op->ch1 != -1)
+                total += xpath_comp_op_eval(ctxt, &comp->steps.values[op->ch1]);
+            if (ctxt->error != XPATH_EXPRESSION_OK) return 0;
+            if (ctxt->value)
+                ctxt->value->all = true;
+            break;
         default:
             WARN("Unknown precompiled operation %d.\n", op->op);
             ctxt->error = XPATH_INVALID_OPERAND;
@@ -5327,13 +5474,18 @@ static int xpath_run_eval(struct xpath_parser_context *ctxt)
     return 0;
 }
 
+static void xslpattern_compile_expr(struct xpath_parser_context *ctxt, bool sort);
+
 static void xpath_eval_expr(struct xpath_parser_context *ctxt)
 {
     int oldDepth = 0;
 
     if (ctxt->context)
         oldDepth = ctxt->context->depth;
-    xpath_compile_expr(ctxt, true);
+    if (ctxt->context->xpath)
+        xpath_compile_expr(ctxt, true);
+    else
+        xslpattern_compile_expr(ctxt, true);
     if (ctxt->context)
         ctxt->context->depth = oldDepth;
 
@@ -6586,7 +6738,863 @@ static WCHAR * xpath_pop_string(struct xpath_parser_context *ctxt)
     return ret;
 }
 
-/* XSLPattern translated functions */
+/* XSLPattern */
+
+/**
+ *  FunctionCall ::=   FunctionName '(' ( Argument ( ',' Argument)*)? ')'
+ *  Argument ::=   Expr
+ */
+static void xslpattern_compile_function_call(struct xpath_parser_context *ctxt)
+{
+    struct xpath_qname name;
+    int nbargs = 0;
+
+    xpath_parse_qname(ctxt, &name);
+    if (!name.name)
+    {
+        xpath_free_qname(&name);
+        return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+    }
+    xpath_parse_skipspaces(ctxt);
+
+    if (!xpath_parse_cmp(ctxt, L"("))
+    {
+        xpath_free_qname(&name);
+        return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+    }
+    xpath_parse_skipspaces(ctxt);
+
+    ctxt->comp->last = -1;
+    if (*ctxt->cur != ')')
+    {
+        while (*ctxt->cur)
+        {
+            int op1 = ctxt->comp->last;
+            ctxt->comp->last = -1;
+            xslpattern_compile_expr(ctxt, true);
+            if (ctxt->error != XPATH_EXPRESSION_OK)
+            {
+                xpath_free_qname(&name);
+                return;
+            }
+            xpath_push_binary_step(ctxt, XPATH_OP_ARG, op1, ctxt->comp->last, 0, 0);
+            nbargs++;
+            if (*ctxt->cur == ')') break;
+            if (!xpath_parse_cmp(ctxt, L","))
+            {
+                xpath_free_qname(&name);
+                return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+            }
+            xpath_parse_skipspaces(ctxt);
+        }
+    }
+
+    xpath_push_long_step(ctxt, XPATH_OP_FUNCTION, nbargs, 0, 0, name.name, name.prefix);
+    xpath_parse_next(ctxt);
+    xpath_parse_skipspaces(ctxt);
+}
+
+/*
+ *  PrimaryExpr ::=
+ *         | '(' Expr ')'
+ *         | Literal
+ *         | Number
+ *         | FunctionCall
+ */
+static void xslpattern_compile_primary_expr(struct xpath_parser_context *ctxt)
+{
+    xpath_parse_skipspaces(ctxt);
+    if (xpath_parse_cmp(ctxt, L"("))
+    {
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_expr(ctxt, true);
+        if (!xpath_parse_cmp(ctxt, L")"))
+            return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+        xpath_parse_skipspaces(ctxt);
+    }
+    else if (is_ascii_digit(*ctxt->cur) || (*ctxt->cur == '.' && is_ascii_digit(ctxt->cur[1])))
+    {
+        xpath_compile_number(ctxt);
+    }
+    else if (*ctxt->cur == '\'' || *ctxt->cur == '"')
+    {
+        xpath_compile_literal(ctxt);
+    }
+    else
+    {
+        xslpattern_compile_function_call(ctxt);
+    }
+    xpath_parse_skipspaces(ctxt);
+}
+
+/**
+ *  FilterExpr ::=   PrimaryExpr
+ *        | FilterExpr Predicate
+ */
+static void xslpattern_compile_filter_expr(struct xpath_parser_context *ctxt)
+{
+    xslpattern_compile_primary_expr(ctxt);
+    xpath_parse_skipspaces(ctxt);
+
+    while (*ctxt->cur == '[')
+    {
+        xpath_compile_predicate(ctxt, true);
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+/**
+ *  NodeType ::=   'comment'
+ *             | 'text'
+ *             | 'pi'
+ *             | 'node'
+ *             | 'textnode'
+ *             | 'cdata'
+ *             | 'attribute'
+ *             | 'element'
+ */
+static bool xslpattern_is_nodetype(const WCHAR *name, enum xpath_type *type)
+{
+    static const struct
+    {
+        const WCHAR *name;
+        enum xpath_type type;
+    }
+    types[] =
+    {
+        { L"node", NODE_TYPE_NODE },
+        { L"comment", NODE_TYPE_COMMENT },
+        { L"text", NODE_TYPE_TEXT },
+        { L"textnode", NODE_TYPE_TEXT },
+        { L"pi", NODE_TYPE_PI },
+        { L"element", NODE_TYPE_ELEMENT },
+        { L"attribute", NODE_TYPE_ATTRIBUTE },
+        { L"cdata", NODE_TYPE_CDATA },
+    };
+
+    for (int i = 0; i < ARRAYSIZE(types); ++i)
+    {
+        if (!wcscmp(types[i].name, name))
+        {
+            if (type) *type = types[i].type;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*
+ *  Predicate ::= '[' Expr ']'
+ */
+static void xslpattern_compile_predicate(struct xpath_parser_context *ctxt, bool filter)
+{
+    int op1 = ctxt->comp->last;
+
+    xpath_parse_skipspaces(ctxt);
+    if (!xpath_parse_cmp(ctxt, L"["))
+        return xpath_parser_context_set_error(ctxt, XPATH_INVALID_PREDICATE_ERROR);
+    xpath_parse_skipspaces(ctxt);
+
+    ctxt->comp->last = -1;
+    xslpattern_compile_expr(ctxt, filter);
+    if (ctxt->error != XPATH_EXPRESSION_OK)
+        return;
+
+    if (!xpath_parse_cmp(ctxt, L"]"))
+        return xpath_parser_context_set_error(ctxt, XPATH_INVALID_PREDICATE_ERROR);
+
+    if (filter)
+        xpath_push_binary_step(ctxt, XPATH_OP_FILTER, op1, ctxt->comp->last, 0, 0);
+    else
+        xpath_push_binary_step(ctxt, XPATH_OP_PREDICATE, op1, ctxt->comp->last, 0, 0);
+
+    xpath_parse_skipspaces(ctxt);
+}
+
+/*
+ * NodeTest ::=   NameTest
+ *            | NodeType '(' ')'
+ *            | 'pi' '(' Literal ')'
+ *            | 'attribute' '(' Literal ')'
+ *            | 'element' '(' Literal ')'
+ *
+ * NameTest ::=  '*'
+ *            | NCName ':' '*'
+ *            | QName
+ * NodeType ::= 'comment'
+ *            | 'text'
+ *            | 'pi'
+ *            | 'node'
+ *            | 'textnode'
+ *            | 'cdata'
+ *            | 'element'
+ *            | 'attribute'
+ */
+static WCHAR * xslpattern_compile_nodetest(struct xpath_parser_context *ctxt, enum xpath_axis *axis,
+        enum xpath_test *test, enum xpath_type *type, WCHAR **prefix, WCHAR *name)
+{
+    bool blanks;
+
+    *type = 0;
+    *test = 0;
+    *prefix = NULL;
+    xpath_parse_skipspaces(ctxt);
+
+    if (!name && *ctxt->cur == '*')
+    {
+        xpath_parse_next(ctxt);
+        *test = NODE_TEST_ALL;
+        return NULL;
+    }
+
+    if (!name)
+        name = xpath_parse_nc_name(ctxt);
+    if (!name)
+    {
+        xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+        return NULL;
+    }
+
+    blanks = xml_is_space(*ctxt->cur);
+    xpath_parse_skipspaces(ctxt);
+    if (xpath_parse_cmp(ctxt, L"("))
+    {
+        if (!xslpattern_is_nodetype(name, type))
+        {
+            free(name);
+            xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+            return NULL;
+        }
+
+        if (*type == NODE_TYPE_ATTRIBUTE)
+        {
+            *axis = AXIS_ATTRIBUTE;
+        }
+
+        *test = NODE_TEST_TYPE;
+
+        xpath_parse_skipspaces(ctxt);
+
+        /* Optional node name */
+        if (*type == NODE_TYPE_PI
+                || *type == NODE_TYPE_ATTRIBUTE
+                || *type == NODE_TYPE_ELEMENT)
+        {
+            free(name);
+            name = NULL;
+            if (*ctxt->cur != ')')
+            {
+                const WCHAR *p = ctxt->cur;
+                bool star = false;
+
+                name = xpath_parse_literal(ctxt);
+                if (!name)
+                {
+                    xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+                    return NULL;
+                }
+
+                /* XPath does not support such notation, it's equivalent to empty braces. */
+                if (!wcscmp(name, L"*"))
+                {
+                    star = true;
+                    free(name);
+                    name = NULL;
+                }
+
+                if (*type == NODE_TYPE_PI)
+                {
+                    *test = NODE_TEST_PI;
+                }
+                else if (!star)
+                {
+                    struct xpath_qname qname;
+
+                    *test = NODE_TEST_NAME;
+
+                    free(name);
+                    name = NULL;
+
+                    ctxt->cur = p;
+                    xpath_parse_next(ctxt);
+                    xpath_parse_qname(ctxt, &qname);
+                    xpath_parse_next(ctxt);
+
+                    *prefix = qname.prefix;
+                    name = qname.name;
+                }
+
+                xpath_parse_skipspaces(ctxt);
+            }
+        }
+        if (*ctxt->cur != ')')
+        {
+            free(*prefix);
+            free(name);
+            xpath_parser_context_set_error(ctxt, XPATH_UNCLOSED_ERROR);
+            return NULL;
+        }
+        xpath_parse_next(ctxt);
+        return name;
+    }
+
+    *test = NODE_TEST_NAME;
+    if (!blanks && *ctxt->cur == ':')
+    {
+        xpath_parse_next(ctxt);
+
+        *prefix = name;
+
+        if (xpath_parse_cmp(ctxt, L"*"))
+        {
+            *test = NODE_TEST_ALL;
+            return NULL;
+        }
+
+        name = xpath_parse_nc_name(ctxt);
+        if (!name)
+        {
+            xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+            return NULL;
+        }
+    }
+
+    return name;
+}
+
+/*
+ * Step ::= '@'? NodeTest Predicate*
+ *              | '.'
+ *              | '..'
+ */
+static void xslpattern_compile_step(struct xpath_parser_context *ctxt)
+{
+    WCHAR *prefix = NULL, *name = NULL;
+    enum xpath_test test = 0;
+    enum xpath_axis axis = 0;
+    enum xpath_type type = 0;
+    int op1;
+
+    if (ctxt->error != XPATH_EXPRESSION_OK)
+        return;
+
+    xpath_parse_skipspaces(ctxt);
+
+    if (xpath_parse_cmp(ctxt, L".."))
+    {
+        xpath_parse_skipspaces(ctxt);
+        xpath_push_long_step(ctxt, XPATH_OP_COLLECT, AXIS_PARENT, NODE_TEST_TYPE, NODE_TYPE_NODE, NULL, NULL);
+    }
+    else if (xpath_parse_cmp(ctxt, L"."))
+    {
+        xpath_parse_skipspaces(ctxt);
+    }
+    else
+    {
+        /* Peek ahead into NodeTest */
+        if (*ctxt->cur == '*')
+        {
+            axis = AXIS_CHILD;
+        }
+        else
+        {
+            axis = AXIS_CHILD;
+
+            name = xpath_parse_nc_name(ctxt);
+            if (!name && xpath_parse_cmp(ctxt, L"@"))
+            {
+                axis = AXIS_ATTRIBUTE;
+            }
+        }
+
+        if (ctxt->error != XPATH_EXPRESSION_OK)
+        {
+            free(name);
+            return;
+        }
+
+        name = xslpattern_compile_nodetest(ctxt, &axis, &test, &type, &prefix, name);
+        if (test == 0)
+            return;
+
+        op1 = ctxt->comp->last;
+        ctxt->comp->last = -1;
+
+        xpath_parse_skipspaces(ctxt);
+        while (*ctxt->cur == '[')
+        {
+            xslpattern_compile_predicate(ctxt, false);
+        }
+
+        if (!xpath_push_full_step(ctxt, XPATH_OP_COLLECT, op1, ctxt->comp->last, axis, test, type, prefix, name))
+        {
+            free(prefix);
+            free(name);
+        }
+    }
+}
+
+/*
+ *  RelativeLocationPath ::=   Step
+ *               | RelativeLocationPath '/' Step
+ *               | RelativeLocationPath '//' Step
+ *               | RelativeLocationPath '!' FunctionCall
+ */
+static void xslpattern_compile_relative_location_path(struct xpath_parser_context *ctxt)
+{
+    WCHAR *name;
+
+    xpath_parse_skipspaces(ctxt);
+    if (xpath_parse_cmp(ctxt, L"//"))
+    {
+        xpath_parse_skipspaces(ctxt);
+        xpath_push_long_step(ctxt, XPATH_OP_COLLECT, AXIS_DESCENDANT_OR_SELF, NODE_TEST_TYPE,
+                NODE_TYPE_NODE, NULL, NULL);
+    }
+    else if (xpath_parse_cmp(ctxt, L"/"))
+    {
+        xpath_parse_skipspaces(ctxt);
+    }
+    xslpattern_compile_step(ctxt);
+    if (ctxt->error != XPATH_EXPRESSION_OK)
+        return;
+
+    xpath_parse_skipspaces(ctxt);
+    while (ctxt->cur[0] == '/' || (ctxt->cur[0] == '!' && ctxt->cur[1] != '='))
+    {
+        if (xpath_parse_cmp(ctxt, L"//"))
+        {
+            xpath_parse_skipspaces(ctxt);
+            xpath_push_long_step(ctxt, XPATH_OP_COLLECT, AXIS_DESCENDANT_OR_SELF, NODE_TEST_TYPE,
+                    NODE_TYPE_NODE, NULL, NULL);
+            xslpattern_compile_step(ctxt);
+        }
+        else if (xpath_parse_cmp(ctxt, L"/"))
+        {
+            xpath_parse_skipspaces(ctxt);
+            xslpattern_compile_step(ctxt);
+        }
+        else if (ctxt->cur[0] == '!' && ctxt->cur[1] != '=')
+        {
+            xpath_parse_next(ctxt);
+            xpath_parse_skipspaces(ctxt);
+
+            /* For node type tests defer to Step, checking if looks like a functional notation. */
+            name = xpath_scan_name(ctxt);
+            if (xslpattern_is_nodetype(name, NULL))
+            {
+                const WCHAR *p = ctxt->cur + wcslen(name);
+
+                while (xml_is_space(*p))
+                    ++p;
+                if (*p == '(')
+                    xslpattern_compile_step(ctxt);
+                else
+                    xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+            }
+            else
+            {
+                xslpattern_compile_function_call(ctxt);
+            }
+            free(name);
+        }
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+/*
+ *  LocationPath ::=   RelativeLocationPath
+ *               | AbsoluteLocationPath
+ *  AbsoluteLocationPath ::=   '/' RelativeLocationPath?
+ *               | '//' RelativeLocationPath
+ */
+static void xslpattern_compile_location_path(struct xpath_parser_context *ctxt)
+{
+    xpath_parse_skipspaces(ctxt);
+    if (*ctxt->cur != '/')
+    {
+        xslpattern_compile_relative_location_path(ctxt);
+    }
+    else
+    {
+        while (*ctxt->cur == '/')
+        {
+            if (xpath_parse_cmp(ctxt, L"//"))
+            {
+                xpath_parse_skipspaces(ctxt);
+                xpath_push_long_step(ctxt, XPATH_OP_COLLECT, AXIS_DESCENDANT_OR_SELF, NODE_TEST_TYPE,
+                        NODE_TYPE_NODE, NULL, NULL);
+                xslpattern_compile_relative_location_path(ctxt);
+            }
+            else if (xpath_parse_cmp(ctxt, L"/"))
+            {
+                xpath_parse_skipspaces(ctxt);
+                if (*ctxt->cur &&
+                        ((is_ascii_letter(*ctxt->cur)) || (*ctxt->cur >= 0x80) ||
+                        (*ctxt->cur == '_') || (*ctxt->cur == '.') ||
+                        (*ctxt->cur == '@') || (*ctxt->cur == '*')))
+                {
+                    xslpattern_compile_relative_location_path(ctxt);
+                }
+            }
+            if (ctxt->error != XPATH_EXPRESSION_OK)
+                return;
+        }
+    }
+}
+
+/*
+ *  PathExpr ::=   LocationPath
+ *        | FilterExpr
+ *        | FilterExpr '/' RelativeLocationPath
+ *        | FilterExpr '//' RelativeLocationPath
+ */
+static void xslpattern_compile_path_expr(struct xpath_parser_context *ctxt)
+{
+    bool location_path = true;
+    WCHAR *name = NULL;
+
+    xpath_parse_skipspaces(ctxt);
+    if (*ctxt->cur == '$' || *ctxt->cur == '(' ||
+        is_ascii_digit(*ctxt->cur) ||
+        (*ctxt->cur == '\'') || *ctxt->cur == '"' ||
+        (*ctxt->cur == '.' && is_ascii_digit(ctxt->cur[1])))
+    {
+        location_path = false;
+    }
+    else if ((*ctxt->cur == '*')
+            || (*ctxt->cur == '/')
+            || (*ctxt->cur == '@')
+            || (*ctxt->cur == '.'))
+    {
+        location_path = true;
+    }
+    else
+    {
+        xpath_parse_skipspaces(ctxt);
+        name = xpath_scan_name(ctxt);
+        if (name)
+        {
+            int len = wcslen(name);
+
+            while (ctxt->cur[len])
+            {
+                if (!xml_is_space(ctxt->cur[len]))
+                    break;
+                ++len;
+            }
+
+            location_path = true;
+            if (ctxt->cur[len++] == '(')
+                location_path = xslpattern_is_nodetype(name, NULL);
+
+            if (!ctxt->cur[len])
+                location_path = true;
+            free(name);
+        }
+    }
+
+    if (location_path)
+    {
+        if (*ctxt->cur == '/')
+            xpath_push_leave_step(ctxt, XPATH_OP_ROOT, 0, 0);
+        else
+            xpath_push_leave_step(ctxt, XPATH_OP_NODE, 0, 0);
+        xslpattern_compile_location_path(ctxt);
+    }
+    else
+    {
+        xslpattern_compile_filter_expr(ctxt);
+
+        if (xpath_parse_cmp(ctxt, L"//"))
+        {
+            xpath_parse_skipspaces(ctxt);
+            xpath_push_long_step(ctxt, XPATH_OP_COLLECT, AXIS_DESCENDANT_OR_SELF, NODE_TEST_TYPE,
+                    NODE_TYPE_NODE, NULL, NULL);
+
+            xslpattern_compile_relative_location_path(ctxt);
+        }
+        else if (ctxt->cur[0] == '/')
+        {
+            xslpattern_compile_relative_location_path(ctxt);
+        }
+    }
+    xpath_parse_skipspaces(ctxt);
+}
+
+/*
+ *  UnionExpr ::=   PathExpr
+ *        | UnionExpr '|' PathExpr
+ */
+static void xslpattern_compile_union_expr(struct xpath_parser_context *ctxt)
+{
+    xslpattern_compile_path_expr(ctxt);
+    xpath_parse_skipspaces(ctxt);
+
+    while (ctxt->cur[0] == '|' && ctxt->cur[1] != '|')
+    {
+        int op1 = ctxt->comp->last;
+
+        xpath_push_leave_step(ctxt, XPATH_OP_NODE, 0, 0);
+
+        xpath_parse_next(ctxt);
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_path_expr(ctxt);
+
+        xpath_push_binary_step(ctxt, XPATH_OP_UNION, op1, ctxt->comp->last, 0, 0);
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+static unsigned int xslpattern_parse_relation_op(struct xpath_parser_context *ctxt)
+{
+    static const struct
+    {
+        const WCHAR *name;
+        int flags;
+    }
+    ops[] =
+    {
+        { L"<=", COMPOP_LE },
+        { L"<",  COMPOP_LT },
+        { L">=", COMPOP_GE },
+        { L">",  COMPOP_GT },
+
+        { L"$le$", COMPOP_LE },
+        { L"$lt$", COMPOP_LT },
+        { L"$ge$", COMPOP_GE },
+        { L"$gt$", COMPOP_GT },
+
+        { L"$ile$", COMPOP_LE | COMPOP_I },
+        { L"$ilt$", COMPOP_LT | COMPOP_I },
+        { L"$ige$", COMPOP_GE | COMPOP_I },
+        { L"$igt$", COMPOP_GT | COMPOP_I },
+    };
+
+    for (int i = 0; i < ARRAYSIZE(ops); ++i)
+    {
+        if (xpath_parse_cmp(ctxt, ops[i].name))
+            return ops[i].flags;
+    }
+
+    return COMPOP_NONE;
+}
+
+static bool xslpattern_parse_compare_modifiers(struct xpath_parser_context *ctxt)
+{
+    if (xpath_parse_cmp(ctxt, L"$all$"))
+        return true;
+
+    /* Ignored */
+    xpath_parse_cmp(ctxt, L"$any$");
+
+    return false;
+}
+
+/*
+ *  RelationalExpr ::= ($any$ | $all$)?  UnionExpr
+ *          | RelationalExpr ('<' | '$lt$') UnionExpr
+ *          | RelationalExpr ('>' | '$gt$') UnionExpr
+ *          | RelationalExpr ('<=' | '$le$') UnionExpr
+ *          | RelationalExpr ('>=' | '$ge$') UnionExpr
+ *          | RelationalExpr '$ilt$' UnionExpr
+ *          | RelationalExpr '$igt$' UnionExpr
+ *          | RelationalExpr '$ile$' UnionExpr
+ *          | RelationalExpr '$ige$' UnionExpr
+ *
+ */
+static void xslpattern_compile_relational_expr(struct xpath_parser_context *ctxt)
+{
+    unsigned int op;
+    bool all;
+
+    all = xslpattern_parse_compare_modifiers(ctxt);
+    xslpattern_compile_union_expr(ctxt);
+    if (all)
+        xpath_push_unary_step(ctxt, XPATH_OP_ALL, ctxt->comp->last, 0, 0);
+    xpath_parse_skipspaces(ctxt);
+
+    if ((op = xslpattern_parse_relation_op(ctxt)) != COMPOP_NONE)
+    {
+        int op1 = ctxt->comp->last;
+
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_union_expr(ctxt);
+        if (op & COMPOP_I)
+            xpath_push_binary_step(ctxt, XPATH_OP_ICMP, op1, ctxt->comp->last, op & COMPOP_LT, !(op & COMPOP_NOTSTRICT));
+        else
+            xpath_push_binary_step(ctxt, XPATH_OP_CMP, op1, ctxt->comp->last, op & COMPOP_LT, !(op & COMPOP_NOTSTRICT));
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+static unsigned int xslpattern_parse_eq_op(struct xpath_parser_context *ctxt)
+{
+    static const struct
+    {
+        const WCHAR *name;
+        int flags;
+    }
+    ops[] =
+    {
+        { L"=",  COMPOP_EQ },
+        { L"!=", COMPOP_NE },
+
+        { L"$eq$", COMPOP_EQ },
+        { L"$ne$", COMPOP_NE },
+
+        { L"$ieq$", COMPOP_EQ | COMPOP_I },
+        { L"$ine$", COMPOP_NE | COMPOP_I },
+    };
+
+    for (int i = 0; i < ARRAYSIZE(ops); ++i)
+    {
+        if (xpath_parse_cmp(ctxt, ops[i].name))
+            return ops[i].flags;
+    }
+
+    return COMPOP_NONE;
+}
+
+/*
+ *  EqualityExpr ::=   RelationalExpr
+ *          | EqualityExpr ('=' | '$eq') RelationalExpr
+ *          | EqualityExpr ('!=' | '$ne$') RelationalExpr
+ *          | EqualityExpr '$ine$' RelationalExpr
+ *          | EqualityExpr '$ieq$' RelationalExpr
+ */
+static void xslpattern_compile_equality_expr(struct xpath_parser_context *ctxt)
+{
+    unsigned int op;
+    bool all;
+
+    all = xslpattern_parse_compare_modifiers(ctxt);
+    xslpattern_compile_relational_expr(ctxt);
+    if (all)
+        xpath_push_unary_step(ctxt, XPATH_OP_ALL, ctxt->comp->last, 0, 0);
+    xpath_parse_skipspaces(ctxt);
+
+    if ((op = xslpattern_parse_eq_op(ctxt)) != COMPOP_NONE)
+    {
+        int op1 = ctxt->comp->last;
+
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_relational_expr(ctxt);
+        if (op & COMPOP_I)
+            xpath_push_binary_step(ctxt, XPATH_OP_IEQUAL, op1, ctxt->comp->last, op & COMPOP_EQ, 0);
+        else
+            xpath_push_binary_step(ctxt, XPATH_OP_EQUAL, op1, ctxt->comp->last, op & COMPOP_EQ, 0);
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+/*
+ *  NegationExpr ::= EqualityExpr
+ *          | '$not$' NegationExpr
+ *          | not( NegationExpr )
+ */
+static void xslpattern_compile_negation_expr(struct xpath_parser_context *ctxt)
+{
+    bool neg = false, functional = false;
+
+    xpath_parse_skipspaces(ctxt);
+    if (xpath_parse_cmp(ctxt, L"$not$"))
+    {
+        xpath_parse_skipspaces(ctxt);
+        neg = true;
+    }
+    else if (xpath_parse_cmp(ctxt, L"not"))
+    {
+        xpath_parse_skipspaces(ctxt);
+        if (!xpath_parse_cmp(ctxt, L"("))
+            return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+        neg = functional = true;
+    }
+
+    xslpattern_compile_equality_expr(ctxt);
+
+    if (functional)
+    {
+        xpath_parse_skipspaces(ctxt);
+        if (!xpath_parse_cmp(ctxt, L")"))
+            return xpath_parser_context_set_error(ctxt, XPATH_EXPR_ERROR);
+    }
+
+    if (neg)
+        xpath_push_unary_step(ctxt, XPATH_OP_NOT, ctxt->comp->last, 0, 0);
+}
+
+/*
+ *  AndExpr ::= NegationExpr
+ *          | NegationExpr ('and' | '$and$' | '&&') AndExpr
+ */
+static void xslpattern_compile_and_expr(struct xpath_parser_context *ctxt)
+{
+    xslpattern_compile_negation_expr(ctxt);
+    xpath_parse_skipspaces(ctxt);
+    while (xpath_parse_cmp(ctxt, L"and")
+            || xpath_parse_cmp(ctxt, L"$and$")
+            || xpath_parse_cmp(ctxt, L"&&"))
+    {
+        int op1 = ctxt->comp->last;
+
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_negation_expr(ctxt);
+        xpath_push_binary_step(ctxt, XPATH_OP_AND, op1, ctxt->comp->last, 0, 0);
+        xpath_parse_skipspaces(ctxt);
+    }
+}
+
+/*
+ *  Expr ::=   OrExpr
+ *  OrExpr ::=   AndExpr
+ *            | OrExpr ('or' | '$or$' | '||')  AndExpr
+ */
+static void xslpattern_compile_expr(struct xpath_parser_context *ctxt, bool sort)
+{
+    struct xpath_context *xpctxt = ctxt->context;
+
+    if (ctxt->error != XPATH_EXPRESSION_OK)
+        return;
+
+    if (xpctxt)
+    {
+        if (xpctxt->depth >= XPATH_MAX_RECURSION_DEPTH)
+            return xpath_parser_context_set_error(ctxt, XPATH_RECURSION_LIMIT_EXCEEDED);
+
+        xpctxt->depth += 10;
+    }
+
+    xslpattern_compile_and_expr(ctxt);
+
+    xpath_parse_skipspaces(ctxt);
+    while (xpath_parse_cmp(ctxt, L"or")
+            || xpath_parse_cmp(ctxt, L"$or$")
+            || xpath_parse_cmp(ctxt, L"||"))
+    {
+        int op1 = ctxt->comp->last;
+
+        xpath_parse_skipspaces(ctxt);
+        xslpattern_compile_and_expr(ctxt);
+        xpath_push_binary_step(ctxt, XPATH_OP_OR, op1, ctxt->comp->last, 0, 0);
+        xpath_parse_skipspaces(ctxt);
+    }
+
+    if (sort && (ctxt->comp->steps.values[ctxt->comp->last].op != XPATH_OP_VALUE))
+    {
+        /* more ops could be optimized too */
+        /*
+        * This is the main place to eliminate sorting for
+        * operations which don't require a sorted node-set.
+        * E.g. count().
+        */
+        xpath_push_unary_step(ctxt, XPATH_OP_SORT, ctxt->comp->last, 0, 0);
+    }
+
+    if (xpctxt)
+        xpctxt->depth -= 10;
+}
 
 /* Indexing is 0-based in XSLPattern */
 static void xpath_builtin_index(struct xpath_parser_context *ctxt, int nargs)
@@ -6622,103 +7630,7 @@ static void xpath_builtin_node_type(struct xpath_parser_context *ctxt, int nargs
     xpath_push_value(ctxt, xpath_new_number(ctxt, ctxt->context->node->type));
 }
 
-static void xpath_builtin_ieq(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) == 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_builtin_ineq(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) != 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_builtin_ilt(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) < 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_builtin_ileq(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) <= 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_builtin_igt(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) > 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_builtin_igeq(struct xpath_parser_context *ctxt, int nargs)
-{
-    WCHAR *arg1, *arg2;
-
-    if (!xpath_builtin_check_stack(ctxt, nargs, 2))
-        return;
-
-    arg2 = xpath_pop_string(ctxt);
-    arg1 = xpath_pop_string(ctxt);
-
-    xpath_push_value(ctxt, xpath_new_boolean(ctxt, wcsicmp(arg1, arg2) >= 0));
-
-    free(arg1);
-    free(arg2);
-}
-
-static void xpath_register_all_functions(struct xpath_context *ctxt)
+static void xpath_register_xpath_functions(struct xpath_context *ctxt)
 {
     xpath_register_func(ctxt, L"boolean", xpath_builtin_boolean);
     xpath_register_func(ctxt, L"ceiling", xpath_builtin_ceiling);
@@ -6754,12 +7666,6 @@ static void xpath_register_xslpattern_functions(struct xpath_context *ctxt)
     xpath_register_func(ctxt, L"index", xpath_builtin_index);
     xpath_register_func(ctxt, L"end", xpath_builtin_end);
     xpath_register_func(ctxt, L"nodeType", xpath_builtin_node_type);
-    xpath_register_func(ctxt, L"OP_IEq", xpath_builtin_ieq);
-    xpath_register_func(ctxt, L"OP_INEq", xpath_builtin_ineq);
-    xpath_register_func(ctxt, L"OP_ILt", xpath_builtin_ilt);
-    xpath_register_func(ctxt, L"OP_ILEq", xpath_builtin_ileq);
-    xpath_register_func(ctxt, L"OP_IGt", xpath_builtin_igt);
-    xpath_register_func(ctxt, L"OP_IGEq", xpath_builtin_igeq);
 }
 
 struct xpath_context * xpath_create_context(bool xpath, struct domnode *node)
@@ -6780,8 +7686,9 @@ struct xpath_context * xpath_create_context(bool xpath, struct domnode *node)
     ret->contextSize = -1;
     ret->proximityPosition = -1;
 
-    xpath_register_all_functions(ret);
-    if (!xpath)
+    if (xpath)
+        xpath_register_xpath_functions(ret);
+    else
         xpath_register_xslpattern_functions(ret);
 
     return ret;

@@ -5345,6 +5345,17 @@ static void test_XPath(void)
         "    <elem min=\"-10\" max=\"-10\" />"
         "</root>";
 
+    static const char pi[] =
+        "<?xml version='1.0' encoding='utf-8'?>"
+        "<root>"
+        "    <elem>"
+        "      <?pi ?>"
+        "    </elem>"
+        "    <elem>"
+        "      <?pi2 ?>"
+        "    </elem>"
+        "</root>";
+
     static const struct query_test node_value_cmp_test[] =
     {
         { "//elem[@min <= 0 and @max >= 0]", "E1.E2.D1 E3.E2.D1" },
@@ -5358,6 +5369,15 @@ static void test_XPath(void)
         { "//elem[@a <= \"c\"]", "" },
         { "//elem[@a = \"c\"]", "E3.E2.D1" },
         { "//elem[@a != 0]", "E1.E2.D1 E2.E2.D1 E3.E2.D1" },
+        { NULL },
+    };
+
+    static const struct query_test pi_test[] =
+    {
+        { "//elem/processing-instruction()", "P1.E1.E2.D1 P1.E2.E2.D1" },
+        { "//elem/processing-instruction('pi')", "P1.E1.E2.D1" },
+        { "//elem/processing-instruction(\"pi2\")", "P1.E2.E2.D1" },
+        { "//elem/processing-instruction(\'*\')", "" },
         { NULL },
     };
 
@@ -5382,9 +5402,11 @@ static void test_XPath(void)
     if (!is_clsid_supported(&CLSID_DOMDocument2, &IID_IXMLDOMDocument2)) return;
     doc = create_document(&IID_IXMLDOMDocument2);
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(node_value_cmp), NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* switch to XPath */
     hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(node_value_cmp), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     for (xptest = node_value_cmp_test; xptest->query; xptest++)
@@ -5399,13 +5421,24 @@ static void test_XPath(void)
         winetest_pop_context();
     }
 
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(pi), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (xptest = pi_test; xptest->query; xptest++)
+    {
+        winetest_push_context("Test %s", xptest->query);
+
+        hr = IXMLDOMDocument2_selectNodes(doc, _bstr_(xptest->query), &list);
+        test_query_result(xptest, list, hr);
+        if (list)
+            IXMLDOMNodeList_Release(list);
+
+        winetest_pop_context();
+    }
+
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
-
-    /* switch to XPath */
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* some simple queries*/
     EXPECT_REF(doc, 1);
@@ -7381,9 +7414,9 @@ static void test_default_properties(void)
 static const struct query_test xslpattern_test[] =
 {
     { "root//elem[$not$ 0]", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1", false, true },
-    { "root//elem[$any$ 0]", "E1.E2.D1", true },
-    { "root//elem[$all$ 0]", "E1.E2.D1", false, true },
-    { "root//elem[$all$ 1]", "E2.E2.D1", false, true },
+    { "root//elem[$any$ 0]", "E1.E2.D1" },
+    { "root//elem[$all$ 0]", "E1.E2.D1" },
+    { "root//elem[$all$ 1]", "E2.E2.D1" },
     { "root//(elem)[0]", "E1.E2.D1", false, true},
     { "root//elem[0]", "E1.E2.D1" },
     { "root//elem[0.0]", "E1.E2.D1" },
@@ -7425,9 +7458,6 @@ static const struct query_test xslpattern_test[] =
     { "root//elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root//elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[0]", "E1.E2.D1" },
-#if 0
-//    { "root/elem[-1]", "" },
-#endif
     { "(root/elem[0] | root/elem[1])", "E1.E2.D1 E2.E2.D1" },
     { "root/elem[index()=1]", "E2.E2.D1" },
     { "root/elem[index() $eq$ 1]", "E2.E2.D1" },
@@ -7469,18 +7499,19 @@ static const struct query_test xslpattern_test[] =
     { "root/elem[@*]", "E2.E2.D1 E3.E2.D1", true },
     { "root/elem[(@*)]", "E2.E2.D1 E3.E2.D1", true },
     { "root/elem[@ *]", "E2.E2.D1 E3.E2.D1", true },
-    { "//@foo:*", "A'foo:b'.E2.D1", false, true },
+    { "//@foo:*", "A'foo:b'.E2.D1", true },
     { "//@xmlns:*", "A'xmlns:foo'.E2.D1 A'xmlns:foo'.E5.E1.E2.D1 "
             "A'xmlns:bar'.E5.E1.E2.D1 A'xmlns'.E1.E5.E1.E2.D1 "
-            "A'xmlns'.E2.E5.E1.E2.D1 A'xmlns'.E3.E2.D1", false, true },
+            "A'xmlns'.E2.E5.E1.E2.D1 A'xmlns'.E3.E2.D1", true },
 
-    /* No unary '-' */
-    { "root/elem[-nodeType()]", NULL, false, true },
+    /* No unary '-' in expression, but allowed for literals. */
+    { "root/elem[-nodeType()]", NULL },
+    { "root/elem[-1]", "", false, true },
+
     { "root/(elem)[d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1", false, true },
 
-    /* mismatch between zero-based index and proximity */
+    /* Predicate at different levels requiring index fixup vs XPath */
     { "root//elem[0][0]", "E1.E2.D1" },
-
     { NULL }
 };
 
@@ -7488,7 +7519,7 @@ static const struct query_test xslpattern_test_no_ns[] =
 {
     /* prefixes don't need to be registered, you may use them as they are in the doc */
     { "//bar:x", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1" },
-    { "//bar:*", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1", false, true },
+    { "//bar:*", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1", true },
     /* prefixes must be explicitly specified in the name */
     { "//foo:elem", "" },
     { "//foo:c", "E3.E4.E2.D1" },
@@ -7504,18 +7535,18 @@ static const struct query_test xslpattern_test_func[] =
     { "root/attribute('depth')", "A'depth'.E3.D1" },
     { "root/attribute('depth')", "A'depth'.E3.D1" },
     { "//x/attribute()", "A'id'.E3.E3.D1 A'depth'.E3.E3.D1" },
-    { "//x/attribute('*')", "A'id'.E3.E3.D1 A'depth'.E3.E3.D1", true },
+    { "//x/attribute('*')", "A'id'.E3.E3.D1 A'depth'.E3.E3.D1" },
     { "//x//attribute(id)", NULL },
     { "//x//attribute('id')", "A'id'.E3.E3.D1 A'id'.E4.E3.E3.D1 A'id'.E5.E3.E3.D1 A'id'.E6.E3.E3.D1" },
     { "comment()", "C2.D1" },
     { "//comment()", "C2.D1 C1.E3.D1 C2.E3.E3.D1 C2.E5.E3.D1" },
     { "element()", "E3.D1" },
     { "root/y/element()", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1" },
-    { "root/y/element('*')", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", true },
+    { "root/y/element('*')", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1" },
     { "root/(y)/element()", "E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", false, true },
     { "//element(a)", NULL },
     { "//element('a')", "E4.E3.E3.D1 E4.E5.E3.D1" },
-    { "//element('*')", "E3.D1 E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1 E5.E3.D1 E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1", true },
+    { "//element('*')", "E3.D1 E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1 E5.E3.D1 E4.E5.E3.D1 E5.E5.E3.D1 E6.E5.E3.D1" },
     { "node()", "P1.D1 C2.D1 E3.D1" },
     { "//x/node()", "P1.E3.E3.D1 C2.E3.E3.D1 T3.E3.E3.D1 E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1" },
     { "//x/node()[nodeType()=1]", "E4.E3.E3.D1 E5.E3.E3.D1 E6.E3.E3.D1" },
@@ -7527,13 +7558,13 @@ static const struct query_test xslpattern_test_func[] =
     { "//x/node()[nodeType()='8.1']", "" },
     { "//x/node()[nodeName()='a']", "E4.E3.E3.D1", false, true },
     { "pi()", "P1.D1" },
-    { "pi('*')", "P1.D1", false, true },
-    { "pi('xml')", "P1.D1", false, true },
-    { "pi( \"xml\" )", "P1.D1", false, true },
+    { "pi('*')", "P1.D1" },
+    { "pi('xml')", "P1.D1" },
+    { "pi( \"xml\" )", "P1.D1" },
     { "//y/pi()", "P1.E5.E3.D1" },
     { "root/textnode()", "T2.E3.D1 CD4.E3.D1 CD6.E3.D1" },
     { "root/text()", "T2.E3.D1 CD4.E3.D1 CD6.E3.D1" },
-    { "root/cdata()", "CD4.E3.D1 CD6.E3.D1", false, true },
+    { "root/cdata()", "CD4.E3.D1 CD6.E3.D1" },
     { "root/element()/textnode()", "T3.E3.E3.D1 T3.E5.E3.D1" },
     { NULL }
 };

@@ -44,6 +44,4 @@ SOURCES = \
 	xmlparser.c \
 	xmlparser.idl \
 	xmlview.c \
-	xpath.c \
-	xslpattern.l \
-	xslpattern.y
+	xpath.c

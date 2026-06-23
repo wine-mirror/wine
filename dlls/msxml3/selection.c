@@ -52,8 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
-
 typedef struct
 {
     IEnumVARIANT IEnumVARIANT_iface;
@@ -598,25 +596,6 @@ static dispex_static_data_t domselection_dispex =
     domselection_iface_tids
 };
 
-static void xmlRegisterNamespaces(struct domnode *node, xmlXPathContextPtr ctxt)
-{
-    struct domnode *doc = node->owner ? node->owner : node;
-    const struct xpath_namespace *ns;
-    xmlChar *p, *uri;
-
-    LIST_FOR_EACH_ENTRY(ns, &doc->properties->namespaces.entries, struct xpath_namespace, entry)
-    {
-        if (*ns->prefix)
-        {
-            p = xmlchar_from_wchar(ns->prefix);
-            uri = xmlchar_from_wchar(ns->uri);
-            xmlXPathRegisterNs(ctxt, p, uri);
-            free(uri);
-            free(p);
-        }
-    }
-}
-
 static HRESULT select_nodes(struct domnode *node, const WCHAR *query, bool xpath, struct selected_list *list)
 {
     struct xpath_object *result;
@@ -625,31 +604,7 @@ static HRESULT select_nodes(struct domnode *node, const WCHAR *query, bool xpath
 
     ctxt = xpath_create_context(xpath, node);
 
-    if (xpath)
-    {
-        result = xpath_eval(query, ctxt);
-    }
-    else
-    {
-        xmlChar *xmlquery, *pattern_query;
-        xmlXPathContextPtr _ctxt;
-        BSTR _query;
-
-        xmlquery = xmlchar_from_wchar(query);
-        _ctxt = xmlXPathNewContext(NULL);
-        xmlRegisterNamespaces(node, _ctxt);
-
-        pattern_query = XSLPattern_to_XPath(_ctxt, xmlquery);
-        _query = bstr_from_xmlChar(pattern_query);
-        xmlFree(pattern_query);
-
-        result = xpath_eval(_query, ctxt);
-
-        xmlXPathFreeContext(_ctxt);
-        SysFreeString(_query);
-        free(xmlquery);
-    }
-
+    result = xpath_eval(query, ctxt);
     if (result && result->type == _XPATH_NODESET)
     {
         list->count = result->nodesetval ? result->nodesetval->count : 0;

@@ -42,10 +42,7 @@ struct xpath_object
     int boolval;
     double floatval;
     WCHAR *stringval;
-    void *user;
-    int index;
-    void *user2;
-    int index2;
+    bool all;
 };
 
 struct xpath_namespace
