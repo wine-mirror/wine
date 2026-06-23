@@ -843,9 +843,6 @@ static void test_math_errors(void)
     __setusermatherr(matherr_callback);
     module = GetModuleHandleW(L"ucrtbase.dll");
 
-    /* necessary so that exp(1e100)==INFINITY on glibc, we can remove this if we change our implementation */
-    fesetround(FE_TONEAREST);
-
     for(i = 0; i < ARRAY_SIZE(testsd); i++) {
         p_funcd = (void*)GetProcAddress(module, testsd[i].func);
         errno = -1;
