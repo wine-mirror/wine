@@ -29,6 +29,7 @@
 DECL_FUNCPTR(AlpcGetHeaderSize)
 DECL_FUNCPTR(AlpcGetMessageAttribute)
 DECL_FUNCPTR(AlpcInitializeMessageAttribute)
+DECL_FUNCPTR(NtAlpcCreatePort)
 
 #undef DECL_FUNCPTR
 
@@ -44,8 +45,25 @@ static void init_functions(void)
     LOAD_FUNCPTR(AlpcGetHeaderSize)
     LOAD_FUNCPTR(AlpcGetMessageAttribute)
     LOAD_FUNCPTR(AlpcInitializeMessageAttribute)
+    LOAD_FUNCPTR(NtAlpcCreatePort)
 
 #undef LOAD_FUNCPTR
+}
+
+static void init_port_attr(ALPC_PORT_ATTRIBUTES *attr, ULONG flags, SIZE_T max_msg_length)
+{
+    attr->Flags = flags;
+    attr->SecurityQos.Length = sizeof(attr->SecurityQos);
+    attr->SecurityQos.ImpersonationLevel = SecurityIdentification;
+    attr->SecurityQos.ContextTrackingMode = SECURITY_STATIC_TRACKING;
+    attr->SecurityQos.EffectiveOnly = FALSE;
+    attr->MaxMessageLength = max_msg_length;
+    attr->MemoryBandwidth = 512;
+    attr->MaxPoolUsage = 0xffffffff;
+    attr->MaxSectionSize = 0xffffffff;
+    attr->MaxViewSize = 0xffffffff;
+    attr->MaxTotalSectionSize = 0xffffffff;
+    attr->DupObjectTypes = (flags & ALPC_PORTFLG_ALLOW_DUP_OBJECT) ? 0xffffffff : 0;
 }
 
 static void test_AlpcGetHeaderSize(void)
@@ -342,6 +360,120 @@ static void test_AlpcInitializeMessageAttribute(void)
     }
 }
 
+static void test_NtAlpcCreatePort(void)
+{
+    UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\test_NtAlpcCreatePort_port");
+    OBJECT_NAME_INFORMATION *name_info;
+    OBJECT_TYPE_INFORMATION *type_info;
+    ALPC_PORT_ATTRIBUTES port_attr;
+    OBJECT_BASIC_INFORMATION info;
+    unsigned char buffer[1024];
+    HANDLE handle, handle2;
+    OBJECT_ATTRIBUTES attr;
+    DWORD size, flags;
+    NTSTATUS status;
+    ULONG flag;
+    BOOL ret;
+
+    if (!pNtAlpcCreatePort)
+    {
+        todo_wine
+        win_skip("NtAlpcCreatePort is unavailable.\n");
+        return;
+    }
+
+    InitializeObjectAttributes(&attr, &name, 0, NULL, NULL);
+    init_port_attr(&port_attr, 0, 1024);
+
+    /* Check parameters */
+    status = pNtAlpcCreatePort(NULL, &attr, &port_attr);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAlpcCreatePort(&handle, NULL, &port_attr);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ret = GetHandleInformation(handle, &flags);
+    ok(ret, "GetHandleInformation failed, error %ld.\n", GetLastError());
+    CloseHandle(handle);
+
+    status = pNtAlpcCreatePort(&handle, &attr, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ret = GetHandleInformation(handle, &flags);
+    ok(ret, "GetHandleInformation failed, error %ld.\n", GetLastError());
+    CloseHandle(handle);
+
+    status = pNtAlpcCreatePort(&handle, NULL, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ret = GetHandleInformation(handle, &flags);
+    ok(ret, "GetHandleInformation failed, error %ld.\n", GetLastError());
+    CloseHandle(handle);
+
+    /* Normal calls */
+    status = pNtAlpcCreatePort(&handle, &attr, &port_attr);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    /* Check handle */
+    ret = GetHandleInformation(handle, &flags);
+    ok(ret, "GetHandleInformation failed, error %ld.\n", GetLastError());
+
+    /* Check object attributes and granted access */
+    status = NtQueryObject(handle, ObjectBasicInformation, &info, sizeof(info), NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ok(info.Attributes == 0, "Got attributes %#lx\n", info.Attributes);
+    ok(info.GrantedAccess == (STANDARD_RIGHTS_ALL | 0x1), "Got access %#lx\n", info.GrantedAccess);
+
+    /* Check object name */
+    status = NtQueryObject(handle, ObjectNameInformation, buffer, sizeof(buffer), &size);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    name_info = (OBJECT_NAME_INFORMATION *)buffer;
+    ok(!wcsicmp(name_info->Name.Buffer, name.Buffer), "Got unexpected name %s.\n",
+       debugstr_w(name_info->Name.Buffer));
+
+    /* Check object type */
+    status = NtQueryObject(handle, ObjectTypeInformation, buffer, sizeof(buffer), &size);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    type_info = (OBJECT_TYPE_INFORMATION *)buffer;
+    ok(!wcscmp(type_info->TypeName.Buffer, L"ALPC Port"), "Got unexpected type %s.\n",
+       debugstr_w(type_info->TypeName.Buffer));
+
+    /* Duplicate name */
+    status = pNtAlpcCreatePort(&handle2, &attr, &port_attr);
+    ok(status == STATUS_OBJECT_NAME_COLLISION, "Got unexpected status %#lx.\n", status);
+
+    CloseHandle(handle);
+
+    /* Test handle validity after deletion */
+    ret = GetHandleInformation(handle, &flags);
+    ok(!ret, "GetHandleInformation succeeded.\n");
+
+    /* Test Flags */
+    for (flag = 0x1; flag != 0; flag = flag << 1)
+    {
+        winetest_push_context("%#lx", flag);
+
+        port_attr.Flags = flag;
+        status = pNtAlpcCreatePort(&handle, &attr, &port_attr);
+        if (flag == 0x100000)
+        {
+            ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", status);
+            winetest_pop_context();
+            continue;
+        }
+        else
+        {
+            ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        }
+        ret = GetHandleInformation(handle, &flags);
+        ok(ret, "GetHandleInformation failed, error %ld.\n", GetLastError());
+        status = NtQueryObject(handle, ObjectBasicInformation, &info, sizeof(info), NULL);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        ok(info.Attributes == 0, "Got attributes %#lx\n", info.Attributes);
+        ok(info.GrantedAccess == (STANDARD_RIGHTS_ALL | 0x1), "Got access %#lx\n", info.GrantedAccess);
+
+        CloseHandle(handle);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(alpc)
 {
     init_functions();
@@ -349,4 +481,5 @@ START_TEST(alpc)
     test_AlpcGetHeaderSize();
     test_AlpcGetMessageAttribute();
     test_AlpcInitializeMessageAttribute();
+    test_NtAlpcCreatePort();
 }
