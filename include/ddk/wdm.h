@@ -477,6 +477,26 @@ typedef struct _DEVICE_OBJECT {
 } DEVICE_OBJECT;
 typedef struct _DEVICE_OBJECT *PDEVICE_OBJECT;
 
+struct _DEVICE_OBJECT_POWER_EXTENSION;
+typedef struct _DEVOBJ_EXTENSION {
+  CSHORT Type;
+  USHORT Size;
+  PDEVICE_OBJECT DeviceObject;
+  ULONG PowerFlags;
+  struct _DEVICE_OBJECT_POWER_EXTENSION *Dope;
+  ULONG ExtensionFlags;
+  PVOID DeviceNode;
+  PDEVICE_OBJECT AttachedTo;
+  LONG StartIoCount;
+  LONG StartIoKey;
+  ULONG StartIoFlags;
+  PVPB Vpb;
+  PVOID DependencyNode;
+  PVOID InterruptContext;
+  LONG InterruptCount;
+  PVOID VerifierContext;
+} DEVOBJ_EXTENSION, *PDEVOBJ_EXTENSION;
+
 typedef struct _DEVICE_RELATIONS {
   ULONG Count;
   PDEVICE_OBJECT Objects[1];
@@ -909,7 +929,10 @@ typedef enum {
   DevicePropertyAddress,
   DevicePropertyUINumber,
   DevicePropertyInstallState,
-  DevicePropertyRemovalPolicy
+  DevicePropertyRemovalPolicy,
+  DevicePropertyResourceRequirements,
+  DevicePropertyAllocatedResources,
+  DevicePropertyContainerID,
 } DEVICE_REGISTRY_PROPERTY;
 
 typedef enum _DEVICE_TEXT_TYPE {
