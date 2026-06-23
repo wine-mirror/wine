@@ -7499,6 +7499,8 @@ static const struct query_test xslpattern_test[] =
     { "root/elem[@*]", "E2.E2.D1 E3.E2.D1", true },
     { "root/elem[(@*)]", "E2.E2.D1 E3.E2.D1", true },
     { "root/elem[@ *]", "E2.E2.D1 E3.E2.D1", true },
+    { "root//c[@type]", "E3.E2.E2.D1" },
+    { "root//c[(@type)]", "E3.E2.E2.D1" },
     { "//@foo:*", "A'foo:b'.E2.D1", true },
     { "//@xmlns:*", "A'xmlns:foo'.E2.D1 A'xmlns:foo'.E5.E1.E2.D1 "
             "A'xmlns:bar'.E5.E1.E2.D1 A'xmlns'.E1.E5.E1.E2.D1 "
