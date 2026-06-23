@@ -126,7 +126,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
     INPUT input = {0};
     RECT *window_rect;
     HWND hwnd;
-    POINT screen;
+    POINT screen = { wl_fixed_to_double(sx), wl_fixed_to_double(sy) };
     struct wayland_surface *surface;
     struct wayland_win_data *data;
 
@@ -140,10 +140,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
 
     window_rect = &surface->window.rect;
 
-    wayland_surface_coords_to_window(surface,
-                                     wl_fixed_to_double(sx),
-                                     wl_fixed_to_double(sy),
-                                     (int *)&screen.x, (int *)&screen.y);
+    screen = map_point_from_surface(surface, screen);
     screen.x += window_rect->left;
     screen.y += window_rect->top;
     /* Sometimes, due to rounding, we may end up with pointer coordinates

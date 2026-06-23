@@ -1136,16 +1136,29 @@ void wayland_surface_coords_from_window(struct wayland_surface *surface,
 }
 
 /**********************************************************************
- *          wayland_surface_coords_to_window
+ *          map_rect_from_surface
  *
  * Converts the surface-local coordinates to window (logical) coordinates.
  */
-void wayland_surface_coords_to_window(struct wayland_surface *surface,
-                                      double surface_x, double surface_y,
-                                      int *window_x, int *window_y)
+RECT map_rect_from_surface(struct wayland_surface *surface, RECT rect)
 {
-    *window_x = round(surface_x * surface->window.scale);
-    *window_y = round(surface_y * surface->window.scale);
+    rect.left = round(rect.left * surface->window.scale);
+    rect.top  = round(rect.top * surface->window.scale);
+    rect.right = round(rect.right * surface->window.scale);
+    rect.bottom  = round(rect.bottom * surface->window.scale);
+    return rect;
+}
+
+/**********************************************************************
+ *          map_point_from_surface
+ *
+ * Converts the surface-local coordinates to window (logical) coordinates.
+ */
+POINT map_point_from_surface(struct wayland_surface *surface, POINT point)
+{
+    point.x = round(point.x * surface->window.scale);
+    point.y = round(point.y * surface->window.scale);
+    return point;
 }
 
 static void wayland_client_surface_destroy(struct client_surface *client)

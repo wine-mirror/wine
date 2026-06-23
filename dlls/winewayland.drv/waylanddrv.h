@@ -337,9 +337,8 @@ BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
 void wayland_surface_coords_from_window(struct wayland_surface *surface,
                                         int window_x, int window_y,
                                         int *surface_x, int *surface_y);
-void wayland_surface_coords_to_window(struct wayland_surface *surface,
-                                      double surface_x, double surface_y,
-                                      int *window_x, int *window_y);
+RECT map_rect_from_surface(struct wayland_surface *surface, RECT rect);
+POINT map_point_from_surface(struct wayland_surface *surface, POINT point);
 void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);

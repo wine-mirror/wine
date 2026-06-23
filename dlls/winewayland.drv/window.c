@@ -495,7 +495,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 static void wayland_configure_window(HWND hwnd)
 {
     struct wayland_surface *surface;
-    INT width, height, window_width, window_height;
+    INT width, height;
     INT window_surf_width, window_surf_height;
     UINT flags = 0;
     uint32_t state;
@@ -582,9 +582,6 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_NOSIZE;
     }
 
-    wayland_surface_coords_to_window(surface, width, height,
-                                     &window_width, &window_height);
-
     /* Detect a restore from an application-initiated minimize: the last
      * requested config placed the window at the offscreen sentinel position
      * with WS_MINIMIZE, and the compositor is now sending a configure. Ack
@@ -607,7 +604,8 @@ static void wayland_configure_window(HWND hwnd)
         return;
     }
 
-    SetRect(&rect, 0, 0, window_width, window_height);
+    SetRect(&rect, 0, 0, width, height);
+    rect = map_rect_from_surface(surface, rect);
     OffsetRect(&rect, data->rects.window.left, data->rects.window.top);
 
     wayland_win_data_release(data);
@@ -618,7 +616,7 @@ static void wayland_configure_window(HWND hwnd)
     if (needs_exit_size_move) send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
     flags |= SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
-    if (window_width == 0 || window_height == 0) flags |= SWP_NOSIZE;
+    if (rect.left == rect.right || rect.bottom == rect.top) flags |= SWP_NOSIZE;
 
     style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE)
