@@ -7630,6 +7630,26 @@ static void xpath_builtin_node_type(struct xpath_parser_context *ctxt, int nargs
     xpath_push_value(ctxt, xpath_new_number(ctxt, ctxt->context->node->type));
 }
 
+static void xslpattern_builtin_node_name(struct xpath_parser_context *ctxt, int nargs)
+{
+    struct domnode *node;
+
+    if (!xpath_builtin_check_stack(ctxt, nargs, 0))
+        return;
+
+    node = ctxt->context->node;
+    switch (node->type)
+    {
+        case NODE_ELEMENT:
+        case NODE_ATTRIBUTE:
+            xpath_push_value(ctxt, xpath_new_string(ctxt, node->qname));
+            break;
+        default:
+            xpath_push_value(ctxt, xpath_new_string(ctxt, node->name));
+            break;
+    }
+}
+
 static void xpath_register_xpath_functions(struct xpath_context *ctxt)
 {
     xpath_register_func(ctxt, L"boolean", xpath_builtin_boolean);
@@ -7666,6 +7686,7 @@ static void xpath_register_xslpattern_functions(struct xpath_context *ctxt)
     xpath_register_func(ctxt, L"index", xpath_builtin_index);
     xpath_register_func(ctxt, L"end", xpath_builtin_end);
     xpath_register_func(ctxt, L"nodeType", xpath_builtin_node_type);
+    xpath_register_func(ctxt, L"nodeName", xslpattern_builtin_node_name);
 }
 
 struct xpath_context * xpath_create_context(bool xpath, struct domnode *node)

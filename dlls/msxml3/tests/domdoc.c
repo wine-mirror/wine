@@ -7501,6 +7501,7 @@ static const struct query_test xslpattern_test[] =
     { "root/elem[@ *]", "E2.E2.D1 E3.E2.D1", true },
     { "root//c[@type]", "E3.E2.E2.D1" },
     { "root//c[(@type)]", "E3.E2.E2.D1" },
+
     { "//@foo:*", "A'foo:b'.E2.D1", true },
     { "//@xmlns:*", "A'xmlns:foo'.E2.D1 A'xmlns:foo'.E5.E1.E2.D1 "
             "A'xmlns:bar'.E5.E1.E2.D1 A'xmlns'.E1.E5.E1.E2.D1 "
@@ -7525,8 +7526,8 @@ static const struct query_test xslpattern_test_no_ns[] =
     /* prefixes must be explicitly specified in the name */
     { "//foo:elem", "" },
     { "//foo:c", "E3.E4.E2.D1" },
-    { "//node()[nodeName()='foo:c']", "E3.E4.E2.D1", false, true },
-    { "//node()[nodeName()='c']", "E3.E1.E2.D1 E3.E2.E2.D1 E3.E3.E2.D1", false, true },
+    { "//node()[nodeName()='foo:c']", "E3.E4.E2.D1" },
+    { "//node()[nodeName()='c']", "E3.E1.E2.D1 E3.E2.E2.D1 E3.E3.E2.D1" },
     { NULL }
 };
 
@@ -7558,7 +7559,7 @@ static const struct query_test xslpattern_test_func[] =
     { "//x/node()[nodeType()='8']", "C2.E3.E3.D1" },
     { "//x/node()[nodeType()='8.0']", "C2.E3.E3.D1" },
     { "//x/node()[nodeType()='8.1']", "" },
-    { "//x/node()[nodeName()='a']", "E4.E3.E3.D1", false, true },
+    { "//x/node()[nodeName()='a']", "E4.E3.E3.D1" },
     { "pi()", "P1.D1" },
     { "pi('*')", "P1.D1" },
     { "pi('xml')", "P1.D1" },
