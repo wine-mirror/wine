@@ -8,9 +8,7 @@ static const double_t toint = 1 / DBL_EPSILON;
 
 double __cdecl rint(double x)
 {
-#if defined(__GNUC__) && !defined(__clang__)
-    return __builtin_rint(x);
-#elif defined(__SSE_MATH__)
+#if defined(__SSE_MATH__)
     union {double f; uint64_t i;} u = {x};
     int e = u.i>>52 & 0x7ff;
     int s = u.i>>63;
