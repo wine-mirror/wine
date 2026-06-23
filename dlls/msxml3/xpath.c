@@ -1986,7 +1986,7 @@ static void xpath_compile_additive_expr(struct xpath_parser_context *ctxt)
  *                 | RelationalExpr '<=' AdditiveExpr
  *                 | RelationalExpr '>=' AdditiveExpr
  */
-static void xpath_compiler_relational_expr(struct xpath_parser_context *ctxt)
+static void xpath_compile_relational_expr(struct xpath_parser_context *ctxt)
 {
     xpath_compile_additive_expr(ctxt);
     xpath_parse_skipspaces(ctxt);
@@ -2015,7 +2015,7 @@ static void xpath_compiler_relational_expr(struct xpath_parser_context *ctxt)
  */
 static void xpath_compile_equality_expr(struct xpath_parser_context *ctxt)
 {
-    xpath_compiler_relational_expr(ctxt);
+    xpath_compile_relational_expr(ctxt);
     xpath_parse_skipspaces(ctxt);
 
     while (ctxt->cur[0] == '=' || (ctxt->cur[0] == '!' && ctxt->cur[1] == '='))
@@ -2028,7 +2028,7 @@ static void xpath_compile_equality_expr(struct xpath_parser_context *ctxt)
         if (!eq)
             xpath_parse_next(ctxt);
         xpath_parse_skipspaces(ctxt);
-        xpath_compiler_relational_expr(ctxt);
+        xpath_compile_relational_expr(ctxt);
         xpath_push_binary_step(ctxt, XPATH_OP_EQUAL, op1, ctxt->comp->last, eq, 0);
         xpath_parse_skipspaces(ctxt);
     }
