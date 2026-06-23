@@ -314,6 +314,7 @@ DECL_HANDLER(d3dkmt_share_objects);
 DECL_HANDLER(d3dkmt_object_open_name);
 DECL_HANDLER(d3dkmt_mutex_acquire);
 DECL_HANDLER(d3dkmt_mutex_release);
+DECL_HANDLER(alpc_create_port);
 
 typedef void (*req_handler)( const void *req, void *reply );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
@@ -625,6 +626,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_d3dkmt_object_open_name,
     (req_handler)req_d3dkmt_mutex_acquire,
     (req_handler)req_d3dkmt_mutex_release,
+    (req_handler)req_alpc_create_port,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2385,3 +2387,8 @@ C_ASSERT( offsetof(struct d3dkmt_mutex_release_request, key_value) == 20 );
 C_ASSERT( offsetof(struct d3dkmt_mutex_release_request, fence_value) == 24 );
 C_ASSERT( offsetof(struct d3dkmt_mutex_release_request, runtime_size) == 32 );
 C_ASSERT( sizeof(struct d3dkmt_mutex_release_request) == 40 );
+C_ASSERT( offsetof(struct alpc_create_port_request, flags) == 12 );
+C_ASSERT( offsetof(struct alpc_create_port_request, max_msg_len) == 16 );
+C_ASSERT( sizeof(struct alpc_create_port_request) == 24 );
+C_ASSERT( offsetof(struct alpc_create_port_reply, handle) == 8 );
+C_ASSERT( sizeof(struct alpc_create_port_reply) == 16 );

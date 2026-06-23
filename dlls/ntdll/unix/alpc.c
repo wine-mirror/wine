@@ -24,6 +24,7 @@
 
 #include "ntstatus.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alpc);
@@ -52,10 +53,61 @@ NTSTATUS WINAPI NtAlpcConnectPort( HANDLE *port_handle, UNICODE_STRING *port_nam
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI NtAlpcCreatePort( HANDLE *port_handle, OBJECT_ATTRIBUTES *obj_attr, ALPC_PORT_ATTRIBUTES *port_attr )
+NTSTATUS WINAPI NtAlpcCreatePort( HANDLE *port_handle, OBJECT_ATTRIBUTES *attr, ALPC_PORT_ATTRIBUTES *port_attr )
 {
-    FIXME( "%p, %p, %p stub!\n", port_handle, obj_attr, port_attr );
-    return STATUS_NOT_IMPLEMENTED;
+    struct object_attributes *objattr = NULL;
+    unsigned int status;
+    data_size_t len = 0;
+
+    TRACE( "%p, %p, %p.\n", port_handle, attr, port_attr );
+
+    if (!port_handle) return STATUS_ACCESS_VIOLATION;
+
+    *port_handle = NULL;
+
+    if (port_attr)
+        TRACE( "port attributes: flags %#x qos (length %#x impersonation_level %d tracking_mode %d "
+               "effective only %d) max_msg_length %#lx memory_bandwidth %#lx max_pool_usage %#lx "
+               "max_section_size %#lx max_view_size %#lx max_total_section_size %#lx.\n",
+               port_attr->Flags, port_attr->SecurityQos.Length, port_attr->SecurityQos.ImpersonationLevel,
+               port_attr->SecurityQos.ContextTrackingMode, port_attr->SecurityQos.EffectiveOnly,
+               port_attr->MaxMessageLength, port_attr->MemoryBandwidth, port_attr->MaxPoolUsage,
+               port_attr->MaxSectionSize, port_attr->MaxViewSize, port_attr->MaxTotalSectionSize );
+
+    if (port_attr && port_attr->Flags & 0x100000) return STATUS_INVALID_PARAMETER;
+
+    if (attr)
+    {
+        if (attr->ObjectName) TRACE( "name %s.\n", debugstr_us( attr->ObjectName ) );
+        if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    }
+
+    SERVER_START_REQ( alpc_create_port )
+    {
+        if (port_attr)
+        {
+            req->flags = port_attr->Flags;
+            req->max_msg_len = port_attr->MaxMessageLength;
+        }
+        else
+        {
+            req->flags = 0;
+            req->max_msg_len = 65535;
+        }
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req )))
+        {
+            *port_handle = wine_server_ptr_handle( reply->handle );
+            TRACE( "created %p.\n", *port_handle );
+        }
+        else
+        {
+            WARN( "status %#x.\n", status );
+        }
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return status;
 }
 
 NTSTATUS WINAPI NtAlpcDisconnectPort( HANDLE port_handle, ULONG flags )

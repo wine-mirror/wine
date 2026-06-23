@@ -1,6 +1,7 @@
 PROGRAMS = wineserver
 
 SOURCES = \
+	alpc.c \
 	async.c \
 	atom.c \
 	change.c \

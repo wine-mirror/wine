@@ -4323,3 +4323,13 @@ enum inproc_sync_type
     data_size_t         runtime_size;   /* size of client runtime data */
     VARARG(runtime,bytes);              /* client runtime data */
 @END
+
+
+/* Create a new ALPC object */
+@REQ(alpc_create_port)
+    unsigned int        flags;          /* flags in port attributes */
+    mem_size_t          max_msg_len;    /* max message length in port attributes */
+    VARARG(obj_attr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t        handle;         /* handle to the ALPC port */
+@END

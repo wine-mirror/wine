@@ -377,7 +377,6 @@ static void test_NtAlpcCreatePort(void)
 
     if (!pNtAlpcCreatePort)
     {
-        todo_wine
         win_skip("NtAlpcCreatePort is unavailable.\n");
         return;
     }

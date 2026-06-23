@@ -3524,6 +3524,18 @@ static void dump_d3dkmt_mutex_release_request( const struct d3dkmt_mutex_release
     dump_varargs_bytes( ", runtime=", cur_size );
 }
 
+static void dump_alpc_create_port_request( const struct alpc_create_port_request *req )
+{
+    fprintf( stderr, " flags=%08x", req->flags );
+    dump_uint64( ", max_msg_len=", &req->max_msg_len );
+    dump_varargs_object_attributes( ", obj_attr=", cur_size );
+}
+
+static void dump_alpc_create_port_reply( const struct alpc_create_port_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 typedef void (*dump_func)( const void *req );
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] =
@@ -3835,6 +3847,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_d3dkmt_object_open_name_request,
     (dump_func)dump_d3dkmt_mutex_acquire_request,
     (dump_func)dump_d3dkmt_mutex_release_request,
+    (dump_func)dump_alpc_create_port_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
@@ -4146,6 +4159,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_d3dkmt_object_open_name_reply,
     (dump_func)dump_d3dkmt_mutex_acquire_reply,
     NULL,
+    (dump_func)dump_alpc_create_port_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -4457,6 +4471,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "d3dkmt_object_open_name",
     "d3dkmt_mutex_acquire",
     "d3dkmt_mutex_release",
+    "alpc_create_port",
 };
 
 static const struct
