@@ -39,6 +39,51 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
+enum negotiate_flags
+{
+    NTLMSSP_NEGOTIATE_UNICODE                   = 0x00000001,
+    NTLM_NEGOTIATE_OEM                          = 0x00000002,
+    NTLMSSP_REQUEST_TARGET                      = 0x00000004,
+    NTLMSSP_NEGOTIATE_SIGN                      = 0x00000010,
+    NTLMSSP_NEGOTIATE_SEAL                      = 0x00000020,
+    NTLMSSP_NEGOTIATE_DATAGRAM                  = 0x00000040,
+    NTLMSSP_NEGOTIATE_LM_KEY                    = 0x00000080,
+    NTLMSSP_NEGOTIATE_NETWARE                   = 0x00000100,
+    NTLMSSP_NEGOTIATE_NTLM                      = 0x00000200,
+    NTLMSSP_NEGOTIATE_ANONYMOUS                 = 0x00000800,
+    NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED       = 0x00001000,
+    NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED  = 0x00002000,
+    NTLMSSP_NEGOTIATE_LOCAL_CALL                = 0x00004000,
+    NTLMSSP_NEGOTIATE_ALWAYS_SIGN               = 0x00008000,
+    NTLMSSP_TARGET_TYPE_DOMAIN                  = 0x00010000,
+    NTLMSSP_TARGET_TYPE_SERVER                  = 0x00020000,
+    NTLMSSP_TARGET_TYPE_SHARE                   = 0x00040000,
+    NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY  = 0x00080000,
+    NTLMSSP_NEGOTIATE_IDENTIFY                  = 0x00100000,
+    NTLMSSP_REQUEST_NON_NT_SESSION_KEY          = 0x00400000,
+    NTLMSSP_NEGOTIATE_TARGET_INFO               = 0x00800000,
+    NTLMSSP_NEGOTIATE_VERSION                   = 0x02000000,
+    NTLMSSP_NEGOTIATE_128                       = 0x20000000,
+    NTLMSSP_NEGOTIATE_KEY_EXCH                  = 0x40000000,
+    NTLMSSP_NEGOTIATE_56                        = 0x80000000,
+};
+
+struct ntlm_challenge
+{
+    char signature[8];
+    int message_type;
+    unsigned short target_name_len;
+    unsigned short target_name_max_len;
+    unsigned int target_name_off;
+    enum negotiate_flags negotiate_flags;
+    BYTE challenge[8];
+    BYTE reserved[8];
+    unsigned short target_info_len;
+    unsigned short target_info_max_len;
+    unsigned int target_info_off;
+    BYTE version[8];
+};
+
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
 {
     WINE_UNIX_CALL( unix_cleanup, ctx );
@@ -720,15 +765,18 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
          */
         if (!(want_flags = malloc( 73 ))) goto done;
         strcpy( want_flags, "SF" );
+        if (ctx_req & ISC_REQ_CONFIDENTIALITY) ctx_req |= ISC_REQ_INTEGRITY;
         if (ctx_req & ISC_REQ_CONFIDENTIALITY) strcat( want_flags, " NTLMSSP_FEATURE_SEAL" );
         if ((ctx_req & ISC_REQ_INTEGRITY) || (ctx_req & ISC_REQ_REPLAY_DETECT) ||
             (ctx_req & ISC_REQ_SEQUENCE_DETECT)) strcat( want_flags, " NTLMSSP_FEATURE_SIGN" );
 
-        if (ctx_req & ISC_REQ_CONNECTION) ctx->attrs |= ISC_RET_CONNECTION;
-        if (ctx_req & ISC_REQ_EXTENDED_ERROR) ctx->attrs |= ISC_RET_EXTENDED_ERROR;
-        if (ctx_req & ISC_REQ_MUTUAL_AUTH) ctx->attrs |= ISC_RET_MUTUAL_AUTH;
-        if (ctx_req & ISC_REQ_USE_DCE_STYLE) ctx->attrs |= ISC_RET_USED_DCE_STYLE;
-        if (ctx_req & ISC_REQ_DELEGATE) ctx->attrs |= ISC_RET_DELEGATE;
+        ctx->req_attrs = ctx_req;
+        *ctx_attr = 0;
+        if (ctx_req & ISC_REQ_REPLAY_DETECT) *ctx_attr |= ISC_RET_REPLAY_DETECT;
+        if (ctx_req & ISC_REQ_SEQUENCE_DETECT) *ctx_attr |= ISC_RET_SEQUENCE_DETECT;
+        if (ctx_req & ISC_REQ_CONFIDENTIALITY) *ctx_attr |= ISC_RET_CONFIDENTIALITY;
+        if (ctx_req & ISC_REQ_CONNECTION) *ctx_attr |= ISC_RET_CONNECTION;
+        if (ctx_req & ISC_REQ_INTEGRITY) *ctx_attr |= ISC_RET_INTEGRITY;
         if (ctx_req & ISC_REQ_STREAM) FIXME( "ISC_REQ_STREAM\n" );
 
         /* use cached credentials if no password was given, fall back to an empty password on failure */
@@ -778,6 +826,8 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
     }
     else /* !ctx_handle && !input */
     {
+        struct ntlm_challenge *challenge;
+
         if (!input || ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1))
         {
             status = SEC_E_INVALID_TOKEN;
@@ -791,11 +841,23 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
             goto done;
         }
 
-        if (!input->pBuffers[idx].pvBuffer || input->pBuffers[idx].cbBuffer > NTLM_MAX_BUF)
+        if (!input->pBuffers[idx].pvBuffer || input->pBuffers[idx].cbBuffer > NTLM_MAX_BUF ||
+                input->pBuffers[idx].cbBuffer < offsetof(struct ntlm_challenge, target_info_len))
         {
             status = SEC_E_INVALID_TOKEN;
             goto done;
         }
+
+        challenge = input->pBuffers[idx].pvBuffer;
+        ctx->req_attrs |= ctx_req;
+        *ctx_attr = 0;
+        if (ctx->req_attrs & ISC_REQ_MUTUAL_AUTH) FIXME( "ASC_REQ_MUTUAL_AUTH\n" );
+        if (ctx->req_attrs & (ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT) &&
+                challenge->negotiate_flags & NTLMSSP_NEGOTIATE_SIGN)
+            *ctx_attr |= ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT;
+        if (ctx->req_attrs & ISC_REQ_CONFIDENTIALITY && challenge->negotiate_flags & NTLMSSP_NEGOTIATE_SEAL)
+            *ctx_attr |= ISC_RET_CONFIDENTIALITY;
+
         bin_len = input->pBuffers[idx].cbBuffer;
         memcpy( bin, input->pBuffers[idx].pvBuffer, bin_len );
 
@@ -951,11 +1013,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         }
         strcpy( want_flags, "SF" );
         if (ctx_req & ASC_REQ_CONFIDENTIALITY) strcat( want_flags, " NTLMSSP_FEATURE_SEAL" );
-        if (ctx_req & ASC_REQ_CONNECTION)
-        {
-            strcat( want_flags, " NTLMSSP_FEATURE_SESSION_KEY" );
-            ctx->attrs |= ASC_RET_CONNECTION;
-        }
+        if (ctx_req & ASC_REQ_CONNECTION) strcat( want_flags, " NTLMSSP_FEATURE_SESSION_KEY" );
         if (ctx_req & ASC_REQ_INTEGRITY) strcat( want_flags, " NTLMSSP_FEATURE_SIGN" );
         if (ctx_req & ASC_REQ_ALLOCATE_MEMORY) FIXME( "ASC_REQ_ALLOCATE_MEMORY\n" );
         if (ctx_req & ASC_REQ_EXTENDED_ERROR) FIXME( "ASC_REQ_EXTENDED_ERROR\n" );

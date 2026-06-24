@@ -64,7 +64,7 @@ struct ntlm_ctx
 {
     enum mode    mode;
     int          pid;
-    unsigned int attrs;
+    unsigned int req_attrs;
     int          pipe_in;
     int          pipe_out;
     char         session_key[16];
