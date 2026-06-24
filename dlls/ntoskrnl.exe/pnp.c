@@ -744,25 +744,30 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
     {
         case DevicePropertyEnumeratorName:
         {
-            WCHAR *id, *ptr;
+            WCHAR *ptr;
 
-            status = get_device_id( device, BusQueryDeviceID, &id );
+            status = get_device_instance_id( device, device_instance_id );
             if (status != STATUS_SUCCESS)
             {
                 ERR("Failed to get instance ID, status %#lx.\n", status);
-                break;
+                return status;
             }
 
-            ptr = wcschr( id, '\\' );
-            if (ptr) *ptr = 0;
+            if (!(ptr = wcschr( device_instance_id, '\\' )))
+            {
+                ERR( "Instance ID %s has no enumerator separator.\n", debugstr_w(device_instance_id) );
+                return STATUS_UNSUCCESSFUL;
+            }
 
-            *needed = sizeof(WCHAR) * (lstrlenW(id) + 1);
+            *needed = ((ptr - device_instance_id) + 1) * sizeof(WCHAR);
             if (length >= *needed)
-                memcpy( buffer, id, *needed );
+            {
+                memcpy( buffer, device_instance_id, *needed - sizeof(WCHAR) );
+                ((WCHAR *)buffer)[((ptr - device_instance_id) + 1)] = 0;
+            }
             else
                 status = STATUS_BUFFER_TOO_SMALL;
 
-            ExFreePool( id );
             return status;
         }
         case DevicePropertyPhysicalDeviceObjectName:

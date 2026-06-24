@@ -876,7 +876,7 @@ static void test_child_enumerator_name(DEVICE_OBJECT *device)
 
     query_id_count = 0;
     status = IoGetDeviceProperty(device, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
-    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
     ok(req_size == sizeof(wine), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
