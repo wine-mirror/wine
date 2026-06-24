@@ -1577,7 +1577,7 @@ void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
             return;
         }
     }
-    set_error( STATUS_FILE_LOCK_CONFLICT );
+    set_error( STATUS_RANGE_NOT_LOCKED );
 }
 
 
