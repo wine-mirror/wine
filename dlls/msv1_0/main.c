@@ -991,7 +991,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
             goto done;
         }
         output->pBuffers[0].cbBuffer = bin_len;
-        output->pBuffers[0].BufferType = SECBUFFER_DATA;
+        output->pBuffers[0].BufferType = SECBUFFER_TOKEN;
         memcpy( output->pBuffers[0].pvBuffer, bin, bin_len );
 
         *new_ctx_handle = (LSA_SEC_HANDLE)ctx;

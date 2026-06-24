@@ -570,7 +570,7 @@ static void testInitializeSecurityContextFlags(void)
 
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
-    SspiData                client = {{0}};
+    SspiData                client = {{0}}, server = {{0}};
     ULONG                   i, ctxt_attr;
     TimeStamp               ttl;
     struct ntlm_negotiate   *negotiate;
@@ -589,6 +589,8 @@ static void testInitializeSecurityContextFlags(void)
                 getSecError(sec_status));
         return;
     }
+    sec_status = setupServer(&server, sec_pkg_name);
+    ok(sec_status == SEC_E_OK, "setupServer returned %s\n", getSecError(sec_status));
 
     negotiate = (struct ntlm_negotiate *)client.out_buf->pBuffers[0].pvBuffer;
 
@@ -596,6 +598,7 @@ static void testInitializeSecurityContextFlags(void)
     {
         winetest_push_context("%lx", test_data[i].req_attr);
 
+        client.out_buf->pBuffers[0].cbBuffer = client.max_token;
         ctxt_attr = 0xffffffff;
         sec_status = InitializeSecurityContextA(&client.cred, NULL, NULL, test_data[i].req_attr, 0,
                 SECURITY_NETWORK_DREP, NULL, 0, &client.ctxt, client.out_buf, &ctxt_attr, &ttl);
@@ -604,13 +607,26 @@ static void testInitializeSecurityContextFlags(void)
         ok((negotiate->negotiate_flags & (NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_SEAL)) == test_data[i].flags,
             "negotiate_flags = %08x\n", negotiate->negotiate_flags);
         todo_wine ok(ctxt_attr == test_data[i].ctxt_attr, "ctxt_attr = %lx\n", ctxt_attr);
+
+        server.out_buf->pBuffers[0].cbBuffer = server.max_token;
+        sec_status = AcceptSecurityContext(&server.cred, NULL, client.out_buf, 0,
+                SECURITY_NETWORK_DREP, &server.ctxt, server.out_buf, &ctxt_attr, &ttl);
+        ok(sec_status == SEC_I_CONTINUE_NEEDED, "AcceptSecurityContext returned %s\n",
+                getSecError(sec_status));
+        ok(server.out_buf->cBuffers == 1, "cBuffers = %lu\n", server.out_buf->cBuffers);
+        ok(server.out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
+                "BufferType = %ld\n", server.out_buf->pBuffers[0].BufferType);
+
         DeleteSecurityContext(&client.ctxt);
+        DeleteSecurityContext(&server.ctxt);
 
         winetest_pop_context();
     }
 
     cleanupBuffers(&client);
+    cleanupBuffers(&server);
     FreeCredentialsHandle(&client.cred);
+    FreeCredentialsHandle(&server.cred);
 }
 
 /**********************************************************************/
