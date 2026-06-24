@@ -36,6 +36,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <dirent.h>
+#ifdef HAVE_ASM_HWCAP_H
+# include <asm/hwcap.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -558,6 +561,23 @@ static int has_feature( const char *line, const char *feat )
     return 0;
 }
 
+#if defined(AT_HWCAP) && defined(__arm__)
+static BOOLEAN has_capability( int hwcap, unsigned long hwcap_bit )
+{
+    unsigned long type;
+    switch (hwcap)
+    {
+    case 1: type = AT_HWCAP;  break;
+    default: return FALSE;
+    }
+    return !!(getauxval( type ) & hwcap_bit);
+}
+
+#define HAS_FEATURE(hwcap, hwcap_bit, ...) has_capability( hwcap, hwcap_bit )
+#else
+#define HAS_FEATURE(hwcap, hwcap_bit, ...) 0
+#endif
+
 static void init_cpu_model(void)
 {
     unsigned int implementer = 0x41, part = 0, variant = 0, revision = 0;
@@ -671,9 +691,6 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
             value++;
             if ((s = strchr( value, '\n' ))) *s = 0;
             if (strcmp( line, "Features" )) continue;
-            features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = has_feature( value, "vfpv3" );
-            features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = has_feature( value, "neon" );
-            features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = has_feature( value, "idivt" );
             if (native_machine == IMAGE_FILE_MACHINE_ARMNT) break;
             features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "crc32" );
             features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "aes" );
@@ -705,8 +722,11 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
     features[PF_FASTFAIL_AVAILABLE]      = TRUE;
     features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 
-    if (native_machine == IMAGE_FILE_MACHINE_ARMNT) return;
-
+#ifdef __arm__
+    features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = HAS_FEATURE( 1, HWCAP_VFPv3 );
+    features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = HAS_FEATURE( 1, HWCAP_NEON );
+    features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = HAS_FEATURE( 1, HWCAP_IDIVT );
+#else
     features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = TRUE;
     features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = TRUE;
     features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = TRUE;
@@ -735,6 +755,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
             break;
         }
     }
+#endif
 }
 
 #endif /* End architecture specific feature detection for CPUs */
@@ -1946,8 +1967,6 @@ static WORD append_smbios_boot_info( struct smbios_buffer *buf )
 
 #ifdef __aarch64__
 #ifdef linux
-
-#include <asm/hwcap.h>
 
 static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs,
                                      WORD logical_thread_id )
