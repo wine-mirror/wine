@@ -114,13 +114,6 @@ struct hint_state
     GLenum multisample_nv;
 };
 
-struct buffers
-{
-    unsigned int ref;
-    struct rb_tree map;
-    struct vk_device *vk_device;
-};
-
 struct context
 {
     struct opengl_context base;
@@ -129,7 +122,6 @@ struct context
     UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
     char *wow64_version;           /* wow64 GL version override */
-    struct buffers *buffers;       /* wow64 buffers map */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
     /* semi-stub state tracker for wglCopyContext */
@@ -183,7 +175,6 @@ struct vk_device
 
 static ULONG_PTR zero_bits;
 
-static struct buffers *buffers;
 static const struct vulkan_funcs *vk_funcs;
 static VkInstance vk_instance;
 static PFN_vkDestroyInstance p_vkDestroyInstance;
@@ -394,6 +385,12 @@ static int compare_buffer_name( const void *key, const struct rb_entry *entry )
     return memcmp( key, &buffer->name, sizeof(buffer->name) );
 }
 
+static struct
+{
+    struct rb_tree map;
+    struct vk_device *vk_device;
+} buffers = { .map = { compare_buffer_name } };
+
 static void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer )
 {
     if (buffer->vk_memory)
@@ -401,32 +398,9 @@ static void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer
         if (buffer->map_ptr) unmap_vk_buffer( buffer );
         buffer->vk_device->p_vkFreeMemory( buffer->vk_device->vk_device, buffer->vk_memory, NULL );
     }
-    if (buffer->gl_memory) funcs->p_glDeleteMemoryObjectsEXT( 1, &buffer->gl_memory );
+    if (buffer->gl_memory && funcs) funcs->p_glDeleteMemoryObjectsEXT( 1, &buffer->gl_memory );
     if (buffer->vm_ptr) NtFreeVirtualMemory( GetCurrentProcess(), &buffer->vm_ptr, &buffer->vm_size, MEM_RELEASE );
     free( buffer );
-}
-
-static void release_buffers( const struct opengl_funcs *funcs )
-{
-    struct buffer *buffer, *next;
-
-    if (--buffers->ref) return;
-
-    RB_FOR_EACH_ENTRY_DESTRUCTOR( buffer, next, &buffers->map, struct buffer, entry )
-        free_buffer( funcs, buffer );
-    free( buffers );
-    buffers = NULL;
-}
-
-static struct buffers *acquire_buffers(void)
-{
-    if (buffers) buffers->ref++;
-    else if ((buffers = calloc( 1, sizeof(*buffers ))))
-    {
-        buffers->ref = 1;
-        rb_init( &buffers->map, compare_buffer_name );
-    }
-    return buffers;
 }
 
 static struct context *context_from_client_context( HGLRC client_context )
@@ -828,7 +802,7 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
     static PFN_vkGetPhysicalDeviceMemoryProperties p_vkGetPhysicalDeviceMemoryProperties;
     static PFN_vkGetPhysicalDeviceProperties2KHR p_vkGetPhysicalDeviceProperties2KHR;
 
-    if (buffers->vk_device) return TRUE; /* already initialized */
+    if (buffers.vk_device) return TRUE; /* already initialized */
     if (!client->extensions[GL_EXT_memory_object_win32] )
     {
         TRACE( "GL_EXT_memory_object_win32 is not supported\n" );
@@ -889,7 +863,7 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
             vk_device = RB_ENTRY_VALUE( entry, struct vk_device, entry );
             if (!vk_device->vk_device) continue; /* known incompatible device */
             TRACE( "Found existing device %p for uuid %s\n", vk_device, debugstr_guid(&vk_device->uuid) );
-            buffers->vk_device = vk_device;
+            buffers.vk_device = vk_device;
             free( vk_physical_devices );
             return TRUE;
         }
@@ -1074,7 +1048,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
         TRACE( "-- %s (disabled by config)\n", all_extensions[i].name );
     }
 
-    if (is_win64 && ctx->buffers && !initialize_vk_device( teb, ctx )
+    if (is_win64 && is_wow64() && !initialize_vk_device( teb, ctx )
         && !(ctx->use_pinned_memory = client->extensions[GL_AMD_pinned_memory]))
     {
         if (client->major_version > 4 || (client->major_version == 4 && client->minor_version > 3))
@@ -1104,7 +1078,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 
 static void free_context( const struct opengl_funcs *funcs, struct context *ctx )
 {
-    if (ctx->buffers) release_buffers( funcs );
     free( ctx->wow64_version );
     free( ctx->extensions );
     free( ctx );
@@ -1274,8 +1247,6 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
         return 0;
     }
     context->base.client_context = client_context;
-
-    if (is_win64 && is_wow64()) context->buffers = acquire_buffers();
 
     if (!(funcs->p_context_create( &context->base, hdc, attribs )))
     {
@@ -1748,8 +1719,15 @@ NTSTATUS thread_attach( void *args )
 
 NTSTATUS process_detach( void *args )
 {
-    struct vk_device *vk_device, *next;
+    struct vk_device *vk_device;
+    struct buffer *buffer;
+    void *next;
 
+    RB_FOR_EACH_ENTRY_DESTRUCTOR( buffer, next, &buffers.map, struct buffer, entry )
+    {
+        WARN( "Leaked buffer %p\n", buffer );
+        free_buffer( NULL, buffer );
+    }
     RB_FOR_EACH_ENTRY_DESTRUCTOR( vk_device, next, &vk_devices, struct vk_device, entry )
     {
         if (vk_device->vk_device) vk_device->p_vkDestroyDevice( vk_device->vk_device, NULL );
@@ -1857,22 +1835,15 @@ static GLuint get_target_name( TEB *teb, GLenum target )
 
 static struct buffer *get_named_buffer( TEB *teb, GLuint name )
 {
-    struct context *ctx = get_current_context( teb, NULL, NULL );
     struct rb_entry *entry;
-
-    if (ctx && (entry = rb_get( &ctx->buffers->map, &name )))
-        return RB_ENTRY_VALUE( entry, struct buffer, entry );
-    return NULL;
+    if (!(entry = rb_get( &buffers.map, &name ))) return NULL;
+    return RB_ENTRY_VALUE( entry, struct buffer, entry );
 }
 
 static struct buffer *invalidate_buffer_name( TEB *teb, GLuint name )
 {
     struct buffer *buffer = get_named_buffer( teb, name );
-    if (buffer)
-    {
-        struct context *ctx = get_current_context( teb, NULL, NULL );
-        rb_remove( &ctx->buffers->map, &buffer->entry );
-    }
+    if (buffer) rb_remove( &buffers.map, &buffer->entry );
     return buffer;
 }
 
@@ -1970,7 +1941,7 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
     VkResult vr;
 
     if (!(flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))) return NULL;
-    if ((!(vk_device = ctx->buffers->vk_device) || !vk_device->vk_device) && !ctx->use_pinned_memory) return NULL;
+    if ((!(vk_device = buffers.vk_device) || !vk_device->vk_device) && !ctx->use_pinned_memory) return NULL;
 
     if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
     buffer->name = buffer_name;
@@ -1990,7 +1961,7 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
          * to support it. */
         funcs->p_glBindBuffer( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, buffer_name );
         funcs->p_glBufferData( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, size, buffer->vm_ptr, GL_DYNAMIC_COPY );
-        rb_put( &ctx->buffers->map, &buffer->name, &buffer->entry );
+        rb_put( &buffers.map, &buffer->name, &buffer->entry );
         TRACE( "created buffer %p with pinned memory %p\n", buffer, buffer->vm_ptr );
         return buffer;
     }
@@ -2057,7 +2028,7 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
         funcs->p_glNamedBufferStorageMemEXT( buffer->name, size, buffer->gl_memory, 0 );
     else
         funcs->p_glBufferStorageMemEXT( target, size, buffer->gl_memory, 0 );
-    rb_put( &ctx->buffers->map, &buffer->name, &buffer->entry );
+    rb_put( &buffers.map, &buffer->name, &buffer->entry );
     TRACE( "created buffer_storage %p\n", buffer );
     return buffer;
 }
@@ -2088,8 +2059,7 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
             .size = VK_WHOLE_SIZE,
         };
         VkResult vr;
-        struct context *ctx = get_current_context( teb, NULL, NULL );
-        struct vk_device *vk_device = ctx->buffers->vk_device;
+        struct vk_device *vk_device = buffers.vk_device;
 
         if (!buffer_vm_alloc( teb, buffer, buffer->size )) return NULL;
         placed_info.pPlacedAddress = buffer->vm_ptr;
@@ -2116,7 +2086,6 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
 
     if (!buffer)
     {
-        struct context *ctx = get_current_context( teb, NULL, NULL );
         GLint size;
 
         if (name) funcs->p_glGetNamedBufferParameteriv( name, GL_BUFFER_SIZE, &size );
@@ -2125,7 +2094,7 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
         if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
         buffer->name = name ? name : get_target_name( teb, target );
         buffer->size = size;
-        rb_put( &ctx->buffers->map, &buffer->name, &buffer->entry );
+        rb_put( &buffers.map, &buffer->name, &buffer->entry );
         TRACE( "allocated buffer %p for %u\n", buffer, buffer->name );
     }
 
