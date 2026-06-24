@@ -154,7 +154,6 @@ struct buffer
     struct vk_device *vk_device;
     VkDeviceMemory vk_memory;
     GLuint gl_memory;
-    GLbitfield flags;
 };
 
 struct vk_device
@@ -1945,7 +1944,6 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
 
     if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
     buffer->name = buffer_name;
-    buffer->flags = flags;
     buffer->size = size;
     buffer->vk_device = vk_device;
 
