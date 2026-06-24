@@ -55,6 +55,7 @@ static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
 
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 static BOOL is_wow64;
+static BOOL old_wow64;
 
 static SYSTEM_BASIC_INFORMATION sbi;
 
@@ -293,7 +294,7 @@ static void test_NtAllocateVirtualMemory(void)
     GetSystemInfo(&si);
     max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
     granularity_mask = si.dwAllocationGranularity - 1;
-    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+    limit_status = is_win64 || old_wow64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
 
     size = 0x1000;
     addr1 = NULL;
@@ -315,10 +316,7 @@ static void test_NtAllocateVirtualMemory(void)
     addr1 = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size,
                                      MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
-    if (is_win64)
-        ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
-    else
-        todo_wine ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
+    ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
     {
         size = 0;
@@ -730,7 +728,7 @@ static void test_NtAllocateVirtualMemoryEx(void)
     GetSystemInfo(&si);
     max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
     granularity_mask = si.dwAllocationGranularity - 1;
-    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+    limit_status = is_win64 || old_wow64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
 
     size = 0x1000;
     addr1 = NULL;
@@ -754,10 +752,7 @@ static void test_NtAllocateVirtualMemoryEx(void)
     status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size,
                                         MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN,
                                         PAGE_READWRITE, NULL, 0);
-    if (is_win64)
-        ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
-    else
-        todo_wine ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
     {
         size = 0;
@@ -1556,8 +1551,6 @@ static void test_NtMapViewOfSection(void)
     NTSTATUS limit_status;
     SYSTEM_INFO si;
 
-    if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
-
     file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
     WriteFile(file, data, sizeof(data), &written, NULL);
@@ -1860,7 +1853,7 @@ static void test_NtMapViewOfSection(void)
     GetSystemInfo(&si);
     max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
     granularity_mask = si.dwAllocationGranularity - 1;
-    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+    limit_status = is_win64 || old_wow64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
 
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 0x40000, NULL);
     ok(mapping != 0, "CreateFileMapping failed, error %lu\n", GetLastError());
@@ -1892,7 +1885,7 @@ static void test_NtMapViewOfSection(void)
     ptr = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
     status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size,
                                 1, MEM_TOP_DOWN, PAGE_READWRITE);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSection returned %08lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSection returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
         NtUnmapViewOfSection(NtCurrentProcess(), ptr);
 
@@ -1901,10 +1894,7 @@ static void test_NtMapViewOfSection(void)
     ptr = (void *)(max_address & ~granularity_mask);
     status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size,
                                 1, MEM_TOP_DOWN, PAGE_READWRITE);
-    if (is_win64)
-        todo_wine ok(status == limit_status, "NtMapViewOfSection returned %08lx\n", status);
-    else
-        ok(status == limit_status, "NtMapViewOfSection returned %08lx\n", status);
+    ok(status == limit_status, "NtMapViewOfSection returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
         NtUnmapViewOfSection(NtCurrentProcess(), ptr);
 
@@ -1937,11 +1927,10 @@ static void test_NtMapViewOfSectionEx(void)
         return;
     }
 
-    if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
     GetSystemInfo(&si);
     max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
     granularity_mask = si.dwAllocationGranularity - 1;
-    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+    limit_status = is_win64 || old_wow64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
 
     file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
@@ -1978,7 +1967,7 @@ static void test_NtMapViewOfSectionEx(void)
     ptr = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
     status = pNtMapViewOfSectionEx(mapping, NtCurrentProcess(), &ptr, &offset, &size,
                                    MEM_TOP_DOWN, PAGE_READWRITE, NULL, 0);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSectionEx returned %08lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSectionEx returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
         NtUnmapViewOfSection(NtCurrentProcess(), ptr);
 
@@ -1987,10 +1976,7 @@ static void test_NtMapViewOfSectionEx(void)
     ptr = (void *)(max_address & ~granularity_mask);
     status = pNtMapViewOfSectionEx(mapping, NtCurrentProcess(), &ptr, &offset, &size,
                                    MEM_TOP_DOWN, PAGE_READWRITE, NULL, 0);
-    if (is_win64)
-        todo_wine ok(status == limit_status, "NtMapViewOfSectionEx returned %08lx\n", status);
-    else
-        ok(status == limit_status, "NtMapViewOfSectionEx returned %08lx\n", status);
+    ok(status == limit_status, "NtMapViewOfSectionEx returned %08lx\n", status);
     if (status == STATUS_SUCCESS)
         NtUnmapViewOfSection(NtCurrentProcess(), ptr);
 
@@ -3796,6 +3782,15 @@ START_TEST(virtual)
     trace("system page size %#lx\n", sbi.PageSize);
     page_size = sbi.PageSize;
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
+    if (is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr(teb64->Peb);
+            old_wow64 = !peb64->LdrData;
+        }
+    }
 
     test_NtAllocateVirtualMemory();
     test_NtAllocateVirtualMemoryEx();
