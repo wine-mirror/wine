@@ -1169,12 +1169,15 @@ static NTSTATUS WINAPI driver_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
 {
+    DEVOBJ_EXTENSION *pdo_ext = pdo->DeviceObjectExtension;
+    DEVOBJ_EXTENSION *fdo_ext;
     NTSTATUS ret;
 
     todo_wine ok(!!(pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected pdo flags %#lx.\n", pdo->Flags);
     if ((ret = IoCreateDevice(driver, 0, NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &bus_fdo)))
         return ret;
 
+    fdo_ext = bus_fdo->DeviceObjectExtension;
     if ((ret = IoRegisterDeviceInterface(pdo, &control_class, NULL, &control_symlink)))
     {
         IoDeleteDevice(bus_fdo);
@@ -1182,6 +1185,12 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
     }
 
     IoAttachDeviceToDeviceStack(bus_fdo, pdo);
+    ok(pdo->AttachedDevice == bus_fdo, "Unexpected AttachedDevice %p.\n", pdo->AttachedDevice);
+    if (pdo_ext)
+        ok(!pdo_ext->AttachedTo, "Unexpected AttachedTo %p.\n", pdo_ext->AttachedTo);
+    ok(!bus_fdo->AttachedDevice, "Unexpected AttachedDevice %p.\n", bus_fdo->AttachedDevice);
+    if (fdo_ext)
+        ok(fdo_ext->AttachedTo == pdo, "Unexpected AttachedTo %p.\n", fdo_ext->AttachedTo);
     bus_pdo = pdo;
     bus_fdo->Flags &= ~DO_DEVICE_INITIALIZING;
     return STATUS_SUCCESS;
