@@ -1829,7 +1829,7 @@ static void xpath_compile_path_expr(struct xpath_parser_context *ctxt)
             }
 
             location_path = true;
-            if (ctxt->cur[len++] == '(')
+            if (ctxt->cur[len] && ctxt->cur[len++] == '(')
                 location_path = xpath_is_nodetype(name);
 
             if (!ctxt->cur[len])
@@ -7286,7 +7286,7 @@ static void xslpattern_compile_path_expr(struct xpath_parser_context *ctxt)
             }
 
             location_path = true;
-            if (ctxt->cur[len++] == '(')
+            if (ctxt->cur[len] && ctxt->cur[len++] == '(')
                 location_path = xslpattern_is_nodetype(name, NULL);
 
             if (!ctxt->cur[len])
