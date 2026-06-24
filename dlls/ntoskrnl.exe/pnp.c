@@ -372,6 +372,7 @@ static void create_dyn_data_key( DEVICE_OBJECT *device )
  * send IRPs to start the device. */
 static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
+    device->Flags |= DO_BUS_ENUMERATED_DEVICE;
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
         send_pnp_irp( device, IRP_MN_START_DEVICE );

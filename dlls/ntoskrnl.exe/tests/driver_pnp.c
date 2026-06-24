@@ -861,7 +861,7 @@ static void test_enumerator_name(void)
     memset(buffer, 0, sizeof(buffer));
     status = IoGetDeviceProperty(bus_pdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
     ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
-    todo_wine ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
+    ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
     ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
         ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
@@ -900,7 +900,7 @@ static void test_device_registry_key(void)
 
     status = IoOpenDeviceRegistryKey(bus_pdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
     ok(status == STATUS_SUCCESS, "IoOpenDeviceRegistryKey failed: %#lx\n", status);
-    todo_wine ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
+    ok(!!(bus_pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_pdo flags %#lx.\n", bus_pdo->Flags);
     if (status == STATUS_SUCCESS)
     {
         RtlInitUnicodeString(&name_str, foobar);
@@ -1173,7 +1173,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
     DEVOBJ_EXTENSION *fdo_ext;
     NTSTATUS ret;
 
-    todo_wine ok(!!(pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected pdo flags %#lx.\n", pdo->Flags);
+    ok(!!(pdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected pdo flags %#lx.\n", pdo->Flags);
     if ((ret = IoCreateDevice(driver, 0, NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &bus_fdo)))
         return ret;
 
