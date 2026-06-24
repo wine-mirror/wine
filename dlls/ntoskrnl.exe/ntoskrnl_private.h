@@ -29,8 +29,10 @@
 #include "winbase.h"
 #include "winsvc.h"
 #include "winternl.h"
+#include "winreg.h"
 #include "ddk/ntifs.h"
 #include "ddk/wdm.h"
+#include "cfgmgr32.h"
 
 #include "wine/asm.h"
 #include "wine/debug.h"
@@ -122,5 +124,8 @@ struct wine_device
     DEVOBJ_EXTENSION devobj_ext;
     DEVICE_RELATIONS *children;
     HKEY dyn_data_key;
+
+    /* Combination of device_id and instance_id. Only set on PDO devices. */
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
 };
 #endif

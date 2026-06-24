@@ -324,7 +324,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
             query_id_count = 0;
             status = IoRegisterDeviceInterface(device_obj, &child_class, NULL, &device->child_symlink);
-            todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+            ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
             ok(!status, "Failed to register interface, status %#lx.\n", status);
             ok(device->child_symlink.Length == sizeof(expect_symlink) - sizeof(WCHAR),
                     "Got length %u.\n", device->child_symlink.Length);
@@ -768,12 +768,12 @@ static void test_child_device_properties(DEVICE_OBJECT *device)
 
     query_id_count = 0;
     status = IoSetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, type, size, &value);
-    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "failed to set device property, status %#lx\n", status);
 
     query_id_count = 0;
     status = IoGetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, size, &stored_value, &req_size, &stored_type);
-    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "failed to get device property, status %#lx\n", status);
     ok(req_size == size, "expected required size %lu, got %lu\n", req_size, size);
     ok(stored_type == type, "expected DEVPROPTYPE value %#lx, got %#lx\n", type, stored_type);
@@ -781,7 +781,7 @@ static void test_child_device_properties(DEVICE_OBJECT *device)
 
     query_id_count = 0;
     status = IoSetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, type, 0, NULL);
-    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "failed to delete device property, status %#lx\n", status);
 }
 
@@ -938,7 +938,7 @@ static void test_child_device_registry_key(DEVICE_OBJECT *device)
 
     query_id_count = 0;
     status = IoOpenDeviceRegistryKey(device, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
-    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "IoOpenDeviceRegistryKey failed: %#lx\n", status);
     if (status == STATUS_SUCCESS)
     {

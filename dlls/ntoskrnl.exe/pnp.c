@@ -149,29 +149,43 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
 
 static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
 {
-    static const WCHAR backslashW[] = {'\\',0};
+    struct wine_device *pdo_dev;
     NTSTATUS status;
     WCHAR *id;
 
-    if ((status = get_device_id( device, BusQueryDeviceID, &id )))
+    while (device->DeviceObjectExtension->AttachedTo)
+        device = device->DeviceObjectExtension->AttachedTo;
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
     {
-        ERR("Failed to get device ID, status %#lx.\n", status);
-        return status;
+        ERR( "Lowest device in stack is not a PDO.\n" );
+        return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    lstrcpyW( buffer, id );
-    ExFreePool( id );
-
-    if ((status = get_device_id( device, BusQueryInstanceID, &id )))
+    pdo_dev = CONTAINING_RECORD(device, struct wine_device, device_obj);
+    if (!wcslen( pdo_dev->device_instance_id ))
     {
-        ERR("Failed to get instance ID, status %#lx.\n", status);
-        return status;
+        if ((status = get_device_id( device, BusQueryDeviceID, &id )))
+        {
+            ERR("Failed to get device ID, status %#lx.\n", status);
+            return status;
+        }
+
+        wcscpy( pdo_dev->device_instance_id, id );
+        wcscat( pdo_dev->device_instance_id, L"\\" );
+        ExFreePool( id );
+
+        if ((status = get_device_id( device, BusQueryInstanceID, &id )))
+        {
+            ERR("Failed to get instance ID, status %#lx.\n", status);
+            pdo_dev->device_instance_id[0] = 0;
+            return status;
+        }
+        wcscat( pdo_dev->device_instance_id, id );
+        ExFreePool( id );
     }
 
-    lstrcatW( buffer, backslashW );
-    lstrcatW( buffer, id );
-    ExFreePool( id );
-
+    wcscpy( buffer, pdo_dev->device_instance_id );
     TRACE("Returning ID %s.\n", debugstr_w(buffer));
 
     return STATUS_SUCCESS;
@@ -372,7 +386,6 @@ static void create_dyn_data_key( DEVICE_OBJECT *device )
  * send IRPs to start the device. */
 static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
-    device->Flags |= DO_BUS_ENUMERATED_DEVICE;
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
         send_pnp_irp( device, IRP_MN_START_DEVICE );
@@ -393,6 +406,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
     HKEY key;
     WCHAR *id;
 
+    device->Flags |= DO_BUS_ENUMERATED_DEVICE;
     if (get_device_instance_id( device, device_instance_id ))
         return;
 
@@ -1642,6 +1656,7 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
         wcscpy( pnp_device->id, id );
         pnp_device->device = device;
         list_add_tail( &new_list, &pnp_device->entry );
+        device->Flags |= DO_BUS_ENUMERATED_DEVICE;
 
         start_device( device, set, &sp_device );
     }
