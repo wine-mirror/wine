@@ -1590,13 +1590,12 @@ void call_raise_user_exception_dispatcher( struct thread_data *data )
 NTSTATUS call_user_exception_dispatcher( struct thread_data *data, EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = get_syscall_frame( data );
-    ULONG esp = (frame->esp - sizeof(struct exc_stack_layout)) & ~3;
     struct exc_stack_layout *stack;
     XSAVE_AREA_HEADER *src_xs;
 
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    stack = (struct exc_stack_layout *)((esp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
+    stack = (struct exc_stack_layout *)((frame->esp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;
     stack->rec          = *rec;
