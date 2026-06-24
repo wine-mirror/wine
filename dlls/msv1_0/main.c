@@ -1052,7 +1052,8 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
                 goto done;
             }
         }
-        output->pBuffers[0].cbBuffer = 0;
+        if (output && output->cBuffers > 0)
+            output->pBuffers[0].cbBuffer = 0;
 
         strcpy( buf, "GF" );
         if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
