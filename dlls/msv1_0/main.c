@@ -68,6 +68,20 @@ enum negotiate_flags
     NTLMSSP_NEGOTIATE_56                        = 0x80000000,
 };
 
+struct ntlm_negotiate
+{
+    char signature[8];
+    int message_type;
+    enum negotiate_flags negotiate_flags;
+    unsigned short target_name_len;
+    unsigned short target_name_max_len;
+    unsigned int target_name_off;
+    unsigned short workstation_name_len;
+    unsigned short workstation_name_max_len;
+    unsigned int workstation_name_off;
+    BYTE version[8];
+};
+
 struct ntlm_challenge
 {
     char signature[8];
@@ -82,6 +96,33 @@ struct ntlm_challenge
     unsigned short target_info_max_len;
     unsigned int target_info_off;
     BYTE version[8];
+};
+
+struct ntlm_authenticate
+{
+    char signature[8];
+    int message_type;
+    unsigned short lm_response_len;
+    unsigned short lm_response_max_len;
+    unsigned int lm_response_off;
+    unsigned short nt_response_len;
+    unsigned short nt_response_max_len;
+    unsigned int nt_response_off;
+    unsigned short domain_len;
+    unsigned short domain_max_len;
+    unsigned int domain_off;
+    unsigned short username_len;
+    unsigned short username_max_len;
+    unsigned int username_off;
+    unsigned short workstation_len;
+    unsigned short workstation_max_len;
+    unsigned int workstation_off;
+    unsigned short random_session_key_len;
+    unsigned short random_session_key_max_len;
+    unsigned int random_session_key_off;
+    unsigned int negotiate_flags;
+    BYTE version[8];
+    BYTE mic[16];
 };
 
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
@@ -977,6 +1018,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
     if (!ctx_handle)
     {
         struct ntlm_cred *cred = (struct ntlm_cred *)cred_handle;
+        struct ntlm_negotiate *negotiate;
         char *argv[3];
 
         if (!cred || !(cred->mode & MODE_SERVER))
@@ -997,6 +1039,13 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
             goto done;
         }
         else bin_len = input->pBuffers[0].cbBuffer;
+
+        if (bin_len < offsetof(struct ntlm_negotiate, target_name_len))
+        {
+            status = SEC_E_INVALID_TOKEN;
+            goto done;
+        }
+        negotiate = input->pBuffers[0].pvBuffer;
 
         if (!(ctx = calloc( 1, sizeof(*ctx) ))) goto done;
 
@@ -1021,6 +1070,17 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         if (ctx_req & ASC_REQ_REPLAY_DETECT) FIXME( "ASC_REQ_REPLAY_DETECT\n" );
         if (ctx_req & ASC_REQ_SEQUENCE_DETECT) FIXME( "ASC_REQ_SEQUENCE_DETECT\n" );
         if (ctx_req & ASC_REQ_STREAM) FIXME( "ASC_REQ_STREAM\n" );
+
+        ctx->req_attrs = ctx_req;
+        *ctx_attr = 0;
+        if (ctx_req & ASC_REQ_CONFIDENTIALITY || negotiate->negotiate_flags & NTLMSSP_NEGOTIATE_SEAL)
+            *ctx_attr |= ASC_RET_CONFIDENTIALITY;
+        if (ctx_req & ASC_REQ_CONNECTION) *ctx_attr |= ASC_RET_CONNECTION;
+        if (ctx_req & ASC_REQ_INTEGRITY) *ctx_attr |= ASC_RET_INTEGRITY;
+        if (ctx_req & ISC_REQ_REPLAY_DETECT || negotiate->negotiate_flags & NTLMSSP_NEGOTIATE_SIGN)
+            *ctx_attr |= ASC_RET_REPLAY_DETECT;
+        if (ctx_req & ISC_REQ_SEQUENCE_DETECT || negotiate->negotiate_flags & NTLMSSP_NEGOTIATE_SIGN)
+            *ctx_attr |= ASC_RET_SEQUENCE_DETECT;
 
         if (strlen( want_flags ) > 3)
         {
@@ -1057,6 +1117,8 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
     }
     else
     {
+        struct ntlm_authenticate *authenticate;
+
         if (!input || input->cBuffers < 1)
         {
             status = SEC_E_INCOMPLETE_MESSAGE;
@@ -1070,13 +1132,21 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
             goto done;
         }
 
-        if (input->pBuffers[0].cbBuffer > NTLM_MAX_BUF)
+        if (input->pBuffers[0].cbBuffer > NTLM_MAX_BUF ||
+                input->pBuffers[0].cbBuffer < offsetof(struct ntlm_authenticate, version))
         {
             status = SEC_E_INVALID_TOKEN;
             goto done;
         }
         else bin_len = input->pBuffers[0].cbBuffer;
         memcpy( bin, input->pBuffers[0].pvBuffer, bin_len );
+        authenticate = input->pBuffers[0].pvBuffer;
+
+        *ctx_attr = 0;
+        if (authenticate->negotiate_flags & NTLMSSP_NEGOTIATE_SEAL)
+            *ctx_attr |= ASC_RET_CONFIDENTIALITY;
+        if (authenticate->negotiate_flags & NTLMSSP_NEGOTIATE_SIGN)
+            *ctx_attr |= ASC_RET_INTEGRITY | ASC_RET_REPLAY_DETECT | ASC_RET_SEQUENCE_DETECT;
 
         strcpy( buf, "KK " );
         encode_base64( bin, bin_len, buf + 3 );

@@ -553,24 +553,34 @@ static void testInitializeSecurityContextFlags(void)
         ULONG req_attr;
         ULONG flags;
         ULONG ctxt_attr;
+        ULONG ctxt_attr_chlg;
         ULONG ctxt_attr_auth;
+        ULONG ctxt_attr_serv;
     } test_data[] =
     {
-        { 0, 0, 0, 0 },
-        { ISC_REQ_CONNECTION, 0, ISC_RET_CONNECTION, 0 },
-        { ISC_REQ_EXTENDED_ERROR, 0, 0, 0 },
-        { ISC_REQ_MUTUAL_AUTH, 0, 0, ISC_RET_MUTUAL_AUTH },
-        { ISC_REQ_USE_DCE_STYLE, 0, 0, 0 },
-        { ISC_REQ_DELEGATE, 0, 0, 0 },
+        { 0, 0, 0, 0, 0 },
+        { ISC_REQ_CONNECTION, 0, ISC_RET_CONNECTION, 0, 0, 0 },
+        { ISC_REQ_EXTENDED_ERROR, 0, 0, 0, 0, 0 },
+        { ISC_REQ_MUTUAL_AUTH, 0, 0, 0, ISC_RET_MUTUAL_AUTH, 0 },
+        { ISC_REQ_USE_DCE_STYLE, 0, 0, 0, 0, 0 },
+        { ISC_REQ_DELEGATE, 0, 0, 0, 0, 0 },
         { ISC_REQ_INTEGRITY, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_INTEGRITY,
-            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT },
+            ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT,
+            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT,
+            ASC_RET_INTEGRITY | ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT },
         { ISC_REQ_REPLAY_DETECT, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_REPLAY_DETECT,
-            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT },
+            ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT,
+            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT,
+            ASC_RET_INTEGRITY | ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT },
         { ISC_REQ_SEQUENCE_DETECT, NTLMSSP_NEGOTIATE_SIGN, ISC_RET_SEQUENCE_DETECT,
-            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT },
+            ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT,
+            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT,
+            ASC_RET_INTEGRITY | ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT },
         { ISC_REQ_CONFIDENTIALITY, NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_SEAL,
             ISC_RET_CONFIDENTIALITY | ISC_RET_INTEGRITY,
-            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT | ISC_RET_CONFIDENTIALITY }
+            ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT | ASC_RET_CONFIDENTIALITY,
+            ISC_RET_INTEGRITY | ISC_RET_SEQUENCE_DETECT | ISC_RET_REPLAY_DETECT | ISC_RET_CONFIDENTIALITY,
+            ASC_RET_INTEGRITY | ASC_RET_SEQUENCE_DETECT | ASC_RET_REPLAY_DETECT | ASC_RET_CONFIDENTIALITY }
     };
 
     SECURITY_STATUS         sec_status;
@@ -616,6 +626,7 @@ static void testInitializeSecurityContextFlags(void)
         ok(ctxt_attr == test_data[i].ctxt_attr, "ctxt_attr = %lx\n", ctxt_attr);
 
         server.out_buf->pBuffers[0].cbBuffer = server.max_token;
+        ctxt_attr = 0xffffffff;
         sec_status = AcceptSecurityContext(&server.cred, NULL, client.out_buf, 0,
                 SECURITY_NETWORK_DREP, &server.ctxt, server.out_buf, &ctxt_attr, &ttl);
         ok(sec_status == SEC_I_CONTINUE_NEEDED, "AcceptSecurityContext returned %s\n",
@@ -623,6 +634,7 @@ static void testInitializeSecurityContextFlags(void)
         ok(server.out_buf->cBuffers == 1, "cBuffers = %lu\n", server.out_buf->cBuffers);
         ok(server.out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
                 "BufferType = %ld\n", server.out_buf->pBuffers[0].BufferType);
+        ok(ctxt_attr == test_data[i].ctxt_attr_chlg, "ctxt_attr = %lx\n", ctxt_attr);
 
         client.out_buf->pBuffers[0].cbBuffer = client.max_token;
         ctxt_attr = 0xffffffff;
@@ -635,6 +647,12 @@ static void testInitializeSecurityContextFlags(void)
             todo_wine_if(test_data[i].req_attr & ISC_REQ_MUTUAL_AUTH)
             ok(ctxt_attr == test_data[i].ctxt_attr_auth, "ctxt_attr = %lx (negotiated flags: %x)\n",
                     ctxt_attr, challenge->negotiate_flags);
+
+            ctxt_attr = 0xffffffff;
+            sec_status = AcceptSecurityContext(&server.cred, &server.ctxt, client.out_buf, 0,
+                    SECURITY_NETWORK_DREP, &server.ctxt, NULL, &ctxt_attr, &ttl);
+            ok(sec_status == SEC_E_OK, "AcceptSecurityContext returned %s\n", getSecError(sec_status));
+            ok(ctxt_attr == test_data[i].ctxt_attr_serv, "ctxt_attr = %lx\n", ctxt_attr);
         }
 
         DeleteSecurityContext(&client.ctxt);
