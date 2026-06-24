@@ -2485,6 +2485,11 @@ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r, unsigned flags)
 
     TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
 
+    /* Comparing an array raises type mismatch on native; VarCmp would instead
+     * fail with DISP_E_BADVARTYPE (the unsupported-type error 458). */
+    if((V_VT(l) & VT_ARRAY) || (V_VT(r) & VT_ARRAY))
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
     if(is_unsupported_script_vt(lvt) || is_unsupported_script_vt(rvt))
         return MAKE_VBSERROR(VBSE_INVALID_TYPELIB_VARIABLE);
 

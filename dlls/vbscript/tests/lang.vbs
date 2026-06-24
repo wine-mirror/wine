@@ -238,6 +238,26 @@ Call ok(err.number = 13, """"" > 0 err.number = " & err.number)
 err.clear
 x = (5 > "abc")
 Call ok(err.number = 13, "5 > ""abc"" err.number = " & err.number)
+' Comparing an array raises type mismatch (error 13), not the unsupported-type
+' error 458. Holds for every comparison operator and every other operand type,
+' including Empty and Null (the array type mismatch wins over Null propagation).
+Dim arrcmp, arrcmp2, arrmd(2,2)
+arrcmp = Array(1,2,3)
+arrcmp2 = Array(1,2,3)
+err.clear : x = (arrcmp <> "")     : Call ok(err.number = 13, "array <> empty string err=" & err.number)
+err.clear : x = (arrcmp = "")      : Call ok(err.number = 13, "array = empty string err=" & err.number)
+err.clear : x = ("" <> arrcmp)     : Call ok(err.number = 13, "empty string <> array err=" & err.number)
+err.clear : x = (arrcmp <> 0)      : Call ok(err.number = 13, "array <> 0 err=" & err.number)
+err.clear : x = (arrcmp < 5)       : Call ok(err.number = 13, "array < 5 err=" & err.number)
+err.clear : x = (arrcmp > 5)       : Call ok(err.number = 13, "array > 5 err=" & err.number)
+err.clear : x = (arrcmp >= 5)      : Call ok(err.number = 13, "array >= 5 err=" & err.number)
+err.clear : x = (arrcmp <= 5)      : Call ok(err.number = 13, "array <= 5 err=" & err.number)
+err.clear : x = (arrcmp = arrcmp2) : Call ok(err.number = 13, "array = array err=" & err.number)
+err.clear : x = (arrcmp = arrcmp)  : Call ok(err.number = 13, "array = same array err=" & err.number)
+err.clear : x = (arrcmp = Empty)   : Call ok(err.number = 13, "array = Empty err=" & err.number)
+err.clear : x = (arrcmp = Null)    : Call ok(err.number = 13, "array = Null err=" & err.number)
+err.clear : x = (arrcmp <> Null)   : Call ok(err.number = 13, "array <> Null err=" & err.number)
+err.clear : x = (arrmd = "")       : Call ok(err.number = 13, "multidim array = empty string err=" & err.number)
 on error goto 0
 
 ' BSTR coerces to numeric for comparison even when it carries VT_BYREF
