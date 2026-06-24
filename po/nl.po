@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-11-29 18:00+0100\n"
+"PO-Revision-Date: 2026-06-24 12:15+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -3817,11 +3817,11 @@ msgstr "Indeo Video Interactive versie 5 video codec"
 
 #: dlls/iyuv_32/iyuv_32.rc:28
 msgid "IYUV codec"
-msgstr ""
+msgstr "IYUV codec"
 
 #: dlls/iyuv_32/iyuv_32.rc:29
 msgid "Intel Indeo IYUV codec"
-msgstr ""
+msgstr "Intel Indeo IYUV codec"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -4039,11 +4039,11 @@ msgstr "'return' verklaring buiten functie"
 
 #: dlls/jscript/jscript.rc:47
 msgid "Can't have 'break' outside of loop"
-msgstr "'break' kan zich niet buiten loop bevinden"
+msgstr "'break' kan zich niet buiten lus bevinden"
 
 #: dlls/jscript/jscript.rc:48
 msgid "Can't have 'continue' outside of loop"
-msgstr "'continue' kan zich niet buiten loop bevinden"
+msgstr "'continue' kan zich niet buiten lus bevinden"
 
 #: dlls/jscript/jscript.rc:49
 msgid "Label redefined"
@@ -4055,7 +4055,7 @@ msgstr "Label niet gevonden"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Expected '@end'"
-msgstr "Verwacht '@end'"
+msgstr "'@end' verwacht"
 
 #: dlls/jscript/jscript.rc:52
 msgid "Conditional compilation is turned off"
@@ -4063,7 +4063,7 @@ msgstr "Conditionele compilatie is uitgeschakeld"
 
 #: dlls/jscript/jscript.rc:53
 msgid "Expected '@'"
-msgstr "Verwacht '@'"
+msgstr "'@' verwacht"
 
 #: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
@@ -4840,7 +4840,7 @@ msgstr "Bestand bestaat al.\n"
 
 #: dlls/kernelbase/winerror.mc:725
 msgid "Invalid flag number.\n"
-msgstr "Ongeldig vlagnumer.\n"
+msgstr "Ongeldig vlagnummer.\n"
 
 #: dlls/kernelbase/winerror.mc:730
 msgid "Semaphore name not found.\n"
@@ -5035,125 +5035,111 @@ msgid "Invalid oplock message received.\n"
 msgstr "Ongeldig oplockbericht ontvangen.\n"
 
 #: dlls/kernelbase/winerror.mc:970
-#, fuzzy
-#| msgid "Disk is corrupt.\n"
 msgid "Disk is too fragmented.\n"
-msgstr "Schijf is corrupt.\n"
+msgstr "Schijf teveel gefragmenteerd.\n"
 
 #: dlls/kernelbase/winerror.mc:975
 msgid "File cannot be opened because it is in the process of being deleted.\n"
-msgstr ""
+msgstr "Bestand kan niet worden geopend omdat het verwijderd wordt.\n"
 
 #: dlls/kernelbase/winerror.mc:980
 msgid "Short name settings incompatible with global registry setting.\n"
 msgstr ""
+"Korte bestandsnamen zijn in strijd met de algemene registerinstellingen.\n"
 
 #: dlls/kernelbase/winerror.mc:985
 msgid "Short names are not enabled on this volume.\n"
-msgstr ""
+msgstr "Op dit sation zijn korte bestandsnamen niet ingeschakeld.\n"
 
 #: dlls/kernelbase/winerror.mc:990
-#, fuzzy
-#| msgid "Floppy registers inconsistent.\n"
 msgid "Security stream is inconsistent.\n"
-msgstr "Floppyregisters inconsistent.\n"
+msgstr "De beveiligingsstatus is inconsistent.\n"
 
 #: dlls/kernelbase/winerror.mc:995
 msgid "File lock operation cannot be processed due to invalid byte range.\n"
 msgstr ""
+"Bestandsvergrendeling kan niet worden verwerkt door een ongeldig "
+"bytebereik.\n"
 
 #: dlls/kernelbase/winerror.mc:1000
 msgid "Subsystem for supporting image type is not present.\n"
 msgstr ""
+"Subsysteem voor de ondersteuning van dit bestandstype is niet aanwezig.\n"
 
 #: dlls/kernelbase/winerror.mc:1005
 msgid "Notification GUID is already defined.\n"
-msgstr ""
+msgstr "De GUID van de melding is al gedefinieerd.\n"
 
 #: dlls/kernelbase/winerror.mc:1010
-#, fuzzy
-#| msgid "Invalid icon handle.\n"
 msgid "Invalid exception handler.\n"
-msgstr "Ongeldige pictogramhandle.\n"
+msgstr "Ongeldige uitzonderingsverwerker.\n"
 
 #: dlls/kernelbase/winerror.mc:1015
-#, fuzzy
-#| msgid "Duplicate service name.\n"
 msgid "Duplicate privileges for the token.\n"
-msgstr "Dubbele servicenaam.\n"
+msgstr "Dubbele rechten voor het token.\n"
 
 #: dlls/kernelbase/winerror.mc:1020
-#, fuzzy
-#| msgid "Not all objects could be exported.\n"
 msgid "No ranges could be processed.\n"
-msgstr "Niet alle objecten konden worden geëxporteerd.\n"
+msgstr "Bereik kan niet worden verwerkt.\n"
 
 #: dlls/kernelbase/winerror.mc:1025
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation not allowed on system file.\n"
-msgstr "Bewerking geannuleerd door gebruiker.\n"
+msgstr "Bewerking niet toegestaan op systeembestand.\n"
 
 #: dlls/kernelbase/winerror.mc:1030
 msgid "Disk resources have been exhausted.\n"
-msgstr ""
+msgstr "Schijfbronnen zijn verbruikt.\n"
 
 #: dlls/kernelbase/winerror.mc:1035
-#, fuzzy
-#| msgid "Invalid key.\n"
 msgid "Invalid token.\n"
-msgstr "Ongeldige sleutel.\n"
+msgstr "Ongeldige token.\n"
 
 #: dlls/kernelbase/winerror.mc:1040
 msgid "Command feature not supported on the device.\n"
-msgstr ""
+msgstr "Deze functie wordt op dit apparaat niet ondersteund.\n"
 
 #: dlls/kernelbase/winerror.mc:1045
 msgid "Message 0x%1 not found in file %2.\n"
 msgstr "Bericht 0x%1 niet gevonden in bestand %2.\n"
 
 #: dlls/kernelbase/winerror.mc:1050
-#, fuzzy
-#| msgid "Sector not found.\n"
 msgid "Scope not found.\n"
-msgstr "Sector niet gevonden.\n"
+msgstr "Bereik niet gevonden.\n"
 
 #: dlls/kernelbase/winerror.mc:1055
-#, fuzzy
-#| msgid "The specified device handle is invalid."
 msgid "The specified Central Access Policy is undefined.\n"
-msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
+msgstr "Het opgegeven centrale toegangsbeleid is niet gedefinieerd.\n"
 
 #: dlls/kernelbase/winerror.mc:1060
 msgid "Central Access Policy from Active Directory is invalid.\n"
-msgstr ""
+msgstr "Ongeldig Active Directory centraal toegangsbeleid.\n"
 
 #: dlls/kernelbase/winerror.mc:1065
-#, fuzzy
-#| msgid "Host unreachable.\n"
 msgid "Device is unreachable.\n"
-msgstr "Host onbereikbaar.\n"
+msgstr "Apparaat is onbereikbaar.\n"
 
 #: dlls/kernelbase/winerror.mc:1070
 msgid "Target device has insufficient resources to complete the operation.\n"
-msgstr ""
+msgstr "Onvoldoende bronnen op het doelapparaat voor deze bewerking.\n"
 
 #: dlls/kernelbase/winerror.mc:1075
 msgid ""
 "A data integrity checksum error occurred. Data in the file stream is "
 "corrupt.\n"
 msgstr ""
+"Fout in de gegevensintegriteit controlesom. Gegevens in de bestandsstroom "
+"zijn beschadigd.\n"
 
 #: dlls/kernelbase/winerror.mc:1080
 msgid ""
 "Cannot modify both KERNEL and normal Extended Attributes in one operation.\n"
 msgstr ""
+"Onmogelijk om KERNEL en normale uitgebreide attributen in één bewerking te "
+"wijzigen.\n"
 
 #: dlls/kernelbase/winerror.mc:1085
-#, fuzzy
-#| msgid "Device does not exist.\n"
 msgid "Device does not support file-level TRIM.\n"
-msgstr "Apparaat bestaat niet.\n"
+msgstr "Apparaat ondersteunt geen TRIM op bestandsniveau.\n"
 
 #: dlls/kernelbase/winerror.mc:1090
 msgid "Invalid address.\n"
@@ -7365,10 +7351,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Deze netwerkverbinding bestaat niet.\n"
 
 #: dlls/kernelbase/winerror.mc:3865
-#, fuzzy
-#| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
-msgstr "Bestand of map corrupt.\n"
+msgstr "Bestand of map is geen reparsepunt.\n"
 
 #: dlls/kernelbase/winerror.mc:3870
 msgid "Call interrupted.\n"
@@ -7419,10 +7403,8 @@ msgid "Call failed.\n"
 msgstr "Oproep mislukt.\n"
 
 #: dlls/kernelbase/winerror.mc:3937
-#, fuzzy
-#| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
-msgstr "Niet in staat media te ontladen.\n"
+msgstr "Gelijkaardig object niet kunnen vinden.\n"
 
 #: dlls/kernelbase/winerror.mc:3944
 msgid "No Signature found in file.\n"
@@ -9000,226 +8982,172 @@ msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video codec"
 
 #: dlls/msxml3/msxml.mc:31
-#, fuzzy
-#| msgid "Undefined external error."
 msgid "Undefined reference\n"
-msgstr "Ongedefinieerde fout van buitenaf."
+msgstr "Ongedefinieerde verwijzing\n"
 
 #: dlls/msxml3/msxml.mc:38
 msgid "Found self-referential entity\n"
-msgstr ""
+msgstr "Zelf verwijzende referentie gevonden\n"
 
 #: dlls/msxml3/msxml.mc:45
 msgid "Unparsed entity reference\n"
-msgstr ""
+msgstr "Niet-geparseerde entiteitsverwijzing\n"
 
 #: dlls/msxml3/msxml.mc:52
 msgid "Name text contains colon ':'\n"
-msgstr ""
+msgstr "Dubbele punt ':' in de naam\n"
 
 #: dlls/msxml3/msxml.mc:59
 msgid "Namespace prefix hasn't been declared\n"
-msgstr ""
+msgstr "Naam pefix is niet opgegeven\n"
 
 #: dlls/msxml3/msxml.mc:66
-#, fuzzy
-#| msgid "Expected '='"
 msgid "Expected '=' character\n"
-msgstr "Verwacht '='"
+msgstr "'=' teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:73
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected a quote character\n"
-msgstr "Verwacht een operator.\n"
+msgstr "Aanhalingstekens verwacht\n"
 
 #: dlls/msxml3/msxml.mc:80
 msgid "Malformed comment\n"
-msgstr ""
+msgstr "Onjuist geformuleerde opmerking\n"
 
 #: dlls/msxml3/msxml.mc:87
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name start character\n"
-msgstr "Ongeldig teken"
+msgstr "Ongeldig beginteken van de naam\n"
 
 #: dlls/msxml3/msxml.mc:94
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name character\n"
-msgstr "Ongeldig teken"
+msgstr "Ongeldig teken van de naam\n"
 
 #: dlls/msxml3/msxml.mc:101
 msgid "The '<' character found in attribute value\n"
-msgstr ""
+msgstr "'<' teken gevonden in de attribuutwaarde\n"
 
 #: dlls/msxml3/msxml.mc:108
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected whitespace character\n"
-msgstr "Verwacht een operator.\n"
+msgstr "Witruimte teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:115
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected end tag character '>'\n"
-msgstr "Verwacht een operator.\n"
+msgstr "Eindtag-teken '>' verwacht\n"
 
 #: dlls/msxml3/msxml.mc:122
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD content\n"
-msgstr "De naam van het pad bevat ongeldige tekens"
+msgstr "Ongeldig teken in DTD inhoud\n"
 
 #: dlls/msxml3/msxml.mc:129
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ';' character\n"
-msgstr "';' verwacht"
+msgstr "';' teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:136
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in entity reference\n"
-msgstr "De naam van het pad bevat ongeldige tekens"
+msgstr "Ongeldig teken in entiteitsverwijzing\n"
 
 #: dlls/msxml3/msxml.mc:143
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in mixed DTD content\n"
-msgstr "De naam van het pad bevat ongeldige tekens"
+msgstr "Ongeldig teken in gemengde DTD inhoud\n"
 
 #: dlls/msxml3/msxml.mc:150
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected '*' character\n"
-msgstr "Verwacht een operator.\n"
+msgstr "'*' teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:157
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected parenthesis character\n"
-msgstr "Verwacht een operator.\n"
+msgstr "Haakjes-teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:164
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD enumeration\n"
-msgstr "De naam van het pad bevat ongeldige tekens"
+msgstr "Ongeldig teken in DTD opsomming\n"
 
 #: dlls/msxml3/msxml.mc:171
-#, fuzzy
-#| msgid "Invalid name syntax.\n"
 msgid "Invalid PI syntax\n"
-msgstr "Ongeldige formulering van de naam.\n"
+msgstr "Ongeldige PI formulering\n"
 
 #: dlls/msxml3/msxml.mc:178
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected closing quote character\n"
-msgstr "Verwacht een operator.\n"
+msgstr "Aanhalingsteken sluiten verwacht\n"
 
 #: dlls/msxml3/msxml.mc:185
 msgid "Multiple colon character found\n"
-msgstr ""
+msgstr "Meerdere dubbele punt-tekens gevonden\n"
 
 #: dlls/msxml3/msxml.mc:192
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid Unicode character\n"
-msgstr "Ongeldig teken"
+msgstr "Ongeldig Unicode teken\n"
 
 #: dlls/msxml3/msxml.mc:199
 msgid "Expected whitespace or '?' character\n"
-msgstr ""
+msgstr "Witruimte of '?' teken verwacht\n"
 
 #: dlls/msxml3/msxml.mc:206
 msgid "Unexpected end tag '>' character\n"
-msgstr ""
+msgstr "Onverwacht eindtag-teken '>'\n"
 
 #: dlls/msxml3/msxml.mc:213
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Found duplicate attribute\n"
-msgstr "Ongeldige groepsattributen.\n"
+msgstr "Dubbel attribuut gevonden\n"
 
 #: dlls/msxml3/msxml.mc:220
-#, fuzzy
-#| msgid "Key is invalid.\n"
 msgid "Document root is invalid\n"
-msgstr "Sleutel is ongeldig.\n"
+msgstr "Hoofd-tag is ongeldig\n"
 
 #: dlls/msxml3/msxml.mc:227
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid xml declaration\n"
-msgstr "Foutieve handle handeling.\n"
+msgstr "Ongeldige xml-declaratie\n"
 
 #: dlls/msxml3/msxml.mc:234
-#, fuzzy
-#| msgid "Source is missing.\n"
 msgid "Document root is missing\n"
-msgstr "Bron ontbreekt.\n"
+msgstr "Hoofd-tag ontbreekt\n"
 
 #: dlls/msxml3/msxml.mc:241
 msgid "Unexpected end of input data stream\n"
-msgstr ""
+msgstr "Onverwacht einde van de invoerdatastroom\n"
 
 #: dlls/msxml3/msxml.mc:248
 msgid "Found unexpected CDATA closing markup ']]>'\n"
-msgstr ""
+msgstr "Onverwachte CDATA afsluitmarkering gevonden ']]'\n"
 
 #: dlls/msxml3/msxml.mc:255
 msgid "Found unterminated PI declaration\n"
-msgstr ""
+msgstr "PI-declaratie zonder afsluiting gevonden\n"
 
 #: dlls/msxml3/msxml.mc:262
 msgid "Found unterminated end tag\n"
-msgstr ""
+msgstr "Niet afgesloten eindtag gevonden\n"
 
 #: dlls/msxml3/msxml.mc:269
 msgid "Found unterminated CDATA block\n"
-msgstr ""
+msgstr "CDATA zonder afsluiting gevonden\n"
 
 #: dlls/msxml3/msxml.mc:276
 msgid "Use namespace prefix is reserved\n"
-msgstr ""
+msgstr "Gebruik van voorbehouden naam prefix\n"
 
 #: dlls/msxml3/msxml.mc:283
-#, fuzzy
-#| msgid "The passwords do not match."
 msgid "End tag does not match\n"
-msgstr "De wachtwoorden zijn niet gelijk."
+msgstr "Eind-tag is niet gelijk\n"
 
 #: dlls/msxml3/msxml.mc:290
-#, fuzzy
-#| msgid "Invalid domain name.\n"
 msgid "Invalid encoding name\n"
-msgstr "Ongeldige domeinnaam.\n"
+msgstr "Ongeldige coderingnaam\n"
 
 #: dlls/msxml3/msxml.mc:297
-#, fuzzy
-#| msgid "Invalid media type.\n"
 msgid "Invalid model in DTD contentspec\n"
-msgstr "Ongeldig media-type.\n"
+msgstr "Ongeldig model in DTD inhoudspec\n"
 
 #: dlls/msxml3/msxml.mc:304
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid DTD attribute type\n"
-msgstr "Ongeldige groepsattributen.\n"
+msgstr "Ongeldig DTD kenmerk type\n"
 
 #: dlls/msxml3/msxml.mc:311
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid standalone declaration\n"
-msgstr "Foutieve handle handeling.\n"
+msgstr "Ongeldige zelfstandige declaratie\n"
 
 #: dlls/msxml3/msxml.mc:318
-#, fuzzy
-#| msgid "Invalid version option.\n"
 msgid "Invalid xml version\n"
-msgstr "Ongeldige versie-optie.\n"
+msgstr "Ongeldige xml versie\n"
 
 #: dlls/oleacc/oleacc.rc:31
 msgid "unknown object"
@@ -13086,10 +13014,8 @@ msgid "This array is fixed or temporarily locked"
 msgstr "Deze matrix ligt vast of is tijdelijk vergrendeld"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Division by zero error.\n"
 msgid "Division by zero"
-msgstr "Delen door nul fout.\n"
+msgstr "Delen door nul"
 
 #: dlls/vbscript/vbscript.rc:35
 msgid "Type mismatch"
@@ -13128,10 +13054,8 @@ msgid "Object variable not set"
 msgstr "De objectvariabele is niet ingesteld"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Object is not initialized.\n"
 msgid "For loop not initialized"
-msgstr "Object is niet geïnitialiseerd.\n"
+msgstr "For-lus is niet geïnitialiseerd"
 
 #: dlls/vbscript/vbscript.rc:47
 msgid "Invalid use of Null"
@@ -13177,7 +13101,7 @@ msgstr "Kan opgegeven DLL-functie niet vinden"
 
 #: dlls/vbscript/vbscript.rc:61
 msgid "This key is already associated with an element of this collection"
-msgstr ""
+msgstr "Deze sleutel is reeds verbonden aan een element in deze collectie"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Variable uses an Automation type not supported in VBScript"
@@ -13190,228 +13114,174 @@ msgid "The remote server machine does not exist or is unavailable"
 msgstr "De externe servercomputer bestaat niet of is niet beschikbaar"
 
 #: dlls/vbscript/vbscript.rc:65
-#, fuzzy
-#| msgid "'|' is undefined"
 msgid "Variable is undefined"
-msgstr "'|' is ongedefinieerd"
+msgstr "Variabele is ongedefinieerd"
 
 #: dlls/vbscript/vbscript.rc:67
 msgid "Invalid or unqualified reference"
 msgstr "Ongeldige of niet-gekwalificeerde verwijzing"
 
 #: dlls/vbscript/vbscript.rc:68
-#, fuzzy
-#| msgid "Class does not exist.\n"
 msgid "Class not defined"
-msgstr "Klasse bestaat niet.\n"
+msgstr "Klasse ongedefineerd"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ']'"
-msgstr "';' verwacht"
+msgstr "']' verwacht"
 
 #: dlls/vbscript/vbscript.rc:75
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'If'"
-msgstr "';' verwacht"
+msgstr "'If' verwacht"
 
 #: dlls/vbscript/vbscript.rc:76
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'To'"
-msgstr "';' verwacht"
+msgstr "'To' verwacht"
 
 #: dlls/vbscript/vbscript.rc:77
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'End'"
-msgstr "Verwacht '@end'"
+msgstr "'End' verwacht"
 
 #: dlls/vbscript/vbscript.rc:78
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Function'"
-msgstr "';' verwacht"
+msgstr "'Function' verwacht"
 
 #: dlls/vbscript/vbscript.rc:79
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Sub'"
-msgstr "';' verwacht"
+msgstr "'Sub' verwacht"
 
 #: dlls/vbscript/vbscript.rc:80
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Then'"
-msgstr "Verwacht '@end'"
+msgstr "'Then' verwacht"
 
 #: dlls/vbscript/vbscript.rc:81
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
-msgstr "Verwacht '@end'"
+msgstr "'Wend' verwacht"
 
 #: dlls/vbscript/vbscript.rc:82
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Loop'"
-msgstr "';' verwacht"
+msgstr "'Loop' verwacht"
 
 #: dlls/vbscript/vbscript.rc:83
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Next'"
-msgstr "';' verwacht"
+msgstr "'Next' verwacht"
 
 #: dlls/vbscript/vbscript.rc:84
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Case'"
-msgstr "';' verwacht"
+msgstr "'Case' verwacht"
 
 #: dlls/vbscript/vbscript.rc:85
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Select'"
-msgstr "';' verwacht"
+msgstr "'Select' verwacht"
 
 #: dlls/vbscript/vbscript.rc:86
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected statement"
-msgstr "Verwacht '@end'"
+msgstr "Verklaring verwacht"
 
 #: dlls/vbscript/vbscript.rc:87
-#, fuzzy
-#| msgid "Expected an operand.\n"
 msgid "Expected end of statement"
-msgstr "Verwacht een operand.\n"
+msgstr "Einde van de verklaring verwacht"
 
 #: dlls/vbscript/vbscript.rc:88
-#, fuzzy
-#| msgid "Unterminated string constant"
 msgid "Expected integer constant"
-msgstr "Onafgesloten tekenreeksconstante"
+msgstr "Gehele constante verwacht"
 
 #: dlls/vbscript/vbscript.rc:89
 msgid "Expected 'While', 'Until' or end of statement"
-msgstr ""
+msgstr "'While', 'Until' of einde van de verklaring verwacht"
 
 #: dlls/vbscript/vbscript.rc:91
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'With'"
-msgstr "';' verwacht"
+msgstr "'With' verwacht"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Secret too long.\n"
 msgid "Identifier too long"
-msgstr "Geheim te lang.\n"
+msgstr "Identificatie te lang"
 
 #: dlls/vbscript/vbscript.rc:92
-#, fuzzy
-#| msgid "Invalid flag number.\n"
 msgid "Invalid number"
-msgstr "Ongeldig vlagnumer.\n"
+msgstr "Ongeldig nummer"
 
 #: dlls/vbscript/vbscript.rc:95
-#, fuzzy
-#| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
-msgstr "Ongeldig gebruik van Null"
+msgstr "Ongeldig gebruik van 'Me'"
 
 #: dlls/vbscript/vbscript.rc:96
 msgid "'loop' without 'do'"
-msgstr ""
+msgstr "'loop' zonder 'do'"
 
 #: dlls/vbscript/vbscript.rc:97
-#, fuzzy
-#| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
-msgstr "Ongeldige printerstatus.\n"
+msgstr "Ongeldig 'exit' verklaring"
 
 #: dlls/vbscript/vbscript.rc:98
 msgid "Invalid 'for' loop control variable"
-msgstr ""
+msgstr "Ongeldige besturingsvariabele voor de 'for'-lus"
 
 #: dlls/vbscript/vbscript.rc:99
-#, fuzzy
-#| msgid "Label redefined"
 msgid "Name redefined"
-msgstr "Label hergedefinieerd"
+msgstr "Naam hergedefinieerd"
 
 #: dlls/vbscript/vbscript.rc:100
 msgid "Must be first statement on the line"
-msgstr ""
+msgstr "Moet de eerste verklaring op de regel zijn"
 
 #: dlls/vbscript/vbscript.rc:101
 msgid "Cannot use parentheses when calling a Sub"
-msgstr ""
+msgstr "Kan geen haakjes gebruiken bij het gebruik van Sub"
 
 #: dlls/vbscript/vbscript.rc:102
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected literal constant"
-msgstr "Verwacht een operator.\n"
+msgstr "Letterlijke constante verwacht"
 
 #: dlls/vbscript/vbscript.rc:103
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'In'"
-msgstr "';' verwacht"
+msgstr "'In' verwacht"
 
 #: dlls/vbscript/vbscript.rc:104
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Class'"
-msgstr "';' verwacht"
+msgstr "'Class' verwacht"
 
 #: dlls/vbscript/vbscript.rc:105
 msgid "Must be defined inside a Class"
-msgstr ""
+msgstr "Moet gedefineerd zijn in een Class"
 
 #: dlls/vbscript/vbscript.rc:106
 msgid "Expected Let or Set or Get in property declaration"
-msgstr ""
+msgstr "Let, Set of Get verwacht in eigenschap declaratie"
 
 #: dlls/vbscript/vbscript.rc:107
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Property'"
-msgstr "';' verwacht"
+msgstr "'Property' verwacht"
 
 #: dlls/vbscript/vbscript.rc:108
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
+"Het aantal argumenten moet in alle eigenschapsspecificaties hetzelfde zijn"
 
 #: dlls/vbscript/vbscript.rc:109
 msgid "Cannot have multiple default property/method in a Class"
 msgstr ""
+"Meerdere standard eigenschappen/methodes in een Class zijn niet mogelijk"
 
 #: dlls/vbscript/vbscript.rc:110
 msgid "Class initialize or terminate do not have arguments"
-msgstr ""
+msgstr "Geen argumenten bij Class initialiseren of beëindigen"
 
 #: dlls/vbscript/vbscript.rc:111
 msgid "Property set or let must have at least one argument"
-msgstr ""
+msgstr "Eigenschappen set of let moeten minstens een argument hebben"
 
 #: dlls/vbscript/vbscript.rc:112
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
-msgstr "';' verwacht"
+msgstr "'Next' verwacht"
 
 #: dlls/vbscript/vbscript.rc:113
 msgid "'Default' specification must also specify 'Public'"
-msgstr ""
+msgstr "Specificatie van 'Default' moet ook 'Public' specificeren"
 
 #: dlls/vbscript/vbscript.rc:114
 msgid "'Default' specification can only be on Property Get"
-msgstr ""
+msgstr "Specificatie van 'Default' kan alleen bij Property Get"
 
 #: dlls/vbscript/vbscript.rc:116
 msgid "Microsoft VBScript compilation error"
@@ -15614,26 +15484,45 @@ msgid ""
 "//X         Execute script in debugger\n"
 "//U         Use Unicode for redirected I/O from the console\n"
 msgstr ""
+"Gebruik: CScript scriptnaam.extensie [optie...] [argumenten...]\n"
+"\n"
+"Opties:\n"
+"//B         Batch mode: Voorkomt dat scriptfouten en meldingen worden "
+"weergegeven\n"
+"//D         Actieve foutopsporing aanzetten\n"
+"//E:engine  Gebruik engine bij het uitvoeren van het script\n"
+"//H:CScript Wijzigt de standaard scripthost naar CScript.exe\n"
+"//H:WScript Wijzigt de standaard scripthost naar WScript.exe (standaard)\n"
+"//I         Interactieve mode (standaard, tegenovergestelde van //B)\n"
+"//Job:xxxx  Voer een WSF job uit\n"
+"//Logo      Logo weergeven (standaard)\n"
+"//Nologo    Geen logo weergeven: Bij het uitvoeren is er geen banner "
+"zichtbaar\n"
+"//S         Voor de gebruiker de huidige opdrachtregel opslaan\n"
+"//T:nn      Uitvoertijd in secondes: Maximale tijd dat het script mag "
+"draaien\n"
+"//X         Script uitvoeren in debugger\n"
+"//U         Gebruik Unicode voor het doorsturen van de I/O van de console\n"
 
 #: programs/wscript/wscript.rc:47
 msgid "Input Error: There is no script file specified.\n"
-msgstr ""
+msgstr "Invoerfout: Er is geen script-bestand opgegeven.\n"
 
 #: programs/wscript/wscript.rc:48
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Input Error: Can not find script file \"%1\".\n"
-msgstr "Fout: Kon proces \"%1\" niet vinden.\n"
+msgstr "Invoerfout: Kan script-bestand \"%1\" niet vinden.\n"
 
 #: programs/wscript/wscript.rc:49
 msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
-msgstr ""
+msgstr "CScript fout: Laden van script \"%1\" mislukt (%2).\n"
 
 #: programs/wscript/wscript.rc:52
 msgid ""
 "Script execution time was exceeded on script \"%1\".\n"
 "Script execution was terminated.\n"
 msgstr ""
+"Overschrijding van de uitvoeringstijd van script \"%1\".\n"
+"Uitvoering van het script is gestopt.\n"
 
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
@@ -19641,10 +19530,8 @@ msgid "(System default)"
 msgstr "(Systeeminstelling)"
 
 #: programs/winecfg/winecfg.rc:90
-#, fuzzy
-#| msgid "5.1 Surround"
 msgid "7.1 Surround"
-msgstr "5.1 Surround"
+msgstr "7.1 Surround"
 
 #: programs/winecfg/winecfg.rc:91
 msgid "5.1 Surround"
