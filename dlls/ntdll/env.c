@@ -682,7 +682,7 @@ void init_user_process_params(void)
     WCHAR *env;
     SIZE_T size = 0, env_size;
     RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
-    UNICODE_STRING curdir;
+    UNICODE_STRING curdir = { 0 };
 
     /* environment needs to be a separate memory block */
     env_size = params->EnvironmentSize;
@@ -692,8 +692,9 @@ void init_user_process_params(void)
         else env[0] = 0;
     }
 
+    curdir.MaximumLength = params->CurrentDirectory.DosPath.MaximumLength;
     if (!(new_params = alloc_process_params( 1, &params->ImagePathName, &params->DllPath,
-                                             &params->CurrentDirectory.DosPath, &params->CommandLine,
+                                             &curdir, &params->CommandLine,
                                              NULL, &params->WindowTitle, &params->Desktop,
                                              &params->ShellInfo, &params->RuntimeInfo )))
         return;
@@ -718,15 +719,14 @@ void init_user_process_params(void)
     new_params->ProcessGroupId  = params->ProcessGroupId;
 
     NtCurrentTeb()->Peb->ProcessParameters = new_params;
-    NtFreeVirtualMemory( GetCurrentProcess(), (void **)&params, &size, MEM_RELEASE );
-
-    if (RtlSetCurrentDirectory_U( &new_params->CurrentDirectory.DosPath ))
+    if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
     {
         MESSAGE("wine: could not open working directory %s, starting in the Windows directory.\n",
-                debugstr_w( new_params->CurrentDirectory.DosPath.Buffer ));
+                debugstr_w( params->CurrentDirectory.DosPath.Buffer ));
         RtlInitUnicodeString( &curdir, windows_dir );
         RtlSetCurrentDirectory_U( &curdir );
     }
+    NtFreeVirtualMemory( GetCurrentProcess(), (void **)&params, &size, MEM_RELEASE );
     set_wow64_environment( &new_params->Environment );
     new_params->EnvironmentSize = RtlSizeHeap( GetProcessHeap(), 0, new_params->Environment );
 }

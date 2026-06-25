@@ -958,7 +958,7 @@ ULONG WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
         us = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
 
     len = us->Length / sizeof(WCHAR);
-    if (us->Buffer[len - 1] == '\\' && us->Buffer[len - 2] != ':')
+    if (len && us->Buffer[len - 1] == '\\' && us->Buffer[len - 2] != ':')
         len--;
 
     if (buflen / sizeof(WCHAR) > len)
@@ -984,6 +984,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 {
     FILE_FS_DEVICE_INFORMATION device_info;
     HANDLE handle, old_handle;
+    WCHAR cur_path[MAX_PATH];
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING newdir;
     IO_STATUS_BLOCK io;
@@ -993,6 +994,16 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     PWSTR ptr;
 
     newdir.Buffer = NULL;
+
+    if (RtlGetCurrentDirectory_U( sizeof(cur_path), cur_path ) < sizeof(cur_path))
+    {
+        size = wcslen( cur_path ) * sizeof(*cur_path);
+        if (dir->Length == size && !memcmp( dir->Buffer, cur_path, size ))
+        {
+            TRACE( "same directory.\n" );
+            return STATUS_SUCCESS;
+        }
+    }
 
     if (!RtlDosPathNameToNtPathName_U( dir->Buffer, &newdir, NULL, NULL )) return STATUS_OBJECT_NAME_INVALID;
 

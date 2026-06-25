@@ -760,7 +760,7 @@ static void test_RtlSetCurrentDirectory_U(void)
     RtlInitUnicodeString( &us, curdir );
     status = RtlSetCurrentDirectory_U( &us );
     ok( !status, "got %#lx.\n", status );
-    todo_wine ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+    ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
 
     prev_handle = cd->Handle;
     cd->DosPath.Length = 0;
@@ -772,7 +772,7 @@ static void test_RtlSetCurrentDirectory_U(void)
     prev_handle = cd->Handle;
     status = RtlSetCurrentDirectory_U( &us );
     ok( !status, "got %#lx.\n", status );
-    todo_wine ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+    ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
     prev_handle = cd->Handle;
 
     wcscpy( name, L"." );
