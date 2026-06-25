@@ -32,7 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
 static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
 
@@ -262,7 +261,6 @@ NTSTATUS init_vulkan(void *arg)
     call_vulkan_debug_report_callback = params->call_vulkan_debug_report_callback;
     call_vulkan_debug_utils_callback = params->call_vulkan_debug_utils_callback;
 
-    p_vkCreateInstance = (PFN_vkCreateInstance)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkCreateInstance");
     p_vkEnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
     p_vkEnumerateInstanceExtensionProperties = (PFN_vkEnumerateInstanceExtensionProperties)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceExtensionProperties");
 
