@@ -503,6 +503,8 @@ static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DW
             pv.vt = VT_LPWSTR;
             pv.pwszVal = cur->drv_id;
 
+            set_driver_prop_value(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_InstanceId);
+
             if (SUCCEEDED(set_driver_prop_value(id, flow, &devicepath_key))) {
                 PROPVARIANT pv2;
 
