@@ -1015,7 +1015,7 @@ static void test_urlcacheW(void)
     bufW[i] = 0;
 
     ret = CreateUrlCacheEntryW(test_urlW, 0, bufW, bufW, 0);
-    todo_wine ok(ret, "CreateUrlCacheEntryW failed: %ld\n", GetLastError());
+    ok(ret, "CreateUrlCacheEntryW failed: %ld\n", GetLastError());
     if(ret) {
         ok(lstrlenW(bufW) < MAX_PATH, "cache path too long: %s\n", wine_dbgstr_w(bufW));
         ret = DeleteFileW(bufW);

@@ -2689,19 +2689,23 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
 
         extW[0] = '.';
         ext_len = MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
-
-        for(p=extW; *p; p++) {
-            switch(*p) {
-            case '<': case '>':
-            case ':': case '"':
-            case '|': case '?':
-            case '*':
-                *p = '_'; break;
-            default: break;
+        if(!ext_len || ext_len >= MAX_PATH - 8) {
+            extW[0] = '\0';
+            ext_len = 0;
+        }else {
+            for(p=extW; *p; p++) {
+                switch(*p) {
+                case '<': case '>':
+                case ':': case '"':
+                case '|': case '?':
+                case '*':
+                    *p = '_'; break;
+                default: break;
+                }
             }
+            if(p > extW && (p[-1]==' ' || p[-1]=='.'))
+                p[-1] = '_';
         }
-        if(p[-1]==' ' || p[-1]=='.')
-            p[-1] = '_';
     }else {
         extW[0] = '\0';
     }
