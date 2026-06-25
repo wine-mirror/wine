@@ -739,6 +739,81 @@ static void test_nt_names(void)
     }
 }
 
+static void test_RtlSetCurrentDirectory_U(void)
+{
+    CURDIR *cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory;
+    WCHAR curdir[MAX_PATH], name[MAX_PATH + 4];
+    HANDLE prev_handle;
+    UNICODE_STRING us;
+    unsigned int len;
+    NTSTATUS status;
+    BOOL bret;
+
+    bret = GetCurrentDirectoryW( sizeof(curdir), curdir );
+    ok( bret, "got error %ld.\n", GetLastError() );
+    ok( curdir[wcslen(curdir) - 1] != '\\' || curdir[wcslen(curdir) - 2] == ':', "got %s.\n", debugstr_w(curdir));
+    ok( !!cd->Handle && cd->Handle != INVALID_HANDLE_VALUE, "got %p.\n", cd->Handle );
+    len = cd->DosPath.Length / sizeof(WCHAR);
+    ok( cd->DosPath.Buffer[len - 1] == '\\' , "got %s.\n", debugstr_wn(cd->DosPath.Buffer, len) );
+
+    prev_handle = cd->Handle;
+    RtlInitUnicodeString( &us, curdir );
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    todo_wine ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+
+    prev_handle = cd->Handle;
+    cd->DosPath.Length = 0;
+    cd->DosPath.Buffer[0] = 0;
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+
+    prev_handle = cd->Handle;
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    todo_wine ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+    prev_handle = cd->Handle;
+
+    wcscpy( name, L"." );
+    RtlInitUnicodeString( &us, name );
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+    prev_handle = cd->Handle;
+    wcscpy( name, L"\\\\?\\" );
+    wcscat( name, curdir );
+    RtlInitUnicodeString( &us, name );
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+    prev_handle = cd->Handle;
+
+    wcscat( curdir, L"\\" );
+    RtlInitUnicodeString( &us, curdir );
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+
+    wcscpy( name, curdir );
+    wcscat( name, L"cdtestdir1" );
+    bret = CreateDirectoryW( L"cdtestdir1", NULL );
+    ok( bret, "got %ld.\n", GetLastError() );
+
+    prev_handle = cd->Handle;
+    RtlInitUnicodeString( &us, name );
+    status = RtlSetCurrentDirectory_U( &us );
+    ok( !status, "got %#lx.\n", status );
+    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
+
+    bret = MoveFileW( L"..\\cdtestdir1", L"..\\cdtestdir2" );
+    ok( !bret && GetLastError() == ERROR_SHARING_VIOLATION, "got bret %d, error %ld.\n", bret, GetLastError() );
+
+    bret = SetCurrentDirectoryW( curdir );
+    ok( bret, "got error %ld.\n", GetLastError() );
+    bret = RemoveDirectoryW( L"cdtestdir1" );
+    ok( bret, "got error %ld.\n", GetLastError() );
+}
 
 START_TEST(path)
 {
@@ -755,6 +830,7 @@ START_TEST(path)
     pRtlDosPathNameToNtPathName_U_WithStatus = (void *)GetProcAddress(mod, "RtlDosPathNameToNtPathName_U_WithStatus");
     pNtOpenFile             = (void *)GetProcAddress(mod, "NtOpenFile");
 
+    test_RtlSetCurrentDirectory_U();
     test_RtlDetermineDosPathNameType_U();
     test_RtlIsDosDeviceName_U();
     test_RtlIsNameLegalDOS8Dot3();
