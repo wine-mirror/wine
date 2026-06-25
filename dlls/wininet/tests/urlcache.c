@@ -1006,6 +1006,21 @@ static void test_urlcacheW(void)
             ok(ret, "%ld) DeleteUrlCacheEntryW failed: %ld\n", i, GetLastError());
         }
     }
+
+    /* CreateUrlCacheEntryW has no output buffer size parameter, so it must not
+     * write more than MAX_PATH characters to lpszFileName.
+     */
+    for(i=0; i<ARRAY_SIZE(bufW) -1; i++)
+        bufW[i] = 'a';
+    bufW[i] = 0;
+
+    ret = CreateUrlCacheEntryW(test_urlW, 0, bufW, bufW, 0);
+    todo_wine ok(ret, "CreateUrlCacheEntryW failed: %ld\n", GetLastError());
+    if(ret) {
+        ok(lstrlenW(bufW) < MAX_PATH, "cache path too long: %s\n", wine_dbgstr_w(bufW));
+        ret = DeleteFileW(bufW);
+        ok(ret, "DeleteFileW failed: %ld\n", GetLastError());
+    }
 }
 
 static void test_FindCloseUrlCache(void)
