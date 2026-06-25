@@ -1,1 +1,4 @@
 MODULE = cldapi.dll
+
+SOURCES = \
+	main.c

@@ -11,7 +11,7 @@
 @ stub CfExecute
 @ stub CfGetCorrelationVector
 @ stub CfGetLastSyncStatus
-@ stub CfGetPlaceholderInfo
+@ stdcall CfGetPlaceholderInfo(ptr long ptr long ptr)
 @ stub CfGetPlaceholderRangeInfo
 @ stub CfGetPlaceholderRangeInfoForHydration
 @ stub CfGetPlaceholderStateFromAttributeTag

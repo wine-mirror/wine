@@ -67,6 +67,7 @@ SOURCES = \
 	bthsdpdef.h \
 	cderr.h \
 	cdosys.idl \
+	cfapi.h \
 	cfg.h \
 	cfgmgr32.h \
 	cguid.h \
