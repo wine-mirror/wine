@@ -225,7 +225,6 @@ static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
     ok(0, "Unexpected call.\n");
     return 1;
 }
-static int ppb_id;
 static unsigned int ppb_got_read;
 
 static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
@@ -270,7 +269,6 @@ static void test_property_bag(IMoniker *mon)
     VariantInit(&var);
     hr = IPropertyBag_Read(devenum_bag, L"WaveInId", &var, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ppb_id = V_I4(&var);
 
     hr = CoCreateInstance(&CLSID_AudioRecord, NULL, CLSCTX_INPROC_SERVER,
             &IID_IPersistPropertyBag, (void **)&ppb);
