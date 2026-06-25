@@ -1232,7 +1232,7 @@ static IMediaObject testdmo;
 static IMediaObjectInPlace testdmo_inplace;
 static LONG testdmo_refcount;
 static WAVEFORMATEX testdmo_input_type;
-static BOOL testdmo_input_type_set, testdmo_output_type_set;
+static BOOL testdmo_input_type_set;
 
 static unsigned int got_Discontinuity;
 static HANDLE got_Process;
@@ -1339,8 +1339,6 @@ static HRESULT WINAPI dmo_SetOutputType(IMediaObject *iface, DWORD index, const 
     ok(type->cbFormat == sizeof(WAVEFORMATEX), "Got format size %lu.\n", type->cbFormat);
 
     ok(!memcmp(type->pbFormat, &testdmo_input_type, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
-
-    testdmo_output_type_set = TRUE;
     return S_OK;
 }
 
