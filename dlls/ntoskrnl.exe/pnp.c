@@ -669,6 +669,9 @@ NTSTATUS WINAPI IoGetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY
            device, debugstr_propkey( property_key ), lcid, flags, size, data, required_size,
            property_type );
 
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+        ERR( "Passed in non-PDO device, this would crash on native.\n" );
+
     if (lcid == LOCALE_SYSTEM_DEFAULT || lcid == LOCALE_USER_DEFAULT) return STATUS_INVALID_PARAMETER;
     if (lcid != LOCALE_NEUTRAL) FIXME( "Only LOCALE_NEUTRAL is supported\n" );
 
@@ -716,6 +719,12 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
 
     TRACE("device %p, property %u, length %lu, buffer %p, needed %p.\n",
             device, property, length, buffer, needed);
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+    {
+        WARN( "Passed in non-PDO device.\n" );
+        return STATUS_INVALID_DEVICE_REQUEST;
+    }
 
     switch (property)
     {
@@ -1164,6 +1173,9 @@ NTSTATUS WINAPI IoSetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY
 
     if (lcid != LOCALE_NEUTRAL) FIXME( "only LOCALE_NEUTRAL is supported\n" );
 
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+        ERR( "Passed in non-PDO device, this would crash on native.\n" );
+
     if ((status = get_device_instance_id( device, device_instance_id ))) return status;
 
     if ((set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL )) == INVALID_HANDLE_VALUE)
@@ -1343,6 +1355,12 @@ NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCE
     HDEVINFO set;
 
     TRACE("device %p, type %#lx, access %#lx, key %p.\n", device, type, access, key);
+
+    if (!(device->Flags & DO_BUS_ENUMERATED_DEVICE))
+    {
+        WARN( "Passed in non-PDO device.\n" );
+        return STATUS_INVALID_PARAMETER;
+    }
 
     if ((status = get_device_instance_id( device, device_instance_id )))
     {

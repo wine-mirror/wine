@@ -854,7 +854,7 @@ static void test_enumerator_name(void)
     NTSTATUS status;
 
     status = IoGetDeviceProperty(bus_fdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
-    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got unexpected status %#lx\n", status);
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "got unexpected status %#lx\n", status);
     ok(!(bus_fdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_fdo flags %#lx.\n", bus_fdo->Flags);
 
     req_size = 0;
@@ -895,7 +895,7 @@ static void test_device_registry_key(void)
     DWORD size;
 
     status = IoOpenDeviceRegistryKey(bus_fdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got unexpected status %#lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got unexpected status %#lx\n", status);
     ok(!(bus_fdo->Flags & DO_BUS_ENUMERATED_DEVICE), "Unexpected bus_fdo flags %#lx.\n", bus_fdo->Flags);
 
     status = IoOpenDeviceRegistryKey(bus_pdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
