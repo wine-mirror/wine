@@ -4583,9 +4583,46 @@ BOOLEAN WINAPI SePrivilegeCheck(PRIVILEGE_SET *privileges, SECURITY_SUBJECT_CONT
  */
 NTSTATUS WINAPI SeLocateProcessImageName(PEPROCESS process, UNICODE_STRING **image_name)
 {
-    FIXME("stub: %p %p\n", process, image_name);
-    if (image_name) *image_name = NULL;
-    return STATUS_NOT_IMPLEMENTED;
+    ULONG len;
+    NTSTATUS status;
+    HANDLE h;
+
+    TRACE("%p %p\n", process, image_name);
+
+    if (!image_name) return STATUS_INVALID_PARAMETER;
+
+    if ((status = ObOpenObjectByPointer(process, 0, NULL, PROCESS_ALL_ACCESS, NULL, KernelMode, &h)))
+    {
+        WARN("Error opening process object, status %#lx.\n", status);
+        return status;
+    }
+
+    status = NtQueryInformationProcess(h, ProcessImageFileName, NULL, 0, &len);
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+    {
+        NtClose(h);
+        return status;
+    }
+
+    len += sizeof(WCHAR) + sizeof(UNICODE_STRING);
+
+    if (!(*image_name = ExAllocatePool(PagedPool, len)))
+    {
+        NtClose(h);
+        return STATUS_NO_MEMORY;
+    }
+
+    if ((status = NtQueryInformationProcess(h, ProcessImageFileName,
+                                            *image_name, len - sizeof(WCHAR), &len)))
+    {
+        ExFreePool(*image_name);
+        *image_name = NULL;
+        NtClose(h);
+        return status;
+    }
+
+    NtClose(h);
+    return STATUS_SUCCESS;
 }
 
 /*********************************************************************

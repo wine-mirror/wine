@@ -237,5 +237,6 @@ NTSTATUS WINAPI PsLookupThreadByThreadId(HANDLE,PETHREAD*);
 PACCESS_TOKEN WINAPI PsReferencePrimaryToken(PEPROCESS);
 void WINAPI PsRevertToSelf(void);
 char WINAPI RtlQueryProcessPlaceholderCompatibilityMode(void);
+NTSTATUS WINAPI SeLocateProcessImageName(PEPROCESS,UNICODE_STRING**);
 
 #endif
