@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
@@ -74,6 +75,57 @@
 
 #if defined(HAVE_LIBHWLOC)
 # include <hwloc.h>
+#endif
+
+#ifdef __linux__
+# define AT_HWCAP2          26
+#endif
+
+#if defined(__aarch64__) && defined(AT_HWCAP)
+# define HWCAP_AES          (1 << 3)
+# define HWCAP_CRC32        (1 << 7)
+# define HWCAP_ATOMICS      (1 << 8)
+# define HWCAP_FPHP         (1 << 9)
+# define HWCAP_JSCVT        (1 << 13)
+# define HWCAP_LRCPC        (1 << 15)
+# define HWCAP_SHA3         (1 << 17)
+# define HWCAP_ASIMDDP      (1 << 20)
+# define HWCAP_SHA512       (1 << 21)
+# define HWCAP_SVE          (1 << 22)
+# define HWCAP_USCAT        (1 << 25)
+# define HWCAP_SME2P2       (1UL << 42)
+# define HWCAP_SME_SBITPERM (1UL << 43)
+# define HWCAP_SME_AES      (1UL << 44)
+# define HWCAP2_SVE2        (1 << 1)
+# define HWCAP2_SVEAES      (1 << 2)
+# define HWCAP2_SVEPMULL    (1 << 3)
+# define HWCAP2_SVEBITPERM  (1 << 4)
+# define HWCAP2_SVESHA3     (1 << 5)
+# define HWCAP2_SVESM4      (1 << 6)
+# define HWCAP2_SVEI8MM     (1 << 9)
+# define HWCAP2_SVEF32MM    (1 << 10)
+# define HWCAP2_SVEF64MM    (1 << 11)
+# define HWCAP2_SVEBF16     (1 << 12)
+# define HWCAP2_I8MM        (1 << 13)
+# define HWCAP2_BF16        (1 << 14)
+# define HWCAP2_SME         (1 << 23)
+# define HWCAP2_SME_I16I64  (1 << 24)
+# define HWCAP2_SME_F64F64  (1 << 25)
+# define HWCAP2_SME_FA64    (1 << 30)
+# define HWCAP2_EBF16       (1UL << 32)
+# define HWCAP2_SVE_EBF16   (1UL << 33)
+# define HWCAP2_SVE2P1      (1UL << 36)
+# define HWCAP2_SME2        (1UL << 37)
+# define HWCAP2_SME2P1      (1UL << 38)
+# define HWCAP2_SME_F16F16  (1UL << 42)
+# define HWCAP2_SME_B16B16  (1UL << 41)
+# define HWCAP2_SVE_B16B16  (1UL << 45)
+# define HWCAP2_SME_LUTV2   (1UL << 57)
+# define HWCAP2_SME_F8F16   (1UL << 58)
+# define HWCAP2_SME_F8F32   (1UL << 59)
+# define HWCAP2_SME_SF8FMA  (1UL << 60)
+# define HWCAP2_SME_SF8DP4  (1UL << 61)
+# define HWCAP2_SME_SF8DP2  (1UL << 62)
 #endif
 
 #include "ntstatus.h"
@@ -526,7 +578,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         features[PF_AVX512F_INSTRUCTIONS_AVAILABLE] = !!(regs[1] & (1 << 16));
         features[PF_RDPID_INSTRUCTION_AVAILABLE]    = !!(regs[2] & (1 << 22));
         features[PF_MOVDIR64B_INSTRUCTION_AVAILABLE]= !!(regs[2] & (1 << 28));
-#if defined(__linux__) && defined(AT_HWCAP2)
+#if defined(__linux__)
         features[PF_RDWRFSGSBASE_AVAILABLE] &= !!(getauxval( AT_HWCAP2 ) & 2);
 #endif
     }
@@ -548,34 +600,66 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 
 #elif defined(__arm__) || defined(__aarch64__)
 
-static int has_feature( const char *line, const char *feat )
-{
-    size_t len = strlen(feat);
-
-    while (*line)
-    {
-        while (*line == ' ' || *line == '\t') line++;
-        if (!strncmp( line, feat, len ) && (!line[len] || isspace(line[len]))) return 1;
-        while (*line && *line != ' ' && *line != '\t') line++;
-    }
-    return 0;
-}
-
-#if defined(AT_HWCAP) && defined(__arm__)
+#if defined(AT_HWCAP)
 static BOOLEAN has_capability( int hwcap, unsigned long hwcap_bit )
 {
     unsigned long type;
     switch (hwcap)
     {
     case 1: type = AT_HWCAP;  break;
+    case 2: type = AT_HWCAP2; break;
     default: return FALSE;
     }
     return !!(getauxval( type ) & hwcap_bit);
 }
 
 #define HAS_FEATURE(hwcap, hwcap_bit, ...) has_capability( hwcap, hwcap_bit )
+#elif defined(__APPLE__)
+static BOOLEAN has_feature( const char *feature )
+{
+    char buf[200];
+    int val;
+    size_t size = sizeof(val);
+
+    snprintf( buf, sizeof(buf), "hw.optional.arm.%s", feature );
+    if (!sysctlbyname( buf, &val, &size, NULL, 0 ))
+        return !!val;
+    return FALSE;
+}
+
+static BOOLEAN has_features( int dummy, ... )
+{
+    BOOLEAN ret = TRUE;
+    const char *feature;
+    va_list args;
+
+    va_start( args, dummy );
+
+    while ((feature = va_arg( args, const char * )))
+    {
+        if (has_feature( feature ))
+            continue;
+
+        ret = FALSE;
+        break;
+    }
+
+    va_end( args );
+    return ret;
+}
+#define HAS_FEATURE(hwcap, hwcap_bit, ...) has_features( 0, __VA_ARGS__, NULL )
 #else
 #define HAS_FEATURE(hwcap, hwcap_bit, ...) 0
+#endif
+
+#ifdef __aarch64__
+static void set_feature_bitmap( ULONG flag, BOOLEAN enabled )
+{
+    assert( flag >= PROCESSOR_FEATURE_MAX );
+    if (!enabled) return;
+    flag -= PROCESSOR_FEATURE_MAX;
+    cpu_features_bitmap[flag / 64] |= 1ull << (flag % 64);
+}
 #endif
 
 static void init_cpu_model(void)
@@ -603,46 +687,6 @@ static void init_cpu_model(void)
             else if (!strcmp( line, "CPU part" )) part = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU variant" )) variant = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU revision" )) revision = strtoul( value, NULL, 0);
-            else if (!strcmp( line, "Features" ))
-            {
-                static const struct { ULONG flag; const char *name; } features[] =
-                {
-                    { PF_ARM_SHA3_INSTRUCTIONS_AVAILABLE, "sha3" },
-                    { PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE, "sha512" },
-                    { PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE, "i8mm" },
-                    { PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE, "fphp" },
-                    { PF_ARM_V86_BF16_INSTRUCTIONS_AVAILABLE, "bf16" },
-                    { PF_ARM_V86_EBF16_INSTRUCTIONS_AVAILABLE, "ebf16" },
-                    { PF_ARM_SME_INSTRUCTIONS_AVAILABLE, "sme" },
-                    { PF_ARM_SME2_INSTRUCTIONS_AVAILABLE, "sme2" },
-                    { PF_ARM_SME2_1_INSTRUCTIONS_AVAILABLE, "sme2p1" },
-                    { PF_ARM_SME2_2_INSTRUCTIONS_AVAILABLE, "sme2p2" },
-                    { PF_ARM_SME_AES_INSTRUCTIONS_AVAILABLE, "smeaes" },
-                    { PF_ARM_SME_SBITPERM_INSTRUCTIONS_AVAILABLE, "smesbitperm" },
-                    /* The PF_ARM_SME_SF8MM4_INSTRUCTIONS_AVAILABLE and
-                     * PF_ARM_SME_SF8MM8_INSTRUCTIONS_AVAILABLE flags aren't exposed by
-                     * the Linux kernel, see
-                     * https://lists.infradead.org/pipermail/linux-arm-kernel/2025-January/991187.html */
-                    { PF_ARM_SME_SF8DP2_INSTRUCTIONS_AVAILABLE, "smesf8dp2" },
-                    { PF_ARM_SME_SF8DP4_INSTRUCTIONS_AVAILABLE, "smesf8dp4" },
-                    { PF_ARM_SME_SF8FMA_INSTRUCTIONS_AVAILABLE, "smesf8fma" },
-                    { PF_ARM_SME_F8F32_INSTRUCTIONS_AVAILABLE, "smef8f32" },
-                    { PF_ARM_SME_F8F16_INSTRUCTIONS_AVAILABLE, "smef8f16" },
-                    { PF_ARM_SME_F16F16_INSTRUCTIONS_AVAILABLE, "smef16f16" },
-                    { PF_ARM_SME_B16B16_INSTRUCTIONS_AVAILABLE, "smeb16b16" },
-                    { PF_ARM_SME_F64F64_INSTRUCTIONS_AVAILABLE, "smef64f64" },
-                    { PF_ARM_SME_I16I64_INSTRUCTIONS_AVAILABLE, "smei16i64" },
-                    { PF_ARM_SME_LUTv2_INSTRUCTIONS_AVAILABLE, "smelutv2" },
-                    { PF_ARM_SME_FA64_INSTRUCTIONS_AVAILABLE, "smefa64" },
-                };
-
-                for (unsigned int i = 0; i < ARRAY_SIZE(features); i++)
-                {
-                    ULONG flag = features[i].flag - PROCESSOR_FEATURE_MAX;
-                    if (!has_feature( value, features[i].name )) continue;
-                    cpu_features_bitmap[flag / 64] |= 1ull << (flag % 64);
-                }
-            }
         }
         fclose( f );
     }
@@ -664,6 +708,38 @@ static void init_cpu_model(void)
     case 0x66: strcpy( cpu_vendor, "Faraday" ); break;
     case 0x69: strcpy( cpu_vendor, "Intel" ); break;
     }
+
+#ifdef __aarch64__
+    set_feature_bitmap( PF_ARM_SHA3_INSTRUCTIONS_AVAILABLE,      HAS_FEATURE( 1, HWCAP_SHA3, "FEAT_SHA3" ) );
+    set_feature_bitmap( PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE,    HAS_FEATURE( 1, HWCAP_SHA512, "FEAT_SHA512" ) );
+    set_feature_bitmap( PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 2, HWCAP2_I8MM, "FEAT_I8MM" ) );
+    set_feature_bitmap( PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 1, HWCAP_FPHP, "FEAT_FP16" ) );
+    set_feature_bitmap( PF_ARM_V86_BF16_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 2, HWCAP2_BF16, "FEAT_BF16" ) );
+    set_feature_bitmap( PF_ARM_V86_EBF16_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_EBF16, "FEAT_EBF16" ) );
+    set_feature_bitmap( PF_ARM_SME_INSTRUCTIONS_AVAILABLE,       HAS_FEATURE( 2, HWCAP2_SME, "FEAT_SME" ) );
+    set_feature_bitmap( PF_ARM_SME2_INSTRUCTIONS_AVAILABLE,      HAS_FEATURE( 2, HWCAP2_SME2, "FEAT_SME2" ) );
+    set_feature_bitmap( PF_ARM_SME2_1_INSTRUCTIONS_AVAILABLE,    HAS_FEATURE( 2, HWCAP2_SME2P1, "FEAT_SME2p1" ) );
+    set_feature_bitmap( PF_ARM_SME2_2_INSTRUCTIONS_AVAILABLE,    HAS_FEATURE( 1, HWCAP_SME2P2, "FEAT_SME2p2" ) );
+    set_feature_bitmap( PF_ARM_SME_AES_INSTRUCTIONS_AVAILABLE,   HAS_FEATURE( 1, HWCAP_SME_AES, "FEAT_SSVE_AES" ) );
+    set_feature_bitmap( PF_ARM_SME_SBITPERM_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 1, HWCAP_SME_SBITPERM, "FEAT_SSVE_BitPerm" ) );
+    /* The PF_ARM_SME_SF8MM4_INSTRUCTIONS_AVAILABLE and
+     * PF_ARM_SME_SF8MM8_INSTRUCTIONS_AVAILABLE flags aren't exposed by
+     * the Linux kernel, see
+     * https://lists.infradead.org/pipermail/linux-arm-kernel/2025-January/991187.html */
+    set_feature_bitmap( PF_ARM_SME_SF8MM4_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 0, 0, "FEAT_SSVE_F8F16MM" ) );
+    set_feature_bitmap( PF_ARM_SME_SF8MM8_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 0, 0, "FEAT_SSVE_F8F32MM" ) );
+    set_feature_bitmap( PF_ARM_SME_SF8DP2_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_SF8DP2, "FEAT_SSVE_FP8DOT2" ) );
+    set_feature_bitmap( PF_ARM_SME_SF8DP4_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_SF8DP4, "FEAT_SSVE_FP8DOT4" ) );
+    set_feature_bitmap( PF_ARM_SME_SF8FMA_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_SF8FMA, "FEAT_SSVE_FP8FMA" ) );
+    set_feature_bitmap( PF_ARM_SME_F8F32_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 2, HWCAP2_SME_F8F32, "FEAT_SME_F8F32" ) );
+    set_feature_bitmap( PF_ARM_SME_F8F16_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 2, HWCAP2_SME_F8F16, "FEAT_SME_F8F16" ) );
+    set_feature_bitmap( PF_ARM_SME_F16F16_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_F16F16, "FEAT_SME_F16F16" ) );
+    set_feature_bitmap( PF_ARM_SME_B16B16_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_B16B16, "FEAT_SME_B16B16" ) );
+    set_feature_bitmap( PF_ARM_SME_F64F64_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_F64F64, "FEAT_SME_F64F64" ) );
+    set_feature_bitmap( PF_ARM_SME_I16I64_INSTRUCTIONS_AVAILABLE, HAS_FEATURE( 2, HWCAP2_SME_I16I64, "FEAT_SME_I16I64" ) );
+    set_feature_bitmap( PF_ARM_SME_LUTv2_INSTRUCTIONS_AVAILABLE,  HAS_FEATURE( 2, HWCAP2_SME_LUTV2, "FEAT_SME_LUTv2" ) );
+    set_feature_bitmap( PF_ARM_SME_FA64_INSTRUCTIONS_AVAILABLE,   HAS_FEATURE( 2, HWCAP2_SME_FA64, "FEAT_SME_FA64" ) );
+#endif
 }
 
 static ULONGLONG get_cpu_features(void)
@@ -674,50 +750,6 @@ static ULONGLONG get_cpu_features(void)
 void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 {
     BOOLEAN *features = data->ProcessorFeatures;
-
-#ifdef linux
-    FILE *f = fopen("/proc/cpuinfo", "r");
-    if (f)
-    {
-        char *s, *value, line[512];
-        while (fgets( line, sizeof(line), f ))
-        {
-            /* NOTE: the ':' is the only character we can rely on */
-            if (!(value = strchr(line,':'))) continue;
-            /* terminate the valuename */
-            s = value - 1;
-            while ((s >= line) && (*s == ' ' || *s == '\t')) s--;
-            s[1] = 0;
-            value++;
-            if ((s = strchr( value, '\n' ))) *s = 0;
-            if (strcmp( line, "Features" )) continue;
-            if (native_machine == IMAGE_FILE_MACHINE_ARMNT) break;
-            features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "crc32" );
-            features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "aes" );
-            features[PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE]   = has_feature( value, "atomics" );
-            features[PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE]       = has_feature( value, "asimddp" );
-            features[PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "jscvt" );
-            features[PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "lrcpc" );
-            features[PF_ARM_SVE_INSTRUCTIONS_AVAILABLE]          = has_feature( value, "sve" );
-            features[PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE]         = has_feature( value, "sve2" );
-            features[PF_ARM_SVE2_1_INSTRUCTIONS_AVAILABLE]       = has_feature( value, "sve2p1" );
-            features[PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE]      = has_feature( value, "sveaes" );
-            features[PF_ARM_SVE_PMULL128_INSTRUCTIONS_AVAILABLE] = has_feature( value, "svepmull" );
-            features[PF_ARM_SVE_BITPERM_INSTRUCTIONS_AVAILABLE]  = has_feature( value, "svebitperm" );
-            features[PF_ARM_SVE_BF16_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svebf16" );
-            features[PF_ARM_SVE_EBF16_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "sveebf16" );
-            features[PF_ARM_SVE_B16B16_INSTRUCTIONS_AVAILABLE]   = has_feature( value, "sveb16b16" );
-            features[PF_ARM_SVE_SHA3_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svesha3" );
-            features[PF_ARM_SVE_SM4_INSTRUCTIONS_AVAILABLE]      = has_feature( value, "svesm4" );
-            features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svei8mm" );
-            features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef32mm" );
-            features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef64mm" );
-            features[PF_ARM_LSE2_AVAILABLE]                      = has_feature( value, "uscat" );
-            break;
-        }
-        fclose( f );
-    }
-#endif
 
     features[PF_FASTFAIL_AVAILABLE]      = TRUE;
     features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
@@ -732,9 +764,29 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
     features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = TRUE;
     features[PF_ARM_64BIT_LOADSTORE_ATOMIC]              = TRUE;
     features[PF_ARM_FMAC_INSTRUCTIONS_AVAILABLE]         = TRUE;
-
-    features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE] = TRUE;
-    features[PF_NX_ENABLED]                    = TRUE;
+    features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]           = TRUE;
+    features[PF_NX_ENABLED]                              = TRUE;
+    features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 1, HWCAP_AES, "FEAT_AES" );
+    features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]     = HAS_FEATURE( 1, HWCAP_CRC32, "FEAT_CRC32" );
+    features[PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE]   = HAS_FEATURE( 1, HWCAP_ATOMICS, "FEAT_LSE" );
+    features[PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE]       = HAS_FEATURE( 1, HWCAP_ASIMDDP, "FEAT_DotProd" );
+    features[PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 1, HWCAP_JSCVT, "FEAT_JSCVT" );
+    features[PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 1, HWCAP_LRCPC, "FEAT_LRCPC" );
+    features[PF_ARM_SVE_INSTRUCTIONS_AVAILABLE]          = HAS_FEATURE( 1, HWCAP_SVE, "FEAT_SVE" );
+    features[PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE]         = HAS_FEATURE( 2, HWCAP2_SVE2, "FEAT_SVE2" );
+    features[PF_ARM_SVE2_1_INSTRUCTIONS_AVAILABLE]       = HAS_FEATURE( 2, HWCAP2_SVE2P1, "FEAT_SVE2p1" );
+    features[PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE]      = HAS_FEATURE( 2, HWCAP2_SVEAES, "FEAT_SVE_AES" );
+    features[PF_ARM_SVE_PMULL128_INSTRUCTIONS_AVAILABLE] = HAS_FEATURE( 2, HWCAP2_SVEPMULL, "FEAT_SVE_PMULL128" );
+    features[PF_ARM_SVE_BITPERM_INSTRUCTIONS_AVAILABLE]  = HAS_FEATURE( 2, HWCAP2_SVEBITPERM, "FEAT_SVE_BitPerm" );
+    features[PF_ARM_SVE_BF16_INSTRUCTIONS_AVAILABLE]     = HAS_FEATURE( 2, HWCAP2_SVEBF16, "FEAT_SVE", "FEAT_BF16" );
+    features[PF_ARM_SVE_EBF16_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 2, HWCAP2_SVE_EBF16, "FEAT_SVE", "FEAT_EBF16" );
+    features[PF_ARM_SVE_B16B16_INSTRUCTIONS_AVAILABLE]   = HAS_FEATURE( 2, HWCAP2_SVE_B16B16, "FEAT_SVE_B16B16" );
+    features[PF_ARM_SVE_SHA3_INSTRUCTIONS_AVAILABLE]     = HAS_FEATURE( 2, HWCAP2_SVESHA3, "FEAT_SVE_SHA3" );
+    features[PF_ARM_SVE_SM4_INSTRUCTIONS_AVAILABLE]      = HAS_FEATURE( 2, HWCAP2_SVESM4, "FEAT_SVE_SM4" );
+    features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]     = HAS_FEATURE( 2, HWCAP2_SVEI8MM, "FEAT_SVE", "FEAT_I8MM" );
+    features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 2, HWCAP2_SVEF32MM, "FEAT_F32MM" );
+    features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE]    = HAS_FEATURE( 2, HWCAP2_SVEF64MM, "FEAT_F64MM" );
+    features[PF_ARM_LSE2_AVAILABLE]                      = HAS_FEATURE( 1, HWCAP_USCAT, "FEAT_LSE2" );
 
     /* add features for other architectures supported by wow64 */
     for (unsigned int i = 0; i < supported_machines_count; i++)
