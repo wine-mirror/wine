@@ -60,7 +60,6 @@ static CRITICAL_SECTION_DEBUG joy_cs_debug =
 static CRITICAL_SECTION joy_cs = { &joy_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list devices = LIST_INIT( devices );
-static HDEVNOTIFY devnotify;
 
 /*********************************************************************
  *  DllMain
@@ -305,7 +304,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         disable_hidraw = get_advanced_option( L"DisableHidraw", FALSE );
         SendMessageW( GetDlgItem( hwnd, IDC_DISABLE_HIDRAW ), BM_SETCHECK, disable_hidraw, 0 );
 
-        devnotify = RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
+        RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
         return TRUE;
     }
 
