@@ -44,7 +44,6 @@ static int (WINAPI *pGetAddrInfoExW)(const WCHAR *name, const WCHAR *servname, D
 static int   (WINAPI *pGetAddrInfoExOverlappedResult)(OVERLAPPED *overlapped);
 static int (WINAPI *pGetHostNameW)(WCHAR *name, int len);
 static const char *(WINAPI *p_inet_ntop)(int family, void *addr, char *string, ULONG size);
-static const WCHAR *(WINAPI *pInetNtopW)(int family, void *addr, WCHAR *string, ULONG size);
 static int (WINAPI *p_inet_pton)(int family, const char *string, void *addr);
 static int (WINAPI *pInetPtonW)(int family, WCHAR *string, void *addr);
 static int (WINAPI *pWSCGetApplicationCategory)(LPCWSTR path, DWORD path_len, LPCWSTR extra, DWORD extra_len, DWORD *category, INT *err);
@@ -3173,7 +3172,6 @@ START_TEST( protocol )
     pGetAddrInfoExW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetAddrInfoExW");
     pGetHostNameW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetHostNameW");
     p_inet_ntop = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_ntop");
-    pInetNtopW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetNtopW");
     p_inet_pton = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_pton");
     pInetPtonW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetPtonW");
     pWSCGetApplicationCategory = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "WSCGetApplicationCategory");
