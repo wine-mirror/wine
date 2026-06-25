@@ -40,7 +40,6 @@ static void *xcursor_handle;
 # define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(XcursorImageCreate);
 MAKE_FUNCPTR(XcursorImageDestroy);
-MAKE_FUNCPTR(XcursorImageLoadCursor);
 MAKE_FUNCPTR(XcursorImagesCreate);
 MAKE_FUNCPTR(XcursorImagesDestroy);
 MAKE_FUNCPTR(XcursorImagesLoadCursor);
@@ -155,7 +154,6 @@ void X11DRV_Xcursor_Init(void)
 
     LOAD_FUNCPTR(XcursorImageCreate);
     LOAD_FUNCPTR(XcursorImageDestroy);
-    LOAD_FUNCPTR(XcursorImageLoadCursor);
     LOAD_FUNCPTR(XcursorImagesCreate);
     LOAD_FUNCPTR(XcursorImagesDestroy);
     LOAD_FUNCPTR(XcursorImagesLoadCursor);

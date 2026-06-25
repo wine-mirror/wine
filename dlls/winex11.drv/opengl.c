@@ -212,7 +212,7 @@ enum glx_swap_control_method
 };
 
 static struct glx_pixel_format *pixel_formats;
-static int nb_pixel_formats, nb_onscreen_formats;
+static int nb_pixel_formats;
 static const struct egl_platform *egl;
 static BOOL (*p_egl_describe_pixel_format)( int format, struct wgl_pixel_format *pf );
 
@@ -274,7 +274,6 @@ static const char *(*pglXQueryServerString)( Display *dpy, int screen, int name 
 static const char *(*pglXGetClientString)( Display *dpy, int name );
 
 /* GLX 1.3 */
-static GLXFBConfig *(*pglXChooseFBConfig)( Display *dpy, int screen, const int *attribList, int *nitems );
 static int (*pglXGetFBConfigAttrib)( Display *dpy, GLXFBConfig config, int attribute, int *value );
 static GLXFBConfig *(*pglXGetFBConfigs)( Display *dpy, int screen, int *nelements );
 static XVisualInfo *(*pglXGetVisualFromFBConfig)( Display *dpy, GLXFBConfig config );
@@ -299,7 +298,6 @@ static void* (*pglXAllocateMemoryNV)(GLsizei size, GLfloat readfreq, GLfloat wri
 static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 
 /* MESA GLX Extensions */
-static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
 static int (*pglXSwapIntervalMESA)(unsigned int interval);
 static Bool (*pglXQueryCurrentRendererIntegerMESA)(int attribute, unsigned int *value);
 static const char *(*pglXQueryCurrentRendererStringMESA)(int attribute);
@@ -687,12 +685,10 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
      */
 
     if(glxRequireVersion(3)) {
-        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
         pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
         pglXQueryDrawable = pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
     } else if (has_extension( glxExtensions, "GLX_SGIX_fbconfig")) {
-        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
         pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
 
@@ -702,7 +698,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         pglXQueryDrawable = NULL;
     } else if(strcmp("ATI", pglXGetClientString(gdi_display, GLX_VENDOR)) == 0) {
         TRACE("Overriding ATI GLX capabilities!\n");
-        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
         pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
         pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
         pglXQueryDrawable = pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
@@ -715,10 +710,6 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
     } else {
         ERR(" glx_version is %s and GLX_SGIX_fbconfig extension is unsupported. Expect problems.\n",
             pglXQueryServerString(gdi_display, DefaultScreen(gdi_display), GLX_VERSION));
-    }
-
-    if (has_extension( glxExtensions, "GLX_MESA_copy_sub_buffer")) {
-        pglXCopySubBufferMESA = pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
     }
 
     if (has_extension( glxExtensions, "GLX_MESA_query_renderer" ))
@@ -883,7 +874,6 @@ static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
 
     pixel_formats = list;
     nb_pixel_formats = size;
-    nb_onscreen_formats = onscreen_size;
 
     *onscreen_count = onscreen_size;
     return size;
