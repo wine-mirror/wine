@@ -3508,6 +3508,38 @@ NTSTATUS WINAPI PsReferenceProcessFilePointer(PEPROCESS process, FILE_OBJECT **f
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/*********************************************************************
+ *           PsReferencePrimaryToken    (NTOSKRNL.@)
+ */
+PACCESS_TOKEN WINAPI PsReferencePrimaryToken( PEPROCESS process )
+{
+    NTSTATUS status;
+    HANDLE h, token;
+    PACCESS_TOKEN ret = NULL;
+
+    TRACE("%p\n", process);
+
+    if ((status = ObOpenObjectByPointer(process, 0, NULL, PROCESS_ALL_ACCESS, NULL, KernelMode, &h)))
+    {
+        WARN("Error opening process object, status %#lx.\n", status);
+        return NULL;
+    }
+
+    if ((status = NtOpenProcessToken(h, TOKEN_ALL_ACCESS, &token)))
+    {
+        NtClose(h);
+        return NULL;
+    }
+
+    if ((status = ObReferenceObjectByHandle(token, TOKEN_ALL_ACCESS, SeTokenObjectType,
+                                            KernelMode, &ret, NULL)))
+        ret = NULL;
+
+    NtClose(token);
+    NtClose(h);
+
+    return ret;
+}
 
 /***********************************************************************
  *           PsTerminateSystemThread   (NTOSKRNL.EXE.@)

@@ -233,6 +233,7 @@ NTSTATUS WINAPI ObQueryNameString(PVOID,POBJECT_NAME_INFORMATION,ULONG,PULONG);
 BOOLEAN WINAPI PsIsSystemThread(PETHREAD);
 NTSTATUS WINAPI PsLookupProcessByProcessId(HANDLE,PEPROCESS*);
 NTSTATUS WINAPI PsLookupThreadByThreadId(HANDLE,PETHREAD*);
+PACCESS_TOKEN WINAPI PsReferencePrimaryToken(PEPROCESS);
 void WINAPI PsRevertToSelf(void);
 char WINAPI RtlQueryProcessPlaceholderCompatibilityMode(void);
 
