@@ -26,6 +26,11 @@ BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key);
 BOOL cng_prepare_signature(const char *alg_oid, BYTE *encoded_sig, DWORD encoded_sig_len,
     BYTE **sig_value, DWORD *sig_len);
 
+/* Returns a freshly-allocated, NUL-terminated UUID string suitable for use
+ * as a CSP key container name. Caller frees with CryptMemFree.  Returns
+ * NULL on failure. */
+WCHAR *CRYPT32_AllocateUniqueContainerName(void);
+
 /* a few asn.1 tags we need */
 #define ASN_BOOL            (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x01)
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)

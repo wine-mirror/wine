@@ -3541,6 +3541,61 @@ static void test_PFXImportCertStore(void)
     CertCloseStore( store, 0 );
 }
 
+static void test_PFXImportCertStore_unique_containers(void)
+{
+    /* Two persistent (CRYPT_USER_KEYSET) PFX imports of the *same* PKCS#12
+     * blob must land in two *distinct* CSP key containers; otherwise the
+     * second import overwrites the first import's private key inside the
+     * shared container, and any cert still held from the first import
+     * then dereferences (via CRYPT_KEY_PROV_INFO) to the second import's
+     * key. The container-name format is internal to the importer; only
+     * its uniqueness across calls is observable to applications, and that
+     * uniqueness is what this test checks. */
+
+    CRYPT_DATA_BLOB pfx = { sizeof(pfxdata), (BYTE *)pfxdata };
+    BYTE buf1[512], buf2[512];
+    CRYPT_KEY_PROV_INFO *info1 = (CRYPT_KEY_PROV_INFO *)buf1;
+    CRYPT_KEY_PROV_INFO *info2 = (CRYPT_KEY_PROV_INFO *)buf2;
+    HCERTSTORE store1, store2;
+    const CERT_CONTEXT *cert1, *cert2;
+    DWORD size;
+    BOOL ret;
+
+    store1 = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
+    ok( store1 != NULL, "first PFXImportCertStore failed: %lu\n", GetLastError() );
+    store2 = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
+    ok( store2 != NULL, "second PFXImportCertStore failed: %lu\n", GetLastError() );
+    if (!store1 || !store2) goto done;
+
+    cert1 = CertFindCertificateInStore( store1, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert1 != NULL, "cert1 lookup failed: %08lx\n", GetLastError() );
+    ok( cert2 != NULL, "cert2 lookup failed: %08lx\n", GetLastError() );
+    if (!cert1 || !cert2) goto done_close;
+
+    size = sizeof(buf1);
+    ret = CertGetCertificateContextProperty( cert1, CERT_KEY_PROV_INFO_PROP_ID, info1, &size );
+    ok( ret, "cert1 has no KEY_PROV_INFO: %08lx\n", GetLastError() );
+    size = sizeof(buf2);
+    ret = CertGetCertificateContextProperty( cert2, CERT_KEY_PROV_INFO_PROP_ID, info2, &size );
+    ok( ret, "cert2 has no KEY_PROV_INFO: %08lx\n", GetLastError() );
+    if (!info1->pwszContainerName || !info2->pwszContainerName) goto done_certs;
+
+    ok( wcscmp( info1->pwszContainerName, info2->pwszContainerName ) != 0,
+        "two PFX imports collided into the same container %s — the second "
+        "import would have overwritten the first cert's private key\n",
+        wine_dbgstr_w( info1->pwszContainerName ) );
+
+done_certs:
+    CertFreeCertificateContext( cert1 );
+    CertFreeCertificateContext( cert2 );
+done_close:
+    CertCloseStore( store1, 0 );
+    CertCloseStore( store2, 0 );
+done:
+    ;
+}
+
 static void test_PFXExportCertStoreEx(void)
 {
     HCERTSTORE store, store2;
@@ -3769,6 +3824,7 @@ START_TEST(store)
 
     test_I_UpdateStore();
     test_PFXImportCertStore();
+    test_PFXImportCertStore_unique_containers();
     test_PFXExportCertStoreEx();
     test_CryptQueryObject();
 }

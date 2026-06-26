@@ -3,7 +3,7 @@ MODULE    = crypt32.dll
 UNIXLIB   = crypt32.so
 IMPORTLIB = crypt32
 IMPORTS   = user32 advapi32 bcrypt ncrypt
-DELAYIMPORTS = cryptnet
+DELAYIMPORTS = cryptnet rpcrt4
 UNIX_LIBS    = $(SECURITY_LIBS)
 UNIX_CFLAGS  = $(GNUTLS_CFLAGS)
 

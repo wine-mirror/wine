@@ -38,20 +38,23 @@ static HCRYPTPROV import_key( cert_store_data_t data, DWORD flags )
     DWORD size, acquire_flags;
     void *key;
     struct import_store_key_params params = { data, NULL, &size };
+    /* Use a unique container name per import. With a NULL container +
+     * CRYPT_NEWKEYSET the CSP falls back to its per-user default container
+     * ("<USERNAME>"), so a second PFX import overwrites the first import's
+     * private key inside that shared container; any cert from the first
+     * import still held will then dereference (via CRYPT_KEY_PROV_INFO)
+     * to the second import's key. */
+    WCHAR *container = CRYPT32_AllocateUniqueContainerName();
 
-    if (CRYPT32_CALL( import_store_key, &params ) != STATUS_BUFFER_TOO_SMALL) return 0;
+    if (!container) return 0;
+
+    if (CRYPT32_CALL( import_store_key, &params ) != STATUS_BUFFER_TOO_SMALL) goto done;
 
     acquire_flags = (flags & CRYPT_MACHINE_KEYSET) | CRYPT_NEWKEYSET;
-    if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
+    if (!CryptAcquireContextW( &prov, container, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
     {
-        if (GetLastError() != NTE_EXISTS) return 0;
-
-        acquire_flags &= ~CRYPT_NEWKEYSET;
-        if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
-        {
-            WARN( "CryptAcquireContextW failed %08lx\n", GetLastError() );
-            return 0;
-        }
+        WARN( "CryptAcquireContextW failed %08lx\n", GetLastError() );
+        goto done;
     }
 
     params.buf = key = CryptMemAlloc( size );
@@ -60,11 +63,15 @@ static HCRYPTPROV import_key( cert_store_data_t data, DWORD flags )
     {
         WARN( "CryptImportKey failed %08lx\n", GetLastError() );
         CryptReleaseContext( prov, 0 );
+        prov = 0;
         CryptMemFree( key );
-        return 0;
+        goto done;
     }
     CryptDestroyKey( cryptkey );
     CryptMemFree( key );
+
+done:
+    CryptMemFree( container );
     return prov;
 }
 
