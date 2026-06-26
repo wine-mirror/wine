@@ -109,9 +109,12 @@ static UINT_PTR get_zero_bits_mask(ULONG_PTR z)
 
 static void test_NtAllocateVirtualMemory(void)
 {
+    SYSTEM_INFO si;
     void *addr1, *addr2;
     NTSTATUS status;
+    ULONG_PTR max_address, granularity_mask;
     SIZE_T size;
+    NTSTATUS limit_status;
     ULONG_PTR zero_bits;
 
     /* simple allocation should success */
@@ -286,6 +289,52 @@ static void test_NtAllocateVirtualMemory(void)
     addr1 = NULL;
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER, PAGE_NOACCESS);
     ok(!!status, "Unexpected status %08lx.\n", status);
+
+    GetSystemInfo(&si);
+    max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
+    granularity_mask = si.dwAllocationGranularity - 1;
+    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+
+    size = 0x1000;
+    addr1 = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size,
+                                     MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "NtAllocateVirtualMemory returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        ok((char *)addr1 + size - 1 <= (char *)si.lpMaximumApplicationAddress,
+           "NtAllocateVirtualMemory returned address range %p-%p above maximum application address %p\n",
+           addr1, (char *)addr1 + size - 1, si.lpMaximumApplicationAddress);
+
+        size = 0;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory returned %08lx\n", status);
+    }
+
+    size = 0x1000;
+    addr1 = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size,
+                                     MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
+    if (is_win64)
+        ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
+    else
+        todo_wine ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    }
+
+    size = si.dwAllocationGranularity * 2;
+    addr1 = (void *)(max_address & ~granularity_mask);
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size,
+                                     MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
+    ok(status == limit_status, "NtAllocateVirtualMemory returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    }
 }
 
 #define check_region_size(p, s) check_region_size_(p, s, __LINE__)
