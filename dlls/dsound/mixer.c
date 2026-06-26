@@ -164,8 +164,9 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	}
 	else if (ochannels == 1)
 	{
-		dsb->mix_channels = 1;
-		dsb->get = get_mono;
+		dsb->mix_channels = ichannels;
+		dsb->put = put_mono;
+		dsb->put_aux = putieee32_sum;
 	}
 	else if (ichannels == 2 && ochannels == 4)
 	{

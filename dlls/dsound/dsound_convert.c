@@ -89,18 +89,6 @@ float getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
     return *sbuf;
 }
 
-float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
-{
-    DWORD channels = dsb->pwfx->nChannels;
-    DWORD c;
-    float val = 0;
-    /* XXX: does Windows include LFE into the mix? */
-    for (c = 0; c < channels; c++)
-        val += dsb->get_aux(dsb, base, c);
-    val /= channels;
-    return val;
-}
-
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE *buf = (BYTE *)dsb->device->tmp_buffer;
@@ -162,6 +150,12 @@ void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
         dsb->put_aux(dsb, pos, 1, value); /* Front right */
         dsb->put_aux(dsb, pos, 5, value); /* Back right */
     }
+}
+
+void put_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    /* XXX: does Windows include LFE into the mix? */
+    dsb->put_aux(dsb, pos, 0, value);
 }
 
 void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
