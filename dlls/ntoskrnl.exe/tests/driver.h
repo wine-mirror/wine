@@ -20,6 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "winreg.h"
+#include "regstr.h"
+#include "cfgmgr32.h"
 
 /* All custom IOCTLs need to have a function value >= 0x800. */
 #define IOCTL_WINETEST_BASIC_IOCTL              CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -50,6 +53,8 @@
 #define IOCTL_WINETEST_CHILD_MARK_PENDING   CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_NEITHER, FILE_ANY_ACCESS)
 #define IOCTL_WINETEST_CHILD_CHECK_REMOVED  CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_NEITHER, FILE_ANY_ACCESS)
 #define IOCTL_WINETEST_CHILD_MAIN           CTL_CODE(FILE_DEVICE_UNKNOWN, 0x803, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_WINETEST_CHILD_ADD_CHILD      CTL_CODE(FILE_DEVICE_UNKNOWN, 0x804, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_WINETEST_CHILD_REMOVE_CHILD   CTL_CODE(FILE_DEVICE_UNKNOWN, 0x805, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 static const char teststr[] = "Wine is not an emulator";
 
@@ -79,7 +84,31 @@ struct return_status_params
     BOOL pending;
 };
 
+struct bus_device_desc
+{
+    WCHAR dev_name[64];
+
+    /* IRP_MN_QUERY_ID strings. */
+    WCHAR device_id_str[MAX_DEVICE_ID_LEN];
+    WCHAR hardware_ids_str[REGSTR_VAL_MAX_HCID_LEN];
+    WCHAR compatible_ids_str[REGSTR_VAL_MAX_HCID_LEN];
+    WCHAR instance_id_str[MAX_DEVICE_ID_LEN];
+    WCHAR serial_number_str[64];
+    WCHAR container_id_str[MAX_GUID_STRING_LEN];
+
+    /* IRP_MN_QUERY_DEVICE_TEXT strings. */
+    WCHAR text_desc_str[64];
+    WCHAR location_info_str[64];
+
+    /* IRP_MN_QUERY_CAPABILITIES values. */
+    BOOL removable;
+    BOOL unique_id;
+    ULONG address;
+    ULONG ui_number;
+};
+
 static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
+static const GUID control_class2 = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xd0}};
 
 #define SERVER_LISTEN_PORT 9374
 #define CLIENT_LISTEN_PORT 9375

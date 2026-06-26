@@ -1561,6 +1561,51 @@ static const char inf_text[] =
     "DisplayName=\"winetest bus driver\"\n"
     "; they don't sleep anymore, on the beach\n";
 
+static const char inf_text2[] =
+    "[Version]\n"
+    "Signature=$Chicago$\n"
+    "ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}\n"
+    "CatalogFile=winetest.cat\n"
+    "DriverVer=09/21/2006,6.0.5736.1\n"
+
+    "[Manufacturer]\n"
+    "Wine=mfg_section,NT" EXT "\n"
+
+    "[mfg_section.NT" EXT "]\n"
+    "Wine test tree root driver=tree_device_section,test_tree_hardware_id\n"
+
+    "[device_section.NT" EXT "]\n"
+    "CopyFiles=file_section\n"
+
+    "[tree_device_section.NT" EXT "]\n"
+    "CopyFiles=file_section\n"
+
+    "[device_section.NT" EXT ".Services]\n"
+    "AddService=winetest,0x2,svc_section\n"
+
+    "[tree_device_section.NT" EXT ".Services]\n"
+    "AddService=winetest_tree,0x2,winetest_tree_service\n"
+
+    "[file_section]\n"
+    "winetest.sys\n"
+
+    "[SourceDisksFiles]\n"
+    "winetest.sys=1\n"
+
+    "[SourceDisksNames]\n"
+    "1=,winetest.sys\n"
+
+    "[DestinationDirs]\n"
+    "DefaultDestDir=12\n"
+
+    "[winetest_tree_service]\n"
+    "ServiceBinary=%12%\\winetest.sys\n"
+    "ServiceType=1\n"
+    "StartType=3\n"
+    "ErrorControl=1\n"
+    "LoadOrderGroup=Extended Base\n"
+    "DisplayName=\"winetest tree bus driver\"\n";
+
 static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
 {
     SIP_SUBJECTINFO subject_info = {sizeof(SIP_SUBJECTINFO)};
@@ -2564,6 +2609,794 @@ static void test_pnp_driver(struct testsign_context *ctx)
     SetCurrentDirectoryA(cwd);
 }
 
+static const GUID *pnp_device_watch_guid;
+static BOOL pnp_device_watch_arrived;
+static BOOL pnp_device_watch_removed;
+static LRESULT WINAPI pnp_device_ids_notify_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message != WM_DEVICECHANGE)
+        return DefWindowProcA(window, message, wparam, lparam);
+
+    switch (wparam)
+    {
+        case DBT_DEVNODES_CHANGED:
+            if (winetest_debug > 1) trace("Device nodes changed.\n");
+            ok(InSendMessageEx(NULL) == ISMEX_NOTIFY, "Got message flags %#lx.\n", InSendMessageEx(NULL));
+            ok(!lparam, "Got lparam %#Ix.\n", lparam);
+            break;
+
+        case DBT_DEVICEARRIVAL:
+        {
+            const DEV_BROADCAST_DEVICEINTERFACE_A *iface = (const DEV_BROADCAST_DEVICEINTERFACE_A *)lparam;
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[strlen(iface->dbcc_name)]);
+
+            if (winetest_debug > 1) trace("device arrival %s\n", iface->dbcc_name);
+
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#lx\n", InSendMessageEx(NULL));
+            ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "got unexpected notification type %#lx\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %lu, got %lu\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#lx\n", iface->dbcc_reserved);
+            if (pnp_device_watch_guid && IsEqualGUID(&iface->dbcc_classguid, pnp_device_watch_guid))
+                pnp_device_watch_arrived = TRUE;
+            break;
+        }
+
+        case DBT_DEVICEREMOVECOMPLETE:
+        {
+            const DEV_BROADCAST_DEVICEINTERFACE_A *iface = (const DEV_BROADCAST_DEVICEINTERFACE_A *)lparam;
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[strlen(iface->dbcc_name)]);
+
+            if (winetest_debug > 1) trace("device removal %s\n", iface->dbcc_name);
+
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#lx\n", InSendMessageEx(NULL));
+
+            ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "got unexpected notification type %#lx\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %lu, got %lu\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#lx\n", iface->dbcc_reserved);
+            if (pnp_device_watch_guid && IsEqualGUID(&iface->dbcc_classguid, pnp_device_watch_guid))
+                pnp_device_watch_removed = TRUE;
+            break;
+        }
+    }
+    return DefWindowProcA(window, message, wparam, lparam);
+}
+
+static void pnp_device_watch(const GUID *iface)
+{
+    DWORD start_time = GetTickCount();
+    MSG msg;
+
+    pnp_device_watch_guid = iface;
+    pnp_device_watch_arrived = pnp_device_watch_removed = FALSE;
+    while (1)
+    {
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+        if (pnp_device_watch_arrived || pnp_device_watch_removed)
+            break;
+        if ((GetTickCount() - start_time) >= 2000)
+            break;
+    }
+    pnp_device_watch_guid = NULL;
+}
+
+struct pnp_test_device
+{
+    const WCHAR *parent_dev_name;
+    unsigned int dev_level;
+    struct bus_device_desc desc;
+};
+
+static const struct pnp_test_device test_devices[] =
+{
+    /* Depth 1. */
+    {
+        L"", 1,
+        {
+            .dev_name = L"winetest_pnp_child_0",
+            .hardware_ids_str = L"test_tree_hardware_id\0test_tree_hardware_id_00",
+            .compatible_ids_str = L"test_tree_hardware_id_compat\0test_tree_hardware_id_compat_00",
+            .device_id_str = L"WINEPNPTEST\\TREE_00",
+            .instance_id_str = L"00",
+            .removable = TRUE,
+            .address = 0x00,
+            .ui_number = 0x00,
+        }
+    },
+    /* Depth 2. */
+    {
+        L"winetest_pnp_child_0", 2,
+        {
+            .dev_name = L"winetest_pnp_child_1",
+            .hardware_ids_str = L"test_tree_hardware_id\0test_tree_hardware_id_01",
+            .compatible_ids_str = L"test_tree_hardware_id_compat\0test_tree_hardware_id_compat_01",
+            .device_id_str = L"WINEPNPTEST\\TREE_01",
+            .instance_id_str = L"01",
+            .text_desc_str = L"Wine Child Device",
+            .location_info_str = L"Location 01",
+            .removable = TRUE,
+            .address = 0x01,
+            .ui_number = 0x01,
+        }
+    },
+    /* Depth 3. */
+    {
+        L"winetest_pnp_child_1", 3,
+        {
+            .dev_name = L"winetest_pnp_child_2",
+            .hardware_ids_str = L"test_tree_hardware_id\0test_tree_hardware_id_02",
+            .compatible_ids_str = L"test_tree_hardware_id_compat\0test_tree_hardware_id_compat_02\0",
+            .device_id_str = L"WINEPNPTEST\\TREE_02",
+            .instance_id_str = L"02",
+            .location_info_str = L"Location 02",
+            .removable = TRUE,
+            .address = 0x02,
+            .ui_number = ~0u,
+        }
+    },
+};
+
+struct pnp_bus_device_data
+{
+    HANDLE handle;
+    WCHAR iface_path[MAX_PATH];
+    WCHAR instance_id[MAX_DEVICE_ID_LEN];
+    HKEY dev_hkey;
+    GUID class_guid;
+    DEVINST dev_node;
+};
+
+static void get_child_level_iface_class(unsigned int level, GUID *class)
+{
+    *class = control_class2;
+    class->Data4[7] += level;
+}
+
+static void get_pnp_bus_device_data(unsigned int level, const WCHAR *device_name, struct pnp_bus_device_data *dev_out)
+{
+    HANDLE device = INVALID_HANDLE_VALUE;
+    WCHAR dev_name[64], *paths, *path;
+    KEY_NAME_INFORMATION *name_info;
+    NTSTATUS status;
+    WCHAR *tmp_ptr;
+    ULONG size = 0;
+    HKEY tmp_hkey;
+    CONFIGRET cr;
+    DWORD type;
+    BOOL ret;
+
+    memset(dev_out, 0, sizeof(*dev_out));
+    get_child_level_iface_class(level, &dev_out->class_guid);
+
+    cr = CM_Get_Device_Interface_List_SizeW(&size, &dev_out->class_guid, NULL, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+    ok(!cr, "Unexpected cr %#lx.\n", cr);
+
+    paths = malloc(size * sizeof(*paths));
+    ok(!!paths, "Failed to allocate paths.\n");
+
+    cr = CM_Get_Device_Interface_ListW(&dev_out->class_guid, NULL, paths, size,
+            CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+    ok(!cr, "Unexpected cr %#lx.\n", cr);
+
+    if (!level)
+    {
+        device = CreateFileW(paths, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+        ok(device != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError());
+        path = paths;
+    }
+    else
+    {
+        for (path = paths; *path; path = path + wcslen(path) + 1)
+        {
+            device = CreateFileW(path, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+            ok(device != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError());
+
+            size = sizeof(dev_name);
+            memset(dev_name, 0, sizeof(dev_name));
+            ret = DeviceIoControl(device, IOCTL_WINETEST_CHILD_GET_ID, NULL, 0, dev_name, sizeof(dev_name), &size, NULL);
+            ok(ret, "Unexpected error %lu.\n", GetLastError());
+
+            if (!wcscmp(dev_name, device_name))
+                break;
+
+            CloseHandle(device);
+            device = INVALID_HANDLE_VALUE;
+        }
+    }
+
+    ok(device != INVALID_HANDLE_VALUE, "Failed to get device handle.\n");
+    if (device == INVALID_HANDLE_VALUE)
+        goto exit;
+    wcscpy(dev_out->iface_path, path);
+
+    size = sizeof(dev_out->instance_id);
+    cr = CM_Get_Device_Interface_PropertyW(path, &DEVPKEY_Device_InstanceId, &type, (BYTE *)dev_out->instance_id, &size, 0);
+    ok(!cr, "Unexpected cr %lx.\n", cr);
+
+    cr = CM_Locate_DevNodeW(&dev_out->dev_node, dev_out->instance_id, 0);
+    ok(!cr, "Unexpected cr %lx.\n", cr);
+
+    cr = CM_Open_DevNode_Key(dev_out->dev_node, KEY_QUERY_VALUE, 0, RegDisposition_OpenAlways, &tmp_hkey,
+            CM_REGISTRY_HARDWARE);
+    ok(!cr, "Unexpected cr %lx.\n", cr);
+    if (cr)
+        goto exit;
+
+    size = 0;
+    status = NtQueryKey(tmp_hkey, KeyNameInformation, NULL, 0, &size);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "got unexpected status %#lx\n", status);
+
+    name_info = malloc(size + sizeof(WCHAR));
+    ok(!!name_info, "Failed to allocate memory.\n");
+
+    memset(name_info, 0, size + sizeof(WCHAR));
+    status = NtQueryKey(tmp_hkey, KeyNameInformation, name_info, size, &size);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    RegCloseKey(tmp_hkey);
+
+    tmp_ptr = wcsstr(name_info->Name, L"\\Device Parameters");
+    *tmp_ptr = 0;
+    tmp_ptr = name_info->Name + wcslen(L"\\REGISTRY\\MACHINE\\");
+
+    RegCreateKeyExW(HKEY_LOCAL_MACHINE, tmp_ptr, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &dev_out->dev_hkey, NULL);
+    free(name_info);
+    ok(!!dev_out->dev_hkey, "Failed to get registry key for parent device.\n");
+    dev_out->handle = device;
+
+exit:
+    if ((device != INVALID_HANDLE_VALUE) && (dev_out->handle != device))
+        CloseHandle(device);
+    free(paths);
+}
+
+static void pnp_bus_device_data_close(struct pnp_bus_device_data *dev)
+{
+    CloseHandle(dev->handle);
+    dev->handle = INVALID_HANDLE_VALUE;
+    RegCloseKey(dev->dev_hkey);
+    dev->dev_hkey = INVALID_HANDLE_VALUE;
+}
+
+#define pnp_bus_test_device_add_child(a, b, c) pnp_bus_test_device_add_child_(__LINE__, a, b, c)
+static void pnp_bus_test_device_add_child_(int line, HANDLE parent, struct bus_device_desc *desc,
+        int child_level)
+{
+    DWORD ctl_code = child_level <= 1 ? IOCTL_WINETEST_BUS_ADD_CHILD : IOCTL_WINETEST_CHILD_ADD_CHILD;
+    GUID child_class;
+    BOOL ret;
+
+    ret = DeviceIoControl(parent, ctl_code, desc, sizeof(*desc), NULL, 0, NULL, NULL);
+    ok_(__FILE__, line)(ret, "Got error %lu.\n", GetLastError());
+
+    get_child_level_iface_class(child_level, &child_class);
+    pnp_device_watch(&child_class);
+    ok_(__FILE__, line)(!!pnp_device_watch_arrived, "Expected device arrival.\n");
+    ok_(__FILE__, line)(!pnp_device_watch_removed, "Unexpected device removal.\n");
+}
+
+#define pnp_bus_test_device_remove_child(a, b, c) pnp_bus_test_device_remove_child_(__LINE__, a, b, c)
+static void pnp_bus_test_device_remove_child_(int line, HANDLE parent, struct bus_device_desc *desc,
+        int child_level)
+{
+    DWORD ctl_code = child_level <= 1 ? IOCTL_WINETEST_BUS_REMOVE_CHILD : IOCTL_WINETEST_CHILD_REMOVE_CHILD;
+    GUID child_class;
+    BOOL ret;
+
+    ret = DeviceIoControl(parent, ctl_code, desc->dev_name, sizeof(desc->dev_name), NULL, 0, NULL, NULL);
+    ok_(__FILE__, line)(ret, "Got error %lu.\n", GetLastError());
+
+    get_child_level_iface_class(child_level, &child_class);
+    pnp_device_watch(&child_class);
+    ok_(__FILE__, line)(!!pnp_device_watch_removed, "Expected device removal.\n");
+    ok_(__FILE__, line)(!pnp_device_watch_arrived, "Unexpected device arrival.\n");
+}
+
+static BOOL extract_parent_id_prefix_values(const WCHAR *parent_id_prefix, DWORD *depth, DWORD *hash, DWORD *sequence)
+{
+    *depth = *hash = *sequence = 0;
+    return (swscanf(parent_id_prefix, L"%02lx&%8lx&%02lx", depth, hash, sequence) == 3);
+}
+
+static void test_pnp_device_ids(void)
+{
+    static const GUID expected_root_container_id = {0x00000000, 0x0000, 0x0000, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+    DEV_BROADCAST_DEVICEINTERFACE_A filter =
+    {
+        .dbcc_size = sizeof(filter),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+    };
+    static const WNDCLASSA class =
+    {
+        .lpszClassName = "ntoskrnl_test_wc",
+        .lpfnWndProc = pnp_device_ids_notify_proc,
+    };
+    struct bus_device_desc desc = { 0 };
+    WCHAR tmp_buf[MAX_PATH] = { 0 };
+    HDEVNOTIFY notify_handle;
+    unsigned int i;
+    LSTATUS status;
+    HKEY enum_hkey;
+    CONFIGRET cr;
+    DWORD type;
+    ULONG size;
+    HWND hwnd;
+    BOOL ret;
+
+    ret = RegisterClassA(&class);
+    ok(ret, "Failed to register window class, error %lu.\n", GetLastError());
+    hwnd = CreateWindowA("ntoskrnl_test_wc", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    ok(!!hwnd, "Failed to create hwnd, error %lu.\n", GetLastError());
+    notify_handle = RegisterDeviceNotificationA(hwnd, &filter, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
+    ok(!!notify_handle, "failed to register window, error %lu\n", GetLastError());
+
+    status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Enum", 0, KEY_ALL_ACCESS, &enum_hkey);
+    ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+
+    /* Construct tree to test device instance ID. */
+    for (i = 0; i < ARRAY_SIZE(test_devices); i++)
+    {
+        struct pnp_bus_device_data parent_dev, child_dev;
+        DWORD depth[2], hash[2], seq[2], next_seq_val;
+        WCHAR dev_instance_id_expected[MAX_PATH];
+        FILETIME first_install[2] = { 0 };
+        WCHAR tmp_buf2[MAX_PATH] = { 0 };
+
+        winetest_push_context("level %d", test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level - 1, test_devices[i].parent_dev_name, &parent_dev);
+
+        /* UniqueID is false, will get an ID prefixed by ParentIdPrefix key. */
+        desc = test_devices[i].desc;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        tmp_buf[0] = 0;
+        size = sizeof(tmp_buf);
+        status = RegQueryValueExW(parent_dev.dev_hkey, L"ParentIdPrefix", NULL, &type, (BYTE *)tmp_buf, &size);
+        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        if (status == STATUS_SUCCESS)
+        {
+            ok(extract_parent_id_prefix_values(tmp_buf, &depth[0], &hash[0], &seq[0]),
+                    "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
+            swprintf(tmp_buf2, ARRAY_SIZE(tmp_buf2), L"NextParentID.%lx.%d", hash[0], depth[0]);
+            status = RegQueryValueExW(enum_hkey, tmp_buf2, NULL, &type, (BYTE *)&next_seq_val, &size);
+            ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+            ok(next_seq_val == (seq[0] + 1), "Unexpected sequence %#lx.\n", next_seq_val);
+            wcscat(tmp_buf, L"&");
+        }
+
+        wcscat(tmp_buf, desc.instance_id_str);
+        swprintf(dev_instance_id_expected, ARRAY_SIZE(dev_instance_id_expected), L"%s\\%s", desc.device_id_str,
+                tmp_buf);
+        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+                debugstr_w(child_dev.instance_id));
+
+        size = sizeof(first_install[0]);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
+                (BYTE *)&first_install[0], &size, 0);
+        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /* Device instance ID is persistent across plug/unplug. */
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+                debugstr_w(child_dev.instance_id));
+
+        size = sizeof(first_install[1]);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
+                (BYTE *)&first_install[1], &size, 0);
+        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
+        if (!cr)
+            ok(!memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install date mismatch.\n");
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * Delete ParentIdPrefix key from registry. Will get the same values
+         * in depth/hash field, but sequence number will be incremented.
+         */
+        status = RegDeleteValueW(parent_dev.dev_hkey, L"ParentIdPrefix");
+        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+
+        /* UniqueID is false, will get an ID prefixed by ParentIdPrefix key. */
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        tmp_buf[0] = 0;
+        size = sizeof(tmp_buf);
+        status = RegQueryValueExW(parent_dev.dev_hkey, L"ParentIdPrefix", NULL, &type, (BYTE *)tmp_buf, &size);
+        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        if (status == STATUS_SUCCESS)
+        {
+            ok(extract_parent_id_prefix_values(tmp_buf, &depth[1], &hash[1], &seq[1]),
+                    "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
+            ok(depth[0] == depth[1], "Unexpected depth value %#lx.\n", depth[1]);
+            ok(hash[0] == hash[1], "Unexpected hash value %#lx.\n", hash[1]);
+            ok(seq[1] > seq[0], "Unexpected sequence value %#lx.\n", seq[1]);
+            wcscat(tmp_buf, L"&");
+        }
+
+        wcscat(tmp_buf, desc.instance_id_str);
+        swprintf(dev_instance_id_expected, ARRAY_SIZE(dev_instance_id_expected), L"%s\\%s", desc.device_id_str,
+                tmp_buf);
+        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+                debugstr_w(child_dev.instance_id));
+
+        size = sizeof(first_install[1]);
+        memset(&first_install[1], 0, size);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
+                (BYTE *)&first_install[1], &size, 0);
+        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
+        if (!cr)
+            ok(memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install dates match.\n");
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /* Unique ID is true, instance ID will be exact value. */
+        desc.unique_id = TRUE;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        swprintf(dev_instance_id_expected, ARRAY_SIZE(dev_instance_id_expected), L"%s\\%s", desc.device_id_str,
+                desc.instance_id_str);
+        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+                debugstr_w(child_dev.instance_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_device_data_close(&parent_dev);
+        winetest_pop_context();
+    }
+
+    /*
+     * Tear everything down. Go in reverse order so children aren't left
+     * unparented.
+     */
+    i = (ARRAY_SIZE(test_devices) - 1);
+    while (1)
+    {
+        struct pnp_bus_device_data parent_dev;
+
+        winetest_push_context("level %d", test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level - 1, test_devices[i].parent_dev_name, &parent_dev);
+        desc = test_devices[i].desc;
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        pnp_bus_device_data_close(&parent_dev);
+        winetest_pop_context();
+
+        if (!i--)
+            break;
+    }
+
+    /* Construct tree to test device container ID. */
+    for (i = 0; i < ARRAY_SIZE(test_devices); i++)
+    {
+        GUID parent_container_id, child_container_id, tmp_container_id;
+        struct pnp_bus_device_data parent_dev, child_dev;
+        WCHAR tmp_buf2[MAX_PATH] = { 0 };
+
+        winetest_push_context("level %d", test_devices[i].dev_level);
+        memset(&parent_container_id, 0, sizeof(parent_container_id));
+        get_pnp_bus_device_data(test_devices[i].dev_level - 1, test_devices[i].parent_dev_name, &parent_dev);
+        size = sizeof(parent_container_id);
+        cr = CM_Get_DevNode_PropertyW(parent_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&parent_container_id, &size, 0);
+        todo_wine_if(test_devices[i].dev_level == 1) ok(!cr, "Unexpected cr %#lx.\n", cr);
+        if (test_devices[i].dev_level == 1)
+        {
+            todo_wine ok(IsEqualGUID(&parent_container_id, &expected_root_container_id), "Expected GUID %s, got %s.\n",
+                    debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
+        }
+
+        /*
+         * Removable is false, we will inherit the container ID from our
+         * parent device.
+         */
+        desc = test_devices[i].desc;
+        swprintf(tmp_buf2, ARRAY_SIZE(tmp_buf2), L"%s\\%s", desc.device_id_str, desc.instance_id_str);
+        /* Delete value created by earlier tests. */
+        status = RegDeleteKeyValueW(enum_hkey, tmp_buf2, L"ContainerId");
+        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        desc.unique_id = TRUE;
+        desc.removable = FALSE;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        memset(&child_container_id, 0, sizeof(child_container_id));
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
+        if (!cr)
+            ok(IsEqualGUID(&parent_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+                debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * Device is not removable, but returns a string for
+         * BusQueryContainerID. The value is now that of our reported
+         * container ID.
+         */
+        swprintf(desc.container_id_str, ARRAY_SIZE(desc.container_id_str), L"{12345678-1234-1234-1234-12345678912%d}", i);
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(!IsEqualGUID(&parent_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * If we don't return a container ID string, the same device instance
+         * will fall back to the parent container ID.
+         */
+        desc.container_id_str[0] = 0;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        todo_wine ok(IsEqualGUID(&parent_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * Device is marked as being removable, the PnP manager will create a
+         * UUIDv1 for the device.
+         */
+        desc.removable = TRUE;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(!IsEqualGUID(&parent_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&expected_root_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * The generated container ID is persistent across plug/unplug cycles
+         * for a particular device instance marked as removable.
+         */
+        tmp_container_id = child_container_id;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(IsEqualGUID(&tmp_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&tmp_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * If we report our own container ID, it overwrites the generated
+         * value.
+         */
+        tmp_container_id = child_container_id;
+        swprintf(desc.container_id_str, ARRAY_SIZE(desc.container_id_str), L"{12345678-1234-1234-1234-12345678912%d}", i);
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        todo_wine ok(!IsEqualGUID(&tmp_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&tmp_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+
+        /*
+         * Once overwritten, the value persists even if we no longer return a
+         * string.
+         */
+        tmp_container_id = child_container_id;
+        desc.container_id_str[0] = 0;
+        pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
+
+        size = sizeof(child_container_id);
+        cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_ContainerId, &type,
+                (BYTE *)&child_container_id, &size, 0);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(IsEqualGUID(&tmp_container_id, &child_container_id), "Expected GUID %s, got %s.\n",
+            debugstr_guid(&tmp_container_id), debugstr_guid(&parent_container_id));
+
+        pnp_bus_device_data_close(&child_dev);
+        pnp_bus_device_data_close(&parent_dev);
+        winetest_pop_context();
+    }
+
+    i = (ARRAY_SIZE(test_devices) - 1);
+    while (1)
+    {
+        struct pnp_bus_device_data parent_dev;
+
+        winetest_push_context("level %d", test_devices[i].dev_level);
+        get_pnp_bus_device_data(test_devices[i].dev_level - 1, test_devices[i].parent_dev_name, &parent_dev);
+        desc = test_devices[i].desc;
+        pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
+        pnp_bus_device_data_close(&parent_dev);
+        winetest_pop_context();
+
+        if (!i--)
+            break;
+    }
+
+    RegCloseKey(enum_hkey);
+    UnregisterDeviceNotification(notify_handle);
+    DestroyWindow(hwnd);
+    UnregisterClassA("ntoskrnl_test_wc", GetModuleHandleA(NULL));
+}
+
+static void test_pnp_tree_driver(struct testsign_context *ctx)
+{
+    static const char tree_hardware_id[] = "test_tree_hardware_id\0";
+    char path[MAX_PATH], dest[MAX_PATH], *filepart;
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    char cwd[MAX_PATH], tempdir[MAX_PATH];
+    WCHAR driver_filename[MAX_PATH];
+    SC_HANDLE manager, service;
+    BOOL ret, need_reboot;
+    HANDLE catalog, file;
+    DWORD dword, type;
+    unsigned int i;
+    HDEVINFO set;
+    FILE *f;
+
+    GetCurrentDirectoryA(ARRAY_SIZE(cwd), cwd);
+    GetTempPathA(ARRAY_SIZE(tempdir), tempdir);
+    SetCurrentDirectoryA(tempdir);
+
+    load_resource(L"driver_pnp2.dll", driver_filename);
+    ret = MoveFileExW(driver_filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
+    ok(ret, "failed to move file, error %lu\n", GetLastError());
+
+    f = fopen("winetest.inf", "w");
+    ok(!!f, "failed to open winetest.inf: %s\n", strerror(errno));
+    fputs(inf_text2, f);
+    fclose(f);
+
+    /* Create the catalog file. */
+    catalog = CryptCATOpen((WCHAR *)L"winetest.cat", CRYPTCAT_OPEN_CREATENEW, 0, CRYPTCAT_VERSION_1, 0);
+    ok(catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %#lx\n", GetLastError());
+
+    ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"HWID1",
+            CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+            sizeof(L"test_tree_hardware_id"), (BYTE *)L"test_tree_hardware_id");
+    todo_wine ok(ret, "failed to add attribute, error %#lx\n", GetLastError());
+
+    ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"OS",
+            CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+            sizeof(L"VistaX64"), (BYTE *)L"VistaX64");
+    todo_wine ok(ret, "failed to add attribute, error %#lx\n", GetLastError());
+
+    add_file_to_catalog(catalog, L"winetest.sys");
+    add_file_to_catalog(catalog, L"winetest.inf");
+
+    ret = CryptCATPersistStore(catalog);
+    todo_wine ok(ret, "Failed to write catalog, error %lu\n", GetLastError());
+
+    ret = CryptCATClose(catalog);
+    ok(ret, "Failed to close catalog, error %lu\n", GetLastError());
+
+    testsign_sign(ctx, L"winetest.cat");
+
+    /* Install the driver. */
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "failed to create device list, error %#lx\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device);
+    ok(ret, "failed to create device, error %#lx\n", GetLastError());
+
+    ret = SetupDiSetDeviceRegistryPropertyA( set, &device, SPDRP_HARDWAREID,
+            (const BYTE *)tree_hardware_id, sizeof(tree_hardware_id) );
+    ok(ret, "failed to create set hardware ID, error %#lx\n", GetLastError());
+
+    ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device);
+    ok(ret, "failed to register device, error %#lx\n", GetLastError());
+
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CONFIGFLAGS,
+            &type, (BYTE *)&dword, sizeof(dword), NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
+
+    GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
+    ret = UpdateDriverForPlugAndPlayDevicesA(NULL, tree_hardware_id, path, INSTALLFLAG_FORCE, &need_reboot);
+    ok(ret, "failed to install device, error %#lx\n", GetLastError());
+    ok(!need_reboot, "expected no reboot necessary\n");
+
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CONFIGFLAGS,
+            &type, (BYTE *)&dword, sizeof(dword), NULL);
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(!dword, "got flags %#lx\n", dword);
+    ok(type == REG_DWORD, "got type %lu\n", type);
+
+    /* Tests. */
+    test_pnp_device_ids();
+
+    /* Clean up. */
+
+    ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
+    ok(ret, "failed to remove device, error %#lx\n", GetLastError());
+
+    file = CreateFileA("\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362d0}", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file == INVALID_HANDLE_VALUE, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "failed to destroy set, error %#lx\n", GetLastError());
+
+    set = SetupDiGetClassDevsA(NULL, "winepnptest", NULL, DIGCF_ALLCLASSES);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError());
+
+    for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
+    {
+        ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
+        ok(ret, "failed to remove device, error %#lx\n", GetLastError());
+    }
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    /* Windows stops the service but does not delete it. */
+    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    ok(!!manager, "failed to open service manager, error %lu\n", GetLastError());
+    service = OpenServiceA(manager, "winetest_tree", SERVICE_STOP | DELETE);
+    ok(!!service, "failed to open service, error %lu\n", GetLastError());
+    unload_driver(service);
+    CloseServiceHandle(manager);
+
+    cat_okfile();
+
+    GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
+    ret = SetupCopyOEMInfA(path, NULL, 0, 0, dest, sizeof(dest), NULL, &filepart);
+    ok(ret, "Failed to copy INF, error %#lx\n", GetLastError());
+    ret = SetupUninstallOEMInfA(filepart, SUOI_FORCEDELETE, NULL);
+    ok(ret, "Failed to uninstall INF, error %lu\n", GetLastError());
+
+    ret = DeleteFileA("winetest.cat");
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
+    ret = DeleteFileA("winetest.inf");
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
+    ret = DeleteFileA("winetest.sys");
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
+    /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
+    ret = DeleteFileA("C:/windows/system32/drivers/winetest.sys");
+    ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError());
+
+    SetCurrentDirectoryA(cwd);
+}
+
 START_TEST(ntoskrnl)
 {
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
@@ -2649,6 +3482,9 @@ START_TEST(ntoskrnl)
 
     subtest("driver_pnp");
     test_pnp_driver(&ctx);
+
+    subtest("driver_pnp_tree");
+    test_pnp_tree_driver(&ctx);
 
 out:
     testsign_cleanup(&ctx);
