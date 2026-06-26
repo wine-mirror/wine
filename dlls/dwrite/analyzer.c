@@ -312,7 +312,7 @@ system_fallback_config[] =
     { "2190-21FF",              L"Noto Sans Symbols" },
 
     /* Miscellaneous Symbols - 2600-26FF */
-    { "2600-26FF",              L"Noto Sans Symbols2, Noto Sans Symbols" },
+    { "2600-26FF",              L"Noto Sans Symbols2, Noto Sans Symbols 2, Noto Sans Symbols" },
 
     /* Dingbats - 2700-27BF */
     { "2700-27BF",              L"Noto Sans Symbols2, Noto Sans Symbols 2" },
