@@ -86,6 +86,7 @@
 # define HWCAP_CRC32        (1 << 7)
 # define HWCAP_ATOMICS      (1 << 8)
 # define HWCAP_FPHP         (1 << 9)
+# define HWCAP_CPUID        (1 << 11)
 # define HWCAP_JSCVT        (1 << 13)
 # define HWCAP_LRCPC        (1 << 15)
 # define HWCAP_SHA3         (1 << 17)
@@ -2038,7 +2039,6 @@ static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs
         regs[regidx++] = (struct smbios_wine_id_reg_value_arm64){ 0x4000, value };
     }
 
-#ifdef HWCAP_CPUID
     if (!(getauxval(AT_HWCAP) & HWCAP_CPUID))
     {
         WARN( "Skipping ID register population as kernel is missing emulation support.\n" );
@@ -2071,9 +2071,6 @@ static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs
     READ_ID_REG( 0x5801 ); /* CTR_EL0 */
     /* Windows exposes SCTLR_EL1, ACTLR_EL1, TTBR0_EL1 and MAIR_EL1, but these are inaccessible under
      * linux so leave them unpopulated. */
-#else
-    WARN( "Skipping ID register population as HWCAP_CPUID isn't supported.\n" );
-#endif
 
 #undef READ_ID_REG
 #undef STR
