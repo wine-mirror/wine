@@ -1499,7 +1499,9 @@ static void test_NtMapViewOfSection(void)
     DWORD status, written;
     SIZE_T size, size2, result;
     LARGE_INTEGER offset;
+    ULONG_PTR max_address, granularity_mask;
     ULONG_PTR zero_bits;
+    NTSTATUS limit_status;
     SYSTEM_INFO si;
 
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
@@ -1802,6 +1804,59 @@ static void test_NtMapViewOfSection(void)
 
     NtClose(mapping);
     CloseHandle(file);
+
+    GetSystemInfo(&si);
+    max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
+    granularity_mask = si.dwAllocationGranularity - 1;
+    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 0x40000, NULL);
+    ok(mapping != 0, "CreateFileMapping failed, error %lu\n", GetLastError());
+    if (!mapping)
+    {
+        TerminateProcess(process, 0);
+        CloseHandle(process);
+        return;
+    }
+
+    offset.QuadPart = 0;
+    size = 0x1000;
+    ptr = NULL;
+    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size,
+                                1, MEM_TOP_DOWN, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        ok((char *)ptr + size - 1 <= (char *)si.lpMaximumApplicationAddress,
+           "NtMapViewOfSection returned address range %p-%p above maximum application address %p\n",
+           ptr, (char *)ptr + size - 1, si.lpMaximumApplicationAddress);
+
+        status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+    }
+
+    offset.QuadPart = 0;
+    size = 0x1000;
+    ptr = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
+    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size,
+                                1, MEM_TOP_DOWN, PAGE_READWRITE);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSection returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+        NtUnmapViewOfSection(NtCurrentProcess(), ptr);
+
+    offset.QuadPart = 0;
+    size = si.dwAllocationGranularity * 2;
+    ptr = (void *)(max_address & ~granularity_mask);
+    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size,
+                                1, MEM_TOP_DOWN, PAGE_READWRITE);
+    if (is_win64)
+        todo_wine ok(status == limit_status, "NtMapViewOfSection returned %08lx\n", status);
+    else
+        ok(status == limit_status, "NtMapViewOfSection returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+        NtUnmapViewOfSection(NtCurrentProcess(), ptr);
+
+    CloseHandle(mapping);
 
     TerminateProcess(process, 0);
     CloseHandle(process);
