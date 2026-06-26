@@ -377,9 +377,7 @@ static DWORD SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pszDir, BOOL bShowUI)
     if (ret == ERROR_SUCCESS)
         ret = SHNotifyRemoveDirectoryW(pszDir);
 
-    return ret == ERROR_PATH_NOT_FOUND ?
-        0x7C: /* DE_INVALIDFILES (legacy Windows error) */
-        ret;
+    return ret == ERROR_PATH_NOT_FOUND ? DE_INVALIDFILES : ret;
 }
 
 /**************************************************************************
