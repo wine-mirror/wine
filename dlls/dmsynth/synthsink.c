@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 #define BUFFER_SUBDIVISIONS 10
 #define WRITE_PERIOD 20
+#define JITTER_BUFFER 10
 
 struct synth_sink
 {
@@ -102,7 +103,8 @@ static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer
     EnterCriticalSection(&sink->cs);
     estimated_play_pos = (sink->play_pos + (master_time - sink->play_pos_time)
             * format->nSamplesPerSec / 10000000ll * format->nBlockAlign) % caps->dwBufferBytes;
-    write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+    write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes
+            + JITTER_BUFFER * format->nSamplesPerSec / 1000 * format->nBlockAlign;
     current_offset = (sink->written - estimated_play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
     LeaveCriticalSection(&sink->cs);
 
@@ -190,7 +192,8 @@ static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuf
             return hr;
 
         EnterCriticalSection(&sink->cs);
-        write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+        write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes
+                + JITTER_BUFFER * format->nSamplesPerSec / 1000 * format->nBlockAlign;
         LeaveCriticalSection(&sink->cs);
 
         if (sink->written >= written + write_latency)
