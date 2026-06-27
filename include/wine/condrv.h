@@ -102,6 +102,10 @@ struct condrv_input_info_params
 #define SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE   0x01
 #define SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE  0x02
 
+#define CONSOLE_READ_NOREMOVE 0x0001
+#define CONSOLE_READ_NOWAIT 0x0002
+
+
 /* IOCTL_CONDRV_WRITE_OUTPUT and IOCTL_CONDRV_READ_OUTPUT params */
 struct condrv_output_params
 {

@@ -1226,8 +1226,8 @@
 @ stdcall -import RaiseFailFastException(ptr ptr long)
 @ stdcall -import ReadConsoleA(long ptr long ptr ptr)
 @ stdcall -import ReadConsoleInputA(long ptr long ptr)
-@ stub ReadConsoleInputExA
-@ stub ReadConsoleInputExW
+@ stdcall -import ReadConsoleInputExA(long ptr long ptr long)
+@ stdcall -import ReadConsoleInputExW(long ptr long ptr long)
 @ stdcall -import ReadConsoleInputW(long ptr long ptr)
 @ stdcall -import ReadConsoleOutputA(long ptr long long ptr)
 @ stdcall -import ReadConsoleOutputAttribute(long ptr long long ptr)

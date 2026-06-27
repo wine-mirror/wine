@@ -491,10 +491,13 @@ static NTSTATUS read_console_input( struct console *console, size_t out_size )
     read_complete( console, STATUS_SUCCESS, console->records, count * sizeof(*console->records),
                    console->record_count > count );
 
-    if (count < console->record_count)
-        memmove( console->records, console->records + count,
-                 (console->record_count - count) * sizeof(*console->records) );
-    console->record_count -= count;
+    if (!(console->read_flags & CONSOLE_READ_NOREMOVE))
+    {
+        if (count < console->record_count)
+            memmove( console->records, console->records + count,
+                     (console->record_count - count) * sizeof(*console->records) );
+        console->record_count -= count;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -2715,8 +2718,19 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_READ_INPUT:
         {
-            if (in_size) return STATUS_INVALID_PARAMETER;
+            USHORT flags = 0;
+            console->read_flags = 0;
+            if (in_size)
+            {
+                if (in_size != sizeof(USHORT)) return STATUS_INVALID_PARAMETER;
+                flags = *(USHORT *)in_data;
+                if (flags & ~CONSOLE_READ_NOREMOVE) return STATUS_INVALID_PARAMETER;
+
+                console->read_flags = flags;
+            }
+
             ensure_tty_input_thread( console );
+
             if (!console->record_count && *out_size)
             {
                 TRACE( "pending read\n" );
@@ -2736,12 +2750,31 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
     case IOCTL_CONDRV_PEEK:
         {
             void *result;
+            DWORD flags = 0;
             TRACE( "peek\n" );
-            if (in_size) return STATUS_INVALID_PARAMETER;
+            if (in_size)
+            {
+                if (in_size != sizeof(USHORT)) return STATUS_INVALID_PARAMETER;
+                flags = *(USHORT *)in_data;
+                if (!(flags & CONSOLE_READ_NOWAIT) ||
+                    flags & ~(CONSOLE_READ_NOREMOVE | CONSOLE_READ_NOWAIT)) return STATUS_INVALID_PARAMETER;
+            }
+
             ensure_tty_input_thread( console );
             *out_size = min( *out_size, console->record_count * sizeof(INPUT_RECORD) );
             if (!(result = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
             if (*out_size) memcpy( result, console->records, *out_size );
+
+            if (!(flags & CONSOLE_READ_NOREMOVE))
+            {
+                if (*out_size)
+                {
+                    size_t count = *out_size / sizeof(INPUT_RECORD);
+                    memmove(console->records, console->records + count,
+                            (console->record_count - count) * sizeof(INPUT_RECORD));
+                    console->record_count -= count;
+                }
+            }
             return STATUS_SUCCESS;
         }
 

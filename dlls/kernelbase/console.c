@@ -1834,6 +1834,30 @@ BOOL WINAPI ReadConsoleInputW( HANDLE handle, INPUT_RECORD *buffer, DWORD length
 }
 
 
+/***********************************************************************
+ *            ReadConsoleInputExA   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleInputExA( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count, USHORT flags )
+{
+    if (!ReadConsoleInputExW(handle, buffer, length, count, flags )) return FALSE;
+    input_records_WtoA( buffer, *count );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *            ReadConsoleInputExW   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleInputExW( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count, USHORT flags )
+{
+    DWORD ioctl_code = (flags & CONSOLE_READ_NOWAIT) ? IOCTL_CONDRV_PEEK : IOCTL_CONDRV_READ_INPUT;
+    if (!console_ioctl( handle, ioctl_code, (void *) &flags, sizeof(USHORT),
+                        buffer, length * sizeof(INPUT_RECORD), count )) return FALSE;
+    *count /= sizeof(INPUT_RECORD);
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	WriteConsoleInputA   (kernelbase.@)
  */

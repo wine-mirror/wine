@@ -1282,8 +1282,8 @@
 @ stdcall ReOpenFile(ptr long long long)
 @ stdcall ReadConsoleA(long ptr long ptr ptr)
 @ stdcall ReadConsoleInputA(long ptr long ptr)
-@ stub ReadConsoleInputExA
-@ stub ReadConsoleInputExW
+@ stdcall ReadConsoleInputExA(long ptr long ptr long)
+@ stdcall ReadConsoleInputExW(long ptr long ptr long)
 @ stdcall ReadConsoleInputW(long ptr long ptr)
 @ stdcall ReadConsoleOutputA(long ptr long long ptr)
 @ stdcall ReadConsoleOutputAttribute(long ptr long long ptr)
