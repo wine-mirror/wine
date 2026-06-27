@@ -28,18 +28,18 @@
 
 typedef struct __JUMP_BUFFER
 {
-    unsigned long Ebp;
-    unsigned long Ebx;
-    unsigned long Edi;
-    unsigned long Esi;
-    unsigned long Esp;
-    unsigned long Eip;
-    unsigned long Registration;
-    unsigned long TryLevel;
+    __msvcrt_ulong Ebp;
+    __msvcrt_ulong Ebx;
+    __msvcrt_ulong Edi;
+    __msvcrt_ulong Esi;
+    __msvcrt_ulong Esp;
+    __msvcrt_ulong Eip;
+    __msvcrt_ulong Registration;
+    __msvcrt_ulong TryLevel;
     /* Start of new struct members */
-    unsigned long Cookie;
-    unsigned long UnwindFunc;
-    unsigned long UnwindData[6];
+    __msvcrt_ulong Cookie;
+    __msvcrt_ulong UnwindFunc;
+    __msvcrt_ulong UnwindData[6];
 } _JUMP_BUFFER;
 
 #define _JBLEN 16
@@ -65,7 +65,7 @@ typedef _CRT_ALIGN(16) struct _JUMP_BUFFER
     unsigned __int64 R14;
     unsigned __int64 R15;
     unsigned __int64 Rip;
-    unsigned long MxCsr;
+    __msvcrt_ulong MxCsr;
     unsigned short FpCsr;
     unsigned short Spare;
     SETJMP_FLOAT128  Xmm6;
@@ -87,18 +87,18 @@ typedef SETJMP_FLOAT128 _JBTYPE;
 
 typedef struct _JUMP_BUFFER
 {
-    unsigned long Frame;
-    unsigned long R4;
-    unsigned long R5;
-    unsigned long R6;
-    unsigned long R7;
-    unsigned long R8;
-    unsigned long R9;
-    unsigned long R10;
-    unsigned long R11;
-    unsigned long Sp;
-    unsigned long Pc;
-    unsigned long Fpscr;
+    __msvcrt_ulong Frame;
+    __msvcrt_ulong R4;
+    __msvcrt_ulong R5;
+    __msvcrt_ulong R6;
+    __msvcrt_ulong R7;
+    __msvcrt_ulong R8;
+    __msvcrt_ulong R9;
+    __msvcrt_ulong R10;
+    __msvcrt_ulong R11;
+    __msvcrt_ulong Sp;
+    __msvcrt_ulong Pc;
+    __msvcrt_ulong Fpscr;
     unsigned long long D[8];
 } _JUMP_BUFFER;
 
@@ -124,8 +124,8 @@ typedef struct _JUMP_BUFFER
     unsigned __int64 Fp;
     unsigned __int64 Lr;
     unsigned __int64 Sp;
-    unsigned long Fpcr;
-    unsigned long Fpsr;
+    __msvcrt_ulong Fpcr;
+    __msvcrt_ulong Fpsr;
     double D[8];
 } _JUMP_BUFFER;
 
