@@ -100,6 +100,28 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
     return TRUE;
 }
 
+BOOL dxgi_validate_swapchain_fullscreen_desc(const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *desc)
+{
+    if (desc && !desc->Windowed)
+    {
+        if (!(desc->ScanlineOrdering >= DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED
+                && desc->ScanlineOrdering <= DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST))
+        {
+            WARN("Invalid scaline order %#x.\n", desc->ScanlineOrdering);
+            return FALSE;
+        }
+
+        if (!(desc->Scaling >= DXGI_MODE_SCALING_UNSPECIFIED
+                && desc->Scaling <= DXGI_MODE_SCALING_STRETCHED))
+        {
+            WARN("Invalid scaling %#x.\n", desc->Scaling);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 HRESULT dxgi_get_output_from_window(IWineDXGIFactory *factory, HWND window, IDXGIOutput **dxgi_output)
 {
     unsigned int adapter_idx, output_idx;

@@ -2254,18 +2254,15 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine
         ok(fullscreen_desc.Windowed != creation_desc.Windowed,
                 "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
         IDXGISwapChain1_Release(swapchain1);
     }
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     todo_wine
@@ -2294,18 +2291,15 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine
         ok(fullscreen_desc.Windowed != creation_desc.Windowed,
                 "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
         IDXGISwapChain1_Release(swapchain1);
     }
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     todo_wine
@@ -2336,18 +2330,15 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine
         ok(fullscreen_desc.Windowed != creation_desc.Windowed,
                 "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
         IDXGISwapChain1_Release(swapchain1);
     }
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     todo_wine
@@ -2376,18 +2367,15 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine
         ok(fullscreen_desc.Windowed != creation_desc.Windowed,
                 "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
         IDXGISwapChain1_Release(swapchain1);
     }
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     todo_wine

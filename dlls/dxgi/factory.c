@@ -295,8 +295,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     if (!dxgi_validate_swapchain_desc(desc))
         return DXGI_ERROR_INVALID_CALL;
 
-    if (!fullscreen_desc)
+    if (!fullscreen_desc || !dxgi_validate_swapchain_fullscreen_desc(fullscreen_desc))
     {
+        if (fullscreen_desc)
+            windowed_fullscreen_desc = *fullscreen_desc;
         windowed_fullscreen_desc.Windowed = TRUE;
         fullscreen_desc = &windowed_fullscreen_desc;
     }
