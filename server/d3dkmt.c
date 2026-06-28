@@ -696,7 +696,7 @@ DECL_HANDLER(d3dkmt_share_objects)
     {
         struct dxgk_shared_resource *shared;
 
-        if (!(resource = d3dkmt_object_open( req->resource, D3DKMT_RESOURCE ))) return;
+        if (!(resource = d3dkmt_object_open( req->resource, D3DKMT_RESOURCE ))) goto done;
         if (req->mutex && !(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) goto done;
         if (req->sync && !(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
@@ -711,7 +711,7 @@ DECL_HANDLER(d3dkmt_share_objects)
     {
         struct dxgk_shared_sync *shared;
 
-        if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) return;
+        if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
         if (!(shared = create_named_object( root, &dxgk_shared_sync_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
         shared->sync = grab_object( sync );
@@ -720,6 +720,7 @@ DECL_HANDLER(d3dkmt_share_objects)
     }
 
 done:
+    if (root) release_object( root );
     if (resource) release_object( resource );
     if (mutex) release_object( mutex );
     if (sync) release_object( sync );
