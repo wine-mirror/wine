@@ -2230,6 +2230,179 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
 
     IDXGIOutput_Release(expected_state.target);
 
+    /* Try to create a fullscreen swapchain with an invalid scanline order. Expect swapchain
+     * creation successful but entering fullscreen mode fails */
+    creation_desc.BufferDesc.Width = 1024;
+    creation_desc.BufferDesc.Height = 768;
+    creation_desc.BufferDesc.RefreshRate.Numerator = 60;
+    creation_desc.BufferDesc.RefreshRate.Denominator = 1;
+    creation_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    creation_desc.BufferDesc.ScanlineOrdering = 0xdeadbeef;
+    creation_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    creation_desc.Windowed = FALSE;
+    creation_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(hr == DXGI_STATUS_OCCLUDED || hr == S_OK /* <= Win10 22H2 */, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain1, (void **)&swapchain1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(!is_d3d12)
+        ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine
+        ok(fullscreen_desc.Windowed != creation_desc.Windowed,
+                "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
+        IDXGISwapChain1_Release(swapchain1);
+    }
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!fullscreen, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+    IDXGISwapChain_Release(swapchain);
+
+    /* Try to create a fullscreen swapchain with an invalid scanline order, zero width and height.
+     * Expect swapchain creation successful but entering fullscreen mode fails */
+    creation_desc.BufferDesc.Width = 0;
+    creation_desc.BufferDesc.Height = 0;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(hr == DXGI_STATUS_OCCLUDED || hr == S_OK /* <= Win10 22H2 */, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain1, (void **)&swapchain1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(!is_d3d12)
+        ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine
+        ok(fullscreen_desc.Windowed != creation_desc.Windowed,
+                "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
+        IDXGISwapChain1_Release(swapchain1);
+    }
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!fullscreen, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+    IDXGISwapChain_Release(swapchain);
+
+    /* Try to create a fullscreen swapchain with an invalid scaling. Expect swapchain creation
+     * successful but entering fullscreen mode fails */
+    creation_desc.BufferDesc.Width = 1024;
+    creation_desc.BufferDesc.Height = 768;
+    creation_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    creation_desc.BufferDesc.Scaling = 0xdeadbeef;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(hr == DXGI_STATUS_OCCLUDED || hr == S_OK /* <= Win10 22H2 */, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain1, (void **)&swapchain1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine_if(!is_d3d12)
+        ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine
+        ok(fullscreen_desc.Windowed != creation_desc.Windowed,
+                "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
+        IDXGISwapChain1_Release(swapchain1);
+    }
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!fullscreen, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+    IDXGISwapChain_Release(swapchain);
+
+    /* Try to create a fullscreen swapchain with an invalid scaling, zero width and height. Expect
+     * swapchain creation successful but entering fullscreen mode fails */
+    creation_desc.BufferDesc.Width = 0;
+    creation_desc.BufferDesc.Height = 0;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(hr == DXGI_STATUS_OCCLUDED || hr == S_OK /* <= Win10 22H2 */, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain1, (void **)&swapchain1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine_if(!is_d3d12)
+        ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
+                "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
+        todo_wine
+        ok(fullscreen_desc.Windowed != creation_desc.Windowed,
+                "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
+        IDXGISwapChain1_Release(swapchain1);
+    }
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(result_desc.Windowed, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!fullscreen, "Got unexpected fullscreen state.\n");
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    todo_wine
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+    IDXGISwapChain_Release(swapchain);
+
 done:
     IUnknown_Release(obj);
     if (adapter)
