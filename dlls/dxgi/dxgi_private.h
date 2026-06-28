@@ -180,13 +180,14 @@ struct d3d11_swapchain
     IWineDXGIDevice *device;
     IWineDXGIFactory *factory;
 
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
     IDXGIOutput *target;
     LONG present_count;
     LONG in_set_fullscreen_state;
 };
 
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
-        struct wined3d_swapchain_desc *desc);
+        struct wined3d_swapchain_desc *desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc);
 
 HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *queue, HWND window,
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,

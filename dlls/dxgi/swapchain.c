@@ -648,7 +648,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenDesc(IDXGISwapChai
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC *desc)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
-    struct wined3d_swapchain_desc wined3d_desc;
+    struct wined3d_swapchain_state *state;
+    BOOL windowed;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -659,16 +660,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenDesc(IDXGISwapChai
     }
 
     wined3d_mutex_lock();
-    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
+    windowed = wined3d_swapchain_state_is_windowed(state);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring ScanlineOrdering and Scaling.\n");
-
-    desc->RefreshRate.Numerator = wined3d_desc.refresh_rate;
-    desc->RefreshRate.Denominator = 1;
-    desc->ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    desc->Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    desc->Windowed = wined3d_desc.windowed;
+    *desc = swapchain->fullscreen_desc;
+    desc->Windowed = windowed;
 
     return S_OK;
 }
@@ -989,7 +986,7 @@ static HRESULT d3d11_swapchain_create_d3d11_textures(struct d3d11_swapchain *swa
 }
 
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
-        struct wined3d_swapchain_desc *desc)
+        struct wined3d_swapchain_desc *desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc)
 {
     struct wined3d_swapchain_state *state;
     BOOL fullscreen;
@@ -1008,6 +1005,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
 
     swapchain->IDXGISwapChain4_iface.lpVtbl = &d3d11_swapchain_vtbl;
     swapchain->state_parent.ops = &d3d11_swapchain_state_parent_ops;
+    swapchain->fullscreen_desc = *fullscreen_desc;
     swapchain->refcount = 1;
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
@@ -3389,7 +3387,6 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGISwapChain1 **swapchain)
 {
-    DXGI_SWAP_CHAIN_FULLSCREEN_DESC default_fullscreen_desc;
     struct D3D12_COMMAND_QUEUE_DESC queue_desc;
     struct d3d12_swapchain *object;
     ID3D12Device *device;
@@ -3401,13 +3398,6 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
     queue_desc = ID3D12CommandQueue_GetDesc(queue);
     if (queue_desc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT)
         return DXGI_ERROR_INVALID_CALL;
-
-    if (!fullscreen_desc)
-    {
-        memset(&default_fullscreen_desc, 0, sizeof(default_fullscreen_desc));
-        default_fullscreen_desc.Windowed = TRUE;
-        fullscreen_desc = &default_fullscreen_desc;
-    }
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;

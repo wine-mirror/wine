@@ -2250,7 +2250,6 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     {
         hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine_if(!is_d3d12)
         ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
@@ -2291,7 +2290,6 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     {
         hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine_if(!is_d3d12)
         ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
@@ -2336,7 +2334,6 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine_if(!is_d3d12)
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         todo_wine
@@ -2377,7 +2374,6 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(fullscreen_desc.ScanlineOrdering == creation_desc.BufferDesc.ScanlineOrdering,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
-        todo_wine_if(!is_d3d12)
         ok(fullscreen_desc.Scaling == creation_desc.BufferDesc.Scaling,
                 "Got unexpected scanline ordering %d.\n", fullscreen_desc.ScanlineOrdering);
         todo_wine

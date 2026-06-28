@@ -272,6 +272,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC windowed_fullscreen_desc = {0};
     IWineDXGISwapChainFactory *swapchain_factory;
     ID3D12CommandQueue *command_queue;
     HRESULT hr;
@@ -293,6 +294,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
 
     if (!dxgi_validate_swapchain_desc(desc))
         return DXGI_ERROR_INVALID_CALL;
+
+    if (!fullscreen_desc)
+    {
+        windowed_fullscreen_desc.Windowed = TRUE;
+        fullscreen_desc = &windowed_fullscreen_desc;
+    }
 
     if (output)
         FIXME("Ignoring output %p.\n", output);
