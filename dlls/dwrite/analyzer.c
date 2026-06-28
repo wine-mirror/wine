@@ -308,6 +308,12 @@ system_fallback_config[] =
     { "1C00-1C4F",              L"Noto Sans Lepcha" },
     { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
 
+    /* Phonetic Extensions            - 1D00-1D7F
+       Phonetic Extensions Supplement - 1D80-1DBF
+       Latin Extended Additional      - 1E00-1EFF */
+    { "1D00-1D7F, 1D80-1DBF, "
+      "1E00-1EFF",              L"Noto Sans" },
+
     /* Arrows - 2190-21FF */
     { "2190-21FF",              L"Noto Sans Symbols" },
 
