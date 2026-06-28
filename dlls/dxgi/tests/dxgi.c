@@ -2143,6 +2143,11 @@ static void test_create_swapchain(void)
     check_window_fullscreen_state(creation_desc.OutputWindow, &initial_state.fullscreen_state);
 
     /* Fullscreen */
+    /* Call flush_events() to make sure that the previously destroyed output windows are disappeared
+     * from the screen. Otherwise, creating a fullscreen swapchain returns DXGI_STATUS_OCCLUDED and
+     * gets a windowed swapchain instead. It's still possible that there is another window on the screen
+     * in the test environment so the following DXGI_STATUS_OCCLUDED return code is kept accepted */
+    flush_events();
     creation_desc.Windowed = FALSE;
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
     ok(hr == S_OK || hr == DXGI_STATUS_OCCLUDED, "Got unexpected hr %#lx.\n", hr);
