@@ -1055,7 +1055,8 @@ static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_even
             }
 
             list_add_tail( &radio->remote_devices, &ext->remote_device.entry );
-            IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
+            if (radio->started)
+                IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
             break;
         }
     }
@@ -1113,8 +1114,9 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
                         ExFreePool( notification );
                     }
                 }
+                if (radio->started)
+                    IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
                 LeaveCriticalSection( &device_list_cs );
-                IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
                 winebluetooth_device_free( event.device );
                 return;
             }
@@ -1367,11 +1369,12 @@ static void bluetooth_device_add_gatt_service( struct winebluetooth_watcher_even
                 bluetooth_device_enable_le_iface( device );
 
                 list_add_tail( &device->gatt_services, &ext->gatt_service.entry );
+                if (device->started)
+                    IoInvalidateDeviceRelations( device->device_obj, BusRelations );
                 LeaveCriticalSection( &device->props_cs );
 
                 LeaveCriticalSection( &device_list_cs );
                 winebluetooth_device_free( event.device );
-                IoInvalidateDeviceRelations( device->device_obj, BusRelations );
                 return;
             }
         }
@@ -1408,9 +1411,10 @@ static void bluetooth_gatt_service_remove( winebluetooth_gatt_service_t service 
                 {
                     list_remove( &svc->entry );
                     svc->removed = 1;
+                    if (device->started)
+                        IoInvalidateDeviceRelations( device->device_obj, BusRelations );
                     LeaveCriticalSection( &device->props_cs );
                     LeaveCriticalSection( &device_list_cs );
-                    IoInvalidateDeviceRelations( device->device_obj, BusRelations );
                     winebluetooth_gatt_service_free( service );
                     return;
                 }
@@ -2122,6 +2126,7 @@ static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct 
     case IRP_MN_START_DEVICE:
     {
         BLUETOOTH_ADDRESS adapter_addr;
+        BOOL needs_invalidate;
 
         EnterCriticalSection( &device_list_cs );
         adapter_addr = ext->radio->props.address;
@@ -2134,7 +2139,10 @@ static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct 
             IoSetDeviceInterfaceState( &ext->bthle_symlink_name, TRUE );
         ext->started = TRUE;
         bluetooth_device_set_properties( ext, adapter_addr.rgBytes, &ext->props, ext->props_mask );
+        needs_invalidate = !list_empty( &ext->gatt_services );
         LeaveCriticalSection( &ext->props_cs );
+        if (needs_invalidate)
+            IoInvalidateDeviceRelations( device_obj, BusRelations );
         ret = STATUS_SUCCESS;
         break;
     }
@@ -2225,9 +2233,13 @@ static NTSTATUS WINAPI radio_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetoot
             break;
         }
         case IRP_MN_START_DEVICE:
+        {
+            BOOL needs_invalidate;
+
             EnterCriticalSection( &device_list_cs );
             bluetooth_radio_set_properties( device_obj, device->props_mask, &device->props );
             device->started = TRUE;
+            needs_invalidate = !list_empty( &device->remote_devices );
             LeaveCriticalSection( &device_list_cs );
 
             if (IoRegisterDeviceInterface( device_obj, &GUID_BTHPORT_DEVICE_INTERFACE, NULL,
@@ -2237,8 +2249,11 @@ static NTSTATUS WINAPI radio_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetoot
             if (IoRegisterDeviceInterface( device_obj, &GUID_BLUETOOTH_RADIO_INTERFACE, NULL,
                                           &device->bthradio_symlink_name ) == STATUS_SUCCESS)
                 IoSetDeviceInterfaceState( &device->bthradio_symlink_name, TRUE );
+            if (needs_invalidate)
+                IoInvalidateDeviceRelations( device_obj, BusRelations );
             ret = STATUS_SUCCESS;
             break;
+        }
         case IRP_MN_REMOVE_DEVICE:
             assert( device->removed );
             EnterCriticalSection( &device_list_cs );
