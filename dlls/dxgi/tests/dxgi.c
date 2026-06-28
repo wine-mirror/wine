@@ -2265,13 +2265,7 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    }
     IDXGISwapChain_Release(swapchain);
 
     /* Try to create a fullscreen swapchain with an invalid scanline order, zero width and height.
@@ -2302,13 +2296,7 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    }
     IDXGISwapChain_Release(swapchain);
 
     /* Try to create a fullscreen swapchain with an invalid scaling. Expect swapchain creation
@@ -2341,13 +2329,7 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    }
     IDXGISwapChain_Release(swapchain);
 
     /* Try to create a fullscreen swapchain with an invalid scaling, zero width and height. Expect
@@ -2378,13 +2360,7 @@ static void test_create_swapchain(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!fullscreen, "Got unexpected fullscreen state.\n");
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    }
     IDXGISwapChain_Release(swapchain);
 
 done:

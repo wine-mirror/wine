@@ -404,6 +404,15 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (fullscreen)
+    {
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC test_fullscreen_desc = swapchain->fullscreen_desc;
+
+        test_fullscreen_desc.Windowed = FALSE;
+        if (!dxgi_validate_swapchain_fullscreen_desc(&test_fullscreen_desc))
+            return DXGI_ERROR_INVALID_CALL;
+    }
+
     if (target)
     {
         IDXGIOutput_AddRef(target);
@@ -2424,6 +2433,15 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
     {
         WARN("Invalid call.\n");
         return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (fullscreen)
+    {
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC test_fullscreen_desc = *fullscreen_desc;
+
+        test_fullscreen_desc.Windowed = FALSE;
+        if (!dxgi_validate_swapchain_fullscreen_desc(&test_fullscreen_desc))
+            return DXGI_ERROR_INVALID_CALL;
     }
 
     if (target)
