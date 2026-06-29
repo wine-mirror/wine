@@ -3782,6 +3782,41 @@ static void test_named_item_builtin_shadowing(void)
     close_script(engine);
 }
 
+/* Native counts '\n', '\r' and '\r\n' as line endings, so a '\n\r' pair is
+   two. Each script ends with a failing statement preceded by two separators,
+   and the reported 0-based error line is the number of line endings before
+   it: 2 for the single-break styles, 4 for the doubled '\n\r' and '\r\r'. */
+static void test_error_line_endings(void)
+{
+    static const struct {
+        const WCHAR *src;
+        ULONG error_line;
+    } tests[] = {
+        { L"' a\n' b\nx = 1 \\ 0\n",             2 },
+        { L"' a\r\n' b\r\nx = 1 \\ 0\r\n",       2 },
+        { L"' a\r' b\rx = 1 \\ 0\r",             2 },
+        { L"' a\n' b\rx = 1 \\ 0\r",             2 },
+        { L"' a\r' b\nx = 1 \\ 0\n",             2 },
+        { L"' a\n\r' b\n\rx = 1 \\ 0\n\r",       4 },
+        { L"' a\r\r' b\r\rx = 1 \\ 0\r\r",       4 },
+        { L"' a\r\n' b\rx = 1 \\ 0\r\n",         2 },
+    };
+    HRESULT hres;
+    unsigned i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+        error_line = ~0;
+        error_code = 0;
+        onerror_hres = S_OK;
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_wr(tests[i].src);
+        CLEAR_CALLED(OnScriptError);
+        ok(hres == 0x80020101 && error_code == 11 && error_line == tests[i].error_line,
+           "[%u] %s: hres=%08lx code=%u line=%lu\n", i, wine_dbgstr_w(tests[i].src),
+           hres, error_code, error_line);
+    }
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -4487,6 +4522,7 @@ static void run_tests(void)
     test_parse_errors();
     test_class_decl_scope();
     test_sub_decl_scope();
+    test_error_line_endings();
     test_redefine_scope();
     test_getref_error_reporting();
     test_getref_external_caller_error();

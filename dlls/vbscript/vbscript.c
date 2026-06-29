@@ -688,7 +688,10 @@ HRESULT report_script_error(script_ctx_t *ctx, vbscode_t *code, unsigned loc, BO
     error->cookie = code->cookie;
     error->line = code->start_line;
     for(nl = p = code->source; p < code->source + loc; p++) {
-        if(*p != '\n') continue;
+        /* A bare '\r' (classic Mac line ending) starts a new line just like
+           '\n'; a '\r\n' pair counts as a single line, tallied on the '\n'. */
+        if(*p != '\n' && (*p != '\r' || p[1] == '\n'))
+            continue;
         error->line++;
         nl = p + 1;
     }
