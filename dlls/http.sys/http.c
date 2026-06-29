@@ -684,7 +684,7 @@ static DWORD WINAPI request_thread_proc(void *arg)
 
     TRACE("Starting request thread.\n");
 
-    while (!WaitForSingleObject(request_event, INFINITE))
+    while (!thread_stop && !WaitForSingleObject(request_event, INFINITE) && !thread_stop)
     {
         EnterCriticalSection(&http_cs);
 
