@@ -1216,14 +1216,14 @@ static void test_IMetaDataImport(void)
         henum2 = NULL;
         token = mdTokenNil;
         hr = IMetaDataImport_EnumMembersWithName(md_import, &henum2, typedef2, name, &token, 1, NULL);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(!!henum2, "got henum2 %p\n", henum2);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(!!henum2, "got henum2 %p\n", henum2);
         buf_len2 = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum2, &buf_len2);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len2 == 1, "got buf_len2 %lu\n", buf_len2);
-        todo_wine ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(buf_len2 == 1, "got buf_len2 %lu\n", buf_len2);
+        ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
+           debugstr_mdToken(methoddef_tokens[i]));
         IMetaDataImport_CloseEnum(md_import, henum2);
 
         winetest_pop_context();
@@ -1248,22 +1248,22 @@ static void test_IMetaDataImport(void)
 
     henum = NULL;
     hr = IMetaDataImport_EnumMembers(md_import, &henum, typedef2, NULL, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-    todo_wine ok(!!henum, "got henum %p\n", henum);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(!!henum, "got henum %p\n", henum);
     buf_len2 = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+    ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
     IMetaDataImport_CloseEnum(md_import, henum);
 
     henum = NULL;
     hr = IMetaDataImport_EnumMembersWithName(md_import, &henum, typedef2, NULL, NULL, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-    todo_wine ok(!!henum, "got henum %p\n", henum);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(!!henum, "got henum %p\n", henum);
     buf_len2 = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+    ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
     IMetaDataImport_CloseEnum(md_import, henum);
 
     for (i = 0; i < ARRAY_SIZE(field_enum_test_cases); i++)
@@ -1309,22 +1309,22 @@ static void test_IMetaDataImport(void)
 
         henum = NULL;
         hr = IMetaDataImport_EnumMembers(md_import, &henum, typedef1, NULL, 0, NULL);
-        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-        todo_wine ok(!!henum, "got henum %p\n", henum);
+        ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        ok(!!henum, "got henum %p\n", henum);
         buf_len2 = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+        ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
         IMetaDataImport_CloseEnum(md_import, henum);
 
         henum = NULL;
         hr = IMetaDataImport_EnumMembersWithName(md_import, &henum, typedef1, NULL, NULL, 0, NULL);
-        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-        todo_wine ok(!!henum, "got henum %p\n", henum);
+        ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        ok(!!henum, "got henum %p\n", henum);
         buf_len2 = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+        ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
         IMetaDataImport_CloseEnum(md_import, henum);
 
         for (field_idx = 0; field_idx < buf_len; field_idx++)
@@ -1374,14 +1374,14 @@ static void test_IMetaDataImport(void)
             henum = NULL;
             fielddef = mdFieldDefNil;
             hr = IMetaDataImport_EnumMembersWithName(md_import, &henum, typedef2, name, &fielddef, 1, NULL);
-            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine ok(!!henum, "got henum %p\n", henum);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(!!henum, "got henum %p\n", henum);
             buf_len2 = 0;
             hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
             ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine ok(buf_len2 == 1, "got buf_len2 %lu\n", buf_len2);
-            todo_wine ok(fielddef == fielddef_tokens[field_idx], "got fielddef %s != %s\n", debugstr_mdToken(fielddef),
-                         debugstr_mdToken(fielddef_tokens[field_idx]));
+            ok(buf_len2 == 1, "got buf_len2 %lu\n", buf_len2);
+            ok(fielddef == fielddef_tokens[field_idx], "got fielddef %s != %s\n", debugstr_mdToken(fielddef),
+               debugstr_mdToken(fielddef_tokens[field_idx]));
             IMetaDataImport_CloseEnum(md_import, henum);
 
             fielddef = mdFieldDefNil;
