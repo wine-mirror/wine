@@ -401,7 +401,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
 
     /* account for the terminator char */
     max_val_name_len++;
-    max_val_size++;
+    max_val_size += sizeof(WCHAR);
 
     valName = malloc(max_val_name_len * sizeof(WCHAR));
     valBuf = malloc(max_val_size);
@@ -416,7 +416,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
 	valType = 0;
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
-        valBuf[valSize] = 0;
+        *(WCHAR*)(valBuf + valSize) = 0;
         AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, -1);
     }
 
