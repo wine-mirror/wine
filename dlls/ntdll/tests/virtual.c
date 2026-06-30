@@ -361,7 +361,10 @@ static void test_NtAllocateVirtualMemoryEx(void)
     SIZE_T size, size2;
     ULONG granularity;
     NTSTATUS status;
+    ULONG_PTR max_address, granularity_mask;
     ULONG_PTR count;
+    NTSTATUS limit_status;
+    SYSTEM_INFO si;
     void *addr1;
 
     if (!pNtAllocateVirtualMemoryEx)
@@ -723,6 +726,55 @@ static void test_NtAllocateVirtualMemoryEx(void)
     status = pNtAllocateVirtualMemoryEx( NtCurrentProcess(), &addr1, &size, MEM_RESERVE,
                                          PAGE_EXECUTE_READWRITE, ext, 2 );
     ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    GetSystemInfo(&si);
+    max_address = (ULONG_PTR)si.lpMaximumApplicationAddress;
+    granularity_mask = si.dwAllocationGranularity - 1;
+    limit_status = is_win64 ? STATUS_INVALID_PARAMETER : STATUS_CONFLICTING_ADDRESSES;
+
+    size = 0x1000;
+    addr1 = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size,
+                                        MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN,
+                                        PAGE_READWRITE, NULL, 0);
+    ok(status == STATUS_SUCCESS, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        ok((char *)addr1 + size - 1 <= (char *)si.lpMaximumApplicationAddress,
+           "NtAllocateVirtualMemoryEx returned address range %p-%p above maximum application address %p\n",
+           addr1, (char *)addr1 + size - 1, si.lpMaximumApplicationAddress);
+
+        size = 0;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory returned %08lx\n", status);
+    }
+
+    size = 0x1000;
+    addr1 = (void *)((max_address + si.dwAllocationGranularity) & ~granularity_mask);
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size,
+                                        MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN,
+                                        PAGE_READWRITE, NULL, 0);
+    if (is_win64)
+        ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    else
+        todo_wine ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    }
+
+    size = si.dwAllocationGranularity * 2;
+    addr1 = (void *)(max_address & ~granularity_mask);
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size,
+                                        MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN,
+                                        PAGE_READWRITE, NULL, 0);
+    ok(status == limit_status, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    }
 
     memset( ext, 0, sizeof(ext) );
     ext[0].Type = MemExtendedParameterAttributeFlags;
