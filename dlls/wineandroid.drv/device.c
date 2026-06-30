@@ -79,7 +79,6 @@ static jobject java_object;
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
 #endif
 
-static HWND capture_window;
 static HWND desktop_window;
 
 int event_sink = -1;
@@ -401,7 +400,6 @@ static void free_native_win_data( struct native_win_data *data )
 {
     unsigned int idx = data_map_idx( data->hwnd, data->opengl );
 
-    InterlockedCompareExchangePointer( (void **)&capture_window, 0, data->hwnd );
     release_native_window( data );
     free( data );
     data_map[idx] = NULL;
@@ -453,12 +451,6 @@ void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
     LOG( TRACE, "%p -> %p win %p\n", hwnd, data, win );
 end:
     pthread_mutex_unlock(&dispatch_ioctl_lock);
-}
-
-/* get the capture window stored in the desktop process */
-HWND get_capture_window(void)
-{
-    return capture_window;
 }
 
 static jobject load_java_method( JNIEnv* env, jmethodID *method, const char *name, const char *args )
@@ -809,7 +801,6 @@ static int setCapture_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_s
 
     LOG( TRACE, "hwnd %08x\n", res->hdr.hwnd );
 
-    InterlockedExchangePointer( (void **)&capture_window, LongToHandle( res->hdr.hwnd ));
     return 0;
 }
 

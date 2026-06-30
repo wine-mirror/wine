@@ -132,7 +132,6 @@ enum android_window_messages
     WM_ANDROID_REFRESH = WM_WINE_FIRST_DRIVER_MSG,
 };
 
-extern HWND get_capture_window(void);
 extern void init_monitors( int width, int height );
 extern void set_screen_dpi( DWORD dpi );
 extern void update_keyboard_lock_state( WORD vkey, UINT state );

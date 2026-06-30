@@ -459,8 +459,6 @@ static int process_events( DWORD mask )
 
         case MOTION_EVENT:
             {
-                HWND capture = get_capture_window();
-
                 if (event->data.motion.input.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
                     TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
                            event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
@@ -473,21 +471,8 @@ static int process_events( DWORD mask )
                     TRACE( "MOUSEMOVE pos %d,%d hwnd %p flags %x\n",
                            event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
                            event->data.motion.hwnd, event->data.motion.input.mi.dwFlags );
-                if (!capture && (event->data.motion.input.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
-                {
-                    RECT rect;
-                    SetRect( &rect, event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
-                             event->data.motion.input.mi.dx + 1, event->data.motion.input.mi.dy + 1 );
 
-                    SERVER_START_REQ( update_window_zorder )
-                    {
-                        req->window      = wine_server_user_handle( event->data.motion.hwnd );
-                        req->rect        = wine_server_rectangle( rect );
-                        wine_server_call( req );
-                    }
-                    SERVER_END_REQ;
-                }
-                NtUserSendHardwareInput( capture ? capture : event->data.motion.hwnd, 0, &event->data.motion.input, 0 );
+                NtUserSendHardwareInput( event->data.motion.hwnd, 0, &event->data.motion.input, 0 );
             }
             break;
 
