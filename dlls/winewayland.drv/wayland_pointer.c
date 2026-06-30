@@ -849,31 +849,6 @@ static void wayland_surface_calc_confine(struct wayland_surface *surface,
     *confine = map_rect_to_surface(surface, window_clip);
 }
 
-/**********************************************************************
- *          wayland_surface_client_covers_vscreen
- *
- * Whether a surface window client area covers the whole virtual screen.
- */
-static BOOL wayland_surface_client_covers_vscreen(struct wayland_surface *surface)
-{
-    RECT vscreen_rect, rect;
-
-    /* Get individual system metrics to get coords in thread dpi
-     * (NtUserGetVirtualScreenRect would return values in system dpi). */
-    vscreen_rect.left = NtUserGetSystemMetrics(SM_XVIRTUALSCREEN);
-    vscreen_rect.top = NtUserGetSystemMetrics(SM_YVIRTUALSCREEN);
-    vscreen_rect.right = vscreen_rect.left +
-                         NtUserGetSystemMetrics(SM_CXVIRTUALSCREEN);
-    vscreen_rect.bottom = vscreen_rect.top +
-                          NtUserGetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-    /* FIXME: surface->window.client_rect is in window dpi, whereas
-     * vscreen_rect is in thread dpi. */
-    intersect_rect(&rect, &surface->window.client_rect, &vscreen_rect);
-
-    return EqualRect(&vscreen_rect, &rect);
-}
-
 /***********************************************************************
  *           wayland_pointer_update_constraint
  *
@@ -881,7 +856,6 @@ static BOOL wayland_surface_client_covers_vscreen(struct wayland_surface *surfac
  */
 static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
                                               RECT *confine_rect,
-                                              BOOL covers_vscreen,
                                               BOOL force_lock)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
@@ -897,7 +871,7 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
 
     is_visible = pointer->cursor.wl_surface || pointer->wp_cursor_shape_device_v1;
     needs_lock = wl_surface &&
-                 (((confine_rect || covers_vscreen) && !is_visible) || force_lock) &&
+                 ((confine_rect && !is_visible) || force_lock) &&
                  pointer->wl_pointer;
     needs_confine = wl_surface && confine_rect && is_visible && !force_lock &&
                     pointer->wl_pointer;
@@ -993,7 +967,7 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
 
 void wayland_pointer_clear_constraint(void)
 {
-    wayland_pointer_update_constraint(NULL, NULL, FALSE, FALSE);
+    wayland_pointer_update_constraint(NULL, NULL, FALSE);
 }
 
 /***********************************************************************
@@ -1037,7 +1011,6 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     struct wl_surface *wl_surface = NULL;
     struct wayland_surface *surface = NULL;
     struct wayland_win_data *data;
-    BOOL covers_vscreen = FALSE;
     RECT confine_rect;
     POINT cursor_pos, warp;
 
@@ -1051,7 +1024,6 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     {
         wl_surface = surface->wl_surface;
         if (clip) wayland_surface_calc_confine(surface, clip, &confine_rect);
-        covers_vscreen = wayland_surface_client_covers_vscreen(surface);
         warp.x = cursor_pos.x - surface->window.rect.left;
         warp.y = cursor_pos.y - surface->window.rect.top;
         warp = map_point_to_surface(surface, warp);
@@ -1075,7 +1047,7 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
         }
         else
         {
-            wayland_pointer_update_constraint(wl_surface, NULL, FALSE, TRUE);
+            wayland_pointer_update_constraint(wl_surface, NULL, TRUE);
         }
         pointer->pending_warp = FALSE;
     }
@@ -1101,7 +1073,6 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     * so we can access it without having the win data lock. */
     wayland_pointer_update_constraint(wl_surface,
                                       (clip && wl_surface) ? &confine_rect : NULL,
-                                      covers_vscreen,
                                       FALSE);
     pthread_mutex_unlock(&pointer->mutex);
 
