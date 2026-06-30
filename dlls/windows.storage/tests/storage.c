@@ -531,36 +531,28 @@ static void test_InMemoryRandomAccessStream(void)
     hr = IOutputStream_QueryInterface( output_stream, &IID_IClosable, (void **)&closable );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IClosable_Close( closable );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     IClosable_Release( closable );
 
     write_op = (void *)0xdeadbeef;
     hr = IOutputStream_WriteAsync( output_stream, buffer, &write_op );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
     ok( !write_op, "got operation %p.\n", write_op );
     operation = (void *)0xdeadbeef;
     hr = IInputStream_ReadAsync( input_stream, buffer, 0, 0, &operation );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
     ok( !operation, "got operation %p.\n", operation );
 
     hr = IRandomAccessStream_Seek( in_memory_stream, 0 );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
     value64 = uint64_value;
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_put_Size( in_memory_stream, 1 );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
     value64 = uint64_value;
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 0x100000, "got pos %I64u.\n", value64 );

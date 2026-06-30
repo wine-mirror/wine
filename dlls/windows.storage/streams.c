@@ -177,6 +177,8 @@ struct memory_stream
     IOutputStream IOutputStream_iface;
     IClosable IClosable_iface;
     LONG ref;
+
+    BOOL closed;
 };
 
 static inline struct memory_stream *impl_from_IRandomAccessStream( IRandomAccessStream *iface )
@@ -255,13 +257,28 @@ static HRESULT WINAPI memory_stream_random_access_GetTrustLevel( IRandomAccessSt
 
 static HRESULT WINAPI memory_stream_random_access_get_Size( IRandomAccessStream *iface, UINT64 *value )
 {
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+
     FIXME( "iface %p, value %p stub!\n", iface, value );
+
+    if (impl->closed)
+    {
+        *value = 0;
+        return RO_E_CLOSED;
+    }
+
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI memory_stream_random_access_put_Size( IRandomAccessStream *iface, UINT64 value )
 {
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+
     FIXME( "iface %p, value %I64u stub!\n", iface, value );
+
+    if (impl->closed)
+        return RO_E_CLOSED;
+
     return E_NOTIMPL;
 }
 
@@ -285,13 +302,22 @@ static HRESULT WINAPI memory_stream_random_access_GetOutputStreamAt( IRandomAcce
 
 static HRESULT WINAPI memory_stream_random_access_get_Position( IRandomAccessStream *iface, UINT64 *value )
 {
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+
+    return impl->closed ? RO_E_CLOSED : E_NOTIMPL;
 }
 
 static HRESULT WINAPI memory_stream_random_access_Seek( IRandomAccessStream *iface, UINT64 position )
 {
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+
     FIXME( "iface %p, position %I64u stub!\n", iface, position );
+
+    if (impl->closed)
+        return RO_E_CLOSED;
+
     return E_NOTIMPL;
 }
 
@@ -345,8 +371,12 @@ DEFINE_IINSPECTABLE( memory_stream_closable, IClosable, struct memory_stream, IR
 
 static HRESULT WINAPI memory_stream_closable_Close( IClosable *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct memory_stream *impl = CONTAINING_RECORD( iface, struct memory_stream, IClosable_iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    impl->closed = TRUE;
+    return S_OK;
 }
 
 static const struct IClosableVtbl memory_stream_closable_vtbl =
@@ -410,9 +440,15 @@ static HRESULT WINAPI memory_stream_input_GetTrustLevel( IInputStream *iface, Tr
 static HRESULT WINAPI memory_stream_input_ReadAsync( IInputStream *iface, IBuffer *buffer, UINT32 count,
         InputStreamOptions options, IAsyncOperationWithProgress_IBuffer_UINT32 **operation )
 {
+    struct memory_stream *impl = impl_from_IInputStream( iface );
+
     FIXME( "iface %p, buffer %p, count %u, options %d, operation %p stub!\n", iface, buffer, count, options, operation );
 
     *operation = NULL;
+
+    if (impl->closed)
+        return RO_E_CLOSED;
+
     return E_NOTIMPL;
 }
 
@@ -477,17 +513,29 @@ static HRESULT WINAPI memory_stream_output_GetTrustLevel( IOutputStream *iface, 
 static HRESULT WINAPI memory_stream_output_WriteAsync( IOutputStream *iface, IBuffer *buffer,
         IAsyncOperationWithProgress_UINT32_UINT32 **operation )
 {
+    struct memory_stream *impl = impl_from_IOutputStream( iface );
+
     FIXME( "iface %p, buffer %p, operation %p stub!\n", iface, buffer, operation );
 
     *operation = NULL;
+
+    if (impl->closed)
+        return RO_E_CLOSED;
+
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI memory_stream_output_FlushAsync( IOutputStream *iface, IAsyncOperation_boolean **operation )
 {
+    struct memory_stream *impl = impl_from_IOutputStream( iface );
+
     FIXME( "iface %p, operation %p stub!\n", iface, operation );
 
     *operation = NULL;
+
+    if (impl->closed)
+        return RO_E_CLOSED;
+
     return E_NOTIMPL;
 }
 
