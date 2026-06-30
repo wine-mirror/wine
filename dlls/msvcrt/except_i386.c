@@ -130,10 +130,16 @@ extern int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp )
 
 __ASM_GLOBAL_FUNC( call_filter,
                    "pushl %ebp\n\t"
-                   "pushl 12(%esp)\n\t"
-                   "movl 20(%esp), %ebp\n\t"
-                   "call *12(%esp)\n\t"
+                   "pushl %ebx\n\t"
+                   "pushl %esi\n\t"
+                   "pushl %edi\n\t"
+                   "pushl 24(%esp)\n\t"
+                   "movl 32(%esp), %ebp\n\t"
+                   "call *24(%esp)\n\t"
                    "popl %ebp\n\t"
+                   "popl %edi\n\t"
+                   "popl %esi\n\t"
+                   "popl %ebx\n\t"
                    "popl %ebp\n\t"
                    "ret" );
 
