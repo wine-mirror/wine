@@ -145,7 +145,6 @@ static HRESULT get_activation_factory( const WCHAR *name, IActivationFactory **f
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)factory );
     WindowsDeleteString( str );
-    todo_wine
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
 
     if (hr == REGDB_E_CLASSNOTREG)

@@ -1,6 +1,7 @@
 /* WinRT Windows.Storage.Streams Implementation
  *
  * Copyright (C) 2025 Mohamad Al-Jaf
+ * Copyright 2026 Conor McCarthy for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -164,3 +165,475 @@ static struct random_access_stream_reference_statics random_access_stream_refere
 };
 
 IActivationFactory *random_access_stream_reference_factory = &random_access_stream_reference_statics.IActivationFactory_iface;
+
+/*
+ * InMemoryRandomAccessStream
+ */
+
+struct memory_stream
+{
+    IRandomAccessStream IRandomAccessStream_iface;
+    IInputStream IInputStream_iface;
+    IOutputStream IOutputStream_iface;
+    IClosable IClosable_iface;
+    LONG ref;
+};
+
+static inline struct memory_stream *impl_from_IRandomAccessStream( IRandomAccessStream *iface )
+{
+    return CONTAINING_RECORD( iface, struct memory_stream, IRandomAccessStream_iface );
+}
+
+static HRESULT WINAPI memory_stream_random_access_QueryInterface( IRandomAccessStream *iface, REFIID iid, void **out )
+{
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown )
+            || IsEqualGUID( iid, &IID_IInspectable )
+            || IsEqualGUID( iid, &IID_IRandomAccessStream ))
+    {
+        *out = iface;
+    }
+    else if (IsEqualGUID( iid, &IID_IInputStream ))
+    {
+        *out = &impl->IInputStream_iface;
+    }
+    else if (IsEqualGUID( iid, &IID_IOutputStream ))
+    {
+        *out = &impl->IOutputStream_iface;
+    }
+    else if (IsEqualGUID( iid, &IID_IClosable ))
+    {
+        *out = &impl->IClosable_iface;
+    }
+    else
+    {
+        WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IRandomAccessStream_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI memory_stream_random_access_AddRef( IRandomAccessStream *iface )
+{
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI memory_stream_random_access_Release( IRandomAccessStream *iface )
+{
+    struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static HRESULT WINAPI memory_stream_random_access_GetIids( IRandomAccessStream *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_GetRuntimeClassName( IRandomAccessStream *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_GetTrustLevel( IRandomAccessStream *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_get_Size( IRandomAccessStream *iface, UINT64 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_put_Size( IRandomAccessStream *iface, UINT64 value )
+{
+    FIXME( "iface %p, value %I64u stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_GetInputStreamAt( IRandomAccessStream *iface, UINT64 position,
+        IInputStream **stream )
+{
+    FIXME( "iface %p, position %I64u, stream %p stub!\n", iface, position, stream );
+
+    *stream = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_GetOutputStreamAt( IRandomAccessStream *iface, UINT64 position,
+        IOutputStream **stream )
+{
+    FIXME( "iface %p, position %I64u, stream %p stub!\n", iface, position, stream );
+
+    *stream = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_get_Position( IRandomAccessStream *iface, UINT64 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_Seek( IRandomAccessStream *iface, UINT64 position )
+{
+    FIXME( "iface %p, position %I64u stub!\n", iface, position );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_CloneStream( IRandomAccessStream *iface, IRandomAccessStream **stream )
+{
+    FIXME( "iface %p, stream %p stub!\n", iface, stream );
+
+    *stream = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_random_access_get_CanRead( IRandomAccessStream *iface, BOOLEAN *value )
+{
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    *value = TRUE;
+    return S_OK;
+}
+
+static HRESULT WINAPI memory_stream_random_access_get_CanWrite( IRandomAccessStream *iface, BOOLEAN *value )
+{
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    *value = TRUE;
+    return S_OK;
+}
+
+static const struct IRandomAccessStreamVtbl memory_stream_random_access_vtbl =
+{
+    /* IUnknown methods */
+    memory_stream_random_access_QueryInterface,
+    memory_stream_random_access_AddRef,
+    memory_stream_random_access_Release,
+    /* IInspectable methods */
+    memory_stream_random_access_GetIids,
+    memory_stream_random_access_GetRuntimeClassName,
+    memory_stream_random_access_GetTrustLevel,
+    /* IRandomAccessStream methods */
+    memory_stream_random_access_get_Size,
+    memory_stream_random_access_put_Size,
+    memory_stream_random_access_GetInputStreamAt,
+    memory_stream_random_access_GetOutputStreamAt,
+    memory_stream_random_access_get_Position,
+    memory_stream_random_access_Seek,
+    memory_stream_random_access_CloneStream,
+    memory_stream_random_access_get_CanRead,
+    memory_stream_random_access_get_CanWrite,
+};
+
+DEFINE_IINSPECTABLE( memory_stream_closable, IClosable, struct memory_stream, IRandomAccessStream_iface )
+
+static HRESULT WINAPI memory_stream_closable_Close( IClosable *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct IClosableVtbl memory_stream_closable_vtbl =
+{
+    /* IUnknown methods */
+    memory_stream_closable_QueryInterface,
+    memory_stream_closable_AddRef,
+    memory_stream_closable_Release,
+    /* IInspectable methods */
+    memory_stream_closable_GetIids,
+    memory_stream_closable_GetRuntimeClassName,
+    memory_stream_closable_GetTrustLevel,
+    /* IClosable methods */
+    memory_stream_closable_Close,
+};
+
+static inline struct memory_stream *impl_from_IInputStream( IInputStream *iface )
+{
+    return CONTAINING_RECORD( iface, struct memory_stream, IInputStream_iface );
+}
+
+static HRESULT WINAPI memory_stream_input_QueryInterface( IInputStream *iface, REFIID iid, void **out )
+{
+    struct memory_stream *impl = impl_from_IInputStream( iface );
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+    return IRandomAccessStream_QueryInterface( &impl->IRandomAccessStream_iface, iid, out );
+}
+
+static ULONG WINAPI memory_stream_input_AddRef( IInputStream *iface )
+{
+    struct memory_stream *impl = impl_from_IInputStream( iface );
+    TRACE( "iface %p.\n", iface );
+    return IRandomAccessStream_AddRef( &impl->IRandomAccessStream_iface );
+}
+
+static ULONG WINAPI memory_stream_input_Release( IInputStream *iface )
+{
+    struct memory_stream *impl = impl_from_IInputStream( iface );
+    TRACE( "iface %p.\n", iface );
+    return IRandomAccessStream_Release( &impl->IRandomAccessStream_iface );
+}
+
+static HRESULT WINAPI memory_stream_input_GetIids( IInputStream *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_input_GetRuntimeClassName( IInputStream *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_input_GetTrustLevel( IInputStream *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_input_ReadAsync( IInputStream *iface, IBuffer *buffer, UINT32 count,
+        InputStreamOptions options, IAsyncOperationWithProgress_IBuffer_UINT32 **operation )
+{
+    FIXME( "iface %p, buffer %p, count %u, options %d, operation %p stub!\n", iface, buffer, count, options, operation );
+
+    *operation = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IInputStreamVtbl memory_stream_input_vtbl =
+{
+    /* IUnknown methods */
+    memory_stream_input_QueryInterface,
+    memory_stream_input_AddRef,
+    memory_stream_input_Release,
+    /* IInspectable methods */
+    memory_stream_input_GetIids,
+    memory_stream_input_GetRuntimeClassName,
+    memory_stream_input_GetTrustLevel,
+    /* IInputStream methods */
+    memory_stream_input_ReadAsync
+};
+
+static inline struct memory_stream *impl_from_IOutputStream( IOutputStream *iface )
+{
+    return CONTAINING_RECORD( iface, struct memory_stream, IOutputStream_iface );
+}
+
+static HRESULT WINAPI memory_stream_output_QueryInterface( IOutputStream *iface, REFIID iid, void **out )
+{
+    struct memory_stream *impl = impl_from_IOutputStream( iface );
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+    return IRandomAccessStream_QueryInterface( &impl->IRandomAccessStream_iface, iid, out );
+}
+
+static ULONG WINAPI memory_stream_output_AddRef( IOutputStream *iface )
+{
+    struct memory_stream *impl = impl_from_IOutputStream( iface );
+    TRACE( "iface %p.\n", iface );
+    return IRandomAccessStream_AddRef( &impl->IRandomAccessStream_iface );
+}
+
+static ULONG WINAPI memory_stream_output_Release( IOutputStream *iface )
+{
+    struct memory_stream *impl = impl_from_IOutputStream( iface );
+    TRACE( "iface %p.\n", iface );
+    return IRandomAccessStream_Release( &impl->IRandomAccessStream_iface );
+}
+
+static HRESULT WINAPI memory_stream_output_GetIids( IOutputStream *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_output_GetRuntimeClassName( IOutputStream *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_output_GetTrustLevel( IOutputStream *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_output_WriteAsync( IOutputStream *iface, IBuffer *buffer,
+        IAsyncOperationWithProgress_UINT32_UINT32 **operation )
+{
+    FIXME( "iface %p, buffer %p, operation %p stub!\n", iface, buffer, operation );
+
+    *operation = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI memory_stream_output_FlushAsync( IOutputStream *iface, IAsyncOperation_boolean **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+
+    *operation = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IOutputStreamVtbl memory_stream_output_vtbl =
+{
+    /* IUnknown methods */
+    memory_stream_output_QueryInterface,
+    memory_stream_output_AddRef,
+    memory_stream_output_Release,
+    /* IInspectable methods */
+    memory_stream_output_GetIids,
+    memory_stream_output_GetRuntimeClassName,
+    memory_stream_output_GetTrustLevel,
+    /* IOutputStream methods */
+    memory_stream_output_WriteAsync,
+    memory_stream_output_FlushAsync,
+};
+
+static HRESULT memory_stream_create( IRandomAccessStream **out )
+{
+    struct memory_stream *impl;
+
+    TRACE( "out %p.\n", out );
+
+    if (!(impl = calloc( 1, sizeof(*impl) )))
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    impl->ref = 1;
+    impl->IRandomAccessStream_iface.lpVtbl = &memory_stream_random_access_vtbl;
+    impl->IInputStream_iface.lpVtbl = &memory_stream_input_vtbl;
+    impl->IOutputStream_iface.lpVtbl = &memory_stream_output_vtbl;
+    impl->IClosable_iface.lpVtbl = &memory_stream_closable_vtbl;
+
+    *out = &impl->IRandomAccessStream_iface;
+    return S_OK;
+}
+
+struct memory_stream_factory
+{
+    IActivationFactory IActivationFactory_iface;
+    LONG ref;
+};
+
+static inline struct memory_stream_factory *impl_memory_stream_factory_from_IActivationFactory( IActivationFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct memory_stream_factory, IActivationFactory_iface );
+}
+
+static HRESULT STDMETHODCALLTYPE memory_stream_activation_factory_QueryInterface( IActivationFactory *iface, REFIID iid,
+        void **out )
+{
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown )
+            || IsEqualGUID( iid, &IID_IInspectable )
+            || IsEqualGUID( iid, &IID_IAgileObject )
+            || IsEqualGUID( iid, &IID_IActivationFactory ))
+    {
+        IUnknown_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE memory_stream_activation_factory_AddRef( IActivationFactory *iface )
+{
+    struct memory_stream_factory *impl = impl_memory_stream_factory_from_IActivationFactory( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE memory_stream_activation_factory_Release( IActivationFactory *iface )
+{
+    struct memory_stream_factory *impl = impl_memory_stream_factory_from_IActivationFactory( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE memory_stream_activation_factory_GetIids( IActivationFactory *iface, ULONG *iid_count,
+        IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE memory_stream_activation_factory_GetRuntimeClassName( IActivationFactory *iface,
+        HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE memory_stream_activation_factory_GetTrustLevel( IActivationFactory *iface,
+        TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE memory_stream_activation_factory_ActivateInstance( IActivationFactory *iface,
+        IInspectable **instance )
+{
+    IRandomAccessStream *out;
+    HRESULT hr;
+
+    TRACE( "iface %p, instance %p.\n", iface, instance );
+
+    *instance = NULL;
+
+    if (SUCCEEDED(hr = memory_stream_create( &out )))
+    {
+        hr = IRandomAccessStream_QueryInterface( out, &IID_IInspectable, (void **)instance );
+        IRandomAccessStream_Release( out );
+        if (SUCCEEDED(hr))
+            TRACE( "created InMemoryRandomAccessStream %p.\n", *instance );
+    }
+
+    return hr;
+}
+
+static const struct IActivationFactoryVtbl memory_stream_activation_factory_vtbl =
+{
+    memory_stream_activation_factory_QueryInterface,
+    memory_stream_activation_factory_AddRef,
+    memory_stream_activation_factory_Release,
+    /* IInspectable methods */
+    memory_stream_activation_factory_GetIids,
+    memory_stream_activation_factory_GetRuntimeClassName,
+    memory_stream_activation_factory_GetTrustLevel,
+    /* IActivationFactory methods */
+    memory_stream_activation_factory_ActivateInstance,
+};
+
+struct memory_stream_factory memory_stream_factory =
+{
+    {&memory_stream_activation_factory_vtbl},
+    1
+};
+
+IActivationFactory *memory_stream_activation_factory = &memory_stream_factory.IActivationFactory_iface;
