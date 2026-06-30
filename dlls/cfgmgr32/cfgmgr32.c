@@ -1868,7 +1868,8 @@ CONFIGRET WINAPI CM_Get_Device_ID_ExW( DEVINST node, WCHAR *buffer, ULONG len, U
     if (*dev.instance) path_len += swprintf( path + path_len, ARRAY_SIZE(path) - path_len, L"\\%s", dev.instance );
 
     if (path_len > len) return CR_BUFFER_SMALL;
-    memcpy( buffer, path, (path_len + 1) * sizeof(WCHAR) );
+    memcpy( buffer, path, path_len * sizeof(WCHAR) );
+    if (path_len < len) buffer[path_len] = 0;
 
     return CR_SUCCESS;
 }
@@ -1881,9 +1882,9 @@ CONFIGRET WINAPI CM_Get_Device_ID_ExA( DEVINST node, char *bufferA, ULONG len, U
     WCHAR *bufferW;
     CONFIGRET ret;
 
-    bufferW = bufferA ? malloc( len * sizeof(WCHAR) ) : NULL;
-    ret = CM_Get_Device_ID_ExW( node, bufferA ? bufferW : NULL, len, flags, machine );
-    if (!ret && bufferA && len && !WideCharToMultiByte( CP_ACP, 0, bufferW, len, bufferA, len, 0, 0 ))
+    bufferW = bufferA ? malloc( (len + 1) * sizeof(WCHAR) ) : NULL;
+    ret = CM_Get_Device_ID_ExW( node, bufferA ? bufferW : NULL, len + 1, flags, machine );
+    if (!ret && bufferA && len && !WideCharToMultiByte( CP_ACP, 0, bufferW, -1, bufferA, len, 0, 0 ))
     {
         if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) ret = CR_BUFFER_SMALL;
         else ret = CR_FAILURE;

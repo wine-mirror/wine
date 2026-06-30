@@ -2905,6 +2905,7 @@ static void test_CM_Open_Device_Interface_Key(void)
 static void test_CM_Locate_DevNode(void)
 {
     WCHAR iface[4096], path[MAX_PATH], instance_id[MAX_PATH];
+    char pathA[MAX_PATH], instance_idA[MAX_PATH];
     DEVINST node, root = 0;
     DWORD size, type, len;
     CONFIGRET ret;
@@ -3000,10 +3001,28 @@ static void test_CM_Locate_DevNode(void)
     todo_wine ok_x4( ret, ==, CR_SUCCESS );
     todo_wine ok_wcs( L"HTREE\\ROOT\\0", path );
 
+    len = wcslen( instance_id );
     memset( path, 0xcd, sizeof(path) );
-    ret = CM_Get_Device_IDW( node, path, ARRAY_SIZE(path), 0 );
+    ret = CM_Get_Device_IDW( node, path, len, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( path[len], ==, 0xcdcd );
+
+    memset( path, 0xcd, sizeof(path) );
+    ret = CM_Get_Device_IDW( node, path, len + 1, 0 );
     ok_x4( ret, ==, CR_SUCCESS );
     ok_wcs( instance_id, path );
+
+    WideCharToMultiByte( CP_ACP, 0, instance_id, -1, instance_idA, ARRAY_SIZE(instance_idA), NULL, NULL );
+
+    len = strlen( instance_idA );
+    memset( path, 0xcd, sizeof(path) );
+    ret = CM_Get_Device_IDA( node, (char *)pathA, len, 0 );
+    ok_x4( ret, ==, CR_BUFFER_SMALL );
+
+    memset( pathA, 0xcd, sizeof(pathA) );
+    ret = CM_Get_Device_IDA( node, (char *)pathA, len + 1, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_str( instance_idA, pathA );
 }
 
 static void test_CM_Open_DevNode_Key(void)
