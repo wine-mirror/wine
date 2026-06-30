@@ -1204,14 +1204,14 @@ static void test_IMetaDataImport(void)
 
         token = mdTokenNil;
         hr = IMetaDataImport_FindMember(md_import, typedef2, name, sig_blob, sig_len, &token);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
+           debugstr_mdToken(methoddef_tokens[i]));
         token = mdTokenNil;
         hr = IMetaDataImport_FindMember(md_import, typedef2, name, NULL, 0, &token);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(token == methoddef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token),
+           debugstr_mdToken(methoddef_tokens[i]));
 
         henum2 = NULL;
         token = mdTokenNil;
@@ -1399,14 +1399,14 @@ static void test_IMetaDataImport(void)
 
             token = mdTokenNil;
             hr = IMetaDataImport_FindMember(md_import, typedef2, name, sig_blob, sig_len, &token);
-            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine ok(token == fielddef_tokens[field_idx], "got token %s != %s\n", debugstr_mdToken(token),
-                         debugstr_mdToken(fielddef_tokens[field_idx]));
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(token == fielddef_tokens[field_idx], "got token %s != %s\n", debugstr_mdToken(token),
+               debugstr_mdToken(fielddef_tokens[field_idx]));
             token = mdTokenNil;
             hr = IMetaDataImport_FindMember(md_import, typedef2, name, NULL, 0, &token);
-            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine ok(token == fielddef_tokens[field_idx], "got token %s != %s\n", debugstr_mdToken(token),
-                         debugstr_mdToken(fielddef_tokens[field_idx]));
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(token == fielddef_tokens[field_idx], "got token %s != %s\n", debugstr_mdToken(token),
+               debugstr_mdToken(fielddef_tokens[field_idx]));
 
             winetest_pop_context();
         }
@@ -1420,9 +1420,9 @@ static void test_IMetaDataImport(void)
     ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
 
     hr = IMetaDataImport_FindMember(md_import, typedef1, NULL, NULL, 0, &token);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
     hr = IMetaDataImport_FindMember(md_import, typedef1, L"foo", NULL, 0, &token);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
 
     typedef1 = buf_len = 0;
     data = NULL;

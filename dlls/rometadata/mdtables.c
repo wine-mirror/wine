@@ -1115,8 +1115,19 @@ static HRESULT WINAPI import_EnumPermissionSets(IMetaDataImport *iface, HCORENUM
 static HRESULT WINAPI import_FindMember(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,
                                         const COR_SIGNATURE *sig_blob, ULONG len, mdToken *member_ref)
 {
-    FIXME("(%p, %#x, %s, %p, %lu, %p): stub!\n", iface, type_def, debugstr_w(name), sig_blob, len, member_ref);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p, %lu, %p)\n", iface, debugstr_mdToken(type_def), debugstr_w(name), sig_blob, len,
+          member_ref);
+
+    if (!name) return E_INVALIDARG;
+    if (IsNilToken(type_def) || TypeFromToken(type_def) != mdtTypeDef) return S_FALSE;
+
+    /* If a method and a field have the same name, native returns the method. */
+    hr = IMetaDataImport_FindMethod(iface, type_def, name, sig_blob, len, member_ref);
+    if (hr == CLDB_E_RECORD_NOTFOUND)
+        hr = IMetaDataImport_FindField(iface, type_def, name, sig_blob, len, member_ref);
+    return hr;
 }
 
 static HRESULT WINAPI import_FindMethod(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,
