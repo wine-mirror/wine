@@ -771,10 +771,16 @@ static SECURITY_STATUS WINAPI lsa_VerifySignature(CtxtHandle *context, SecBuffer
 
 static SECURITY_STATUS WINAPI lsa_QuerySecurityContextToken(CtxtHandle *context, HANDLE *token)
 {
+    HANDLE primary;
+    BOOL r;
+
     FIXME("%p %p): stub\n", context, token);
-    if (!OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, token))
+
+    if (!OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &primary))
         return GetLastError();
-    return SEC_E_OK;
+    r = DuplicateToken(primary, SecurityImpersonation, token);
+    CloseHandle(primary);
+    return r ? SEC_E_OK : GetLastError();
 }
 
 static SECURITY_STATUS WINAPI lsa_EncryptMessage(CtxtHandle *context, ULONG quality_of_protection,
