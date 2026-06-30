@@ -520,9 +520,10 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         }
         else  /* hack: call builtin handlers registered in the tib list */
         {
-            while (is_valid_frame( (ULONG_PTR)teb_frame ) &&
-                   (DWORD)teb_frame < new_context.Sp &&
-                   (DWORD)teb_frame < (DWORD)end_frame)
+            ULONG_PTR last_frame = new_context.Sp;
+            if (end_frame && (ULONG_PTR)end_frame < last_frame) last_frame = (ULONG_PTR)end_frame;
+
+            while (is_valid_frame( (ULONG_PTR)teb_frame ) && (ULONG_PTR)teb_frame < last_frame)
             {
                 TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
                        teb_frame->Handler, rec, teb_frame, dispatch.ContextRecord, &dispatch );
@@ -549,7 +550,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                     break;
                 }
             }
-            if ((DWORD)teb_frame == (DWORD)end_frame && (DWORD)end_frame < new_context.Sp) break;
+            if ((ULONG_PTR)teb_frame == last_frame && last_frame < new_context.Sp) break;
         }
 
         if (dispatch.EstablisherFrame == (DWORD)end_frame) break;
