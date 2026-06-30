@@ -531,29 +531,12 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
  *
  * Update the various window states on a mouse event.
  */
-static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPUT *input )
+static void send_mouse_input( HWND hwnd, Window window, INPUT *input )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
     /* ignore clipping window input when not clipping or wrong clipping window */
     if (!hwnd && (!thread_data->clipping_cursor || thread_data->clip_window != window)) return;
-
-    /* update the wine server Z-order */
-
-    if (hwnd && hwnd != NtUserGetAncestor( get_capture_window(), GA_ROOT ) &&
-        /* ignore event if a button is pressed, since the mouse is then grabbed too */
-        !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
-    {
-        RECT rect = { input->mi.dx, input->mi.dy, input->mi.dx + 1, input->mi.dy + 1 };
-
-        SERVER_START_REQ( update_window_zorder )
-        {
-            req->window      = wine_server_user_handle( hwnd );
-            req->rect        = wine_server_rectangle( rect );
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
 
     input->type = INPUT_MOUSE;
     NtUserSendHardwareInput( hwnd, 0, input, 0 );
@@ -1544,7 +1527,7 @@ BOOL X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     }
 
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
-    send_mouse_input( hwnd, event->window, event->state, &input );
+    send_mouse_input( hwnd, event->window, &input );
     return TRUE;
 }
 
@@ -1570,7 +1553,7 @@ BOOL X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     input.mi.dwExtraInfo = 0;
 
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
-    send_mouse_input( hwnd, event->window, event->state, &input );
+    send_mouse_input( hwnd, event->window, &input );
     return TRUE;
 }
 
@@ -1599,7 +1582,7 @@ BOOL X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
         return FALSE;
     }
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
-    send_mouse_input( hwnd, event->window, event->state, &input );
+    send_mouse_input( hwnd, event->window, &input );
     return TRUE;
 }
 
@@ -1632,7 +1615,7 @@ BOOL X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
         return FALSE;
     }
     map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
-    send_mouse_input( hwnd, event->window, event->state, &input );
+    send_mouse_input( hwnd, event->window, &input );
     return TRUE;
 }
 
