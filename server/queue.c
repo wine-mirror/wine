@@ -2250,6 +2250,16 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     time  = input->mouse.time;
     if (!time) time = desktop_shm->cursor.last_change;
 
+    if (win && origin == IMO_HARDWARE && flags == (MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE))
+    {
+        struct rectangle rect = { input->mouse.x, input->mouse.y, input->mouse.x + 1, input->mouse.y + 1 };
+        unsigned char state = (desktop_shm->keystate[VK_LBUTTON] | desktop_shm->keystate[VK_MBUTTON] |
+                               desktop_shm->keystate[VK_RBUTTON] | desktop_shm->keystate[VK_XBUTTON1] |
+                               desktop_shm->keystate[VK_XBUTTON2]) & 0x80;
+        input_shm_t *input_shm = sender && sender->input ? sender->input->shared : NULL;
+        if (!state && input_shm && !input_shm->capture) set_window_rect_visible( win, rect );
+    }
+
     if (flags & MOUSEEVENTF_MOVE)
     {
         if (flags & MOUSEEVENTF_ABSOLUTE)

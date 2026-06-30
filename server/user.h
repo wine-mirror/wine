@@ -184,6 +184,7 @@ extern user_handle_t shallow_window_from_point( struct desktop *desktop, int x, 
 extern struct thread *window_thread_from_point( user_handle_t scope, int x, int y );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 extern struct window_class *get_window_class( user_handle_t window );
+extern void set_window_rect_visible( user_handle_t window, struct rectangle rect );
 
 /* window class functions */
 
