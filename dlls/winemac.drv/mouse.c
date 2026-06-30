@@ -130,25 +130,6 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
                              DWORD mouse_data, BOOL drag, unsigned long time)
 {
     INPUT input;
-    HWND top_level_hwnd;
-
-    top_level_hwnd = NtUserGetAncestor(hwnd, GA_ROOT);
-
-    if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE) && !drag &&
-        cocoa_window != macdrv_thread_data()->capture_window)
-    {
-        /* update the wine server Z-order */
-        SERVER_START_REQ(update_window_zorder)
-        {
-            req->window      = wine_server_user_handle(top_level_hwnd);
-            req->rect.left   = x;
-            req->rect.top    = y;
-            req->rect.right  = x + 1;
-            req->rect.bottom = y + 1;
-            wine_server_call(req);
-        }
-        SERVER_END_REQ;
-    }
 
     input.type              = INPUT_MOUSE;
     input.mi.dx             = x;
@@ -158,7 +139,7 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
     input.mi.time           = time;
     input.mi.dwExtraInfo    = 0;
 
-    NtUserSendHardwareInput(top_level_hwnd, 0, &input, 0);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 
