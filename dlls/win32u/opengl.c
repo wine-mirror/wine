@@ -193,6 +193,27 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
     return drawable->funcs->swap( drawable );
 }
 
+static void *internal_context_create( void *share, int *context_format )
+{
+    static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0 };
+    void *context;
+    int format;
+
+    for (format = 1; format <= formats_count; format++)
+    {
+        struct wgl_pixel_format *desc = pixel_formats + format - 1;
+        if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
+        if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
+        if (desc->pfd.cColorBits < 24) continue;
+        if (!driver_funcs->p_context_create( format, share, attribs, &context )) continue;
+        if (context_format) *context_format = format;
+        return context;
+    }
+
+    WARN( "Failed to create internal %s context\n", global_context ? "global" : "thread" );
+    return NULL;
+}
+
 static BOOL make_null_context_current( struct opengl_drawable *drawable )
 {
     struct opengl_thread_data *data = get_opengl_thread_data();
@@ -200,17 +221,7 @@ static BOOL make_null_context_current( struct opengl_drawable *drawable )
 
     if (!data->null_context)
     {
-        for (format = 1; format <= formats_count; format++)
-        {
-            struct wgl_pixel_format *desc = pixel_formats + format - 1;
-            if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
-            if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
-            if (desc->pfd.cColorBits < 24) continue;
-            break;
-        }
-
-        if (format > formats_count) return FALSE;
-        driver_funcs->p_context_create( format, global_context, NULL, &data->null_context );
+        if (!(data->null_context = internal_context_create( global_context, &format ))) return FALSE;
         if (driver_funcs->p_null_surface_create) driver_funcs->p_null_surface_create( format, &data->null_surface );
     }
 
@@ -2782,17 +2793,7 @@ static void display_funcs_init(void)
             init_device_info( egl, &display_funcs );
     }
 
-    if (!global_context)
-    {
-        for (int format = 1; format <= formats_count; format++)
-        {
-            struct wgl_pixel_format *desc = pixel_formats + format - 1;
-            if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
-            if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
-            if (desc->pfd.cColorBits < 24) continue;
-            if (driver_funcs->p_context_create( format, NULL, NULL, &global_context )) break;
-        }
-    }
+    if (!global_context) global_context = internal_context_create( NULL, NULL );
 }
 
 /***********************************************************************
