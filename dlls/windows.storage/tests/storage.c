@@ -363,14 +363,12 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got pos %I64u.\n", value64 );
     hr = IRandomAccessStream_Seek( in_memory_stream, 16 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 16, "got pos %I64u.\n", value64 );
 
     /* Write 0 bytes at position 16 */
@@ -383,25 +381,20 @@ static void test_InMemoryRandomAccessStream(void)
     output_stream_write( output_stream, buffer, 1 );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 17, "got size %I64u.\n", value64 );
 
     hr = IRandomAccessStream_Seek( in_memory_stream, 0 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 0, "got pos %I64u.\n", value64 );
     memcpy( data, &uint64_value, 8 );
     output_stream_write( output_stream, buffer, 8 );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 17, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 8, "got pos %I64u.\n", value64 );
 
     hr = IOutputStream_WriteAsync( output_stream, NULL, &write_op );
@@ -412,7 +405,6 @@ static void test_InMemoryRandomAccessStream(void)
     memset( data, 0xcd, 17 );
 
     hr = IRandomAccessStream_Seek( in_memory_stream, 0 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 0, Completed, S_OK, &res_buffer );
@@ -452,7 +444,6 @@ static void test_InMemoryRandomAccessStream(void)
     IBuffer_Release( res_buffer );
 
     hr = IRandomAccessStream_Seek( in_memory_stream, 18 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 1, Completed, S_OK, &res_buffer );
@@ -492,11 +483,9 @@ static void test_InMemoryRandomAccessStream(void)
     ok( value64 == 0x100000, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 18, "got pos %I64u.\n", value64 );
 
     hr = IRandomAccessStream_Seek( in_memory_stream, 0xffff8 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 8, Completed, S_OK, &res_buffer );

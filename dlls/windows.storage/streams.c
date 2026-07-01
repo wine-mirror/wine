@@ -353,12 +353,13 @@ static HRESULT WINAPI memory_stream_random_access_Seek( IRandomAccessStream *ifa
 {
     struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
 
-    FIXME( "iface %p, position %I64u stub!\n", iface, position );
+    TRACE( "iface %p, position %I64u.\n", iface, position );
 
     if (impl->closed)
         return RO_E_CLOSED;
 
-    return E_NOTIMPL;
+    impl->pos = position;
+    return S_OK;
 }
 
 static HRESULT WINAPI memory_stream_random_access_CloneStream( IRandomAccessStream *iface, IRandomAccessStream **stream )
