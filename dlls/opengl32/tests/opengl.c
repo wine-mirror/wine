@@ -3218,120 +3218,280 @@ static void test_dc(HWND hwnd, HDC hdc)
     }
 }
 
-/* Nvidia converts win32 error codes to (0xc007 << 16) | win32_error_code */
-#define NVIDIA_HRESULT_FROM_WIN32(x) (HRESULT_FROM_WIN32(x) | 0x40000000)
-static void test_opengl3(HDC hdc)
+static void test_wglCreateContextAttribsARB( HDC hdc )
 {
-    /* Try to create a context compatible with OpenGL 1.x; 1.0-2.1 is allowed */
-    {
-        HGLRC gl3Ctx;
-        int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 1, 0};
+    static const int gl30_fwd_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, 0 };
+    static const int gl32_fwd_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 2, WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, 0 };
+    static const int gl32_comp_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 2, WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0 };
 
-        gl3Ctx = ext.wglCreateContextAttribsARB( hdc, 0, attribs );
-        ok( gl3Ctx != 0, "ext.wglCreateContextAttribsARB for a 1.x context failed!\n" );
-        wglDeleteContext(gl3Ctx);
-    }
+    static const int gl10_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 1, 0 };
+    static const int gl21_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 2, WGL_CONTEXT_MINOR_VERSION_ARB, 1, 0 };
+    static const int gl30_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0 };
+    static const int gl31_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 1, 0 };
+    static const int gl32_attribs[] = { WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 2, 0 };
+
+    GLint num, major, minor, expect_major, expect_minor, flags, profile;
+    const GLubyte *extension;
+    HGLRC ctx, tmp;
+
 
     /* Try to pass an invalid HDC */
-    {
-        HGLRC gl3Ctx;
-        DWORD error;
-        SetLastError(0xdeadbeef);
-        gl3Ctx = ext.wglCreateContextAttribsARB( (HDC)0xdeadbeef, 0, 0 );
-        ok( gl3Ctx == 0, "ext.wglCreateContextAttribsARB using an invalid HDC passed\n" );
-        error = GetLastError();
-        ok(error == ERROR_DC_NOT_FOUND || error == ERROR_INVALID_HANDLE ||
-           broken(error == ERROR_DS_GENERIC_ERROR) ||
-           broken(error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
-           "Expected ERROR_DC_NOT_FOUND, got error=%lx\n", error);
-        wglDeleteContext(gl3Ctx);
-    }
+    SetLastError( 0xdeadbeef );
+    ctx = ext.wglCreateContextAttribsARB( (HDC)0xdeadbeef, 0, 0 );
+    ok_ptr( ctx, ==, NULL );
+    ok( GetLastError() == ERROR_DC_NOT_FOUND || GetLastError() == ERROR_INVALID_HANDLE ||
+        broken( GetLastError() == ERROR_DS_GENERIC_ERROR ) || broken( LOWORD( GetLastError() ) == ERROR_INVALID_DATA ), /* Nvidia Vista + Win7 */
+        "got error %ld\n", GetLastError() );
 
     /* Try to pass an invalid shareList */
-    {
-        HGLRC gl3Ctx;
-        DWORD error;
-        SetLastError(0xdeadbeef);
-        gl3Ctx = ext.wglCreateContextAttribsARB( hdc, (HGLRC)0xdeadbeef, 0 );
-        ok( gl3Ctx == 0, "ext.wglCreateContextAttribsARB using an invalid shareList passed\n" );
-        error = GetLastError();
-        /* The Nvidia implementation seems to return hresults instead of win32 error codes */
-        ok(error == ERROR_INVALID_OPERATION || error == ERROR_INVALID_DATA ||
-           error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%lx\n", error);
-        wglDeleteContext(gl3Ctx);
-    }
+    SetLastError( 0xdeadbeef );
+    ctx = ext.wglCreateContextAttribsARB( hdc, (HGLRC)0xdeadbeef, 0 );
+    ok_ptr( ctx, ==, NULL );
+    ok( LOWORD( GetLastError() ) == ERROR_INVALID_OPERATION || GetLastError() == ERROR_INVALID_DATA,
+        "got %ld\n", GetLastError() );
 
-    /* Try to create an OpenGL 3.0 context */
-    {
-        int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0};
-        HGLRC gl3Ctx = ext.wglCreateContextAttribsARB( hdc, 0, attribs );
-        const GLubyte *extension;
-        GLint num;
 
-        if(gl3Ctx == NULL)
-        {
-            skip("Skipping the rest of the WGL_ARB_create_context test due to lack of OpenGL 3.0\n");
-            return;
-        }
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, NULL );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
 
-        wglMakeCurrent(hdc, gl3Ctx);
+    glGetIntegerv( GL_MAJOR_VERSION, &expect_major );
+    glGetIntegerv( GL_MINOR_VERSION, &expect_minor );
+    ok_ret( 0, glGetError() );
+    ok_u4( expect_major, >=, 3 );
+    if (expect_major == 3) ok_u4( expect_minor, >, 1 );
 
-        glGetIntegerv(GL_NUM_EXTENSIONS, &num);
-        ok(num > 0, "got %u\n", num);
-        check_gl_error(0);
-        extension = ext.glGetStringi( GL_EXTENSIONS, 0 );
-        ok( !!extension, "got %p\n", extension );
-        check_gl_error(0);
-        extension = ext.glGetStringi( GL_EXTENSIONS, num );
-        ok( !extension, "got %p\n", extension );
-        check_gl_error(GL_INVALID_VALUE);
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok( profile == GL_CONTEXT_COMPATIBILITY_PROFILE_BIT || profile == 0 /* NVIDIA */, "got profile %#x\n", profile );
 
-        wglDeleteContext(gl3Ctx);
-    }
+    glGetIntegerv( GL_NUM_EXTENSIONS, &num );
+    ok_u4( num, >, 0 );
+    ok_ret( 0, glGetError() );
 
-    /* Test matching an OpenGL 3.0 context with an older one, OpenGL 3.0 should allow it until the new object model is introduced in a future revision */
-    {
-        HGLRC glCtx = wglCreateContext(hdc);
+    if (!ext.glGetStringi) extension = NULL;
+    else extension = ext.glGetStringi( GL_EXTENSIONS, 0 );
+    ok_ptr( extension, !=, NULL );
+    ok_ret( 0, glGetError() );
 
-        int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0};
-        int attribs_future[] = {WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0};
+    if (!ext.glGetStringi) extension = NULL;
+    else extension = ext.glGetStringi( GL_EXTENSIONS, num );
+    ok_ptr( extension, ==, NULL );
+    ok_ret( GL_INVALID_VALUE, glGetError() );
 
-        HGLRC gl3Ctx = ext.wglCreateContextAttribsARB( hdc, glCtx, attribs );
-        ok(gl3Ctx != NULL, "Sharing of a display list between OpenGL 3.0 and OpenGL 1.x/2.x failed!\n");
-        if(gl3Ctx)
-            wglDeleteContext(gl3Ctx);
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
 
-        gl3Ctx = ext.wglCreateContextAttribsARB( hdc, glCtx, attribs_future );
-        ok(gl3Ctx != NULL, "Sharing of a display list between a forward compatible OpenGL 3.0 context and OpenGL 1.x/2.x failed!\n");
-        if(gl3Ctx)
-            wglDeleteContext(gl3Ctx);
 
-        if(glCtx)
-            wglDeleteContext(glCtx);
-    }
+    /* wglCreateContext is the same as wglCreateContextAttribsARB without attribs */
+    ctx = wglCreateContext( hdc );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok_u4( major, ==, expect_major );
+    ok_u4( minor, ==, expect_minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok( profile == GL_CONTEXT_COMPATIBILITY_PROFILE_BIT || profile == 0 /* NVIDIA */, "got profile %#x\n", profile );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* requesting non-forward version < 3.0 is ignored */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl10_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok_u4( major, ==, expect_major );
+    ok_u4( minor, ==, expect_minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok_x4( profile, ==, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl21_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok_u4( major, ==, expect_major );
+    ok_u4( minor, ==, expect_minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok_x4( profile, ==, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* AMD allows 3.0 context creation without forward-compatible bit */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl30_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok( major == expect_major || broken( major == 3 ) /* AMD */, "got major %d\n", major );
+    ok( minor == expect_minor || broken( minor == 0 ) /* AMD */, "got minor %d\n", minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok_x4( profile, ==, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* requesting forward-compatible version 3.0 is respected */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl30_fwd_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    todo_wine_if( expect_major != 3 ) ok_u4( major, ==, 3 );
+    todo_wine_if( expect_minor != 0 ) ok_u4( minor, ==, 0 );
+
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* requesting version >= 3.1 is respected */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl31_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    todo_wine_if( expect_major != 3 ) ok_u4( major, ==, 3 );
+    todo_wine_if( expect_minor != 1 ) ok_u4( minor, ==, 1 );
+
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+    /* requesting version >= 3.2 is core by default */
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl32_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    todo_wine_if( expect_major != 3 ) ok_u4( major, ==, 3 );
+    todo_wine_if( expect_minor != 2 ) ok_u4( minor, ==, 2 );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok_x4( profile, ==, GL_CONTEXT_CORE_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl32_fwd_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    todo_wine_if( expect_minor != 3 ) ok_u4( major, ==, 3 );
+    todo_wine_if( expect_minor != 2 ) ok_u4( minor, ==, 2 );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT );
+    ok_x4( profile, ==, GL_CONTEXT_CORE_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    ctx = ext.wglCreateContextAttribsARB( hdc, NULL, gl32_comp_attribs );
+    ok_ptr( ctx, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( hdc, ctx ) );
+
+    glGetIntegerv( GL_MAJOR_VERSION, &major );
+    glGetIntegerv( GL_MINOR_VERSION, &minor );
+    ok_ret( 0, glGetError() );
+    ok( major == 3 /* AMD */ || major == expect_major /* NVIDIA */, "got major %u\n", major );
+    ok( minor == 2 /* AMD */ || minor == expect_minor /* NVIDIA */, "got minor %u\n", minor );
+
+    glGetIntegerv( GL_CONTEXT_PROFILE_MASK, &profile );
+    glGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+    ok_ret( 0, glGetError() );
+    ok_x4( flags, ==, 0 );
+    ok_x4( profile, ==, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
+
+    /* sharing is always possible regardless of core / compat / version */
+    ctx = wglCreateContext( hdc );
+    ok_ptr( ctx, !=, NULL );
+
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl21_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl30_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl30_fwd_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl32_comp_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl31_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+    tmp = ext.wglCreateContextAttribsARB( hdc, ctx, gl32_attribs );
+    ok_ptr( tmp, !=, NULL );
+    ok_ret( TRUE, wglDeleteContext( tmp ) );
+
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
+
 
     /* Try to create an OpenGL 3.0 context and test windowless rendering */
-    {
-        HGLRC gl3Ctx;
-        int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0};
-        BOOL res;
+    ctx = ext.wglCreateContextAttribsARB( hdc, 0, gl32_attribs );
+    ok_ptr( ctx, !=, NULL );
 
-        gl3Ctx = ext.wglCreateContextAttribsARB( hdc, 0, attribs );
-        ok( gl3Ctx != 0, "ext.wglCreateContextAttribsARB for a 3.0 context failed!\n" );
-
-        /* OpenGL 3.0 allows offscreen rendering WITHOUT a drawable
-         * Neither AMD or Nvidia support it at this point. The WGL_ARB_create_context specs also say that
-         * it is hard because drivers use the HDC to enter the display driver and it sounds like they don't
-         * expect drivers to ever offer it.
-         */
-        res = wglMakeCurrent(0, gl3Ctx);
-        ok(res == FALSE, "Wow, OpenGL 3.0 windowless rendering passed while it was expected not to!\n");
-        if(res)
-            wglMakeCurrent(0, 0);
-
-        if(gl3Ctx)
-            wglDeleteContext(gl3Ctx);
-    }
+    /* OpenGL 3.0 allows offscreen rendering WITHOUT a drawable
+     * Neither AMD or Nvidia support it at this point. The WGL_ARB_create_context specs also say that
+     * it is hard because drivers use the HDC to enter the display driver and it sounds like they don't
+     * expect drivers to ever offer it.
+     */
+    ok_ret( FALSE, wglMakeCurrent( NULL, ctx ) );
+    ok_ret( TRUE, wglDeleteContext( ctx ) );
 }
 
 static void test_minimized(void)
@@ -5243,7 +5403,7 @@ START_TEST(opengl)
 
     if (strstr( wgl_extensions, "WGL_ARB_create_context" ))
     {
-        test_opengl3( hdc );
+        test_wglCreateContextAttribsARB( hdc );
         test_object_creation( hdc );
     }
 
