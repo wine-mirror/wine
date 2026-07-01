@@ -1917,3 +1917,12 @@ DWORD WINAPI PssQuerySnapshot( HPSS handle, PSS_QUERY_INFORMATION_CLASS class, v
     FIXME( "(%p %u %p %lu)\n", handle ,class, buffer, len );
     return ERROR_NOT_FOUND;
 }
+
+/***********************************************************************
+ *           PssFreeSnapshot   (kernelbase.@)
+ */
+DWORD WINAPI PssFreeSnapshot( HANDLE hprocess, HPSS handle )
+{
+    FIXME( "(%p %p)\n", hprocess , handle );
+    return ERROR_SUCCESS;
+}

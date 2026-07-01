@@ -1223,7 +1223,7 @@
 # @ stub PsmIsValidKey
 # @ stub PssCaptureSnapshot
 # @ stub PssDuplicateSnapshot
-# @ stub PssFreeSnapshot
+@ stdcall PssFreeSnapshot(ptr ptr)
 @ stdcall PssQuerySnapshot(ptr long ptr long)
 # @ stub PssWalkMarkerCreate
 # @ stub PssWalkMarkerFree
