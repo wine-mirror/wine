@@ -1591,7 +1591,10 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     swapchain->ref = 1;
     swapchain->win_handle = window;
     swapchain->swap_interval = WINED3D_SWAP_INTERVAL_DEFAULT;
-    swapchain->max_frame_latency = device->max_frame_latency;
+    if (desc->flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT)
+        swapchain->max_frame_latency = 1;
+    else
+        swapchain->max_frame_latency = device->max_frame_latency;
 
     if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->max_frame_latency, LONG_MAX, NULL)))
     {

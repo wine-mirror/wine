@@ -784,9 +784,12 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 
     wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
 
-    /* Limit input latency by limiting the number of presents that we can get
-     * ahead of the worker thread. */
-    WaitForSingleObject(swapchain->frame_latency_semaphore, INFINITE);
+    if (!(swapchain->state.desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        /* Limit input latency by limiting the number of presents that we can
+         * get ahead of the worker thread. */
+        WaitForSingleObject(swapchain->frame_latency_semaphore, INFINITE);
+    }
 }
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
