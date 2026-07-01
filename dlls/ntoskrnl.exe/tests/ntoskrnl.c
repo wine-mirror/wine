@@ -2957,22 +2957,20 @@ static void test_pnp_device_ids(void)
         tmp_buf[0] = 0;
         size = sizeof(tmp_buf);
         status = RegQueryValueExW(parent_dev.dev_hkey, L"ParentIdPrefix", NULL, &type, (BYTE *)tmp_buf, &size);
-        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
-        if (status == STATUS_SUCCESS)
-        {
-            ok(extract_parent_id_prefix_values(tmp_buf, &depth[0], &hash[0], &seq[0]),
-                    "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
-            swprintf(tmp_buf2, ARRAY_SIZE(tmp_buf2), L"NextParentID.%lx.%d", hash[0], depth[0]);
-            status = RegQueryValueExW(enum_hkey, tmp_buf2, NULL, &type, (BYTE *)&next_seq_val, &size);
-            ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
-            ok(next_seq_val == (seq[0] + 1), "Unexpected sequence %#lx.\n", next_seq_val);
-            wcscat(tmp_buf, L"&");
-        }
+        ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        ok(extract_parent_id_prefix_values(tmp_buf, &depth[0], &hash[0], &seq[0]),
+                "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
+        swprintf(tmp_buf2, ARRAY_SIZE(tmp_buf2), L"NextParentID.%lx.%d", hash[0], depth[0]);
+        status = RegQueryValueExW(enum_hkey, tmp_buf2, NULL, &type, (BYTE *)&next_seq_val, &size);
+        ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        ok(next_seq_val == (seq[0] + 1), "Unexpected sequence %#lx.\n", next_seq_val);
+        wcscat(tmp_buf, L"&");
 
         wcscat(tmp_buf, desc.instance_id_str);
         swprintf(dev_instance_id_expected, ARRAY_SIZE(dev_instance_id_expected), L"%s\\%s", desc.device_id_str,
                 tmp_buf);
-        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+        /* FIXME: Wine doesn't have correct casing. */
+        ok(!lstrcmpiW(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
                 debugstr_w(child_dev.instance_id));
 
         size = sizeof(first_install[0]);
@@ -2987,7 +2985,8 @@ static void test_pnp_device_ids(void)
         pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
         get_pnp_bus_device_data(test_devices[i].dev_level, desc.dev_name, &child_dev);
 
-        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+        /* FIXME: Wine doesn't have correct casing. */
+        ok(!lstrcmpiW(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
                 debugstr_w(child_dev.instance_id));
 
         size = sizeof(first_install[1]);
@@ -3004,7 +3003,7 @@ static void test_pnp_device_ids(void)
          * in depth/hash field, but sequence number will be incremented.
          */
         status = RegDeleteValueW(parent_dev.dev_hkey, L"ParentIdPrefix");
-        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
 
         /* UniqueID is false, will get an ID prefixed by ParentIdPrefix key. */
         pnp_bus_test_device_add_child(parent_dev.handle, &desc, test_devices[i].dev_level);
@@ -3013,21 +3012,19 @@ static void test_pnp_device_ids(void)
         tmp_buf[0] = 0;
         size = sizeof(tmp_buf);
         status = RegQueryValueExW(parent_dev.dev_hkey, L"ParentIdPrefix", NULL, &type, (BYTE *)tmp_buf, &size);
-        todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
-        if (status == STATUS_SUCCESS)
-        {
-            ok(extract_parent_id_prefix_values(tmp_buf, &depth[1], &hash[1], &seq[1]),
-                    "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
-            ok(depth[0] == depth[1], "Unexpected depth value %#lx.\n", depth[1]);
-            ok(hash[0] == hash[1], "Unexpected hash value %#lx.\n", hash[1]);
-            ok(seq[1] > seq[0], "Unexpected sequence value %#lx.\n", seq[1]);
-            wcscat(tmp_buf, L"&");
-        }
+        ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
+        ok(extract_parent_id_prefix_values(tmp_buf, &depth[1], &hash[1], &seq[1]),
+                "Failed to get parent ID prefix values from %s.\n", debugstr_w(tmp_buf));
+        ok(depth[0] == depth[1], "Unexpected depth value %#lx.\n", depth[1]);
+        ok(hash[0] == hash[1], "Unexpected hash value %#lx.\n", hash[1]);
+        ok(seq[1] > seq[0], "Unexpected sequence value %#lx.\n", seq[1]);
+        wcscat(tmp_buf, L"&");
 
         wcscat(tmp_buf, desc.instance_id_str);
         swprintf(dev_instance_id_expected, ARRAY_SIZE(dev_instance_id_expected), L"%s\\%s", desc.device_id_str,
                 tmp_buf);
-        ok(!wcscmp(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
+        /* FIXME: Wine doesn't have correct casing. */
+        ok(!lstrcmpiW(child_dev.instance_id, dev_instance_id_expected), "Got unexpected device instance ID %s.\n",
                 debugstr_w(child_dev.instance_id));
 
         size = sizeof(first_install[1]);
@@ -3035,7 +3032,7 @@ static void test_pnp_device_ids(void)
         cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
                 (BYTE *)&first_install[1], &size, 0);
         ok(!cr, "Unexpected cr %#lx.\n", cr);
-        todo_wine ok(memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install dates match.\n");
+        ok(memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install dates match.\n");
 
         pnp_bus_device_data_close(&child_dev);
         pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);

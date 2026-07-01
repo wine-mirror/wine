@@ -474,7 +474,7 @@ static void get_parent_id_prefix(DEVICE_OBJECT *parent, WCHAR *prefix_out, ULONG
 
     RtlInitUnicodeString(&name_str, L"ParentIdPrefix");
     status = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, NULL, 0, &size);
-    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", status);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", status);
     if (status != STATUS_BUFFER_TOO_SMALL)
     {
         status = ZwClose(hkey);
