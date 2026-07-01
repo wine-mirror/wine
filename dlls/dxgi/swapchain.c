@@ -469,7 +469,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapCha
         BOOL *fullscreen, IDXGIOutput **target)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
-    struct wined3d_swapchain_desc swapchain_desc;
+    struct wined3d_swapchain_state *state;
+    BOOL windowed;
     HRESULT hr;
 
     TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
@@ -477,16 +478,17 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapCha
     if (fullscreen || target)
     {
         wined3d_mutex_lock();
-        wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
+        state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
+        windowed = wined3d_swapchain_state_is_windowed(state);
         wined3d_mutex_unlock();
     }
 
     if (fullscreen)
-        *fullscreen = !swapchain_desc.windowed;
+        *fullscreen = !windowed;
 
     if (target)
     {
-        if (!swapchain_desc.windowed)
+        if (!windowed)
         {
             if (!swapchain->target && FAILED(hr = IDXGISwapChain4_GetContainingOutput(iface, &swapchain->target)))
                 return hr;
