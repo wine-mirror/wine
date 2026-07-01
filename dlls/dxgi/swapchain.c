@@ -811,9 +811,15 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetSourceSize(IDXGISwapChain4 *
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_SetMaximumFrameLatency(IDXGISwapChain4 *iface, UINT max_latency)
 {
-    FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
+    struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, max_latency %u.\n", iface, max_latency);
+
+    wined3d_mutex_lock();
+    hr = wined3d_swapchain_set_max_frame_latency(swapchain->wined3d_swapchain, max_latency);
+    wined3d_mutex_unlock();
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetMaximumFrameLatency(IDXGISwapChain4 *iface, UINT *max_latency)

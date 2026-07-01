@@ -7538,7 +7538,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     /* raising the maximum frame latency releases the semaphore the
      * corresponding number of times */
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 3);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
     todo_wine_if(!is_d3d12)
@@ -7559,7 +7558,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     /* lowering the maximum frame latency doesn't seem to impact the
      * semaphore */
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 1);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
     todo_wine_if(!is_d3d12)

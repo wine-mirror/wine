@@ -1406,15 +1406,26 @@ static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_s
     *quality = 0;
 }
 
-void swapchain_set_max_frame_latency(struct wined3d_swapchain *swapchain, const struct wined3d_device *device)
+HRESULT CDECL wined3d_swapchain_set_max_frame_latency(struct wined3d_swapchain *swapchain, unsigned int latency)
 {
-    if (device->max_frame_latency > swapchain->max_frame_latency)
+    TRACE("swapchain %p, latency %u.\n", swapchain, latency);
+
+    if (!(swapchain->state.desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT))
+        return WINED3DERR_INVALIDCALL;
+
+    if (!latency)
+        return WINED3DERR_INVALIDCALL;
+
+    if (latency > swapchain->max_frame_latency)
     {
-        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore,
-                device->max_frame_latency - swapchain->max_frame_latency, NULL))
+        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, latency - swapchain->max_frame_latency, NULL))
+        {
             ERR("Failed to release semaphore, error %lu.\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
-    swapchain->max_frame_latency = device->max_frame_latency;
+    swapchain->max_frame_latency = latency;
+    return WINED3D_OK;
 }
 
 static enum wined3d_format_id adapter_format_from_backbuffer_format(const struct wined3d_adapter *adapter,

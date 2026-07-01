@@ -2741,7 +2741,7 @@ void CDECL wined3d_device_set_max_frame_latency(struct wined3d_device *device, u
 
     device->max_frame_latency = latency;
     for (i = 0; i < device->swapchain_count; ++i)
-        swapchain_set_max_frame_latency(device->swapchains[i], device);
+        wined3d_swapchain_set_max_frame_latency(device->swapchains[i], device->max_frame_latency);
 }
 
 unsigned int CDECL wined3d_device_get_max_frame_latency(const struct wined3d_device *device)
