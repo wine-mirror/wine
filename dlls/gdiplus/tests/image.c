@@ -6778,6 +6778,7 @@ static void test_png_histogram_property(void)
 
 static void test_GdipLoadImageFromStream(void)
 {
+    ULARGE_INTEGER li = { 0 };
     IStream *stream;
     GpStatus status;
     GpImage *image;
@@ -6792,6 +6793,17 @@ static void test_GdipLoadImageFromStream(void)
     status = GdipLoadImageFromStream(NULL, &image);
     ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
     ok(image == (void *)0xdeadbeef, "Unexpected image pointer.\n");
+
+    hglob = GlobalAlloc(0, 0);
+    hr = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream.\n");
+    hr = IStream_SetSize(stream, li);
+    ok(hr == S_OK, "SetSize failed\n");
+
+    status = GdipLoadImageFromStream(stream, &image);
+    ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
+
+    IStream_Release(stream);
 
     hglob = GlobalAlloc(0, sizeof(pngimage));
     data = GlobalLock (hglob);
