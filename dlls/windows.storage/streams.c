@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
@@ -178,8 +179,34 @@ struct memory_stream
     IClosable IClosable_iface;
     LONG ref;
 
+    BYTE *buffer;
+    size_t capacity;
+    size_t size;
+    size_t pos;
     BOOL closed;
 };
+
+static HRESULT memory_stream_require_capacity( struct memory_stream *impl, size_t capacity )
+{
+    BYTE *new_buffer;
+
+    if (capacity <= impl->capacity)
+        return S_OK;
+
+    capacity = max( capacity, impl->capacity + impl->capacity / 2u );
+    capacity = max( capacity, 0x1000 );
+    new_buffer = realloc( impl->buffer, capacity );
+
+    if (!new_buffer)
+        return HRESULT_FROM_WIN32( ERROR_DISK_FULL );
+
+    /* Zero memory for security and to silence address sanitisers */
+    memset( &new_buffer[impl->capacity], 0, capacity - impl->capacity );
+    impl->capacity = capacity;
+    impl->buffer = new_buffer;
+
+    return S_OK;
+}
 
 static inline struct memory_stream *impl_from_IRandomAccessStream( IRandomAccessStream *iface )
 {
@@ -233,7 +260,12 @@ static ULONG WINAPI memory_stream_random_access_Release( IRandomAccessStream *if
 {
     struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
+
     TRACE( "iface %p, ref %lu.\n", iface, ref );
+
+    if (!ref)
+        free( impl->buffer );
+
     return ref;
 }
 
@@ -510,19 +542,60 @@ static HRESULT WINAPI memory_stream_output_GetTrustLevel( IOutputStream *iface, 
     return E_NOTIMPL;
 }
 
+static HRESULT memory_stream_output_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
+{
+    struct memory_stream *impl = impl_from_IOutputStream( (IOutputStream *)invoker );
+    IBuffer *buffer = (IBuffer *)param;
+    IBufferByteAccess *access;
+    size_t capacity;
+    UINT32 length;
+    HRESULT hr;
+    BYTE *data;
+
+    assert( !called_async );
+
+    IBuffer_get_Length( buffer, &length );
+
+    if (!length)
+        return S_OK;
+
+    capacity = impl->pos + length;
+    if (capacity < impl->pos || capacity < length)
+        return HRESULT_FROM_WIN32( ERROR_DISK_FULL );
+
+    if (FAILED(hr = memory_stream_require_capacity( impl, capacity )))
+        return hr;
+
+    IBuffer_QueryInterface( buffer, &IID_IBufferByteAccess, (void **)&access );
+    IBufferByteAccess_Buffer( access, &data );
+    IBufferByteAccess_Release( access );
+
+    memcpy( &impl->buffer[impl->pos], data, length );
+    impl->pos += length;
+    impl->size = max( impl->size, impl->pos );
+
+    result->vt = VT_UI4;
+    result->ulVal = length;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI memory_stream_output_WriteAsync( IOutputStream *iface, IBuffer *buffer,
         IAsyncOperationWithProgress_UINT32_UINT32 **operation )
 {
     struct memory_stream *impl = impl_from_IOutputStream( iface );
 
-    FIXME( "iface %p, buffer %p, operation %p stub!\n", iface, buffer, operation );
+    TRACE( "iface %p, buffer %p, operation %p.\n", iface, buffer, operation );
 
     *operation = NULL;
+
+    if (!buffer)
+        return E_POINTER;
 
     if (impl->closed)
         return RO_E_CLOSED;
 
-    return E_NOTIMPL;
+    return async_operation_uint32_uint32_create( (IUnknown *)iface, (IUnknown *)buffer, memory_stream_output_async, operation );
 }
 
 static HRESULT WINAPI memory_stream_output_FlushAsync( IOutputStream *iface, IAsyncOperation_boolean **operation )

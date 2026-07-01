@@ -243,9 +243,7 @@ static void output_stream_write_( unsigned int line, IOutputStream *output_strea
     hr = IBuffer_put_Length( buffer, count );
     ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IOutputStream_WriteAsync( output_stream, buffer, &operation );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (FAILED(hr)) return;
     res = await_IAsyncOperationWithProgress_UINT32_UINT32( operation, 1000 );
     ok( res == 0, "await_IAsyncOperationWithProgress_UINT32_UINT32 returned %#x\n", res );
     check_async_info( operation, Completed, S_OK );
@@ -415,7 +413,6 @@ static void test_InMemoryRandomAccessStream(void)
     ok( value64 == 8, "got pos %I64u.\n", value64 );
 
     hr = IOutputStream_WriteAsync( output_stream, NULL, &write_op );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     /* Crashes on Windows if the op pointer is null
      * hr = IOutputStream_WriteAsync( output_stream, NULL, NULL ); */

@@ -38,6 +38,11 @@
 #define WIDL_using_Windows_Storage_Streams
 #include "windows.storage.h"
 #include "windows.storage.streams.h"
+#include "robuffer.h"
+#include "async_private.h"
+
+HRESULT async_operation_uint32_uint32_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+        IAsyncOperationWithProgress_UINT32_UINT32 **out );
 
 extern IActivationFactory *random_access_stream_reference_factory;
 extern IActivationFactory *memory_stream_activation_factory;
@@ -79,5 +84,7 @@ extern IActivationFactory *memory_stream_activation_factory;
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
+#define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
+    DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface )
 
 #endif
