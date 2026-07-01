@@ -3698,10 +3698,8 @@ struct wined3d_cs
     struct list query_poll_list;
     BOOL queries_flushed;
 
-    HANDLE event, present_event;
+    HANDLE event;
     LONG waiting_for_event;
-    LONG waiting_for_present;
-    LONG pending_presents;
 };
 
 static inline void wined3d_device_context_lock(struct wined3d_device_context *context)
@@ -4111,6 +4109,7 @@ struct wined3d_swapchain
     RECT front_buffer_update;
     unsigned int swap_interval;
     unsigned int max_frame_latency;
+    HANDLE frame_latency_semaphore;
 
     /* Performance tracking */
     LARGE_INTEGER last_present_time;
