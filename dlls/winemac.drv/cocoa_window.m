@@ -1122,7 +1122,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         [nc addObserver:window
                selector:@selector(updateFullscreen)
-                   name:NSApplicationDidChangeScreenParametersNotification
+                   name:WineDisplayConfigurationChangedNotification
                  object:NSApp];
         [window updateFullscreen];
 
@@ -2293,7 +2293,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         {
             displayIDToDisplayLinkMap = [[NSMutableDictionary alloc] init];
 
-            [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidChangeScreenParametersNotification
+            [[NSNotificationCenter defaultCenter] addObserverForName:WineDisplayConfigurationChangedNotification
                                                               object:NSApp
                                                                queue:nil
                                                           usingBlock:^(NSNotification *note){
@@ -3801,7 +3801,7 @@ macdrv_view macdrv_create_view(CGRect rect)
 #pragma clang diagnostic pop
         [nc addObserver:view
                selector:@selector(updateGLContexts)
-                   name:NSApplicationDidChangeScreenParametersNotification
+                   name:WineDisplayConfigurationChangedNotification
                  object:NSApp];
     });
 
@@ -3831,7 +3831,7 @@ void macdrv_dispose_view(macdrv_view v)
                     object:view];
 #pragma clang diagnostic pop
         [nc removeObserver:view
-                      name:NSApplicationDidChangeScreenParametersNotification
+                      name:WineDisplayConfigurationChangedNotification
                     object:NSApp];
         [view removeFromSuperview];
         [view release];

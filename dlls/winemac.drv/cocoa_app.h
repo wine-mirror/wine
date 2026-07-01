@@ -24,6 +24,12 @@
 
 #define ERR(...) do { if (macdrv_err_on) LogError(__func__, __VA_ARGS__); } while (false)
 
+/* Internal notification sent on NSApp for display configuration changes. The
+   userInfo contains the two keys, NSNumbers for the effected CGDirectDisplayID
+   and the CGDisplayChangeSummaryFlags from the underlying CG callback. */
+static NSString* const WineDisplayConfigurationChangedNotification = @"WineDisplayConfigurationChanged";
+static NSString* const WineDisplayConfigurationNotificationDisplayIDKey = @"DisplayID";
+static NSString* const WineDisplayConfigurationNotificationFlagsKey = @"Flags";
 
 enum {
     WineApplicationEventWakeQuery,

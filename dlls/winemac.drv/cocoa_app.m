@@ -217,6 +217,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             CFRunLoopSourceInvalidate(requestSource);
             CFRelease(requestSource);
         }
+        CGDisplayRemoveReconfigurationCallback(DisplayReconfigCallback, NULL);
         [super dealloc];
     }
 
@@ -2154,6 +2155,48 @@ static NSString* WineLocalizedString(unsigned int stringID)
     /*
      * ---------- NSApplicationDelegate methods ----------
      */
+    - (void)cgDisplay:(CGDirectDisplayID)display wasReconfiguredWithFlags:(CGDisplayChangeSummaryFlags)flags
+    {
+        NSDictionary *userInfo;
+
+        primaryScreenHeightValid = FALSE;
+        [self sendDisplaysChanged:FALSE];
+        [self adjustWindowLevels];
+
+        /* When the display configuration changes, the cursor position may jump.
+           Accumulated mouse movement deltas are invalidated.  Make sure the
+           next mouse move event starts over from an absolute baseline. */
+        forceNextMouseMoveAbsolute = TRUE;
+
+        userInfo = @{
+            WineDisplayConfigurationNotificationDisplayIDKey: @(display),
+            WineDisplayConfigurationNotificationFlagsKey: @(flags)
+        };
+        [NSNotificationCenter.defaultCenter postNotificationName:WineDisplayConfigurationChangedNotification
+                                                          object:NSApp
+                                                        userInfo:userInfo];
+    }
+
+    static void DisplayReconfigCallback(CGDirectDisplayID display, CGDisplayChangeSummaryFlags flags, void *userInfo)
+    {
+        /* A callback with flag == kCGDisplayBeginConfigurationFlag is
+           documented to be sent at the beginning of a change set. We should
+           ignore it; the actual changes will come in separate callbacks. */
+        if (flags == kCGDisplayBeginConfigurationFlag)
+            return;
+
+        /* We're called back on an internal CG thread, so kick this over to the
+           main thread. */
+        OnMainThreadAsync(^{
+            [WineApplicationController.sharedController cgDisplay:display wasReconfiguredWithFlags:flags];
+        });
+    }
+
+    - (void)applicationDidFinishLaunching:(NSNotification *)notification
+    {
+        CGDisplayRegisterReconfigurationCallback(DisplayReconfigCallback, NULL);
+    }
+
     - (void)applicationDidBecomeActive:(NSNotification *)notification
     {
         NSNumber* displayID;
@@ -2188,18 +2231,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
         // The cursor probably moved while we were inactive.  Accumulated mouse
         // movement deltas are invalidated.  Make sure the next mouse move event
         // starts over from an absolute baseline.
-        forceNextMouseMoveAbsolute = TRUE;
-    }
-
-    - (void)applicationDidChangeScreenParameters:(NSNotification *)notification
-    {
-        primaryScreenHeightValid = FALSE;
-        [self sendDisplaysChanged:FALSE];
-        [self adjustWindowLevels];
-
-        // When the display configuration changes, the cursor position may jump.
-        // Accumulated mouse movement deltas are invalidated.  Make sure the next
-        // mouse move event starts over from an absolute baseline.
         forceNextMouseMoveAbsolute = TRUE;
     }
 
