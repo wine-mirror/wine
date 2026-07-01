@@ -360,7 +360,6 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got pos %I64u.\n", value64 );
     hr = IRandomAccessStream_Seek( in_memory_stream, 16 );
@@ -370,7 +369,6 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 16, "got pos %I64u.\n", value64 );
@@ -392,7 +390,6 @@ static void test_InMemoryRandomAccessStream(void)
     todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 0, "got pos %I64u.\n", value64 );
@@ -403,7 +400,6 @@ static void test_InMemoryRandomAccessStream(void)
     todo_wine
     ok( value64 == 17, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 8, "got pos %I64u.\n", value64 );
@@ -444,7 +440,6 @@ static void test_InMemoryRandomAccessStream(void)
     todo_wine
     ok( value == 17, "got read %u.\n", value );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 17, "got pos %I64u.\n", value64 );
@@ -496,7 +491,6 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0x100000, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 18, "got pos %I64u.\n", value64 );

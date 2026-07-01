@@ -343,9 +343,10 @@ static HRESULT WINAPI memory_stream_random_access_get_Position( IRandomAccessStr
 {
     struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
 
-    FIXME( "iface %p, value %p stub!\n", iface, value );
+    TRACE( "iface %p, value %p.\n", iface, value );
 
-    return impl->closed ? RO_E_CLOSED : E_NOTIMPL;
+    *value = impl->pos;
+    return impl->closed ? RO_E_CLOSED : S_OK;
 }
 
 static HRESULT WINAPI memory_stream_random_access_Seek( IRandomAccessStream *iface, UINT64 position )
