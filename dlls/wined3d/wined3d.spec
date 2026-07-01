@@ -300,6 +300,7 @@
 @ cdecl wined3d_swapchain_get_desc(ptr ptr)
 @ cdecl wined3d_swapchain_get_device(ptr)
 @ cdecl wined3d_swapchain_get_display_mode(ptr ptr ptr)
+@ cdecl wined3d_swapchain_get_frame_latency_waitable_object(ptr)
 @ cdecl wined3d_swapchain_get_front_buffer(ptr)
 @ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr long)
 @ cdecl wined3d_swapchain_get_gamma_ramp(ptr ptr)

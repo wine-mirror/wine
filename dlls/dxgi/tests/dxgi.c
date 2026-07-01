@@ -7492,32 +7492,24 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     IDXGISwapChain1_Release(swapchain1);
 
     semaphore = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
-    todo_wine_if(!is_d3d12)
     ok(!!semaphore, "Got unexpected NULL semaphore.\n");
 
     /* a new duplicate handle is returned each time */
     semaphore2 = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
-    todo_wine_if(!is_d3d12)
     ok(!!semaphore2, "Got unexpected NULL semaphore.\n");
-    todo_wine_if(!is_d3d12)
     ok(semaphore != semaphore2, "Got the same semaphore twice %p.\n", semaphore);
 
     ret = CloseHandle(semaphore);
-    todo_wine_if(!is_d3d12)
     ok(!!ret, "Failed to close handle, last error %lu.\n", GetLastError());
     ret = CloseHandle(semaphore2);
-    todo_wine_if(!is_d3d12)
     ok(!!ret, "Failed to close handle, last error %lu.\n", GetLastError());
 
     semaphore = IDXGISwapChain2_GetFrameLatencyWaitableObject(swapchain2);
-    todo_wine_if(!is_d3d12)
     ok(!!semaphore, "Got unexpected NULL semaphore.\n");
 
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine_if(!is_d3d12)
     ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine_if(!is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
@@ -7540,13 +7532,10 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(frame_latency == 3, "Got unexpected frame latency %#x.\n", frame_latency);
 
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine_if(!is_d3d12)
     ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine_if(!is_d3d12)
     ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 100);
-    todo_wine_if(!is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     /* lowering the maximum frame latency doesn't seem to impact the
@@ -7558,7 +7547,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
     wait_result = WaitForSingleObject(semaphore, 100);
-    todo_wine_if(!is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     for (i = 0; i < 5; i++)
@@ -7567,12 +7555,10 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Present %u failed with hr %#lx.\n", i, hr);
 
         wait_result = WaitForSingleObject(semaphore, 100);
-        todo_wine_if(!is_d3d12)
         ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     }
 
     wait_result = WaitForSingleObject(semaphore, 100);
-    todo_wine_if(!is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     /* each frame presentation releases the semaphore */
@@ -7587,12 +7573,10 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     for (i = 0; i < 5; i++)
     {
         wait_result = WaitForSingleObject(semaphore, 100);
-        todo_wine_if(!is_d3d12)
         ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     }
 
     wait_result = WaitForSingleObject(semaphore, 100);
-    todo_wine_if(!is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     if (is_d3d12)

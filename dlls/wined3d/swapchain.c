@@ -1439,6 +1439,25 @@ HRESULT CDECL wined3d_swapchain_get_max_frame_latency(struct wined3d_swapchain *
     return WINED3D_OK;
 }
 
+HANDLE CDECL wined3d_swapchain_get_frame_latency_waitable_object(struct wined3d_swapchain *swapchain)
+{
+    HANDLE handle;
+
+    TRACE("swapchain %p.\n", swapchain);
+
+    if (!(swapchain->state.desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT))
+        return NULL;
+
+    if (!DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_semaphore, GetCurrentProcess(),
+            &handle, 0, FALSE, DUPLICATE_SAME_ACCESS))
+    {
+        ERR("Failed to duplicate handle, error %lu.\n", GetLastError());
+        return NULL;
+    }
+
+    return handle;
+}
+
 static enum wined3d_format_id adapter_format_from_backbuffer_format(const struct wined3d_adapter *adapter,
         enum wined3d_format_id format_id)
 {

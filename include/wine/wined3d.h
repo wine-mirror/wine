@@ -2904,6 +2904,7 @@ struct wined3d_texture * __cdecl wined3d_swapchain_get_back_buffer(const struct 
 struct wined3d_device * __cdecl wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
+HANDLE __cdecl wined3d_swapchain_get_frame_latency_waitable_object(struct wined3d_swapchain *swapchain);
 struct wined3d_texture * __cdecl wined3d_swapchain_get_front_buffer(const struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
         struct wined3d_texture *dst_texture, unsigned int sub_resource_idx);
