@@ -517,6 +517,18 @@ HRESULT creation_fn( IUnknown *invoker, IUnknown *param,                        
     return S_OK;                                                                                                    \
 }                                                                                                                   \
 
+struct async_buffer_uint32
+{
+    IAsyncOperationWithProgress_IBuffer_UINT32 IAsyncOperationWithProgress_IBuffer_UINT32_iface;
+    IAsyncInfoImpl *IAsyncInfoImpl_inner;
+    LONG ref;
+};
+
+DEFINE_IASYNCOPERATIONWITHPROGRESS( IAsyncOperationWithProgress_IBuffer_UINT32, \
+        IAsyncOperationProgressHandler_IBuffer_UINT32, \
+        IAsyncOperationWithProgressCompletedHandler_IBuffer_UINT32, \
+        "IBuffer,UInt32", async_buffer_uint32, IBuffer*, VT_UNKNOWN, punkVal, async_operation_buffer_uint32_create )
+
 struct async_uint32_uint32
 {
     IAsyncOperationWithProgress_UINT32_UINT32 IAsyncOperationWithProgress_UINT32_UINT32_iface;

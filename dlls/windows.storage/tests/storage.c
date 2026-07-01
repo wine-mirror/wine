@@ -262,9 +262,7 @@ static void input_stream_read_( unsigned int line, IInputStream *input_stream, I
     UINT res;
 
     hr = IInputStream_ReadAsync( input_stream, buffer, count, 0, &operation );
-    todo_wine
     ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
-    if (FAILED(hr)) return;
     res = await_IAsyncOperationWithProgress_IBuffer_UINT32( operation, 1000 );
     ok_(__FILE__, line)( res == 0, "await_IAsyncOperationWithProgress_IBuffer_UINT32 returned %#x\n", res );
     check_async_info( operation, expect_status, expect_hr );
@@ -408,38 +406,28 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 0, Completed, S_OK, &res_buffer );
-    todo_wine
     ok( res_buffer == buffer, "got different buffer.\n" );
-    if (!res_buffer) IBuffer_AddRef( res_buffer = buffer );
     hr = IBuffer_get_Length( res_buffer, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value == 0, "got read %u.\n", value );
     IBuffer_Release( res_buffer );
 
     res_buffer = (void *)0xdeadbeef;
     input_stream_read( input_stream, buffer, 20, Error, E_INVALIDARG, &res_buffer );
-    todo_wine
     ok( !res_buffer, "got res_buffer %p.\n", res_buffer );
 
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 17, Completed, S_OK, &res_buffer );
-    todo_wine
     ok( res_buffer == buffer, "got different buffer.\n" );
-    if (!res_buffer) IBuffer_AddRef( res_buffer = buffer );
     hr = IBuffer_get_Length( res_buffer, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value == 17, "got read %u.\n", value );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 17, "got pos %I64u.\n", value64 );
     data = buffer_get_data( res_buffer );
     memcpy( &value64, data, sizeof(value64 ) );
-    todo_wine
     ok( value64 == uint64_value, "got value64 %#I64x.\n", value64 );
-    todo_wine
     ok ( data[16] == byte_value, "got byte value %#x.\n", data[16]);
     IBuffer_Release( res_buffer );
 
@@ -447,18 +435,14 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 1, Completed, S_OK, &res_buffer );
-    todo_wine
     ok( res_buffer == buffer, "got different buffer.\n" );
-    if (!res_buffer) IBuffer_AddRef( res_buffer = buffer );
     hr = IBuffer_get_Length( res_buffer, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value == 0, "got read %u.\n", value );
     IBuffer_Release( res_buffer );
 
     operation = (void *)0xdeadbeef;
     hr = IInputStream_ReadAsync( input_stream, NULL, 1, 0, &operation );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     ok( !operation, "got operation %p.\n", operation );
     /* Crashes on Windows if the op pointer is null
@@ -489,15 +473,12 @@ static void test_InMemoryRandomAccessStream(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     res_buffer = NULL;
     input_stream_read( input_stream, buffer, 8, Completed, S_OK, &res_buffer );
-    todo_wine
     ok( res_buffer == buffer, "got different buffer.\n" );
-    if (!res_buffer) IBuffer_AddRef( res_buffer = buffer );
     hr = IBuffer_get_Length( res_buffer, &value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value == 8, "got read %u.\n", value );
     data = buffer_get_data( res_buffer );
     memcpy( &value64, data, sizeof(value64) );
-    todo_wine
     ok( value64 == 0, "got value64 %#I64x.\n", value64 );
     IBuffer_Release( res_buffer );
 
@@ -527,7 +508,6 @@ static void test_InMemoryRandomAccessStream(void)
     value64 = uint64_value;
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     ok( hr == RO_E_CLOSED, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 0x100000, "got pos %I64u.\n", value64 );
     value_bool = 0;
     hr = IRandomAccessStream_get_CanRead( in_memory_stream, &value_bool );

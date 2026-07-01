@@ -186,6 +186,21 @@ struct memory_stream
     BOOL closed;
 };
 
+static void memory_stream_read( struct memory_stream *impl, IBuffer *buffer, UINT32 count )
+{
+    IBufferByteAccess *access;
+    BYTE *data;
+
+    IBuffer_QueryInterface( buffer, &IID_IBufferByteAccess, (void **)&access );
+    IBufferByteAccess_Buffer( access, &data );
+    IBufferByteAccess_Release( access );
+
+    count = (impl->size >= impl->pos) ? min( count, impl->size - impl->pos ) : 0;
+    memcpy( data, &impl->buffer[impl->pos], count );
+    impl->pos += count;
+    IBuffer_put_Length( buffer, count );
+}
+
 static HRESULT memory_stream_require_capacity( struct memory_stream *impl, size_t capacity )
 {
     BYTE *new_buffer;
@@ -434,6 +449,22 @@ static const struct IClosableVtbl memory_stream_closable_vtbl =
     memory_stream_closable_Close,
 };
 
+struct read_async_params
+{
+    IUnknown IUnknown_iface;
+    LONG ref;
+
+    IBuffer *buffer;
+    UINT32 count;
+};
+
+static void read_async_params_destroy( struct read_async_params *params )
+{
+    IBuffer_Release( params->buffer );
+}
+
+DEFINE_ASYNC_PARAMS( read_async_params )
+
 static inline struct memory_stream *impl_from_IInputStream( IInputStream *iface )
 {
     return CONTAINING_RECORD( iface, struct memory_stream, IInputStream_iface );
@@ -478,19 +509,56 @@ static HRESULT WINAPI memory_stream_input_GetTrustLevel( IInputStream *iface, Tr
     return E_NOTIMPL;
 }
 
+static HRESULT memory_stream_input_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
+{
+    struct memory_stream *impl = impl_from_IInputStream( (IInputStream *)invoker );
+    struct read_async_params *params = read_async_params_from_IUnknown( param );
+    UINT32 capacity;
+    HRESULT hr;
+
+    assert( !called_async );
+
+    if (FAILED(hr = IBuffer_get_Capacity( params->buffer, &capacity )))
+        return hr;
+
+    if (capacity < params->count)
+        return E_INVALIDARG;
+
+    memory_stream_read( impl, params->buffer, params->count );
+    result->vt = VT_UNKNOWN;
+    IBuffer_AddRef( params->buffer );
+    result->punkVal = (IUnknown *)params->buffer;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI memory_stream_input_ReadAsync( IInputStream *iface, IBuffer *buffer, UINT32 count,
         InputStreamOptions options, IAsyncOperationWithProgress_IBuffer_UINT32 **operation )
 {
     struct memory_stream *impl = impl_from_IInputStream( iface );
+    struct read_async_params *params;
 
-    FIXME( "iface %p, buffer %p, count %u, options %d, operation %p stub!\n", iface, buffer, count, options, operation );
+    TRACE( "iface %p, buffer %p, count %u, options %d, operation %p.\n", iface, buffer, count, options, operation );
 
     *operation = NULL;
+
+    if (!buffer)
+        return E_POINTER;
 
     if (impl->closed)
         return RO_E_CLOSED;
 
-    return E_NOTIMPL;
+    if (!(params = read_async_params_alloc()))
+        return E_OUTOFMEMORY;
+
+    IBuffer_AddRef( buffer );
+    params->buffer = buffer;
+    params->count = count;
+    async_operation_buffer_uint32_create( (IUnknown *)iface, &params->IUnknown_iface, memory_stream_input_async, operation );
+
+    IUnknown_Release( &params->IUnknown_iface );
+
+    return S_OK;
 }
 
 static const struct IInputStreamVtbl memory_stream_input_vtbl =
