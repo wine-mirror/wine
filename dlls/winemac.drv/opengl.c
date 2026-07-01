@@ -226,6 +226,7 @@ C_ASSERT(sizeof(((pixel_format_or_code*)0)->format) <= sizeof(((pixel_format_or_
 
 static pixel_format *pixel_formats;
 static int nb_formats, nb_displayable_formats;
+static CGLOpenGLProfile core_profile;
 
 
 static const char* debugstr_attrib(int attrib, int value)
@@ -1265,6 +1266,7 @@ static BOOL init_gl_info(void)
 
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
+    core_profile = kCGLOGLPVersion_Legacy;
 
     if (!(context = init_context(kCGLOGLPVersion_GL3_Core))) return TRUE;
     str = (const char*)pglGetString(GL_VERSION);
@@ -1272,6 +1274,7 @@ static BOOL init_gl_info(void)
     sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
+    core_profile = kCGLOGLPVersion_GL3_Core;
 
     if (!(context = init_context(kCGLOGLPVersion_GL4_Core))) return TRUE;
     str = (const char*)pglGetString(GL_VERSION);
@@ -1279,6 +1282,7 @@ static BOOL init_gl_info(void)
     sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
+    core_profile = kCGLOGLPVersion_GL4_Core;
 
     return TRUE;
 }
@@ -1367,10 +1371,7 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     if (core)
     {
         attribs[n++] = kCGLPFAOpenGLProfile;
-        if (major == 3)
-            attribs[n++] = (int)kCGLOGLPVersion_GL3_Core;
-        else
-            attribs[n++] = (int)kCGLOGLPVersion_GL4_Core;
+        attribs[n++] = (CGLPixelFormatAttribute)core_profile;
     }
 
     attribs[n] = 0;
