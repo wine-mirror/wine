@@ -1406,8 +1406,7 @@ static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_s
 
 void swapchain_set_max_frame_latency(struct wined3d_swapchain *swapchain, const struct wined3d_device *device)
 {
-    /* Subtract 1 for the implicit OpenGL latency. */
-    swapchain->max_frame_latency = device->max_frame_latency >= 2 ? device->max_frame_latency - 1 : 1;
+    swapchain->max_frame_latency = device->max_frame_latency;
 }
 
 static enum wined3d_format_id adapter_format_from_backbuffer_format(const struct wined3d_adapter *adapter,
