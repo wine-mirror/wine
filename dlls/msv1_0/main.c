@@ -1645,6 +1645,7 @@ static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecB
     }
 
     free( buf );
+    if (status != SEC_E_OK) TRACE( "signature verification failed %lx\n", status );
     return status;
 }
 
@@ -1708,7 +1709,7 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
 
 static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
 {
-    int data_idx, stream_idx, token_idx;
+    int i, data_idx, stream_idx, token_idx;
     SecBuffer token_buf;
     struct ntlm_ctx *ctx;
 
@@ -1745,11 +1746,23 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     ctx = (struct ntlm_ctx *)handle;
     if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
-        arc4_process( &ctx->crypt.ntlm2.recv_arc4info, msg->pBuffers[data_idx].pvBuffer,
-                      msg->pBuffers[data_idx].cbBuffer );
+    {
+        for (i = 0; i < msg->cBuffers; i++)
+        {
+            if (msg->pBuffers[i].BufferType != SECBUFFER_DATA) continue;
+            arc4_process( &ctx->crypt.ntlm2.recv_arc4info, msg->pBuffers[i].pvBuffer,
+                          msg->pBuffers[i].cbBuffer );
+        }
+    }
     else
-        arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer,
-                      msg->pBuffers[data_idx].cbBuffer);
+    {
+        for (i = 0; i < msg->cBuffers; i++)
+        {
+            if (msg->pBuffers[i].BufferType != SECBUFFER_DATA) continue;
+            arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[i].pvBuffer,
+                          msg->pBuffers[i].cbBuffer);
+        }
+    }
 
     /* make sure we use a session key for the signature check, SealMessage always does that,
        even in the dummy case */

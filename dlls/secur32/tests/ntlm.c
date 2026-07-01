@@ -1062,11 +1062,9 @@ static void test_Encrypt(void)
     BOOL                    first = TRUE;
     SspiData                client = {{0}}, server = {{0}};
     SecBufferDesc           crypt;
-    SecBuffer               data[2], complex_data[4];
+    SecBuffer               data[3] = {0}, complex_data[4] = {0};
     ULONG                   qop = 0xdeadbeef;
     SecPkgContext_Sizes     ctxt_sizes;
-
-    complex_data[1].pvBuffer = complex_data[3].pvBuffer = NULL;
 
     /****************************************************************
      * This is basically the same as in testAuth with a fake server,
@@ -1192,6 +1190,25 @@ static void test_Encrypt(void)
             getSecError(sec_status));
     ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
+    /* Test decryption with multiple data buffers */
+    crypt.ulVersion = SECBUFFER_VERSION;
+    crypt.cBuffers = 2;
+    crypt.pBuffers = data;
+
+    sec_status = EncryptMessage(&client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+
+    crypt.cBuffers = 3;
+    data[2].BufferType = SECBUFFER_DATA;
+    data[2].cbBuffer = data[1].cbBuffer - 8;
+    data[2].pvBuffer = (BYTE *)data[1].pvBuffer + 8;
+    data[1].cbBuffer = 8;
+
+    sec_status = DecryptMessage(&server.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n", getSecError(sec_status));
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
+
 end:
     cleanupBuffers(&client);
     cleanupBuffers(&server);
@@ -1199,6 +1216,8 @@ end:
     DeleteSecurityContext(&client.ctxt);
     FreeCredentialsHandle(&client.cred);
 
+    HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
 }
