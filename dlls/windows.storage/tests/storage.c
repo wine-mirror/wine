@@ -357,7 +357,6 @@ static void test_InMemoryRandomAccessStream(void)
     data = buffer_get_data( buffer );
 
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
@@ -368,7 +367,6 @@ static void test_InMemoryRandomAccessStream(void)
     todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
@@ -380,14 +378,12 @@ static void test_InMemoryRandomAccessStream(void)
     /* Write 0 bytes at position 16 */
     output_stream_write( output_stream, buffer, 0 );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value64 == 0, "got size %I64u.\n", value64 );
     /* Write 1 byte at position 16 */
     data[0] = byte_value;
     output_stream_write( output_stream, buffer, 1 );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 17, "got size %I64u.\n", value64 );
@@ -398,11 +394,11 @@ static void test_InMemoryRandomAccessStream(void)
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine
     ok( value64 == 0, "got pos %I64u.\n", value64 );
     memcpy( data, &uint64_value, 8 );
     output_stream_write( output_stream, buffer, 8 );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 17, "got size %I64u.\n", value64 );
@@ -498,7 +494,6 @@ static void test_InMemoryRandomAccessStream(void)
     todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( value64 == 0x100000, "got size %I64u.\n", value64 );

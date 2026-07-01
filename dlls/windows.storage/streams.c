@@ -291,7 +291,7 @@ static HRESULT WINAPI memory_stream_random_access_get_Size( IRandomAccessStream 
 {
     struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
 
-    FIXME( "iface %p, value %p stub!\n", iface, value );
+    TRACE( "iface %p, value %p.\n", iface, value );
 
     if (impl->closed)
     {
@@ -299,7 +299,8 @@ static HRESULT WINAPI memory_stream_random_access_get_Size( IRandomAccessStream 
         return RO_E_CLOSED;
     }
 
-    return E_NOTIMPL;
+    *value = impl->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI memory_stream_random_access_put_Size( IRandomAccessStream *iface, UINT64 value )
