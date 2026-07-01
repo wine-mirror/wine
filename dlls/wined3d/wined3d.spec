@@ -303,6 +303,7 @@
 @ cdecl wined3d_swapchain_get_front_buffer(ptr)
 @ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr long)
 @ cdecl wined3d_swapchain_get_gamma_ramp(ptr ptr)
+@ cdecl wined3d_swapchain_get_max_frame_latency(ptr long)
 @ cdecl wined3d_swapchain_get_parent(ptr)
 @ cdecl wined3d_swapchain_get_raster_status(ptr ptr)
 @ cdecl wined3d_swapchain_get_state(ptr)

@@ -1428,6 +1428,17 @@ HRESULT CDECL wined3d_swapchain_set_max_frame_latency(struct wined3d_swapchain *
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_swapchain_get_max_frame_latency(struct wined3d_swapchain *swapchain, unsigned int *latency)
+{
+    TRACE("swapchain %p, latency %p.\n", swapchain, latency);
+
+    if (!(swapchain->state.desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT))
+        return WINED3DERR_INVALIDCALL;
+
+    *latency = swapchain->max_frame_latency;
+    return WINED3D_OK;
+}
+
 static enum wined3d_format_id adapter_format_from_backbuffer_format(const struct wined3d_adapter *adapter,
         enum wined3d_format_id format_id)
 {

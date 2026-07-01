@@ -7521,18 +7521,14 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if(!is_d3d12)
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 0);
     todo_wine_if(!is_d3d12)
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if(!is_d3d12)
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
     /* raising the maximum frame latency releases the semaphore the
@@ -7540,9 +7536,7 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 3);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if(!is_d3d12)
     ok(frame_latency == 3, "Got unexpected frame latency %#x.\n", frame_latency);
 
     wait_result = WaitForSingleObject(semaphore, 0);
@@ -7560,9 +7554,7 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 1);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
-    todo_wine_if(!is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if(!is_d3d12)
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
     wait_result = WaitForSingleObject(semaphore, 100);
