@@ -57,7 +57,6 @@ static struct gl_info gl_info;
 struct macdrv_context
 {
     int                     format;
-    GLint                   renderer_id;
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
     HWND                    draw_hwnd;
@@ -1332,14 +1331,6 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     attribs[n++] = kCGLPFAMinimumPolicy;
     attribs[n++] = kCGLPFAClosestPolicy;
 
-    if (context->renderer_id)
-    {
-        attribs[n++] = kCGLPFARendererID;
-        attribs[n++] = context->renderer_id;
-        attribs[n++] = kCGLPFASingleRenderer;
-        attribs[n++] = kCGLPFANoRecovery;
-    }
-
     if (pf->accelerated)
     {
         attribs[n++] = kCGLPFAAccelerated;
@@ -2105,7 +2096,6 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
     const int *iptr;
     int major = 1, minor = 0, profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB, flags = 0;
     BOOL core = FALSE;
-    GLint renderer_id = 0;
 
     TRACE("format %d, share_context %p, attrib_list %p\n", format, share_context, attrib_list);
 
@@ -2203,7 +2193,6 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
     if (!(context = calloc(1, sizeof(*context)))) return FALSE;
 
     context->format = format;
-    context->renderer_id = renderer_id;
     if (!create_context(context, share_context ? share_context->cglcontext : NULL, major))
     {
         free(context);
