@@ -43,7 +43,7 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 
 /* dsound_convert.h */
-typedef void (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel);
+typedef void (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel);
 typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
 void putieee32_sum(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value);
@@ -84,8 +84,9 @@ struct DirectSoundDevice
     int                         speaker_num[DS_MAX_CHANNELS];
     int                         num_speakers;
     int                         lfe_channel;
+    BYTE                       *filter_buffer;
     float *tmp_buffer, *cp_buffer;
-    DWORD                       tmp_buffer_len, cp_buffer_len;
+    DWORD                       filter_buffer_len, tmp_buffer_len, cp_buffer_len;
     CO_MTA_USAGE_COOKIE         mta_cookie;
 
     DSVOLUMEPAN                 volpan;

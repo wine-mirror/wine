@@ -1302,7 +1302,7 @@ static HRESULT WINAPI dmo_SetInputType(IMediaObject *iface, DWORD index, const D
     ok(!flags, "Got unexpected flags %#lx.\n", flags);
 
     ok(IsEqualGUID(&type->majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&type->majortype));
-    todo_wine ok(IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&type->subtype));
+    ok(IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&type->subtype));
     ok(type->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", type->bFixedSizeSamples);
     ok(!type->bTemporalCompression, "Got temporal compression %d.\n", type->bTemporalCompression);
     ok(IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n", debugstr_guid(&type->formattype));
@@ -1310,7 +1310,7 @@ static HRESULT WINAPI dmo_SetInputType(IMediaObject *iface, DWORD index, const D
     ok(type->cbFormat == sizeof(WAVEFORMATEX), "Got format size %lu.\n", type->cbFormat);
 
     wfx = (WAVEFORMATEX *)type->pbFormat;
-    todo_wine ok(type->lSampleSize == wfx->nBlockAlign, "Got sample size %lu.\n", type->lSampleSize);
+    ok(type->lSampleSize == wfx->nBlockAlign, "Got sample size %lu.\n", type->lSampleSize);
 
     if (wfx->wBitsPerSample != 8)
         return DMO_E_TYPE_NOT_ACCEPTED;
@@ -1788,26 +1788,26 @@ static void test_effects(void)
     effects[0].guidDSFXClass = testdmo_clsid;
     results[0] = 0xdeadbeef;
     hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
-    todo_wine ok(hr == DS_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#lx.\n", results[0]);
-    todo_wine ok(!memcmp(&testdmo_input_type, &wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+    ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#lx.\n", results[0]);
+    ok(!memcmp(&testdmo_input_type, &wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
 
     ResetEvent(notify_params.hEventNotify);
     hr = IDirectSoundBuffer8_Play(buffer8, 0, 0, 0);
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+    ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
 
-    todo_wine ok(!WaitForSingleObject(got_Process, 100), "Wait timed out.\n");
+    ok(!WaitForSingleObject(got_Process, 100), "Wait timed out.\n");
 
     hr = IDirectSoundBuffer8_Stop(buffer8);
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+    ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
     ok(!WaitForSingleObject(notify_params.hEventNotify, 1000), "Wait timed out.\n");
 
     ResetEvent(notify_params.hEventNotify);
     hr = IDirectSoundBuffer8_Play(buffer8, 0, 0, 0);
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(got_Discontinuity == 2, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+    ok(got_Discontinuity == 2, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
 
     hr = IDirectSoundBuffer8_Stop(buffer8);
     ok(hr == DS_OK, "Got hr %#lx.\n", hr);

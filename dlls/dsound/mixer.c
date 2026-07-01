@@ -99,17 +99,17 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
     TRACE("Vol=%ld Pan=%ld\n", volpan->lVolume, volpan->lPan);
 }
 
-static void get8(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+static void get8(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
 {
     DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + channel;
     int i;
 
     for (i = 0; i < samples; ++i)
-        dst[i] = (buf[i * channels] - 0x80) / (float)0x80;
+        ((float *)dst)[i] = (buf[i * channels] - 0x80) / (float)0x80;
 }
 
-static void get16(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+static void get16(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
 {
     DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 2 * channel;
@@ -117,10 +117,10 @@ static void get16(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, uns
     int i;
 
     for (i = 0; i < samples; ++i)
-        dst[i] = sbuf[i * channels] / (float)0x8000;
+        ((float *)dst)[i] = sbuf[i * channels] / (float)0x8000;
 }
 
-static void get24(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+static void get24(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
 {
     DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 3 * channel;
@@ -134,11 +134,11 @@ static void get24(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, uns
                 (buf[i * channels * 3 + 0] << 8) |
                 (buf[i * channels * 3 + 1] << 16) |
                 (buf[i * channels * 3 + 2] << 24);
-        dst[i] = sample / (float)0x80000000U;
+        ((float *)dst)[i] = sample / (float)0x80000000U;
     }
 }
 
-static void get32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+static void get32(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
 {
     DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 4 * channel;
@@ -146,12 +146,12 @@ static void get32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, uns
     int i;
 
     for (i = 0; i < samples; ++i)
-        dst[i] = sbuf[i * channels] / (float)0x80000000U;
+        ((float *)dst)[i] = sbuf[i * channels] / (float)0x80000000U;
 }
 
 static const bitsgetfunc getbpp[4] = {get8, get16, get24, get32};
 
-static void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+static void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
 {
     DWORD channels = dsb->pwfx->nChannels;
     const BYTE *buf = base + 4 * channel;
@@ -160,7 +160,14 @@ static void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst,
 
     for (i = 0; i < samples; ++i)
         /* The value will be clipped later, when put into some non-float buffer */
-        dst[i] = sbuf[i * channels];
+        ((float *)dst)[i] = sbuf[i * channels];
+}
+
+static void get_raw(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel)
+{
+    DWORD istride = dsb->pwfx->nBlockAlign;
+
+    memcpy(dst, base, samples * istride);
 }
 
 /**
@@ -363,31 +370,52 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 }
 
 static inline void get_samples(const IDirectSoundBufferImpl *dsb, BYTE *buffer, DWORD buflen,
-        DWORD mixpos, DWORD channel, DWORD count, float *dst)
+        DWORD mixpos, DWORD channel, DWORD count, DWORD ostride, BYTE *dst, bitsgetfunc get)
 {
     UINT istride = dsb->pwfx->nBlockAlign;
     DWORD advance;
     DWORD pos;
 
     if (dsb->state == STATE_STOPPING) {
-        memset(dst, 0, count * sizeof(float));
+        memset(dst, 0, count * ostride);
         return;
     }
 
     if (!(dsb->playflags & DSBPLAY_LOOPING)) {
         advance = buflen < mixpos ? 0 : min((buflen - mixpos) / istride, count);
-        dsb->get(dsb, buffer + mixpos, dst, advance, channel);
-        memset(dst + advance, 0, (count - advance) * sizeof(float));
+        get(dsb, buffer + mixpos, dst, advance, channel);
+        memset(dst + advance * ostride, 0, (count - advance) * ostride);
         return;
     }
 
     advance = min((buflen - mixpos % buflen) / istride, count);
-    dsb->get(dsb, buffer + mixpos % buflen, dst, advance, channel);
+    get(dsb, buffer + mixpos % buflen, dst, advance, channel);
     pos = advance;
     while (pos < count) {
         advance = min(buflen / istride, count - pos);
-        dsb->get(dsb, buffer, dst + pos, advance, channel);
+        get(dsb, buffer, dst + pos * ostride, advance, channel);
         pos += advance;
+    }
+}
+
+static inline void filter_samples(const IDirectSoundBufferImpl *dsb, BYTE *buffer, DWORD buflen,
+        DWORD mixpos, DWORD count, BYTE *dst)
+{
+    UINT istride = dsb->pwfx->nBlockAlign;
+    IMediaObjectInPlace *inplace;
+    int i;
+
+    get_samples(dsb, buffer, buflen, mixpos, 0, count, istride, dst, get_raw);
+
+    for (i = 0; i < dsb->num_filters; i++) {
+        if (!(inplace = dsb->filters[i].inplace)) {
+            WARN("filter %u has no inplace object - unsupported\n", i);
+            continue;
+        }
+
+        if (FAILED(IMediaObjectInPlace_Process(inplace, count * istride, dst, 0,
+                DMO_INPLACE_NORMAL)))
+            WARN("IMediaObjectInPlace_Process failed for filter %u\n", i);
     }
 }
 
@@ -657,6 +685,21 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
     len += FIR_WIDTH - 1 + (count + FIR_WIDTH - 1) * channels;
     len *= sizeof(float);
 
+    if (dsb->num_filters) {
+        DWORD size_bytes = max_ipos * dsb->pwfx->nBlockAlign;
+
+        if (dsb->device->filter_buffer_len < size_bytes) {
+            BYTE *filter_buffer = realloc(dsb->device->filter_buffer, size_bytes);
+            if (!filter_buffer)
+                return max_ipos;
+            dsb->device->filter_buffer_len = size_bytes;
+            dsb->device->filter_buffer = filter_buffer;
+        }
+
+        filter_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, max_ipos,
+                dsb->device->filter_buffer);
+    }
+
     *freqAccNum = freqAcc_end % dsb->freqAdjustDen;
 
     if (!secondarybuffer_is_audible(dsb)) {
@@ -680,8 +723,13 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
      * This is good for CPU cache effects, too.
      */
     for (channel = 0; channel < channels; channel++) {
-        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, max_ipos,
-                intermediate + channel * total_input + dsb->input_delay);
+        float *channel_input = intermediate + channel * total_input;
+        if (dsb->num_filters)
+            get_samples(dsb, dsb->device->filter_buffer, dsb->device->filter_buffer_len, 0, channel,
+                    max_ipos, sizeof(float), (BYTE *)(channel_input + dsb->input_delay), dsb->get);
+        else
+            get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, max_ipos,
+                    sizeof(float), (BYTE *)(channel_input + dsb->input_delay), dsb->get);
     }
 
     for (channel = 0; channel < channels; channel++) {
@@ -722,6 +770,21 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
     DWORD len = total_input * dsb->mix_channels;
     len *= sizeof(float);
 
+    if (dsb->num_filters) {
+        DWORD size_bytes = count * dsb->pwfx->nBlockAlign;
+
+        if (dsb->device->filter_buffer_len < size_bytes) {
+            BYTE *filter_buffer = realloc(dsb->device->filter_buffer, size_bytes);
+            if (!filter_buffer)
+                return count;
+            dsb->device->filter_buffer_len = size_bytes;
+            dsb->device->filter_buffer = filter_buffer;
+        }
+
+        filter_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, count,
+                dsb->device->filter_buffer);
+    }
+
     if (!secondarybuffer_is_audible(dsb)) {
         dsb->input_tail_valid = FALSE;
         return count;
@@ -739,8 +802,13 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 
     for (channel = 0; channel < dsb->mix_channels; channel++)
     {
-        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, count,
-                intermediate + channel * total_input + dsb->input_delay);
+        float *channel_input = intermediate + channel * total_input;
+        if (dsb->num_filters)
+            get_samples(dsb, dsb->device->filter_buffer, dsb->device->filter_buffer_len, 0, channel,
+                    count, sizeof(float), (BYTE *)(channel_input + dsb->input_delay), dsb->get);
+        else
+            get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, count,
+                    sizeof(float), (BYTE *)(channel_input + dsb->input_delay), dsb->get);
     }
 
     for (channel = 0; channel < dsb->mix_channels; channel++) {
@@ -825,8 +893,6 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
 static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 {
 	UINT size_bytes = frames * sizeof(float) * dsb->device->pwfx->nChannels;
-	HRESULT hr;
-	int i;
 
 	if (dsb->device->tmp_buffer_len < size_bytes || !dsb->device->tmp_buffer)
 	{
@@ -837,18 +903,6 @@ static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 		memset(dsb->device->tmp_buffer, 0, dsb->device->tmp_buffer_len);
 
 	cp_fields(dsb, frames, &dsb->freqAccNum);
-
-	if (size_bytes > 0) {
-		for (i = 0; i < dsb->num_filters; i++) {
-			if (dsb->filters[i].inplace) {
-				hr = IMediaObjectInPlace_Process(dsb->filters[i].inplace, size_bytes, (BYTE*)dsb->device->tmp_buffer, 0, DMO_INPLACE_NORMAL);
-
-				if (FAILED(hr))
-					WARN("IMediaObjectInPlace_Process failed for filter %u\n", i);
-			} else
-				WARN("filter %u has no inplace object - unsupported\n", i);
-		}
-	}
 }
 
 static void DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT frames)

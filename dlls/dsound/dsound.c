@@ -224,6 +224,7 @@ static void DirectSoundDevice_destroy(DirectSoundDevice *device)
         if(device->mmdevice)
             IMMDevice_Release(device->mmdevice);
         CloseHandle(device->sleepev);
+        free(device->filter_buffer);
         free(device->tmp_buffer);
         free(device->cp_buffer);
         free(device->buffer);
