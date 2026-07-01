@@ -1485,6 +1485,18 @@ HANDLE WINAPI FindFirstFileNameW( const WCHAR *file_name, DWORD flags, DWORD *le
     return INVALID_HANDLE_VALUE;
 }
 
+
+/******************************************************************************
+ *     FindNextFileNameW   (kernelbase.@)
+ */
+BOOL WINAPI FindNextFileNameW( HANDLE handle, DWORD *len, WCHAR *link_name )
+{
+    FIXME( "(%p, %p, %p): stub.\n", handle, len, link_name );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 /**************************************************************************
  *	FindFirstStreamW   (kernelbase.@)
  */

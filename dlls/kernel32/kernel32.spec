@@ -505,7 +505,7 @@
 @ stdcall -import FindFirstVolumeW(ptr long)
 @ stdcall -import FindNextChangeNotification(long)
 @ stdcall -import FindNextFileA(long ptr)
-# @ stub FindNextFileNameW
+@ stdcall -import FindNextFileNameW(ptr ptr ptr)
 @ stdcall -import FindNextFileW(long ptr)
 @ stdcall -import FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
