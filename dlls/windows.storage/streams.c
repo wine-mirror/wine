@@ -306,13 +306,19 @@ static HRESULT WINAPI memory_stream_random_access_get_Size( IRandomAccessStream 
 static HRESULT WINAPI memory_stream_random_access_put_Size( IRandomAccessStream *iface, UINT64 value )
 {
     struct memory_stream *impl = impl_from_IRandomAccessStream( iface );
+    HRESULT hr;
 
-    FIXME( "iface %p, value %I64u stub!\n", iface, value );
+    TRACE( "iface %p, value %I64u.\n", iface, value );
 
     if (impl->closed)
         return RO_E_CLOSED;
 
-    return E_NOTIMPL;
+    /* Native truncates the size to 32 bits, which is not replicated here if size_t is 64 bits. */
+    if (FAILED(hr = memory_stream_require_capacity( impl, value )))
+        return hr;
+
+    impl->size = min( value, SIZE_MAX );
+    return S_OK;
 }
 
 static HRESULT WINAPI memory_stream_random_access_GetInputStreamAt( IRandomAccessStream *iface, UINT64 position,

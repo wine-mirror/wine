@@ -491,11 +491,9 @@ static void test_InMemoryRandomAccessStream(void)
      * but only allows reading from positions less than 1 << 31
      * Both of these seem potentially subject to change, so are untested. */
     hr = IRandomAccessStream_put_Size( in_memory_stream, 0x100000 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IRandomAccessStream_get_Size( in_memory_stream, &value64 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( value64 == 0x100000, "got size %I64u.\n", value64 );
     hr = IRandomAccessStream_get_Position( in_memory_stream, &value64 );
     todo_wine
