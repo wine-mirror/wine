@@ -1190,6 +1190,7 @@
 @ stdcall Process32Next (ptr ptr)
 @ stdcall Process32NextW (ptr ptr)
 @ stdcall -import ProcessIdToSessionId(long ptr)
+@ stdcall -import PssCaptureSnapshot(ptr long long ptr)
 @ stdcall -import PssFreeSnapshot(ptr ptr)
 @ stdcall -import PssQuerySnapshot(ptr long ptr long)
 @ stdcall -import PulseEvent(long)

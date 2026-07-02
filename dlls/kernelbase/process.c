@@ -1926,3 +1926,12 @@ DWORD WINAPI PssFreeSnapshot( HANDLE hprocess, HPSS handle )
     FIXME( "(%p %p)\n", hprocess , handle );
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ *           PssCaptureSnapshot   (kernelbase.@)
+ */
+DWORD WINAPI PssCaptureSnapshot( HANDLE hprocess, PSS_CAPTURE_FLAGS flags, DWORD ctx_flags, HPSS *handle )
+{
+    FIXME( "(%p %u %lu %p)\n", hprocess , flags, ctx_flags, handle );
+    return ERROR_NOT_FOUND;
+}
