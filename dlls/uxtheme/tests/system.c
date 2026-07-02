@@ -55,6 +55,7 @@ static BOOLEAN (WINAPI *pShouldAppsUseDarkMode)(void);
 static DWORD (WINAPI *pGetImmersiveColorFromColorSetEx)(UINT, UINT, BOOL, UINT);
 static UINT (WINAPI *pGetImmersiveColorTypeFromName)(const WCHAR *);
 static int (WINAPI *pGetImmersiveUserColorSetPreference)(BOOL, BOOL);
+static const WCHAR ** (WINAPI *pGetImmersiveColorNamedTypeByIndex)(UINT);
 
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
@@ -86,6 +87,7 @@ static void init_funcs(void)
     pShouldSystemUseDarkMode = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(138));
     pShouldAppsUseDarkMode = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132));
     pGetImmersiveColorTypeFromName = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(96));
+    pGetImmersiveColorNamedTypeByIndex = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(100));
 
 #define GET_PROC(module, func)                       \
     p##func = (void *)GetProcAddress(module, #func); \
@@ -2786,12 +2788,13 @@ static void test_ShouldAppsUseDarkMode(void)
 
 static void test_GetImmersiveColors(void)
 {
+    const WCHAR **name;
     DWORD color;
     UINT type;
     int pref;
 
     if (!pGetImmersiveColorFromColorSetEx || !pGetImmersiveColorTypeFromName
-        || !pGetImmersiveUserColorSetPreference)
+        || !pGetImmersiveUserColorSetPreference || !pGetImmersiveColorNamedTypeByIndex)
     {
         win_skip("Immersive color set functions are unavailable.\n");
         return;
@@ -2805,6 +2808,21 @@ static void test_GetImmersiveColors(void)
 
     color = pGetImmersiveColorFromColorSetEx(pref, 0, FALSE, 0);
     ok(color != 0, "Got unexpected color %#lx.\n", color);
+
+    name = pGetImmersiveColorNamedTypeByIndex(0);
+    todo_wine ok(!!name, "Got unexpected NULL color type name.\n");
+    if (name)
+    {
+        WCHAR full_name[128];
+
+        ok(*name && (*name)[0], "Got an empty color type name.\n");
+
+        /* Color type names are returned without their "Immersive" prefix. */
+        lstrcpyW(full_name, L"Immersive");
+        lstrcatW(full_name, *name);
+        type = pGetImmersiveColorTypeFromName(full_name);
+        ok(type != ~0u, "Got unexpected color type %#x for %s.\n", type, wine_dbgstr_w(full_name));
+    }
 }
 
 static void test_DrawThemeEdge(void)
