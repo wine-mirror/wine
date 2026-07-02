@@ -201,3 +201,8 @@ NTSTATUS WINAPI FltParseFileNameInformation(PFLT_FILE_NAME_INFORMATION informati
     FIXME("%p\n", information);
     return STATUS_NOT_SUPPORTED;
 }
+
+void WINAPI FltReleaseFileNameInformation(PFLT_FILE_NAME_INFORMATION information)
+{
+    FIXME("%p\n", information);
+}

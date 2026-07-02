@@ -132,7 +132,7 @@
 @ stub FltReissueSynchronousIo
 @ stdcall FltReleaseContext(ptr)
 @ stub FltReleaseContexts
-@ stub FltReleaseFileNameInformation
+@ stdcall FltReleaseFileNameInformation(ptr)
 @ stdcall FltReleasePushLock(ptr)
 @ stub FltReleaseResource
 @ stub FltRequestOperationStatusCallback
