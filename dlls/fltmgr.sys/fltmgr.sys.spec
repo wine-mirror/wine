@@ -146,7 +146,7 @@
 @ stub FltSetInformationFile
 @ stub FltSetInstanceContext
 @ stub FltSetSecurityObject
-@ stub FltSetStreamContext
+@ stdcall FltSetStreamContext(ptr ptr long ptr ptr)
 @ stub FltSetStreamHandleContext
 @ stub FltSetVolumeContext
 @ stub FltSetVolumeInformation

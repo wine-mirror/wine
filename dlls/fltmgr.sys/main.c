@@ -166,3 +166,10 @@ NTSTATUS WINAPI FltGetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT  fileob
     FIXME("%p, %p, %p\n", instance, fileobject, context);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltSetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, FLT_SET_CONTEXT_OPERATION operation,
+        PFLT_CONTEXT new_context, PFLT_CONTEXT *old_context)
+{
+    FIXME("%p, %p, %d, %p, %p\n", instance, fileobject, operation, new_context, old_context);
+    return STATUS_NOT_SUPPORTED;
+}
