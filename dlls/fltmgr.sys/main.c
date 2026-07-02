@@ -160,3 +160,9 @@ void WINAPI FltReleaseContext(PFLT_CONTEXT context)
 {
     FIXME("%p\n", context);
 }
+
+NTSTATUS WINAPI FltGetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT  fileobject, PFLT_CONTEXT  *context)
+{
+    FIXME("%p, %p, %p\n", instance, fileobject, context);
+    return STATUS_NOT_SUPPORTED;
+}

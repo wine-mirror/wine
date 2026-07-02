@@ -80,7 +80,7 @@
 @ stub FltGetRequestorProcess
 @ stub FltGetRequestorProcessId
 @ stdcall FltGetRoutineAddress(str)
-@ stub FltGetStreamContext
+@ stdcall FltGetStreamContext(ptr ptr ptr)
 @ stub FltGetStreamHandleContext
 @ stub FltGetSwappedBufferMdlAddress
 @ stub FltGetTopInstance
