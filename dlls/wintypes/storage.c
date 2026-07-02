@@ -1,6 +1,7 @@
 /*
  * Copyright 2022-2024 Zhiyi Zhang for CodeWeavers
  * Copyright 2025 Jactry Zeng for CodeWeavers
+ * Copyright 2026 Conor McCarthy for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,302 @@
 #include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
+
+struct data_writer
+{
+    IDataWriter IDataWriter_iface;
+    LONG ref;
+};
+
+static struct data_writer *impl_from_IDataWriter(IDataWriter *iface)
+{
+    return CONTAINING_RECORD(iface, struct data_writer, IDataWriter_iface);
+}
+
+static HRESULT WINAPI data_writer_QueryInterface(IDataWriter *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IInspectable)
+            || IsEqualGUID(iid, &IID_IAgileObject)
+            || IsEqualGUID(iid, &IID_IDataWriter))
+    {
+        *out = iface;
+        IDataWriter_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI data_writer_AddRef(IDataWriter *iface)
+{
+    struct data_writer *impl = impl_from_IDataWriter(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI data_writer_Release(IDataWriter *iface)
+{
+    struct data_writer *impl = impl_from_IDataWriter(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI data_writer_GetIids(IDataWriter *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_GetRuntimeClassName(IDataWriter *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_GetTrustLevel(IDataWriter *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_get_UnstoredBufferLength(IDataWriter *iface, UINT32 *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_get_UnicodeEncoding(IDataWriter *iface, UnicodeEncoding *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_put_UnicodeEncoding(IDataWriter *iface, UnicodeEncoding value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_get_ByteOrder(IDataWriter *iface, ByteOrder *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_put_ByteOrder(IDataWriter *iface, ByteOrder value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteByte(IDataWriter *iface, BYTE value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteBytes(IDataWriter *iface, UINT32 value_size, BYTE *value)
+{
+    FIXME("iface %p, value_size %u, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteBuffer(IDataWriter *iface, IBuffer *buffer)
+{
+    FIXME("iface %p, buffer %p stub!\n", iface, buffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteBufferRange(IDataWriter *iface, IBuffer *buffer, UINT32 start, UINT32 count)
+{
+    FIXME("iface %p, buffer %p, start %u, count %u stub!\n", iface, buffer, start, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteBoolean(IDataWriter *iface, boolean value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteGuid(IDataWriter *iface, GUID value)
+{
+    FIXME("iface %p, value %s stub!\n", iface, debugstr_guid(&value));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteInt16(IDataWriter *iface, INT16 value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteInt32(IDataWriter *iface, INT32 value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteInt64(IDataWriter *iface, INT64 value)
+{
+    FIXME("iface %p, value %I64d stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteUInt16(IDataWriter *iface, UINT16 value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteUInt32(IDataWriter *iface, UINT32 value)
+{
+    FIXME("iface %p, value %u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteUInt64(IDataWriter *iface, UINT64 value)
+{
+    FIXME("iface %p, value %I64u stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteSingle(IDataWriter *iface, FLOAT value)
+{
+    FIXME("iface %p, value %.7f stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteDouble(IDataWriter *iface, DOUBLE value)
+{
+    FIXME("iface %p, value %.15f stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteDateTime(IDataWriter *iface, DateTime value)
+{
+    FIXME("iface %p, value %I64u stub!\n", iface, value.UniversalTime);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteTimeSpan(IDataWriter *iface, TimeSpan value)
+{
+    FIXME("iface %p, value %I64u stub!\n", iface, value.Duration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_WriteString(IDataWriter *iface, HSTRING value, UINT32 *code_unit_count)
+{
+    FIXME("iface %p, value %p, code_unit_count %p stub!\n", iface, value, code_unit_count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_MeasureString(IDataWriter *iface, HSTRING value, UINT32 *code_unit_count)
+{
+    FIXME("iface %p, value %p, code_unit_count %p stub!\n", iface, value, code_unit_count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_StoreAsync(IDataWriter *iface, IAsyncOperation_UINT32 **operation)
+{
+    FIXME("iface %p, operation %p stub!\n", iface, operation);
+
+    *operation = NULL;
+    return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+}
+
+static HRESULT WINAPI data_writer_FlushAsync(IDataWriter *iface, IAsyncOperation_boolean **operation)
+{
+    FIXME("iface %p, operation %p stub!\n", iface, operation);
+
+    *operation = NULL;
+    return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+}
+
+static HRESULT WINAPI data_writer_DetachBuffer(IDataWriter *iface, IBuffer **buffer)
+{
+    FIXME("iface %p, buffer %p stub!\n", iface, buffer);
+
+    *buffer = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI data_writer_DetachStream(IDataWriter *iface, IOutputStream **output_stream)
+{
+    FIXME("iface %p, output_stream %p stub!\n", iface, output_stream);
+
+    *output_stream = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IDataWriterVtbl data_writer_vtbl =
+{
+    /* IUnknown methods */
+    data_writer_QueryInterface,
+    data_writer_AddRef,
+    data_writer_Release,
+    /* IInspectable methods */
+    data_writer_GetIids,
+    data_writer_GetRuntimeClassName,
+    data_writer_GetTrustLevel,
+    /* IDataWriter */
+    data_writer_get_UnstoredBufferLength,
+    data_writer_get_UnicodeEncoding,
+    data_writer_put_UnicodeEncoding,
+    data_writer_get_ByteOrder,
+    data_writer_put_ByteOrder,
+    data_writer_WriteByte,
+    data_writer_WriteBytes,
+    data_writer_WriteBuffer,
+    data_writer_WriteBufferRange,
+    data_writer_WriteBoolean,
+    data_writer_WriteGuid,
+    data_writer_WriteInt16,
+    data_writer_WriteInt32,
+    data_writer_WriteInt64,
+    data_writer_WriteUInt16,
+    data_writer_WriteUInt32,
+    data_writer_WriteUInt64,
+    data_writer_WriteSingle,
+    data_writer_WriteDouble,
+    data_writer_WriteDateTime,
+    data_writer_WriteTimeSpan,
+    data_writer_WriteString,
+    data_writer_MeasureString,
+    data_writer_StoreAsync,
+    data_writer_FlushAsync,
+    data_writer_DetachBuffer,
+    data_writer_DetachStream,
+};
+
+static HRESULT data_writer_create(IDataWriter **out)
+{
+    struct data_writer *impl;
+
+    *out = NULL;
+    if (!(impl = calloc(1, sizeof(*impl))))
+        return E_OUTOFMEMORY;
+
+    impl->IDataWriter_iface.lpVtbl = &data_writer_vtbl;
+    impl->ref = 1;
+
+    *out = &impl->IDataWriter_iface;
+    return S_OK;
+}
 
 struct data_writer_factory
 {
@@ -92,8 +389,18 @@ static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_GetTrustLevel(IA
 static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_ActivateInstance(IActivationFactory *iface,
         IInspectable **instance)
 {
-    FIXME("iface %p, instance %p stub!\n", iface, instance);
-    return S_OK;
+    IDataWriter *data_writer;
+    HRESULT hr;
+
+    TRACE("iface %p, instance %p.\n", iface, instance);
+
+    if (FAILED(hr = data_writer_create(&data_writer)))
+        return hr;
+
+    hr = IDataWriter_QueryInterface(data_writer, &IID_IInspectable, (void **)instance);
+    IDataWriter_Release(data_writer);
+
+    return hr;
 }
 
 static const struct IActivationFactoryVtbl data_writer_activation_factory_vtbl =

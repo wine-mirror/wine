@@ -1681,11 +1681,6 @@ static void test_DataWriter(void)
     todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     IActivationFactory_Release(factory);
-    if (FAILED(hr))
-    {
-        RoUninitialize();
-        return;
-    }
 
     hr = IInspectable_QueryInterface(inspectable, &IID_IDataWriter, (void **)&data_writer);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
