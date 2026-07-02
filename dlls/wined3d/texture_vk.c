@@ -328,12 +328,11 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     if (src_format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
     {
         struct wined3d_const_bo_address uv_bo_addr;
-        const struct wined3d_format *plane_format;
         struct wined3d_box uv_box;
 
-        plane_format = wined3d_get_format(context->device->adapter, src_format->plane_formats[0], 0);
-        wined3d_texture_vk_upload_plane(context, VK_IMAGE_ASPECT_PLANE_0_BIT, src_bo_addr, plane_format, src_box,
-                src_row_pitch, src_slice_pitch, dst_texture, dst_sub_resource_idx, dst_x, dst_y, dst_z);
+        wined3d_texture_vk_upload_plane(context, VK_IMAGE_ASPECT_PLANE_0_BIT,
+                src_bo_addr, src_format->plane_formats[0], src_box, src_row_pitch, src_slice_pitch,
+                dst_texture, dst_sub_resource_idx, dst_x, dst_y, dst_z);
 
         uv_bo_addr = *src_bo_addr;
         uv_bo_addr.addr += src_slice_pitch;
@@ -347,9 +346,9 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
         src_row_pitch = src_row_pitch * 2 / src_format->uv_width;
         src_slice_pitch = src_slice_pitch * 2 / src_format->uv_width / src_format->uv_height;
 
-        plane_format = wined3d_get_format(context->device->adapter, src_format->plane_formats[1], 0);
-        wined3d_texture_vk_upload_plane(context, VK_IMAGE_ASPECT_PLANE_1_BIT, &uv_bo_addr, plane_format, &uv_box,
-                src_row_pitch, src_slice_pitch, dst_texture, dst_sub_resource_idx, dst_x, dst_y, dst_z);
+        wined3d_texture_vk_upload_plane(context, VK_IMAGE_ASPECT_PLANE_1_BIT, &uv_bo_addr,
+                src_format->plane_formats[1], &uv_box, src_row_pitch, src_slice_pitch,
+                dst_texture, dst_sub_resource_idx, dst_x, dst_y, dst_z);
     }
     else
     {
@@ -626,13 +625,12 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
 
     if (dst_format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
     {
-        const struct wined3d_format *plane_format;
         struct wined3d_bo_address uv_bo_addr;
         struct wined3d_box uv_box;
 
-        plane_format = wined3d_get_format(context->device->adapter, dst_format->plane_formats[0], 0);
-        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_0_BIT, src_texture, src_sub_resource_idx,
-                src_box, dst_bo_addr, plane_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_0_BIT,
+                src_texture, src_sub_resource_idx, src_box,
+                dst_bo_addr, dst_format->plane_formats[0], dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
 
         uv_bo_addr = *dst_bo_addr;
         uv_bo_addr.addr += dst_slice_pitch;
@@ -646,9 +644,9 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         dst_row_pitch = dst_row_pitch * 2 / dst_format->uv_width;
         dst_slice_pitch = dst_slice_pitch * 2 / dst_format->uv_width / dst_format->uv_height;
 
-        plane_format = wined3d_get_format(context->device->adapter, dst_format->plane_formats[1], 0);
-        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_1_BIT, src_texture, src_sub_resource_idx,
-                &uv_box, &uv_bo_addr, plane_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_1_BIT,
+                src_texture, src_sub_resource_idx, &uv_box,
+                &uv_bo_addr, dst_format->plane_formats[1], dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
     }
     else
     {

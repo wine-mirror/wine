@@ -4605,7 +4605,7 @@ struct wined3d_format
     UINT block_height;
     UINT block_byte_count;
 
-    enum wined3d_format_id plane_formats[2];
+    struct wined3d_format *plane_formats[2];
     unsigned int uv_width, uv_height;
 
     enum wined3d_ffp_emit_idx emit_idx;

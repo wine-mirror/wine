@@ -2108,8 +2108,8 @@ static void init_format_plane_info(struct wined3d_adapter *adapter)
         struct wined3d_format *format = get_format_internal(adapter, format_plane_info[i].id);
 
         format->attrs |= WINED3D_FORMAT_ATTR_PLANAR;
-        format->plane_formats[0] = format_plane_info[i].plane_formats[0];
-        format->plane_formats[1] = format_plane_info[i].plane_formats[1];
+        format->plane_formats[0] = get_format_internal(adapter, format_plane_info[i].plane_formats[0]);
+        format->plane_formats[1] = get_format_internal(adapter, format_plane_info[i].plane_formats[1]);
         format->uv_width = format_plane_info[i].uv_width;
         format->uv_height = format_plane_info[i].uv_height;
     }
@@ -4263,7 +4263,7 @@ static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wine
 
         caps = ~0u;
         for (unsigned int i = 0; i < 2; ++i)
-            caps &= get_format_internal(adapter, format->f.plane_formats[i])->caps[WINED3D_GL_RES_TYPE_TEX_2D];
+            caps &= format->f.plane_formats[i]->caps[WINED3D_GL_RES_TYPE_TEX_2D];
         format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] |= caps;
         TRACE("Caps %#08x are supported for format %s.\n", caps, debug_d3dformat(format->f.id));
         return;

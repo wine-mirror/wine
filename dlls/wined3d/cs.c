@@ -2799,13 +2799,12 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         {
             unsigned int uv_height = format->uv_height;
             unsigned int uv_width = format->uv_width;
-            const struct wined3d_format *plane_format;
 
-            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[0], 0);
-            wined3d_format_copy_data(plane_format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
-                    map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
-            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[1], 0);
-            wined3d_format_copy_data(plane_format, (const uint8_t *)data + (row_pitch * (box->bottom - box->top)),
+            wined3d_format_copy_data(format->plane_formats[0], data, row_pitch, slice_pitch,
+                    map_desc.data, map_desc.row_pitch, map_desc.slice_pitch,
+                    box->right - box->left, box->bottom - box->top, box->back - box->front);
+            wined3d_format_copy_data(format->plane_formats[1],
+                    (const uint8_t *)data + (row_pitch * (box->bottom - box->top)),
                     row_pitch * 2 / uv_width, slice_pitch * 2 / uv_width / uv_height,
                     (uint8_t *)map_desc.data + map_desc.slice_pitch,
                     map_desc.row_pitch * 2 / uv_width, map_desc.slice_pitch * 2 / uv_width / uv_height,
