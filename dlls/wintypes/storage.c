@@ -21,15 +21,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
 
-struct data_writer
+struct data_writer_factory
 {
     IActivationFactory IActivationFactory_iface;
     LONG ref;
 };
 
-static inline struct data_writer *impl_data_writer_from_IActivationFactory(IActivationFactory *iface)
+static inline struct data_writer_factory *impl_data_writer_factory_from_IActivationFactory(IActivationFactory *iface)
 {
-    return CONTAINING_RECORD(iface, struct data_writer, IActivationFactory_iface);
+    return CONTAINING_RECORD(iface, struct data_writer_factory, IActivationFactory_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_QueryInterface(IActivationFactory *iface, REFIID iid,
@@ -54,7 +54,7 @@ static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_QueryInterface(I
 
 static ULONG STDMETHODCALLTYPE data_writer_activation_factory_AddRef(IActivationFactory *iface)
 {
-    struct data_writer *impl = impl_data_writer_from_IActivationFactory(iface);
+    struct data_writer_factory *impl = impl_data_writer_factory_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
@@ -62,7 +62,7 @@ static ULONG STDMETHODCALLTYPE data_writer_activation_factory_AddRef(IActivation
 
 static ULONG STDMETHODCALLTYPE data_writer_activation_factory_Release(IActivationFactory *iface)
 {
-    struct data_writer *impl = impl_data_writer_from_IActivationFactory(iface);
+    struct data_writer_factory *impl = impl_data_writer_factory_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
@@ -109,10 +109,10 @@ static const struct IActivationFactoryVtbl data_writer_activation_factory_vtbl =
     data_writer_activation_factory_ActivateInstance,
 };
 
-struct data_writer data_writer =
+struct data_writer_factory data_writer_factory =
 {
     {&data_writer_activation_factory_vtbl},
     1
 };
 
-IActivationFactory *data_writer_activation_factory = &data_writer.IActivationFactory_iface;
+IActivationFactory *data_writer_activation_factory = &data_writer_factory.IActivationFactory_iface;
