@@ -68,7 +68,7 @@
 @ stub FltGetDeviceObject
 @ stub FltGetDiskDeviceObject
 @ stub FltGetFileContext
-@ stub FltGetFileNameInformation
+@ stdcall FltGetFileNameInformation(ptr long ptr)
 @ stdcall FltGetFileNameInformationUnsafe(ptr ptr long ptr)
 @ stub FltGetFilterFromInstance
 @ stub FltGetFilterFromName

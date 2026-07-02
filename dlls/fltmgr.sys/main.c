@@ -206,3 +206,9 @@ void WINAPI FltReleaseFileNameInformation(PFLT_FILE_NAME_INFORMATION information
 {
     FIXME("%p\n", information);
 }
+
+NTSTATUS WINAPI FltGetFileNameInformation(PFLT_CALLBACK_DATA callback, FLT_FILE_NAME_OPTIONS options, PFLT_FILE_NAME_INFORMATION *information)
+{
+    FIXME("%p, %lu, %p\n", callback, options, information);
+    return STATUS_NOT_SUPPORTED;
+}
