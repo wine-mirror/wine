@@ -1336,6 +1336,16 @@ BOOLEAN WINAPI IsDarkModeAllowedForWindow(HWND hwnd)
 }
 
 /**********************************************************************
+ *      GetImmersiveColorTypeFromName                      (UXTHEME.96)
+ *
+ */
+UINT WINAPI GetImmersiveColorTypeFromName(const WCHAR *name)
+{
+    FIXME("%s: stub\n", debugstr_w(name));
+    return ~0u;
+}
+
+/**********************************************************************
  *      GetImmersiveUserColorSetPreference                 (UXTHEME.98)
  *
  */
