@@ -850,7 +850,7 @@ HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPST
     if(szFileName)
         file_name = malloc(dwBufLength * sizeof(WCHAR));
 
-    hres = URLDownloadToCacheFileW(lpUnkCaller, url, file_name, dwBufLength*sizeof(WCHAR),
+    hres = URLDownloadToCacheFileW(lpUnkCaller, url, file_name, dwBufLength,
             dwReserved, pBSC);
 
     if(SUCCEEDED(hres) && file_name)
@@ -899,7 +899,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
                               header, sizeof(header), NULL, NULL))
         return E_FAIL;
 
-    if (lstrlenW(cache_path) > dwBufLength)
+    if (lstrlenW(cache_path) + 1 > dwBufLength)
         return E_OUTOFMEMORY;
 
     lstrcpyW(szFileName, cache_path);
