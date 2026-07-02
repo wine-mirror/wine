@@ -3,7 +3,7 @@
 @ stub FltAcquireResourceExclusive
 @ stub FltAcquireResourceShared
 @ stub FltAllocateCallbackData
-@ stub FltAllocateContext
+@ stdcall FltAllocateContext(ptr long long long ptr)
 @ stub FltAllocateDeferredIoWorkItem
 @ stub FltAllocateFileLock
 @ stub FltAllocateGenericWorkItem

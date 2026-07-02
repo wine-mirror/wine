@@ -149,3 +149,9 @@ void WINAPI FltFreeSecurityDescriptor(PSECURITY_DESCRIPTOR descriptor)
 {
     ExFreePool(descriptor);
 }
+
+NTSTATUS WINAPI FltAllocateContext(PFLT_FILTER filter, FLT_CONTEXT_TYPE context, SIZE_T size, POOL_TYPE type, PFLT_CONTEXT *out)
+{
+    FIXME("%p, %d, %Iu, %u, %p\n", filter, context, size, type, *out);
+    return STATUS_NOT_SUPPORTED;
+}
