@@ -36384,9 +36384,9 @@ static void test_nv12(void)
     static const float clear_values_float[4] = {100.0, 100.0, 100.0, 100.0};
 
     static const char cs_code[] =
-            "Texture2D<uint> luma : register(t0);\n"
-            "Texture2D<uint2> chroma : register(t1);\n"
-            "RWTexture2D<uint> check : register(u1);\n"
+            "Texture2D<float> luma : register(t0);\n"
+            "Texture2D<float2> chroma : register(t1);\n"
+            "RWTexture2D<float> check : register(u1);\n"
             "\n"
             "uint2 size;\n"
             "\n"
@@ -36564,7 +36564,7 @@ static void test_nv12(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         desc.Height += height / 2;
-        desc.Format = DXGI_FORMAT_R8_UINT;
+        desc.Format = DXGI_FORMAT_R8_UNORM;
         desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &check_texture);
@@ -36581,7 +36581,7 @@ static void test_nv12(void)
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[0]);
         ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
-        srv_desc.Format = DXGI_FORMAT_R8_UINT;
+        srv_desc.Format = DXGI_FORMAT_R8_UNORM;
         srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
         srv_desc.Texture2D.MostDetailedMip = 0;
         srv_desc.Texture2D.MipLevels = 1;
@@ -36589,12 +36589,12 @@ static void test_nv12(void)
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[0]);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        srv_desc.Format = DXGI_FORMAT_R8G8_UINT;
+        srv_desc.Format = DXGI_FORMAT_R8G8_UNORM;
 
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[1]);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        uav_desc.Format = DXGI_FORMAT_R8_UINT;
+        uav_desc.Format = DXGI_FORMAT_R8_UNORM;
         uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
         uav_desc.Texture2D.MipSlice = 0;
 

@@ -84,12 +84,12 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
 static bool find_format_plane_idx(const struct wined3d_format *resource_format,
         const struct wined3d_format *plane_format, unsigned int *plane_idx)
 {
-    if (plane_format->id == resource_format->plane_formats[0]->id)
+    if (plane_format->typeless_id == resource_format->plane_formats[0]->typeless_id)
     {
         *plane_idx = 0;
         return true;
     }
-    if (plane_format->id == resource_format->plane_formats[1]->id)
+    if (plane_format->typeless_id == resource_format->plane_formats[1]->typeless_id)
     {
         *plane_idx = 1;
         return true;
