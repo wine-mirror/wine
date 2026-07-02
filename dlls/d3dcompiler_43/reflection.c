@@ -157,6 +157,24 @@ static struct d3dcompiler_shader_reflection_variable null_variable =
     &null_type
 };
 
+static bool require_space(size_t offset, size_t count, size_t size, size_t data_size)
+{
+    return !count || (data_size - offset) / count >= size;
+}
+
+/* Return a pointer to data in a code blob, with bounds checking. */
+static const void *get_data_ptr(const struct vkd3d_shader_code *code,
+        uint32_t offset, uint32_t count, uint32_t size)
+{
+    if (!require_space(offset, count, size, code->size))
+    {
+        WARN("Offset %#x and size %#x exceeds section size %#Ix.\n", offset, size, code->size);
+        return NULL;
+    }
+
+    return (const uint8_t *)code->code + offset;
+}
+
 static BOOL copy_name(const char *ptr, char **name)
 {
     if (!ptr || !ptr[0]) return TRUE;
@@ -186,6 +204,47 @@ static BOOL copy_value(const char *ptr, void **value, uint32_t size)
 
     return TRUE;
 }
+
+struct stat
+{
+    uint32_t instruction_count;
+    uint32_t temp_count;
+    uint32_t def_count;
+    uint32_t dcl_count;
+    uint32_t float_count;
+    uint32_t int_count;
+    uint32_t uint_count;
+    uint32_t static_flow_control_count;
+    uint32_t dynamic_flow_control_count;
+    uint32_t macro_instruction_count;
+    uint32_t temp_array_count;
+    uint32_t array_instruction_count;
+    uint32_t cut_count;
+    uint32_t emit_count;
+    uint32_t sample_count;
+    uint32_t load_count;
+    uint32_t sample_compare_count;
+    uint32_t sample_bias_count;
+    uint32_t sample_grad_count;
+    uint32_t mov_count;
+    uint32_t movc_count;
+    uint32_t type_conversion_count;
+    uint32_t bitwise_count;
+    uint32_t input_primitive;
+    uint32_t gs_output_topology;
+    uint32_t gs_max_output_vertex_count;
+    uint32_t gather_count;
+    uint32_t lod_count;
+    uint32_t sample_frequency;
+    uint32_t gs_instance_count;
+    uint32_t control_point_count;
+    uint32_t hs_output_primitive;
+    uint32_t hs_partitioning;
+    uint32_t tessellator_domain;
+    uint32_t barrier_count;
+    uint32_t atomic_count;
+    uint32_t store_count;
+};
 
 static int d3dcompiler_shader_reflection_type_compare(const void *key, const struct wine_rb_entry *entry)
 {
@@ -1022,126 +1081,60 @@ static const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection
 #endif
 };
 
-static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, const char *data, size_t data_size)
+static HRESULT parse_stat(struct d3dcompiler_shader_reflection *r, const struct vkd3d_shader_code *section)
 {
-    const char *ptr = data;
-    size_t size = data_size >> 2;
+    struct stat normalised_stat = {0};
+    size_t stat_size = section->size;
+    const struct stat *stat;
 
-    TRACE("Size %Iu.\n", size);
+    if (stat_size != sizeof(struct stat)
+            && stat_size != offsetof(struct stat, gs_instance_count)
+            && stat_size != offsetof(struct stat, sample_frequency))
+    {
+        FIXME("Unexpected STAT size %#Ix.\n", stat_size);
+        return E_FAIL;
+    }
 
-    r->desc.InstructionCount = read_u32(&ptr);
-    TRACE("InstructionCount: %u.\n", r->desc.InstructionCount);
+    if (!(stat = get_data_ptr(section, 0, 1, stat_size)))
+        return E_INVALIDARG;
+    memcpy(&normalised_stat, stat, stat_size);
 
-    r->desc.TempRegisterCount = read_u32(&ptr);
-    TRACE("TempRegisterCount: %u.\n", r->desc.TempRegisterCount);
-
-    r->desc.DefCount = read_u32(&ptr);
-    TRACE("DefCount: %u.\n", r->desc.DefCount);
-
-    r->desc.DclCount = read_u32(&ptr);
-    TRACE("DclCount: %u.\n", r->desc.DclCount);
-
-    r->desc.FloatInstructionCount = read_u32(&ptr);
-    TRACE("FloatInstructionCount: %u.\n", r->desc.FloatInstructionCount);
-
-    r->desc.IntInstructionCount = read_u32(&ptr);
-    TRACE("IntInstructionCount: %u.\n", r->desc.IntInstructionCount);
-
-    r->desc.UintInstructionCount = read_u32(&ptr);
-    TRACE("UintInstructionCount: %u.\n", r->desc.UintInstructionCount);
-
-    r->desc.StaticFlowControlCount = read_u32(&ptr);
-    TRACE("StaticFlowControlCount: %u.\n", r->desc.StaticFlowControlCount);
-
-    r->desc.DynamicFlowControlCount = read_u32(&ptr);
-    TRACE("DynamicFlowControlCount: %u.\n", r->desc.DynamicFlowControlCount);
-
-    r->desc.MacroInstructionCount = read_u32(&ptr);
-    TRACE("MacroInstructionCount: %u.\n", r->desc.MacroInstructionCount);
-
-    r->desc.TempArrayCount = read_u32(&ptr);
-    TRACE("TempArrayCount: %u.\n", r->desc.TempArrayCount);
-
-    r->desc.ArrayInstructionCount = read_u32(&ptr);
-    TRACE("ArrayInstructionCount: %u.\n", r->desc.ArrayInstructionCount);
-
-    r->desc.CutInstructionCount = read_u32(&ptr);
-    TRACE("CutInstructionCount: %u.\n", r->desc.CutInstructionCount);
-
-    r->desc.EmitInstructionCount = read_u32(&ptr);
-    TRACE("EmitInstructionCount: %u.\n", r->desc.EmitInstructionCount);
-
-    r->desc.TextureNormalInstructions = read_u32(&ptr);
-    TRACE("TextureNormalInstructions: %u.\n", r->desc.TextureNormalInstructions);
-
-    r->desc.TextureLoadInstructions = read_u32(&ptr);
-    TRACE("TextureLoadInstructions: %u.\n", r->desc.TextureLoadInstructions);
-
-    r->desc.TextureCompInstructions = read_u32(&ptr);
-    TRACE("TextureCompInstructions: %u.\n", r->desc.TextureCompInstructions);
-
-    r->desc.TextureBiasInstructions = read_u32(&ptr);
-    TRACE("TextureBiasInstructions: %u.\n", r->desc.TextureBiasInstructions);
-
-    r->desc.TextureGradientInstructions = read_u32(&ptr);
-    TRACE("TextureGradientInstructions: %u.\n", r->desc.TextureGradientInstructions);
-
-    r->mov_instruction_count = read_u32(&ptr);
-    TRACE("MovInstructionCount: %u.\n", r->mov_instruction_count);
-
-    skip_u32_unknown(&ptr, 1);
-
-    r->conversion_instruction_count = read_u32(&ptr);
-    TRACE("ConversionInstructionCount: %u.\n", r->conversion_instruction_count);
-
-    skip_u32_unknown(&ptr, 1);
-
+    r->desc.InstructionCount = normalised_stat.instruction_count;
+    r->desc.TempRegisterCount = normalised_stat.temp_count;
+    r->desc.DefCount = normalised_stat.def_count;
+    r->desc.DclCount = normalised_stat.dcl_count;
+    r->desc.FloatInstructionCount = normalised_stat.float_count;
+    r->desc.IntInstructionCount = normalised_stat.int_count;
+    r->desc.UintInstructionCount = normalised_stat.uint_count;
+    r->desc.StaticFlowControlCount = normalised_stat.static_flow_control_count;
+    r->desc.DynamicFlowControlCount = normalised_stat.dynamic_flow_control_count;
+    r->desc.MacroInstructionCount = normalised_stat.macro_instruction_count;
+    r->desc.TempArrayCount = normalised_stat.temp_array_count;
+    r->desc.ArrayInstructionCount = normalised_stat.array_instruction_count;
+    r->desc.CutInstructionCount = normalised_stat.cut_count;
+    r->desc.EmitInstructionCount = normalised_stat.emit_count;
+    r->desc.TextureNormalInstructions = normalised_stat.sample_count;
+    r->desc.TextureLoadInstructions = normalised_stat.load_count;
+    r->desc.TextureCompInstructions = normalised_stat.sample_compare_count;
+    r->desc.TextureBiasInstructions = normalised_stat.sample_bias_count;
+    r->desc.TextureGradientInstructions = normalised_stat.sample_grad_count;
+    r->mov_instruction_count = normalised_stat.mov_count;
+    r->conversion_instruction_count = normalised_stat.type_conversion_count;
 #if D3D_COMPILER_VERSION
-    r->desc.InputPrimitive = read_u32(&ptr);
-    TRACE("InputPrimitive: %x.\n", r->desc.InputPrimitive);
-
-    r->desc.GSOutputTopology = read_u32(&ptr);
-    TRACE("GSOutputTopology: %x.\n", r->desc.GSOutputTopology);
-
-    r->desc.GSMaxOutputVertexCount = read_u32(&ptr);
-    TRACE("GSMaxOutputVertexCount: %u.\n", r->desc.GSMaxOutputVertexCount);
-
-    skip_u32_unknown(&ptr, 2);
-
-    /* old dx10 stat size */
-    if (size == 28) return S_OK;
-
-    skip_u32_unknown(&ptr, 1);
-
-    /* dx10 stat size */
-    if (size == 29) return S_OK;
-
-    skip_u32_unknown(&ptr, 1);
-
-    r->desc.cControlPoints = read_u32(&ptr);
-    TRACE("cControlPoints: %u.\n", r->desc.cControlPoints);
-
-    r->desc.HSOutputPrimitive = read_u32(&ptr);
-    TRACE("HSOutputPrimitive: %x.\n", r->desc.HSOutputPrimitive);
-
-    r->desc.HSPartitioning = read_u32(&ptr);
-    TRACE("HSPartitioning: %x.\n", r->desc.HSPartitioning);
-
-    r->desc.TessellatorDomain = read_u32(&ptr);
-    TRACE("TessellatorDomain: %x.\n", r->desc.TessellatorDomain);
-
-    skip_u32_unknown(&ptr, 3);
-
-    /* dx11 stat size */
-    if (size == 37) return S_OK;
-#else
-    if (size == 28 || size == 29 || size == 37)
-        return S_OK;
+    r->desc.InputPrimitive = normalised_stat.input_primitive;
+    r->desc.GSOutputTopology = normalised_stat.gs_output_topology;
+    r->desc.GSMaxOutputVertexCount = normalised_stat.gs_max_output_vertex_count;
+    r->desc.cGSInstanceCount = normalised_stat.gs_instance_count;
+    r->desc.cControlPoints = normalised_stat.control_point_count;
+    r->desc.HSOutputPrimitive = normalised_stat.hs_output_primitive;
+    r->desc.HSPartitioning = normalised_stat.hs_partitioning;
+    r->desc.TessellatorDomain = normalised_stat.tessellator_domain;
+    r->desc.cBarrierInstructions = normalised_stat.barrier_count;
+    r->desc.cInterlockedInstructions = normalised_stat.atomic_count;
+    r->desc.cTextureStoreInstructions = normalised_stat.store_count;
 #endif
 
-    FIXME("Unhandled size %Iu.\n", size);
-
-    return E_FAIL;
+    return S_OK;
 }
 
 static HRESULT d3dcompiler_parse_type_members(struct d3dcompiler_shader_reflection *ref,
@@ -1579,6 +1572,7 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
 {
     struct vkd3d_shader_compile_info compile_info = {.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO};
     struct vkd3d_shader_dxbc_desc src_dxbc_desc;
+    bool found_stat = false;
     HRESULT hr = S_OK;
     unsigned int i;
     int ret;
@@ -1629,11 +1623,18 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
         }
         else if (section->tag == TAG_STAT)
         {
-            if (FAILED(hr = d3dcompiler_parse_stat(reflection, section->data.code, section->data.size)))
+            if (found_stat)
+            {
+                FIXME("Multiple STAT sections.\n");
+                continue;
+            }
+
+            if (FAILED(hr = parse_stat(reflection, &section->data)))
             {
                 WARN("Failed to parse STAT section.\n");
                 goto err_out;
             }
+            found_stat = true;
         }
     }
 
