@@ -125,7 +125,7 @@
 @ stub FltQueryVolumeInformationFile
 @ stub FltQueueDeferredIoWorkItem
 @ stub FltQueueGenericWorkItem
-@ stub FltReadFile
+@ stdcall FltReadFile(ptr ptr ptr long ptr long ptr ptr ptr)
 @ stub FltReferenceContext
 @ stub FltReferenceFileNameInformation
 @ stdcall FltRegisterFilter(ptr ptr ptr)

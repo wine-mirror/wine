@@ -187,3 +187,11 @@ NTSTATUS WINAPI FltGetFileNameInformationUnsafe(PFILE_OBJECT fileobject, PFLT_IN
     FIXME("%p, %p, %lu, %p\n", fileobject, instance, options, FileNameInformation);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltReadFile(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, PLARGE_INTEGER offset,
+        ULONG length, PVOID buffer, FLT_IO_OPERATION_FLAGS flags, PULONG read,
+        PFLT_COMPLETED_ASYNC_IO_CALLBACK callback, PVOID context)
+{
+    FIXME("%p, %p, %p, %lu, %p, 0x%lx, %p, %p, %p\n", instance, fileobject, offset, length, buffer, flags, read, callback, context);
+    return STATUS_NOT_SUPPORTED;
+}
