@@ -2154,19 +2154,16 @@ static void test_pnp_devices(void)
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
-    todo_wine ok(ret, "got error %#lx\n", GetLastError());
-    if (ret)
-    {
-        ok(dword == (CM_DEVCAP_EJECTSUPPORTED | CM_DEVCAP_UNIQUEID
-                | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#lx\n", dword);
-        ok(type == REG_DWORD, "got type %lu\n", type);
-    }
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(dword == (CM_DEVCAP_EJECTSUPPORTED | CM_DEVCAP_UNIQUEID
+            | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#lx\n", dword);
+    ok(type == REG_DWORD, "got type %lu\n", type);
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID,
             &type, (BYTE *)buffer, sizeof(buffer), NULL);
     todo_wine ok(!ret, "expected failure\n");
     if (ret)
-        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
+        todo_wine ok(GetLastError() == ERROR_INVALID_DATA, "got error %#lx\n", GetLastError());
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CONFIGFLAGS,
             &type, (BYTE *)&dword, sizeof(dword), NULL);

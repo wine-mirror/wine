@@ -868,7 +868,12 @@ typedef struct _DEVICE_CAPABILITIES {
   ULONG  NonDynamic : 1;
   ULONG  WarmEjectSupported : 1;
   ULONG  NoDisplayInUI : 1;
-  ULONG  Reserved : 14;
+  ULONG  Reserved1 : 1;
+  ULONG  WakeFromInterrupt : 1;
+  ULONG  SecureDevice : 1;
+  ULONG  ChildOfVgaEnabledBridge : 1;
+  ULONG  DecodeIoOnBoot : 1;
+  ULONG  Reserved : 9;
   ULONG  Address;
   ULONG  UINumber;
   DEVICE_POWER_STATE  DeviceState[PowerSystemMaximum];

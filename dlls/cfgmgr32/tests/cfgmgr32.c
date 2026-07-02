@@ -3255,9 +3255,9 @@ static void test_CM_Get_DevNode_Registry_Property(void)
     type = 0xdeadbeef;
     len = sizeof(buffer);
     ret = CM_Get_DevNode_Registry_PropertyW( node, CM_DRP_CAPABILITIES, &type, buffer, &len, 0 );
-    todo_wine ok_x4( ret, ==, CR_SUCCESS );
-    todo_wine ok_u4( type, ==, REG_DWORD );
-    todo_wine ok_u4( len, ==, 4 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_u4( type, ==, REG_DWORD );
+    ok_u4( len, ==, 4 );
     len = sizeof(buffer);
     ret = CM_Get_DevNode_Registry_PropertyW( node, CM_DRP_UI_NUMBER, &type, buffer, &len, 0 );
     ok_x4( ret, ==, CR_NO_SUCH_VALUE );
@@ -3483,9 +3483,9 @@ static void test_CM_Get_DevNode_Property(void)
     type = 0xdeadbeef;
     len = sizeof(buffer);
     ret = CM_Get_DevNode_PropertyW( node, &DEVPKEY_Device_Capabilities, &type, (BYTE *)buffer, &len, 0 );
-    todo_wine ok_x4( ret, ==, CR_SUCCESS );
-    todo_wine ok_u4( type, ==, DEVPROP_TYPE_UINT32 );
-    todo_wine ok_u4( len, ==, 4 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_u4( type, ==, DEVPROP_TYPE_UINT32 );
+    ok_u4( len, ==, 4 );
     len = sizeof(buffer);
     ret = CM_Get_DevNode_PropertyW( node, &DEVPKEY_Device_UINumber, &type, (BYTE *)buffer, &len, 0 );
     ok_x4( ret, ==, CR_NO_SUCH_VALUE );

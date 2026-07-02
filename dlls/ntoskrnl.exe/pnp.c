@@ -477,6 +477,36 @@ static void get_parent_id_prefix( DEVICE_OBJECT *parent, WCHAR *prefix_out )
     RegCloseKey( dev_hkey );
 }
 
+static INT32 cm_devcaps_from_device_capabalities(DEVICE_CAPABILITIES *caps)
+{
+    INT32 ret_val = 0;
+
+    if (caps->LockSupported)
+        ret_val |= CM_DEVCAP_LOCKSUPPORTED;
+    if (caps->EjectSupported)
+        ret_val |= CM_DEVCAP_EJECTSUPPORTED;
+    if (caps->Removable)
+        ret_val |= CM_DEVCAP_REMOVABLE;
+    if (caps->DockDevice)
+        ret_val |= CM_DEVCAP_DOCKDEVICE;
+    if (caps->UniqueID)
+        ret_val |= CM_DEVCAP_UNIQUEID;
+    if (caps->SilentInstall)
+        ret_val |= CM_DEVCAP_SILENTINSTALL;
+    if (caps->RawDeviceOK)
+        ret_val |= CM_DEVCAP_RAWDEVICEOK;
+    if (caps->SurpriseRemovalOK)
+        ret_val |= CM_DEVCAP_SURPRISEREMOVALOK;
+    if (caps->HardwareDisabled)
+        ret_val |= CM_DEVCAP_HARDWAREDISABLED;
+    if (caps->NonDynamic)
+        ret_val |= CM_DEVCAP_NONDYNAMIC;
+    if (caps->SecureDevice)
+        ret_val |= CM_DEVCAP_SECUREDEVICE;
+
+    return ret_val;
+}
+
 static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OBJECT *parent_device )
 {
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
@@ -487,6 +517,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
     WCHAR parent_id[MAX_DEVICE_ID_LEN];
     DEVICE_CAPABILITIES caps;
     BOOL need_driver = TRUE;
+    INT32 cm_devcaps;
     NTSTATUS status;
     HKEY key;
     WCHAR *id;
@@ -555,6 +586,8 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OB
         RegCloseKey( key );
     }
 
+    cm_devcaps = cm_devcaps_from_device_capabalities(&caps);
+    SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_CAPABILITIES, (BYTE *)&cm_devcaps, sizeof(cm_devcaps) );
     if (!get_device_id(device, BusQueryContainerID, &id) && id)
     {
         SetupDiSetDeviceRegistryPropertyW( set, &sp_device, SPDRP_BASE_CONTAINERID, (BYTE *)id,
