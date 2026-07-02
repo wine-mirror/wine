@@ -122,41 +122,12 @@ struct d3dcompiler_shader_reflection
     struct vkd3d_shader_scan_signature_info signature_info;
     struct vkd3d_shader_scan_thread_group_size_info thread_group_size_info;
 
+    D3D11_SHADER_DESC desc;
+
     uint32_t target;
-    char *creator;
-    UINT flags;
-    UINT version;
-    UINT bound_resource_count;
-    UINT constant_buffer_count;
 
     UINT mov_instruction_count;
     UINT conversion_instruction_count;
-    UINT instruction_count;
-    UINT emit_instruction_count;
-    D3D_PRIMITIVE_TOPOLOGY gs_output_topology;
-    UINT gs_max_output_vertex_count;
-    D3D_PRIMITIVE input_primitive;
-    UINT cut_instruction_count;
-    UINT def_count;
-    UINT dcl_count;
-    UINT static_flow_control_count;
-    UINT float_instruction_count;
-    UINT temp_register_count;
-    UINT int_instruction_count;
-    UINT uint_instruction_count;
-    UINT temp_array_count;
-    UINT array_instruction_count;
-    UINT texture_normal_instructions;
-    UINT texture_load_instructions;
-    UINT texture_comp_instructions;
-    UINT texture_bias_instructions;
-    UINT texture_gradient_instructions;
-    UINT dynamic_flow_control_count;
-    UINT macro_instruction_count;
-    UINT c_control_points;
-    D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
-    D3D_TESSELLATOR_PARTITIONING hs_partitioning;
-    D3D_TESSELLATOR_DOMAIN tessellator_domain;
 
     char *resource_string;
     D3D12_SHADER_INPUT_BIND_DESC *bound_resources;
@@ -285,7 +256,7 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
     {
         unsigned int i;
 
-        for (i = 0; i < ref->constant_buffer_count; ++i)
+        for (i = 0; i < ref->desc.ConstantBuffers; ++i)
         {
             free_constant_buffer(&ref->constant_buffers[i]);
         }
@@ -295,7 +266,7 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
     free(ref->constant_buffers);
     free(ref->bound_resources);
     free(ref->resource_string);
-    free(ref->creator);
+    free((void *)ref->desc.Creator);
 
     vkd3d_shader_free_scan_signature_info(&ref->signature_info);
 }
@@ -358,7 +329,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11Sha
 {
     struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
-    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc)
     {
@@ -366,46 +337,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11Sha
         return E_FAIL;
     }
 
-    desc->Version = reflection->version;
-    desc->Creator = reflection->creator;
-    desc->Flags = reflection->flags;
-    desc->ConstantBuffers = reflection->constant_buffer_count;
-    desc->BoundResources = reflection->bound_resource_count;
-    desc->InputParameters = reflection->signature_info.input.element_count;
-    desc->OutputParameters = reflection->signature_info.output.element_count;
-    desc->InstructionCount = reflection->instruction_count;
-    desc->TempRegisterCount = reflection->temp_register_count;
-    desc->TempArrayCount = reflection->temp_array_count;
-    desc->DefCount = reflection->def_count;
-    desc->DclCount = reflection->dcl_count;
-    desc->TextureNormalInstructions = reflection->texture_normal_instructions;
-    desc->TextureLoadInstructions = reflection->texture_load_instructions;
-    desc->TextureCompInstructions = reflection->texture_comp_instructions;
-    desc->TextureBiasInstructions = reflection->texture_bias_instructions;
-    desc->TextureGradientInstructions = reflection->texture_gradient_instructions;
-    desc->FloatInstructionCount = reflection->float_instruction_count;
-    desc->IntInstructionCount = reflection->int_instruction_count;
-    desc->UintInstructionCount = reflection->uint_instruction_count;
-    desc->StaticFlowControlCount = reflection->static_flow_control_count;
-    desc->DynamicFlowControlCount = reflection->dynamic_flow_control_count;
-    desc->MacroInstructionCount = reflection->macro_instruction_count;
-    desc->ArrayInstructionCount = reflection->array_instruction_count;
-    desc->CutInstructionCount = reflection->cut_instruction_count;
-    desc->EmitInstructionCount = reflection->emit_instruction_count;
-    desc->GSOutputTopology = reflection->gs_output_topology;
-    desc->GSMaxOutputVertexCount = reflection->gs_max_output_vertex_count;
-#if D3D_COMPILER_VERSION
-    desc->InputPrimitive = reflection->input_primitive;
-    desc->PatchConstantParameters = reflection->signature_info.patch_constant.element_count;
-    desc->cGSInstanceCount = 0;
-    desc->cControlPoints = reflection->c_control_points;
-    desc->HSOutputPrimitive = reflection->hs_output_primitive;
-    desc->HSPartitioning = reflection->hs_partitioning;
-    desc->TessellatorDomain = reflection->tessellator_domain;
-    desc->cBarrierInstructions = 0;
-    desc->cInterlockedInstructions = 0;
-    desc->cTextureStoreInstructions = 0;
-#endif
+    *desc = reflection->desc;
 
     return S_OK;
 }
@@ -417,7 +349,7 @@ static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompil
 
     TRACE("iface %p, index %u\n", iface, index);
 
-    if (index >= This->constant_buffer_count)
+    if (index >= This->desc.ConstantBuffers)
     {
         WARN("Invalid argument specified\n");
         return &null_constant_buffer.ID3D11ShaderReflectionConstantBuffer_iface;
@@ -440,7 +372,7 @@ static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompil
         return &null_constant_buffer.ID3D11ShaderReflectionConstantBuffer_iface;
     }
 
-    for (i = 0; i < This->constant_buffer_count; ++i)
+    for (i = 0; i < This->desc.ConstantBuffers; ++i)
     {
         struct d3dcompiler_shader_reflection_constant_buffer *d = &This->constant_buffers[i];
 
@@ -463,7 +395,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindin
 
     TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
 
-    if (!desc || index >= reflection->bound_resource_count)
+    if (!desc || index >= reflection->desc.BoundResources)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
@@ -530,7 +462,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetPatchConstantP
         ID3D11ShaderReflection *iface, UINT index, D3D11_SIGNATURE_PARAMETER_DESC *desc)
 {
     struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
-    bool output = ((reflection->version & 0xffff0000) >> 16) == D3D12_SHVER_HULL_SHADER;
+    bool output = ((reflection->desc.Version & 0xffff0000) >> 16) == D3D12_SHVER_HULL_SHADER;
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
@@ -551,7 +483,7 @@ static struct ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_sha
         return &null_variable.ID3D11ShaderReflectionVariable_iface;
     }
 
-    for (i = 0; i < This->constant_buffer_count; ++i)
+    for (i = 0; i < This->desc.ConstantBuffers; ++i)
     {
         struct d3dcompiler_shader_reflection_constant_buffer *cb = &This->constant_buffers[i];
 
@@ -586,7 +518,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindin
         return E_INVALIDARG;
     }
 
-    for (i = 0; i < reflection->bound_resource_count; ++i)
+    for (i = 0; i < reflection->desc.BoundResources; ++i)
     {
         D3D12_SHADER_INPUT_BIND_DESC *d = &reflection->bound_resources[i];
 
@@ -1097,62 +1029,62 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 
     TRACE("Size %Iu.\n", size);
 
-    r->instruction_count = read_u32(&ptr);
-    TRACE("InstructionCount: %u.\n", r->instruction_count);
+    r->desc.InstructionCount = read_u32(&ptr);
+    TRACE("InstructionCount: %u.\n", r->desc.InstructionCount);
 
-    r->temp_register_count = read_u32(&ptr);
-    TRACE("TempRegisterCount: %u.\n", r->temp_register_count);
+    r->desc.TempRegisterCount = read_u32(&ptr);
+    TRACE("TempRegisterCount: %u.\n", r->desc.TempRegisterCount);
 
-    r->def_count = read_u32(&ptr);
-    TRACE("DefCount: %u.\n", r->def_count);
+    r->desc.DefCount = read_u32(&ptr);
+    TRACE("DefCount: %u.\n", r->desc.DefCount);
 
-    r->dcl_count = read_u32(&ptr);
-    TRACE("DclCount: %u.\n", r->dcl_count);
+    r->desc.DclCount = read_u32(&ptr);
+    TRACE("DclCount: %u.\n", r->desc.DclCount);
 
-    r->float_instruction_count = read_u32(&ptr);
-    TRACE("FloatInstructionCount: %u.\n", r->float_instruction_count);
+    r->desc.FloatInstructionCount = read_u32(&ptr);
+    TRACE("FloatInstructionCount: %u.\n", r->desc.FloatInstructionCount);
 
-    r->int_instruction_count = read_u32(&ptr);
-    TRACE("IntInstructionCount: %u.\n", r->int_instruction_count);
+    r->desc.IntInstructionCount = read_u32(&ptr);
+    TRACE("IntInstructionCount: %u.\n", r->desc.IntInstructionCount);
 
-    r->uint_instruction_count = read_u32(&ptr);
-    TRACE("UintInstructionCount: %u.\n", r->uint_instruction_count);
+    r->desc.UintInstructionCount = read_u32(&ptr);
+    TRACE("UintInstructionCount: %u.\n", r->desc.UintInstructionCount);
 
-    r->static_flow_control_count = read_u32(&ptr);
-    TRACE("StaticFlowControlCount: %u.\n", r->static_flow_control_count);
+    r->desc.StaticFlowControlCount = read_u32(&ptr);
+    TRACE("StaticFlowControlCount: %u.\n", r->desc.StaticFlowControlCount);
 
-    r->dynamic_flow_control_count = read_u32(&ptr);
-    TRACE("DynamicFlowControlCount: %u.\n", r->dynamic_flow_control_count);
+    r->desc.DynamicFlowControlCount = read_u32(&ptr);
+    TRACE("DynamicFlowControlCount: %u.\n", r->desc.DynamicFlowControlCount);
 
-    r->macro_instruction_count = read_u32(&ptr);
-    TRACE("MacroInstructionCount: %u.\n", r->macro_instruction_count);
+    r->desc.MacroInstructionCount = read_u32(&ptr);
+    TRACE("MacroInstructionCount: %u.\n", r->desc.MacroInstructionCount);
 
-    r->temp_array_count = read_u32(&ptr);
-    TRACE("TempArrayCount: %u.\n", r->temp_array_count);
+    r->desc.TempArrayCount = read_u32(&ptr);
+    TRACE("TempArrayCount: %u.\n", r->desc.TempArrayCount);
 
-    r->array_instruction_count = read_u32(&ptr);
-    TRACE("ArrayInstructionCount: %u.\n", r->array_instruction_count);
+    r->desc.ArrayInstructionCount = read_u32(&ptr);
+    TRACE("ArrayInstructionCount: %u.\n", r->desc.ArrayInstructionCount);
 
-    r->cut_instruction_count = read_u32(&ptr);
-    TRACE("CutInstructionCount: %u.\n", r->cut_instruction_count);
+    r->desc.CutInstructionCount = read_u32(&ptr);
+    TRACE("CutInstructionCount: %u.\n", r->desc.CutInstructionCount);
 
-    r->emit_instruction_count = read_u32(&ptr);
-    TRACE("EmitInstructionCount: %u.\n", r->emit_instruction_count);
+    r->desc.EmitInstructionCount = read_u32(&ptr);
+    TRACE("EmitInstructionCount: %u.\n", r->desc.EmitInstructionCount);
 
-    r->texture_normal_instructions = read_u32(&ptr);
-    TRACE("TextureNormalInstructions: %u.\n", r->texture_normal_instructions);
+    r->desc.TextureNormalInstructions = read_u32(&ptr);
+    TRACE("TextureNormalInstructions: %u.\n", r->desc.TextureNormalInstructions);
 
-    r->texture_load_instructions = read_u32(&ptr);
-    TRACE("TextureLoadInstructions: %u.\n", r->texture_load_instructions);
+    r->desc.TextureLoadInstructions = read_u32(&ptr);
+    TRACE("TextureLoadInstructions: %u.\n", r->desc.TextureLoadInstructions);
 
-    r->texture_comp_instructions = read_u32(&ptr);
-    TRACE("TextureCompInstructions: %u.\n", r->texture_comp_instructions);
+    r->desc.TextureCompInstructions = read_u32(&ptr);
+    TRACE("TextureCompInstructions: %u.\n", r->desc.TextureCompInstructions);
 
-    r->texture_bias_instructions = read_u32(&ptr);
-    TRACE("TextureBiasInstructions: %u.\n", r->texture_bias_instructions);
+    r->desc.TextureBiasInstructions = read_u32(&ptr);
+    TRACE("TextureBiasInstructions: %u.\n", r->desc.TextureBiasInstructions);
 
-    r->texture_gradient_instructions = read_u32(&ptr);
-    TRACE("TextureGradientInstructions: %u.\n", r->texture_gradient_instructions);
+    r->desc.TextureGradientInstructions = read_u32(&ptr);
+    TRACE("TextureGradientInstructions: %u.\n", r->desc.TextureGradientInstructions);
 
     r->mov_instruction_count = read_u32(&ptr);
     TRACE("MovInstructionCount: %u.\n", r->mov_instruction_count);
@@ -1164,14 +1096,15 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 
     skip_u32_unknown(&ptr, 1);
 
-    r->input_primitive = read_u32(&ptr);
-    TRACE("InputPrimitive: %x.\n", r->input_primitive);
+#if D3D_COMPILER_VERSION
+    r->desc.InputPrimitive = read_u32(&ptr);
+    TRACE("InputPrimitive: %x.\n", r->desc.InputPrimitive);
 
-    r->gs_output_topology = read_u32(&ptr);
-    TRACE("GSOutputTopology: %x.\n", r->gs_output_topology);
+    r->desc.GSOutputTopology = read_u32(&ptr);
+    TRACE("GSOutputTopology: %x.\n", r->desc.GSOutputTopology);
 
-    r->gs_max_output_vertex_count = read_u32(&ptr);
-    TRACE("GSMaxOutputVertexCount: %u.\n", r->gs_max_output_vertex_count);
+    r->desc.GSMaxOutputVertexCount = read_u32(&ptr);
+    TRACE("GSMaxOutputVertexCount: %u.\n", r->desc.GSMaxOutputVertexCount);
 
     skip_u32_unknown(&ptr, 2);
 
@@ -1185,22 +1118,26 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 
     skip_u32_unknown(&ptr, 1);
 
-    r->c_control_points = read_u32(&ptr);
-    TRACE("cControlPoints: %u.\n", r->c_control_points);
+    r->desc.cControlPoints = read_u32(&ptr);
+    TRACE("cControlPoints: %u.\n", r->desc.cControlPoints);
 
-    r->hs_output_primitive = read_u32(&ptr);
-    TRACE("HSOutputPrimitive: %x.\n", r->hs_output_primitive);
+    r->desc.HSOutputPrimitive = read_u32(&ptr);
+    TRACE("HSOutputPrimitive: %x.\n", r->desc.HSOutputPrimitive);
 
-    r->hs_partitioning = read_u32(&ptr);
-    TRACE("HSPartitioning: %x.\n", r->hs_partitioning);
+    r->desc.HSPartitioning = read_u32(&ptr);
+    TRACE("HSPartitioning: %x.\n", r->desc.HSPartitioning);
 
-    r->tessellator_domain = read_u32(&ptr);
-    TRACE("TessellatorDomain: %x.\n", r->tessellator_domain);
+    r->desc.TessellatorDomain = read_u32(&ptr);
+    TRACE("TessellatorDomain: %x.\n", r->desc.TessellatorDomain);
 
     skip_u32_unknown(&ptr, 3);
 
     /* dx11 stat size */
     if (size == 37) return S_OK;
+#else
+    if (size == 28 || size == 29 || size == 37)
+        return S_OK;
+#endif
 
     FIXME("Unhandled size %Iu.\n", size);
 
@@ -1453,14 +1390,14 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
 
     TRACE("Size %Iu.\n", size);
 
-    r->constant_buffer_count = read_u32(&ptr);
-    TRACE("Constant buffer count: %u.\n", r->constant_buffer_count);
+    r->desc.ConstantBuffers = read_u32(&ptr);
+    TRACE("Constant buffer count: %u.\n", r->desc.ConstantBuffers);
 
     cbuffer_offset = read_u32(&ptr);
     TRACE("Constant buffer offset: %#x.\n", cbuffer_offset);
 
-    r->bound_resource_count = read_u32(&ptr);
-    TRACE("Bound resource count: %u.\n", r->bound_resource_count);
+    r->desc.BoundResources = read_u32(&ptr);
+    TRACE("Bound resource count: %u.\n", r->desc.BoundResources);
 
     resource_offset = read_u32(&ptr);
     TRACE("Bound resource offset: %#x.\n", resource_offset);
@@ -1480,8 +1417,8 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     }
 #endif
 
-    r->flags = read_u32(&ptr);
-    TRACE("Flags: %u.\n", r->flags);
+    r->desc.Flags = read_u32(&ptr);
+    TRACE("Flags: %#x.\n", r->desc.Flags);
 
     creator_offset = read_u32(&ptr);
     TRACE("Creator at offset %#x.\n", creator_offset);
@@ -1499,10 +1436,10 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         skip_u32_unknown(&ptr, 8);
     }
 
-    if (r->bound_resource_count)
+    if (r->desc.BoundResources)
     {
         /* 8 for each bind desc */
-        string_data_offset = resource_offset + r->bound_resource_count * 8 * sizeof(uint32_t);
+        string_data_offset = resource_offset + r->desc.BoundResources * 8 * sizeof(uint32_t);
         string_data_size = (cbuffer_offset ? cbuffer_offset : creator_offset) - string_data_offset;
 
         string_data = malloc(string_data_size);
@@ -1514,7 +1451,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
         memcpy(string_data, data + string_data_offset, string_data_size);
 
-        bound_resources = calloc(r->bound_resource_count, sizeof(*bound_resources));
+        bound_resources = calloc(r->desc.BoundResources, sizeof(*bound_resources));
         if (!bound_resources)
         {
             ERR("Failed to allocate resources memory.\n");
@@ -1523,7 +1460,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
 
         ptr = data + resource_offset;
-        for (i = 0; i < r->bound_resource_count; i++)
+        for (i = 0; i < r->desc.BoundResources; i++)
         {
             D3D12_SHADER_INPUT_BIND_DESC *desc = &bound_resources[i];
 
@@ -1566,9 +1503,9 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
     }
 
-    if (r->constant_buffer_count)
+    if (r->desc.ConstantBuffers)
     {
-        constant_buffers = calloc(r->constant_buffer_count, sizeof(*constant_buffers));
+        constant_buffers = calloc(r->desc.ConstantBuffers, sizeof(*constant_buffers));
         if (!constant_buffers)
         {
             ERR("Failed to allocate constant buffer memory.\n");
@@ -1577,7 +1514,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
 
         ptr = data + cbuffer_offset;
-        for (i = 0; i < r->constant_buffer_count; i++)
+        for (i = 0; i < r->desc.ConstantBuffers; i++)
         {
             struct d3dcompiler_shader_reflection_constant_buffer *cb = &constant_buffers[i];
 
@@ -1617,7 +1554,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
     }
 
-    r->creator = creator;
+    r->desc.Creator = creator;
     r->resource_string = string_data;
     r->bound_resources = bound_resources;
     r->constant_buffers = constant_buffers;
@@ -1625,7 +1562,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     return S_OK;
 
 err_out:
-    for (i = 0; i < r->constant_buffer_count; ++i)
+    for (i = 0; i < r->desc.ConstantBuffers; ++i)
     {
         free_constant_buffer(&constant_buffers[i]);
     }
@@ -1687,8 +1624,8 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
         {
             const char *ptr = section->data.code;
 
-            reflection->version = read_u32(&ptr);
-            TRACE("Shader version: 0x%08x.\n", reflection->version);
+            reflection->desc.Version = read_u32(&ptr);
+            TRACE("Shader version: 0x%08x.\n", reflection->desc.Version);
         }
         else if (section->tag == TAG_STAT)
         {
@@ -1699,6 +1636,12 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
             }
         }
     }
+
+    reflection->desc.InputParameters = reflection->signature_info.input.element_count;
+    reflection->desc.OutputParameters = reflection->signature_info.output.element_count;
+#if D3D_COMPILER_VERSION
+    reflection->desc.PatchConstantParameters = reflection->signature_info.patch_constant.element_count;
+#endif
 
     vkd3d_shader_free_dxbc(&src_dxbc_desc);
 
