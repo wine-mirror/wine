@@ -132,6 +132,9 @@ static inline time_t mktime(struct tm *tm) { return _mktime32(tm); }
 static inline time_t time(time_t *t) { return _time32(t); }
 #endif
 
+#define CLK_TCK CLOCKS_PER_SEC
+_ACRTIMP void __cdecl tzset(void);
+
 #ifdef __cplusplus
 }
 #endif
