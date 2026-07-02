@@ -658,6 +658,7 @@ NTSTATUS WINAPI FltBuildDefaultSecurityDescriptor(PSECURITY_DESCRIPTOR *, ACCESS
 void     WINAPI FltFreeSecurityDescriptor(PSECURITY_DESCRIPTOR);
 void*    WINAPI FltGetRoutineAddress(LPCSTR name);
 NTSTATUS WINAPI FltRegisterFilter(PDRIVER_OBJECT, const FLT_REGISTRATION *, PFLT_FILTER *);
+VOID     WINAPI FltReleaseContext(PFLT_CONTEXT);
 NTSTATUS WINAPI FltStartFiltering(PFLT_FILTER);
 void     WINAPI FltUnregisterFilter(PFLT_FILTER);
 

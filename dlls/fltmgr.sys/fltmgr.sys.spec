@@ -130,7 +130,7 @@
 @ stub FltReferenceFileNameInformation
 @ stdcall FltRegisterFilter(ptr ptr ptr)
 @ stub FltReissueSynchronousIo
-@ stub FltReleaseContext
+@ stdcall FltReleaseContext(ptr)
 @ stub FltReleaseContexts
 @ stub FltReleaseFileNameInformation
 @ stdcall FltReleasePushLock(ptr)

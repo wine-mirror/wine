@@ -155,3 +155,8 @@ NTSTATUS WINAPI FltAllocateContext(PFLT_FILTER filter, FLT_CONTEXT_TYPE context,
     FIXME("%p, %d, %Iu, %u, %p\n", filter, context, size, type, *out);
     return STATUS_NOT_SUPPORTED;
 }
+
+void WINAPI FltReleaseContext(PFLT_CONTEXT context)
+{
+    FIXME("%p\n", context);
+}
