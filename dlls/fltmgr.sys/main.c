@@ -180,3 +180,10 @@ NTSTATUS WINAPI FltQueryInformationFile(PFLT_INSTANCE instance, PFILE_OBJECT fil
     FIXME("%p, %p, %p, %lu, %d, %p\n", instance, fileobject, information, length, file_information_class, ret_len);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltGetFileNameInformationUnsafe(PFILE_OBJECT fileobject, PFLT_INSTANCE instance,
+        FLT_FILE_NAME_OPTIONS options, PFLT_FILE_NAME_INFORMATION *FileNameInformation)
+{
+    FIXME("%p, %p, %lu, %p\n", fileobject, instance, options, FileNameInformation);
+    return STATUS_NOT_SUPPORTED;
+}
