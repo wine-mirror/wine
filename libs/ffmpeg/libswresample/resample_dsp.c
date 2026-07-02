@@ -72,7 +72,7 @@ void swri_resample_dsp_init(ResampleContext *c)
     swri_resample_dsp_x86_init(c);
 #elif ARCH_ARM
     swri_resample_dsp_arm_init(c);
-#elif ARCH_AARCH64 && !defined __arm64ec__
+#elif ARCH_AARCH64
     swri_resample_dsp_aarch64_init(c);
 #endif
 }

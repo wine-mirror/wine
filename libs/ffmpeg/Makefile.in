@@ -129,6 +129,10 @@ SOURCES = \
 	libswresample/arm/audio_convert_neon.S \
 	libswresample/arm/resample.S \
 	libswresample/arm/resample_init.c \
+	libswresample/arm64ec/audio_convert_init.c \
+	libswresample/arm64ec/audio_convert_neon.S \
+	libswresample/arm64ec/resample.S \
+	libswresample/arm64ec/resample_init.c \
 	libswresample/audioconvert.c \
 	libswresample/dither.c \
 	libswresample/options.c \
