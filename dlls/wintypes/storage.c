@@ -322,10 +322,13 @@ static HRESULT WINAPI data_writer_FlushAsync(IDataWriter *iface, IAsyncOperation
 
 static HRESULT WINAPI data_writer_DetachBuffer(IDataWriter *iface, IBuffer **buffer)
 {
-    FIXME("iface %p, buffer %p stub!\n", iface, buffer);
+    struct data_writer *impl = impl_from_IDataWriter(iface);
 
-    *buffer = NULL;
-    return E_NOTIMPL;
+    TRACE("iface %p, buffer %p.\n", iface, buffer);
+
+    *buffer = impl->buffer;
+    impl->buffer = NULL;
+    return data_writer_init_buffer(impl, 0);
 }
 
 static HRESULT WINAPI data_writer_DetachStream(IDataWriter *iface, IOutputStream **output_stream)

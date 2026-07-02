@@ -1702,10 +1702,7 @@ static void test_DataWriter(void)
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "got hr %#lx.\n", hr);
 
     hr = IDataWriter_DetachBuffer(data_writer, &buffer);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
     hr = IBuffer_get_Length(buffer, &value);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ok(value == 8, "got length %u.\n", value);
@@ -1715,7 +1712,6 @@ static void test_DataWriter(void)
     ok(value64 == uint64_value, "got %I64x.\n", value64);
 
     IBuffer_Release(buffer);
-    }
 
     ref = IDataWriter_Release(data_writer);
     ok(ref == 0, "got ref %ld.\n", ref);
