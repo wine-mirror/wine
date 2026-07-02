@@ -226,12 +226,8 @@ typedef __int64 _CRT_ALIGN(8) __time64_t;
 #define _TIME64_T_DEFINED
 #endif
 
-#ifdef _USE_32BIT_TIME_T
-# ifdef _WIN64
+#if defined(_USE_32BIT_TIME_T) && defined(_WIN64)
 #  error You cannot use 32-bit time_t in Win64
-# endif
-#elif !defined(_WIN64)
-# define _USE_32BIT_TIME_T
 #endif
 
 #ifndef _TIME_T_DEFINED
