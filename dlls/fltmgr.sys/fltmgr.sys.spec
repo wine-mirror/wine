@@ -113,7 +113,7 @@
 @ stub FltOplockFsctrl
 @ stub FltOplockIsFastIoPossible
 @ stub FltParseFileName
-@ stub FltParseFileNameInformation
+@ stdcall FltParseFileNameInformation(ptr)
 @ stub FltPerformAsynchronousIo
 @ stub FltPerformSynchronousIo
 @ stub FltProcessFileLock

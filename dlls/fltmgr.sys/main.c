@@ -195,3 +195,9 @@ NTSTATUS WINAPI FltReadFile(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, PLA
     FIXME("%p, %p, %p, %lu, %p, 0x%lx, %p, %p, %p\n", instance, fileobject, offset, length, buffer, flags, read, callback, context);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltParseFileNameInformation(PFLT_FILE_NAME_INFORMATION information)
+{
+    FIXME("%p\n", information);
+    return STATUS_NOT_SUPPORTED;
+}
