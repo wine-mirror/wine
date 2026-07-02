@@ -173,3 +173,10 @@ NTSTATUS WINAPI FltSetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT fileobj
     FIXME("%p, %p, %d, %p, %p\n", instance, fileobject, operation, new_context, old_context);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltQueryInformationFile(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, PVOID information,
+        ULONG length, FILE_INFORMATION_CLASS file_information_class, PULONG ret_len)
+{
+    FIXME("%p, %p, %p, %lu, %d, %p\n", instance, fileobject, information, length, file_information_class, ret_len);
+    return STATUS_NOT_SUPPORTED;
+}

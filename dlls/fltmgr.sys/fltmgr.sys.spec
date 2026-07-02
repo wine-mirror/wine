@@ -119,7 +119,7 @@
 @ stub FltProcessFileLock
 @ stub FltPurgeFileNameInformationCache
 @ stub FltQueryEaFile
-@ stub FltQueryInformationFile
+@ stdcall FltQueryInformationFile(ptr ptr long ptr ptr ptr)
 @ stub FltQuerySecurityObject
 @ stub FltQueryVolumeInformation
 @ stub FltQueryVolumeInformationFile
