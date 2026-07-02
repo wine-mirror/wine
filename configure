@@ -17276,7 +17276,10 @@ if test "x$ac_cv_func_SCardEstablishContext" = xyes
 then :
   :
 else case e in #(
-  e) PCSCLITE_LIBS="" ;;
+  e) case $host_os in
+                        darwin*) PCSCLITE_LIBS="-framework PCSC" ;;
+                        *) PCSCLITE_LIBS="";;
+                     esac ;;
 esac
 fi
 

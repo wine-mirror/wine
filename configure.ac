@@ -1522,10 +1522,11 @@ dnl **** Check for libpcsclite ****
 if test "x$with_pcsclite" != "xno"
 then
     WINE_PACKAGE_FLAGS(PCSCLITE,[libpcsclite],[-lpcsclite],,,
-                 [AC_CHECK_FUNC(SCardEstablishContext,[:],[PCSCLITE_LIBS=""])],
-                 [case $host_os in
-                    darwin*) AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
-                  esac])
+                 [AC_CHECK_FUNC(SCardEstablishContext,[:],
+                    [case $host_os in
+                        darwin*) PCSCLITE_LIBS="-framework PCSC" ;;
+                        *) PCSCLITE_LIBS="";;
+                     esac])])
 fi
 WINE_NOTICE_WITH(pcsclite,[test "x$PCSCLITE_LIBS" = x],
                  [libpcsclite not found, smart cards won't be supported.],
