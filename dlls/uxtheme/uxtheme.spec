@@ -43,6 +43,7 @@
 61 stdcall OpenThemeDataEx(ptr wstr long)
 62 stub -noname ServerClearStockObjects
 63 stub -noname MarkSelection
+95 stdcall GetImmersiveColorFromColorSetEx(long long long long)
 96 stdcall -noname GetImmersiveColorTypeFromName(wstr)
 98 stdcall GetImmersiveUserColorSetPreference(long long)
 104 stdcall -noname RefreshImmersiveColorPolicyState()

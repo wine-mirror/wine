@@ -1336,6 +1336,21 @@ BOOLEAN WINAPI IsDarkModeAllowedForWindow(HWND hwnd)
 }
 
 /**********************************************************************
+ *      GetImmersiveColorFromColorSetEx                    (UXTHEME.95)
+ *
+ * Semi-stub: the immersive color tables are not implemented; return a
+ * color following ShouldAppsUseDarkMode (black for light, white for dark).
+ */
+DWORD WINAPI GetImmersiveColorFromColorSetEx(UINT color_set, UINT color_type,
+                                             BOOL ignore_high_contrast, UINT high_contrast_cache_mode)
+{
+    FIXME("%u %u %d %u: semi-stub\n", color_set, color_type,
+          ignore_high_contrast, high_contrast_cache_mode);
+
+    return ShouldAppsUseDarkMode() ? 0xffffffff : 0xff000000;
+}
+
+/**********************************************************************
  *      GetImmersiveColorTypeFromName                      (UXTHEME.96)
  *
  */
