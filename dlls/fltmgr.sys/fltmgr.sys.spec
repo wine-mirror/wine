@@ -31,7 +31,7 @@
 @ stub FltCompareInstanceAltitudes
 @ stub FltCompletePendedPostOperation
 @ stub FltCompletePendedPreOperation
-@ stub FltCreateCommunicationPort
+@ stdcall FltCreateCommunicationPort(ptr ptr ptr ptr ptr ptr ptr long)
 @ stub FltCreateFile
 @ stub FltCreateFileEx
 @ stub FltCreateSystemVolumeInformationFolder

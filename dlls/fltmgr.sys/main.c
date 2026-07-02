@@ -212,3 +212,12 @@ NTSTATUS WINAPI FltGetFileNameInformation(PFLT_CALLBACK_DATA callback, FLT_FILE_
     FIXME("%p, %lu, %p\n", callback, options, information);
     return STATUS_NOT_SUPPORTED;
 }
+
+NTSTATUS WINAPI FltCreateCommunicationPort(PFLT_FILTER filter, PFLT_PORT *port, POBJECT_ATTRIBUTES attributes,
+        PVOID cookie, PFLT_CONNECT_NOTIFY  connect_callback, PFLT_DISCONNECT_NOTIFY disconnect_callback,
+        PFLT_MESSAGE_NOTIFY message_callback, LONG max_connections)
+{
+    FIXME("%p, %p, %p, %p, %p, %p, %p, %ld\n", filter, port, attributes, cookie, connect_callback, disconnect_callback,
+                        message_callback, max_connections);
+    return STATUS_NOT_SUPPORTED;
+}
