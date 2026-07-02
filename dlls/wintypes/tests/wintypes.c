@@ -1694,7 +1694,6 @@ static void test_DataWriter(void)
     ok(!output_stream, "got stream %p.\n", output_stream);
 
     hr = IDataWriter_WriteBytes(data_writer, 8, (BYTE *)&uint64_value);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 
     hr = IDataWriter_StoreAsync(data_writer, &operation);

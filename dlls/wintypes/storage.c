@@ -19,14 +19,73 @@
  */
 
 #include "private.h"
+#include "robuffer.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
+
+static HRESULT buffer_create(UINT32 capacity, IBuffer **out)
+{
+    IBufferFactory *buffer_factory;
+    HRESULT hr;
+
+    IActivationFactory_QueryInterface(buffer_activation_factory, &IID_IBufferFactory, (void **)&buffer_factory);
+    hr = IBufferFactory_Create(buffer_factory, capacity, out);
+    IBufferFactory_Release(buffer_factory);
+    return hr;
+}
 
 struct data_writer
 {
     IDataWriter IDataWriter_iface;
     LONG ref;
+
+    IBuffer *buffer;
+    byte *data;
 };
+
+static HRESULT data_writer_init_buffer(struct data_writer *impl, UINT32 extra_capacity)
+{
+    /* Native capacity starts at 0x88 */
+    UINT32 new_capacity, capacity = max(extra_capacity, 0x88), pos = 0;
+    IBufferByteAccess *access;
+    IBuffer *buffer;
+    HRESULT hr;
+    byte *data;
+
+    if (impl->buffer)
+    {
+        IBuffer_get_Capacity(impl->buffer, &capacity);
+        IBuffer_get_Length(impl->buffer, &pos);
+
+        new_capacity = pos + extra_capacity;
+        if (new_capacity < pos || new_capacity < extra_capacity)
+            return E_OUTOFMEMORY;
+        if (new_capacity <= capacity)
+            return S_OK;
+
+        /* If allocation size grows by 50%, the sixth allocation can fit in freed
+         * memory of the first four if they were contiguous. This matches native. */
+        capacity = max(new_capacity, capacity + capacity / 2u);
+    }
+
+    if (FAILED(hr = buffer_create(capacity, &buffer)))
+        return hr;
+
+    IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&access);
+    IBufferByteAccess_Buffer(access, &data);
+    IBufferByteAccess_Release(access);
+
+    if (impl->buffer)
+    {
+        memcpy(data, impl->data, pos);
+        IBuffer_Release(impl->buffer);
+    }
+
+    impl->buffer = buffer;
+    impl->data = data;
+
+    return S_OK;
+}
 
 static struct data_writer *impl_from_IDataWriter(IDataWriter *iface)
 {
@@ -69,6 +128,8 @@ static ULONG WINAPI data_writer_Release(IDataWriter *iface)
 
     if (!ref)
     {
+        if (impl->buffer)
+            IBuffer_Release(impl->buffer);
         free(impl);
     }
 
@@ -131,8 +192,20 @@ static HRESULT WINAPI data_writer_WriteByte(IDataWriter *iface, BYTE value)
 
 static HRESULT WINAPI data_writer_WriteBytes(IDataWriter *iface, UINT32 value_size, BYTE *value)
 {
-    FIXME("iface %p, value_size %u, value %p stub!\n", iface, value_size, value);
-    return E_NOTIMPL;
+    struct data_writer *impl = impl_from_IDataWriter(iface);
+    UINT32 pos = 0;
+    HRESULT hr;
+
+    TRACE("iface %p, value_size %u, value %p.\n", iface, value_size, value);
+
+    if (FAILED(hr = data_writer_init_buffer(impl, value_size)))
+        return hr;
+
+    IBuffer_get_Length(impl->buffer, &pos);
+    memcpy(&impl->data[pos], value, value_size);
+    IBuffer_put_Length(impl->buffer, pos + value_size);
+
+    return hr;
 }
 
 static HRESULT WINAPI data_writer_WriteBuffer(IDataWriter *iface, IBuffer *buffer)
@@ -306,6 +379,7 @@ static const struct IDataWriterVtbl data_writer_vtbl =
 static HRESULT data_writer_create(IDataWriter **out)
 {
     struct data_writer *impl;
+    HRESULT hr;
 
     *out = NULL;
     if (!(impl = calloc(1, sizeof(*impl))))
@@ -313,6 +387,12 @@ static HRESULT data_writer_create(IDataWriter **out)
 
     impl->IDataWriter_iface.lpVtbl = &data_writer_vtbl;
     impl->ref = 1;
+
+    if (FAILED(hr = data_writer_init_buffer(impl, 0)))
+    {
+        free(impl);
+        return hr;
+    }
 
     *out = &impl->IDataWriter_iface;
     return S_OK;
