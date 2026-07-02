@@ -82,4 +82,10 @@ void *_alloca(size_t size);
 # define alloca(x) _alloca((x))
 # endif
 
+/* Simplistic _malloca/_freea implementation.
+ * Native allocates on stack for blocks smaller than a given threshold.
+ */
+#define _malloca(sz) malloc(sz)
+#define _freea(ptr) free(ptr)
+
 #endif /* __WINE_MALLOC_H */
