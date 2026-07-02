@@ -833,7 +833,7 @@
 
 /* tweaks for Wine build */
 
-#if defined __aarch64__
+#if defined __aarch64__ || defined __arm64ec__
 
 #undef  ARCH_AARCH64
 #define ARCH_AARCH64 1
@@ -843,10 +843,6 @@
 #define HAVE_FAST_FLOAT16 1
 #undef  CONFIG_PIC
 #define CONFIG_PIC 1
-
-#elif defined __arm64ec__
-
-/* FIXME */
 
 #elif defined __arm__
 

@@ -2689,7 +2689,7 @@ void ff_get_unscaled_swscale(SwsInternal *c)
     ff_get_unscaled_swscale_ppc(c);
 #elif ARCH_ARM
     ff_get_unscaled_swscale_arm(c);
-#elif ARCH_AARCH64
+#elif ARCH_AARCH64 && !defined __arm64ec__
     ff_get_unscaled_swscale_aarch64(c);
 #endif
 }

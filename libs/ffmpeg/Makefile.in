@@ -19,6 +19,8 @@ SOURCES = \
 	libavutil/arm/float_dsp_init_vfp.c \
 	libavutil/arm/float_dsp_neon.S \
 	libavutil/arm/float_dsp_vfp.S \
+	libavutil/arm64ec/cpu.c \
+	libavutil/arm64ec/crc.S \
 	libavutil/audio_fifo.c \
 	libavutil/avsscanf.c \
 	libavutil/avstring.c \

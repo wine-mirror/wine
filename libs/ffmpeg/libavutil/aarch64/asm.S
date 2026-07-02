@@ -262,6 +262,22 @@ DISABLE_SME2
         .popsection
 #endif
 
+#ifdef __arm64ec__
+.macro  function name, export=0, align=4
+    .macro endfunc
+        .purgem endfunc
+    .endm
+        .text
+        .align          \align
+    .if \export
+        .global "#\name"
+"#\name":
+        AARCH64_VALID_CALL_TARGET
+    .else
+"#\name":
+    .endif
+.endm
+#else
 .macro  function name, export=0, align=4
     .macro endfunc
 ELF     .size   \name, . - \name
@@ -282,6 +298,7 @@ FUNC    .func   \name
 \name:
     .endif
 .endm
+#endif
 
 .macro  const   name, align=4, relocate=0
     .macro endconst
