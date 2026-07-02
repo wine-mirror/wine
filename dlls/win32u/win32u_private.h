@@ -452,4 +452,10 @@ static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2
     return !IsRectEmpty( dst );
 }
 
+static inline UINT round_dpi( struct ratio dpi )
+{
+    if (!dpi.den) return 0;
+    return (dpi.num + dpi.den / 2) / dpi.den;
+}
+
 #endif /* __WINE_WIN32U_PRIVATE */

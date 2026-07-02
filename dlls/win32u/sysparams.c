@@ -303,6 +303,34 @@ static pthread_mutex_t display_dc_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t user_mutex;
 static unsigned int user_lock_thread, user_lock_rec;
 
+static UINT gcd( UINT a, UINT b )
+{
+    UINT r;
+
+    for (;;)
+    {
+        if (!a) return b;
+        if (!b) return a;
+        r = a % b;
+        a = b;
+        b = r;
+    }
+}
+
+static struct ratio make_ratio( UINT num, UINT den )
+{
+    UINT d = gcd( num, den );
+    struct ratio r = { num / d, den / d };
+    assert( num / d < 65536 );
+    assert( den / d < 65536 );
+    return r;
+}
+
+static struct ratio min_ratio( struct ratio x, struct ratio y )
+{
+    return x.num * y.den <= y.num * x.den ? x : y;
+}
+
 void user_lock(void)
 {
     pthread_mutex_lock( &user_mutex );
@@ -2307,22 +2335,22 @@ static void monitor_virt_to_raw_ratio( struct monitor *monitor, UINT *num, UINT 
 /* display_lock must be held */
 static struct ratio monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, struct ratio *dpi_x, struct ratio *dpi_y )
 {
+    struct ratio scale_x = {1, 1}, scale_y = {1, 1};
     struct source *source = monitor->source;
-    float scale_x = 1.0, scale_y = 1.0;
     UINT dpi;
 
     if (!source || !(dpi = source->dpi)) dpi = system_dpi;
     if (source && type != MDT_EFFECTIVE_DPI)
     {
-        scale_x = source->physical.dmPelsWidth / (float)source->current.dmPelsWidth;
-        scale_y = source->physical.dmPelsHeight / (float)source->current.dmPelsHeight;
+        scale_x.num = source->physical.dmPelsWidth;
+        scale_x.den = source->current.dmPelsWidth;
+        scale_y.num = source->physical.dmPelsHeight;
+        scale_y.den = source->current.dmPelsHeight;
     }
 
-    dpi_x->num = round( dpi * scale_x );
-    dpi_x->den = 1;
-    dpi_y->num = round( dpi * scale_y );
-    dpi_y->den = 1;
-    return dpi_x->num < dpi_y->num ? *dpi_x : *dpi_y;
+    *dpi_x = make_ratio( dpi * scale_x.num, scale_x.den );
+    *dpi_y = make_ratio( dpi * scale_y.num, scale_y.den );
+    return min_ratio( *dpi_x, *dpi_y );
 }
 
 /* display_lock must be held */
@@ -2366,11 +2394,11 @@ static RECT map_monitor_rect( struct monitor *monitor, RECT rect, struct ratio d
 
         for (int i = 0; i < ARRAY_SIZE(points); i++)
         {
-            points[i] *= (double)dpi.num / dpi_from.num;
+            points[i] *= (double)dpi.num * dpi_from.den / (dpi_from.num * dpi.den);
             points[i] -= from[i & 1];
             points[i] *= (double)num / den;
             points[i] += to[i & 1];
-            points[i] *= (double)dpi_to.num / dpi.num;
+            points[i] *= (double)dpi_to.num * dpi.den / (dpi.num * dpi_to.den);
             points[i] = roundf( points[i] );
             points[i] = min( INT_MAX, max( INT_MIN, (INT64)points[i] ));
         }
@@ -3240,7 +3268,7 @@ UINT set_thread_dpi_awareness_context( UINT context )
 
 static BOOL needs_dpi_mapping( struct ratio dpi_from, struct ratio dpi_to )
 {
-    return dpi_from.num && dpi_to.num && dpi_from.num != dpi_to.num;
+    return dpi_from.num && dpi_to.num && memcmp( &dpi_from, &dpi_to, sizeof(struct ratio) );
 }
 
 /**********************************************************************
@@ -3250,10 +3278,11 @@ RECT map_dpi_rect( RECT rect, struct ratio dpi_from, struct ratio dpi_to )
 {
     if (needs_dpi_mapping( dpi_from, dpi_to ))
     {
-        rect.left   = muldiv( rect.left, dpi_to.num, dpi_from.num );
-        rect.top    = muldiv( rect.top, dpi_to.num, dpi_from.num );
-        rect.right  = muldiv( rect.right, dpi_to.num, dpi_from.num );
-        rect.bottom = muldiv( rect.bottom, dpi_to.num, dpi_from.num );
+        unsigned int num = dpi_to.num * dpi_from.den, den = dpi_from.num * dpi_to.den;
+        rect.left   = muldiv( rect.left, num, den );
+        rect.top    = muldiv( rect.top, num, den );
+        rect.right  = muldiv( rect.right, num, den );
+        rect.bottom = muldiv( rect.bottom, num, den );
     }
     return rect;
 }
@@ -3305,8 +3334,9 @@ POINT map_dpi_point( POINT pt, struct ratio dpi_from, struct ratio dpi_to )
 {
     if (needs_dpi_mapping( dpi_from, dpi_to ))
     {
-        pt.x = muldiv( pt.x, dpi_to.num, dpi_from.num );
-        pt.y = muldiv( pt.y, dpi_to.num, dpi_from.num );
+        unsigned int num = dpi_to.num * dpi_from.den, den = dpi_from.num * dpi_to.den;
+        pt.x = muldiv( pt.x, num, den );
+        pt.y = muldiv( pt.y, num, den );
     }
     return pt;
 }
@@ -4824,8 +4854,8 @@ BOOL WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *
     {
         struct ratio dpi_x, dpi_y;
         get_monitor_dpi( monitor, type, &dpi_x, &dpi_y );
-        *x = dpi_x.num;
-        *y = dpi_y.num;
+        *x = round_dpi( dpi_x );
+        *y = round_dpi( dpi_y );
         break;
     }
     }
