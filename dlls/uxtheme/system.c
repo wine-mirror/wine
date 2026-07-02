@@ -1334,3 +1334,13 @@ BOOLEAN WINAPI IsDarkModeAllowedForWindow(HWND hwnd)
     FIXME("%p: stub\n", hwnd);
     return FALSE;
 }
+
+/**********************************************************************
+ *      GetImmersiveUserColorSetPreference                 (UXTHEME.98)
+ *
+ */
+int WINAPI GetImmersiveUserColorSetPreference(BOOL force_check_registry, BOOL skip_check_on_fail)
+{
+    FIXME("%d %d: stub\n", force_check_registry, skip_check_on_fail);
+    return 0;
+}

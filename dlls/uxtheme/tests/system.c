@@ -52,6 +52,7 @@ static HRESULT (WINAPI *pGetThemeIntList)(HTHEME, int, int, int, INTLIST *);
 static HRESULT (WINAPI *pGetThemeTransitionDuration)(HTHEME, int, int, int, int, DWORD *);
 static BOOLEAN (WINAPI *pShouldSystemUseDarkMode)(void);
 static BOOLEAN (WINAPI *pShouldAppsUseDarkMode)(void);
+static int (WINAPI *pGetImmersiveUserColorSetPreference)(BOOL, BOOL);
 
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
@@ -100,6 +101,7 @@ static void init_funcs(void)
     GET_PROC(uxtheme, GetThemeTransitionDuration)
     GET_PROC(uxtheme, OpenThemeDataEx)
     GET_PROC(uxtheme, OpenThemeDataForDpi)
+    GET_PROC(uxtheme, GetImmersiveUserColorSetPreference)
 
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
@@ -2778,6 +2780,20 @@ static void test_ShouldAppsUseDarkMode(void)
     ok(result == !light_theme, "Expected value %d, got %d\n", !light_theme, result);
 }
 
+static void test_GetImmersiveColors(void)
+{
+    int pref;
+
+    if (!pGetImmersiveUserColorSetPreference)
+    {
+        win_skip("Immersive color set functions are unavailable.\n");
+        return;
+    }
+
+    pref = pGetImmersiveUserColorSetPreference(FALSE, FALSE);
+    ok(pref >= 0, "Got unexpected color set preference %d.\n", pref);
+}
+
 static void test_DrawThemeEdge(void)
 {
     HTHEME htheme;
@@ -2883,6 +2899,7 @@ START_TEST(system)
     test_theme(FALSE);
     test_ShouldSystemUseDarkMode();
     test_ShouldAppsUseDarkMode();
+    test_GetImmersiveColors();
     test_DrawThemeEdge();
     test_DrawThemeTextEx();
 
