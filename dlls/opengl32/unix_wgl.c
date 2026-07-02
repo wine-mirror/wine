@@ -126,7 +126,6 @@ struct context
 {
     struct opengl_context base;
 
-    HGLRC client;                  /* client-side context handle */
     UINT64 debug_callback;         /* client pointer */
     UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
@@ -368,7 +367,7 @@ static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context 
     dst->used |= (src->used & mask);
 
     if (!old_ctx) funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL );
-    else old_funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, old_ctx->client );
+    else old_funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, old_ctx->base.client_context );
 
     NtUserReleaseDC( hwnd, hdc );
     NtUserDestroyWindow( hwnd );
@@ -1285,7 +1284,6 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
         return 0;
     }
 
-    context->client = client_context;
     opengl_client_context_init( client_context, context, funcs );
     return client_context;
 }
