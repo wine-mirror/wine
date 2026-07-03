@@ -1726,14 +1726,8 @@ static void test_DataWriter(void)
     hr = IRandomAccessStream_QueryInterface(in_memory_stream, &IID_IOutputStream, (void **)&output_stream);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     hr = IDataWriterFactory_CreateDataWriter(data_writer_factory, output_stream, &data_writer);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     IOutputStream_Release(output_stream);
-    if (FAILED(hr))
-    {
-        IActivationFactory_Release(factory);
-        goto done;
-    }
 
     for (i = 0; i < 2; ++i)
     {
@@ -1758,6 +1752,8 @@ static void test_DataWriter(void)
     hr = IDataWriter_StoreAsync(data_writer, &operation);
     todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (FAILED(hr))
+        goto done;
 
     /* Writing is allowed while storing, and the data will be stored by the next StoreAsync() call */
     hr = IDataWriter_WriteBytes(data_writer, 1, &byte_value);
@@ -1868,10 +1864,9 @@ static void test_DataWriter(void)
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "got hr %#lx.\n", hr);
 
+done:
     ref = IDataWriter_Release(data_writer);
     ok(ref == 0, "got ref %ld.\n", ref);
-
-done:
     ref = IRandomAccessStream_Release(in_memory_stream);
     ok(ref == 0, "got ref %ld.\n", ref);
     ref = IDataWriterFactory_Release(data_writer_factory);

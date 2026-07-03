@@ -39,6 +39,7 @@ struct data_writer
     IDataWriter IDataWriter_iface;
     LONG ref;
 
+    IOutputStream *stream;
     IBuffer *buffer;
     byte *data;
 };
@@ -128,6 +129,22 @@ static ULONG WINAPI data_writer_Release(IDataWriter *iface)
 
     if (!ref)
     {
+        if (impl->stream)
+        {
+            IClosable *closable;
+            HRESULT hr;
+
+            if (SUCCEEDED(hr = IOutputStream_QueryInterface(impl->stream, &IID_IClosable, (void **)&closable)))
+            {
+                hr = IClosable_Close(closable);
+                IClosable_Release(closable);
+            }
+
+            if (FAILED(hr))
+                WARN("Failed to close stream, hr %#lx.\n", hr);
+
+            IOutputStream_Release(impl->stream);
+        }
         if (impl->buffer)
             IBuffer_Release(impl->buffer);
         free(impl);
@@ -306,18 +323,30 @@ static HRESULT WINAPI data_writer_MeasureString(IDataWriter *iface, HSTRING valu
 
 static HRESULT WINAPI data_writer_StoreAsync(IDataWriter *iface, IAsyncOperation_UINT32 **operation)
 {
+    struct data_writer *impl = impl_from_IDataWriter(iface);
+
     FIXME("iface %p, operation %p stub!\n", iface, operation);
 
     *operation = NULL;
-    return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+
+    if (!impl->stream)
+        return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI data_writer_FlushAsync(IDataWriter *iface, IAsyncOperation_boolean **operation)
 {
+    struct data_writer *impl = impl_from_IDataWriter(iface);
+
     FIXME("iface %p, operation %p stub!\n", iface, operation);
 
     *operation = NULL;
-    return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+
+    if (!impl->stream)
+        return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
+
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI data_writer_DetachBuffer(IDataWriter *iface, IBuffer **buffer)
@@ -379,7 +408,7 @@ static const struct IDataWriterVtbl data_writer_vtbl =
     data_writer_DetachStream,
 };
 
-static HRESULT data_writer_create(IDataWriter **out)
+static HRESULT data_writer_create(IOutputStream *output_stream, IDataWriter **out)
 {
     struct data_writer *impl;
     HRESULT hr;
@@ -389,6 +418,7 @@ static HRESULT data_writer_create(IDataWriter **out)
         return E_OUTOFMEMORY;
 
     impl->IDataWriter_iface.lpVtbl = &data_writer_vtbl;
+    impl->stream = output_stream;
     impl->ref = 1;
 
     if (FAILED(hr = data_writer_init_buffer(impl, 0)))
@@ -396,6 +426,9 @@ static HRESULT data_writer_create(IDataWriter **out)
         free(impl);
         return hr;
     }
+
+    if (output_stream)
+        IOutputStream_AddRef(output_stream);
 
     *out = &impl->IDataWriter_iface;
     return S_OK;
@@ -491,7 +524,7 @@ static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_ActivateInstance
 
     TRACE("iface %p, instance %p.\n", iface, instance);
 
-    if (FAILED(hr = data_writer_create(&data_writer)))
+    if (FAILED(hr = data_writer_create(NULL, &data_writer)))
         return hr;
 
     hr = IDataWriter_QueryInterface(data_writer, &IID_IInspectable, (void **)instance);
@@ -580,9 +613,8 @@ static HRESULT STDMETHODCALLTYPE data_writer_factory_GetTrustLevel(IDataWriterFa
 static HRESULT STDMETHODCALLTYPE data_writer_factory_CreateDataWriter(IDataWriterFactory *iface,
         IOutputStream *output_stream, IDataWriter **data_writer)
 {
-    FIXME("iface %p, output_stream %p, data_writer %p stub!\n", iface, output_stream, data_writer);
-    *data_writer = NULL;
-    return E_NOTIMPL;
+    TRACE("iface %p, output_stream %p, data_writer %p.\n", iface, output_stream, data_writer);
+    return data_writer_create(output_stream, data_writer);
 }
 
 static const struct IDataWriterFactoryVtbl data_writer_factory_vtbl =
