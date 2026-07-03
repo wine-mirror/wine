@@ -1688,7 +1688,6 @@ static void test_DataWriter(void)
     check_interface(data_writer, &IID_IAgileObject, TRUE);
 
     hr = IDataWriter_DetachStream(data_writer, &output_stream);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ok(!output_stream, "got stream %p.\n", output_stream);
 
@@ -1847,18 +1846,13 @@ static void test_DataWriter(void)
     IOutputStream_Release(output_stream);
 
     hr = IDataWriter_DetachStream(data_writer, &detached_stream);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine
     ok(detached_stream == output_stream, "got stream %p.\n", detached_stream);
-    if (SUCCEEDED(hr)) IOutputStream_Release(detached_stream);
+    IOutputStream_Release(detached_stream);
 
     hr = IDataWriter_StoreAsync(data_writer, &operation);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "got hr %#lx.\n", hr);
-    if (SUCCEEDED(hr)) IAsyncOperation_UINT32_Release(operation);
     hr = IDataWriter_FlushAsync(data_writer, &bool_op);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "got hr %#lx.\n", hr);
 
     ref = IDataWriter_Release(data_writer);

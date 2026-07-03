@@ -610,14 +610,16 @@ static HRESULT WINAPI data_writer_DetachStream(IDataWriter *iface, IOutputStream
 {
     struct data_writer *impl = impl_from_IDataWriter(iface);
 
-    FIXME("iface %p, output_stream %p stub!\n", iface, output_stream);
+    TRACE("iface %p, output_stream %p.\n", iface, output_stream);
 
     *output_stream = NULL;
 
     if (impl->storing)
         return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
 
-    return E_NOTIMPL;
+    *output_stream = impl->stream;
+    impl->stream = NULL;
+    return S_OK;
 }
 
 static const struct IDataWriterVtbl data_writer_vtbl =
