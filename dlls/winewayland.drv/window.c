@@ -48,7 +48,7 @@ static int wayland_win_data_cmp_rb(const void *key,
     return 0;
 }
 
-static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t win_data_mutex;
 static struct rb_tree win_data_rb = { wayland_win_data_cmp_rb };
 
 /***********************************************************************
