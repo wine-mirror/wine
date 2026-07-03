@@ -196,6 +196,7 @@ static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
 static void *internal_context_create( void *share, int *context_format )
 {
     static const int attribs[] = { WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0 };
+    BOOL shared = TRUE;
     void *context;
     int format;
 
@@ -205,7 +206,7 @@ static void *internal_context_create( void *share, int *context_format )
         if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
         if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
         if (desc->pfd.cColorBits < 24) continue;
-        if (!driver_funcs->p_context_create( format, share, attribs, &context )) continue;
+        if (!driver_funcs->p_context_create( format, share, attribs, &context, &shared )) continue;
         if (context_format) *context_format = format;
         return context;
     }
@@ -799,7 +800,7 @@ static UINT egldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLen
     return -1; /* use default implementation */
 }
 
-static BOOL egldrv_context_create( int format, void *share, const int *attribs, void **context )
+static BOOL egldrv_context_create( int format, void *share, const int *attribs, void **context, BOOL *shared )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     const struct egl_platform *egl = &display_egl;
@@ -1350,7 +1351,7 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, struct opengl_drawable *drawable, GLe
     return -1; /* use default implementation */
 }
 
-static BOOL nulldrv_context_create( int format, void *share, const int *attribs, void **private )
+static BOOL nulldrv_context_create( int format, void *share, const int *attribs, void **private, BOOL *shared )
 {
     return FALSE;
 }
@@ -2285,6 +2286,7 @@ static int get_window_swap_interval( HWND hwnd )
 
 static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, const int *attribs )
 {
+    BOOL shared = TRUE;
     int format;
 
     TRACE( "context %p, hdc %p, attribs %p\n", context, hdc, attribs );
@@ -2296,12 +2298,13 @@ static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, cons
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (!driver_funcs->p_context_create( format, global_context, attribs, &context->driver_private ))
+    if (!driver_funcs->p_context_create( format, global_context, attribs, &context->driver_private, &shared ))
     {
         WARN( "Failed to create driver context for context %p\n", context );
         return FALSE;
     }
     context->format = format;
+    if (!shared) opengl_client_context_from_client( context->client_context )->broken_sharing = TRUE;
 
     TRACE( "created context %p, format %u for driver context %p\n", context, format, context->driver_private );
     return TRUE;

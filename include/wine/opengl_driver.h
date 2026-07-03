@@ -79,6 +79,7 @@ struct opengl_client_context
     GLint                       profile_mask;
     int                         major_version;
     int                         minor_version;
+    BOOL                        broken_sharing;                         /* context couldn't be shared (for macOS) */
     BOOLEAN                     extensions[GL_EXTENSION_COUNT];         /* exposed client extensions */
     UINT32                      extension_count;                        /* size of supported extensions */
     UINT16                      extension_array[GL_EXTENSION_COUNT];    /* array of supported extensions */
@@ -242,7 +243,7 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     void (*p_init_extensions)( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] );
     BOOL (*p_surface_create)( struct client_surface *client, int format, struct opengl_drawable **drawable );
-    BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context );
+    BOOL (*p_context_create)( int format, void *share, const int *attribs, void **context, BOOL *shared );
     BOOL (*p_context_destroy)(void*);
     BOOL (*p_make_current)( struct opengl_drawable *draw, struct opengl_drawable *read, void *private );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,

@@ -455,10 +455,10 @@ static void destroy_host_shader( struct object_table *table, GLuint host_id, GLu
     destroy_object( table->type, host_id );
 }
 
-static void free_object_table( struct object_table *table )
+static void free_object_table( struct object_table *table, BOOL destroy )
 {
-    if (table->type == OBJ_TYPE_SHADER) free_object_ids( table, table->host_ids, destroy_host_shader );
-    else free_object_ids( table, table->host_ids, destroy_host_object );
+    if (table->type == OBJ_TYPE_SHADER) free_object_ids( table, table->host_ids, destroy ? destroy_host_shader : NULL );
+    else free_object_ids( table, table->host_ids, destroy ? destroy_host_object : NULL );
     free_object_ids( table, table->client_ids, NULL );
 }
 
@@ -496,14 +496,14 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
     return lists;
 }
 
-static void display_lists_release( struct display_lists *lists )
+static void display_lists_release( struct display_lists *lists, BOOL destroy )
 {
     struct glDeleteSync_params delete_sync = { .teb = NtCurrentTeb() };
 
     if (InterlockedDecrement( &lists->refcount )) return;
 
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
-        free_object_table( lists->tables + i );
+        free_object_table( lists->tables + i, destroy );
 
     for (int i = 0; i < lists->syncs.count; i++)
     {
@@ -511,7 +511,7 @@ static void display_lists_release( struct display_lists *lists )
         if (LOWORD(entry->handle) == 0xffff) continue;
         WARN( "Leaking sync client %#x, host %p\n", entry->handle, entry->user_data );
         delete_sync.sync = entry->user_data;
-        UNIX_CALL( glDeleteSync, &delete_sync );
+        if (destroy) UNIX_CALL( glDeleteSync, &delete_sync );
         free( entry->user_data );
     }
 
@@ -557,7 +557,7 @@ static struct handle_entry *alloc_client_context( struct context *share )
     if (!(context->lists = share ? display_lists_acquire( share->lists ) : display_lists_create())) goto failed;
     if ((ptr = alloc_handle( &contexts, context ))) return ptr;
 
-    display_lists_release( context->lists );
+    display_lists_release( context->lists, share ? !share->base.broken_sharing : TRUE );
 failed:
     free( context );
     return NULL;
@@ -567,7 +567,7 @@ static void free_client_context( struct handle_entry *ptr )
 {
     struct context *context = context_from_opengl_client_context( ptr->context );
 
-    display_lists_release( context->lists );
+    display_lists_release( context->lists, !context->base.broken_sharing );
 
     free_handle( &contexts, ptr );
     free( context );
@@ -920,9 +920,14 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
         SetLastError( ERROR_INVALID_OPERATION );
         return NULL;
     }
+    if (share_context && share_context->base.broken_sharing)
+    {
+        ERR( "Shared context %p has broken display list sharing\n", share );
+        share = NULL;
+    }
     if (share) args.hShareContext = &share_context->base.obj;
 
-    if (!(ptr = alloc_client_context( share_context ))) return NULL;
+    if (!(ptr = alloc_client_context( share ? share_context : NULL ))) return NULL;
     args.ret = &ptr->context->obj;
 
     if ((status = UNIX_CALL( wglCreateContextAttribsARB, &args ))) WARN( "wglCreateContextAttribsARB returned %#lx\n", status );
@@ -1014,9 +1019,15 @@ BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
     if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
     if (ReadNoFence( &dst_context->lists->modified )) return FALSE;
 
+    if (src_context->base.broken_sharing || dst_context->base.broken_sharing)
+    {
+        ERR( "Either source or destination context has broken sharing\n" );
+        return FALSE;
+    }
+
     lists = display_lists_acquire( src_context->lists );
     lists = InterlockedExchangePointer( (void *)&dst_context->lists, lists );
-    display_lists_release( lists );
+    display_lists_release( lists, TRUE );
 
     return TRUE;
 }

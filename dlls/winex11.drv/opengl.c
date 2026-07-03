@@ -1197,7 +1197,7 @@ static void x11drv_surface_flush( struct opengl_drawable *base, UINT flags )
 /***********************************************************************
  *		X11DRV_wglCreateContextAttribsARB
  */
-static BOOL x11drv_context_create( int format, void *share, const int *attribList, void **context )
+static BOOL x11drv_context_create( int format, void *share, const int *attribList, void **context, BOOL *shared )
 {
     int glx_attribs[16] = {0}, *pContextAttribList = glx_attribs;
     int err = 0;

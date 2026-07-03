@@ -1292,7 +1292,7 @@ static BOOL init_gl_info(void)
 /**********************************************************************
  *              create_context
  */
-static BOOL create_context(struct macdrv_context *context, CGLContextObj share)
+static BOOL create_context(struct macdrv_context *context, CGLContextObj share, BOOL *shared)
 {
     const pixel_format *pf;
     CGLPixelFormatAttribute attribs[64];
@@ -2067,9 +2067,9 @@ static UINT macdrv_pbuffer_bind(HDC hdc, struct opengl_drawable *base, GLenum so
  *
  * WGL_ARB_create_context: wglCreateContextAttribsARB
  */
-static BOOL macdrv_context_create(int format, void *shared, const int *attrib_list, void **private)
+static BOOL macdrv_context_create(int format, void *share, const int *attrib_list, void **private, BOOL *shared)
 {
-    struct macdrv_context *share_context = shared;
+    struct macdrv_context *share_context = share;
     struct macdrv_context *context;
     const int *iptr;
     int major = 1, minor = 0, profile = WGL_CONTEXT_CORE_PROFILE_BIT_ARB, flags = 0;
@@ -2162,11 +2162,18 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
         return FALSE;
     }
 
+    if (share_context && share_context->core != core)
+    {
+        WARN("Cannot share core context with compatibility context\n");
+        share_context = NULL;
+        *shared = FALSE;
+    }
+
     if (!(context = calloc(1, sizeof(*context)))) return FALSE;
     context->core = core;
     context->format = format;
 
-    if (!create_context(context, share_context ? share_context->cglcontext : NULL))
+    if (!create_context(context, share_context ? share_context->cglcontext : NULL, shared))
     {
         free(context);
         return FALSE;
