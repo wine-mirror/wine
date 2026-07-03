@@ -135,7 +135,7 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
     input.mi.dx             = x;
     input.mi.dy             = y;
     input.mi.mouseData      = mouse_data;
-    input.mi.dwFlags        = flags;
+    input.mi.dwFlags        = flags | MOUSEEVENTF_MOVE_NOCOALESCE;
     input.mi.time           = time;
     input.mi.dwExtraInfo    = 0;
 

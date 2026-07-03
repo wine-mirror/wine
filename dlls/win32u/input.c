@@ -667,18 +667,53 @@ static const char *debugstr_mouseinput( const MOUSEINPUT *mi )
                              mi->dwFlags, mi->mouseData, mi->time );
 }
 
-static NTSTATUS send_mouse_motion( HWND hwnd, UINT flags, INPUT input )
+static NTSTATUS send_mouse_motion( UINT flags )
 {
+    struct user_thread_info *info = get_user_thread_info();
+    INPUT input = info->mouse_motion;
+    NTSTATUS status;
+
     if (!input.mi.dwFlags && !input.mi.mouseData) return STATUS_SUCCESS; /* ignore empty inputs */
 
     TRACE( "Sending %s\n", debugstr_mouseinput( &input.mi ) );
-    return server_send_hardware_message( hwnd, flags, &input, 0 );
+    status = server_send_hardware_message( info->mouse_hwnd, flags, &input, 0 );
+    memset( &info->mouse_motion, 0, sizeof(info->mouse_motion) );
+    info->mouse_hwnd = NULL;
+
+    return status;
+}
+
+static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input )
+{
+    struct user_thread_info *info = get_user_thread_info();
+    BOOL send;
+
+    /* don't accumulate if there's button / wheel / MOUSEEVENTF_MOVE_NOCOALESCE */
+    send = input.mi.mouseData || (input.mi.dwFlags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE));
+    if (send || info->mouse_hwnd != hwnd) send_mouse_motion( flags );
+
+    input.mi.dwFlags &= ~MOUSEEVENTF_MOVE_NOCOALESCE;
+    if (!input.mi.dwFlags) input = info->mouse_motion; /* only MOUSEEVENTF_MOVE_NOCOALESCE */
+    else if (!(input.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
+    {
+        input.mi.dwFlags |= (info->mouse_motion.mi.dwFlags & MOUSEEVENTF_ABSOLUTE);
+        input.mi.dx += info->mouse_motion.mi.dx;
+        input.mi.dy += info->mouse_motion.mi.dy;
+    }
+
+    info->mouse_hwnd = hwnd;
+    info->mouse_motion = input;
+
+    if (send) return send_mouse_motion( flags );
+
+    TRACE( "Keeping %s\n", debugstr_mouseinput( &info->mouse_motion.mi ) );
+    return STATUS_SUCCESS;
 }
 
 /* NtUserSendHardwareInput, for user drivers to feed host device input to wineserver */
 NTSTATUS send_hardware_input( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
 {
-    if (input->type == INPUT_MOUSE) return send_mouse_motion( hwnd, flags, *input );
+    if (input->type == INPUT_MOUSE) return accum_mouse_motion( hwnd, flags, *input );
     return server_send_hardware_message( hwnd, flags, input, lparam );
 }
 

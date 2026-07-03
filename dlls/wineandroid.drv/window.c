@@ -296,7 +296,7 @@ jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action, jint x, 
     data.motion.input.mi.mouseData   = 0;
     data.motion.input.mi.time        = 0;
     data.motion.input.mi.dwExtraInfo = 0;
-    data.motion.input.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    data.motion.input.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE_NOCOALESCE;
     switch (action & AMOTION_EVENT_ACTION_MASK)
     {
     case AMOTION_EVENT_ACTION_DOWN:

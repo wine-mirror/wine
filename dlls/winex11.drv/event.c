@@ -475,6 +475,7 @@ static int check_fd_events( int fd, int events )
  */
 BOOL X11DRV_ProcessEvents( DWORD mask )
 {
+    static const INPUT input = { .type = INPUT_MOUSE, .mi.dwFlags = MOUSEEVENTF_MOVE_NOCOALESCE };
     struct x11drv_thread_data *data = x11drv_thread_data();
     XEvent event, prev_event;
     int count = 0;
@@ -526,6 +527,7 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
 
     XFlush( gdi_display );
     if (count) TRACE( "processed %d events\n", count );
+    NtUserSendHardwareInput( NULL, 0, &input, 0 ); /* flush win32u accumulated motion */
 
     if (mask != QS_ALLINPUT || check_fd_events( ConnectionNumber( data->display ), POLLIN )) return FALSE;
     XFlush( data->display ); /* all events have been processed, flush any pending request */
