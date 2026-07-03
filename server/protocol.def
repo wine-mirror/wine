@@ -356,6 +356,7 @@ union hw_input
         unsigned int   flags;   /* event flags */
         unsigned int   time;    /* event time */
         lparam_t       info;    /* extra info */
+        unsigned int   raw_count; /* number of rawinput POINT in varargs */
     } mouse;
     struct
     {
@@ -2418,7 +2419,7 @@ enum message_type
     user_handle_t   win;       /* window handle */
     union hw_input  input;     /* input data */
     unsigned int    flags;     /* flags (see below) */
-    VARARG(report,bytes);      /* HID report data */
+    VARARG(extra,bytes);       /* HID report data / raw input data */
 @REPLY
     int             wait;      /* do we need to wait for a reply? */
     int             prev_x;    /* previous cursor position */
@@ -2426,7 +2427,8 @@ enum message_type
     int             new_x;     /* new cursor position */
     int             new_y;
 @END
-#define SEND_HWMSG_INJECTED    0x01
+#define SEND_HWMSG_INJECTED    0x01  /* message is injected from application */
+#define SEND_HWMSG_RAWINPUT    0x02  /* don't generate WM_INPUT x / y updates */
 
 
 /* Get a message from the current queue */

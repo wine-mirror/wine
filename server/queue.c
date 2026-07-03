@@ -2213,8 +2213,10 @@ static void dispatch_rawinput_message( struct desktop *desktop, const struct raw
 
 /* queue a hardware message for a mouse event */
 static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const union hw_input *input,
-                                unsigned int origin, struct msg_queue *sender )
+                                unsigned int origin, struct msg_queue *sender, bool rawinput )
 {
+    static const POINT empty_raw = {0};
+
     desktop_shm_t *desktop_shm = desktop->shared;
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
@@ -2223,6 +2225,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     unsigned int i, time = get_tick_count(), flags;
     struct hw_msg_source source = { IMDT_MOUSE, origin };
     lparam_t wparam = input->mouse.data << 16;
+    const POINT *raw = &empty_raw;
     int wait = 0, x, y;
 
     static const unsigned int messages[] =
@@ -2241,6 +2244,13 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         WM_MOUSEWHEEL,   /* 0x0800 = MOUSEEVENTF_WHEEL */
         WM_MOUSEHWHEEL   /* 0x1000 = MOUSEEVENTF_HWHEEL */
     };
+
+    if (input->mouse.raw_count != get_req_data_size() / sizeof(*raw))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
+    }
+    if (input->mouse.raw_count) raw = get_req_data();
 
     SHARED_WRITE_BEGIN( desktop_shm, desktop_shm_t )
     {
@@ -2285,8 +2295,6 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 
     if ((foreground = get_foreground_thread( desktop, win )))
     {
-        int raw_x, raw_y;
-
         memset( &raw_msg, 0, sizeof(raw_msg) );
         raw_msg.foreground = foreground;
         raw_msg.source     = source;
@@ -2294,12 +2302,17 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         raw_msg.message    = WM_INPUT;
         raw_msg.flags      = flags;
 
-        raw_x = x - desktop_shm->cursor.x;
-        raw_y = y - desktop_shm->cursor.y;
+        for (int i = 0, count = max( 1, input->mouse.raw_count ); i < count; i++)
+        {
+            int raw_x, raw_y;
 
-        if (rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, raw_x, raw_y,
-                           raw_msg.flags, input->mouse.data, input->mouse.info ))
-            dispatch_rawinput_message( desktop, &raw_msg );
+            raw_x = rawinput ? raw[i].x : x - desktop_shm->cursor.x;
+            raw_y = rawinput ? raw[i].y : y - desktop_shm->cursor.y;
+
+            if (rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, raw_x, raw_y,
+                               raw_msg.flags, input->mouse.data, input->mouse.info ))
+                dispatch_rawinput_message( desktop, &raw_msg );
+        }
 
         release_object( foreground );
     }
@@ -3257,6 +3270,7 @@ DECL_HANDLER(send_hardware_message)
     struct desktop *desktop;
     unsigned int origin = (req->flags & SEND_HWMSG_INJECTED ? IMO_INJECTED : IMO_HARDWARE);
     struct msg_queue *sender = req->flags & SEND_HWMSG_INJECTED ? get_current_queue() : NULL;
+    bool rawinput = !!(req->flags & SEND_HWMSG_RAWINPUT);
     desktop_shm_t *desktop_shm;
     int wait = 0;
 
@@ -3276,7 +3290,7 @@ DECL_HANDLER(send_hardware_message)
     switch (req->input.type)
     {
     case INPUT_MOUSE:
-        wait = queue_mouse_message( desktop, req->win, &req->input, origin, sender );
+        wait = queue_mouse_message( desktop, req->win, &req->input, origin, sender, rawinput );
         break;
     case INPUT_KEYBOARD:
         wait = queue_keyboard_message( desktop, req->win, &req->input, origin, sender, 0 );

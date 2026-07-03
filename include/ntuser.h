@@ -1600,11 +1600,22 @@ struct hid_packet
 
 C_ASSERT(sizeof(struct hid_packet) == offsetof(struct hid_packet, data[0]));
 
+struct raw_mouse
+{
+    UINT  count;
+    POINT data[64]; /* arbitrary buffer size */
+};
+
 struct send_hardware_input_params
 {
     UINT flags;
     const INPUT *input;
-    LPARAM lparam;  /* struct hid_packet pointer for WM_INPUT* messages */
+    union
+    {
+        LPARAM             lparam;
+        struct hid_packet *hid_packet; /* WM_INPUT* */
+        struct raw_mouse  *raw_mouse;  /* WM_MOUSEMOVE* */
+    };
 };
 
 static inline BOOL NtUserSendHardwareInput( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )

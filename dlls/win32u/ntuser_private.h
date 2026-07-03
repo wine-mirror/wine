@@ -121,6 +121,7 @@ struct user_thread_info
     HIMC                          default_imc;            /* default input context */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
+    struct raw_mouse              raw_mouse;              /* accumulated hardware raw mouse frames */
     INPUT                         mouse_motion;           /* accumulated hardware mouse motion */
     HWND                          mouse_hwnd;             /* hardware mouse motion target window */
     struct hardware_msg_data     *rawinput;               /* Current rawinput message data */

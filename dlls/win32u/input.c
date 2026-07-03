@@ -675,15 +675,16 @@ static NTSTATUS send_mouse_motion( UINT flags )
 
     if (!input.mi.dwFlags && !input.mi.mouseData) return STATUS_SUCCESS; /* ignore empty inputs */
 
-    TRACE( "Sending %s\n", debugstr_mouseinput( &input.mi ) );
-    status = server_send_hardware_message( info->mouse_hwnd, flags, &input, 0 );
+    TRACE( "Sending %s (%u raw frames)\n", debugstr_mouseinput( &input.mi ), info->raw_mouse.count );
+    status = server_send_hardware_message( info->mouse_hwnd, flags, &input, (LPARAM)&info->raw_mouse );
     memset( &info->mouse_motion, 0, sizeof(info->mouse_motion) );
+    info->raw_mouse.count = 0;
     info->mouse_hwnd = NULL;
 
     return status;
 }
 
-static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input )
+static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input, const struct raw_mouse *raw )
 {
     struct user_thread_info *info = get_user_thread_info();
     BOOL send;
@@ -691,9 +692,10 @@ static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input )
     /* don't accumulate if there's button / wheel / MOUSEEVENTF_MOVE_NOCOALESCE */
     send = input.mi.mouseData || (input.mi.dwFlags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE));
     if (send || info->mouse_hwnd != hwnd) send_mouse_motion( flags );
+    else if (info->raw_mouse.count + raw->count > ARRAY_SIZE(raw->data)) send_mouse_motion( flags );
 
     input.mi.dwFlags &= ~MOUSEEVENTF_MOVE_NOCOALESCE;
-    if (!input.mi.dwFlags) input = info->mouse_motion; /* only MOUSEEVENTF_MOVE_NOCOALESCE */
+    if (!input.mi.dwFlags) input = info->mouse_motion; /* only MOUSEEVENTF_MOVE_NOCOALESCE or raw */
     else if (!(input.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
     {
         input.mi.dwFlags |= (info->mouse_motion.mi.dwFlags & MOUSEEVENTF_ABSOLUTE);
@@ -703,17 +705,24 @@ static NTSTATUS accum_mouse_motion( HWND hwnd, UINT flags, INPUT input )
 
     info->mouse_hwnd = hwnd;
     info->mouse_motion = input;
+    memcpy( info->raw_mouse.data + info->raw_mouse.count, raw->data, raw->count * sizeof(*raw->data) );
+    info->raw_mouse.count += raw->count;
 
     if (send) return send_mouse_motion( flags );
 
-    TRACE( "Keeping %s\n", debugstr_mouseinput( &info->mouse_motion.mi ) );
+    TRACE( "Keeping %s (%u raw frames)\n", debugstr_mouseinput( &info->mouse_motion.mi ), info->raw_mouse.count );
     return STATUS_SUCCESS;
 }
 
 /* NtUserSendHardwareInput, for user drivers to feed host device input to wineserver */
 NTSTATUS send_hardware_input( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
 {
-    if (input->type == INPUT_MOUSE) return accum_mouse_motion( hwnd, flags, *input );
+    if (input->type == INPUT_MOUSE)
+    {
+        const struct raw_mouse empty_raw = {0}, *raw = lparam ? (void *)lparam : &empty_raw;
+        return accum_mouse_motion( hwnd, flags, *input, raw );
+    }
+
     return server_send_hardware_message( hwnd, flags, input, lparam );
 }
 

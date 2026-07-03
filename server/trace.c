@@ -480,7 +480,7 @@ static void dump_hw_input( const char *prefix, const union hw_input *input )
                  prefix, input->mouse.x, input->mouse.y, input->mouse.data, input->mouse.flags,
                  input->mouse.time );
         dump_uint64( ",info=", &input->mouse.info );
-        fputc( '}', stderr );
+        fprintf( stderr, ",raw_count=%u}", input->mouse.raw_count );
         break;
     case INPUT_KEYBOARD:
         fprintf( stderr, "%s{type=KEYBOARD,vkey=%04hx,scan=%04hx,flags=%08x,time=%u",

@@ -340,6 +340,7 @@ union hw_input
         unsigned int   flags;
         unsigned int   time;
         lparam_t       info;
+        unsigned int   raw_count;
     } mouse;
     struct
     {
@@ -3153,7 +3154,7 @@ struct send_hardware_message_request
     user_handle_t   win;
     union hw_input  input;
     unsigned int    flags;
-    /* VARARG(report,bytes); */
+    /* VARARG(extra,bytes); */
     char __pad_60[4];
 };
 struct send_hardware_message_reply
@@ -3167,6 +3168,7 @@ struct send_hardware_message_reply
     char __pad_28[4];
 };
 #define SEND_HWMSG_INJECTED    0x01
+#define SEND_HWMSG_RAWINPUT    0x02
 
 
 
@@ -7156,6 +7158,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 955
+#define SERVER_PROTOCOL_VERSION 956
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

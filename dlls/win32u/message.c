@@ -3937,6 +3937,12 @@ NTSTATUS server_send_hardware_message( HWND hwnd, UINT flags, const INPUT *input
             req->input.mouse.flags = input->mi.dwFlags;
             req->input.mouse.time  = input->mi.time;
             req->input.mouse.info  = input->mi.dwExtraInfo;
+            if (lparam)
+            {
+                struct raw_mouse *raw = (struct raw_mouse *)lparam;
+                req->input.mouse.raw_count = raw->count;
+                wine_server_add_data( req, raw->data, raw->count * sizeof(*raw->data) );
+            }
             break;
         case INPUT_KEYBOARD:
             req->input.kbd.vkey  = input->ki.wVk;
