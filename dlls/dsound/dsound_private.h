@@ -42,9 +42,7 @@ extern int ds_hel_buflen;
 typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 
-/* dsound_convert.h */
 typedef void (*bitsgetfunc)(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, unsigned samples, DWORD channel);
-void mixieee32(float *src, float *dst, unsigned samples);
 
 typedef struct _DSVOLUMEPAN
 {
@@ -82,8 +80,8 @@ struct DirectSoundDevice
     int                         num_speakers;
     int                         lfe_channel;
     BYTE                       *filter_buffer;
-    float *tmp_buffer, *cp_buffer, *linear_buffer;
-    DWORD                       filter_buffer_len, tmp_buffer_len, cp_buffer_len, linear_buffer_len;
+    float                      *cp_buffer, *linear_buffer;
+    DWORD                       filter_buffer_len, cp_buffer_len, linear_buffer_len;
     CO_MTA_USAGE_COOKIE         mta_cookie;
 
     DSVOLUMEPAN                 volpan;
