@@ -827,7 +827,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetMaximumFrameLatency(IDXGISwa
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
     HRESULT hr;
 
-    FIXME("iface %p, max_latency %p.\n", iface, max_latency);
+    TRACE("iface %p, max_latency %p.\n", iface, max_latency);
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_get_max_frame_latency(swapchain->wined3d_swapchain, max_latency);
@@ -839,7 +839,7 @@ static HANDLE STDMETHODCALLTYPE d3d11_swapchain_GetFrameLatencyWaitableObject(ID
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
 
-    FIXME("iface %p.\n", iface);
+    TRACE("iface %p.\n", iface);
 
     return wined3d_swapchain_get_frame_latency_waitable_object(swapchain->wined3d_swapchain);
 }
