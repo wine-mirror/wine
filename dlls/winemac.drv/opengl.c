@@ -56,6 +56,7 @@ static struct gl_info gl_info;
 
 struct macdrv_context
 {
+    BOOL                    core;
     int                     format;
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
@@ -1291,7 +1292,7 @@ static BOOL init_gl_info(void)
 /**********************************************************************
  *              create_context
  */
-static BOOL create_context(struct macdrv_context *context, CGLContextObj share, unsigned int major)
+static BOOL create_context(struct macdrv_context *context, CGLContextObj share)
 {
     const pixel_format *pf;
     CGLPixelFormatAttribute attribs[64];
@@ -1299,7 +1300,6 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     CGLPixelFormatObj pix;
     GLint virtualScreens;
     CGLError err;
-    BOOL core = major >= 3;
 
     pf = get_pixel_format(context->format, TRUE /* non-displayable */);
     if (!pf)
@@ -1326,7 +1326,7 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     if (pf->double_buffer)
         attribs[n++] = kCGLPFADoubleBuffer;
 
-    if (!core)
+    if (!context->core)
     {
         attribs[n++] = kCGLPFAAuxBuffers;
         attribs[n++] = pf->aux_buffers;
@@ -1348,13 +1348,13 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     if (pf->stereo)
         attribs[n++] = kCGLPFAStereo;
 
-    if (pf->accum_mode && !core)
+    if (pf->accum_mode && !context->core)
     {
         attribs[n++] = kCGLPFAAccumSize;
         attribs[n++] = color_modes[pf->accum_mode - 1].color_bits;
     }
 
-    if (pf->pbuffer && !core)
+    if (pf->pbuffer && !context->core)
         attribs[n++] = kCGLPFAPBuffer;
 
     if (pf->sample_buffers && pf->samples)
@@ -1368,7 +1368,7 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     if (pf->backing_store)
         attribs[n++] = kCGLPFABackingStore;
 
-    if (core)
+    if (context->core)
     {
         attribs[n++] = kCGLPFAOpenGLProfile;
         attribs[n++] = (CGLPixelFormatAttribute)core_profile;
@@ -2113,6 +2113,7 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
                     RtlSetLastWin32Error(ERROR_INVALID_PROFILE_ARB);
                     return FALSE;
                 }
+                core = value == WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
                 profile = value;
                 break;
 
@@ -2162,9 +2163,10 @@ static BOOL macdrv_context_create(int format, void *shared, const int *attrib_li
     }
 
     if (!(context = calloc(1, sizeof(*context)))) return FALSE;
-
+    context->core = core;
     context->format = format;
-    if (!create_context(context, share_context ? share_context->cglcontext : NULL, major))
+
+    if (!create_context(context, share_context ? share_context->cglcontext : NULL))
     {
         free(context);
         return FALSE;
