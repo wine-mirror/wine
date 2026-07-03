@@ -404,12 +404,18 @@ static HRESULT data_writer_create(IDataWriter **out)
 struct data_writer_factory
 {
     IActivationFactory IActivationFactory_iface;
+    IDataWriterFactory IDataWriterFactory_iface;
     LONG ref;
 };
 
 static inline struct data_writer_factory *impl_data_writer_factory_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct data_writer_factory, IActivationFactory_iface);
+}
+
+static inline struct data_writer_factory *impl_data_writer_factory_from_IDataWriterFactory(IDataWriterFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct data_writer_factory, IDataWriterFactory_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_QueryInterface(IActivationFactory *iface, REFIID iid,
@@ -424,6 +430,14 @@ static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_QueryInterface(I
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IDataWriterFactory))
+    {
+        struct data_writer_factory *impl = impl_data_writer_factory_from_IActivationFactory(iface);
+        IDataWriterFactory_AddRef(&impl->IDataWriterFactory_iface);
+        *out = &impl->IDataWriterFactory_iface;
         return S_OK;
     }
 
@@ -499,9 +513,95 @@ static const struct IActivationFactoryVtbl data_writer_activation_factory_vtbl =
     data_writer_activation_factory_ActivateInstance,
 };
 
+static HRESULT STDMETHODCALLTYPE data_writer_factory_QueryInterface(IDataWriterFactory *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IInspectable)
+            || IsEqualGUID(iid, &IID_IAgileObject)
+            || IsEqualGUID(iid, &IID_IDataWriterFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IActivationFactory))
+    {
+        struct data_writer_factory *impl = impl_data_writer_factory_from_IDataWriterFactory(iface);
+        IActivationFactory_AddRef(&impl->IActivationFactory_iface);
+        *out = &impl->IActivationFactory_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE data_writer_factory_AddRef(IDataWriterFactory *iface)
+{
+    struct data_writer_factory *impl = impl_data_writer_factory_from_IDataWriterFactory(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE data_writer_factory_Release(IDataWriterFactory *iface)
+{
+    struct data_writer_factory *impl = impl_data_writer_factory_from_IDataWriterFactory(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE data_writer_factory_GetIids(IDataWriterFactory *iface, ULONG *iid_count,
+        IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE data_writer_factory_GetRuntimeClassName(IDataWriterFactory *iface,
+        HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE data_writer_factory_GetTrustLevel(IDataWriterFactory *iface,
+        TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE data_writer_factory_CreateDataWriter(IDataWriterFactory *iface,
+        IOutputStream *output_stream, IDataWriter **data_writer)
+{
+    FIXME("iface %p, output_stream %p, data_writer %p stub!\n", iface, output_stream, data_writer);
+    *data_writer = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IDataWriterFactoryVtbl data_writer_factory_vtbl =
+{
+    data_writer_factory_QueryInterface,
+    data_writer_factory_AddRef,
+    data_writer_factory_Release,
+    /* IInspectable methods */
+    data_writer_factory_GetIids,
+    data_writer_factory_GetRuntimeClassName,
+    data_writer_factory_GetTrustLevel,
+    /* IDataWriterFactory methods */
+    data_writer_factory_CreateDataWriter,
+};
+
 struct data_writer_factory data_writer_factory =
 {
     {&data_writer_activation_factory_vtbl},
+    {&data_writer_factory_vtbl},
     1
 };
 

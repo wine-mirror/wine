@@ -264,7 +264,7 @@ static void test_interfaces(void)
     check_interface(factory, &IID_IInspectable, TRUE);
     check_interface(factory, &IID_IAgileObject, TRUE);
     check_interface(factory, &IID_IActivationFactory, TRUE);
-    todo_wine check_interface(factory, &IID_IDataWriterFactory, TRUE);
+    check_interface(factory, &IID_IDataWriterFactory, TRUE);
     check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, FALSE);
     check_interface(factory, &IID_IApiInformationStatics, FALSE);
     check_interface(factory, &IID_IPropertyValueStatics, FALSE);
@@ -1678,7 +1678,6 @@ static void test_DataWriter(void)
     hr = IActivationFactory_ActivateInstance(factory, &inspectable);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     hr = IActivationFactory_QueryInterface(factory, &IID_IDataWriterFactory, (void **)&data_writer_factory);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     IActivationFactory_Release(factory);
 
@@ -1716,9 +1715,6 @@ static void test_DataWriter(void)
     ref = IDataWriter_Release(data_writer);
     ok(ref == 0, "got ref %ld.\n", ref);
 
-    if (!data_writer_factory)
-        goto done;
-
     get_activation_factory(in_memory_stream_statics_name, &factory);
 
     hr = IActivationFactory_ActivateInstance(factory, &inspectable);
@@ -1730,8 +1726,14 @@ static void test_DataWriter(void)
     hr = IRandomAccessStream_QueryInterface(in_memory_stream, &IID_IOutputStream, (void **)&output_stream);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     hr = IDataWriterFactory_CreateDataWriter(data_writer_factory, output_stream, &data_writer);
+    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     IOutputStream_Release(output_stream);
+    if (FAILED(hr))
+    {
+        IActivationFactory_Release(factory);
+        goto done;
+    }
 
     for (i = 0; i < 2; ++i)
     {
@@ -1868,15 +1870,12 @@ static void test_DataWriter(void)
 
     ref = IDataWriter_Release(data_writer);
     ok(ref == 0, "got ref %ld.\n", ref);
-    ref = IRandomAccessStream_Release(in_memory_stream);
-    ok(ref == 0, "got ref %ld.\n", ref);
 
 done:
-    if (data_writer_factory)
-    {
-        ref = IDataWriterFactory_Release(data_writer_factory);
-        ok(ref == 1, "got ref %ld.\n", ref);
-    }
+    ref = IRandomAccessStream_Release(in_memory_stream);
+    ok(ref == 0, "got ref %ld.\n", ref);
+    ref = IDataWriterFactory_Release(data_writer_factory);
+    ok(ref == 1, "got ref %ld.\n", ref);
 
     RoUninitialize();
 }
