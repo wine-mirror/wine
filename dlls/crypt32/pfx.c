@@ -51,7 +51,7 @@ static HCRYPTPROV import_key( cert_store_data_t data, DWORD flags )
     if (CRYPT32_CALL( import_store_key, &params ) != STATUS_BUFFER_TOO_SMALL) goto done;
 
     acquire_flags = (flags & CRYPT_MACHINE_KEYSET) | CRYPT_NEWKEYSET;
-    if (!CryptAcquireContextW( &prov, container, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
+    if (!CryptAcquireContextW( &prov, container, MS_ENH_RSA_AES_PROV_W, PROV_RSA_AES, acquire_flags ))
     {
         WARN( "CryptAcquireContextW failed %08lx\n", GetLastError() );
         goto done;

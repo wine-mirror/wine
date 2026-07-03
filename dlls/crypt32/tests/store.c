@@ -3596,6 +3596,57 @@ done:
     ;
 }
 
+static void test_PFXImportCertStore_sha256_signing(void)
+{
+    CRYPT_DATA_BLOB pfx = { sizeof(pfxdata), (BYTE *)pfxdata };
+    BYTE buf[512];
+    CRYPT_KEY_PROV_INFO *info = (CRYPT_KEY_PROV_INFO *)buf;
+    HCERTSTORE store;
+    const CERT_CONTEXT *cert;
+    HCRYPTPROV prov;
+    HCRYPTHASH hash;
+    DWORD size;
+    BOOL ret;
+
+    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
+    ok( store != NULL, "PFXImportCertStore failed: %lu\n", GetLastError() );
+    if (!store) return;
+
+    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert != NULL, "no cert in store: %08lx\n", GetLastError() );
+    if (!cert) goto done_close;
+
+    size = sizeof(buf);
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size );
+    ok( ret, "cert has no KEY_PROV_INFO: %08lx\n", GetLastError() );
+    if (!ret) goto done_cert;
+
+    ok( info->dwProvType == PROV_RSA_AES,
+        "PFX-imported key sits in provider type %lu, expected PROV_RSA_AES (%u) so that "
+        "SHA-256 signing works; PROV_RSA_FULL (1) can only hash MD5 and SHA-1\n",
+        info->dwProvType, PROV_RSA_AES );
+
+    if (info->dwProvType == PROV_RSA_AES)
+    {
+        ret = CryptAcquireContextW( &prov, info->pwszContainerName, info->pwszProvName,
+                                    info->dwProvType, 0 );
+        ok( ret, "CryptAcquireContextW(PROV_RSA_AES) failed: %08lx\n", GetLastError() );
+        if (ret)
+        {
+            ret = CryptCreateHash( prov, CALG_SHA_256, 0, 0, &hash );
+            ok( ret, "CryptCreateHash(CALG_SHA_256) failed on PFX-imported key's CSP: %08lx "
+                "— this is what NTE_BAD_ALGID looks like from userspace\n", GetLastError() );
+            if (ret) CryptDestroyHash( hash );
+            CryptReleaseContext( prov, 0 );
+        }
+    }
+
+done_cert:
+    CertFreeCertificateContext( cert );
+done_close:
+    CertCloseStore( store, 0 );
+}
+
 static void test_PFXExportCertStoreEx(void)
 {
     HCERTSTORE store, store2;
@@ -3825,6 +3876,7 @@ START_TEST(store)
     test_I_UpdateStore();
     test_PFXImportCertStore();
     test_PFXImportCertStore_unique_containers();
+    test_PFXImportCertStore_sha256_signing();
     test_PFXExportCertStoreEx();
     test_CryptQueryObject();
 }
