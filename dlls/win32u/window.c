@@ -37,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 #define USER_HANDLE_FROM_INDEX(index, generation) UlongToHandle( (index << 1) + FIRST_USER_HANDLE + (generation << 16) )
 
+static const struct ratio no_dpi;
+
 static void *client_objects[MAX_USER_HANDLES];
 
 #define SWP_AGG_NOGEOMETRYCHANGE \
@@ -323,7 +325,7 @@ void detach_client_surfaces( HWND hwnd )
 
 static RECT get_client_surface_rects( HWND toplevel, HWND hwnd, RECT *monitor_rect )
 {
-    UINT dpi = get_dpi_for_window( hwnd ), raw_dpi;
+    struct ratio dpi = get_dpi_for_window( hwnd ), raw_dpi;
     struct window_rects rects, monitor_rects;
     RECT rect = {0};
 
@@ -684,7 +686,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     if (parent && parent != NtUserGetDesktopWindow()) win->has_icons = FALSE;
 
     get_window_rect_rel( hwnd, COORDS_PARENT, &window_rect, get_dpi_for_window(hwnd) );
-    get_window_rect_rel( hwnd, COORDS_SCREEN, &old_screen_rect, 0 );
+    get_window_rect_rel( hwnd, COORDS_SCREEN, &old_screen_rect, no_dpi );
 
     SERVER_START_REQ( set_parent )
     {
@@ -701,7 +703,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     release_win_ptr( win );
     if (!ret) return 0;
 
-    get_window_rect_rel( hwnd, COORDS_SCREEN, &new_screen_rect, 0 );
+    get_window_rect_rel( hwnd, COORDS_SCREEN, &new_screen_rect, no_dpi );
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
 
     user_driver->pSetParent( full_handle, parent, old_parent );
@@ -1129,11 +1131,13 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
 }
 
 /* see GetDpiForWindow */
-UINT get_dpi_for_window( HWND hwnd )
+struct ratio get_dpi_for_window( HWND hwnd )
 {
-    UINT raw_dpi, context = get_window_dpi_awareness_context( hwnd );
+    struct ratio dpi = {1, 1}, raw_dpi;
+    UINT context = get_window_dpi_awareness_context( hwnd );
     if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( context )) return get_win_monitor_dpi( hwnd, &raw_dpi );
-    return NTUSER_DPI_CONTEXT_GET_DPI( context );
+    dpi.num = NTUSER_DPI_CONTEXT_GET_DPI( context );
+    return dpi;
 }
 
 /* see GetLastActivePopup */
@@ -1772,7 +1776,7 @@ static void mirror_rect( const RECT *window_rect, RECT *rect )
  *
  * Get the window and client rectangles.
  */
-BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_rects *rects, UINT dpi )
+BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_rects *rects, struct ratio dpi )
 {
     WND *win = get_win_ptr( hwnd );
     BOOL ret = TRUE;
@@ -1803,7 +1807,7 @@ BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_r
     }
     if (win != WND_OTHER_PROCESS)
     {
-        UINT window_dpi = get_dpi_for_window( hwnd );
+        struct ratio window_dpi = get_dpi_for_window( hwnd );
         *rects = win->rects;
 
         switch (relative)
@@ -1891,7 +1895,7 @@ other_process:
     {
         req->handle = wine_server_user_handle( hwnd );
         req->relative = relative;
-        req->dpi = dpi;
+        req->dpi = dpi.num;
         if ((ret = !wine_server_call_err( req )))
         {
             rects->window = wine_server_get_rect( reply->window );
@@ -1903,7 +1907,7 @@ other_process:
     return ret;
 }
 
-BOOL get_window_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT dpi )
+BOOL get_window_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, struct ratio dpi )
 {
     struct window_rects rects;
     BOOL ret = get_window_rects( hwnd, rel, &rects, dpi );
@@ -1912,12 +1916,12 @@ BOOL get_window_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT 
 }
 
 /* see GetWindowRect */
-BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi )
+BOOL get_window_rect( HWND hwnd, RECT *rect, struct ratio dpi )
 {
     return get_window_rect_rel( hwnd, COORDS_SCREEN, rect, dpi );
 }
 
-BOOL get_client_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT dpi )
+BOOL get_client_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, struct ratio dpi )
 {
     struct window_rects rects;
     BOOL ret = get_window_rects( hwnd, rel, &rects, dpi );
@@ -1926,7 +1930,7 @@ BOOL get_client_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT 
 }
 
 /* see GetClientRect */
-BOOL get_client_rect( HWND hwnd, RECT *rect, UINT dpi )
+BOOL get_client_rect( HWND hwnd, RECT *rect, struct ratio dpi )
 {
     return get_client_rect_rel( hwnd, COORDS_CLIENT, rect, dpi );
 }
@@ -2030,13 +2034,14 @@ done:
 
 static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style, const struct window_rects *rects )
 {
-    UINT dpi = get_dpi_for_window( hwnd ), style_mask, ex_style_mask;
+    struct ratio dpi = get_dpi_for_window( hwnd );
+    UINT style_mask, ex_style_mask;
     RECT visible_rect, rect = {0};
 
     if (get_present_rect( hwnd, &rect, get_thread_dpi() )) return rect;
     if (IsRectEmpty( &rects->window ) || EqualRect( &rects->window, &rects->client ) || shaped || !decorated_mode) return rects->window;
     if (!user_driver->pGetWindowStyleMasks( hwnd, style, ex_style, &style_mask, &ex_style_mask )) return rects->window;
-    if (!NtUserAdjustWindowRect( &rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi )) return rects->window;
+    if (!adjust_window_rect( &rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi.num )) return rects->window;
 
     visible_rect = rects->window;
     visible_rect.left   -= rect.left;
@@ -2054,7 +2059,7 @@ static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style,
 
 static BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    RECT virtual_rect = get_virtual_screen_rect( 0, MDT_RAW_DPI );
+    RECT virtual_rect = get_virtual_screen_rect( no_dpi, MDT_RAW_DPI );
 
     *surface_rect = *visible_rect;
 
@@ -2109,7 +2114,8 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     struct window_surface *new_surface;
     struct window_rects monitor_rects;
-    UINT raw_dpi, style, ex_style;
+    struct ratio raw_dpi;
+    UINT style, ex_style;
     RECT dummy;
     HRGN shape;
 
@@ -2208,7 +2214,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     struct window_rects monitor_rects;
     WND *win;
     HWND owner_hint, surface_win = 0, toplevel;
-    UINT raw_dpi, monitor_dpi, dpi = get_thread_dpi();
+    struct ratio raw_dpi, monitor_dpi, dpi = get_thread_dpi();
     BOOL ret, is_layered, is_child, need_icons = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
@@ -2242,7 +2248,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         req->handle        = wine_server_user_handle( hwnd );
         req->previous      = wine_server_user_handle( insert_after );
         req->swp_flags     = swp_flags;
-        req->monitor_dpi   = monitor_dpi;
+        req->monitor_dpi   = monitor_dpi.num;
         req->window        = wine_server_rectangle( new_rects->window );
         req->client        = wine_server_rectangle( new_rects->client );
         if (!EqualRect( &new_rects->window, &new_rects->visible ) || new_surface || valid_rects)
@@ -2404,7 +2410,7 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect )
 
     if (rect)
     {
-        UINT raw_dpi;
+        struct ratio raw_dpi;
         get_win_monitor_dpi( hwnd, &raw_dpi );
         exposed_rect = map_dpi_rect( *rect, raw_dpi, get_dpi_for_window( hwnd ) );
     }
@@ -2503,7 +2509,7 @@ int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     {
         UINT swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED |
             SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE;
-        UINT raw_dpi;
+        struct ratio raw_dpi;
         HRGN monitor_hrgn;
 
         if (!redraw) swp_flags |= SWP_NOREDRAW;
@@ -2695,7 +2701,7 @@ done:
  * Point is in screen coordinates.
  * Returned list must be freed by caller.
  */
-static HWND *list_children_from_point( HWND hwnd, POINT pt, UINT dpi )
+static HWND *list_children_from_point( HWND hwnd, POINT pt, struct ratio dpi )
 {
     int i, size = 128;
     HWND *list;
@@ -2711,7 +2717,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt, UINT dpi )
             req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
-            req->dpi = dpi;
+            req->dpi = dpi.num;
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -2741,10 +2747,10 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest, BOOL send_nchittest )
     int i, res;
     HWND ret, *list;
     POINT win_pt;
-    UINT dpi, raw_dpi;
+    struct ratio dpi = get_thread_dpi(), raw_dpi;
 
     if (!hwnd) hwnd = get_desktop_window();
-    if (!(dpi = get_thread_dpi())) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    if (!dpi.num) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
 
     *hittest = HTNOWHERE;
 
@@ -2904,7 +2910,7 @@ static BOOL empty_point( POINT pt )
 BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
     WND *win = get_win_ptr( hwnd );
-    UINT win_dpi;
+    struct ratio win_dpi;
 
     if (!win) return FALSE;
 
@@ -3270,7 +3276,7 @@ INT WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count )
  * Calculate the offset between the origin of the two windows. Used
  * to implement MapWindowPoints.
  */
-static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mirrored, POINT *ret_offset )
+static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, struct ratio dpi, BOOL *mirrored, POINT *ret_offset )
 {
     WND *win;
     POINT offset;
@@ -3291,7 +3297,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
         if (win == WND_OTHER_PROCESS) goto other_process;
         if (win != WND_DESKTOP)
         {
-            UINT raw_dpi, dpi_from = dpi ? dpi : get_win_monitor_dpi( hwnd_from, &raw_dpi );
+            struct ratio raw_dpi, dpi_from = dpi.num ? dpi : get_win_monitor_dpi( hwnd_from, &raw_dpi );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_from = TRUE;
@@ -3328,7 +3334,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
         if (win == WND_OTHER_PROCESS) goto other_process;
         if (win != WND_DESKTOP)
         {
-            UINT raw_dpi, dpi_to = dpi ? dpi : get_win_monitor_dpi( hwnd_to, &raw_dpi );
+            struct ratio raw_dpi, dpi_to = dpi.num ? dpi : get_win_monitor_dpi( hwnd_to, &raw_dpi );
             POINT pt = { 0, 0 };
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
@@ -3367,7 +3373,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
     {
         req->from = wine_server_user_handle( hwnd_from );
         req->to   = wine_server_user_handle( hwnd_to );
-        req->dpi  = dpi;
+        req->dpi  = dpi.num;
         if ((ret = !wine_server_call_err( req )))
         {
             ret_offset->x = reply->x;
@@ -3454,7 +3460,7 @@ void map_window_region( HWND from, HWND to, HRGN hrgn )
 }
 
 /* see MapWindowPoints */
-int map_window_points( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count, UINT dpi )
+int map_window_points( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count, struct ratio dpi )
 {
     BOOL mirrored;
     POINT offset;
@@ -3515,9 +3521,9 @@ static void dump_winpos_flags( UINT flags )
 static void map_dpi_winpos( WINDOWPOS *winpos )
 {
     RECT rect = {winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy};
-    UINT raw_dpi, dpi_from = get_thread_dpi(), dpi_to = get_dpi_for_window( winpos->hwnd );
+    struct ratio raw_dpi, dpi_from = get_thread_dpi(), dpi_to = get_dpi_for_window( winpos->hwnd );
 
-    if (!dpi_from) dpi_from = get_win_monitor_dpi( winpos->hwnd, &raw_dpi );
+    if (!dpi_from.num) dpi_from = get_win_monitor_dpi( winpos->hwnd, &raw_dpi );
     rect = map_dpi_rect( rect, dpi_from, dpi_to );
     winpos->x = rect.left;
     winpos->y = rect.top;
@@ -5657,15 +5663,15 @@ static void fix_cs_coordinates( CREATESTRUCTW *cs, INT *sw )
 /***********************************************************************
  *           map_dpi_create_struct
  */
-static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_to )
+static void map_dpi_create_struct( CREATESTRUCTW *cs, struct ratio dpi_to )
 {
     RECT rect = {cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy};
-    UINT dpi_from = get_thread_dpi();
+    struct ratio dpi_from = get_thread_dpi();
 
-    if (!dpi_from || !dpi_to)
+    if (!dpi_from.num || !dpi_to.num)
     {
-        UINT raw_dpi, mon_dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
-        if (!dpi_from) dpi_from = mon_dpi;
+        struct ratio raw_dpi, mon_dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
+        if (!dpi_from.num) dpi_from = mon_dpi;
         else dpi_to = mon_dpi;
     }
 
@@ -5686,7 +5692,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   DWORD flags, HINSTANCE instance, const WCHAR *class, BOOL ansi )
 {
     WCHAR base_nameW[MAX_ATOM_LEN + 1];
-    UINT win_dpi, context;
+    struct ratio win_dpi;
     struct window_surface *surface;
     struct window_rects new_rects;
     CBT_CREATEWNDW cbtc;
@@ -5694,6 +5700,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     CREATESTRUCTW cs;
     INT sw = SW_SHOW;
     RECT surface_rect;
+    UINT context;
     WND *win;
 
     TRACE( "ex_style %#x, class_name %s, version %s, window_name %s, style %#x, x %u, y %u, cx %u, cy %u, "
@@ -6042,13 +6049,13 @@ static BOOL set_raw_window_pos( HWND hwnd, RECT rect, UINT flags, BOOL internal 
     return NtUserSetWindowPos( hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, flags );
 }
 
-BOOL get_present_rect( HWND hwnd, RECT *rect, UINT dpi )
+BOOL get_present_rect( HWND hwnd, RECT *rect, struct ratio dpi )
 {
-    UINT dpi_from = get_dpi_for_window( hwnd );
+    struct ratio dpi_from = get_dpi_for_window( hwnd );
     WND *win;
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
-    if (dpi != -1) *rect = map_dpi_rect( win->present_rect, dpi_from, dpi );
+    if (dpi.num != (unsigned short)-1) *rect = map_dpi_rect( win->present_rect, dpi_from, dpi );
     else *rect = map_rect_virt_to_raw( win->present_rect, dpi_from );
     release_win_ptr( win );
 
@@ -6070,7 +6077,7 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return set_foreground_window( hwnd, FALSE, TRUE );
 
     case NtUserCallHwnd_GetDpiForWindow:
-        return get_dpi_for_window( hwnd );
+        return get_dpi_for_window( hwnd ).num;
 
     case NtUserCallHwnd_GetLastActivePopup:
         return (ULONG_PTR)get_last_active_popup( hwnd );
@@ -6177,17 +6184,20 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_GetWindowRect:
     {
         struct get_window_rects_params *params = (void *)param;
-        return get_window_rect( hwnd, params->rect, params->dpi );
+        struct ratio dpi = {params->dpi, 1};
+        return get_window_rect( hwnd, params->rect, dpi );
     }
     case NtUserCallHwndParam_GetClientRect:
     {
         struct get_window_rects_params *params = (void *)param;
-        return get_client_rect( hwnd, params->rect, params->dpi );
+        struct ratio dpi = {params->dpi, 1};
+        return get_client_rect( hwnd, params->rect, dpi );
     }
     case NtUserCallHwndParam_GetPresentRect:
     {
         struct get_window_rects_params *params = (void *)param;
-        return get_present_rect( hwnd, params->rect, params->dpi );
+        struct ratio dpi = {params->dpi, 1};
+        return get_present_rect( hwnd, params->rect, dpi );
     }
 
     case NtUserCallHwndParam_GetWindowRelative:
@@ -6203,10 +6213,11 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return is_child( hwnd, UlongToHandle(param) );
 
     case NtUserCallHwndParam_MapWindowPoints:
-        {
-            struct map_window_points_params *params = (void *)param;
-            return map_window_points( hwnd, params->hwnd_to, params->points, params->count, params->dpi );
-        }
+    {
+        struct map_window_points_params *params = (void *)param;
+        struct ratio dpi = {params->dpi, 1};
+        return map_window_points( hwnd, params->hwnd_to, params->points, params->count, dpi );
+    }
 
     case NtUserCallHwndParam_MirrorRgn:
         return mirror_window_region( hwnd, UlongToHandle(param) );
@@ -6238,8 +6249,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_GetWinMonitorDpi:
     {
-        UINT raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
-        return param == MDT_EFFECTIVE_DPI ? dpi : raw_dpi;
+        struct ratio raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+        return param == MDT_EFFECTIVE_DPI ? dpi.num : raw_dpi.num;
     }
 
     case NtUserCallHwndParam_SetRawWindowPos:

@@ -463,7 +463,7 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
     if (ret > 0 && (iCode & NTGDI_RGN_MONITOR_DPI))
     {
         HWND hwnd = NtUserWindowFromDC( hDC );
-        UINT raw_dpi;
+        struct ratio raw_dpi;
         HRGN region;
 
         get_win_monitor_dpi( hwnd, &raw_dpi );

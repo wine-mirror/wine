@@ -144,8 +144,8 @@ struct scaled_surface
 {
     struct window_surface header;
     struct window_surface *target_surface;
-    UINT dpi_from;
-    UINT dpi_to;
+    struct ratio dpi_from;
+    struct ratio dpi_to;
 };
 
 static struct scaled_surface *get_scaled_surface( struct window_surface *window_surface )
@@ -223,14 +223,14 @@ static const struct window_surface_funcs scaled_surface_funcs =
     scaled_surface_destroy
 };
 
-static void scaled_surface_set_target( struct scaled_surface *surface, struct window_surface *target, UINT dpi_to )
+static void scaled_surface_set_target( struct scaled_surface *surface, struct window_surface *target, struct ratio dpi_to )
 {
     if (surface->target_surface) window_surface_release( surface->target_surface );
     window_surface_add_ref( (surface->target_surface = target) );
     surface->dpi_to = dpi_to;
 }
 
-static struct window_surface *scaled_surface_create( HWND hwnd, const RECT *surface_rect, UINT dpi_from, UINT dpi_to,
+static struct window_surface *scaled_surface_create( HWND hwnd, const RECT *surface_rect, struct ratio dpi_from, struct ratio dpi_to,
                                                      struct window_surface *target_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -269,11 +269,11 @@ static RECT get_surface_rect( RECT rect )
     return rect;
 }
 
-void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_rect, UINT monitor_dpi,
+void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_rect, struct ratio monitor_dpi,
                             struct window_surface **window_surface )
 {
     struct window_surface *previous, *driver_surface;
-    UINT dpi = get_dpi_for_window( hwnd );
+    struct ratio dpi = get_dpi_for_window( hwnd );
     RECT monitor_rect;
 
 
@@ -296,7 +296,7 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
         return;
     }
 
-    if (!driver_surface || dpi == monitor_dpi)
+    if (!driver_surface || !memcmp( &dpi, &monitor_dpi, sizeof(monitor_dpi) ))
     {
         if (*window_surface) window_surface_release( *window_surface );
         *window_surface = driver_surface;
@@ -317,11 +317,11 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
     window_surface_release( driver_surface );
 }
 
-struct window_surface *get_driver_window_surface( struct window_surface *surface, UINT monitor_dpi )
+struct window_surface *get_driver_window_surface( struct window_surface *surface, struct ratio monitor_dpi )
 {
     if (!surface || surface == &dummy_surface) return surface;
     if (surface->funcs != &scaled_surface_funcs) return surface;
-    if (get_scaled_surface( surface )->dpi_to != monitor_dpi) return &dummy_surface;
+    if (memcmp( &get_scaled_surface( surface )->dpi_to, &monitor_dpi, sizeof(monitor_dpi) )) return &dummy_surface;
     return get_scaled_surface( surface )->target_surface;
 }
 
@@ -1936,7 +1936,7 @@ BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
     {
         HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
         DWORD layout = NtGdiSetLayout( hdc, -1, 0 );  /* map_window_points mirrors already */
-        UINT win_dpi = get_dpi_for_window( hwnd );
+        struct ratio win_dpi = get_dpi_for_window( hwnd );
         map_window_points( 0, hwnd, (POINT *)rect, 2, win_dpi );
         *rect = map_dpi_rect( *rect, win_dpi, get_thread_dpi() );
         NtGdiTransformPoints( hdc, (POINT *)rect, (POINT *)rect, 2, NtGdiDPtoLP );

@@ -267,6 +267,12 @@ struct property_data
     lparam_t       data;     /* data stored in property */
 };
 
+struct ratio
+{
+    unsigned short num;
+    unsigned short den;
+};
+
 /* structure to specify window rectangles */
 struct rectangle
 {

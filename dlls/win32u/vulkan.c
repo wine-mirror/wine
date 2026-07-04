@@ -1574,7 +1574,7 @@ static void win32u_vkDestroySurfaceKHR( VkInstance client_instance, VkSurfaceKHR
     free( surface );
 }
 
-static BOOL get_surface_rect( HWND hwnd, RECT *rect, UINT dpi )
+static BOOL get_surface_rect( HWND hwnd, RECT *rect, struct ratio dpi )
 {
     if (!get_present_rect( hwnd, rect, dpi ) && !get_client_rect( hwnd, rect, dpi )) return FALSE;
     OffsetRect( rect, -rect->left, -rect->top );
@@ -1825,9 +1825,9 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
     VkSwapchainCreateInfoKHR create_info_host = *create_info;
     VkSurfaceCapabilitiesKHR capabilities;
     VkSwapchainKHR host_swapchain;
+    struct ratio raw_dpi;
     RECT client_rect;
     VkResult res;
-    UINT raw_dpi;
 
     if (!NtUserIsWindow( surface->hwnd ))
     {

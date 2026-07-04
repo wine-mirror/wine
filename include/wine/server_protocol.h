@@ -251,6 +251,12 @@ struct property_data
     lparam_t       data;
 };
 
+struct ratio
+{
+    unsigned short num;
+    unsigned short den;
+};
+
 
 struct rectangle
 {
@@ -7149,6 +7155,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 952
+#define SERVER_PROTOCOL_VERSION 953
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

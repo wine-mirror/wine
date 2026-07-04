@@ -550,7 +550,7 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
     {
         HWND hwnd = UlongToHandle( desc->hContext );
         RECT *rect = desc->pPrivateDriverData;
-        UINT dpi = get_dpi_for_window( hwnd );
+        struct ratio dpi = get_dpi_for_window( hwnd );
         WND *win;
 
         if (desc->PrivateDriverDataSize != sizeof(*rect)) return STATUS_INVALID_PARAMETER;

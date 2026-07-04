@@ -253,7 +253,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         if (info->page)
         {
             *thumb_size = muldiv( pixels,info->page, info->maxVal - info->minVal + 1 );
-            min_thumb_size = muldiv( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ), 96 );
+            min_thumb_size = map_user_dpi( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ) );
             if (*thumb_size < min_thumb_size) *thumb_size = min_thumb_size;
         }
         else *thumb_size = get_system_metrics( SM_CXVSCROLL );
@@ -475,7 +475,7 @@ static UINT get_thumb_val( HWND hwnd, int bar, RECT *rect, BOOL vertical, int po
         if (info->page)
         {
             thumb_size = muldiv( pixels, info->page, info->maxVal - info->minVal + 1 );
-            min_thumb_size = muldiv( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ), 96 );
+            min_thumb_size = map_user_dpi( SCROLL_MIN_THUMB, get_dpi_for_window( hwnd ) );
             if (thumb_size < min_thumb_size) thumb_size = min_thumb_size;
         }
         else thumb_size = get_system_metrics( SM_CXVSCROLL );
