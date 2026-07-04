@@ -2535,6 +2535,13 @@ static int xpath_equal_number_values(double arg1, double arg2)
     return ret;
 }
 
+static bool xpath_strequal(const WCHAR *str1, const WCHAR *str2)
+{
+    if (str1 == str2) return true;
+    if (!str1 || !str2) return false;
+    return !wcscmp(str1, str2);
+}
+
 static bool xpath_equal_values_common(struct xpath_parser_context *ctxt,
         struct xpath_object *arg1, struct xpath_object *arg2)
 {
@@ -2588,7 +2595,7 @@ static bool xpath_equal_values_common(struct xpath_parser_context *ctxt,
                     ret = (arg2->boolval == ret);
                     break;
                 case XPATH_STRING:
-                    ret = !wcscmp(arg1->stringval, arg2->stringval);
+                    ret = xpath_strequal(arg1->stringval, arg2->stringval);
                     break;
                 case XPATH_NUMBER:
                     xpath_push_value(ctxt, arg1);
