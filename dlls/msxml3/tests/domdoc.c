@@ -5280,6 +5280,7 @@ static const struct query_test xpath_test[] =
     { "*/c", "E3.E1.E2.D1 E3.E2.E2.D1" },
     { "*/d", "E4.E1.E2.D1 E4.E2.E2.D1 E4.E4.E2.D1" },
     { "//a", "E1.E1.E2.D1 E1.E2.E2.D1 E1.E4.E2.D1" },
+    { "//elem[translate(a, \"A\", \"a\") = \"a1 field\"]", "E1.E2.D1", true },
     { "//b", "E2.E1.E2.D1 E2.E2.E2.D1 E2.E4.E2.D1" },
     { "//c", "E3.E1.E2.D1 E3.E2.E2.D1" },
     { "//d", "E4.E1.E2.D1 E4.E2.E2.D1 E4.E4.E2.D1" },
