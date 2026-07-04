@@ -4865,7 +4865,9 @@ WCHAR *xpath_translate_function(const WCHAR *to, const WCHAR *from, const WCHAR 
         cptr++;
     }
 
-    if (buffer.status != S_OK)
+    string_append(&buffer, L"", 1);
+
+    if (buffer._status != S_OK)
         string_buffer_cleanup(&buffer);
 
     return buffer.data;
