@@ -1608,7 +1608,7 @@ static BOOL AddIndexPopup(HHInfo *info)
     hwndPopup = CreateWindowExW(WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_APPWINDOW
                                  | WS_EX_WINDOWEDGE | WS_EX_RIGHTSCROLLBAR,
                                 L"HH Popup", window_title, WS_POPUPWINDOW
-                                 | WS_OVERLAPPEDWINDOW | WS_VISIBLE
+                                 | WS_OVERLAPPEDWINDOW
                                  | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, CW_USEDEFAULT,
                                 CW_USEDEFAULT, 300, 200, info->WinType.hwndHelp,
                                 NULL, hhctrl_hinstance, NULL);
@@ -1623,7 +1623,6 @@ static BOOL AddIndexPopup(HHInfo *info)
     if (!hwndCallback)
         return FALSE;
 
-    ShowWindow(hwndPopup, SW_HIDE);
     hwndList = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, szEmpty,
                                WS_CHILD | WS_BORDER | LVS_SINGLESEL | LVS_REPORT
                                 | LVS_NOCOLUMNHEADER, 50, 50, 100, 100,
