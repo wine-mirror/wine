@@ -279,14 +279,12 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
         {
             swprintf( pdo->base.device_id, ARRAY_SIZE(pdo->base.device_id), L"%s&Col%02d",
                       fdo->base.device_id, pdo->collection_desc->CollectionNumber );
-            swprintf( pdo->base.instance_id, ARRAY_SIZE(pdo->base.instance_id), L"%s&%04u",
-                      fdo->base.instance_id, i );
         }
         else
         {
             wcscpy( pdo->base.device_id, fdo->base.device_id );
-            wcscpy( pdo->base.instance_id, fdo->base.instance_id );
         }
+        swprintf( pdo->base.instance_id, ARRAY_SIZE(pdo->base.instance_id), L"%04u", i );
         wcscpy( pdo->base.container_id, fdo->base.container_id );
         pdo->base.class_guid = fdo->base.class_guid;
 
@@ -540,6 +538,8 @@ static NTSTATUS pdo_pnp( DEVICE_OBJECT *device, IRP *irp )
             DEVICE_CAPABILITIES *caps = irpsp->Parameters.DeviceCapabilities.Capabilities;
 
             caps->RawDeviceOK = 1;
+            caps->UniqueID = 0;
+            caps->Removable = 0;
             status = STATUS_SUCCESS;
             break;
         }

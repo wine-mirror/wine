@@ -2128,7 +2128,6 @@ static void test_simple_joystick( DWORD version )
         debugstr_guid( &prop_guid_path.guidClass ) );
     ok( !wcsncmp( prop_guid_path.wszPath, expect_path, wcslen( expect_path ) ), "got path %s\n",
         debugstr_w(prop_guid_path.wszPath) );
-    todo_wine
     ok( !wcscmp( wcsrchr( prop_guid_path.wszPath, '&' ), expect_path_end ), "got path %s\n",
         debugstr_w(prop_guid_path.wszPath) );
 
