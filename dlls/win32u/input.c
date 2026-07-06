@@ -2983,9 +2983,6 @@ static struct pointer *find_pointer( UINT32 id )
     LIST_FOR_EACH_ENTRY( pointer, &thread_info->known_pointers, struct pointer, entry )
         if (pointer->id == id) return pointer;
 
-    /* allocate a pointer for the mouse if we don't have one yet */
-    if (id == 1) return pointer_create( id, PT_MOUSE );
-
     WARN( "failed to find pointer with id %d\n", id );
     return NULL;
 }
@@ -3098,6 +3095,13 @@ BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
     struct pointer *pointer;
 
     TRACE( "%u, %p\n", id, type );
+
+    /* pointerid 1 is always the mouse */
+    if (id == 1 && type)
+    {
+        *type = PT_MOUSE;
+        return TRUE;
+    }
 
     if (!id || !type || !(pointer = find_pointer( id )))
     {
