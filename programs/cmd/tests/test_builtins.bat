@@ -99,16 +99,22 @@ call :setError 666 & (start /B /WAIT /d "%FOO_PATH%" cmd /s /c "if /I \"%%cd%%\"
 rd /q /s foo
 echo --- success/failure for TYPE command
 mkdir foo & cd foo
+mkdir bar
+mkdir spam
 echo a > fileA
 echo b > fileB
 call :setError 666 & (type &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (type NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (type i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (type file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 echo ---
-call :setError 666 & (type i\dont\exist\at\all.txt file* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-cd .. && rd /q /s foo
-
+call :setError 666 & (type file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type file* idontexistatall.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type idontexistatall.txt file* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type i\dont\exist\at\all.txt file*&&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd ..
+del foo\file*
+call :setError 666 & (type foo\* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rd /q /s foo
 echo --- success/failure for COPY command
 mkdir foo & cd foo
 echo a > fileA
