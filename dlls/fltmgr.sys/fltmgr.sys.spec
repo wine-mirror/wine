@@ -27,7 +27,7 @@
 @ stub FltClearCancelCompletion
 @ stub FltClose
 @ stub FltCloseClientPort
-@ stub FltCloseCommunicationPort
+@ stdcall FltCloseCommunicationPort(ptr)
 @ stub FltCompareInstanceAltitudes
 @ stub FltCompletePendedPostOperation
 @ stub FltCompletePendedPreOperation

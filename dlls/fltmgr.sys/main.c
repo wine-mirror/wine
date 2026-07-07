@@ -221,3 +221,8 @@ NTSTATUS WINAPI FltCreateCommunicationPort(PFLT_FILTER filter, PFLT_PORT *port, 
                         message_callback, max_connections);
     return STATUS_NOT_SUPPORTED;
 }
+
+void WINAPI FltCloseCommunicationPort (PFLT_PORT ServerPort)
+{
+    FIXME("%p\n", ServerPort);
+}
