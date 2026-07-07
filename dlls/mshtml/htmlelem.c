@@ -8209,6 +8209,7 @@ static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, const WCHA
             if(iter == nsattr)
                 break;
         }
+        nsIDOMAttr_Release(nsattr);
 
         assert(i < length);
         *dispid = MSHTML_DISPID_CUSTOM_MIN + i;
