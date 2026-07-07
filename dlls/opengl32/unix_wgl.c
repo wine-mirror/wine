@@ -1832,30 +1832,44 @@ static GLuint get_target_name( TEB *teb, GLenum target )
     return name;
 }
 
-static struct buffer *get_named_buffer( TEB *teb, GLuint name )
+/* wgl_lock must be held */
+static struct buffer *set_buffer_storage( GLuint name, struct buffer *buffer )
 {
     struct rb_entry *entry;
-    if (!(entry = rb_get( &buffers.map, &name ))) return NULL;
-    return RB_ENTRY_VALUE( entry, struct buffer, entry );
+    assert( !buffer || buffer->name == name );
+    if ((entry = rb_get( &buffers.map, &name ))) rb_remove( &buffers.map, entry );
+    if (buffer) rb_put( &buffers.map, &buffer->name, &buffer->entry );
+    return entry ? RB_ENTRY_VALUE( entry, struct buffer, entry ) : NULL;
 }
 
-static struct buffer *invalidate_buffer_name( TEB *teb, GLuint name )
+static struct buffer *set_named_buffer_storage( TEB *teb, GLuint name, struct buffer *buffer )
 {
-    struct buffer *buffer = get_named_buffer( teb, name );
-    if (buffer) rb_remove( &buffers.map, &buffer->entry );
-    return buffer;
+    struct buffer *previous;
+    pthread_mutex_lock( &wgl_lock );
+    previous = set_buffer_storage( name, buffer );
+    pthread_mutex_unlock( &wgl_lock );
+    return previous;
 }
 
-static struct buffer *invalidate_buffer_target( TEB *teb, GLenum target )
+static struct buffer *get_named_buffer_storage( TEB *teb, GLuint name )
+{
+    struct rb_entry *entry;
+    pthread_mutex_lock( &wgl_lock );
+    entry = rb_get( &buffers.map, &name );
+    pthread_mutex_unlock( &wgl_lock );
+    return entry ? RB_ENTRY_VALUE( entry, struct buffer, entry ) : NULL;
+}
+
+static struct buffer *set_target_buffer_storage( TEB *teb, GLenum target, struct buffer *buffer )
 {
     GLuint name = get_target_name( teb, target );
-    return name ? invalidate_buffer_name( teb, name ) : NULL;
+    return name ? set_named_buffer_storage( teb, name, buffer ) : NULL;
 }
 
-static struct buffer *get_target_buffer( TEB *teb, GLenum target )
+static struct buffer *get_target_buffer_storage( TEB *teb, GLenum target )
 {
     GLuint name = get_target_name( teb, target );
-    return name ? get_named_buffer( teb, name ) : NULL;
+    return name ? get_named_buffer_storage( teb, name ) : NULL;
 }
 
 static BOOL use_driver_buffer_map( struct buffer *buffer )
@@ -1959,7 +1973,6 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
          * to support it. */
         funcs->p_glBindBuffer( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, buffer_name );
         funcs->p_glBufferData( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, size, buffer->vm_ptr, GL_DYNAMIC_COPY );
-        rb_put( &buffers.map, &buffer->name, &buffer->entry );
         TRACE( "created buffer %p with pinned memory %p\n", buffer, buffer->vm_ptr );
         return buffer;
     }
@@ -2026,7 +2039,6 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
         funcs->p_glNamedBufferStorageMemEXT( buffer->name, size, buffer->gl_memory, 0 );
     else
         funcs->p_glBufferStorageMemEXT( target, size, buffer->gl_memory, 0 );
-    rb_put( &buffers.map, &buffer->name, &buffer->entry );
     TRACE( "created buffer_storage %p\n", buffer );
     return buffer;
 }
@@ -2084,6 +2096,7 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
 
     if (!buffer)
     {
+        struct buffer *previous;
         GLint size;
 
         if (name) funcs->p_glGetNamedBufferParameteriv( name, GL_BUFFER_SIZE, &size );
@@ -2092,7 +2105,8 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
         if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
         buffer->name = name ? name : get_target_name( teb, target );
         buffer->size = size;
-        rb_put( &buffers.map, &buffer->name, &buffer->entry );
+        previous = set_named_buffer_storage( teb, buffer->name, buffer );
+        assert( !previous );
         TRACE( "allocated buffer %p for %u\n", buffer, buffer->name );
     }
 
@@ -2146,21 +2160,23 @@ static GLbitfield map_range_flags_from_map_flags( GLenum flags )
     }
 }
 
-void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers, PFN_glDeleteBuffers p_glDeleteBuffers )
+void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *names, PFN_glDeleteBuffers p_glDeleteBuffers )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    struct buffer *buffer;
+    struct buffer **tmp;
     GLsizei i;
 
-    pthread_mutex_lock( &wgl_lock );
-
-    p_glDeleteBuffers( n, buffers );
-    for (i = 0; i < n; i++)
+    if ((tmp = malloc( n * sizeof(*tmp) )))
     {
-        if ((buffer = invalidate_buffer_name( teb, buffers[i] ))) free_buffer( funcs, buffer );
+        pthread_mutex_lock( &wgl_lock );
+        for (i = 0; i < n; i++) tmp[i] = names[i] ? set_buffer_storage( names[i], NULL ) : NULL;
+        pthread_mutex_unlock( &wgl_lock );
+
+        for (i = 0; i < n; i++) if (tmp[i]) free_buffer( funcs, tmp[i] );
+        free( tmp );
     }
 
-    pthread_mutex_unlock( &wgl_lock );
+    p_glDeleteBuffers( n, names );
 }
 
 void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data,
@@ -2169,15 +2185,9 @@ void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer = NULL, *previous;
 
-    pthread_mutex_lock( &wgl_lock );
-    previous = invalidate_buffer_target( teb, target );
-
-    if (flags & GL_MAP_PERSISTENT_BIT)
-        buffer = create_buffer_storage( teb, target, 0, size, data, flags );
-
+    if (flags & GL_MAP_PERSISTENT_BIT) buffer = create_buffer_storage( teb, target, 0, size, data, flags );
+    previous = set_target_buffer_storage( teb, target, buffer );
     if (!buffer) p_glBufferStorage( target, size, data, flags );
-
-    pthread_mutex_unlock( &wgl_lock );
     if (previous) free_buffer( funcs, previous );
 }
 
@@ -2187,15 +2197,9 @@ void wow64_glNamedBufferStorage( TEB *teb, GLuint name, GLsizeiptr size, const v
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer = NULL, *previous;
 
-    pthread_mutex_lock( &wgl_lock );
-    previous = invalidate_buffer_name( teb, name );
-
-    if (flags & GL_MAP_PERSISTENT_BIT)
-        buffer = create_buffer_storage( teb, 0, name, size, data, flags );
-
+    if (flags & GL_MAP_PERSISTENT_BIT) buffer = create_buffer_storage( teb, 0, name, size, data, flags );
+    previous = set_named_buffer_storage( teb, name, buffer );
     if (!buffer) p_glNamedBufferStorage( name, size, data, flags );
-
-    pthread_mutex_unlock( &wgl_lock );
     if (previous) free_buffer( funcs, previous );
 }
 
@@ -2205,15 +2209,11 @@ static BOOL wow64_gl_get_buffer_pointer_v( TEB *teb, GLenum target, GLuint name,
     BOOL ret = FALSE;
 
     if (pname != GL_BUFFER_MAP_POINTER) return FALSE;
-
-    pthread_mutex_lock( &wgl_lock );
-    buffer = name ? get_named_buffer( teb, name ) : get_target_buffer( teb, target );
-    if (buffer)
+    if ((buffer = name ? get_named_buffer_storage( teb, name ) : get_target_buffer_storage( teb, target )))
     {
         *wow_ptr = PtrToUlong( buffer->map_ptr );
         ret = TRUE;
     }
-    pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
@@ -2240,11 +2240,9 @@ void *wow64_glMapBuffer( TEB *teb, GLenum target, GLenum access, PFN_glMapBuffer
     struct buffer *buffer;
     void *ptr = NULL;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = get_target_buffer( teb, target );
+    buffer = get_target_buffer_storage( teb, target );
     if (use_driver_buffer_map( buffer )) ptr = p_glMapBuffer( target, access );
     ptr = wow64_map_buffer( teb, buffer, target, 0, 0, 0, range_access, ptr );
-    pthread_mutex_unlock( &wgl_lock );
     return ptr;
 }
 
@@ -2254,11 +2252,9 @@ void *wow64_glMapBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeip
     struct buffer *buffer;
     void *ptr = NULL;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = get_target_buffer( teb, target );
+    buffer = get_target_buffer_storage( teb, target );
     if (use_driver_buffer_map( buffer )) ptr = p_glMapBufferRange( target, offset, length, access );
     ptr = wow64_map_buffer( teb, buffer, target, 0, offset, length, access, ptr );
-    pthread_mutex_unlock( &wgl_lock );
     return ptr;
 }
 
@@ -2268,11 +2264,9 @@ void *wow64_glMapNamedBuffer( TEB *teb, GLuint name, GLenum access, PFN_glMapNam
     struct buffer *buffer;
     void *ptr = NULL;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = get_named_buffer( teb, name );
+    buffer = get_named_buffer_storage( teb, name );
     if (use_driver_buffer_map( buffer )) ptr = p_glMapNamedBuffer( name, access );
     ptr = wow64_map_buffer( teb, buffer, 0, name, 0, 0, range_access, ptr );
-    pthread_mutex_unlock( &wgl_lock );
     return ptr;
 }
 
@@ -2282,11 +2276,9 @@ void *wow64_glMapNamedBufferRange( TEB *teb, GLuint name, GLintptr offset, GLsiz
     struct buffer *buffer;
     void *ptr = NULL;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = get_named_buffer( teb, name );
+    buffer = get_named_buffer_storage( teb, name );
     if (use_driver_buffer_map( buffer )) ptr = p_glMapNamedBufferRange( name, offset, length, access );
     ptr = wow64_map_buffer( teb, buffer, 0, name, offset, length, access, ptr );
-    pthread_mutex_unlock( &wgl_lock );
     return ptr;
 }
 
@@ -2319,10 +2311,8 @@ GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target, PFN_glUnmapBuffer p_glUn
     struct buffer *buffer;
     GLboolean ret;
 
-    pthread_mutex_lock( &wgl_lock );
-    if ((buffer = get_target_buffer( teb, target ))) ret = wow64_unmap_buffer( teb, buffer );
+    if ((buffer = get_target_buffer_storage( teb, target ))) ret = wow64_unmap_buffer( teb, buffer );
     if (use_driver_buffer_map( buffer )) ret = p_glUnmapBuffer( target );
-    pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
@@ -2331,10 +2321,8 @@ GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint name, PFN_glUnmapBuffer p_g
     struct buffer *buffer;
     GLboolean ret;
 
-    pthread_mutex_lock( &wgl_lock );
-    if ((buffer = get_named_buffer( teb, name ))) ret = wow64_unmap_buffer( teb, buffer );
+    if ((buffer = get_named_buffer_storage( teb, name ))) ret = wow64_unmap_buffer( teb, buffer );
     if (use_driver_buffer_map( buffer )) ret = p_glUnmapNamedBuffer( name );
-    pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
 
@@ -2343,10 +2331,8 @@ void wow64_glFlushMappedBufferRange( TEB *teb, GLenum target, GLintptr offset, G
 {
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    if ((buffer = get_target_buffer( teb, target ))) flush_buffer( teb, buffer, offset, length );
+    if ((buffer = get_target_buffer_storage( teb, target ))) flush_buffer( teb, buffer, offset, length );
     if (use_driver_buffer_map( buffer )) p_glFlushMappedBufferRange( target, offset, length );
-    pthread_mutex_unlock( &wgl_lock );
 }
 
 void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint name, GLintptr offset, GLsizeiptr length,
@@ -2354,10 +2340,8 @@ void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint name, GLintptr offset
 {
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    if ((buffer = get_named_buffer( teb, name ))) flush_buffer( teb, buffer, offset, length );
+    if ((buffer = get_named_buffer_storage( teb, name ))) flush_buffer( teb, buffer, offset, length );
     if (use_driver_buffer_map( buffer )) p_glFlushMappedNamedBufferRange( name, offset, length );
-    pthread_mutex_unlock( &wgl_lock );
 }
 
 void wow64_glBufferAttachMemoryNV( TEB *teb, GLenum target, GLuint memory, GLuint64 offset, PFN_glBufferAttachMemoryNV p_glBufferAttachMemoryNV )
@@ -2365,12 +2349,8 @@ void wow64_glBufferAttachMemoryNV( TEB *teb, GLenum target, GLuint memory, GLuin
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_target( teb, target );
+    if ((buffer = set_target_buffer_storage( teb, target, NULL ))) free_buffer( funcs, buffer );
     p_glBufferAttachMemoryNV( target, memory, offset );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 void wow64_glBufferData( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLenum usage, PFN_glBufferData p_glBufferData )
@@ -2378,12 +2358,8 @@ void wow64_glBufferData( TEB *teb, GLenum target, GLsizeiptr size, const void *d
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_target( teb, target );
+    if ((buffer = set_target_buffer_storage( teb, target, NULL ))) free_buffer( funcs, buffer );
     p_glBufferData( target, size, data, usage );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 void wow64_glBufferStorageMemEXT( TEB *teb, GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset, PFN_glBufferStorageMemEXT p_glBufferStorageMemEXT )
@@ -2391,12 +2367,8 @@ void wow64_glBufferStorageMemEXT( TEB *teb, GLenum target, GLsizeiptr size, GLui
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_target( teb, target );
+    if ((buffer = set_target_buffer_storage( teb, target, NULL ))) free_buffer( funcs, buffer );
     p_glBufferStorageMemEXT( target, size, memory, offset );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 void wow64_glNamedBufferAttachMemoryNV( TEB *teb, GLuint name, GLuint memory, GLuint64 offset, PFN_glNamedBufferAttachMemoryNV p_glNamedBufferAttachMemoryNV )
@@ -2404,12 +2376,8 @@ void wow64_glNamedBufferAttachMemoryNV( TEB *teb, GLuint name, GLuint memory, GL
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_name( teb, name );
+    if ((buffer = set_named_buffer_storage( teb, name, NULL ))) free_buffer( funcs, buffer );
     p_glNamedBufferAttachMemoryNV( name, memory, offset );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 void wow64_glNamedBufferData( TEB *teb, GLuint name, GLsizeiptr size, const void *data, GLenum usage, PFN_glNamedBufferData p_glNamedBufferData )
@@ -2417,12 +2385,8 @@ void wow64_glNamedBufferData( TEB *teb, GLuint name, GLsizeiptr size, const void
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_name( teb, name );
+    if ((buffer = set_named_buffer_storage( teb, name, NULL ))) free_buffer( funcs, buffer );
     p_glNamedBufferData( name, size, data, usage );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 void wow64_glNamedBufferStorageMemEXT( TEB *teb, GLuint name, GLsizeiptr size, GLuint memory, GLuint64 offset, PFN_glNamedBufferStorageMemEXT p_glNamedBufferStorageMemEXT )
@@ -2430,12 +2394,8 @@ void wow64_glNamedBufferStorageMemEXT( TEB *teb, GLuint name, GLsizeiptr size, G
     const struct opengl_funcs *funcs = teb->glTable;
     struct buffer *buffer;
 
-    pthread_mutex_lock( &wgl_lock );
-    buffer = invalidate_buffer_name( teb, name );
+    if ((buffer = set_named_buffer_storage( teb, name, NULL ))) free_buffer( funcs, buffer );
     p_glNamedBufferStorageMemEXT( name, size, memory, offset );
-    pthread_mutex_unlock( &wgl_lock );
-
-    if (buffer) free_buffer( funcs, buffer );
 }
 
 NTSTATUS wow64_thread_attach( void *args )
