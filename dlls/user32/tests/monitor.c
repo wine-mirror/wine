@@ -1615,11 +1615,7 @@ static void test_work_area(void)
     trace("min: %ld,%ld max %ld,%ld normal %s\n", wp.ptMinPosition.x, wp.ptMinPosition.y,
           wp.ptMaxPosition.x, wp.ptMaxPosition.y, wine_dbgstr_rect(&wp.rcNormalPosition));
     OffsetRect(&wp.rcNormalPosition, rc_work.left, rc_work.top);
-    todo_wine_if (mi.rcMonitor.left != mi.rcWork.left ||
-        mi.rcMonitor.top != mi.rcWork.top)  /* FIXME: remove once Wine is fixed */
-    {
-        ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
-    }
+    ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
 
     SetWindowLongA(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 

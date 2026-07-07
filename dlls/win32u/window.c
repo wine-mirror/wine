@@ -2924,10 +2924,74 @@ static BOOL empty_point( POINT pt )
     return pt.x == -1 && pt.y == -1;
 }
 
-/***********************************************************************
- *           NtUserGetWindowPlacement (win32u.@)
- */
-BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
+/* When a window is a top-level window that doesn't have WS_EX_TOOLWINDOW, ptMinPosition,
+ * ptMaxPosition, and rcNormalPosition are in work area coordinates. Otherwise, they are in screen
+ * coordinates. So we need to convert the coordinates to screen coordinates. */
+static void placement_workarea_to_screen( HWND hwnd, WINDOWPLACEMENT *wp )
+{
+    DWORD style, ex_style;
+    MONITORINFO mon_info;
+
+    if (hwnd == NtUserGetDesktopWindow())
+        return;
+
+    style = get_window_long( hwnd, GWL_STYLE );
+    ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+    if (style & WS_CHILD || ex_style & WS_EX_TOOLWINDOW)
+        return;
+
+    mon_info = monitor_info_from_rect( wp->rcNormalPosition, get_thread_dpi() );
+
+    if (!empty_point( wp->ptMinPosition ))
+    {
+        wp->ptMinPosition.x += mon_info.rcWork.left;
+        wp->ptMinPosition.y += mon_info.rcWork.top;
+    }
+
+    if (!empty_point( wp->ptMaxPosition ))
+    {
+        wp->ptMaxPosition.x += mon_info.rcWork.left;
+        wp->ptMaxPosition.y += mon_info.rcWork.top;
+    }
+
+    OffsetRect( &wp->rcNormalPosition, mon_info.rcWork.left, mon_info.rcWork.top );
+}
+
+static void placement_screen_to_workarea( HWND hwnd, WINDOWPLACEMENT *wp )
+{
+    DWORD style, ex_style;
+    MONITORINFO mon_info;
+
+    if (hwnd == NtUserGetDesktopWindow())
+        return;
+
+    style = get_window_long( hwnd, GWL_STYLE );
+    ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+    if (style & WS_CHILD || ex_style & WS_EX_TOOLWINDOW)
+        return;
+
+    mon_info = monitor_info_from_rect( wp->rcNormalPosition, get_thread_dpi() );
+
+    if (!empty_point( wp->ptMinPosition ))
+    {
+        wp->ptMinPosition.x -= mon_info.rcWork.left;
+        wp->ptMinPosition.y -= mon_info.rcWork.top;
+    }
+
+    /* ptMaxPosition is in screen coordinates when WS_MAXIMIZE is present */
+    if (!(style & WS_MAXIMIZE) && !empty_point( wp->ptMaxPosition ))
+    {
+        wp->ptMaxPosition.x -= mon_info.rcWork.left;
+        wp->ptMaxPosition.y -= mon_info.rcWork.top;
+    }
+
+    OffsetRect( &wp->rcNormalPosition, -mon_info.rcWork.left, -mon_info.rcWork.top );
+}
+
+/* Coordinates returned in WINDOWPLACEMENT is always in screen coordinates */
+BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
     WND *win = get_win_ptr( hwnd );
     struct ratio win_dpi;
@@ -3005,12 +3069,25 @@ BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
         : map_dpi_point( win->max_pos, win_dpi, get_thread_dpi() );
     placement->rcNormalPosition = map_dpi_rect( win->normal_rect, win_dpi, get_thread_dpi() );
     release_win_ptr( win );
-
-    TRACE( "%p: returning min %d,%d max %d,%d normal %s\n",
-           hwnd, placement->ptMinPosition.x, placement->ptMinPosition.y,
-           placement->ptMaxPosition.x, placement->ptMaxPosition.y,
-           wine_dbgstr_rect(&placement->rcNormalPosition) );
     return TRUE;
+}
+
+/***********************************************************************
+ *           NtUserGetWindowPlacement (win32u.@)
+ */
+BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
+{
+    BOOL ret = get_window_placement( hwnd, placement );
+
+    if (ret)
+    {
+        placement_screen_to_workarea( hwnd, placement );
+        TRACE( "%p: returning min %d,%d max %d,%d normal %s\n",
+               hwnd, placement->ptMinPosition.x, placement->ptMinPosition.y,
+               placement->ptMaxPosition.x, placement->ptMaxPosition.y,
+               wine_dbgstr_rect(&placement->rcNormalPosition) );
+    }
+    return ret;
 }
 
 /* make sure the specified rect is visible on screen */
@@ -3018,7 +3095,6 @@ static void make_rect_onscreen( RECT *rect )
 {
     MONITORINFO info = monitor_info_from_rect( *rect, get_thread_dpi() );
 
-    /* FIXME: map coordinates from rcWork to rcMonitor */
     if (rect->right <= info.rcWork.left)
     {
         rect->right += info.rcWork.left - rect->left;
@@ -3049,7 +3125,7 @@ UINT WINAPI NtUserGetInternalWindowPos( HWND hwnd, RECT *rect, POINT *pt )
     WINDOWPLACEMENT placement;
 
     placement.length = sizeof(placement);
-    if (!NtUserGetWindowPlacement( hwnd, &placement )) return 0;
+    if (!get_window_placement( hwnd, &placement )) return 0;
     if (rect) *rect = placement.rcNormalPosition;
     if (pt) *pt = placement.ptMinPosition;
     return placement.showCmd;
@@ -3078,6 +3154,7 @@ void set_window_normal_placement( HWND hwnd, RECT rect )
     }
 }
 
+/* Coordinates in WINDOWPLACEMENT should already be in screen coordinates instead of work area coordinates */
 static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT flags )
 {
     WND *win = get_win_ptr( hwnd );
@@ -3145,6 +3222,8 @@ static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT 
  */
 BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
 {
+    WINDOWPLACEMENT wp_screen;
+
     UINT flags = PLACE_MAX | PLACE_RECT;
     if (!wpl) return FALSE;
     if (wpl->length != sizeof(*wpl))
@@ -3153,7 +3232,10 @@ BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
         return FALSE;
     }
     if (wpl->flags & WPF_SETMINPOSITION) flags |= PLACE_MIN;
-    return set_window_placement( hwnd, wpl, flags );
+
+    wp_screen = *wpl;
+    placement_workarea_to_screen( hwnd, &wp_screen );
+    return set_window_placement( hwnd, &wp_screen, flags );
 }
 
 /*****************************************************************************
@@ -4625,7 +4707,7 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     TRACE( "%p %u\n", hwnd, cmd );
 
     wpl.length = sizeof(wpl);
-    NtUserGetWindowPlacement( hwnd, &wpl );
+    get_window_placement( hwnd, &wpl );
 
     if (call_hooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd, 0 ))
         return SWP_NOSIZE | SWP_NOMOVE;

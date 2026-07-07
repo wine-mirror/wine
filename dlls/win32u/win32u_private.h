@@ -301,6 +301,7 @@ extern int get_window_pixel_format( HWND hwnd );
 extern DWORD get_window_long( HWND hwnd, INT offset );
 extern UINT get_window_fnid( HWND hwnd );
 extern ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi );
+extern BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement );
 extern BOOL get_window_rect( HWND hwnd, RECT *rect, struct ratio dpi );
 enum coords_relative;
 extern BOOL get_window_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, struct ratio dpi );
