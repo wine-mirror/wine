@@ -53,7 +53,7 @@
 @ stub FltEnumerateInstanceInformationByVolume
 @ stub FltEnumerateInstances
 @ stub FltEnumerateVolumeInformation
-@ stub FltEnumerateVolumes
+@ stdcall FltEnumerateVolumes(ptr ptr long ptr)
 @ stub FltFlushBuffers
 @ stub FltFreeCallbackData
 @ stub FltFreeDeferredIoWorkItem

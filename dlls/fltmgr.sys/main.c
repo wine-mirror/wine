@@ -226,3 +226,12 @@ void WINAPI FltCloseCommunicationPort (PFLT_PORT ServerPort)
 {
     FIXME("%p\n", ServerPort);
 }
+
+NTSTATUS WINAPI FltEnumerateVolumes (PFLT_FILTER filter, PFLT_VOLUME *volumes, ULONG size, PULONG returned)
+{
+    FIXME("%p, %p, %lu, %p\n", filter, volumes, size, returned);
+
+    if (returned)
+        *returned = 0;
+    return STATUS_NOT_SUPPORTED;
+}
