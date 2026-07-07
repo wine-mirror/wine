@@ -887,8 +887,10 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
         return E_FAIL;
 
     hr = URLDownloadToFileW(lpUnkCaller, szURL, cache_path, 0, pBSC);
-    if (FAILED(hr))
+    if (FAILED(hr)) {
+        DeleteFileW(cache_path);
         return hr;
+    }
 
     expire.dwHighDateTime = 0;
     expire.dwLowDateTime = 0;
@@ -896,8 +898,10 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
     modified.dwLowDateTime = 0;
 
     if (!CommitUrlCacheEntryW(szURL, cache_path, expire, modified, NORMAL_CACHE_ENTRY,
-                              header, sizeof(header), NULL, NULL))
+                              header, sizeof(header), NULL, NULL)) {
+        DeleteFileW(cache_path);
         return E_FAIL;
+    }
 
     if (lstrlenW(cache_path) + 1 > dwBufLength)
         return E_OUTOFMEMORY;
