@@ -432,6 +432,8 @@ static int set_parent_window( struct window *win, struct window *parent )
         else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
         {
             shared->dpi_context = parent->shared->dpi_context;
+            shared->dpi         = parent->shared->dpi;
+            shared->raw_dpi     = parent->shared->raw_dpi;
         }
         SHARED_WRITE_END;
 
@@ -688,6 +690,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
         shared->class           = class_locator;
+        /* FIXME: NTUSER_DPI_PER_MONITOR_AWARE_V2 isn't implemented */
         shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
         shared->fnid            = fnid;
         shared->private_size    = private_size;
@@ -2225,7 +2228,7 @@ DECL_HANDLER(create_window)
     struct window *win, *parent = NULL, *owner = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
-    unsigned int dpi_context;
+    unsigned int dpi_context = req->dpi_context;
     atom_t atom = req->atom;
 
     reply->handle = 0;
@@ -2258,17 +2261,19 @@ DECL_HANDLER(create_window)
 
     if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi ))) return;
 
-    if (parent && !is_desktop_window( parent ))
-        dpi_context = parent->shared->dpi_context;
-    else if (!parent || !NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( req->dpi_context ))
-        dpi_context = req->dpi_context;
-    else
-        dpi_context = win->shared->dpi_context;
+    /* FIXME: NTUSER_DPI_PER_MONITOR_AWARE_V2 isn't implemented */
+    if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( dpi_context )) dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
 
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
         shared->dpi_context     = dpi_context;
         shared->info.instance   = req->instance;
+        if (parent && !is_desktop_window( parent ))
+        {
+            shared->dpi_context = parent->shared->dpi_context;
+            shared->dpi         = parent->shared->dpi;
+            shared->raw_dpi     = parent->shared->raw_dpi;
+        }
     }
     SHARED_WRITE_END;
 
