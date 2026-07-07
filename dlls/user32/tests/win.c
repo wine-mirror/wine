@@ -12880,6 +12880,19 @@ static void test_window_placement(void)
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
 
+    /* Test setting ptMaxPosition while the window is maximized */
+    wp.ptMaxPosition.x = 200;
+    wp.ptMaxPosition.y = 200;
+    placement_screen_to_workarea(hwnd, &wp, &work_rect);
+    ret = SetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to set window placement, error %lu\n", GetLastError());
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    placement_workarea_to_screen(hwnd, &wp, &work_rect);
+    todo_wine_if(mon_info.rcWork.left || mon_info.rcWork.top)
+    ok(wp.ptMaxPosition.x == 200 && wp.ptMaxPosition.y == 200,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+
     ShowWindow(hwnd, SW_MINIMIZE);
 
     ret = GetWindowPlacement(hwnd, &wp);
@@ -13159,6 +13172,82 @@ static void test_window_placement(void)
     todo_wine_if(mon_info.rcWork.left || mon_info.rcWork.top)
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    DestroyWindow(hwnd);
+
+    /* Test windows with WS_CHILD */
+    hwnd = CreateWindowA("MainWindowClass", "wp", WS_CHILD, orig.left, orig.top,
+        orig.right - orig.left, orig.bottom - orig.top, hwndMain, 0, 0, 0);
+    ok(!!hwnd, "failed to create window, error %lu\n", GetLastError());
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    placement_workarea_to_screen(hwnd, &wp, &work_rect);
+    ok(wp.showCmd == SW_SHOWNORMAL, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    wp.flags = WPF_SETMINPOSITION;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
+    wp.rcNormalPosition = orig2;
+    placement_screen_to_workarea(hwnd, &wp, &work_rect);
+    ret = SetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to set window placement, error %lu\n", GetLastError());
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    placement_workarea_to_screen(hwnd, &wp, &work_rect);
+    ok(wp.showCmd == SW_SHOWNORMAL, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == 200 && wp.ptMinPosition.y == 200,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == 200 && wp.ptMaxPosition.y == 200,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig2), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    DestroyWindow(hwnd);
+
+    /* Test windows with WS_EX_TOOLWINDOW */
+    hwnd = CreateWindowExA(WS_EX_TOOLWINDOW, "MainWindowClass", "wp", WS_OVERLAPPEDWINDOW,
+        orig.left, orig.top, orig.right - orig.left, orig.bottom - orig.top, 0, 0, 0, 0);
+    ok(!!hwnd, "failed to create window, error %lu\n", GetLastError());
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    placement_workarea_to_screen(hwnd, &wp, &work_rect);
+    ok(wp.showCmd == SW_SHOWNORMAL, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    wp.flags = WPF_SETMINPOSITION;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
+    wp.rcNormalPosition = orig2;
+    placement_screen_to_workarea(hwnd, &wp, &work_rect);
+    ret = SetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to set window placement, error %lu\n", GetLastError());
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    placement_workarea_to_screen(hwnd, &wp, &work_rect);
+    ok(wp.showCmd == SW_SHOWNORMAL, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == 200 && wp.ptMinPosition.y == 200,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig2), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+    GetWindowRect(hwnd, &rect);
+    ok(EqualRect(&rect, &orig2), "got window rect %s\n", wine_dbgstr_rect(&rect));
 
     DestroyWindow(hwnd);
 }
