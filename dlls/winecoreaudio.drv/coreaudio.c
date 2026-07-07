@@ -64,6 +64,7 @@
 #include "mmdeviceapi.h"
 #include "initguid.h"
 #include "audioclient.h"
+#include "devpkey.h"
 #include "wine/debug.h"
 #include "wine/unixlib.h"
 
@@ -1700,12 +1701,76 @@ static NTSTATUS unix_is_started(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_device_vid_pid(const char *device, DWORD *vid, DWORD *pid)
+{
+    UInt32 type_property;
+    UInt32 size;
+    OSStatus sc;
+    AudioObjectPropertyAddress addr;
+    const AudioDeviceID dev_id = dev_id_from_device(device);
+
+    addr.mScope = kAudioObjectPropertyScopeGlobal;
+    addr.mElement = kAudioObjectPropertyElementMain;
+    addr.mSelector = kAudioDevicePropertyTransportType;
+    type_property = 0;
+    size = sizeof(type_property);
+    sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &type_property);
+    if(sc == noErr && type_property == kAudioDeviceTransportTypeUSB){
+        CFStringRef property_value = NULL;
+
+        addr.mSelector = kAudioDevicePropertyModelUID;
+        size = sizeof(property_value);
+        sc = AudioObjectGetPropertyData(dev_id, &addr, 0, NULL, &size, &property_value);
+        if(sc == noErr){
+            WCHAR output[255];
+
+            size = min(CFStringGetLength(property_value), ARRAY_SIZE(output) - 1);
+            CFStringGetCharacters(property_value, CFRangeMake(0, size), (UniChar*)output);
+            output[size] = 0;
+            CFRelease(property_value);
+
+            if(size > 10 && output[size - 5] == ':' && output[size - 10] == ':'){
+                *vid = wcstoul(&output[size - 9], NULL, 16);
+                *pid = wcstoul(&output[size - 4], NULL, 16);
+                return STATUS_SUCCESS;
+            }
+        }
+    }
+    return STATUS_UNSUCCESSFUL;
+}
+
 static NTSTATUS unix_get_prop_value(void *args)
 {
     struct get_prop_value_params *params = args;
+    const PROPERTYKEY *prop = params->prop;
+
+    if(IsEqualPropertyKey(*prop, DEVPKEY_Device_InstanceId)){
+        DWORD vid = 0, pid = 0;
+
+        if (SUCCEEDED(get_device_vid_pid(params->device, &vid, &pid))){
+            int len;
+            char buf[128];
+            PROPVARIANT *out = params->value;
+
+            len = sizeof(buf);
+            snprintf(buf, len, "{1}.USB\\VID_%04X&PID_%04X", vid, pid);
+
+            len = strlen(buf) + 1;
+            if(*params->buffer_size < len * sizeof(WCHAR)){
+                params->result = E_NOT_SUFFICIENT_BUFFER;
+                *params->buffer_size = len * sizeof(WCHAR);
+                return STATUS_SUCCESS;
+            }
+
+            out->vt = VT_LPWSTR;
+            out->pwszVal = params->buffer;
+            ntdll_umbstowcs(buf, len, out->pwszVal, len);
+            params->result = S_OK;
+            return STATUS_SUCCESS;
+        }
+    }
 
     params->result = E_NOTIMPL;
-
     return STATUS_SUCCESS;
 }
 
