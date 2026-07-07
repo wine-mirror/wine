@@ -1214,6 +1214,9 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
             list_remove(&attr->entry);
             IHTMLDOMNode_Release(&attr->elem->node.IHTMLDOMNode_iface);
             attr->elem = NULL;
+
+            /* The collection also keeps ref to us, release it */
+            IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
         }
 
         if(id == DISPID_IHTMLELEMENT_STYLE) {
