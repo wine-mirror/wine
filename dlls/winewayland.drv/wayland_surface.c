@@ -689,13 +689,9 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
                                                struct wayland_client_surface *client,
                                                const RECT *client_rect)
 {
-    struct wayland_window_config *window = &surface->window;
-    RECT rect = client->rect;
+    RECT rect = client_rect ? *client_rect : client->rect;
 
     /* The offset of the client area origin relatively to the window origin. */
-    if (client_rect) rect = *client_rect;
-    OffsetRect(&rect, window->client_rect.left - window->rect.left,
-               window->client_rect.top - window->rect.top);
     rect = map_rect_to_surface(surface, rect);
 
     TRACE("hwnd=%p rect=%s\n", surface->hwnd, wine_dbgstr_rect(&rect));
