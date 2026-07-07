@@ -1294,6 +1294,7 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
         nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMAttr, (void **)&nsattr);
         assert(nsres == NS_OK);
         hres = create_attr_node(doc, nsattr, &attr);
+        nsIDOMAttr_Release(nsattr);
         if(SUCCEEDED(hres))
             *ret = &attr->node;
         return hres;
