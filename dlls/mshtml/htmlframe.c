@@ -850,7 +850,7 @@ static void HTMLFrameElement_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLFrameElement_unlink(DispatchEx *dispex)
 {
     HTMLFrameElement *This = frame_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->framebase.nsframe);
 }
 
