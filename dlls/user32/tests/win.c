@@ -12698,7 +12698,7 @@ static void test_IsWindowEnabled(void)
 
 static void test_window_placement(void)
 {
-    RECT orig = {100, 200, 300, 400}, orig2 = {200, 300, 400, 500}, rect, work_rect;
+    RECT orig = {300, 400, 500, 600}, orig2 = {200, 300, 400, 500}, rect, work_rect;
     WINDOWPLACEMENT wp = {sizeof(wp)};
     MONITORINFO mon_info;
     HWND hwnd;
@@ -12759,14 +12759,14 @@ static void test_window_placement(void)
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
 
-    SetWindowPos(hwnd, 0, 100, 100, 100, 100, SWP_NOZORDER | SWP_NOACTIVATE);
+    SetWindowPos(hwnd, 0, 200, 200, 100, 100, SWP_NOZORDER | SWP_NOACTIVATE);
 
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %lu\n", GetLastError());
     ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
     ok(wp.ptMinPosition.x == -32000 && wp.ptMinPosition.y == -32000,
         "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
-    ok(wp.ptMaxPosition.x == 100 && wp.ptMaxPosition.y == 100,
+    ok(wp.ptMaxPosition.x == 200 && wp.ptMaxPosition.y == 200,
         "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
@@ -12845,8 +12845,8 @@ static void test_window_placement(void)
         wine_dbgstr_rect(&wp.rcNormalPosition));
 
     wp.flags = WPF_SETMINPOSITION;
-    wp.ptMinPosition.x = wp.ptMinPosition.y = 100;
-    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 100;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
     wp.rcNormalPosition = orig2;
     ret = SetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to set window placement, error %lu\n", GetLastError());
@@ -12854,7 +12854,7 @@ static void test_window_placement(void)
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %lu\n", GetLastError());
     ok(wp.showCmd == SW_SHOWNORMAL, "got show cmd %u\n", wp.showCmd);
-    ok(wp.ptMinPosition.x == 100 && wp.ptMinPosition.y == 100,
+    ok(wp.ptMinPosition.x == 200 && wp.ptMinPosition.y == 200,
         "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
     ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
         "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
@@ -12880,8 +12880,8 @@ static void test_window_placement(void)
 
     wp.flags = WPF_SETMINPOSITION;
     wp.showCmd = SW_MINIMIZE;
-    wp.ptMinPosition.x = wp.ptMinPosition.y = 100;
-    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 100;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
     wp.rcNormalPosition = orig;
     ret = SetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to set window placement, error %lu\n", GetLastError());
@@ -12901,8 +12901,8 @@ static void test_window_placement(void)
 
     wp.flags = WPF_SETMINPOSITION;
     wp.showCmd = SW_MAXIMIZE;
-    wp.ptMinPosition.x = wp.ptMinPosition.y = 100;
-    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 100;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
     wp.rcNormalPosition = orig;
     ret = SetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to set window placement, error %lu\n", GetLastError());
@@ -12910,7 +12910,7 @@ static void test_window_placement(void)
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %lu\n", GetLastError());
     ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
-    ok(wp.ptMinPosition.x == 100 && wp.ptMinPosition.y == 100,
+    ok(wp.ptMinPosition.x == 200 && wp.ptMinPosition.y == 200,
         "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
     ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
         "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
@@ -12919,8 +12919,8 @@ static void test_window_placement(void)
 
     wp.flags = WPF_SETMINPOSITION;
     wp.showCmd = SW_NORMAL;
-    wp.ptMinPosition.x = wp.ptMinPosition.y = 100;
-    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 100;
+    wp.ptMinPosition.x = wp.ptMinPosition.y = 200;
+    wp.ptMaxPosition.x = wp.ptMaxPosition.y = 200;
     wp.rcNormalPosition = orig;
     ret = SetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to set window placement, error %lu\n", GetLastError());
@@ -12937,7 +12937,7 @@ static void test_window_placement(void)
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
 
-    ret = SetWindowPos(hwnd, NULL, 100, 100, 151, 151, SWP_NOACTIVATE | SWP_NOZORDER);
+    ret = SetWindowPos(hwnd, NULL, 200, 200, 151, 151, SWP_NOACTIVATE | SWP_NOZORDER);
     ok(ret, "failed to set window pos, error %lu\n", GetLastError());
 
     ret = GetWindowPlacement(hwnd, &wp);
@@ -12999,14 +12999,14 @@ static void test_window_placement(void)
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
 
-    SetWindowPos(hwnd, 0, 100, 100, 100, 100, SWP_NOZORDER | SWP_NOACTIVATE);
+    SetWindowPos(hwnd, 0, 200, 200, 100, 100, SWP_NOZORDER | SWP_NOACTIVATE);
 
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %lu\n", GetLastError());
     ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
     ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
         "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
-    ok(wp.ptMaxPosition.x == 100 && wp.ptMaxPosition.y == 100,
+    ok(wp.ptMaxPosition.x == 200 && wp.ptMaxPosition.y == 200,
         "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
