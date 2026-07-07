@@ -99,6 +99,70 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
     TRACE("Vol=%ld Pan=%ld\n", volpan->lVolume, volpan->lPan);
 }
 
+static void get8(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    const BYTE *buf = base + channel;
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = (buf[i * channels] - 0x80) / (float)0x80;
+}
+
+static void get16(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    const BYTE *buf = base + 2 * channel;
+    const SHORT *sbuf = (const SHORT*)(buf);
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = sbuf[i * channels] / (float)0x8000;
+}
+
+static void get24(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    const BYTE *buf = base + 3 * channel;
+    int i;
+
+    for (i = 0; i < samples; ++i) {
+        /* The next expression deliberately has an overflow for buf[2] >= 0x80,
+           this is how negative values are made.
+         */
+        LONG sample =
+                (buf[i * channels * 3 + 0] << 8) |
+                (buf[i * channels * 3 + 1] << 16) |
+                (buf[i * channels * 3 + 2] << 24);
+        dst[i] = sample / (float)0x80000000U;
+    }
+}
+
+static void get32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    const BYTE *buf = base + 4 * channel;
+    const LONG *sbuf = (const LONG*)(buf);
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        dst[i] = sbuf[i * channels] / (float)0x80000000U;
+}
+
+static const bitsgetfunc getbpp[4] = {get8, get16, get24, get32};
+
+static void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst, unsigned samples, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    const BYTE *buf = base + 4 * channel;
+    const float *sbuf = (const float*)(buf);
+    int i;
+
+    for (i = 0; i < samples; ++i)
+        /* The value will be clipped later, when put into some non-float buffer */
+        dst[i] = sbuf[i * channels];
+}
+
 /**
  * Recalculate the size for temporary buffer, and new writelead
  * Should be called when one of the following things occur:
