@@ -1297,7 +1297,7 @@ static void HTMLIFrame_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
 static void HTMLIFrame_unlink(DispatchEx *dispex)
 {
     HTMLIFrame *This = iframe_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->framebase.nsiframe);
 }
 
