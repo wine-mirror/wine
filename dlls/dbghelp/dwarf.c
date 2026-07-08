@@ -1327,6 +1327,11 @@ static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name
         if (!di->unit_ctx->cpp_name) return name;
     }
     last = di->unit_ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
+    if (last < di->unit_ctx->cpp_name)
+    {
+        WARN("Too long C++ qualified identifier for %s... using unqualified identifier\n", debugstr_a(name));
+        return name;
+    }
     strcpy(last, name);
 
     for (di = di->parent; di; di = di->parent)
