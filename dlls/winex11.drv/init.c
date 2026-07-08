@@ -443,7 +443,7 @@ struct client_surface *X11DRV_CreateClientSurface( HWND hwnd, int format )
     else colormap = XCreateColormap( gdi_display, get_dummy_parent(), visual.visual, visual_class_alloc( visual.class ) );
     if (!colormap) return NULL;
 
-    if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) goto failed;
+    if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd, format ))) goto failed;
     surface->colormap = colormap;
     if (!(surface->window = create_client_window( hwnd, surface->client.virtual_rect, &visual, colormap ))) goto failed;
 

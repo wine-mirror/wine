@@ -292,7 +292,8 @@ void *free_user_handle( HANDLE handle, unsigned short type )
 }
 
 static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
-static struct list client_surfaces = LIST_INIT( client_surfaces );
+static struct list client_surfaces = LIST_INIT( client_surfaces ); /* non-owning used client surfaces */
+static struct list unused_surfaces = LIST_INIT( unused_surfaces ); /* owning unused client surfaces */
 
 static void client_surface_detach_locked( struct client_surface *surface )
 {
@@ -325,6 +326,8 @@ void detach_client_surfaces( HWND hwnd )
 
     LIST_FOR_EACH_ENTRY_SAFE( surface, next, &client_surfaces, struct client_surface, entry )
         if (surface->hwnd == hwnd) client_surface_detach_locked( surface );
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &unused_surfaces, struct client_surface, entry )
+        if (surface->hwnd == hwnd) client_surface_release_locked( surface );
 
     pthread_mutex_unlock( &surfaces_lock );
 }
@@ -364,6 +367,7 @@ static void client_surface_update_locked( struct client_surface *surface )
 void update_client_surfaces( HWND hwnd )
 {
     struct client_surface *surface, *next;
+    UINT count = 0;
 
     pthread_mutex_lock( &surfaces_lock );
 
@@ -373,10 +377,14 @@ void update_client_surfaces( HWND hwnd )
         client_surface_update_locked( surface );
     }
 
+    /* discard extra unused surfaces when updating window */
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &unused_surfaces, struct client_surface, entry )
+        if (surface->hwnd == hwnd && count++) client_surface_release_locked( surface );
+
     pthread_mutex_unlock( &surfaces_lock );
 }
 
-void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd )
+void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd, int format )
 {
     HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     struct client_surface *surface;
@@ -385,12 +393,13 @@ void *client_surface_create( UINT size, const struct client_surface_funcs *funcs
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
+    surface->format = format;
     surface->toplevel = toplevel;
     surface->virtual_rect = get_client_surface_rects( toplevel, hwnd, &surface->monitor_rect );
     list_init( &surface->entry );
 
-    TRACE( "created %s, toplevel %p, virtual_rect %s, monitor_rect %s\n", debugstr_client_surface( surface ), toplevel,
-           wine_dbgstr_rect( &surface->virtual_rect ), wine_dbgstr_rect( &surface->monitor_rect ) );
+    TRACE( "created %s, format %d, toplevel %p, virtual_rect %s, monitor_rect %s\n", debugstr_client_surface( surface ),
+           format, toplevel, wine_dbgstr_rect( &surface->virtual_rect ), wine_dbgstr_rect( &surface->monitor_rect ) );
     return surface;
 }
 
@@ -430,15 +439,50 @@ void client_surface_update( struct client_surface *surface )
     pthread_mutex_unlock( &surfaces_lock );
 }
 
-void add_window_client_surface( HWND hwnd, struct client_surface *surface )
+void use_window_client_surface( struct client_surface *surface, BOOL use )
 {
+    TRACE( "surface %s, use %u\n", debugstr_client_surface( surface ), use );
+
     pthread_mutex_lock( &surfaces_lock );
 
-    surface->hwnd = hwnd;
-    list_add_tail( &client_surfaces, &surface->entry );
-    client_surface_update_locked( surface );
+    if (!surface->hwnd)
+        WARN( "surface %s has been detached already, ignoring.\n", debugstr_client_surface( surface ) );
+    else if (use)
+    {
+        /* surface wasn't used, it shouldn't be in any list */
+        list_add_tail( &client_surfaces, &surface->entry );
+        client_surface_update_locked( surface );
+    }
+    else
+    {
+        list_remove( &surface->entry ); /* remove it from client_surfaces, if it was used */
+        list_add_head( &unused_surfaces, &surface->entry ); /* add it to the head, so we discard older ones */
+        client_surface_add_ref( surface );
+    }
 
     pthread_mutex_unlock( &surfaces_lock );
+}
+
+struct client_surface *get_unused_client_surface( HWND hwnd, int format )
+{
+    struct client_surface *surface;
+
+    pthread_mutex_lock( &surfaces_lock );
+
+    LIST_FOR_EACH_ENTRY( surface, &unused_surfaces, struct client_surface, entry )
+    {
+        if (surface->hwnd != hwnd || surface->format != format) continue;
+        client_surface_update_locked( surface ); /* refresh it before creating GL/VK drawable */
+        list_remove( &surface->entry ); /* take over its reference */
+        list_init( &surface->entry );
+        break;
+    }
+    if (&surface->entry == &unused_surfaces) surface = NULL;
+
+    pthread_mutex_unlock( &surfaces_lock );
+
+    if (surface) TRACE( "Reusing surface %s\n", debugstr_client_surface( surface ) );
+    return surface ? surface : user_driver->pCreateClientSurface( hwnd, format );
 }
 
 BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )

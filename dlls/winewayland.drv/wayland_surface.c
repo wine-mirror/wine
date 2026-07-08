@@ -1243,7 +1243,7 @@ struct client_surface *WAYLAND_CreateClientSurface(HWND hwnd, int pixel_format)
     struct wayland_client_surface *client;
     struct wl_region *empty_region;
 
-    if (!(client = client_surface_create(sizeof(*client), &wayland_client_surface_funcs, hwnd))) return NULL;
+    if (!(client = client_surface_create(sizeof(*client), &wayland_client_surface_funcs, hwnd, pixel_format))) return NULL;
 
     client->wl_surface =
         wl_compositor_create_surface(process_wayland.wl_compositor);

@@ -1534,8 +1534,12 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         surface->hwnd = dummy;
     }
 
-    if (!(surface->client = user_driver->pCreateClientSurface( surface->hwnd, 0 ))) res = VK_ERROR_OUT_OF_HOST_MEMORY;
-    else res = driver_funcs->p_vulkan_surface_create( surface->client, instance, &host_surface );
+    if (!(surface->client = get_unused_client_surface( surface->hwnd, 0 ))) res = VK_ERROR_OUT_OF_HOST_MEMORY;
+    else
+    {
+        res = driver_funcs->p_vulkan_surface_create( surface->client, instance, &host_surface );
+        use_window_client_surface( surface->client, !res );
+    }
     if (res)
     {
         if (surface->client) client_surface_release( surface->client );
@@ -1543,7 +1547,6 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         free( surface );
         return res;
     }
-    add_window_client_surface( surface->hwnd, surface->client );
     set_window_pixel_format( surface->hwnd, -1, TRUE );
 
     vulkan_object_init( &surface->obj.obj, host_surface );
@@ -1568,6 +1571,7 @@ static void win32u_vkDestroySurfaceKHR( VkInstance client_instance, VkSurfaceKHR
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
     instance->p_vkDestroySurfaceKHR( instance->host.instance, surface->obj.host.surface, NULL /* allocator */ );
+    use_window_client_surface( surface->client, FALSE );
     client_surface_release( surface->client );
 
     instance->p_remove_object( instance, &surface->obj.obj );

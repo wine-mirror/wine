@@ -264,6 +264,7 @@ struct client_surface
     struct list                        entry;          /* entry in win32u managed list */
     LONG                               ref;            /* reference count */
     HWND                               hwnd;           /* window the surface was created for */
+    int                                format;         /* pixel format of the surface */
     LONG                               updated;        /* has been moved / resized / reparented */
     HWND                               toplevel;       /* toplevel window of the surface */
     LONG                               offscreen;      /* client window is offscreen */
@@ -271,11 +272,10 @@ struct client_surface
     RECT                               monitor_rect;   /* raw physical size and position in the toplevel ancestor */
 };
 
-W32KAPI void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd );
+W32KAPI void *client_surface_create( UINT size, const struct client_surface_funcs *funcs, HWND hwnd, int format );
 W32KAPI void client_surface_add_ref( struct client_surface *surface );
 W32KAPI void client_surface_release( struct client_surface *surface );
 W32KAPI void client_surface_present( struct client_surface *surface );
-W32KAPI void client_surface_update( struct client_surface *surface );
 W32KAPI void update_client_surfaces( HWND hwnd );
 W32KAPI void detach_client_surfaces( HWND hwnd );
 

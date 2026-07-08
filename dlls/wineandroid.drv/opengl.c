@@ -191,7 +191,7 @@ static const struct client_surface_funcs android_client_surface_funcs =
 
 struct client_surface *ANDROID_CreateClientSurface( HWND hwnd, int pixel_format )
 {
-    return client_surface_create( sizeof(struct client_surface), &android_client_surface_funcs, hwnd );
+    return client_surface_create( sizeof(struct client_surface), &android_client_surface_funcs, hwnd, pixel_format );
 }
 
 static const struct opengl_drawable_funcs android_drawable_funcs =

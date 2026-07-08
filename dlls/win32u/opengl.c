@@ -167,7 +167,11 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
 
         drawable->funcs->destroy( drawable );
         if (drawable->surface) funcs->p_eglDestroySurface( egl->display, drawable->surface );
-        if (drawable->client) client_surface_release( drawable->client );
+        if (drawable->client)
+        {
+            use_window_client_surface( drawable->client, FALSE );
+            client_surface_release( drawable->client );
+        }
         free( drawable );
     }
 }
@@ -1463,16 +1467,15 @@ static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format
     {
         struct client_surface *client;
 
-        if (!(client = user_driver->pCreateClientSurface( hwnd, format )))
+        if (!(client = get_unused_client_surface( hwnd, format )))
             WARN( "Failed to create a surface for window %p, format %d\n", hwnd, format );
         else
         {
             if (!(driver_funcs->p_surface_create( client, format, &drawable )))
                 WARN( "Failed to create a drawable for window %p, format %d\n", hwnd, format );
+            use_window_client_surface( client, !!drawable );
             client_surface_release( client );
         }
-
-        if (drawable && drawable->client) add_window_client_surface( hwnd, drawable->client );
     }
 
     TRACE( "hwnd %p, drawable %s\n", hwnd, debugstr_opengl_drawable( drawable ) );

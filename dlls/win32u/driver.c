@@ -906,7 +906,7 @@ static const struct client_surface_funcs nulldrv_surface_funcs =
 
 static struct client_surface *nulldrv_CreateClientSurface( HWND hwnd, int pixel_format )
 {
-    return client_surface_create( sizeof(struct client_surface), &nulldrv_surface_funcs, hwnd );
+    return client_surface_create( sizeof(struct client_surface), &nulldrv_surface_funcs, hwnd, pixel_format );
 }
 
 static BOOL nulldrv_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface )
