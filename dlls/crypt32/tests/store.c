@@ -3647,6 +3647,23 @@ done_close:
     CertCloseStore( store, 0 );
 }
 
+static void test_PFXImportCertStore_trailing_zeros(void)
+{
+    BYTE padded[sizeof(pfxdata) + 32];
+    CRYPT_DATA_BLOB pfx = { sizeof(padded), padded };
+    HCERTSTORE store;
+
+    memcpy( padded, pfxdata, sizeof(pfxdata) );
+    memset( padded + sizeof(pfxdata), 0, sizeof(padded) - sizeof(pfxdata) );
+
+    SetLastError( 0xdeadbeef );
+    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
+    ok( store != NULL,
+        "PFXImportCertStore rejected a %Iu-byte PFX blob with %Iu trailing zero bytes: %08lx\n",
+        sizeof(pfxdata), sizeof(padded) - sizeof(pfxdata), GetLastError() );
+    if (store) CertCloseStore( store, 0 );
+}
+
 static void test_PFXExportCertStoreEx(void)
 {
     HCERTSTORE store, store2;
@@ -3877,6 +3894,7 @@ START_TEST(store)
     test_PFXImportCertStore();
     test_PFXImportCertStore_unique_containers();
     test_PFXImportCertStore_sha256_signing();
+    test_PFXImportCertStore_trailing_zeros();
     test_PFXExportCertStoreEx();
     test_CryptQueryObject();
 }

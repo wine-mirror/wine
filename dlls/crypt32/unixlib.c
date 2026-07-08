@@ -430,6 +430,34 @@ error:
     return status;
 }
 
+static SIZE_T pfx_der_outer_length( const BYTE *buf, SIZE_T len )
+{
+    SIZE_T header_len, content_len;
+    unsigned int n, i;
+
+    if (len < 2 || buf[0] != 0x30 /* SEQUENCE */) return 0;
+    if (buf[1] < 0x80)
+    {
+        header_len = 2;
+        content_len = buf[1];
+    }
+    else if (buf[1] == 0x80)
+    {
+        /* indefinite length is BER, not DER; PKCS#12 uses DER */
+        return 0;
+    }
+    else
+    {
+        n = buf[1] & 0x7f;
+        if (n == 0 || n > 4 || len < 2u + n) return 0;
+        header_len = 2 + n;
+        content_len = 0;
+        for (i = 0; i < n; i++) content_len = (content_len << 8) | buf[2 + i];
+    }
+    if (content_len > len - header_len) return 0;
+    return header_len + content_len;
+}
+
 static NTSTATUS open_cert_store( void *args )
 {
     struct open_cert_store_params *params = args;
@@ -441,6 +469,7 @@ static NTSTATUS open_cert_store( void *args )
     char *pwd = NULL;
     NTSTATUS status;
     int ret;
+    SIZE_T actual;
     struct cert_store_data *store_data;
 
     if (!libgnutls_handle) return STATUS_DLL_NOT_FOUND;
@@ -450,6 +479,8 @@ static NTSTATUS open_cert_store( void *args )
 
     pfx_data.data = params->pfx->pbData;
     pfx_data.size = params->pfx->cbData;
+    if ((actual = pfx_der_outer_length( pfx_data.data, pfx_data.size )) && actual < pfx_data.size)
+        pfx_data.size = actual;
     if ((ret = pgnutls_pkcs12_import( p12, &pfx_data, GNUTLS_X509_FMT_DER, 0 )) < 0) goto error;
     if ((ret = pgnutls_pkcs12_verify_mac( p12, pwd ? pwd : "" )) < 0) goto error;
 
