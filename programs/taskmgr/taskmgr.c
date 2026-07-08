@@ -87,6 +87,7 @@ static BOOL OnCreate(HWND hWnd)
     int     nParts[3];
     RECT    rc;
     TCITEMW item;
+    WINDOWPLACEMENT wp;
 
     static WCHAR wszApplications[255];
     static WCHAR wszProcesses[255];
@@ -156,10 +157,20 @@ static BOOL OnCreate(HWND hWnd)
         (TaskManagerSettings.Top != 0) ||
         (TaskManagerSettings.Right != 0) ||
         (TaskManagerSettings.Bottom != 0))
-        MoveWindow(hWnd, TaskManagerSettings.Left, TaskManagerSettings.Top, TaskManagerSettings.Right - TaskManagerSettings.Left, TaskManagerSettings.Bottom - TaskManagerSettings.Top, TRUE);
-
-    if (TaskManagerSettings.Maximized)
-        ShowWindow(hWnd, SW_MAXIMIZE);
+    {
+        wp.length = sizeof(wp);
+        wp.flags = 0;
+        wp.showCmd = SW_SHOW;
+        wp.ptMinPosition.x = -1;
+        wp.ptMinPosition.y = -1;
+        wp.ptMaxPosition.x = -1;
+        wp.ptMaxPosition.y = -1;
+        wp.rcNormalPosition.left = TaskManagerSettings.Left;
+        wp.rcNormalPosition.top = TaskManagerSettings.Top;
+        wp.rcNormalPosition.right = TaskManagerSettings.Right;
+        wp.rcNormalPosition.bottom = TaskManagerSettings.Bottom;
+        SetWindowPlacement(hWnd, &wp);
+    }
 
     /* Set the always on top style */
     hMenu = GetMenu(hWnd);
@@ -318,7 +329,6 @@ static void LoadSettings(void)
     DWORD   dwSize;
 
     /* Window size & position settings */
-    TaskManagerSettings.Maximized = FALSE;
     TaskManagerSettings.Left = 0;
     TaskManagerSettings.Top = 0;
     TaskManagerSettings.Right = 0;
@@ -952,10 +962,6 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         TaskManagerSettings.Top = wp.rcNormalPosition.top;
         TaskManagerSettings.Right = wp.rcNormalPosition.right;
         TaskManagerSettings.Bottom = wp.rcNormalPosition.bottom;
-        if (IsZoomed(hDlg) || (wp.flags & WPF_RESTORETOMAXIMIZED))
-            TaskManagerSettings.Maximized = TRUE;
-        else
-            TaskManagerSettings.Maximized = FALSE;
         return DefWindowProcW(hDlg, message, wParam, lParam);
 
     case WM_TIMER:
