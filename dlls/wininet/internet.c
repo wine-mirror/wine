@@ -2317,9 +2317,9 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                 }
             }
             /* if ends in \. or \.. append a backslash */
-            if (tmppath[len - 1] == '.' &&
+            if (len >= 2 && tmppath[len - 1] == '.' &&
                     (tmppath[len - 2] == '\\' ||
-                     (tmppath[len - 2] == '.' && tmppath[len - 3] == '\\')))
+                     (len >= 3 && tmppath[len - 2] == '.' && tmppath[len - 3] == '\\')))
             {
                 if (len < MAX_PATH - 1)
                 {
