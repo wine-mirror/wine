@@ -7554,7 +7554,6 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         FILE_FS_VOLUME_INFORMATION *info = buffer;
         ULONGLONG data[64];
         struct mountmgr_unix_drive *drive = (struct mountmgr_unix_drive *)data;
-        const WCHAR *label;
 
         if (length < sizeof(FILE_FS_VOLUME_INFORMATION))
         {
@@ -7564,17 +7563,22 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 
         if (get_mountmgr_fs_info( handle, fd, drive, sizeof(data) ))
         {
-            status = STATUS_NOT_IMPLEMENTED;
-            break;
+            /* fall back to an empty reply rather than failing */
+            info->VolumeCreationTime.QuadPart = 0;
+            info->VolumeSerialNumber = 0;
+            info->VolumeLabelLength = 0;
+            info->SupportsObjects = FALSE;
         }
-
-        label = (WCHAR *)((char *)drive + drive->label_offset);
-        info->VolumeCreationTime.QuadPart = 0; /* FIXME */
-        info->VolumeSerialNumber = drive->serial;
-        info->VolumeLabelLength = min( wcslen( label ) * sizeof(WCHAR),
-                                       length - offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) );
-        info->SupportsObjects = (drive->fs_type == MOUNTMGR_FS_TYPE_NTFS);
-        memcpy( info->VolumeLabel, label, info->VolumeLabelLength );
+        else
+        {
+            const WCHAR *label = (WCHAR *)((char *)drive + drive->label_offset);
+            info->VolumeCreationTime.QuadPart = 0; /* FIXME */
+            info->VolumeSerialNumber = drive->serial;
+            info->VolumeLabelLength = min( wcslen( label ) * sizeof(WCHAR),
+                                           length - offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) );
+            info->SupportsObjects = (drive->fs_type == MOUNTMGR_FS_TYPE_NTFS);
+            memcpy( info->VolumeLabel, label, info->VolumeLabelLength );
+        }
         io->Information = offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) + info->VolumeLabelLength;
         status = STATUS_SUCCESS;
         break;
