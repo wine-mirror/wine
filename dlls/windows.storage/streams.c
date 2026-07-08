@@ -332,7 +332,7 @@ static HRESULT WINAPI memory_stream_random_access_put_Size( IRandomAccessStream 
     if (FAILED(hr = memory_stream_require_capacity( impl, value )))
         return hr;
 
-    impl->size = min( value, SIZE_MAX );
+    impl->size = value;
     return S_OK;
 }
 
