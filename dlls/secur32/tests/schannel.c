@@ -536,7 +536,7 @@ static void test_remote_cert(PCCERT_CONTEXT remote_cert)
         cert_cnt++;
     }
 
-    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
+    ok(cert_cnt == 4, "cert_cnt = %u\n", cert_cnt);
     ok(incl_remote, "context does not contain cert itself\n");
 }
 
