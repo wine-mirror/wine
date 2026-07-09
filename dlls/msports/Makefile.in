@@ -1,6 +1,4 @@
 MODULE    = msports.dll
 
-EXTRADLLFLAGS = -Wb,--prefer-native
-
 SOURCES = \
 	msports.c
