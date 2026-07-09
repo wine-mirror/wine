@@ -112,6 +112,7 @@
 @ stub DnsServiceNotificationRegister_W
 @ stub DnsSetMaxNumberOfAddressesToRegister
 @ stub DnsStatusString
+@ stdcall DnsStartMulticastQuery(ptr ptr)
 @ stub DnsStringCopyAllocateEx
 @ stub DnsUnicodeToUtf8
 @ stub DnsUpdate
