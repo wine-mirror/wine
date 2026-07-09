@@ -346,6 +346,7 @@ SOURCES = \
 	fileapi.h \
 	filter.idl \
 	fltdefs.h \
+	fltuser.h \
 	fontsub.h \
 	fusion.idl \
 	gameinput.idl \
