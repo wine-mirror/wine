@@ -18,6 +18,8 @@
 #ifndef __FLTUSER_H__
 #define __FLTUSER_H__
 
+#include <fltuserstructures.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
