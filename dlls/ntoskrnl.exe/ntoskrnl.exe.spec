@@ -497,7 +497,7 @@
 @ stdcall IoStopTimer(ptr)
 @ stub IoSynchronousInvalidateDeviceRelations
 @ stub IoSynchronousPageWrite
-@ stub IoThreadToProcess
+@ stdcall IoThreadToProcess(ptr)
 @ stdcall IoUnregisterFileSystem(ptr)
 @ stub IoUnregisterFsRegistrationChange
 @ stdcall IoUnregisterPlugPlayNotification(ptr)
