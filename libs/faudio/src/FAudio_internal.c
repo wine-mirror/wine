@@ -1918,7 +1918,7 @@ static void decode_mono_adpcm_block(const uint8_t *src, float *dst, uint32_t off
 		if (i == 0) *dst++ = sample2 / 32768.0;
 		if (i == 1) *dst++ = sample1 / 32768.0;
 	}
-	for (; i < offset + count; i += 2)
+	while (i < offset + count)
 	{
 		float high, low;
 
@@ -1929,6 +1929,12 @@ static void decode_mono_adpcm_block(const uint8_t *src, float *dst, uint32_t off
 			&sample1,
 			&sample2
 		);
+		if (i >= offset)
+			*dst++ = high;
+		i++;
+		if (i >= offset + count)
+			break;
+
 		low = FAudio_INTERNAL_ParseNibble(
 			*src & 0xf,
 			predictor,
@@ -1936,13 +1942,9 @@ static void decode_mono_adpcm_block(const uint8_t *src, float *dst, uint32_t off
 			&sample1,
 			&sample2
 		);
-
 		if (i >= offset)
-		{
-			*dst++ = high;
-			if (i + 1 < offset + count)
-				*dst++ = low;
-		}
+			*dst++ = low;
+		i++;
 
 		++src;
 	}
