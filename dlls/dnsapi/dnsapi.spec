@@ -113,6 +113,7 @@
 @ stub DnsSetMaxNumberOfAddressesToRegister
 @ stub DnsStatusString
 @ stdcall DnsStartMulticastQuery(ptr ptr)
+@ stdcall DnsStopMulticastQuery(ptr)
 @ stub DnsStringCopyAllocateEx
 @ stub DnsUnicodeToUtf8
 @ stub DnsUpdate

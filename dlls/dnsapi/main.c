@@ -253,3 +253,13 @@ DNS_STATUS WINAPI DnsStartMulticastQuery(MDNS_QUERY_REQUEST *request, MDNS_QUERY
     FIXME( "(%p, %p) stub\n", request, handle );
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ * DnsStopMulticastQuery                   [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsStopMulticastQuery(MDNS_QUERY_HANDLE *handle)
+{
+    FIXME( "(%p) stub\n", handle );
+    return ERROR_SUCCESS;
+}
