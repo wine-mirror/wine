@@ -556,11 +556,14 @@ sub generate_unix_thunk($$$$)
     {
         my $param = "params->" . get_arg_name( ${$func->[1]}[0] );
         $param = "ULongToPtr($param)" if $is_wow64;
-        $ret .= "    const struct opengl_funcs *funcs = ";
-        $ret .= "get_dc_funcs( $param );\n" if $use_dc;
-        $ret .= "get_pbuffer_funcs( $param );\n" if $use_pbuffer;
-        $ret .= "get_context_funcs( $param );\n" if $use_context;
-        $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
+        if (!$wrapper)
+        {
+            $ret .= "    const struct opengl_funcs *funcs = ";
+            $ret .= "get_dc_funcs( $param );\n" if $use_dc;
+            $ret .= "get_pbuffer_funcs( $param );\n" if $use_pbuffer;
+            $ret .= "get_context_funcs( $param );\n" if $use_context;
+            $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
+        }
     }
     elsif ($need_funcs)
     {
@@ -2115,6 +2118,7 @@ print OUT "#endif\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
+    next if manual_unix_thunks( $_ );
     print OUT generate_null_func($_, $wgl_functions{$_});
 }
 
@@ -2130,6 +2134,7 @@ print OUT "{\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
+    next if manual_unix_thunks( $_ );
     print OUT "    .p_$_ = null_$_,\n";
 }
 foreach (sort keys %norm_functions)

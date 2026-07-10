@@ -22,8 +22,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 static NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
-    const struct opengl_funcs *funcs = get_context_funcs( params->oldContext );
-    if (!funcs || !funcs->p_wglDeleteContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglDeleteContext( params->teb, params->oldContext );
     return STATUS_SUCCESS;
 }
@@ -49,8 +47,6 @@ static NTSTATUS wgl_wglSetPixelFormat( void *args )
 static NTSTATUS wgl_wglSwapBuffers( void *args )
 {
     struct wglSwapBuffers_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
-    if (!funcs || !funcs->p_wglSwapBuffers) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglSwapBuffers( params->teb, params->hdc );
     return STATUS_SUCCESS;
 }
@@ -27785,8 +27781,6 @@ static NTSTATUS ext_wglBindTexImageARB( void *args )
 static NTSTATUS ext_wglCreateContextAttribsARB( void *args )
 {
     struct wglCreateContextAttribsARB_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
-    if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList, params->ret );
     return STATUS_SUCCESS;
 }
@@ -27794,8 +27788,6 @@ static NTSTATUS ext_wglCreateContextAttribsARB( void *args )
 static NTSTATUS ext_wglCreatePbufferARB( void *args )
 {
     struct wglCreatePbufferARB_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
-    if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglCreatePbufferARB( params->teb, params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList, params->ret );
     return STATUS_SUCCESS;
 }
@@ -31048,8 +31040,6 @@ static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->oldContext) );
-    if (!funcs || !funcs->p_wglDeleteContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglDeleteContext( teb, ULongToPtr(params->oldContext) );
     return STATUS_SUCCESS;
 }
@@ -31093,8 +31083,6 @@ static NTSTATUS wow64_wgl_wglSwapBuffers( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
-    if (!funcs || !funcs->p_wglSwapBuffers) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglSwapBuffers( teb, ULongToPtr(params->hdc) );
     return STATUS_SUCCESS;
 }
@@ -81334,8 +81322,6 @@ static NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDC) );
-    if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = (UINT_PTR)wrap_wglCreateContextAttribsARB( teb, ULongToPtr(params->hDC), ULongToPtr(params->hShareContext), ULongToPtr(params->attribList), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
@@ -81353,8 +81339,6 @@ static NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDC) );
-    if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = (UINT_PTR)wrap_wglCreatePbufferARB( teb, ULongToPtr(params->hDC), params->iPixelFormat, params->iWidth, params->iHeight, ULongToPtr(params->piAttribList), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
@@ -84690,11 +84674,6 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif
 
-static BOOL null_wglDeleteContext( HGLRC oldContext )
-{
-    WARN( "unsupported\n" );
-    return 0;
-}
 static int null_wglGetPixelFormat( HDC hdc )
 {
     WARN( "unsupported\n" );
@@ -84702,11 +84681,6 @@ static int null_wglGetPixelFormat( HDC hdc )
     return 0;
 }
 static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd )
-{
-    WARN( "unsupported\n" );
-    return 0;
-}
-static BOOL null_wglSwapBuffers( HDC hdc )
 {
     WARN( "unsupported\n" );
     return 0;
@@ -86066,10 +86040,8 @@ static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 
 struct opengl_funcs null_opengl_funcs =
 {
-    .p_wglDeleteContext = null_wglDeleteContext,
     .p_wglGetPixelFormat = null_wglGetPixelFormat,
     .p_wglSetPixelFormat = null_wglSetPixelFormat,
-    .p_wglSwapBuffers = null_wglSwapBuffers,
     .p_glAccum = null_glAccum,
     .p_glAlphaFunc = null_glAlphaFunc,
     .p_glAreTexturesResident = null_glAreTexturesResident,

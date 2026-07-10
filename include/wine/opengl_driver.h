@@ -148,13 +148,33 @@ static inline struct opengl_context *opengl_context_from_handle( HGLRC client_co
 struct opengl_funcs
 {
 #define USE_GL_FUNC(x) PFN_##x p_##x;
-    ALL_WGL_FUNCS
-    ALL_WGL_EXT_FUNCS
     ALL_EGL_FUNCS
     ALL_EGL_EXT_FUNCS
     ALL_GL_FUNCS
     ALL_GL_EXT_FUNCS
 #undef USE_GL_FUNC
+
+    PFN_wglGetProcAddress p_wglGetProcAddress;
+    PFN_wglGetPixelFormat p_wglGetPixelFormat;
+    PFN_wglSetPixelFormat p_wglSetPixelFormat;
+    PFN_wglSetPixelFormatWINE p_wglSetPixelFormatWINE;
+    PFN_wglSwapBuffers p_wglSwapBuffers;
+    PFN_wglSwapIntervalEXT p_wglSwapIntervalEXT;
+    PFN_wglGetSwapIntervalEXT p_wglGetSwapIntervalEXT;
+    PFN_wglDestroyPbufferARB p_wglDestroyPbufferARB;
+    PFN_wglGetPbufferDCARB p_wglGetPbufferDCARB;
+    PFN_wglReleasePbufferDCARB p_wglReleasePbufferDCARB;
+    PFN_wglQueryPbufferARB p_wglQueryPbufferARB;
+    PFN_wglBindTexImageARB p_wglBindTexImageARB;
+    PFN_wglReleaseTexImageARB p_wglReleaseTexImageARB;
+    PFN_wglSetPbufferAttribARB p_wglSetPbufferAttribARB;
+    PFN_wglQueryCurrentRendererIntegerWINE p_wglQueryCurrentRendererIntegerWINE;
+    PFN_wglQueryCurrentRendererStringWINE p_wglQueryCurrentRendererStringWINE;
+    PFN_wglQueryRendererIntegerWINE p_wglQueryRendererIntegerWINE;
+    PFN_wglQueryRendererStringWINE p_wglQueryRendererStringWINE;
+    PFN_wglAllocateMemoryNV p_wglAllocateMemoryNV;
+    PFN_wglFreeMemoryNV p_wglFreeMemoryNV;
+
     void (*p_init_extensions)( BOOLEAN extensions[GL_EXTENSION_COUNT] );
     void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
     BOOL (*p_query_renderer)( UINT attribute, void *value );
