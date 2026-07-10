@@ -2987,6 +2987,7 @@ const GLubyte * WINAPI glGetString( GLenum name )
     {
     case GL_VENDOR: return (const GLubyte *)ctx->base.vendor_name;
     case GL_RENDERER: return (const GLubyte *)ctx->base.device_name;
+    case GL_VERSION: return (const GLubyte *)ctx->base.version_str;
     }
 
 #ifndef _WIN64

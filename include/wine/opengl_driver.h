@@ -80,6 +80,7 @@ struct opengl_client_context
     GLint                       profile_mask;
     int                         major_version;
     int                         minor_version;
+    char                        version_str[64];
     char                        vendor_name[64];
     char                        device_name[64];
     BOOL                        broken_sharing;                         /* context couldn't be shared (for macOS) */

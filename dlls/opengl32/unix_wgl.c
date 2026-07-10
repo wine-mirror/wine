@@ -63,7 +63,6 @@ struct context
     UINT64 debug_callback;         /* client pointer */
     UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
-    char *wow64_version;           /* wow64 GL version override */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
     GLenum read_buffer;                         /* currently bound default FBO read buffers */
@@ -536,11 +535,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
             GLubyte **extensions = &ctx->extensions;
             if (*extensions || (*extensions = filter_extensions( ctx, (const char *)ret, funcs ))) return *extensions;
         }
-        else if (name == GL_VERSION)
-        {
-            struct context *ctx = get_current_context( teb, NULL, NULL );
-            if (ctx->wow64_version) return (const GLubyte *)ctx->wow64_version;
-        }
     }
 
     return ret;
@@ -758,7 +752,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     const char *vendor, *device, *version, *rest = "";
-    size_t count = 0, i;
+    size_t count = 0, i, len;
 
     static pthread_once_t once = PTHREAD_ONCE_INIT;
 
@@ -769,8 +763,8 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 
     if (client->major_version) return; /* already synced */
 
-    version = (const char *)funcs->p_glGetString( GL_VERSION );
-    if (version) rest = parse_gl_version( version, &client->major_version, &client->minor_version );
+    if (!(version = (const char *)funcs->p_glGetString( GL_VERSION ))) version = "1.0";
+    rest = parse_gl_version( version, &client->major_version, &client->minor_version );
     if (!client->major_version) client->major_version = 1;
     TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
 
@@ -783,6 +777,9 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     else device = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_DEVICE_ID_WINE );
     if (!device) device = (const char *)funcs->p_glGetString( GL_RENDERER );
     lstrcpynA( client->device_name, device, ARRAY_SIZE(client->device_name) );
+
+    if ((len = strlen( version )) >= ARRAY_SIZE(client->version_str)) FIXME( "version_str buffer too small, need %zu\n", len );
+    lstrcpynA( client->version_str, version, ARRAY_SIZE(client->version_str) );
 
     funcs->p_init_extensions( client->extensions );
 
@@ -825,7 +822,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", client->major_version, client->minor_version );
             client->major_version = 4;
             client->minor_version = 3;
-            asprintf( &ctx->wow64_version, "4.3%s", rest );
+            snprintf( client->version_str, ARRAY_SIZE(client->version_str), "4.3%s", rest );
         }
         if (client->extensions[GL_ARB_buffer_storage])
         {
@@ -847,7 +844,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 
 static void free_context( const struct opengl_funcs *funcs, struct context *ctx )
 {
-    free( ctx->wow64_version );
     free( ctx->extensions );
     free( ctx );
 }
