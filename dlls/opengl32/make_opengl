@@ -133,6 +133,7 @@ my %manual_win_functions =
      "glDebugEntry" => 1,
      "wglChoosePixelFormat" => 1,
      "wglChoosePixelFormatARB" => 1,
+     "wglCopyContext" => 1,
      "wglCreateContext" => 1,
      "wglCreateLayerContext" => 1,
      "wglDescribeLayerPlane" => 1,
@@ -324,18 +325,22 @@ my %pointer_is_offset =
      "glGetVertexAttribPointerv" => "pointer",
      "glGetVertexAttribPointervARB" => "pointer",
     );
-my %state_attrib_funcs =
-    (
-     "glViewport" => "GL_VIEWPORT, &params->x, 2 * sizeof(GLint) + 2 * sizeof(GLsizei)",
-     "glEnable" => "params->cap, &const_true, sizeof(const_true)",
-     "glDisable" => "params->cap, &const_false, sizeof(const_false)",
-     "glHint" => "params->target, &params->mode, sizeof(params->mode)",
-     "glDepthFunc" => "GL_DEPTH_FUNC, &params->func, sizeof(params->func)",
-     "glShadeModel" => "GL_SHADE_MODEL, &params->mode, sizeof(params->mode)",
-     "glClearColor" => "GL_COLOR_CLEAR_VALUE, &params->red, 4 * sizeof(GLfloat)",
-     "glLightModelfv" => "params->pname, PARAMSPTR(params->params), 0 /* variable size */",
-     "glLightModeli" => "params->pname, &params->param, sizeof(params->param)",
-    );
+
+sub set_context_attributes($)
+{
+    my $name = shift;
+    return "set_context_attribute( GL_VIEWPORT, &args.x, 2 * sizeof(GLint) + 2 * sizeof(GLsizei) );" if $name =~ /^glViewport$/;
+    return "set_context_attribute( args.cap, &const_true, sizeof(const_true) );"                     if $name =~ /^glEnable$/;
+    return "set_context_attribute( args.cap, &const_false, sizeof(const_false) );"                   if $name =~ /^glDisable$/;
+    return "set_context_attribute( args.target, &args.mode, sizeof(args.mode) );"                    if $name =~ /^glHint$/;
+    return "set_context_attribute( GL_DEPTH_FUNC, &args.func, sizeof(args.func) );"                  if $name =~ /^glDepthFunc$/;
+    return "set_context_attribute( GL_SHADE_MODEL, &args.mode, sizeof(args.mode) );"                 if $name =~ /^glShadeModel$/;
+    return "set_context_attribute( GL_COLOR_CLEAR_VALUE, &args.red, 4 * sizeof(GLfloat) );"          if $name =~ /^glClearColor$/;
+    return "set_context_attribute( args.pname, args.params, 0 /* variable size */ );"                if $name =~ /^glLightModelfv$/;
+    return "set_context_attribute( args.pname, &args.param, sizeof(args.param) );"                   if $name =~ /^glLightModeli$/;
+    return "set_context_attribute( -1 /* unsupported */, NULL, 0 );"                                 if $name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/;
+    return 0;
+}
 
 sub get_func_trace($$$)
 {
@@ -590,23 +595,6 @@ sub generate_unix_thunk($$$$)
     }
     $ret .= "    set_current_fbo( $teb, params->target, params->framebuffer );\n" if $name =~ /glBindFramebuffer/;
     $ret .= "    pop_default_fbo( $teb );\n" if hide_default_fbo( $name );
-    if (defined $state_attrib_funcs{$name})
-    {
-        my $state_args = $state_attrib_funcs{$name};
-        if ($is_wow64)
-        {
-            $state_args =~ s/PARAMSPTR/UlongToPtr/g;
-        }
-        else
-        {
-            $state_args =~ s/PARAMSPTR//g;
-        }
-        $ret .= "    set_context_attribute( $teb, $state_args );\n";
-    }
-    elsif ($name !~ /^wgl|^glGet|^glIs[A-Z]|^glAre[A-Z]/)
-    {
-        $ret .= "    set_context_attribute( $teb, -1 /* unsupported */, NULL, 0 );\n";
-    }
     $ret .= $output_conv;
     $ret .= "    $ret_stat\n";
     $ret .= "}\n\n";
@@ -874,6 +862,10 @@ sub generate_win_thunk($$)
     {
         $post_call .= "    if (range > 0) args.ret = put_context_object_range( $map_type, range, args.ret );\n" if $name =~ /^glGen/;
         $post_call .= "    put_context_objects( $map_type, 1, &args.ret );\n" if $name =~ /^glCreate/;
+    }
+    if (my $set_attribs = set_context_attributes($name))
+    {
+        $post_call .= "    $set_attribs\n";
     }
     $ret .= "    struct $name\_params args = {$params };\n";
     $ret .= "    NTSTATUS status;\n";
@@ -1877,7 +1869,10 @@ print OUT "#include \"wingdi.h\"\n\n";
 print OUT "#include \"unixlib.h\"\n";
 print OUT "#include \"private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
-print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
+print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n";
+
+print OUT "static GLboolean const_false;\n";
+print OUT "static GLboolean const_true = 1;\n";
 
 foreach (sort keys %wgl_functions)
 {
@@ -2025,9 +2020,6 @@ print OUT "#include \"unix_private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n";
-
-print OUT "static GLboolean const_false;\n";
-print OUT "static GLboolean const_true = 1;\n\n";
 
 foreach (sort keys %wgl_functions)
 {

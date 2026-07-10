@@ -525,10 +525,71 @@ static void display_lists_release( struct display_lists *lists, BOOL destroy )
     free( lists );
 }
 
+/* context state management */
+
+struct light_model_state
+{
+    GLfloat ambient[4];
+    GLint two_side;
+};
+
+struct lighting_state
+{
+    struct light_model_state model;
+    GLenum shade_model;
+};
+
+struct depth_buffer_state
+{
+    GLenum depth_func;
+};
+
+struct viewport_state
+{
+    GLint x;
+    GLint y;
+    GLsizei w;
+    GLsizei h;
+};
+
+struct enable_state
+{
+    GLboolean cull_face;
+    GLboolean depth_test;
+    GLboolean dither;
+    GLboolean fog;
+    GLboolean lighting;
+    GLboolean normalize;
+};
+
+struct color_buffer_state
+{
+    GLfloat clear_color[4];
+};
+
+struct hint_state
+{
+    GLenum perspective_correction;
+    GLenum point_smooth;
+    GLenum line_smooth;
+    GLenum polygon_smooth;
+    GLenum fog;
+    GLenum multisample_nv;
+};
+
 struct context
 {
     struct opengl_client_context base;
     struct display_lists *lists;
+
+    /* semi-stub state tracker for wglCopyContext */
+    GLbitfield used;                            /* context state used bits */
+    struct lighting_state lighting;             /* GL_LIGHTING_BIT */
+    struct depth_buffer_state depth_buffer;     /* GL_DEPTH_BUFFER_BIT */
+    struct viewport_state viewport;             /* GL_VIEWPORT_BIT */
+    struct enable_state enable;                 /* GL_ENABLE_BIT */
+    struct color_buffer_state color_buffer;     /* GL_COLOR_BUFFER_BIT */
+    struct hint_state hint;                     /* GL_HINT_BIT */
 };
 
 static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
@@ -1041,6 +1102,170 @@ BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
     display_lists_release( lists, TRUE );
 
     return TRUE;
+}
+
+struct context_attribute_desc
+{
+    GLenum name;
+    GLbitfield bit;
+    unsigned short offset;
+    unsigned short size;
+};
+
+static struct context_attribute_desc context_attributes[] =
+{
+#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) { name, bit, offsetof(struct context, field), sizeof(((struct context *)0)->field) }
+    CONTEXT_ATTRIBUTE_DESC( GL_COLOR_BUFFER_BIT, GL_COLOR_CLEAR_VALUE, color_buffer.clear_color ),
+    CONTEXT_ATTRIBUTE_DESC( GL_DEPTH_BUFFER_BIT, GL_DEPTH_FUNC, depth_buffer.depth_func ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_CULL_FACE, enable.cull_face ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DEPTH_TEST, enable.depth_test ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DITHER, enable.dither ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_FOG, enable.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_LIGHTING, enable.lighting ),
+    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_NORMALIZE, enable.normalize ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_PERSPECTIVE_CORRECTION_HINT, hint.perspective_correction ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POINT_SMOOTH_HINT, hint.point_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_LINE_SMOOTH_HINT, hint.line_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POLYGON_SMOOTH_HINT, hint.polygon_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_FOG_HINT, hint.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_MULTISAMPLE_FILTER_HINT_NV, hint.multisample_nv ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_AMBIENT, lighting.model.ambient ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_TWO_SIDE, lighting.model.two_side ),
+    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_SHADE_MODEL, lighting.shade_model ),
+    CONTEXT_ATTRIBUTE_DESC( GL_VIEWPORT_BIT, GL_VIEWPORT, viewport ),
+#undef CONTEXT_ATTRIBUTE_DESC
+};
+
+static int compare_context_attributes( const void *v1, const void *v2 )
+{
+    const struct context_attribute_desc *a1 = v1, *a2 = v2;
+
+    return (int)a1->name - (int)a2->name;
+};
+
+void set_context_attribute( GLenum name, const void *value, size_t size )
+{
+    struct context_attribute_desc key = { .name = name };
+    const struct context_attribute_desc *desc;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context())) return;
+
+    if (name == GL_FRAMEBUFFER)
+    {
+        set_context_attribute( GL_READ_FRAMEBUFFER, value, size );
+        name = GL_DRAW_FRAMEBUFFER;
+    }
+
+    if (name != -1 && (desc = bsearch( &key, context_attributes, ARRAY_SIZE(context_attributes),
+                                       sizeof(*context_attributes), compare_context_attributes )))
+    {
+        if (size && size != desc->size) ERR( "Invalid state attrib %#x parameter size %#Ix\n", name, size );
+        else
+        {
+            memcpy( (char *)ctx + desc->offset, value, desc->size );
+            ctx->used |= desc->bit;
+        }
+    }
+    else
+    {
+        if (ctx->used != -1) WARN( "Unsupported attribute on context %p\n", ctx );
+        ctx->used |= -1;
+    }
+}
+
+/***********************************************************************
+ *      wglCopyContext
+ */
+BOOL WINAPI wglCopyContext( HGLRC src_handle, HGLRC dst_handle, UINT mask )
+{
+    HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
+    HGLRC context = NtCurrentTeb()->glCurrentRC;
+    struct context *src, *dst;
+    HDC hdc = NULL;
+    HWND hwnd;
+
+    if (dst_handle == context)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (!(src = context_from_handle( src_handle ))) return FALSE;
+    if (!(dst = context_from_handle( dst_handle ))) return FALSE;
+
+    if (!mask) return TRUE;
+    if (src->used == -1) FIXME( "Unsupported attributes on context %p\n", src );
+    if (src != dst && dst->used == -1) FIXME( "Unsupported attributes on context %p\n", dst );
+
+    if (!(hwnd = CreateWindowExW( 0, L"static", L"static", WS_POPUP, 0, 0, 0, 0, NULL, NULL, NULL, NULL )) ||
+        !(hdc = GetWindowDC( hwnd )) || !SetPixelFormat( hdc, dst->base.format, NULL ))
+    {
+        WARN( "Failed to create dummy window to update context attributes\n" );
+        if (hdc) ReleaseDC( hwnd, hdc );
+        if (hwnd) DestroyWindow( hwnd );
+        return FALSE;
+    }
+
+    wglMakeContextCurrentARB( hdc, hdc, dst_handle );
+
+    if (mask & GL_COLOR_BUFFER_BIT)
+    {
+        const GLfloat *floats = src->color_buffer.clear_color;
+        glClearColor( floats[0], floats[1], floats[2], floats[3] );
+        dst->color_buffer = src->color_buffer;
+    }
+    if (mask & GL_DEPTH_BUFFER_BIT)
+    {
+        glDepthFunc( src->depth_buffer.depth_func );
+        dst->depth_buffer = src->depth_buffer;
+    }
+    if (mask & GL_ENABLE_BIT)
+    {
+        if (src->enable.cull_face) glEnable( GL_CULL_FACE );
+        else glDisable( GL_CULL_FACE );
+        if (src->enable.depth_test) glEnable( GL_DEPTH_TEST );
+        else glDisable( GL_DEPTH_TEST );
+        if (src->enable.dither) glEnable( GL_DITHER );
+        else glDisable( GL_DITHER );
+        if (src->enable.fog) glEnable( GL_FOG );
+        else glDisable( GL_FOG );
+        if (src->enable.lighting) glEnable( GL_LIGHTING );
+        else glDisable( GL_LIGHTING );
+        if (src->enable.normalize) glEnable( GL_NORMALIZE );
+        else glDisable( GL_NORMALIZE );
+        dst->enable = src->enable;
+    }
+    if (mask & GL_HINT_BIT)
+    {
+        if (src->hint.perspective_correction) glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
+        if (src->hint.point_smooth)           glHint( GL_POINT_SMOOTH_HINT, src->hint.point_smooth );
+        if (src->hint.line_smooth)            glHint( GL_LINE_SMOOTH_HINT, src->hint.line_smooth );
+        if (src->hint.polygon_smooth)         glHint( GL_POLYGON_SMOOTH_HINT, src->hint.polygon_smooth );
+        if (src->hint.fog)                    glHint( GL_FOG_HINT, src->hint.fog );
+        if (src->hint.multisample_nv)         glHint( GL_MULTISAMPLE_FILTER_HINT_NV, src->hint.multisample_nv );
+        dst->hint = src->hint;
+    }
+    if (mask & GL_LIGHTING_BIT)
+    {
+        glLightModelfv( GL_LIGHT_MODEL_AMBIENT, src->lighting.model.ambient );
+        glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, src->lighting.model.two_side );
+        glShadeModel( src->lighting.shade_model );
+        dst->lighting = src->lighting;
+    }
+    if (mask & GL_VIEWPORT_BIT)
+    {
+        glViewport( src->viewport.x, src->viewport.y, src->viewport.w, src->viewport.h );
+        dst->viewport = src->viewport;
+    }
+    dst->used |= (src->used & mask);
+
+    if (!context) wglMakeContextCurrentARB( NULL, NULL, NULL );
+    else wglMakeContextCurrentARB( draw_hdc, read_hdc, context );
+
+    ReleaseDC( hwnd, hdc );
+    DestroyWindow( hwnd );
+
+    return dst->used != -1 && src->used != -1;
 }
 
 /***********************************************************************
@@ -2859,6 +3084,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             ERR( "Failed to load unixlib, status %#lx\n", status );
             return FALSE;
         }
+        qsort( context_attributes, ARRAY_SIZE(context_attributes), sizeof(*context_attributes), compare_context_attributes );
 
         /* fallthrough */
     case DLL_THREAD_ATTACH:

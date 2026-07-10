@@ -21,15 +21,6 @@ struct process_attach_params
     UINT64 call_gl_debug_message_callback;
 };
 
-struct wglCopyContext_params
-{
-    TEB *teb;
-    HGLRC hglrcSrc;
-    HGLRC hglrcDst;
-    UINT mask;
-    BOOL ret;
-};
-
 struct wglDeleteContext_params
 {
     TEB *teb;
@@ -25791,7 +25782,6 @@ enum unix_funcs
     unix_thread_attach,
     unix_process_detach,
     unix_get_pixel_formats,
-    unix_wglCopyContext,
     unix_wglDeleteContext,
     unix_wglGetPixelFormat,
     unix_wglSetPixelFormat,

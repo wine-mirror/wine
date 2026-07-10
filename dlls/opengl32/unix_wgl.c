@@ -56,64 +56,6 @@ static UINT64 call_gl_debug_message_callback;
 
 /* context state management */
 
-struct pixel_mode_state
-{
-    GLenum read_buffer;
-};
-
-struct light_model_state
-{
-    GLfloat ambient[4];
-    GLint two_side;
-};
-
-struct lighting_state
-{
-    struct light_model_state model;
-    GLenum shade_model;
-};
-
-struct depth_buffer_state
-{
-    GLenum depth_func;
-};
-
-struct viewport_state
-{
-    GLint x;
-    GLint y;
-    GLsizei w;
-    GLsizei h;
-};
-
-struct enable_state
-{
-    GLboolean cull_face;
-    GLboolean depth_test;
-    GLboolean dither;
-    GLboolean fog;
-    GLboolean lighting;
-    GLboolean normalize;
-};
-
-#define MAX_DRAW_BUFFERS 16
-
-struct color_buffer_state
-{
-    GLfloat clear_color[4];
-    GLenum  draw_buffers[MAX_DRAW_BUFFERS];
-};
-
-struct hint_state
-{
-    GLenum perspective_correction;
-    GLenum point_smooth;
-    GLenum line_smooth;
-    GLenum polygon_smooth;
-    GLenum fog;
-    GLenum multisample_nv;
-};
-
 struct context
 {
     struct opengl_context base;
@@ -124,15 +66,8 @@ struct context
     char *wow64_version;           /* wow64 GL version override */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
-    /* semi-stub state tracker for wglCopyContext */
-    GLbitfield used;                            /* context state used bits */
-    struct pixel_mode_state pixel_mode;         /* GL_PIXEL_MODE_BIT */
-    struct lighting_state lighting;             /* GL_LIGHTING_BIT */
-    struct depth_buffer_state depth_buffer;     /* GL_DEPTH_BUFFER_BIT */
-    struct viewport_state viewport;             /* GL_VIEWPORT_BIT */
-    struct enable_state enable;                 /* GL_ENABLE_BIT */
-    struct color_buffer_state color_buffer;     /* GL_COLOR_BUFFER_BIT */
-    struct hint_state hint;                     /* GL_HINT_BIT */
+    GLenum read_buffer;                         /* currently bound default FBO read buffers */
+    GLenum draw_buffers[16];                    /* currently bound default FBO draw buffers */
     GLuint draw_fbo;                            /* currently bound draw FBO name */
     GLuint read_fbo;                            /* currently bound read FBO name */
     GLboolean has_viewport;                     /* whether viewport has been initialized */
@@ -205,163 +140,6 @@ static struct context *get_current_context( TEB *teb, struct opengl_drawable **d
     if (draw) *draw = context->base.draw;
     if (read) *read = context->base.read;
     return context;
-}
-
-struct context_attribute_desc
-{
-    GLenum name;
-    GLbitfield bit;
-    unsigned short offset;
-    unsigned short size;
-};
-
-static struct context_attribute_desc context_attributes[] =
-{
-#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) { name, bit, offsetof(struct context, field), sizeof(((struct context *)0)->field) }
-    CONTEXT_ATTRIBUTE_DESC( GL_COLOR_BUFFER_BIT, GL_COLOR_CLEAR_VALUE, color_buffer.clear_color ),
-    CONTEXT_ATTRIBUTE_DESC( GL_DEPTH_BUFFER_BIT, GL_DEPTH_FUNC, depth_buffer.depth_func ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_CULL_FACE, enable.cull_face ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DEPTH_TEST, enable.depth_test ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_DITHER, enable.dither ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_FOG, enable.fog ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_LIGHTING, enable.lighting ),
-    CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_NORMALIZE, enable.normalize ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_PERSPECTIVE_CORRECTION_HINT, hint.perspective_correction ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POINT_SMOOTH_HINT, hint.point_smooth ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_LINE_SMOOTH_HINT, hint.line_smooth ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POLYGON_SMOOTH_HINT, hint.polygon_smooth ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_FOG_HINT, hint.fog ),
-    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_MULTISAMPLE_FILTER_HINT_NV, hint.multisample_nv ),
-    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_AMBIENT, lighting.model.ambient ),
-    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_TWO_SIDE, lighting.model.two_side ),
-    CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_SHADE_MODEL, lighting.shade_model ),
-    CONTEXT_ATTRIBUTE_DESC( GL_VIEWPORT_BIT, GL_VIEWPORT, viewport ),
-#undef CONTEXT_ATTRIBUTE_DESC
-};
-
-static int compare_context_attributes( const void *v1, const void *v2 )
-{
-    const struct context_attribute_desc *a1 = v1, *a2 = v2;
-
-    return (int)a1->name - (int)a2->name;
-};
-
-void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size )
-{
-    struct context_attribute_desc key = { .name = name };
-    const struct context_attribute_desc *desc;
-    struct context *ctx;
-
-    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
-
-    if (name != -1 && (desc = bsearch( &key, context_attributes, ARRAY_SIZE(context_attributes),
-                                       sizeof(*context_attributes), compare_context_attributes )))
-    {
-        if (size && size != desc->size) ERR( "Invalid state attrib %#x parameter size %#zx\n", name, size );
-        else
-        {
-            memcpy( (char *)ctx + desc->offset, value, desc->size );
-            ctx->used |= desc->bit;
-        }
-    }
-    else
-    {
-        if (ctx->used != -1) WARN( "Unsupported attribute on context %p/%p\n", teb->glCurrentRC, ctx );
-        ctx->used |= -1;
-    }
-}
-
-static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context *dst,
-                                     HGLRC client_src, struct context *src, GLbitfield mask )
-{
-    struct context *old_ctx = CONTAINING_RECORD( teb->glContext, struct context, base );
-    HDC draw_hdc = teb->glReserved1[0], read_hdc = teb->glReserved1[1];
-    const struct opengl_funcs *old_funcs = teb->glTable, *funcs;
-    static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
-    UNICODE_STRING static_us = RTL_CONSTANT_STRING( staticW );
-    HDC hdc = NULL;
-    HWND hwnd;
-
-    if (dst == old_ctx || !(funcs = get_context_funcs( client_dst )))
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-
-    if (!mask) return TRUE;
-    if (src->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", client_src, src );
-    if (src != dst && dst->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", client_dst, dst );
-
-    if (!(hwnd = NtUserCreateWindowEx( 0, &static_us, NULL, &static_us, WS_POPUP, 0, 0, 0, 0,
-                                       NULL, NULL, NULL, NULL, 0, NULL, NULL, FALSE )) ||
-        !(hdc = NtUserGetWindowDC( hwnd )) || !funcs->p_wglSetPixelFormat( hdc, dst->base.format, NULL ))
-    {
-        WARN( "Failed to create dummy window to update context attributes\n" );
-        if (hdc) NtUserReleaseDC( hwnd, hdc );
-        if (hwnd) NtUserDestroyWindow( hwnd );
-        return FALSE;
-    }
-
-    funcs->p_wglMakeContextCurrentARB( hdc, hdc, client_dst );
-
-    if (mask & GL_COLOR_BUFFER_BIT)
-    {
-        const GLfloat *floats = src->color_buffer.clear_color;
-        funcs->p_glClearColor( floats[0], floats[1], floats[2], floats[3] );
-        dst->color_buffer = src->color_buffer;
-    }
-    if (mask & GL_DEPTH_BUFFER_BIT)
-    {
-        funcs->p_glDepthFunc( src->depth_buffer.depth_func );
-        dst->depth_buffer = src->depth_buffer;
-    }
-    if (mask & GL_ENABLE_BIT)
-    {
-        if (src->enable.cull_face) funcs->p_glEnable( GL_CULL_FACE );
-        else funcs->p_glDisable( GL_CULL_FACE );
-        if (src->enable.depth_test) funcs->p_glEnable( GL_DEPTH_TEST );
-        else funcs->p_glDisable( GL_DEPTH_TEST );
-        if (src->enable.dither) funcs->p_glEnable( GL_DITHER );
-        else funcs->p_glDisable( GL_DITHER );
-        if (src->enable.fog) funcs->p_glEnable( GL_FOG );
-        else funcs->p_glDisable( GL_FOG );
-        if (src->enable.lighting) funcs->p_glEnable( GL_LIGHTING );
-        else funcs->p_glDisable( GL_LIGHTING );
-        if (src->enable.normalize) funcs->p_glEnable( GL_NORMALIZE );
-        else funcs->p_glDisable( GL_NORMALIZE );
-        dst->enable = src->enable;
-    }
-    if (mask & GL_HINT_BIT)
-    {
-        if (src->hint.perspective_correction) funcs->p_glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
-        if (src->hint.point_smooth)           funcs->p_glHint( GL_POINT_SMOOTH_HINT, src->hint.point_smooth );
-        if (src->hint.line_smooth)            funcs->p_glHint( GL_LINE_SMOOTH_HINT, src->hint.line_smooth );
-        if (src->hint.polygon_smooth)         funcs->p_glHint( GL_POLYGON_SMOOTH_HINT, src->hint.polygon_smooth );
-        if (src->hint.fog)                    funcs->p_glHint( GL_FOG_HINT, src->hint.fog );
-        if (src->hint.multisample_nv)         funcs->p_glHint( GL_MULTISAMPLE_FILTER_HINT_NV, src->hint.multisample_nv );
-        dst->hint = src->hint;
-    }
-    if (mask & GL_LIGHTING_BIT)
-    {
-        funcs->p_glLightModelfv( GL_LIGHT_MODEL_AMBIENT, src->lighting.model.ambient );
-        funcs->p_glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, src->lighting.model.two_side );
-        funcs->p_glShadeModel( src->lighting.shade_model );
-        dst->lighting = src->lighting;
-    }
-    if (mask & GL_VIEWPORT_BIT)
-    {
-        funcs->p_glViewport( src->viewport.x, src->viewport.y, src->viewport.w, src->viewport.h );
-        dst->viewport = src->viewport;
-    }
-    dst->used |= (src->used & mask);
-
-    if (!old_ctx) funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL );
-    else old_funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, old_ctx->base.client_context );
-
-    NtUserReleaseDC( hwnd, hdc );
-    NtUserDestroyWindow( hwnd );
-
-    return dst->used != -1 && src->used != -1;
 }
 
 static void unmap_vk_buffer( struct buffer *buffer )
@@ -675,17 +453,17 @@ static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable
 {
     if (pname == GL_READ_BUFFER && !ctx->read_fbo)
     {
-        *data = ctx->pixel_mode.read_buffer;
+        *data = ctx->read_buffer;
         return TRUE;
     }
     if ((pname == GL_DRAW_BUFFER || pname == GL_DRAW_BUFFER0) && !ctx->draw_fbo)
     {
-        *data = ctx->color_buffer.draw_buffers[0];
+        *data = ctx->draw_buffers[0];
         return TRUE;
     }
     if (pname >= GL_DRAW_BUFFER1 && pname <= GL_DRAW_BUFFER15 && !ctx->draw_fbo)
     {
-        *data = ctx->color_buffer.draw_buffers[pname - GL_DRAW_BUFFER0];
+        *data = ctx->draw_buffers[pname - GL_DRAW_BUFFER0];
         return TRUE;
     }
     if (pname == GL_DOUBLEBUFFER && !ctx->draw_fbo)
@@ -776,14 +554,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
     }
 
     return ret;
-}
-
-BOOL wrap_wglCopyContext( TEB *teb, HGLRC client_src, HGLRC client_dst, UINT mask )
-{
-    struct context *src, *dst;
-    if (!(src = context_from_client_context( client_src ))) return FALSE;
-    if (!(dst = context_from_client_context( client_dst ))) return FALSE;
-    return copy_context_attributes( teb, client_dst, dst, client_src, src, mask );
 }
 
 static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
@@ -1071,8 +841,8 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", all_extensions[client->extension_array[i]].name );
 
-    ctx->color_buffer.draw_buffers[0] = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
-    ctx->pixel_mode.read_buffer = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
+    ctx->draw_buffers[0] = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
+    ctx->read_buffer = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
 }
 
 static void free_context( const struct opengl_funcs *funcs, struct context *ctx )
@@ -1131,8 +901,8 @@ static enum buffer_mask buffer_mask_from_enum( GLenum buffer )
 
 static BOOL context_draws_back( struct context *ctx )
 {
-    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-        if (buffer_mask_from_enum( ctx->color_buffer.draw_buffers[i] ) & MASK_BACK)
+    for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
+        if (buffer_mask_from_enum( ctx->draw_buffers[i] ) & MASK_BACK)
             return TRUE;
 
     return FALSE;
@@ -1140,8 +910,8 @@ static BOOL context_draws_back( struct context *ctx )
 
 static BOOL context_draws_front( struct context *ctx )
 {
-    for (int i = 0; i < ARRAY_SIZE(ctx->color_buffer.draw_buffers); i++)
-        if (buffer_mask_from_enum( ctx->color_buffer.draw_buffers[i] ) & MASK_FRONT)
+    for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
+        if (buffer_mask_from_enum( ctx->draw_buffers[i] ) & MASK_FRONT)
             return TRUE;
     return FALSE;
 }
@@ -1175,7 +945,7 @@ static void flush_context( TEB *teb, void (*flush)(void) )
         funcs->p_glReadBuffer( GL_FRONT_LEFT );
         funcs->p_glBlitFramebuffer( 0, 0, rect.right, rect.bottom, 0, 0, rect.right, rect.bottom, mask, GL_NEAREST );
         if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, ctx->read_fbo );
-        else funcs->p_glReadBuffer( drawable_buffer_from_buffer( read, ctx->pixel_mode.read_buffer ) );
+        else funcs->p_glReadBuffer( drawable_buffer_from_buffer( read, ctx->read_buffer ) );
     }
 }
 
@@ -1236,6 +1006,7 @@ BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc )
 
 HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, const int *attribs, HGLRC client_context )
 {
+    struct opengl_client_context *client = opengl_client_context_from_client( client_context );
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
     struct context *context;
 
@@ -1254,6 +1025,8 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
     }
 
     opengl_client_context_init( client_context, context, funcs );
+    client->format = context->base.format;
+
     return client_context;
 }
 
@@ -1323,7 +1096,6 @@ void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *us
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     p_glDebugMessageCallback( gl_debug_message_callback, ctx );
-    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
 }
 
 void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user, PFN_glDebugMessageCallbackAMD p_glDebugMessageCallbackAMD )
@@ -1332,7 +1104,6 @@ void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *us
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     p_glDebugMessageCallbackAMD( gl_debug_message_callback, ctx );
-    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
 }
 
 void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
@@ -1456,12 +1227,12 @@ static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_
         if (src[i] && !drawable_buffer_from_buffer( draw, src[i] )) return dst;
     }
 
-    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
+    memset( ctx->draw_buffers, 0, sizeof(ctx->draw_buffers) );
     for (GLsizei i = 0; i < count; i++)
     {
         dst[i] = drawable_buffer_from_buffer( draw, src[i] );
-        if (i >= MAX_DRAW_BUFFERS) FIXME( "Needs %u draw buffers\n", i );
-        else ctx->color_buffer.draw_buffers[i] = src[i];
+        if (i >= ARRAY_SIZE(ctx->draw_buffers)) FIXME( "Needs %u draw buffers\n", i );
+        else ctx->draw_buffers[i] = src[i];
     }
 
     return dst;
@@ -1469,9 +1240,9 @@ static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_
 
 void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs, PFN_glDrawBuffers p_glDrawBuffers )
 {
-    GLenum buffer[MAX_DRAW_BUFFERS];
     struct opengl_drawable *draw;
     struct context *ctx;
+    GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
@@ -1481,9 +1252,9 @@ void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs, PFN_glDrawBuff
 
 void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs, PFN_glFramebufferDrawBuffersEXT p_glFramebufferDrawBuffersEXT )
 {
-    GLenum buffer[MAX_DRAW_BUFFERS];
     struct opengl_drawable *draw;
     struct context *ctx;
+    GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
@@ -1493,9 +1264,9 @@ void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GL
 
 void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs, PFN_glNamedFramebufferDrawBuffers p_glNamedFramebufferDrawBuffers )
 {
-    GLenum buffer[MAX_DRAW_BUFFERS];
     struct opengl_drawable *draw;
     struct context *ctx;
+    GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
@@ -1511,8 +1282,8 @@ static GLenum set_default_fbo_draw_buffer( struct context *ctx, struct opengl_dr
         WARN( "Invalid draw buffer %#x for context %p\n", src, ctx );
         return src;
     }
-    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-    ctx->color_buffer.draw_buffers[0] = src;
+    memset( ctx->draw_buffers, 0, sizeof(ctx->draw_buffers) );
+    ctx->draw_buffers[0] = src;
     return dst;
 }
 
@@ -1557,7 +1328,7 @@ static GLenum set_default_fbo_read_buffer( struct context *ctx, struct opengl_dr
         WARN( "Invalid read buffer %#x for context %p\n", src, ctx );
         return src;
     }
-    ctx->pixel_mode.read_buffer = src;
+    ctx->read_buffer = src;
     return dst;
 }
 
@@ -1705,7 +1476,6 @@ NTSTATUS process_attach( void *args )
         zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 
-    qsort( context_attributes, ARRAY_SIZE(context_attributes), sizeof(*context_attributes), compare_context_attributes );
     return STATUS_SUCCESS;
 }
 

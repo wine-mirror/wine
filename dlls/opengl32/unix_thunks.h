@@ -2,7 +2,6 @@
 
 typedef ULONG PTR32;
 
-extern BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
 extern BOOL wrap_wglDeleteContext( TEB *teb, HGLRC oldContext );
 extern BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc );
 extern void wrap_glClear( TEB *teb, GLbitfield mask, PFN_glClear func );
