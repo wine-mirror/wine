@@ -84,6 +84,8 @@ struct opengl_client_context
     char                        vendor_name[64];
     char                        device_name[64];
     BOOL                        broken_sharing;                         /* context couldn't be shared (for macOS) */
+    UINT64                      debug_callback;                         /* callback pointer for glDebugMessageCallback */
+    UINT64                      debug_user;                             /* user pointer for glDebugMessageCallback */
     BOOLEAN                     extensions[GL_EXTENSION_COUNT];         /* exposed client extensions */
     UINT32                      extension_count;                        /* size of supported extensions */
     UINT16                      extension_array[GL_EXTENSION_COUNT];    /* array of supported extensions */

@@ -59,9 +59,6 @@ static UINT64 call_gl_debug_message_callback;
 struct context
 {
     struct opengl_context base;
-
-    UINT64 debug_callback;         /* client pointer */
-    UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
@@ -1059,10 +1056,10 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     struct gl_debug_message_callback_params *params;
     void *ret_ptr;
     ULONG ret_len;
-    struct context *ctx = (struct context *)user;
+    struct opengl_client_context *client = (struct opengl_client_context *)user;
     UINT len = strlen( message ) + 1, size;
 
-    if (!ctx->debug_callback) return;
+    if (!client->debug_callback) return;
     if (!NtCurrentTeb())
     {
         fprintf( stderr, "msg:gl_debug_message_callback called from native thread, severity %#x, message \"%.*s\".\n",
@@ -1073,8 +1070,8 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     size = offsetof(struct gl_debug_message_callback_params, message[len] );
     if (!(params = malloc( size ))) return;
     params->dispatch.callback = call_gl_debug_message_callback;
-    params->debug_callback = ctx->debug_callback;
-    params->debug_user = ctx->debug_user;
+    params->debug_callback = client->debug_callback;
+    params->debug_user = client->debug_user;
     params->source = source;
     params->type = type;
     params->id = id;
@@ -1088,18 +1085,26 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
 
 void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user, PFN_glDebugMessageCallback p_glDebugMessageCallback )
 {
-    struct context *ctx = get_current_context( teb, NULL, NULL );
-    ctx->debug_callback = (UINT_PTR)callback;
-    ctx->debug_user     = (UINT_PTR)user;
-    p_glDebugMessageCallback( gl_debug_message_callback, ctx );
+    struct opengl_client_context *client;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
+    if (!(client = opengl_client_context_from_client( ctx->base.client_context ))) return;
+    client->debug_callback = (UINT_PTR)callback;
+    client->debug_user     = (UINT_PTR)user;
+    p_glDebugMessageCallback( gl_debug_message_callback, client );
 }
 
 void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user, PFN_glDebugMessageCallbackAMD p_glDebugMessageCallbackAMD )
 {
-    struct context *ctx = get_current_context( teb, NULL, NULL );
-    ctx->debug_callback = (UINT_PTR)callback;
-    ctx->debug_user     = (UINT_PTR)user;
-    p_glDebugMessageCallbackAMD( gl_debug_message_callback, ctx );
+    struct opengl_client_context *client;
+    struct context *ctx;
+
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
+    if (!(client = opengl_client_context_from_client( ctx->base.client_context ))) return;
+    client->debug_callback = (UINT_PTR)callback;
+    client->debug_user     = (UINT_PTR)user;
+    p_glDebugMessageCallbackAMD( gl_debug_message_callback, client );
 }
 
 void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
