@@ -54,21 +54,6 @@ static BOOL is_wow64(void)
 
 static UINT64 call_gl_debug_message_callback;
 
-/* context state management */
-
-struct context
-{
-    struct opengl_context base;
-    GLubyte *extensions;           /* extension string */
-    BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
-
-    GLenum read_buffer;                         /* currently bound default FBO read buffers */
-    GLenum draw_buffers[16];                    /* currently bound default FBO draw buffers */
-    GLuint draw_fbo;                            /* currently bound draw FBO name */
-    GLuint read_fbo;                            /* currently bound read FBO name */
-    GLboolean has_viewport;                     /* whether viewport has been initialized */
-};
-
 struct buffer
 {
     struct rb_entry entry;
@@ -118,7 +103,7 @@ static int vk_device_cmp( const void *key, const struct rb_entry *entry )
 
 struct rb_tree vk_devices = { vk_device_cmp };
 
-static void opengl_client_context_init( HGLRC client_context, struct context *context, const struct opengl_funcs *funcs )
+static void opengl_client_context_init( HGLRC client_context, struct opengl_context *context, const struct opengl_funcs *funcs )
 {
     struct opengl_client_context *client = opengl_client_context_from_client( client_context );
     client->unix_handle = (UINT_PTR)context;
@@ -126,17 +111,15 @@ static void opengl_client_context_init( HGLRC client_context, struct context *co
 }
 
 /* the current context is assumed valid and doesn't need locking */
-static struct context *get_current_context( TEB *teb, struct opengl_drawable **draw, struct opengl_drawable **read,
-                                            struct opengl_client_context **client )
+static struct opengl_context *get_current_context( TEB *teb, struct opengl_drawable **draw, struct opengl_drawable **read,
+                                                   struct opengl_client_context **client )
 {
-    struct opengl_context *base;
-    struct context *context;
+    struct opengl_context *context;
 
-    if (!(base = teb->glContext)) return NULL;
-    context = CONTAINING_RECORD( base, struct context, base );
-    if (draw) *draw = context->base.draw;
-    if (read) *read = context->base.read;
-    if (client && !(*client = opengl_client_context_from_client( base->client_context ))) return NULL;
+    if (!(context = teb->glContext)) return NULL;
+    if (draw) *draw = context->draw;
+    if (read) *read = context->read;
+    if (client && !(*client = opengl_client_context_from_client( context->client_context ))) return NULL;
     return context;
 }
 
@@ -178,10 +161,9 @@ static void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer
     free( buffer );
 }
 
-static struct context *context_from_client_context( HGLRC client_context )
+static struct opengl_context *context_from_client_context( HGLRC client_context )
 {
-    struct opengl_context *base = opengl_context_from_handle( client_context );
-    return base ? CONTAINING_RECORD( base, struct context, base ) : NULL;
+    return opengl_context_from_handle( client_context );
 }
 
 struct extension_entry
@@ -443,7 +425,7 @@ static void set_gl_error( TEB *teb, GLenum error )
     if (!client->last_error && !(client->last_error = funcs->p_glGetError())) client->last_error = error;
 }
 
-static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
+static BOOL get_default_fbo_integer( struct opengl_context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
                                      GLenum pname, GLint *data )
 {
     if (pname == GL_READ_BUFFER && !ctx->read_fbo)
@@ -479,7 +461,7 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if (!(ctx = get_current_context( teb, &draw, &read, NULL )))
     {
@@ -522,7 +504,7 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_client_context *client;
-    struct context *ctx;
+    struct opengl_context *ctx;
     const GLubyte *ret;
 
     if ((ret = p_glGetString( name )))
@@ -743,26 +725,17 @@ static void init_enabled_extensions(void)
     free( disabled );
 }
 
-static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HDC draw_hdc, HDC read_hdc,
-                                  HGLRC client_context, struct context *ctx )
+static void init_client_context( TEB *teb, const struct opengl_funcs *funcs, struct opengl_client_context *client )
 {
-    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     const char *vendor, *device, *version, *rest = "";
     size_t count = 0, i, len;
 
     static pthread_once_t once = PTHREAD_ONCE_INIT;
 
-    teb->glReserved1[0] = draw_hdc;
-    teb->glReserved1[1] = read_hdc;
-    teb->glTable = (void *)funcs;
-    pop_default_fbo( teb );
-
-    if (client->major_version) return; /* already synced */
-
     if (!(version = (const char *)funcs->p_glGetString( GL_VERSION ))) version = "1.0";
     rest = parse_gl_version( version, &client->major_version, &client->minor_version );
     if (!client->major_version) client->major_version = 1;
-    TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
+    TRACE( "context %p version %d.%d\n", client, client->major_version, client->minor_version );
 
     if (!funcs->p_wglQueryCurrentRendererStringWINE) vendor = NULL;
     else vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
@@ -810,8 +783,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
         TRACE( "-- %s (disabled by config)\n", all_extensions[i].name );
     }
 
-    if (is_win64 && is_wow64() && !initialize_vk_device( teb, client )
-        && !(ctx->use_pinned_memory = client->extensions[GL_AMD_pinned_memory]))
+    if (is_win64 && is_wow64() && !initialize_vk_device( teb, client ) && !client->extensions[GL_AMD_pinned_memory])
     {
         if (client->major_version > 4 || (client->major_version == 4 && client->minor_version > 3))
         {
@@ -833,23 +805,12 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     client->extension_count = count;
 
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", all_extensions[client->extension_array[i]].name );
-
-    ctx->draw_buffers[0] = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
-    ctx->read_buffer = ctx->base.draw->doublebuffer ? GL_BACK : GL_FRONT;
-}
-
-static void free_context( const struct opengl_funcs *funcs, struct context *ctx )
-{
-    free( ctx->extensions );
-    free( ctx );
 }
 
 BOOL wrap_wglDeleteContext( TEB *teb, HGLRC client_context )
 {
     const struct opengl_funcs *funcs = get_context_funcs( client_context );
-    struct context *ctx = context_from_client_context( client_context );
-    funcs->p_context_destroy( &ctx->base );
-    free_context( funcs, ctx );
+    funcs->p_context_destroy( context_from_client_context( client_context ) );
     return TRUE;
 }
 
@@ -891,7 +852,7 @@ static enum buffer_mask buffer_mask_from_enum( GLenum buffer )
     }
 }
 
-static BOOL context_draws_back( struct context *ctx )
+static BOOL context_draws_back( struct opengl_context *ctx )
 {
     for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
         if (buffer_mask_from_enum( ctx->draw_buffers[i] ) & MASK_BACK)
@@ -900,7 +861,7 @@ static BOOL context_draws_back( struct context *ctx )
     return FALSE;
 }
 
-static BOOL context_draws_front( struct context *ctx )
+static BOOL context_draws_front( struct opengl_context *ctx )
 {
     for (int i = 0; i < ARRAY_SIZE(ctx->draw_buffers); i++)
         if (buffer_mask_from_enum( ctx->draw_buffers[i] ) & MASK_FRONT)
@@ -911,7 +872,8 @@ static BOOL context_draws_front( struct context *ctx )
 static void flush_context( TEB *teb, void (*flush)(void) )
 {
     struct opengl_drawable *read, *draw;
-    struct context *ctx = get_current_context( teb, &read, &draw, NULL );
+    struct opengl_client_context *client;
+    struct opengl_context *ctx = get_current_context( teb, &read, &draw, &client );
     HWND draw_hwnd = ctx && draw && draw->client ? draw->client->hwnd : NULL;
     const struct opengl_funcs *funcs = teb->glTable;
     UINT flags = 0;
@@ -919,7 +881,7 @@ static void flush_context( TEB *teb, void (*flush)(void) )
     if (flush && ctx && !ctx->draw_fbo && context_draws_front( ctx ) && draw->client) flags |= GL_FLUSH_PRESENT;
     if ((flags & GL_FLUSH_PRESENT) && draw->buffer_map[0] == GL_BACK_LEFT) flags |= GL_FLUSH_FORCE_SWAP;
 
-    if (!ctx || !funcs->p_context_flush( &ctx->base, flush, flags ))
+    if (!ctx || !funcs->p_context_flush( ctx, flush, flags ))
     {
         /* default implementation: call the functions directly */
         if (flush) flush();
@@ -1000,43 +962,39 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
 {
     struct opengl_client_context *client = opengl_client_context_from_client( client_context );
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    struct context *context;
+    struct opengl_context *context;
 
     if (!funcs->p_context_create) return 0;
-    if (!(context = calloc( 1, sizeof(*context) )))
-    {
-        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
-        return 0;
-    }
-    context->base.client_context = client_context;
 
-    if (!(funcs->p_context_create( &context->base, hdc, attribs )))
-    {
-        free_context( funcs, context );
-        return 0;
-    }
-
+    if (!(context = funcs->p_context_create( hdc, attribs, &client->broken_sharing ))) return 0;
     opengl_client_context_init( client_context, context, funcs );
-    client->format = context->base.format;
+    context->client_context = client_context;
+    client->format = context->format;
 
     return client_context;
 }
 
 BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC client_context )
 {
-    struct context *ctx;
+    struct opengl_client_context *client;
+    struct opengl_context *ctx;
 
     if (client_context)
     {
         const struct opengl_funcs *funcs = get_context_funcs( client_context );
+        if (!(client = opengl_client_context_from_client( client_context ))) return FALSE;
         if (!(ctx = context_from_client_context( client_context ))) return FALSE;
-        if (!funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, client_context )) return FALSE;
-        make_context_current( teb, funcs, draw_hdc, read_hdc, client_context, ctx );
+        if (!funcs->p_make_current( draw_hdc, read_hdc, ctx )) return FALSE;
+        if (!client->major_version) init_client_context( teb, funcs, client );
+        teb->glReserved1[0] = draw_hdc;
+        teb->glReserved1[1] = read_hdc;
+        teb->glTable = (void *)funcs;
+        pop_default_fbo( teb );
     }
     else
     {
         const struct opengl_funcs *funcs = teb->glTable;
-        if (!funcs->p_wglMakeContextCurrentARB( NULL, NULL, NULL )) return FALSE;
+        if (!funcs->p_make_current( NULL, NULL, NULL )) return FALSE;
     }
 
     return TRUE;
@@ -1104,7 +1062,7 @@ void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *us
 
 void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
 {
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if (!(ctx = get_current_context( teb, NULL, NULL, NULL ))) return;
     if (target == GL_FRAMEBUFFER) ctx->draw_fbo = ctx->read_fbo = fbo;
@@ -1115,7 +1073,7 @@ void set_current_fbo( TEB *teb, GLenum target, GLuint fbo )
 GLuint get_default_fbo( TEB *teb, GLenum target )
 {
     struct opengl_drawable *draw, *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if (!(ctx = get_current_context( teb, &draw, &read, NULL ))) return 0;
     if (target == GL_FRAMEBUFFER) return draw->draw_fbo;
@@ -1128,7 +1086,7 @@ void push_default_fbo( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if (!(ctx = get_current_context( teb, &draw, &read, NULL ))) return;
     if (!ctx->draw_fbo && draw->draw_fbo) funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
@@ -1139,7 +1097,7 @@ void pop_default_fbo( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
     RECT rect;
 
     if (!(ctx = get_current_context( teb, &draw, &read, NULL ))) return;
@@ -1157,7 +1115,7 @@ void resolve_default_fbo( TEB *teb, BOOL read )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *drawable;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if (!(ctx = get_current_context( teb, read ? NULL : &drawable, read ? &drawable : NULL, NULL )) || !drawable) return;
 
@@ -1208,7 +1166,7 @@ void resolve_default_fbo( TEB *teb, BOOL read )
     }
 }
 
-static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_drawable *draw,
+static GLenum *set_default_fbo_draw_buffers( struct opengl_context *ctx, struct opengl_drawable *draw,
                                              GLsizei count, const GLenum *src, GLenum *dst )
 {
     UINT used[4] = {0};
@@ -1237,7 +1195,7 @@ static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_
 void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs, PFN_glDrawBuffers p_glDrawBuffers )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
     GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !ctx->draw_fbo)
@@ -1249,7 +1207,7 @@ void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs, PFN_glDrawBuff
 void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs, PFN_glFramebufferDrawBuffersEXT p_glFramebufferDrawBuffersEXT )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
     GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !fbo)
@@ -1261,7 +1219,7 @@ void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GL
 void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint fbo, GLsizei n, const GLenum *bufs, PFN_glNamedFramebufferDrawBuffers p_glNamedFramebufferDrawBuffers )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
     GLenum buffer[ARRAY_SIZE(ctx->draw_buffers)];
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !fbo)
@@ -1270,7 +1228,7 @@ void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint fbo, GLsizei n, const 
     p_glNamedFramebufferDrawBuffers( fbo, n, bufs );
 }
 
-static GLenum set_default_fbo_draw_buffer( struct context *ctx, struct opengl_drawable *draw, GLint src )
+static GLenum set_default_fbo_draw_buffer( struct opengl_context *ctx, struct opengl_drawable *draw, GLint src )
 {
     GLenum dst = drawable_buffer_from_buffer( draw, src );
     if (src && !dst)
@@ -1286,7 +1244,7 @@ static GLenum set_default_fbo_draw_buffer( struct context *ctx, struct opengl_dr
 void wrap_glDrawBuffer( TEB *teb, GLenum buf, PFN_glDrawBuffer p_glDrawBuffer )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !ctx->draw_fbo)
         buf = set_default_fbo_draw_buffer( ctx, draw, buf );
@@ -1297,7 +1255,7 @@ void wrap_glDrawBuffer( TEB *teb, GLenum buf, PFN_glDrawBuffer p_glDrawBuffer )
 void wrap_glFramebufferDrawBufferEXT( TEB *teb, GLuint fbo, GLenum mode, PFN_glFramebufferDrawBufferEXT p_glFramebufferDrawBufferEXT )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !fbo)
         mode = set_default_fbo_draw_buffer( ctx, draw, mode );
@@ -1308,7 +1266,7 @@ void wrap_glFramebufferDrawBufferEXT( TEB *teb, GLuint fbo, GLenum mode, PFN_glF
 void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint fbo, GLenum buf, PFN_glNamedFramebufferDrawBuffer p_glNamedFramebufferDrawBuffer )
 {
     struct opengl_drawable *draw;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, NULL, NULL )) && !fbo)
         buf = set_default_fbo_draw_buffer( ctx, draw, buf );
@@ -1316,7 +1274,7 @@ void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint fbo, GLenum buf, PFN_gl
     p_glNamedFramebufferDrawBuffer( fbo, buf );
 }
 
-static GLenum set_default_fbo_read_buffer( struct context *ctx, struct opengl_drawable *read, GLint src )
+static GLenum set_default_fbo_read_buffer( struct opengl_context *ctx, struct opengl_drawable *read, GLint src )
 {
     GLenum dst = drawable_buffer_from_buffer( read, src );
     if (src && !dst)
@@ -1331,7 +1289,7 @@ static GLenum set_default_fbo_read_buffer( struct context *ctx, struct opengl_dr
 void wrap_glReadBuffer( TEB *teb, GLenum src, PFN_glReadBuffer p_glReadBuffer )
 {
     struct opengl_drawable *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, NULL, &read, NULL )) && !ctx->read_fbo)
         src = set_default_fbo_read_buffer( ctx, read, src );
@@ -1342,7 +1300,7 @@ void wrap_glReadBuffer( TEB *teb, GLenum src, PFN_glReadBuffer p_glReadBuffer )
 void wrap_glFramebufferReadBufferEXT( TEB *teb, GLuint fbo, GLenum mode, PFN_glFramebufferReadBufferEXT p_glFramebufferReadBufferEXT )
 {
     struct opengl_drawable *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, NULL, &read, NULL )) && !fbo)
         mode = set_default_fbo_read_buffer( ctx, read, mode );
@@ -1353,7 +1311,7 @@ void wrap_glFramebufferReadBufferEXT( TEB *teb, GLuint fbo, GLenum mode, PFN_glF
 void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint fbo, GLenum src, PFN_glNamedFramebufferReadBuffer p_glNamedFramebufferReadBuffer )
 {
     struct opengl_drawable *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, NULL, &read, NULL )) && !fbo)
         src = set_default_fbo_read_buffer( ctx, read, src );
@@ -1398,7 +1356,7 @@ void wrap_glGetInteger64v( TEB *teb, GLenum pname, GLint64 *data, PFN_glGetInteg
 void wrap_glGetFramebufferParameteriv( TEB *teb, GLuint fbo, GLenum pname, GLint *params, PFN_glGetFramebufferParameteriv p_glGetFramebufferParameteriv )
 {
     struct opengl_drawable *draw, *read;
-    struct context *ctx;
+    struct opengl_context *ctx;
 
     if ((ctx = get_current_context( teb, &draw, &read, NULL )) && !fbo)
     {
@@ -1709,22 +1667,24 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
     struct opengl_funcs *funcs = teb->glTable;
     GLuint buffer_name = name ? name : get_target_name( teb, target );
     uint32_t type_mask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    struct opengl_client_context *client;
     uint32_t desired_type = type_mask;
-    struct context *ctx = get_current_context( teb, NULL, NULL, NULL );
     struct vk_device *vk_device;
+    struct opengl_context *ctx;
     struct buffer *buffer;
     int fd, memory_type;
     VkResult vr;
 
     if (!(flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))) return NULL;
-    if ((!(vk_device = buffers.vk_device) || !vk_device->vk_device) && !ctx->use_pinned_memory) return NULL;
+    if (!(ctx = get_current_context( teb, NULL, NULL, &client ))) return FALSE;
+    if ((!(vk_device = buffers.vk_device) || !vk_device->vk_device) && !client->extensions[GL_AMD_pinned_memory]) return NULL;
 
     if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
     buffer->name = buffer_name;
     buffer->size = size;
     buffer->vk_device = vk_device;
 
-    if (ctx->use_pinned_memory)
+    if (!vk_device && client->extensions[GL_AMD_pinned_memory])
     {
         if (!buffer_vm_alloc( teb, buffer, size )) return NULL;
         if (data) memcpy( buffer->vm_ptr, data, size );

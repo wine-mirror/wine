@@ -1919,9 +1919,8 @@ static BOOL context_sync_drawables( struct opengl_context *context, HDC draw_hdc
     return ret;
 }
 
-static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC client_context )
+static BOOL win32u_make_current( HDC draw_hdc, HDC read_hdc, struct opengl_context *context )
 {
-    struct opengl_context *context = opengl_context_from_handle( client_context );
     struct opengl_context *prev_context = NtCurrentTeb()->glContext;
     BOOL created;
     int format;
@@ -2287,30 +2286,41 @@ static int get_window_swap_interval( HWND hwnd )
     return interval;
 }
 
-static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, const int *attribs )
+static struct opengl_context *win32u_context_create( HDC hdc, const int *attribs, BOOL *broken_sharing )
 {
-    BOOL shared = TRUE;
+    struct opengl_context *context;
+    BOOL shared = TRUE, doublebuffer;
     int format;
 
-    TRACE( "context %p, hdc %p, attribs %p\n", context, hdc, attribs );
+    TRACE( "hdc %p, attribs %p\n", hdc, attribs );
 
     if ((format = get_dc_pixel_format( hdc )) <= 0 &&
         (format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
     {
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return FALSE;
+        return NULL;
+    }
+    doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
+
+    if (!(context = calloc( 1, sizeof(*context) )))
+    {
+        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
+        return NULL;
     }
     if (!driver_funcs->p_context_create( format, global_context, attribs, &context->driver_private, &shared ))
     {
         WARN( "Failed to create driver context for context %p\n", context );
-        return FALSE;
+        free( context );
+        return NULL;
     }
     context->format = format;
-    if (!shared) opengl_client_context_from_client( context->client_context )->broken_sharing = TRUE;
+    context->draw_buffers[0] = doublebuffer ? GL_BACK : GL_FRONT;
+    context->read_buffer = doublebuffer ? GL_BACK : GL_FRONT;
+    *broken_sharing = !shared;
 
     TRACE( "created context %p, format %u for driver context %p\n", context, format, context->driver_private );
-    return TRUE;
+    return context;
 }
 
 static BOOL win32u_context_destroy( struct opengl_context *context )
@@ -2324,6 +2334,8 @@ static BOOL win32u_context_destroy( struct opengl_context *context )
     }
     context->driver_private = NULL;
 
+    free( context->extensions );
+    free( context );
     return TRUE;
 }
 
@@ -2756,7 +2768,8 @@ static void display_funcs_init(void)
 
     global_extensions[WGL_ARB_make_current_read] = 1;
     display_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-    display_funcs.p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
+    display_funcs.p_wglMakeContextCurrentARB = (void *)1;  /* never called */
+    display_funcs.p_make_current = win32u_make_current;
 
     global_extensions[WGL_ARB_pbuffer] = 1;
     display_funcs.p_pbuffer_create         = win32u_pbuffer_create;

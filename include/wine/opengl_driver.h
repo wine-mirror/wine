@@ -119,7 +119,7 @@ struct __GLsync
 #include "wine/gdi_driver.h"
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 38
+#define WINE_OPENGL_DRIVER_VERSION 39
 
 struct opengl_drawable;
 
@@ -128,8 +128,14 @@ struct opengl_context
     HGLRC                       client_context;     /* client side context pointer */
     void                       *driver_private;     /* driver context / private data */
     int                         format;             /* pixel format of the context */
+    GLubyte                    *extensions;         /* extension string */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
+    GLboolean                   has_viewport;       /* whether viewport has been initialized */
+    GLuint                      draw_fbo;           /* currently bound draw FBO name */
+    GLuint                      read_fbo;           /* currently bound read FBO name */
+    GLenum                      read_buffer;        /* currently bound default FBO read buffers */
+    GLenum                      draw_buffers[16];   /* currently bound default FBO draw buffers */
 };
 
 static inline struct opengl_context *opengl_context_from_handle( HGLRC client_context )
@@ -152,9 +158,10 @@ struct opengl_funcs
     void (*p_init_extensions)( BOOLEAN extensions[GL_EXTENSION_COUNT] );
     void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
     BOOL (*p_query_renderer)( UINT attribute, void *value );
+    struct opengl_context *(*p_context_create)( HDC hdc, const int *attribs, BOOL *broken_sharing );
     BOOL (*p_context_flush)( struct opengl_context *context, void (*flush)(void), UINT flags );
-    BOOL (*p_context_create)( struct opengl_context *context, HDC hdc, const int *attribs );
     BOOL (*p_context_destroy)( struct opengl_context *context );
+    BOOL (*p_make_current)( HDC draw_hdc, HDC read_hdc, struct opengl_context *context );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, int width, int height, const int *attribs, HPBUFFERARB client_pbuffer );
     void *egl_handle;
 };
