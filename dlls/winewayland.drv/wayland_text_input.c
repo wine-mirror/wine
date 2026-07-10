@@ -252,7 +252,7 @@ BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect)
     wayland_win_data_release(data);
 
     zwp_text_input_v3_set_cursor_rectangle(text_input->zwp_text_input_v3,
-            surface_rect.left, surface_rect.right, surface_rect.right - surface_rect.left,
+            surface_rect.left, surface_rect.top, surface_rect.right - surface_rect.left,
             surface_rect.bottom - surface_rect.top);
     zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
 
