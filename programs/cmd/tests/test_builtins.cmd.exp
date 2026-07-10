@@ -587,17 +587,17 @@ FAILURE 1
 SUCCESS 0
 FAILURE 1
 ---
-@todo_wine@a@space@
-@todo_wine@b@space@
+a@space@
+b@space@
 FAILURE 1
-@todo_wine@a@space@
-@todo_wine@b@space@
-@todo_wine@FAILURE 1
-@todo_wine@a@space@
-@todo_wine@b@space@
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+a@space@
+b@space@
+FAILURE 1
+a@space@
+b@space@
+FAILURE 1
+FAILURE 1
+FAILURE 1
 --- success/failure for COPY command
 FAILURE 1
 SUCCESS 0
