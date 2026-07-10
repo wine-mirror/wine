@@ -648,7 +648,7 @@ av_cold void ff_sws_init_range_convert(SwsInternal *c)
             }
         }
 
-#if ARCH_AARCH64 && !defined __arm64ec__
+#if ARCH_AARCH64
         ff_sws_init_range_convert_aarch64(c);
 #elif ARCH_LOONGARCH64
         ff_sws_init_range_convert_loongarch(c);
@@ -703,7 +703,7 @@ void ff_sws_init_scale(SwsInternal *c)
     ff_sws_init_swscale_ppc(c);
 #elif ARCH_X86
     ff_sws_init_swscale_x86(c);
-#elif ARCH_AARCH64 && !defined __arm64ec__
+#elif ARCH_AARCH64
     ff_sws_init_swscale_aarch64(c);
 #elif ARCH_ARM
     ff_sws_init_swscale_arm(c);
@@ -866,7 +866,7 @@ av_cold void ff_sws_init_xyzdsp(SwsInternal *c)
     c->xyz12Torgb48 = xyz12Torgb48_c;
     c->rgb48Toxyz12 = rgb48Toxyz12_c;
 
-#if ARCH_AARCH64 && !defined __arm64ec__
+#if ARCH_AARCH64
     ff_sws_init_xyzdsp_aarch64(c);
 #endif
 }

@@ -127,7 +127,7 @@ void (*yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
 av_cold void ff_sws_rgb2rgb_init(void)
 {
     rgb2rgb_init_c();
-#if ARCH_AARCH64 && !defined __arm64ec__
+#if ARCH_AARCH64
     rgb2rgb_init_aarch64();
 #elif ARCH_RISCV
     rgb2rgb_init_riscv();

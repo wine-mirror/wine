@@ -39,6 +39,7 @@ static_assert(offsetof(SwsColorXform, mat) +
               2 * SIZEOF_MEMBER(SwsColorXform, mat[0][0]) == SCX_MAT_22,
               "struct layout mismatch");
 
+#ifndef __arm64ec__
 void ff_xyz12Torgb48le_neon_asm(const SwsColorXform *c, uint8_t *dst,
                                 int dst_stride, const uint8_t *src,
                                 int src_stride, int w, int h);
@@ -50,6 +51,7 @@ static void xyz12Torgb48le_neon(const SwsInternal *c, uint8_t *dst,
     ff_xyz12Torgb48le_neon_asm(&c->xyz2rgb, dst, dst_stride, src, src_stride,
                                w, h);
 }
+#endif
 
 void ff_hscale16to15_4_neon_asm(int shift, int16_t *_dst, int dstW,
                       const uint8_t *_src, const int16_t *filter,
@@ -342,7 +344,9 @@ av_cold void ff_sws_init_xyzdsp_aarch64(SwsInternal *c)
 
     if (have_neon(cpu_flags)) {
         if (!isBE(c->opts.src_format)) {
+#ifndef __arm64ec__
             c->xyz12Torgb48 = xyz12Torgb48le_neon;
+#endif
         }
     }
 }

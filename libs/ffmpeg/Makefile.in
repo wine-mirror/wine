@@ -165,6 +165,16 @@ SOURCES = \
 	libswscale/arm/swscale.c \
 	libswscale/arm/swscale_unscaled.c \
 	libswscale/arm/yuv2rgb_neon.S \
+	libswscale/arm64ec/hscale.S \
+	libswscale/arm64ec/input.S \
+	libswscale/arm64ec/output.S \
+	libswscale/arm64ec/range_convert_neon.S \
+	libswscale/arm64ec/rgb2rgb.c \
+	libswscale/arm64ec/rgb2rgb_neon.S \
+	libswscale/arm64ec/swscale.c \
+	libswscale/arm64ec/swscale_unscaled.c \
+	libswscale/arm64ec/swscale_unscaled_neon.S \
+	libswscale/arm64ec/yuv2rgb_neon.S \
 	libswscale/cms.c \
 	libswscale/csputils.c \
 	libswscale/format.c \
