@@ -5771,6 +5771,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( class, "RegisterClassW failed: %lu\n", GetLastError() );
 
     ret = pGetPointerInfo( 1, invalid_ptr );
+    todo_wine_if( ret == STATUS_ACCESS_VIOLATION )
     ok( !ret, "GetPointerInfo succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* w10 32bit */,

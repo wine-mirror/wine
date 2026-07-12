@@ -1923,16 +1923,19 @@ static void test_NtUserGetPointerInfoList( BOOL mouse_in_pointer_enabled )
 
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), invalid_ptr, &pointer_count, pointer_info );
+    todo_wine_if( ret == STATUS_ACCESS_VIOLATION )
     ok( !ret, "NtUserGetPointerInfoList succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), &entry_count, invalid_ptr, pointer_info );
+    todo_wine_if( ret == STATUS_ACCESS_VIOLATION )
     ok( !ret, "NtUserGetPointerInfoList succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), &entry_count, &pointer_count, invalid_ptr );
+    todo_wine_if( ret == STATUS_ACCESS_VIOLATION )
     ok( !ret, "NtUserGetPointerInfoList succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* w10 32bit */, "got error %lu\n", GetLastError() );
