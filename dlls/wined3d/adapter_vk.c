@@ -221,7 +221,6 @@ static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info 
     dynamic_state3->extendedDynamicState3LineRasterizationMode = VK_FALSE;
     dynamic_state3->extendedDynamicState3LineStippleEnable = VK_FALSE;
     dynamic_state3->extendedDynamicState3LogicOpEnable = VK_FALSE;
-    dynamic_state3->extendedDynamicState3PolygonMode = VK_FALSE;
     dynamic_state3->extendedDynamicState3ProvokingVertexMode = VK_FALSE;
     dynamic_state3->extendedDynamicState3RasterizationStream = VK_FALSE;
     dynamic_state3->extendedDynamicState3RepresentativeFragmentTestEnable = VK_FALSE;
