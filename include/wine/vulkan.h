@@ -479,6 +479,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_EXT_PAGEABLE_DEVICE_LOCAL_MEMORY_SPEC_VERSION 1
 #define VK_EXT_PCI_BUS_INFO_EXTENSION_NAME "VK_EXT_pci_bus_info"
 #define VK_EXT_PCI_BUS_INFO_SPEC_VERSION 2
+#define VK_EXT_PHYSICAL_DEVICE_DRM_EXTENSION_NAME "VK_EXT_physical_device_drm"
+#define VK_EXT_PHYSICAL_DEVICE_DRM_SPEC_VERSION 1
 #define VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME "VK_EXT_pipeline_creation_cache_control"
 #define VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_SPEC_VERSION 3
 #define VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME "VK_EXT_pipeline_creation_feedback"
@@ -6544,6 +6546,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT = 1000352000,
     VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT = 1000352001,
     VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT = 1000352002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRM_PROPERTIES_EXT = 1000353000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT = 1000354000,
     VK_STRUCTURE_TYPE_DEVICE_ADDRESS_BINDING_CALLBACK_DATA_EXT = 1000354001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT = 1000355000,
@@ -15630,6 +15633,18 @@ typedef struct VkPhysicalDeviceDriverProperties
 } VkPhysicalDeviceDriverProperties;
 typedef VkPhysicalDeviceDriverProperties VkPhysicalDeviceDriverPropertiesKHR;
 
+typedef struct VkPhysicalDeviceDrmPropertiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 hasPrimary;
+    VkBool32 hasRender;
+    int64_t primaryMajor;
+    int64_t primaryMinor;
+    int64_t renderMajor;
+    int64_t renderMinor;
+} VkPhysicalDeviceDrmPropertiesEXT;
+
 typedef struct VkPhysicalDeviceDynamicRenderingFeatures
 {
     VkStructureType sType;
@@ -23752,6 +23767,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_EXT_external_memory_metal) \
     USE_VK_EXT(VK_EXT_image_drm_format_modifier) \
     USE_VK_EXT(VK_EXT_map_memory_placed) \
+    USE_VK_EXT(VK_EXT_physical_device_drm) \
     USE_VK_EXT(VK_KHR_external_fence_fd) \
     USE_VK_EXT(VK_KHR_external_memory_fd) \
     USE_VK_EXT(VK_KHR_external_semaphore_fd)
