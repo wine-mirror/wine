@@ -46,6 +46,12 @@ struct va_context
 {
     void *libva_handle, *libva_drm_handle;
 #define MAKE_FUNCPTR(f) typeof(f) *f
+    MAKE_FUNCPTR(vaCreateConfig);
+    MAKE_FUNCPTR(vaCreateContext);
+    MAKE_FUNCPTR(vaCreateSurfaces);
+    MAKE_FUNCPTR(vaDestroyConfig);
+    MAKE_FUNCPTR(vaDestroyContext);
+    MAKE_FUNCPTR(vaDestroySurfaces);
     MAKE_FUNCPTR(vaGetDisplayDRM);
     MAKE_FUNCPTR(vaInitialize);
     MAKE_FUNCPTR(vaMaxNumProfiles);
@@ -55,6 +61,14 @@ struct va_context
 
     VADisplay display;
     int fd;
+};
+
+struct va_decoder
+{
+    struct va_context ctx;
+    VAConfigID config;
+    VAContextID context;
+    VASurfaceID surfaces[VA_DECODER_SURFACE_COUNT];
 };
 
 static void close_va_display(struct va_context *ctx)
@@ -95,6 +109,12 @@ static NTSTATUS open_va_display(UINT64 handle, struct va_context *ctx)
         ERR("Failed to load function %s.\n", #f); \
         goto fail; \
     }
+    LOAD_FUNCPTR(vaCreateConfig);
+    LOAD_FUNCPTR(vaCreateContext);
+    LOAD_FUNCPTR(vaCreateSurfaces);
+    LOAD_FUNCPTR(vaDestroyConfig);
+    LOAD_FUNCPTR(vaDestroyContext);
+    LOAD_FUNCPTR(vaDestroySurfaces);
     LOAD_FUNCPTR(vaInitialize);
     LOAD_FUNCPTR(vaMaxNumProfiles);
     LOAD_FUNCPTR(vaQueryConfigProfiles);
@@ -178,14 +198,105 @@ static NTSTATUS va_get_profiles_vk(void *args)
     return S_OK;
 }
 
+static NTSTATUS va_decoder_create_vk(void *args)
+{
+    struct va_decoder_create_vk_params *params = args;
+    VASurfaceAttrib surface_attribs[1];
+    VAConfigAttrib config_attribs[1];
+    unsigned int format, fourcc;
+    struct va_decoder *decoder;
+    struct va_context *ctx;
+    VAStatus status;
+
+    if (params->desc.output_format == WINED3DFMT_NV12_PLANAR)
+    {
+        format = VA_RT_FORMAT_YUV420;
+        fourcc = VA_FOURCC_NV12;
+    }
+    else
+    {
+        FIXME("Unhandled output format %#x.\n", params->desc.output_format);
+        return E_NOTIMPL;
+    }
+
+    if (!(decoder = calloc(1, sizeof(*decoder))))
+        return E_OUTOFMEMORY;
+    ctx = &decoder->ctx;
+
+    if ((status = open_va_display(params->physical_device, ctx)))
+        return status;
+
+    config_attribs[0].type = VAConfigAttribRTFormat;
+    config_attribs[0].value = format;
+
+    if ((status = ctx->vaCreateConfig(ctx->display, VAProfileH264High, VAEntrypointVLD,
+            config_attribs, ARRAY_SIZE(config_attribs), &decoder->config)) != VA_STATUS_SUCCESS)
+    {
+        ERR("Failed to create config, error %#x.\n", status);
+        close_va_display(ctx);
+        goto fail;
+    }
+
+    surface_attribs[0].type = VASurfaceAttribPixelFormat;
+    surface_attribs[0].flags = VA_SURFACE_ATTRIB_SETTABLE;
+    surface_attribs[0].value.type = VAGenericValueTypeInteger;
+    surface_attribs[0].value.value.i = fourcc;
+
+    if ((status = ctx->vaCreateSurfaces(ctx->display, format, params->width, params->height, decoder->surfaces,
+            VA_DECODER_SURFACE_COUNT, surface_attribs, ARRAY_SIZE(surface_attribs))) != VA_STATUS_SUCCESS)
+    {
+        ERR("Failed to create surfaces, error %#x.\n", status);
+        ctx->vaDestroyConfig(ctx->display, decoder->config);
+        close_va_display(ctx);
+        goto fail;
+    }
+
+    if ((status = ctx->vaCreateContext(ctx->display, decoder->config, params->desc.width, params->desc.height,
+            VA_PROGRESSIVE, decoder->surfaces, ARRAY_SIZE(decoder->surfaces), &decoder->context)) != VA_STATUS_SUCCESS)
+    {
+        ERR("Failed to create context, error %#x.\n", status);
+        ctx->vaDestroySurfaces(ctx->display, decoder->surfaces, VA_DECODER_SURFACE_COUNT);
+        ctx->vaDestroyConfig(ctx->display, decoder->config);
+        close_va_display(ctx);
+        goto fail;
+    }
+
+    TRACE("Created VA decoder %p.\n", decoder);
+
+    params->decoder = (uintptr_t)decoder;
+    return S_OK;
+
+fail:
+    free(decoder);
+    return E_FAIL;
+}
+
+static NTSTATUS va_decoder_destroy_vk(void *args)
+{
+    struct va_decoder_destroy_vk_params *params = args;
+    struct va_decoder *decoder = (struct va_decoder *)(uintptr_t)params->decoder;
+    struct va_context *ctx = &decoder->ctx;
+
+    ctx->vaDestroyContext(ctx->display, decoder->context);
+    ctx->vaDestroySurfaces(ctx->display, decoder->surfaces, VA_DECODER_SURFACE_COUNT);
+    ctx->vaDestroyConfig(ctx->display, decoder->config);
+    close_va_display(ctx);
+    free(decoder);
+    return S_OK;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     [unix_va_get_profiles_vk] = va_get_profiles_vk,
+    [unix_va_decoder_create_vk] = va_decoder_create_vk,
+    [unix_va_decoder_destroy_vk] = va_decoder_destroy_vk,
 };
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     [unix_va_get_profiles_vk] = va_get_profiles_vk,
+    [unix_va_decoder_create_vk] = va_decoder_create_vk,
+    [unix_va_decoder_destroy_vk] = va_decoder_destroy_vk,
 };
 
 #endif

@@ -29,6 +29,8 @@
 #include "wine/wined3d.h"
 #include "wine/unixlib.h"
 
+#define VA_DECODER_SURFACE_COUNT 17
+
 struct va_get_profiles_vk_params
 {
     UINT64 physical_device; /* VkPhysicalDevice */
@@ -36,9 +38,26 @@ struct va_get_profiles_vk_params
     UINT64 profiles; /* GUID * */
 };
 
+struct va_decoder_create_vk_params
+{
+    struct wined3d_decoder_desc desc;
+    UINT64 physical_device; /* VkPhysicalDevice */
+    UINT64 device; /* VkDevice */
+    UINT64 decoder;
+    unsigned int width;
+    unsigned int height;
+};
+
+struct va_decoder_destroy_vk_params
+{
+    UINT64 decoder;
+};
+
 enum unix_funcs
 {
     unix_va_get_profiles_vk,
+    unix_va_decoder_create_vk,
+    unix_va_decoder_destroy_vk,
 };
 
 #endif

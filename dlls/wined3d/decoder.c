@@ -1361,6 +1361,7 @@ const struct wined3d_decoder_ops wined3d_decoder_vk_ops =
 struct wined3d_decoder_va_vk
 {
     struct wined3d_decoder d;
+    uint64_t va_decoder;
 };
 
 static struct wined3d_decoder_va_vk *wined3d_decoder_va_vk(struct wined3d_decoder *decoder)
@@ -1388,6 +1389,29 @@ static void wined3d_decoder_va_vk_get_profiles(struct wined3d_adapter *adapter, 
     WINE_UNIX_CALL(unix_va_get_profiles_vk, &params);
 }
 
+static void wined3d_decoder_va_vk_cs_init(void *object)
+{
+    struct wined3d_decoder_va_vk *decoder_va = object;
+    struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(decoder_va->d.device->adapter);
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_va->d.device);
+    struct va_decoder_create_vk_params params;
+    HRESULT hr;
+
+    params.desc = decoder_va->d.desc;
+    params.physical_device = (uintptr_t)adapter_vk->physical_device;
+    params.device = (uintptr_t)device_vk->vk_device;
+    params.width = decoder_va->d.width;
+    params.height = decoder_va->d.height;
+
+    if (FAILED(hr = WINE_UNIX_CALL(unix_va_decoder_create_vk, &params)))
+    {
+        ERR("Failed to initialize decoder, hr %#lx.\n", hr);
+        return;
+    }
+
+    decoder_va->va_decoder = params.decoder;
+}
+
 static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
 {
@@ -1410,6 +1434,8 @@ static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
         return hr;
     }
 
+    wined3d_cs_init_object(device->cs, wined3d_decoder_va_vk_cs_init, object);
+
     TRACE("Created decoder %p.\n", object);
     *decoder = &object->d;
 
@@ -1419,9 +1445,12 @@ static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
 static void wined3d_decoder_va_vk_destroy_object(void *object)
 {
     struct wined3d_decoder_va_vk *decoder_va = object;
+    struct va_decoder_destroy_vk_params params;
 
     TRACE("decoder_va %p.\n", decoder_va);
 
+    params.decoder = decoder_va->va_decoder;
+    WINE_UNIX_CALL(unix_va_decoder_destroy_vk, &params);
     free(decoder_va);
 }
 
