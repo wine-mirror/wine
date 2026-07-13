@@ -286,7 +286,8 @@ static HRESULT WINAPI uisettings2_add_TextScaleFactorChanged( IUISettings2 *ifac
         EventRegistrationToken *cookie )
 {
     FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    return E_NOTIMPL;
+    *cookie = dummy_cookie;
+    return S_OK;
 }
 
 static HRESULT WINAPI uisettings2_remove_TextScaleFactorChanged( IUISettings2 *iface, EventRegistrationToken cookie )
