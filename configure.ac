@@ -59,6 +59,7 @@ AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
 AC_ARG_WITH(usb,       AS_HELP_STRING([--without-usb],[do not use the libusb library]))
 AC_ARG_WITH(v4l2,      AS_HELP_STRING([--without-v4l2],[do not use v4l2 (video capture)]))
+AC_ARG_WITH(va,        AS_HELP_STRING([--without-va],[do not use VA-API (hardware video decoding)]))
 AC_ARG_WITH(vulkan,    AS_HELP_STRING([--without-vulkan],[do not use Vulkan]))
 AC_ARG_WITH(wayland,   AS_HELP_STRING([--without-wayland],[do not build the Wayland driver]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
@@ -1617,6 +1618,22 @@ then
 fi
 WINE_NOTICE_WITH(v4l2,[test "x$ac_cv_lib_soname_v4l2" = "x"],
                  [libv4l2 ${notice_platform}development files not found.])
+
+dnl **** Check for libva ****
+if test "x$with_va" != "xno"
+then
+    WINE_PACKAGE_FLAGS(VA,[libva libva-drm],[-lva-drm -lva],,,
+        [AC_CHECK_HEADERS(va/va_drm.h)
+        if test "$ac_cv_header_va_va_drm_h" = "yes"
+        then
+            WINE_CHECK_SONAME(va-drm, vaGetDisplayDRM,,[VA_CFLAGS=""])
+            WINE_CHECK_SONAME(va, vaInitialize,,[VA_CFLAGS=""])
+        else
+            VA_CFLAGS=""
+        fi])
+fi
+WINE_NOTICE_WITH(va,[test "x$ac_cv_lib_soname_va_drm" = x -o "x$ac_cv_lib_soname_va" = x],
+                 [libva-drm ${notice_platform}development files not found, VA video acceleration won't be supported.])
 
 dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"

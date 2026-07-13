@@ -668,6 +668,8 @@ GPHOTO2_PORT_LIBS
 GPHOTO2_PORT_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_CFLAGS
+VA_LIBS
+VA_CFLAGS
 USB_LIBS
 USB_CFLAGS
 SANE_LIBS
@@ -970,6 +972,7 @@ with_sdl
 with_udev
 with_usb
 with_v4l2
+with_va
 with_vulkan
 with_wayland
 with_xcomposite
@@ -1931,6 +1934,8 @@ SANE_CFLAGS
 SANE_LIBS
 USB_CFLAGS
 USB_LIBS
+VA_CFLAGS
+VA_LIBS
 GPHOTO2_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS
@@ -2638,6 +2643,7 @@ Optional Packages:
   --without-udev          do not use udev (plug and play support)
   --without-usb           do not use the libusb library
   --without-v4l2          do not use v4l2 (video capture)
+  --without-va            do not use VA-API (hardware video decoding)
   --without-vulkan        do not use Vulkan
   --without-wayland       do not build the Wayland driver
   --without-xcomposite    do not use the Xcomposite extension
@@ -2822,6 +2828,8 @@ Some influential environment variables:
   SANE_LIBS   Linker flags for sane-backends, overriding pkg-config
   USB_CFLAGS  C compiler flags for libusb-1.0, overriding pkg-config
   USB_LIBS    Linker flags for libusb-1.0, overriding pkg-config
+  VA_CFLAGS   C compiler flags for libva libva-drm, overriding pkg-config
+  VA_LIBS     Linker flags for libva libva-drm, overriding pkg-config
   GPHOTO2_CFLAGS
               C compiler flags for libgphoto2, overriding pkg-config
   GPHOTO2_LIBS
@@ -4531,6 +4539,13 @@ fi
 if test ${with_v4l2+y}
 then :
   withval=$with_v4l2;
+fi
+
+
+# Check whether --with-va was given.
+if test ${with_va+y}
+then :
+  withval=$with_va;
 fi
 
 
@@ -17907,6 +17922,193 @@ esac
 
 fi
 
+if test "x$with_va" != "xno"
+then
+    rm -f conftest.err
+if ${VA_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  VA_CFLAGS=`$PKG_CONFIG --cflags libva libva-drm 2>conftest.err`
+fi
+fi
+
+if ${VA_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  VA_LIBS=`$PKG_CONFIG --libs libva libva-drm 2>/dev/null`
+fi
+fi
+
+VA_LIBS=${VA_LIBS:-"-lva-drm -lva"}
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libva libva-drm cflags: $VA_CFLAGS" >&5
+printf '%s\n' "$as_me:${as_lineno-$LINENO}: libva libva-drm libs: $VA_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libva libva-drm errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+if test -n "$VA_CFLAGS$VA_LIBS"
+then :
+  ac_save_pkg_CPPFLAGS=$CPPFLAGS
+ac_save_pkg_LIBS=$LIBS
+CPPFLAGS="$CPPFLAGS $VA_CFLAGS"
+LIBS="$VA_LIBS $LIBS"
+ac_fn_c_check_header_compile "$LINENO" "va/va_drm.h" "ac_cv_header_va_va_drm_h" "$ac_includes_default"
+if test "x$ac_cv_header_va_va_drm_h" = xyes
+then :
+  printf '%s\n' "#define HAVE_VA_VA_DRM_H 1" >>confdefs.h
+
+fi
+
+        if test "$ac_cv_header_va_va_drm_h" = "yes"
+        then
+            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva-drm" >&5
+printf %s "checking for -lva-drm... " >&6; }
+if test ${ac_cv_lib_soname_va_drm+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_soname_save_LIBS=$LIBS
+LIBS="-lva-drm  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vaGetDisplayDRM (void);
+int
+main (void)
+{
+return vaGetDisplayDRM ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_va_drm=`$ac_cv_path_LDD conftest.exe | grep "va-drm" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_va_drm=`$OTOOL -L conftest$ac_exeext | grep "libva-drm\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libva-drm\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_va_drm=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libva-drm\\.$LIBEXT" | sed -e "s/^.*\\[\\(libva-drm\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_va_drm:+false} :
+then :
+  ac_cv_lib_soname_va_drm=`$LDD conftest$ac_exeext | grep "libva-drm\\.$LIBEXT" | sed -e "s/^.*\(libva-drm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else case e in #(
+  e) ac_cv_lib_soname_va_drm= ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS ;;
+esac
+fi
+if ${ac_cv_lib_soname_va_drm:+false} :
+then :
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf '%s\n' "not found" >&6; }
+       VA_CFLAGS=""
+else case e in #(
+  e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_va_drm" >&5
+printf '%s\n' "$ac_cv_lib_soname_va_drm" >&6; }
+
+printf '%s\n' "#define SONAME_LIBVA_DRM \"$ac_cv_lib_soname_va_drm\"" >>confdefs.h
+
+        ;;
+esac
+fi
+            { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for -lva" >&5
+printf %s "checking for -lva... " >&6; }
+if test ${ac_cv_lib_soname_va+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_soname_save_LIBS=$LIBS
+LIBS="-lva  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vaInitialize (void);
+int
+main (void)
+{
+return vaInitialize ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_va=`$ac_cv_path_LDD conftest.exe | grep "va" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_va=`$OTOOL -L conftest$ac_exeext | grep "libva\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libva\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_va=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libva\\.$LIBEXT" | sed -e "s/^.*\\[\\(libva\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_va:+false} :
+then :
+  ac_cv_lib_soname_va=`$LDD conftest$ac_exeext | grep "libva\\.$LIBEXT" | sed -e "s/^.*\(libva\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else case e in #(
+  e) ac_cv_lib_soname_va= ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS ;;
+esac
+fi
+if ${ac_cv_lib_soname_va:+false} :
+then :
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf '%s\n' "not found" >&6; }
+       VA_CFLAGS=""
+else case e in #(
+  e) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_va" >&5
+printf '%s\n' "$ac_cv_lib_soname_va" >&6; }
+
+printf '%s\n' "#define SONAME_LIBVA \"$ac_cv_lib_soname_va\"" >>confdefs.h
+
+        ;;
+esac
+fi
+        else
+            VA_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_pkg_CPPFLAGS
+LIBS=$ac_save_pkg_LIBS
+fi
+
+fi
+if test "x$ac_cv_lib_soname_va_drm" = x -o "x$ac_cv_lib_soname_va" = x
+then :
+  case "x$with_va" in
+  x)   as_fn_append wine_notices "|libva-drm ${notice_platform}development files not found, VA video acceleration won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libva-drm ${notice_platform}development files not found, VA video acceleration won't be supported.
+This is an error since --with-va was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_gphoto" != "xno"
 then
     rm -f conftest.err
@@ -24418,6 +24620,8 @@ SANE_CFLAGS = $SANE_CFLAGS
 SANE_LIBS = $SANE_LIBS
 USB_CFLAGS = $USB_CFLAGS
 USB_LIBS = $USB_LIBS
+VA_CFLAGS = $VA_CFLAGS
+VA_LIBS = $VA_LIBS
 GPHOTO2_CFLAGS = $GPHOTO2_CFLAGS
 GPHOTO2_LIBS = $GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS = $GPHOTO2_PORT_CFLAGS

@@ -669,6 +669,9 @@
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
 
+/* Define to 1 if you have the <va/va_drm.h> header file. */
+#undef HAVE_VA_VA_DRM_H
+
 /* Define to 1 if the Wine preloader is being used. */
 #undef HAVE_WINE_PRELOADER
 
@@ -791,6 +794,12 @@
 
 /* Define to the soname of the libv4l2 library. */
 #undef SONAME_LIBV4L2
+
+/* Define to the soname of the libva library. */
+#undef SONAME_LIBVA
+
+/* Define to the soname of the libva-drm library. */
+#undef SONAME_LIBVA_DRM
 
 /* Define to the soname of the libvulkan library. */
 #undef SONAME_LIBVULKAN

@@ -18,6 +18,7 @@
 
 #include "wined3d_private.h"
 #include "wined3d_vk.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
@@ -1369,14 +1370,37 @@ static struct wined3d_decoder_va_vk *wined3d_decoder_va_vk(struct wined3d_decode
 
 static void wined3d_decoder_va_vk_get_profiles(struct wined3d_adapter *adapter, unsigned int *count, GUID *profiles)
 {
+    struct va_get_profiles_vk_params params;
+    NTSTATUS status;
+
     *count = 0;
+
+    /* We are under wined3d_mutex, so this is thread safe. */
+    if ((status = __wine_init_unix_call()))
+    {
+        WARN("Failed to load Unix library, status %#lx.\n", status);
+        return;
+    }
+
+    params.physical_device = (uintptr_t)wined3d_adapter_vk(adapter)->physical_device;
+    params.count = (uintptr_t)count;
+    params.profiles = (uintptr_t)profiles;
+    WINE_UNIX_CALL(unix_va_get_profiles_vk, &params);
 }
 
 static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
 {
     struct wined3d_decoder_va_vk *object;
+    NTSTATUS status;
     HRESULT hr;
+
+    /* We are under wined3d_mutex, so this is thread safe. */
+    if ((status = __wine_init_unix_call()))
+    {
+        WARN("Failed to load Unix library, status %#lx.\n", status);
+        return E_FAIL;
+    }
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
