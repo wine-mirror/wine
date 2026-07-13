@@ -84,7 +84,7 @@ static bool is_supported_codec(struct wined3d_adapter *adapter, const GUID *code
 }
 
 static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
-        struct wined3d_device *device, const struct wined3d_decoder_desc *desc)
+        struct wined3d_device *device, const struct wined3d_decoder_desc *desc, bool gpu_bitstream)
 {
     HRESULT hr;
 
@@ -128,9 +128,12 @@ static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
      * is at most 1 byte). AMD makes it larger than that.
      * Go with the smaller of the two. */
     buffer_desc.byte_width = desc->width * desc->height;
-    buffer_desc.bind_flags = WINED3D_BIND_DECODER_SRC;
-    buffer_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_W;
-    buffer_desc.usage = WINED3DUSAGE_DYNAMIC;
+    if (gpu_bitstream)
+    {
+        buffer_desc.bind_flags = WINED3D_BIND_DECODER_SRC;
+        buffer_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_W;
+        buffer_desc.usage = WINED3DUSAGE_DYNAMIC;
+    }
 
     if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
             NULL, NULL, &wined3d_null_parent_ops, &decoder->bitstream)))
@@ -616,7 +619,7 @@ static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc)))
+    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc, true)))
     {
         free(object);
         return hr;
@@ -1377,7 +1380,7 @@ static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
-    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc)))
+    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc, false)))
     {
         free(object);
         return hr;
