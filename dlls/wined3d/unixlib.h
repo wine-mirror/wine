@@ -58,11 +58,20 @@ struct va_decoder_destroy_vk_params
     UINT64 decoder;
 };
 
+struct va_decoder_decode_params
+{
+    UINT64 decoder;
+    UINT64 bitstream, parameters, matrix, slice_control;
+    UINT32 bitstream_size, slice_control_size;
+    UINT32 output_idx;
+};
+
 enum unix_funcs
 {
     unix_va_get_profiles_vk,
     unix_va_decoder_create_vk,
     unix_va_decoder_destroy_vk,
+    unix_va_decoder_decode,
 };
 
 #endif
