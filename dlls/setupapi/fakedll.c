@@ -502,11 +502,13 @@ static HANDLE create_dest_file( const WCHAR *name, BOOL delete )
         }
         /* truncate the file */
         SetFilePointer( h, 0, NULL, FILE_BEGIN );
-        SetEndOfFile( h );
+        if (SetEndOfFile( h )) return h;
+        CloseHandle( h );
     }
-    else if (GetLastError() == ERROR_SHARING_VIOLATION &&
-             (h = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL,
-                               OPEN_EXISTING, 0, NULL )) != INVALID_HANDLE_VALUE)
+
+    if ((GetLastError() == ERROR_SHARING_VIOLATION || GetLastError() == ERROR_USER_MAPPED_FILE) &&
+        (h = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                          OPEN_EXISTING, 0, NULL )) != INVALID_HANDLE_VALUE)
     {
         if (!is_fake_dll( h ))
         {
