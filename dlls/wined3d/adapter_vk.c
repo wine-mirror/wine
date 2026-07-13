@@ -2414,6 +2414,12 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_EXT_SHADER_STENCIL_EXPORT_EXTENSION_NAME,       ~0u},
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,          ~0u},
         {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u},
+        {VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,        ~0u},
+        /* FIXME: We don't use KHR_external_memory_win32 yet, but we do use
+         * KHR_external_memory_fd for VA support, and we need to enable the
+         * fd extension by enabling the win32 extension. */
+        {VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,             ~0u},
+        {VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,       ~0u},
         {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1, true},
         {VK_KHR_MAINTENANCE2_EXTENSION_NAME,                VK_API_VERSION_1_1},
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME,VK_API_VERSION_1_2},

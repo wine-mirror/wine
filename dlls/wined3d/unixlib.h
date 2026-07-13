@@ -46,10 +46,15 @@ struct va_decoder_create_vk_params
     UINT64 decoder;
     unsigned int width;
     unsigned int height;
+    struct
+    {
+        UINT64 image; /* VkImage */
+    } surfaces[VA_DECODER_SURFACE_COUNT];
 };
 
 struct va_decoder_destroy_vk_params
 {
+    UINT64 device; /* VkDevice */
     UINT64 decoder;
 };
 

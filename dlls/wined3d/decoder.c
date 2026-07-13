@@ -1362,6 +1362,12 @@ struct wined3d_decoder_va_vk
 {
     struct wined3d_decoder d;
     uint64_t va_decoder;
+
+    struct wined3d_decoder_image_va_vk
+    {
+        VkImage image;
+        uint64_t command_buffer_id;
+    } images[VA_DECODER_SURFACE_COUNT];
 };
 
 static struct wined3d_decoder_va_vk *wined3d_decoder_va_vk(struct wined3d_decoder *decoder)
@@ -1395,6 +1401,7 @@ static void wined3d_decoder_va_vk_cs_init(void *object)
     struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(decoder_va->d.device->adapter);
     struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_va->d.device);
     struct va_decoder_create_vk_params params;
+    struct wined3d_context_vk *context_vk;
     HRESULT hr;
 
     params.desc = decoder_va->d.desc;
@@ -1410,6 +1417,25 @@ static void wined3d_decoder_va_vk_cs_init(void *object)
     }
 
     decoder_va->va_decoder = params.decoder;
+
+    context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+
+    for (unsigned int i = 0; i < VA_DECODER_SURFACE_COUNT; ++i)
+    {
+        struct wined3d_decoder_image_va_vk *image = &decoder_va->images[i];
+        VkImageSubresourceRange vk_range = {0};
+
+        image->image = params.surfaces[i].image;
+
+        vk_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        vk_range.levelCount = 1;
+        vk_range.layerCount = 1;
+        wined3d_context_vk_image_barrier(context_vk, wined3d_context_vk_get_command_buffer(context_vk),
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0,
+                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, image->image, &vk_range);
+    }
+
+    context_release(&context_vk->c);
 }
 
 static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
@@ -1442,16 +1468,40 @@ static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+void wined3d_decoder_va_vk_destroy_va_decoder(struct wined3d_device_vk *device_vk, uint64_t handle)
+{
+    struct va_decoder_destroy_vk_params params;
+
+    params.device = (uintptr_t)device_vk->vk_device;
+    params.decoder = handle;
+    WINE_UNIX_CALL(unix_va_decoder_destroy_vk, &params);
+}
+
 static void wined3d_decoder_va_vk_destroy_object(void *object)
 {
     struct wined3d_decoder_va_vk *decoder_va = object;
-    struct va_decoder_destroy_vk_params params;
+    struct wined3d_context_vk *context_vk;
+    uint64_t command_buffer_id = 0;
 
     TRACE("decoder_va %p.\n", decoder_va);
 
-    params.decoder = decoder_va->va_decoder;
-    WINE_UNIX_CALL(unix_va_decoder_destroy_vk, &params);
+    context_vk = wined3d_context_vk(context_acquire(decoder_va->d.device, NULL, 0));
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(decoder_va->images); ++i)
+    {
+        struct wined3d_decoder_image_va_vk *image = &decoder_va->images[i];
+
+        wined3d_context_vk_destroy_vk_image(context_vk, image->image, image->command_buffer_id);
+        command_buffer_id = max(command_buffer_id, image->command_buffer_id);
+    }
+
+    /* We probably don't need to wait to destroy the VA decoder, since it's not
+     * a Vulkan object, but we did allocate Vulkan memory on the Unix side
+     * which we need to make sure isn't freed until the GPU is done with it. */
+    wined3d_context_vk_destroy_va_decoder(context_vk, decoder_va->va_decoder, command_buffer_id);
     free(decoder_va);
+
+    context_release(&context_vk->c);
 }
 
 static void wined3d_decoder_va_vk_destroy(struct wined3d_decoder *decoder)

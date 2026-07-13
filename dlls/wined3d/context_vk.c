@@ -1159,6 +1159,30 @@ void wined3d_context_vk_destroy_vk_video_parameters(struct wined3d_context_vk *c
     o->command_buffer_id = command_buffer_id;
 }
 
+void wined3d_context_vk_destroy_va_decoder(struct wined3d_context_vk *context_vk,
+        uint64_t handle, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
+    {
+        wined3d_decoder_va_vk_destroy_va_decoder(device_vk, handle);
+        TRACE("Destroyed VA decoder 0x%s.\n", wine_dbgstr_longlong(handle));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking VA decoder 0x%s.\n", wine_dbgstr_longlong(handle));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_DECODER_VA_VK;
+    o->u.va_decoder = handle;
+    o->command_buffer_id = command_buffer_id;
+}
+
 void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk, struct wined3d_image_vk *image)
 {
     wined3d_context_vk_destroy_vk_image(context_vk, image->vk_image, image->command_buffer_id);
@@ -1470,6 +1494,10 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK:
                 wined3d_aux_command_pool_vk_complete_buffer(context_vk,
                         o->u.aux_command_buffer.pool, &o->u.aux_command_buffer.buffer);
+                break;
+
+            case WINED3D_RETIRED_DECODER_VA_VK:
+                wined3d_decoder_va_vk_destroy_va_decoder(device_vk, o->u.va_decoder);
                 break;
 
             default:

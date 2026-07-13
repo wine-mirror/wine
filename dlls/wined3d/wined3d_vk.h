@@ -475,6 +475,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_VIDEO_SESSION_VK,
     WINED3D_RETIRED_VIDEO_PARAMETERS_VK,
     WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK,
+    WINED3D_RETIRED_DECODER_VA_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -512,6 +513,7 @@ struct wined3d_retired_object_vk
             struct wined3d_aux_command_pool_vk *pool;
             struct wined3d_aux_command_buffer_vk buffer;
         } aux_command_buffer;
+        uint64_t va_decoder;
     } u;
     uint64_t command_buffer_id;
 };
@@ -758,6 +760,8 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo);
 void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
         struct wined3d_image_vk *image_vk);
+void wined3d_context_vk_destroy_va_decoder(struct wined3d_context_vk *context_vk,
+        uint64_t handle, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_vk_buffer_view(struct wined3d_context_vk *context_vk,
         VkBufferView vk_view, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *context_vk,
@@ -1149,6 +1153,8 @@ static inline struct wined3d_decoder_output_view_vk *wined3d_decoder_output_view
 HRESULT wined3d_decoder_output_view_vk_init(struct wined3d_decoder_output_view_vk *view_vk,
         const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
         void *parent, const struct wined3d_parent_ops *parent_ops);
+
+void wined3d_decoder_va_vk_destroy_va_decoder(struct wined3d_device_vk *device_vk, uint64_t handle);
 
 struct wined3d_swapchain_vk
 {

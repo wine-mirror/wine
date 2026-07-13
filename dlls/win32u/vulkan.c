@@ -691,6 +691,8 @@ static VkResult convert_device_create_info( struct vulkan_physical_device *physi
 
     /* For Direct3D VA support. */
     device->extensions.has_VK_EXT_external_memory_dma_buf = physical_device->extensions.has_VK_EXT_external_memory_dma_buf;
+    device->extensions.has_VK_EXT_image_drm_format_modifier = physical_device->extensions.has_VK_EXT_image_drm_format_modifier;
+    device->extensions.has_VK_KHR_image_format_list = physical_device->extensions.has_VK_KHR_image_format_list;
     device->extensions.has_VK_EXT_physical_device_drm = physical_device->extensions.has_VK_EXT_physical_device_drm;
 
     if (physical_device->map_placed_align)
