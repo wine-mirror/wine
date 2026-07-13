@@ -1354,6 +1354,73 @@ const struct wined3d_decoder_ops wined3d_decoder_vk_ops =
     .decode = wined3d_decoder_vk_decode,
 };
 
+struct wined3d_decoder_va_vk
+{
+    struct wined3d_decoder d;
+};
+
+static struct wined3d_decoder_va_vk *wined3d_decoder_va_vk(struct wined3d_decoder *decoder)
+{
+    return CONTAINING_RECORD(decoder, struct wined3d_decoder_va_vk, d);
+}
+
+static void wined3d_decoder_va_vk_get_profiles(struct wined3d_adapter *adapter, unsigned int *count, GUID *profiles)
+{
+    *count = 0;
+}
+
+static HRESULT wined3d_decoder_va_vk_create(struct wined3d_device *device,
+        const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
+{
+    struct wined3d_decoder_va_vk *object;
+    HRESULT hr;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc)))
+    {
+        free(object);
+        return hr;
+    }
+
+    TRACE("Created decoder %p.\n", object);
+    *decoder = &object->d;
+
+    return WINED3D_OK;
+}
+
+static void wined3d_decoder_va_vk_destroy_object(void *object)
+{
+    struct wined3d_decoder_va_vk *decoder_va = object;
+
+    TRACE("decoder_va %p.\n", decoder_va);
+
+    free(decoder_va);
+}
+
+static void wined3d_decoder_va_vk_destroy(struct wined3d_decoder *decoder)
+{
+    struct wined3d_decoder_va_vk *decoder_va = wined3d_decoder_va_vk(decoder);
+
+    wined3d_decoder_cleanup(&decoder_va->d);
+    wined3d_cs_destroy_object(decoder->device->cs, wined3d_decoder_va_vk_destroy_object, decoder_va);
+}
+
+static void wined3d_decoder_va_vk_decode(struct wined3d_context *context,
+        struct wined3d_decoder *decoder, struct wined3d_decoder_output_view *output_view,
+        unsigned int bitstream_size, unsigned int slice_control_size)
+{
+    FIXME("Not implemented.\n");
+}
+
+const struct wined3d_decoder_ops wined3d_decoder_va_vk_ops =
+{
+    .get_profiles = wined3d_decoder_va_vk_get_profiles,
+    .create = wined3d_decoder_va_vk_create,
+    .destroy = wined3d_decoder_va_vk_destroy,
+    .decode = wined3d_decoder_va_vk_decode,
+};
+
 struct wined3d_resource * CDECL wined3d_decoder_get_buffer(
         struct wined3d_decoder *decoder, enum wined3d_decoder_buffer_type type)
 {

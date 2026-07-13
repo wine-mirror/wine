@@ -457,6 +457,13 @@ enum wined3d_shader_backend
     WINED3D_SHADER_BACKEND_GLSL_VKD3D,
 };
 
+enum wined3d_decoder_backend
+{
+    WINED3D_DECODER_BACKEND_AUTO,
+    WINED3D_DECODER_BACKEND_VULKAN,
+    WINED3D_DECODER_BACKEND_VA,
+};
+
 #define WINED3D_CSMT_ENABLE    0x00000001
 #define WINED3D_CSMT_SERIALIZE 0x00000002
 
@@ -482,6 +489,7 @@ struct wined3d_settings
     unsigned int max_sm_cs;
     enum wined3d_renderer renderer;
     enum wined3d_shader_backend shader_backend;
+    enum wined3d_decoder_backend decoder_backend;
     bool check_float_constants;
     bool cb_access_map_w;
     bool ffp_hlsl;
@@ -4520,6 +4528,7 @@ struct wined3d_decoder_ops
 };
 
 extern const struct wined3d_decoder_ops wined3d_decoder_vk_ops;
+extern const struct wined3d_decoder_ops wined3d_decoder_va_vk_ops;
 extern const struct wined3d_decoder_ops wined3d_null_decoder_ops;
 
 /* DirectDraw utility functions */
