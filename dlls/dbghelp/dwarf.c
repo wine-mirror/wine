@@ -1031,7 +1031,7 @@ compute_location(const struct module *module, const dwarf2_cuhead_t* head,
         case DW_OP_shl:         stack[stk-1] <<= stack[stk]; stk--; break;
         case DW_OP_shr:         stack[stk-1] >>= stack[stk]; stk--; break;
         case DW_OP_plus_uconst: stack[stk] += dwarf2_leb128_as_unsigned(ctx); break;
-        case DW_OP_shra:        stack[stk-1] = stack[stk-1] / (1 << stack[stk]); stk--; break;
+        case DW_OP_shra:        stack[stk-1] = (LONG_PTR)stack[stk-1] >> stack[stk]; stk--; break;
         case DW_OP_div:         stack[stk-1] = stack[stk-1] / stack[stk]; stk--; break;
         case DW_OP_mod:         stack[stk-1] = stack[stk-1] % stack[stk]; stk--; break;
         case DW_OP_ge:          stack[stk-1] = (stack[stk-1] >= stack[stk]); stk--; break;
@@ -3793,7 +3793,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         case DW_OP_shl:         stack[sp-1] <<= stack[sp]; sp--; break;
         case DW_OP_shr:         stack[sp-1] >>= stack[sp]; sp--; break;
         case DW_OP_plus_uconst: stack[sp] += dwarf2_leb128_as_unsigned(&ctx); break;
-        case DW_OP_shra:        stack[sp-1] = (LONG_PTR)stack[sp-1] / (1 << stack[sp]); sp--; break;
+        case DW_OP_shra:        stack[sp-1] = (LONG_PTR)stack[sp-1] >> stack[sp]; sp--; break;
         case DW_OP_div:         stack[sp-1] = (LONG_PTR)stack[sp-1] / (LONG_PTR)stack[sp]; sp--; break;
         case DW_OP_mod:         stack[sp-1] = (LONG_PTR)stack[sp-1] % (LONG_PTR)stack[sp]; sp--; break;
         case DW_OP_ge:          stack[sp-1] = ((LONG_PTR)stack[sp-1] >= (LONG_PTR)stack[sp]); sp--; break;
