@@ -540,6 +540,12 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
         flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
     }
 
+    if (wined3d_flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT)
+    {
+        wined3d_flags &= ~WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT;
+        flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    }
+
     if (wined3d_flags)
         FIXME("Unhandled flags %#x.\n", flags);
 

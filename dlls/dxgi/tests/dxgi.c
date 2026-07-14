@@ -4838,7 +4838,8 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
         hr = IDXGISwapChain_GetDesc(tmp_swapchain, &swapchain_desc);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         todo_wine_if(!is_d3d12 && !(flag == DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE
-                || flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH))
+                || flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+                || flag == DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
         ok(swapchain_desc.Flags == flag, "Got unexpected Flags %#x.\n", swapchain_desc.Flags);
         /* Test turning on the flag used at swapchain creation */
         hr = IDXGISwapChain_ResizeBuffers(tmp_swapchain, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, flag);
@@ -4964,7 +4965,8 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
             hr = IDXGISwapChain_GetDesc(tmp_swapchain, &swapchain_desc);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             todo_wine_if(!is_d3d12 && !(flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-                    || flag == DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE))
+                    || flag == DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE
+                    || flag == DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
             ok(swapchain_desc.Flags == flag, "Got unexpected Flags %#x.\n", swapchain_desc.Flags);
             /* Test turning on the flag used at swapchain creation */
             hr = IDXGISwapChain3_ResizeBuffers1(tmp_swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM,
