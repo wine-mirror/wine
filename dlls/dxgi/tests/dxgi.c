@@ -4792,7 +4792,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
                 || flag == DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO
                 || flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
         {
-            todo_wine_if(is_d3d12 || flag != DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+            todo_wine_if(flag != DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
             ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         }
         else
@@ -4800,7 +4800,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-            todo_wine_if(is_d3d12 || !(flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+            todo_wine_if(!is_d3d12 && !(flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
                     || flag == DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE))
             ok(swapchain_desc.Flags == flag, "Got unexpected Flags %#x.\n", swapchain_desc.Flags);
         }
@@ -4854,7 +4854,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
                 || flag == DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS)
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         else
-            todo_wine_if(is_d3d12 || flag != DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+            todo_wine_if(flag != DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
             ok(hr == DXGI_ERROR_INVALID_CALL || hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         IDXGISwapChain_Release(tmp_swapchain);
         DestroyWindow(swapchain_desc.OutputWindow);
@@ -4905,7 +4905,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
                         || flag == DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO
                         || flag == DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
                 {
-                    todo_wine
+                    todo_wine_if(flag != DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
                     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
                 }
                 else
@@ -4913,7 +4913,6 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
                     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
                     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
                     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-                    todo_wine
                     ok(swapchain_desc.Flags == flag, "Got unexpected Flags %#x.\n", swapchain_desc.Flags);
                 }
             }
@@ -4981,7 +4980,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
                     || flag == DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS))
                 ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             else
-                todo_wine
+                todo_wine_if(!(is_d3d12 && flag == DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
                 ok(hr == DXGI_ERROR_INVALID_CALL || hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
             IDXGISwapChain3_Release(tmp_swapchain3);
             IDXGISwapChain_Release(tmp_swapchain);
@@ -5011,7 +5010,6 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if(is_d3d12)
     ok(swapchain_desc.Flags == DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE, "Got unexpected Flags %#x.\n",
             swapchain_desc.Flags);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface1, (void **)&surface1);
@@ -5049,7 +5047,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine
+        todo_wine_if(!is_d3d12)
         ok(swapchain_desc.Flags == DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED, "Got unexpected Flags %#x.\n",
                 swapchain_desc.Flags);
         /* Note that MSDN says that DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED can only be used with

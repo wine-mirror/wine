@@ -2611,13 +2611,18 @@ static HRESULT d3d12_swapchain_op_resize_buffers_execute(struct d3d12_swapchain 
 static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
+    static const UINT supported_flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+            | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
     DXGI_SWAP_CHAIN_DESC1 *desc, new_desc;
     struct d3d12_swapchain_op *op;
     unsigned int i;
     ULONG refcount;
 
-    if (flags)
-        FIXME("Ignoring flags %#x.\n", flags);
+    if (flags & ~supported_flags)
+        FIXME("Ignoring flags %#x.\n", flags & ~supported_flags);
+
+    if ((swapchain->desc.Flags ^ flags) & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+        return E_INVALIDARG;
 
     for (i = 0; i < swapchain->desc.BufferCount; ++i)
     {
@@ -2631,6 +2636,7 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
 
     desc = &swapchain->desc;
     new_desc = swapchain->desc;
+    new_desc.Flags = flags;
 
     if (buffer_count)
         new_desc.BufferCount = buffer_count;
@@ -2662,6 +2668,9 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
             && desc->Format == new_desc.Format && desc->BufferCount == new_desc.BufferCount)
     {
         swapchain->current_buffer_index = 0;
+        /* DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE is not applicable on D3D12. So there is no need to
+         * recreate buffers when the flag gets toggled */
+        swapchain->desc.Flags = flags;
         return S_OK;
     }
 
