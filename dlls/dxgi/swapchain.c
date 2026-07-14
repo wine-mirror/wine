@@ -549,6 +549,9 @@ static HRESULT d3d11_swapchain_create_d3d11_textures(struct d3d11_swapchain *swa
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeBuffers(IDXGISwapChain4 *iface,
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
+    static const UINT supported_flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+            | DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE
+            | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain4(iface);
     struct wined3d_swapchain_desc wined3d_desc;
     struct wined3d_texture *texture;
@@ -559,11 +562,17 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeBuffers(IDXGISwapChain4 *
     TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x.\n",
             iface, buffer_count, width, height, debug_dxgi_format(format), flags);
 
-    if (flags)
-        FIXME("Ignoring flags %#x.\n", flags);
+    if (flags & ~supported_flags)
+        FIXME("Ignoring flags %#x.\n", flags & ~supported_flags);
 
     wined3d_mutex_lock();
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    if (!(wined3d_desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT)
+            != !(flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        wined3d_mutex_unlock();
+        return E_INVALIDARG;
+    }
     for (i = 0; i < wined3d_desc.backbuffer_count; ++i)
     {
         texture = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain, i);
@@ -577,8 +586,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeBuffers(IDXGISwapChain4 *
     }
     if (format != DXGI_FORMAT_UNKNOWN)
         wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(format);
+    wined3d_desc.flags = wined3d_swapchain_flags_from_dxgi(flags);
     hr = wined3d_swapchain_resize_buffers(swapchain->wined3d_swapchain, buffer_count, width, height,
-            wined3d_desc.backbuffer_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+            wined3d_desc.backbuffer_format, wined3d_desc.multisample_type,
+            wined3d_desc.multisample_quality, wined3d_desc.flags);
     /* wined3d_swapchain_resize_buffers() may recreate swapchain textures.
      * We do not need to remove the reference to the wined3d swapchain from the
      * old d3d11 textures: we just validated above that they have 0 references,

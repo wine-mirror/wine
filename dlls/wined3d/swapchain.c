@@ -2030,7 +2030,8 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
 HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapchain, unsigned int buffer_count,
         unsigned int width, unsigned int height, enum wined3d_format_id format_id,
-        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality)
+        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality,
+        unsigned int flags)
 {
     struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
     bool recreate = false;
@@ -2094,6 +2095,13 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
         desc->multisample_type = multisample_type;
         desc->multisample_quality = multisample_quality;
         recreate = true;
+    }
+
+    if (flags)
+    {
+        if ((desc->flags ^ flags) & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
+            recreate = true;
+        desc->flags = flags;
     }
 
     if (recreate)

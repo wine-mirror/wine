@@ -552,7 +552,7 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
     return flags;
 }
 
-static unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
+unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
 {
     unsigned int wined3d_flags = DXGI_WINED3D_SWAPCHAIN_FLAGS; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
 
