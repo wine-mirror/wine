@@ -3151,7 +3151,7 @@ BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_P
         return FALSE;
     }
 
-    if (type != PT_POINTER) FIXME( "Pointer type %#x not implemented!", type );
+    if (type != PT_POINTER) FIXME( "Pointer type %#x not implemented\n", type );
 
     *entry_count = 1;
     *pointer_count = 1;
