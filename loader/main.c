@@ -153,6 +153,10 @@ static void *try_dlopen( const char *argv0 )
 
     if ((p = remove_tail( dir, "/loader" )))
         path = build_path( p, "dlls/ntdll/ntdll.so" );
+#if defined(__APPLE__) && defined(__aarch64__)
+    else if ((p = remove_tail( dir, "/wine.app/Contents/MacOS" )))
+        path = build_path( p, "ntdll.so" );
+#endif
     else
         path = build_path( dir, "ntdll.so" );
 

@@ -1919,14 +1919,24 @@ static struct strarray get_expanded_make_var_array( const struct makefile *make,
 
 
 /*******************************************************************
+ *         get_file_local_var
+ */
+static char *get_file_local_var( const char *file, const char *name )
+{
+    char *p, *var = strmake( "%s_%s", file, name );
+
+    for (p = var; *p; p++) if (!isalnum( *p )) *p = '_';
+    return var;
+}
+
+
+/*******************************************************************
  *         get_expanded_file_local_var
  */
 static struct strarray get_expanded_file_local_var( const struct makefile *make, const char *file,
                                                     const char *name )
 {
-    char *p, *var = strmake( "%s_%s", file, name );
-
-    for (p = var; *p; p++) if (!isalnum( *p )) *p = '_';
+    char *var = get_file_local_var( file, name );
     return get_expanded_make_var_array( make, var );
 }
 
@@ -4207,7 +4217,7 @@ static void output_programs( struct makefile *make )
 
     STRARRAY_FOR_EACH( name, &make->programs )
     {
-        const char *install_dir;
+        const char *install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)";
         char *program = strmake( "%s%s", name, exe_ext );
         struct strarray deps = get_local_dependencies( make, name, make->in_files );
         struct strarray ldflags  = get_expanded_file_local_var( make, name, "LDFLAGS" );
@@ -4221,6 +4231,33 @@ static void output_programs( struct makefile *make )
             strarray_add( &ldflags, "$(LDFLAGS)" );
             strarray_addall( &all_libs, libs );
         }
+
+        if (strendswith( name, ".app" ))  /* create a macOS app bundle */
+        {
+            struct strarray bundle_files = empty_strarray;
+            char *appdir = strmake( "%s/Contents", name );
+            char *info_plist = get_expanded_make_variable( make, get_file_local_var( name, "INFO_PLIST" ));
+
+            if (info_plist)
+            {
+                output( "%s/Info.plist:", obj_dir_path( make, appdir ) );
+                output_filename( obj_dir_path( make, info_plist ) );
+                output( "\n" );
+                output( "\t%scp %s $@\n", cmd_prefix( "GEN" ), obj_dir_path( make, info_plist ) );
+                strarray_add( &bundle_files, strmake( "%s/Info.plist", appdir ) );
+            }
+            output( "%s/PkgInfo:\n", obj_dir_path( make, appdir ) );
+            output( "\t%secho -n \"APPL????\" >$@ || (rm -f $@ && false)\n", cmd_prefix( "GEN" ));
+            strarray_add( &bundle_files, strmake( "%s/PkgInfo", appdir ) );
+
+            strarray_addall( &make->all_targets[arch], bundle_files );
+            STRARRAY_FOR_EACH( file, &bundle_files )
+                install_data_file( make, name, file, strmake( "%s/%s", install_dir, appdir ), NULL );
+
+            program = strmake( "%s/MacOS/%s", appdir, replace_extension( name, ".app", "" ));
+            install_dir = strmake( "%s/%s/MacOS", install_dir, appdir );
+        }
+
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
         output_filenames( deps );
@@ -4239,7 +4276,6 @@ static void output_programs( struct makefile *make )
         }
         strarray_addall( &make->all_targets[arch], symlinks );
 
-        install_dir = !strcmp( make->obj_dir, "loader" ) ? arch_install_dirs[arch] : "$(bindir)";
         install_program( make, name, arch, program, install_dir );
         STRARRAY_FOR_EACH( link, &symlinks )
             install_program_symlink( make, link, obj_dir_path( make, program ),

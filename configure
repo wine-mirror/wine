@@ -631,7 +631,6 @@ LIBOBJS
 TAGSFLAGS
 EXTERNAL_SUBDIRS
 RT_LIBS
-WINELOADER_PROGRAMS
 MSVCRTFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
@@ -775,6 +774,7 @@ OTOOL
 LDD
 WINEPRELOADER_LDFLAGS
 WINELOADER_LDFLAGS
+WINELOADER_PROGRAMS
 TOP_INSTALL_DEV
 TOP_INSTALL_LIB
 UNIXLDFLAGS
@@ -12098,6 +12098,8 @@ TOP_INSTALL_LIB=""
 
 TOP_INSTALL_DEV=""
 
+WINELOADER_PROGRAMS="wine"
+
 WINELOADER_LDFLAGS=""
 
 WINEPRELOADER_LDFLAGS=""
@@ -12407,10 +12409,15 @@ case $host_os in
     SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
 
-    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
+    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000"
 
     case $HOST_ARCH in
+      aarch64)
+        wine_use_preloader=no
+        WINELOADER_PROGRAMS="wine.app"
+        ;;
       x86_64)
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
                 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_huge" >&5
 printf %s "checking whether the compiler supports -Wl,-no_huge... " >&6; }
 if test ${ac_cv_cflags__Wl__no_huge+y}
@@ -12446,7 +12453,6 @@ else case e in #(
 esac
 fi
         ;;
-      *)    wine_use_preloader=no ;;
     esac
 
     if test "$wine_use_preloader" = "yes"
@@ -20837,9 +20843,6 @@ then
 fi
 
 
-WINELOADER_PROGRAMS="wine"
-
-
 case $host_os in
   linux*)
     if test $HOST_ARCH != unknown
@@ -24103,6 +24106,7 @@ UNIXDLLFLAGS = $UNIXDLLFLAGS
 UNIXLDFLAGS = $UNIXLDFLAGS
 TOP_INSTALL_LIB = $TOP_INSTALL_LIB
 TOP_INSTALL_DEV = $TOP_INSTALL_DEV
+WINELOADER_PROGRAMS = $WINELOADER_PROGRAMS
 WINELOADER_LDFLAGS = $WINELOADER_LDFLAGS
 WINEPRELOADER_LDFLAGS = $WINEPRELOADER_LDFLAGS
 LDD = $LDD
@@ -24246,7 +24250,6 @@ PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
-WINELOADER_PROGRAMS = $WINELOADER_PROGRAMS
 RT_LIBS = $RT_LIBS
 EXTERNAL_SUBDIRS = $EXTERNAL_SUBDIRS
 TAGSFLAGS = $TAGSFLAGS

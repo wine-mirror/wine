@@ -389,7 +389,11 @@ static void init_paths(void)
 
     if ((build_dir = remove_tail( ntdll_dir, "/dlls/ntdll" )))
     {
+#if defined(__APPLE__) && defined(__aarch64__)
+        wineloader = build_path( build_dir, "loader/wine.app/Contents/MacOS/wine" );
+#else
         wineloader = build_path( build_dir, "loader/wine" );
+#endif
         alt_build_dir = realpath_dirname( build_path( build_dir, "loader-wow64" ));
     }
     else
@@ -397,7 +401,11 @@ static void init_paths(void)
         if (!(dll_dir = remove_tail( ntdll_dir, get_so_dir(current_machine) ))) dll_dir = ntdll_dir;
         bin_dir = build_relative_path( dll_dir, LIBDIR "/wine", BINDIR );
         data_dir = build_relative_path( dll_dir, LIBDIR "/wine", DATADIR "/wine" );
+#if defined(__APPLE__) && defined(__aarch64__)
+        wineloader = build_path( ntdll_dir, "wine.app/Contents/MacOS/wine" );
+#else
         wineloader = build_path( ntdll_dir, "wine" );
+#endif
     }
 
     set_dll_path();

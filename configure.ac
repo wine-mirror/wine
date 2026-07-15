@@ -960,6 +960,7 @@ AC_SUBST(UNIXDLLFLAGS,"-fPIC")
 AC_SUBST(UNIXLDFLAGS,["-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"])
 AC_SUBST(TOP_INSTALL_LIB,"")
 AC_SUBST(TOP_INSTALL_DEV,"")
+AC_SUBST(WINELOADER_PROGRAMS,"wine")
 AC_SUBST(WINELOADER_LDFLAGS,"")
 AC_SUBST(WINEPRELOADER_LDFLAGS,"")
 LIBEXT="so"
@@ -988,17 +989,21 @@ case $host_os in
     AC_SUBST(SECURITY_LIBS,"-framework Security -framework CoreFoundation")
     AC_SUBST(SYSTEMCONFIGURATION_LIBS,"-framework SystemConfiguration")
 
-    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
+    WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000"
 
     case $HOST_ARCH in
+      aarch64)
+        wine_use_preloader=no
+        WINELOADER_PROGRAMS="wine.app"
+        ;;
       x86_64)
+        WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
         dnl If the -no_huge linker option is present (added in Xcode 15.3), use zerofill sections instead of the preloader
         WINE_TRY_CFLAGS([-Wl,-no_huge],
            [wine_use_preloader=no
             WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-no_pie,-image_base,0x200000000,-no_huge,-no_fixup_chains,-segalign,0x1000,-segaddr,WINE_RESERVE,0x1000"],
            [wine_use_preloader=yes])
         ;;
-      *)    wine_use_preloader=no ;;
     esac
 
     if test "$wine_use_preloader" = "yes"
@@ -2068,8 +2073,6 @@ then
 fi
 
 dnl **** Platform-specific checks ****
-
-AC_SUBST(WINELOADER_PROGRAMS,"wine")
 
 case $host_os in
   linux*)
