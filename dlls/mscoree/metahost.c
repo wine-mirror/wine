@@ -710,11 +710,11 @@ HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **res
 }
 
 #ifdef __i386__
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86.dll";
 #elif defined(__x86_64__)
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','-','x','8','6','_','6','4','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86_64.dll";
 #else
-static const WCHAR libmono2_arch_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','.','d','l','l',0};
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0.dll";
 #endif
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path)
