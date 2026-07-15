@@ -1538,6 +1538,24 @@ static void maybe_remove_devnode(const char *base, const char *dir)
     else WARN("failed to find device for path %s\n", devnode);
 }
 
+static void process_attrib_change(const char *base, const char *dir, const char *subsystem)
+{
+    char devnode[MAX_PATH];
+    int fd;
+
+    snprintf(devnode, sizeof(devnode), "%s/%s", dir, base);
+    if (!find_device_from_devnode(devnode))
+    {
+        maybe_add_devnode(base, dir, subsystem);
+        return;
+    }
+
+    if ((fd = open(devnode, O_RDWR)) < 0)
+        maybe_remove_devnode(base, dir);
+    else
+        close(fd);
+}
+
 static void process_inotify_event(int fd)
 {
     union
@@ -1564,10 +1582,7 @@ static void process_inotify_event(int fd)
                 else if (buf.event.mask & (IN_CREATE | IN_MOVED_TO))
                     maybe_add_devnode(buf.event.name, "/dev", "hidraw");
                 else if (buf.event.mask & IN_ATTRIB)
-                {
-                    maybe_remove_devnode(buf.event.name, "/dev");
-                    maybe_add_devnode(buf.event.name, "/dev", "hidraw");
-                }
+                    process_attrib_change(buf.event.name, "/dev", "hidraw");
             }
 #ifdef HAS_PROPER_INPUT_HEADER
             else if (buf.event.wd == devinput_watch)
@@ -1579,10 +1594,7 @@ static void process_inotify_event(int fd)
                 else if (buf.event.mask & (IN_CREATE | IN_MOVED_TO))
                     maybe_add_devnode(buf.event.name, "/dev/input", "input");
                 else if (buf.event.mask & IN_ATTRIB)
-                {
-                    maybe_remove_devnode(buf.event.name, "/dev/input");
-                    maybe_add_devnode(buf.event.name, "/dev/input", "input");
-                }
+                    process_attrib_change(buf.event.name, "/dev/input", "input");
             }
 #endif
         }
