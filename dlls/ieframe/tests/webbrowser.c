@@ -1010,7 +1010,10 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
     case DISPID_TITLECHANGE:
         CHECK_EXPECT2(Invoke_TITLECHANGE);
-        /* FIXME */
+        ok(pDispParams->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
+        ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(pDispParams->rgvarg)=%d, expected VT_BSTR\n",
+           V_VT(pDispParams->rgvarg));
         break;
 
     case DISPID_NAVIGATECOMPLETE2:
@@ -3128,7 +3131,7 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     else
         CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
-    todo_wine CHECK_CALLED(Invoke_TITLECHANGE);
+    CHECK_CALLED(Invoke_TITLECHANGE);
     if(!(flags & DWL_REFRESH))
         CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
     if(is_first_load)
