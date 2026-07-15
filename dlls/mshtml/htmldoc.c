@@ -649,6 +649,11 @@ static HRESULT WINAPI HTMLDocument_put_title(IHTMLDocument2 *iface, BSTR v)
     if(NS_FAILED(nsres))
         ERR("SetTitle failed: %08lx\n", nsres);
 
+    if(This->doc_obj)
+        call_property_onchanged(&This->doc_obj->cp_container, DISPID_IHTMLDOCUMENT2_TITLE);
+    else
+        call_property_onchanged(&This->cp_container, DISPID_IHTMLDOCUMENT2_TITLE);
+
     return S_OK;
 }
 

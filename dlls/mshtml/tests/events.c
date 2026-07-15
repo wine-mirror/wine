@@ -127,6 +127,7 @@ DEFINE_EXPECT(QS_GetCaller);
 DEFINE_EXPECT(QS_GetCaller_parent2);
 DEFINE_EXPECT(QS_GetCaller_parent3);
 DEFINE_EXPECT(cmdtarget_Exec);
+DEFINE_EXPECT(OnChanged_title);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -4656,6 +4657,26 @@ static void test_create_event(IHTMLDocument2 *doc)
     IDocumentEvent_Release(doc_event);
 }
 
+static void test_doc_title_notify(IHTMLDocument2 *doc)
+{
+    BSTR title = NULL, tmp;
+    HRESULT hres;
+
+    trace("doc title notify tests...\n");
+
+    SET_EXPECT(OnChanged_title);
+    tmp = SysAllocString(L"wine title notify test");
+    hres = IHTMLDocument2_put_title(doc, tmp);
+    ok(hres == S_OK, "put_title failed: %08lx\n", hres);
+    SysFreeString(tmp);
+    CHECK_CALLED(OnChanged_title);
+
+    hres = IHTMLDocument2_get_title(doc, &title);
+    ok(hres == S_OK, "get_title failed: %08lx\n", hres);
+    ok(!lstrcmpW(title, L"wine title notify test"), "unexpected title %s\n", wine_dbgstr_w(title));
+    SysFreeString(title);
+}
+
 static unsigned onstorage_expect_line;
 static const WCHAR *onstorage_expect_key, *onstorage_expect_old_value, *onstorage_expect_new_value;
 
@@ -6473,6 +6494,9 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
             nav_notif_test();
     }
 
+    if(dispID == DISPID_IHTMLDOCUMENT2_TITLE)
+        CHECK_EXPECT(OnChanged_title);
+
     return S_OK;
 }
 
@@ -7779,6 +7803,7 @@ START_TEST(events)
         run_test(empty_doc_ie9_str, test_submit);
         run_test(iframe_doc_str, test_message_event);
         run_test(iframe_doc_str, test_iframe_connections);
+        run_test(empty_doc_str, test_doc_title_notify);
         if(is_ie9plus) {
             run_test_from_res(L"doc_with_prop.html", test_doc_obj);
             run_test_from_res(L"doc_with_prop_ie9.html", test_doc_obj);
