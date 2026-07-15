@@ -506,6 +506,7 @@ typedef struct _WAIT_CONTEXT_BLOCK {
 #define IRP_MN_DEVICE_USAGE_NOTIFICATION    0x16
 #define IRP_MN_SURPRISE_REMOVAL             0x17
 #define IRP_MN_QUERY_LEGACY_BUS_INFORMATION 0x18
+#define IRP_MN_DEVICE_ENUMERATED            0x19
 
 #define IRP_MN_WAIT_WAKE                    0x00
 #define IRP_MN_POWER_SEQUENCE               0x01
