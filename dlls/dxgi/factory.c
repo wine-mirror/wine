@@ -448,9 +448,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IWineDXGIFactory
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumWarpAdapter(IWineDXGIFactory *iface,
         REFIID iid, void **adapter)
 {
-    FIXME("iface %p, iid %s, adapter %p stub!\n", iface, debugstr_guid(iid), adapter);
+    IDXGIAdapter1 *adapter_object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, iid %s, adapter %p semi-stub, returning a hardware adapter.\n",
+            iface, debugstr_guid(iid), adapter);
+
+    if (!adapter)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (FAILED(hr = dxgi_factory_EnumAdapters1(iface, 0, &adapter_object)))
+        return hr;
+
+    hr = IDXGIAdapter1_QueryInterface(adapter_object, iid, adapter);
+    IDXGIAdapter1_Release(adapter_object);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CheckFeatureSupport(IWineDXGIFactory *iface,

@@ -1151,6 +1151,40 @@ static void test_adapter_luid(void)
     ok(!refcount, "Factory has %lu references left.\n", refcount);
 }
 
+static void test_enum_warp_adapter(void)
+{
+    DXGI_ADAPTER_DESC1 desc;
+    IDXGIFactory4 *factory4;
+    IDXGIAdapter1 *adapter;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!pCreateDXGIFactory2
+            || FAILED(hr = pCreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory4)))
+    {
+        skip("DXGI 1.4 is not available.\n");
+        return;
+    }
+
+    hr = IDXGIFactory4_EnumWarpAdapter(factory4, &IID_IDXGIAdapter1, NULL);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDXGIFactory4_EnumWarpAdapter(factory4, &IID_IDXGIAdapter1, (void **)&adapter);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDXGIAdapter1_GetDesc1(adapter, &desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(desc.Flags == DXGI_ADAPTER_FLAG_SOFTWARE,
+            "Got unexpected flags %#x.\n", desc.Flags);
+    todo_wine ok(desc.VendorId == 0x1414, "Got unexpected vendor ID %#x.\n", desc.VendorId);
+    todo_wine ok(desc.DeviceId == 0x008c, "Got unexpected device ID %#x.\n", desc.DeviceId);
+
+    refcount = IDXGIAdapter1_Release(adapter);
+    ok(!refcount, "Adapter has %lu references left.\n", refcount);
+    refcount = IDXGIFactory4_Release(factory4);
+    ok(!refcount, "Factory has %lu references left.\n", refcount);
+}
+
 static void test_query_video_memory_info(void)
 {
     DXGI_QUERY_VIDEO_MEMORY_INFO memory_info;
@@ -8723,6 +8757,7 @@ START_TEST(dxgi)
 
     queue_test(test_adapter_desc);
     queue_test(test_adapter_luid);
+    queue_test(test_enum_warp_adapter);
     queue_test(test_query_video_memory_info);
     queue_test(test_check_interface_support);
     queue_test(test_create_surface);
