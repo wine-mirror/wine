@@ -713,6 +713,8 @@ HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **res
 static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86.dll";
 #elif defined(__x86_64__)
 static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-x86_64.dll";
+#elif defined(__aarch64__)
+static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0-arm64.dll";
 #else
 static const WCHAR libmono2_arch_dll[] = L"\\bin\\libmono-2.0.dll";
 #endif
