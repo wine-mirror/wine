@@ -1300,12 +1300,6 @@ SymCryptSha512AppendBlocks_ull3(
 #pragma GCC target("ssse3")
 #endif
 
-#if SYMCRYPT_MS_VC
-#ifndef _mm_storeu_si64
-    // Workaround missing intrinsic on some versions of MSVC
-    #define _mm_storeu_si64(p, a) (_mm_storel_epi64((__m128i*)(p), (a)))
-#endif
-#endif
 
 #define XMMADD( _a, _b ) _mm_add_epi64((_a), (_b))
 #define XMMAND( _a, _b ) _mm_and_si128((_a), (_b))
@@ -1313,7 +1307,7 @@ SymCryptSha512AppendBlocks_ull3(
 #define XMMROR( _a, _n ) _mm_xor_si128( _mm_slli_epi64( (_a), 64-(_n)), _mm_srli_epi64( (_a), (_n)) )
 #define XMMSHR( _a, _n ) _mm_srli_epi64((_a), (_n))
 #define XMMXOR( _a, _b ) _mm_xor_si128((_a), (_b))
-#define XMMSTORE_UINT64( _a, _addr ) _mm_storeu_si64((_addr), (_a))
+#define XMMSTORE_UINT64( _a, _addr ) _mm_storel_epi64((__m128i*)(_addr), (_a))
 
 #define XMMMAJ( x, y, z )  XMMOR( XMMAND( XMMOR( (z), (y)), (x)), XMMAND( (z), (y) ) )
 #define XMMCH(  x, y, z )  XMMXOR( XMMAND( XMMXOR( (z), (y) ), (x)), (z))

@@ -244,11 +244,11 @@ cleanup:
 #define VEC128_TYPE_UINT16 __m128i
 
 #define VEC128_LOAD_UINT16( addr )       _mm_loadu_si128( (__m128i*) (addr) )
-#define VEC64_LOAD_UINT16( addr )        _mm_loadu_si64( (PBYTE) (addr) )
+#define VEC64_LOAD_UINT16( addr )        _mm_loadl_epi64( (__m128i const*) (addr) )
 #define VEC32_LOAD_UINT16( addr )        _mm_cvtsi32_si128( SYMCRYPT_LOAD_LSBFIRST32( addr ) )
 
 #define VEC128_STORE_UINT16( addr, vec ) _mm_storeu_si128( (__m128i*) (addr), (vec) )
-#define VEC64_STORE_UINT16( addr, vec )  _mm_storeu_si64( (PBYTE) (addr), (vec) )
+#define VEC64_STORE_UINT16( addr, vec )  _mm_storel_epi64( (__m128i*) (addr), (vec) )
 #define VEC32_STORE_UINT16( addr, vec )  SYMCRYPT_STORE_LSBFIRST32( (addr), _mm_cvtsi128_si32( vec ) )
 
 #define VEC128_SET_UINT16( value )       _mm_set1_epi16( (value) )
