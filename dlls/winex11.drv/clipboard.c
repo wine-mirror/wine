@@ -1921,6 +1921,7 @@ static void acquire_selection( Display *display )
 
     XSetSelectionOwner( display, x11drv_atom(CLIPBOARD), selection_window, CurrentTime );
     if (use_primary_selection) XSetSelectionOwner( display, XA_PRIMARY, selection_window, CurrentTime );
+    XFlush( display );
     TRACE( "win %lx\n", selection_window );
 }
 
