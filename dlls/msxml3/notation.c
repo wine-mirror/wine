@@ -283,9 +283,9 @@ static HRESULT WINAPI domnotation_cloneNode(IXMLDOMNotation *iface, VARIANT_BOOL
 
 static HRESULT WINAPI domnotation_get_nodeTypeString(IXMLDOMNotation *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    TRACE("%p, %p.\n", iface, p);
 
-    return E_NOTIMPL;
+    return return_bstr(L"notation", p);
 }
 
 static HRESULT WINAPI domnotation_get_text(IXMLDOMNotation *iface, BSTR *p)
