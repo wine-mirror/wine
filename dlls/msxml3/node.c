@@ -3633,6 +3633,7 @@ struct parse_context
     ISAXContentHandler content_handler;
     ISAXLexicalHandler lexical_handler;
     ISAXDTDHandler dtd_handler;
+    ISAXDeclHandler decl_handler;
     ISAXXMLReaderExtension *reader_extension;
     ISAXXMLReader *reader;
 
@@ -3768,6 +3769,11 @@ static struct parse_context *impl_from_ISAXExtensionHandler(ISAXExtensionHandler
 static struct parse_context *impl_from_ISAXDTDHandler(ISAXDTDHandler *iface)
 {
     return CONTAINING_RECORD(iface, struct parse_context, dtd_handler);
+}
+
+static struct parse_context *impl_from_ISAXDeclHandler(ISAXDeclHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct parse_context, decl_handler);
 }
 
 static HRESULT WINAPI parse_content_handler_QueryInterface(ISAXContentHandler *iface, REFIID riid, void **obj)
@@ -3971,7 +3977,13 @@ static HRESULT WINAPI parse_dtd_handler_unparsedEntityDecl(ISAXDTDHandler *iface
         int name_len, const WCHAR *pubid, int pubid_len, const WCHAR *sysid, int sysid_len,
         const WCHAR *notation_name, int notation_name_len)
 {
-    return S_OK;
+    struct parse_context *c = impl_from_ISAXDTDHandler(iface);
+    struct domnode *node;
+
+    parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
+    parse_context_append_child(c, c->node, node);
+
+    return c->status;
 }
 
 static const ISAXDTDHandlerVtbl parse_dtd_handler_vtbl =
@@ -3981,6 +3993,73 @@ static const ISAXDTDHandlerVtbl parse_dtd_handler_vtbl =
     parse_dtd_handler_Release,
     parse_dtd_handler_notationDecl,
     parse_dtd_handler_unparsedEntityDecl,
+};
+
+static HRESULT WINAPI parse_decl_handler_QueryInterface(ISAXDeclHandler *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_ISAXDeclHandler)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        ISAXDeclHandler_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI parse_decl_handler_AddRef(ISAXDeclHandler *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI parse_decl_handler_Release(ISAXDeclHandler *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI parse_decl_handler_elementDecl(ISAXDeclHandler *iface, const WCHAR *name,
+        int name_len, const WCHAR *model, int model_len)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI parse_decl_handler_attributeDecl(ISAXDeclHandler *iface, const WCHAR *element_name,
+        int element_name_len, const WCHAR *attribute_name, int attribute_name_len,
+        const WCHAR *type, int type_len, const WCHAR *value_default, int value_default_len,
+        const WCHAR *value, int value_len)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI parse_decl_handler_internalEntityDecl(ISAXDeclHandler *iface, const WCHAR *name,
+        int name_len, const WCHAR *value, int value_len)
+{
+    struct parse_context *c = impl_from_ISAXDeclHandler(iface);
+    struct domnode *node;
+
+    parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
+    parse_context_append_child(c, c->node, node);
+
+    return c->status;
+}
+
+static HRESULT WINAPI parse_decl_handler_externalEntityDecl(ISAXDeclHandler *iface, const WCHAR *name,
+        int name_len, const WCHAR *pubid, int pubid_len, const WCHAR *sysid, int sysid_len)
+{
+    return S_OK;
+}
+
+static const ISAXDeclHandlerVtbl parse_decl_handler_vtbl =
+{
+    parse_decl_handler_QueryInterface,
+    parse_decl_handler_AddRef,
+    parse_decl_handler_Release,
+    parse_decl_handler_elementDecl,
+    parse_decl_handler_attributeDecl,
+    parse_decl_handler_internalEntityDecl,
+    parse_decl_handler_externalEntityDecl,
 };
 
 static HRESULT WINAPI parse_extension_handler_QueryInterface(ISAXExtensionHandler *iface, REFIID riid, void **obj)
@@ -4179,6 +4258,7 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     c->extension_handler.lpVtbl = &parse_extension_handler_vtbl;
     c->lexical_handler.lpVtbl = &parse_lexical_handler_vtbl;
     c->dtd_handler.lpVtbl = &parse_dtd_handler_vtbl;
+    c->decl_handler.lpVtbl = &parse_decl_handler_vtbl;
     c->buffer.status = &c->status;
     c->max_depth = properties->max_element_depth;
     c->version = properties->version;

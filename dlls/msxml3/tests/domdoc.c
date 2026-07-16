@@ -17870,7 +17870,6 @@ if (!winetest_platform_is_wine)
 
     hr = IXMLDOMNodeList_get_length(list, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(len == 3, "Unexpected length %ld.\n", len);
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
@@ -17879,15 +17878,17 @@ if (!winetest_platform_is_wine)
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (!winetest_platform_is_wine)
-    expect_node(node, "EN2.DT2.D1");
-    IXMLDOMNode_Release(node);
-
-    hr = IXMLDOMNodeList_nextNode(list, &node);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 if (hr == S_OK)
+{
+    expect_node(node, "EN2.DT2.D1");
+    IXMLDOMNode_Release(node);
+}
+
+    hr = IXMLDOMNodeList_nextNode(list, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (!winetest_platform_is_wine)
 {
     expect_node(node, "N3.DT2.D1");
     IXMLDOMNode_Release(node);
