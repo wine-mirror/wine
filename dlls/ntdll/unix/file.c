@@ -4434,7 +4434,7 @@ NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name
     ULONG prefix_len, len = max( ARRAY_SIZE(unix_prefixW), wcslen(curdir) ) + strlen(name) + 1;
 
     /* special case for Unix file name */
-    if (name[0] == '/' && !find_drive_nt_root( name, strlen(name), &ret, FILE_OPEN )) goto done;
+    if (name[0] == '/' && !find_drive_nt_root( name, strlen(name), &ret, FILE_OPEN ) && ret) goto done;
 
     if (!(ret = malloc( len * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
 
@@ -4457,7 +4457,13 @@ NTSTATUS get_full_path( char *name, const WCHAR *curdir, UNICODE_STRING *nt_name
             prefix_len = ARRAY_SIZE(unc_prefixW);
         }
     }
-    else if (IS_SEPARATOR(name[0]))  /* absolute path */
+    else if (name[0] == '/') /* Unix path */
+    {
+        /* if we got here, there is no DOS drive */
+        memcpy( ret, unix_prefixW, sizeof(unix_prefixW) );
+        prefix_len = ARRAY_SIZE(unix_prefixW);
+    }
+    else if (name[0] == '\\')  /* absolute path */
     {
         memcpy( ret, dos_prefixW, sizeof(dos_prefixW) );
         prefix_len = ARRAY_SIZE(dos_prefixW);
