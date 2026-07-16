@@ -17859,6 +17859,16 @@ static void test_dtd_children(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"notation"), "Unexpected type %s.\n", debugstr_w(str));
     SysFreeString(str);
+    hr = IXMLDOMNode_get_text(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_text(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    hr = IXMLDOMNode_put_text(node, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_put_text(node, _bstr_("text"));
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     expect_node(node, "N1.DT2.D1");
     hr = IXMLDOMDocumentType_removeChild(doctype, node, &node2);
