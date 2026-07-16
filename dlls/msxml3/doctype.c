@@ -187,23 +187,29 @@ static HRESULT WINAPI domdoctype_get_parentNode(IXMLDOMDocumentType *iface, IXML
 
 static HRESULT WINAPI domdoctype_get_childNodes(IXMLDOMDocumentType *iface, IXMLDOMNodeList **list)
 {
-    FIXME("%p, %p: stub\n", iface, list);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, list);
+
+    return node_get_child_nodes(doctype->node, list);
 }
 
 static HRESULT WINAPI domdoctype_get_firstChild(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    FIXME("%p, %p: stub\n", iface, node);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, node);
+
+    return node_get_first_child(doctype->node, node);
 }
 
 static HRESULT WINAPI domdoctype_get_lastChild(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    FIXME("%p, %p: stub\n", iface, node);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, node);
+
+    return node_get_last_child(doctype->node, node);
 }
 
 static HRESULT WINAPI domdoctype_get_previousSibling(IXMLDOMDocumentType *iface, IXMLDOMNode **node)

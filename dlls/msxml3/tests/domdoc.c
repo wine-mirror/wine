@@ -17852,18 +17852,16 @@ static void test_dtd_children(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-if (hr == S_OK)
-{
     expect_node(node, "N1.DT2.D1");
     hr = IXMLDOMDocumentType_removeChild(doctype, node, &node2);
+    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMDocumentType_get_lastChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (!winetest_platform_is_wine)
     expect_node(node, "N3.DT2.D1");
     IXMLDOMNode_Release(node);
 
@@ -17872,6 +17870,7 @@ if (hr == S_OK)
 
     hr = IXMLDOMNodeList_get_length(list, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(len == 3, "Unexpected length %ld.\n", len);
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
@@ -17881,19 +17880,27 @@ if (hr == S_OK)
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (!winetest_platform_is_wine)
     expect_node(node, "EN2.DT2.D1");
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     expect_node(node, "N3.DT2.D1");
     IXMLDOMNode_Release(node);
+}
 
     IXMLDOMNodeList_Release(list);
 
     /* Maps */
     hr = IXMLDOMDocumentType_get_entities(doctype, &map);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 1, "Unexpected length %ld.\n", len);
@@ -17932,9 +17939,13 @@ if (hr == S_OK)
     IXMLDOMNamedNodeMap_Release(map2);
     IXMLDOMNode_Release(node);
     IXMLDOMNamedNodeMap_Release(map);
+}
 
     hr = IXMLDOMDocumentType_get_notations(doctype, &map);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 2, "Unexpected length %ld.\n", len);

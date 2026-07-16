@@ -328,6 +328,7 @@ extern HRESULT create_selection(struct domnode *, BSTR, bool xpath, IXMLDOMNodeL
 extern HRESULT create_selection_from_nodeset( xmlXPathObjectPtr, IXMLDOMNodeList ** );
 extern HRESULT create_enumvariant( IUnknown*, BOOL, const struct enumvariant_funcs*, IEnumVARIANT**);
 extern HRESULT create_dom_implementation(IXMLDOMImplementation **obj);
+extern HRESULT create_notation(struct domnode *, IUnknown **);
 
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
 extern void wineXmlCallbackError(char const* caller, const xmlError* err);

@@ -28,6 +28,7 @@ SOURCES = \
 	node.c \
 	nodelist.c \
 	nodemap.c \
+	notation.c \
 	parseerror.c \
 	pi.c \
 	rsrc.rc \
