@@ -17885,6 +17885,13 @@ static void test_dtd_children(void)
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeTypeString(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeTypeString(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"entity"), "Unexpected type %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
     expect_node(node, "EN2.DT2.D1");
     IXMLDOMNode_Release(node);
 

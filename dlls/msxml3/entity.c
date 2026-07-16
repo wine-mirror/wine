@@ -283,9 +283,9 @@ static HRESULT WINAPI domentity_cloneNode(IXMLDOMEntity *iface, VARIANT_BOOL dee
 
 static HRESULT WINAPI domentity_get_nodeTypeString(IXMLDOMEntity *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    TRACE("%p, %p.\n", iface, p);
 
-    return E_NOTIMPL;
+    return return_bstr(L"entity", p);
 }
 
 static HRESULT WINAPI domentity_get_text(IXMLDOMEntity *iface, BSTR *p)
