@@ -155,6 +155,7 @@ static void test_GetProperty(void)
     DXCoreHardwareID hwid[2];
     IDXCoreAdapter *adapter;
     uint32_t count, dummy;
+    uint64_t memory;
     LARGE_INTEGER version;
     BYTE is_hardware;
     LUID luid[2];
@@ -226,6 +227,24 @@ static void test_GetProperty(void)
         ok(!!hwid[0].vendorID, "Expected vendorID.\n");
         ok(!hwid[1].vendorID, "Expected no vendorID.\n");
         ok(!hwid[1].deviceID, "Expected no deviceID.\n");
+
+        /* DedicatedAdapterMemory */
+        hr = IDXCoreAdapter_GetProperty(adapter, DedicatedAdapterMemory, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, DedicatedAdapterMemory, 0, &memory);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, DedicatedAdapterMemory, sizeof(memory) - 1, &memory);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, DedicatedAdapterMemory, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, DedicatedAdapterMemory, &size);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(size == sizeof(memory), "Got size %Iu.\n", size);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, DedicatedAdapterMemory, sizeof(memory), &memory);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         /* IsHardware */
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, NULL);
