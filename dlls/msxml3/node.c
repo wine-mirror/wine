@@ -3630,6 +3630,7 @@ struct parse_context
     ISAXExtensionHandler extension_handler;
     ISAXContentHandler content_handler;
     ISAXLexicalHandler lexical_handler;
+    ISAXDTDHandler dtd_handler;
     ISAXXMLReaderExtension *reader_extension;
     ISAXXMLReader *reader;
 
@@ -3760,6 +3761,11 @@ static struct parse_context *impl_from_ISAXContentHandler(ISAXContentHandler *if
 static struct parse_context *impl_from_ISAXExtensionHandler(ISAXExtensionHandler *iface)
 {
     return CONTAINING_RECORD(iface, struct parse_context, extension_handler);
+}
+
+static struct parse_context *impl_from_ISAXDTDHandler(ISAXDTDHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct parse_context, dtd_handler);
 }
 
 static HRESULT WINAPI parse_content_handler_QueryInterface(ISAXContentHandler *iface, REFIID riid, void **obj)
@@ -3921,6 +3927,58 @@ static const ISAXContentHandlerVtbl parse_content_handler_vtbl =
     parse_content_handler_ignorableWhitespace,
     parse_content_handler_processingInstruction,
     parse_content_handler_skippedEntity,
+};
+
+static HRESULT WINAPI parse_dtd_handler_QueryInterface(ISAXDTDHandler *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_ISAXDTDHandler)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        ISAXDTDHandler_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI parse_dtd_handler_AddRef(ISAXDTDHandler *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI parse_dtd_handler_Release(ISAXDTDHandler *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI parse_dtd_handler_notationDecl(ISAXDTDHandler *iface, const WCHAR *name,
+        int name_len, const WCHAR *pubid, int pubid_len, const WCHAR *sysid, int sysid_len)
+{
+    struct parse_context *c = impl_from_ISAXDTDHandler(iface);
+    struct domnode *node;
+
+    parse_context_node_create(c, NODE_NOTATION, name, name_len, NULL, 0, c->root, &node);
+    parse_context_append_child(c, c->node, node);
+
+    return c->status;
+}
+
+static HRESULT WINAPI parse_dtd_handler_unparsedEntityDecl(ISAXDTDHandler *iface, const WCHAR *name,
+        int name_len, const WCHAR *pubid, int pubid_len, const WCHAR *sysid, int sysid_len,
+        const WCHAR *notation_name, int notation_name_len)
+{
+    return S_OK;
+}
+
+static const ISAXDTDHandlerVtbl parse_dtd_handler_vtbl =
+{
+    parse_dtd_handler_QueryInterface,
+    parse_dtd_handler_AddRef,
+    parse_dtd_handler_Release,
+    parse_dtd_handler_notationDecl,
+    parse_dtd_handler_unparsedEntityDecl,
 };
 
 static HRESULT WINAPI parse_extension_handler_QueryInterface(ISAXExtensionHandler *iface, REFIID riid, void **obj)
@@ -4118,6 +4176,7 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     c->content_handler.lpVtbl = &parse_content_handler_vtbl;
     c->extension_handler.lpVtbl = &parse_extension_handler_vtbl;
     c->lexical_handler.lpVtbl = &parse_lexical_handler_vtbl;
+    c->dtd_handler.lpVtbl = &parse_dtd_handler_vtbl;
     c->buffer.status = &c->status;
     c->max_depth = properties->max_element_depth;
     c->version = properties->version;
@@ -4130,6 +4189,7 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     IUnknown_Release(unk);
 
     ISAXXMLReader_putContentHandler(c->reader, &c->content_handler);
+    ISAXXMLReader_putDTDHandler(c->reader, &c->dtd_handler);
 
     V_VT(&v) = VT_UNKNOWN;
     V_UNKNOWN(&v) = (IUnknown *)&c->lexical_handler;
