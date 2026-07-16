@@ -322,6 +322,7 @@ extern HRESULT create_cdata(struct domnode *, IUnknown **);
 extern HRESULT create_children_nodelist(struct domnode *, IXMLDOMNodeList **);
 extern HRESULT create_nodemap(struct domnode *, const struct nodemap_funcs *, IXMLDOMNamedNodeMap **);
 extern HRESULT create_doc_fragment(struct domnode *, IUnknown **);
+extern HRESULT create_entity(struct domnode *, IUnknown **);
 extern HRESULT create_entity_ref(struct domnode *, IUnknown **);
 extern HRESULT create_doc_type(struct domnode *, IUnknown **);
 extern HRESULT create_selection(struct domnode *, BSTR, bool xpath, IXMLDOMNodeList** );

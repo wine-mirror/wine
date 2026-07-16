@@ -47,6 +47,7 @@ typedef enum tid_t
     IXMLDOMDocumentFragment_tid,
     IXMLDOMDocumentType_tid,
     IXMLDOMElement_tid,
+    IXMLDOMEntity_tid,
     IXMLDOMEntityReference_tid,
     IXMLDOMImplementation_tid,
     IXMLDOMNamedNodeMap_tid,

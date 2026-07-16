@@ -3608,8 +3608,8 @@ HRESULT create_node(struct domnode *node, IXMLDOMNode **ret)
         hr = create_doc_type(node, &obj);
         break;
     case NODE_ENTITY:
-        FIXME("Unsupported node type %d.\n", node->type);
-        return E_NOTIMPL;
+        hr = create_entity(node, &obj);
+        break;
     case NODE_NOTATION:
         hr = create_notation(node, &obj);
         break;

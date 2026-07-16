@@ -17,6 +17,7 @@ SOURCES = \
 	domdoc.c \
 	domimpl.c \
 	element.c \
+	entity.c \
 	entityref.c \
 	factory.c \
 	httprequest.c \

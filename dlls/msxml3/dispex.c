@@ -91,6 +91,7 @@ static tid_id_t tid_ids[] = {
     { &IID_IXMLDOMDocumentFragment, LibXml2 },
     { &IID_IXMLDOMDocumentType, LibXml2 },
     { &IID_IXMLDOMElement, LibXml2 },
+    { &IID_IXMLDOMEntity, LibXml2 },
     { &IID_IXMLDOMEntityReference, LibXml2 },
     { &IID_IXMLDOMImplementation, LibXml2 },
     { &IID_IXMLDOMNamedNodeMap, LibXml2 },
