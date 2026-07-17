@@ -3303,7 +3303,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             RECT dst_area;
             GpRectF graphics_bounds;
             GpRect src_area;
-            int i, x, y, src_stride, dst_stride;
+            int i, x, y, src_stride, dst_stride, dst_width, dst_height;
             LPBYTE src_data, dst_data, dst_dyn_data=NULL;
             BitmapData lockeddata;
             InterpolationMode interpolation = graphics->interpolation;
@@ -3350,6 +3350,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             }
 
             TRACE("src_area: %d x %d\n", src_area.Width, src_area.Height);
+
+            if (src_area.Width <= 0 || src_area.Height <= 0 ||
+                src_area.Width > INT_MAX / src_area.Height)
+                return InvalidParameter;
 
             src_data = calloc(src_area.Width * src_area.Height, sizeof(ARGB));
             if (!src_data)
@@ -3413,7 +3417,15 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 y_dy = dst_to_src.matrix[3];
 
                 /* Transform the bits as needed to the destination. */
-                dst_data = dst_dyn_data = calloc((dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top), sizeof(ARGB));
+                dst_width = dst_area.right - dst_area.left;
+                dst_height = dst_area.bottom - dst_area.top;
+                if (dst_width <= 0 || dst_height <= 0 ||
+                    dst_width > INT_MAX / dst_height)
+                {
+                    free(src_data);
+                    return InvalidParameter;
+                }
+                dst_data = dst_dyn_data = calloc(dst_width * dst_height, sizeof(ARGB));
                 if (!dst_data)
                 {
                     free(src_data);
