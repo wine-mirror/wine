@@ -220,72 +220,63 @@ static void create_dispenser(void)
     hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, L"SC.Pool 1 1", &holder3);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
 
-    if(holder1)
-    {
-        SET_EXPECT(driver_CreateResource);
-        SET_EXPECT(driver_Release);
+    SET_EXPECT(driver_CreateResource);
+    SET_EXPECT(driver_Release);
+    str = SysAllocString(L"data1");
+    hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(resid == 10, "got %d\n", (int)resid);
+    SysFreeString(str);
+    CHECK_CALLED(driver_CreateResource);
+    todo_wine CHECK_CALLED_BROKEN(driver_Release);
 
-        str = SysAllocString(L"data1");
-        hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        ok(resid == 10, "got %d\n", (int)resid);
-        SysFreeString(str);
+    SET_EXPECT(driver_ResetResource);
+    hr = IHolder_FreeResource(holder1, resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine CHECK_CALLED(driver_ResetResource);
 
-        CHECK_CALLED(driver_CreateResource);
-        todo_wine CHECK_CALLED_BROKEN(driver_Release);
+    SET_EXPECT(driver_DestroyResource);
+    SET_EXPECT(driver_Release);
+    hr = IHolder_Close(holder1);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    CHECK_CALLED(driver_Release);
+    CHECK_CALLED(driver_DestroyResource);
 
-        SET_EXPECT(driver_ResetResource);
-        hr = IHolder_FreeResource(holder1, resid);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        todo_wine CHECK_CALLED(driver_ResetResource);
+    IHolder_Release(holder1);
 
-        SET_EXPECT(driver_DestroyResource);
-        SET_EXPECT(driver_Release);
-        hr = IHolder_Close(holder1);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        CHECK_CALLED(driver_Release);
-        CHECK_CALLED(driver_DestroyResource);
+    SET_EXPECT(driver_CreateResource);
+    SET_EXPECT(driver_Release);
 
-        IHolder_Release(holder1);
-    }
-    if(holder2)
-    {
-        SET_EXPECT(driver_CreateResource);
-        SET_EXPECT(driver_Release);
+    str = SysAllocString(L"data1");
+    hr = IHolder_AllocResource(holder2, (RESTYPID)str, &resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(resid == 10, "got %d\n", (int)resid);
+    SysFreeString(str);
 
-        str = SysAllocString(L"data1");
-        hr = IHolder_AllocResource(holder2, (RESTYPID)str, &resid);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        ok(resid == 10, "got %d\n", (int)resid);
-        SysFreeString(str);
+    CHECK_CALLED(driver_CreateResource);
+    todo_wine CHECK_CALLED_BROKEN(driver_Release);
 
-        CHECK_CALLED(driver_CreateResource);
-        todo_wine CHECK_CALLED_BROKEN(driver_Release);
+    SET_EXPECT(driver_ResetResource);
+    hr = IHolder_FreeResource(holder2, resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    todo_wine CHECK_CALLED(driver_ResetResource);
 
-        SET_EXPECT(driver_ResetResource);
-        hr = IHolder_FreeResource(holder2, resid);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        todo_wine CHECK_CALLED(driver_ResetResource);
+    /* DestroyResource return doesn't directly affect the Holder Close return value */
+    driver.destroy_resource_hr = E_FAIL;
+    SET_EXPECT(driver_DestroyResource);
+    SET_EXPECT(driver_Release);
+    hr = IHolder_Close(holder2);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    CHECK_CALLED(driver_Release);
+    CHECK_CALLED(driver_DestroyResource);
+    driver.destroy_resource_hr = S_OK;
+    IHolder_Release(holder2);
 
-        /* DestroyResource return doesn't directly affect the Holder Close return value */
-        driver.destroy_resource_hr = E_FAIL;
-        SET_EXPECT(driver_DestroyResource);
-        SET_EXPECT(driver_Release);
-        hr = IHolder_Close(holder2);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        CHECK_CALLED(driver_Release);
-        CHECK_CALLED(driver_DestroyResource);
-        driver.destroy_resource_hr = S_OK;
-        IHolder_Release(holder2);
-    }
-    if(holder3)
-    {
-        SET_EXPECT(driver_Release);
-        hr = IHolder_Close(holder3);
-        ok(hr == S_OK, "got 0x%08lx\n", hr);
-        CHECK_CALLED(driver_Release);
-        IHolder_Release(holder3);
-    }
+    SET_EXPECT(driver_Release);
+    hr = IHolder_Close(holder3);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    CHECK_CALLED(driver_Release);
+    IHolder_Release(holder3);
 
     IDispenserManager_Release(dispenser);
 }
