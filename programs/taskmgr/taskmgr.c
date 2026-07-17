@@ -179,6 +179,9 @@ static BOOL OnCreate(HWND hWnd)
     hUpdateSpeedMenu = GetSubMenu(hViewMenu, 1);
     hCPUHistoryMenu = GetSubMenu(hViewMenu, 7);
 
+    /* Change the default push button to avoid the application closing on pressing enter */
+    SendMessageW(hMainWnd, DM_SETDEFID, IDIGNORE, 0);
+
     /* Check or uncheck the always on top menu item */
     if (TaskManagerSettings.AlwaysOnTop) {
         CheckMenuItem(hEditMenu, ID_OPTIONS_ALWAYSONTOP, MF_BYCOMMAND|MF_CHECKED);
