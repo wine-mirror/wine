@@ -246,6 +246,24 @@ static void test_GetProperty(void)
         hr = IDXCoreAdapter_GetProperty(adapter, DedicatedAdapterMemory, sizeof(memory), &memory);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+        /* SharedSystemMemory */
+        hr = IDXCoreAdapter_GetProperty(adapter, SharedSystemMemory, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, SharedSystemMemory, 0, &memory);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        hr = IDXCoreAdapter_GetProperty(adapter, SharedSystemMemory, sizeof(memory) - 1, &memory);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, SharedSystemMemory, NULL);
+        ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+        hr = IDXCoreAdapter_GetPropertySize(adapter, SharedSystemMemory, &size);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(size == sizeof(memory), "Got size %Iu.\n", size);
+
+        hr = IDXCoreAdapter_GetProperty(adapter, SharedSystemMemory, sizeof(memory), &memory);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
         /* IsHardware */
         hr = IDXCoreAdapter_GetProperty(adapter, IsHardware, 0, NULL);
         ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
