@@ -372,7 +372,6 @@ static void test_CreateStdDispatch(void)
     ok(hr == S_OK, "got %08lx\n", hr);
     hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void **)&disp);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok((IUnknown *)disp != unk, "Unexpected interface pointer %p.\n", disp);
     IDispatch_Release(disp);
 
@@ -384,22 +383,16 @@ static void test_CreateStdDispatch(void)
 
     hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void **)&disp);
     ok(hr == S_OK, "got %08lx\n", hr);
-    todo_wine
     ok((IUnknown *)disp != unk, "Unexpected interface pointer %p.\n", disp);
 
     /* Outer does not support IDispatch */
     disp2 = (void *)0x1;
     hr = IDispatch_QueryInterface(disp, &IID_IDispatch, (void **)&disp2);
-    todo_wine
     ok(hr == 0x80010003, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!disp2, "Unexpected pointer %p.\n", disp2);
-    if (hr == S_OK)
-        IDispatch_Release(disp2);
 
     hr = IDispatch_QueryInterface(disp, &IID_IUnknown, (void **)&unk2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(unk2 == &outer_test_unk, "Unexpected pointer %p.\n", unk2);
     IUnknown_Release(unk2);
 
