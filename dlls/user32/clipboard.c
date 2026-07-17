@@ -1158,7 +1158,14 @@ void drag_drop_leave(void)
 
     TRACE("DND Operation canceled\n");
 
-    if ((object = get_data_object( TRUE ))) IDataObject_Release( &object->IDataObject_iface );
+    if (!(object = get_data_object( TRUE ))) return;
+    if (object->drop_target)
+    {
+        IDropTarget_DragLeave( object->drop_target );
+        IDropTarget_Release( object->drop_target );
+        object->drop_target = NULL;
+    }
+    IDataObject_Release( &object->IDataObject_iface );
 }
 
 DWORD drag_drop_drag( HWND hwnd, POINT point, DWORD effect )
@@ -1276,8 +1283,6 @@ DWORD drag_drop_drop( HWND hwnd )
     {
         HRESULT hr = IDropTarget_DragLeave( object->drop_target );
         if (FAILED(hr)) WARN( "IDropTarget_DragLeave returned %#lx\n", hr );
-        IDropTarget_Release( object->drop_target );
-        object->drop_target = NULL;
     }
 
     if (drop_file)
@@ -1304,6 +1309,12 @@ DWORD drag_drop_drop( HWND hwnd )
             accept = 1;
             effect = DROPEFFECT_COPY;
         }
+    }
+
+     if (object->drop_target)
+    {
+        IDropTarget_Release( object->drop_target );
+        object->drop_target = NULL;
     }
 
     TRACE("effectRequested(0x%lx) accept(%d) performed(0x%lx) at x(%ld),y(%ld)\n",
