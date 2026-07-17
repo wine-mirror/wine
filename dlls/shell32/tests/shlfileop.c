@@ -183,6 +183,7 @@ static void clean_after_shfo_tests(void)
     DeleteFileA("testdir4\\nested\\subnested\\3.txt");
     DeleteFileA("testdir4\\nested\\two.txt");
     DeleteFileA("testdir4\\nested\\2.txt");
+    DeleteFileA("testdir4\\one.txt");
     RemoveDirectoryA("testdir4\\nested\\subnested");
     RemoveDirectoryA("testdir4\\nested");
     RemoveDirectoryA("testdir4");
@@ -843,6 +844,9 @@ static void test_rename(void)
         check_file_operation(FO_RENAME, FOF_NO_UI,
                 "testdir2\0", "testdir4\0",
                 ERROR_SUCCESS, FALSE, TRUE, FALSE);
+        todo_wine
+        ok(!dir_exists("testdir2"), "The dir is not renamed\n");
+        ok(dir_exists("testdir4"), "The dir is not renamed\n");
     }
     else
         win_skip("Skip FO_RENAME with already existing target directory.\n");
