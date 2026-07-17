@@ -303,12 +303,51 @@ static const IUnknownVtbl unkvtbl =
 
 static IUnknown test_unk = { &unkvtbl };
 
+static HRESULT WINAPI outer_unk_QI(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IDispatch))
+    {
+        *obj = NULL;
+        return 0x80010003;
+    }
+    else
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI outer_unk_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI outer_unk_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl outerunkvtbl =
+{
+    outer_unk_QI,
+    outer_unk_AddRef,
+    outer_unk_Release
+};
+
+static IUnknown outer_test_unk = { &outerunkvtbl };
+
 static void test_CreateStdDispatch(void)
 {
     static const WCHAR stdole2W[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+    IDispatch *disp, *disp2;
+    IUnknown *unk, *unk2;
     ITypeLib *tl;
     ITypeInfo *ti;
-    IUnknown *unk;
     HRESULT hr;
 
     hr = CreateStdDispatch(NULL, NULL, NULL, NULL);
@@ -331,6 +370,40 @@ static void test_CreateStdDispatch(void)
 
     hr = CreateStdDispatch(NULL, &test_unk, ti, &unk);
     ok(hr == S_OK, "got %08lx\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void **)&disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok((IUnknown *)disp != unk, "Unexpected interface pointer %p.\n", disp);
+    IDispatch_Release(disp);
+
+    IUnknown_Release(unk);
+
+    /* With aggregation */
+    hr = CreateStdDispatch(&outer_test_unk, &test_unk, ti, &unk);
+    ok(hr == S_OK, "got %08lx\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void **)&disp);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    todo_wine
+    ok((IUnknown *)disp != unk, "Unexpected interface pointer %p.\n", disp);
+
+    /* Outer does not support IDispatch */
+    disp2 = (void *)0x1;
+    hr = IDispatch_QueryInterface(disp, &IID_IDispatch, (void **)&disp2);
+    todo_wine
+    ok(hr == 0x80010003, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!disp2, "Unexpected pointer %p.\n", disp2);
+    if (hr == S_OK)
+        IDispatch_Release(disp2);
+
+    hr = IDispatch_QueryInterface(disp, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(unk2 == &outer_test_unk, "Unexpected pointer %p.\n", unk2);
+    IUnknown_Release(unk2);
+
+    IDispatch_Release(disp);
     IUnknown_Release(unk);
 
     ITypeInfo_Release(ti);
