@@ -315,8 +315,6 @@ static void client_surface_update_offscreen( HWND hwnd, struct x11drv_client_sur
     BOOL offscreen = needs_offscreen_rendering( hwnd );
     struct x11drv_win_data *data;
 
-    TRACE( "%s offscreen %u\n", debugstr_client_surface( &surface->client ), offscreen );
-
     if (InterlockedExchange( &surface->client.offscreen, offscreen ) == offscreen)
     {
         if (!offscreen && (data = get_win_data( hwnd )))
@@ -325,6 +323,10 @@ static void client_surface_update_offscreen( HWND hwnd, struct x11drv_client_sur
             release_win_data( data );
         }
         return;
+    }
+    else
+    {
+        TRACE( "%s offscreen %u\n", debugstr_client_surface( &surface->client ), offscreen );
     }
 
     if (!offscreen)
@@ -372,8 +374,6 @@ static void x11drv_client_surface_update( struct client_surface *client )
     struct x11drv_client_surface *surface = impl_from_client_surface( client );
     HWND hwnd = client->hwnd;
 
-    TRACE( "%s\n", debugstr_client_surface( client ) );
-
     client_surface_update_geometry( hwnd, surface );
     client_surface_update_offscreen( hwnd, surface );
 }
@@ -385,8 +385,6 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
     RECT rect_dst, rect_src = client->virtual_rect, rect;
     Drawable window;
     HRGN region;
-
-    TRACE( "%s\n", debugstr_client_surface( client ) );
 
     if (!hdc) return;
     window = X11DRV_get_whole_window( toplevel );
