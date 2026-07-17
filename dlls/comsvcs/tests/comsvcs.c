@@ -177,7 +177,7 @@ static DWORD WINAPI com_thread(void *arg)
 static void create_dispenser(void)
 {
     HRESULT hr;
-    IDispenserManager *dispenser = NULL;
+    IDispenserManager *dispenser = NULL, *dispenser2;
     IHolder *holder1 = NULL, *holder2 = NULL, *holder3 = NULL;
     HANDLE thread;
     RESID resid;
@@ -185,13 +185,18 @@ static void create_dispenser(void)
     BSTR str;
     struct test_driver driver;
 
-    hr = CoCreateInstance( &CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser);
+    hr = CoCreateInstance(&CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser);
     ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
     if(FAILED(hr))
     {
         win_skip("DispenserManager not available\n");
         return;
     }
+
+    hr = CoCreateInstance(&CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser2);
+    ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
+    todo_wine ok(dispenser == dispenser2, "dispenser objects are different\n");
+    IDispenserManager_Release(dispenser2);
 
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
     ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
