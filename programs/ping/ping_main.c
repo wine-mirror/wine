@@ -50,11 +50,12 @@ int __cdecl main(int argc, char** argv)
     int res;
     int rec = 0, lost = 0, min = INT_MAX, max = 0;
     WSADATA wsa;
-    HANDLE icmp_file;
-    unsigned long ipaddr;
+    HANDLE icmp_file = INVALID_HANDLE_VALUE;
+    unsigned long ipaddr = INADDR_NONE;
     DWORD retval, reply_size;
-    char *send_data, ip[100], *hostname = NULL, rtt[16];
-    void *reply_buffer;
+    char *send_data = NULL, *hostname = NULL, rtt[16];
+    char ip_str[INET_ADDRSTRLEN];
+    void *reply_buffer = NULL;
     struct in_addr addr;
     ICMP_ECHO_REPLY *reply;
     float avg = 0;
@@ -63,9 +64,10 @@ int __cdecl main(int argc, char** argv)
     if (argc == 1)
     {
         usage();
-        exit(1);
+        return 1;
     }
 
+    /* Parse command line arguments */
     for (i = 1; i < argc; i++)
     {
         if (argv[i][0] == '-' || argv[i][0] == '/')
@@ -73,51 +75,27 @@ int __cdecl main(int argc, char** argv)
             switch (argv[i][1])
             {
             case 'n':
-                if (i == argc - 1)
-                {
-                    printf( "Missing value for option %s\n", argv[i] );
-                    exit(1);
-                }
+                if (i == argc - 1) return 1;
                 n = atoi(argv[++i]);
-                if (n == 0)
-                {
-                  printf("Bad value for option -n, valid range is from 1 to 4294967295.\n");
-                  exit(1);
-                }
+                if (n == 0) return 1; /* Prevent 0 packet count */
                 break;
             case 'w':
-                if (i == argc - 1)
-                {
-                    printf( "Missing value for option %s\n", argv[i] );
-                    exit(1);
-                }
+                if (i == argc - 1) return 1;
                 w = atoi(argv[++i]);
-                if (w == 0)
-                {
-                    printf("Bad value for option -w.\n");
-                    exit(1);
-                }
+                if (w == 0) return 1;
                 break;
             case 'l':
-                if (i == argc - 1)
-                {
-                    printf( "Missing value for option %s\n", argv[i] );
-                    exit(1);
-                }
+                if (i == argc - 1) return 1;
                 l = atoi(argv[++i]);
-                if (l == 0)
-                {
-                    printf("Bad value for option -l.\n");
-                    exit(1);
-                }
+                if (l == 0) return 1;
                 break;
             case '?':
                 usage();
-                exit(1);
+                return 0;
             default:
                 usage();
                 WINE_FIXME( "this command currently only supports the -n, -w and -l parameters.\n" );
-                exit(1);
+                return 1;
             }
         }
         else
@@ -125,7 +103,7 @@ int __cdecl main(int argc, char** argv)
             if (hostname)
             {
                 printf( "Bad argument %s\n", argv[i] );
-                exit(1);
+                return 1;
             }
             hostname = argv[i];
         }
@@ -137,6 +115,7 @@ int __cdecl main(int argc, char** argv)
         return 1;
     }
 
+    /* Initialize Winsock */
     res = WSAStartup(MAKEWORD(2, 2), &wsa);
     if (res != 0)
     {
@@ -144,50 +123,84 @@ int __cdecl main(int argc, char** argv)
         return 1;
     }
 
+    /* Resolve hostname to IP */
     remote_host = gethostbyname(hostname);
     if (remote_host == NULL)
     {
         printf("Ping request could not find host %s. Please check the name and try again.\n",
                hostname);
+        WSACleanup();
         return 1;
     }
 
-    addr.s_addr = *(u_long *) remote_host->h_addr_list[0];
-    strcpy(ip, inet_ntoa(addr));
-    ipaddr = inet_addr(ip);
+    /* Extract the IP address directly from the host entry */
+    ipaddr = *(u_long *) remote_host->h_addr_list[0];
+
+    /* Convert to string only for display purposes */
+    addr.s_addr = ipaddr;
+    strcpy(ip_str, inet_ntoa(addr));
+
     if (ipaddr == INADDR_NONE)
     {
-        printf("Could not get IP address of host %s.", hostname);
+        printf("Could not get IP address of host %s.\n", hostname);
+        WSACleanup();
         return 1;
     }
 
+    /* Create a handle for ICMP requests */
     icmp_file = IcmpCreateFile();
+    if (icmp_file == INVALID_HANDLE_VALUE)
+    {
+        printf("Unable to open ICMP handle. Error: %ld\n", GetLastError());
+        WSACleanup();
+        return 1;
+    }
 
+    /* Allocate the send buffer */
     send_data = calloc(1, l);
+    if (!send_data)
+    {
+        printf("Memory allocation failed for send buffer.\n");
+        IcmpCloseHandle(icmp_file);
+        WSACleanup();
+        return 1;
+    }
+
+    /* Calculate reply buffer size (Reply struct + Data + 8 bytes for ICMP error) */
     reply_size = sizeof(ICMP_ECHO_REPLY) + l + 8;
-    /* The buffer has to hold 8 more bytes of data (the size of an ICMP error message). */
     reply_buffer = malloc(reply_size);
     if (reply_buffer == NULL)
     {
         printf("Unable to allocate memory to reply buffer.\n");
+        free(send_data);
+        IcmpCloseHandle(icmp_file);
+        WSACleanup();
         return 1;
     }
 
-    printf("Pinging %s [%s] with %d bytes of data:\n", hostname, ip, l);
+    printf("Pinging %s [%s] with %d bytes of data:\n", hostname, ip_str, l);
+
     for (i = 0; i < n; i++)
     {
         SetLastError(0);
+        /* Send the ICMP Echo Request */
         retval = IcmpSendEcho(icmp_file, ipaddr, send_data, l,
             NULL, reply_buffer, reply_size, w);
+
         if (retval != 0)
         {
             reply = (ICMP_ECHO_REPLY *) reply_buffer;
+            
+            /* Format RTT display */
             if (reply->RoundTripTime >= 1)
                 sprintf(rtt, "=%ld", reply->RoundTripTime);
             else
                 strcpy(rtt, "<1");
-            printf("Reply from %s: bytes=%d time%sms TTL=%d\n", ip, l,
+
+            printf("Reply from %s: bytes=%d time%sms TTL=%d\n", ip_str, l,
                 rtt, reply->Options.Ttl);
+
+            /* Update statistics */
             if (reply->RoundTripTime > max)
                 max = reply->RoundTripTime;
             if (reply->RoundTripTime < min)
@@ -203,12 +216,20 @@ int __cdecl main(int argc, char** argv)
                 puts("PING: transmit failed. General failure.");
             lost++;
         }
+
+        /* Wait 1 second between pings, but not after the last one */
         if (i < n - 1) Sleep(1000);
     }
 
-    printf("\nPing statistics for %s\n", ip);
+    /* Display final statistics */
+    printf("\nPing statistics for %s\n", ip_str);
+    
+    /* Calculate loss percentage (protected against division by zero) */
+    float loss_pct = (n > 0) ? (float)lost / n * 100 : 0;
+    
     printf("\tPackets: Sent = %d, Received = %d, Lost = %d (%.0f%% loss)\n",
-        n, rec, lost, (float) lost / n * 100);
+        n, rec, lost, loss_pct);
+
     if (rec != 0)
     {
         avg /= rec;
@@ -217,6 +238,11 @@ int __cdecl main(int argc, char** argv)
                min, max, avg);
     }
 
+    /* Cleanup resources */
     free(reply_buffer);
+    free(send_data);
+    IcmpCloseHandle(icmp_file);
+    WSACleanup();
+
     return 0;
 }
