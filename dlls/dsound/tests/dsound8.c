@@ -1476,12 +1476,22 @@ static ULONG WINAPI dmo_inplace_Release(IMediaObjectInPlace *iface)
 static HRESULT WINAPI dmo_inplace_Process(IMediaObjectInPlace *iface, ULONG size,
         BYTE *data, REFERENCE_TIME start, DWORD flags)
 {
+    static const BYTE expected_data[] = {0xad, 0x10, 0xda, 0x7a};
+    int i;
+
     if (winetest_debug > 1) trace("Process(size %lu)\n", size);
 
     ok(!start, "Got start time %s.\n", wine_dbgstr_longlong(start));
     ok(!flags, "Got flags %#lx.\n", flags);
 
-    SetEvent(got_Process);
+    for (i = 0; i < size + 1 - sizeof(expected_data); ++i)
+    {
+        if (!memcmp(data + i, expected_data, sizeof(expected_data)))
+        {
+            SetEvent(got_Process);
+            break;
+        }
+    }
 
     return S_FALSE;
 }
@@ -1576,6 +1586,7 @@ static void test_effects(void)
     IUnknown *unk;
     HRESULT hr;
     ULONG ref;
+    int i;
 
     hr = DirectSoundCreate8(NULL, &dsound, NULL);
     ok(hr == DS_OK || hr == DSERR_NODRIVER, "Got hr %#lx.\n", hr);
@@ -1751,6 +1762,26 @@ static void test_effects(void)
 
     IMediaObject_Release(echo);
     IMediaObject_Release(reverb);
+
+    hr = IDirectSoundBuffer8_Lock(buffer8, 0, 0, &ptr1, &size1, &ptr2, &size2, DSBLOCK_ENTIREBUFFER);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
+    for (i = 0;;)
+    {
+        if (i >= size1) break;
+        ((BYTE *)ptr1)[i] = 0xad;
+        ++i;
+        if (i >= size1) break;
+        ((BYTE *)ptr1)[i] = 0x10;
+        ++i;
+        if (i >= size1) break;
+        ((BYTE *)ptr1)[i] = 0xda;
+        ++i;
+        if (i >= size1) break;
+        ((BYTE *)ptr1)[i] = 0x7a;
+        ++i;
+    }
+    hr = IDirectSoundBuffer8_Unlock(buffer8, ptr1, size1, ptr2, size2);
+    ok(hr == DS_OK, "Got hr %#lx.\n", hr);
 
     got_Process = CreateEventA(NULL, TRUE, FALSE, NULL);
 
