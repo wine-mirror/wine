@@ -17751,9 +17751,7 @@ if (hr == S_OK)
 
     b = VARIANT_TRUE;
     hr = IXMLDOMDocumentType_hasChildNodes(doctype, &b);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(b == VARIANT_FALSE, "Unexpected value %d\n", b);
 
     IXMLDOMDocumentType_Release(doctype);
@@ -17840,6 +17838,7 @@ static void test_dtd_children(void)
     IXMLDOMNodeList *list;
     IXMLDOMDocument *doc;
     BSTR str, str2;
+    VARIANT_BOOL b;
     HRESULT hr;
     LONG len;
 
@@ -17850,6 +17849,11 @@ static void test_dtd_children(void)
 
     hr = IXMLDOMDocument_get_doctype(doc, &doctype);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocumentType_hasChildNodes(doctype, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "Unexpected value %d\n", b);
 
     hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

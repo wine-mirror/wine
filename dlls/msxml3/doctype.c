@@ -271,9 +271,11 @@ static HRESULT WINAPI domdoctype_appendChild(IXMLDOMDocumentType *iface, IXMLDOM
 
 static HRESULT WINAPI domdoctype_hasChildNodes(IXMLDOMDocumentType *iface, VARIANT_BOOL *v)
 {
-    FIXME("%p, %p: stub\n", iface, v);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, v);
+
+    return node_has_childnodes(doctype->node, v);
 }
 
 static HRESULT WINAPI domdoctype_get_ownerDocument(IXMLDOMDocumentType *iface, IXMLDOMDocument **doc)
