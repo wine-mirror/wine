@@ -110,6 +110,7 @@ static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
         [DriverVersion] = sizeof(LARGE_INTEGER),
         [HardwareID] = sizeof(DXCoreHardwareID),
         [DedicatedAdapterMemory] = sizeof(UINT64),
+        [DedicatedSystemMemory] = sizeof(UINT64),
         [SharedSystemMemory] = sizeof(UINT64),
         [IsHardware] = sizeof(BYTE),
     };
@@ -120,6 +121,7 @@ static HRESULT dxcore_adapter_get_property_size(struct dxcore_adapter *adapter,
         case DriverVersion:
         case HardwareID:
         case DedicatedAdapterMemory:
+        case DedicatedSystemMemory:
         case SharedSystemMemory:
         case IsHardware:
             *size = property_sizes[property];
@@ -180,6 +182,11 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *ifac
 
         case DedicatedAdapterMemory:
             *(UINT64 *)buffer = adapter->identifier.video_memory;
+            break;
+
+        case DedicatedSystemMemory:
+            FIXME("Returning 0 for DedicatedSystemMemory.\n");
+            *(UINT64 *)buffer = 0;
             break;
 
         case SharedSystemMemory:
