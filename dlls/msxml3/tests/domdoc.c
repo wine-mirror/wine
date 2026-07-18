@@ -18024,13 +18024,14 @@ static void test_dtd_notation(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMNode_get_nodeName(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"notation0"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
+
+    hr = IXMLDOMNode_get_baseName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"notation0"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
 
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

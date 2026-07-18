@@ -144,9 +144,11 @@ static HRESULT WINAPI domnotation_Invoke(IXMLDOMNotation *iface, DISPID dispIdMe
 
 static HRESULT WINAPI domnotation_get_nodeName(IXMLDOMNotation *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    struct domnotation *notation = impl_from_IXMLDOMNotation(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_name(notation->node, p);
 }
 
 static HRESULT WINAPI domnotation_get_nodeValue(IXMLDOMNotation *iface, VARIANT *v)
@@ -395,9 +397,11 @@ static HRESULT WINAPI domnotation_get_prefix(IXMLDOMNotation *iface, BSTR *prefi
 
 static HRESULT WINAPI domnotation_get_baseName(IXMLDOMNotation *iface, BSTR *name)
 {
-    FIXME("%p, %p: stub\n", iface, name);
+    struct domnotation *notation = impl_from_IXMLDOMNotation(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, name);
+
+    return node_get_name(notation->node, name);
 }
 
 static HRESULT WINAPI domnotation_transformNodeToObject(IXMLDOMNotation *iface, IXMLDOMNode *node, VARIANT var1)
