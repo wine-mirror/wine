@@ -17853,22 +17853,6 @@ static void test_dtd_children(void)
 
     hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_get_nodeTypeString(node, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_get_nodeTypeString(node, &str);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"notation"), "Unexpected type %s.\n", debugstr_w(str));
-    SysFreeString(str);
-    hr = IXMLDOMNode_get_text(node, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_get_text(node, &str);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
-    SysFreeString(str);
-    hr = IXMLDOMNode_put_text(node, NULL);
-    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_put_text(node, _bstr_("text"));
-    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     expect_node(node, "N1.DT2.D1");
     hr = IXMLDOMDocumentType_removeChild(doctype, node, &node2);
@@ -18010,6 +17994,99 @@ if (hr == S_OK)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_dtd_notation(void)
+{
+    static const char xml_dtd[] =
+        "<?xml version=\"1.0\" ?>\n"
+        "<!DOCTYPE a [\n"
+        "<!NOTATION notation0 PUBLIC  \"pub-id-0\" \"sys-id-0\" >\n"
+        "<!NOTATION notation1  PUBLIC \"pub-id-1\" >\n"
+        "<!ELEMENT a ANY>\n"
+        "]>\n"
+        "<a></a>";
+
+    IXMLDOMDocumentType *doctype;
+    DOMNodeType node_type;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xml_dtd), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(!wcscmp(str, L"notation0"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+}
+
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_NOTATION, "Unexpected type %d.\n", node_type);
+
+    hr = IXMLDOMNode_get_nodeTypeString(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeTypeString(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"notation"), "Unexpected type %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Text property */
+    hr = IXMLDOMNode_get_text(node, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_text(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMNode_put_text(node, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_put_text(node, _bstr_("text"));
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    /* XML property */
+    hr = IXMLDOMDocumentType_get_firstChild(doctype, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(!wcscmp(str, L"<!NOTATION notation0 PUBLIC \"pub-id-0\" \"sys-id-0\">"), "Unexpected type %s.\n", debugstr_w(str));
+    SysFreeString(str);
+}
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocumentType_get_lastChild(doctype, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node, &str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(!wcscmp(str, L"<!NOTATION notation1 PUBLIC \"pub-id-1\">"), "Unexpected type %s.\n", debugstr_w(str));
+    SysFreeString(str);
+}
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMDocumentType_Release(doctype);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -18121,6 +18198,7 @@ START_TEST(domdoc)
     test_doctype();
     test_entityref();
     test_dtd_children();
+    test_dtd_notation();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
