@@ -18167,11 +18167,8 @@ if (hr == S_OK)
 }
     /* Entity attributes */
     hr = IXMLDOMNode_get_attributes(node, &map);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IXMLDOMNamedNodeMap_get_length(map, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
@@ -18200,22 +18197,18 @@ if (hr == S_OK)
 
     IXMLDOMNamedNodeMap_Release(map);
     IXMLDOMNode_Release(node);
-}
 
     /* Character entity */
     hr = IXMLDOMNodeList_get_item(list, 2, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMNode_get_attributes(node, &map);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!len, "Unexpected length %ld.\n", len);
     IXMLDOMNamedNodeMap_Release(map);
-}
+
     hr = IXMLDOMNode_get_nodeName(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"ent3"), "Unexpected name %s.\n", debugstr_w(str));

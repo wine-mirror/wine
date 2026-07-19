@@ -41,6 +41,8 @@ struct domentity
     struct domnode *node;
 };
 
+static const struct nodemap_funcs domentity_attr_map;
+
 static const tid_t entity_se_tids[] =
 {
     IXMLDOMNode_tid,
@@ -223,9 +225,11 @@ static HRESULT WINAPI domentity_get_nextSibling(IXMLDOMEntity *iface, IXMLDOMNod
 
 static HRESULT WINAPI domentity_get_attributes(IXMLDOMEntity *iface, IXMLDOMNamedNodeMap **map)
 {
-    FIXME("%p, %p: stub\n", iface, map);
+    struct domentity *entity = impl_from_IXMLDOMEntity(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, map);
+
+    return create_nodemap(entity->node, &domentity_attr_map, map);
 }
 
 static HRESULT WINAPI domentity_insertBefore(IXMLDOMEntity *iface, IXMLDOMNode *node,
@@ -482,6 +486,81 @@ static const struct IXMLDOMEntityVtbl domentity_vtbl =
     domentity_get_publicId,
     domentity_get_systemId,
     domentity_get_notationName,
+};
+
+static HRESULT domentity_get_qualified_item(const struct domnode *node, BSTR name, BSTR uri,
+    IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %s, %p.\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    if (!name || !item)
+        return E_INVALIDARG;
+
+    return node_get_qualified_attribute(node, name, uri, item);
+}
+
+static HRESULT domentity_get_named_item(const struct domnode *node, BSTR name, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %p.\n", node, debugstr_w(name), item);
+
+    if (!name || !item)
+        return E_INVALIDARG;
+
+    return node_get_attribute(node, name, (IXMLDOMAttribute **)item);
+}
+
+static HRESULT domentity_set_named_item(struct domnode *node, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)
+{
+    TRACE("%p, %p, %p.\n", node, newItem, namedItem );
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domentity_remove_qualified_item(struct domnode *node, BSTR name, BSTR uri, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %s, %p.\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domentity_remove_named_item(struct domnode *node, BSTR name, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %p.\n", node, debugstr_w(name), item);
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domentity_get_item(struct domnode *node, LONG index, IXMLDOMNode **item)
+{
+    TRACE("%p, %ld, %p.\n", node, index, item);
+
+    return node_get_attribute_by_index(node, index, item);
+}
+
+static HRESULT domentity_get_length(struct domnode *node, LONG *length)
+{
+    TRACE("%p, %p.\n", node, length);
+
+    return node_get_attribute_count(node, length);
+}
+
+static HRESULT domentity_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **nextNode)
+{
+    FIXME("%p, %ld, %p.\n", node, *iter, nextNode);
+
+    return E_NOTIMPL;
+}
+
+static const struct nodemap_funcs domentity_attr_map =
+{
+    .get_named_item = domentity_get_named_item,
+    .set_named_item = domentity_set_named_item,
+    .remove_named_item = domentity_remove_named_item,
+    .get_item = domentity_get_item,
+    .get_length = domentity_get_length,
+    .get_qualified_item = domentity_get_qualified_item,
+    .remove_qualified_item = domentity_remove_qualified_item,
+    .next_node = domentity_next_node,
 };
 
 static const tid_t domentity_iface_tids[] =

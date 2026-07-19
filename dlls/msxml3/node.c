@@ -4002,10 +4002,32 @@ static HRESULT WINAPI parse_dtd_handler_unparsedEntityDecl(ISAXDTDHandler *iface
         const WCHAR *notation_name, int notation_name_len)
 {
     struct parse_context *c = impl_from_ISAXDTDHandler(iface);
-    struct domnode *node;
+    struct domnode *node, *attr;
 
     parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
     parse_context_node_put_data(c, node, NULL, 0);
+
+    if (pubid)
+    {
+        parse_context_node_create(c, NODE_ATTRIBUTE, L"PUBLIC", 6, NULL, 0, c->root, &attr);
+        parse_context_append_attribute(c, node, attr);
+        parse_context_node_put_data(c, attr, pubid, pubid_len);
+    }
+
+    if (sysid)
+    {
+        parse_context_node_create(c, NODE_ATTRIBUTE, L"SYSTEM", 6, NULL, 0, c->root, &attr);
+        parse_context_append_attribute(c, node, attr);
+        parse_context_node_put_data(c, attr, sysid, sysid_len);
+    }
+
+    if (notation_name)
+    {
+        parse_context_node_create(c, NODE_ATTRIBUTE, L"NDATA", 6, NULL, 0, c->root, &attr);
+        parse_context_append_attribute(c, node, attr);
+        parse_context_node_put_data(c, attr, notation_name, notation_name_len);
+    }
+
     parse_context_append_child(c, c->node, node);
 
     return c->status;
