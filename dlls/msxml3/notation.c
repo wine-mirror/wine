@@ -41,6 +41,8 @@ struct domnotation
     struct domnode *node;
 };
 
+static const struct nodemap_funcs domnotation_attr_map;
+
 static const tid_t notation_se_tids[] =
 {
     IXMLDOMNode_tid,
@@ -223,9 +225,11 @@ static HRESULT WINAPI domnotation_get_nextSibling(IXMLDOMNotation *iface, IXMLDO
 
 static HRESULT WINAPI domnotation_get_attributes(IXMLDOMNotation *iface, IXMLDOMNamedNodeMap **map)
 {
-    FIXME("%p, %p: stub\n", iface, map);
+    struct domnotation *notation = impl_from_IXMLDOMNotation(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, map);
+
+    return create_nodemap(notation->node, &domnotation_attr_map, map);
 }
 
 static HRESULT WINAPI domnotation_insertBefore(IXMLDOMNotation *iface, IXMLDOMNode *node,
@@ -472,6 +476,81 @@ static const struct IXMLDOMNotationVtbl domnotation_vtbl =
     domnotation_transformNodeToObject,
     domnotation_get_publicId,
     domnotation_get_systemId,
+};
+
+static HRESULT domnotation_get_qualified_item(const struct domnode *node, BSTR name, BSTR uri,
+    IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %s, %p.\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    if (!name || !item)
+        return E_INVALIDARG;
+
+    return node_get_qualified_attribute(node, name, uri, item);
+}
+
+static HRESULT domnotation_get_named_item(const struct domnode *node, BSTR name, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %p.\n", node, debugstr_w(name), item);
+
+    if (!name || !item)
+        return E_INVALIDARG;
+
+    return node_get_attribute(node, name, (IXMLDOMAttribute **)item);
+}
+
+static HRESULT domnotation_set_named_item(struct domnode *node, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)
+{
+    TRACE("%p, %p, %p.\n", node, newItem, namedItem );
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domnotation_remove_qualified_item(struct domnode *node, BSTR name, BSTR uri, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %s, %p.\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domnotation_remove_named_item(struct domnode *node, BSTR name, IXMLDOMNode **item)
+{
+    TRACE("%p, %s, %p.\n", node, debugstr_w(name), item);
+
+    return E_INVALIDARG;
+}
+
+static HRESULT domnotation_get_item(struct domnode *node, LONG index, IXMLDOMNode **item)
+{
+    TRACE("%p, %ld, %p.\n", node, index, item);
+
+    return node_get_attribute_by_index(node, index, item);
+}
+
+static HRESULT domnotation_get_length(struct domnode *node, LONG *length)
+{
+    TRACE("%p, %p.\n", node, length);
+
+    return node_get_attribute_count(node, length);
+}
+
+static HRESULT domnotation_next_node(const struct domnode *node, LONG *iter, IXMLDOMNode **nextNode)
+{
+    FIXME("%p, %ld, %p.\n", node, *iter, nextNode);
+
+    return E_NOTIMPL;
+}
+
+static const struct nodemap_funcs domnotation_attr_map =
+{
+    .get_named_item = domnotation_get_named_item,
+    .set_named_item = domnotation_set_named_item,
+    .remove_named_item = domnotation_remove_named_item,
+    .get_item = domnotation_get_item,
+    .get_length = domnotation_get_length,
+    .get_qualified_item = domnotation_get_qualified_item,
+    .remove_qualified_item = domnotation_remove_qualified_item,
+    .next_node = domnotation_next_node,
 };
 
 static const tid_t domnotation_iface_tids[] =

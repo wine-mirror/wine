@@ -3974,10 +3974,24 @@ static HRESULT WINAPI parse_dtd_handler_notationDecl(ISAXDTDHandler *iface, cons
         int name_len, const WCHAR *pubid, int pubid_len, const WCHAR *sysid, int sysid_len)
 {
     struct parse_context *c = impl_from_ISAXDTDHandler(iface);
-    struct domnode *node;
+    struct domnode *node, *attr;
 
     parse_context_node_create(c, NODE_NOTATION, name, name_len, NULL, 0, c->root, &node);
     parse_context_append_child(c, c->node, node);
+
+    if (pubid)
+    {
+        parse_context_node_create(c, NODE_ATTRIBUTE, L"PUBLIC", 6, NULL, 0, c->root, &attr);
+        parse_context_append_attribute(c, node, attr);
+        parse_context_node_put_data(c, attr, pubid, pubid_len);
+    }
+
+    if (sysid)
+    {
+        parse_context_node_create(c, NODE_ATTRIBUTE, L"SYSTEM", 6, NULL, 0, c->root, &attr);
+        parse_context_append_attribute(c, node, attr);
+        parse_context_node_put_data(c, attr, sysid, sysid_len);
+    }
 
     return c->status;
 }

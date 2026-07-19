@@ -18058,10 +18058,8 @@ if (hr == S_OK)
 
     /* Notation attributes */
     hr = IXMLDOMNode_get_attributes(node, &map);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
+
     hr = IXMLDOMNamedNodeMap_get_length(map, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
@@ -18089,7 +18087,6 @@ if (hr == S_OK)
     SysFreeString(str);
 
     IXMLDOMNamedNodeMap_Release(map);
-}
 
     IXMLDOMNode_Release(node);
 
