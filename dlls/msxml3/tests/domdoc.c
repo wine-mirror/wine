@@ -18146,21 +18146,15 @@ static void test_dtd_entity(void)
 
     /* Text property */
     hr = IXMLDOMNode_get_text(node, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_text(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
+
     hr = IXMLDOMNode_put_text(node, NULL);
-    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_put_text(node, _bstr_("text"));
-    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMNode_get_xml(node, &str);
@@ -18229,16 +18223,11 @@ if (hr == S_OK)
 
     /* Text property */
     hr = IXMLDOMNode_get_text(node, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_text(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"text3"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     IXMLDOMNode_Release(node);
 

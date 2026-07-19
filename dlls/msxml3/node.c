@@ -1715,6 +1715,7 @@ HRESULT node_get_text(struct domnode *node, BSTR *text)
         case NODE_COMMENT:
         case NODE_ENTITY_REFERENCE:
         case NODE_CDATA_SECTION:
+        case NODE_ENTITY:
             return return_bstr(node->data, text);
 
         case NODE_PROCESSING_INSTRUCTION:
@@ -4004,6 +4005,7 @@ static HRESULT WINAPI parse_dtd_handler_unparsedEntityDecl(ISAXDTDHandler *iface
     struct domnode *node;
 
     parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
+    parse_context_node_put_data(c, node, NULL, 0);
     parse_context_append_child(c, c->node, node);
 
     return c->status;
@@ -4066,6 +4068,7 @@ static HRESULT WINAPI parse_decl_handler_internalEntityDecl(ISAXDeclHandler *ifa
     {
         parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
         parse_context_append_child(c, c->node, node);
+        parse_context_node_put_data(c, node, value, value_len);
     }
 
     return c->status;

@@ -292,16 +292,18 @@ static HRESULT WINAPI domentity_get_nodeTypeString(IXMLDOMEntity *iface, BSTR *p
 
 static HRESULT WINAPI domentity_get_text(IXMLDOMEntity *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    struct domentity *entity = impl_from_IXMLDOMEntity(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_text(entity->node, p);
 }
 
 static HRESULT WINAPI domentity_put_text(IXMLDOMEntity *iface, BSTR p)
 {
-    FIXME("%p, %s: stub\n", iface, debugstr_w(p));
+    TRACE("%p, %s.\n", iface, debugstr_w(p));
 
-    return E_NOTIMPL;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domentity_get_specified(IXMLDOMEntity *iface, VARIANT_BOOL *v)
