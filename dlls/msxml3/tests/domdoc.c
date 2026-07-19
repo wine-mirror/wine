@@ -18129,13 +18129,9 @@ static void test_dtd_entity(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMNode_get_nodeName(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"ent1"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     hr = IXMLDOMNode_get_nodeType(node, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -18227,13 +18223,9 @@ if (hr == S_OK)
     IXMLDOMNamedNodeMap_Release(map);
 }
     hr = IXMLDOMNode_get_nodeName(node, &str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(!wcscmp(str, L"ent3"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
-}
 
     /* Text property */
     hr = IXMLDOMNode_get_text(node, NULL);

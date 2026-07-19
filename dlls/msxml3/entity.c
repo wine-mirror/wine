@@ -144,9 +144,11 @@ static HRESULT WINAPI domentity_Invoke(IXMLDOMEntity *iface, DISPID dispIdMember
 
 static HRESULT WINAPI domentity_get_nodeName(IXMLDOMEntity *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    struct domentity *entity = impl_from_IXMLDOMEntity(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_name(entity->node, p);
 }
 
 static HRESULT WINAPI domentity_get_nodeValue(IXMLDOMEntity *iface, VARIANT *v)
@@ -393,11 +395,13 @@ static HRESULT WINAPI domentity_get_prefix(IXMLDOMEntity *iface, BSTR *prefix)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domentity_get_baseName(IXMLDOMEntity *iface, BSTR *name)
+static HRESULT WINAPI domentity_get_baseName(IXMLDOMEntity *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, name);
+    struct domentity *entity = impl_from_IXMLDOMEntity(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_name(entity->node, p);
 }
 
 static HRESULT WINAPI domentity_transformNodeToObject(IXMLDOMEntity *iface, IXMLDOMNode *node, VARIANT var1)
