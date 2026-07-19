@@ -17961,28 +17961,6 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"notation0"), "Unexpected name %s.\n", debugstr_w(str));
 
-    hr = IXMLDOMNode_get_attributes(node, &map2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNamedNodeMap_get_length(map2, &len);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(len == 2, "Unexpected length %ld.\n", len);
-
-    hr = IXMLDOMNamedNodeMap_get_item(map2, 0, &node2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_get_nodeName(node2, &str2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str2, L"PUBLIC"), "Unexpected name %s.\n", debugstr_w(str2));
-    IXMLDOMNode_Release(node2);
-
-    hr = IXMLDOMNamedNodeMap_get_item(map2, 1, &node2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMNode_get_nodeName(node2, &str2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str2, L"SYSTEM"), "Unexpected name %s.\n", debugstr_w(str2));
-    IXMLDOMNode_Release(node2);
-
-    IXMLDOMNamedNodeMap_Release(map2);
-
     hr = IXMLDOMNamedNodeMap_removeNamedItem(map, str, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_removeNamedItem(map, str, &node2);
@@ -18010,11 +17988,13 @@ static void test_dtd_notation(void)
         "<a></a>";
 
     IXMLDOMDocumentType *doctype;
+    IXMLDOMNode *node, *node2;
+    IXMLDOMNamedNodeMap *map;
     DOMNodeType node_type;
     IXMLDOMDocument *doc;
-    IXMLDOMNode *node;
     HRESULT hr;
     BSTR str;
+    LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -18073,6 +18053,40 @@ if (hr == S_OK)
     ok(!wcscmp(str, L"<!NOTATION notation0 PUBLIC \"pub-id-0\" \"sys-id-0\">"), "Unexpected type %s.\n", debugstr_w(str));
     SysFreeString(str);
 }
+
+    /* Notation attributes */
+    hr = IXMLDOMNode_get_attributes(node, &map);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(len == 2, "Unexpected length %ld.\n", len);
+
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node2, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_ATTRIBUTE, "Unexpected type %d.\n", node_type);
+    EXPECT_CHILDREN(node2);
+    hr = IXMLDOMNode_get_nodeName(node2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"PUBLIC"), "Unexpected name %s.\n", debugstr_w(str));
+    IXMLDOMNode_Release(node2);
+    SysFreeString(str);
+
+    hr = IXMLDOMNamedNodeMap_get_item(map, 1, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeName(node2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"SYSTEM"), "Unexpected name %s.\n", debugstr_w(str));
+    IXMLDOMNode_Release(node2);
+    SysFreeString(str);
+
+    IXMLDOMNamedNodeMap_Release(map);
+}
+
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMDocumentType_get_lastChild(doctype, &node);
