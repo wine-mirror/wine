@@ -4062,8 +4062,11 @@ static HRESULT WINAPI parse_decl_handler_internalEntityDecl(ISAXDeclHandler *ifa
     struct parse_context *c = impl_from_ISAXDeclHandler(iface);
     struct domnode *node;
 
-    parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
-    parse_context_append_child(c, c->node, node);
+    if (name[0] != '%')
+    {
+        parse_context_node_create(c, NODE_ENTITY, name, name_len, NULL, 0, c->root, &node);
+        parse_context_append_child(c, c->node, node);
+    }
 
     return c->status;
 }
@@ -4299,6 +4302,10 @@ static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_p
     V_VT(&v) = VT_UNKNOWN;
     V_UNKNOWN(&v) = (IUnknown *)&c->lexical_handler;
     ISAXXMLReader_putProperty(c->reader, L"http://xml.org/sax/properties/lexical-handler", v);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)&c->decl_handler;
+    ISAXXMLReader_putProperty(c->reader, L"http://xml.org/sax/properties/declaration-handler", v);
 
     V_VT(&v) = VT_UNKNOWN;
     V_UNKNOWN(&v) = (IUnknown *)&c->extension_handler;

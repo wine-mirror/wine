@@ -18123,7 +18123,6 @@ static void test_dtd_entity(void)
 
     hr = IXMLDOMNodeList_get_length(list, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(len == 3, "Unexpected length %ld.\n", len);
 
     hr = IXMLDOMNodeList_get_item(list, 1, &node);
@@ -18215,34 +18214,41 @@ if (hr == S_OK)
 
     /* Character entity */
     hr = IXMLDOMNodeList_get_item(list, 2, &node);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IXMLDOMNode_get_attributes(node, &map);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!len, "Unexpected length %ld.\n", len);
     IXMLDOMNamedNodeMap_Release(map);
-
+}
     hr = IXMLDOMNode_get_nodeName(node, &str);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     ok(!wcscmp(str, L"ent3"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
+}
 
     /* Text property */
     hr = IXMLDOMNode_get_text(node, NULL);
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_text(node, &str);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
     ok(!wcscmp(str, L"text3"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
+}
 
     IXMLDOMNode_Release(node);
-}
 
     IXMLDOMNodeList_Release(list);
 
