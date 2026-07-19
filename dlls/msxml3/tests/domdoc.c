@@ -17904,10 +17904,8 @@ static void test_dtd_children(void)
 
     /* Maps */
     hr = IXMLDOMDocumentType_get_entities(doctype, &map);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
+
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 1, "Unexpected length %ld.\n", len);
@@ -17925,7 +17923,6 @@ if (hr == S_OK)
 
     IXMLDOMNode_Release(node);
     IXMLDOMNamedNodeMap_Release(map);
-}
 
     hr = IXMLDOMDocumentType_get_notations(doctype, &map);
     todo_wine
