@@ -227,6 +227,14 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
+    if (!(swapchain->state.desc.flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        /* Limit input latency by limiting the number of presents that we can
+         * get ahead of the worker thread. Avoid holding the D3D mutex across
+         * to not block other threads. */
+        WaitForSingleObject(swapchain->frame_latency_semaphore, INFINITE);
+    }
+
     wined3d_mutex_lock();
 
     if (!swapchain->back_buffers)
