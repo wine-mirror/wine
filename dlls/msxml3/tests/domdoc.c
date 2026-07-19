@@ -16663,6 +16663,8 @@ static void test_xmldecl_attributes(void)
     ok(!wcscmp(str, L""), "Unexpected string %s.\n", debugstr_w(str));
     SysFreeString(str);
 
+    hr = IXMLDOMNamedNodeMap_get_length(map, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_get_length(map, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!length, "Unexpected length %ld.\n", length);
@@ -18060,6 +18062,8 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 if (hr == S_OK)
 {
+    hr = IXMLDOMNamedNodeMap_get_length(map, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 2, "Unexpected length %ld.\n", len);

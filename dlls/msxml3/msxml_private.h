@@ -366,6 +366,7 @@ extern HRESULT node_put_value(struct domnode*,VARIANT*);
 extern HRESULT node_get_attribute(const struct domnode *,const WCHAR *,IXMLDOMAttribute **);
 extern HRESULT node_get_qualified_attribute(const struct domnode *, const WCHAR *name, const WCHAR *uri, IXMLDOMNode **);
 extern HRESULT node_get_attribute_by_index(const struct domnode *, LONG, IXMLDOMNode **);
+extern HRESULT node_get_attribute_count(const struct domnode *, LONG *);
 extern HRESULT node_get_attribute_value(struct domnode *,const WCHAR *,VARIANT *);
 extern HRESULT node_set_attribute(struct domnode *, IXMLDOMNode *, IXMLDOMNode **);
 extern HRESULT node_set_attribute_value(struct domnode *,const WCHAR *,const VARIANT *);

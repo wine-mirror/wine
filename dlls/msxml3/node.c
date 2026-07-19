@@ -3439,6 +3439,15 @@ HRESULT node_get_attribute_by_index(const struct domnode *node, LONG index, IXML
     return create_node(curr, attr);
 }
 
+HRESULT node_get_attribute_count(const struct domnode *node, LONG *count)
+{
+    if (!count)
+        return E_INVALIDARG;
+
+    *count = list_count(&node->attributes);
+    return S_OK;
+}
+
 HRESULT node_get_attribute_value(struct domnode *node, const WCHAR *name, VARIANT *value)
 {
     struct string_buffer buffer;
