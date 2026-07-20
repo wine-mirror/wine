@@ -2978,7 +2978,7 @@ static void test_pnp_device_ids(void)
         size = sizeof(first_install[0]);
         cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
                 (BYTE *)&first_install[0], &size, 0);
-        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
 
         pnp_bus_device_data_close(&child_dev);
         pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
@@ -2993,9 +2993,8 @@ static void test_pnp_device_ids(void)
         size = sizeof(first_install[1]);
         cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
                 (BYTE *)&first_install[1], &size, 0);
-        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
-        if (!cr)
-            ok(!memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install date mismatch.\n");
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        ok(!memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install date mismatch.\n");
 
         pnp_bus_device_data_close(&child_dev);
         pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);
@@ -3035,9 +3034,8 @@ static void test_pnp_device_ids(void)
         memset(&first_install[1], 0, size);
         cr = CM_Get_DevNode_PropertyW(child_dev.dev_node, &DEVPKEY_Device_FirstInstallDate, &type,
                 (BYTE *)&first_install[1], &size, 0);
-        todo_wine ok(!cr, "Unexpected cr %#lx.\n", cr);
-        if (!cr)
-            ok(memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install dates match.\n");
+        ok(!cr, "Unexpected cr %#lx.\n", cr);
+        todo_wine ok(memcmp(&first_install[0], &first_install[1], sizeof(first_install[0])), "First install dates match.\n");
 
         pnp_bus_device_data_close(&child_dev);
         pnp_bus_test_device_remove_child(parent_dev.handle, &desc, test_devices[i].dev_level);

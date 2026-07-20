@@ -386,6 +386,18 @@ static void create_dyn_data_key( DEVICE_OBJECT *device )
  * send IRPs to start the device. */
 static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
+    FILETIME first_install_date;
+    DEVPROPTYPE type;
+
+    if (!SetupDiGetDevicePropertyW( set, sp_device, &DEVPKEY_Device_FirstInstallDate, &type,
+                (BYTE *)&first_install_date, sizeof(first_install_date), NULL, 0 ) && (GetLastError() == ERROR_NOT_FOUND))
+    {
+        GetSystemTimeAsFileTime( &first_install_date );
+        if (!SetupDiSetDevicePropertyW( set, sp_device, &DEVPKEY_Device_FirstInstallDate, DEVPROP_TYPE_FILETIME,
+                    (BYTE *)&first_install_date, sizeof(first_install_date), 0 ))
+            ERR( "Failed to set install date, error %#lx.\n", GetLastError() );
+    }
+
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
         send_pnp_irp( device, IRP_MN_START_DEVICE );
