@@ -276,6 +276,7 @@ static HRESULT WINAPI color_sink_Receive(struct strmbase_sink *iface, IMediaSamp
     AVFrame *input_frame, *output_frame;
     IMediaSample *dst_sample;
     LONGLONG start, stop;
+    AM_MEDIA_TYPE *mt;
     BYTE *dst_buff;
     LONG dst_size;
     HRESULT hr;
@@ -299,6 +300,36 @@ static HRESULT WINAPI color_sink_Receive(struct strmbase_sink *iface, IMediaSamp
     if (filter->sink.flushing)
         return S_FALSE;
 
+    /* Handle dynamic format change of input sample. */
+    if ((hr = IMediaSample_GetMediaType(src_sample, &mt)) == S_OK)
+    {
+        if (memcmp(mt, &filter->sink.pin.mt, offsetof(AM_MEDIA_TYPE, pbFormat))
+                || memcmp(mt->pbFormat, filter->sink.pin.mt.pbFormat, mt->cbFormat))
+        {
+            VIDEOINFO *curr_video_info = (VIDEOINFO *)filter->sink.pin.mt.pbFormat;
+            VIDEOINFO *new_video_info = (VIDEOINFO *)mt->pbFormat;
+
+            if (mt->lSampleSize != filter->sink.pin.mt.lSampleSize
+                    || curr_video_info->bmiHeader.biWidth != new_video_info->bmiHeader.biWidth
+                    || labs(curr_video_info->bmiHeader.biHeight) != labs(new_video_info->bmiHeader.biHeight))
+            {
+                DeleteMediaType(mt);
+                FIXME("Dynamic format change that requires buffer renegotiation is not supported\n");
+                return VFW_E_INVALIDMEDIATYPE;
+            }
+            else
+            {
+                FreeMediaType(&filter->sink.pin.mt);
+                filter->sink.pin.mt = *mt;
+                CoTaskMemFree(mt);
+            }
+        }
+        else
+        {
+            DeleteMediaType(mt);
+        }
+    }
+
     if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &dst_sample, NULL, NULL, 0)))
     {
         ERR("Failed to get sample, hr %#lx.\n", hr);
@@ -309,6 +340,32 @@ static HRESULT WINAPI color_sink_Receive(struct strmbase_sink *iface, IMediaSamp
     {
         ERR("Failed to get output buffer pointer, hr %#lx.\n", hr);
         goto out;
+    }
+
+    /* Handle dynamic format change of output sample. */
+    if ((hr = IMediaSample_GetMediaType(dst_sample, &mt)) == S_OK)
+    {
+        if (memcmp(mt, &filter->source.pin.mt, offsetof(AM_MEDIA_TYPE, pbFormat))
+                || memcmp(mt->pbFormat, filter->source.pin.mt.pbFormat, mt->cbFormat))
+        {
+            FreeMediaType(&filter->source.pin.mt);
+            filter->source.pin.mt = *mt;
+            CoTaskMemFree(mt);
+            sws_freeContext(filter->sws_ctx);
+            if (FAILED(hr = create_context(filter)))
+            {
+                ERR("Failed create context %#lx.\n", hr);
+                goto out;
+            }
+        }
+        else
+        {
+            DeleteMediaType(mt);
+        }
+    }
+    else if (hr != S_FALSE)
+    {
+        ERR("Failed to get media type, hr %#lx.\n", hr);
     }
 
     sink_header = &((VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat)->bmiHeader;

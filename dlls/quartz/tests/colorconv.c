@@ -1921,9 +1921,7 @@ static void test_sink_dynamic_format_change(const char *test_context, IMemInputP
         sink_allocator->expect_get_media_type = TRUE;
         sink_allocator->media_type_checked = FALSE;
         hr = IMemInputPin_Receive(input, sample);
-        todo_wine_if(i == 2 || i == 3)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine
         ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
         sink_allocator->expect_get_buffer = FALSE;
         sink_allocator->expect_get_media_type = FALSE;
@@ -1933,9 +1931,6 @@ static void test_sink_dynamic_format_change(const char *test_context, IMemInputP
 
         sample = testsink->sample;
         testsink->sample = NULL;
-
-        if (hr != S_OK)
-            goto skip_test;
 
         ok(sample != NULL, "Expected out peer sample.\n");
 
@@ -1957,7 +1952,6 @@ static void test_sink_dynamic_format_change(const char *test_context, IMemInputP
         }
         color_diff = color_diff * 100 / 255 / (image_size * 3 / 4);
         x_diff = x_diff * 100 / 255 / (image_size / 4);
-        todo_wine_if(color_diff != 0)
         ok(color_diff == 0, "Got %I64u%% difference.\n", color_diff);
         todo_wine
         ok(x_diff == 0, "Got %I64u%% difference.\n", x_diff);
@@ -1966,7 +1960,6 @@ static void test_sink_dynamic_format_change(const char *test_context, IMemInputP
         IMediaSample_Release(sample);
         ok(sink_allocator->sample_refcount == 0, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
 
-skip_test:
         winetest_pop_context();
     }
 
@@ -2188,7 +2181,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         ok(sink_allocator->sample_refcount == 1, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
-        todo_wine
         ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
         ok(testsink->sample != NULL, "Expected out peer sample.\n");
         sink_allocator->expect_get_buffer = FALSE;
@@ -2285,7 +2277,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     sink_allocator->media_type_checked = FALSE;
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
     sink_allocator->expect_get_buffer = FALSE;
     sink_allocator->expect_get_media_type = FALSE;
@@ -2363,14 +2354,11 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     sink_allocator->media_type_checked = FALSE;
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
     sink_allocator->expect_get_buffer = FALSE;
     sink_allocator->expect_get_media_type = FALSE;
 
     IMediaSample_Release(sample);
-    if (hr != S_OK)
-        goto skip_test;
 
     sample = testsink->sample;
     testsink->sample = NULL;
@@ -2395,7 +2383,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     }
     color_diff = color_diff * 100 / 255 / (image_size * 3 / 4);
     x_diff = x_diff * 100 / 255 / (image_size / 4);
-    todo_wine
     ok(color_diff == 0, "Got %I64u%% difference.\n", color_diff);
     todo_wine
     ok(x_diff == 0, "Got %I64u%% difference.\n", x_diff);
@@ -2409,7 +2396,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
 
     free(rgb24_image);
 
-skip_test:
     hr = IMemAllocator_Decommit(allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -2440,7 +2426,6 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     sink_allocator->expect_get_buffer = FALSE;
     sink_allocator->expect_get_media_type = FALSE;
-    todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2470,7 +2455,6 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(testsink->sample != NULL, "Expected to receive sample.\n");
-    todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
     sink_allocator->expect_get_media_type = FALSE;
     if (testsink->sample)
@@ -2499,7 +2483,6 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(testsink->sample != NULL, "Expected to receive sample.\n");
-    todo_wine
     ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
     sink_allocator->expect_get_buffer = FALSE;
     sink_allocator->expect_get_media_type = FALSE;
