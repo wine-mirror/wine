@@ -3514,6 +3514,43 @@ HRESULT node_set_attribute(struct domnode *node, IXMLDOMNode *attribute, IXMLDOM
     return S_OK;
 }
 
+/* Used for setNamedItem(), using different semantics for returned node comparing to setAttributeNode() */
+HRESULT node_set_named_attribute(struct domnode *node, IXMLDOMNode *attribute, IXMLDOMNode **ret)
+{
+    struct domnode *attr, *old_attr;
+    HRESULT hr = S_OK;
+
+    if (!attribute)
+        return E_INVALIDARG;
+
+    if (!(attr = get_node_obj(attribute)))
+        return E_FAIL;
+
+    if (attr->type != NODE_ATTRIBUTE)
+        return E_FAIL;
+
+    if (attr->parent)
+        return E_FAIL;
+
+    if (ret)
+        *ret = NULL;
+
+    if (domnode_get_attribute(node, attr->qname, &old_attr) == S_OK)
+    {
+        domnode_insert_attribute(node, attr, old_attr);
+        domnode_unlink_attribute(old_attr);
+    }
+    else
+    {
+        domnode_insert_attribute(node, attr, NULL);
+    }
+
+    if (ret)
+        hr = create_node(attr, ret);
+
+    return hr;
+}
+
 static bool is_namespace_definition_name(const struct parsed_name *name)
 {
     if (!name->prefix && !wcscmp(name->local, L"xmlns"))

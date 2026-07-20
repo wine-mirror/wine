@@ -569,7 +569,7 @@ static HRESULT dom_pi_set_named_item(struct domnode *node, IXMLDOMNode *newItem,
 {
     TRACE("%p, %p, %p.\n", node, newItem, namedItem);
 
-    return node_set_attribute(node, newItem, namedItem);
+    return node_set_named_attribute(node, newItem, namedItem);
 }
 
 static HRESULT dom_pi_remove_qualified_item(struct domnode *node, BSTR name, BSTR uri, IXMLDOMNode **item)

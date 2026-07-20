@@ -16682,16 +16682,11 @@ static void test_xmldecl_attributes(void)
     /* Insert new attribute */
     hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!node, "Unexpected node %p.\n", node);
-if (node)
-{
     hr = IXMLDOMNode_get_text(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"no"), "Unexpected node text %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
-}
     IXMLDOMAttribute_Release(attr);
 
     hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
@@ -16772,7 +16767,6 @@ if (node)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_text(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"utf-16"), "Unexpected node text %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
@@ -18284,22 +18278,16 @@ static void test_element_setNamedItem(void)
     /* New attribute */
     hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr1, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!node, "Unexpected node %p.\n", node);
-if (node)
-{
     hr = IXMLDOMNode_get_text(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L"text1"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
-}
 
     hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr2, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMNode_get_text(node, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"text2"), "Unexpected name %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
