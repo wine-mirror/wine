@@ -35,7 +35,6 @@ typedef struct dispensermanager
     HANDLE thread;              /* pool purging thread */
     HANDLE quit_event;          /* purging thread quit event */
     struct list holders;
-    CO_MTA_USAGE_COOKIE mta_cookie;
 } dispensermanager;
 
 #define RESOURCE_IN_USE 0
@@ -426,8 +425,6 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
         DeleteCriticalSection(&This->cs);
         if (!list_empty(&This->holders))
             ERR("holders list is not empty\n");
-        if (This->mta_cookie)
-            CoDecrementMTAUsage(This->mta_cookie);
         free(This);
     }
 
@@ -515,9 +512,6 @@ static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDi
 
     *dispenser = &hold->IHolder_iface;
     IHolder_AddRef(*dispenser);
-
-    if (!This->mta_cookie)
-        CoIncrementMTAUsage(&This->mta_cookie);
     return hr;
 }
 
