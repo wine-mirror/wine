@@ -749,7 +749,7 @@ static void test_RtlSetCurrentDirectory_U(void)
     NTSTATUS status;
     BOOL bret;
 
-    bret = GetCurrentDirectoryW( sizeof(curdir), curdir );
+    bret = GetCurrentDirectoryW( ARRAY_SIZE(curdir), curdir );
     ok( bret, "got error %ld.\n", GetLastError() );
     ok( curdir[wcslen(curdir) - 1] != '\\' || curdir[wcslen(curdir) - 2] == ':', "got %s.\n", debugstr_w(curdir));
     ok( !!cd->Handle && cd->Handle != INVALID_HANDLE_VALUE, "got %p.\n", cd->Handle );
