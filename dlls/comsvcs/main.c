@@ -122,6 +122,8 @@ static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid
 
     TRACE("(%p)->(%08Ix, %p) stub\n", This, typeid, resid);
 
+    if (!This->driver)
+        return E_UNEXPECTED;
     hr = IDispenserDriver_CreateResource(This->driver, typeid, resid, &secs);
 
     TRACE("<- 0x%08lx\n", hr);
@@ -131,11 +133,12 @@ static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid
 static HRESULT WINAPI holder_FreeResource(IHolder *iface, const RESID resid)
 {
     holder *This = impl_from_IHolder(iface);
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%08Ix) stub\n", This, resid);
 
-    hr = IDispenserDriver_DestroyResource(This->driver, resid);
+    if (This->driver)
+        hr = IDispenserDriver_DestroyResource(This->driver, resid);
 
     TRACE("<- 0x%08lx\n", hr);
 
@@ -184,8 +187,9 @@ static HRESULT WINAPI holder_Close(IHolder *iface)
 
     FIXME("(%p) stub\n", This);
 
-    IDispenserDriver_Release(This->driver);
-
+    if (This->driver)
+        IDispenserDriver_Release(This->driver);
+    This->driver = NULL;
     return S_OK;
 }
 
