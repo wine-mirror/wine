@@ -20,6 +20,7 @@
 
 #include "comsvcs_private.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "initguid.h"
 #include "comsvcs_classes.h"
 
@@ -32,12 +33,23 @@ typedef struct dispensermanager
     CO_MTA_USAGE_COOKIE mta_cookie;
 } dispensermanager;
 
+#define RESOURCE_IN_USE 0
+typedef struct
+{
+    struct list entry;
+    RESID resid;
+    TIMEINSECS ttl;
+    ULONGLONG timestamp;
+} resource;
+
 typedef struct holder
 {
     IHolder IHolder_iface;
     LONG ref;
 
+    CRITICAL_SECTION cs;
     IDispenserDriver *driver;
+    struct list pool;
 } holder;
 
 struct new_moniker
@@ -108,6 +120,8 @@ static ULONG WINAPI holder_Release(IHolder *iface)
 
     if (!ref)
     {
+        DeleteCriticalSection(&This->cs);
+        if (!list_empty(&This->pool)) ERR("pool is not empty\n");
         free(This);
     }
 
@@ -117,32 +131,113 @@ static ULONG WINAPI holder_Release(IHolder *iface)
 static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid, RESID *resid)
 {
     holder *This = impl_from_IHolder(iface);
+    RESOURCERATING best_rating = 0, rating;
+    resource *res, *best = NULL;
+    IDispenserDriver *driver;
     HRESULT hr;
-    TIMEINSECS secs;
 
-    TRACE("(%p)->(%08Ix, %p) stub\n", This, typeid, resid);
+    TRACE("(%p)->(%08Ix, %p) semi-stub\n", This, typeid, resid);
 
+    /* TODO: add transactions support */
+
+    EnterCriticalSection(&This->cs);
     if (!This->driver)
+    {
+        LeaveCriticalSection(&This->cs);
         return E_UNEXPECTED;
-    hr = IDispenserDriver_CreateResource(This->driver, typeid, resid, &secs);
+    }
 
-    TRACE("<- 0x%08lx\n", hr);
+    LIST_FOR_EACH_ENTRY(res, &This->pool, resource, entry)
+    {
+        if (res->timestamp == RESOURCE_IN_USE) continue;
+        hr = IDispenserDriver_RateResource(This->driver, typeid, res->resid, FALSE, &rating);
+        if (SUCCEEDED(hr) && rating && rating >= best_rating)
+        {
+            best_rating = rating;
+            best = res;
+        }
+    }
+    if (best)
+    {
+        best->timestamp = RESOURCE_IN_USE;
+        *resid = best->resid;
+        LeaveCriticalSection(&This->cs);
+        return S_OK;
+    }
+
+    driver = This->driver;
+    IDispenserDriver_AddRef(driver);
+    LeaveCriticalSection(&This->cs);
+
+    if (!(res = malloc(sizeof(*res))))
+    {
+        IDispenserDriver_Release(driver);
+        return E_OUTOFMEMORY;
+    }
+    hr = IDispenserDriver_CreateResource(driver, typeid, &res->resid, &res->ttl);
+    TRACE(" creating new resource returned 0x%08lx\n", hr);
+    if (FAILED(hr))
+    {
+        IDispenserDriver_Release(driver);
+        free(res);
+        return hr;
+    }
+    if (res->ttl) FIXME("ignoring maximum idle time\n");
+
+    EnterCriticalSection(&This->cs);
+    if (!This->driver)
+    {
+        IDispenserDriver_DestroyResource(driver, res->resid);
+        free(resid);
+        hr = E_UNEXPECTED;
+    }
+    else
+    {
+        list_add_tail(&This->pool, &res->entry);
+        res->timestamp = RESOURCE_IN_USE;
+        *resid = res->resid;
+    }
+    LeaveCriticalSection(&This->cs);
+    IDispenserDriver_Release(driver);
     return hr;
 }
 
 static HRESULT WINAPI holder_FreeResource(IHolder *iface, const RESID resid)
 {
     holder *This = impl_from_IHolder(iface);
-    HRESULT hr = S_OK;
+    resource *res;
+    HRESULT hr;
 
-    TRACE("(%p)->(%08Ix) stub\n", This, resid);
+    TRACE("(%p)->(%08Ix)\n", This, resid);
 
-    if (This->driver)
-        hr = IDispenserDriver_DestroyResource(This->driver, resid);
+    EnterCriticalSection(&This->cs);
+    if (!This->driver)
+    {
+        LeaveCriticalSection(&This->cs);
+        return S_OK;
+    }
 
-    TRACE("<- 0x%08lx\n", hr);
+    LIST_FOR_EACH_ENTRY(res, &This->pool, resource, entry)
+    {
+        if (res->resid != resid) continue;
+        if (res->timestamp != RESOURCE_IN_USE)
+            ERR("resource found in pool\n");
 
-    return hr;
+        hr = IDispenserDriver_ResetResource(This->driver, resid);
+        if (FAILED(hr))
+        {
+            LeaveCriticalSection(&This->cs);
+            return hr;
+        }
+
+        res->timestamp = GetTickCount64();
+        LeaveCriticalSection(&This->cs);
+        return hr;
+    }
+    LeaveCriticalSection(&This->cs);
+
+    ERR("resource not found\n");
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI holder_TrackResource(IHolder *iface, const RESID resid)
@@ -184,12 +279,31 @@ static HRESULT WINAPI holder_UntrackResourceS(IHolder *iface, const SRESID resid
 static HRESULT WINAPI holder_Close(IHolder *iface)
 {
     holder *This = impl_from_IHolder(iface);
+    struct list pool = LIST_INIT(pool);
+    IDispenserDriver *driver = NULL;
+    resource *res, *tmp;
 
-    FIXME("(%p) stub\n", This);
+    TRACE("(%p)\n", This);
 
+    EnterCriticalSection(&This->cs);
     if (This->driver)
-        IDispenserDriver_Release(This->driver);
-    This->driver = NULL;
+    {
+        list_move_head(&pool, &This->pool);
+        driver = This->driver;
+        This->driver = NULL;
+    }
+    LeaveCriticalSection(&This->cs);
+    if (!driver) return S_OK;
+
+    LIST_FOR_EACH_ENTRY_SAFE(res, tmp, &pool, resource, entry)
+    {
+        if (res->timestamp != RESOURCE_IN_USE)
+            IDispenserDriver_DestroyResource(driver, res->resid);
+        list_remove(&res->entry);
+        free(res);
+    }
+
+    IDispenserDriver_Release(driver);
     return S_OK;
 }
 
@@ -233,7 +347,9 @@ static HRESULT create_holder(IDispenserDriver *driver, IHolder **object)
 
     hold->IHolder_iface.lpVtbl = &holder_vtbl;
     hold->ref = 1;
+    InitializeCriticalSection(&hold->cs);
     hold->driver = driver;
+    list_init(&hold->pool);
 
     ret = holder_QueryInterface(&hold->IHolder_iface, &IID_IHolder, (void**)object);
     holder_Release(&hold->IHolder_iface);

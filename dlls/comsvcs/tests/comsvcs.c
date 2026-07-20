@@ -249,7 +249,7 @@ static void create_dispenser(void)
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(resid == 10, "got %Id\n", resid);
     CHECK_CALLED(driver_CreateResource);
-    todo_wine CHECK_CALLED_BROKEN(driver_Release);
+    CHECK_CALLED_BROKEN(driver_Release);
 
     SET_EXPECT(driver_CreateResource);
     SET_EXPECT(driver_Release);
@@ -257,41 +257,33 @@ static void create_dispenser(void)
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(resid2 == 11, "got %Id\n", resid2);
     CHECK_CALLED(driver_CreateResource);
-    todo_wine CHECK_CALLED_BROKEN(driver_Release);
+    CHECK_CALLED_BROKEN(driver_Release);
 
     SET_EXPECT(driver_ResetResource);
-    SET_EXPECT(driver_DestroyResource);
     hr = IHolder_FreeResource(holder1, resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine CHECK_CALLED(driver_ResetResource);
-    todo_wine CHECK_NOT_CALLED(driver_DestroyResource);
+    CHECK_CALLED(driver_ResetResource);
 
-    SET_EXPECT(driver_DestroyResource);
     hr = IHolder_FreeResource(holder2, resid2);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
-    todo_wine CHECK_NOT_CALLED(driver_DestroyResource);
+    ok(hr == E_INVALIDARG, "got 0x%08lx\n", hr);
 
     SET_EXPECT(driver_ResetResource);
-    SET_EXPECT(driver_DestroyResource);
     hr = IHolder_FreeResource(holder1, resid2);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine CHECK_CALLED(driver_ResetResource);
-    todo_wine CHECK_NOT_CALLED(driver_DestroyResource);
+    CHECK_CALLED(driver_ResetResource);
 
     SET_EXPECT(driver_RateResource);
-    SET_EXPECT(driver_CreateResource);
     hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine ok(resid == 10, "got %Id\n", resid);
-    todo_wine CHECK_CALLED(driver_RateResource);
-    todo_wine CHECK_NOT_CALLED(driver_CreateResource);
+    ok(resid == 10, "got %Id\n", resid);
+    CHECK_CALLED(driver_RateResource);
 
     SET_EXPECT(driver_DestroyResource);
     SET_EXPECT(driver_Release);
     hr = IHolder_Close(holder1);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     CHECK_CALLED(driver_Release);
-    todo_wine CHECK_CALLED(driver_DestroyResource);
+    CHECK_CALLED(driver_DestroyResource);
 
     hr = IHolder_FreeResource(holder1, resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
@@ -308,17 +300,15 @@ static void create_dispenser(void)
     SET_EXPECT(driver_Release);
     hr = IHolder_AllocResource(holder2, (RESTYPID)str, &resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine ok(resid == 12, "got %Id\n", resid);
+    ok(resid == 12, "got %Id\n", resid);
     SysFreeString(str);
     CHECK_CALLED(driver_CreateResource);
-    todo_wine CHECK_CALLED_BROKEN(driver_Release);
+    CHECK_CALLED_BROKEN(driver_Release);
 
     SET_EXPECT(driver_ResetResource);
-    SET_EXPECT(driver_DestroyResource);
     hr = IHolder_FreeResource(holder2, resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
-    todo_wine CHECK_CALLED(driver_ResetResource);
-    todo_wine CHECK_NOT_CALLED(driver_DestroyResource);
+    CHECK_CALLED(driver_ResetResource);
 
     /* DestroyResource return doesn't directly affect the Holder Close return value */
     driver.destroy_resource_hr = E_FAIL;
@@ -327,7 +317,7 @@ static void create_dispenser(void)
     hr = IHolder_Close(holder2);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     CHECK_CALLED(driver_Release);
-    todo_wine CHECK_CALLED(driver_DestroyResource);
+    CHECK_CALLED(driver_DestroyResource);
     driver.destroy_resource_hr = S_OK;
     IHolder_Release(holder2);
 
