@@ -30,6 +30,11 @@ typedef struct dispensermanager
 {
     IDispenserManager IDispenserManager_iface;
     LONG ref;
+
+    CRITICAL_SECTION cs;
+    HANDLE thread;              /* pool purging thread */
+    HANDLE quit_event;          /* purging thread quit event */
+    struct list holders;
     CO_MTA_USAGE_COOKIE mta_cookie;
 } dispensermanager;
 
@@ -48,6 +53,8 @@ typedef struct holder
     LONG ref;
 
     CRITICAL_SECTION cs;
+    IDispenserManager *manager;
+    struct list entry;
     IDispenserDriver *driver;
     struct list pool;
 } holder;
@@ -276,11 +283,39 @@ static HRESULT WINAPI holder_UntrackResourceS(IHolder *iface, const SRESID resid
     return E_NOTIMPL;
 }
 
+static void unregister_dispenser(IDispenserManager *iface, holder *hold)
+{
+    dispensermanager *manager = impl_from_IDispenserManager(iface);
+    HANDLE thread = NULL;
+    HANDLE quit_event;
+
+    EnterCriticalSection(&manager->cs);
+    list_remove(&hold->entry);
+    if (list_empty(&manager->holders))
+    {
+        thread = manager->thread;
+        manager->thread = NULL;
+        quit_event = manager->quit_event;
+        manager->quit_event = NULL;
+    }
+    LeaveCriticalSection(&manager->cs);
+    IHolder_Release(&hold->IHolder_iface);
+
+    if (thread)
+    {
+        SetEvent(quit_event);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+        CloseHandle(quit_event);
+    }
+}
+
 static HRESULT WINAPI holder_Close(IHolder *iface)
 {
     holder *This = impl_from_IHolder(iface);
     struct list pool = LIST_INIT(pool);
     IDispenserDriver *driver = NULL;
+    IDispenserManager *manager;
     resource *res, *tmp;
 
     TRACE("(%p)\n", This);
@@ -291,6 +326,8 @@ static HRESULT WINAPI holder_Close(IHolder *iface)
         list_move_head(&pool, &This->pool);
         driver = This->driver;
         This->driver = NULL;
+        manager = This->manager;
+        This->manager = NULL;
     }
     LeaveCriticalSection(&This->cs);
     if (!driver) return S_OK;
@@ -304,6 +341,8 @@ static HRESULT WINAPI holder_Close(IHolder *iface)
     }
 
     IDispenserDriver_Release(driver);
+    unregister_dispenser(manager, This);
+    IDispenserManager_Release(manager);
     return S_OK;
 }
 
@@ -331,30 +370,20 @@ struct IHolderVtbl holder_vtbl =
     holder_RequestDestroyResource
 };
 
-static HRESULT create_holder(IDispenserDriver *driver, IHolder **object)
+static HRESULT create_holder(IDispenserManager *manager, IDispenserDriver *driver, holder **hold)
 {
-    holder *hold;
-    HRESULT ret;
-
-    TRACE("(%p)\n", object);
-
-    hold = malloc(sizeof(*hold));
-    if (!hold)
-    {
-        *object = NULL;
+    *hold = malloc(sizeof(**hold));
+    if (!*hold)
         return E_OUTOFMEMORY;
-    }
 
-    hold->IHolder_iface.lpVtbl = &holder_vtbl;
-    hold->ref = 1;
-    InitializeCriticalSection(&hold->cs);
-    hold->driver = driver;
-    list_init(&hold->pool);
-
-    ret = holder_QueryInterface(&hold->IHolder_iface, &IID_IHolder, (void**)object);
-    holder_Release(&hold->IHolder_iface);
-
-    return ret;
+    (*hold)->IHolder_iface.lpVtbl = &holder_vtbl;
+    (*hold)->ref = 1;
+    InitializeCriticalSection(&(*hold)->cs);
+    (*hold)->manager = manager;
+    IDispenserManager_AddRef(manager);
+    (*hold)->driver = driver;
+    list_init(&(*hold)->pool);
+    return S_OK;
 }
 
 static HRESULT WINAPI dismanager_QueryInterface(IDispenserManager *iface, REFIID riid, void **object)
@@ -394,6 +423,9 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
 
     if (!ref)
     {
+        DeleteCriticalSection(&This->cs);
+        if (!list_empty(&This->holders))
+            ERR("holders list is not empty\n");
         if (This->mta_cookie)
             CoDecrementMTAUsage(This->mta_cookie);
         free(This);
@@ -402,24 +434,90 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
     return ref;
 }
 
+static DWORD WINAPI purge_expired_resources(void *arg)
+{
+    dispensermanager *manager = arg;
+    resource *res, *tmp;
+    ULONGLONG ticks;
+    holder *hold;
+    HRESULT com_init;
+
+    com_init = CoInitializeEx(0, COINIT_MULTITHREADED);
+
+    while(1)
+    {
+        DWORD r = WaitForSingleObject(manager->quit_event, 20000);
+        if (r == WAIT_OBJECT_0) break;
+
+        ticks = GetTickCount64();
+        EnterCriticalSection(&manager->cs);
+        LIST_FOR_EACH_ENTRY(hold, &manager->holders, holder, entry)
+        {
+            EnterCriticalSection(&hold->cs);
+            LIST_FOR_EACH_ENTRY_SAFE(res, tmp, &hold->pool, resource, entry)
+            {
+                if (res->timestamp == RESOURCE_IN_USE) continue;
+                if (!res->ttl) continue;
+                if (res->timestamp + res->ttl * 1000 > ticks) continue;
+
+                IDispenserDriver_DestroyResource(hold->driver, res->resid);
+                list_remove(&res->entry);
+                free(res);
+            }
+            LeaveCriticalSection(&hold->cs);
+        }
+        LeaveCriticalSection(&manager->cs);
+    }
+
+    IDispenserManager_Release(&manager->IDispenserManager_iface);
+    if (SUCCEEDED(com_init))
+        CoUninitialize();
+    return 0;
+}
+
 static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDispenserDriver *driver,
                         LPCOLESTR name, IHolder **dispenser)
 {
     dispensermanager *This = impl_from_IDispenserManager(iface);
+    holder *hold;
     HRESULT hr;
 
     TRACE("(%p)->(%p, %s, %p)\n", This, driver, debugstr_w(name), dispenser);
 
     if(!dispenser)
         return E_INVALIDARG;
+    *dispenser = NULL;
 
-    hr = create_holder(driver, dispenser);
+    if (FAILED((hr = create_holder(iface, driver, &hold))))
+        return hr;
+    EnterCriticalSection(&This->cs);
+    list_add_tail(&This->holders, &hold->entry);
+
+    if (!This->thread)
+    {
+        This->quit_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+        if (This->quit_event)
+           This->thread = CreateThread(NULL, 0, purge_expired_resources, This, 0, NULL);
+        if (This->thread)
+        {
+            IDispenserManager_AddRef(&This->IDispenserManager_iface);
+        }
+        else
+        {
+            if (This->quit_event)
+            {
+                CloseHandle(This->quit_event);
+                This->quit_event = NULL;
+            }
+        }
+    }
+    LeaveCriticalSection(&This->cs);
+
+    *dispenser = &hold->IHolder_iface;
+    IHolder_AddRef(*dispenser);
 
     if (!This->mta_cookie)
         CoIncrementMTAUsage(&This->mta_cookie);
-
-    TRACE("<-- 0x%08lx, %p\n", hr, *dispenser);
-
     return hr;
 }
 
@@ -458,6 +556,8 @@ static HRESULT WINAPI dispenser_manager_cf_CreateInstance(IClassFactory *iface, 
 
     dismanager->IDispenserManager_iface.lpVtbl = &dismanager_vtbl;
     dismanager->ref = 1;
+    InitializeCriticalSection(&dismanager->cs);
+    list_init(&dismanager->holders);
 
     ret = dismanager_QueryInterface(&dismanager->IDispenserManager_iface, riid, object);
     dismanager_Release(&dismanager->IDispenserManager_iface);
