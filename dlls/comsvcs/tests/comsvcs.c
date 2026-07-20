@@ -212,7 +212,7 @@ static void create_dispenser(void)
 
     hr = CoCreateInstance(&CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser2);
     ok(hr == S_OK, "Failed to create object 0x%08lx\n", hr);
-    todo_wine ok(dispenser == dispenser2, "dispenser objects are different\n");
+    ok(dispenser == dispenser2, "dispenser objects are different\n");
     IDispenserManager_Release(dispenser2);
 
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);

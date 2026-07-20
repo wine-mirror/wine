@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(comsvcs);
 
+static IDispenserManager *manager;
+
 typedef struct dispensermanager
 {
     IDispenserManager IDispenserManager_iface;
@@ -533,30 +535,35 @@ struct IDispenserManagerVtbl dismanager_vtbl =
     dismanager_GetContext
 };
 
-static HRESULT WINAPI dispenser_manager_cf_CreateInstance(IClassFactory *iface, IUnknown* outer, REFIID riid,
-        void **object)
+static BOOL WINAPI create_dispenser_manager(INIT_ONCE *once, void *param, void **context)
 {
     dispensermanager *dismanager;
-    HRESULT ret;
-
-    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), object);
 
     dismanager = calloc(1, sizeof(*dismanager));
     if (!dismanager)
-    {
-        *object = NULL;
-        return E_OUTOFMEMORY;
-    }
+        return FALSE;
 
     dismanager->IDispenserManager_iface.lpVtbl = &dismanager_vtbl;
     dismanager->ref = 1;
     InitializeCriticalSection(&dismanager->cs);
     list_init(&dismanager->holders);
 
-    ret = dismanager_QueryInterface(&dismanager->IDispenserManager_iface, riid, object);
-    dismanager_Release(&dismanager->IDispenserManager_iface);
+    manager = &dismanager->IDispenserManager_iface;
+    return TRUE;
+}
 
-    return ret;
+static HRESULT WINAPI dispenser_manager_cf_CreateInstance(IClassFactory *iface, IUnknown* outer, REFIID riid,
+        void **object)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), object);
+
+    *object = NULL;
+    if (!InitOnceExecuteOnce(&init_once, create_dispenser_manager, NULL, NULL))
+        return E_OUTOFMEMORY;
+
+    return IDispenserManager_QueryInterface(manager, riid, object);
 }
 
 static HRESULT WINAPI comsvcscf_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv )
@@ -1235,4 +1242,14 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
+{
+    if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
+        if (manager)
+            IDispenserManager_Release(manager);
+    }
+    return TRUE;
 }
