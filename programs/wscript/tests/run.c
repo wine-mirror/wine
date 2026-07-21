@@ -835,6 +835,17 @@ static void run_cscript_error_on_stdout_test(void)
     ok(stderr_buf[0] == 0, "expected no stderr output, got: %s\n", stderr_buf);
 }
 
+static void test_script_encoding(void)
+{
+    static const WCHAR utf16le[] =
+        L"new ActiveXObject('Wine.Test').reportSuccess();\n";
+    static const WCHAR utf16le_bom[] =
+        L"\ufeffnew ActiveXObject('Wine.Test').reportSuccess();\n";
+
+    run_script("utf16le.js", (const char *)utf16le, sizeof(utf16le), 0);
+    run_script("utf16lebom.js", (const char *)utf16le_bom, sizeof(utf16le_bom), 0);
+}
+
 START_TEST(run)
 {
     char **argv;
@@ -859,6 +870,7 @@ START_TEST(run)
                            "WScript.Quit(3);\n"
                            "winetest.ok(false, 'not quit?');\n", 3);
 
+        test_script_encoding();
         run_cscript_error_test();
         run_cscript_unknown_option_test();
         run_cscript_no_file_test();
