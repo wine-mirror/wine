@@ -192,6 +192,27 @@ static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
     ok(((DWORD_PTR)(mem2 + offset) & (alignment ? alignment - 1 : 0)) == 0,
             "incorrect alignment: %p\n", mem2);
     ok(!memcmp(mem2, v, min(size1, size2)), "wrong data\n");
+
+    /* change offset */
+    mem = p_aligned_offset_realloc(mem2, size2, alignment, offset + 1);
+    if (offset + 1 < size2)
+    {
+        todo_wine ok (mem != NULL, "changing offset failed\n");
+        if (!mem) mem = mem2;
+        ok(!memcmp(mem, v, min(size1, size2)), "wrong data\n");
+    }
+    else
+    {
+        ok(mem == NULL, "_aligned_offset_realloc should have failed\n");
+        ok(errno == EINVAL, "errno = %d\n", errno);
+        mem = mem2;
+    }
+
+    /* change alignment */
+    mem2 = p_aligned_offset_realloc(mem, size2, alignment / 2, offset);
+    todo_wine_if(!mem2) ok(mem2 != NULL, "changing alignment failed\n");
+    if (!mem2) mem2 = mem;
+    ok(!memcmp(mem2, v, min(size1, size2)), "wrong data\n");
     p_aligned_free(mem2);
 
     winetest_pop_context();
@@ -377,6 +398,7 @@ static void test_aligned(void)
     test_aligned_offset_realloc(256, 128, 32, 112);
     test_aligned_offset_realloc(256, 512, 64, 112);
     test_aligned_offset_realloc(256, 128, 64, 112);
+    test_aligned_offset_realloc(256, 128, 64, 127);
 }
 
 static void test_sbheap(void)
