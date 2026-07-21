@@ -426,12 +426,23 @@ out:
     return hr;
 }
 
+static HRESULT color_sink_receive_can_block(struct strmbase_sink *iface)
+{
+    struct color_converter *filter = impl_from_strmbase_filter(iface->pin.filter);
+
+    if (!filter->source.pMemInputPin)
+        return VFW_E_NOT_CONNECTED;
+
+    return IMemInputPin_ReceiveCanBlock(filter->source.pMemInputPin);
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = color_sink_query_interface,
     .base.pin_query_accept = color_sink_query_accept,
     .sink_connect = color_sink_connect,
     .pfnReceive = color_sink_Receive,
+    .sink_receive_can_block = color_sink_receive_can_block,
 };
 
 static HRESULT color_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
