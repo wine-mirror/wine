@@ -296,7 +296,7 @@ static const struct object_ops console_device_ops =
     console_device_open_file,         /* open_file */
     NULL,                             /* get_kernel_obj_list */
     NULL,                             /* close_handle */
-    no_destroy                        /* destroy */
+    NULL,                             /* destroy */
 };
 
 struct console_input

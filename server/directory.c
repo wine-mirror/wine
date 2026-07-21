@@ -82,7 +82,7 @@ static const struct object_ops object_type_ops =
     NULL,                         /* open_file */
     NULL,                         /* get_kernel_obj_list */
     NULL,                         /* close_handle */
-    no_destroy                    /* destroy */
+    NULL,                         /* destroy */
 };
 
 

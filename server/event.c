@@ -83,7 +83,7 @@ static const struct object_ops event_sync_ops =
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
     NULL,                      /* close_handle */
-    no_destroy                 /* destroy */
+    NULL,                      /* destroy */
 };
 
 static struct object *create_event_sync( int manual, int signaled )
@@ -232,7 +232,7 @@ static const struct object_ops keyed_event_ops =
     NULL,                        /* open_file */
     NULL,                        /* get_kernel_obj_list */
     NULL,                        /* close_handle */
-    no_destroy                   /* destroy */
+    NULL,                        /* destroy */
 };
 
 

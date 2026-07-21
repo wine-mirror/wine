@@ -3941,7 +3941,7 @@ static const struct object_ops socket_device_ops =
     socket_device_open_file,    /* open_file */
     NULL,                       /* get_kernel_obj_list */
     NULL,                       /* close_handle */
-    no_destroy                  /* destroy */
+    NULL,                       /* destroy */
 };
 
 static void socket_device_dump( struct object *obj, int verbose )

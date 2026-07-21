@@ -82,7 +82,7 @@ static const struct object_ops semaphore_sync_ops =
     NULL,                          /* open_file */
     NULL,                          /* get_kernel_obj_list */
     NULL,                          /* close_handle */
-    no_destroy                     /* destroy */
+    NULL,                          /* destroy */
 };
 
 static int release_semaphore( struct semaphore_sync *sem, unsigned int count,

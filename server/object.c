@@ -122,7 +122,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* open_file */
     NULL,                       /* get_kernel_obj_list */
     NULL,                       /* close_handle */
-    no_destroy                  /* destroy */
+    NULL,                       /* destroy */
 };
 
 static const struct object_ops completion_reserve_ops =
@@ -147,7 +147,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
     NULL,                      /* close_handle */
-    no_destroy                 /* destroy */
+    NULL,                      /* destroy */
 };
 
 #ifdef DEBUG_OBJECTS
@@ -563,7 +563,7 @@ void release_object( void *ptr )
         assert( list_empty( &obj->wait_queue ));
         free_kernel_objects( obj );
         unlink_named_object( obj );
-        obj->ops->destroy( obj );
+        if (obj->ops->destroy) obj->ops->destroy( obj );
         free_object( obj );
     }
 }
@@ -770,10 +770,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-void no_destroy( struct object *obj )
-{
 }
 
 static void dump_reserve( struct object *obj, int verbose )
