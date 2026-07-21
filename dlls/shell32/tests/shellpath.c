@@ -1332,6 +1332,15 @@ static const struct knownFolderDef known_folders[] = {
                  NULL,
                  0,
                  KFDF_PRECREATE | KFDF_ROAMABLE),
+    KNOWN_FOLDER(FOLDERID_AppDataDocuments,
+                 NO_CSIDL,
+                 "AppDataDocuments",
+                 KF_CATEGORY_PERUSER,
+                 FOLDERID_LocalAppData, GUID_NULL,
+                 "Documents",
+                 NULL,
+                 0,
+                 KFDF_PRECREATE | KFDF_ROAMABLE),
 };
 #undef KNOWN_FOLDER
 BOOL known_folder_found[ARRAY_SIZE(known_folders)];
