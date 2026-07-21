@@ -2174,6 +2174,14 @@ static void test_fopen_s( void )
             ubuff[0], ubuff[1]);
     fclose(file);
 
+    ret = p_fopen_s(&file, name, "rb,ccs=unicode");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, 2, file);
+    ok(len == 2, "len = %d\n", len);
+    todo_wine ok(ubuff[0]==0xff && ubuff[1]==0xfe, "buff[0]=%02x, buff[1]=%02x\n",
+            ubuff[0], ubuff[1]);
+    fclose(file);
+
     ret = p_fopen_s(&file, name, "r,ccs=utf-16le");
     ok(ret == 0, "fopen_s failed with %d\n", ret);
     len = fread(buff, 1, 2, file);
@@ -2213,6 +2221,20 @@ static void test_fopen_s( void )
     ok(ubuff[0]==0xef && ubuff[1]==0xbb && ubuff[2]==0xbf,
             "buff[0]=%02x, buff[1]=%02x, buff[2]=%02x\n",
             ubuff[0], ubuff[1], ubuff[2]);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "wb, ccs=utf-8");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    fwrite("test", 1, 4, file);
+    fputwc('a', file);
+    fputwc('b', file);
+    fclose(file);
+
+    ret = p_fopen_s(&file, name, "rb");
+    ok(ret == 0, "fopen_s failed with %d\n", ret);
+    len = fread(buff, 1, ARRAY_SIZE(buff) - 1, file);
+    todo_wine ok(len == 8, "len = %d\n", len);
+    todo_wine ok(!memcmp(buff, "testa\0b", 8), "got %s\n", wine_dbgstr_an(buff, len));
     fclose(file);
 
     /* test initial FILE values */
