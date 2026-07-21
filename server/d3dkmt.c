@@ -72,7 +72,7 @@ static const struct fd_ops d3dkmt_fd_ops =
     NULL,                         /* flush */
     NULL,                         /* get_file_info */
     NULL,                         /* get_volume_info */
-    no_fd_ioctl,                  /* ioctl */
+    NULL,                         /* ioctl */
     default_fd_cancel_async,      /* cancel_async */
     no_fd_queue_async,            /* queue_async */
     default_fd_reselect_async     /* reselect_async */

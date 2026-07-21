@@ -2641,12 +2641,6 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
 }
 
 /* default ioctl() routine */
-void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
-/* default ioctl() routine */
 void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     switch(code)
@@ -3106,7 +3100,8 @@ DECL_HANDLER(ioctl)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
     {
-        fd->fd_ops->ioctl( fd, req->code, async );
+        if (fd->fd_ops->ioctl) fd->fd_ops->ioctl( fd, req->code, async );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = fd->options;
         release_object( async );

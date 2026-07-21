@@ -3702,7 +3702,7 @@ static const struct fd_ops ifchange_fd_ops =
     NULL,                     /* flush */
     NULL,                     /* get_file_info */
     NULL,                     /* get_volume_info */
-    no_fd_ioctl,              /* ioctl */
+    NULL,                     /* ioctl */
     NULL,                     /* cancel_async */
     NULL,                     /* queue_async */
     NULL                      /* reselect_async */
