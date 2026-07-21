@@ -118,7 +118,7 @@ static const struct object_ops process_ops =
     NULL,                        /* unlink_name */
     NULL,                        /* open_file */
     process_get_kernel_obj_list, /* get_kernel_obj_list */
-    no_close_handle,             /* close_handle */
+    NULL,                        /* close_handle */
     process_destroy              /* destroy */
 };
 
@@ -171,7 +171,7 @@ static const struct object_ops startup_info_ops =
     NULL,                          /* unlink_name */
     NULL,                          /* open_file */
     NULL,                          /* get_kernel_obj_list */
-    no_close_handle,               /* close_handle */
+    NULL,                          /* close_handle */
     startup_info_destroy           /* destroy */
 };
 

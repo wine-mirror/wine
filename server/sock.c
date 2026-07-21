@@ -3718,7 +3718,7 @@ static const struct object_ops ifchange_ops =
     NULL,                    /* unlink_name */
     NULL,                    /* open_file */
     NULL,                    /* get_kernel_obj_list */
-    no_close_handle,         /* close_handle */
+    NULL,                    /* close_handle */
     ifchange_destroy         /* destroy */
 };
 
@@ -3940,7 +3940,7 @@ static const struct object_ops socket_device_ops =
     NULL,                       /* unlink_name */
     socket_device_open_file,    /* open_file */
     NULL,                       /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     no_destroy                  /* destroy */
 };
 

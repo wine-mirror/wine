@@ -100,7 +100,7 @@ static const struct object_ops debug_event_ops =
     NULL,                          /* unlink_name */
     NULL,                          /* open_file */
     NULL,                          /* get_kernel_obj_list */
-    no_close_handle,               /* close_handle */
+    NULL,                          /* close_handle */
     debug_event_destroy            /* destroy */
 };
 
@@ -129,7 +129,7 @@ static const struct object_ops debug_obj_ops =
     NULL,                          /* unlink_name */
     NULL,                          /* open_file */
     NULL,                          /* get_kernel_obj_list */
-    no_close_handle,               /* close_handle */
+    NULL,                          /* close_handle */
     debug_obj_destroy              /* destroy */
 };
 

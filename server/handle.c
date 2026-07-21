@@ -138,7 +138,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* unlink_name */
     NULL,                            /* open_file */
     NULL,                            /* get_kernel_obj_list */
-    no_close_handle,                 /* close_handle */
+    NULL,                            /* close_handle */
     handle_table_destroy             /* destroy */
 };
 
@@ -180,7 +180,7 @@ static void handle_table_destroy( struct object *obj )
         entry->ptr = NULL;
         if (obj)
         {
-            if (table->process)
+            if (table->process && obj->ops->close_handle)
                 obj->ops->close_handle( obj, table->process, index_to_handle(i) );
             release_object_from_handle( obj );
         }
@@ -433,7 +433,8 @@ unsigned int close_handle( struct process *process, obj_handle_t handle )
     if (!(entry = get_handle( process, handle ))) return STATUS_INVALID_HANDLE;
     if (entry->access & RESERVED_CLOSE_PROTECT) return STATUS_HANDLE_NOT_CLOSABLE;
     obj = entry->ptr;
-    if (!obj->ops->close_handle( obj, process, handle )) return STATUS_HANDLE_NOT_CLOSABLE;
+    if (obj->ops->close_handle && !obj->ops->close_handle( obj, process, handle ))
+        return STATUS_HANDLE_NOT_CLOSABLE;
 
     table = handle_is_global(handle) ? global_table : process->handles;
     table->entries[index].ptr = NULL;

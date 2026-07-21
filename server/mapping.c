@@ -82,7 +82,7 @@ static const struct object_ops ranges_ops =
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    NULL,                      /* close_handle */
     ranges_destroy             /* destroy */
 };
 
@@ -119,7 +119,7 @@ static const struct object_ops shared_map_ops =
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    NULL,                      /* close_handle */
     shared_map_destroy         /* destroy */
 };
 
@@ -197,7 +197,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* unlink_name */
     NULL,                        /* open_file */
     NULL,                        /* get_kernel_obj_list */
-    no_close_handle,             /* close_handle */
+    NULL,                        /* close_handle */
     mapping_destroy              /* destroy */
 };
 

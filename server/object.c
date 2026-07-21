@@ -121,7 +121,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* unlink_name */
     NULL,                       /* open_file */
     NULL,                       /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     no_destroy                  /* destroy */
 };
 
@@ -146,7 +146,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    NULL,                      /* close_handle */
     no_destroy                 /* destroy */
 };
 
@@ -770,11 +770,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
-{
-    return 1;  /* ok to close */
 }
 
 void no_destroy( struct object *obj )

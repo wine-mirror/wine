@@ -188,7 +188,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* unlink_name */
     NULL,                     /* open_file */
     NULL,                     /* get_kernel_obj_list */
-    no_close_handle,          /* close_handle */
+    NULL,                     /* close_handle */
     fd_destroy                /* destroy */
 };
 
@@ -230,7 +230,7 @@ static const struct object_ops device_ops =
     NULL,                     /* unlink_name */
     NULL,                     /* open_file */
     NULL,                     /* get_kernel_obj_list */
-    no_close_handle,          /* close_handle */
+    NULL,                     /* close_handle */
     device_destroy            /* destroy */
 };
 
@@ -271,7 +271,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* unlink_name */
     NULL,                     /* open_file */
     NULL,                     /* get_kernel_obj_list */
-    no_close_handle,          /* close_handle */
+    NULL,                     /* close_handle */
     inode_destroy             /* destroy */
 };
 
@@ -316,7 +316,7 @@ static const struct object_ops file_lock_ops =
     NULL,                       /* unlink_name */
     NULL,                       /* open_file */
     NULL,                       /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     file_lock_destroy,          /* destroy */
 };
 

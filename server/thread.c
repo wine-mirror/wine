@@ -120,7 +120,7 @@ static const struct object_ops thread_apc_ops =
     NULL,                       /* unlink_name */
     NULL,                       /* open_file */
     NULL,                       /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     thread_apc_destroy          /* destroy */
 };
 
@@ -166,7 +166,7 @@ static const struct object_ops context_ops =
     NULL,                       /* unlink_name */
     NULL,                       /* open_file */
     NULL,                       /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     context_destroy,            /* destroy */
 };
 
@@ -216,7 +216,7 @@ static const struct object_ops thread_ops =
     NULL,                       /* unlink_name */
     NULL,                       /* open_file */
     thread_get_kernel_obj_list, /* get_kernel_obj_list */
-    no_close_handle,            /* close_handle */
+    NULL,                       /* close_handle */
     destroy_thread              /* destroy */
 };
 

@@ -82,7 +82,7 @@ static const struct object_ops event_sync_ops =
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
     NULL,                      /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    NULL,                      /* close_handle */
     no_destroy                 /* destroy */
 };
 
@@ -183,7 +183,7 @@ static const struct object_ops event_ops =
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
     event_get_kernel_obj_list, /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    NULL,                      /* close_handle */
     event_destroy,             /* destroy */
 };
 
@@ -231,7 +231,7 @@ static const struct object_ops keyed_event_ops =
     NULL,                        /* unlink_name */
     NULL,                        /* open_file */
     NULL,                        /* get_kernel_obj_list */
-    no_close_handle,             /* close_handle */
+    NULL,                        /* close_handle */
     no_destroy                   /* destroy */
 };
 

@@ -78,7 +78,7 @@ static const struct object_ops irp_call_ops =
     NULL,                             /* unlink_name */
     NULL,                             /* open_file */
     NULL,                             /* get_kernel_obj_list */
-    no_close_handle,                  /* close_handle */
+    NULL,                             /* close_handle */
     irp_call_destroy                  /* destroy */
 };
 
@@ -120,7 +120,7 @@ static const struct object_ops device_manager_ops =
     NULL,                             /* unlink_name */
     NULL,                             /* open_file */
     NULL,                             /* get_kernel_obj_list */
-    no_close_handle,                  /* close_handle */
+    NULL,                             /* close_handle */
     device_manager_destroy            /* destroy */
 };
 
@@ -178,7 +178,7 @@ static const struct object_ops device_ops =
     NULL,                             /* unlink_name */
     device_open_file,                 /* open_file */
     device_get_kernel_obj_list,       /* get_kernel_obj_list */
-    no_close_handle,                  /* close_handle */
+    NULL,                             /* close_handle */
     device_destroy                    /* destroy */
 };
 
