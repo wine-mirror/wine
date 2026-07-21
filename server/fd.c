@@ -2257,7 +2257,8 @@ void fd_cancel_async( struct fd *fd, struct async *async )
 
 void fd_reselect_async( struct fd *fd, struct async_queue *queue )
 {
-    fd->fd_ops->reselect_async( fd, queue );
+    if (fd->fd_ops->reselect_async) fd->fd_ops->reselect_async( fd, queue );
+    else default_fd_reselect_async( fd, queue );
 }
 
 void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count )

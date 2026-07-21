@@ -105,7 +105,7 @@ static const struct fd_ops mailslot_fd_ops =
     default_fd_ioctl,           /* ioctl */
     NULL,                       /* cancel_async */
     NULL,                       /* queue_async */
-    default_fd_reselect_async   /* reselect_async */
+    NULL,                       /* reselect_async */
 };
 
 
@@ -151,7 +151,7 @@ static const struct fd_ops mail_writer_fd_ops =
     default_fd_ioctl,            /* ioctl */
     NULL,                        /* cancel_async */
     default_fd_queue_async,      /* queue_async */
-    default_fd_reselect_async    /* reselect_async */
+    NULL,                        /* reselect_async */
 };
 
 
@@ -215,7 +215,7 @@ static const struct fd_ops mailslot_device_fd_ops =
     default_fd_ioctl,                   /* ioctl */
     NULL,                               /* cancel_async */
     default_fd_queue_async,             /* queue_async */
-    default_fd_reselect_async           /* reselect_async */
+    NULL,                               /* reselect_async */
 };
 
 static struct mailslot_message *get_first_message( struct mailslot *mailslot )

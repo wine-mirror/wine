@@ -75,7 +75,7 @@ static const struct fd_ops d3dkmt_fd_ops =
     NULL,                         /* ioctl */
     NULL,                         /* cancel_async */
     NULL,                         /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 struct keyed_wait

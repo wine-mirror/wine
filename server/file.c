@@ -114,7 +114,7 @@ static const struct fd_ops file_fd_ops =
     default_fd_ioctl,             /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 /* create a file from a file descriptor */

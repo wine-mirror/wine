@@ -188,7 +188,7 @@ static const struct fd_ops device_file_fd_ops =
     device_file_ioctl,                /* ioctl */
     device_file_cancel_async,         /* cancel_async */
     default_fd_queue_async,           /* queue_async */
-    default_fd_reselect_async,        /* reselect_async */
+    NULL,                             /* reselect_async */
 };
 
 

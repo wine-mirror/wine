@@ -136,7 +136,7 @@ static const struct fd_ops dir_fd_ops =
     default_fd_ioctl,            /* ioctl */
     NULL,                        /* cancel_async */
     default_fd_queue_async,      /* queue_async */
-    default_fd_reselect_async    /* reselect_async */
+    NULL,                        /* reselect_async */
 };
 
 static struct list change_list = LIST_INIT(change_list);

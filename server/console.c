@@ -106,7 +106,7 @@ static const struct fd_ops console_fd_ops =
     console_ioctl,                /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 struct console_host_ioctl
@@ -167,7 +167,7 @@ static const struct fd_ops console_server_fd_ops =
     console_server_ioctl,         /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 struct font_info
@@ -225,7 +225,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     screen_buffer_ioctl,          /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 static void console_device_dump( struct object *obj, int verbose );
@@ -287,7 +287,7 @@ static const struct fd_ops console_input_fd_ops =
     console_input_ioctl,          /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 struct console_output
@@ -333,7 +333,7 @@ static const struct fd_ops console_output_fd_ops =
     console_output_ioctl,         /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 struct console_connection
@@ -378,7 +378,7 @@ static const struct fd_ops console_connection_fd_ops =
     console_connection_ioctl,     /* ioctl */
     NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async     /* reselect_async */
+    NULL,                         /* reselect_async */
 };
 
 static int queue_host_ioctl( struct console_server *server, unsigned int code, unsigned int output,
