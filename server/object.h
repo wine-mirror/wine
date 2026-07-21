@@ -169,7 +169,6 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
-extern int no_signal( struct object *obj, unsigned int access, int signal );
 extern struct fd *no_get_fd( struct object *obj );
 extern struct object *default_get_sync( struct object *obj );
 static inline struct object *get_obj_sync( struct object *obj ) { return obj->ops->get_sync( obj ); }

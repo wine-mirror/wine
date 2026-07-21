@@ -86,7 +86,7 @@ static const struct object_ops alpc_port_ops =
     remove_queue,                  /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
-    no_signal,                     /* signal */
+    NULL,                          /* signal */
     no_get_fd,                     /* get_fd */
     default_get_sync,              /* get_sync */
     default_map_access,            /* map_access */

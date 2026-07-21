@@ -176,7 +176,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    no_signal,                /* signal */
+    NULL,                     /* signal */
     no_get_fd,                /* get_fd */
     fd_get_sync,              /* get_sync */
     default_map_access,       /* map_access */
@@ -218,7 +218,7 @@ static const struct object_ops device_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    no_signal,                /* signal */
+    NULL,                     /* signal */
     no_get_fd,                /* get_fd */
     default_get_sync,         /* get_sync */
     default_map_access,       /* map_access */
@@ -259,7 +259,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    no_signal,                /* signal */
+    NULL,                     /* signal */
     no_get_fd,                /* get_fd */
     default_get_sync,         /* get_sync */
     default_map_access,       /* map_access */
@@ -304,7 +304,7 @@ static const struct object_ops file_lock_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    NULL,                       /* signal */
     no_get_fd,                  /* get_fd */
     file_lock_get_sync,         /* get_sync */
     default_map_access,         /* map_access */

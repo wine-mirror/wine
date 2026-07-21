@@ -106,7 +106,7 @@ static const struct object_ops process_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */
-    no_signal,                   /* signal */
+    NULL,                        /* signal */
     no_get_fd,                   /* get_fd */
     process_get_sync,            /* get_sync */
     process_map_access,          /* map_access */
@@ -159,7 +159,7 @@ static const struct object_ops startup_info_ops =
     NULL,                          /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
-    no_signal,                     /* signal */
+    NULL,                          /* signal */
     no_get_fd,                     /* get_fd */
     startup_info_get_sync,         /* get_sync */
     default_map_access,            /* map_access */
@@ -221,7 +221,7 @@ static const struct object_ops job_ops =
     NULL,                          /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
-    no_signal,                     /* signal */
+    NULL,                          /* signal */
     no_get_fd,                     /* get_fd */
     job_get_sync,                  /* get_sync */
     default_map_access,            /* map_access */

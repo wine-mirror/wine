@@ -72,7 +72,7 @@ static const struct object_ops mutex_sync_ops =
     remove_queue,              /* remove_queue */
     mutex_sync_signaled,       /* signaled */
     mutex_sync_satisfied,      /* satisfied */
-    no_signal,                 /* signal */
+    NULL,                      /* signal */
     no_get_fd,                 /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */

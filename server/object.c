@@ -109,7 +109,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    NULL,                       /* signal */
     no_get_fd,                  /* get_fd */
     default_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
@@ -134,7 +134,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
-    no_signal,                 /* signal */
+    NULL,                      /* signal */
     no_get_fd,                 /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */
@@ -618,12 +618,6 @@ struct namespace *create_namespace( unsigned int hash_size )
 }
 
 /* functions for unimplemented/default object operations */
-
-int no_signal( struct object *obj, unsigned int access, int signal )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
-}
 
 struct fd *no_get_fd( struct object *obj )
 {

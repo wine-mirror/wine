@@ -53,7 +53,7 @@ static const struct object_ops async_cancel_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */
-    no_signal,                   /* signal */
+    NULL,                        /* signal */
     no_get_fd,                   /* get_fd */
     async_cancel_get_sync,       /* get_sync */
     default_map_access,          /* map_access */
@@ -154,7 +154,7 @@ static const struct object_ops async_ops =
     remove_queue,              /* remove_queue */
     async_signaled,            /* signaled */
     async_satisfied,           /* satisfied */
-    no_signal,                 /* signal */
+    NULL,                      /* signal */
     no_get_fd,                 /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */
@@ -828,7 +828,7 @@ static const struct object_ops iosb_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    no_signal,                /* signal */
+    NULL,                     /* signal */
     no_get_fd,                /* get_fd */
     default_get_sync,         /* get_sync */
     default_map_access,       /* map_access */

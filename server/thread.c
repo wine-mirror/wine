@@ -108,7 +108,7 @@ static const struct object_ops thread_apc_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    NULL,                       /* signal */
     no_get_fd,                  /* get_fd */
     thread_apc_get_sync,        /* get_sync */
     default_map_access,         /* map_access */
@@ -154,7 +154,7 @@ static const struct object_ops context_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    NULL,                       /* signal */
     no_get_fd,                  /* get_fd */
     context_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
@@ -204,7 +204,7 @@ static const struct object_ops thread_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
-    no_signal,                  /* signal */
+    NULL,                       /* signal */
     no_get_fd,                  /* get_fd */
     thread_get_sync,            /* get_sync */
     thread_map_access,          /* map_access */
@@ -1310,7 +1310,8 @@ static int signal_object( obj_handle_t handle )
     obj = get_handle_obj( current->process, handle, 0, NULL );
     if (obj)
     {
-        ret = obj->ops->signal( obj, get_handle_access( current->process, handle ), -1 );
+        if (obj->ops->signal) ret = obj->ops->signal( obj, get_handle_access( current->process, handle ), -1 );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         release_object( obj );
     }
     return ret;

@@ -57,7 +57,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
     NULL,                           /* satisfied */
-    no_signal,                      /* signal */
+    NULL,                           /* signal */
     d3dkmt_object_get_fd,           /* get_fd */
     default_get_sync,               /* get_sync */
     default_map_access,             /* map_access */
@@ -125,7 +125,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
     NULL,                           /* satisfied */
-    no_signal,                      /* signal */
+    NULL,                           /* signal */
     no_get_fd,                      /* get_fd */
     default_get_sync,               /* get_sync */
     default_map_access,             /* map_access */
@@ -177,7 +177,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     NULL,                               /* remove_queue */
     NULL,                               /* signaled */
     NULL,                               /* satisfied */
-    no_signal,                          /* signal */
+    NULL,                               /* signal */
     no_get_fd,                          /* get_fd */
     default_get_sync,                   /* get_sync */
     default_map_access,                 /* map_access */
@@ -244,7 +244,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     NULL,                                   /* remove_queue */
     NULL,                                   /* signaled */
     NULL,                                   /* satisfied */
-    no_signal,                              /* signal */
+    NULL,                                   /* signal */
     no_get_fd,                              /* get_fd */
     default_get_sync,                       /* get_sync */
     default_map_access,                     /* map_access */

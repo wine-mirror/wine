@@ -83,7 +83,7 @@ static const struct object_ops console_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     console_get_fd,                   /* get_fd */
     console_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
@@ -162,7 +162,7 @@ static const struct object_ops console_server_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     console_server_get_fd,            /* get_fd */
     console_server_get_sync,          /* get_sync */
     default_map_access,               /* map_access */
@@ -233,7 +233,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     screen_buffer_get_fd,             /* get_fd */
     screen_buffer_get_sync,           /* get_sync */
     default_map_access,               /* map_access */
@@ -283,7 +283,7 @@ static const struct object_ops console_device_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     no_get_fd,                        /* get_fd */
     default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
@@ -324,7 +324,7 @@ static const struct object_ops console_input_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     console_input_get_fd,             /* get_fd */
     console_input_get_sync,           /* get_sync */
     default_map_access,               /* map_access */
@@ -385,7 +385,7 @@ static const struct object_ops console_output_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     console_output_get_fd,            /* get_fd */
     console_output_get_sync,          /* get_sync */
     default_map_access,               /* map_access */
@@ -444,7 +444,7 @@ static const struct object_ops console_connection_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    no_signal,                        /* signal */
+    NULL,                             /* signal */
     console_connection_get_fd,        /* get_fd */
     default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */

@@ -69,7 +69,7 @@ static const struct object_ops semaphore_sync_ops =
     remove_queue,                  /* remove_queue */
     semaphore_sync_signaled,       /* signaled */
     semaphore_sync_satisfied,      /* satisfied */
-    no_signal,                     /* signal */
+    NULL,                          /* signal */
     no_get_fd,                     /* get_fd */
     default_get_sync,              /* get_sync */
     default_map_access,            /* map_access */

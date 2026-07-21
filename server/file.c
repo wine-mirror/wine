@@ -94,7 +94,7 @@ static const struct object_ops file_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
-    no_signal,                    /* signal */
+    NULL,                         /* signal */
     file_get_fd,                  /* get_fd */
     default_fd_get_sync,          /* get_sync */
     default_map_access,           /* map_access */
