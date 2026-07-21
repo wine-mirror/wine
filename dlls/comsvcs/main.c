@@ -460,7 +460,7 @@ static DWORD WINAPI purge_expired_resources(void *arg)
             EnterCriticalSection(&hold->cs);
             LIST_FOR_EACH_ENTRY_SAFE(res, tmp, &hold->pool, resource, entry)
             {
-                if (res->timestamp == RESOURCE_IN_USE) continue;
+                if (res->timestamp == RESOURCE_IN_USE) break;
                 if (!res->ttl) continue;
                 if (res->timestamp + res->ttl * 1000 > ticks) continue;
 
