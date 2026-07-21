@@ -94,18 +94,11 @@ static const struct object_ops serial_ops =
 
 static const struct fd_ops serial_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    serial_get_fd_type,           /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    default_fd_get_file_info,     /* get_file_info */
-    NULL,                         /* get_volume_info */
-    serial_ioctl,                 /* ioctl */
-    NULL,                         /* cancel_async */
-    serial_queue_async,           /* queue_async */
-    serial_reselect_async         /* reselect_async */
+    .get_fd_type    = serial_get_fd_type,
+    .get_file_info  = default_fd_get_file_info,
+    .ioctl          = serial_ioctl,
+    .queue_async    = serial_queue_async,
+    .reselect_async = serial_reselect_async,
 };
 
 /* check if the given fd is a serial port */

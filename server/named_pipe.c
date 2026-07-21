@@ -174,18 +174,14 @@ static const struct object_ops pipe_server_ops =
 
 static const struct fd_ops pipe_server_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    pipe_end_get_fd_type,         /* get_fd_type */
-    pipe_end_read,                /* read */
-    pipe_end_write,               /* write */
-    pipe_end_flush,               /* flush */
-    pipe_end_get_file_info,       /* get_file_info */
-    pipe_end_get_volume_info,     /* get_volume_info */
-    pipe_server_ioctl,            /* ioctl */
-    NULL,                         /* cancel_async */
-    NULL,                         /* queue_async */
-    pipe_end_reselect_async       /* reselect_async */
+    .get_fd_type     = pipe_end_get_fd_type,
+    .read            = pipe_end_read,
+    .write           = pipe_end_write,
+    .flush           = pipe_end_flush,
+    .get_file_info   = pipe_end_get_file_info,
+    .get_volume_info = pipe_end_get_volume_info,
+    .ioctl           = pipe_server_ioctl,
+    .reselect_async  = pipe_end_reselect_async,
 };
 
 /* client end functions */
@@ -208,18 +204,14 @@ static const struct object_ops pipe_client_ops =
 
 static const struct fd_ops pipe_client_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    pipe_end_get_fd_type,         /* get_fd_type */
-    pipe_end_read,                /* read */
-    pipe_end_write,               /* write */
-    pipe_end_flush,               /* flush */
-    pipe_end_get_file_info,       /* get_file_info */
-    pipe_end_get_volume_info,     /* get_volume_info */
-    pipe_client_ioctl,            /* ioctl */
-    NULL,                         /* cancel_async */
-    NULL,                         /* queue_async */
-    pipe_end_reselect_async       /* reselect_async */
+    .get_fd_type     = pipe_end_get_fd_type,
+    .read            = pipe_end_read,
+    .write           = pipe_end_write,
+    .flush           = pipe_end_flush,
+    .get_file_info   = pipe_end_get_file_info,
+    .get_volume_info = pipe_end_get_volume_info,
+    .ioctl           = pipe_client_ioctl,
+    .reselect_async  = pipe_end_reselect_async,
 };
 
 static void named_pipe_device_dump( struct object *obj, int verbose );
@@ -261,18 +253,10 @@ static const struct object_ops named_pipe_device_file_ops =
 
 static const struct fd_ops named_pipe_device_fd_ops =
 {
-    NULL,                                    /* get_poll_events */
-    NULL,                                    /* poll_event */
-    named_pipe_device_file_get_fd_type,      /* get_fd_type */
-    NULL,                                    /* read */
-    NULL,                                    /* write */
-    NULL,                                    /* flush */
-    default_fd_get_file_info,                /* get_file_info */
-    NULL,                                    /* get_volume_info */
-    named_pipe_device_ioctl,                 /* ioctl */
-    NULL,                                    /* cancel_async */
-    default_fd_queue_async,                  /* queue_async */
-    NULL,                                    /* reselect_async */
+    .get_fd_type   = named_pipe_device_file_get_fd_type,
+    .get_file_info = default_fd_get_file_info,
+    .ioctl         = named_pipe_device_ioctl,
+    .queue_async   = default_fd_queue_async,
 };
 
 static void named_pipe_dir_dump( struct object *obj, int verbose );
@@ -300,18 +284,9 @@ static const struct object_ops named_pipe_dir_ops =
 
 static const struct fd_ops named_pipe_dir_fd_ops =
 {
-    NULL,                                    /* get_poll_events */
-    NULL,                                    /* poll_event */
-    NULL,                                    /* get_fd_type */
-    NULL,                                    /* read */
-    NULL,                                    /* write */
-    NULL,                                    /* flush */
-    default_fd_get_file_info,                /* get_file_info */
-    NULL,                                    /* get_volume_info */
-    named_pipe_dir_ioctl,                    /* ioctl */
-    NULL,                                    /* cancel_async */
-    default_fd_queue_async,                  /* queue_async */
-    NULL,                                    /* reselect_async */
+    .get_file_info = default_fd_get_file_info,
+    .ioctl         = named_pipe_dir_ioctl,
+    .queue_async   = default_fd_queue_async,
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )

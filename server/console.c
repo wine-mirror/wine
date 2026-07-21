@@ -95,18 +95,13 @@ static void console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async
 
 static const struct fd_ops console_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    console_read,                 /* read */
-    NULL,                         /* write */
-    console_flush,                /* flush */
-    console_get_file_info,        /* get_file_info */
-    console_get_volume_info,      /* get_volume_info */
-    console_ioctl,                /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type     = console_get_fd_type,
+    .read            = console_read,
+    .flush           = console_flush,
+    .get_file_info   = console_get_file_info,
+    .get_volume_info = console_get_volume_info,
+    .ioctl           = console_ioctl,
+    .queue_async     = default_fd_queue_async,
 };
 
 struct console_host_ioctl
@@ -156,18 +151,9 @@ static void console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async
 
 static const struct fd_ops console_server_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    NULL,                         /* get_file_info */
-    NULL,                         /* get_volume_info */
-    console_server_ioctl,         /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type = console_get_fd_type,
+    .ioctl       = console_server_ioctl,
+    .queue_async = default_fd_queue_async,
 };
 
 struct font_info
@@ -214,18 +200,12 @@ static void screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async 
 
 static const struct fd_ops screen_buffer_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    NULL,                         /* read */
-    screen_buffer_write,          /* write */
-    NULL,                         /* flush */
-    console_get_file_info,        /* get_file_info */
-    console_get_volume_info,      /* get_volume_info */
-    screen_buffer_ioctl,          /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type     = console_get_fd_type,
+    .write           = screen_buffer_write,
+    .get_file_info   = console_get_file_info,
+    .get_volume_info = console_get_volume_info,
+    .ioctl           = screen_buffer_ioctl,
+    .queue_async     = default_fd_queue_async,
 };
 
 static void console_device_dump( struct object *obj, int verbose );
@@ -276,18 +256,13 @@ static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async 
 
 static const struct fd_ops console_input_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    console_input_read,           /* read */
-    NULL,                         /* write */
-    console_input_flush,          /* flush */
-    console_get_file_info,        /* get_file_info */
-    console_get_volume_info,      /* get_volume_info */
-    console_input_ioctl,          /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type     = console_get_fd_type,
+    .read            = console_input_read,
+    .flush           = console_input_flush,
+    .get_file_info   = console_get_file_info,
+    .get_volume_info = console_get_volume_info,
+    .ioctl           = console_input_ioctl,
+    .queue_async     = default_fd_queue_async,
 };
 
 struct console_output
@@ -322,18 +297,12 @@ static void console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async
 
 static const struct fd_ops console_output_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    NULL,                         /* read */
-    console_output_write,         /* write */
-    NULL,                         /* flush */
-    console_get_file_info,        /* get_file_info */
-    console_get_volume_info,      /* get_volume_info */
-    console_output_ioctl,         /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type     = console_get_fd_type,
+    .write           = console_output_write,
+    .get_file_info   = console_get_file_info,
+    .get_volume_info = console_get_volume_info,
+    .ioctl           = console_output_ioctl,
+    .queue_async     = default_fd_queue_async,
 };
 
 struct console_connection
@@ -367,18 +336,9 @@ static void console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct a
 
 static const struct fd_ops console_connection_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    console_get_fd_type,          /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    NULL,                         /* get_file_info */
-    NULL,                         /* get_volume_info */
-    console_connection_ioctl,     /* ioctl */
-    NULL,                         /* cancel_async */
-    default_fd_queue_async,       /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type = console_get_fd_type,
+    .ioctl       = console_connection_ioctl,
+    .queue_async = default_fd_queue_async,
 };
 
 static int queue_host_ioctl( struct console_server *server, unsigned int code, unsigned int output,

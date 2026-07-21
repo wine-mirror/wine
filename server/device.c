@@ -177,18 +177,15 @@ static const struct object_ops device_file_ops =
 
 static const struct fd_ops device_file_fd_ops =
 {
-    NULL,                             /* get_poll_events */
-    NULL,                             /* poll_event */
-    device_file_get_fd_type,          /* get_fd_type */
-    device_file_read,                 /* read */
-    device_file_write,                /* write */
-    device_file_flush,                /* flush */
-    default_fd_get_file_info,         /* get_file_info */
-    device_file_get_volume_info,      /* get_volume_info */
-    device_file_ioctl,                /* ioctl */
-    device_file_cancel_async,         /* cancel_async */
-    default_fd_queue_async,           /* queue_async */
-    NULL,                             /* reselect_async */
+    .get_fd_type     = device_file_get_fd_type,
+    .read            = device_file_read,
+    .write           = device_file_write,
+    .flush           = device_file_flush,
+    .get_file_info   = default_fd_get_file_info,
+    .get_volume_info = device_file_get_volume_info,
+    .ioctl           = device_file_ioctl,
+    .cancel_async    = device_file_cancel_async,
+    .queue_async     = default_fd_queue_async,
 };
 
 

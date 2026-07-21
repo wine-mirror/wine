@@ -66,13 +66,7 @@ static void handler_poll_event( struct fd *fd, int event );
 
 static const struct fd_ops handler_fd_ops =
 {
-    NULL,                     /* get_poll_events */
-    handler_poll_event,       /* poll_event */
-    NULL,                     /* flush */
-    NULL,                     /* get_fd_type */
-    NULL,                     /* ioctl */
-    NULL,                     /* queue_async */
-    NULL                      /* reselect_async */
+    .poll_event = handler_poll_event,
 };
 
 static struct handler *handler_sighup;

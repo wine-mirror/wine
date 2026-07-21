@@ -176,13 +176,7 @@ static const struct object_ops thread_ops =
 
 static const struct fd_ops thread_fd_ops =
 {
-    NULL,                       /* get_poll_events */
-    thread_poll_event,          /* poll_event */
-    NULL,                       /* flush */
-    NULL,                       /* get_fd_type */
-    NULL,                       /* ioctl */
-    NULL,                       /* queue_async */
-    NULL                        /* reselect_async */
+    .poll_event = thread_poll_event,
 };
 
 static struct list thread_list = LIST_INIT(thread_list);

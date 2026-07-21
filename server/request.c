@@ -90,13 +90,7 @@ static const struct object_ops master_socket_ops =
 
 static const struct fd_ops master_socket_fd_ops =
 {
-    NULL,                          /* get_poll_events */
-    master_socket_poll_event,      /* poll_event */
-    NULL,                          /* flush */
-    NULL,                          /* get_fd_type */
-    NULL,                          /* ioctl */
-    NULL,                          /* queue_async */
-    NULL                           /* reselect_async */
+    .poll_event = master_socket_poll_event,
 };
 
 

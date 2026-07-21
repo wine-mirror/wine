@@ -490,18 +490,13 @@ static const struct object_ops sock_ops =
 
 static const struct fd_ops sock_fd_ops =
 {
-    sock_get_poll_events,         /* get_poll_events */
-    sock_poll_event,              /* poll_event */
-    sock_get_fd_type,             /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    default_fd_get_file_info,     /* get_file_info */
-    NULL,                         /* get_volume_info */
-    sock_ioctl,                   /* ioctl */
-    sock_cancel_async,            /* cancel_async */
-    NULL,                         /* queue_async */
-    sock_reselect_async           /* reselect_async */
+    .get_poll_events = sock_get_poll_events,
+    .poll_event      = sock_poll_event,
+    .get_fd_type     = sock_get_fd_type,
+    .get_file_info   = default_fd_get_file_info,
+    .ioctl           = sock_ioctl,
+    .cancel_async    = sock_cancel_async,
+    .reselect_async  = sock_reselect_async,
 };
 
 static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_sockaddr *wsaddr, socklen_t wsaddrlen )
@@ -3694,18 +3689,8 @@ static const struct object_ops ifchange_ops =
 
 static const struct fd_ops ifchange_fd_ops =
 {
-    ifchange_get_poll_events, /* get_poll_events */
-    ifchange_poll_event,      /* poll_event */
-    NULL,                     /* get_fd_type */
-    NULL,                     /* read */
-    NULL,                     /* write */
-    NULL,                     /* flush */
-    NULL,                     /* get_file_info */
-    NULL,                     /* get_volume_info */
-    NULL,                     /* ioctl */
-    NULL,                     /* cancel_async */
-    NULL,                     /* queue_async */
-    NULL                      /* reselect_async */
+    .get_poll_events = ifchange_get_poll_events,
+    .poll_event      = ifchange_poll_event,
 };
 
 static void ifchange_dump( struct object *obj, int verbose )

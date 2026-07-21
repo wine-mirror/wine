@@ -169,14 +169,7 @@ static const struct object_ops msg_queue_ops =
 
 static const struct fd_ops msg_queue_fd_ops =
 {
-    NULL,                        /* get_poll_events */
-    msg_queue_poll_event,        /* poll_event */
-    NULL,                        /* flush */
-    NULL,                        /* get_fd_type */
-    NULL,                        /* ioctl */
-    NULL,                        /* queue_async */
-    NULL,                        /* reselect_async */
-    NULL                         /* cancel async */
+    .poll_event = msg_queue_poll_event,
 };
 
 

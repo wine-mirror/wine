@@ -153,18 +153,7 @@ static const struct object_ops mapping_ops =
 
 static const struct fd_ops mapping_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    mapping_get_fd_type,          /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    NULL,                         /* get_file_info */
-    NULL,                         /* get_volume_info */
-    NULL,                         /* ioctl */
-    NULL,                         /* cancel_async */
-    NULL,                         /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type = mapping_get_fd_type,
 };
 
 /* free address ranges for PE image mappings */

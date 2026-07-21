@@ -64,18 +64,7 @@ static enum server_fd_type d3dkmt_get_fd_type( struct fd *fd )
 
 static const struct fd_ops d3dkmt_fd_ops =
 {
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
-    d3dkmt_get_fd_type,           /* get_fd_type */
-    NULL,                         /* read */
-    NULL,                         /* write */
-    NULL,                         /* flush */
-    NULL,                         /* get_file_info */
-    NULL,                         /* get_volume_info */
-    NULL,                         /* ioctl */
-    NULL,                         /* cancel_async */
-    NULL,                         /* queue_async */
-    NULL,                         /* reselect_async */
+    .get_fd_type = d3dkmt_get_fd_type,
 };
 
 struct keyed_wait
