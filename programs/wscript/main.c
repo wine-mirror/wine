@@ -504,6 +504,7 @@ static BSTR get_script_str(const WCHAR *filename)
     HANDLE file, map;
     DWORD size, len;
     BSTR ret;
+    int flags;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
     if(file == INVALID_HANDLE_VALUE)
@@ -525,9 +526,27 @@ static BSTR get_script_str(const WCHAR *filename)
     if(!file_map)
         return NULL;
 
+    flags = IS_TEXT_UNICODE_UNICODE_MASK;
+    if(IsTextUnicode(file_map, size, &flags))
+    {
+        const WCHAR *start = (const WCHAR *)file_map;
+        DWORD count = size / sizeof(WCHAR);
+
+        if(flags & IS_TEXT_UNICODE_SIGNATURE)
+        {
+            start++;
+            count--;
+        }
+        ret = SysAllocStringLen(start, count);
+        UnmapViewOfFile(file_map);
+        return ret;
+    }
+
+    /* Not Unicode, fall back to system ANSI code page. */
     len = MultiByteToWideChar(CP_ACP, 0, file_map, size, NULL, 0);
     ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, file_map, size, ret, len);
+    if(ret)
+        MultiByteToWideChar(CP_ACP, 0, file_map, size, ret, len);
 
     UnmapViewOfFile(file_map);
     return ret;
