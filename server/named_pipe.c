@@ -139,7 +139,7 @@ static const struct object_ops named_pipe_ops =
     named_pipe_get_full_name,     /* get_full_name */
     NULL,                         /* lookup_name */
     named_pipe_link_name,         /* link_name */
-    default_unlink_name,          /* unlink_name */
+    NULL,                         /* unlink_name */
     named_pipe_open_file,         /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
     no_close_handle,              /* close_handle */
@@ -282,7 +282,7 @@ static const struct object_ops named_pipe_device_ops =
     named_pipe_device_get_full_name,  /* get_full_name */
     named_pipe_device_lookup_name,    /* lookup_name */
     NULL,                             /* link_name */
-    default_unlink_name,              /* unlink_name */
+    NULL,                             /* unlink_name */
     named_pipe_device_open_file,      /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */

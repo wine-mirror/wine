@@ -174,7 +174,6 @@ extern struct object *get_obj_sync( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
-extern void default_unlink_name( struct object *obj, struct object_name *name );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );
 extern struct list *no_kernel_obj_list( struct object *obj );
@@ -209,6 +208,11 @@ static inline unsigned int map_obj_access( struct object *obj, unsigned int acce
 {
     if (obj->ops->map_access) return obj->ops->map_access( obj, access );
     return default_map_access( obj, access );
+}
+
+static inline void unlink_name( struct object_name *name )
+{
+    list_remove( &name->entry );
 }
 
 static inline void *mem_append( void *ptr, const void *src, data_size_t len )

@@ -625,7 +625,7 @@ static void key_unlink_name( struct object *obj, struct object_name *name )
 
     if (parent->obj.ops != &key_ops)
     {
-        default_unlink_name( obj, name );
+        unlink_name( name );
         return;
     }
 

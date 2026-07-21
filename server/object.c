@@ -118,7 +118,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* get_full_name */
     NULL,                       /* lookup_name */
     NULL,                       /* link_name */
-    default_unlink_name,        /* unlink_name */
+    NULL,                       /* unlink_name */
     no_open_file,               /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
@@ -143,7 +143,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* get_full_name */
     NULL,                      /* lookup_name */
     NULL,                      /* link_name */
-    default_unlink_name,       /* unlink_name */
+    NULL,                      /* unlink_name */
     no_open_file,              /* open_file */
     no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
@@ -536,7 +536,8 @@ void unlink_named_object( struct object *obj )
 
     if (!name_ptr) return;
     obj->name = NULL;
-    obj->ops->unlink_name( obj, name_ptr );
+    if (obj->ops->unlink_name) obj->ops->unlink_name( obj, name_ptr );
+    else unlink_name( name_ptr );
     if (name_ptr->parent) release_object( name_ptr->parent );
     free( name_ptr );
 }
@@ -769,11 +770,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-void default_unlink_name( struct object *obj, struct object_name *name )
-{
-    list_remove( &name->entry );
 }
 
 struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,

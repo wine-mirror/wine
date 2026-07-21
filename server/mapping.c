@@ -194,7 +194,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* get_full_name */
     NULL,                        /* lookup_name */
     NULL,                        /* link_name */
-    default_unlink_name,         /* unlink_name */
+    NULL,                        /* unlink_name */
     no_open_file,                /* open_file */
     no_kernel_obj_list,          /* get_kernel_obj_list */
     no_close_handle,             /* close_handle */
