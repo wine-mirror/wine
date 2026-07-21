@@ -141,7 +141,7 @@ static const struct object_ops token_ops =
     sizeof(struct token),      /* size */
     &token_type,               /* type */
     token_dump,                /* dump */
-    no_add_queue,              /* add_queue */
+    NULL,                      /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* satisfied */

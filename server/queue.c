@@ -201,7 +201,7 @@ static const struct object_ops thread_input_ops =
     sizeof(struct thread_input),  /* size */
     &no_type,                     /* type */
     thread_input_dump,            /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */

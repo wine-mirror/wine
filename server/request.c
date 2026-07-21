@@ -85,7 +85,7 @@ static const struct object_ops master_socket_ops =
     sizeof(struct master_socket),  /* size */
     &no_type,                      /* type */
     master_socket_dump,            /* dump */
-    no_add_queue,                  /* add_queue */
+    NULL,                          /* add_queue */
     NULL,                          /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */

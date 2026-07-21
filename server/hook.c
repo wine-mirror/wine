@@ -72,7 +72,7 @@ static const struct object_ops hook_table_ops =
     sizeof(struct hook_table),    /* size */
     &no_type,                     /* type */
     hook_table_dump,              /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */

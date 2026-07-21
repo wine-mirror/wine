@@ -824,7 +824,7 @@ static const struct object_ops iosb_ops =
     sizeof(struct iosb),      /* size */
     &no_type,                 /* type */
     iosb_dump,                /* dump */
-    no_add_queue,             /* add_queue */
+    NULL,                     /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */

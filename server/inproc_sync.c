@@ -70,7 +70,7 @@ static const struct object_ops inproc_sync_ops =
     sizeof(struct inproc_sync), /* size */
     &no_type,                   /* type */
     inproc_sync_dump,           /* dump */
-    no_add_queue,               /* add_queue */
+    NULL,                       /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */

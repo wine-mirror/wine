@@ -62,7 +62,7 @@ static const struct object_ops irp_call_ops =
     sizeof(struct irp_call),          /* size */
     &no_type,                         /* type */
     irp_call_dump,                    /* dump */
-    no_add_queue,                     /* add_queue */
+    NULL,                             /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
@@ -162,7 +162,7 @@ static const struct object_ops device_ops =
     sizeof(struct device),            /* size */
     &device_type,                     /* type */
     device_dump,                      /* dump */
-    no_add_queue,                     /* add_queue */
+    NULL,                             /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */

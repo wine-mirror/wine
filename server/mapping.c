@@ -66,7 +66,7 @@ static const struct object_ops ranges_ops =
     sizeof(struct ranges),     /* size */
     &no_type,                  /* type */
     ranges_dump,               /* dump */
-    no_add_queue,              /* add_queue */
+    NULL,                      /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
@@ -103,7 +103,7 @@ static const struct object_ops shared_map_ops =
     sizeof(struct shared_map), /* size */
     &no_type,                  /* type */
     shared_map_dump,           /* dump */
-    no_add_queue,              /* add_queue */
+    NULL,                      /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
@@ -181,7 +181,7 @@ static const struct object_ops mapping_ops =
     sizeof(struct mapping),      /* size */
     &mapping_type,               /* type */
     mapping_dump,                /* dump */
-    no_add_queue,                /* add_queue */
+    NULL,                        /* add_queue */
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */

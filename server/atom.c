@@ -73,7 +73,7 @@ static const struct object_ops atom_table_ops =
     sizeof(struct atom_table),    /* size */
     &no_type,                     /* type */
     atom_table_dump,              /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */

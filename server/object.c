@@ -105,7 +105,7 @@ static const struct object_ops apc_reserve_ops =
     sizeof(struct reserve),     /* size */
     &apc_reserve_type,          /* type */
     dump_reserve,               /* dump */
-    no_add_queue,               /* add_queue */
+    NULL,                       /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     no_satisfied,               /* satisfied */
@@ -130,7 +130,7 @@ static const struct object_ops completion_reserve_ops =
     sizeof(struct reserve),    /* size */
     &completion_reserve_type,  /* type */
     dump_reserve,              /* dump */
-    no_add_queue,              /* add_queue */
+    NULL,                      /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     no_satisfied,              /* satisfied */
@@ -618,12 +618,6 @@ struct namespace *create_namespace( unsigned int hash_size )
 }
 
 /* functions for unimplemented/default object operations */
-
-int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
-}
 
 void no_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {

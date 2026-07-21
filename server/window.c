@@ -102,7 +102,7 @@ static const struct object_ops window_ops =
     sizeof(struct window),    /* size */
     &no_type,                 /* type */
     window_dump,              /* dump */
-    no_add_queue,             /* add_queue */
+    NULL,                     /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */

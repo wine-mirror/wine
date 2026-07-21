@@ -1042,7 +1042,10 @@ static void object_sync_remove_queue( struct object *obj, struct wait_queue_entr
 static int object_sync_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct object *sync = get_obj_sync( obj );
-    int ret = sync->ops->add_queue( sync, entry );
+    int ret = 0;
+
+    if (sync->ops->add_queue) ret = sync->ops->add_queue( sync, entry );
+    else set_error( STATUS_OBJECT_TYPE_MISMATCH );
     release_object( sync );
     return ret;
 }

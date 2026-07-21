@@ -180,7 +180,7 @@ static const struct object_ops key_ops =
     sizeof(struct key),      /* size */
     &key_type,               /* type */
     key_dump,                /* dump */
-    no_add_queue,            /* add_queue */
+    NULL,                    /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     NULL,                    /* satisfied */

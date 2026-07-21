@@ -53,7 +53,7 @@ static const struct object_ops d3dkmt_object_ops =
     sizeof(struct d3dkmt_object),   /* size */
     &no_type,                       /* type */
     d3dkmt_object_dump,             /* dump */
-    no_add_queue,                   /* add_queue */
+    NULL,                           /* add_queue */
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
     NULL,                           /* satisfied */
@@ -121,7 +121,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     sizeof(struct d3dkmt_mutex),    /* size */
     &no_type,                       /* type */
     d3dkmt_mutex_dump,              /* dump */
-    no_add_queue,                   /* add_queue */
+    NULL,                           /* add_queue */
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
     NULL,                           /* satisfied */
@@ -173,7 +173,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     sizeof(struct dxgk_shared_sync),    /* size */
     &dxgk_shared_sync_type,             /* type */
     dxgk_shared_sync_dump,              /* dump */
-    no_add_queue,                       /* add_queue */
+    NULL,                               /* add_queue */
     NULL,                               /* remove_queue */
     NULL,                               /* signaled */
     NULL,                               /* satisfied */
@@ -240,7 +240,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     sizeof(struct dxgk_shared_resource),    /* size */
     &dxgk_shared_resource_type,             /* type */
     dxgk_shared_resource_dump,              /* dump */
-    no_add_queue,                           /* add_queue */
+    NULL,                                   /* add_queue */
     NULL,                                   /* remove_queue */
     NULL,                                   /* signaled */
     NULL,                                   /* satisfied */

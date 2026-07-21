@@ -122,7 +122,7 @@ static const struct object_ops handle_table_ops =
     sizeof(struct handle_table),     /* size */
     &no_type,                        /* type */
     handle_table_dump,               /* dump */
-    no_add_queue,                    /* add_queue */
+    NULL,                            /* add_queue */
     NULL,                            /* remove_queue */
     NULL,                            /* signaled */
     NULL,                            /* satisfied */

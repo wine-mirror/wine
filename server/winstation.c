@@ -72,7 +72,7 @@ static const struct object_ops winstation_ops =
     sizeof(struct winstation),    /* size */
     &winstation_type,             /* type */
     winstation_dump,              /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
@@ -113,7 +113,7 @@ static const struct object_ops desktop_ops =
     sizeof(struct desktop),       /* size */
     &desktop_type,                /* type */
     desktop_dump,                 /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */

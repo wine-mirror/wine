@@ -140,7 +140,7 @@ static const struct object_ops mail_writer_ops =
     sizeof(struct mail_writer), /* size */
     &file_type,                 /* type */
     mail_writer_dump,           /* dump */
-    no_add_queue,               /* add_queue */
+    NULL,                       /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
@@ -206,7 +206,7 @@ static const struct object_ops mailslot_device_ops =
     sizeof(struct mailslot_device), /* size */
     &device_type,                   /* type */
     mailslot_device_dump,           /* dump */
-    no_add_queue,                   /* add_queue */
+    NULL,                           /* add_queue */
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
     no_satisfied,                   /* satisfied */

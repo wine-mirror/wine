@@ -72,7 +72,7 @@ static const struct object_ops clipboard_ops =
     sizeof(struct clipboard),     /* size */
     &no_type,                     /* type */
     clipboard_dump,               /* dump */
-    no_add_queue,                 /* add_queue */
+    NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */

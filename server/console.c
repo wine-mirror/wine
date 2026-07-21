@@ -279,7 +279,7 @@ static const struct object_ops console_device_ops =
     sizeof(struct object),            /* size */
     &device_type,                     /* type */
     console_device_dump,              /* dump */
-    no_add_queue,                     /* add_queue */
+    NULL,                             /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
@@ -440,7 +440,7 @@ static const struct object_ops console_connection_ops =
     sizeof(struct console_connection),/* size */
     &device_type,                     /* type */
     console_connection_dump,          /* dump */
-    no_add_queue,                     /* add_queue */
+    NULL,                             /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */

@@ -3702,7 +3702,7 @@ static const struct object_ops ifchange_ops =
     sizeof(struct ifchange), /* size */
     &no_type,                /* type */
     ifchange_dump,           /* dump */
-    no_add_queue,            /* add_queue */
+    NULL,                    /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     no_satisfied,            /* satisfied */
@@ -3924,7 +3924,7 @@ static const struct object_ops socket_device_ops =
     sizeof(struct object),      /* size */
     &device_type,               /* type */
     socket_device_dump,         /* dump */
-    no_add_queue,               /* add_queue */
+    NULL,                       /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     no_satisfied,               /* satisfied */
