@@ -61,7 +61,7 @@ static const struct object_ops async_cancel_ops =
     NULL,                        /* set_sd */
     NULL,                        /* get_full_name */
     NULL,                        /* lookup_name */
-    no_link_name,                /* link_name */
+    NULL,                        /* link_name */
     NULL,                        /* unlink_name */
     no_open_file,                /* open_file */
     no_kernel_obj_list,          /* get_kernel_obj_list */
@@ -162,7 +162,7 @@ static const struct object_ops async_ops =
     NULL,                      /* set_sd */
     NULL,                      /* get_full_name */
     NULL,                      /* lookup_name */
-    no_link_name,              /* link_name */
+    NULL,                      /* link_name */
     NULL,                      /* unlink_name */
     no_open_file,              /* open_file */
     no_kernel_obj_list,        /* get_kernel_obj_list */
@@ -836,7 +836,7 @@ static const struct object_ops iosb_ops =
     NULL,                     /* set_sd */
     NULL,                     /* get_full_name */
     NULL,                     /* lookup_name */
-    no_link_name,             /* link_name */
+    NULL,                     /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
     no_kernel_obj_list,       /* get_kernel_obj_list */

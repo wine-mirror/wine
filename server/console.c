@@ -91,7 +91,7 @@ static const struct object_ops console_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     console_lookup_name,              /* lookup_name */
-    no_link_name,                     /* link_name */
+    NULL,                             /* link_name */
     NULL,                             /* unlink_name */
     console_open_file,                /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -170,7 +170,7 @@ static const struct object_ops console_server_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     console_server_lookup_name,       /* lookup_name */
-    no_link_name,                     /* link_name */
+    NULL,                             /* link_name */
     NULL,                             /* unlink_name */
     console_server_open_file,         /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -241,7 +241,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     NULL,                             /* lookup_name */
-    no_link_name,                     /* link_name */
+    NULL,                             /* link_name */
     NULL,                             /* unlink_name */
     screen_buffer_open_file,          /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -291,7 +291,7 @@ static const struct object_ops console_device_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     console_device_lookup_name,       /* lookup_name */
-    directory_link_name,              /* link_name */
+    NULL,                             /* link_name */
     default_unlink_name,              /* unlink_name */
     console_device_open_file,         /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -332,7 +332,7 @@ static const struct object_ops console_input_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     NULL,                             /* lookup_name */
-    directory_link_name,              /* link_name */
+    NULL,                             /* link_name */
     default_unlink_name,              /* unlink_name */
     console_input_open_file,          /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -393,7 +393,7 @@ static const struct object_ops console_output_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     NULL,                             /* lookup_name */
-    directory_link_name,              /* link_name */
+    NULL,                             /* link_name */
     default_unlink_name,              /* unlink_name */
     console_output_open_file,         /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -452,7 +452,7 @@ static const struct object_ops console_connection_ops =
     NULL,                             /* set_sd */
     NULL,                             /* get_full_name */
     console_connection_lookup_name,   /* lookup_name */
-    directory_link_name,              /* link_name */
+    NULL,                             /* link_name */
     default_unlink_name,              /* unlink_name */
     console_connection_open_file,     /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */

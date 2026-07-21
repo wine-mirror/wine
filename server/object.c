@@ -117,7 +117,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* set_sd */
     NULL,                       /* get_full_name */
     NULL,                       /* lookup_name */
-    directory_link_name,        /* link_name */
+    NULL,                       /* link_name */
     default_unlink_name,        /* unlink_name */
     no_open_file,               /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
@@ -142,7 +142,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* set_sd */
     NULL,                      /* get_full_name */
     NULL,                      /* lookup_name */
-    directory_link_name,       /* link_name */
+    NULL,                      /* link_name */
     default_unlink_name,       /* unlink_name */
     no_open_file,              /* open_file */
     no_kernel_obj_list,        /* get_kernel_obj_list */
@@ -421,11 +421,14 @@ static struct object *create_object( struct object *parent, const struct object_
     if (sd && !default_set_sd( obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
         goto failed;
-    if (!obj->ops->link_name( obj, name_ptr, parent )) goto failed;
-
-    name_ptr->obj = obj;
-    obj->name = name_ptr;
-    return obj;
+    if (obj->ops->link_name ?
+        obj->ops->link_name( obj, name_ptr, parent ) :
+        directory_link_name( obj, name_ptr, parent ))
+    {
+        name_ptr->obj = obj;
+        obj->name = name_ptr;
+        return obj;
+    }
 
 failed:
     if (obj) free_object( obj );
@@ -766,12 +769,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-int no_link_name( struct object *obj, struct object_name *name, struct object *parent )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 void default_unlink_name( struct object *obj, struct object_name *name )

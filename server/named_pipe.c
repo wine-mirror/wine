@@ -187,7 +187,7 @@ static const struct object_ops pipe_server_ops =
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
     pipe_server_lookup_name,      /* lookup_name */
-    no_link_name,                 /* link_name */
+    NULL,                         /* link_name */
     NULL,                         /* unlink_name */
     pipe_server_open_file,        /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
@@ -232,7 +232,7 @@ static const struct object_ops pipe_client_ops =
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
     NULL,                         /* lookup_name */
-    no_link_name,                 /* link_name */
+    NULL,                         /* link_name */
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
@@ -281,7 +281,7 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* set_sd */
     named_pipe_device_get_full_name,  /* get_full_name */
     named_pipe_device_lookup_name,    /* lookup_name */
-    directory_link_name,              /* link_name */
+    NULL,                             /* link_name */
     default_unlink_name,              /* unlink_name */
     named_pipe_device_open_file,      /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
@@ -313,7 +313,7 @@ static const struct object_ops named_pipe_device_file_ops =
     NULL,                                    /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */
     NULL,                                    /* lookup_name */
-    no_link_name,                            /* link_name */
+    NULL,                                    /* link_name */
     NULL,                                    /* unlink_name */
     no_open_file,                            /* open_file */
     no_kernel_obj_list,                      /* get_kernel_obj_list */
@@ -364,7 +364,7 @@ static const struct object_ops named_pipe_dir_ops =
     NULL,                                    /* set_sd */
     named_pipe_dir_get_full_name,            /* get_full_name */
     named_pipe_dir_lookup_name,              /* lookup_name */
-    no_link_name,                            /* link_name */
+    NULL,                                    /* link_name */
     NULL,                                    /* unlink_name */
     named_pipe_dir_open_file,                /* open_file */
     no_kernel_obj_list,                      /* get_kernel_obj_list */
