@@ -193,7 +193,6 @@ static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid
         free(res);
         return hr;
     }
-    if (res->ttl) FIXME("ignoring maximum idle time\n");
 
     EnterCriticalSection(&This->cs);
     if (!This->driver)
