@@ -110,7 +110,7 @@ static const struct fd_ops file_fd_ops =
     NULL,                         /* write */
     NULL,                         /* flush */
     default_fd_get_file_info,     /* get_file_info */
-    no_fd_get_volume_info,        /* get_volume_info */
+    NULL,                         /* get_volume_info */
     default_fd_ioctl,             /* ioctl */
     default_fd_cancel_async,      /* cancel_async */
     default_fd_queue_async,       /* queue_async */

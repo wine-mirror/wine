@@ -163,7 +163,7 @@ static const struct fd_ops console_server_fd_ops =
     NULL,                         /* write */
     NULL,                         /* flush */
     NULL,                         /* get_file_info */
-    no_fd_get_volume_info,        /* get_volume_info */
+    NULL,                         /* get_volume_info */
     console_server_ioctl,         /* ioctl */
     default_fd_cancel_async,      /* cancel_async */
     default_fd_queue_async,       /* queue_async */
@@ -374,7 +374,7 @@ static const struct fd_ops console_connection_fd_ops =
     NULL,                         /* write */
     NULL,                         /* flush */
     NULL,                         /* get_file_info */
-    no_fd_get_volume_info,        /* get_volume_info */
+    NULL,                         /* get_volume_info */
     console_connection_ioctl,     /* ioctl */
     default_fd_cancel_async,      /* cancel_async */
     default_fd_queue_async,       /* queue_async */

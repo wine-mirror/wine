@@ -2640,12 +2640,6 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
     }
 }
 
-/* default get_volume_info() routine */
-void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
 /* default ioctl() routine */
 void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
@@ -2995,7 +2989,8 @@ DECL_HANDLER(get_volume_info)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
     {
-        fd->fd_ops->get_volume_info( fd, async, req->info_class );
+        if (fd->fd_ops->get_volume_info) fd->fd_ops->get_volume_info( fd, async, req->info_class );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         reply->wait = async_handoff( async, NULL, 1 );
         release_object( async );
     }
