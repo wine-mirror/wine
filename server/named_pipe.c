@@ -184,7 +184,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
     NULL,                         /* cancel_async */
-    no_fd_queue_async,            /* queue_async */
+    NULL,                         /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
 
@@ -218,7 +218,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
     NULL,                         /* cancel_async */
-    no_fd_queue_async,            /* queue_async */
+    NULL,                         /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
 

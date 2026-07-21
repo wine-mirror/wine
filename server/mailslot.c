@@ -104,7 +104,7 @@ static const struct fd_ops mailslot_fd_ops =
     NULL,                       /* get_volume_info */
     default_fd_ioctl,           /* ioctl */
     NULL,                       /* cancel_async */
-    no_fd_queue_async,          /* queue_async */
+    NULL,                       /* queue_async */
     default_fd_reselect_async   /* reselect_async */
 };
 
