@@ -29,7 +29,7 @@
 #include "wine/test.h"
 
 #define DEFINE_EXPECT(func) \
-    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+    static BOOL expect_ ## func = FALSE; static unsigned int called_ ## func = 0
 
 #define SET_EXPECT(func) \
     called_ ## func = FALSE, expect_ ## func = TRUE
@@ -37,13 +37,21 @@
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        expect_ ## func = FALSE; \
+        called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLEDN(func, n) \
+    do { \
+        ok(called_ ## func == n, "expected " #func " called %u times, got %u\n", n, called_ ## func); \
+        expect_ ## func = FALSE; \
+        called_ ## func = 0; \
     }while(0)
 
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
-        called_ ## func = TRUE; \
+        called_ ## func++; \
     }while(0)
 
 #define CHECK_CALLED_BROKEN(func) \
@@ -276,7 +284,18 @@ static void create_dispenser(void)
     hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
     ok(resid == 10, "got %Id\n", resid);
-    CHECK_CALLED(driver_RateResource);
+    CHECK_CALLEDN(driver_RateResource, 2);
+
+    SET_EXPECT(driver_ResetResource);
+    hr = IHolder_FreeResource(holder1, resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    CHECK_CALLED(driver_ResetResource);
+
+    SET_EXPECT(driver_RateResource);
+    hr = IHolder_AllocResource(holder1, (RESTYPID)str, &resid);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+    ok(resid == 10, "got %Id\n", resid);
+    CHECK_CALLEDN(driver_RateResource, 1);
 
     SET_EXPECT(driver_DestroyResource);
     SET_EXPECT(driver_Release);

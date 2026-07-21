@@ -159,10 +159,13 @@ static HRESULT WINAPI holder_AllocResource(IHolder *iface, const RESTYPID typeid
     {
         if (res->timestamp == RESOURCE_IN_USE) continue;
         hr = IDispenserDriver_RateResource(This->driver, typeid, res->resid, FALSE, &rating);
-        if (SUCCEEDED(hr) && rating && rating >= best_rating)
+        if (SUCCEEDED(hr) && rating && rating > best_rating)
         {
             best_rating = rating;
             best = res;
+
+            if (rating >= 100)
+                break;
         }
     }
     if (best)
@@ -239,6 +242,8 @@ static HRESULT WINAPI holder_FreeResource(IHolder *iface, const RESID resid)
         }
 
         res->timestamp = GetTickCount64();
+        list_remove(&res->entry);
+        list_add_head(&This->pool, &res->entry);
         LeaveCriticalSection(&This->cs);
         return hr;
     }
