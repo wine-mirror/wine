@@ -135,7 +135,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* get_sync */
     NULL,                         /* map_access */
     NULL,                         /* get_sd */
-    default_set_sd,               /* set_sd */
+    NULL,                         /* set_sd */
     named_pipe_get_full_name,     /* get_full_name */
     no_lookup_name,               /* lookup_name */
     named_pipe_link_name,         /* link_name */
@@ -278,7 +278,7 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     named_pipe_device_get_full_name,  /* get_full_name */
     named_pipe_device_lookup_name,    /* lookup_name */
     directory_link_name,              /* link_name */
@@ -310,7 +310,7 @@ static const struct object_ops named_pipe_device_file_ops =
     default_fd_get_sync,                     /* get_sync */
     NULL,                                    /* map_access */
     NULL,                                    /* get_sd */
-    default_set_sd,                          /* set_sd */
+    NULL,                                    /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */
     no_lookup_name,                          /* lookup_name */
     no_link_name,                            /* link_name */
@@ -361,7 +361,7 @@ static const struct object_ops named_pipe_dir_ops =
     default_fd_get_sync,                     /* get_sync */
     NULL,                                    /* map_access */
     NULL,                                    /* get_sd */
-    default_set_sd,                          /* set_sd */
+    NULL,                                    /* set_sd */
     named_pipe_dir_get_full_name,            /* get_full_name */
     named_pipe_dir_lookup_name,              /* lookup_name */
     no_link_name,                            /* link_name */

@@ -189,7 +189,7 @@ static const struct object_ops key_ops =
     NULL,                    /* get_sync */
     key_map_access,          /* map_access */
     key_get_sd,              /* get_sd */
-    default_set_sd,          /* set_sd */
+    NULL,                    /* set_sd */
     key_get_full_name,       /* get_full_name */
     key_lookup_name,         /* lookup_name */
     key_link_name,           /* link_name */

@@ -113,7 +113,7 @@ static const struct object_ops thread_apc_ops =
     thread_apc_get_sync,        /* get_sync */
     NULL,                       /* map_access */
     NULL,                       /* get_sd */
-    default_set_sd,             /* set_sd */
+    NULL,                       /* set_sd */
     no_get_full_name,           /* get_full_name */
     no_lookup_name,             /* lookup_name */
     no_link_name,               /* link_name */
@@ -159,7 +159,7 @@ static const struct object_ops context_ops =
     context_get_sync,           /* get_sync */
     NULL,                       /* map_access */
     NULL,                       /* get_sd */
-    default_set_sd,             /* set_sd */
+    NULL,                       /* set_sd */
     no_get_full_name,           /* get_full_name */
     no_lookup_name,             /* lookup_name */
     no_link_name,               /* link_name */
@@ -209,7 +209,7 @@ static const struct object_ops thread_ops =
     thread_get_sync,            /* get_sync */
     thread_map_access,          /* map_access */
     NULL,                       /* get_sd */
-    default_set_sd,             /* set_sd */
+    NULL,                       /* set_sd */
     no_get_full_name,           /* get_full_name */
     no_lookup_name,             /* lookup_name */
     no_link_name,               /* link_name */

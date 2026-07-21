@@ -94,7 +94,7 @@ static const struct object_ops master_socket_ops =
     NULL,                          /* get_sync */
     NULL,                          /* map_access */
     NULL,                          /* get_sd */
-    default_set_sd,                /* set_sd */
+    NULL,                          /* set_sd */
     no_get_full_name,              /* get_full_name */
     no_lookup_name,                /* lookup_name */
     no_link_name,                  /* link_name */

@@ -111,7 +111,7 @@ static const struct object_ops process_ops =
     process_get_sync,            /* get_sync */
     process_map_access,          /* map_access */
     process_get_sd,              /* get_sd */
-    default_set_sd,              /* set_sd */
+    NULL,                        /* set_sd */
     no_get_full_name,            /* get_full_name */
     no_lookup_name,              /* lookup_name */
     no_link_name,                /* link_name */
@@ -164,7 +164,7 @@ static const struct object_ops startup_info_ops =
     startup_info_get_sync,         /* get_sync */
     NULL,                          /* map_access */
     NULL,                          /* get_sd */
-    default_set_sd,                /* set_sd */
+    NULL,                          /* set_sd */
     no_get_full_name,              /* get_full_name */
     no_lookup_name,                /* lookup_name */
     no_link_name,                  /* link_name */
@@ -226,7 +226,7 @@ static const struct object_ops job_ops =
     job_get_sync,                  /* get_sync */
     NULL,                          /* map_access */
     NULL,                          /* get_sd */
-    default_set_sd,                /* set_sd */
+    NULL,                          /* set_sd */
     default_get_full_name,         /* get_full_name */
     no_lookup_name,                /* lookup_name */
     directory_link_name,           /* link_name */

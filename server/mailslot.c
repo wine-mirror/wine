@@ -87,7 +87,7 @@ static const struct object_ops mailslot_ops =
     default_fd_get_sync,       /* get_sync */
     mailslot_map_access,       /* map_access */
     NULL,                      /* get_sd */
-    default_set_sd,            /* set_sd */
+    NULL,                      /* set_sd */
     mailslot_get_full_name,    /* get_full_name */
     no_lookup_name,            /* lookup_name */
     mailslot_link_name,        /* link_name */
@@ -149,7 +149,7 @@ static const struct object_ops mail_writer_ops =
     NULL,                       /* get_sync */
     mail_writer_map_access,     /* map_access */
     NULL,                       /* get_sd */
-    default_set_sd,             /* set_sd */
+    NULL,                       /* set_sd */
     no_get_full_name,           /* get_full_name */
     no_lookup_name,             /* lookup_name */
     no_link_name,               /* link_name */
@@ -215,7 +215,7 @@ static const struct object_ops mailslot_device_ops =
     NULL,                           /* get_sync */
     NULL,                           /* map_access */
     NULL,                           /* get_sd */
-    default_set_sd,                 /* set_sd */
+    NULL,                           /* set_sd */
     default_get_full_name,          /* get_full_name */
     mailslot_device_lookup_name,    /* lookup_name */
     directory_link_name,            /* link_name */
@@ -246,7 +246,7 @@ static const struct object_ops mailslot_device_file_ops =
     default_fd_get_sync,                    /* get_sync */
     NULL,                                   /* map_access */
     NULL,                                   /* get_sd */
-    default_set_sd,                         /* set_sd */
+    NULL,                                   /* set_sd */
     mailslot_device_file_get_full_name,     /* get_full_name */
     no_lookup_name,                         /* lookup_name */
     no_link_name,                           /* link_name */

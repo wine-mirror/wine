@@ -88,7 +88,7 @@ static const struct object_ops console_ops =
     console_get_sync,                 /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     console_lookup_name,              /* lookup_name */
     no_link_name,                     /* link_name */
@@ -167,7 +167,7 @@ static const struct object_ops console_server_ops =
     console_server_get_sync,          /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     console_server_lookup_name,       /* lookup_name */
     no_link_name,                     /* link_name */
@@ -238,7 +238,7 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_get_sync,           /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     no_lookup_name,                   /* lookup_name */
     no_link_name,                     /* link_name */
@@ -288,7 +288,7 @@ static const struct object_ops console_device_ops =
     NULL,                             /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     default_get_full_name,            /* get_full_name */
     console_device_lookup_name,       /* lookup_name */
     directory_link_name,              /* link_name */
@@ -329,7 +329,7 @@ static const struct object_ops console_input_ops =
     console_input_get_sync,           /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     no_lookup_name,                   /* lookup_name */
     directory_link_name,              /* link_name */
@@ -390,7 +390,7 @@ static const struct object_ops console_output_ops =
     console_output_get_sync,          /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     no_lookup_name,                   /* lookup_name */
     directory_link_name,              /* link_name */
@@ -449,7 +449,7 @@ static const struct object_ops console_connection_ops =
     NULL,                             /* get_sync */
     NULL,                             /* map_access */
     NULL,                             /* get_sd */
-    default_set_sd,                   /* set_sd */
+    NULL,                             /* set_sd */
     no_get_full_name,                 /* get_full_name */
     console_connection_lookup_name,   /* lookup_name */
     directory_link_name,              /* link_name */

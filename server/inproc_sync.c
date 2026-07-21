@@ -79,7 +79,7 @@ static const struct object_ops inproc_sync_ops =
     NULL,                       /* get_sync */
     NULL,                       /* map_access */
     NULL,                       /* get_sd */
-    default_set_sd,             /* set_sd */
+    NULL,                       /* set_sd */
     default_get_full_name,      /* get_full_name */
     no_lookup_name,             /* lookup_name */
     directory_link_name,        /* link_name */

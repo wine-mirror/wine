@@ -81,7 +81,7 @@ static const struct object_ops winstation_ops =
     NULL,                         /* get_sync */
     NULL,                         /* map_access */
     NULL,                         /* get_sd */
-    default_set_sd,               /* set_sd */
+    NULL,                         /* set_sd */
     default_get_full_name,        /* get_full_name */
     winstation_lookup_name,       /* lookup_name */
     directory_link_name,          /* link_name */
@@ -122,7 +122,7 @@ static const struct object_ops desktop_ops =
     NULL,                         /* get_sync */
     NULL,                         /* map_access */
     NULL,                         /* get_sd */
-    default_set_sd,               /* set_sd */
+    NULL,                         /* set_sd */
     default_get_full_name,        /* get_full_name */
     no_lookup_name,               /* lookup_name */
     desktop_link_name,            /* link_name */
