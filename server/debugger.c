@@ -89,7 +89,7 @@ static const struct object_ops debug_event_ops =
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
     NULL,                          /* signal */
-    no_get_fd,                     /* get_fd */
+    NULL,                          /* get_fd */
     debug_event_get_sync,          /* get_sync */
     default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
@@ -118,7 +118,7 @@ static const struct object_ops debug_obj_ops =
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
     NULL,                          /* signal */
-    no_get_fd,                     /* get_fd */
+    NULL,                          /* get_fd */
     debug_obj_get_sync,            /* get_sync */
     default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */

@@ -110,7 +110,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
     NULL,                       /* signal */
-    no_get_fd,                  /* get_fd */
+    NULL,                       /* get_fd */
     default_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
@@ -135,7 +135,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
     NULL,                      /* signal */
-    no_get_fd,                 /* get_fd */
+    NULL,                      /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
@@ -617,13 +617,15 @@ struct namespace *create_namespace( unsigned int hash_size )
     return namespace;
 }
 
-/* functions for unimplemented/default object operations */
-
-struct fd *no_get_fd( struct object *obj )
+/* retrieve the file descriptor associated to an object, if any */
+struct fd *get_obj_fd( struct object *obj )
 {
+    if (obj->ops->get_fd) return obj->ops->get_fd( obj );
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return NULL;
 }
+
+/* functions for unimplemented/default object operations */
 
 struct object *default_get_sync( struct object *obj )
 {

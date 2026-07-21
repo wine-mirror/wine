@@ -109,7 +109,7 @@ static const struct object_ops thread_apc_ops =
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
     NULL,                       /* signal */
-    no_get_fd,                  /* get_fd */
+    NULL,                       /* get_fd */
     thread_apc_get_sync,        /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
@@ -155,7 +155,7 @@ static const struct object_ops context_ops =
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
     NULL,                       /* signal */
-    no_get_fd,                  /* get_fd */
+    NULL,                       /* get_fd */
     context_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
@@ -205,7 +205,7 @@ static const struct object_ops thread_ops =
     NULL,                       /* signaled */
     NULL,                       /* satisfied */
     NULL,                       /* signal */
-    no_get_fd,                  /* get_fd */
+    NULL,                       /* get_fd */
     thread_get_sync,            /* get_sync */
     thread_map_access,          /* map_access */
     default_get_sd,             /* get_sd */

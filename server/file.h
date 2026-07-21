@@ -131,8 +131,6 @@ extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue 
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
 
-static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
-
 /* timeout functions */
 
 struct timeout_user;

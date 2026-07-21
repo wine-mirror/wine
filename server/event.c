@@ -71,7 +71,7 @@ static const struct object_ops event_sync_ops =
     event_sync_signaled,       /* signaled */
     event_sync_satisfied,      /* satisfied */
     event_sync_signal,         /* signal */
-    no_get_fd,                 /* get_fd */
+    NULL,                      /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
@@ -172,7 +172,7 @@ static const struct object_ops event_ops =
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
     event_signal,              /* signal */
-    no_get_fd,                 /* get_fd */
+    NULL,                      /* get_fd */
     event_get_sync,            /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
@@ -220,7 +220,7 @@ static const struct object_ops keyed_event_ops =
     keyed_event_signaled,        /* signaled */
     NULL,                        /* satisfied */
     NULL,                        /* signal */
-    no_get_fd,                   /* get_fd */
+    NULL,                        /* get_fd */
     default_get_sync,            /* get_sync */
     default_map_access,          /* map_access */
     default_get_sd,              /* get_sd */

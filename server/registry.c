@@ -185,7 +185,7 @@ static const struct object_ops key_ops =
     NULL,                    /* signaled */
     NULL,                    /* satisfied */
     NULL,                    /* signal */
-    no_get_fd,               /* get_fd */
+    NULL,                    /* get_fd */
     default_get_sync,        /* get_sync */
     key_map_access,          /* map_access */
     key_get_sd,              /* get_sd */

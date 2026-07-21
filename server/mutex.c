@@ -73,7 +73,7 @@ static const struct object_ops mutex_sync_ops =
     mutex_sync_signaled,       /* signaled */
     mutex_sync_satisfied,      /* satisfied */
     NULL,                      /* signal */
-    no_get_fd,                 /* get_fd */
+    NULL,                      /* get_fd */
     default_get_sync,          /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
@@ -188,7 +188,7 @@ static const struct object_ops mutex_ops =
     NULL,                      /* signaled */
     NULL,                      /* satisfied */
     mutex_signal,              /* signal */
-    no_get_fd,                 /* get_fd */
+    NULL,                      /* get_fd */
     mutex_get_sync,            /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */

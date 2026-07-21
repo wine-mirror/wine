@@ -70,7 +70,7 @@ static const struct object_ops semaphore_sync_ops =
     semaphore_sync_signaled,       /* signaled */
     semaphore_sync_satisfied,      /* satisfied */
     NULL,                          /* signal */
-    no_get_fd,                     /* get_fd */
+    NULL,                          /* get_fd */
     default_get_sync,              /* get_sync */
     default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
@@ -162,7 +162,7 @@ static const struct object_ops semaphore_ops =
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
     semaphore_signal,              /* signal */
-    no_get_fd,                     /* get_fd */
+    NULL,                          /* get_fd */
     semaphore_get_sync,            /* get_sync */
     default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
