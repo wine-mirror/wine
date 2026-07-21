@@ -108,7 +108,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
-    no_satisfied,               /* satisfied */
+    NULL,                       /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
     default_get_sync,           /* get_sync */
@@ -133,7 +133,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
-    no_satisfied,              /* satisfied */
+    NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
     default_get_sync,          /* get_sync */
@@ -618,10 +618,6 @@ struct namespace *create_namespace( unsigned int hash_size )
 }
 
 /* functions for unimplemented/default object operations */
-
-void no_satisfied( struct object *obj, struct wait_queue_entry *entry )
-{
-}
 
 int no_signal( struct object *obj, unsigned int access, int signal )
 {

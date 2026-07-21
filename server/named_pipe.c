@@ -261,7 +261,7 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
     default_get_sync,                 /* get_sync */

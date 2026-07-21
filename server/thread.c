@@ -1028,7 +1028,7 @@ void set_wait_status( struct wait_queue_entry *entry, int status )
 static void object_sync_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct object *sync = get_obj_sync( obj );
-    sync->ops->satisfied( sync, entry );
+    if (sync->ops->satisfied) sync->ops->satisfied( sync, entry );
     release_object( sync );
 }
 
