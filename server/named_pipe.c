@@ -137,7 +137,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* get_sd */
     NULL,                         /* set_sd */
     named_pipe_get_full_name,     /* get_full_name */
-    no_lookup_name,               /* lookup_name */
+    NULL,                         /* lookup_name */
     named_pipe_link_name,         /* link_name */
     default_unlink_name,          /* unlink_name */
     named_pipe_open_file,         /* open_file */
@@ -231,7 +231,7 @@ static const struct object_ops pipe_client_ops =
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
-    no_lookup_name,               /* lookup_name */
+    NULL,                         /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
@@ -312,7 +312,7 @@ static const struct object_ops named_pipe_device_file_ops =
     NULL,                                    /* get_sd */
     NULL,                                    /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */
-    no_lookup_name,                          /* lookup_name */
+    NULL,                                    /* lookup_name */
     no_link_name,                            /* link_name */
     NULL,                                    /* unlink_name */
     no_open_file,                            /* open_file */
@@ -701,7 +701,7 @@ static struct object *named_pipe_dir_lookup_name( struct object *obj, struct uni
 {
     struct named_pipe_device_file *dir = (struct named_pipe_device_file *)obj;
     if (!name || !name->len) return NULL;  /* open the directory itself */
-    return dir->device->obj.ops->lookup_name( &dir->device->obj, name, attr, root );
+    return named_pipe_device_lookup_name( &dir->device->obj, name, attr, root );
 }
 
 static struct object *named_pipe_dir_open_file( struct object *obj, unsigned int access,

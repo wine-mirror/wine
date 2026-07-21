@@ -64,7 +64,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* get_sd */
     NULL,                           /* set_sd */
     NULL,                           /* get_full_name */
-    no_lookup_name,                 /* lookup_name */
+    NULL,                           /* lookup_name */
     no_link_name,                   /* link_name */
     NULL,                           /* unlink_name */
     no_open_file,                   /* open_file */
@@ -132,7 +132,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     NULL,                           /* get_sd */
     NULL,                           /* set_sd */
     NULL,                           /* get_full_name */
-    no_lookup_name,                 /* lookup_name */
+    NULL,                           /* lookup_name */
     no_link_name,                   /* link_name */
     NULL,                           /* unlink_name */
     no_open_file,                   /* open_file */
@@ -184,7 +184,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     NULL,                               /* get_sd */
     NULL,                               /* set_sd */
     NULL,                               /* get_full_name */
-    no_lookup_name,                     /* lookup_name */
+    NULL,                               /* lookup_name */
     directory_link_name,                /* link_name */
     default_unlink_name,                /* unlink_name */
     no_open_file,                       /* open_file */
@@ -251,7 +251,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     NULL,                                   /* get_sd */
     NULL,                                   /* set_sd */
     NULL,                                   /* get_full_name */
-    no_lookup_name,                         /* lookup_name */
+    NULL,                                   /* lookup_name */
     directory_link_name,                    /* link_name */
     default_unlink_name,                    /* unlink_name */
     no_open_file,                           /* open_file */

@@ -183,7 +183,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* get_sd */
     NULL,                     /* set_sd */
     NULL,                     /* get_full_name */
-    no_lookup_name,           /* lookup_name */
+    NULL,                     /* lookup_name */
     no_link_name,             /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
@@ -225,7 +225,7 @@ static const struct object_ops device_ops =
     NULL,                     /* get_sd */
     NULL,                     /* set_sd */
     NULL,                     /* get_full_name */
-    no_lookup_name,           /* lookup_name */
+    NULL,                     /* lookup_name */
     no_link_name,             /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
@@ -266,7 +266,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* get_sd */
     NULL,                     /* set_sd */
     NULL,                     /* get_full_name */
-    no_lookup_name,           /* lookup_name */
+    NULL,                     /* lookup_name */
     no_link_name,             /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
@@ -311,7 +311,7 @@ static const struct object_ops file_lock_ops =
     NULL,                       /* get_sd */
     NULL,                       /* set_sd */
     NULL,                       /* get_full_name */
-    no_lookup_name,             /* lookup_name */
+    NULL,                       /* lookup_name */
     no_link_name,               /* link_name */
     NULL,                       /* unlink_name */
     no_open_file,               /* open_file */

@@ -116,7 +116,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* get_sd */
     NULL,                       /* set_sd */
     NULL,                       /* get_full_name */
-    no_lookup_name,             /* lookup_name */
+    NULL,                       /* lookup_name */
     directory_link_name,        /* link_name */
     default_unlink_name,        /* unlink_name */
     no_open_file,               /* open_file */
@@ -141,7 +141,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* get_sd */
     NULL,                      /* set_sd */
     NULL,                      /* get_full_name */
-    no_lookup_name,            /* lookup_name */
+    NULL,                      /* lookup_name */
     directory_link_name,       /* link_name */
     default_unlink_name,       /* unlink_name */
     no_open_file,              /* open_file */
@@ -339,7 +339,7 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
                                     unsigned int attr, struct unicode_str *name_left )
 {
     static int recursion_count;
-    struct object *obj, *parent;
+    struct object *parent;
     struct unicode_str name_tmp = *name, *ptr = &name_tmp;
 
     if (root)
@@ -376,8 +376,14 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
     recursion_count++;
     clear_error();
 
-    while ((obj = parent->ops->lookup_name( parent, ptr, attr, root )))
+    for (;;)
     {
+        struct object *obj = NULL;
+
+        if (parent->ops->lookup_name) obj = parent->ops->lookup_name( parent, ptr, attr, root );
+        else if (!ptr) set_error( STATUS_OBJECT_TYPE_MISMATCH );
+
+        if (!obj) break;
         /* move to the next element */
         release_object ( parent );
         parent = obj;
@@ -760,13 +766,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
-                               unsigned int attr, struct object *root )
-{
-    if (!name) set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return NULL;
 }
 
 int no_link_name( struct object *obj, struct object_name *name, struct object *parent )
