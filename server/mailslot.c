@@ -95,7 +95,7 @@ static void mailslot_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
 static const struct fd_ops mailslot_fd_ops =
 {
     NULL,                       /* get_poll_events */
-    default_poll_event,         /* poll_event */
+    NULL,                       /* poll_event */
     mailslot_get_fd_type,       /* get_fd_type */
     mailslot_read,              /* read */
     mailslot_write,             /* write */
@@ -141,7 +141,7 @@ static void mail_writer_write( struct fd *fd, struct async *async, file_pos_t po
 static const struct fd_ops mail_writer_fd_ops =
 {
     NULL,                        /* get_poll_events */
-    default_poll_event,          /* poll_event */
+    NULL,                        /* poll_event */
     mail_writer_get_fd_type,     /* get_fd_type */
     mail_writer_read,            /* read */
     mail_writer_write,           /* write */
@@ -205,7 +205,7 @@ static const struct object_ops mailslot_device_file_ops =
 static const struct fd_ops mailslot_device_fd_ops =
 {
     NULL,                               /* get_poll_events */
-    default_poll_event,                 /* poll_event */
+    NULL,                               /* poll_event */
     mailslot_device_file_get_fd_type,   /* get_fd_type */
     no_fd_read,                         /* read */
     no_fd_write,                        /* write */

@@ -95,7 +95,7 @@ static const struct object_ops serial_ops =
 static const struct fd_ops serial_fd_ops =
 {
     NULL,                         /* get_poll_events */
-    default_poll_event,           /* poll_event */
+    NULL,                         /* poll_event */
     serial_get_fd_type,           /* get_fd_type */
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */

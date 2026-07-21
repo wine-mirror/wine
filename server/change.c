@@ -126,7 +126,7 @@ static enum server_fd_type dir_get_fd_type( struct fd *fd );
 static const struct fd_ops dir_fd_ops =
 {
     dir_get_poll_events,         /* get_poll_events */
-    default_poll_event,          /* poll_event */
+    NULL,                        /* poll_event */
     dir_get_fd_type,             /* get_fd_type */
     no_fd_read,                  /* read */
     no_fd_write,                 /* write */

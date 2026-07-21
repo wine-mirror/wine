@@ -178,7 +178,7 @@ static const struct object_ops device_file_ops =
 static const struct fd_ops device_file_fd_ops =
 {
     NULL,                             /* get_poll_events */
-    default_poll_event,               /* poll_event */
+    NULL,                             /* poll_event */
     device_file_get_fd_type,          /* get_fd_type */
     device_file_read,                 /* read */
     device_file_write,                /* write */
