@@ -197,8 +197,7 @@ static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
     mem = p_aligned_offset_realloc(mem2, size2, alignment, offset + 1);
     if (offset + 1 < size2)
     {
-        todo_wine ok (mem != NULL, "changing offset failed\n");
-        if (!mem) mem = mem2;
+        ok (mem != NULL, "changing offset failed\n");
         ok(!memcmp(mem, v, min(size1, size2)), "wrong data\n");
     }
     else
@@ -210,8 +209,7 @@ static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
 
     /* change alignment */
     mem2 = p_aligned_offset_realloc(mem, size2, alignment / 2, offset);
-    todo_wine_if(!mem2) ok(mem2 != NULL, "changing alignment failed\n");
-    if (!mem2) mem2 = mem;
+    ok(mem2 != NULL, "changing alignment failed\n");
     ok(!memcmp(mem2, v, min(size1, size2)), "wrong data\n");
     p_aligned_free(mem2);
 
