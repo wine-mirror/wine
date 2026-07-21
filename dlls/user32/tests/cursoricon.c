@@ -751,9 +751,7 @@ static void test_initial_cursor(void)
     /* Check what handle GetCursor() returns if a cursor is not set yet. */
     SetLastError(0xdeadbeef);
     cursor2 = LoadCursorA(NULL, (LPCSTR)IDC_WAIT);
-    todo_wine {
-        ok(cursor == cursor2, "cursor (%p) is not IDC_WAIT (%p).\n", cursor, cursor2);
-    }
+    ok(cursor == cursor2, "cursor (%p) is not IDC_WAIT (%p).\n", cursor, cursor2);
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: 0x%08lx\n", error);
 }

@@ -63,6 +63,8 @@ struct cursoricon_object
 
 static struct list icon_cache = LIST_INIT( icon_cache );
 
+static LONG has_set_cursor = 0;
+
 static struct cursoricon_object *get_icon_ptr( HICON handle )
 {
     struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
@@ -121,6 +123,7 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
             old_cursor = wine_server_ptr_handle( reply->prev_handle );
     }
     SERVER_END_REQ;
+    InterlockedExchange( &has_set_cursor, 1 );
     if (!ret) return 0;
 
     check_for_events( QS_INPUT );
@@ -136,6 +139,9 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
 HCURSOR WINAPI NtUserGetCursor(void)
 {
     HCURSOR ret;
+
+    if (!ReadNoFence( &has_set_cursor ))
+        return LoadImageW( NULL, (LPCWSTR)IDC_WAIT, IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE );
 
     SERVER_START_REQ( set_cursor )
     {
