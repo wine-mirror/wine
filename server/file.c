@@ -103,7 +103,7 @@ static const struct object_ops file_ops =
 
 static const struct fd_ops file_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     file_get_fd_type,             /* get_fd_type */
     no_fd_read,                   /* read */

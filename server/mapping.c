@@ -153,7 +153,7 @@ static const struct object_ops mapping_ops =
 
 static const struct fd_ops mapping_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     mapping_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */

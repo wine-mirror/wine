@@ -1625,6 +1625,13 @@ void set_fd_events( struct fd *fd, int events )
     }
 }
 
+/* get the events we want to poll() for */
+static int get_poll_events( struct fd *fd )
+{
+    if (fd->fd_ops->get_poll_events) return fd->fd_ops->get_poll_events( fd );
+    return default_fd_get_poll_events( fd );
+}
+
 /* prepare an fd for unmounting its corresponding device */
 static inline void unmount_fd( struct fd *fd )
 {
@@ -2189,7 +2196,7 @@ void default_poll_event( struct fd *fd, int event )
 
     /* if an error occurred, stop polling this fd to avoid busy-looping */
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
-    else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+    else if (!fd->inode) set_fd_events( fd, get_poll_events( fd ) );
 }
 
 void fd_queue_async( struct fd *fd, struct async *async, int type )
@@ -2217,7 +2224,7 @@ void fd_queue_async( struct fd *fd, struct async *async, int type )
     if (type != ASYNC_TYPE_WAIT)
     {
         if (!fd->inode)
-            set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+            set_fd_events( fd, get_poll_events( fd ) );
         else  /* regular files are always ready for read and write */
             async_wake_up( queue, STATUS_ALERTED );
     }
@@ -2272,7 +2279,7 @@ void default_fd_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     if (queue == &fd->read_q || queue == &fd->write_q)
     {
-        int poll_events = fd->fd_ops->get_poll_events( fd );
+        int poll_events = get_poll_events( fd );
         int events = check_fd_events( fd, poll_events );
         if (events) fd->fd_ops->poll_event( fd, events );
         else set_fd_events( fd, poll_events );

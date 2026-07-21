@@ -64,7 +64,7 @@ static enum server_fd_type d3dkmt_get_fd_type( struct fd *fd )
 
 static const struct fd_ops d3dkmt_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     d3dkmt_get_fd_type,           /* get_fd_type */
     no_fd_read,                   /* read */

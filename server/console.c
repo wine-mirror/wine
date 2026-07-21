@@ -95,7 +95,7 @@ static void console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async
 
 static const struct fd_ops console_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     console_read,                 /* read */
@@ -156,7 +156,7 @@ static void console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async
 
 static const struct fd_ops console_server_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */
@@ -214,7 +214,7 @@ static void screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async 
 
 static const struct fd_ops screen_buffer_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */
@@ -276,7 +276,7 @@ static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async 
 
 static const struct fd_ops console_input_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     console_input_read,           /* read */
@@ -322,7 +322,7 @@ static void console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async
 
 static const struct fd_ops console_output_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */
@@ -367,7 +367,7 @@ static void console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct a
 
 static const struct fd_ops console_connection_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */

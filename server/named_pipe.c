@@ -174,7 +174,7 @@ static const struct object_ops pipe_server_ops =
 
 static const struct fd_ops pipe_server_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
@@ -208,7 +208,7 @@ static const struct object_ops pipe_client_ops =
 
 static const struct fd_ops pipe_client_fd_ops =
 {
-    default_fd_get_poll_events,   /* get_poll_events */
+    NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
@@ -261,7 +261,7 @@ static const struct object_ops named_pipe_device_file_ops =
 
 static const struct fd_ops named_pipe_device_fd_ops =
 {
-    default_fd_get_poll_events,              /* get_poll_events */
+    NULL,                                    /* get_poll_events */
     default_poll_event,                      /* poll_event */
     named_pipe_device_file_get_fd_type,      /* get_fd_type */
     no_fd_read,                              /* read */
@@ -300,7 +300,7 @@ static const struct object_ops named_pipe_dir_ops =
 
 static const struct fd_ops named_pipe_dir_fd_ops =
 {
-    default_fd_get_poll_events,              /* get_poll_events */
+    NULL,                                    /* get_poll_events */
     default_poll_event,                      /* poll_event */
     NULL,                                    /* get_fd_type */
     no_fd_read,                              /* read */
