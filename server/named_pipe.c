@@ -134,7 +134,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* get_fd */
     NULL,                         /* get_sync */
     NULL,                         /* map_access */
-    default_get_sd,               /* get_sd */
+    NULL,                         /* get_sd */
     default_set_sd,               /* set_sd */
     named_pipe_get_full_name,     /* get_full_name */
     no_lookup_name,               /* lookup_name */
@@ -277,7 +277,7 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* get_fd */
     NULL,                             /* get_sync */
     NULL,                             /* map_access */
-    default_get_sd,                   /* get_sd */
+    NULL,                             /* get_sd */
     default_set_sd,                   /* set_sd */
     named_pipe_device_get_full_name,  /* get_full_name */
     named_pipe_device_lookup_name,    /* lookup_name */
@@ -309,7 +309,7 @@ static const struct object_ops named_pipe_device_file_ops =
     named_pipe_device_file_get_fd,           /* get_fd */
     default_fd_get_sync,                     /* get_sync */
     NULL,                                    /* map_access */
-    default_get_sd,                          /* get_sd */
+    NULL,                                    /* get_sd */
     default_set_sd,                          /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */
     no_lookup_name,                          /* lookup_name */
@@ -360,7 +360,7 @@ static const struct object_ops named_pipe_dir_ops =
     named_pipe_dir_get_fd,                   /* get_fd */
     default_fd_get_sync,                     /* get_sync */
     NULL,                                    /* map_access */
-    default_get_sd,                          /* get_sd */
+    NULL,                                    /* get_sd */
     default_set_sd,                          /* set_sd */
     named_pipe_dir_get_full_name,            /* get_full_name */
     named_pipe_dir_lookup_name,              /* lookup_name */
@@ -919,7 +919,7 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
 static struct security_descriptor *pipe_end_get_sd( struct object *obj )
 {
     struct pipe_end *pipe_end = (struct pipe_end *) obj;
-    if (pipe_end->pipe) return default_get_sd( &pipe_end->pipe->obj );
+    if (pipe_end->pipe) return pipe_end->pipe->obj.sd;
     set_error( STATUS_PIPE_DISCONNECTED );
     return NULL;
 }

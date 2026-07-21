@@ -149,7 +149,7 @@ static const struct object_ops token_ops =
     NULL,                      /* get_fd */
     NULL,                      /* get_sync */
     NULL,                      /* map_access */
-    default_get_sd,            /* get_sd */
+    NULL,                      /* get_sd */
     token_set_sd,              /* set_sd */
     no_get_full_name,          /* get_full_name */
     no_lookup_name,            /* lookup_name */

@@ -57,7 +57,7 @@ static const struct object_ops async_cancel_ops =
     NULL,                        /* get_fd */
     async_cancel_get_sync,       /* get_sync */
     NULL,                        /* map_access */
-    default_get_sd,              /* get_sd */
+    NULL,                        /* get_sd */
     default_set_sd,              /* set_sd */
     no_get_full_name,            /* get_full_name */
     no_lookup_name,              /* lookup_name */
@@ -158,7 +158,7 @@ static const struct object_ops async_ops =
     NULL,                      /* get_fd */
     NULL,                      /* get_sync */
     NULL,                      /* map_access */
-    default_get_sd,            /* get_sd */
+    NULL,                      /* get_sd */
     default_set_sd,            /* set_sd */
     no_get_full_name,          /* get_full_name */
     no_lookup_name,            /* lookup_name */
@@ -832,7 +832,7 @@ static const struct object_ops iosb_ops =
     NULL,                     /* get_fd */
     NULL,                     /* get_sync */
     NULL,                     /* map_access */
-    default_get_sd,           /* get_sd */
+    NULL,                     /* get_sd */
     default_set_sd,           /* set_sd */
     no_get_full_name,         /* get_full_name */
     no_lookup_name,           /* lookup_name */

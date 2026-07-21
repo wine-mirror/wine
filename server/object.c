@@ -113,7 +113,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* get_fd */
     NULL,                       /* get_sync */
     NULL,                       /* map_access */
-    default_get_sd,             /* get_sd */
+    NULL,                       /* get_sd */
     default_set_sd,             /* set_sd */
     default_get_full_name,      /* get_full_name */
     no_lookup_name,             /* lookup_name */
@@ -138,7 +138,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* get_fd */
     NULL,                      /* get_sync */
     NULL,                      /* map_access */
-    default_get_sd,            /* get_sd */
+    NULL,                      /* get_sd */
     default_set_sd,            /* set_sd */
     default_get_full_name,     /* get_full_name */
     no_lookup_name,            /* lookup_name */
@@ -633,11 +633,6 @@ struct object *get_obj_sync( struct object *obj )
 }
 
 /* functions for unimplemented/default object operations */
-
-struct security_descriptor *default_get_sd( struct object *obj )
-{
-    return obj->sd;
-}
 
 int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                 unsigned int set_info, struct token *token )

@@ -171,7 +171,6 @@ extern struct object *find_object( const struct namespace *namespace, const stru
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern struct fd *get_obj_fd( struct object *obj );
 extern struct object *get_obj_sync( struct object *obj );
-extern struct security_descriptor *default_get_sd( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );

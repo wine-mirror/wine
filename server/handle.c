@@ -130,7 +130,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* get_fd */
     NULL,                            /* get_sync */
     NULL,                            /* map_access */
-    default_get_sd,                  /* get_sd */
+    NULL,                            /* get_sd */
     default_set_sd,                  /* set_sd */
     no_get_full_name,                /* get_full_name */
     no_lookup_name,                  /* lookup_name */
@@ -773,7 +773,7 @@ DECL_HANDLER(get_security_object)
 
     if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
 
-    sd = obj->ops->get_sd( obj );
+    sd = obj->ops->get_sd ? obj->ops->get_sd( obj ) : obj->sd;
     if (sd)
     {
         req_sd.control = sd->control & ~SE_SELF_RELATIVE;
