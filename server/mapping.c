@@ -159,7 +159,7 @@ static const struct fd_ops mapping_fd_ops =
     NULL,                         /* read */
     NULL,                         /* write */
     NULL,                         /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    NULL,                         /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     no_fd_ioctl,                  /* ioctl */
     default_fd_cancel_async,      /* cancel_async */

@@ -116,7 +116,6 @@ extern void fd_cancel_async( struct fd *fd, struct async *async );
 extern void fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 extern void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 extern void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 extern void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
