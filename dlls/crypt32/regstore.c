@@ -320,10 +320,10 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
     WINE_REGSTOREINFO *store = hCertStore;
 
     TRACE("(%p, %08lx)\n", store, dwFlags);
-    if (dwFlags)
+    if (dwFlags & ~CERT_CLOSE_STORE_FORCE_FLAG)
         FIXME("Unimplemented flags: %08lx\n", dwFlags);
 
-    CRYPT_RegFlushStore(store, FALSE);
+    CRYPT_RegFlushStore(store, dwFlags & CERT_CLOSE_STORE_FORCE_FLAG);
     RegCloseKey(store->key);
     CloseHandle(store->key_modified_event);
     store->cs.DebugInfo->Spare[0] = 0;
