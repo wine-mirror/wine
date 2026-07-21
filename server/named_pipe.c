@@ -103,17 +103,28 @@ struct named_pipe_device_file
 };
 
 static void named_pipe_dump( struct object *obj, int verbose );
-static unsigned int named_pipe_map_access( struct object *obj, unsigned int access );
 static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len );
 static int named_pipe_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
                                             unsigned int sharing, unsigned int options );
 static void named_pipe_destroy( struct object *obj );
 
+static struct type_descr named_pipe_type =
+{
+    { NULL, 0 },                /* name */
+    STANDARD_RIGHTS_ALL,        /* valid_access */
+    {                           /* mapping */
+        STANDARD_RIGHTS_READ,
+        STANDARD_RIGHTS_WRITE | FILE_CREATE_PIPE_INSTANCE,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_ALL
+    }
+};
+
 static const struct object_ops named_pipe_ops =
 {
     sizeof(struct named_pipe),    /* size */
-    &no_type,                     /* type */
+    &named_pipe_type,             /* type */
     named_pipe_dump,              /* dump */
     NULL,                         /* add_queue */
     NULL,                         /* remove_queue */
@@ -122,7 +133,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* signal */
     NULL,                         /* get_fd */
     NULL,                         /* get_sync */
-    named_pipe_map_access,        /* map_access */
+    NULL,                         /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     named_pipe_get_full_name,     /* get_full_name */
@@ -171,7 +182,7 @@ static const struct object_ops pipe_server_ops =
     NULL,                         /* signal */
     pipe_end_get_fd,              /* get_fd */
     default_fd_get_sync,          /* get_sync */
-    default_map_access,           /* map_access */
+    NULL,                         /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
@@ -216,7 +227,7 @@ static const struct object_ops pipe_client_ops =
     NULL,                         /* signal */
     pipe_end_get_fd,              /* get_fd */
     default_fd_get_sync,          /* get_sync */
-    default_map_access,           /* map_access */
+    NULL,                         /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
@@ -265,7 +276,7 @@ static const struct object_ops named_pipe_device_ops =
     NULL,                             /* signal */
     NULL,                             /* get_fd */
     NULL,                             /* get_sync */
-    default_map_access,               /* map_access */
+    NULL,                             /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     named_pipe_device_get_full_name,  /* get_full_name */
@@ -297,7 +308,7 @@ static const struct object_ops named_pipe_device_file_ops =
     NULL,                                    /* signal */
     named_pipe_device_file_get_fd,           /* get_fd */
     default_fd_get_sync,                     /* get_sync */
-    default_map_access,                      /* map_access */
+    NULL,                                    /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */
@@ -348,7 +359,7 @@ static const struct object_ops named_pipe_dir_ops =
     NULL,                                    /* signal */
     named_pipe_dir_get_fd,                   /* get_fd */
     default_fd_get_sync,                     /* get_sync */
-    default_map_access,                      /* map_access */
+    NULL,                                    /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */
     named_pipe_dir_get_full_name,            /* get_full_name */
@@ -380,15 +391,6 @@ static const struct fd_ops named_pipe_dir_fd_ops =
 static void named_pipe_dump( struct object *obj, int verbose )
 {
     fputs( "Named pipe\n", stderr );
-}
-
-static unsigned int named_pipe_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | FILE_CREATE_PIPE_INSTANCE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len )

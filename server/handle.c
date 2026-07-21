@@ -129,7 +129,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* signal */
     NULL,                            /* get_fd */
     NULL,                            /* get_sync */
-    default_map_access,              /* map_access */
+    NULL,                            /* map_access */
     default_get_sd,                  /* get_sd */
     default_set_sd,                  /* set_sd */
     no_get_full_name,                /* get_full_name */
@@ -273,7 +273,7 @@ obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, u
 {
     struct object *obj = ptr;
     if (access & MAXIMUM_ALLOWED) access = GENERIC_ALL;
-    access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
+    access = map_obj_access( obj, access ) & ~RESERVED_ALL;
     return alloc_handle_entry( process, ptr, access, attr );
 }
 
@@ -284,7 +284,7 @@ obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int acce
 {
     struct object *obj = ptr;
 
-    if (!(access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL))
+    if (!(access = map_obj_access( obj, access ) & ~RESERVED_ALL))
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
@@ -581,14 +581,14 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
     if ((entry = get_handle( src, src_handle )))
         src_access = entry->access;
     else  /* pseudo-handle, give it full access */
-        src_access = obj->ops->map_access( obj, GENERIC_ALL );
+        src_access = map_obj_access( obj, GENERIC_ALL );
     src_flags = (src_access & RESERVED_ALL) >> RESERVED_SHIFT;
     src_access &= ~RESERVED_ALL;
 
     if (options & DUPLICATE_SAME_ACCESS)
         access = src_access;
     else
-        access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
+        access = map_obj_access( obj, access ) & ~RESERVED_ALL;
 
     /* asking for the more access rights than src_access? */
     if (access & ~src_access)

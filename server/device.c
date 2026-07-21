@@ -69,7 +69,7 @@ static const struct object_ops irp_call_ops =
     NULL,                             /* signal */
     NULL,                             /* get_fd */
     NULL,                             /* get_sync */
-    default_map_access,               /* map_access */
+    NULL,                             /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -111,7 +111,7 @@ static const struct object_ops device_manager_ops =
     NULL,                             /* signal */
     NULL,                             /* get_fd */
     device_manager_get_sync,          /* get_sync */
-    default_map_access,               /* map_access */
+    NULL,                             /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -169,7 +169,7 @@ static const struct object_ops device_ops =
     NULL,                             /* signal */
     NULL,                             /* get_fd */
     NULL,                             /* get_sync */
-    default_map_access,               /* map_access */
+    NULL,                             /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     default_get_full_name,            /* get_full_name */
@@ -222,7 +222,7 @@ static const struct object_ops device_file_ops =
     NULL,                             /* signal */
     device_file_get_fd,               /* get_fd */
     default_fd_get_sync,              /* get_sync */
-    default_map_access,               /* map_access */
+    NULL,                             /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     device_file_get_full_name,        /* get_full_name */
@@ -445,7 +445,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
         if ((fullname = device->obj.ops->get_full_name( &device->obj, ~0u, &nt_name.len )))
         {
             mode_t mode = 0666;
-            access = file->obj.ops->map_access( &file->obj, access );
+            access = map_obj_access( &file->obj, access );
             nt_name.str = fullname;
             file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK, &mode, access, sharing, options );
             if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );

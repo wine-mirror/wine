@@ -60,7 +60,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* signal */
     d3dkmt_object_get_fd,           /* get_fd */
     NULL,                           /* get_sync */
-    default_map_access,             /* map_access */
+    NULL,                           /* map_access */
     default_get_sd,                 /* get_sd */
     default_set_sd,                 /* set_sd */
     no_get_full_name,               /* get_full_name */
@@ -128,7 +128,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     NULL,                           /* signal */
     NULL,                           /* get_fd */
     NULL,                           /* get_sync */
-    default_map_access,             /* map_access */
+    NULL,                           /* map_access */
     default_get_sd,                 /* get_sd */
     default_set_sd,                 /* set_sd */
     no_get_full_name,               /* get_full_name */
@@ -180,7 +180,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     NULL,                               /* signal */
     NULL,                               /* get_fd */
     NULL,                               /* get_sync */
-    default_map_access,                 /* map_access */
+    NULL,                               /* map_access */
     default_get_sd,                     /* get_sd */
     default_set_sd,                     /* set_sd */
     default_get_full_name,              /* get_full_name */
@@ -247,7 +247,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     NULL,                                   /* signal */
     NULL,                                   /* get_fd */
     NULL,                                   /* get_sync */
-    default_map_access,                     /* map_access */
+    NULL,                                   /* map_access */
     default_get_sd,                         /* get_sd */
     default_set_sd,                         /* set_sd */
     default_get_full_name,                  /* get_full_name */

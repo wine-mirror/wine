@@ -148,7 +148,7 @@ static const struct object_ops token_ops =
     NULL,                      /* signal */
     NULL,                      /* get_fd */
     NULL,                      /* get_sync */
-    default_map_access,        /* map_access */
+    NULL,                      /* map_access */
     default_get_sd,            /* get_sd */
     token_set_sd,              /* set_sd */
     no_get_full_name,          /* get_full_name */
@@ -1092,7 +1092,7 @@ int check_object_access(struct token *token, struct object *obj, unsigned int *a
     if (!token)
         token = current->token ? current->token : current->process->token;
 
-    mapping.all = obj->ops->map_access( obj, GENERIC_ALL );
+    mapping.all = map_obj_access( obj, GENERIC_ALL );
 
     if (!obj->sd)
     {
@@ -1100,9 +1100,9 @@ int check_object_access(struct token *token, struct object *obj, unsigned int *a
         return TRUE;
     }
 
-    mapping.read  = obj->ops->map_access( obj, GENERIC_READ );
-    mapping.write = obj->ops->map_access( obj, GENERIC_WRITE );
-    mapping.exec = obj->ops->map_access( obj, GENERIC_EXECUTE );
+    mapping.read  = map_obj_access( obj, GENERIC_READ );
+    mapping.write = map_obj_access( obj, GENERIC_WRITE );
+    mapping.exec  = map_obj_access( obj, GENERIC_EXECUTE );
 
     res = token_access_check( token, obj->sd, *access, NULL, NULL,
                               &mapping, access, &status ) == STATUS_SUCCESS &&

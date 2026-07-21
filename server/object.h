@@ -171,7 +171,6 @@ extern struct object *find_object( const struct namespace *namespace, const stru
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern struct fd *get_obj_fd( struct object *obj );
 extern struct object *get_obj_sync( struct object *obj );
-extern unsigned int default_map_access( struct object *obj, unsigned int access );
 extern struct security_descriptor *default_get_sd( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
@@ -204,6 +203,17 @@ static inline unsigned int map_access( unsigned int access, const struct generic
     if (access & GENERIC_EXECUTE) access |= mapping->exec;
     if (access & GENERIC_ALL)     access |= mapping->all;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static inline unsigned int default_map_access( struct object *obj, unsigned int access )
+{
+    return map_access( access, &obj->ops->type->mapping );
+}
+
+static inline unsigned int map_obj_access( struct object *obj, unsigned int access )
+{
+    if (obj->ops->map_access) return obj->ops->map_access( obj, access );
+    return default_map_access( obj, access );
 }
 
 static inline void *mem_append( void *ptr, const void *src, data_size_t len )

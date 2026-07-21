@@ -179,7 +179,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* signal */
     NULL,                     /* get_fd */
     fd_get_sync,              /* get_sync */
-    default_map_access,       /* map_access */
+    NULL,                     /* map_access */
     default_get_sd,           /* get_sd */
     default_set_sd,           /* set_sd */
     no_get_full_name,         /* get_full_name */
@@ -221,7 +221,7 @@ static const struct object_ops device_ops =
     NULL,                     /* signal */
     NULL,                     /* get_fd */
     NULL,                     /* get_sync */
-    default_map_access,       /* map_access */
+    NULL,                     /* map_access */
     default_get_sd,           /* get_sd */
     default_set_sd,           /* set_sd */
     no_get_full_name,         /* get_full_name */
@@ -262,7 +262,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* signal */
     NULL,                     /* get_fd */
     NULL,                     /* get_sync */
-    default_map_access,       /* map_access */
+    NULL,                     /* map_access */
     default_get_sd,           /* get_sd */
     default_set_sd,           /* set_sd */
     no_get_full_name,         /* get_full_name */
@@ -307,7 +307,7 @@ static const struct object_ops file_lock_ops =
     NULL,                       /* signal */
     NULL,                       /* get_fd */
     file_lock_get_sync,         /* get_sync */
-    default_map_access,         /* map_access */
+    NULL,                       /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
     no_get_full_name,           /* get_full_name */
