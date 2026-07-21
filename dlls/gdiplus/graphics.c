@@ -5815,11 +5815,35 @@ GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
                break;
             }
 
-            if(*(stringdup + sum + lret) == '\r' && lret + 1 < fit
+            if(*(stringdup + sum + lret) == '\r' && sum + lret + 1 < length
                && *(stringdup + sum + lret + 1) == '\n')
             {
                unixstyle_newline = FALSE;
                break;
+            }
+        }
+
+        /* If no newline found within fit, check position fit for \n or \r\n.
+         * Wine's GetTextExtentExPointW may assign non-zero advance width to
+         * newline characters (rendering them as missing-glyph boxes), causing
+         * them to be excluded from the fit count. When this happens, the
+         * newline is invisible to the scan above, leading to incorrect line
+         * breaking under StringFormatFlagsNoWrap. */
+        if (lret == fit && sum + fit < length)
+        {
+            if (*(stringdup + sum + fit) == '\n')
+            {
+                unixstyle_newline = TRUE;
+                fitcpy = fit + 1;
+                fit++;
+            }
+            else if (sum + fit + 1 < length &&
+                     *(stringdup + sum + fit) == '\r' &&
+                     *(stringdup + sum + fit + 1) == '\n')
+            {
+                unixstyle_newline = FALSE;
+                fitcpy = fit + 2;
+                fit += 2;
             }
         }
 

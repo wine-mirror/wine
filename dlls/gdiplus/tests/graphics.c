@@ -3407,7 +3407,7 @@ static void test_string_functions(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     todo_wine expect(5, codepointsfitted);
-    todo_wine expect(1, linesfilled);
+    expect(1, linesfilled);
 
     /* Cut off everything after the first space. */
     rc.Width = char_bounds.Width + char_width * 2.1;
@@ -3443,7 +3443,7 @@ static void test_string_functions(void)
     expectf_(char_bounds.Width, bounds.Width, 0.01);
     expectf_(char_bounds.Height + char_height * 3, bounds.Height, 0.05);
     expect(6, codepointsfitted);
-    todo_wine expect(4, linesfilled);
+    expect(4, linesfilled);
 
     for (i = 0; i < 4; i++)
         regions[i] = (GpRegion *)0xdeadbeef;
