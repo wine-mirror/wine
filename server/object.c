@@ -111,7 +111,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* satisfied */
     NULL,                       /* signal */
     NULL,                       /* get_fd */
-    default_get_sync,           /* get_sync */
+    NULL,                       /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -136,7 +136,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* satisfied */
     NULL,                      /* signal */
     NULL,                      /* get_fd */
-    default_get_sync,          /* get_sync */
+    NULL,                      /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
@@ -625,12 +625,14 @@ struct fd *get_obj_fd( struct object *obj )
     return NULL;
 }
 
-/* functions for unimplemented/default object operations */
-
-struct object *default_get_sync( struct object *obj )
+/* retrieve the sync object associated to an object, or the object itself */
+struct object *get_obj_sync( struct object *obj )
 {
+    if (obj->ops->get_sync) return obj->ops->get_sync( obj );
     return grab_object( obj );
 }
+
+/* functions for unimplemented/default object operations */
 
 unsigned int default_map_access( struct object *obj, unsigned int access )
 {

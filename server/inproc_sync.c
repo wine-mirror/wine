@@ -76,7 +76,7 @@ static const struct object_ops inproc_sync_ops =
     NULL,                       /* satisfied */
     inproc_sync_signal,         /* signal */
     NULL,                       /* get_fd */
-    default_get_sync,           /* get_sync */
+    NULL,                       /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */

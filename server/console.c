@@ -285,7 +285,7 @@ static const struct object_ops console_device_ops =
     NULL,                             /* satisfied */
     NULL,                             /* signal */
     NULL,                             /* get_fd */
-    default_get_sync,                 /* get_sync */
+    NULL,                             /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -446,7 +446,7 @@ static const struct object_ops console_connection_ops =
     NULL,                             /* satisfied */
     NULL,                             /* signal */
     console_connection_get_fd,        /* get_fd */
-    default_get_sync,                 /* get_sync */
+    NULL,                             /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
