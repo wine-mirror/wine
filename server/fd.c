@@ -186,7 +186,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* lookup_name */
     NULL,                     /* link_name */
     NULL,                     /* unlink_name */
-    no_open_file,             /* open_file */
+    NULL,                     /* open_file */
     no_kernel_obj_list,       /* get_kernel_obj_list */
     no_close_handle,          /* close_handle */
     fd_destroy                /* destroy */
@@ -228,7 +228,7 @@ static const struct object_ops device_ops =
     NULL,                     /* lookup_name */
     NULL,                     /* link_name */
     NULL,                     /* unlink_name */
-    no_open_file,             /* open_file */
+    NULL,                     /* open_file */
     no_kernel_obj_list,       /* get_kernel_obj_list */
     no_close_handle,          /* close_handle */
     device_destroy            /* destroy */
@@ -269,7 +269,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* lookup_name */
     NULL,                     /* link_name */
     NULL,                     /* unlink_name */
-    no_open_file,             /* open_file */
+    NULL,                     /* open_file */
     no_kernel_obj_list,       /* get_kernel_obj_list */
     no_close_handle,          /* close_handle */
     inode_destroy             /* destroy */
@@ -314,7 +314,7 @@ static const struct object_ops file_lock_ops =
     NULL,                       /* lookup_name */
     NULL,                       /* link_name */
     NULL,                       /* unlink_name */
-    no_open_file,               /* open_file */
+    NULL,                       /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
     file_lock_destroy,          /* destroy */
@@ -3094,7 +3094,8 @@ DECL_HANDLER(open_file_object)
     if (root) release_object( root );
     if (!obj) return;
 
-    if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
+    if (!obj->ops->open_file) set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    else if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
     {
         reply->handle = alloc_handle( current->process, result, req->access, req->attributes );
         release_object( result );

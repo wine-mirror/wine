@@ -119,7 +119,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* lookup_name */
     NULL,                       /* link_name */
     NULL,                       /* unlink_name */
-    no_open_file,               /* open_file */
+    NULL,                       /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
     no_destroy                  /* destroy */
@@ -144,7 +144,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* lookup_name */
     NULL,                      /* link_name */
     NULL,                      /* unlink_name */
-    no_open_file,              /* open_file */
+    NULL,                      /* open_file */
     no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     no_destroy                 /* destroy */
@@ -770,13 +770,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
-                             unsigned int options )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return NULL;
 }
 
 int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle )

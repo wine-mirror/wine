@@ -234,7 +234,7 @@ static const struct object_ops pipe_client_ops =
     NULL,                         /* lookup_name */
     NULL,                         /* link_name */
     NULL,                         /* unlink_name */
-    no_open_file,                 /* open_file */
+    NULL,                         /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
     async_close_obj_handle,       /* close_handle */
     pipe_end_destroy              /* destroy */
@@ -315,7 +315,7 @@ static const struct object_ops named_pipe_device_file_ops =
     NULL,                                    /* lookup_name */
     NULL,                                    /* link_name */
     NULL,                                    /* unlink_name */
-    no_open_file,                            /* open_file */
+    NULL,                                    /* open_file */
     no_kernel_obj_list,                      /* get_kernel_obj_list */
     no_close_handle,                         /* close_handle */
     named_pipe_device_file_destroy           /* destroy */
@@ -527,7 +527,7 @@ static struct object *pipe_server_open_file( struct object *obj, unsigned int ac
 {
     struct pipe_server *server = (struct pipe_server *)obj;
 
-    return server->pipe_end.pipe->obj.ops->open_file( &server->pipe_end.pipe->obj, access, sharing, options );
+    return named_pipe_open_file(  &server->pipe_end.pipe->obj, access, sharing, options );
 }
 
 static void pipe_server_destroy( struct object *obj )
@@ -712,7 +712,8 @@ static struct object *named_pipe_dir_open_file( struct object *obj, unsigned int
     if (dir->fd)
     {
         /* Trying to open by (already opened) file object */
-        return no_open_file( obj, access, sharing, options );
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return NULL;
     }
 
     /* Turn this "proto-object" into an actual file object */

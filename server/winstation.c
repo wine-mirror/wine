@@ -86,7 +86,7 @@ static const struct object_ops winstation_ops =
     winstation_lookup_name,       /* lookup_name */
     NULL,                         /* link_name */
     NULL,                         /* unlink_name */
-    no_open_file,                 /* open_file */
+    NULL,                         /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
     winstation_close_handle,      /* close_handle */
     winstation_destroy            /* destroy */
@@ -127,7 +127,7 @@ static const struct object_ops desktop_ops =
     NULL,                         /* lookup_name */
     desktop_link_name,            /* link_name */
     NULL,                         /* unlink_name */
-    no_open_file,                 /* open_file */
+    NULL,                         /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
     desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */

@@ -124,7 +124,7 @@ static const struct object_ops dir_ops =
     NULL,                     /* lookup_name */
     NULL,                     /* link_name */
     NULL,                     /* unlink_name */
-    no_open_file,             /* open_file */
+    NULL,                     /* open_file */
     dir_get_kernel_obj_list,  /* get_kernel_obj_list */
     dir_close_handle,         /* close_handle */
     dir_destroy               /* destroy */
