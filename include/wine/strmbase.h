@@ -125,6 +125,7 @@ struct strmbase_sink_ops
     HRESULT (*sink_begin_flush)(struct strmbase_sink *pin);
     HRESULT (*sink_end_flush)(struct strmbase_sink *pin);
     HRESULT (*sink_new_segment)(struct strmbase_sink *pin, REFERENCE_TIME start, REFERENCE_TIME stop, double rate);
+    HRESULT (*sink_receive_can_block)(struct strmbase_sink *pin);
 };
 
 /* Base Pin */
