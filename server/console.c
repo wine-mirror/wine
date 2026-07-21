@@ -104,7 +104,7 @@ static const struct fd_ops console_fd_ops =
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     console_ioctl,                /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -165,7 +165,7 @@ static const struct fd_ops console_server_fd_ops =
     NULL,                         /* get_file_info */
     NULL,                         /* get_volume_info */
     console_server_ioctl,         /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -223,7 +223,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     screen_buffer_ioctl,          /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -285,7 +285,7 @@ static const struct fd_ops console_input_fd_ops =
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     console_input_ioctl,          /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -331,7 +331,7 @@ static const struct fd_ops console_output_fd_ops =
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     console_output_ioctl,         /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -376,7 +376,7 @@ static const struct fd_ops console_connection_fd_ops =
     NULL,                         /* get_file_info */
     NULL,                         /* get_volume_info */
     console_connection_ioctl,     /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };

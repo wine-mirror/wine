@@ -103,7 +103,7 @@ static const struct fd_ops mailslot_fd_ops =
     mailslot_get_file_info,     /* get_file_info */
     NULL,                       /* get_volume_info */
     default_fd_ioctl,           /* ioctl */
-    default_fd_cancel_async,    /* cancel_async */
+    NULL,                       /* cancel_async */
     no_fd_queue_async,          /* queue_async */
     default_fd_reselect_async   /* reselect_async */
 };
@@ -149,7 +149,7 @@ static const struct fd_ops mail_writer_fd_ops =
     default_fd_get_file_info,    /* get_file_info */
     NULL,                        /* get_volume_info */
     default_fd_ioctl,            /* ioctl */
-    default_fd_cancel_async,     /* cancel_async */
+    NULL,                        /* cancel_async */
     default_fd_queue_async,      /* queue_async */
     default_fd_reselect_async    /* reselect_async */
 };
@@ -213,7 +213,7 @@ static const struct fd_ops mailslot_device_fd_ops =
     default_fd_get_file_info,           /* get_file_info */
     NULL,                               /* get_volume_info */
     default_fd_ioctl,                   /* ioctl */
-    default_fd_cancel_async,            /* cancel_async */
+    NULL,                               /* cancel_async */
     default_fd_queue_async,             /* queue_async */
     default_fd_reselect_async           /* reselect_async */
 };

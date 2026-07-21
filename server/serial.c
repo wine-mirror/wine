@@ -103,7 +103,7 @@ static const struct fd_ops serial_fd_ops =
     default_fd_get_file_info,     /* get_file_info */
     NULL,                         /* get_volume_info */
     serial_ioctl,                 /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    NULL,                         /* cancel_async */
     serial_queue_async,           /* queue_async */
     serial_reselect_async         /* reselect_async */
 };
