@@ -2178,7 +2178,7 @@ static void test_fopen_s( void )
     ok(ret == 0, "fopen_s failed with %d\n", ret);
     len = fread(buff, 1, 2, file);
     ok(len == 2, "len = %d\n", len);
-    todo_wine ok(ubuff[0]==0xff && ubuff[1]==0xfe, "buff[0]=%02x, buff[1]=%02x\n",
+    ok(ubuff[0]==0xff && ubuff[1]==0xfe, "buff[0]=%02x, buff[1]=%02x\n",
             ubuff[0], ubuff[1]);
     fclose(file);
 
@@ -2233,8 +2233,8 @@ static void test_fopen_s( void )
     ret = p_fopen_s(&file, name, "rb");
     ok(ret == 0, "fopen_s failed with %d\n", ret);
     len = fread(buff, 1, ARRAY_SIZE(buff) - 1, file);
-    todo_wine ok(len == 8, "len = %d\n", len);
-    todo_wine ok(!memcmp(buff, "testa\0b", 8), "got %s\n", wine_dbgstr_an(buff, len));
+    ok(len == 8, "len = %d\n", len);
+    ok(!memcmp(buff, "testa\0b", 8), "got %s\n", wine_dbgstr_an(buff, len));
     fclose(file);
 
     /* test initial FILE values */
