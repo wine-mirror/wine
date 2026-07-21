@@ -174,7 +174,6 @@ extern struct object *get_obj_sync( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
-extern WCHAR *no_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
                                       unsigned int attributes, struct object *root );
 extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );

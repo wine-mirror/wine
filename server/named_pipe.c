@@ -644,7 +644,7 @@ static struct fd *named_pipe_device_file_get_fd( struct object *obj )
 static WCHAR *named_pipe_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
 {
     struct named_pipe_device_file *file = (struct named_pipe_device_file *)obj;
-    return file->device->obj.ops->get_full_name( &file->device->obj, max, len );
+    return named_pipe_device_get_full_name( &file->device->obj, max, len );
 }
 
 static enum server_fd_type named_pipe_device_file_get_fd_type( struct fd *fd )
@@ -677,9 +677,9 @@ static WCHAR *named_pipe_dir_get_full_name( struct object *obj, data_size_t max,
 {
     struct named_pipe_device_file *dir = (struct named_pipe_device_file *)obj;
     data_size_t len;
-    char *device_name, *ret;
+    WCHAR *device_name, *ret;
 
-    device_name = (char *)dir->device->obj.ops->get_full_name( &dir->device->obj, max, &len );
+    device_name = named_pipe_device_get_full_name( &dir->device->obj, max, &len );
     if (!device_name) return NULL;
 
     len += sizeof(WCHAR);
@@ -689,11 +689,11 @@ static WCHAR *named_pipe_dir_get_full_name( struct object *obj, data_size_t max,
         free(device_name);
         return NULL;
     }
-    *(WCHAR *)(ret + len - sizeof(WCHAR)) = '\\';
+    ret[len / sizeof(WCHAR) - 1] = '\\';
 
     if (len > max) set_error( STATUS_BUFFER_OVERFLOW );
     *ret_len = len;
-    return (WCHAR *)ret;
+    return ret;
 }
 
 static struct object *named_pipe_dir_lookup_name( struct object *obj, struct unicode_str *name,
@@ -936,7 +936,7 @@ static int pipe_end_set_sd( struct object *obj, const struct security_descriptor
 static WCHAR *pipe_end_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
 {
     struct pipe_end *pipe_end = (struct pipe_end *) obj;
-    return pipe_end->pipe->obj.ops->get_full_name( &pipe_end->pipe->obj, max, len );
+    return named_pipe_get_full_name( &pipe_end->pipe->obj, max, len );
 }
 
 static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )

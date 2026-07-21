@@ -63,7 +63,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* map_access */
     NULL,                           /* get_sd */
     NULL,                           /* set_sd */
-    no_get_full_name,               /* get_full_name */
+    NULL,                           /* get_full_name */
     no_lookup_name,                 /* lookup_name */
     no_link_name,                   /* link_name */
     NULL,                           /* unlink_name */
@@ -131,7 +131,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     NULL,                           /* map_access */
     NULL,                           /* get_sd */
     NULL,                           /* set_sd */
-    no_get_full_name,               /* get_full_name */
+    NULL,                           /* get_full_name */
     no_lookup_name,                 /* lookup_name */
     no_link_name,                   /* link_name */
     NULL,                           /* unlink_name */
@@ -183,7 +183,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     NULL,                               /* map_access */
     NULL,                               /* get_sd */
     NULL,                               /* set_sd */
-    default_get_full_name,              /* get_full_name */
+    NULL,                               /* get_full_name */
     no_lookup_name,                     /* lookup_name */
     directory_link_name,                /* link_name */
     default_unlink_name,                /* unlink_name */
@@ -250,7 +250,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     NULL,                                   /* map_access */
     NULL,                                   /* get_sd */
     NULL,                                   /* set_sd */
-    default_get_full_name,                  /* get_full_name */
+    NULL,                                   /* get_full_name */
     no_lookup_name,                         /* lookup_name */
     directory_link_name,                    /* link_name */
     default_unlink_name,                    /* unlink_name */

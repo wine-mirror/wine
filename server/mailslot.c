@@ -150,7 +150,7 @@ static const struct object_ops mail_writer_ops =
     mail_writer_map_access,     /* map_access */
     NULL,                       /* get_sd */
     NULL,                       /* set_sd */
-    no_get_full_name,           /* get_full_name */
+    NULL,                       /* get_full_name */
     no_lookup_name,             /* lookup_name */
     no_link_name,               /* link_name */
     NULL,                       /* unlink_name */
@@ -216,7 +216,7 @@ static const struct object_ops mailslot_device_ops =
     NULL,                           /* map_access */
     NULL,                           /* get_sd */
     NULL,                           /* set_sd */
-    default_get_full_name,          /* get_full_name */
+    NULL,                           /* get_full_name */
     mailslot_device_lookup_name,    /* lookup_name */
     directory_link_name,            /* link_name */
     default_unlink_name,            /* unlink_name */
@@ -545,7 +545,7 @@ static struct fd *mailslot_device_file_get_fd( struct object *obj )
 static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
 {
     struct mailslot_device_file *file = (struct mailslot_device_file *)obj;
-    WCHAR *ret = file->device->obj.ops->get_full_name( &file->device->obj, max, len );
+    WCHAR *ret = default_get_full_name( &file->device->obj, max, len );
     if (*len > max) set_error( STATUS_BUFFER_OVERFLOW );
     return ret;
 }

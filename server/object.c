@@ -115,7 +115,7 @@ static const struct object_ops apc_reserve_ops =
     NULL,                       /* map_access */
     NULL,                       /* get_sd */
     NULL,                       /* set_sd */
-    default_get_full_name,      /* get_full_name */
+    NULL,                       /* get_full_name */
     no_lookup_name,             /* lookup_name */
     directory_link_name,        /* link_name */
     default_unlink_name,        /* unlink_name */
@@ -140,7 +140,7 @@ static const struct object_ops completion_reserve_ops =
     NULL,                      /* map_access */
     NULL,                      /* get_sd */
     NULL,                      /* set_sd */
-    default_get_full_name,     /* get_full_name */
+    NULL,                      /* get_full_name */
     no_lookup_name,            /* lookup_name */
     directory_link_name,       /* link_name */
     default_unlink_name,       /* unlink_name */
@@ -760,11 +760,6 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
                     unsigned int set_info )
 {
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
-}
-
-WCHAR *no_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len )
-{
-    return NULL;
 }
 
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,

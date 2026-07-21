@@ -78,7 +78,7 @@ static const struct object_ops mutex_sync_ops =
     NULL,                      /* map_access */
     NULL,                      /* get_sd */
     NULL,                      /* set_sd */
-    default_get_full_name,     /* get_full_name */
+    NULL,                      /* get_full_name */
     no_lookup_name,            /* lookup_name */
     directory_link_name,       /* link_name */
     default_unlink_name,       /* unlink_name */
@@ -193,7 +193,7 @@ static const struct object_ops mutex_ops =
     NULL,                      /* map_access */
     NULL,                      /* get_sd */
     NULL,                      /* set_sd */
-    default_get_full_name,     /* get_full_name */
+    NULL,                      /* get_full_name */
     no_lookup_name,            /* lookup_name */
     directory_link_name,       /* link_name */
     default_unlink_name,       /* unlink_name */

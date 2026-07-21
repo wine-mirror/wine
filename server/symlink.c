@@ -77,7 +77,7 @@ static const struct object_ops symlink_ops =
     NULL,                         /* map_access */
     NULL,                         /* get_sd */
     NULL,                         /* set_sd */
-    default_get_full_name,        /* get_full_name */
+    NULL,                         /* get_full_name */
     symlink_lookup_name,          /* lookup_name */
     directory_link_name,          /* link_name */
     default_unlink_name,          /* unlink_name */
@@ -177,7 +177,10 @@ struct object *create_obj_symlink( struct object *root, const struct unicode_str
     data_size_t len;
     WCHAR *target_name;
 
-    if (!(target_name = target->ops->get_full_name( target, ~0u, &len )))
+    if (target->ops->get_full_name) target_name = target->ops->get_full_name( target, ~0u, &len );
+    else target_name = default_get_full_name( target, ~0u, &len );
+
+    if (!target_name)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
