@@ -161,7 +161,7 @@ static const struct fd_ops console_server_fd_ops =
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
     NULL,                         /* write */
-    no_fd_flush,                  /* flush */
+    NULL,                         /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     console_server_ioctl,         /* ioctl */
@@ -219,7 +219,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
     screen_buffer_write,          /* write */
-    no_fd_flush,                  /* flush */
+    NULL,                         /* flush */
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     screen_buffer_ioctl,          /* ioctl */
@@ -327,7 +327,7 @@ static const struct fd_ops console_output_fd_ops =
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
     console_output_write,         /* write */
-    no_fd_flush,                  /* flush */
+    NULL,                         /* flush */
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
     console_output_ioctl,         /* ioctl */
@@ -372,7 +372,7 @@ static const struct fd_ops console_connection_fd_ops =
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
     NULL,                         /* write */
-    no_fd_flush,                  /* flush */
+    NULL,                         /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     console_connection_ioctl,     /* ioctl */
