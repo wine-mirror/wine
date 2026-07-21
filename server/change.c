@@ -128,7 +128,7 @@ static const struct fd_ops dir_fd_ops =
     dir_get_poll_events,         /* get_poll_events */
     NULL,                        /* poll_event */
     dir_get_fd_type,             /* get_fd_type */
-    no_fd_read,                  /* read */
+    NULL,                        /* read */
     no_fd_write,                 /* write */
     no_fd_flush,                 /* flush */
     default_fd_get_file_info,    /* get_file_info */

@@ -493,7 +493,7 @@ static const struct fd_ops sock_fd_ops =
     sock_get_poll_events,         /* get_poll_events */
     sock_poll_event,              /* poll_event */
     sock_get_fd_type,             /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
     default_fd_get_file_info,     /* get_file_info */
@@ -3697,7 +3697,7 @@ static const struct fd_ops ifchange_fd_ops =
     ifchange_get_poll_events, /* get_poll_events */
     ifchange_poll_event,      /* poll_event */
     NULL,                     /* get_fd_type */
-    no_fd_read,               /* read */
+    NULL,                     /* read */
     no_fd_write,              /* write */
     no_fd_flush,              /* flush */
     no_fd_get_file_info,      /* get_file_info */

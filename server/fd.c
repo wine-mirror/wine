@@ -2567,12 +2567,6 @@ static void delete_reparse_point( struct fd *fd, struct async *async )
     xattr_fremove( fd->unix_fd, XATTR_REPARSE );
 }
 
-/* default read() routine */
-void no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
 /* default write() routine */
 void no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
@@ -3094,7 +3088,8 @@ DECL_HANDLER(read)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
     {
-        fd->fd_ops->read( fd, async, req->pos );
+        if (fd->fd_ops->read) fd->fd_ops->read( fd, async, req->pos );
+        else set_error( STATUS_OBJECT_TYPE_MISMATCH );
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = fd->options;
         release_object( async );

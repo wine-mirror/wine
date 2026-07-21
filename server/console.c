@@ -159,7 +159,7 @@ static const struct fd_ops console_server_fd_ops =
     NULL,                         /* get_poll_events */
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
@@ -217,7 +217,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     NULL,                         /* get_poll_events */
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     screen_buffer_write,          /* write */
     no_fd_flush,                  /* flush */
     console_get_file_info,        /* get_file_info */
@@ -325,7 +325,7 @@ static const struct fd_ops console_output_fd_ops =
     NULL,                         /* get_poll_events */
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     console_output_write,         /* write */
     no_fd_flush,                  /* flush */
     console_get_file_info,        /* get_file_info */
@@ -370,7 +370,7 @@ static const struct fd_ops console_connection_fd_ops =
     NULL,                         /* get_poll_events */
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */

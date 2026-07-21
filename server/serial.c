@@ -97,7 +97,7 @@ static const struct fd_ops serial_fd_ops =
     NULL,                         /* get_poll_events */
     NULL,                         /* poll_event */
     serial_get_fd_type,           /* get_fd_type */
-    no_fd_read,                   /* read */
+    NULL,                         /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
     default_fd_get_file_info,     /* get_file_info */
