@@ -163,74 +163,38 @@ static void test_aligned_realloc(unsigned int size1, unsigned int size2, unsigne
 static void test_aligned_offset_realloc(unsigned int size1, unsigned int size2,
                                         unsigned int alignment, unsigned int offset)
 {
-    void *mem, *mem1, *mem2;
+    static BYTE v[256];
+    BYTE *mem, *mem2;
+    int i;
+
+    winetest_push_context("%u, %u, %u, %u", size1, size2, alignment, offset);
+
+    for (i = 0; i < ARRAY_SIZE(v); i++)
+        v[i] = i + 1;
 
     mem = p_aligned_offset_malloc(size1, alignment, offset);
-
-    if ((alignment & (alignment - 1)) == 0)
-        ok(mem != NULL, "_aligned_offset_malloc(%d, %d, %d) failed\n", size1, alignment, offset);
-    else
-        ok(mem == NULL, "_aligned_offset_malloc(%d, %d, %d) should have failed\n", size1, alignment, offset);
-
-    if (mem)
+    if ((alignment & (alignment - 1)) != 0)
     {
-	mem1 = malloc(size1);
-        if (mem1)
-        {
-            unsigned int i;
-            for (i = 0; i < size1; i++)
-                ((char *)mem)[i] = i + 1;
-            memcpy(mem1, mem, size1);
-        }
-
-        ok(((DWORD_PTR)((char *)mem + offset) & (alignment ? alignment - 1 : 0)) == 0,
-           "_aligned_offset_malloc(%d, %d, %d) not aligned: %p\n", size1, alignment, offset, mem);
-        if (winetest_debug > 1)
-        {
-            void *saved;
-            saved = *(void **)((DWORD_PTR)((char *)mem - sizeof(void *)) & ~(sizeof(void *) - 1));
-            trace("_aligned_offset_malloc(%3d, %3d, %3d) returns %p, saved = %p\n",
-                  size1, alignment, offset, mem, saved);
-        }
-
-        mem2 = p_aligned_offset_realloc(mem, size2, alignment, offset);
-
-        ok(mem2 != NULL, "_aligned_offset_realloc(%p, %d, %d, %d) failed\n", mem, size2, alignment, offset);
-
-        if (mem2)
-        {
-            ok(((DWORD_PTR)((char *)mem + offset) & (alignment ? alignment - 1 : 0)) == 0,
-               "_aligned_offset_realloc(%p, %d, %d, %d) not aligned: %p\n", mem, size2, alignment, offset, mem2);
-            if (winetest_debug > 1)
-            {
-                void *saved;
-                saved = *(void **)((DWORD_PTR)((char *)mem2 - sizeof(void *)) & ~(sizeof(void *) - 1));
-                trace("_aligned_offset_realloc(%p, %3d, %3d, %3d) returns %p, saved = %p\n",
-                      mem, size2, alignment, offset, mem2, saved);
-            }
-            if (mem1)
-            {
-                ok(memcmp(mem2, mem1, min(size1, size2))==0, "_aligned_offset_realloc(%p, %d, %d, %d) has different data\n", mem, size2, alignment, offset);
-                if (memcmp(mem2, mem1, min(size1, size2)) && winetest_debug > 1)
-                {
-                    unsigned int i;
-                    for (i = 0; i < min(size1, size2); i++)
-                    {
-                        if (((char *)mem2)[i] != ((char *)mem1)[i])
-                            trace("%d: %02x != %02x\n", i, ((char *)mem2)[i] & 0xff, ((char *)mem1)[i] & 0xff);
-                    }
-                }
-            }
-            p_aligned_free(mem2);
-        } else {
-            ok(errno == EINVAL, "_aligned_offset_realloc(%p, %d, %d, %d) errno: %d != %d\n", mem, size2, alignment, offset, errno, EINVAL);
-            p_aligned_free(mem);
-        }
-
-        free(mem1);
+        ok(!mem, "_aligned_offset_malloc should have failed\n");
+        ok(errno == EINVAL, "errno = %d\n", errno);
+        winetest_pop_context();
+        return;
     }
-    else
-        ok(errno == EINVAL, "_aligned_offset_malloc(%d, %d) errno: %d != %d\n", size1, alignment, errno, EINVAL);
+    ok(mem != NULL, "_aligned_offset_malloc failed\n");
+    ok(((DWORD_PTR)(mem + offset) & (alignment ? alignment - 1 : 0)) == 0,
+            "incorrect alignment: %p\n", mem);
+
+    ok(size1 <= ARRAY_SIZE(v), "size1 = %d\n", size1);
+    memcpy(mem, v, size1);
+
+    mem2 = p_aligned_offset_realloc(mem, size2, alignment, offset);
+    ok(mem2 != NULL, "_aligned_offset_realloc failed\n");
+    ok(((DWORD_PTR)(mem2 + offset) & (alignment ? alignment - 1 : 0)) == 0,
+            "incorrect alignment: %p\n", mem2);
+    ok(!memcmp(mem2, v, min(size1, size2)), "wrong data\n");
+    p_aligned_free(mem2);
+
+    winetest_pop_context();
 }
 
 static void test_aligned(void)
