@@ -170,7 +170,7 @@ static const struct object_ops startup_info_ops =
     NULL,                          /* link_name */
     NULL,                          /* unlink_name */
     NULL,                          /* open_file */
-    no_kernel_obj_list,            /* get_kernel_obj_list */
+    NULL,                          /* get_kernel_obj_list */
     no_close_handle,               /* close_handle */
     startup_info_destroy           /* destroy */
 };
@@ -232,7 +232,7 @@ static const struct object_ops job_ops =
     NULL,                          /* link_name */
     NULL,                          /* unlink_name */
     NULL,                          /* open_file */
-    no_kernel_obj_list,            /* get_kernel_obj_list */
+    NULL,                          /* get_kernel_obj_list */
     job_close_handle,              /* close_handle */
     job_destroy                    /* destroy */
 };

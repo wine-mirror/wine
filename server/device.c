@@ -77,7 +77,7 @@ static const struct object_ops irp_call_ops =
     NULL,                             /* link_name */
     NULL,                             /* unlink_name */
     NULL,                             /* open_file */
-    no_kernel_obj_list,               /* get_kernel_obj_list */
+    NULL,                             /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     irp_call_destroy                  /* destroy */
 };
@@ -119,7 +119,7 @@ static const struct object_ops device_manager_ops =
     NULL,                             /* link_name */
     NULL,                             /* unlink_name */
     NULL,                             /* open_file */
-    no_kernel_obj_list,               /* get_kernel_obj_list */
+    NULL,                             /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     device_manager_destroy            /* destroy */
 };
@@ -252,11 +252,6 @@ static const struct fd_ops device_file_fd_ops =
 };
 
 
-struct list *no_kernel_obj_list( struct object *obj )
-{
-    return NULL;
-}
-
 struct kernel_object
 {
     struct device_manager  *manager;
@@ -278,6 +273,7 @@ static struct kernel_object *kernel_object_from_obj( struct device_manager *mana
     struct kernel_object *kernel_object;
     struct list *list;
 
+    if (!obj->ops->get_kernel_obj_list) return NULL;
     if (!(list = obj->ops->get_kernel_obj_list( obj ))) return NULL;
     LIST_FOR_EACH_ENTRY( kernel_object, list, struct kernel_object, list_entry )
     {
@@ -298,6 +294,7 @@ static struct kernel_object *set_kernel_object( struct device_manager *manager, 
     struct kernel_object *kernel_object;
     struct list *list;
 
+    if (!obj->ops->get_kernel_obj_list) return NULL;
     if (!(list = obj->ops->get_kernel_obj_list( obj ))) return NULL;
 
     if (!(kernel_object = malloc( sizeof(*kernel_object) ))) return NULL;
@@ -860,6 +857,7 @@ void free_kernel_objects( struct object *obj )
 {
     struct list *ptr, *list;
 
+    if (!obj->ops->get_kernel_obj_list) return;
     if (!(list = obj->ops->get_kernel_obj_list( obj ))) return;
 
     while ((ptr = list_head( list )))

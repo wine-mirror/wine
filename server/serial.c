@@ -102,7 +102,7 @@ static const struct object_ops serial_ops =
     NULL,                         /* link_name */
     NULL,                         /* unlink_name */
     NULL,                         /* open_file */
-    no_kernel_obj_list,           /* get_kernel_obj_list */
+    NULL,                         /* get_kernel_obj_list */
     no_close_handle,              /* close_handle */
     serial_destroy                /* destroy */
 };

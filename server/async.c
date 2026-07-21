@@ -64,7 +64,7 @@ static const struct object_ops async_cancel_ops =
     NULL,                        /* link_name */
     NULL,                        /* unlink_name */
     NULL,                        /* open_file */
-    no_kernel_obj_list,          /* get_kernel_obj_list */
+    NULL,                        /* get_kernel_obj_list */
     no_close_handle,             /* close_handle */
     async_cancel_destroy         /* destroy */
 };
@@ -165,7 +165,7 @@ static const struct object_ops async_ops =
     NULL,                      /* link_name */
     NULL,                      /* unlink_name */
     NULL,                      /* open_file */
-    no_kernel_obj_list,        /* get_kernel_obj_list */
+    NULL,                      /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     async_destroy              /* destroy */
 };
@@ -839,7 +839,7 @@ static const struct object_ops iosb_ops =
     NULL,                     /* link_name */
     NULL,                     /* unlink_name */
     NULL,                     /* open_file */
-    no_kernel_obj_list,       /* get_kernel_obj_list */
+    NULL,                     /* get_kernel_obj_list */
     no_close_handle,          /* close_handle */
     iosb_destroy              /* destroy */
 };

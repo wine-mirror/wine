@@ -68,7 +68,7 @@ static const struct object_ops d3dkmt_object_ops =
     NULL,                           /* link_name */
     NULL,                           /* unlink_name */
     NULL,                           /* open_file */
-    no_kernel_obj_list,             /* get_kernel_obj_list */
+    NULL,                           /* get_kernel_obj_list */
     no_close_handle,                /* close_handle */
     d3dkmt_object_destroy,          /* destroy */
 };
@@ -136,7 +136,7 @@ static const struct object_ops d3dkmt_mutex_ops =
     NULL,                           /* link_name */
     NULL,                           /* unlink_name */
     NULL,                           /* open_file */
-    no_kernel_obj_list,             /* get_kernel_obj_list */
+    NULL,                           /* get_kernel_obj_list */
     no_close_handle,                /* close_handle */
     d3dkmt_mutex_destroy,           /* destroy */
 };
@@ -188,7 +188,7 @@ static const struct object_ops dxgk_shared_sync_ops =
     NULL,                               /* link_name */
     NULL,                               /* unlink_name */
     NULL,                               /* open_file */
-    no_kernel_obj_list,                 /* get_kernel_obj_list */
+    NULL,                               /* get_kernel_obj_list */
     no_close_handle,                    /* close_handle */
     dxgk_shared_sync_destroy,           /* destroy */
 };
@@ -255,7 +255,7 @@ static const struct object_ops dxgk_shared_resource_ops =
     NULL,                                   /* link_name */
     NULL,                                   /* unlink_name */
     NULL,                                   /* open_file */
-    no_kernel_obj_list,                     /* get_kernel_obj_list */
+    NULL,                                   /* get_kernel_obj_list */
     no_close_handle,                        /* close_handle */
     dxgk_shared_resource_destroy,           /* destroy */
 };
