@@ -99,7 +99,7 @@ static const struct fd_ops console_fd_ops =
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     console_read,                 /* read */
-    no_fd_write,                  /* write */
+    NULL,                         /* write */
     console_flush,                /* flush */
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
@@ -160,7 +160,7 @@ static const struct fd_ops console_server_fd_ops =
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
-    no_fd_write,                  /* write */
+    NULL,                         /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
@@ -280,7 +280,7 @@ static const struct fd_ops console_input_fd_ops =
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     console_input_read,           /* read */
-    no_fd_write,                  /* write */
+    NULL,                         /* write */
     console_input_flush,          /* flush */
     console_get_file_info,        /* get_file_info */
     console_get_volume_info,      /* get_volume_info */
@@ -371,7 +371,7 @@ static const struct fd_ops console_connection_fd_ops =
     NULL,                         /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     NULL,                         /* read */
-    no_fd_write,                  /* write */
+    NULL,                         /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */

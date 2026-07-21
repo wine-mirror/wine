@@ -129,7 +129,7 @@ static const struct fd_ops dir_fd_ops =
     NULL,                        /* poll_event */
     dir_get_fd_type,             /* get_fd_type */
     NULL,                        /* read */
-    no_fd_write,                 /* write */
+    NULL,                        /* write */
     no_fd_flush,                 /* flush */
     default_fd_get_file_info,    /* get_file_info */
     no_fd_get_volume_info,       /* get_volume_info */

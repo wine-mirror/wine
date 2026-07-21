@@ -68,7 +68,7 @@ static const struct fd_ops d3dkmt_fd_ops =
     NULL,                         /* poll_event */
     d3dkmt_get_fd_type,           /* get_fd_type */
     NULL,                         /* read */
-    no_fd_write,                  /* write */
+    NULL,                         /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
