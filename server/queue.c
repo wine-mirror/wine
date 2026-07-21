@@ -160,27 +160,11 @@ static void timer_callback( void *private );
 
 static const struct object_ops msg_queue_ops =
 {
-    sizeof(struct msg_queue),  /* size */
-    &no_type,                  /* type */
-    msg_queue_dump,            /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    msg_queue_get_sync,        /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    msg_queue_destroy          /* destroy */
+    .size     = sizeof(struct msg_queue),
+    .type     = &no_type,
+    .dump     = msg_queue_dump,
+    .get_sync = msg_queue_get_sync,
+    .destroy  = msg_queue_destroy,
 };
 
 static const struct fd_ops msg_queue_fd_ops =
@@ -198,27 +182,10 @@ static const struct fd_ops msg_queue_fd_ops =
 
 static const struct object_ops thread_input_ops =
 {
-    sizeof(struct thread_input),  /* size */
-    &no_type,                     /* type */
-    thread_input_dump,            /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    NULL,                         /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    thread_input_destroy          /* destroy */
+    .size    = sizeof(struct thread_input),
+    .type    = &no_type,
+    .dump    = thread_input_dump,
+    .destroy = thread_input_destroy,
 };
 
 /* pointer to input structure of foreground thread */

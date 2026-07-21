@@ -123,27 +123,13 @@ static struct type_descr named_pipe_type =
 
 static const struct object_ops named_pipe_ops =
 {
-    sizeof(struct named_pipe),    /* size */
-    &named_pipe_type,             /* type */
-    named_pipe_dump,              /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    named_pipe_get_full_name,     /* get_full_name */
-    NULL,                         /* lookup_name */
-    named_pipe_link_name,         /* link_name */
-    NULL,                         /* unlink_name */
-    named_pipe_open_file,         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    named_pipe_destroy            /* destroy */
+    .size          = sizeof(struct named_pipe),
+    .type          = &named_pipe_type,
+    .dump          = named_pipe_dump,
+    .get_full_name = named_pipe_get_full_name,
+    .link_name     = named_pipe_link_name,
+    .open_file     = named_pipe_open_file,
+    .destroy       = named_pipe_destroy,
 };
 
 /* common server and client pipe end functions */
@@ -172,27 +158,18 @@ static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *a
 
 static const struct object_ops pipe_server_ops =
 {
-    sizeof(struct pipe_server),   /* size */
-    &file_type,                   /* type */
-    pipe_server_dump,             /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    pipe_end_get_fd,              /* get_fd */
-    default_fd_get_sync,          /* get_sync */
-    NULL,                         /* map_access */
-    pipe_end_get_sd,              /* get_sd */
-    pipe_end_set_sd,              /* set_sd */
-    pipe_end_get_full_name,       /* get_full_name */
-    pipe_server_lookup_name,      /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    pipe_server_open_file,        /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    async_close_obj_handle,       /* close_handle */
-    pipe_server_destroy           /* destroy */
+    .size          = sizeof(struct pipe_server),
+    .type          = &file_type,
+    .dump          = pipe_server_dump,
+    .get_fd        = pipe_end_get_fd,
+    .get_sync      = default_fd_get_sync,
+    .get_sd        = pipe_end_get_sd,
+    .set_sd        = pipe_end_set_sd,
+    .get_full_name = pipe_end_get_full_name,
+    .lookup_name   = pipe_server_lookup_name,
+    .open_file     = pipe_server_open_file,
+    .close_handle  = async_close_obj_handle,
+    .destroy       = pipe_server_destroy,
 };
 
 static const struct fd_ops pipe_server_fd_ops =
@@ -217,27 +194,16 @@ static void pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *a
 
 static const struct object_ops pipe_client_ops =
 {
-    sizeof(struct pipe_end),      /* size */
-    &file_type,                   /* type */
-    pipe_client_dump,             /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    pipe_end_get_fd,              /* get_fd */
-    default_fd_get_sync,          /* get_sync */
-    NULL,                         /* map_access */
-    pipe_end_get_sd,              /* get_sd */
-    pipe_end_set_sd,              /* set_sd */
-    pipe_end_get_full_name,       /* get_full_name */
-    NULL,                         /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    async_close_obj_handle,       /* close_handle */
-    pipe_end_destroy              /* destroy */
+    .size          = sizeof(struct pipe_end),
+    .type          = &file_type,
+    .dump          = pipe_client_dump,
+    .get_fd        = pipe_end_get_fd,
+    .get_sync      = default_fd_get_sync,
+    .get_sd        = pipe_end_get_sd,
+    .set_sd        = pipe_end_set_sd,
+    .get_full_name = pipe_end_get_full_name,
+    .close_handle  = async_close_obj_handle,
+    .destroy       = pipe_end_destroy,
 };
 
 static const struct fd_ops pipe_client_fd_ops =
@@ -266,27 +232,13 @@ static void named_pipe_device_destroy( struct object *obj );
 
 static const struct object_ops named_pipe_device_ops =
 {
-    sizeof(struct named_pipe_device), /* size */
-    &device_type,                     /* type */
-    named_pipe_device_dump,           /* dump */
-    NULL,                             /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
-    NULL,                             /* signal */
-    NULL,                             /* get_fd */
-    NULL,                             /* get_sync */
-    NULL,                             /* map_access */
-    NULL,                             /* get_sd */
-    NULL,                             /* set_sd */
-    named_pipe_device_get_full_name,  /* get_full_name */
-    named_pipe_device_lookup_name,    /* lookup_name */
-    NULL,                             /* link_name */
-    NULL,                             /* unlink_name */
-    named_pipe_device_open_file,      /* open_file */
-    NULL,                             /* get_kernel_obj_list */
-    NULL,                             /* close_handle */
-    named_pipe_device_destroy         /* destroy */
+    .size          = sizeof(struct named_pipe_device),
+    .type          = &device_type,
+    .dump          = named_pipe_device_dump,
+    .get_full_name = named_pipe_device_get_full_name,
+    .lookup_name   = named_pipe_device_lookup_name,
+    .open_file     = named_pipe_device_open_file,
+    .destroy       = named_pipe_device_destroy,
 };
 
 static void named_pipe_device_file_dump( struct object *obj, int verbose );
@@ -298,27 +250,13 @@ static void named_pipe_device_file_destroy( struct object *obj );
 
 static const struct object_ops named_pipe_device_file_ops =
 {
-    sizeof(struct named_pipe_device_file),   /* size */
-    &file_type,                              /* type */
-    named_pipe_device_file_dump,             /* dump */
-    NULL,                                    /* add_queue */
-    NULL,                                    /* remove_queue */
-    NULL,                                    /* signaled */
-    NULL,                                    /* satisfied */
-    NULL,                                    /* signal */
-    named_pipe_device_file_get_fd,           /* get_fd */
-    default_fd_get_sync,                     /* get_sync */
-    NULL,                                    /* map_access */
-    NULL,                                    /* get_sd */
-    NULL,                                    /* set_sd */
-    named_pipe_device_file_get_full_name,    /* get_full_name */
-    NULL,                                    /* lookup_name */
-    NULL,                                    /* link_name */
-    NULL,                                    /* unlink_name */
-    NULL,                                    /* open_file */
-    NULL,                                    /* get_kernel_obj_list */
-    NULL,                                    /* close_handle */
-    named_pipe_device_file_destroy           /* destroy */
+    .size          = sizeof(struct named_pipe_device_file),
+    .type          = &file_type,
+    .dump          = named_pipe_device_file_dump,
+    .get_fd        = named_pipe_device_file_get_fd,
+    .get_sync      = default_fd_get_sync,
+    .get_full_name = named_pipe_device_file_get_full_name,
+    .destroy       = named_pipe_device_file_destroy,
 };
 
 static const struct fd_ops named_pipe_device_fd_ops =
@@ -349,27 +287,15 @@ static void named_pipe_dir_destroy( struct object *obj );
 
 static const struct object_ops named_pipe_dir_ops =
 {
-    sizeof(struct named_pipe_device_file),   /* size */
-    &file_type,                              /* type */
-    named_pipe_dir_dump,                     /* dump */
-    NULL,                                    /* add_queue */
-    NULL,                                    /* remove_queue */
-    NULL,                                    /* signaled */
-    NULL,                                    /* satisfied */
-    NULL,                                    /* signal */
-    named_pipe_dir_get_fd,                   /* get_fd */
-    default_fd_get_sync,                     /* get_sync */
-    NULL,                                    /* map_access */
-    NULL,                                    /* get_sd */
-    NULL,                                    /* set_sd */
-    named_pipe_dir_get_full_name,            /* get_full_name */
-    named_pipe_dir_lookup_name,              /* lookup_name */
-    NULL,                                    /* link_name */
-    NULL,                                    /* unlink_name */
-    named_pipe_dir_open_file,                /* open_file */
-    NULL,                                    /* get_kernel_obj_list */
-    NULL,                                    /* close_handle */
-    named_pipe_dir_destroy                   /* destroy */
+    .size          = sizeof(struct named_pipe_device_file),
+    .type          = &file_type,
+    .dump          = named_pipe_dir_dump,
+    .get_fd        = named_pipe_dir_get_fd,
+    .get_sync      = default_fd_get_sync,
+    .get_full_name = named_pipe_dir_get_full_name,
+    .lookup_name   = named_pipe_dir_lookup_name,
+    .open_file     = named_pipe_dir_open_file,
+    .destroy       = named_pipe_dir_destroy,
 };
 
 static const struct fd_ops named_pipe_dir_fd_ops =

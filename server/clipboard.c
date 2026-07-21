@@ -69,27 +69,10 @@ static void clipboard_destroy( struct object *obj );
 
 static const struct object_ops clipboard_ops =
 {
-    sizeof(struct clipboard),     /* size */
-    &no_type,                     /* type */
-    clipboard_dump,               /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    NULL,                         /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    clipboard_destroy             /* destroy */
+    .size    = sizeof(struct clipboard),
+    .type    = &no_type,
+    .dump    = clipboard_dump,
+    .destroy = clipboard_destroy,
 };
 
 

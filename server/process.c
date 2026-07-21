@@ -99,27 +99,14 @@ static void terminate_process( struct process *process, struct thread *skip, int
 
 static const struct object_ops process_ops =
 {
-    sizeof(struct process),      /* size */
-    &process_type,               /* type */
-    process_dump,                /* dump */
-    NULL,                        /* add_queue */
-    NULL,                        /* remove_queue */
-    NULL,                        /* signaled */
-    NULL,                        /* satisfied */
-    NULL,                        /* signal */
-    NULL,                        /* get_fd */
-    process_get_sync,            /* get_sync */
-    process_map_access,          /* map_access */
-    process_get_sd,              /* get_sd */
-    NULL,                        /* set_sd */
-    NULL,                        /* get_full_name */
-    NULL,                        /* lookup_name */
-    NULL,                        /* link_name */
-    NULL,                        /* unlink_name */
-    NULL,                        /* open_file */
-    process_get_kernel_obj_list, /* get_kernel_obj_list */
-    NULL,                        /* close_handle */
-    process_destroy              /* destroy */
+    .size                = sizeof(struct process),
+    .type                = &process_type,
+    .dump                = process_dump,
+    .get_sync            = process_get_sync,
+    .map_access          = process_map_access,
+    .get_sd              = process_get_sd,
+    .get_kernel_obj_list = process_get_kernel_obj_list,
+    .destroy             = process_destroy,
 };
 
 static const struct fd_ops process_fd_ops =
@@ -152,27 +139,11 @@ static void startup_info_destroy( struct object *obj );
 
 static const struct object_ops startup_info_ops =
 {
-    sizeof(struct startup_info),   /* size */
-    &no_type,                      /* type */
-    startup_info_dump,             /* dump */
-    NULL,                          /* add_queue */
-    NULL,                          /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    startup_info_get_sync,         /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    startup_info_destroy           /* destroy */
+    .size     = sizeof(struct startup_info),
+    .type     = &no_type,
+    .dump     = startup_info_dump,
+    .get_sync = startup_info_get_sync,
+    .destroy  = startup_info_destroy,
 };
 
 /* job object */
@@ -214,27 +185,12 @@ struct job
 
 static const struct object_ops job_ops =
 {
-    sizeof(struct job),            /* size */
-    &job_type,                     /* type */
-    job_dump,                      /* dump */
-    NULL,                          /* add_queue */
-    NULL,                          /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    job_get_sync,                  /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    job_close_handle,              /* close_handle */
-    job_destroy                    /* destroy */
+    .size         = sizeof(struct job),
+    .type         = &job_type,
+    .dump         = job_dump,
+    .get_sync     = job_get_sync,
+    .close_handle = job_close_handle,
+    .destroy      = job_destroy,
 };
 
 static struct job *create_job_object( struct object *root, const struct unicode_str *name,

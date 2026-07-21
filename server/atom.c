@@ -70,27 +70,10 @@ static void atom_table_destroy( struct object *obj );
 
 static const struct object_ops atom_table_ops =
 {
-    sizeof(struct atom_table),    /* size */
-    &no_type,                     /* type */
-    atom_table_dump,              /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    NULL,                         /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    atom_table_destroy            /* destroy */
+    .size    = sizeof(struct atom_table),
+    .type    = &no_type,
+    .dump    = atom_table_dump,
+    .destroy = atom_table_destroy,
 };
 
 static struct atom_table *global_table;

@@ -79,27 +79,12 @@ static void alpc_port_destroy( struct object *obj );
 
 static const struct object_ops alpc_port_ops =
 {
-    sizeof(struct alpc_port),      /* size */
-    &alpc_port_type,               /* type */
-    alpc_port_dump,                /* dump */
-    add_queue,                     /* add_queue */
-    remove_queue,                  /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    NULL,                          /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    alpc_port_destroy              /* destroy */
+    .size         = sizeof(struct alpc_port),
+    .type         = &alpc_port_type,
+    .dump         = alpc_port_dump,
+    .add_queue    = add_queue,
+    .remove_queue = remove_queue,
+    .destroy      = alpc_port_destroy
 };
 
 static void alpc_port_dump( struct object *obj, int verbose )

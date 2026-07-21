@@ -63,27 +63,10 @@ static void ranges_destroy( struct object *obj );
 
 static const struct object_ops ranges_ops =
 {
-    sizeof(struct ranges),     /* size */
-    &no_type,                  /* type */
-    ranges_dump,               /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    NULL,                      /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    ranges_destroy             /* destroy */
+    .size    = sizeof(struct ranges),
+    .type    = &no_type,
+    .dump    = ranges_dump,
+    .destroy = ranges_destroy,
 };
 
 /* file backing the shared sections of a PE image mapping */
@@ -100,27 +83,10 @@ static void shared_map_destroy( struct object *obj );
 
 static const struct object_ops shared_map_ops =
 {
-    sizeof(struct shared_map), /* size */
-    &no_type,                  /* type */
-    shared_map_dump,           /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    NULL,                      /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    shared_map_destroy         /* destroy */
+    .size    = sizeof(struct shared_map),
+    .type    = &no_type,
+    .dump    = shared_map_dump,
+    .destroy = shared_map_destroy,
 };
 
 static struct list shared_map_list = LIST_INIT( shared_map_list );
@@ -178,27 +144,11 @@ static enum server_fd_type mapping_get_fd_type( struct fd *fd );
 
 static const struct object_ops mapping_ops =
 {
-    sizeof(struct mapping),      /* size */
-    &mapping_type,               /* type */
-    mapping_dump,                /* dump */
-    NULL,                        /* add_queue */
-    NULL,                        /* remove_queue */
-    NULL,                        /* signaled */
-    NULL,                        /* satisfied */
-    NULL,                        /* signal */
-    mapping_get_fd,              /* get_fd */
-    NULL,                        /* get_sync */
-    NULL,                        /* map_access */
-    NULL,                        /* get_sd */
-    NULL,                        /* set_sd */
-    NULL,                        /* get_full_name */
-    NULL,                        /* lookup_name */
-    NULL,                        /* link_name */
-    NULL,                        /* unlink_name */
-    NULL,                        /* open_file */
-    NULL,                        /* get_kernel_obj_list */
-    NULL,                        /* close_handle */
-    mapping_destroy              /* destroy */
+    .size    = sizeof(struct mapping),
+    .type    = &mapping_type,
+    .dump    = mapping_dump,
+    .get_fd  = mapping_get_fd,
+    .destroy = mapping_destroy,
 };
 
 static const struct fd_ops mapping_fd_ops =

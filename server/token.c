@@ -138,27 +138,11 @@ static int token_set_sd( struct object *obj, const struct security_descriptor *s
 
 static const struct object_ops token_ops =
 {
-    sizeof(struct token),      /* size */
-    &token_type,               /* type */
-    token_dump,                /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    NULL,                      /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    token_set_sd,              /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    token_destroy              /* destroy */
+    .size    = sizeof(struct token),
+    .type    = &token_type,
+    .dump    = token_dump,
+    .set_sd  = token_set_sd,
+    .destroy = token_destroy,
 };
 
 static void token_dump( struct object *obj, int verbose )

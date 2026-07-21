@@ -59,27 +59,10 @@ static void irp_call_destroy( struct object *obj );
 
 static const struct object_ops irp_call_ops =
 {
-    sizeof(struct irp_call),          /* size */
-    &no_type,                         /* type */
-    irp_call_dump,                    /* dump */
-    NULL,                             /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
-    NULL,                             /* signal */
-    NULL,                             /* get_fd */
-    NULL,                             /* get_sync */
-    NULL,                             /* map_access */
-    NULL,                             /* get_sd */
-    NULL,                             /* set_sd */
-    NULL,                             /* get_full_name */
-    NULL,                             /* lookup_name */
-    NULL,                             /* link_name */
-    NULL,                             /* unlink_name */
-    NULL,                             /* open_file */
-    NULL,                             /* get_kernel_obj_list */
-    NULL,                             /* close_handle */
-    irp_call_destroy                  /* destroy */
+    .size    = sizeof(struct irp_call),
+    .type    = &no_type,
+    .dump    = irp_call_dump,
+    .destroy = irp_call_destroy,
 };
 
 
@@ -101,27 +84,11 @@ static void device_manager_destroy( struct object *obj );
 
 static const struct object_ops device_manager_ops =
 {
-    sizeof(struct device_manager),    /* size */
-    &no_type,                         /* type */
-    device_manager_dump,              /* dump */
-    NULL,                             /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
-    NULL,                             /* signal */
-    NULL,                             /* get_fd */
-    device_manager_get_sync,          /* get_sync */
-    NULL,                             /* map_access */
-    NULL,                             /* get_sd */
-    NULL,                             /* set_sd */
-    NULL,                             /* get_full_name */
-    NULL,                             /* lookup_name */
-    NULL,                             /* link_name */
-    NULL,                             /* unlink_name */
-    NULL,                             /* open_file */
-    NULL,                             /* get_kernel_obj_list */
-    NULL,                             /* close_handle */
-    device_manager_destroy            /* destroy */
+    .size     = sizeof(struct device_manager),
+    .type     = &no_type,
+    .dump     = device_manager_dump,
+    .get_sync = device_manager_get_sync,
+    .destroy  = device_manager_destroy,
 };
 
 
@@ -159,27 +126,12 @@ static struct list *device_get_kernel_obj_list( struct object *obj );
 
 static const struct object_ops device_ops =
 {
-    sizeof(struct device),            /* size */
-    &device_type,                     /* type */
-    device_dump,                      /* dump */
-    NULL,                             /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
-    NULL,                             /* signal */
-    NULL,                             /* get_fd */
-    NULL,                             /* get_sync */
-    NULL,                             /* map_access */
-    NULL,                             /* get_sd */
-    NULL,                             /* set_sd */
-    NULL,                             /* get_full_name */
-    NULL,                             /* lookup_name */
-    NULL,                             /* link_name */
-    NULL,                             /* unlink_name */
-    device_open_file,                 /* open_file */
-    device_get_kernel_obj_list,       /* get_kernel_obj_list */
-    NULL,                             /* close_handle */
-    device_destroy                    /* destroy */
+    .size                = sizeof(struct device),
+    .type                = &device_type,
+    .dump                = device_dump,
+    .open_file           = device_open_file,
+    .get_kernel_obj_list = device_get_kernel_obj_list,
+    .destroy             = device_destroy,
 };
 
 
@@ -212,27 +164,15 @@ static void device_file_get_volume_info( struct fd *fd, struct async *async, uns
 
 static const struct object_ops device_file_ops =
 {
-    sizeof(struct device_file),       /* size */
-    &file_type,                       /* type */
-    device_file_dump,                 /* dump */
-    NULL,                             /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
-    NULL,                             /* signal */
-    device_file_get_fd,               /* get_fd */
-    default_fd_get_sync,              /* get_sync */
-    NULL,                             /* map_access */
-    NULL,                             /* get_sd */
-    NULL,                             /* set_sd */
-    device_file_get_full_name,        /* get_full_name */
-    NULL,                             /* lookup_name */
-    NULL,                             /* link_name */
-    NULL,                             /* unlink_name */
-    NULL,                             /* open_file */
-    device_file_get_kernel_obj_list,  /* get_kernel_obj_list */
-    device_file_close_handle,         /* close_handle */
-    device_file_destroy               /* destroy */
+    .size                = sizeof(struct device_file),
+    .type                = &file_type,
+    .dump                = device_file_dump,
+    .get_fd              = device_file_get_fd,
+    .get_sync            = default_fd_get_sync,
+    .get_full_name       = device_file_get_full_name,
+    .get_kernel_obj_list = device_file_get_kernel_obj_list,
+    .close_handle        = device_file_close_handle,
+    .destroy             = device_file_destroy,
 };
 
 static const struct fd_ops device_file_fd_ops =

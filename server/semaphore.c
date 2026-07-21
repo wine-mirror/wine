@@ -62,27 +62,13 @@ static void semaphore_sync_satisfied( struct object *obj, struct wait_queue_entr
 
 static const struct object_ops semaphore_sync_ops =
 {
-    sizeof(struct semaphore_sync), /* size */
-    &no_type,                      /* type */
-    semaphore_sync_dump,           /* dump */
-    add_queue,                     /* add_queue */
-    remove_queue,                  /* remove_queue */
-    semaphore_sync_signaled,       /* signaled */
-    semaphore_sync_satisfied,      /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    NULL,                          /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    NULL,                          /* destroy */
+    .size         = sizeof(struct semaphore_sync),
+    .type         = &no_type,
+    .dump         = semaphore_sync_dump,
+    .add_queue    = add_queue,
+    .remove_queue = remove_queue,
+    .signaled     = semaphore_sync_signaled,
+    .satisfied    = semaphore_sync_satisfied,
 };
 
 static int release_semaphore( struct semaphore_sync *sem, unsigned int count,
@@ -154,27 +140,12 @@ static void semaphore_destroy( struct object *obj );
 
 static const struct object_ops semaphore_ops =
 {
-    sizeof(struct semaphore),      /* size */
-    &semaphore_type,               /* type */
-    semaphore_dump,                /* dump */
-    NULL,                          /* add_queue */
-    NULL,                          /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    semaphore_signal,              /* signal */
-    NULL,                          /* get_fd */
-    semaphore_get_sync,            /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    semaphore_destroy,             /* destroy */
+    .size     = sizeof(struct semaphore),
+    .type     = &semaphore_type,
+    .dump     = semaphore_dump,
+    .signal   = semaphore_signal,
+    .get_sync = semaphore_get_sync,
+    .destroy  = semaphore_destroy,
 };
 
 static struct semaphore *create_semaphore( struct object *root, const struct unicode_str *name,

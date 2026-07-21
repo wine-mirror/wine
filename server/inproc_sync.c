@@ -67,27 +67,11 @@ static void inproc_sync_destroy( struct object *obj );
 
 static const struct object_ops inproc_sync_ops =
 {
-    sizeof(struct inproc_sync), /* size */
-    &no_type,                   /* type */
-    inproc_sync_dump,           /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    inproc_sync_signal,         /* signal */
-    NULL,                       /* get_fd */
-    NULL,                       /* get_sync */
-    NULL,                       /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    NULL,                       /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    inproc_sync_destroy,        /* destroy */
+    .size    = sizeof(struct inproc_sync),
+    .type    = &no_type,
+    .dump    = inproc_sync_dump,
+    .signal  = inproc_sync_signal,
+    .destroy = inproc_sync_destroy,
 };
 
 int get_inproc_sync_fd( struct inproc_sync *sync )

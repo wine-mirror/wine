@@ -169,27 +169,11 @@ static void fd_destroy( struct object *obj );
 
 static const struct object_ops fd_ops =
 {
-    sizeof(struct fd),        /* size */
-    &no_type,                 /* type */
-    fd_dump,                  /* dump */
-    NULL,                     /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
-    NULL,                     /* signal */
-    NULL,                     /* get_fd */
-    fd_get_sync,              /* get_sync */
-    NULL,                     /* map_access */
-    NULL,                     /* get_sd */
-    NULL,                     /* set_sd */
-    NULL,                     /* get_full_name */
-    NULL,                     /* lookup_name */
-    NULL,                     /* link_name */
-    NULL,                     /* unlink_name */
-    NULL,                     /* open_file */
-    NULL,                     /* get_kernel_obj_list */
-    NULL,                     /* close_handle */
-    fd_destroy                /* destroy */
+    .size     = sizeof(struct fd),
+    .type     = &no_type,
+    .dump     = fd_dump,
+    .get_sync = fd_get_sync,
+    .destroy  = fd_destroy,
 };
 
 /* device object */
@@ -211,27 +195,10 @@ static void device_destroy( struct object *obj );
 
 static const struct object_ops device_ops =
 {
-    sizeof(struct device),    /* size */
-    &no_type,                 /* type */
-    device_dump,              /* dump */
-    NULL,                     /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
-    NULL,                     /* signal */
-    NULL,                     /* get_fd */
-    NULL,                     /* get_sync */
-    NULL,                     /* map_access */
-    NULL,                     /* get_sd */
-    NULL,                     /* set_sd */
-    NULL,                     /* get_full_name */
-    NULL,                     /* lookup_name */
-    NULL,                     /* link_name */
-    NULL,                     /* unlink_name */
-    NULL,                     /* open_file */
-    NULL,                     /* get_kernel_obj_list */
-    NULL,                     /* close_handle */
-    device_destroy            /* destroy */
+    .size    = sizeof(struct device),
+    .type    = &no_type,
+    .dump    = device_dump,
+    .destroy = device_destroy,
 };
 
 /* inode object */
@@ -252,27 +219,10 @@ static void inode_destroy( struct object *obj );
 
 static const struct object_ops inode_ops =
 {
-    sizeof(struct inode),     /* size */
-    &no_type,                 /* type */
-    inode_dump,               /* dump */
-    NULL,                     /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
-    NULL,                     /* signal */
-    NULL,                     /* get_fd */
-    NULL,                     /* get_sync */
-    NULL,                     /* map_access */
-    NULL,                     /* get_sd */
-    NULL,                     /* set_sd */
-    NULL,                     /* get_full_name */
-    NULL,                     /* lookup_name */
-    NULL,                     /* link_name */
-    NULL,                     /* unlink_name */
-    NULL,                     /* open_file */
-    NULL,                     /* get_kernel_obj_list */
-    NULL,                     /* close_handle */
-    inode_destroy             /* destroy */
+    .size    = sizeof(struct inode),
+    .type    = &no_type,
+    .dump    = inode_dump,
+    .destroy = inode_destroy,
 };
 
 /* file lock object */
@@ -297,27 +247,11 @@ static void file_lock_destroy( struct object *obj );
 
 static const struct object_ops file_lock_ops =
 {
-    sizeof(struct file_lock),   /* size */
-    &no_type,                   /* type */
-    file_lock_dump,             /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    NULL,                       /* signal */
-    NULL,                       /* get_fd */
-    file_lock_get_sync,         /* get_sync */
-    NULL,                       /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    NULL,                       /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    file_lock_destroy,          /* destroy */
+    .size     = sizeof(struct file_lock),
+    .type     = &no_type,
+    .dump     = file_lock_dump,
+    .get_sync = file_lock_get_sync,
+    .destroy  = file_lock_destroy,
 };
 
 

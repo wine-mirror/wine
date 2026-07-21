@@ -85,27 +85,14 @@ static void completion_wait_destroy( struct object * );
 
 static const struct object_ops completion_wait_ops =
 {
-    sizeof(struct completion_wait), /* size */
-    &no_type,                       /* type */
-    completion_wait_dump,           /* dump */
-    add_queue,                      /* add_queue */
-    remove_queue,                   /* remove_queue */
-    completion_wait_signaled,       /* signaled */
-    completion_wait_satisfied,      /* satisfied */
-    NULL,                           /* signal */
-    NULL,                           /* get_fd */
-    NULL,                           /* get_sync */
-    NULL,                           /* map_access */
-    NULL,                           /* get_sd */
-    NULL,                           /* set_sd */
-    NULL,                           /* get_full_name */
-    NULL,                           /* lookup_name */
-    NULL,                           /* link_name */
-    NULL,                           /* unlink_name */
-    NULL,                           /* open_file */
-    NULL,                           /* get_kernel_obj_list */
-    NULL,                           /* close_handle */
-    completion_wait_destroy         /* destroy */
+    .size         = sizeof(struct completion_wait),
+    .type         = &no_type,
+    .dump         = completion_wait_dump,
+    .add_queue    = add_queue,
+    .remove_queue = remove_queue,
+    .signaled     = completion_wait_signaled,
+    .satisfied    = completion_wait_satisfied,
+    .destroy      = completion_wait_destroy,
 };
 
 static void completion_wait_destroy( struct object *obj )
@@ -160,27 +147,12 @@ static void completion_destroy( struct object * );
 
 static const struct object_ops completion_ops =
 {
-    sizeof(struct completion), /* size */
-    &completion_type,          /* type */
-    completion_dump,           /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    completion_get_sync,       /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    completion_close_handle,   /* close_handle */
-    completion_destroy         /* destroy */
+    .size         = sizeof(struct completion),
+    .type         = &completion_type,
+    .dump         = completion_dump,
+    .get_sync     = completion_get_sync,
+    .close_handle = completion_close_handle,
+    .destroy      = completion_destroy,
 };
 
 static void completion_destroy( struct object *obj)

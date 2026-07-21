@@ -62,27 +62,9 @@ static void object_type_dump( struct object *obj, int verbose );
 
 static const struct object_ops object_type_ops =
 {
-    sizeof(struct object_type),   /* size */
-    &objtype_type,                /* type */
-    object_type_dump,             /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    NULL,                         /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    NULL,                         /* destroy */
+    .size = sizeof(struct object_type),
+    .type = &objtype_type,
+    .dump = object_type_dump,
 };
 
 
@@ -113,27 +95,11 @@ static void directory_destroy( struct object *obj );
 
 static const struct object_ops directory_ops =
 {
-    sizeof(struct directory),     /* size */
-    &directory_type,              /* type */
-    directory_dump,               /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    directory_lookup_name,        /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    directory_destroy             /* destroy */
+    .size        = sizeof(struct directory),
+    .type        = &directory_type,
+    .dump        = directory_dump,
+    .lookup_name = directory_lookup_name,
+    .destroy     = directory_destroy,
 };
 
 static struct directory *root_directory;

@@ -94,34 +94,18 @@ struct thread_apc
     union apc_result    result;   /* call results once executed */
 };
 
-static void dump_thread_apc( struct object *obj, int verbose );
+static void thread_apc_dump( struct object *obj, int verbose );
 static struct object *thread_apc_get_sync( struct object *obj );
 static void thread_apc_destroy( struct object *obj );
 static void clear_apc_queue( struct list *queue );
 
 static const struct object_ops thread_apc_ops =
 {
-    sizeof(struct thread_apc),  /* size */
-    &no_type,                   /* type */
-    dump_thread_apc,            /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    NULL,                       /* signal */
-    NULL,                       /* get_fd */
-    thread_apc_get_sync,        /* get_sync */
-    NULL,                       /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    NULL,                       /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    thread_apc_destroy          /* destroy */
+    .size     = sizeof(struct thread_apc),
+    .type     = &no_type,
+    .dump     = thread_apc_dump,
+    .get_sync = thread_apc_get_sync,
+    .destroy  = thread_apc_destroy,
 };
 
 
@@ -141,33 +125,17 @@ struct context
 /* flags for registers that always need to be set from the server side */
 static const unsigned int system_flags = SERVER_CTX_DEBUG_REGISTERS;
 
-static void dump_context( struct object *obj, int verbose );
+static void context_dump( struct object *obj, int verbose );
 static struct object *context_get_sync( struct object *obj );
 static void context_destroy( struct object *obj );
 
 static const struct object_ops context_ops =
 {
-    sizeof(struct context),     /* size */
-    &no_type,                   /* type */
-    dump_context,               /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    NULL,                       /* signal */
-    NULL,                       /* get_fd */
-    context_get_sync,           /* get_sync */
-    NULL,                       /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    NULL,                       /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    context_destroy,            /* destroy */
+    .size     = sizeof(struct context),
+    .type     = &no_type,
+    .dump     = context_dump,
+    .get_sync = context_get_sync,
+    .destroy  = context_destroy,
 };
 
 
@@ -188,36 +156,22 @@ struct type_descr thread_type =
     },
 };
 
-static void dump_thread( struct object *obj, int verbose );
+static void thread_dump( struct object *obj, int verbose );
 static struct object *thread_get_sync( struct object *obj );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
 static struct list *thread_get_kernel_obj_list( struct object *obj );
-static void destroy_thread( struct object *obj );
+static void thread_destroy( struct object *obj );
 
 static const struct object_ops thread_ops =
 {
-    sizeof(struct thread),      /* size */
-    &thread_type,               /* type */
-    dump_thread,                /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    NULL,                       /* signal */
-    NULL,                       /* get_fd */
-    thread_get_sync,            /* get_sync */
-    thread_map_access,          /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    thread_get_kernel_obj_list, /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    destroy_thread              /* destroy */
+    .size                = sizeof(struct thread),
+    .type                = &thread_type,
+    .dump                = thread_dump,
+    .get_sync            = thread_get_sync,
+    .map_access          = thread_map_access,
+    .get_kernel_obj_list = thread_get_kernel_obj_list,
+    .destroy             = thread_destroy,
 };
 
 static const struct fd_ops thread_fd_ops =
@@ -459,7 +413,7 @@ static inline int is_valid_address( client_ptr_t addr )
 
 
 /* dump a context on stdout for debugging purposes */
-static void dump_context( struct object *obj, int verbose )
+static void context_dump( struct object *obj, int verbose )
 {
     struct context *context = (struct context *)obj;
     assert( obj->ops == &context_ops );
@@ -651,7 +605,7 @@ static void cleanup_thread( struct thread *thread )
 }
 
 /* destroy a thread when its refcount is 0 */
-static void destroy_thread( struct object *obj )
+static void thread_destroy( struct object *obj )
 {
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
@@ -666,7 +620,7 @@ static void destroy_thread( struct object *obj )
 }
 
 /* dump a thread on stdout for debugging purposes */
-static void dump_thread( struct object *obj, int verbose )
+static void thread_dump( struct object *obj, int verbose )
 {
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
@@ -690,7 +644,7 @@ static unsigned int thread_map_access( struct object *obj, unsigned int access )
     return access;
 }
 
-static void dump_thread_apc( struct object *obj, int verbose )
+static void thread_apc_dump( struct object *obj, int verbose )
 {
     struct thread_apc *apc = (struct thread_apc *)obj;
     assert( obj->ops == &thread_apc_ops );

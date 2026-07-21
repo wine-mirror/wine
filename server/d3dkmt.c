@@ -50,27 +50,11 @@ static void d3dkmt_object_destroy( struct object *obj );
 
 static const struct object_ops d3dkmt_object_ops =
 {
-    sizeof(struct d3dkmt_object),   /* size */
-    &no_type,                       /* type */
-    d3dkmt_object_dump,             /* dump */
-    NULL,                           /* add_queue */
-    NULL,                           /* remove_queue */
-    NULL,                           /* signaled */
-    NULL,                           /* satisfied */
-    NULL,                           /* signal */
-    d3dkmt_object_get_fd,           /* get_fd */
-    NULL,                           /* get_sync */
-    NULL,                           /* map_access */
-    NULL,                           /* get_sd */
-    NULL,                           /* set_sd */
-    NULL,                           /* get_full_name */
-    NULL,                           /* lookup_name */
-    NULL,                           /* link_name */
-    NULL,                           /* unlink_name */
-    NULL,                           /* open_file */
-    NULL,                           /* get_kernel_obj_list */
-    NULL,                           /* close_handle */
-    d3dkmt_object_destroy,          /* destroy */
+    .size    = sizeof(struct d3dkmt_object),
+    .type    = &no_type,
+    .dump    = d3dkmt_object_dump,
+    .get_fd  = d3dkmt_object_get_fd,
+    .destroy = d3dkmt_object_destroy,
 };
 
 static enum server_fd_type d3dkmt_get_fd_type( struct fd *fd )
@@ -118,27 +102,10 @@ static void d3dkmt_mutex_destroy( struct object *obj );
 
 static const struct object_ops d3dkmt_mutex_ops =
 {
-    sizeof(struct d3dkmt_mutex),    /* size */
-    &no_type,                       /* type */
-    d3dkmt_mutex_dump,              /* dump */
-    NULL,                           /* add_queue */
-    NULL,                           /* remove_queue */
-    NULL,                           /* signaled */
-    NULL,                           /* satisfied */
-    NULL,                           /* signal */
-    NULL,                           /* get_fd */
-    NULL,                           /* get_sync */
-    NULL,                           /* map_access */
-    NULL,                           /* get_sd */
-    NULL,                           /* set_sd */
-    NULL,                           /* get_full_name */
-    NULL,                           /* lookup_name */
-    NULL,                           /* link_name */
-    NULL,                           /* unlink_name */
-    NULL,                           /* open_file */
-    NULL,                           /* get_kernel_obj_list */
-    NULL,                           /* close_handle */
-    d3dkmt_mutex_destroy,           /* destroy */
+    .size    = sizeof(struct d3dkmt_mutex),
+    .type    = &no_type,
+    .dump    = d3dkmt_mutex_dump,
+    .destroy = d3dkmt_mutex_destroy,
 };
 
 #define DXGK_SHARED_SYNC_QUERY_STATE  0x0001
@@ -170,27 +137,10 @@ static void dxgk_shared_sync_destroy( struct object *obj );
 
 static const struct object_ops dxgk_shared_sync_ops =
 {
-    sizeof(struct dxgk_shared_sync),    /* size */
-    &dxgk_shared_sync_type,             /* type */
-    dxgk_shared_sync_dump,              /* dump */
-    NULL,                               /* add_queue */
-    NULL,                               /* remove_queue */
-    NULL,                               /* signaled */
-    NULL,                               /* satisfied */
-    NULL,                               /* signal */
-    NULL,                               /* get_fd */
-    NULL,                               /* get_sync */
-    NULL,                               /* map_access */
-    NULL,                               /* get_sd */
-    NULL,                               /* set_sd */
-    NULL,                               /* get_full_name */
-    NULL,                               /* lookup_name */
-    NULL,                               /* link_name */
-    NULL,                               /* unlink_name */
-    NULL,                               /* open_file */
-    NULL,                               /* get_kernel_obj_list */
-    NULL,                               /* close_handle */
-    dxgk_shared_sync_destroy,           /* destroy */
+    .size    = sizeof(struct dxgk_shared_sync),
+    .type    = &dxgk_shared_sync_type,
+    .dump    = dxgk_shared_sync_dump,
+    .destroy = dxgk_shared_sync_destroy,
 };
 
 static void dxgk_shared_sync_dump( struct object *obj, int verbose )
@@ -237,27 +187,10 @@ static void dxgk_shared_resource_destroy( struct object *obj );
 
 static const struct object_ops dxgk_shared_resource_ops =
 {
-    sizeof(struct dxgk_shared_resource),    /* size */
-    &dxgk_shared_resource_type,             /* type */
-    dxgk_shared_resource_dump,              /* dump */
-    NULL,                                   /* add_queue */
-    NULL,                                   /* remove_queue */
-    NULL,                                   /* signaled */
-    NULL,                                   /* satisfied */
-    NULL,                                   /* signal */
-    NULL,                                   /* get_fd */
-    NULL,                                   /* get_sync */
-    NULL,                                   /* map_access */
-    NULL,                                   /* get_sd */
-    NULL,                                   /* set_sd */
-    NULL,                                   /* get_full_name */
-    NULL,                                   /* lookup_name */
-    NULL,                                   /* link_name */
-    NULL,                                   /* unlink_name */
-    NULL,                                   /* open_file */
-    NULL,                                   /* get_kernel_obj_list */
-    NULL,                                   /* close_handle */
-    dxgk_shared_resource_destroy,           /* destroy */
+    .size    = sizeof(struct dxgk_shared_resource),
+    .type    = &dxgk_shared_resource_type,
+    .dump    = dxgk_shared_resource_dump,
+    .destroy = dxgk_shared_resource_destroy,
 };
 
 static void dxgk_shared_resource_dump( struct object *obj, int verbose )

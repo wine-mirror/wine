@@ -56,27 +56,10 @@ static void handler_destroy( struct object *obj );
 
 static const struct object_ops handler_ops =
 {
-    sizeof(struct handler),   /* size */
-    &no_type,                 /* type */
-    handler_dump,             /* dump */
-    NULL,                     /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
-    NULL,                     /* signal */
-    NULL,                     /* get_fd */
-    NULL,                     /* get_sync */
-    NULL,                     /* map_access */
-    NULL,                     /* get_sd */
-    NULL,                     /* set_sd */
-    NULL,                     /* get_full_name */
-    NULL,                     /* lookup_name */
-    NULL,                     /* link_name */
-    NULL,                     /* unlink_name */
-    NULL,                     /* open_file */
-    NULL,                     /* get_kernel_obj_list */
-    NULL,                     /* close_handle */
-    handler_destroy           /* destroy */
+    .size    = sizeof(struct handler),
+    .type    = &no_type,
+    .dump    = handler_dump,
+    .destroy = handler_destroy,
 };
 
 static void handler_poll_event( struct fd *fd, int event );

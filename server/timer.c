@@ -69,27 +69,11 @@ static void timer_destroy( struct object *obj );
 
 static const struct object_ops timer_ops =
 {
-    sizeof(struct timer),      /* size */
-    &timer_type,               /* type */
-    timer_dump,                /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    timer_get_sync,            /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    timer_destroy              /* destroy */
+    .size     = sizeof(struct timer),
+    .type     = &timer_type,
+    .dump     = timer_dump,
+    .get_sync = timer_get_sync,
+    .destroy  = timer_destroy,
 };
 
 

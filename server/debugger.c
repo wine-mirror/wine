@@ -81,27 +81,11 @@ static void debug_event_destroy( struct object *obj );
 
 static const struct object_ops debug_event_ops =
 {
-    sizeof(struct debug_event),    /* size */
-    &no_type,                      /* type */
-    debug_event_dump,              /* dump */
-    NULL,                          /* add_queue */
-    NULL,                          /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    debug_event_get_sync,          /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    debug_event_destroy            /* destroy */
+    .size     = sizeof(struct debug_event),
+    .type     = &no_type,
+    .dump     = debug_event_dump,
+    .get_sync = debug_event_get_sync,
+    .destroy  = debug_event_destroy,
 };
 
 static void debug_obj_dump( struct object *obj, int verbose );
@@ -110,27 +94,11 @@ static void debug_obj_destroy( struct object *obj );
 
 static const struct object_ops debug_obj_ops =
 {
-    sizeof(struct debug_obj),      /* size */
-    &debug_obj_type,               /* type */
-    debug_obj_dump,                /* dump */
-    NULL,                          /* add_queue */
-    NULL,                          /* remove_queue */
-    NULL,                          /* signaled */
-    NULL,                          /* satisfied */
-    NULL,                          /* signal */
-    NULL,                          /* get_fd */
-    debug_obj_get_sync,            /* get_sync */
-    NULL,                          /* map_access */
-    NULL,                          /* get_sd */
-    NULL,                          /* set_sd */
-    NULL,                          /* get_full_name */
-    NULL,                          /* lookup_name */
-    NULL,                          /* link_name */
-    NULL,                          /* unlink_name */
-    NULL,                          /* open_file */
-    NULL,                          /* get_kernel_obj_list */
-    NULL,                          /* close_handle */
-    debug_obj_destroy              /* destroy */
+    .size     = sizeof(struct debug_obj),
+    .type     = &debug_obj_type,
+    .dump     = debug_obj_dump,
+    .get_sync = debug_obj_get_sync,
+    .destroy  = debug_obj_destroy,
 };
 
 /* get a pointer to TEB->ArbitraryUserPointer in the client address space */

@@ -119,27 +119,10 @@ static void handle_table_destroy( struct object *obj );
 
 static const struct object_ops handle_table_ops =
 {
-    sizeof(struct handle_table),     /* size */
-    &no_type,                        /* type */
-    handle_table_dump,               /* dump */
-    NULL,                            /* add_queue */
-    NULL,                            /* remove_queue */
-    NULL,                            /* signaled */
-    NULL,                            /* satisfied */
-    NULL,                            /* signal */
-    NULL,                            /* get_fd */
-    NULL,                            /* get_sync */
-    NULL,                            /* map_access */
-    NULL,                            /* get_sd */
-    NULL,                            /* set_sd */
-    NULL,                            /* get_full_name */
-    NULL,                            /* lookup_name */
-    NULL,                            /* link_name */
-    NULL,                            /* unlink_name */
-    NULL,                            /* open_file */
-    NULL,                            /* get_kernel_obj_list */
-    NULL,                            /* close_handle */
-    handle_table_destroy             /* destroy */
+    .size    = sizeof(struct handle_table),
+    .type    = &no_type,
+    .dump    = handle_table_dump,
+    .destroy = handle_table_destroy,
 };
 
 /* dump a handle table */

@@ -177,27 +177,17 @@ static void key_destroy( struct object *obj );
 
 static const struct object_ops key_ops =
 {
-    sizeof(struct key),      /* size */
-    &key_type,               /* type */
-    key_dump,                /* dump */
-    NULL,                    /* add_queue */
-    NULL,                    /* remove_queue */
-    NULL,                    /* signaled */
-    NULL,                    /* satisfied */
-    NULL,                    /* signal */
-    NULL,                    /* get_fd */
-    NULL,                    /* get_sync */
-    key_map_access,          /* map_access */
-    key_get_sd,              /* get_sd */
-    NULL,                    /* set_sd */
-    key_get_full_name,       /* get_full_name */
-    key_lookup_name,         /* lookup_name */
-    key_link_name,           /* link_name */
-    key_unlink_name,         /* unlink_name */
-    NULL,                    /* open_file */
-    NULL,                    /* get_kernel_obj_list */
-    key_close_handle,        /* close_handle */
-    key_destroy              /* destroy */
+    .size          = sizeof(struct key),
+    .type          = &key_type,
+    .dump          = key_dump,
+    .map_access    = key_map_access,
+    .get_sd        = key_get_sd,
+    .get_full_name = key_get_full_name,
+    .lookup_name   = key_lookup_name,
+    .link_name     = key_link_name,
+    .unlink_name   = key_unlink_name,
+    .close_handle  = key_close_handle,
+    .destroy       = key_destroy,
 };
 
 

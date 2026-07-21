@@ -107,27 +107,17 @@ static struct list *dir_get_kernel_obj_list( struct object *obj );
 
 static const struct object_ops dir_ops =
 {
-    sizeof(struct dir),       /* size */
-    &file_type,               /* type */
-    dir_dump,                 /* dump */
-    NULL,                     /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
-    NULL,                     /* signal */
-    dir_get_fd,               /* get_fd */
-    default_fd_get_sync,      /* get_sync */
-    NULL,                     /* map_access */
-    dir_get_sd,               /* get_sd */
-    dir_set_sd,               /* set_sd */
-    default_fd_get_full_name, /* get_full_name */
-    NULL,                     /* lookup_name */
-    NULL,                     /* link_name */
-    NULL,                     /* unlink_name */
-    NULL,                     /* open_file */
-    dir_get_kernel_obj_list,  /* get_kernel_obj_list */
-    dir_close_handle,         /* close_handle */
-    dir_destroy               /* destroy */
+    .size                = sizeof(struct dir),
+    .type                = &file_type,
+    .dump                = dir_dump,
+    .get_fd              = dir_get_fd,
+    .get_sync            = default_fd_get_sync,
+    .get_sd              = dir_get_sd,
+    .set_sd              = dir_set_sd,
+    .get_full_name       = default_fd_get_full_name,
+    .get_kernel_obj_list = dir_get_kernel_obj_list,
+    .close_handle        = dir_close_handle,
+    .destroy             = dir_destroy,
 };
 
 static int dir_get_poll_events( struct fd *fd );

@@ -102,52 +102,16 @@ static void dump_reserve( struct object *obj, int verbose );
 
 static const struct object_ops apc_reserve_ops =
 {
-    sizeof(struct reserve),     /* size */
-    &apc_reserve_type,          /* type */
-    dump_reserve,               /* dump */
-    NULL,                       /* add_queue */
-    NULL,                       /* remove_queue */
-    NULL,                       /* signaled */
-    NULL,                       /* satisfied */
-    NULL,                       /* signal */
-    NULL,                       /* get_fd */
-    NULL,                       /* get_sync */
-    NULL,                       /* map_access */
-    NULL,                       /* get_sd */
-    NULL,                       /* set_sd */
-    NULL,                       /* get_full_name */
-    NULL,                       /* lookup_name */
-    NULL,                       /* link_name */
-    NULL,                       /* unlink_name */
-    NULL,                       /* open_file */
-    NULL,                       /* get_kernel_obj_list */
-    NULL,                       /* close_handle */
-    NULL,                       /* destroy */
+    .size = sizeof(struct reserve),
+    .type = &apc_reserve_type,
+    .dump = dump_reserve,
 };
 
 static const struct object_ops completion_reserve_ops =
 {
-    sizeof(struct reserve),    /* size */
-    &completion_reserve_type,  /* type */
-    dump_reserve,              /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    NULL,                      /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    NULL,                      /* destroy */
+    .size = sizeof(struct reserve),
+    .type = &completion_reserve_type,
+    .dump = dump_reserve,
 };
 
 #ifdef DEBUG_OBJECTS

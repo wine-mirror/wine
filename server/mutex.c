@@ -65,27 +65,14 @@ static void mutex_sync_destroy( struct object *obj );
 
 static const struct object_ops mutex_sync_ops =
 {
-    sizeof(struct mutex_sync), /* size */
-    &no_type,                  /* type */
-    mutex_sync_dump,           /* dump */
-    add_queue,                 /* add_queue */
-    remove_queue,              /* remove_queue */
-    mutex_sync_signaled,       /* signaled */
-    mutex_sync_satisfied,      /* satisfied */
-    NULL,                      /* signal */
-    NULL,                      /* get_fd */
-    NULL,                      /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    mutex_sync_destroy,        /* destroy */
+    .size         = sizeof(struct mutex_sync),
+    .type         = &no_type,
+    .dump         = mutex_sync_dump,
+    .add_queue    = add_queue,
+    .remove_queue = remove_queue,
+    .signaled     = mutex_sync_signaled,
+    .satisfied    = mutex_sync_satisfied,
+    .destroy      = mutex_sync_destroy,
 };
 
 /* grab a mutex for a given thread */
@@ -180,27 +167,12 @@ static void mutex_destroy( struct object *obj );
 
 static const struct object_ops mutex_ops =
 {
-    sizeof(struct mutex),      /* size */
-    &mutex_type,               /* type */
-    mutex_dump,                /* dump */
-    NULL,                      /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    mutex_signal,              /* signal */
-    NULL,                      /* get_fd */
-    mutex_get_sync,            /* get_sync */
-    NULL,                      /* map_access */
-    NULL,                      /* get_sd */
-    NULL,                      /* set_sd */
-    NULL,                      /* get_full_name */
-    NULL,                      /* lookup_name */
-    NULL,                      /* link_name */
-    NULL,                      /* unlink_name */
-    NULL,                      /* open_file */
-    NULL,                      /* get_kernel_obj_list */
-    NULL,                      /* close_handle */
-    mutex_destroy,             /* destroy */
+    .size     = sizeof(struct mutex),
+    .type     = &mutex_type,
+    .dump     = mutex_dump,
+    .signal   = mutex_signal,
+    .get_sync = mutex_get_sync,
+    .destroy  = mutex_destroy,
 };
 
 static struct mutex *create_mutex( struct object *root, const struct unicode_str *name,

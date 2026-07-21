@@ -87,27 +87,18 @@ static enum server_fd_type file_get_fd_type( struct fd *fd );
 
 static const struct object_ops file_ops =
 {
-    sizeof(struct file),          /* size */
-    &file_type,                   /* type */
-    file_dump,                    /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    file_get_fd,                  /* get_fd */
-    default_fd_get_sync,          /* get_sync */
-    NULL,                         /* map_access */
-    file_get_sd,                  /* get_sd */
-    file_set_sd,                  /* set_sd */
-    default_fd_get_full_name,     /* get_full_name */
-    file_lookup_name,             /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    file_open_file,               /* open_file */
-    file_get_kernel_obj_list,     /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    file_destroy                  /* destroy */
+    .size                = sizeof(struct file),
+    .type                = &file_type,
+    .dump                = file_dump,
+    .get_fd              = file_get_fd,
+    .get_sync            = default_fd_get_sync,
+    .get_sd              = file_get_sd,
+    .set_sd              = file_set_sd,
+    .get_full_name       = default_fd_get_full_name,
+    .lookup_name         = file_lookup_name,
+    .open_file           = file_open_file,
+    .get_kernel_obj_list = file_get_kernel_obj_list,
+    .destroy             = file_destroy,
 };
 
 static const struct fd_ops file_fd_ops =

@@ -69,27 +69,12 @@ struct type_descr winstation_type =
 
 static const struct object_ops winstation_ops =
 {
-    sizeof(struct winstation),    /* size */
-    &winstation_type,             /* type */
-    winstation_dump,              /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    winstation_lookup_name,       /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    winstation_close_handle,      /* close_handle */
-    winstation_destroy            /* destroy */
+    .size         = sizeof(struct winstation),
+    .type         = &winstation_type,
+    .dump         = winstation_dump,
+    .lookup_name  = winstation_lookup_name,
+    .close_handle = winstation_close_handle,
+    .destroy      = winstation_destroy,
 };
 
 
@@ -110,27 +95,12 @@ struct type_descr desktop_type =
 
 static const struct object_ops desktop_ops =
 {
-    sizeof(struct desktop),       /* size */
-    &desktop_type,                /* type */
-    desktop_dump,                 /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    NULL,                         /* lookup_name */
-    desktop_link_name,            /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    desktop_close_handle,         /* close_handle */
-    desktop_destroy               /* destroy */
+    .size         = sizeof(struct desktop),
+    .type         = &desktop_type,
+    .dump         = desktop_dump,
+    .link_name    = desktop_link_name,
+    .close_handle = desktop_close_handle,
+    .destroy      = desktop_destroy,
 };
 
 /* create a winstation object */

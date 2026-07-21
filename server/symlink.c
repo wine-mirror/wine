@@ -64,27 +64,11 @@ static void symlink_destroy( struct object *obj );
 
 static const struct object_ops symlink_ops =
 {
-    sizeof(struct symlink),       /* size */
-    &symlink_type,                /* type */
-    symlink_dump,                 /* dump */
-    NULL,                         /* add_queue */
-    NULL,                         /* remove_queue */
-    NULL,                         /* signaled */
-    NULL,                         /* satisfied */
-    NULL,                         /* signal */
-    NULL,                         /* get_fd */
-    NULL,                         /* get_sync */
-    NULL,                         /* map_access */
-    NULL,                         /* get_sd */
-    NULL,                         /* set_sd */
-    NULL,                         /* get_full_name */
-    symlink_lookup_name,          /* lookup_name */
-    NULL,                         /* link_name */
-    NULL,                         /* unlink_name */
-    NULL,                         /* open_file */
-    NULL,                         /* get_kernel_obj_list */
-    NULL,                         /* close_handle */
-    symlink_destroy               /* destroy */
+    .size        = sizeof(struct symlink),
+    .type        = &symlink_type,
+    .dump        = symlink_dump,
+    .lookup_name = symlink_lookup_name,
+    .destroy     = symlink_destroy,
 };
 
 static void symlink_dump( struct object *obj, int verbose )
