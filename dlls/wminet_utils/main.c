@@ -128,3 +128,10 @@ HRESULT WINAPI GetNames(int vFunc, IWbemClassObject *ptr, LPCWSTR wszQualifierNa
 
     return IWbemClassObject_GetNames(ptr, wszQualifierName, lFlags, pQualifierVal, pNames);
 }
+
+HRESULT WINAPI BeginMethodEnumeration(int vFunc, IWbemClassObject *ptr, LONG lEnumFlags)
+{
+    TRACE("%i %p %lx\n", vFunc, ptr, lEnumFlags);
+
+    return IWbemClassObject_BeginMethodEnumeration(ptr, lEnumFlags);
+}
