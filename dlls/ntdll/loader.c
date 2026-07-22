@@ -127,6 +127,7 @@ static const char * const reason_names[] =
 struct file_id
 {
     BYTE ObjectId[16];
+    BYTE BirthVolumeId[16];
 };
 
 #define HASH_MAP_SIZE 32
@@ -2723,7 +2724,8 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
 
     if (!NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, &fid, sizeof(fid) ))
     {
-        memcpy( id, fid.ObjectId, sizeof(*id) );
+        memcpy( id->ObjectId, fid.ObjectId, sizeof(id->ObjectId) );
+        memcpy( id->BirthVolumeId, fid.BirthVolumeId, sizeof(id->BirthVolumeId) );
         if ((*pwm = find_fileid_module( id )))
         {
             TRACE( "%s is the same file as existing module %p %s\n", debugstr_w( nt_name->Buffer ),
