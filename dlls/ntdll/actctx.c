@@ -5524,8 +5524,9 @@ NTSTATUS WINAPI RtlActivateActivationContextEx( ULONG flags, TEB *teb, ACTIVATIO
     actctx_stack->ActiveFrame = frame;
     RtlAddRefActivationContext( actctx );
 
-    *cookie = (ULONG_PTR)frame;
-    TRACE( "%p cookie=%Ix\n", actctx, *cookie );
+    if (cookie)
+        *cookie = (ULONG_PTR)frame;
+    TRACE( "%p cookie=%Ix\n", actctx, frame );
     return STATUS_SUCCESS;
 }
 
