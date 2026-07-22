@@ -579,6 +579,7 @@ enum unix_call
     unix_vkGetImageViewHandle64NVX,
     unix_vkGetImageViewHandleNVX,
     unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
+    unix_vkGetLatencyTimingsLegacyNV,
     unix_vkGetLatencyTimingsNV,
     unix_vkGetMemoryHostPointerPropertiesEXT,
     unix_vkGetMemoryWin32HandleKHR,
@@ -674,6 +675,7 @@ enum unix_call
     unix_vkGetShaderInstrumentationValuesARM,
     unix_vkGetShaderModuleCreateInfoIdentifierEXT,
     unix_vkGetShaderModuleIdentifierEXT,
+    unix_vkGetSleepStatusLegacyNV,
     unix_vkGetSwapchainImagesKHR,
     unix_vkGetSwapchainTimeDomainPropertiesEXT,
     unix_vkGetSwapchainTimingPropertiesEXT,
@@ -687,6 +689,7 @@ enum unix_call
     unix_vkImportSemaphoreWin32HandleKHR,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
+    unix_vkLatencySleepLegacyNV,
     unix_vkLatencySleepNV,
     unix_vkMapMemory,
     unix_vkMapMemory2,
@@ -697,6 +700,7 @@ enum unix_call
     unix_vkQueueBindSparse,
     unix_vkQueueEndDebugUtilsLabelEXT,
     unix_vkQueueInsertDebugUtilsLabelEXT,
+    unix_vkQueueNotifyOutOfBandLegacyNV,
     unix_vkQueueNotifyOutOfBandNV,
     unix_vkQueuePresentKHR,
     unix_vkQueueSetPerfHintQCOM,
@@ -725,11 +729,14 @@ enum unix_call
     unix_vkSetEvent,
     unix_vkSetGpaDeviceClockModeAMD,
     unix_vkSetHdrMetadataEXT,
+    unix_vkSetLatencyMarkerLegacyNV,
     unix_vkSetLatencyMarkerNV,
+    unix_vkSetLatencySleepModeLegacyNV,
     unix_vkSetLatencySleepModeNV,
     unix_vkSetPrivateData,
     unix_vkSetPrivateDataEXT,
     unix_vkSetSwapchainPresentTimingQueueSizeEXT,
+    unix_vkShutdownLatencyDeviceLegacyNV,
     unix_vkSignalSemaphore,
     unix_vkSignalSemaphoreKHR,
     unix_vkSubmitDebugUtilsMessageEXT,
@@ -5000,6 +5007,12 @@ struct vkGetImageViewOpaqueCaptureDescriptorDataEXT_params
     VkResult result;
 };
 
+struct vkGetLatencyTimingsLegacyNV_params
+{
+    VkDevice device;
+    void *pTimings;
+};
+
 struct vkGetLatencyTimingsNV_params
 {
     VkDevice device;
@@ -5764,6 +5777,12 @@ struct vkGetShaderModuleIdentifierEXT_params
     VkShaderModuleIdentifierEXT *pIdentifier;
 };
 
+struct vkGetSleepStatusLegacyNV_params
+{
+    VkDevice device;
+    VkBool32 *pLowLatencyMode;
+};
+
 struct vkGetSwapchainImagesKHR_params
 {
     VkDevice device;
@@ -5870,6 +5889,13 @@ struct vkInvalidateMappedMemoryRanges_params
     VkResult result;
 };
 
+struct vkLatencySleepLegacyNV_params
+{
+    VkDevice device;
+    VkSemaphore DECLSPEC_ALIGN(8) signalSemaphore;
+    uint64_t DECLSPEC_ALIGN(8) value;
+};
+
 struct vkLatencySleepNV_params
 {
     VkDevice device;
@@ -5947,6 +5973,12 @@ struct vkQueueInsertDebugUtilsLabelEXT_params
 {
     VkQueue queue;
     const VkDebugUtilsLabelEXT *pLabelInfo;
+};
+
+struct vkQueueNotifyOutOfBandLegacyNV_params
+{
+    VkQueue queue;
+    uint32_t queueType;
 };
 
 struct vkQueueNotifyOutOfBandNV_params
@@ -6156,11 +6188,26 @@ struct vkSetHdrMetadataEXT_params
     const VkHdrMetadataEXT *pMetadata;
 };
 
+struct vkSetLatencyMarkerLegacyNV_params
+{
+    VkDevice device;
+    uint64_t DECLSPEC_ALIGN(8) frameID;
+    uint32_t marker;
+};
+
 struct vkSetLatencyMarkerNV_params
 {
     VkDevice device;
     VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
     const VkSetLatencyMarkerInfoNV *pLatencyMarkerInfo;
+};
+
+struct vkSetLatencySleepModeLegacyNV_params
+{
+    VkDevice device;
+    VkBool32 lowLatencyMode;
+    VkBool32 lowLatencyBoost;
+    uint32_t minimumIntervalUs;
 };
 
 struct vkSetLatencySleepModeNV_params
@@ -6197,6 +6244,11 @@ struct vkSetSwapchainPresentTimingQueueSizeEXT_params
     VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
     uint32_t size;
     VkResult result;
+};
+
+struct vkShutdownLatencyDeviceLegacyNV_params
+{
+    VkDevice device;
 };
 
 struct vkSignalSemaphore_params
