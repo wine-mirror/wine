@@ -5806,6 +5806,16 @@ static void test_GetFinalPathNameByHandleW(void)
     wcscpy(test_path, temp_path);
     wcscat(test_path, L"link");
     success = CreateSymbolicLinkW(test_path, temp_path, SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
+    if (!success && GetLastError() == ERROR_PRIVILEGE_NOT_HELD)
+    {
+        win_skip("Insufficient permissions to perform symlink tests.\n");
+        return;
+    }
+    if (!success && GetLastError() == ERROR_INVALID_PARAMETER /* <= Win10v1607 */)
+    {
+        win_skip("Flag SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE not supported, skipping test.\n");
+        return;
+    }
     ok(success, "got error %ld.\n", GetLastError());
 
     wcscpy(test_path, temp_path);
