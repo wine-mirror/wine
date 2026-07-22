@@ -684,24 +684,26 @@ NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_dword_property( UCHAR *buf, ULONG size, ULONG *ret_size, DWORD value )
+{
+    *ret_size = sizeof(value);
+    if (size < sizeof(value)) return STATUS_BUFFER_TOO_SMALL;
+    if (buf) *(DWORD *)buf = value;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_OBJECT_LENGTH ))
     {
         if (!builtin_algorithms[id].object_length) return STATUS_NOT_SUPPORTED;
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = builtin_algorithms[id].object_length;
-        return STATUS_SUCCESS;
+        return get_dword_property( buf, size, ret_size, builtin_algorithms[id].object_length );
     }
 
     if (!wcscmp( prop, BCRYPT_HASH_LENGTH ))
     {
         if (!builtin_algorithms[id].hash_length) return STATUS_NOT_SUPPORTED;
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG*)buf = builtin_algorithms[id].hash_length;
-        return STATUS_SUCCESS;
+        return get_dword_property( buf, size, ret_size, builtin_algorithms[id].hash_length );
     }
 
     if (!wcscmp( prop, BCRYPT_ALGORITHM_NAME ))
@@ -718,12 +720,8 @@ static NTSTATUS get_generic_alg_property( enum alg_id id, const WCHAR *prop, UCH
 static NTSTATUS get_3des_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
-    {
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BLOCK_LENGTH_3DES;
-        return STATUS_SUCCESS;
-    }
+        return get_dword_property( buf, size, ret_size, BLOCK_LENGTH_3DES );
+
     if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
     {
         const WCHAR *str;
@@ -760,12 +758,8 @@ static NTSTATUS get_3des_property( enum chain_mode mode, const WCHAR *prop, UCHA
 static NTSTATUS get_aes_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
-    {
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BLOCK_LENGTH_AES;
-        return STATUS_SUCCESS;
-    }
+        return get_dword_property( buf, size, ret_size, BLOCK_LENGTH_AES );
+
     if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
     {
         const WCHAR *str;
@@ -818,12 +812,7 @@ static NTSTATUS get_aes_property( enum chain_mode mode, const WCHAR *prop, UCHAR
 static NTSTATUS get_rc4_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
-    {
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BLOCK_LENGTH_RC4;
-        return STATUS_SUCCESS;
-    }
+        return get_dword_property( buf, size, ret_size, BLOCK_LENGTH_RC4 );
 
     FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
@@ -832,12 +821,7 @@ static NTSTATUS get_rc4_property( enum chain_mode mode, const WCHAR *prop, UCHAR
 static NTSTATUS get_rsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES ))
-    {
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BCRYPT_SUPPORTED_PAD_PKCS1_SIG | BCRYPT_SUPPORTED_PAD_OAEP;
-        return STATUS_SUCCESS;
-    }
+        return get_dword_property( buf, size, ret_size, BCRYPT_SUPPORTED_PAD_PKCS1_SIG | BCRYPT_SUPPORTED_PAD_OAEP );
 
     FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
@@ -873,12 +857,7 @@ static NTSTATUS get_pbkdf2_property( enum chain_mode mode, const WCHAR *prop, UC
 static NTSTATUS get_chacha20_poly1305_property( const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
-    {
-        *ret_size = sizeof(ULONG);
-        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BLOCK_LENGTH_CHACHA20_POLY1305;
-        return STATUS_SUCCESS;
-    }
+        return get_dword_property( buf, size, ret_size, BLOCK_LENGTH_CHACHA20_POLY1305 );
 
     FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
@@ -1184,14 +1163,8 @@ static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHA
 {
     if (!wcscmp( prop, BCRYPT_KEY_STRENGTH ))
     {
-        *ret_size = sizeof(DWORD);
-        if (size < sizeof(DWORD)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf)
-        {
-            if (is_symmetric_key(key)) *(DWORD *)buf = key->s.block_size * 8;
-            else *(DWORD *)buf = key->a.bitlen;
-        }
-        return STATUS_SUCCESS;
+        DWORD value = is_symmetric_key (key ) ? key->s.block_size * 8 : key->a.bitlen;
+        return get_dword_property( buf, size, ret_size, value );
     }
 
     switch (key->alg_id)
@@ -1206,6 +1179,11 @@ static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHA
     case ALG_ID_DH:
         if (wcscmp( prop, BCRYPT_DH_PARAMETERS )) return STATUS_NOT_SUPPORTED;
         return get_dh_parameters( key, buf, size, ret_size );
+
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+        if (wcscmp( prop, BCRYPT_SIGNATURE_LENGTH )) return STATUS_NOT_SUPPORTED;
+        return get_dword_property( buf, size, ret_size, key->a.bitlen / 8 );
 
     default:
         FIXME( "unsupported algorithm %u\n", key->alg_id );

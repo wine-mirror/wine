@@ -2973,11 +2973,17 @@ static void test_RSA(void)
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
     ok(!ret, "BCryptImportKeyPair failed: %#lx\n", ret);
 
-    keylen = 0;
+    size = keylen = 0;
     ret = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&keylen, sizeof(keylen), &size, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(size == sizeof(keylen), "got %lu\n", size);
     ok(keylen == 2048, "got %lu\n", keylen);
+
+    size = len = 0;
+    ret = BCryptGetProperty(key, BCRYPT_SIGNATURE_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == sizeof(len), "got %lu\n", size);
+    ok(len == 256, "got %lu\n", len);
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
@@ -3186,7 +3192,7 @@ static void test_RSA_SIGN(void)
     BCRYPT_KEY_HANDLE key = NULL;
     BCRYPT_RSAKEY_BLOB *rsablob;
     NTSTATUS ret;
-    ULONG size, size2;
+    ULONG size, size2, len;
     BYTE *buf, buf2[sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(rsaPublicBlob)];
 
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_SIGN_ALGORITHM, NULL, 0);
@@ -3246,6 +3252,12 @@ static void test_RSA_SIGN(void)
 
     ret = BCryptFinalizeKeyPair(key, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    size = len = 0;
+    ret = BCryptGetProperty(key, BCRYPT_SIGNATURE_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == sizeof(len), "got %lu\n", size);
+    ok(len == 64, "got %lu\n", len);
 
     size = 0;
     ret = BCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, NULL, 0, &size, 0);
