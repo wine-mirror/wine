@@ -1552,6 +1552,34 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS
 #define XSTATE_MASK_AMX_TILE_DATA           (1 << XSTATE_AMX_TILE_DATA)
 #define XSTATE_MASK_LWP                     ((UINT64)1 << XSTATE_LWP)
 
+#define XSTATE_ARM64_SVE                    (2)
+#define XSTATE_MASK_ARM64_SVE               ((UINT64)1 << XSTATE_ARM64_SVE)
+
+#define XSTATE_ARM64_SME_ZA                 (3)
+#define XSTATE_MASK_ARM64_SME_ZA            ((UINT64)1 << XSTATE_ARM64_SME_ZA)
+
+#define XSTATE_ARM64_SME_TPIDR2             (4)
+#define XSTATE_MASK_ARM64_SME_TPIDR2        ((UINT64)1 << XSTATE_ARM64_SME_TPIDR2)
+
+#define XSTATE_ARM64_SME_ZT                 (5)
+#define XSTATE_MASK_ARM64_SME_ZT            ((UINT64)1 << XSTATE_ARM64_SME_ZT)
+
+#define XSTATE_COMPACTION_ENABLE            (63)
+#define XSTATE_COMPACTION_ENABLE_MASK       ((UINT64)1 << XSTATE_COMPACTION_ENABLE)
+
+#define XSTATE_ALIGN_BIT                    (1)
+#define XSTATE_ALIGN_MASK                   ((UINT64)1 << XSTATE_ALIGN_BIT)
+
+#define XSTATE_XFD_BIT                      (2)
+#define XSTATE_XFD_MASK                     ((UINT64)1 << XSTATE_XFD_BIT)
+
+#define XSTATE_CONTROLFLAG_XSAVEOPT_MASK    (1)
+#define XSTATE_CONTROLFLAG_XSAVEC_MASK      (2)
+#define XSTATE_CONTROLFLAG_XFD_MASK         (4)
+#define XSTATE_CONTROLFLAG_VALID_MASK       (XSTATE_CONTROLFLAG_XSAVEOPT_MASK | \
+                                             XSTATE_CONTROLFLAG_XSAVEC_MASK | \
+                                             XSTATE_CONTROLFLAG_XFD_MASK)
+
 typedef struct _XSTATE_FEATURE
 {
     ULONG Offset;
