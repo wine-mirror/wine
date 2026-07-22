@@ -395,14 +395,18 @@ void init_directories( struct fd *intl_fd )
     static const WCHAR event_high_pagedW[] = {'H','i','g','h','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR event_high_nonpgW[] = {'H','i','g','h','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR keyed_event_crit_sectW[] = {'C','r','i','t','S','e','c','O','u','t','O','f','M','e','m','o','r','y','E','v','e','n','t'};
-    static const struct unicode_str kernel_events[] =
+    static const struct
     {
-        { event_low_memW, sizeof(event_low_memW) },
-        { event_low_pagedW, sizeof(event_low_pagedW) },
-        { event_low_nonpgW, sizeof(event_low_nonpgW) },
-        { event_high_memW, sizeof(event_high_memW) },
-        { event_high_pagedW, sizeof(event_high_pagedW) },
-        { event_high_nonpgW, sizeof(event_high_nonpgW) }
+        struct unicode_str name;
+        int initial_state;
+    } kernel_events[] =
+    {
+        { { event_low_memW, sizeof(event_low_memW) }, 0 },
+        { { event_low_pagedW, sizeof(event_low_pagedW) }, 0 },
+        { { event_low_nonpgW, sizeof(event_low_nonpgW) }, 0 },
+        { { event_high_memW, sizeof(event_high_memW) }, 1 },
+        { { event_high_pagedW, sizeof(event_high_pagedW) }, 1 },
+        { { event_high_nonpgW, sizeof(event_high_nonpgW) }, 1 }
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
@@ -456,7 +460,10 @@ void init_directories( struct fd *intl_fd )
 
     /* events */
     for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
-        release_object( create_event( &dir_kernel->obj, &kernel_events[i], OBJ_PERMANENT, 1, 0, NULL ));
+    {
+        release_object( create_event( &dir_kernel->obj, &kernel_events[i].name, OBJ_PERMANENT,
+                                      1, kernel_events[i].initial_state, NULL ));
+    }
     release_object( create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, OBJ_PERMANENT, NULL ));
 
     /* mappings */
