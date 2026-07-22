@@ -3345,6 +3345,22 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE
     return STATUS_SUCCESS;
 }
 
+static ULONG curve_size( enum ecc_curve_id curve_id )
+{
+    switch (curve_id)
+    {
+    case ECC_CURVE_25519:           return 255;
+    case ECC_CURVE_BRAINPOOLP256R1:
+    case ECC_CURVE_P256R1:          return 256;
+    case ECC_CURVE_BRAINPOOLP384R1:
+    case ECC_CURVE_P384R1:          return 384;
+    case ECC_CURVE_P521R1:          return 521;
+    default:
+        FIXME( "unsupported curve %u\n", curve_id );
+        return 0;
+    }
+}
+
 static NTSTATUS generate_key_pair( const struct algorithm *alg, ULONG bitlen, ULONG flags, struct key **ret_key )
 {
     NTSTATUS status;
@@ -3375,7 +3391,7 @@ static NTSTATUS generate_key_pair( const struct algorithm *alg, ULONG bitlen, UL
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_ECDSA_P521:
-        if (bitlen && bitlen != curve_strength( alg->curve_id ))
+        if (bitlen && bitlen != curve_size( alg->curve_id ))
         {
             destroy_key( key );
             return STATUS_INVALID_PARAMETER;

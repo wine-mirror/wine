@@ -3655,6 +3655,13 @@ static void test_ECDH(void)
     status = BCryptSetProperty(alg, BCRYPT_ECC_CURVE_NAME, (UCHAR *)BCRYPT_ECC_CURVE_25519, sizeof(BCRYPT_ECC_CURVE_25519), 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
+    status = BCryptGenerateKeyPair(alg, &key, 253, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, 255, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    BCryptDestroyKey(key);
+
     status = BCryptGenerateKeyPair(alg, &key, 0, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
