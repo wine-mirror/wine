@@ -671,6 +671,14 @@ static void test_aes(void)
         ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
         ok(size == 64, "got %lu\n", size);
     }
+
+    alg = NULL;
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_AES_GMAC_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 }
 
 static void test_3des(void)

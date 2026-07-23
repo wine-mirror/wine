@@ -54,6 +54,7 @@ enum alg_id
     ALG_ID_3DES,
     ALG_ID_CHACHA20_POLY1305,
     ALG_ID_AES,
+    ALG_ID_AES_GMAC,
     ALG_ID_RC4,
 
     /* hash */
@@ -134,6 +135,7 @@ struct algorithm
     enum chain_mode   mode;
     ULONG             flags;
     enum ecc_curve_id curve_id;
+    enum chain_mode   chain_mode;
 };
 
 struct aes_key
@@ -343,12 +345,14 @@ static const struct
     ULONG        hash_length;
     ULONG        block_bits;
     enum ecc_curve_id curve_id;
+    enum chain_mode   chain_mode;
 }
 builtin_algorithms[] =
 {
     {  BCRYPT_3DES_ALGORITHM,       BCRYPT_CIPHER_INTERFACE,                522,    0,    0 },
     {  BCRYPT_CHACHA20_POLY1305_ALGORITHM, BCRYPT_CIPHER_INTERFACE,         166,    0,    0 },
     {  BCRYPT_AES_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
+    {  BCRYPT_AES_GMAC_ALGORITHM,   BCRYPT_CIPHER_INTERFACE,                654,    0,    0, 0, CHAIN_MODE_GCM },
     {  BCRYPT_RC4_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
     {  BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  286,   32,  512 },
     {  BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   48, 1024 },
@@ -458,7 +462,7 @@ static const struct algorithm pseudo_algorithms[] =
     {{ MAGIC_ALG }, ALG_ID_RSA },
     {{ MAGIC_ALG }, ALG_ID_ECDSA },
     {{ 0 }}, /* AES_CMAC */
-    {{ 0 }}, /* AES_GMAC */
+    {{ MAGIC_ALG }, ALG_ID_AES_GMAC, CHAIN_MODE_GCM },
     {{ MAGIC_ALG }, ALG_ID_MD2, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
     {{ MAGIC_ALG }, ALG_ID_MD4, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG },
     {{ MAGIC_ALG }, ALG_ID_3DES, CHAIN_MODE_CBC },
@@ -599,10 +603,11 @@ static struct algorithm *create_algorithm( enum alg_id id, DWORD flags )
 {
     struct algorithm *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
-    ret->hdr.magic = MAGIC_ALG;
-    ret->id        = id;
-    ret->flags     = flags;
-    ret->curve_id  = builtin_algorithms[id].curve_id;
+    ret->hdr.magic  = MAGIC_ALG;
+    ret->id         = id;
+    ret->flags      = flags;
+    ret->curve_id   = builtin_algorithms[id].curve_id;
+    ret->chain_mode = builtin_algorithms[id].chain_mode;
     return ret;
 }
 
@@ -880,6 +885,7 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
         return get_chacha20_poly1305_property( prop, buf, size, ret_size );
 
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         return get_aes_property( alg->mode, prop, buf, size, ret_size );
 
     case ALG_ID_RC4:
@@ -1173,6 +1179,7 @@ static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHA
         return get_3des_property( key->s.mode, prop, buf, size, ret_size );
 
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         if (!wcscmp( prop, BCRYPT_AUTH_TAG_LENGTH )) return STATUS_NOT_SUPPORTED;
         return get_aes_property( key->s.mode, prop, buf, size, ret_size );
 
@@ -1564,6 +1571,7 @@ static NTSTATUS generate_symmetric_key( const struct algorithm *alg, const UCHAR
     switch (alg->id)
     {
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         if ((status = validate_len_aes( &key_lengths, secret_len, &secret_len )) ||
             (status = alloc_aes_key( key, alg->mode, BLOCK_LENGTH_AES, secret, secret_len )))
         {
@@ -1748,6 +1756,7 @@ static NTSTATUS decrypt_symmetric( struct key *key, const UCHAR *input, ULONG in
     switch (key->alg_id)
     {
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         switch (key->s.mode)
         {
         case CHAIN_MODE_ECB:
@@ -2092,6 +2101,7 @@ static NTSTATUS encrypt_symmetric( struct key *key, const UCHAR *input, ULONG in
     switch (key->alg_id)
     {
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         switch (key->s.mode)
         {
         case CHAIN_MODE_ECB:
@@ -3516,6 +3526,7 @@ static NTSTATUS duplicate_key( const struct key *src, struct key **ret_key )
     switch (src->alg_id)
     {
     case ALG_ID_AES:
+    case ALG_ID_AES_GMAC:
         if ((status = alloc_key( src->alg_id, src->flags, &dst ))) return status;
         if ((status = alloc_aes_key( dst, src->s.mode, src->s.block_size, src->s.secret, src->s.secret_len )))
         {
