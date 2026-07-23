@@ -250,7 +250,8 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
     }
     else if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppGrayFloat)
             || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBFloat)
-            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBAFloat))
+            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBAFloat)
+            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppPRGBAFloat))
     {
         UINT i;
         const float *a=(const float*)expect->bits, *b=(const float*)converted_bits;
@@ -816,6 +817,12 @@ static const float bits_128bppRGBAFloat_3[] = {
 static const struct bitmap_data testdata_128bppRGBAFloat_3 = {
     &GUID_WICPixelFormat128bppRGBAFloat, 128, (const BYTE *)bits_128bppRGBAFloat_3, 3, 2, 96.0, 96.0};
 
+static const float bits_128bppPRGBAFloat[] = {
+    0.0f,0.0f,0.0f,0.0f, 0.0f,0.533333f,0.000001f,0.533333, 1.0f,0.0f,0.0f,1.0f,
+    0.0f,1.0f,0.205079f,1.0f, 0.0f,0.205079f,0.0f,1.0f, 0.102935f,0.0f,0.0f,0.501961f};
+static const struct bitmap_data testdata_128bppPRGBAFloat = {
+    &GUID_WICPixelFormat128bppPRGBAFloat, 128, (const BYTE *)bits_128bppPRGBAFloat, 3, 2, 96.0, 96.0};
+
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
     BitmapTestSrc *src_obj;
@@ -942,7 +949,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(96bppRGBFixedPoint)},
         {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
         {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 32},
-        {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 33},
         {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 33},
 
         {WIC_PIXEL_FORMAT(32bppCMYK)},
@@ -2458,6 +2465,8 @@ START_TEST(converter)
     test_conversion(&testdata_96bppRGBFloat, &testdata_128bppRGBFloat, "96bppRGBFloat -> 128bppRGBFloat", FALSE);
     test_conversion(&testdata_96bppRGBFloat_2, &testdata_32bppBGRA_3, "96bppRGBFloat -> 32bppBGRA", FALSE);
     test_conversion(&testdata_128bppRGBAFloat_2, &testdata_32bppBGRA_2, "128bppRGBAFloat -> 32bppBGRA", FALSE);
+
+    test_conversion(&testdata_64bppPRGBA_2, &testdata_128bppPRGBAFloat, "64bppPRGBA -> 128bppPRGBAFloat", FALSE);
 
     test_conversion(&testdata_48bppRGBHalf, &testdata_32bppBGRA_3, "48bppRGBHalf -> 32bppBGRA", FALSE);
     test_conversion(&testdata_48bppRGBHalf, &testdata_128bppRGBFloat_2, "48bppRGBHalf -> 128bppRGBFloat", FALSE);

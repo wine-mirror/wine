@@ -2457,6 +2457,49 @@ static HRESULT copypixels_to_128bppRGBAFloat(struct FormatConverter *This, const
     }
 }
 
+static HRESULT copypixels_to_128bppPRGBAFloat(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_128bppPRGBAFloat:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+    case format_64bppPRGBA:
+        {
+            hr = copypixels_to_128bppRGBAFloat(This, prc, cbStride, cbBufferSize, pbBuffer, source_format);
+            if (SUCCEEDED(hr) && prc)
+            {
+                float *dstrow;
+                INT x, y;
+
+                for (y=0; y<prc->Height; y++)
+                {
+                    dstrow = (float *)&pbBuffer[cbStride*y];
+                    for (x=0; x<prc->Width; x++)
+                    {
+                        float alpha = dstrow[4*x+3];
+
+                        if (alpha != 65535)
+                        {
+                            dstrow[4*x] = dstrow[4*x] * alpha;
+                            dstrow[4*x+1] = dstrow[4*x+1] * alpha;
+                            dstrow[4*x+2] = dstrow[4*x+2] * alpha;
+                        }
+                    }
+                }
+            }
+            return hr;
+        }
+    default:
+        FIXME("Unimplemented conversion path %d.\n", source_format);
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
 static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
 {
@@ -2680,7 +2723,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_32bppBGR101010, &GUID_WICPixelFormat32bppBGR101010, NULL},
     {format_96bppRGBFloat, &GUID_WICPixelFormat96bppRGBFloat, NULL},
     {format_128bppRGBAFloat, &GUID_WICPixelFormat128bppRGBAFloat, copypixels_to_128bppRGBAFloat },
-    {format_128bppPRGBAFloat, &GUID_WICPixelFormat128bppPRGBAFloat, NULL},
+    {format_128bppPRGBAFloat, &GUID_WICPixelFormat128bppPRGBAFloat, copypixels_to_128bppPRGBAFloat},
     {format_128bppRGBFloat, &GUID_WICPixelFormat128bppRGBFloat, copypixels_to_128bppRGBFloat },
     {format_32bppR10G10B10A2, &GUID_WICPixelFormat32bppR10G10B10A2, NULL},
     {format_48bppRGBHalf, &GUID_WICPixelFormat48bppRGBHalf},

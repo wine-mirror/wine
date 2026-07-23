@@ -1689,6 +1689,7 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat96bppRGBFloat,
     &GUID_WICPixelFormat128bppRGBFloat,
     &GUID_WICPixelFormat128bppRGBAFloat,
+    &GUID_WICPixelFormat128bppPRGBAFloat,
     NULL
 };
 
