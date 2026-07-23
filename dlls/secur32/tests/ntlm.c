@@ -1402,6 +1402,135 @@ static void testAcquireCredentialsHandleW(void)
     FreeCredentialsHandle( &cred );
 }
 
+static const char *get_name_from_token(HANDLE token)
+{
+    static char ret[512];
+
+    DWORD size, name_len, domain_len;
+    char name[256];
+    TOKEN_USER *token_user;
+    SID_NAME_USE use;
+    BOOL r;
+
+    r = GetTokenInformation(token, TokenUser, NULL, 0, &size);
+    ok(!r, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %lu\n", GetLastError());
+    token_user = malloc(size);
+    r = GetTokenInformation(token, TokenUser, token_user, size, &size);
+    ok(r, "GetTokenInformation() failed %lu\n", GetLastError());
+
+    name_len = sizeof(name);
+    domain_len = sizeof(ret) - sizeof(name) - 1;
+    r = LookupAccountSidA(NULL, token_user->User.Sid, name, &name_len, ret, &domain_len, &use);
+    ok(r, "LookupAccountSid() failed %lu\n", GetLastError());
+    free(token_user);
+
+    strcat(ret, "\\");
+    strcat(ret, name);
+    return ret;
+}
+
+static void testQueryCredentialsAttributes(void)
+{
+    SecPkgCredentials_NamesA names;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    PSecPkgInfoA pkg_info;
+    SECURITY_STATUS ret;
+    const char *name;
+    CredHandle cred;
+    TimeStamp ttl;
+    HANDLE token;
+    BOOL r;
+
+    if (QuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
+    {
+        ok(0, "NTLM package not installed, skipping test\n");
+        return;
+    }
+    FreeContextBuffer(pkg_info);
+
+    r = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(r, "OpenProcessToken() failed %lu\n", GetLastError());
+    ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, NULL, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
+
+    ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
+    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    if (ret == SEC_E_OK)
+    {
+        name = get_name_from_token(token);
+        ok(!strcmp(names.sUserName, name), "sUserName = %s, expected %s\n",
+                wine_dbgstr_a(names.sUserName), wine_dbgstr_a(name));
+        FreeContextBuffer(names.sUserName);
+    }
+    CloseHandle(token);
+    ret = FreeCredentialsHandle(&cred);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
+
+    r = ImpersonateAnonymousToken(GetCurrentThread());
+    todo_wine ok(r, "ImpersonateAnonymousToken failed %lu\n", GetLastError());
+    if (r)
+    {
+        r = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token);
+        ok(r, "OpenProcessToken() failed %lu\n", GetLastError());
+        ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+                NULL, NULL, NULL, NULL, &cred, &ttl);
+        ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
+        r = RevertToSelf();
+        ok(r, "RevertToSelf failed %lu\n", GetLastError());
+
+        ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
+        ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+        name = get_name_from_token(token);
+        CloseHandle(token);
+        ok(!strcmp(names.sUserName, name), "sUserName = %s, expected %s\n",
+                wine_dbgstr_a(names.sUserName), wine_dbgstr_a(name));
+        todo_wine ok(!strcmp(names.sUserName, "NT AUTHORITY\\ANONYMOUS LOGON"),
+                "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
+        FreeContextBuffer(names.sUserName);
+        ret = FreeCredentialsHandle(&cred);
+        ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
+    }
+
+    id.User = (unsigned char *)test_user;
+    id.UserLength = strlen((char *)id.User);
+    id.Domain = (unsigned char *)workgroup;
+    id.DomainLength = strlen((char *)id.Domain);
+    id.Password = (unsigned char *)test_pass;
+    id.PasswordLength = strlen((char *)id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
+
+    ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
+    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    if (ret == SEC_E_OK)
+    {
+        ok(!strcmp(names.sUserName, "WORKGROUP\\testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
+        FreeContextBuffer(names.sUserName);
+    }
+    ret = FreeCredentialsHandle(&cred);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
+
+    id.Domain = NULL;
+    id.DomainLength = 0;
+    ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
+
+    ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
+    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    if (ret == SEC_E_OK)
+    {
+        ok(!strcmp(names.sUserName, "testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
+        FreeContextBuffer(names.sUserName);
+    }
+    ret = FreeCredentialsHandle(&cred);
+    ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
+}
+
 static void test_cred_multiple_use(void)
 {
     SECURITY_STATUS ret;
@@ -1516,6 +1645,7 @@ START_TEST(ntlm)
 {
     testAcquireCredentialsHandleW();
     testAcquireCredentialsHandle();
+    testQueryCredentialsAttributes();
     testInitializeSecurityContextFlags();
     testAuth(SECURITY_NATIVE_DREP, TRUE);
     testAuth(SECURITY_NETWORK_DREP, TRUE);
