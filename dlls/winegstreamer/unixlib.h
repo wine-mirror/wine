@@ -192,7 +192,7 @@ struct wg_sample
     UINT32 flags;
     UINT32 max_size;
     UINT32 size;
-    UINT32 stride;
+    INT32 stride;
     UINT64 data; /* pointer to user memory */
 };
 
@@ -335,7 +335,7 @@ struct wg_parser_stream_seek_params
 struct wg_transform_attrs
 {
     UINT32 output_plane_align;
-    UINT32 output_plane_stride;
+    INT32 output_plane_stride;
     UINT32 input_queue_length;
     BOOL allow_format_change;
     BOOL low_latency;
