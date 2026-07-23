@@ -654,6 +654,15 @@ static void test_aes(void)
     ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CFB), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
     ok(size == 64, "got %lu\n", size);
 
+    len = size = 0;
+    ret = BCryptGetProperty(alg, BCRYPT_MESSAGE_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(len == 1, "got %lu\n", len);
+
+    len = 16;
+    ret = BCryptSetProperty(alg, BCRYPT_MESSAGE_BLOCK_LENGTH, (UCHAR *)&len, 0, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+
     test_alg_name(alg, L"AES");
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);

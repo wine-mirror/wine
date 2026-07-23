@@ -143,6 +143,8 @@ extern "C" {
 #define BCRYPT_KDF_RAW_SECRET       L"TRUNCATE"
 
 #define BCRYPT_DH_PARAMETERS        L"DHParameters"
+
+#define BCRYPT_MESSAGE_BLOCK_LENGTH L"MessageBlockLength"
 #else
 static const WCHAR BCRYPT_ALGORITHM_NAME[] = {'A','l','g','o','r','i','t','h','m','N','a','m','e',0};
 static const WCHAR BCRYPT_AUTH_TAG_LENGTH[] = {'A','u','t','h','T','a','g','L','e','n','g','t','h',0};
@@ -240,6 +242,7 @@ static const WCHAR BCRYPT_KDF_SP80056A_CONCAT[] = {'S','P','8','0','0','_','5','
 static const WCHAR BCRYPT_KDF_RAW_SECRET[] = {'T','R','U','N','C','A','T','E',0};
 
 static const WCHAR BCRYPT_DH_PARAMETERS[] = {'D','H','P','a','r','a','m','e','t','e','r','s',0};
+static const WCHAR BCRYPT_MESSAGE_BLOCK_LENGTH[] = {'M','e','s','s','a','g','e','B','l','o','c','k','L','e','n','g','t','h',0};
 #endif
 
 #define BCRYPT_ECDSA_PUBLIC_P256_MAGIC  0x31534345

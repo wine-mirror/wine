@@ -765,6 +765,9 @@ static NTSTATUS get_aes_property( enum chain_mode mode, const WCHAR *prop, UCHAR
     if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
         return get_dword_property( buf, size, ret_size, BLOCK_LENGTH_AES );
 
+    if (!wcscmp( prop, BCRYPT_MESSAGE_BLOCK_LENGTH ))
+        return get_dword_property( buf, size, ret_size, 1 );
+
     if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
     {
         const WCHAR *str;
@@ -971,6 +974,9 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
                 return STATUS_NOT_IMPLEMENTED;
             }
         }
+        else if (!wcscmp( (WCHAR *)prop, BCRYPT_MESSAGE_BLOCK_LENGTH ))
+            return STATUS_INVALID_PARAMETER;
+
         FIXME( "unsupported aes algorithm property %s\n", debugstr_w(prop) );
         return STATUS_NOT_IMPLEMENTED;
 
