@@ -1277,6 +1277,69 @@ static void test_max_element_depth_values(void)
     free_bstrs();
 }
 
+static void test_selection_namespaces(void)
+{
+    IXMLDOMDocument2 *doc;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Empty or null value will reset a property. */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"xmlns:ns=\'uri\'");
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"xmlns:ns=\'uri\'"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = NULL;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"xmlns:ns=\'uri\'");
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"xmlns:ns=\'uri\'"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"");
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -1303,6 +1366,7 @@ START_TEST(domdoc)
     test_interfaces();
     test_dtd_validation();
     test_max_element_depth_values();
+    test_selection_namespaces();
 
     CoUninitialize();
 }

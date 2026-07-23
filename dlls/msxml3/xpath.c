@@ -7749,6 +7749,9 @@ HRESULT xpath_parse_selection_namespaces(const WCHAR *value, struct domdoc_prope
     HRESULT hr = S_OK;
     WCHAR *uri;
 
+    if (!value)
+        return S_OK;
+
     ctxt.cur = ctxt.base = value;
 
     while (*ctxt.cur)

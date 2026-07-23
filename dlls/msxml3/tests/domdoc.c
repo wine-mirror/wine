@@ -4789,6 +4789,55 @@ static void test_IXMLDOMDocument2(void)
     ok(!wcscmp(V_BSTR(&var), L"XSLPattern"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
+    /* Empty or null value will reset a property. */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"xmlns:ns=\'uri\'");
+    hr = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"xmlns:ns=\'uri\'"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = NULL;
+    hr = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"xmlns:ns=\'uri\'");
+    hr = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"xmlns:ns=\'uri\'"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"");
+    hr = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    memset(&var, 0, sizeof(var));
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionNamespaces"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
     IXMLDOMDocument2_Release( doc2 );
     IXMLDOMDocument_Release( doc );
     free_bstrs();
