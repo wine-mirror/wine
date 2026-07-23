@@ -792,6 +792,12 @@ static const BYTE bits_32bppBGRA_2[] = {
 static const struct bitmap_data testdata_32bppBGRA_2 = {
     &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA_2, 3, 2, 96.0, 96.0};
 
+static const WORD bits_64bppPRGBA_2[] = {
+    0,0,0,0, 0,0x8888,0x0001,0x8888, 0xffff,0,0,0xffff,
+    0,0xffff,0x7d7d,0xffff, 0,0x7d7d,0,0xffff, 0x3efd,0,0,0x8080};
+static const struct bitmap_data testdata_64bppPRGBA_2 = {
+    &GUID_WICPixelFormat64bppPRGBA, 64, (BYTE *)bits_64bppPRGBA_2, 3, 2, 96.0, 96.0};
+
 static const float bits_128bppRGBAFloat[] = {
     0.0f,0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f,1.0f, 1.0f,0.0f,0.0f,1.0f,
     0.0f,0.0f,1.0f,1.0f, 0.0f,0.205079f,0.0f,1.0f, 0.205079f,0.0f,0.0f,1.0f};
@@ -803,6 +809,12 @@ static const float bits_128bppRGBAFloat_2[] = {
     0.0f,0.0f,1.0f,0.0f, 0.0f,0.205079f,0.0f,1.0f, 0.205079f,0.0f,0.0f,0.5019f};
 static const struct bitmap_data testdata_128bppRGBAFloat_2 = {
     &GUID_WICPixelFormat128bppRGBAFloat, 128, (const BYTE *)bits_128bppRGBAFloat_2, 3, 2, 96.0, 96.0};
+
+static const float bits_128bppRGBAFloat_3[] = {
+    0.0f,0.0f,0.0f,0.0f, 0.0f,1.0f,0.000002f,0.533333f, 1.0f,0.0f,0.0f,1.0f,
+    0.0f,1.0f,0.205079f,1.0f, 0.0f,0.205079f,0.0f,1.0f, 0.205065f,0.0f,0.0f,0.501961f};
+static const struct bitmap_data testdata_128bppRGBAFloat_3 = {
+    &GUID_WICPixelFormat128bppRGBAFloat, 128, (const BYTE *)bits_128bppRGBAFloat_3, 3, 2, 96.0, 96.0};
 
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
@@ -929,7 +941,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(48bppBGRFixedPoint)},
         {WIC_PIXEL_FORMAT(96bppRGBFixedPoint)},
         {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
-        {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 33},
+        {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 32},
         {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 33},
 
@@ -2442,6 +2454,7 @@ START_TEST(converter)
     test_conversion(&testdata_48bppRGB, &testdata_128bppRGBFloat, "48bppRGB -> 128bppRGBFloat", FALSE);
     test_conversion(&testdata_24bppBGR_2, &testdata_128bppRGBAFloat, "24bppBGR -> 128bppRGBAFloat", FALSE);
     test_conversion(&testdata_32bppBGRA_2, &testdata_128bppRGBAFloat_2, "32bppBGRA -> 128bppRGBAFloat", FALSE);
+    test_conversion(&testdata_64bppPRGBA_2, &testdata_128bppRGBAFloat_3, "64bppPRGBA -> 128bppRGBAFloat", FALSE);
     test_conversion(&testdata_96bppRGBFloat, &testdata_128bppRGBFloat, "96bppRGBFloat -> 128bppRGBFloat", FALSE);
     test_conversion(&testdata_96bppRGBFloat_2, &testdata_32bppBGRA_3, "96bppRGBFloat -> 32bppBGRA", FALSE);
     test_conversion(&testdata_128bppRGBAFloat_2, &testdata_32bppBGRA_2, "128bppRGBAFloat -> 32bppBGRA", FALSE);

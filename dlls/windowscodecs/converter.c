@@ -2396,6 +2396,61 @@ static HRESULT copypixels_to_128bppRGBAFloat(struct FormatConverter *This, const
         free(srcdata);
         return hr;
     }
+    case format_64bppPRGBA:
+    {
+        UINT srcstride, srcdatasize;
+        const WORD *srcpixel;
+        const BYTE *srcrow;
+        float *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 8 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = (WORD *)srcrow;
+                dstpixel= (float *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    float alpha = srcpixel[3];
+                    if (alpha != 0 && alpha != 255)
+                    {
+                        *dstpixel++ = from_sRGB_component(srcpixel[0] / alpha);
+                        *dstpixel++ = from_sRGB_component(srcpixel[1] / alpha);
+                        *dstpixel++ = from_sRGB_component(srcpixel[2] / alpha);
+                    }
+                    else
+                    {
+                        *dstpixel++ = from_sRGB_component(srcpixel[0] / 65535.0f);
+                        *dstpixel++ = from_sRGB_component(srcpixel[1] / 65535.0f);
+                        *dstpixel++ = from_sRGB_component(srcpixel[2] / 65535.0f);
+                    }
+                    *dstpixel++ = alpha / 65535.0f;
+
+                    srcpixel += 4;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+
+        free(srcdata);
+        return hr;
+    }
     default:
         FIXME("Unimplemented conversion path %d.\n", source_format);
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
