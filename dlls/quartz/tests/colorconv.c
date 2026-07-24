@@ -490,6 +490,49 @@ skip_test:
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
 }
 
+static void test_find_pin(void)
+{
+    IEnumPins *enum_pins;
+    IBaseFilter *filter;
+    IPin *pin, *pin2;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto skip_test;
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+skip_test:
+    IEnumPins_Release(enum_pins);
+    refcount = IBaseFilter_Release(filter);
+    ok(refcount == 0, "Got refcount %ld.\n", refcount);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
@@ -498,6 +541,7 @@ START_TEST(colorconv)
     test_interfaces();
     test_aggregation();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
