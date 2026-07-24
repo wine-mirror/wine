@@ -1134,8 +1134,43 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         }
     }
 
-    hr = surface_cpu_blt_plane(&dst_map, dst_format, dst_box,
-            &src_map, src_format, src_box, flags, fx, filter, same_sub_resource, src_texture);
+    if ((src_format->attrs & WINED3D_FORMAT_ATTR_PLANAR) != (dst_format->attrs & WINED3D_FORMAT_ATTR_PLANAR))
+    {
+        FIXME("Copy between mismatched planar formats %s and %s.\n",
+                debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
+    }
+    else if (src_format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        struct wined3d_map_desc src_uv_map, dst_uv_map;
+        struct wined3d_box src_uv_box, dst_uv_box;
+
+        hr = surface_cpu_blt_plane(&dst_map, dst_format->plane_formats[0], dst_box,
+                &src_map, src_format->plane_formats[0], src_box, flags, fx, filter, same_sub_resource, src_texture);
+
+        src_uv_map = src_map;
+        src_uv_map.data = (uint8_t *)src_map.data + src_map.slice_pitch;
+        src_uv_box = *src_box;
+        src_uv_box.left /= src_format->uv_width;
+        src_uv_box.right /= src_format->uv_width;
+        src_uv_box.top /= src_format->uv_height;
+        src_uv_box.bottom /= src_format->uv_height;
+
+        dst_uv_map = dst_map;
+        dst_uv_map.data = (uint8_t *)dst_map.data + dst_map.slice_pitch;
+        dst_uv_box = *dst_box;
+        dst_uv_box.left /= dst_format->uv_width;
+        dst_uv_box.right /= dst_format->uv_width;
+        dst_uv_box.top /= dst_format->uv_height;
+        dst_uv_box.bottom /= dst_format->uv_height;
+
+        hr = surface_cpu_blt_plane(&dst_uv_map, dst_format->plane_formats[1], &dst_uv_box,
+                &src_uv_map, src_format->plane_formats[1], &src_uv_box, flags, fx, filter, same_sub_resource, src_texture);
+    }
+    else
+    {
+        hr = surface_cpu_blt_plane(&dst_map, dst_format, dst_box,
+                &src_map, src_format, src_box, flags, fx, filter, same_sub_resource, src_texture);
+    }
 
     if (upload && hr == WINED3D_OK)
     {
