@@ -957,6 +957,36 @@ static bool find_unused_slot(struct wined3d_decoder_vk *decoder_vk, unsigned int
     return false;
 }
 
+static bool wined3d_decoder_vk_prepare_image(struct wined3d_decoder_vk *decoder_vk,
+        struct wined3d_context_vk *context_vk, struct wined3d_decoder_image_vk *image)
+{
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+    if (image->output_view)
+        return true;
+
+    if (!decoder_vk->distinct_dpb)
+        usage |= VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR;
+
+    if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, usage,
+            VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR, &image->output_image, &image->output_view))
+        return false;
+
+    if (decoder_vk->distinct_dpb)
+    {
+        if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR,
+                VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR, &image->dpb_image, &image->dpb_view))
+            return false;
+        wined3d_context_vk_reference_image(context_vk, &image->dpb_image);
+    }
+    else
+    {
+        image->dpb_view = image->output_view;
+    }
+
+    return true;
+}
+
 static void wined3d_decoder_vk_blit_output(struct wined3d_decoder_vk *decoder_vk, struct wined3d_context_vk *context_vk,
         struct wined3d_decoder_output_view_vk *output_view_vk, unsigned int slot_index)
 {
@@ -1149,29 +1179,8 @@ static void wined3d_decoder_vk_decode_h264(struct wined3d_decoder_vk *decoder_vk
 
     image->dxva_index = h264_params->CurrPic.Index7Bits;
 
-    if (!image->output_view)
-    {
-        VkImageUsageFlags usage = VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    wined3d_decoder_vk_prepare_image(decoder_vk, context_vk, image);
 
-        if (!decoder_vk->distinct_dpb)
-            usage |= VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR;
-
-        if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, usage,
-                VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR, &image->output_image, &image->output_view))
-            goto out;
-
-        if (decoder_vk->distinct_dpb)
-        {
-            if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR,
-                    VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR, &image->dpb_image, &image->dpb_view))
-                goto out;
-            wined3d_context_vk_reference_image(context_vk, &image->dpb_image);
-        }
-        else
-        {
-            image->dpb_view = image->output_view;
-        }
-    }
     if (decoder_vk->layered_dpb)
         wined3d_context_vk_reference_image(context_vk, &decoder_vk->layered_output_image);
     else
