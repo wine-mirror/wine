@@ -473,6 +473,57 @@ out:
     context_release(&context_vk->c);
 }
 
+static void wined3d_decoder_vk_create_layered_image(struct wined3d_decoder_vk *decoder_vk)
+{
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_vk->d.device);
+    struct wined3d_context_vk *context_vk = &device_vk->context_vk;
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    const struct wined3d_format_vk *output_format;
+
+    output_format = wined3d_format_vk(wined3d_get_format(device_vk->d.adapter, decoder_vk->d.desc.output_format, 0));
+
+    if (!decoder_vk->distinct_dpb)
+        usage |= VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR;
+
+    if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, usage,
+            VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR, &decoder_vk->layered_output_image, NULL))
+        return;
+
+    if (decoder_vk->distinct_dpb && !wined3d_decoder_vk_create_image(decoder_vk,
+            context_vk, VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR,
+            VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR, &decoder_vk->layered_dpb_image, NULL))
+        return;
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(decoder_vk->images); ++i)
+    {
+        VkImageViewCreateInfo view_desc = {.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+        struct wined3d_decoder_image_vk *image = &decoder_vk->images[i];
+        VkResult vr;
+
+        view_desc.image = decoder_vk->layered_output_image.vk_image;
+        view_desc.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        view_desc.format = output_format->vk_format;
+        view_desc.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        view_desc.subresourceRange.baseArrayLayer = i;
+        view_desc.subresourceRange.layerCount = 1;
+        view_desc.subresourceRange.levelCount = 1;
+        if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &image->output_view))))
+            ERR("Failed to create image view, vr %s.\n", wined3d_debug_vkresult(vr));
+
+        if (decoder_vk->distinct_dpb)
+        {
+            view_desc.image = decoder_vk->layered_dpb_image.vk_image;
+            if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &image->dpb_view))))
+                ERR("Failed to create image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        }
+        else
+        {
+            image->dpb_view = image->output_view;
+        }
+    }
+}
+
 static void wined3d_decoder_vk_cs_init(void *object)
 {
     VkVideoDecodeH264CapabilitiesKHR h264_caps = {.sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_CAPABILITIES_KHR};
@@ -539,49 +590,7 @@ static void wined3d_decoder_vk_cs_init(void *object)
     bind_video_session_memory(decoder_vk);
 
     if (decoder_vk->layered_dpb)
-    {
-        VkImageUsageFlags usage = VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        struct wined3d_context_vk *context_vk = &device_vk->context_vk;
-
-        if (!decoder_vk->distinct_dpb)
-            usage |= VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR;
-
-        if (!wined3d_decoder_vk_create_image(decoder_vk, context_vk, usage,
-                VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR, &decoder_vk->layered_output_image, NULL))
-            return;
-
-        if (decoder_vk->distinct_dpb && !wined3d_decoder_vk_create_image(decoder_vk,
-                context_vk, VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR,
-                VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR, &decoder_vk->layered_dpb_image, NULL))
-            return;
-
-        for (unsigned int i = 0; i < ARRAY_SIZE(decoder_vk->images); ++i)
-        {
-            VkImageViewCreateInfo view_desc = {.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-            struct wined3d_decoder_image_vk *image = &decoder_vk->images[i];
-
-            view_desc.image = decoder_vk->layered_output_image.vk_image;
-            view_desc.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            view_desc.format = output_format->vk_format;
-            view_desc.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            view_desc.subresourceRange.baseArrayLayer = i;
-            view_desc.subresourceRange.layerCount = 1;
-            view_desc.subresourceRange.levelCount = 1;
-            if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &image->output_view))))
-                ERR("Failed to create image view, vr %s.\n", wined3d_debug_vkresult(vr));
-
-            if (decoder_vk->distinct_dpb)
-            {
-                view_desc.image = decoder_vk->layered_dpb_image.vk_image;
-                if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &image->dpb_view))))
-                    ERR("Failed to create image view, vr %s.\n", wined3d_debug_vkresult(vr));
-            }
-            else
-            {
-                image->dpb_view = image->output_view;
-            }
-        }
-    }
+        wined3d_decoder_vk_create_layered_image(decoder_vk);
 }
 
 static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
