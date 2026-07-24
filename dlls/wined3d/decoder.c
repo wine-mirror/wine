@@ -280,22 +280,8 @@ static void wined3d_decoder_vk_get_profiles(struct wined3d_adapter *adapter, uns
     }
 }
 
-static void wined3d_decoder_vk_destroy_object(void *object)
+static void wined3d_decoder_vk_destroy_images(struct wined3d_decoder_vk *decoder_vk, struct wined3d_context_vk *context_vk)
 {
-    struct wined3d_decoder_vk *decoder_vk = object;
-    struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_vk->d.device);
-    struct wined3d_vk_info *vk_info = &device_vk->vk_info;
-    struct wined3d_context_vk *context_vk;
-
-    TRACE("decoder_vk %p.\n", decoder_vk);
-
-    context_vk = wined3d_context_vk(context_acquire(decoder_vk->d.device, NULL, 0));
-
-    if (decoder_vk->session_memory)
-        wined3d_context_vk_free_memory(context_vk, decoder_vk->session_memory);
-    else
-        VK_CALL(vkFreeMemory(device_vk->vk_device, decoder_vk->vk_session_memory, NULL));
-
     for (unsigned int i = 0; i < ARRAY_SIZE(decoder_vk->images); ++i)
     {
         struct wined3d_decoder_image_vk *image = &decoder_vk->images[i];
@@ -330,9 +316,26 @@ static void wined3d_decoder_vk_destroy_object(void *object)
                 wined3d_context_vk_destroy_image(context_vk, &image->dpb_image);
         }
     }
+}
 
+static void wined3d_decoder_vk_destroy_object(void *object)
+{
+    struct wined3d_decoder_vk *decoder_vk = object;
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_vk->d.device);
+    struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    struct wined3d_context_vk *context_vk;
+
+    TRACE("decoder_vk %p.\n", decoder_vk);
+
+    context_vk = wined3d_context_vk(context_acquire(decoder_vk->d.device, NULL, 0));
+
+    if (decoder_vk->session_memory)
+        wined3d_context_vk_free_memory(context_vk, decoder_vk->session_memory);
+    else
+        VK_CALL(vkFreeMemory(device_vk->vk_device, decoder_vk->vk_session_memory, NULL));
+
+    wined3d_decoder_vk_destroy_images(decoder_vk, context_vk);
     wined3d_context_vk_destroy_vk_video_session(context_vk, decoder_vk->vk_session, decoder_vk->command_buffer_id);
-
     free(decoder_vk);
 }
 
