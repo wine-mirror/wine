@@ -36483,17 +36483,17 @@ static void test_nv12(void)
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
     {
         /* I need only two uints in the cbuffer, but the size must be a multiple of 16. */
-        ID3D11Texture2D *texture, *texture2, *check_texture, *staging_texture;
+        ID3D11Texture2D *texture, *texture2, *check_texture, *staging_texture, *staging_texture2;
         unsigned int i, j, image_size, broken_warp_pitch;
         D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {0};
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {0};
         D3D11_SUBRESOURCE_DATA subresource_data = {0};
         D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {0};
+        D3D11_MAPPED_SUBRESOURCE map_desc, map_desc2;
         char *content, *content2, *copy_source;
         ID3D11UnorderedAccessView *check_uav;
         ID3D11RenderTargetView *rtv1, *rtv2;
         ID3D11ShaderResourceView *srvs[2];
-        D3D11_MAPPED_SUBRESOURCE map_desc;
         D3D11_TEXTURE2D_DESC desc = {0};
         struct resource_readback rb;
         uint32_t cbuffer_data[4];
@@ -36716,13 +36716,15 @@ static void test_nv12(void)
         check_readback_data_u8_with_buffer(&rb, content, width, 0);
         release_resource_readback(&rb);
 
-        /* Staging upload, GPU blit, and staging download tests. */
+        /* Staging upload, GPU blit, staging download, and CPU blit tests. */
         desc.Height = height;
         desc.Format = DXGI_FORMAT_NV12;
         desc.BindFlags = 0;
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
         desc.Usage = D3D11_USAGE_STAGING;
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &staging_texture);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &staging_texture2);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
@@ -36781,6 +36783,7 @@ static void test_nv12(void)
 
         ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture2, (ID3D11Resource *)staging_texture);
         ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture, (ID3D11Resource *)texture2);
+        ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)staging_texture2, (ID3D11Resource *)staging_texture);
 
         hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
                 D3D11_MAP_WRITE, 0, &map_desc);
@@ -36805,6 +36808,8 @@ static void test_nv12(void)
         ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture2, (ID3D11Resource *)staging_texture);
         ID3D11DeviceContext_CopySubresourceRegion(device_context, (ID3D11Resource *)texture, 0,
                 copy_x, copy_y, 0, (ID3D11Resource *)texture2, 0, &box);
+        ID3D11DeviceContext_CopySubresourceRegion(device_context, (ID3D11Resource *)staging_texture2, 0,
+                copy_x, copy_y, 0, (ID3D11Resource *)staging_texture, 0, &box);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(device_context, check_uav, clear_values);
         ID3D11DeviceContext_CSSetShader(device_context, cs, NULL, 0);
@@ -36822,13 +36827,22 @@ static void test_nv12(void)
         hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
                 D3D11_MAP_READ, 0, &map_desc);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture2, 0,
+                D3D11_MAP_READ, 0, &map_desc2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         for (i = 0; i < height; ++i)
         {
             for (j = 0; j < width; ++j)
             {
+                /* GPU blit... */
                 uint8_t value = ((uint8_t *)map_desc.pData)[i * map_desc.RowPitch + j];
                 uint8_t expect = content2[i * width + j];
+                ok(value == expect, "Got Y %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+                /* ...and CPU blit. */
+                value = ((uint8_t *)map_desc2.pData)[i * map_desc2.RowPitch + j];
                 ok(value == expect, "Got Y %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
                 if (value != expect)
                     goto fail_match;
@@ -36839,13 +36853,26 @@ static void test_nv12(void)
         {
             for (j = 0; j < width / 2; ++j)
             {
+                /* GPU blit... */
                 uint8_t value = ((uint8_t *)map_desc.pData)[map_desc.RowPitch * (height + i) + j * 2];
                 uint8_t expect = content2[width * (height + i) + j * 2];
                 ok(value == expect, "Got U %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
                 if (value != expect)
                     goto fail_match;
+                /* ...and CPU blit. */
+                value = ((uint8_t *)map_desc2.pData)[map_desc2.RowPitch * (height + i) + j * 2];
+                ok(value == expect, "Got U %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+
+                /* Now the V, GPU blit... */
                 value = ((uint8_t *)map_desc.pData)[map_desc.RowPitch * (height + i) + j * 2 + 1];
                 expect = content2[width * (height + i) + j * 2 + 1];
+                ok(value == expect, "Got V %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+                /* ...and CPU blit. */
+                value = ((uint8_t *)map_desc.pData)[map_desc.RowPitch * (height + i) + j * 2 + 1];
                 ok(value == expect, "Got V %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
                 if (value != expect)
                     goto fail_match;
@@ -36854,6 +36881,7 @@ static void test_nv12(void)
 
 fail_match:
         ID3D11DeviceContext_Unmap(device_context, (ID3D11Resource *)staging_texture, 0);
+        ID3D11DeviceContext_Unmap(device_context, (ID3D11Resource *)staging_texture2, 0);
 
         ID3D11RenderTargetView_Release(rtv2);
         ID3D11RenderTargetView_Release(rtv1);
@@ -36861,6 +36889,7 @@ fail_match:
         ID3D11UnorderedAccessView_Release(check_uav);
         ID3D11ShaderResourceView_Release(srvs[1]);
         ID3D11ShaderResourceView_Release(srvs[0]);
+        ID3D11Texture2D_Release(staging_texture2);
         ID3D11Texture2D_Release(staging_texture);
         ID3D11Texture2D_Release(check_texture);
         ID3D11Texture2D_Release(texture2);
