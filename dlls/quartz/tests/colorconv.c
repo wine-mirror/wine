@@ -361,6 +361,135 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
 }
 
+static void test_enum_pins(void)
+{
+    IEnumPins *enum1, *enum2;
+    ULONG count, refcount;
+    IBaseFilter *filter;
+    IPin *pins[4];
+    HRESULT hr;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    refcount = get_refcount(filter);
+    ok(refcount == 1, "Got refcount %ld.\n", refcount);
+
+    hr = IBaseFilter_EnumPins(filter, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    refcount = get_refcount(filter);
+    ok(refcount == 2, "Got refcount %ld.\n", refcount);
+    refcount = get_refcount(enum1);
+    ok(refcount == 1, "Got refcount %ld.\n", refcount);
+
+    hr = IEnumPins_Next(enum1, 1, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto skip_test;
+
+    refcount = get_refcount(filter);
+    ok(refcount == 3, "Got refcount %ld.\n", refcount);
+    refcount = get_refcount(pins[0]);
+    ok(refcount == 3, "Got refcount %ld.\n", refcount);
+    refcount = get_refcount(enum1);
+    ok(refcount == 1, "Got refcount %ld.\n", refcount);
+    IPin_Release(pins[0]);
+    refcount = get_refcount(filter);
+    ok(refcount == 2, "Got refcount %ld.\n", refcount);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    refcount = get_refcount(filter);
+    ok(refcount == 3, "Got refcount %ld.\n", refcount);
+    refcount = get_refcount(pins[0]);
+    ok(refcount == 3, "Got refcount %ld.\n", refcount);
+    refcount = get_refcount(enum1);
+    ok(refcount == 1, "Got refcount %ld.\n", refcount);
+    IPin_Release(pins[0]);
+    refcount = get_refcount(filter);
+    ok(refcount == 2, "Got refcount %ld.\n", refcount);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(!count, "Got count %lu.\n", count);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 3, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+    IPin_Release(pins[1]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 4, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(count == 2, "Got count %lu.\n", count);
+    IPin_Release(pins[0]);
+    IPin_Release(pins[1]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 4);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IPin_Release(pins[0]);
+
+    IEnumPins_Release(enum2);
+
+skip_test:
+    IEnumPins_Release(enum1);
+    refcount = IBaseFilter_Release(filter);
+    ok(refcount == 0, "Got refcount %ld.\n", refcount);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
@@ -368,6 +497,7 @@ START_TEST(colorconv)
     test_registration();
     test_interfaces();
     test_aggregation();
+    test_enum_pins();
 
     CoUninitialize();
 }
