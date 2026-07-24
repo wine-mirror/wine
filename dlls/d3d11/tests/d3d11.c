@@ -36927,6 +36927,7 @@ static void test_h264_decoder(void)
     D3D11_VIDEO_DECODER_CONFIG config = {0};
     D3D11_TEXTURE2D_DESC texture_desc = {0};
     struct d3d11_test_context test_context;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
     DXVA_Slice_H264_Short *h264_slice;
     ID3D11VideoContext *video_context;
     DXVA_PicParams_H264 *h264_params;
@@ -36944,6 +36945,7 @@ static void test_h264_decoder(void)
 
     DXVA_PicParams_H264 h264_params_template =
     {
+        /* 320x240, the actual size of the frame. */
         .wFrameWidthInMbsMinus1 = 19,
         .wFrameHeightInMbsMinus1 = 14,
         .num_ref_frames = 4,
@@ -36993,9 +36995,11 @@ static void test_h264_decoder(void)
             &IID_ID3D11VideoContext, (void **)&video_context);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    /* The video is 320x240, but we create 480x320 here. Native will happily
+     * just copy this into the top left area. */
     desc.Guid = DXVA_ModeH264_VLD_NoFGT;
-    desc.SampleWidth = 320;
-    desc.SampleHeight = 240;
+    desc.SampleWidth = 480;
+    desc.SampleHeight = 320;
     desc.OutputFormat = DXGI_FORMAT_NV12;
 
     hr = ID3D11VideoDevice_GetVideoDecoderConfigCount(video_device, &desc, &count);
@@ -37073,8 +37077,8 @@ static void test_h264_decoder(void)
     }
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    texture_desc.Width = 320;
-    texture_desc.Height = 240;
+    texture_desc.Width = 480;
+    texture_desc.Height = 320;
     texture_desc.MipLevels = 1;
     texture_desc.ArraySize = ARRAY_SIZE(output_views);
     texture_desc.Format = DXGI_FORMAT_NV12;
@@ -37085,8 +37089,28 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     texture_desc.ArraySize = 1;
     texture_desc.BindFlags = 0;
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
     hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, NULL, &readback_texture);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Fill the output texture with initial data to test whether parts outside
+     * the image size are modified. */
+
+    hr = ID3D11DeviceContext_Map(test_context.immediate_context,
+            (ID3D11Resource *)readback_texture, 0, D3D11_MAP_WRITE, 0, &map_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    /* Y plane */
+    for (unsigned int y = 0; y < texture_desc.Height; ++y)
+        memset((char *)map_desc.pData + y * map_desc.RowPitch, 123, texture_desc.Width);
+    /* UV plane */
+    for (unsigned int y = 0; y < texture_desc.Height / 2; ++y)
+        memset((char *)map_desc.pData + (texture_desc.Height + y) * map_desc.RowPitch, 45, texture_desc.Width);
+    ID3D11DeviceContext_Unmap(test_context.immediate_context, (ID3D11Resource *)readback_texture, 0);
+    ID3D11DeviceContext_CopySubresourceRegion(test_context.immediate_context,
+            (ID3D11Resource *)output_texture, 0, 0, 0, 0, (ID3D11Resource *)readback_texture, 0, NULL);
+    ID3D11DeviceContext_CopySubresourceRegion(test_context.immediate_context,
+            (ID3D11Resource *)output_texture, 1, 0, 0, 0, (ID3D11Resource *)readback_texture, 0, NULL);
 
     for (unsigned int i = 0; i < ARRAY_SIZE(output_views); ++i)
     {
@@ -37303,6 +37327,12 @@ static void test_h264_decoder(void)
     get_readback_nv12(&rb, 176, 136, &colour);
     ok(colour.y == 41 && colour.u == 240 && colour.v == 110,
             "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    /* Of course NVidia and AMD don't agree on what's done to areas outside of
+     * the picture. NVidia fills them with black; AMD leaves them alone. */
+    get_readback_nv12(&rb, 320, 240, &colour);
+    ok((colour.y == 16 && colour.u == 128 && colour.v == 128)
+            || (colour.y == 123 && colour.u == 45 && colour.v == 45),
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
     release_resource_readback(&rb);
 
     ID3D11DeviceContext_CopySubresourceRegion(test_context.immediate_context,
@@ -37313,6 +37343,10 @@ static void test_h264_decoder(void)
             "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
     get_readback_nv12(&rb, 176, 136, &colour);
     ok(colour.y == 49 && colour.u == 109 && colour.v == 184,
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    get_readback_nv12(&rb, 320, 240, &colour);
+    ok((colour.y == 16 && colour.u == 128 && colour.v == 128)
+            || (colour.y == 123 && colour.u == 45 && colour.v == 45),
             "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
     release_resource_readback(&rb);
 

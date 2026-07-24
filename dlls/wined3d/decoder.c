@@ -34,6 +34,13 @@ struct wined3d_decoder
     unsigned int feedback_number;
     uint8_t feedback_pic_entry;
     bool feedback_field;
+
+    /* The dimensions of the actual images can change mid-stream, and need not
+     * match the dimensions of the output textures or the dimensions the
+     * decoder was initialized with.
+     * These describe the dimensions of the most recent image decoded.
+     * Accessed only from the CS thread. */
+    unsigned int width, height;
 };
 
 static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
@@ -89,6 +96,8 @@ static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
     decoder->ref = 1;
     decoder->device = device;
     decoder->desc = *desc;
+    decoder->width = desc->width;
+    decoder->height = desc->height;
     wined3d_lock_init(&decoder->feedback_cs, "wined3d_decoder.feedback_cs");
 
     buffer_desc.byte_width = sizeof(DXVA_PicParams_H264);
@@ -290,11 +299,13 @@ static void wined3d_decoder_vk_destroy_images(struct wined3d_decoder_vk *decoder
         {
             wined3d_context_vk_destroy_image(context_vk, &image->output_image);
             wined3d_context_vk_destroy_vk_image_view(context_vk, image->output_view, decoder_vk->command_buffer_id);
+            image->output_view = VK_NULL_HANDLE;
         }
         if (decoder_vk->distinct_dpb && image->dpb_view)
         {
             wined3d_context_vk_destroy_image(context_vk, &image->dpb_image);
             wined3d_context_vk_destroy_vk_image_view(context_vk, image->dpb_view, decoder_vk->command_buffer_id);
+            image->dpb_view = VK_NULL_HANDLE;
         }
     }
 
@@ -371,7 +382,7 @@ static bool wined3d_decoder_vk_create_image(struct wined3d_decoder_vk *decoder_v
     fill_vk_profile_info(&profile, &decoder_vk->d.desc.codec, decoder_vk->d.desc.output_format);
 
     if (!wined3d_context_vk_create_image(context_vk, VK_IMAGE_TYPE_2D, usage, vk_format,
-            decoder_vk->d.desc.width, decoder_vk->d.desc.height, 1, 1, 1, layer_count, 0, &profile_list, image))
+            decoder_vk->d.width, decoder_vk->d.height, 1, 1, 1, layer_count, 0, &profile_list, image))
     {
         ERR("Failed to create output image.\n");
         return false;
@@ -930,8 +941,8 @@ static void init_h264_reference_info(VkVideoReferenceSlotInfoKHR *reference_slot
     reference_slot->pPictureResource = &info->picture_info;
 
     info->picture_info.sType = VK_STRUCTURE_TYPE_VIDEO_PICTURE_RESOURCE_INFO_KHR;
-    info->picture_info.codedExtent.width = decoder_vk->d.desc.width;
-    info->picture_info.codedExtent.height = decoder_vk->d.desc.height;
+    info->picture_info.codedExtent.width = decoder_vk->d.width;
+    info->picture_info.codedExtent.height = decoder_vk->d.height;
     info->picture_info.baseArrayLayer = 0;
     info->picture_info.imageViewBinding = decoder_vk->images[slot_index].dpb_view;
 
@@ -970,9 +981,20 @@ static bool find_unused_slot(struct wined3d_decoder_vk *decoder_vk, unsigned int
 }
 
 static bool wined3d_decoder_vk_prepare_image(struct wined3d_decoder_vk *decoder_vk,
-        struct wined3d_context_vk *context_vk, struct wined3d_decoder_image_vk *image)
+        struct wined3d_context_vk *context_vk, unsigned int width, unsigned int height,
+        struct wined3d_decoder_image_vk *image)
 {
     VkImageUsageFlags usage = VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+    if (width != decoder_vk->d.width || height != decoder_vk->d.height)
+    {
+        TRACE("Dynamic resize from %ux%u to %ux%u.\n", decoder_vk->d.width, decoder_vk->d.height, width, height);
+        wined3d_decoder_vk_destroy_images(decoder_vk, context_vk);
+        decoder_vk->d.width = width;
+        decoder_vk->d.height = height;
+        if (decoder_vk->layered_dpb)
+            wined3d_decoder_vk_create_layered_image(decoder_vk);
+    }
 
     if (image->output_view)
         return true;
@@ -1021,8 +1043,8 @@ static void wined3d_decoder_vk_blit_output(struct wined3d_decoder_vk *decoder_vk
     regions[0].dstSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT;
     regions[0].dstSubresource.baseArrayLayer = output_view_vk->v.desc.u.texture.layer_idx;
     regions[0].dstSubresource.layerCount = 1;
-    regions[0].extent.width = texture_vk->t.resource.width;
-    regions[0].extent.height = texture_vk->t.resource.height;
+    regions[0].extent.width = decoder_vk->d.width;
+    regions[0].extent.height = decoder_vk->d.height;
     regions[0].extent.depth = 1;
 
     if (decoder_vk->layered_dpb)
@@ -1191,7 +1213,9 @@ static void wined3d_decoder_vk_decode_h264(struct wined3d_decoder_vk *decoder_vk
 
     image->dxva_index = h264_params->CurrPic.Index7Bits;
 
-    wined3d_decoder_vk_prepare_image(decoder_vk, context_vk, image);
+    wined3d_decoder_vk_prepare_image(decoder_vk, context_vk,
+            (h264_params->wFrameWidthInMbsMinus1 + 1) * 16,
+            (h264_params->wFrameHeightInMbsMinus1 + 1) * 16, image);
 
     if (decoder_vk->layered_dpb)
         wined3d_context_vk_reference_image(context_vk, &decoder_vk->layered_output_image);
@@ -1234,6 +1258,8 @@ static void wined3d_decoder_vk_decode_h264(struct wined3d_decoder_vk *decoder_vk
     decode_info->pReferenceSlots = reference_slots;
     decode_info->referenceSlotCount = slot_count;
     decode_info->dstPictureResource.imageViewBinding = image->output_view;
+    decode_info->dstPictureResource.codedExtent.width = decoder_vk->d.width;
+    decode_info->dstPictureResource.codedExtent.height = decoder_vk->d.height;
 
     h264_picture.flags.field_pic_flag = h264_params->field_pic_flag;
     /* ffmpeg treats these two as identical. */
@@ -1310,8 +1336,6 @@ static void wined3d_decoder_vk_decode(struct wined3d_context *context, struct wi
     decode_info.srcBufferOffset = bitstream_bo->b.buffer_offset;
     decode_info.srcBufferRange = align(bitstream_size, decoder_vk->bitstream_alignment);
     decode_info.dstPictureResource.sType = VK_STRUCTURE_TYPE_VIDEO_PICTURE_RESOURCE_INFO_KHR;
-    decode_info.dstPictureResource.codedExtent.width = decoder_vk->d.desc.width;
-    decode_info.dstPictureResource.codedExtent.height = decoder_vk->d.desc.height;
     decode_info.dstPictureResource.baseArrayLayer = 0;
 
     wined3d_decoder_vk_decode_h264(decoder_vk, context_vk, output_view_vk,
