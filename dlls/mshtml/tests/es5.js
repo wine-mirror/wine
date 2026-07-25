@@ -542,6 +542,26 @@ sync_test("identifier_keywords", function() {
     ok(tmp === true, "Expected exception for 'function var() { }'");
 });
 
+sync_test("member_expression_keywords", function() {
+    var O = { continue: 1, break: 2, return: 3, throw: 4 };
+    var x = {
+        label: O.continue
+    };
+    ok(x.label === 1, "x.label = " + x.label);
+    var y = {
+        label: O.break
+    };
+    ok(y.label === 2, "y.label = " + y.label);
+    var z = {
+        label: O.return
+    };
+    ok(z.label === 3, "z.label = " + z.label);
+    var w = {
+        label: O.throw
+    };
+    ok(w.label === 4, "w.label = " + w.label);
+});
+
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
                                  expected_configurable) {
     var desc = Object.getOwnPropertyDescriptor(obj, prop);
