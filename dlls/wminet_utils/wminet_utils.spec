@@ -36,7 +36,7 @@
 @ stdcall Initialize(long)
 @ stub Lock
 @ stub Next
-@ stub NextMethod
+@ stdcall NextMethod(long ptr long ptr ptr ptr)
 @ stub Put
 @ stub PutClassWmi
 @ stub PutInstanceWmi

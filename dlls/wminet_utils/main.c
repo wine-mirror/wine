@@ -135,3 +135,11 @@ HRESULT WINAPI BeginMethodEnumeration(int vFunc, IWbemClassObject *ptr, LONG lEn
 
     return IWbemClassObject_BeginMethodEnumeration(ptr, lEnumFlags);
 }
+
+HRESULT WINAPI NextMethod(int vFunc, IWbemClassObject *ptr, LONG lFlags, BSTR *pstrName,
+    IWbemClassObject **ppInSignature, IWbemClassObject **ppOutSignature)
+{
+    TRACE("%i %p, %lx, %p, %p, %p\n", vFunc, ptr, lFlags, pstrName, ppInSignature, ppOutSignature);
+
+    return IWbemClassObject_NextMethod(ptr, lFlags, pstrName, ppInSignature, ppOutSignature);
+}
