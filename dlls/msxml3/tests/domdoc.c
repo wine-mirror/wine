@@ -3044,6 +3044,11 @@ static void test_create(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(node == (void *)0x1, "Unexpected value %p.\n", node);
 
+    node = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("name"), _bstr_(""), &node);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(node == (void *)0x1, "Unexpected value %p.\n", node);
+
     /* NODE_COMMENT */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_COMMENT;
@@ -6668,6 +6673,25 @@ static void test_save(void)
     GlobalUnlock(global);
     IStream_Release(stream);
 
+    /* Using UTF-16 adds a BOM */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\" encoding=\"utf-16\"?><a/>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown *)stream;
+    hr = IXMLDOMDocument_save(doc, dest);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ptr = GlobalLock(global);
+    todo_wine
+    ok(!memcmp(ptr, "\xff\xfe<\x00", 4), "Unexpected content %s.\n", debugstr_an(ptr, 4));
+    GlobalUnlock(global);
+    IStream_Release(stream);
+
     /* loaded data without xml declaration */
     hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a/>"), &b);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -6682,7 +6706,7 @@ static void test_save(void)
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ptr = GlobalLock(global);
-    ok(ptr[0] == '<' && ptr[1] != '?', "got wrong start tag %c%c\n", ptr[0], ptr[1]);
+    ok(!memcmp(ptr, "<a", 2), "Unexpected content %s.\n", debugstr_an((char *)ptr, 4));
     GlobalUnlock(global);
     IStream_Release(stream);
 
@@ -18350,6 +18374,344 @@ static void test_element_setNamedItem(void)
     free_bstrs();
 }
 
+static void test_document_stream(void)
+{
+    IStream *stream, *stream2, *cloned_stream;
+    IPersistStreamInit *streaminit;
+    IUnknown *unk, *unk2;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *root;
+    ULARGE_INTEGER pos;
+    IXMLDOMNode *node;
+    LARGE_INTEGER off;
+    char buffer[64];
+    ULONG length;
+    STATSTG stat;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+
+    check_interface(stream, &IID_IUnknown, TRUE);
+    check_interface(stream, &IID_ISequentialStream, TRUE);
+    check_interface(stream, &IID_IStream, TRUE);
+    check_interface(stream, &IID_IXMLDOMDocument, FALSE);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_QueryInterface(stream, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(unk == unk2, "Unexpected instance.\n");
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+
+    hr = IStream_QueryInterface(stream, &IID_IStream, (void **)&stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stream == stream2, "Unexpected instance.\n");
+    IStream_Release(stream2);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stream != stream2, "Unexpected instance.\n");
+    IStream_Release(stream2);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void **)&streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IStream_Clone(stream, &cloned_stream);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!stat.pwcsName, "Unexpected name %s.\n", debugstr_w(stat.pwcsName));
+    ok(stat.type == STGTY_STREAM, "Unexpected type %#lx.\n", stat.type);
+    ok(!stat.cbSize.QuadPart, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a ></a  >"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stat.cbSize.QuadPart == 9, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!pos.QuadPart, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
+
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 4, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<a><", 4), "%s\n", debugstr_an(buffer, 4));
+
+    /* Tree modifications are not reflected in the stream content. */
+    V_VT(&v) = VT_I1;
+    V_I1(&v) = NODE_ELEMENT;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("e"), _bstr_(""), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &root);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_appendChild(root, node, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMElement_Release(root);
+    IXMLDOMNode_Release(node);
+
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<a><e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 4, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "/a>\r", 4), "%s\n", debugstr_an(buffer, 4));
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "\n", 1), "%s\n", debugstr_an(buffer, 1));
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 1, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %lu.\n", length);
+
+    off.QuadPart = 1;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 4, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "a></", 4), "%s\n", debugstr_an(buffer, 4));
+
+    /* InitNew */
+    hr = IPersistStreamInit_InitNew(streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 3, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "a>\r", 3), "%s\n", debugstr_an(buffer, 3));
+
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<a><e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Clear dirty state */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IPersistStreamInit_Save(streaminit, stream2, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!pos.QuadPart, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
+
+    hr = IPersistStreamInit_Save(streaminit, stream2, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!pos.QuadPart, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 7, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<a></a>", 7), "%s\n", debugstr_an(buffer, 7));
+
+    IStream_Release(stream2);
+
+    IStream_Release(stream);
+    IPersistStreamInit_Release(streaminit);
+    IXMLDOMDocument_Release(doc);
+
+    /* Writing */
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void **)&streaminit);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!stat.cbSize.QuadPart, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!pos.QuadPart, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    /* Releasing the stream triggers document parsing. */
+    hr = IStream_Write(stream, "<a>text</a>", 11, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IStream_Release(stream);
+    hr = IPersistStreamInit_IsDirty(streaminit);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<a>text</a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Write and parse with invalid content. First write drops existing document contents. */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<a>text</a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IStream_Write(stream, "====", 4, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IStream_Release(stream);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Seek after writing. */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Write(stream, "<b>", 3, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 1;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    length = 0xdead;
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 3, &length);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(length == 0xdead, "Unexpected length %lu.\n", length);
+    off.QuadPart = 1;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Write(stream, "<c>", 3, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Write(stream, "</c></b>", 8, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IStream_Release(stream);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<b><c></c></b>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Open two streams for writing. */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IStream_Write(stream, "<d></d>", 7, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Write(stream2, "<e></e>", 7, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IStream_Release(stream);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IStream_Release(stream2);
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<e></e>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* One stream for reading one for writing. */
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 9, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<e></e>\r\n", 9), "%s\n", debugstr_an(buffer, 3));
+
+    hr = IStream_Write(stream2, "<f></f>", 7, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IStream_Release(stream2);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<f></f>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 9, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<e></e>\r\n", 9), "%s\n", debugstr_an(buffer, 3));
+    off.QuadPart = 1;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 9, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "e></e>\r\n", 8), "%s\n", debugstr_an(buffer, 3));
+
+    IStream_Release(stream);
+    IPersistStreamInit_Release(streaminit);
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -18464,6 +18826,7 @@ START_TEST(domdoc)
     test_dtd_notation();
     test_dtd_entity();
     test_element_setNamedItem();
+    test_document_stream();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
