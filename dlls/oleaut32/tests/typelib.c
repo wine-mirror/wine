@@ -864,13 +864,10 @@ static void test_CreateDispTypeInfo(void)
 
     memset(&res, 0, sizeof(res));
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, DISPID_VALUE, DISPATCH_PROPERTYGET, &dp, &res, NULL, &argerr);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(V_VT(&res) == VT_I4, "Unexpected return type %d.\n", V_VT(&res));
     ok(V_I4(&res) == 1, "Unexpected value %ld.\n", V_I4(&res));
-}
+
     SysFreeString(methdata[0].szName);
     ITypeInfo_Release(pTypeInfo);
 }

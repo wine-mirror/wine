@@ -7686,7 +7686,10 @@ func_fail:
 
     /* not found, look for it in inherited interfaces */
     ITypeInfo2_GetTypeKind(iface, &type_kind);
-    if(type_kind == TKIND_INTERFACE || type_kind == TKIND_DISPATCH) {
+    if (type_kind == TKIND_INTERFACE
+            || type_kind == TKIND_DISPATCH
+            || type_kind == TKIND_COCLASS)
+    {
         if(This->impltypes) {
             /* recursive search */
             ITypeInfo *pTInfo;
