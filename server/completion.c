@@ -294,24 +294,21 @@ void add_completion( struct completion *completion, apc_param_t ckey, apc_param_
 DECL_HANDLER(create_completion)
 {
     struct completion *completion;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((completion = create_completion( root, name, objattr->attributes, req->concurrent, sd )))
+    if ((completion = create_completion( params.root, params.name, params.attr, req->concurrent, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, completion, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, completion, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, completion,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( completion );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a completion */

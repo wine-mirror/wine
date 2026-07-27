@@ -253,24 +253,21 @@ static void mutex_destroy( struct object *obj )
 DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((mutex = create_mutex( root, name, objattr->attributes, req->owned, sd )))
+    if ((mutex = create_mutex( params.root, params.name, params.attr, req->owned, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, mutex, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, mutex, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, mutex,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( mutex );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a mutex */

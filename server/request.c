@@ -141,51 +141,54 @@ void *set_reply_data_size( data_size_t size )
 static const struct object_attributes empty_attributes;
 
 /* return object attributes from the current request */
-const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
-                                                           struct unicode_str *name,
-                                                           struct object **root )
+bool get_req_object_attributes( struct object_params *params )
 {
     const struct object_attributes *attr = get_req_data();
     data_size_t size = get_req_data_size();
 
-    if (root) *root = NULL;
+    params->root = NULL;
+    params->sd   = NULL;
 
     if (!size)
     {
-        *sd = NULL;
-        name->len = 0;
-        return &empty_attributes;
+        params->name.len = 0;
+        params->attr     = 0;
+        params->objattr  = &empty_attributes;
+        return true;
     }
-
     if ((size < sizeof(*attr)) || (size - sizeof(*attr) < attr->sd_len) ||
         (size - sizeof(*attr) - attr->sd_len < attr->name_len))
     {
         set_error( STATUS_ACCESS_VIOLATION );
-        return NULL;
+        return false;
     }
     if (attr->sd_len && !sd_is_valid( (const struct security_descriptor *)(attr + 1), attr->sd_len ))
     {
         set_error( STATUS_INVALID_SECURITY_DESCR );
-        return NULL;
+        return false;
     }
     if ((attr->name_len & (sizeof(WCHAR) - 1)) || attr->name_len >= 65534)
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
-        return NULL;
+        return false;
     }
-    if (root && attr->rootdir && attr->name_len)
+    if (attr->rootdir && attr->name_len)
     {
-        if (!(*root = get_handle_obj( current->process, attr->rootdir, 0, NULL ))) return NULL;
+        if (!(params->root = get_handle_obj( current->process, attr->rootdir, 0, NULL ))) return false;
     }
-    *sd = attr->sd_len ? (const struct security_descriptor *)(attr + 1) : NULL;
-    name->len = attr->name_len;
-    name->str = (const WCHAR *)(attr + 1) + attr->sd_len / sizeof(WCHAR);
-    return attr;
+    if (attr->sd_len) params->sd = (const struct security_descriptor *)(attr + 1);
+
+    params->name.len = attr->name_len;
+    params->name.str = (const WCHAR *)(attr + 1) + attr->sd_len / sizeof(WCHAR);
+    params->attr     = attr->attributes;
+    params->objattr  = attr;
+    return true;
 }
 
 /* return a pointer to the request data following an object attributes structure */
-const void *get_req_data_after_objattr( const struct object_attributes *attr, data_size_t *len )
+const void *get_req_data_after_objattr( const struct object_params *params, data_size_t *len )
 {
+    const struct object_attributes *attr = params->objattr;
     data_size_t size = (sizeof(*attr) + (attr->sd_len & ~1) + (attr->name_len & ~1) + 3) & ~3;
 
     if (attr == &empty_attributes || size >= get_req_data_size())

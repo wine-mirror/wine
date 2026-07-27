@@ -214,24 +214,21 @@ static void timer_destroy( struct object *obj )
 DECL_HANDLER(create_timer)
 {
     struct timer *timer;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((timer = create_timer( root, name, objattr->attributes, req->manual, sd )))
+    if ((timer = create_timer( params.root, params.name, params.attr, req->manual, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, timer, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, timer,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( timer );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a timer */

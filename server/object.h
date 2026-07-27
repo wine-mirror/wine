@@ -66,6 +66,16 @@ struct type_descr
     unsigned int       handle_max;    /* max count of handles of this type */
 };
 
+/* parameters for named object creation */
+struct object_params
+{
+    struct object                    *root;       /* root directory */
+    struct unicode_str                name;       /* new object name */
+    unsigned int                      attr;       /* creation attributes */
+    const struct security_descriptor *sd;         /* pointer to sd data in the request */
+    const struct object_attributes   *objattr;    /* pointer to object attributes in the request */
+};
+
 /* operations valid on all objects */
 struct object_ops
 {

@@ -498,25 +498,22 @@ void init_directories( struct fd *intl_fd )
 /* create a directory object */
 DECL_HANDLER(create_directory)
 {
-    struct unicode_str name;
-    struct object *root;
     struct directory *dir;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((dir = create_directory( root, name, objattr->attributes, HASH_SIZE, sd )))
+    if ((dir = create_directory( params.root, params.name, params.attr, HASH_SIZE, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, dir, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, dir, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, dir,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( dir );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a directory object */

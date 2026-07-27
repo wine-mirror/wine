@@ -527,22 +527,20 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 DECL_HANDLER(create_debug_obj)
 {
     struct debug_obj *debug_obj;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
-    if ((debug_obj = create_debug_obj( root, name, objattr->attributes, req->flags, sd )))
+    if (!get_req_object_attributes( &params )) return;
+
+    if ((debug_obj = create_debug_obj( params.root, params.name, params.attr, req->flags, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, debug_obj, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, debug_obj, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, debug_obj,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( debug_obj );
     }
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* Wait for a debug event */

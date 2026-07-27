@@ -133,17 +133,16 @@ static struct alpc_port *alpc_create_port( struct object *root, struct unicode_s
 DECL_HANDLER(alpc_create_port)
 {
     struct alpc_port *alpc_port;
-    const struct security_descriptor *sd;
-    struct unicode_str name;
-    struct object *root;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if ((alpc_port = alpc_create_port( root, name, objattr->attributes, sd, CONNECTION_PORT,
-                                       req->flags, req->max_msg_len )))
+    if (!get_req_object_attributes( &params )) return;
+
+    if ((alpc_port = alpc_create_port( params.root, params.name, params.attr, params.sd,
+                                       CONNECTION_PORT, req->flags, req->max_msg_len )))
     {
-        reply->handle = alloc_handle( current->process, alpc_port, ALPC_PORT_ALL_ACCESS, objattr->attributes );
+        reply->handle = alloc_handle( current->process, alpc_port, ALPC_PORT_ALL_ACCESS, params.attr );
         release_object( alpc_port );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }

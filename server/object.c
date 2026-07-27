@@ -808,20 +808,17 @@ void reserve_obj_unbind( struct reserve *reserve )
 /* Allocate a reserve object for pre-allocating memory for object types */
 DECL_HANDLER(allocate_reserve_object)
 {
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
     struct reserve *reserve;
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((reserve = create_reserve( root, name, objattr->attributes, req->type, sd )))
+    if ((reserve = create_reserve( params.root, params.name, params.attr, req->type, params.sd )))
     {
         reply->handle = alloc_handle_no_access_check( current->process, reserve, GENERIC_READ | GENERIC_WRITE,
-                                                      objattr->attributes );
+                                                      params.attr );
         release_object( reserve );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }

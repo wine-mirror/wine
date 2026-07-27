@@ -335,25 +335,22 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
 DECL_HANDLER(create_event)
 {
     struct event *event;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((event = create_event( root, name, objattr->attributes,
-                               req->manual_reset, req->initial_state, sd )))
+    if ((event = create_event( params.root, params.name, params.attr,
+                               req->manual_reset, req->initial_state, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, event, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, event,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( event );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to an event */
@@ -413,23 +410,20 @@ DECL_HANDLER(query_event)
 DECL_HANDLER(create_keyed_event)
 {
     struct keyed_event *event;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((event = create_keyed_event( root, name, objattr->attributes, sd )))
+    if ((event = create_keyed_event( params.root, params.name, params.attr, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, event, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, event,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( event );
     }
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a keyed event */

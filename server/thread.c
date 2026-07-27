@@ -1618,9 +1618,7 @@ DECL_HANDLER(new_thread)
 {
     struct thread *thread;
     struct process *process;
-    struct unicode_str name;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
+    struct object_params params;
     int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
     if (!(process = get_process_from_handle( req->process, 0 )))
@@ -1656,7 +1654,14 @@ DECL_HANDLER(new_thread)
         goto done;
     }
 
-    if ((thread = create_thread( request_fd, process, sd )))
+    if (!get_req_object_attributes( &params ))
+    {
+        close( request_fd );
+        goto done;
+    }
+    if (params.root) release_object( params.root );  /* unused */
+
+    if ((thread = create_thread( request_fd, process, params.sd )))
     {
         thread->system_regs = current->system_regs;
         if (req->flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED) thread->suspend++;
@@ -1666,7 +1671,7 @@ DECL_HANDLER(new_thread)
         add_process_thread( process, thread );
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle_no_access_check( current->process, thread,
-                                                           req->access, objattr->attributes )))
+                                                           req->access, params.attr )))
         {
             /* thread object will be released when the thread gets killed */
             goto done;

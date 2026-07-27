@@ -1106,9 +1106,8 @@ DECL_HANDLER(new_process)
 {
     struct startup_info *info;
     const void *info_ptr;
-    struct unicode_str name, desktop_path = {0};
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
+    struct unicode_str desktop_path = {0};
+    struct object_params params;
     struct process *process = NULL;
     struct token *token = NULL;
     struct debug_obj *debug_obj = NULL;
@@ -1125,12 +1124,14 @@ DECL_HANDLER(new_process)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!objattr)
+    if (!get_req_object_attributes( &params ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         close( socket_fd );
         return;
     }
+    if (params.root) release_object( params.root );  /* unused */
+
     if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
     {
         set_error( STATUS_INVALID_HANDLE );
@@ -1183,7 +1184,7 @@ DECL_HANDLER(new_process)
         goto done;
     }
 
-    info_ptr = get_req_data_after_objattr( objattr, &info->data_size );
+    info_ptr = get_req_data_after_objattr( &params, &info->data_size );
 
     if ((req->handles_size & 3) || req->handles_size > info->data_size)
     {
@@ -1275,7 +1276,7 @@ DECL_HANDLER(new_process)
         goto done;
     }
 
-    if (!(process = create_process( socket_fd, parent, req->flags, info->data, sd,
+    if (!(process = create_process( socket_fd, parent, req->flags, info->data, params.sd,
                                     handles, req->handles_size / sizeof(*handles), token )))
         goto done;
 
@@ -1349,7 +1350,7 @@ DECL_HANDLER(new_process)
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
     reply->pid = get_process_id( process );
-    reply->handle = alloc_handle_no_access_check( current->process, process, req->access, objattr->attributes );
+    reply->handle = alloc_handle_no_access_check( current->process, process, req->access, params.attr );
 
  done:
     if (process) release_object( process );
@@ -1826,23 +1827,20 @@ DECL_HANDLER(grant_process_admin_token)
 DECL_HANDLER(create_job)
 {
     struct job *job;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((job = create_job_object( root, name, objattr->attributes, sd )))
+    if ((job = create_job_object( params.root, params.name, params.attr, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, job, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, job, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, job,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( job );
     }
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a job object */

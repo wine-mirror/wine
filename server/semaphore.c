@@ -217,24 +217,21 @@ static void semaphore_destroy( struct object *obj )
 DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((sem = create_semaphore( root, name, objattr->attributes, req->initial, req->max, sd )))
+    if ((sem = create_semaphore( params.root, params.name, params.attr, req->initial, req->max, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, sem, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, sem, req->access, params.attr );
         else
             reply->handle = alloc_handle_no_access_check( current->process, sem,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( sem );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a semaphore */

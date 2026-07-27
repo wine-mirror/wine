@@ -185,30 +185,28 @@ struct object *create_obj_symlink( struct object *root, struct unicode_str name,
 DECL_HANDLER(create_symlink)
 {
     struct object *symlink;
-    struct unicode_str name, target;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct unicode_str target;
+    struct object_params params;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    target.str = get_req_data_after_objattr( objattr, &target.len );
+    target.str = get_req_data_after_objattr( &params, &target.len );
     target.len = (target.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
-    if ((symlink = create_symlink( root, name, objattr->attributes, target, sd )))
+    if ((symlink = create_symlink( params.root, params.name, params.attr, target, params.sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         {
             clear_error();
-            reply->handle = alloc_handle( current->process, symlink, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, symlink, req->access, params.attr );
         }
         else
             reply->handle = alloc_handle_no_access_check( current->process, symlink,
-                                                          req->access, objattr->attributes );
+                                                          req->access, params.attr );
         release_object( symlink );
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
 }
 
 /* open a symbolic link object */
