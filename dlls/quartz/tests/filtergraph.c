@@ -7262,7 +7262,7 @@ static void test_implicit_fullscreen_support(void)
 
     hr = IVideoWindow_put_FullScreenMode(window, OATRUE);
     ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine check_renderer_calls(set_fullscreen_seq);
+    check_renderer_calls(set_fullscreen_seq);
     reset_renderer_calls();
 
     hr = IVideoWindow_put_FullScreenMode(window, OATRUE);
@@ -7445,7 +7445,7 @@ static void test_implicit_fullscreen_support(void)
     /* Restore from fullscreen mode. */
     hr = IVideoWindow_put_FullScreenMode(window, OAFALSE);
     ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine check_renderer_calls(restore_seq);
+    check_renderer_calls(restore_seq);
     reset_renderer_calls();
 
     hr = IVideoWindow_GetWindowPosition(window, &x, &y, &cx, &cy);

@@ -77,6 +77,19 @@ struct filter
     BOOL sorting;
 };
 
+struct emulated_fullscreen_state
+{
+    LONG auto_show;
+    LONG cursor_hidden;
+    LONG source_left, source_top, source_width, source_height;
+    LONG dest_left, dest_top, dest_width, dest_height;
+    BOOL using_default_source, using_default_dest;
+    LONG restore_left, restore_top, restore_width, restore_height;
+    LONG style, style_ex;
+    OAHWND owner;
+    OAHWND drain;
+};
+
 struct filter_graph
 {
     IUnknown IUnknown_inner;
@@ -148,6 +161,9 @@ struct filter_graph
     REFERENCE_TIME stream_start, stream_elapsed;
     REFERENCE_TIME stream_stop;
     LONGLONG current_pos;
+
+    OAHWND hwnd_drain;
+    struct emulated_fullscreen_state fs_state;
 
     unsigned int needs_async_run : 1;
     unsigned int threaded : 1;
@@ -4495,7 +4511,10 @@ static HRESULT WINAPI VideoWindow_put_MessageDrain(IVideoWindow *iface, OAHWND D
         hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
+    {
         hr = IVideoWindow_put_MessageDrain(pVideoWindow, Drain);
+        This->hwnd_drain = Drain;
+    }
 
     LeaveCriticalSection(&This->cs);
 
@@ -4603,6 +4622,143 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *
     return hr;
 }
 
+static void leave_fullscreen_mode(struct filter_graph *graph, IVideoWindow *window)
+{
+    struct emulated_fullscreen_state *s = &graph->fs_state;
+    IBasicVideo *video = NULL;
+
+    IVideoWindow_QueryInterface(window, &IID_IBasicVideo, (void **)&video);
+
+    IVideoWindow_SetWindowPosition(window, 0, 0, 0, 0);
+    IVideoWindow_put_WindowStyleEx(window, s->style_ex);
+    IVideoWindow_put_Visible(window, OAFALSE);
+    IVideoWindow_put_WindowStyle(window, s->style);
+    IVideoWindow_put_MessageDrain(window, s->drain);
+    if (!s->cursor_hidden)
+        IVideoWindow_HideCursor(window, OAFALSE);
+    if (video)
+    {
+        IBasicVideo_SetSourcePosition(video, s->source_left, s->source_top, s->source_width, s->source_height);
+        IBasicVideo_SetDestinationPosition(video, s->dest_left, s->dest_top, s->dest_width, s->dest_height);
+        if (s->using_default_source)
+            IBasicVideo_SetDefaultSourcePosition(video);
+        if (s->using_default_dest)
+            IBasicVideo_SetDefaultDestinationPosition(video);
+    }
+    IVideoWindow_put_Owner(window, s->owner);
+    IVideoWindow_SetWindowPosition(window, s->restore_left, s->restore_top, s->restore_width, s->restore_height);
+    IVideoWindow_put_WindowState(window, SW_SHOWNORMAL);
+}
+
+static void enter_fullscreen_mode(struct filter_graph *graph, IVideoWindow *window)
+{
+    unsigned int monitor_width, monitor_height, monitor_left, monitor_top;
+    unsigned int video_width, video_height, video_left, video_top;
+    struct emulated_fullscreen_state *s = &graph->fs_state;
+    MONITORINFO info = { .cbSize = sizeof(info) };
+    IEnumPins *enum_pins = NULL;
+    IBaseFilter *filter = NULL;
+    IBasicVideo *video = NULL;
+    IOverlay *overlay = NULL;
+    LONG width, height;
+    IPin *pin = NULL;
+    HWND hwnd = NULL;
+
+    IVideoWindow_QueryInterface(window, &IID_IBasicVideo, (void **)&video);
+    if (SUCCEEDED(IVideoWindow_QueryInterface(window, &IID_IBaseFilter, (void **)&filter))
+            && SUCCEEDED(IBaseFilter_EnumPins(filter, &enum_pins))
+            && IEnumPins_Next(enum_pins, 1, &pin, NULL) == S_OK)
+        IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    if (pin)
+        IPin_Release(pin);
+    if (enum_pins)
+        IEnumPins_Release(enum_pins);
+    if (filter)
+        IBaseFilter_Release(filter);
+
+    memset(s, 0, sizeof(*s));
+    IVideoWindow_get_AutoShow(window, &s->auto_show);
+    IVideoWindow_put_AutoShow(window, OAFALSE);
+    width = height = 0;
+    if (video)
+        IBasicVideo_GetVideoSize(video, &width, &height);
+    if (overlay)
+        IOverlay_GetWindowHandle(overlay, &hwnd);
+
+    if (hwnd && GetMonitorInfoW(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &info))
+    {
+        monitor_width = info.rcMonitor.right - info.rcMonitor.left;
+        monitor_height = info.rcMonitor.bottom - info.rcMonitor.top;
+        monitor_left = info.rcMonitor.left;
+        monitor_top = info.rcMonitor.top;
+    }
+    else
+    {
+        monitor_width = GetSystemMetrics(SM_CXSCREEN);
+        monitor_height = GetSystemMetrics(SM_CYSCREEN);
+        monitor_left = monitor_top = 0;
+    }
+    if (width && height)
+    {
+        if (monitor_width * height >= width * monitor_height)
+        {
+            video_height = monitor_height;
+            video_width = monitor_height * width / height;
+            video_top = 0;
+            video_left = (monitor_width - video_width) / 2;
+        }
+        else
+        {
+            video_width = monitor_width;
+            video_height = monitor_width * height / width;
+            video_left = 0;
+            video_top = (monitor_height - video_height) / 2;
+        }
+    }
+    else
+    {
+        video_left = video_top = 0;
+        video_width = monitor_width;
+        video_height = monitor_height;
+    }
+
+    /* As tests show GetMaxIdealImageSize is called on Windows but not clear yet what the result affects. */
+    IVideoWindow_GetMaxIdealImageSize(window, &width, &height);
+    IVideoWindow_put_AutoShow(window, OATRUE);
+    IVideoWindow_put_Visible(window, OAFALSE);
+    IVideoWindow_IsCursorHidden(window, &s->cursor_hidden);
+    if (!s->cursor_hidden)
+        IVideoWindow_HideCursor(window, OATRUE);
+    if (video)
+    {
+        IBasicVideo_GetSourcePosition(video, &s->source_left, &s->source_top, &s->source_width, &s->source_height);
+        IBasicVideo_GetDestinationPosition(video, &s->dest_left, &s->dest_top, &s->dest_width, &s->dest_height);
+        s->using_default_source = (IBasicVideo_IsUsingDefaultSource(video) == S_OK);
+        s->using_default_dest = (IBasicVideo_IsUsingDefaultDestination(video) == S_OK);
+        IBasicVideo_SetDefaultSourcePosition(video);
+        IBasicVideo_SetDestinationPosition(video, video_left, video_top, video_width, video_height);
+    }
+    IVideoWindow_GetRestorePosition(window, &s->restore_left, &s->restore_top, &s->restore_width, &s->restore_height);
+    IVideoWindow_get_WindowStyle(window, &s->style);
+    IVideoWindow_put_WindowStyle(window, WS_POPUP);
+    IVideoWindow_get_Owner(window, &s->owner);
+    IVideoWindow_put_Owner(window, 0);
+    if (overlay)
+        IOverlay_GetWindowHandle(overlay, &hwnd);
+    IVideoWindow_SetWindowPosition(window, monitor_left, monitor_top, monitor_width, monitor_height);
+    IVideoWindow_get_MessageDrain(window, &s->drain);
+    IVideoWindow_put_MessageDrain(window, graph->hwnd_drain);
+    IVideoWindow_put_Visible(window, OATRUE);
+    IVideoWindow_SetWindowForeground(window, OATRUE);
+    IVideoWindow_get_WindowStyleEx(window, &s->style_ex);
+    IVideoWindow_put_WindowStyleEx(window, WS_EX_TOPMOST);
+
+    if (video)
+        IBasicVideo_Release(video);
+    if (overlay)
+        IOverlay_Release(overlay);
+}
+
 static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG fullscreen)
 {
     struct filter_graph *This = impl_from_IVideoWindow(iface);
@@ -4622,13 +4778,13 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG f
     {
         if (This->in_emulated_fs_mode && !fullscreen)
         {
-            /* TODO: restore window from fullscreen.*/
+            leave_fullscreen_mode(This, video_window);
             hr = S_OK;
             This->in_emulated_fs_mode = FALSE;
         }
         else if (!This->in_emulated_fs_mode && fullscreen)
         {
-            /* TODO: setup fullscreen window.*/
+            enter_fullscreen_mode(This, video_window);
             hr = S_OK;
             This->in_emulated_fs_mode = TRUE;
         }
