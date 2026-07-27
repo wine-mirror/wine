@@ -108,8 +108,9 @@ static struct winstation *create_winstation( struct object *root, struct unicode
                                              unsigned int attr, unsigned int flags )
 {
     struct winstation *winstation;
+    struct object_params params = { .ops = &winstation_ops, .root = root, .name = name, .attr = attr };
 
-    if ((winstation = create_named_object( root, &winstation_ops, name, attr, NULL )))
+    if ((winstation = create_named_object( &params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -242,8 +243,10 @@ static struct desktop *create_desktop( struct unicode_str name, unsigned int att
                                        unsigned int flags, struct winstation *winstation )
 {
     struct desktop *desktop, *current_desktop;
+    struct object_params params = { .ops = &desktop_ops, .root = &winstation->obj,
+                                    .name = name, .attr = attr };
 
-    if ((desktop = create_named_object( &winstation->obj, &desktop_ops, name, attr, NULL )))
+    if ((desktop = create_named_object( &params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {

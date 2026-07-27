@@ -148,9 +148,8 @@ static const struct object_ops semaphore_ops =
     .destroy  = semaphore_destroy,
 };
 
-static struct semaphore *create_semaphore( struct object *root, struct unicode_str name,
-                                           unsigned int attr, unsigned int initial, unsigned int max,
-                                           const struct security_descriptor *sd )
+static struct semaphore *create_semaphore( const struct object_params *params,
+                                           unsigned int initial, unsigned int max )
 {
     struct semaphore *sem;
 
@@ -159,7 +158,7 @@ static struct semaphore *create_semaphore( struct object *root, struct unicode_s
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( root, &semaphore_ops, name, attr, sd )))
+    if ((sem = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -217,11 +216,11 @@ static void semaphore_destroy( struct object *obj )
 DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
-    struct object_params params;
+    struct object_params params = { .ops = &semaphore_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((sem = create_semaphore( params.root, params.name, params.attr, req->initial, req->max, params.sd )))
+    if ((sem = create_semaphore( &params, req->initial, req->max )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, sem, req->access, params.attr );

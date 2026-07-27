@@ -610,6 +610,7 @@ DECL_HANDLER(d3dkmt_share_objects)
     struct object_params params;
 
     if (!get_req_object_attributes( &params )) return;
+    params.attr |= OBJ_CASE_INSENSITIVE;
 
     if (req->resource)
     {
@@ -619,7 +620,8 @@ DECL_HANDLER(d3dkmt_share_objects)
         if (req->mutex && !(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) goto done;
         if (req->sync && !(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
-        if (!(shared = create_named_object( params.root, &dxgk_shared_resource_ops, params.name, params.attr | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        params.ops = &dxgk_shared_resource_ops;
+        if (!(shared = create_named_object( &params ))) goto done;
         shared->resource = grab_object( resource );
         if ((shared->mutex = mutex)) grab_object( mutex );
         if ((shared->sync = sync)) grab_object( sync );
@@ -632,7 +634,8 @@ DECL_HANDLER(d3dkmt_share_objects)
 
         if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
-        if (!(shared = create_named_object( params.root, &dxgk_shared_sync_ops, params.name, params.attr | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        params.ops = &dxgk_shared_sync_ops;
+        if (!(shared = create_named_object( &params ))) goto done;
         shared->sync = grab_object( sync );
         reply->handle = alloc_handle( current->process, shared, req->access, OBJ_INHERIT );
         release_object( shared );

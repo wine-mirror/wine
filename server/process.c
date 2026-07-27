@@ -186,12 +186,11 @@ static const struct object_ops job_ops =
     .destroy      = job_destroy,
 };
 
-static struct job *create_job_object( struct object *root, struct unicode_str name,
-                                      unsigned int attr, const struct security_descriptor *sd )
+static struct job *create_job_object( const struct object_params *params )
 {
     struct job *job;
 
-    if ((job = create_named_object( root, &job_ops, name, attr, sd )))
+    if ((job = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -1827,11 +1826,11 @@ DECL_HANDLER(grant_process_admin_token)
 DECL_HANDLER(create_job)
 {
     struct job *job;
-    struct object_params params;
+    struct object_params params = { .ops = &job_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((job = create_job_object( params.root, params.name, params.attr, params.sd )))
+    if ((job = create_job_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, job, req->access, params.attr );

@@ -400,21 +400,20 @@ failed:
     return NULL;
 }
 
-/* create an object as named child under the specified parent */
-void *create_named_object( struct object *parent, const struct object_ops *ops,
-                           struct unicode_str name, unsigned int attributes,
-                           const struct security_descriptor *sd )
+/* create an object as named child with the specified parameters */
+void *create_named_object( const struct object_params *params )
 {
     struct object *obj, *new_obj;
     struct unicode_str new_name;
 
     clear_error();
 
-    if (!name.len)
+    if (!params->name.len)
     {
-        if (!(new_obj = alloc_object( ops ))) return NULL;
-        if (sd && !default_set_sd( new_obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                   DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+        if (!(new_obj = alloc_object( params->ops ))) return NULL;
+        if (params->sd &&
+            !default_set_sd( new_obj, params->sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                                  DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
         {
             free_object( new_obj );
             return NULL;
@@ -422,29 +421,30 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
     }
     else
     {
-        if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
+        if (!(obj = lookup_named_object( params->root, params->name, params->attr, &new_name )))
+            return NULL;
 
         if (!new_name.len)
         {
-            if (attributes & OBJ_OPENIF && obj->ops == ops)
+            if (params->attr & OBJ_OPENIF && obj->ops == params->ops)
             {
                 set_error( STATUS_OBJECT_NAME_EXISTS );
                 return obj;
             }
             release_object( obj );
-            if (attributes & OBJ_OPENIF)
+            if (params->attr & OBJ_OPENIF)
                 set_error( STATUS_OBJECT_TYPE_MISMATCH );
             else
                 set_error( STATUS_OBJECT_NAME_COLLISION );
             return NULL;
         }
 
-        new_obj = create_object( obj, ops, new_name, attributes, sd );
+        new_obj = create_object( obj, params->ops, new_name, params->attr, params->sd );
         release_object( obj );
         if (!new_obj) return NULL;
     }
 
-    if (attributes & OBJ_PERMANENT)
+    if (params->attr & OBJ_PERMANENT)
     {
         make_object_permanent( new_obj );
         grab_object( new_obj );
@@ -744,12 +744,11 @@ static void dump_reserve( struct object *obj, int verbose )
     fprintf( stderr, "reserve type=%d\n", reserve->type);
 }
 
-static struct reserve *create_reserve( struct object *root, struct unicode_str name,
-                                       unsigned int attr, int type, const struct security_descriptor *sd )
+static struct reserve *create_reserve( struct object_params *params, int type )
 {
     struct reserve *reserve;
 
-    if (name.len)
+    if (params->name.len)
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return NULL;
@@ -757,11 +756,13 @@ static struct reserve *create_reserve( struct object *root, struct unicode_str n
 
     if (type == MemoryReserveObjectTypeUserApc)
     {
-        reserve = create_named_object( root, &apc_reserve_ops, name, attr, sd );
+        params->ops = &apc_reserve_ops;
+        reserve = create_named_object( params );
     }
     else if (type == MemoryReserveObjectTypeIoCompletion)
     {
-        reserve = create_named_object( root, &completion_reserve_ops, name, attr, sd );
+        params->ops = &completion_reserve_ops;
+        reserve = create_named_object( params );
     }
     else
     {
@@ -813,7 +814,7 @@ DECL_HANDLER(allocate_reserve_object)
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((reserve = create_reserve( params.root, params.name, params.attr, req->type, params.sd )))
+    if ((reserve = create_reserve( &params, req->type )))
     {
         reply->handle = alloc_handle_no_access_check( current->process, reserve, GENERIC_READ | GENERIC_WRITE,
                                                       params.attr );

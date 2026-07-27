@@ -325,13 +325,11 @@ struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, u
     return (struct debug_obj *)get_handle_obj( process, handle, access, &debug_obj_ops );
 }
 
-static struct debug_obj *create_debug_obj( struct object *root, struct unicode_str name,
-                                           unsigned int attr, unsigned int flags,
-                                           const struct security_descriptor *sd )
+static struct debug_obj *create_debug_obj( const struct object_params *params, unsigned int flags )
 {
     struct debug_obj *debug_obj;
 
-    if ((debug_obj = create_named_object( root, &debug_obj_ops, name, attr, sd )))
+    if ((debug_obj = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -527,11 +525,11 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 DECL_HANDLER(create_debug_obj)
 {
     struct debug_obj *debug_obj;
-    struct object_params params;
+    struct object_params params = { .ops = &debug_obj_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((debug_obj = create_debug_obj( params.root, params.name, params.attr, req->flags, params.sd )))
+    if ((debug_obj = create_debug_obj( &params, req->flags )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, debug_obj, req->access, params.attr );

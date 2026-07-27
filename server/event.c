@@ -194,13 +194,12 @@ static const struct object_ops keyed_event_ops =
 };
 
 
-struct event *create_event( struct object *root, struct unicode_str name,
-                            unsigned int attr, int manual_reset, int initial_state,
-                            const struct security_descriptor *sd )
+static struct event *create_event_obj( const struct object_params *params,
+                                       int manual_reset, int initial_state )
 {
     struct event *event;
 
-    if ((event = create_named_object( root, &event_ops, name, attr, sd )))
+    if ((event = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -216,6 +215,16 @@ struct event *create_event( struct object *root, struct unicode_str name,
         }
     }
     return event;
+}
+
+struct event *create_event( struct object *root, struct unicode_str name,
+                            unsigned int attr, int manual_reset, int initial_state,
+                            const struct security_descriptor *sd )
+{
+    struct object_params params = { .ops = &event_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd };
+
+    return create_event_obj( &params, manual_reset, initial_state );
 }
 
 struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -281,16 +290,10 @@ static void event_destroy( struct object *obj )
 struct keyed_event *create_keyed_event( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
-    struct keyed_event *event;
+    struct object_params params = { .ops = &keyed_event_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
-    if ((event = create_named_object( root, &keyed_event_ops, name, attr, sd )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-        }
-    }
-    return event;
+    return create_named_object( &params );
 }
 
 struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -335,12 +338,11 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
 DECL_HANDLER(create_event)
 {
     struct event *event;
-    struct object_params params;
+    struct object_params params = { .ops = &event_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((event = create_event( params.root, params.name, params.attr,
-                               req->manual_reset, req->initial_state, params.sd )))
+    if ((event = create_event_obj( &params, req->manual_reset, req->initial_state )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, event, req->access, params.attr );
@@ -410,11 +412,11 @@ DECL_HANDLER(query_event)
 DECL_HANDLER(create_keyed_event)
 {
     struct keyed_event *event;
-    struct object_params params;
+    struct object_params params = { .ops = &keyed_event_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((event = create_keyed_event( params.root, params.name, params.attr, params.sd )))
+    if ((event = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, event, req->access, params.attr );

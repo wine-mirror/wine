@@ -235,13 +235,11 @@ static struct completion_wait *create_completion_wait( struct thread *thread )
     return wait;
 }
 
-static struct completion *create_completion( struct object *root, struct unicode_str name,
-                                             unsigned int attr, unsigned int concurrent,
-                                             const struct security_descriptor *sd )
+static struct completion *create_completion( const struct object_params *params, unsigned int concurrent )
 {
     struct completion *completion;
 
-    if ((completion = create_named_object( root, &completion_ops, name, attr, sd )))
+    if ((completion = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -294,11 +292,11 @@ void add_completion( struct completion *completion, apc_param_t ckey, apc_param_
 DECL_HANDLER(create_completion)
 {
     struct completion *completion;
-    struct object_params params;
+    struct object_params params = { .ops = &completion_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((completion = create_completion( params.root, params.name, params.attr, req->concurrent, params.sd )))
+    if ((completion = create_completion( &params, req->concurrent )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, completion, req->access, params.attr );

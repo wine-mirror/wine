@@ -653,8 +653,9 @@ static struct device *create_device( struct object *root, struct unicode_str nam
                                      struct device_manager *manager )
 {
     struct device *device;
+    struct object_params params = { .ops = &device_ops, .root = root, .name = name };
 
-    if ((device = create_named_object( root, &device_ops, name, 0, NULL )))
+    if ((device = create_named_object( &params )))
     {
         device->unix_path = NULL;
         device->manager = manager;
@@ -671,8 +672,10 @@ struct object *create_unix_device( struct object *root, struct unicode_str name,
                                    const char *unix_path )
 {
     struct device *device;
+    struct object_params params = { .ops = &device_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd };
 
-    if ((device = create_named_object( root, &device_ops, name, attr, sd )))
+    if ((device = create_named_object( &params )))
     {
         device->unix_path = strdup( unix_path );
         device->manager = NULL;  /* no manager, requests go straight to the Unix device */

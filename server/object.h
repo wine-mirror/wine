@@ -69,6 +69,7 @@ struct type_descr
 /* parameters for named object creation */
 struct object_params
 {
+    const struct object_ops          *ops;        /* object operations */
     struct object                    *root;       /* root directory */
     struct unicode_str                name;       /* new object name */
     unsigned int                      attr;       /* creation attributes */
@@ -166,9 +167,7 @@ extern void dump_object_name( struct object *obj );
 extern struct object *lookup_named_object( struct object *root, struct unicode_str name,
                                            unsigned int attr, struct unicode_str *name_left );
 extern data_size_t get_path_element( const WCHAR *name, data_size_t len );
-extern void *create_named_object( struct object *parent, const struct object_ops *ops,
-                                  struct unicode_str name, unsigned int attributes,
-                                  const struct security_descriptor *sd );
+extern void *create_named_object( const struct object_params *params );
 extern void *open_named_object( struct object *parent, const struct object_ops *ops,
                                 struct unicode_str name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );

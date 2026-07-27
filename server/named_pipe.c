@@ -515,8 +515,10 @@ struct object *create_named_pipe_device( struct object *root, struct unicode_str
                                          unsigned int attr, const struct security_descriptor *sd )
 {
     struct named_pipe_device *dev;
+    struct object_params params = { .ops = &named_pipe_device_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
-    if ((dev = create_named_object( root, &named_pipe_device_ops, name, attr, sd )) &&
+    if ((dev = create_named_object( &params )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->pipes = NULL;
@@ -1494,7 +1496,7 @@ DECL_HANDLER(create_named_pipe)
 {
     struct named_pipe *pipe;
     struct pipe_server *server;
-    struct object_params params;
+    struct object_params params = { .ops = &named_pipe_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
@@ -1530,7 +1532,8 @@ DECL_HANDLER(create_named_pipe)
         break;
     case FILE_CREATE:
     case FILE_OPEN_IF:
-        pipe = create_named_object( params.root, &named_pipe_ops, params.name, params.attr | OBJ_OPENIF, NULL );
+        params.attr |= OBJ_OPENIF;
+        pipe = create_named_object( &params );
         break;
     default:
         pipe = NULL;
@@ -1553,10 +1556,6 @@ DECL_HANDLER(create_named_pipe)
         pipe->timeout = req->timeout;
         pipe->message_mode = (req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) != 0;
         pipe->sharing = req->sharing;
-        if (params.sd) default_set_sd( &pipe->obj, params.sd, OWNER_SECURITY_INFORMATION |
-                                                              GROUP_SECURITY_INFORMATION |
-                                                              DACL_SECURITY_INFORMATION |
-                                                              SACL_SECURITY_INFORMATION );
         reply->created = 1;
     }
     else

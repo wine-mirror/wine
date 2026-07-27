@@ -683,10 +683,12 @@ static struct key *create_key_object( struct object *parent, struct unicode_str 
                                       const struct security_descriptor *sd )
 {
     struct key *key;
+    struct object_params params = { .ops = &key_ops, .root = parent, .name = name,
+                                    .attr = attributes, .sd = sd };
 
     if (!name.len) return open_named_object( parent, &key_ops, name, attributes );
 
-    if ((key = create_named_object( parent, &key_ops, name, attributes, sd )))
+    if ((key = create_named_object( &params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {

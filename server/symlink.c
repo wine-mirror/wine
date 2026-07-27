@@ -121,8 +121,10 @@ struct object *create_root_symlink( struct object *root, struct unicode_str name
                                     unsigned int attr, const struct security_descriptor *sd )
 {
     struct symlink *symlink;
+    struct object_params params = { .ops = &symlink_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
-    if (!(symlink = create_named_object( root, &symlink_ops, name, attr, sd ))) return NULL;
+    if (!(symlink = create_named_object( &params ))) return NULL;
     symlink->target = NULL;
     symlink->len = 0;
     return &symlink->obj;
@@ -133,13 +135,16 @@ struct object *create_symlink( struct object *root, struct unicode_str name,
                                const struct security_descriptor *sd )
 {
     struct symlink *symlink;
+    struct object_params params = { .ops = &symlink_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd };
 
     if (!target.len)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if (!(symlink = create_named_object( root, &symlink_ops, name, attr | OBJ_OPENLINK, sd ))) return NULL;
+    params.attr |= OBJ_OPENLINK;
+    if (!(symlink = create_named_object( &params ))) return NULL;
     if (get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         symlink->len = target.len;
@@ -160,6 +165,8 @@ struct object *create_obj_symlink( struct object *root, struct unicode_str name,
     struct symlink *symlink;
     data_size_t len;
     WCHAR *target_name;
+    struct object_params params = { .ops = &symlink_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd };
 
     if (target->ops->get_full_name) target_name = target->ops->get_full_name( target, ~0u, &len );
     else target_name = default_get_full_name( target, ~0u, &len );
@@ -169,7 +176,7 @@ struct object *create_obj_symlink( struct object *root, struct unicode_str name,
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((symlink = create_named_object( root, &symlink_ops, name, attr, sd )) &&
+    if ((symlink = create_named_object( &params )) &&
         (get_error() != STATUS_OBJECT_NAME_EXISTS))
     {
         symlink->target = target_name;

@@ -101,14 +101,13 @@ static void alpc_port_destroy( struct object *obj )
     release_object( port->thread );
 }
 
-static struct alpc_port *alpc_create_port( struct object *root, struct unicode_str name,
-                                           unsigned int attr, const struct security_descriptor *sd,
+static struct alpc_port *alpc_create_port( const struct object_params *params,
                                            enum alpc_port_enum_type type, unsigned int flags,
                                            mem_size_t max_msg_len )
 {
     struct alpc_port *port;
 
-    port = create_named_object( root, &alpc_port_ops, name, attr, sd );
+    port = create_named_object( params );
     if (port)
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
@@ -133,12 +132,11 @@ static struct alpc_port *alpc_create_port( struct object *root, struct unicode_s
 DECL_HANDLER(alpc_create_port)
 {
     struct alpc_port *alpc_port;
-    struct object_params params;
+    struct object_params params = { .ops = &alpc_port_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((alpc_port = alpc_create_port( params.root, params.name, params.attr, params.sd,
-                                       CONNECTION_PORT, req->flags, req->max_msg_len )))
+    if ((alpc_port = alpc_create_port( &params, CONNECTION_PORT, req->flags, req->max_msg_len )))
     {
         reply->handle = alloc_handle( current->process, alpc_port, ALPC_PORT_ALL_ACCESS, params.attr );
         release_object( alpc_port );

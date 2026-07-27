@@ -78,12 +78,11 @@ static const struct object_ops timer_ops =
 
 
 /* create a timer object */
-static struct timer *create_timer( struct object *root, struct unicode_str name,
-                                   unsigned int attr, int manual, const struct security_descriptor *sd )
+static struct timer *create_timer( const struct object_params *params, int manual )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( root, &timer_ops, name, attr, sd )))
+    if ((timer = create_named_object( params )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -214,11 +213,11 @@ static void timer_destroy( struct object *obj )
 DECL_HANDLER(create_timer)
 {
     struct timer *timer;
-    struct object_params params;
+    struct object_params params = { .ops = &timer_ops };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((timer = create_timer( params.root, params.name, params.attr, req->manual, params.sd )))
+    if ((timer = create_timer( &params, req->manual )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, timer, req->access, params.attr );
