@@ -1001,6 +1001,69 @@ skip_test:
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_unconnected_filter_state(void)
+{
+    IBaseFilter *filter;
+    FILTER_STATE state;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
@@ -1013,6 +1076,7 @@ START_TEST(colorconv)
     test_pin_info();
     test_media_types();
     test_enum_media_types();
+    test_unconnected_filter_state();
 
     CoUninitialize();
 }
