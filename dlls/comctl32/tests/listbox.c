@@ -3097,7 +3097,6 @@ static void test_multicolumn_redraw(void)
 
     /* Ensure top_index is correct after redraw */
     top_index_after = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
-    todo_wine
     ok(top_index_after == top_index_before,
         "Expected top index %d after WM_SETREDRAW, got %d\n",
         top_index_before, top_index_after);
