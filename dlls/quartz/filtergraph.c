@@ -151,6 +151,7 @@ struct filter_graph
 
     unsigned int needs_async_run : 1;
     unsigned int threaded : 1;
+    unsigned int in_emulated_fs_mode : 1;
 };
 
 struct enum_filters
@@ -3935,7 +3936,10 @@ static HRESULT WINAPI VideoWindow_put_Caption(IVideoWindow *iface, BSTR strCapti
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Caption(pVideoWindow, strCaption);
@@ -3955,7 +3959,10 @@ static HRESULT WINAPI VideoWindow_get_Caption(IVideoWindow *iface, BSTR *strCapt
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Caption(pVideoWindow, strCaption);
@@ -3975,7 +3982,10 @@ static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface, LONG Wind
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_WindowStyle(pVideoWindow, WindowStyle);
@@ -3995,7 +4005,10 @@ static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface, LONG *Win
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_WindowStyle(pVideoWindow, WindowStyle);
@@ -4015,7 +4028,10 @@ static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface, LONG Wi
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_WindowStyleEx(pVideoWindow, WindowStyleEx);
@@ -4035,7 +4051,10 @@ static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface, LONG *W
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_WindowStyleEx(pVideoWindow, WindowStyleEx);
@@ -4055,7 +4074,10 @@ static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface, LONG AutoSho
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_AutoShow(pVideoWindow, AutoShow);
@@ -4075,7 +4097,10 @@ static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface, LONG *AutoSh
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_AutoShow(pVideoWindow, AutoShow);
@@ -4095,7 +4120,10 @@ static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface, LONG Wind
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_WindowState(pVideoWindow, WindowState);
@@ -4115,7 +4143,10 @@ static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface, LONG *Win
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_WindowState(pVideoWindow, WindowState);
@@ -4135,7 +4166,10 @@ static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface, LON
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_BackgroundPalette(pVideoWindow, BackgroundPalette);
@@ -4156,7 +4190,10 @@ static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_BackgroundPalette(pVideoWindow, pBackgroundPalette);
@@ -4176,7 +4213,10 @@ static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface, LONG Visible)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Visible(pVideoWindow, Visible);
@@ -4196,7 +4236,10 @@ static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface, LONG *pVisibl
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Visible(pVideoWindow, pVisible);
@@ -4216,7 +4259,10 @@ static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface, LONG Left)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Left(pVideoWindow, Left);
@@ -4236,7 +4282,10 @@ static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface, LONG *pLeft)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Left(pVideoWindow, pLeft);
@@ -4256,7 +4305,10 @@ static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface, LONG Width)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Width(pVideoWindow, Width);
@@ -4276,7 +4328,10 @@ static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface, LONG *pWidth)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Width(pVideoWindow, pWidth);
@@ -4296,7 +4351,10 @@ static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface, LONG Top)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Top(pVideoWindow, Top);
@@ -4316,7 +4374,10 @@ static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface, LONG *pTop)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Top(pVideoWindow, pTop);
@@ -4336,7 +4397,10 @@ static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface, LONG Height)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Height(pVideoWindow, Height);
@@ -4356,7 +4420,10 @@ static HRESULT WINAPI VideoWindow_get_Height(IVideoWindow *iface, LONG *pHeight)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Height(pVideoWindow, pHeight);
@@ -4376,7 +4443,10 @@ static HRESULT WINAPI VideoWindow_put_Owner(IVideoWindow *iface, OAHWND Owner)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_Owner(pVideoWindow, Owner);
@@ -4396,7 +4466,10 @@ static HRESULT WINAPI VideoWindow_get_Owner(IVideoWindow *iface, OAHWND *Owner)
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_Owner(pVideoWindow, Owner);
@@ -4416,7 +4489,10 @@ static HRESULT WINAPI VideoWindow_put_MessageDrain(IVideoWindow *iface, OAHWND D
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_MessageDrain(pVideoWindow, Drain);
@@ -4436,7 +4512,10 @@ static HRESULT WINAPI VideoWindow_get_MessageDrain(IVideoWindow *iface, OAHWND *
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_MessageDrain(pVideoWindow, Drain);
@@ -4456,7 +4535,10 @@ static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface, LONG *Col
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_get_BorderColor(pVideoWindow, Color);
@@ -4476,7 +4558,10 @@ static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface, LONG Colo
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_put_BorderColor(pVideoWindow, Color);
@@ -4486,24 +4571,31 @@ static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface, LONG Colo
     return hr;
 }
 
-static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *FullScreenMode)
+static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *fullscreen)
 {
     struct filter_graph *This = impl_from_IVideoWindow(iface);
-    IVideoWindow *pVideoWindow;
+    IVideoWindow *video_window;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, FullScreenMode);
+    TRACE("(%p/%p)->(%p)\n", This, iface, fullscreen);
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
-
-    if (hr == S_OK)
-        hr = IVideoWindow_get_FullScreenMode(pVideoWindow, FullScreenMode);
-    if (hr == E_NOTIMPL)
+    if (This->in_emulated_fs_mode)
     {
-        *FullScreenMode = OAFALSE;
+        *fullscreen = OATRUE;
         hr = S_OK;
+    }
+    else
+    {
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&video_window);
+        if (hr == S_OK)
+            hr = IVideoWindow_get_FullScreenMode(video_window, fullscreen);
+        if (hr == E_NOTIMPL)
+        {
+            *fullscreen = OAFALSE;
+            hr = S_OK;
+        }
     }
 
     LeaveCriticalSection(&This->cs);
@@ -4511,23 +4603,44 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *
     return hr;
 }
 
-static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG FullScreenMode)
+static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG fullscreen)
 {
     struct filter_graph *This = impl_from_IVideoWindow(iface);
-    IVideoWindow *pVideoWindow;
+    IVideoWindow *video_window = NULL;
+    BOOL emulated = FALSE;
     HRESULT hr;
+    LONG mode;
 
-    TRACE("graph %p, fullscreen %ld.\n", This, FullScreenMode);
+    TRACE("graph %p, fullscreen %ld.\n", This, fullscreen);
 
     EnterCriticalSection(&This->cs);
+    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&video_window);
+    if (SUCCEEDED(hr) && !(emulated = This->in_emulated_fs_mode))
+        emulated = ((hr = IVideoWindow_get_FullScreenMode(video_window, &mode)) == E_NOTIMPL);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
-
-    if (hr == S_OK)
-        hr = IVideoWindow_put_FullScreenMode(pVideoWindow, FullScreenMode);
-    if (hr == E_NOTIMPL && FullScreenMode == OAFALSE)
-        hr = S_FALSE;
-
+    if (emulated)
+    {
+        if (This->in_emulated_fs_mode && !fullscreen)
+        {
+            /* TODO: restore window from fullscreen.*/
+            hr = S_OK;
+            This->in_emulated_fs_mode = FALSE;
+        }
+        else if (!This->in_emulated_fs_mode && fullscreen)
+        {
+            /* TODO: setup fullscreen window.*/
+            hr = S_OK;
+            This->in_emulated_fs_mode = TRUE;
+        }
+        else
+        {
+            hr = S_FALSE;
+        }
+    }
+    else if (SUCCEEDED(hr))
+    {
+        hr = IVideoWindow_put_FullScreenMode(video_window, fullscreen);
+    }
     LeaveCriticalSection(&This->cs);
 
     return hr;
@@ -4543,7 +4656,10 @@ static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface, LONG 
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_SetWindowForeground(pVideoWindow, Focus);
@@ -4564,7 +4680,10 @@ static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface, OAHWND
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_NotifyOwnerMessage(pVideoWindow, hwnd, uMsg, wParam, lParam);
@@ -4585,7 +4704,10 @@ static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface, LONG Le
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_SetWindowPosition(pVideoWindow, Left, Top, Width, Height);
@@ -4606,7 +4728,10 @@ static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface, LONG *p
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_GetWindowPosition(pVideoWindow, pLeft, pTop, pWidth, pHeight);
@@ -4627,7 +4752,10 @@ static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface, LONG
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_GetMinIdealImageSize(pVideoWindow, pWidth, pHeight);
@@ -4648,7 +4776,10 @@ static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface, LONG
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_GetMaxIdealImageSize(pVideoWindow, pWidth, pHeight);
@@ -4669,7 +4800,10 @@ static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface, LONG *
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_GetRestorePosition(pVideoWindow, pLeft, pTop, pWidth, pHeight);
@@ -4689,7 +4823,10 @@ static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface, LONG HideCurso
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_HideCursor(pVideoWindow, HideCursor);
@@ -4709,7 +4846,10 @@ static HRESULT WINAPI VideoWindow_IsCursorHidden(IVideoWindow *iface, LONG *Curs
 
     EnterCriticalSection(&This->cs);
 
-    hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (This->in_emulated_fs_mode)
+        hr = VFW_E_IN_FULLSCREEN_MODE;
+    else
+        hr = GetTargetInterface(This, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
 
     if (hr == S_OK)
         hr = IVideoWindow_IsCursorHidden(pVideoWindow, CursorHidden);
