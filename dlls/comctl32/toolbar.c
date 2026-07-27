@@ -1415,6 +1415,8 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 	else if ((btnPtr[i].fsStyle & BTNS_SEP) &&
             !(infoPtr->dwStyle & CCS_VERT))
             cx = (btnPtr[i].iBitmap > 0) ? btnPtr[i].iBitmap : SEPARATOR_WIDTH;
+	else if (btnPtr[i].fsStyle & BTNS_AUTOSIZE)
+	    cx = TOOLBAR_AutoSizeButtonWidth(infoPtr, btnPtr + i);
 	else
 	    cx = infoPtr->nButtonWidth;
 
