@@ -1130,13 +1130,10 @@ LPSTR WINAPI CharPrevA(const char *start, const char *ptr)
 
 LPSTR WINAPI CharPrevExA(WORD codepage, const char *start, const char *ptr, DWORD flags)
 {
-    while (*start && (start < ptr))
-    {
-        LPCSTR next = CharNextExA(codepage, start, flags);
-        if (next >= ptr) break;
-        start = next;
-    }
-    return (LPSTR)start;
+    /* Assume that ptr is not the second byte of a DBCS pair and search backwards */
+    if (ptr <= start) return (char *)ptr;
+    if (ptr >= start + 2 && IsDBCSLeadByteEx(codepage, ptr[-2])) return (char *)(ptr - 2);
+    return (char *)(ptr - 1);
 }
 
 LPWSTR WINAPI CharPrevW(const WCHAR *start, const WCHAR *x)
