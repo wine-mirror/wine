@@ -1425,7 +1425,7 @@ static void console_output_write( struct fd *fd, struct async *async, file_pos_t
     screen_buffer_write( console->active->fd, async, pos );
 }
 
-struct object *create_console_device( struct object *root, const struct unicode_str *name,
+struct object *create_console_device( struct object *root, struct unicode_str name,
                                       unsigned int attr, const struct security_descriptor *sd )
 {
     return create_named_object( root, &console_device_ops, name, attr, sd );

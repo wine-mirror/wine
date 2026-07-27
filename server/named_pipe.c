@@ -482,7 +482,7 @@ static struct object *named_pipe_device_lookup_name( struct object *obj, struct 
         return &dir->obj;
     }
 
-    if ((found = find_object( device->pipes, name, attr | OBJ_CASE_INSENSITIVE )))
+    if ((found = find_object( device->pipes, *name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 
     return found;
@@ -511,7 +511,7 @@ static void named_pipe_device_destroy( struct object *obj )
     free( device->pipes );
 }
 
-struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name,
+struct object *create_named_pipe_device( struct object *root, struct unicode_str name,
                                          unsigned int attr, const struct security_descriptor *sd )
 {
     struct named_pipe_device *dev;
@@ -1470,7 +1470,7 @@ static void named_pipe_dir_ioctl( struct fd *fd, ioctl_code_t code, struct async
             }
             name.str = buffer->Name;
             name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
-            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, &name, 0 ))) return;
+            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, name, 0 ))) return;
 
             if (list_empty( &pipe->listeners ))
             {
@@ -1529,11 +1529,11 @@ DECL_HANDLER(create_named_pipe)
     switch (req->disposition)
     {
     case FILE_OPEN:
-        pipe = open_named_object( root, &named_pipe_ops, &name, objattr->attributes );
+        pipe = open_named_object( root, &named_pipe_ops, name, objattr->attributes );
         break;
     case FILE_CREATE:
     case FILE_OPEN_IF:
-        pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF, NULL );
+        pipe = create_named_object( root, &named_pipe_ops, name, objattr->attributes | OBJ_OPENIF, NULL );
         break;
     default:
         pipe = NULL;

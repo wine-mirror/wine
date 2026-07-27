@@ -235,7 +235,7 @@ static struct completion_wait *create_completion_wait( struct thread *thread )
     return wait;
 }
 
-static struct completion *create_completion( struct object *root, const struct unicode_str *name,
+static struct completion *create_completion( struct object *root, struct unicode_str name,
                                              unsigned int attr, unsigned int concurrent,
                                              const struct security_descriptor *sd )
 {
@@ -301,7 +301,7 @@ DECL_HANDLER(create_completion)
 
     if (!objattr) return;
 
-    if ((completion = create_completion( root, &name, objattr->attributes, req->concurrent, sd )))
+    if ((completion = create_completion( root, name, objattr->attributes, req->concurrent, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, completion, req->access, objattr->attributes );
@@ -317,10 +317,8 @@ DECL_HANDLER(create_completion)
 /* open a completion */
 DECL_HANDLER(open_completion)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &completion_ops, &name, req->attributes );
+                                 &completion_ops, get_req_unicode_str(), req->attributes );
 }
 
 

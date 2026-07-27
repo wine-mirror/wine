@@ -406,7 +406,7 @@ static struct object *mailslot_device_lookup_name( struct object *obj, struct un
 
     if (!name) return NULL;  /* open the device itself */
 
-    if ((found = find_object( device->mailslots, name, attr | OBJ_CASE_INSENSITIVE )))
+    if ((found = find_object( device->mailslots, *name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 
     return found;
@@ -435,7 +435,7 @@ static void mailslot_device_destroy( struct object *obj )
     free( device->mailslots );
 }
 
-struct object *create_mailslot_device( struct object *root, const struct unicode_str *name,
+struct object *create_mailslot_device( struct object *root, struct unicode_str name,
                                        unsigned int attr, const struct security_descriptor *sd )
 {
     struct mailslot_device *dev;
@@ -487,8 +487,7 @@ static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-static struct mailslot *create_mailslot( struct object *root,
-                                         const struct unicode_str *name, unsigned int attr,
+static struct mailslot *create_mailslot( struct object *root, struct unicode_str name, unsigned int attr,
                                          unsigned int options, int max_msgsize, timeout_t read_timeout,
                                          const struct security_descriptor *sd )
 {
@@ -598,7 +597,7 @@ DECL_HANDLER(create_mailslot)
         return;
     }
 
-    if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->options, req->max_msgsize,
+    if ((mailslot = create_mailslot( root, name, objattr->attributes, req->options, req->max_msgsize,
                                      req->read_timeout, sd )))
     {
         reply->handle = alloc_handle( current->process, mailslot, req->access, objattr->attributes );

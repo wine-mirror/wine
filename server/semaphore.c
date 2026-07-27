@@ -148,7 +148,7 @@ static const struct object_ops semaphore_ops =
     .destroy  = semaphore_destroy,
 };
 
-static struct semaphore *create_semaphore( struct object *root, const struct unicode_str *name,
+static struct semaphore *create_semaphore( struct object *root, struct unicode_str name,
                                            unsigned int attr, unsigned int initial, unsigned int max,
                                            const struct security_descriptor *sd )
 {
@@ -224,7 +224,7 @@ DECL_HANDLER(create_semaphore)
 
     if (!objattr) return;
 
-    if ((sem = create_semaphore( root, &name, objattr->attributes, req->initial, req->max, sd )))
+    if ((sem = create_semaphore( root, name, objattr->attributes, req->initial, req->max, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, sem, req->access, objattr->attributes );
@@ -240,10 +240,8 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &semaphore_ops, &name, req->attributes );
+                                 &semaphore_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* release a semaphore */

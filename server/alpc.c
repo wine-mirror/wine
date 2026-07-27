@@ -101,7 +101,7 @@ static void alpc_port_destroy( struct object *obj )
     release_object( port->thread );
 }
 
-static struct alpc_port *alpc_create_port( struct object *root, const struct unicode_str *name,
+static struct alpc_port *alpc_create_port( struct object *root, struct unicode_str name,
                                            unsigned int attr, const struct security_descriptor *sd,
                                            enum alpc_port_enum_type type, unsigned int flags,
                                            mem_size_t max_msg_len )
@@ -138,7 +138,7 @@ DECL_HANDLER(alpc_create_port)
     struct object *root;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
-    if ((alpc_port = alpc_create_port( root, &name, objattr->attributes, sd, CONNECTION_PORT,
+    if ((alpc_port = alpc_create_port( root, name, objattr->attributes, sd, CONNECTION_PORT,
                                        req->flags, req->max_msg_len )))
     {
         reply->handle = alloc_handle( current->process, alpc_port, ALPC_PORT_ALL_ACCESS, objattr->attributes );

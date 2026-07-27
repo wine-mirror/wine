@@ -541,15 +541,13 @@ static struct object *file_open_file( struct object *obj, unsigned int access,
 {
     struct file *file = (struct file *)obj;
     struct object *new_file = NULL;
-    struct unicode_str nt_name;
     char *unix_name;
 
     assert( obj->ops == &file_ops );
 
     if ((unix_name = dup_fd_name( file->fd, "" )))
     {
-        get_nt_name( file->fd, &nt_name );
-        new_file = create_file( NULL, unix_name, strlen(unix_name), nt_name, access,
+        new_file = create_file( NULL, unix_name, strlen(unix_name), get_nt_name(file->fd), access,
                                 sharing, FILE_OPEN, options, 0, NULL );
         free( unix_name );
     }

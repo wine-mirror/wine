@@ -325,7 +325,7 @@ struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, u
     return (struct debug_obj *)get_handle_obj( process, handle, access, &debug_obj_ops );
 }
 
-static struct debug_obj *create_debug_obj( struct object *root, const struct unicode_str *name,
+static struct debug_obj *create_debug_obj( struct object *root, struct unicode_str name,
                                            unsigned int attr, unsigned int flags,
                                            const struct security_descriptor *sd )
 {
@@ -533,7 +533,7 @@ DECL_HANDLER(create_debug_obj)
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-    if ((debug_obj = create_debug_obj( root, &name, objattr->attributes, req->flags, sd )))
+    if ((debug_obj = create_debug_obj( root, name, objattr->attributes, req->flags, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, debug_obj, req->access, objattr->attributes );

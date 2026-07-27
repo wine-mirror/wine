@@ -175,7 +175,7 @@ static const struct object_ops mutex_ops =
     .destroy  = mutex_destroy,
 };
 
-static struct mutex *create_mutex( struct object *root, const struct unicode_str *name,
+static struct mutex *create_mutex( struct object *root, struct unicode_str name,
                                    unsigned int attr, int owned, const struct security_descriptor *sd )
 {
     struct mutex *mutex;
@@ -260,7 +260,7 @@ DECL_HANDLER(create_mutex)
 
     if (!objattr) return;
 
-    if ((mutex = create_mutex( root, &name, objattr->attributes, req->owned, sd )))
+    if ((mutex = create_mutex( root, name, objattr->attributes, req->owned, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, mutex, req->access, objattr->attributes );
@@ -276,10 +276,8 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &mutex_ops, &name, req->attributes );
+                                 &mutex_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* release a mutex */

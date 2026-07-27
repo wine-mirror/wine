@@ -186,7 +186,7 @@ static const struct object_ops job_ops =
     .destroy      = job_destroy,
 };
 
-static struct job *create_job_object( struct object *root, const struct unicode_str *name,
+static struct job *create_job_object( struct object *root, struct unicode_str name,
                                       unsigned int attr, const struct security_descriptor *sd )
 {
     struct job *job;
@@ -1309,7 +1309,7 @@ DECL_HANDLER(new_process)
     }
 
     /* connect to the window station */
-    connect_process_winstation( process, &desktop_path, parent_thread, parent );
+    connect_process_winstation( process, desktop_path, parent_thread, parent );
 
     /* inherit the process console, but keep pseudo handles (< 0), and 0 (= not attached to a console) as is */
     if ((int)info->data->console > 0)
@@ -1448,7 +1448,7 @@ DECL_HANDLER(init_process_done)
     set_process_startup_state( process, STARTUP_DONE );
 
     if (process->image_info.subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
-        process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
+        process->idle_event = create_event( NULL, empty_str, 0, 1, 0, NULL );
     if (process->debug_obj) set_process_debug_flag( process, 1 );
     reply->suspend = (current->suspend || process->suspend);
 }
@@ -1781,7 +1781,7 @@ DECL_HANDLER(make_process_system)
 
     if (!shutdown_event)
     {
-        if (!(shutdown_event = create_event( NULL, NULL, OBJ_PERMANENT, 1, 0, NULL ))) return;
+        if (!(shutdown_event = create_event( NULL, empty_str, OBJ_PERMANENT, 1, 0, NULL ))) return;
         release_object( shutdown_event );
     }
 
@@ -1833,7 +1833,7 @@ DECL_HANDLER(create_job)
 
     if (!objattr) return;
 
-    if ((job = create_job_object( root, &name, objattr->attributes, sd )))
+    if ((job = create_job_object( root, name, objattr->attributes, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, job, req->access, objattr->attributes );
@@ -1848,10 +1848,8 @@ DECL_HANDLER(create_job)
 /* open a job object */
 DECL_HANDLER(open_job)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &job_ops, &name, req->attributes );
+                                 &job_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* assign a job object to a process */

@@ -147,7 +147,7 @@ int is_message_class( struct window_class *class )
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
     static const struct unicode_str name = { messageW, sizeof(messageW) };
     struct atom_table *table = get_user_atom_table();
-    return !class->shared->local && class->shared->info.atom == find_atom( table, &name );
+    return !class->shared->local && class->shared->info.atom == find_atom( table, name );
 }
 
 int get_class_style( struct window_class *class )
@@ -219,7 +219,7 @@ DECL_HANDLER(create_class)
     name.len -= sizeof(info);
 
     if (atom && !name.len) name = integral_atom_name( buffer, atom );
-    if (!atom && !(atom = add_atom( table, &name ))) return;
+    if (!atom && !(atom = add_atom( table, name ))) return;
 
     if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
     {
@@ -229,7 +229,7 @@ DECL_HANDLER(create_class)
         base.str += name_offset;
         base.len -= name_offset * sizeof(WCHAR);
 
-        if (!(info.atom = add_atom( table, &base )))
+        if (!(info.atom = add_atom( table, base )))
         {
             release_atom( table, atom );
             return;
@@ -292,7 +292,7 @@ DECL_HANDLER(destroy_class)
     struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
 
-    if (!atom) atom = find_atom( table, &name );
+    if (!atom) atom = find_atom( table, name );
 
     if (!(class = find_class( current->process, atom, req->instance )))
         set_win32_error( ERROR_CLASS_DOES_NOT_EXIST );

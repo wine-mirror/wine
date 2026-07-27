@@ -78,7 +78,7 @@ static const struct object_ops timer_ops =
 
 
 /* create a timer object */
-static struct timer *create_timer( struct object *root, const struct unicode_str *name,
+static struct timer *create_timer( struct object *root, struct unicode_str name,
                                    unsigned int attr, int manual, const struct security_descriptor *sd )
 {
     struct timer *timer;
@@ -221,7 +221,7 @@ DECL_HANDLER(create_timer)
 
     if (!objattr) return;
 
-    if ((timer = create_timer( root, &name, objattr->attributes, req->manual, sd )))
+    if ((timer = create_timer( root, name, objattr->attributes, req->manual, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
@@ -237,10 +237,8 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &timer_ops, &name, req->attributes );
+                                 &timer_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* set a waitable timer */

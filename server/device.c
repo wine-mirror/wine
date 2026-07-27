@@ -649,7 +649,7 @@ static void device_file_cancel_async( struct fd *fd, struct async *async )
     }
 }
 
-static struct device *create_device( struct object *root, const struct unicode_str *name,
+static struct device *create_device( struct object *root, struct unicode_str name,
                                      struct device_manager *manager )
 {
     struct device *device;
@@ -666,7 +666,7 @@ static struct device *create_device( struct object *root, const struct unicode_s
     return device;
 }
 
-struct object *create_unix_device( struct object *root, const struct unicode_str *name,
+struct object *create_unix_device( struct object *root, struct unicode_str name,
                                    unsigned int attr, const struct security_descriptor *sd,
                                    const char *unix_path )
 {
@@ -853,7 +853,7 @@ DECL_HANDLER(create_device)
         return;
     }
 
-    if ((device = create_device( root, &name, manager )))
+    if ((device = create_device( root, name, manager )))
     {
         struct kernel_object *ptr = set_kernel_object( manager, &device->obj, req->user_ptr );
         if (ptr)

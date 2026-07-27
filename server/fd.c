@@ -1862,10 +1862,10 @@ static WCHAR *dup_nt_name( struct fd *root, struct unicode_str name, data_size_t
     return ret;
 }
 
-void get_nt_name( struct fd *fd, struct unicode_str *name )
+struct unicode_str get_nt_name( struct fd *fd )
 {
-    name->str = fd->nt_name;
-    name->len = fd->nt_namelen;
+    struct unicode_str name = { .str = fd->nt_name, .len = fd->nt_namelen };
+    return name;
 }
 
 /* open() wrapper that returns a struct fd with no fd user set */
@@ -2991,7 +2991,7 @@ DECL_HANDLER(open_file_object)
 
     if (req->rootdir && !(root = get_handle_obj( current->process, req->rootdir, 0, NULL ))) return;
 
-    obj = open_named_object( root, NULL, &name, req->attributes );
+    obj = open_named_object( root, NULL, name, req->attributes );
     if (root) release_object( root );
     if (!obj) return;
 

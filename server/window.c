@@ -2240,7 +2240,7 @@ DECL_HANDLER(create_window)
                 owner = owner->parent;
     }
 
-    if (!atom) atom = find_atom( table, &cls_name );
+    if (!atom) atom = find_atom( table, cls_name );
 
     if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi ))) return;
 
@@ -2354,7 +2354,7 @@ DECL_HANDLER(get_desktop_window)
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         struct atom_table *table = get_user_atom_table();
-        atom_t atom = add_atom( table, &name );
+        atom_t atom = add_atom( table, name );
         if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false )))
         {
             detach_window_thread( desktop->msg_window );
@@ -2571,7 +2571,7 @@ DECL_HANDLER(get_class_windows)
     user_handle_t *data;
     unsigned int count = 0, max_count = get_reply_max_size() / sizeof(*data);
 
-    if (!atom && cls_name.len && !(atom = find_atom( table, &cls_name ))) return;
+    if (!atom && cls_name.len && !(atom = find_atom( table, cls_name ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
     if (req->child)
@@ -3126,7 +3126,7 @@ DECL_HANDLER(set_window_property)
 
     if (name.len)
     {
-        atom_t atom = add_atom( table, &name );
+        atom_t atom = add_atom( table, name );
         if (atom)
         {
             set_property( win, atom, req->data, PROP_TYPE_STRING );
@@ -3146,7 +3146,7 @@ DECL_HANDLER(remove_window_property)
 
     if (win)
     {
-        atom_t atom = name.len ? find_atom( table, &name ) : req->atom;
+        atom_t atom = name.len ? find_atom( table, name ) : req->atom;
         if (atom) reply->data = remove_property( win, atom );
     }
 }
@@ -3161,7 +3161,7 @@ DECL_HANDLER(get_window_property)
 
     if (win)
     {
-        atom_t atom = name.len ? find_atom( table, &name ) : req->atom;
+        atom_t atom = name.len ? find_atom( table, name ) : req->atom;
         if (atom) reply->data = get_property( win, atom );
     }
 }

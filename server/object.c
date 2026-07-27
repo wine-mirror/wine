@@ -210,15 +210,15 @@ void namespace_add( struct namespace *namespace, struct object_name *ptr )
 }
 
 /* allocate a name for an object */
-static struct object_name *alloc_name( const struct unicode_str *name )
+static struct object_name *alloc_name( struct unicode_str name )
 {
     struct object_name *ptr;
 
-    if ((ptr = mem_alloc( sizeof(*ptr) + name->len - sizeof(ptr->name) )))
+    if ((ptr = mem_alloc( sizeof(*ptr) + name.len - sizeof(ptr->name) )))
     {
-        ptr->len = name->len;
+        ptr->len = name.len;
         ptr->parent = NULL;
-        memcpy( ptr->name, name->str, name->len );
+        memcpy( ptr->name, name.str, name.len );
     }
     return ptr;
 }
@@ -299,17 +299,17 @@ static void free_object( struct object *obj )
 
 /* find an object by name starting from the specified root */
 /* if it doesn't exist, its parent is returned, and name_left contains the remaining name */
-struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
+struct object *lookup_named_object( struct object *root, struct unicode_str name,
                                     unsigned int attr, struct unicode_str *name_left )
 {
     static int recursion_count;
     struct object *parent;
-    struct unicode_str name_tmp = *name, *ptr = &name_tmp;
+    struct unicode_str *ptr = &name;
 
     if (root)
     {
         /* if root is specified path shouldn't start with backslash */
-        if (name_tmp.len && name_tmp.str[0] == '\\')
+        if (name.len && name.str[0] == '\\')
         {
             set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
             return NULL;
@@ -318,18 +318,18 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
     }
     else
     {
-        if (!name_tmp.len || name_tmp.str[0] != '\\')
+        if (!name.len || name.str[0] != '\\')
         {
             set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
             return NULL;
         }
         /* skip leading backslash */
-        name_tmp.str++;
-        name_tmp.len -= sizeof(WCHAR);
+        name.str++;
+        name.len -= sizeof(WCHAR);
         parent = root = get_root_directory();
     }
 
-    if (!name_tmp.len) ptr = NULL;  /* special case for empty path */
+    if (!name.len) ptr = NULL;  /* special case for empty path */
 
     if (recursion_count > 32)
     {
@@ -360,7 +360,7 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
         return NULL;
     }
 
-    if (name_left) *name_left = name_tmp;
+    if (name_left) *name_left = name;
     return parent;
 }
 
@@ -374,7 +374,7 @@ data_size_t get_path_element( const WCHAR *name, data_size_t len )
 }
 
 static struct object *create_object( struct object *parent, const struct object_ops *ops,
-                                     const struct unicode_str *name, unsigned int attributes,
+                                     struct unicode_str name, unsigned int attributes,
                                      const struct security_descriptor *sd )
 {
     struct object *obj;
@@ -402,7 +402,7 @@ failed:
 
 /* create an object as named child under the specified parent */
 void *create_named_object( struct object *parent, const struct object_ops *ops,
-                           const struct unicode_str *name, unsigned int attributes,
+                           struct unicode_str name, unsigned int attributes,
                            const struct security_descriptor *sd )
 {
     struct object *obj, *new_obj;
@@ -410,7 +410,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
 
     clear_error();
 
-    if (!name || !name->len)
+    if (!name.len)
     {
         if (!(new_obj = alloc_object( ops ))) return NULL;
         if (sd && !default_set_sd( new_obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
@@ -439,7 +439,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
             return NULL;
         }
 
-        new_obj = create_object( obj, ops, &new_name, attributes, sd );
+        new_obj = create_object( obj, ops, new_name, attributes, sd );
         release_object( obj );
         if (!new_obj) return NULL;
     }
@@ -454,7 +454,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
 
 /* open a object by name under the specified parent */
 void *open_named_object( struct object *parent, const struct object_ops *ops,
-                         const struct unicode_str *name, unsigned int attributes )
+                         struct unicode_str name, unsigned int attributes )
 {
     struct unicode_str name_left;
     struct object *obj;
@@ -533,26 +533,26 @@ void release_object( void *ptr )
 }
 
 /* find an object by its name; the refcount is incremented */
-struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
+struct object *find_object( const struct namespace *namespace, struct unicode_str name,
                             unsigned int attributes )
 {
     const struct list *list;
     const struct object_name *ptr;
 
-    if (!name || !name->len) return NULL;
+    if (!name.len) return NULL;
 
-    list = &namespace->names[ hash_strW( name->str, name->len, namespace->hash_size ) ];
+    list = &namespace->names[ hash_strW( name.str, name.len, namespace->hash_size ) ];
     LIST_FOR_EACH_ENTRY( ptr, list, struct object_name, entry )
     {
-        if (ptr->len != name->len) continue;
+        if (ptr->len != name.len) continue;
         if (attributes & OBJ_CASE_INSENSITIVE)
         {
-            if (!memicmp_strW( ptr->name, name->str, name->len ))
+            if (!memicmp_strW( ptr->name, name.str, name.len ))
                 return grab_object( ptr->obj );
         }
         else
         {
-            if (!memcmp( ptr->name, name->str, name->len ))
+            if (!memcmp( ptr->name, name.str, name.len ))
                 return grab_object( ptr->obj );
         }
     }
@@ -744,12 +744,12 @@ static void dump_reserve( struct object *obj, int verbose )
     fprintf( stderr, "reserve type=%d\n", reserve->type);
 }
 
-static struct reserve *create_reserve( struct object *root, const struct unicode_str *name,
+static struct reserve *create_reserve( struct object *root, struct unicode_str name,
                                        unsigned int attr, int type, const struct security_descriptor *sd )
 {
     struct reserve *reserve;
 
-    if (name->len)
+    if (name.len)
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return NULL;
@@ -816,7 +816,7 @@ DECL_HANDLER(allocate_reserve_object)
 
     if (!objattr) return;
 
-    if ((reserve = create_reserve( root, &name, objattr->attributes, req->type, sd )))
+    if ((reserve = create_reserve( root, name, objattr->attributes, req->type, sd )))
     {
         reply->handle = alloc_handle_no_access_check( current->process, reserve, GENERIC_READ | GENERIC_WRITE,
                                                       objattr->attributes );

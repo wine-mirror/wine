@@ -1054,7 +1054,7 @@ static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
 }
 
 
-static struct mapping *create_mapping( struct object *root, const struct unicode_str *name,
+static struct mapping *create_mapping( struct object *root, struct unicode_str name,
                                        unsigned int attr, mem_size_t size, unsigned int flags,
                                        obj_handle_t handle, unsigned int file_access,
                                        const struct security_descriptor *sd )
@@ -1155,7 +1155,7 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
 }
 
 /* create a read-only file mapping for the specified fd */
-struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name,
+struct mapping *create_fd_mapping( struct object *root, struct unicode_str name,
                                    struct fd *fd, unsigned int attr, const struct security_descriptor *sd )
 {
     struct mapping *mapping;
@@ -1223,7 +1223,7 @@ int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
         return 1;
     }
     if (!view->fd) return 0;
-    get_nt_name( view->fd, name );
+    *name = get_nt_name( view->fd );
     return 1;
 }
 
@@ -1360,7 +1360,7 @@ size_t get_page_size(void)
     return host_page_mask + 1;
 }
 
-struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
+struct mapping *create_session_mapping( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
@@ -1513,7 +1513,7 @@ struct obj_locator get_shared_object_locator( volatile void *object_shm )
     return locator;
 }
 
-struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+struct object *create_user_data_mapping( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     void *ptr;
@@ -1537,7 +1537,7 @@ DECL_HANDLER(create_mapping)
 
     if (!objattr) return;
 
-    if ((mapping = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
+    if ((mapping = create_mapping( root, name, objattr->attributes, req->size, req->flags,
                                    req->file_handle, req->file_access, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
@@ -1554,10 +1554,8 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &mapping_ops, &name, req->attributes );
+                                 &mapping_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* get a mapping information */
@@ -1572,11 +1570,10 @@ DECL_HANDLER(get_mapping_info)
 
     if (mapping->flags & SEC_IMAGE)
     {
-        struct unicode_str name = { NULL, 0 };
+        struct unicode_str name = mapping->fd ? get_nt_name( mapping->fd ) : empty_str;
         data_size_t size;
         void *data;
 
-        if (mapping->fd) get_nt_name( mapping->fd, &name );
         size = reply->total = sizeof(struct pe_image_info) + mapping->ver_len + name.len + mapping->exp_len;
         if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len + name.len;
         if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len;

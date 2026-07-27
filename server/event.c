@@ -194,7 +194,7 @@ static const struct object_ops keyed_event_ops =
 };
 
 
-struct event *create_event( struct object *root, const struct unicode_str *name,
+struct event *create_event( struct object *root, struct unicode_str name,
                             unsigned int attr, int manual_reset, int initial_state,
                             const struct security_descriptor *sd )
 {
@@ -278,7 +278,7 @@ static void event_destroy( struct object *obj )
     if (event->sync) release_object( event->sync );
 }
 
-struct keyed_event *create_keyed_event( struct object *root, const struct unicode_str *name,
+struct keyed_event *create_keyed_event( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     struct keyed_event *event;
@@ -342,7 +342,7 @@ DECL_HANDLER(create_event)
 
     if (!objattr) return;
 
-    if ((event = create_event( root, &name, objattr->attributes,
+    if ((event = create_event( root, name, objattr->attributes,
                                req->manual_reset, req->initial_state, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
@@ -359,10 +359,8 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &event_ops, &name, req->attributes );
+                                 &event_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* do an event operation */
@@ -422,7 +420,7 @@ DECL_HANDLER(create_keyed_event)
 
     if (!objattr) return;
 
-    if ((event = create_keyed_event( root, &name, objattr->attributes, sd )))
+    if ((event = create_keyed_event( root, name, objattr->attributes, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, event, req->access, objattr->attributes );
@@ -437,8 +435,6 @@ DECL_HANDLER(create_keyed_event)
 /* open a handle to a keyed event */
 DECL_HANDLER(open_keyed_event)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &keyed_event_ops, &name, req->attributes );
+                                 &keyed_event_ops, get_req_unicode_str(), req->attributes );
 }

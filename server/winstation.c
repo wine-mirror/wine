@@ -104,7 +104,7 @@ static const struct object_ops desktop_ops =
 };
 
 /* create a winstation object */
-static struct winstation *create_winstation( struct object *root, const struct unicode_str *name,
+static struct winstation *create_winstation( struct object *root, struct unicode_str name,
                                              unsigned int attr, unsigned int flags )
 {
     struct winstation *winstation;
@@ -163,7 +163,7 @@ static struct object *winstation_lookup_name( struct object *obj, struct unicode
         return NULL;
     }
 
-    if ((found = find_object( winstation->desktop_names, name, attr )))
+    if ((found = find_object( winstation->desktop_names, *name, attr )))
         name->len = 0;
 
     return found;
@@ -238,7 +238,7 @@ struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, u
 }
 
 /* create a desktop object */
-static struct desktop *create_desktop( const struct unicode_str *name, unsigned int attr,
+static struct desktop *create_desktop( struct unicode_str name, unsigned int attr,
                                        unsigned int flags, struct winstation *winstation )
 {
     struct desktop *desktop, *current_desktop;
@@ -466,10 +466,10 @@ void set_process_default_desktop( struct process *process, struct desktop *deskt
 }
 
 /* connect a process to its window station */
-void connect_process_winstation( struct process *process, struct unicode_str *desktop_path,
+void connect_process_winstation( struct process *process, struct unicode_str desktop_name,
                                  struct thread *parent_thread, struct process *parent_process )
 {
-    struct unicode_str desktop_name = *desktop_path, winstation_name = {0};
+    struct unicode_str winstation_name = {0};
     const int attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
     struct winstation *winstation = NULL;
     struct desktop *desktop = NULL;
@@ -493,7 +493,7 @@ void connect_process_winstation( struct process *process, struct unicode_str *de
     {
         winstation = (struct winstation *)get_handle_obj( process, handle, 0, &winstation_ops );
     }
-    else if (winstation_name.len && (winstation = open_named_object( NULL, &winstation_ops, &winstation_name, attributes )))
+    else if (winstation_name.len && (winstation = open_named_object( NULL, &winstation_ops, winstation_name, attributes )))
     {
         handle = alloc_handle( process, winstation, STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS, 0 );
     }
@@ -511,7 +511,7 @@ void connect_process_winstation( struct process *process, struct unicode_str *de
         desktop = get_desktop_obj( process, handle, 0 );
         if (!desktop || desktop->winstation != winstation) goto done;
     }
-    else if (desktop_name.len && (desktop = open_named_object( &winstation->obj, &desktop_ops, &desktop_name, attributes )))
+    else if (desktop_name.len && (desktop = open_named_object( &winstation->obj, &desktop_ops, desktop_name, attributes )))
     {
         handle = alloc_handle( process, desktop, STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS, 0 );
     }
@@ -582,7 +582,7 @@ DECL_HANDLER(create_winstation)
     reply->handle = 0;
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir ))) return;
 
-    if ((winstation = create_winstation( root, &name, req->attributes, req->flags )))
+    if ((winstation = create_winstation( root, name, req->attributes, req->flags )))
     {
         reply->handle = alloc_handle( current->process, winstation, req->access, req->attributes );
         release_object( winstation );
@@ -593,10 +593,8 @@ DECL_HANDLER(create_winstation)
 /* open a handle to a window station */
 DECL_HANDLER(open_winstation)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &winstation_ops, &name, req->attributes );
+                                 &winstation_ops, get_req_unicode_str(), req->attributes );
 }
 
 
@@ -686,7 +684,7 @@ DECL_HANDLER(create_desktop)
     }
     if ((winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
     {
-        if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
+        if ((desktop = create_desktop( name, req->attributes, req->flags, winstation )))
         {
             if (!winstation->input_desktop) set_input_desktop( winstation, desktop );
             reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
@@ -711,7 +709,7 @@ DECL_HANDLER(open_desktop)
 
     if (!winstation) return;
 
-    if ((obj = open_named_object( &winstation->obj, &desktop_ops, &name, req->attributes )))
+    if ((obj = open_named_object( &winstation->obj, &desktop_ops, name, req->attributes )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );
