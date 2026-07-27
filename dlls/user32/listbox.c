@@ -738,10 +738,7 @@ static void LISTBOX_SetRedraw( LB_DESCR *descr, BOOL on )
         {     /* page was changed while setredraw false, refresh automatically */
             NtUserInvalidateRect(descr->self, NULL, TRUE);
             if ((descr->top_item + descr->page_size) > descr->nb_items)
-            {      /* reset top of page if less than number of items/page */
-                descr->top_item = descr->nb_items - descr->page_size;
-                if (descr->top_item < 0) descr->top_item = 0;
-            }
+                descr->top_item = LISTBOX_GetMaxTopIndex(descr);
             descr->style &= ~LBS_DISPLAYCHANGED;
         }
         LISTBOX_UpdateScroll( descr );
