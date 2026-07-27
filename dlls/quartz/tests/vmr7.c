@@ -2080,6 +2080,15 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 200, "Got top %ld.\n", top);
     ok(width == 300, "Got width %ld.\n", width);
     ok(height == 400, "Got height %ld.\n", height);
+
+    left = top = width = height = 0xdeadbeef;
+    hr = IVideoWindow_GetRestorePosition(window, &left, &top, &width, &height);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(left == 100, "Got left %ld.\n", left);
+    ok(top == 200, "Got top %ld.\n", top);
+    ok(width == 300, "Got width %ld.\n", width);
+    ok(height == 400, "Got height %ld.\n", height);
+
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 100, "Got window left %ld.\n", rect.left);
     ok(rect.top == 200, "Got window top %ld.\n", rect.top);
