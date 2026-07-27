@@ -7037,6 +7037,11 @@ static void test_weld_vertices(void)
         D3DXVECTOR3 position;
         BYTE color[4];
     };
+    struct vertex_color_float
+    {
+        D3DXVECTOR3 position;
+        float color[4];
+    };
     struct vertex_texcoord_short2
     {
         D3DXVECTOR3 position;
@@ -7077,6 +7082,7 @@ static void test_weld_vertices(void)
     UINT vertex_size_texcoord = sizeof(struct vertex_texcoord);
     UINT vertex_size_color = sizeof(struct vertex_color);
     UINT vertex_size_color_ubyte4 = sizeof(struct vertex_color_ubyte4);
+    UINT vertex_size_color_float = sizeof(struct vertex_color_float);
     UINT vertex_size_texcoord_short2 = sizeof(struct vertex_texcoord_short2);
     UINT vertex_size_normal_short4 = sizeof(struct vertex_normal_short4);
     UINT vertex_size_texcoord_float16_2 = sizeof(struct vertex_texcoord_float16_2);
@@ -7167,10 +7173,10 @@ static void test_weld_vertices(void)
         {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 10},
         D3DDECL_END()
     };
-    D3DVERTEXELEMENT9 declaration_color2[] =
+    D3DVERTEXELEMENT9 declaration_color_float[] =
     {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 2},
+        {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
         D3DDECL_END()
     };
     D3DVERTEXELEMENT9 declaration_color1[] =
@@ -8007,17 +8013,19 @@ static void test_weld_vertices(void)
     const DWORD exp_face_remap25[] = {0, 1};
     const DWORD exp_vertex_remap25[] = {0, 1, 2, 4, 5, -1};
     const DWORD exp_new_num_vertices25 = ARRAY_SIZE(exp_vertices25);
-    /* Test 26. Weld color with usage index larger than 1. Shows that none of
-     * the epsilon values are used. */
-    const struct vertex_color vertices26[] =
+    /* Test 26. Weld float color. */
+    /* Previously this test used index > 1 but that case appears to be
+     * effectively unhandled in native so the test gave inconsistent
+     * results. */
+    const struct vertex_color_float vertices26[] =
     {
-        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
-        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
-        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
 
-        {{ 3.0f,  3.0f,  0.f}, 0x00000000},
-        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
-        {{ 1.0f,  0.0f,  0.f}, 0x01010101},
+        {{ 2.5f,  3.0f,  0.f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 0.5f,  0.0f,  0.f}, {0.1f, 0.1f, 0.1f, 0.1f}},
     };
     const DWORD indices26[] = {0, 1, 2, 3, 4, 5};
     const DWORD attributes26[] = {0, 0};
@@ -8026,24 +8034,19 @@ static void test_weld_vertices(void)
     DWORD flags26 = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
     const D3DXWELDEPSILONS epsilons26 = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}, 1.0f, 1.0f, 1.0f};
     const DWORD adjacency26[] = {-1, 1, -1, -1, -1, 0};
-    const struct vertex_color exp_vertices26[] =
+    const struct vertex_color_float exp_vertices26[] =
     {
-        {{ 0.0f,  3.0f,  0.f}, 0xFFFFFFFF},
-        {{ 2.0f,  3.0f,  0.f}, 0xFFFFFFFF},
-        {{ 0.0f,  0.0f,  0.f}, 0xFFFFFFFF},
+        {{ 0.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 2.0f,  3.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{ 0.0f,  0.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
 
-        {{ 2.0f,  3.0f,  0.f}, 0x00000000},
-        {{ 3.0f,  0.0f,  0.f}, 0xFFFFFFFF},
-        {{ 0.0f,  0.0f,  0.f}, 0x01010101},
+        {{ 3.0f,  0.0f,  0.f}, {1.0f, 1.0f, 1.0f, 1.0f}},
     };
-    const DWORD exp_indices26[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_indices26[] = {0, 1, 2, 1, 3, 2};
     const DWORD exp_face_remap26[] = {0, 1};
-    const DWORD exp_vertex_remap26[] = {0, 1, 2, 3, 4, 5};
+    const DWORD exp_vertex_remap26[] = {0, 1, 2, 4, -1, -1};
     const DWORD exp_new_num_vertices26 = ARRAY_SIZE(exp_vertices26);
     /* Test 27. Weld color with usage index 1 (specular). */
-    /* Previously this test used float color values and index > 1 but that case
-     * appears to be effectively unhandled in native so the test gave
-     * inconsistent results. */
     const struct vertex_color vertices27[] =
     {
         {{ 0.0f,  3.0f,  0.0f}, 0x00000000},
@@ -8647,8 +8650,8 @@ static void test_weld_vertices(void)
             num_vertices26,
             num_faces26,
             options,
-            declaration_color2,
-            vertex_size_color,
+            declaration_color_float,
+            vertex_size_color_float,
             flags26,
             &epsilons26,
             adjacency26,
