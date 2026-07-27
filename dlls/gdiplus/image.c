@@ -602,7 +602,7 @@ GpStatus convert_pixels(INT width, INT height,
     if (src_format == dst_format ||
         (dst_format == PixelFormat32bppRGB && PIXELFORMATBPP(src_format) == 32))
     {
-        UINT widthbytes = PIXELFORMATBPP(src_format) * width / 8;
+        UINT widthbytes = (PIXELFORMATBPP(src_format) * width + 7) / 8;
         for (y=0; y<height; y++)
             memcpy(dst_bits+dst_stride*y, src_bits+src_stride*y, widthbytes);
         return Ok;
