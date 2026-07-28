@@ -88,7 +88,13 @@ struct directory
     struct namespace *entries;    /* directory's name space */
 };
 
+struct directory_init_data
+{
+    unsigned int hash_size;
+};
+
 static void directory_dump( struct object *obj, int verbose );
+static bool directory_init( struct object *obj, const void *init_data );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
                                              unsigned int attr, struct object *root );
 static void directory_destroy( struct object *obj );
@@ -98,6 +104,7 @@ static const struct object_ops directory_ops =
     .size        = sizeof(struct directory),
     .type        = &directory_type,
     .dump        = directory_dump,
+    .init        = directory_init,
     .lookup_name = directory_lookup_name,
     .destroy     = directory_destroy,
 };
@@ -155,6 +162,14 @@ static struct object_type *create_object_type( struct object *root, unsigned int
 static void directory_dump( struct object *obj, int verbose )
 {
     fputs( "Directory\n", stderr );
+}
+
+static bool directory_init( struct object *obj, const void *init_data )
+{
+    struct directory *dir = (struct directory *)obj;
+    const struct directory_init_data *data = init_data;
+
+    return !!(dir->entries = create_namespace( data->hash_size ));
 }
 
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
@@ -219,30 +234,15 @@ static void directory_destroy( struct object *obj )
     free( dir->entries );
 }
 
-static struct directory *create_directory_obj( const struct object_params *params, unsigned int hash_size )
-{
-    struct directory *dir;
-
-    if ((dir = create_named_object( params )) &&
-        get_error() != STATUS_OBJECT_NAME_EXISTS)
-    {
-        if (!(dir->entries = create_namespace( hash_size )))
-        {
-            release_object( dir );
-            return NULL;
-        }
-    }
-    return dir;
-}
-
 static struct directory *create_directory( struct object *root, struct unicode_str name,
                                            unsigned int attr, unsigned int hash_size,
                                            const struct security_descriptor *sd )
 {
+    struct directory_init_data data = { .hash_size = hash_size };
     struct object_params params = { .ops = &directory_ops, .root = root, .name = name,
-                                    .attr = attr, .sd = sd };
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
-    return create_directory_obj( &params, hash_size );
+    return create_named_object( &params );
 }
 
 struct object *get_root_directory(void)
@@ -508,11 +508,12 @@ void init_directories( struct fd *intl_fd )
 DECL_HANDLER(create_directory)
 {
     struct directory *dir;
-    struct object_params params = { .ops = &directory_ops };
+    struct directory_init_data data = { .hash_size = HASH_SIZE };
+    struct object_params params = { .ops = &directory_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((dir = create_directory_obj( &params, HASH_SIZE )))
+    if ((dir = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, dir, req->access, params.attr );
