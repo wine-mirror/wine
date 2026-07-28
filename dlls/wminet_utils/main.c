@@ -143,3 +143,10 @@ HRESULT WINAPI NextMethod(int vFunc, IWbemClassObject *ptr, LONG lFlags, BSTR *p
 
     return IWbemClassObject_NextMethod(ptr, lFlags, pstrName, ppInSignature, ppOutSignature);
 }
+
+HRESULT WINAPI EndMethodEnumeration(int vFunc, IWbemClassObject *ptr)
+{
+    TRACE("%i %p\n", vFunc, ptr);
+
+    return IWbemClassObject_EndMethodEnumeration(ptr);
+}

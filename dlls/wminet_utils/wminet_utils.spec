@@ -15,7 +15,7 @@
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
 @ stub EndEnumeration
-@ stub EndMethodEnumeration
+@ stdcall EndMethodEnumeration(long ptr)
 @ stub ExecNotificationQueryWmi
 @ stdcall ExecQueryWmi(wstr wstr long ptr ptr long long ptr wstr wstr wstr)
 @ stdcall Get(long ptr wstr long ptr ptr ptr)
