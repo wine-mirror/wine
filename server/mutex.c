@@ -160,7 +160,13 @@ struct mutex
     struct object      *sync;            /* mutex sync object */
 };
 
+struct mutex_init_data
+{
+    int owned;
+};
+
 static void mutex_dump( struct object *obj, int verbose );
+static bool mutex_init( struct object *obj, const void *init_data );
 static struct object *mutex_get_sync( struct object *obj );
 static int mutex_signal( struct object *obj, unsigned int access, int signal );
 static void mutex_destroy( struct object *obj );
@@ -170,31 +176,11 @@ static const struct object_ops mutex_ops =
     .size     = sizeof(struct mutex),
     .type     = &mutex_type,
     .dump     = mutex_dump,
+    .init     = mutex_init,
     .signal   = mutex_signal,
     .get_sync = mutex_get_sync,
     .destroy  = mutex_destroy,
 };
-
-static struct mutex *create_mutex( const struct object_params *params, int owned )
-{
-    struct mutex *mutex;
-
-    if ((mutex = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            mutex->sync = NULL;
-
-            if (!(mutex->sync = create_mutex_sync( owned )))
-            {
-                release_object( mutex );
-                return NULL;
-            }
-        }
-    }
-    return mutex;
-}
 
 void abandon_mutexes( struct thread *thread )
 {
@@ -216,6 +202,14 @@ static void mutex_dump( struct object *obj, int verbose )
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
     mutex->sync->ops->dump( mutex->sync, verbose );
+}
+
+static bool mutex_init( struct object *obj, const void *init_data )
+{
+    struct mutex *mutex = (struct mutex *)obj;
+    const struct mutex_init_data *data = init_data;
+
+    return !!(mutex->sync = create_mutex_sync( data->owned ));
 }
 
 static struct object *mutex_get_sync( struct object *obj )
@@ -252,11 +246,12 @@ static void mutex_destroy( struct object *obj )
 DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
-    struct object_params params = { .ops = &mutex_ops };
+    struct mutex_init_data data = { .owned = req->owned };
+    struct object_params params = { .ops = &mutex_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((mutex = create_mutex( &params, req->owned )))
+    if ((mutex = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, mutex, req->access, params.attr );
