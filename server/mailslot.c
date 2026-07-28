@@ -63,8 +63,16 @@ struct mailslot
     struct async_queue  read_q;
 };
 
+struct mailslot_init_data
+{
+    unsigned int options;
+    unsigned int max_msgsize;
+    timeout_t    read_timeout;
+};
+
 /* mailslot functions */
 static void mailslot_dump( struct object*, int );
+static bool mailslot_init( struct object *obj, const void *init_data );
 static struct fd *mailslot_get_fd( struct object * );
 static unsigned int mailslot_map_access( struct object *obj, unsigned int access );
 static WCHAR *mailslot_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
@@ -78,6 +86,7 @@ static const struct object_ops mailslot_ops =
     .size          = sizeof(struct mailslot),
     .type          = &file_type,
     .dump          = mailslot_dump,
+    .init          = mailslot_init,
     .get_fd        = mailslot_get_fd,
     .get_sync      = default_fd_get_sync,
     .map_access    = mailslot_map_access,
@@ -156,6 +165,7 @@ struct mailslot_device_file
 };
 
 static void mailslot_device_dump( struct object *obj, int verbose );
+static bool mailslot_device_init( struct object *obj, const void *init_data );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr, struct object *root );
 static struct object *mailslot_device_open_file( struct object *obj, unsigned int access,
@@ -167,6 +177,7 @@ static const struct object_ops mailslot_device_ops =
     .size        = sizeof(struct mailslot_device),
     .type        = &device_type,
     .dump        = mailslot_device_dump,
+    .init        = mailslot_device_init,
     .lookup_name = mailslot_device_lookup_name,
     .open_file   = mailslot_device_open_file,
     .destroy     = mailslot_device_destroy,
@@ -228,6 +239,22 @@ static void mailslot_dump( struct object *obj, int verbose )
     assert( obj->ops == &mailslot_ops );
     fprintf( stderr, "Mailslot max_msgsize=%d read_timeout=%s\n",
              mailslot->max_msgsize, get_timeout_str(mailslot->read_timeout) );
+}
+
+static bool mailslot_init( struct object *obj, const void *init_data )
+{
+    struct mailslot *mailslot = (struct mailslot *)obj;
+    const struct mailslot_init_data *data = init_data;
+
+    if (!(mailslot->fd = alloc_pseudo_fd( &mailslot_fd_ops, &mailslot->obj, data->options ))) return false;
+
+    mailslot->max_msgsize = data->max_msgsize;
+    mailslot->read_timeout = data->read_timeout;
+    list_init( &mailslot->writers );
+    list_init( &mailslot->messages );
+    init_async_queue( &mailslot->read_q );
+    allow_fd_caching( mailslot->fd );
+    return true;
 }
 
 static enum server_fd_type mailslot_get_fd_type( struct fd *fd )
@@ -396,6 +423,13 @@ static void mailslot_device_dump( struct object *obj, int verbose )
     fputs( "Mailslot device\n", stderr );
 }
 
+static bool mailslot_device_init( struct object *obj, const void *init_data )
+{
+    struct mailslot_device *device = (struct mailslot_device *)obj;
+
+    return !!(device->mailslots = create_namespace( 7 ));
+}
+
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr, struct object *root )
 {
@@ -438,21 +472,10 @@ static void mailslot_device_destroy( struct object *obj )
 struct object *create_mailslot_device( struct object *root, struct unicode_str name,
                                        unsigned int attr, const struct security_descriptor *sd )
 {
-    struct mailslot_device *dev;
     struct object_params params = { .ops = &mailslot_device_ops, .root = root,
                                     .name = name, .attr = attr, .sd = sd };
 
-    if ((dev = create_named_object( &params )) &&
-        get_error() != STATUS_OBJECT_NAME_EXISTS)
-    {
-        dev->mailslots = NULL;
-        if (!(dev->mailslots = create_namespace( 7 )))
-        {
-            release_object( dev );
-            dev = NULL;
-        }
-    }
-    return &dev->obj;
+    return create_named_object( &params );
 }
 
 static void mailslot_device_file_dump( struct object *obj, int verbose )
@@ -487,30 +510,6 @@ static void mailslot_device_file_destroy( struct object *obj )
 static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_DEVICE;
-}
-
-static struct mailslot *create_mailslot( const struct object_params *params,
-                                         unsigned int options, int max_msgsize, timeout_t read_timeout )
-{
-    struct mailslot *mailslot;
-
-    if (!(mailslot = create_named_object( params ))) return NULL;
-
-    mailslot->fd = NULL;
-    mailslot->max_msgsize = max_msgsize;
-    mailslot->read_timeout = read_timeout;
-    list_init( &mailslot->writers );
-    list_init( &mailslot->messages );
-    init_async_queue( &mailslot->read_q );
-
-    if ((mailslot->fd = alloc_pseudo_fd( &mailslot_fd_ops, &mailslot->obj, options )))
-    {
-        allow_fd_caching( mailslot->fd );
-        return mailslot;
-    }
-
-    release_object( mailslot );
-    return NULL;
 }
 
 static void mail_writer_dump( struct object *obj, int verbose )
@@ -574,7 +573,9 @@ static struct mailslot *get_mailslot_obj( struct process *process, obj_handle_t 
 DECL_HANDLER(create_mailslot)
 {
     struct mailslot *mailslot;
-    struct object_params params = { .ops = &mailslot_ops };
+    struct mailslot_init_data data = { .options = req->options, .max_msgsize = req->max_msgsize,
+                                       .read_timeout = req->read_timeout };
+    struct object_params params = { .ops = &mailslot_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
@@ -596,7 +597,7 @@ DECL_HANDLER(create_mailslot)
     }
 
     params.attr &= ~OBJ_OPENIF;
-    if ((mailslot = create_mailslot( &params, req->options, req->max_msgsize, req->read_timeout )))
+    if ((mailslot = create_named_object( &params )))
     {
         reply->handle = alloc_handle( current->process, mailslot, req->access, params.attr );
         release_object( mailslot );
