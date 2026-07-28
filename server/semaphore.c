@@ -133,7 +133,14 @@ struct semaphore
     struct object         *sync;   /* semaphore sync object */
 };
 
+struct semaphore_init_data
+{
+    unsigned int initial;
+    unsigned int max;
+};
+
 static void semaphore_dump( struct object *obj, int verbose );
+static bool semaphore_init( struct object *obj, const void *init_data );
 static struct object *semaphore_get_sync( struct object *obj );
 static int semaphore_signal( struct object *obj, unsigned int access, int signal );
 static void semaphore_destroy( struct object *obj );
@@ -143,43 +150,25 @@ static const struct object_ops semaphore_ops =
     .size     = sizeof(struct semaphore),
     .type     = &semaphore_type,
     .dump     = semaphore_dump,
+    .init     = semaphore_init,
     .signal   = semaphore_signal,
     .get_sync = semaphore_get_sync,
     .destroy  = semaphore_destroy,
 };
-
-static struct semaphore *create_semaphore( const struct object_params *params,
-                                           unsigned int initial, unsigned int max )
-{
-    struct semaphore *sem;
-
-    if (!max || (initial > max))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
-    if ((sem = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            sem->sync = NULL;
-
-            if (!(sem->sync = create_semaphore_sync( initial, max )))
-            {
-                release_object( sem );
-                return NULL;
-            }
-        }
-    }
-    return sem;
-}
 
 static void semaphore_dump( struct object *obj, int verbose )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
     sem->sync->ops->dump( sem->sync, verbose );
+}
+
+static bool semaphore_init( struct object *obj, const void *init_data )
+{
+    struct semaphore *sem = (struct semaphore *)obj;
+    const struct semaphore_init_data *data = init_data;
+
+    return !!(sem->sync = create_semaphore_sync( data->initial, data->max ));
 }
 
 static struct object *semaphore_get_sync( struct object *obj )
@@ -216,11 +205,18 @@ static void semaphore_destroy( struct object *obj )
 DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
-    struct object_params params = { .ops = &semaphore_ops };
+    struct semaphore_init_data data = { .initial = req->initial, .max = req->max };
+    struct object_params params = { .ops = &semaphore_ops, .init_data = &data };
+
+    if (!req->max || (req->initial > req->max))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((sem = create_semaphore( &params, req->initial, req->max )))
+    if ((sem = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, sem, req->access, params.attr );
