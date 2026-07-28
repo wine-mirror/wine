@@ -63,7 +63,13 @@ struct timer
     client_ptr_t         arg;       /* callback argument */
 };
 
+struct timer_init_data
+{
+    int manual;
+};
+
 static void timer_dump( struct object *obj, int verbose );
+static bool timer_init( struct object *obj, const void *init_data );
 static struct object *timer_get_sync( struct object *obj );
 static void timer_destroy( struct object *obj );
 
@@ -72,38 +78,11 @@ static const struct object_ops timer_ops =
     .size     = sizeof(struct timer),
     .type     = &timer_type,
     .dump     = timer_dump,
+    .init     = timer_init,
     .get_sync = timer_get_sync,
     .destroy  = timer_destroy,
 };
 
-
-/* create a timer object */
-static struct timer *create_timer( const struct object_params *params, int manual )
-{
-    struct timer *timer;
-
-    if ((timer = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            timer->sync     = NULL;
-            timer->manual   = manual;
-            timer->signaled = 0;
-            timer->when     = 0;
-            timer->period   = 0;
-            timer->timeout  = NULL;
-            timer->thread   = NULL;
-
-            if (!(timer->sync = create_internal_sync( manual, 0 )))
-            {
-                release_object( timer );
-                return NULL;
-            }
-        }
-    }
-    return timer;
-}
 
 /* callback on timer expiration */
 static void timer_callback( void *private )
@@ -192,6 +171,21 @@ static void timer_dump( struct object *obj, int verbose )
              timer->manual, get_timeout_str(timeout), timer->period );
 }
 
+static bool timer_init( struct object *obj, const void *init_data )
+{
+    struct timer *timer = (struct timer *)obj;
+    const struct timer_init_data *data = init_data;
+
+    timer->sync     = NULL;
+    timer->manual   = data->manual;
+    timer->signaled = 0;
+    timer->when     = 0;
+    timer->period   = 0;
+    timer->timeout  = NULL;
+    timer->thread   = NULL;
+    return !!(timer->sync = create_internal_sync( data->manual, 0 ));
+}
+
 static struct object *timer_get_sync( struct object *obj )
 {
     struct timer *timer = (struct timer *)obj;
@@ -213,11 +207,12 @@ static void timer_destroy( struct object *obj )
 DECL_HANDLER(create_timer)
 {
     struct timer *timer;
-    struct object_params params = { .ops = &timer_ops };
+    struct timer_init_data data = { .manual = req->manual };
+    struct object_params params = { .ops = &timer_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((timer = create_timer( &params, req->manual )))
+    if ((timer = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, timer, req->access, params.attr );
