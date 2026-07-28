@@ -164,7 +164,16 @@ struct file_load_info
 };
 
 
+struct key_init_data
+{
+    unsigned int options;
+    data_size_t  classlen;
+    const WCHAR *class;
+    timeout_t    modif;
+};
+
 static void key_dump( struct object *obj, int verbose );
+static bool key_init( struct object *obj, const void *init_data );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
 static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
@@ -180,6 +189,7 @@ static const struct object_ops key_ops =
     .size          = sizeof(struct key),
     .type          = &key_type,
     .dump          = key_dump,
+    .init          = key_init,
     .map_access    = key_map_access,
     .get_sd        = key_get_sd,
     .get_full_name = key_get_full_name,
@@ -376,6 +386,39 @@ static void key_dump( struct object *obj, int verbose )
     fprintf( stderr, "Key flags=%x ", key->flags );
     dump_path( key, NULL, stderr );
     fprintf( stderr, "\n" );
+}
+
+static bool key_init( struct object *obj, const void *init_data )
+{
+    struct key *key = (struct key *)obj;
+    struct key *parent = get_parent( key );
+    const struct key_init_data *data = init_data;
+
+    key->class       = NULL;
+    key->flags       = 0;
+    key->last_subkey = -1;
+    key->nb_subkeys  = 0;
+    key->subkeys     = NULL;
+    key->wow6432node = NULL;
+    key->nb_values   = 0;
+    key->last_value  = -1;
+    key->values      = NULL;
+    key->modif       = data->modif;
+    list_init( &key->notify_list );
+
+    if ((key->classlen = (data->classlen / sizeof(WCHAR)) * sizeof(WCHAR)) &&
+        !(key->class = memdup( data->class, key->classlen ))) return false;
+
+    if (data->options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
+    if (data->options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
+    else if (parent && parent->flags & KEY_VOLATILE)
+    {
+        set_error( STATUS_CHILD_MUST_BE_VOLATILE );
+        return false;
+    }
+    else key->flags |= KEY_DIRTY;
+
+    return true;
 }
 
 /* notify waiter and maybe delete the notification */
@@ -677,50 +720,6 @@ static void key_destroy( struct object *obj )
     }
 }
 
-/* allocate a key object */
-static struct key *create_key_object( struct object *parent, struct unicode_str name,
-                                      unsigned int attributes, unsigned int options, timeout_t modif,
-                                      const struct security_descriptor *sd )
-{
-    struct key *key;
-    struct object_params params = { .ops = &key_ops, .root = parent, .name = name,
-                                    .attr = attributes, .sd = sd };
-
-    if (!name.len) return open_named_object( &params );
-
-    if ((key = create_named_object( &params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            key->class       = NULL;
-            key->classlen    = 0;
-            key->flags       = 0;
-            key->last_subkey = -1;
-            key->nb_subkeys  = 0;
-            key->subkeys     = NULL;
-            key->wow6432node = NULL;
-            key->nb_values   = 0;
-            key->last_value  = -1;
-            key->values      = NULL;
-            key->modif       = modif;
-            list_init( &key->notify_list );
-
-            if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
-            if (options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
-            else if (parent && (get_parent( key )->flags & KEY_VOLATILE))
-            {
-                set_error( STATUS_CHILD_MUST_BE_VOLATILE );
-                unlink_named_object( &key->obj );
-                release_object( key );
-                return NULL;
-            }
-            else key->flags |= KEY_DIRTY;
-        }
-    }
-    return key;
-}
-
 /* mark a key and all its parents as dirty (modified) */
 static void make_dirty( struct key *key )
 {
@@ -804,91 +803,40 @@ static struct key *get_wow6432node( struct key *key )
     return find_subkey( ret, name, &index );
 }
 
-/* open a subkey */
-static struct key *open_key( struct key *parent, struct unicode_str name,
-                             unsigned int access, unsigned int attributes )
+/* get the real parent key, taking wow6432node into account */
+static struct object *get_wow6432_parent( struct key *parent, unsigned int access, struct unicode_str name )
 {
-    struct key *key;
-    struct object_params params = { .ops = &key_ops, .root = &parent->obj,
-                                    .name = name, .attr = attributes };
-
-    if (name.len >= 65534)
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return NULL;
-    }
-
     if (parent && !(access & KEY_WOW64_64KEY) && !is_wow6432node( name.str, name.len ))
     {
-        key = get_wow6432node( parent );
-        if (key && ((access & KEY_WOW64_32KEY) || (key->flags & KEY_WOWSHARE)))
-            params.root = &key->obj;
+        struct key *key = get_wow6432node( parent );
+        if (key && ((access & KEY_WOW64_32KEY) || (key->flags & KEY_WOWSHARE))) return &key->obj;
     }
-
-    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
-
-    if (!(key = open_named_object( &params ))) return NULL;
-
-    if (!(access & KEY_WOW64_64KEY)) key = grab_wow6432node( key );
-    if (debug_level > 1) dump_operation( key, NULL, "Open" );
-    if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
-    return key;
-}
-
-/* create a subkey */
-static struct key *create_key( struct key *parent, struct unicode_str name,
-                               unsigned int options, unsigned int access, unsigned int attributes,
-                               const struct security_descriptor *sd )
-{
-    struct key *key;
-
-    if (options & REG_OPTION_CREATE_LINK) attributes = (attributes & ~OBJ_OPENIF) | OBJ_OPENLINK;
-
-    if (parent && !(access & KEY_WOW64_64KEY) && !is_wow6432node( name.str, name.len ))
-    {
-        key = get_wow6432node( parent );
-        if (key && ((access & KEY_WOW64_32KEY) || (key->flags & KEY_WOWSHARE)))
-            parent = key;
-    }
-
-    if (!(access & KEY_WOW64_64KEY)) attributes |= OBJ_KEY_WOW64;
-
-    if (!(key = create_key_object( &parent->obj, name, attributes, options, current_time, sd )))
-        return NULL;
-
-    if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-    {
-        if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
-        if (!(access & KEY_WOW64_64KEY)) key = grab_wow6432node( key );
-    }
-    else
-    {
-        if (parent) touch_key( get_parent( key ), REG_NOTIFY_CHANGE_NAME );
-        if (debug_level > 1) dump_operation( key, NULL, "Create" );
-    }
-    return key;
+    return &parent->obj;
 }
 
 /* recursively create a subkey (for internal use only) */
 static struct key *create_key_recursive( struct key *root, struct unicode_str name, timeout_t modif )
 {
     struct key *key, *parent = (struct key *)grab_object( root );
+    struct key_init_data data = { .modif = modif };
+    struct object_params params = { .ops = &key_ops, .name = name, .attr = OBJ_OPENIF, .init_data = &data };
     data_size_t len = name.len;
 
     while (len)
     {
-        name.len = get_path_element( name.str, len );
-        key = create_key_object( &parent->obj, name, OBJ_OPENIF, 0, modif, NULL );
+        params.name.len = get_path_element( params.name.str, len );
+        params.root = &parent->obj;
+        key = create_named_object( &params );
         release_object( parent );
         if (!key) return NULL;
         parent = key;
 
         /* skip trailing \\ and move to the next element */
-        if (name.len < len)
+        if (params.name.len < len)
         {
-            name.len += sizeof(WCHAR);
-            name.str += name.len / sizeof(WCHAR);
-            len -= name.len;
+            params.name.len += sizeof(WCHAR);
+            params.name.str += params.name.len / sizeof(WCHAR);
+            len -= params.name.len;
         }
         else break;
     }
@@ -1912,13 +1860,17 @@ void init_registry(void)
     struct key *key, *hklm, *hkcu;
     unsigned int i;
     char *p;
+    struct key_init_data data = { .modif = current_time };
+    struct object_params params = { .ops = &key_ops, .name = root_name,
+                                    .attr = OBJ_PERMANENT, .init_data = &data };
+
 
     /* switch to the config dir */
 
     if (fchdir( config_dir_fd ) == -1) fatal_error( "chdir to config dir: %s\n", strerror( errno ));
 
     /* create the root key */
-    root_key = create_key_object( NULL, root_name, OBJ_PERMANENT, 0, current_time, NULL );
+    root_key = create_named_object( &params );
     assert( root_key );
     release_object( root_key );
 
@@ -2174,33 +2126,41 @@ DECL_HANDLER(create_key)
 {
     struct key *key, *parent = NULL;
     unsigned int access = req->access;
-    const WCHAR *class;
-    struct object_params params;
+    struct key_init_data data = { .options = req->options, .modif = current_time };
+    struct object_params params = { .ops = &key_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
     if (params.root) release_object( params.root );
+    data.class = get_req_data_after_objattr( &params, &data.classlen );
 
     if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
+    if (req->options & REG_OPTION_CREATE_LINK) params.attr = (params.attr & ~OBJ_OPENIF) | OBJ_OPENLINK;
 
     if (params.objattr->rootdir)
     {
         if (!(parent = get_hkey_obj( params.objattr->rootdir, 0 ))) return;
+        params.root = get_wow6432_parent( parent, access, params.name );
     }
 
-    if ((key = create_key( parent, params.name, req->options, access, params.attr, params.sd )))
+    if ((key = params.name.len ? create_named_object( &params ) : open_named_object( &params )))
     {
-        if ((class = get_req_data_after_objattr( &params, &key->classlen )))
+        if (!params.name.len || get_error() == STATUS_OBJECT_NAME_EXISTS)
         {
-            key->classlen = (key->classlen / sizeof(WCHAR)) * sizeof(WCHAR);
-            if (!(key->class = memdup( class, key->classlen ))) key->classlen = 0;
-        }
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
+            if (!(access & KEY_WOW64_64KEY)) key = grab_wow6432node( key );
             reply->hkey = alloc_handle( current->process, key, access, params.attr );
+        }
         else
+        {
             reply->hkey = alloc_handle_no_access_check( current->process, key,
                                                         access, params.attr );
+            if (parent) touch_key( get_parent( key ), REG_NOTIFY_CHANGE_NAME );
+            if (debug_level > 1) dump_operation( key, NULL, "Create" );
+        }
         release_object( key );
     }
+
     if (parent) release_object( parent );
 }
 
@@ -2209,15 +2169,30 @@ DECL_HANDLER(open_key)
 {
     struct key *key, *parent = NULL;
     unsigned int access = req->access;
-    struct unicode_str name = get_req_unicode_str();
+    struct object_params params = { .ops = &key_ops, .name = get_req_unicode_str(),
+                                    .attr = req->attributes };
+
+    if (params.name.len >= 65534)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return;
+    }
 
     if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
 
-    if (req->parent && !(parent = get_hkey_obj( req->parent, 0 ))) return;
-
-    if ((key = open_key( parent, name, access, req->attributes )))
+    if (req->parent)
     {
+        if (!(parent = get_hkey_obj( req->parent, 0 ))) return;
+        params.root = get_wow6432_parent( parent, access, params.name );
+    }
+
+    if ((key = open_named_object( &params )))
+    {
+        if (!(access & KEY_WOW64_64KEY)) key = grab_wow6432node( key );
+        if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
         reply->hkey = alloc_handle( current->process, key, access, req->attributes );
+        if (debug_level > 1) dump_operation( key, NULL, "Open" );
         release_object( key );
     }
     if (parent) release_object( parent );
@@ -2325,9 +2300,11 @@ DECL_HANDLER(delete_key_value)
 DECL_HANDLER(load_registry)
 {
     struct key *key, *parent = NULL;
-    struct object_params params;
+    struct key_init_data data = { .modif = current_time };
+    struct object_params params = { .ops = &key_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
+    if (params.root) release_object( params.root );
 
     if (!thread_single_check_privilege( current, SeRestorePrivilege ))
     {
@@ -2336,11 +2313,11 @@ DECL_HANDLER(load_registry)
     }
     if (params.objattr->rootdir)
     {
-        if (params.root) release_object( params.root );
         if (!(parent = get_hkey_obj( params.objattr->rootdir, 0 ))) return;
+        params.root = &parent->obj;
     }
 
-    if ((key = create_key( parent, params.name, 0, KEY_WOW64_64KEY, 0, params.sd )))
+    if ((key = create_named_object( &params )))
     {
         load_registry( key, req->file );
         release_object( key );
@@ -2351,7 +2328,8 @@ DECL_HANDLER(load_registry)
 DECL_HANDLER(unload_registry)
 {
     struct key *key, *parent = NULL;
-    struct unicode_str name = get_req_unicode_str();
+    struct object_params params = { .ops = &key_ops, .name = get_req_unicode_str(),
+                                    .attr = req->attributes };
 
     if (!thread_single_check_privilege( current, SeRestorePrivilege ))
     {
@@ -2359,9 +2337,13 @@ DECL_HANDLER(unload_registry)
         return;
     }
 
-    if (req->parent && !(parent = get_hkey_obj( req->parent, 0 ))) return;
+    if (req->parent)
+    {
+        if (!(parent = get_hkey_obj( req->parent, 0 ))) return;
+        params.root = &parent->obj;
+    }
 
-    if ((key = open_key( parent, name, KEY_WOW64_64KEY, req->attributes )))
+    if ((key = open_named_object( &params )))
     {
         if (key->obj.handle_count)
             set_error( STATUS_CANNOT_DELETE );
