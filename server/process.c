@@ -156,6 +156,7 @@ struct type_descr job_type =
 };
 
 static void job_dump( struct object *obj, int verbose );
+static bool job_init( struct object *obj, const void *init_data );
 static struct object *job_get_sync( struct object *obj );
 static int job_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void job_destroy( struct object *obj );
@@ -181,40 +182,11 @@ static const struct object_ops job_ops =
     .size         = sizeof(struct job),
     .type         = &job_type,
     .dump         = job_dump,
+    .init         = job_init,
     .get_sync     = job_get_sync,
     .close_handle = job_close_handle,
     .destroy      = job_destroy,
 };
-
-static struct job *create_job_object( const struct object_params *params )
-{
-    struct job *job;
-
-    if ((job = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            job->sync = NULL;
-            list_init( &job->process_list );
-            list_init( &job->child_job_list );
-            job->num_processes = 0;
-            job->total_processes = 0;
-            job->limit_flags = 0;
-            job->terminating = 0;
-            job->completion_port = NULL;
-            job->completion_key = 0;
-            job->parent = NULL;
-
-            if (!(job->sync = create_internal_sync( 1, 0 )))
-            {
-                release_object( job );
-                return NULL;
-            }
-        }
-    }
-    return job;
-}
 
 static struct job *get_job_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
@@ -406,6 +378,24 @@ static void job_dump( struct object *obj, int verbose )
     assert( obj->ops == &job_ops );
     fprintf( stderr, "Job processes=%d child_jobs=%d parent=%p\n",
              list_count(&job->process_list), list_count(&job->child_job_list), job->parent );
+}
+
+static bool job_init( struct object *obj, const void *init_data )
+{
+    struct job *job = (struct job *)obj;
+
+    if (!(job->sync = create_internal_sync( 1, 0 ))) return false;
+
+    job->num_processes = 0;
+    job->total_processes = 0;
+    job->limit_flags = 0;
+    job->terminating = 0;
+    job->completion_port = NULL;
+    job->completion_key = 0;
+    job->parent = NULL;
+    list_init( &job->process_list );
+    list_init( &job->child_job_list );
+    return true;
 }
 
 static struct object *job_get_sync( struct object *obj )
@@ -1830,7 +1820,7 @@ DECL_HANDLER(create_job)
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((job = create_job_object( &params )))
+    if ((job = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, job, req->access, params.attr );
