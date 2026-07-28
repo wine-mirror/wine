@@ -196,8 +196,11 @@ static void free_handle( struct handle_table *table, struct handle_entry *ptr )
 
 static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE handle )
 {
-    WORD index = LOWORD( handle ) - 1;
-    struct handle_entry *ptr = table->handles + index;
+    UINT index = ((UINT_PTR)handle & 0xffff) - 1;
+    struct handle_entry *ptr;
+
+    if (index >= ARRAY_SIZE(table->handles)) return NULL;
+    ptr = table->handles + index;
 
     AcquireSRWLockShared( &table->lock );
     if (index >= table->count || ULongToHandle( ptr->handle ) != handle)
