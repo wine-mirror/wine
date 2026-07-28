@@ -88,7 +88,13 @@ static const struct object_ops debug_event_ops =
     .destroy  = debug_event_destroy,
 };
 
+struct debug_obj_init_data
+{
+    unsigned int flags;
+};
+
 static void debug_obj_dump( struct object *obj, int verbose );
+static bool debug_obj_init( struct object *obj, const void *init_data );
 static struct object *debug_obj_get_sync( struct object *obj );
 static void debug_obj_destroy( struct object *obj );
 
@@ -97,6 +103,7 @@ static const struct object_ops debug_obj_ops =
     .size     = sizeof(struct debug_obj),
     .type     = &debug_obj_type,
     .dump     = debug_obj_dump,
+    .init     = debug_obj_init,
     .get_sync = debug_obj_get_sync,
     .destroy  = debug_obj_destroy,
 };
@@ -297,6 +304,16 @@ static void debug_obj_dump( struct object *obj, int verbose )
              debug_obj->event_queue.next, debug_obj->event_queue.prev );
 }
 
+static bool debug_obj_init( struct object *obj, const void *init_data )
+{
+    struct debug_obj *debug_obj = (struct debug_obj *)obj;
+    const struct debug_obj_init_data *data = init_data;
+
+    debug_obj->flags = data->flags;
+    list_init( &debug_obj->event_queue );
+    return !!(debug_obj->sync = create_internal_sync( 1, 0 ));
+}
+
 static struct object *debug_obj_get_sync( struct object *obj )
 {
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
@@ -323,28 +340,6 @@ static void debug_obj_destroy( struct object *obj )
 struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct debug_obj *)get_handle_obj( process, handle, access, &debug_obj_ops );
-}
-
-static struct debug_obj *create_debug_obj( const struct object_params *params, unsigned int flags )
-{
-    struct debug_obj *debug_obj;
-
-    if ((debug_obj = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            debug_obj->sync  = NULL;
-            debug_obj->flags = flags;
-            list_init( &debug_obj->event_queue );
-
-            if (!(debug_obj->sync = create_internal_sync( 1, 0 )))
-            {
-                release_object( debug_obj );
-                return NULL;
-            }
-        }
-    }
-    return debug_obj;
 }
 
 /* continue a debug event */
@@ -525,11 +520,12 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 DECL_HANDLER(create_debug_obj)
 {
     struct debug_obj *debug_obj;
-    struct object_params params = { .ops = &debug_obj_ops };
+    struct debug_obj_init_data data =  { .flags = req->flags };
+    struct object_params params = { .ops = &debug_obj_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((debug_obj = create_debug_obj( &params, req->flags )))
+    if ((debug_obj = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, debug_obj, req->access, params.attr );
