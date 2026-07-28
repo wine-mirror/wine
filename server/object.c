@@ -453,17 +453,16 @@ void *create_named_object( const struct object_params *params )
 }
 
 /* open a object by name under the specified parent */
-void *open_named_object( struct object *parent, const struct object_ops *ops,
-                         struct unicode_str name, unsigned int attributes )
+void *open_named_object( const struct object_params *params )
 {
     struct unicode_str name_left;
     struct object *obj;
 
-    if ((obj = lookup_named_object( parent, name, attributes, &name_left )))
+    if ((obj = lookup_named_object( params->root, params->name, params->attr, &name_left )))
     {
         if (name_left.len) /* not fully parsed */
             set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-        else if (ops && obj->ops != ops)
+        else if (params->ops && obj->ops != params->ops)
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
         else
             return obj;

@@ -686,7 +686,7 @@ static struct key *create_key_object( struct object *parent, struct unicode_str 
     struct object_params params = { .ops = &key_ops, .root = parent, .name = name,
                                     .attr = attributes, .sd = sd };
 
-    if (!name.len) return open_named_object( parent, &key_ops, name, attributes );
+    if (!name.len) return open_named_object( &params );
 
     if ((key = create_named_object( &params )))
     {
@@ -809,6 +809,8 @@ static struct key *open_key( struct key *parent, struct unicode_str name,
                              unsigned int access, unsigned int attributes )
 {
     struct key *key;
+    struct object_params params = { .ops = &key_ops, .root = &parent->obj,
+                                    .name = name, .attr = attributes };
 
     if (name.len >= 65534)
     {
@@ -820,12 +822,12 @@ static struct key *open_key( struct key *parent, struct unicode_str name,
     {
         key = get_wow6432node( parent );
         if (key && ((access & KEY_WOW64_32KEY) || (key->flags & KEY_WOWSHARE)))
-            parent = key;
+            params.root = &key->obj;
     }
 
-    if (!(access & KEY_WOW64_64KEY)) attributes |= OBJ_KEY_WOW64;
+    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
 
-    if (!(key = open_named_object( &parent->obj, &key_ops, name, attributes ))) return NULL;
+    if (!(key = open_named_object( &params ))) return NULL;
 
     if (!(access & KEY_WOW64_64KEY)) key = grab_wow6432node( key );
     if (debug_level > 1) dump_operation( key, NULL, "Open" );

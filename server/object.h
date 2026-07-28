@@ -168,8 +168,7 @@ extern struct object *lookup_named_object( struct object *root, struct unicode_s
                                            unsigned int attr, struct unicode_str *name_left );
 extern data_size_t get_path_element( const WCHAR *name, data_size_t len );
 extern void *create_named_object( const struct object_params *params );
-extern void *open_named_object( struct object *parent, const struct object_ops *ops,
-                                struct unicode_str name, unsigned int attributes );
+extern void *open_named_object( const struct object_params *params );
 extern void unlink_named_object( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
 extern void free_kernel_objects( struct object *obj );

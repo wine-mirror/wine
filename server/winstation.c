@@ -473,11 +473,11 @@ void connect_process_winstation( struct process *process, struct unicode_str des
                                  struct thread *parent_thread, struct process *parent_process )
 {
     struct unicode_str winstation_name = {0};
-    const int attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
     struct winstation *winstation = NULL;
     struct desktop *desktop = NULL;
     const WCHAR *wch, *end;
     obj_handle_t handle;
+    struct object_params params = { .attr = OBJ_CASE_INSENSITIVE | OBJ_OPENIF };
 
     for (wch = desktop_name.str, end = wch + desktop_name.len / sizeof(WCHAR); wch != end; wch++)
     {
@@ -491,12 +491,15 @@ void connect_process_winstation( struct process *process, struct unicode_str des
         }
     }
 
+    params.ops  = &winstation_ops;
+    params.name = winstation_name;
+
     /* check for an inherited winstation handle (don't ask...) */
     if ((handle = find_inherited_handle( process, &winstation_ops )))
     {
         winstation = (struct winstation *)get_handle_obj( process, handle, 0, &winstation_ops );
     }
-    else if (winstation_name.len && (winstation = open_named_object( NULL, &winstation_ops, winstation_name, attributes )))
+    else if (winstation_name.len && (winstation = open_named_object( &params )))
     {
         handle = alloc_handle( process, winstation, STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS, 0 );
     }
@@ -509,12 +512,16 @@ void connect_process_winstation( struct process *process, struct unicode_str des
     if (!winstation) goto done;
     process->winstation = handle;
 
+    params.root = &winstation->obj;
+    params.ops  = &desktop_ops;
+    params.name = desktop_name;
+
     if ((handle = find_inherited_handle( process, &desktop_ops )))
     {
         desktop = get_desktop_obj( process, handle, 0 );
         if (!desktop || desktop->winstation != winstation) goto done;
     }
-    else if (desktop_name.len && (desktop = open_named_object( &winstation->obj, &desktop_ops, desktop_name, attributes )))
+    else if (desktop_name.len && (desktop = open_named_object( &params )))
     {
         handle = alloc_handle( process, desktop, STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS, 0 );
     }
@@ -702,7 +709,8 @@ DECL_HANDLER(open_desktop)
 {
     struct winstation *winstation;
     struct object *obj;
-    struct unicode_str name = get_req_unicode_str();
+    struct object_params params = { .ops = &desktop_ops, .name = get_req_unicode_str(),
+                                    .attr = req->attributes };
 
     /* FIXME: check access rights */
     if (!req->winsta)
@@ -712,7 +720,8 @@ DECL_HANDLER(open_desktop)
 
     if (!winstation) return;
 
-    if ((obj = open_named_object( &winstation->obj, &desktop_ops, name, req->attributes )))
+    params.root = &winstation->obj;
+    if ((obj = open_named_object( &params )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );

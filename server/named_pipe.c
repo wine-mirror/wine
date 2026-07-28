@@ -1461,8 +1461,8 @@ static void named_pipe_dir_ioctl( struct fd *fd, ioctl_code_t code, struct async
             const FILE_PIPE_WAIT_FOR_BUFFER *buffer = get_req_data();
             data_size_t size = get_req_data_size();
             struct named_pipe *pipe;
-            struct unicode_str name;
             timeout_t when;
+            struct object_params params = { .ops = &named_pipe_ops, .root = &device->obj };
 
             if (size < sizeof(*buffer) ||
                 size < FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[buffer->NameLength/sizeof(WCHAR)]))
@@ -1470,9 +1470,9 @@ static void named_pipe_dir_ioctl( struct fd *fd, ioctl_code_t code, struct async
                 set_error( STATUS_INVALID_PARAMETER );
                 return;
             }
-            name.str = buffer->Name;
-            name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
-            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, name, 0 ))) return;
+            params.name.str = buffer->Name;
+            params.name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
+            if (!(pipe = open_named_object( &params ))) return;
 
             if (list_empty( &pipe->listeners ))
             {
@@ -1528,7 +1528,7 @@ DECL_HANDLER(create_named_pipe)
     switch (req->disposition)
     {
     case FILE_OPEN:
-        pipe = open_named_object( params.root, &named_pipe_ops, params.name, params.attr );
+        pipe = open_named_object( &params );
         break;
     case FILE_CREATE:
     case FILE_OPEN_IF:
