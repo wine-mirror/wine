@@ -20,10 +20,119 @@
 
 #define COBJMACROS
 #include "wine/fil_data.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
 
 #include <control.h>
 #include <uuids.h>
+
+#define compare_media_types(got, expected) compare_media_types_(__LINE__, got, expected)
+
+static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, const AM_MEDIA_TYPE *expected)
+{
+    VIDEOINFO *got_video_info_ptr, *expected_video_info_ptr;
+
+    ok_(__FILE__, line)(IsEqualGUID(&got->majortype, &expected->majortype), "Got major type %s.\n",
+            wine_dbgstr_guid(&got->majortype));
+    ok_(__FILE__, line)(
+            IsEqualGUID(&got->subtype, &expected->subtype), "Got subtype %s.\n", wine_dbgstr_guid(&got->subtype));
+    ok_(__FILE__, line)(IsEqualGUID(&got->formattype, &expected->formattype), "Got format type %s.\n",
+            wine_dbgstr_guid(&got->formattype));
+
+    ok_(__FILE__, line)(got->lSampleSize == expected->lSampleSize, "Got sample size %lu.\n", got->lSampleSize);
+    ok_(__FILE__, line)(got->bFixedSizeSamples == expected->bFixedSizeSamples, "Got bFixedSizeSamples %d.\n",
+            got->bFixedSizeSamples);
+    ok_(__FILE__, line)(got->bTemporalCompression == expected->bTemporalCompression, "Got bTemporalCompression %d.\n",
+            got->bTemporalCompression);
+    ok_(__FILE__, line)(got->pUnk == expected->pUnk, "Got pUnk %p.\n", got->pUnk);
+
+    ok_(__FILE__, line)(got->cbFormat == expected->cbFormat, "Got cbFormat %lu.\n", got->cbFormat);
+    if (expected->pbFormat == NULL)
+    {
+        ok_(__FILE__, line)(got->pbFormat == NULL, "Expected pbFormat to be NULL.\n");
+        return;
+    }
+
+    ok_(__FILE__, line)(got->pbFormat != NULL, "Expected a pbFormat value.\n");
+
+    got_video_info_ptr = (VIDEOINFO *)got->pbFormat;
+    expected_video_info_ptr = (VIDEOINFO *)expected->pbFormat;
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biSize == expected_video_info_ptr->bmiHeader.biSize,
+            "Got size %lu.\n", got_video_info_ptr->bmiHeader.biSize);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biWidth == expected_video_info_ptr->bmiHeader.biWidth,
+            "Got width %ld.\n", got_video_info_ptr->bmiHeader.biWidth);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biHeight == expected_video_info_ptr->bmiHeader.biHeight,
+            "Got height %ld.\n", got_video_info_ptr->bmiHeader.biHeight);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biPlanes == expected_video_info_ptr->bmiHeader.biPlanes,
+            "Got planes %d.\n", got_video_info_ptr->bmiHeader.biPlanes);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biBitCount == expected_video_info_ptr->bmiHeader.biBitCount,
+            "Got bitcount %d.\n", got_video_info_ptr->bmiHeader.biBitCount);
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biCompression == expected_video_info_ptr->bmiHeader.biCompression,
+            "Got compression %lx.\n", got_video_info_ptr->bmiHeader.biCompression);
+
+    ok_(__FILE__, line)(got_video_info_ptr->bmiHeader.biSizeImage == expected_video_info_ptr->bmiHeader.biSizeImage,
+            "Got image size %lu.\n", got_video_info_ptr->bmiHeader.biSizeImage);
+
+    ok_(__FILE__, line)(got_video_info_ptr->rcSource.left == expected_video_info_ptr->rcSource.left,
+            "Got source left %ld.\n", got_video_info_ptr->rcSource.left);
+    ok_(__FILE__, line)(got_video_info_ptr->rcSource.top == expected_video_info_ptr->rcSource.top,
+            "Got source top %ld.\n", got_video_info_ptr->rcSource.top);
+    ok_(__FILE__, line)(got_video_info_ptr->rcSource.right == expected_video_info_ptr->rcSource.right,
+            "Got source right %ld.\n", got_video_info_ptr->rcSource.right);
+    ok_(__FILE__, line)(got_video_info_ptr->rcSource.bottom == expected_video_info_ptr->rcSource.bottom,
+            "Got source bottom %ld.\n", got_video_info_ptr->rcSource.bottom);
+
+    ok_(__FILE__, line)(got_video_info_ptr->rcTarget.left == expected_video_info_ptr->rcTarget.left,
+            "Got target left %ld.\n", got_video_info_ptr->rcTarget.left);
+    ok_(__FILE__, line)(got_video_info_ptr->rcTarget.top == expected_video_info_ptr->rcTarget.top,
+            "Got target top %ld.\n", got_video_info_ptr->rcTarget.top);
+    ok_(__FILE__, line)(got_video_info_ptr->rcTarget.right == expected_video_info_ptr->rcTarget.right,
+            "Got target right %ld.\n", got_video_info_ptr->rcTarget.right);
+    ok_(__FILE__, line)(got_video_info_ptr->rcTarget.bottom == expected_video_info_ptr->rcTarget.bottom,
+            "Got target bottom %ld.\n", got_video_info_ptr->rcTarget.bottom);
+}
+
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_source source;
+};
+
+static struct testfilter *testfilter_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface);
+    strmbase_source_cleanup(&filter->source);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_destroy = testfilter_destroy,
+};
+
+static const struct strmbase_source_ops peer_source_ops =
+{
+};
+
+static struct testfilter *create_testfilter(void)
+{
+    static const GUID clsid = { 0xabacab };
+
+    struct testfilter *testfilter;
+
+    testfilter = calloc(1, sizeof(*testfilter));
+    strmbase_filter_init(&testfilter->filter, NULL, &clsid, &testfilter_ops);
+
+    strmbase_source_init(&testfilter->source, &testfilter->filter, L"Out", &peer_source_ops);
+    wcscpy(testfilter->source.pin.name, L"XForm Out");
+
+    return testfilter;
+}
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
@@ -38,6 +147,11 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
+}
+
+static HRESULT create_filter_graph(IFilterGraph **graph)
+{
+    return CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph, (void **)graph);
 }
 
 static HRESULT create_color_conv(IBaseFilter **filter)
@@ -99,14 +213,21 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
-static const GUID *subtypes[] =
+static const struct
 {
-    &MEDIASUBTYPE_RGB8,
-    &MEDIASUBTYPE_RGB555,
-    &MEDIASUBTYPE_RGB565,
-    &MEDIASUBTYPE_RGB24,
-    &MEDIASUBTYPE_RGB32,
-    &MEDIASUBTYPE_ARGB32,
+    const GUID *guid;
+    DWORD compression;
+    WORD bitcount;
+    ULONG cbFormat;
+}
+subtypes[] =
+{
+    { &MEDIASUBTYPE_ARGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
+    { &MEDIASUBTYPE_RGB32, BI_RGB, 32, sizeof(VIDEOINFOHEADER) },
+    { &MEDIASUBTYPE_RGB24, BI_RGB, 24, sizeof(VIDEOINFOHEADER) },
+    { &MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
+    { &MEDIASUBTYPE_RGB555, BI_BITFIELDS, 16, sizeof(VIDEOINFOHEADER) + sizeof(DWORD[3]) /* dwBitMasks */ },
+    { &MEDIASUBTYPE_RGB8, BI_RGB, 8, sizeof(VIDEOINFOHEADER) + sizeof(RGBQUAD[256]) /* bmiColors */ },
 };
 
 static void test_registration(void)
@@ -173,8 +294,8 @@ static void test_registration(void)
             pin_types = pin->lpMediaType + j;
             ok(IsEqualGUID(pin_types->clsMajorType, &MEDIATYPE_Video), "Got major type %s.\n",
                     wine_dbgstr_guid(pin_types->clsMajorType));
-            ok(IsEqualGUID(pin_types->clsMinorType, subtypes[j]), "Got minor type %s.\n",
-                    wine_dbgstr_guid(pin_types->clsMinorType));
+            ok(IsEqualGUID(pin_types->clsMinorType, subtypes[ARRAY_SIZE(subtypes) - j - 1].guid),
+                    "Got minor type %s.\n", wine_dbgstr_guid(pin_types->clsMinorType));
 
             winetest_pop_context();
         }
@@ -619,6 +740,181 @@ skip_test:
     ok(refcount == 0, "Got refcount %ld.\n", refcount);
 }
 
+static void test_media_types(void)
+{
+    AM_MEDIA_TYPE *media_types[ARRAY_SIZE(subtypes)], req_mt, mt;
+    struct testfilter *peer = NULL;
+    IEnumMediaTypes *enum_types;
+    ULONG refcount, num_types;
+    IPin *sink, *source;
+    VIDEOINFO video_info;
+    IFilterGraph *graph;
+    IBaseFilter *filter;
+    DWORD image_size;
+    HRESULT hr;
+    int i;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    hr = create_filter_graph(&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_AddFilter(graph, filter, L"Color Filter");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &source);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto skip_test;
+
+    hr = IBaseFilter_FindPin(filter, L"In", &sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    peer = create_testfilter();
+
+    memset(&req_mt, 0, sizeof(req_mt));
+    memset(&video_info, 0, sizeof(video_info));
+    req_mt.majortype = MEDIATYPE_Video;
+    req_mt.formattype = FORMAT_VideoInfo;
+    req_mt.pbFormat = (BYTE *)&video_info;
+    video_info.bmiHeader.biSize = sizeof(video_info.bmiHeader);
+    video_info.bmiHeader.biWidth = 240;
+
+    for (i = 0; i < ARRAY_SIZE(subtypes); i++)
+    {
+        winetest_push_context("subtype %d", i);
+
+        req_mt.subtype = *subtypes[i].guid;
+        req_mt.cbFormat = subtypes[i].cbFormat;
+        video_info.bmiHeader.biHeight = 240;
+        hr = IPin_QueryAccept(sink, &req_mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IPin_Disconnect(sink);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        /* Test negative height */
+        video_info.bmiHeader.biHeight = -240;
+
+        hr = IPin_QueryAccept(sink, &req_mt);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IPin_Disconnect(sink);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
+    req_mt.subtype = MEDIASUBTYPE_RGB32;
+    req_mt.cbFormat = sizeof(VIDEOINFOHEADER);
+    video_info.bmiHeader.biHeight = 240;
+    /* Any value of biPlanes is accepted, and then echoed back in the enum */
+    video_info.bmiHeader.biPlanes = 123;
+    /* source and target must be the same size and be contained within the bounds of heigth and width */
+    video_info.rcSource.left = 60;
+    video_info.rcSource.top = 80;
+    video_info.rcSource.right = 120;
+    video_info.rcSource.bottom = 200;
+    video_info.rcTarget.left = 140;
+    video_info.rcTarget.top = 100;
+    video_info.rcTarget.right = 200;
+    video_info.rcTarget.bottom = 220;
+
+    hr = IPin_ReceiveConnection(sink, &peer->source.pin.IPin_iface, &req_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_EnumMediaTypes(source, &enum_types);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(num_types == 6, "Got num_types %lu.\n", num_types);
+
+    mt = req_mt;
+    mt.bFixedSizeSamples = TRUE;
+
+    for (i = 0; i < num_types; i++)
+    {
+        winetest_push_context("subtype %d", i);
+
+        image_size = 240 * 240 * (subtypes[i].bitcount / 8);
+        mt.subtype = *subtypes[i].guid;
+        mt.lSampleSize = image_size;
+        mt.cbFormat = subtypes[i].cbFormat;
+        video_info.bmiHeader.biSizeImage = image_size;
+        video_info.bmiHeader.biBitCount = subtypes[i].bitcount;
+        video_info.bmiHeader.biCompression = subtypes[i].compression;
+
+        compare_media_types(media_types[i], &mt);
+
+        hr = IPin_QueryAccept(source, media_types[i]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        /* Copy the RGB32 media type that was accepted for another QueryAccept test after disconnect */
+        if (i == 1)
+            CopyMediaType(&req_mt, media_types[i]);
+
+        /* Test negative height */
+        ((VIDEOINFO *)media_types[i]->pbFormat)->bmiHeader.biHeight = -240;
+        hr = IPin_QueryAccept(source, media_types[i]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        DeleteMediaType(media_types[i]);
+
+        winetest_pop_context();
+    }
+
+    hr = IEnumMediaTypes_Next(enum_types, ARRAY_SIZE(subtypes), media_types, &num_types);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(num_types == 0, "Got num_types %lu.\n", num_types);
+
+    IEnumMediaTypes_Release(enum_types);
+
+    hr = IPin_Disconnect(sink);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* The previously accepted media type is no longer accepted after disconnect */
+    hr = IPin_QueryAccept(source, &req_mt);
+    todo_wine
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    FreeMediaType(&req_mt);
+
+    IPin_Release(sink);
+    IPin_Release(source);
+
+    refcount = IBaseFilter_Release(&peer->filter.IBaseFilter_iface);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+
+skip_test:
+    hr = IFilterGraph_RemoveFilter(graph, filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    refcount = IFilterGraph_Release(graph);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+
+    refcount = IBaseFilter_Release(filter);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
@@ -629,6 +925,7 @@ START_TEST(colorconv)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
 
     CoUninitialize();
 }
