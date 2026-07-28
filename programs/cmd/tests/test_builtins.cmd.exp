@@ -2316,7 +2316,7 @@ A2@space@
 BB@space@
 ---
 ------------ Testing short path modifier ------------
-@todo_wine@short name: filename shortened
+short name: filename shortened
 short path: non-existent last preserved
 short path: beyond missing preserved
 ------------ Testing combined CALLs/GOTOs ------------
