@@ -98,20 +98,28 @@ struct type_descr completion_reserve_type =
     },
 };
 
-static void dump_reserve( struct object *obj, int verbose );
+struct reserve_init_data
+{
+    int type;
+};
+
+static void reserve_dump( struct object *obj, int verbose );
+static bool reserve_init( struct object *obj, const void *init_data );
 
 static const struct object_ops apc_reserve_ops =
 {
     .size = sizeof(struct reserve),
     .type = &apc_reserve_type,
-    .dump = dump_reserve,
+    .dump = reserve_dump,
+    .init = reserve_init,
 };
 
 static const struct object_ops completion_reserve_ops =
 {
     .size = sizeof(struct reserve),
     .type = &completion_reserve_type,
-    .dump = dump_reserve,
+    .dump = reserve_dump,
+    .init = reserve_init,
 };
 
 #ifdef DEBUG_OBJECTS
@@ -744,7 +752,7 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
     return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
 }
 
-static void dump_reserve( struct object *obj, int verbose )
+static void reserve_dump( struct object *obj, int verbose )
 {
     struct reserve *reserve = (struct reserve *) obj;
 
@@ -752,39 +760,14 @@ static void dump_reserve( struct object *obj, int verbose )
     fprintf( stderr, "reserve type=%d\n", reserve->type);
 }
 
-static struct reserve *create_reserve( struct object_params *params, int type )
+static bool reserve_init( struct object *obj, const void *init_data )
 {
-    struct reserve *reserve;
+    struct reserve *reserve = (struct reserve *)obj;
+    const struct reserve_init_data *data = init_data;
 
-    if (params->name.len)
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return NULL;
-    }
-
-    if (type == MemoryReserveObjectTypeUserApc)
-    {
-        params->ops = &apc_reserve_ops;
-        reserve = create_named_object( params );
-    }
-    else if (type == MemoryReserveObjectTypeIoCompletion)
-    {
-        params->ops = &completion_reserve_ops;
-        reserve = create_named_object( params );
-    }
-    else
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
-
-    if (reserve && get_error() != STATUS_OBJECT_NAME_EXISTS)
-    {
-        reserve->type = type;
-        reserve->bound_obj = NULL;
-    }
-
-    return reserve;
+    reserve->type = data->type;
+    reserve->bound_obj = NULL;
+    return true;
 }
 
 struct reserve *get_completion_reserve_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -818,16 +801,32 @@ void reserve_obj_unbind( struct reserve *reserve )
 DECL_HANDLER(allocate_reserve_object)
 {
     struct reserve *reserve;
-    struct object_params params;
+    struct reserve_init_data data = { .type = req->type };
+    struct object_params params = { .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
+    if (params.root) release_object( params.root ); /* unused */
 
-    if ((reserve = create_reserve( &params, req->type )))
+    if (params.name.len)
     {
-        reply->handle = alloc_handle_no_access_check( current->process, reserve, GENERIC_READ | GENERIC_WRITE,
-                                                      params.attr );
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return;
+    }
+
+    switch (data.type)
+    {
+    case MemoryReserveObjectTypeUserApc:      params.ops = &apc_reserve_ops; break;
+    case MemoryReserveObjectTypeIoCompletion: params.ops = &completion_reserve_ops; break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if ((reserve = create_named_object( &params )))
+    {
+        reply->handle = alloc_handle_no_access_check( current->process, reserve,
+                                                      STANDARD_RIGHTS_REQUIRED | 0x3, params.attr );
         release_object( reserve );
     }
 
-    if (params.root) release_object( params.root );
 }
