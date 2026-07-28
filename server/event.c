@@ -143,7 +143,14 @@ struct event
     struct list        kernel_object;   /* list of kernel object pointers */
 };
 
+struct event_init_data
+{
+    int manual_reset;
+    int initial_state;
+};
+
 static void event_dump( struct object *obj, int verbose );
+static bool event_init( struct object *obj, const void *init_data );
 static struct object *event_get_sync( struct object *obj );
 static int event_signal( struct object *obj, unsigned int access, int signal );
 static struct list *event_get_kernel_obj_list( struct object *obj );
@@ -154,6 +161,7 @@ static const struct object_ops event_ops =
     .size                = sizeof(struct event),
     .type                = &event_type,
     .dump                = event_dump,
+    .init                = event_init,
     .signal              = event_signal,
     .get_sync            = event_get_sync,
     .get_kernel_obj_list = event_get_kernel_obj_list,
@@ -194,37 +202,15 @@ static const struct object_ops keyed_event_ops =
 };
 
 
-static struct event *create_event_obj( const struct object_params *params,
-                                       int manual_reset, int initial_state )
-{
-    struct event *event;
-
-    if ((event = create_named_object( params )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            event->sync = NULL;
-            list_init( &event->kernel_object );
-
-            if (!(event->sync = create_event_sync( manual_reset, initial_state )))
-            {
-                release_object( event );
-                return NULL;
-            }
-        }
-    }
-    return event;
-}
-
 struct event *create_event( struct object *root, struct unicode_str name,
                             unsigned int attr, int manual_reset, int initial_state,
                             const struct security_descriptor *sd )
 {
+    struct event_init_data data = { .manual_reset = manual_reset, .initial_state = initial_state };
     struct object_params params = { .ops = &event_ops, .root = root, .name = name,
-                                    .attr = attr, .sd = sd };
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
-    return create_event_obj( &params, manual_reset, initial_state );
+    return create_named_object( &params );
 }
 
 struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -247,6 +233,15 @@ static void event_dump( struct object *obj, int verbose )
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
     event->sync->ops->dump( event->sync, verbose );
+}
+
+static bool event_init( struct object *obj, const void *init_data )
+{
+    struct event *event = (struct event *)obj;
+    const struct event_init_data *data = init_data;
+
+    list_init( &event->kernel_object );
+    return !!(event->sync = create_event_sync( data->manual_reset, data->initial_state ));
 }
 
 static struct object *event_get_sync( struct object *obj )
@@ -338,11 +333,13 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
 DECL_HANDLER(create_event)
 {
     struct event *event;
-    struct object_params params = { .ops = &event_ops };
+    struct event_init_data data = { .manual_reset = req->manual_reset,
+                                    .initial_state = req->initial_state };
+    struct object_params params = { .ops = &event_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
-    if ((event = create_event_obj( &params, req->manual_reset, req->initial_state )))
+    if ((event = create_named_object( &params )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, event, req->access, params.attr );
