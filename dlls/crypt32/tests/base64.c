@@ -59,6 +59,8 @@ static const BYTE toEncode5[] =
 
 static const BYTE toEncode6[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
+static const BYTE toEncode_len48[] = "abcd4567890123456789012345678901234567890123456";
+
 static const struct BinTests tests[] = {
  { toEncode1, sizeof(toEncode1), "AA==\r\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\r\n", },
@@ -74,6 +76,8 @@ static const struct BinTests tests[] = {
  { toEncode6, sizeof(toEncode6),
    "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh\r\n"
    "YQA=\r\n" },
+ { toEncode_len48, sizeof(toEncode_len48),
+   "YWJjZDQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTYA\r\n" },
 };
 
 static const struct BinTests testsNoCR[] = {
@@ -91,6 +95,8 @@ static const struct BinTests testsNoCR[] = {
  { toEncode6, sizeof(toEncode6),
    "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh\n"
    "YQA=\n" },
+ { toEncode_len48, sizeof(toEncode_len48),
+   "YWJjZDQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTYA\n" },
 };
 
 static WCHAR *strdupAtoW(const char *str)
@@ -221,7 +227,6 @@ static void encode_compare_base64_W(const BYTE *toEncode, DWORD toEncodeLen, DWO
     strLen2 = strLen;
     ret = CryptBinaryToStringW(toEncode, toEncodeLen, format, strW, &strLen2);
     ok(ret, "CryptBinaryToStringW failed: %ld\n", GetLastError());
-
     ok(strLen2 == strLen - 1, "Expected length %ld, got %ld\n", strLen - 1, strLen);
 
     ptr = strW;
@@ -694,7 +699,7 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
         ret = CryptStringToBinaryA(str, 0, useFormat, NULL, &bufLen, NULL,
          NULL);
         /* expect failure with no header, and success with one */
-        if (header)
+        if (header || !(expectedLen * 4 % 3))
             ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
         else
             ok(!ret && GetLastError() == ERROR_INVALID_DATA,
@@ -704,14 +709,15 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
             buf = malloc(bufLen);
             if (buf)
             {
-                DWORD skipped, usedFormat;
+                DWORD skipped, usedFormat, expected_skipped;
 
                 ret = CryptStringToBinaryA(str, 0, useFormat, buf, &bufLen,
                  &skipped, &usedFormat);
                 ok(ret, "CryptStringToBinaryA failed: %ld\n", GetLastError());
-                ok(skipped == strlen(garbage),
-                 "Expected %d characters of \"%s\" skipped when trying format %08lx, got %ld (used format is %08lx)\n",
-                 lstrlenA(garbage), str, useFormat, skipped, usedFormat);
+                expected_skipped = usedFormat != CRYPT_STRING_BASE64 || expectedLen * 4 % 3 ? strlen(garbage) : 0;
+                ok(skipped == expected_skipped,
+                 "Expected %lu characters of \"%s\" skipped when trying format %08lx, got %ld (used format is %08lx)\n",
+                 expected_skipped, str, useFormat, skipped, usedFormat);
                 free(buf);
             }
         }
@@ -1009,6 +1015,7 @@ static void test_CryptStringToBinary(void)
     /* Good strings */
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
+        winetest_push_context("test %lu", i);
         bufLen = 0;
         /* Bogus length--oddly enough, that succeeds, even though it's not
          * properly padded.
@@ -1062,10 +1069,12 @@ static void test_CryptStringToBinary(void)
          CRYPT_STRING_ANY, CRYPT_STRING_BASE64X509CRLHEADER, tests[i].toEncode,
          tests[i].toEncodeLen);
          */
+        winetest_pop_context();
     }
     /* And again, with no CR--decoding handles this automatically */
     for (i = 0; i < ARRAY_SIZE(testsNoCR); i++)
     {
+        winetest_push_context("test %lu", i);
         bufLen = 0;
         /* Bogus length--oddly enough, that succeeds, even though it's not
          * properly padded.
@@ -1100,6 +1109,7 @@ static void test_CryptStringToBinary(void)
         decodeAndCompareBase64_A(testsNoCR[i].base64, CERT_HEADER, CERT_TRAILER,
          CRYPT_STRING_ANY, CRYPT_STRING_BASE64HEADER, testsNoCR[i].toEncode,
          testsNoCR[i].toEncodeLen);
+        winetest_pop_context();
     }
 
     /* CRYPT_STRING_HEX */
