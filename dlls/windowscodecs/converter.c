@@ -2427,7 +2427,7 @@ static HRESULT copypixels_to_128bppRGBAFloat(struct FormatConverter *This, const
                 for (x = 0; x < prc->Width; x++)
                 {
                     float alpha = srcpixel[3];
-                    if (alpha != 0 && alpha != 255)
+                    if (alpha != 0)
                     {
                         *dstpixel++ = from_sRGB_component(srcpixel[0] / alpha);
                         *dstpixel++ = from_sRGB_component(srcpixel[1] / alpha);
