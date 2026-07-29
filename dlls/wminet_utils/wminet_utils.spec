@@ -22,7 +22,7 @@
 @ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
 @ stub GetErrorInfo
-@ stub GetMethod
+@ stdcall GetMethod(long ptr wstr long ptr ptr)
 @ stub GetMethodOrigin
 @ stub GetMethodQualifierSet
 @ stdcall GetNames(long ptr wstr long ptr ptr)
