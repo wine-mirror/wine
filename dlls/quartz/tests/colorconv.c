@@ -92,6 +92,70 @@ static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, co
             "Got target bottom %ld.\n", got_video_info_ptr->rcTarget.bottom);
 }
 
+struct image_data
+{
+    DWORD size;
+    BYTE data[];
+};
+
+static struct image_data *create_image(BOOL is_32bit, BOOL is_flipped, DWORD width, DWORD height)
+{
+    static const struct
+    {
+        BYTE r;
+        BYTE g;
+        BYTE b;
+    }
+    color[8] =
+    {
+        { 0xFF, 0xFF, 0xFF }, /* white */
+        { 0xFF, 0xFF, 0x00 }, /* yellow */
+        { 0x00, 0xFF, 0xFF }, /* cyan */
+        { 0x00, 0xFF, 0x00 }, /* green */
+        { 0xFF, 0x00, 0xFF }, /* magenta */
+        { 0xFF, 0x00, 0x00 }, /* red */
+        { 0x00, 0x00, 0xFF }, /* blue */
+        { 0x00, 0x00, 0x00 }, /* black */
+    };
+
+    struct image_data *image_data;
+    BYTE pixel_size_in_bytes;
+    BYTE *line, *ptr;
+    LONG stride;
+    DWORD size;
+    int i, j;
+
+    pixel_size_in_bytes = (is_32bit ? 4 : 3);
+    stride = width * pixel_size_in_bytes;
+    size = height * stride;
+
+    image_data = calloc(1, sizeof(*image_data) + size);
+    image_data->size = size;
+    line = image_data->data;
+
+    if (is_flipped)
+    {
+        line += (height - 1) * stride;
+        stride = -stride;
+    }
+
+    for (i = 0; i < 240; i++)
+    {
+        ptr = line;
+        for (j = 0; j < 240; j++)
+        {
+            *ptr++ = color[i / 30].b;
+            *ptr++ = color[i / 30].g;
+            *ptr++ = color[i / 30].r;
+            if (is_32bit)
+                ptr++;
+        }
+        line += stride;
+    }
+
+    return image_data;
+}
+
 struct mem_allocator
 {
     IMemAllocator IMemAllocator_iface;
@@ -1766,11 +1830,15 @@ static void test_sample_processing(
         },
     };
 
+    struct image_data *rgb24_image, *rgb32_image;
     REFERENCE_TIME *time_start, *time_end;
     struct mem_allocator *sink_allocator;
     IMemAllocator *allocator;
     IMediaSample *sample;
+    LONG image_size;
+    LONGLONG diff;
     HRESULT hr;
+    BYTE *buff;
     int i;
 
     hr = IMemInputPin_ReceiveCanBlock(input);
@@ -1939,6 +2007,71 @@ static void test_sample_processing(
     IMediaSample_Release(sample);
     ok(sink_allocator->sample_refcount == 0, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
 
+    /* Test content of image */
+    sink_allocator->expect_get_buffer = TRUE;
+    sink_allocator->expect_get_media_type = TRUE;
+    sink_allocator->media_type_checked = FALSE;
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sink_allocator->sample_refcount == 1, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    sink_allocator->expect_get_buffer = FALSE;
+    sink_allocator->expect_get_media_type = FALSE;
+
+    rgb24_image = create_image(FALSE, TRUE, 240, 240);
+
+    image_size = IMediaSample_GetSize(sample);
+    ok(image_size == rgb24_image->size, "Got image_size %ld.\n", image_size);
+
+    hr = IMediaSample_GetPointer(sample, &buff);
+    ok(hr == S_OK, "Get hr %#lx.\n", hr);
+
+    memcpy(buff, rgb24_image->data, image_size);
+    hr = IMediaSample_SetActualDataLength(sample, image_size);
+    ok(hr == S_OK, "Get hr %#lx.\n", hr);
+
+    sink_allocator->expect_get_buffer = TRUE;
+    sink_allocator->expect_get_media_type = TRUE;
+    sink_allocator->media_type_checked = FALSE;
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    sink_allocator->expect_get_buffer = FALSE;
+    sink_allocator->expect_get_media_type = FALSE;
+
+    IMediaSample_Release(sample);
+
+    sample = testsink->sample;
+    testsink->sample = NULL;
+
+    todo_wine
+    ok(sample != NULL, "Expected out peer sample.\n");
+    if (sample == NULL)
+        goto skip_test;
+
+    hr = IMediaSample_GetPointer(sample, &buff);
+    ok(hr == S_OK, "Get hr %#lx.\n", hr);
+
+    rgb32_image = create_image(TRUE, TRUE, 240, 240);
+
+    image_size = IMediaSample_GetActualDataLength(sample);
+    ok(image_size == rgb32_image->size, "Got image_size %ld.\n", image_size);
+
+    diff = 0;
+    for (unsigned int i = 0; i < image_size; ++i)
+        diff += abs((int)buff[i] - (int)rgb32_image->data[i]);
+    diff = diff * 100 / 256 / image_size;
+    ok(diff == 0, "Got %I64u%% difference.\n", diff);
+
+    free(rgb32_image);
+    IMediaSample_Release(sample);
+    ok(sink_allocator->sample_refcount == 0, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
+
+skip_test:
     hr = IMemAllocator_Decommit(allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
