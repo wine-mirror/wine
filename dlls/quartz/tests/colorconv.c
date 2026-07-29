@@ -1189,6 +1189,73 @@ static void test_sink_allocator(IMemInputPin *input)
     IMemAllocator_Release(allocator);
 }
 
+static void test_filter_state(IMediaControl *control, IBaseFilter *filter)
+{
+    FILTER_STATE base_state;
+    OAFilterState state;
+    HRESULT hr;
+
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &base_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(base_state == State_Paused, "Got state %#x.\n", base_state);
+
+    hr = IBaseFilter_Pause(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &base_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(base_state == State_Paused, "Got state %#x.\n", base_state);
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %lu.\n", state);
+}
+
 static void test_connect_pin(void)
 {
     struct testfilter *testsource, *testsink = NULL;
@@ -1324,6 +1391,8 @@ static void test_connect_pin(void)
 
     ok(testsource->source.pin.peer == sink, "Got in peer %p.\n", testsource->source.pin.peer);
     ok(testsink->sink.pin.peer == source, "Got out peer %p.\n", testsink->sink.pin.peer);
+
+    test_filter_state(control, filter);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
