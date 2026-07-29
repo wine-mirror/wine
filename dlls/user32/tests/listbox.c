@@ -2621,28 +2621,22 @@ static void test_LB_SETTOPINDEX(void)
 
     /* Greater than or equal to item count (out of bounds) */
     ret = SendMessageA(listbox, LB_SETTOPINDEX, 10, 0);
-    todo_wine
     ok(ret == LB_ERR, "got %d\n", ret);
 
     ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
-    todo_wine
     ok(ret == 2, "got %d\n", ret);
 
     ret = SendMessageA(listbox, LB_SETTOPINDEX, 20, 0);
-    todo_wine
     ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
 
     ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
-    todo_wine
     ok(ret == 2, "got %d\n", ret);
 
     /* Negative (out of bounds) */
     ret = SendMessageA(listbox, LB_SETTOPINDEX, -1, 0);
-    todo_wine
     ok(ret == LB_ERR, "Expected LB_ERR, got %d\n", ret);
 
     ret = SendMessageA(listbox, LB_GETTOPINDEX, 0, 0);
-    todo_wine
     ok(ret == 2, "got %d\n", ret);
 
     DestroyWindow(listbox);

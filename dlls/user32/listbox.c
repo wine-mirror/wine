@@ -2881,6 +2881,8 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         return descr->focus_item;
 
     case LB_SETTOPINDEX:
+        if (((INT)wParam < 0) || ((INT)wParam >= descr->nb_items))
+            return LB_ERR;
         return LISTBOX_SetTopItem( descr, wParam, TRUE );
 
     case LB_SETCOLUMNWIDTH:
