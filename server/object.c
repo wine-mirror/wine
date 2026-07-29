@@ -373,83 +373,92 @@ data_size_t get_path_element( const WCHAR *name, data_size_t len )
     return i * sizeof(WCHAR);
 }
 
-static struct object *create_object( struct object *parent, const struct object_ops *ops,
-                                     struct unicode_str name, unsigned int attributes,
-                                     const struct security_descriptor *sd )
+static struct object *create_object_without_name( const struct object_params *params )
 {
     struct object *obj;
-    struct object_name *name_ptr;
 
-    if (!(name_ptr = alloc_name( name ))) return NULL;
-    if (!(obj = alloc_object( ops ))) goto failed;
-    if (sd && !default_set_sd( obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                               DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+    if (!(obj = alloc_object( params->ops ))) return NULL;
+
+    if (params->sd && !default_set_sd( obj, params->sd,
+                                       OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
         goto failed;
-    if (obj->ops->link_name ?
-        obj->ops->link_name( obj, name_ptr, parent ) :
-        directory_link_name( obj, name_ptr, parent ))
+
+    if (!obj->ops->init || obj->ops->init( obj, params->init_data )) return obj;
+
+ failed:
+    free_object( obj );
+    return NULL;
+}
+
+static struct object *create_object_with_name( const struct object_params *params )
+{
+    struct object *obj = NULL, *parent;
+    struct object_name *name_ptr;
+    struct unicode_str new_name;
+
+    clear_error();
+
+    if (!params->name.len) return create_object_without_name( params );
+
+    if (!(parent = lookup_named_object( params->root, params->name, params->attr, &new_name )))
+        return NULL;
+
+    if (!new_name.len)
     {
-        name_ptr->obj = obj;
-        obj->name = name_ptr;
-        return obj;
+        if (params->attr & OBJ_OPENIF && parent->ops == params->ops)
+        {
+            set_error( STATUS_OBJECT_NAME_EXISTS );
+            return parent;
+        }
+        release_object( parent );
+        if (params->attr & OBJ_OPENIF)
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        else
+            set_error( STATUS_OBJECT_NAME_COLLISION );
+        return NULL;
     }
 
-failed:
+    if (!(name_ptr = alloc_name( new_name ))) goto failed;
+    if (!(obj = alloc_object( params->ops ))) goto failed;
+
+    if (params->sd && !default_set_sd( obj, params->sd,
+                                       OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+        goto failed;
+
+    if (!(obj->ops->link_name ? obj->ops->link_name( obj, name_ptr, parent ) :
+                                directory_link_name( obj, name_ptr, parent )))
+        goto failed;
+
+    name_ptr->obj = obj;
+    obj->name = name_ptr;
+    release_object( parent );
+
+    if (!obj->ops->init || obj->ops->init( obj, params->init_data )) return obj;
+
+    unlink_named_object( obj );
+    free_object( obj );
+    return NULL;
+
+ failed:
     if (obj) free_object( obj );
     free( name_ptr );
+    release_object( parent );
     return NULL;
 }
 
 /* create an object as named child with the specified parameters */
 void *create_named_object( const struct object_params *params )
 {
-    struct object *obj, *new_obj;
-    struct unicode_str new_name;
+    struct object *obj = create_object_with_name( params );
 
-    clear_error();
-
-    if (!params->name.len)
+    if (obj && (params->attr & OBJ_PERMANENT))
     {
-        if (!(new_obj = alloc_object( params->ops ))) return NULL;
-        if (params->sd &&
-            !default_set_sd( new_obj, params->sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                                  DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
-        {
-            free_object( new_obj );
-            return NULL;
-        }
+        make_object_permanent( obj );
+        grab_object( obj );
     }
-    else
-    {
-        if (!(obj = lookup_named_object( params->root, params->name, params->attr, &new_name )))
-            return NULL;
-
-        if (!new_name.len)
-        {
-            if (params->attr & OBJ_OPENIF && obj->ops == params->ops)
-            {
-                set_error( STATUS_OBJECT_NAME_EXISTS );
-                return obj;
-            }
-            release_object( obj );
-            if (params->attr & OBJ_OPENIF)
-                set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            else
-                set_error( STATUS_OBJECT_NAME_COLLISION );
-            return NULL;
-        }
-
-        new_obj = create_object( obj, params->ops, new_name, params->attr, params->sd );
-        release_object( obj );
-        if (!new_obj) return NULL;
-    }
-
-    if (params->attr & OBJ_PERMANENT)
-    {
-        make_object_permanent( new_obj );
-        grab_object( new_obj );
-    }
-    return new_obj;
+    return obj;
 }
 
 /* open a object by name under the specified parent */

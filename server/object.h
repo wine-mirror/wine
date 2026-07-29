@@ -75,6 +75,7 @@ struct object_params
     unsigned int                      attr;       /* creation attributes */
     const struct security_descriptor *sd;         /* pointer to sd data in the request */
     const struct object_attributes   *objattr;    /* pointer to object attributes in the request */
+    const void                       *init_data;  /* object-specific initialization data */
 };
 
 /* operations valid on all objects */
@@ -86,6 +87,8 @@ struct object_ops
     struct type_descr *type;
     /* dump the object (for debugging) */
     void (*dump)(struct object *,int);
+    /* initialize a newly-created object */
+    bool (*init)(struct object *,const void *);
     /* add a thread to the object wait queue */
     int  (*add_queue)(struct object *,struct wait_queue_entry *);
     /* remove a thread from the object wait queue */
