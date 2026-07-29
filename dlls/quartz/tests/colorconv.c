@@ -1116,11 +1116,85 @@ static void test_unconnected_filter_state(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_sink_allocator(IMemInputPin *input)
+{
+    ALLOCATOR_PROPERTIES allocator_props_request, allocator_props_actual;
+    IMemAllocator *allocator, *req_allocator, *ret_allocator;
+    ALLOCATOR_PROPERTIES props, ret_props;
+    LONG image_size;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+
+    memset(&props, 0xcc, sizeof(props));
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_GetProperties(allocator, &props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(!props.cBuffers, "Got %ld buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %ld.\n", props.cbBuffer);
+        ok(!props.cbAlign, "Got alignment %ld.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+        image_size = 240 * 240 * 3;
+        allocator_props_request.cBuffers = 1;
+        allocator_props_request.cbBuffer = image_size;
+        allocator_props_request.cbAlign = 1;
+        allocator_props_request.cbPrefix = 0;
+        hr = IMemAllocator_SetProperties(allocator, &allocator_props_request, &allocator_props_actual);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(allocator_props_actual.cBuffers == 1, "Got cBuffers %ld.\n", allocator_props_actual.cBuffers);
+        ok(allocator_props_actual.cbBuffer == image_size, "Got cbBuffer %ld.\n", allocator_props_actual.cbBuffer);
+        ok(allocator_props_actual.cbAlign == 1, "Got cbAlign %ld.\n", allocator_props_actual.cbAlign);
+        ok(allocator_props_actual.cbPrefix == 0, "Got cbPrefix %ld.\n", allocator_props_actual.cbPrefix);
+
+        hr = IMemInputPin_NotifyAllocator(input, allocator, TRUE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (void **)&req_allocator);
+
+    props.cBuffers = 1;
+    props.cbBuffer = 256;
+    props.cbAlign = 1;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(req_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(ret_allocator == req_allocator, "Allocators didn't match.\n");
+
+    IMemAllocator_Release(req_allocator);
+    IMemAllocator_Release(ret_allocator);
+
+    hr = IMemInputPin_NotifyAllocator(input, allocator, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IMemAllocator_Release(allocator);
+}
+
 static void test_connect_pin(void)
 {
     struct testfilter *testsource, *testsink = NULL;
     IPin *sink, *source, *peer;
     AM_MEDIA_TYPE mt, req_mt;
+    IMemInputPin *meminput;
     IMediaControl *control;
     VIDEOINFO video_info;
     IFilterGraph *graph;
@@ -1150,6 +1224,11 @@ static void test_connect_pin(void)
         goto skip_test;
 
     hr = IBaseFilter_FindPin(filter, L"Out", &source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    meminput = NULL;
+    hr = IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
+    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testsource = create_testfilter();
@@ -1220,6 +1299,8 @@ static void test_connect_pin(void)
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    test_sink_allocator(meminput);
+
     /* Test source connection. */
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(source, &peer);
@@ -1260,6 +1341,9 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
 skip_connection_test:
+    if (meminput)
+        IMemInputPin_Release(meminput);
+
     IPin_Release(sink);
     IPin_Release(source);
 
