@@ -96,6 +96,9 @@ struct testfilter
 {
     struct strmbase_filter filter;
     struct strmbase_source source;
+    struct strmbase_sink sink;
+
+    const GUID *wanted_subtype;
 };
 
 static struct testfilter *testfilter_from_strmbase_filter(struct strmbase_filter *iface)
@@ -103,20 +106,66 @@ static struct testfilter *testfilter_from_strmbase_filter(struct strmbase_filter
     return CONTAINING_RECORD(iface, struct testfilter, filter);
 }
 
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface);
+    if (!index)
+        return &filter->source.pin;
+    else if (index == 1)
+        return &filter->sink.pin;
+    return NULL;
+}
+
 static void testfilter_destroy(struct strmbase_filter *iface)
 {
     struct testfilter *filter = testfilter_from_strmbase_filter(iface);
     strmbase_source_cleanup(&filter->source);
+    strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
 }
 
 static const struct strmbase_filter_ops testfilter_ops =
 {
+    .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
 };
 
+static HRESULT WINAPI peer_source_DecideAllocator(
+        struct strmbase_source *iface, IMemInputPin *peer, IMemAllocator **allocator)
+{
+    return S_OK;
+}
+
+static HRESULT peer_source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(pin->filter);
+
+    return (!filter->wanted_subtype || IsEqualGUID(&mt->subtype, filter->wanted_subtype)) ? S_OK : S_FALSE;
+}
+
 static const struct strmbase_source_ops peer_source_ops =
 {
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = peer_source_DecideAllocator,
+    .base.pin_query_accept = peer_source_query_accept,
+};
+
+static HRESULT peer_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static const struct strmbase_sink_ops peer_sink_ops =
+{
+    .base.pin_query_interface = peer_sink_query_interface,
 };
 
 static struct testfilter *create_testfilter(void)
@@ -127,6 +176,9 @@ static struct testfilter *create_testfilter(void)
 
     testfilter = calloc(1, sizeof(*testfilter));
     strmbase_filter_init(&testfilter->filter, NULL, &clsid, &testfilter_ops);
+
+    strmbase_sink_init(&testfilter->sink, &testfilter->filter, L"In", &peer_sink_ops, NULL);
+    wcscpy(testfilter->sink.pin.name, L"Input");
 
     strmbase_source_init(&testfilter->source, &testfilter->filter, L"Out", &peer_source_ops);
     wcscpy(testfilter->source.pin.name, L"XForm Out");
@@ -1064,6 +1116,178 @@ static void test_unconnected_filter_state(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_connect_pin(void)
+{
+    struct testfilter *testsource, *testsink = NULL;
+    IPin *sink, *source, *peer;
+    AM_MEDIA_TYPE mt, req_mt;
+    IMediaControl *control;
+    VIDEOINFO video_info;
+    IFilterGraph *graph;
+    IBaseFilter *filter;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = create_color_conv(&filter);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    hr = create_filter_graph(&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_AddFilter(graph, filter, L"Color Filter");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, L"In", &sink);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto skip_test;
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testsource = create_testfilter();
+    testsink = create_testfilter();
+
+    hr = IFilterGraph_AddFilter(graph, &testsource->filter.IBaseFilter_iface, L"In Peer");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_AddFilter(graph, &testsink->filter.IBaseFilter_iface, L"Out Peer");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test sink connection. */
+    memset(&req_mt, 0, sizeof(req_mt));
+    req_mt.majortype = MEDIATYPE_Video;
+    req_mt.subtype = MEDIASUBTYPE_RGB24;
+    req_mt.formattype = FORMAT_None;
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+
+    /* Partial types are not accepted */
+    hr = IFilterGraph_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    /* Set exact type */
+    req_mt.formattype = FORMAT_VideoInfo;
+    req_mt.cbFormat = sizeof(video_info);
+    req_mt.pbFormat = (BYTE *)&video_info;
+    memset(&video_info, 0, sizeof(video_info));
+    video_info.bmiHeader.biSize = sizeof(video_info.bmiHeader);
+    video_info.bmiHeader.biWidth = 240;
+    video_info.bmiHeader.biHeight = 240;
+    video_info.bmiHeader.biBitCount = 24;
+    testsource->wanted_subtype = &MEDIASUBTYPE_RGB24;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &req_mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto skip_connection_test;
+
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(peer == &testsource->source.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    compare_media_types(&mt, &req_mt);
+    compare_media_types(&testsource->source.pin.mt, &req_mt);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph_Disconnect(graph, sink);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test source connection. */
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(source, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+
+    req_mt.subtype = MEDIASUBTYPE_RGB32;
+    req_mt.bFixedSizeSamples = TRUE;
+    req_mt.lSampleSize = 240 * 240 * 4;
+    video_info.bmiHeader.biBitCount = 32;
+    hr = IFilterGraph_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    compare_media_types(&mt, &req_mt);
+    compare_media_types(&testsink->sink.pin.mt, &req_mt);
+
+    ok(testsource->source.pin.peer == sink, "Got in peer %p.\n", testsource->source.pin.peer);
+    ok(testsink->sink.pin.peer == source, "Got out peer %p.\n", testsink->sink.pin.peer);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_Disconnect(graph, &testsink->sink.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_Disconnect(graph, source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_Disconnect(graph, sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_Disconnect(graph, &testsource->source.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+skip_connection_test:
+    IPin_Release(sink);
+    IPin_Release(source);
+
+    hr = IFilterGraph_RemoveFilter(graph, &testsink->filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph_RemoveFilter(graph, &testsource->filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    refcount = IBaseFilter_Release(&testsource->filter.IBaseFilter_iface);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+
+    refcount = IBaseFilter_Release(&testsink->filter.IBaseFilter_iface);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+
+skip_test:
+    IMediaControl_Release(control);
+
+    hr = IFilterGraph_RemoveFilter(graph, filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    refcount = IFilterGraph_Release(graph);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+
+    refcount = IBaseFilter_Release(filter);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
+}
+
 START_TEST(colorconv)
 {
     CoInitialize(NULL);
@@ -1077,6 +1301,7 @@ START_TEST(colorconv)
     test_media_types();
     test_enum_media_types();
     test_unconnected_filter_state();
+    test_connect_pin();
 
     CoUninitialize();
 }
