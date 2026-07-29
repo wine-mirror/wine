@@ -206,22 +206,11 @@ static void timer_destroy( struct object *obj )
 /* create a timer */
 DECL_HANDLER(create_timer)
 {
-    struct timer *timer;
     struct timer_init_data data = { .manual = req->manual };
-    struct object_params params = { .ops = &timer_ops, .init_data = &data };
+    struct object_params params = { .ops = &timer_ops, .access = req->access, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((timer = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, timer, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, timer,
-                                                          req->access, params.attr );
-        release_object( timer );
-    }
-
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

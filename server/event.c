@@ -332,23 +332,12 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    struct event *event;
     struct event_init_data data = { .manual_reset = req->manual_reset,
                                     .initial_state = req->initial_state };
-    struct object_params params = { .ops = &event_ops, .init_data = &data };
+    struct object_params params = { .ops = &event_ops, .access = req->access, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((event = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, event,
-                                                          req->access, params.attr );
-        release_object( event );
-    }
-
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 
@@ -408,20 +397,10 @@ DECL_HANDLER(query_event)
 /* create a keyed event */
 DECL_HANDLER(create_keyed_event)
 {
-    struct keyed_event *event;
-    struct object_params params = { .ops = &keyed_event_ops };
+    struct object_params params = { .ops = &keyed_event_ops, .access = req->access };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((event = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, event,
-                                                          req->access, params.attr );
-        release_object( event );
-    }
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

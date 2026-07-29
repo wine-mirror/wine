@@ -507,22 +507,11 @@ void init_directories( struct fd *intl_fd )
 /* create a directory object */
 DECL_HANDLER(create_directory)
 {
-    struct directory *dir;
     struct directory_init_data data = { .hash_size = HASH_SIZE };
-    struct object_params params = { .ops = &directory_ops, .init_data = &data };
+    struct object_params params = { .ops = &directory_ops, .access = req->access, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((dir = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, dir, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, dir,
-                                                          req->access, params.attr );
-        release_object( dir );
-    }
-
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

@@ -204,9 +204,8 @@ static void semaphore_destroy( struct object *obj )
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
-    struct semaphore *sem;
     struct semaphore_init_data data = { .initial = req->initial, .max = req->max };
-    struct object_params params = { .ops = &semaphore_ops, .init_data = &data };
+    struct object_params params = { .ops = &semaphore_ops, .access = req->access, .init_data = &data };
 
     if (!req->max || (req->initial > req->max))
     {
@@ -215,17 +214,7 @@ DECL_HANDLER(create_semaphore)
     }
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((sem = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, sem, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, sem,
-                                                          req->access, params.attr );
-        release_object( sem );
-    }
-
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

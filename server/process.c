@@ -1815,20 +1815,10 @@ DECL_HANDLER(grant_process_admin_token)
 /* create a new job object */
 DECL_HANDLER(create_job)
 {
-    struct job *job;
-    struct object_params params = { .ops = &job_ops };
+    struct object_params params = { .ops = &job_ops, .access = req->access };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((job = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, job, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, job,
-                                                          req->access, params.attr );
-        release_object( job );
-    }
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

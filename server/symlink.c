@@ -189,9 +189,8 @@ struct object *create_obj_symlink( struct object *root, struct unicode_str name,
 /* create a symbolic link object */
 DECL_HANDLER(create_symlink)
 {
-    struct object *symlink;
     struct unicode_str target;
-    struct object_params params = { .ops = &symlink_ops, .init_data = &target };
+    struct object_params params = { .ops = &symlink_ops, .access = req->access, .init_data = &target };
 
     if (!get_req_object_attributes( &params )) return;
 
@@ -199,19 +198,12 @@ DECL_HANDLER(create_symlink)
     target.str = get_req_data_after_objattr( &params, &target.len );
     target.len = (target.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
-    if (!target.len) set_error( STATUS_INVALID_PARAMETER );
-    else if ((symlink = create_named_object( &params )))
+    if (target.len)
     {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-        {
-            clear_error();
-            reply->handle = alloc_handle( current->process, symlink, req->access, params.attr );
-        }
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, symlink,
-                                                          req->access, params.attr );
-        release_object( symlink );
+        reply->handle = create_named_obj_handle( current->process, &params );
+        if (reply->handle) clear_error();
     }
+    else set_error( STATUS_INVALID_PARAMETER );
 
     if (params.root) release_object( params.root );
 }

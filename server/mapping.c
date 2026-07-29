@@ -1502,10 +1502,9 @@ struct object *create_user_data_mapping( struct object *root, struct unicode_str
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    struct mapping *mapping;
     struct file *file = NULL;
     struct mapping_init_data data = { .size = req->size, .file_access = req->file_access };
-    struct object_params params = { .ops = &mapping_ops, .init_data = &data };
+    struct object_params params = { .ops = &mapping_ops, .access = req->access, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
 
@@ -1524,15 +1523,7 @@ DECL_HANDLER(create_mapping)
         data.fd = get_obj_fd( (struct object *)file );
     }
 
-    if ((mapping = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, &mapping->obj, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, &mapping->obj,
-                                                          req->access, params.attr );
-        release_object( mapping );
-    }
+    reply->handle = create_named_obj_handle( current->process, &params );
 
     if (file) release_object( file );
     if (data.fd) release_object( data.fd );

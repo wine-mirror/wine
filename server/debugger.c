@@ -519,21 +519,11 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 /* create a debug object */
 DECL_HANDLER(create_debug_obj)
 {
-    struct debug_obj *debug_obj;
     struct debug_obj_init_data data =  { .flags = req->flags };
-    struct object_params params = { .ops = &debug_obj_ops, .init_data = &data };
+    struct object_params params = { .ops = &debug_obj_ops, .access = req->access, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
-
-    if ((debug_obj = create_named_object( &params )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, debug_obj, req->access, params.attr );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, debug_obj,
-                                                          req->access, params.attr );
-        release_object( debug_obj );
-    }
+    reply->handle = create_named_obj_handle( current->process, &params );
     if (params.root) release_object( params.root );
 }
 

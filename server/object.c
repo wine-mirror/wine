@@ -469,6 +469,28 @@ void *create_named_object( const struct object_params *params )
     return obj;
 }
 
+/* create a handle as named child with the specified parameters */
+obj_handle_t create_named_obj_handle( struct process *process, const struct object_params *params )
+{
+    obj_handle_t handle;
+    struct object *obj = create_object_with_name( params );
+
+    if (!obj) return 0;
+
+    if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+    {
+        handle = alloc_handle( process, obj, params->access, params->attr );
+        release_object( obj );
+    }
+    else
+    {
+        handle = alloc_handle_no_access_check( process, obj, params->access, params->attr );
+        if (handle && (params->attr & OBJ_PERMANENT)) make_object_permanent( obj );
+        else release_object( obj );
+    }
+    return handle;
+}
+
 /* open a object by name under the specified parent */
 void *open_named_object( const struct object_params *params )
 {
