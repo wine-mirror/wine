@@ -628,6 +628,37 @@ static HRESULT WINAPI peer_sink_Receive(struct strmbase_sink *iface, IMediaSampl
     return S_OK;
 }
 
+static HRESULT testsink_new_segment(struct strmbase_sink *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_new_segment;
+    ok(start == 10000, "Got start %I64d.\n", start);
+    ok(stop == 20000, "Got stop %I64d.\n", stop);
+    ok(rate == 1.0, "Got rate %.16e.\n", rate);
+    return S_OK;
+}
+
+static HRESULT testsink_eos(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_eos;
+    return S_OK;
+}
+
+static HRESULT testsink_begin_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_begin_flush;
+    return S_OK;
+}
+
+static HRESULT testsink_end_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_end_flush;
+    return S_OK;
+}
+
 static HRESULT peer_sink_receive_can_block(struct strmbase_sink *iface)
 {
     struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
@@ -639,6 +670,10 @@ static const struct strmbase_sink_ops peer_sink_ops =
 {
     .base.pin_query_interface = peer_sink_query_interface,
     .pfnReceive = peer_sink_Receive,
+    .sink_new_segment = testsink_new_segment,
+    .sink_eos = testsink_eos,
+    .sink_begin_flush = testsink_begin_flush,
+    .sink_end_flush = testsink_end_flush,
     .sink_receive_can_block = peer_sink_receive_can_block,
 };
 
@@ -2159,6 +2194,108 @@ skip_test:
     IMemAllocator_Release(allocator);
 }
 
+static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputPin *input, struct testfilter *testsink)
+{
+    struct mem_allocator *sink_allocator;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    HRESULT hr;
+    BYTE *data;
+    LONG i;
+
+    sink_allocator = mem_allocator_from_IMemAllocator(testsink->sink.pAllocator);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    sink_allocator->expect_get_buffer = TRUE;
+    sink_allocator->expect_get_media_type = TRUE;
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    sink_allocator->expect_get_buffer = FALSE;
+    sink_allocator->expect_get_media_type = FALSE;
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    for (i = 0; i < 200; ++i)
+        data[i] = i;
+    hr = IMediaSample_SetActualDataLength(sample, 200);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(!testsink->got_new_segment, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+    hr = IPin_NewSegment(sink, 10000, 20000, 1.0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_new_segment == 1, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+
+    ok(!testsink->got_eos, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    hr = IPin_EndOfStream(sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!testsink->sample, "Got unexpected sample %p.\n", testsink->sample);
+    ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    testsink->got_eos = 0;
+
+    hr = IPin_EndOfStream(sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+
+    sink_allocator->media_type_checked = FALSE;
+    sink_allocator->expect_get_media_type = TRUE;
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(testsink->sample != NULL, "Expected to receive sample.\n");
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    sink_allocator->expect_get_media_type = FALSE;
+    if (testsink->sample)
+        IMediaSample_Release(testsink->sample);
+    testsink->sample = NULL;
+
+    ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+    hr = IPin_BeginFlush(sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_begin_flush == 1, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    hr = IPin_EndOfStream(sink);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    ok(!testsink->got_end_flush, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+    hr = IPin_EndFlush(sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsink->got_end_flush == 1, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+
+    sink_allocator->media_type_checked = FALSE;
+    sink_allocator->expect_get_media_type = TRUE;
+    sink_allocator->expect_get_buffer = TRUE;
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(testsink->sample != NULL, "Expected to receive sample.\n");
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    sink_allocator->expect_get_buffer = FALSE;
+    sink_allocator->expect_get_media_type = FALSE;
+    if (testsink->sample)
+        IMediaSample_Release(testsink->sample);
+    testsink->sample = NULL;
+
+    IMediaSample_Release(sample);
+
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IMemAllocator_Release(allocator);
+}
+
 static void test_connect_pin(void)
 {
     struct testfilter *testsource, *testsink = NULL;
@@ -2300,6 +2437,7 @@ static void test_connect_pin(void)
 
     test_filter_state(control, filter);
     test_sample_processing(control, meminput, testsink, filter);
+    test_streaming_events(control, sink, meminput, testsink);
 
     ok(sink_allocator->commited, "Allocator should still be commited\n");
     hr = IMediaControl_Stop(control);
