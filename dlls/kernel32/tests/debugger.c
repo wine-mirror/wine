@@ -2472,18 +2472,30 @@ static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS
 
 static void test_unhandled_exception_filter(BYTE being_debugged_flag)
 {
+    BYTE being_debugged_saved = NtCurrentTeb()->Peb->BeingDebugged;
     EXCEPTION_RECORD rec = { .ExceptionCode = 0xbeef };
     EXCEPTION_POINTERS ep = { .ExceptionRecord = &rec };
     LPTOP_LEVEL_EXCEPTION_FILTER old;
+    ULONG_PTR port;
     LONG ret;
 
-    winetest_push_context("%d", being_debugged_flag);
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL );
+
+    winetest_push_context("debug flag %d, port %d", being_debugged_flag, !!port);
     NtCurrentTeb()->Peb->BeingDebugged = being_debugged_flag;
     old = SetUnhandledExceptionFilter( test_unhandled_exception_filter_topfilter );
     test_unhandled_exception_filter_called = 0;
     ret = UnhandledExceptionFilter( &ep );
-    todo_wine_if(being_debugged_flag) ok( test_unhandled_exception_filter_called, "not called.\n" );
-    todo_wine_if(being_debugged_flag) ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %ld.\n", ret );
+    if (port)
+    {
+        ok( !test_unhandled_exception_filter_called, "called.\n" );
+        ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %ld.\n", ret );
+    }
+    else
+    {
+        todo_wine_if(being_debugged_flag) ok( test_unhandled_exception_filter_called, "not called.\n" );
+        todo_wine_if(being_debugged_flag) ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %ld.\n", ret );
+    }
 
     SetUnhandledExceptionFilter( NULL );
 
@@ -2497,10 +2509,11 @@ static void test_unhandled_exception_filter(BYTE being_debugged_flag)
     test_unhandled_exception_filter_called = 0;
     ret = UnhandledExceptionFilter( &ep );
     ok( !test_unhandled_exception_filter_called, "called.\n" );
-    todo_wine_if(being_debugged_flag) ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
+    todo_wine_if(!port != !being_debugged_flag)
+    ok( ret == (port ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER), "got %#lx.\n", ret );
 
     SetUnhandledExceptionFilter( old );
-    NtCurrentTeb()->Peb->BeingDebugged = 0;
+    NtCurrentTeb()->Peb->BeingDebugged = being_debugged_saved;
     winetest_pop_context();
 }
 
@@ -2542,6 +2555,8 @@ START_TEST(debugger)
     }
     else if (myARGC >= 5 && !strcmp(myARGV[2], "child"))
     {
+        test_unhandled_exception_filter(0);
+        test_unhandled_exception_filter(1);
         doChild(myARGC, myARGV);
     }
     else if (myARGC >= 4 && !strcmp(myARGV[2], "children"))
