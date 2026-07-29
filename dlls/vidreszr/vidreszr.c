@@ -43,11 +43,16 @@ DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x2
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
+extern IClassFactory resizer_factory;
+
 /***********************************************************************
  *              DllGetClassObject (msvproc.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
+    if (IsEqualGUID(clsid, &CLSID_CResizerDMO))
+        return IClassFactory_QueryInterface(&resizer_factory, riid, out);
+
     *out = NULL;
     FIXME("Unknown clsid %s.\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
