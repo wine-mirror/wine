@@ -92,6 +92,355 @@ static void compare_media_types_(unsigned int line, const AM_MEDIA_TYPE *got, co
             "Got target bottom %ld.\n", got_video_info_ptr->rcTarget.bottom);
 }
 
+struct mem_allocator
+{
+    IMemAllocator IMemAllocator_iface;
+    LONG refcount;
+
+    BOOL commited;
+    BOOL second_decommit;
+    BOOL expect_get_buffer;
+    BOOL expect_get_media_type;
+    BOOL expect_set_time;
+    BOOL media_type_checked;
+
+    IMediaSample IMediaSample_iface;
+    LONG sample_refcount;
+    BYTE data[640 * 480 * 4];
+    LONG size;
+    LONG length;
+    BOOL sync_point;
+    BOOL preroll;
+    BOOL discontinuity;
+
+    LONGLONG media_time_start, media_time_end;
+    REFERENCE_TIME time_start, time_end;
+    BOOL mts_set, mte_set, ts_set, te_set;
+    BOOL test_qc;
+
+    const struct strmbase_sink *sink;
+};
+
+static struct mem_allocator *mem_allocator_from_IMediaSample(IMediaSample *iface)
+{
+    return CONTAINING_RECORD(iface, struct mem_allocator, IMediaSample_iface);
+}
+
+static HRESULT WINAPI media_sample_QueryInterface(IMediaSample *iface, REFIID iid, void **out)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+    return IMemAllocator_QueryInterface(&allocator->IMemAllocator_iface, iid, out);
+}
+
+static ULONG WINAPI media_sample_AddRef(IMediaSample *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+    InterlockedIncrement(&allocator->sample_refcount);
+    return IMemAllocator_AddRef(&allocator->IMemAllocator_iface);
+}
+
+static ULONG WINAPI media_sample_Release(IMediaSample *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+    LONG refcount;
+
+    refcount = InterlockedDecrement(&allocator->sample_refcount);
+
+    if (!refcount)
+    {
+        allocator->mts_set = allocator->mte_set = FALSE;
+        allocator->ts_set = allocator->te_set = FALSE;
+        allocator->discontinuity = FALSE;
+        allocator->preroll = FALSE;
+        allocator->sync_point = FALSE;
+        allocator->time_start = allocator->time_end = 0;
+        allocator->media_time_start = allocator->media_time_end = 0;
+        allocator->test_qc = FALSE;
+    }
+
+    return IMemAllocator_Release(&allocator->IMemAllocator_iface);
+}
+
+static HRESULT WINAPI media_sample_GetPointer(IMediaSample *iface, BYTE **data)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    *data = allocator->data;
+
+    return S_OK;
+}
+
+static LONG WINAPI media_sample_GetSize(IMediaSample *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    return allocator->size;
+}
+
+static HRESULT WINAPI media_sample_GetTime(IMediaSample *iface, REFERENCE_TIME *start, REFERENCE_TIME *end)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_SetTime(IMediaSample *iface, REFERENCE_TIME *start, REFERENCE_TIME *end)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    todo_wine_if(!allocator->expect_set_time)
+    ok(allocator->expect_set_time, "Unexpected call to IMediaSample::SetTime.\n");
+
+    if ((allocator->ts_set = !!start))
+        allocator->time_start = *start;
+
+    if ((allocator->te_set = !!end))
+        allocator->time_end = *end;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_sample_IsSyncPoint(IMediaSample *iface)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_SetSyncPoint(IMediaSample *iface, BOOL sync_point)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    allocator->sync_point = sync_point;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_sample_IsPreroll(IMediaSample *iface)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_SetPreroll(IMediaSample *iface, BOOL preroll)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    allocator->preroll = preroll;
+
+    return S_OK;
+}
+
+static LONG WINAPI media_sample_GetActualDataLength(IMediaSample *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    return allocator->length;
+}
+
+static HRESULT WINAPI media_sample_SetActualDataLength(IMediaSample *iface, LONG length)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    allocator->length = length;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_sample_GetMediaType(IMediaSample *iface, AM_MEDIA_TYPE **ret_mt)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    ok(allocator->expect_get_media_type, "Unexpected call to IMediaSample::GetMediaType.\n");
+    allocator->media_type_checked = TRUE;
+
+    *ret_mt = NULL;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI media_sample_SetMediaType(IMediaSample *iface, AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_IsDiscontinuity(IMediaSample *iface)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_SetDiscontinuity(IMediaSample *iface, BOOL discontinuity)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    allocator->discontinuity = discontinuity;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_sample_GetMediaTime(IMediaSample *iface, LONGLONG *start, LONGLONG *end)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_sample_SetMediaTime(IMediaSample *iface, LONGLONG *start, LONGLONG *end)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMediaSample(iface);
+
+    if ((allocator->mts_set = !!start))
+        allocator->media_time_start = *start;
+
+    if ((allocator->mte_set = !!end))
+        allocator->media_time_end = *end;
+
+    return S_OK;
+}
+
+static struct IMediaSampleVtbl media_sample_vtbl =
+{
+    media_sample_QueryInterface,
+    media_sample_AddRef,
+    media_sample_Release,
+    media_sample_GetPointer,
+    media_sample_GetSize,
+    media_sample_GetTime,
+    media_sample_SetTime,
+    media_sample_IsSyncPoint,
+    media_sample_SetSyncPoint,
+    media_sample_IsPreroll,
+    media_sample_SetPreroll,
+    media_sample_GetActualDataLength,
+    media_sample_SetActualDataLength,
+    media_sample_GetMediaType,
+    media_sample_SetMediaType,
+    media_sample_IsDiscontinuity,
+    media_sample_SetDiscontinuity,
+    media_sample_GetMediaTime,
+    media_sample_SetMediaTime,
+};
+
+static struct mem_allocator *mem_allocator_from_IMemAllocator(IMemAllocator *iface)
+{
+    return CONTAINING_RECORD(iface, struct mem_allocator, IMemAllocator_iface);
+}
+
+static HRESULT WINAPI mem_allocator_QueryInterface(IMemAllocator *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IMemAllocator) || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+    }
+    else
+    {
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI mem_allocator_AddRef(IMemAllocator *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMemAllocator(iface);
+    ULONG refcount;
+
+    refcount = InterlockedIncrement(&allocator->refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI mem_allocator_Release(IMemAllocator *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMemAllocator(iface);
+    ULONG refcount;
+
+    refcount = InterlockedDecrement(&allocator->refcount);
+
+    if (!refcount)
+        free(allocator);
+
+    return refcount;
+}
+
+static HRESULT WINAPI mem_allocator_SetProperties(
+        IMemAllocator *iface, ALLOCATOR_PROPERTIES *req_props, ALLOCATOR_PROPERTIES *ret_props)
+{
+    *ret_props = *req_props;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mem_allocator_GetProperties(IMemAllocator *iface, ALLOCATOR_PROPERTIES *props)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mem_allocator_Commit(IMemAllocator *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMemAllocator(iface);
+
+    allocator->commited = TRUE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mem_allocator_Decommit(IMemAllocator *iface)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMemAllocator(iface);
+
+    if (!allocator->commited)
+        allocator->second_decommit = TRUE;
+
+    allocator->commited = FALSE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mem_allocator_GetBuffer(
+        IMemAllocator *iface, IMediaSample **ret_sample, REFERENCE_TIME *start, REFERENCE_TIME *end, DWORD flags)
+{
+    struct mem_allocator *allocator = mem_allocator_from_IMemAllocator(iface);
+
+    todo_wine_if(!allocator->expect_get_buffer)
+    ok(allocator->expect_get_buffer, "Not expecting call to IMemAllocator::GetBuffer.\n");
+    IMediaSample_AddRef(*ret_sample = &allocator->IMediaSample_iface);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mem_allocator_ReleaseBuffer(IMemAllocator *iface, IMediaSample *sample)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IMemAllocatorVtbl mem_allocator_vtbl =
+{
+    mem_allocator_QueryInterface,
+    mem_allocator_AddRef,
+    mem_allocator_Release,
+    mem_allocator_SetProperties,
+    mem_allocator_GetProperties,
+    mem_allocator_Commit,
+    mem_allocator_Decommit,
+    mem_allocator_GetBuffer,
+    mem_allocator_ReleaseBuffer,
+};
+
+static struct mem_allocator *create_mem_allocator(void)
+{
+    struct mem_allocator *allocator;
+
+    allocator = calloc(1, sizeof(*allocator));
+    allocator->refcount = 1;
+    allocator->IMemAllocator_iface.lpVtbl = &mem_allocator_vtbl;
+    allocator->IMediaSample_iface.lpVtbl = &media_sample_vtbl;
+
+    return allocator;
+}
+
 struct testfilter
 {
     struct strmbase_filter filter;
@@ -99,6 +448,10 @@ struct testfilter
     struct strmbase_sink sink;
 
     const GUID *wanted_subtype;
+    IMediaSample *sample;
+
+    HRESULT can_block;
+    unsigned int got_new_segment, got_eos, got_begin_flush, got_end_flush;
 };
 
 static struct testfilter *testfilter_from_strmbase_filter(struct strmbase_filter *iface)
@@ -163,12 +516,60 @@ static HRESULT peer_sink_query_interface(struct strmbase_pin *iface, REFIID iid,
     return S_OK;
 }
 
+static DWORD WINAPI call_qc_notify(void *ptr)
+{
+    Quality q = { Famine, 2000, -10000000, 10000000 };
+    struct testfilter *filter = ptr;
+    IQualityControl *qc;
+    HRESULT hr;
+
+    hr = IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&qc);
+    todo_wine
+    ok(hr == S_OK, "QualityControl not implemented.\n");
+    if (hr == S_OK)
+    {
+        /* don't worry too much about what it returns, just check that it doesn't deadlock */
+        IQualityControl_Notify(qc, &filter->filter.IBaseFilter_iface, q);
+        IQualityControl_Release(qc);
+    }
+
+    return 0;
+}
+
+static HRESULT WINAPI peer_sink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+    struct mem_allocator *mem_allocator = mem_allocator_from_IMediaSample(sample);
+
+    ok(sample != NULL, "Get Receive with a NULL sample.\n");
+    ok(filter->sample == NULL, "Got Receive when we already have a sample.\n");
+    IMediaSample_AddRef(filter->sample = sample);
+
+    if (mem_allocator->test_qc)
+    {
+        HANDLE h = CreateThread(NULL, 0, call_qc_notify, filter, 0, NULL);
+        ok(WaitForSingleObject(h, 1000) == WAIT_OBJECT_0, "Didn't expect deadlock.\n");
+        CloseHandle(h);
+    }
+
+    return S_OK;
+}
+
+static HRESULT peer_sink_receive_can_block(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = testfilter_from_strmbase_filter(iface->pin.filter);
+
+    return filter->can_block;
+}
+
 static const struct strmbase_sink_ops peer_sink_ops =
 {
     .base.pin_query_interface = peer_sink_query_interface,
+    .pfnReceive = peer_sink_Receive,
+    .sink_receive_can_block = peer_sink_receive_can_block,
 };
 
-static struct testfilter *create_testfilter(void)
+static struct testfilter *create_testfilter(IMemAllocator *mem_allocator)
 {
     static const GUID clsid = { 0xabacab };
 
@@ -177,7 +578,7 @@ static struct testfilter *create_testfilter(void)
     testfilter = calloc(1, sizeof(*testfilter));
     strmbase_filter_init(&testfilter->filter, NULL, &clsid, &testfilter_ops);
 
-    strmbase_sink_init(&testfilter->sink, &testfilter->filter, L"In", &peer_sink_ops, NULL);
+    strmbase_sink_init(&testfilter->sink, &testfilter->filter, L"In", &peer_sink_ops, mem_allocator);
     wcscpy(testfilter->sink.pin.name, L"Input");
 
     strmbase_source_init(&testfilter->source, &testfilter->filter, L"Out", &peer_source_ops);
@@ -827,7 +1228,7 @@ static void test_media_types(void)
     hr = IBaseFilter_FindPin(filter, L"In", &sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    peer = create_testfilter();
+    peer = create_testfilter(NULL);
 
     memset(&req_mt, 0, sizeof(req_mt));
     memset(&video_info, 0, sizeof(video_info));
@@ -1256,9 +1657,298 @@ static void test_filter_state(IMediaControl *control, IBaseFilter *filter)
     ok(state == State_Stopped, "Got state %lu.\n", state);
 }
 
+#define SET_TIME_START    (1 << 0)
+#define SET_TIME_END      (1 << 1)
+#define SET_MEDIA_TIME    (1 << 2)
+#define SET_SYNC_POINT    (1 << 3)
+#define SET_PREROLL       (1 << 4)
+#define SET_DISCONTINUITY (1 << 5)
+#define SET_TEST_QC       (1 << 6)
+
+#define SET_TIME (SET_TIME_START | SET_TIME_END)
+
+#define EXP_TIME               (1 << 0)
+#define EXP_MEDIA_TIME         (1 << 1)
+#define EXP_SYNC_POINT         (1 << 2)
+#define EXP_PREROLL            (1 << 3)
+#define EXP_DISCONTINUITY      (1 << 4)
+#define EXP_UNDEFINED_TIME_END (1 << 5)
+
+#define TODO_TIME           (1 << 0)
+#define TODO_MEDIA_TIME     (1 << 1)
+#define TODO_SYNC_POINT     (1 << 2)
+#define TODO_PREROLL        (1 << 3)
+
+static void test_sample_processing(
+        IMediaControl *control, IMemInputPin *input, struct testfilter *testsink, IBaseFilter *dmo_filter)
+{
+    static struct
+    {
+        BYTE flags, expected_flags;
+        REFERENCE_TIME time_start, time_end;
+        LONGLONG media_time_start, media_time_end;
+        BOOL sync_point, preroll, discontinuity;
+        BYTE todo_flags;
+    }
+    tests[] =
+    {
+        {
+            .todo_flags = TODO_SYNC_POINT | TODO_TIME
+        },
+        {
+            .flags = SET_TIME_START | SET_MEDIA_TIME | SET_SYNC_POINT,
+            .time_start = 20000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .sync_point = TRUE,
+            .expected_flags = EXP_TIME | EXP_UNDEFINED_TIME_END | EXP_MEDIA_TIME | EXP_SYNC_POINT,
+            .todo_flags = TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_TIME,
+            .time_start = 20000,
+            .time_end = 30000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME | EXP_SYNC_POINT,
+            .todo_flags = TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_PREROLL,
+            .time_start = 20000,
+            .time_end = 30000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .preroll = TRUE,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME | EXP_SYNC_POINT,
+            .todo_flags = TODO_PREROLL | TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_PREROLL | SET_DISCONTINUITY,
+            .time_end = 30000,
+            .time_start = 20000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .preroll = FALSE,
+            .discontinuity = TRUE,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME | EXP_SYNC_POINT | EXP_DISCONTINUITY,
+            .todo_flags = TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_SYNC_POINT,
+            .time_start = 20000,
+            .time_end = 30000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .sync_point = FALSE,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME | EXP_DISCONTINUITY,
+            .todo_flags = TODO_SYNC_POINT | TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_DISCONTINUITY,
+            .time_start = 20000,
+            .time_end = 30000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .discontinuity = FALSE,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME,
+            .todo_flags = TODO_SYNC_POINT | TODO_MEDIA_TIME
+        },
+        {
+            .flags = SET_SYNC_POINT | SET_TEST_QC,
+            .time_start = 20000,
+            .time_end = 30000,
+            .media_time_start = 10000,
+            .media_time_end = 20000,
+            .sync_point = TRUE,
+            .expected_flags = EXP_TIME | EXP_MEDIA_TIME | EXP_SYNC_POINT,
+            .todo_flags = TODO_MEDIA_TIME
+        },
+    };
+
+    REFERENCE_TIME *time_start, *time_end;
+    struct mem_allocator *sink_allocator;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    HRESULT hr;
+    int i;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testsink->can_block = S_FALSE;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    todo_wine
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    sink_allocator = mem_allocator_from_IMemAllocator(testsink->sink.pAllocator);
+
+    ok(!sink_allocator->commited, "Allocator should not be commited\n");
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(sink_allocator->commited, "Allocator should now be commited\n");
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    sink_allocator->size = 240 * 240 * 4;
+
+    sink_allocator->expect_get_buffer = TRUE;
+    sink_allocator->expect_get_media_type = TRUE;
+    sink_allocator->media_type_checked = FALSE;
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sink_allocator->sample_refcount == 1, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
+    todo_wine
+    ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+    sink_allocator->expect_get_buffer = FALSE;
+    sink_allocator->expect_get_media_type = FALSE;
+
+    for (i = 0; i < ARRAYSIZE(tests); i++)
+    {
+        winetest_push_context("test %d", i);
+
+        if (tests[i].flags & SET_TIME)
+        {
+            if (tests[i].flags & SET_TIME_START)
+                time_start = &tests[i].time_start;
+            else
+                time_start = NULL;
+
+            if (tests[i].flags & SET_TIME_END)
+                time_end = &tests[i].time_end;
+            else
+                time_end = NULL;
+
+            hr = IMediaSample_SetTime(sample, time_start, time_end);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        if (tests[i].flags & SET_MEDIA_TIME)
+        {
+            time_start = &tests[i].media_time_start;
+            time_end = &tests[i].media_time_end;
+
+            hr = IMediaSample_SetMediaTime(sample, time_start, time_end);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        if (tests[i].flags & SET_SYNC_POINT)
+        {
+            hr = IMediaSample_SetSyncPoint(sample, tests[i].sync_point);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        if (tests[i].flags & SET_PREROLL)
+        {
+            hr = IMediaSample_SetPreroll(sample, tests[i].preroll);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        if (tests[i].flags & SET_DISCONTINUITY)
+        {
+            hr = IMediaSample_SetDiscontinuity(sample, tests[i].discontinuity);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        sink_allocator->test_qc = !!(tests[i].flags & SET_TEST_QC);
+
+        sink_allocator->expect_set_time = TRUE;
+        sink_allocator->expect_get_buffer = TRUE;
+        sink_allocator->expect_get_media_type = TRUE;
+        sink_allocator->media_type_checked = FALSE;
+        hr = IMemInputPin_Receive(input, sample);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr != S_OK)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        ok(sink_allocator->sample_refcount == 1, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
+        todo_wine
+        ok(sink_allocator->media_type_checked, "Expected media type to have been checked.\n");
+        ok(testsink->sample != NULL, "Expected out peer sample.\n");
+        sink_allocator->expect_get_buffer = FALSE;
+        sink_allocator->expect_set_time = FALSE;
+        sink_allocator->expect_get_media_type = FALSE;
+
+        todo_wine_if(tests[i].todo_flags & TODO_TIME)
+        if (tests[i].expected_flags & EXP_TIME)
+        {
+            ok(sink_allocator->ts_set, "Time start should be set.\n");
+            ok(sink_allocator->te_set, "Time end should be set.\n");
+            ok(sink_allocator->time_start == tests[i].time_start, "Got start time %I64d.\n",
+                    sink_allocator->time_start);
+            if (!(tests[i].expected_flags & EXP_UNDEFINED_TIME_END))
+                ok(sink_allocator->time_end == tests[i].time_end, "Got end time %I64d.\n", sink_allocator->time_end);
+        }
+        else
+        {
+            ok(!sink_allocator->ts_set, "Time start should not be set.\n");
+            ok(!sink_allocator->te_set, "Time end should not be set.\n");
+        }
+
+        todo_wine_if(tests[i].todo_flags & TODO_MEDIA_TIME)
+        if (tests[i].expected_flags & EXP_MEDIA_TIME)
+        {
+            ok(sink_allocator->mts_set, "Media time start should be set.\n");
+            ok(sink_allocator->mte_set, "Media time end should be set.\n");
+            ok(sink_allocator->media_time_start == tests[i].media_time_start, "Got media start time %I64d.\n",
+                    sink_allocator->media_time_start);
+            ok(sink_allocator->media_time_end == tests[i].media_time_end, "Got media end time %I64d.\n",
+                    sink_allocator->media_time_end);
+        }
+        else
+        {
+            ok(!sink_allocator->mts_set, "Media time start should not be set.\n");
+            ok(!sink_allocator->mte_set, "Media time end should not be set.\n");
+        }
+
+        if (tests[i].expected_flags & EXP_DISCONTINUITY)
+            ok(sink_allocator->discontinuity, "Discontinuity should be set.\n");
+        else
+            ok(!sink_allocator->discontinuity, "Discontinuity should not be set.\n");
+
+        todo_wine_if(tests[i].todo_flags & TODO_PREROLL)
+        if (tests[i].expected_flags & EXP_PREROLL)
+            ok(sink_allocator->preroll, "Preroll should be set.\n");
+        else
+            ok(!sink_allocator->preroll, "Preroll should not be set.\n");
+
+        todo_wine_if(tests[i].todo_flags & TODO_SYNC_POINT)
+        if (tests[i].expected_flags & EXP_SYNC_POINT)
+            ok(sink_allocator->sync_point, "Sync point should be set.\n");
+        else
+            ok(!sink_allocator->sync_point, "Sync point should not be set.\n");
+
+
+        if (testsink->sample)
+            IMediaSample_Release(testsink->sample);
+        testsink->sample = NULL;
+
+        winetest_pop_context();
+    }
+
+    IMediaSample_Release(sample);
+    ok(sink_allocator->sample_refcount == 0, "Got sample refcount %ld.\n", sink_allocator->sample_refcount);
+
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IMemAllocator_Release(allocator);
+}
+
 static void test_connect_pin(void)
 {
     struct testfilter *testsource, *testsink = NULL;
+    struct mem_allocator *sink_allocator;
     IPin *sink, *source, *peer;
     AM_MEDIA_TYPE mt, req_mt;
     IMemInputPin *meminput;
@@ -1298,8 +1988,10 @@ static void test_connect_pin(void)
     todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    testsource = create_testfilter();
-    testsink = create_testfilter();
+    sink_allocator = create_mem_allocator();
+    testsource = create_testfilter(NULL);
+    testsink = create_testfilter(&sink_allocator->IMemAllocator_iface);
+    sink_allocator->sink = &testsink->sink;
 
     hr = IFilterGraph_AddFilter(graph, &testsource->filter.IBaseFilter_iface, L"In Peer");
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1393,15 +2085,21 @@ static void test_connect_pin(void)
     ok(testsink->sink.pin.peer == source, "Got out peer %p.\n", testsink->sink.pin.peer);
 
     test_filter_state(control, filter);
+    test_sample_processing(control, meminput, testsink, filter);
 
+    ok(sink_allocator->commited, "Allocator should still be commited\n");
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!sink_allocator->commited, "Allocator should no longer be commited\n");
 
     hr = IFilterGraph_Disconnect(graph, &testsink->sink.pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    ok(!sink_allocator->second_decommit, "Allocator should not yet have been decommitted twice\n");
     hr = IFilterGraph_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sink_allocator->second_decommit, "Expected allocator to have been decommitted twice\n");
 
     hr = IFilterGraph_Disconnect(graph, sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1428,6 +2126,8 @@ skip_connection_test:
     refcount = IBaseFilter_Release(&testsink->filter.IBaseFilter_iface);
     ok(refcount == 0, "Got refcount %lu.\n", refcount);
 
+    refcount = IMemAllocator_Release(&sink_allocator->IMemAllocator_iface);
+    ok(refcount == 0, "Got refcount %lu.\n", refcount);
 skip_test:
     IMediaControl_Release(control);
 
