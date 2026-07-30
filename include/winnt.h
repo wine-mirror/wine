@@ -7720,7 +7720,7 @@ static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volati
 static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
     LONG ret;
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || defined(__clang__)
     ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
 #elif defined(__i386__) || defined(__x86_64__)
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -7734,7 +7734,7 @@ static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG va
 static FORCEINLINE char WINAPI InterlockedExchange8( char volatile *dest, char val )
 {
     char ret;
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || defined(__clang__)
     ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
 #elif defined(__i386__) || defined(__x86_64__)
     __asm__ __volatile__( "lock; xchgb %0,(%1)"
@@ -7748,7 +7748,7 @@ static FORCEINLINE char WINAPI InterlockedExchange8( char volatile *dest, char v
 static FORCEINLINE short WINAPI InterlockedExchange16( short volatile *dest, short val )
 {
     short ret;
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || defined(__clang__)
     ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
 #elif defined(__i386__) || defined(__x86_64__)
     __asm__ __volatile__( "lock; xchgw %0,(%1)"
@@ -7812,7 +7812,7 @@ static FORCEINLINE LONGLONG WINAPI InterlockedDecrement64( LONGLONG volatile *de
 static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *dest, void *val )
 {
     void *ret;
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) || defined(__clang__)
     ret = __atomic_exchange_n( dest, val, __ATOMIC_SEQ_CST );
 #elif defined(__x86_64__)
     __asm__ __volatile__( "lock; xchgq %0,(%1)" : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
