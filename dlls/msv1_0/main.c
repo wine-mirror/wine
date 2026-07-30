@@ -213,6 +213,17 @@ static NTSTATUS NTAPI ntlm_SpGetInfo( SecPkgInfoW *info )
     return STATUS_SUCCESS;
 }
 
+static WCHAR *strndupW( const WCHAR *str, size_t len )
+{
+    WCHAR *ret = malloc( (len + 1) * sizeof(WCHAR) );
+    if (ret)
+    {
+        memcpy( ret, str, len * sizeof(WCHAR) );
+        ret[len] = 0;
+    }
+    return ret;
+}
+
 static char *get_username_arg( const WCHAR *user, int user_len )
 {
     static const char arg[] = "--username=";
@@ -352,6 +363,8 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
             TRACE( "username is %s\n", debugstr_wn(user, user_len) );
             TRACE( "domain name is %s\n", debugstr_wn(domain, domain_len) );
 
+            cred->usernameW = strndupW(user, user_len);
+            cred->domainW = strndupW(domain, domain_len);
             cred->username_arg = get_username_arg( user, user_len );
             cred->domain_arg   = get_domain_arg( domain, domain_len );
             if (password_len)
@@ -361,6 +374,14 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
                 if (!(cred->password = malloc( cred->password_len ))) goto done;
                 WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len, cred->password,
                                      cred->password_len, NULL, NULL );
+            }
+        }
+        else
+        {
+            if (!OpenThreadToken( GetCurrentThread(), TOKEN_QUERY | TOKEN_DUPLICATE, TRUE, &cred->token ))
+            {
+                if (!OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &cred->token ))
+                    WARN("failed to get user token (%ld)\n", GetLastError());
             }
         }
 
@@ -386,8 +407,73 @@ done:
 
 static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, ULONG attr, void *buf)
 {
-    FIXME( "%#Ix, %lu, %p\n", handle, attr, buf );
-    return STATUS_NOT_IMPLEMENTED;
+    WCHAR domain_buf[DNLEN + 1], username_buf[UNLEN + 1], *domain, *username;
+    struct ntlm_cred *cred = (struct ntlm_cred *)handle;
+    SecPkgCredentials_NamesW *names = buf;
+    size_t len;
+
+    TRACE( "%#Ix, %lu, %p\n", handle, attr, buf );
+
+    if (attr != SECPKG_CRED_ATTR_NAMES) return STATUS_INVALID_PARAMETER;
+    if (cred->mode == MODE_SERVER)
+    {
+        FIXME("MODE_SERVER not handled\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (!cred->usernameW && !cred->domainW && !cred->token)
+    {
+        FIXME("no username/domain/token\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    username = cred->usernameW;
+    domain = cred->domainW;
+
+    if (cred->token)
+    {
+        DWORD username_len = sizeof(username_buf), domain_len = sizeof(domain_buf);
+        char tmp[256];
+        TOKEN_USER *token_user = (TOKEN_USER *)tmp;
+        DWORD size = sizeof(tmp);
+        SID_NAME_USE use;
+        BOOL r;
+
+        if (!GetTokenInformation( cred->token, TokenUser, token_user, size, &size ))
+        {
+            if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+                return SEC_E_INTERNAL_ERROR;
+
+            token_user = malloc( size );
+            if (!token_user) return SEC_E_INSUFFICIENT_MEMORY;
+
+            if (!GetTokenInformation( cred->token, TokenUser, token_user, size, &size ))
+            {
+                free( token_user );
+                return SEC_E_INTERNAL_ERROR;
+            }
+        }
+        r = LookupAccountSidW( NULL, token_user->User.Sid, username_buf, &username_len,
+                domain_buf, &domain_len, &use);
+        if (token_user != (TOKEN_USER *)tmp) free( token_user );
+        if (!r) return SEC_E_INTERNAL_ERROR;
+
+        username = username_buf;
+        domain = domain_buf;
+    }
+
+    len = 1;
+    if (domain && domain[0]) len += wcslen( domain ) + 1;
+    if (username) len += wcslen( username );
+    names->sUserName = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (!names->sUserName) return SEC_E_INSUFFICIENT_MEMORY;
+    names->sUserName[0] = 0;
+    if (domain && domain[0])
+    {
+        wcscpy( names->sUserName, domain );
+        wcscat( names->sUserName, L"\\" );
+    }
+    if (username) wcscat( names->sUserName, username );
+    return SEC_E_OK;
 }
 
 static NTSTATUS NTAPI ntlm_SpFreeCredentialsHandle( LSA_SEC_HANDLE handle )
@@ -400,9 +486,12 @@ static NTSTATUS NTAPI ntlm_SpFreeCredentialsHandle( LSA_SEC_HANDLE handle )
 
     cred->mode = MODE_INVALID;
     if (cred->password) memset( cred->password, 0, cred->password_len );
+    free( cred->usernameW );
+    free( cred->domainW );
     free( cred->password );
     free( cred->username_arg );
     free( cred->domain_arg );
+    CloseHandle( cred->token );
     free( cred );
     return SEC_E_OK;
 }

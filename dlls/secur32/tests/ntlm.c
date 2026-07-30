@@ -1456,14 +1456,11 @@ static void testQueryCredentialsAttributes(void)
     ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
 
     ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
-    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
-    if (ret == SEC_E_OK)
-    {
-        name = get_name_from_token(token);
-        ok(!strcmp(names.sUserName, name), "sUserName = %s, expected %s\n",
-                wine_dbgstr_a(names.sUserName), wine_dbgstr_a(name));
-        FreeContextBuffer(names.sUserName);
-    }
+    ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    name = get_name_from_token(token);
+    ok(!strcmp(names.sUserName, name), "sUserName = %s, expected %s\n",
+            wine_dbgstr_a(names.sUserName), wine_dbgstr_a(name));
+    FreeContextBuffer(names.sUserName);
     CloseHandle(token);
     ret = FreeCredentialsHandle(&cred);
     ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
@@ -1505,12 +1502,9 @@ static void testQueryCredentialsAttributes(void)
     ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
 
     ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
-    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
-    if (ret == SEC_E_OK)
-    {
-        ok(!strcmp(names.sUserName, "WORKGROUP\\testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
-        FreeContextBuffer(names.sUserName);
-    }
+    ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    ok(!strcmp(names.sUserName, "WORKGROUP\\testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
+    FreeContextBuffer(names.sUserName);
     ret = FreeCredentialsHandle(&cred);
     ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
 
@@ -1521,12 +1515,9 @@ static void testQueryCredentialsAttributes(void)
     ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n", getSecError(ret));
 
     ret = QueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
-    todo_wine ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
-    if (ret == SEC_E_OK)
-    {
-        ok(!strcmp(names.sUserName, "testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
-        FreeContextBuffer(names.sUserName);
-    }
+    ok(ret == SEC_E_OK, "QueryCredentialsAttributes() returned %s\n", getSecError(ret));
+    ok(!strcmp(names.sUserName, "testuser"), "sUserName = %s\n", wine_dbgstr_a(names.sUserName));
+    FreeContextBuffer(names.sUserName);
     ret = FreeCredentialsHandle(&cred);
     ok(ret == SEC_E_OK, "FreeCredentialsHandle() returned %s\n", getSecError(ret));
 }

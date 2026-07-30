@@ -38,11 +38,14 @@ enum mode
 struct ntlm_cred
 {
     enum mode mode;
+    WCHAR    *usernameW;
     char     *username_arg;
+    WCHAR    *domainW;
     char     *domain_arg;
     char     *password;
     int       password_len;
     int       no_cached_credentials; /* don't try to use cached Samba credentials */
+    HANDLE    token; /* local authentication token */
 };
 
 struct arc4_info
