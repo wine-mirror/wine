@@ -556,7 +556,7 @@ static void set_abs_axis_value(struct unix_device *iface, int code, int value)
 
 static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev, struct lnxev_info *info)
 {
-    struct input_absinfo abs_info[ABS_CNT];
+    struct input_absinfo abs_info[ABS_CNT] = {0};
     USHORT count = 0;
     USAGE usages[16];
     int i;
@@ -581,7 +581,6 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
             LONG min = impl->abs_min[i], max = impl->abs_max[i];
             USAGE_AND_PAGE usage = absolute_usages[i];
             if (!impl->abs_map[i]) continue;
-            ioctl(impl->base.device_fd, EVIOCGABS(i), abs_info + i);
             if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, FALSE,
                                      min, max))
                 return STATUS_NO_MEMORY;
@@ -637,6 +636,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         USAGE_AND_PAGE usage = absolute_usages[i];
         if (!usage.UsagePage || !usage.Usage) continue;
         if (!test_bit(info->abs, i)) continue;
+        ioctl(impl->base.device_fd, EVIOCGABS(i), abs_info + i);
         set_abs_axis_value(iface, i, abs_info[i].value);
     }
 
