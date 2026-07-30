@@ -1,4 +1,4 @@
-﻿## INTRODUCTIE
+## INTRODUCTIE
 
 Wine is een programma wat het mogelijk maakt om Microsoft Windows
 programma's (waaronder uitvoerbare DOS, Windows 3.x, Win32 en Win64
@@ -50,7 +50,7 @@ besturingssystemen nodig:
 - FreeBSD 12.4 of nieuwer
 - Solaris x86 9 of nieuwer
 - NetBSD-current
-- macOS 10.12 of nieuwer
+- macOS 10.15 of nieuwer
 
 Omdat Wine threadondersteuning op kernelniveau vereist, worden alleen de
 bovenstaande besturingssystemen ondersteund. Andere besturingssystemen
@@ -72,9 +72,7 @@ toekomst ook ondersteund worden.
   SYSVSHM, SYSVSEM, en SYSVMSG.
 
 **Mac OS X informatie**:
-  Xcode/Xcode Command Line Tools of Apple cctools zijn nodig. De minimale
-  vereisten om Wine te kunnen compileren zijn clang 3.8 met MacOSX10.10.sdk
-  en mingw-w64 v8. MacOSX10.14.sdk en nieuwer kunnen alleen wine64 bouwen.
+  Xcode/Xcode Command Line Tools of Apple cctools zijn nodig.
 
 **Ondersteunde bestandssystemen**:
   Wine zou op de meeste bestandssystemen uitgevoerd moeten kunnen worden.
