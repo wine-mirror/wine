@@ -475,6 +475,12 @@ void *open_named_object( const struct object_params *params )
     struct unicode_str name_left;
     struct object *obj;
 
+    if (params->name.len >= 65534)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return NULL;
+    }
+
     if ((obj = lookup_named_object( params->root, params->name, params->attr, &name_left )))
     {
         if (name_left.len) /* not fully parsed */

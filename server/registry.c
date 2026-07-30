@@ -2172,12 +2172,6 @@ DECL_HANDLER(open_key)
     struct object_params params = { .ops = &key_ops, .name = get_req_unicode_str(),
                                     .attr = req->attributes };
 
-    if (params.name.len >= 65534)
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return;
-    }
-
     if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
     if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
 

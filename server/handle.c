@@ -620,12 +620,6 @@ obj_handle_t open_object( struct process *process, obj_handle_t parent, unsigned
     struct object *obj;
     struct object_params params = { .ops = ops, .name = name, .attr = attributes };
 
-    if (name.len >= 65534)
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return 0;
-    }
-
     if (parent)
     {
         if (name.len)
