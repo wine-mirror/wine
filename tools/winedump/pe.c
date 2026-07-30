@@ -4161,7 +4161,7 @@ static void print_clr_metadata( const BYTE *data, UINT data_size )
     version = (const char *)ptr;
     print_clr( "Version      " );
     printf( "%s\n", version );
-    len = ((strlen( version ) + 1) + 3) & ~3;
+    len = (len + 3) & ~3;
     if (size < len) return;
     ptr += len; size -= len;
 
