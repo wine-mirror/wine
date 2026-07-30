@@ -774,4 +774,16 @@ ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
 ok(re.multiline === true, "re.multiline = " + re.multiline);
 ok(re.global === true, "re.global = " + re.global);
 
+re = new RegExp("");
+ok(re.source === "", "re.source = " + re.source);
+m = re.exec("abc");
+ok(m.input === "abc", "m.input = " + m.input);
+ok(m[0] === "", "m[0] = " + m[0]);
+
+re = RegExp.prototype;
+ok(re.source === "", "re.source = " + re.source);
+m = re.exec("abc");
+ok(m.input === "abc", "m.input = " + m.input);
+ok(m[0] === "", "m[0] = " + m[0]);
+
 reportSuccess();
