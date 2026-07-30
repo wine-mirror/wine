@@ -632,6 +632,15 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
 
     LONG64 freqAcc_start = *freqAccNum;
     LONG64 freqAcc_end = freqAcc_start + count * dsb->freqAdjustNum;
+    /* The FIR has a latency of FIR_WIDTH / 2 samples. Our resampling functions
+     * add FIR_WIDTH - 1 samples of lead, for a total lead of FIR_WIDTH / 2 - 1
+     * samples. When downsampling, this value is scaled by the resampling ratio,
+     * creating a position discontinuity when the frequency changes. This can
+     * produce an audible click if the frequency step is large enough. To
+     * prevent this, shift the input position so that the lead always matches
+     * the worst case, which is dsb->freqAdjustNum == DSBFREQUENCY_MAX. */
+    LONG64 freqAcc_equalized = freqAcc_start +
+            (FIR_WIDTH / 2 - 1) * (DSBFREQUENCY_MAX - max(dsb->freqAdjustNum, dsb->freqAdjustDen));
     UINT channels = dsb->mix_channels;
     UINT max_ipos = (freqAcc_start + count * dsb->freqAdjustNum) / dsb->freqAdjustDen;
 
@@ -689,8 +698,9 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
          * copies may overlap, so the order is important here. */
         memcpy(channel_input_tail, channel_input + max_ipos, dsb->input_delay * sizeof(float));
 
-        resample(dsb->freqAdjustNum, dsb->freqAdjustDen, freqAcc_start, dsb->firgain,
-                required_input, count, channel_input, channel_output);
+        resample(dsb->freqAdjustNum, dsb->freqAdjustDen, freqAcc_equalized % dsb->freqAdjustDen,
+                dsb->firgain, required_input, count,
+                channel_input + freqAcc_equalized / dsb->freqAdjustDen, channel_output);
     }
 
     for(i = 0; i < count; ++i)
