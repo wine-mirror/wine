@@ -384,6 +384,12 @@ done:
     return status;
 }
 
+static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, ULONG attr, void *buf)
+{
+    FIXME( "%#Ix, %lu, %p\n", handle, attr, buf );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS NTAPI ntlm_SpFreeCredentialsHandle( LSA_SEC_HANDLE handle )
 {
     struct ntlm_cred *cred = (struct ntlm_cred *)handle;
@@ -1378,7 +1384,7 @@ static SECPKG_FUNCTION_TABLE ntlm_table =
     ntlm_SpGetInfo,
     NULL, /* AcceptCredentials */
     ntlm_SpAcquireCredentialsHandle,
-    NULL, /* SpQueryCredentialsAttributes */
+    ntlm_SpQueryCredentialsAttributes,
     ntlm_SpFreeCredentialsHandle,
     NULL, /* SaveCredentials */
     NULL, /* GetCredentials */
