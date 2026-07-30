@@ -297,18 +297,13 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
            get_key_fn, get_key_arg, cred, expiry );
 
     if (auth_data && (status = map_auth_data( auth_data, &id ))) return status;
+    if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
 
     cred_use &= ~SECPKG_CRED_RESERVED;
     switch (cred_use)
     {
     case SECPKG_CRED_INBOUND:
-        if (!(cred = malloc( sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
-        cred->mode         = MODE_SERVER;
-        cred->username_arg = NULL;
-        cred->domain_arg   = NULL;
-        cred->password     = NULL;
-        cred->password_len = 0;
-        cred->no_cached_credentials = 0;
+        cred->mode = MODE_SERVER;
 
         *handle = (LSA_SEC_HANDLE)cred;
         status = SEC_E_OK;
@@ -317,13 +312,7 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
     case SECPKG_CRED_BOTH:
         /* fall through */
     case SECPKG_CRED_OUTBOUND:
-        if (!(cred = malloc( sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
-
-        cred->mode         = cred_use == SECPKG_CRED_OUTBOUND ? MODE_CLIENT : MODE_BOTH;
-        cred->username_arg = NULL;
-        cred->domain_arg   = NULL;
-        cred->password     = NULL;
-        cred->password_len = 0;
+        cred->mode = cred_use == SECPKG_CRED_OUTBOUND ? MODE_CLIENT : MODE_BOTH;
         cred->no_cached_credentials = (cred_use & WINE_NO_CACHED_CREDENTIALS);
 
         if (auth_data)
