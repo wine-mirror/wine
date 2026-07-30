@@ -4125,7 +4125,7 @@ static void print_clr_stream( const BYTE *base, const BYTE **ptr, UINT *size )
         guids.data = base + stream_offset;
         guids.size = stream_size;
     }
-    else if (!strcmp( name, "#~" ))
+    else if (!strcmp( name, "#~" ) || !strcmp (name, "#-" ))
     {
         tables.data = base + stream_offset;
         tables.size = stream_size;
