@@ -281,6 +281,9 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 			FIXME("Conversion from %lu to %lu channels is not implemented, falling back to stereo\n", ichannels, ochannels);
 		dsb->mix_channels = 2;
 	}
+
+	dsb->input_delay = ((FIR_WIDTH - 1) * DSBFREQUENCY_MAX + dsb->freqAdjustDen - 1) /
+			dsb->freqAdjustDen;
 }
 
 /**
@@ -632,12 +635,13 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
     UINT channels = dsb->mix_channels;
     UINT max_ipos = (freqAcc_start + count * dsb->freqAdjustNum) / dsb->freqAdjustDen;
 
+    UINT total_input = dsb->input_delay + max_ipos;
     UINT required_input = max(
             (freqAcc_start + (count - 1) * dsb->freqAdjustNum) / dsb->freqAdjustDen + FIR_WIDTH,
             (freqAcc_start + (count - 1 + FIR_WIDTH) * dsb->freqAdjustNum) / dsb->freqAdjustDen);
     float *intermediate, *output;
 
-    DWORD len = required_input * channels;
+    DWORD len = total_input * channels;
     /* Allocate an output buffer for each channel with padding on both ends as
      * required by the resample function. Padding at the end of one channel
      * buffer is reused as a start padding for the next channel buffer. */
@@ -646,8 +650,10 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
 
     *freqAccNum = freqAcc_end % dsb->freqAdjustDen;
 
-    if (!secondarybuffer_is_audible(dsb))
+    if (!secondarybuffer_is_audible(dsb)) {
+        dsb->input_tail_valid = FALSE;
         return max_ipos;
+    }
 
     if (!dsb->device->cp_buffer) {
         dsb->device->cp_buffer = malloc(len);
@@ -658,25 +664,40 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
     }
 
     intermediate = dsb->device->cp_buffer;
-    output = intermediate + required_input * channels + FIR_WIDTH - 1;
+    output = intermediate + total_input * channels + FIR_WIDTH - 1;
 
     /* Important: this buffer MUST be non-interleaved
      * if you want -msse3 to have any effect.
      * This is good for CPU cache effects, too.
      */
     for (channel = 0; channel < channels; channel++) {
-        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel,
-                required_input, intermediate + channel * required_input);
+        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, max_ipos,
+                intermediate + channel * total_input + dsb->input_delay);
     }
 
-    for (channel = 0; channel < channels; channel++)
+    for (channel = 0; channel < channels; channel++) {
+        float *channel_input = intermediate + channel * total_input;
+        float *channel_output = output + channel * (count + FIR_WIDTH - 1);
+        float *channel_input_tail = dsb->input_tail + channel * dsb->input_delay;
+
+        if (dsb->input_tail_valid)
+            /* Copy the previously saved dsb->input_delay input samples. */
+            memcpy(channel_input, channel_input_tail, dsb->input_delay * sizeof(float));
+        else
+            memset(channel_input, 0, dsb->input_delay * sizeof(float));
+        /* Save the last dsb->input_delay input samples. Note that the two
+         * copies may overlap, so the order is important here. */
+        memcpy(channel_input_tail, channel_input + max_ipos, dsb->input_delay * sizeof(float));
+
         resample(dsb->freqAdjustNum, dsb->freqAdjustDen, freqAcc_start, dsb->firgain,
-                required_input, count, intermediate + channel * required_input,
-                output + channel * (FIR_WIDTH - 1 + count));
+                required_input, count, channel_input, channel_output);
+    }
 
     for(i = 0; i < count; ++i)
         for (channel = 0; channel < channels; channel++)
             dsb->put(dsb, i * ostride, channel, output[channel * (FIR_WIDTH - 1 + count) + i]);
+
+    dsb->input_tail_valid = TRUE;
 
     return max_ipos;
 }
@@ -684,14 +705,17 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
 static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 {
     UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
+    DWORD total_input = dsb->input_delay + count;
     float *intermediate;
     DWORD channel, i;
 
-    DWORD len = count * dsb->mix_channels;
+    DWORD len = total_input * dsb->mix_channels;
     len *= sizeof(float);
 
-    if (!secondarybuffer_is_audible(dsb))
+    if (!secondarybuffer_is_audible(dsb)) {
+        dsb->input_tail_valid = FALSE;
         return count;
+    }
 
     if (!dsb->device->cp_buffer) {
         dsb->device->cp_buffer = malloc(len);
@@ -706,12 +730,27 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
     for (channel = 0; channel < dsb->mix_channels; channel++)
     {
         get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, count,
-                intermediate + channel * count);
+                intermediate + channel * total_input + dsb->input_delay);
+    }
+
+    for (channel = 0; channel < dsb->mix_channels; channel++) {
+        float *channel_input = intermediate + channel * total_input;
+        float *channel_input_tail = dsb->input_tail + channel * dsb->input_delay;
+
+        if (dsb->input_tail_valid)
+            /* Copy the previously saved dsb->input_delay input samples. */
+            memcpy(channel_input, channel_input_tail, dsb->input_delay * sizeof(float));
+        else
+            memset(channel_input, 0, dsb->input_delay * sizeof(float));
+        /* Save the last dsb->input_delay input samples. */
+        memcpy(channel_input_tail, channel_input + count, dsb->input_delay * sizeof(float));
     }
 
     for (i = 0; i < count; i++)
         for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, i * ostride, channel, intermediate[channel * count + i]);
+            dsb->put(dsb, i * ostride, channel, intermediate[channel * total_input + i]);
+
+    dsb->input_tail_valid = TRUE;
 
     return count;
 }

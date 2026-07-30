@@ -297,6 +297,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(IDirectSoundBuffer8 *iface, DW
 	This->playflags = flags;
 	if (This->state == STATE_STOPPED) {
 		This->state = STATE_STARTING;
+		This->input_tail_valid = FALSE;
 	}
 
 	for (i = 0; i < This->num_filters; i++) {
@@ -1092,6 +1093,12 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 		DSOUND_RecalcFormat(dsb);
 	}
 
+	dsb->input_tail = malloc(dsb->pwfx->nChannels * dsb->input_delay * sizeof(float));
+	if(!dsb->input_tail) {
+		IDirectSoundBuffer8_Release(&dsb->IDirectSoundBuffer8_iface);
+		return DSERR_OUTOFMEMORY;
+	}
+
         InitializeSRWLock(&dsb->lock);
 
         /* register buffer */
@@ -1123,6 +1130,7 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
 
     free(This->notifies);
     free(This->pwfx);
+    free(This->input_tail);
 
     if (This->filters) {
         int i;
@@ -1156,11 +1164,20 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 {
     IDirectSoundBufferImpl *dsb;
     HRESULT hres = DS_OK;
+    void *input_tail;
+
     TRACE("(%p,%p,%p)\n", device, ppdsb, pdsb);
 
     dsb = malloc(sizeof(*dsb));
     if (dsb == NULL) {
         WARN("out of memory\n");
+        *ppdsb = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
+    input_tail = malloc(pdsb->pwfx->nChannels * pdsb->input_delay * sizeof(float));
+    if (input_tail == NULL) {
+        free(dsb);
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
     }
@@ -1174,6 +1191,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     ReleaseSRWLockShared(&pdsb->lock);
 
     if (dsb->pwfx == NULL) {
+        free(input_tail);
         free(dsb);
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
@@ -1192,6 +1210,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->notifies = NULL;
     dsb->nrofnotifies = 0;
     dsb->device = device;
+    dsb->input_tail = input_tail;
     DSOUND_RecalcFormat(dsb);
 
     InitializeSRWLock(&dsb->lock);
@@ -1202,6 +1221,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
         list_remove(&dsb->entry);
         dsb->buffer->ref--;
         free(dsb->pwfx);
+        free(dsb->input_tail);
         free(dsb);
         dsb = NULL;
     }else

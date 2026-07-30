@@ -209,6 +209,8 @@ static void DSOUND_ReleaseDevice(DirectSoundDevice *device)
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, DWORD frames, BOOL forcewave)
 {
     IDirectSoundBufferImpl** dsb = device->buffers;
+    WAVEFORMATEX *old_wfx;
+    float **input_tails;
     LPBYTE newbuf;
     DWORD new_buflen;
     int i;
@@ -222,7 +224,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
     if (forcewave)
     {
         /* forcewave means DSSCL_WRITEPRIMARY, which implies no mixing */
-        newbuf = realloc(device->buffer, new_buflen);
+        newbuf = malloc(new_buflen);
 
         if (!newbuf) {
             ERR("failed to allocate primary buffer\n");
@@ -234,26 +236,62 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
                (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
                 IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)wfx)->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)));
 
-        free(device->buffer);
         newbuf = NULL;
     }
 
+    if (!(input_tails = calloc(device->nrofbuffers, sizeof(input_tails[0])))) {
+        free(newbuf);
+        return DSERR_OUTOFMEMORY;
+    }
+
+    old_wfx = device->pwfx;
+    device->pwfx = wfx;
+
+    for (i = 0; i < device->nrofbuffers; i++) {
+        AcquireSRWLockExclusive(&dsb[i]->lock);
+        DSOUND_RecalcFormat(dsb[i]);
+    }
+
+    for (i = 0; i < device->nrofbuffers; i++) {
+        DWORD input_tail_size = dsb[i]->pwfx->nChannels * dsb[i]->input_delay * sizeof(float);
+
+        if ((input_tails[i] = malloc(input_tail_size)))
+            continue;
+
+        ERR("failed to allocate secondary buffer input tail\n");
+
+        device->pwfx = old_wfx;
+
+        for (i = 0; i < device->nrofbuffers; i++) {
+            free(input_tails[i]);
+            DSOUND_RecalcFormat(dsb[i]);
+            ReleaseSRWLockExclusive(&dsb[i]->lock);
+        }
+
+        free(input_tails);
+        free(newbuf);
+
+        return DSERR_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < device->nrofbuffers; i++) {
+        dsb[i]->input_tail = input_tails[i];
+        dsb[i]->input_tail_valid = FALSE;
+        ReleaseSRWLockExclusive(&dsb[i]->lock);
+    }
+
+    free(input_tails);
+    free(old_wfx);
+
+    free(device->buffer);
     device->buffer = newbuf;
     device->buflen = new_buflen;
-    free(device->pwfx);
-    device->pwfx = wfx;
 
     device->writelead = (wfx->nSamplesPerSec / 100) * wfx->nBlockAlign;
 
     TRACE("buflen: %lu, frames %lu\n", device->buflen, frames);
 
     device->playpos = 0;
-
-    for (i = 0; i < device->nrofbuffers; i++) {
-        AcquireSRWLockExclusive(&dsb[i]->lock);
-        DSOUND_RecalcFormat(dsb[i]);
-        ReleaseSRWLockExclusive(&dsb[i]->lock);
-    }
 
     return DS_OK;
 }

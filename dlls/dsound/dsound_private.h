@@ -142,6 +142,9 @@ struct IDirectSoundBufferImpl
     float                       firgain;
     DWORD                       freqAdjustNum,freqAdjustDen;
     DWORD                       freqAccNum;
+    DWORD                       input_delay;
+    float                      *input_tail;
+    BOOL                        input_tail_valid;
     /* used for mixing */
     DWORD                       sec_mixpos;
     DWORD                       sec_playpos;
