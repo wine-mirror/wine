@@ -2312,12 +2312,9 @@ static BOOL is_monitor_primary( struct monitor *monitor )
 }
 
 /* display_lock must be held */
-static void monitor_virt_to_raw_ratio( struct monitor *monitor, UINT *num, UINT *den )
+static void source_virt_to_raw_ratio( struct source *source, UINT *num, UINT *den )
 {
-    struct source *source = monitor->source;
-
     *num = *den = 1;
-    if (!source) return;
 
     if (source->physical.dmPelsWidth * source->current.dmPelsHeight <=
         source->physical.dmPelsHeight * source->current.dmPelsWidth)
@@ -2340,7 +2337,7 @@ static struct ratio monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE t
     UINT dpi;
 
     if (!source || !(dpi = source->dpi)) dpi = system_dpi;
-    if (source && type != MDT_EFFECTIVE_DPI)
+    if (source && type != MDT_EFFECTIVE_DPI && (source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
     {
         scale_x.num = source->physical.dmPelsWidth;
         scale_x.den = source->current.dmPelsWidth;
@@ -2357,19 +2354,20 @@ static struct ratio monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE t
 static RECT map_monitor_rect( struct monitor *monitor, RECT rect, struct ratio dpi_from, MONITOR_DPI_TYPE type_from,
                               struct ratio dpi_to, MONITOR_DPI_TYPE type_to )
 {
+    struct source *source;
     struct ratio x, y;
 
     assert( type_from != type_to );
 
-    if (monitor->source)
+    if ((source = monitor->source) && (source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
     {
         double points[4] = {rect.left, rect.top, rect.right, rect.bottom}, from[2], to[2];
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)}, physical_mode;
         struct ratio dpi;
         UINT num, den;
 
-        source_get_current_settings( monitor->source, &current_mode );
-        physical_mode = monitor->source->physical;
+        source_get_current_settings( source, &current_mode );
+        physical_mode = source->physical;
 
         dpi = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
         if (!dpi_from.num) dpi_from = dpi;
@@ -2377,7 +2375,7 @@ static RECT map_monitor_rect( struct monitor *monitor, RECT rect, struct ratio d
 
         if (type_from == MDT_RAW_DPI)
         {
-            monitor_virt_to_raw_ratio( monitor, &den, &num );
+            source_virt_to_raw_ratio( source, &den, &num );
             from[0] = physical_mode.dmPosition.x + physical_mode.dmPelsWidth / 2.0;
             from[1] = physical_mode.dmPosition.y + physical_mode.dmPelsHeight / 2.0;
             to[0] = current_mode.dmPosition.x + current_mode.dmPelsWidth / 2.0;
@@ -2385,7 +2383,7 @@ static RECT map_monitor_rect( struct monitor *monitor, RECT rect, struct ratio d
         }
         else
         {
-            monitor_virt_to_raw_ratio( monitor, &num, &den );
+            source_virt_to_raw_ratio( source, &num, &den );
             from[0] = current_mode.dmPosition.x + current_mode.dmPelsWidth / 2.0;
             from[1] = current_mode.dmPosition.y + current_mode.dmPelsHeight / 2.0;
             to[0] = physical_mode.dmPosition.x + physical_mode.dmPelsWidth / 2.0;
