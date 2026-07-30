@@ -158,3 +158,10 @@ HRESULT WINAPI GetMethod(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG
 
 	return IWbemClassObject_GetMethod(ptr, wszName, lFlags, ppInSignature, ppOutSignature);
 }
+
+HRESULT WINAPI GetMethodQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR wszMethod, IWbemQualifierSet **ppQualSet)
+{
+    TRACE("%i %p %s %p\n", vFunc, ptr, debugstr_w(wszMethod), ppQualSet);
+
+    return IWbemClassObject_GetMethodQualifierSet(ptr, wszMethod, ppQualSet);
+}

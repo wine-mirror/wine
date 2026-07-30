@@ -24,7 +24,7 @@
 @ stub GetErrorInfo
 @ stdcall GetMethod(long ptr wstr long ptr ptr)
 @ stub GetMethodOrigin
-@ stub GetMethodQualifierSet
+@ stdcall GetMethodQualifierSet(long ptr wstr ptr)
 @ stdcall GetNames(long ptr wstr long ptr ptr)
 @ stub GetObjectText
 @ stub GetPropertyHandle
