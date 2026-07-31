@@ -3201,11 +3201,21 @@ static void check_logical_physical_dpi_( int line, HWND hwnd, UINT log_x, UINT l
     check_physical_dpi_( line, hwnd, log_x, log_y, phy_x, phy_y, expect_ret, todo_ret );
 }
 
+static UINT dpichanged_count;
+static WPARAM dpichanged_dpis;
+static RECT dpichanged_rect;
+
 static DPI_AWARENESS_CONTEXT cbt_ctx;
 static UINT cbt_dpi;
 
 static LRESULT CALLBACK test_monitor_dpi_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
+    if (msg == WM_DPICHANGED)
+    {
+        dpichanged_dpis = wparam;
+        dpichanged_rect = *(RECT *)lparam;
+        dpichanged_count++;
+    }
     if (msg == WM_NCCREATE)
     {
         DPI_AWARENESS_CONTEXT ctx;
@@ -3250,10 +3260,11 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
     RECT primary = {0}, scaled_device = {0}, expect_device = {0}, rect, expect_rect, device;
     struct monitor_info tmp_info = {.handle = info->handle};
     UINT ret, i, x, y, expect_width, expect_height;
-    HWND unaware_hwnd, aware_hwnd, primary_hwnd;
+    HWND unaware_hwnd, aware_hwnd, primary_hwnd, child;
     MONITORINFO mi = {.cbSize = sizeof(mi)};
     DPI_AWARENESS_CONTEXT old_ctx = 0, cur_ctx, ctx, system_ctx = (DPI_AWARENESS_CONTEXT)(((UINT_PTR)system_dpi << 8)|0x11);
     float unaware_scale = scales[step], scale, scale_x, scale_y;
+    BOOL same_monitor;
     HHOOK hook;
     HDC hdc;
 
@@ -3529,6 +3540,153 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         ret = pGetDpiForWindow( aware_hwnd );
         if (monitor_aware) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
         else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        ok( MonitorFromWindow( unaware_hwnd, MONITOR_DEFAULTTONEAREST ) == MonitorFromWindow( aware_hwnd, MONITOR_DEFAULTTONEAREST ),
+            "got different monitor\n" );
+
+
+        /* if window was created as a child of DPI unaware window, it can never become DPI aware */
+        child = CreateWindowW( L"static", NULL, WS_CHILD | WS_VISIBLE, 0, 0, 10, 10, unaware_hwnd, NULL, NULL, NULL );
+        ok( child != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+        SetWindowLongPtrW( child, GWLP_WNDPROC, (LONG_PTR)test_monitor_dpi_wndproc );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( child );
+        ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
+
+        SetParent( child, NULL );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( child );
+        ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
+
+        SetParent( child, aware_hwnd );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( child );
+        ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
+
+        SetParent( child, NULL );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( child );
+        ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
+
+        DestroyWindow( child );
+
+
+        /* if window is created as a child of DPI aware window, it is always DPI aware */
+        child = CreateWindowW( L"static", NULL, WS_CHILD | WS_VISIBLE, 0, 0, 10, 10, aware_hwnd, NULL, NULL, NULL );
+        ok( child != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+        SetWindowLongPtrW( child, GWLP_WNDPROC, (LONG_PTR)test_monitor_dpi_wndproc );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( child );
+        if (monitor_aware) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        /* WM_DPICHANGED is only sent if window was child of monitor aware window, and if
+         * reparenting makes the window toplevel and changes its monitor */
+        SetParent( child, NULL );
+        same_monitor = MonitorFromWindow( aware_hwnd, MONITOR_DEFAULTTONEAREST ) == MonitorFromWindow( child, MONITOR_DEFAULTTONEAREST );
+        if (!monitor_aware || same_monitor) ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        else
+        {
+            ok( dpichanged_count == 1, "got dpichanged_count %u\n", dpichanged_count );
+            ok( dpichanged_dpis == MAKELONG(system_dpi, system_dpi), "got dpichanged_dpis %Ix\n", dpichanged_dpis );
+            ok( !IsRectEmpty( &dpichanged_rect ), "got dpichanged_rect %s\n", wine_dbgstr_rect( &dpichanged_rect ) );
+            dpichanged_count = dpichanged_dpis = 0;
+            SetRect( &dpichanged_rect, 0, 0, 0, 0 );
+        }
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( child );
+        if (monitor_aware && same_monitor) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        SetParent( child, unaware_hwnd );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( child );
+        if (monitor_aware && same_monitor) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        /* WM_DPICHANGED is only sent if window was child of monitor aware window, and if
+         * reparenting makes the window toplevel and changes its monitor */
+        SetParent( child, NULL );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( child );
+        if (monitor_aware && same_monitor) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        SetParent( child, aware_hwnd );
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        ctx = pGetWindowDpiAwarenessContext( child );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( child );
+        if (monitor_aware) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", ret );
+
+        /* WM_DPICHANGED is only sent if window was children of monitor aware window, and if
+         * reparenting makes the window toplevel and changes its monitor */
+        SetParent( child, NULL );
+        same_monitor = MonitorFromWindow( aware_hwnd, MONITOR_DEFAULTTONEAREST ) == MonitorFromWindow( child, MONITOR_DEFAULTTONEAREST );
+        if (!monitor_aware || same_monitor) ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+        else
+        {
+            ok( dpichanged_count == 1, "got dpichanged_count %u\n", dpichanged_count );
+            ok( dpichanged_dpis == MAKELONG(system_dpi, system_dpi), "got dpichanged_dpis %Ix\n", dpichanged_dpis );
+            ok( !IsRectEmpty( &dpichanged_rect ), "got dpichanged_rect %s\n", wine_dbgstr_rect( &dpichanged_rect ) );
+            dpichanged_count = dpichanged_dpis = 0;
+            SetRect( &dpichanged_rect, 0, 0, 0, 0 );
+        }
+        flush_events();
+        ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
+
+        DestroyWindow( child );
+
 
         SetRect( &expect_rect, 0, 0, 100, 100 );
         ret = GetClientRect( aware_hwnd, &rect );
