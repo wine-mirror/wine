@@ -924,7 +924,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
             encode_base64( password ? password : cred->password, password ? password_len : cred->password_len, buf + 3 );
         }
 
-        TRACE( "sending to ntlm_auth: %s\n", debugstr_a(buf) );
+        TRACE( "sending to ntlm_auth: %s\n", strncmp(buf, "PW ", 3) ? debugstr_a(buf) : "PW <password>" );
         if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         TRACE( "ntlm_auth returned %s\n", debugstr_a(buf) );
 
