@@ -1380,8 +1380,8 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
         struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
 
         flags->Flags = 0;
-        if (ctx->flags & FLAG_NEGOTIATE_SIGN) flags->Flags |= ISC_RET_INTEGRITY;
-        if (ctx->flags & FLAG_NEGOTIATE_SEAL) flags->Flags |= ISC_RET_CONFIDENTIALITY;
+        if (ctx->flags & NTLMSSP_NEGOTIATE_SIGN) flags->Flags |= ISC_RET_INTEGRITY;
+        if (ctx->flags & NTLMSSP_NEGOTIATE_SEAL) flags->Flags |= ISC_RET_CONFIDENTIALITY;
         return SEC_E_OK;
     }
     case SECPKG_ATTR_SIZES:
@@ -1420,7 +1420,7 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
         SEC_WCHAR *signature_alg;
         ULONG signature_size, signature_algid;
 
-        if (ctx->flags & FLAG_NEGOTIATE_KEY_EXCHANGE)
+        if (ctx->flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
         {
             signature_alg = (SEC_WCHAR *)L"HMAC-MD5";
             signature_size = sizeof(L"HMAC-MD5");
@@ -1581,7 +1581,7 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
     unsigned int i, sign_version = 1;
     char *sig = sig_buf->pvBuffer;
 
-    if (flags & FLAG_NEGOTIATE_NTLM2 && flags & FLAG_NEGOTIATE_SIGN)
+    if (flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY && flags & NTLMSSP_NEGOTIATE_SIGN)
     {
         char digest[16], seq_no[4];
         struct hmac_md5_ctx hmac_md5;
@@ -1615,7 +1615,7 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
         }
         hmac_md5_final( &hmac_md5, digest );
 
-        if (encrypt && flags & FLAG_NEGOTIATE_KEY_EXCHANGE)
+        if (encrypt && flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
         {
             if (dir == SIGN_SEND)
                 arc4_process( &ctx->crypt.ntlm2.send_arc4info, digest, 8 );
@@ -1634,7 +1634,7 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
         return SEC_E_OK;
     }
 
-    if (flags & FLAG_NEGOTIATE_SIGN)
+    if (flags & NTLMSSP_NEGOTIATE_SIGN)
     {
         unsigned int crc = 0;
 
@@ -1663,7 +1663,7 @@ static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flag
         return SEC_E_OK;
     }
 
-    if (flags & FLAG_NEGOTIATE_ALWAYS_SIGN || !flags)
+    if (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || !flags)
     {
         /* create dummy signature */
         memset( sig_buf->pvBuffer, 0, 16 );
@@ -1767,25 +1767,25 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
     if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
 
     ctx = (struct ntlm_ctx *)handle;
-    if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
+    if (ctx->flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY && ctx->flags & NTLMSSP_NEGOTIATE_SEAL)
     {
         create_signature( ctx, ctx->flags, msg, &msg->pBuffers[token_idx], SIGN_SEND, FALSE );
 
         arc4_process( &ctx->crypt.ntlm2.send_arc4info, msg->pBuffers[data_idx].pvBuffer,
                       msg->pBuffers[data_idx].cbBuffer );
-        if (ctx->flags & FLAG_NEGOTIATE_KEY_EXCHANGE)
+        if (ctx->flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
             arc4_process( &ctx->crypt.ntlm2.send_arc4info, (char *)msg->pBuffers[token_idx].pvBuffer + 4, 8 );
     }
     else
     {
         char *sig = msg->pBuffers[token_idx].pvBuffer;
 
-        create_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, &msg->pBuffers[token_idx], SIGN_SEND, FALSE );
+        create_signature( ctx, ctx->flags | NTLMSSP_NEGOTIATE_SIGN, msg, &msg->pBuffers[token_idx], SIGN_SEND, FALSE );
 
         arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer, msg->pBuffers[data_idx].cbBuffer );
         arc4_process( &ctx->crypt.ntlm.arc4info, sig + 4, 12 );
 
-        if (ctx->flags & FLAG_NEGOTIATE_ALWAYS_SIGN || !ctx->flags) memset( sig + 4, 0, 4 );
+        if (ctx->flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || !ctx->flags) memset( sig + 4, 0, 4 );
     }
 
     return SEC_E_OK;
@@ -1829,7 +1829,7 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
     }
 
     ctx = (struct ntlm_ctx *)handle;
-    if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
+    if (ctx->flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY && ctx->flags & NTLMSSP_NEGOTIATE_SEAL)
     {
         for (i = 0; i < msg->cBuffers; i++)
         {
@@ -1850,7 +1850,7 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     /* make sure we use a session key for the signature check, SealMessage always does that,
        even in the dummy case */
-    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, &token_buf );
+    return verify_signature( ctx, ctx->flags | NTLMSSP_NEGOTIATE_SIGN, msg, &token_buf );
 }
 
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =

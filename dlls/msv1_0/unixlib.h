@@ -55,12 +55,6 @@ struct arc4_info
     char state[256];
 };
 
-#define FLAG_NEGOTIATE_SIGN         0x00000010
-#define FLAG_NEGOTIATE_SEAL         0x00000020
-#define FLAG_NEGOTIATE_ALWAYS_SIGN  0x00008000
-#define FLAG_NEGOTIATE_NTLM2        0x00080000
-#define FLAG_NEGOTIATE_KEY_EXCHANGE 0x40000000
-
 typedef UINT64 com_buf_ptr;
 
 struct ntlm_ctx
