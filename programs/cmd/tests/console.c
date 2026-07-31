@@ -47,7 +47,7 @@ static void test_console_mode_change_grandchild( const char *exec_type, const ch
     ok_child( bret, "got error %lu.\n", GetLastError() );
     if (exec_type && !strcmp( exec_type, "startcmd" ))
     {
-        todo_wine ok_child( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+        ok_child( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
                   || broken( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT) ) /* before Win10 */,
                   "got %#lx.\n", mode );
     }
@@ -104,7 +104,6 @@ static void test_console_mode_change(int argc, char *argv[])
     CloseHandle( info.hThread );
     bret = GetConsoleMode( con_out, &mode );
     ok( bret, "got error %lu.\n", GetLastError() );
-    todo_wine
     ok( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
         || broken( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT) ) /* before Win10 */,
         "got %#lx.\n", mode );
@@ -123,7 +122,7 @@ static void test_console_mode_change(int argc, char *argv[])
     CloseHandle( info.hThread );
     bret = GetConsoleMode( con_out, &mode );
     ok( bret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    ok( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
         || broken( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT) ) /* before Win10 */,
         "got %#lx.\n", mode );
 
@@ -198,7 +197,7 @@ static void test_console_mode_change(int argc, char *argv[])
     bret = SetConsoleMode( con_out, ENABLE_PROCESSED_OUTPUT );
     ok( bret, "got error %lu.\n", GetLastError() );
     DeleteFileA( "grandchild.out" );
-    sprintf( cmd, "cmd.exe /c %s %s grandchild 2>>grandchild.out & %s %s grandchild todo 2>>grandchild.out",
+    sprintf( cmd, "cmd.exe /c %s %s grandchild 2>>grandchild.out & %s %s grandchild 2>>grandchild.out",
              argv[0], argv[1], argv[0], argv[1] );
     bret = CreateProcessA( NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &info );
     ok( bret, "got error %lu.\n", GetLastError() );
@@ -225,7 +224,7 @@ static void test_console_mode_change(int argc, char *argv[])
     wait_child_process( &info );
     bret = GetConsoleMode( con_out, &mode );
     ok( bret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    ok( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
         || broken( mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT) ) /* before Win10 */,
         "got %#lx.\n", mode );
 

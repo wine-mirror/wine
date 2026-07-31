@@ -68,6 +68,11 @@ static BOOL unicodeOutput = FALSE;
 static HANDLE console_input;
 BOOL echo_mode = TRUE;
 
+/* Output handling */
+static DWORD orig_console_mode;
+static DWORD internal_console_mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+                                     | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
 /* Variables pertaining to paging */
 static BOOL paged_mode;
 static const WCHAR *pagedMessage = NULL;
@@ -1807,6 +1812,8 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
         console = SHGetFileInfoW(exe_path, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
 
     init_msvcrt_io_block(&si);
+    if (console && !HIWORD(console))
+        SetConsoleMode( GetStdHandle(STD_OUTPUT_HANDLE), orig_console_mode );
     ret = CreateProcessW(file, full_cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     free(si.lpReserved2);
 
@@ -4698,6 +4705,7 @@ static RETURN_CODE node_execute_with_echo(CMD_NODE *node, BOOL with_echo)
 
 RETURN_CODE node_execute(CMD_NODE *node)
 {
+    SetConsoleMode( GetStdHandle(STD_OUTPUT_HANDLE), internal_console_mode );
     return node_execute_with_echo(node, echo_mode && WCMD_is_in_context(NULL));
 }
 
@@ -4950,6 +4958,7 @@ static void WCMD_setup(void)
     /* init for loop context */
     forloopcontext = NULL;
     WCMD_save_for_loop_context(TRUE);
+    GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &orig_console_mode);
 }
 
 /*****************************************************************************
