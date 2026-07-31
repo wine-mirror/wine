@@ -3201,6 +3201,37 @@ static void check_logical_physical_dpi_( int line, HWND hwnd, UINT log_x, UINT l
     check_physical_dpi_( line, hwnd, log_x, log_y, phy_x, phy_y, expect_ret, todo_ret );
 }
 
+static DPI_AWARENESS_CONTEXT cbt_ctx;
+static UINT cbt_dpi;
+
+static LRESULT CALLBACK test_monitor_dpi_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_NCCREATE)
+    {
+        DPI_AWARENESS_CONTEXT ctx;
+        UINT dpi;
+
+        ctx = pGetWindowDpiAwarenessContext( hwnd );
+        ok( ctx == cbt_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        dpi = pGetDpiForWindow( hwnd );
+        ok( dpi == cbt_dpi, "GetDpiForWindow returned %u\n", dpi );
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI test_monitor_dpi_cbtproc( int code, WPARAM wparam, LPARAM lparam )
+{
+    if (code == HCBT_CREATEWND)
+    {
+        HWND hwnd = (HWND)wparam;
+        cbt_ctx = pGetWindowDpiAwarenessContext( hwnd );
+        cbt_dpi = pGetDpiForWindow( hwnd );
+    }
+
+    return CallNextHookEx( NULL, code, wparam, lparam );
+}
+
 static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT count, int step, UINT system_dpi,
                                         const struct monitor_info *info, struct monitor_info *phys, BOOL is_virtual )
 {
@@ -3223,6 +3254,7 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
     MONITORINFO mi = {.cbSize = sizeof(mi)};
     DPI_AWARENESS_CONTEXT old_ctx = 0, cur_ctx, ctx, system_ctx = (DPI_AWARENESS_CONTEXT)(((UINT_PTR)system_dpi << 8)|0x11);
     float unaware_scale = scales[step], scale, scale_x, scale_y;
+    HHOOK hook;
     HDC hdc;
 
     scale_x = (info->rect.right - info->rect.left) / (float)(phys->rect.right - phys->rect.left);
@@ -3261,9 +3293,14 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
     }
 
-    unaware_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, monitor.left + 100,
+    hook = SetWindowsHookExW( WH_CBT, test_monitor_dpi_cbtproc, 0, GetCurrentThreadId() );
+    unaware_hwnd = CreateWindowW( L"test_monitor_dpi", NULL, WS_POPUP | WS_VISIBLE, monitor.left + 100,
                                   monitor.top + 100, 100, 100, NULL, NULL, NULL, NULL );
     ok( unaware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ok( cbt_ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)cbt_ctx );
+    ok( cbt_dpi == system_dpi, "GetDpiForWindow returned %u\n", cbt_dpi );
+    UnhookWindowsHookEx( hook );
+
     ctx = pGetWindowDpiAwarenessContext( unaware_hwnd );
     ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
     ret = pGetDpiForWindow( unaware_hwnd );
@@ -3476,9 +3513,15 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
 
 
-        aware_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, mi.rcWork.left + 200,
+        hook = SetWindowsHookExW( WH_CBT, test_monitor_dpi_cbtproc, 0, GetCurrentThreadId() );
+        aware_hwnd = CreateWindowW( L"test_monitor_dpi", NULL, WS_POPUP | WS_VISIBLE, mi.rcWork.left + 200,
                                     mi.rcWork.top + 200, 100, 100, NULL, NULL, NULL, NULL );
         ok( aware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( cbt_ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", cbt_ctx, cur_ctx );
+        if (monitor_aware) ok( cbt_dpi == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", cbt_dpi );
+        else ok( cbt_dpi == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", cbt_dpi );
+        UnhookWindowsHookEx( hook );
 
         ctx = pGetWindowDpiAwarenessContext( aware_hwnd );
         todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
@@ -3498,9 +3541,16 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
 
 
-        primary_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, primary.left + 300,
+        hook = SetWindowsHookExW( WH_CBT, test_monitor_dpi_cbtproc, 0, GetCurrentThreadId() );
+        primary_hwnd = CreateWindowW( L"test_monitor_dpi", NULL, WS_POPUP | WS_VISIBLE, primary.left + 300,
                                       primary.top + 300, 100, 100, NULL, NULL, NULL, NULL );
         ok( primary_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( cbt_ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)cbt_ctx );
+        if (!monitor_aware) ok( cbt_dpi == (system_aware ? system_dpi : 96), "GetDpiForWindow returned %u\n", cbt_dpi );
+        else if (EqualRect( &primary, &monitor )) ok( cbt_dpi == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", cbt_dpi );
+        else ok( cbt_dpi == system_dpi, "GetDpiForWindow returned %u\n", cbt_dpi );
+        UnhookWindowsHookEx( hook );
 
         ctx = pGetWindowDpiAwarenessContext( primary_hwnd );
         todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
@@ -3730,12 +3780,22 @@ static void test_monitor_dpi(void)
     DPI_AWARENESS_CONTEXT old_ctx;
     float scale_x, scale_y;
     BOOL ret, is_virtual;
+    WNDCLASSW cls =
+    {
+        .lpfnWndProc   = test_monitor_dpi_wndproc,
+        .hInstance     = GetModuleHandleW( NULL ),
+        .hbrBackground = GetStockObject( WHITE_BRUSH ),
+        .lpszClassName = L"test_monitor_dpi",
+    };
 
     if (!pGetDpiForMonitorInternal || !pSetThreadDpiAwarenessContext)
     {
         win_skip( "GetDpiForMonitorInternal / SetThreadDpiAwarenessContext not found, skipping tests\n" );
         return;
     }
+
+    ret = RegisterClassW( &cls );
+    ok( ret, "RegisterClassW failed, error %lu\n", GetLastError() );
 
     old_ctx = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
     system_dpi = pGetDpiForSystem();
@@ -3888,6 +3948,9 @@ static void test_monitor_dpi(void)
     }
 
     ChangeDisplaySettingsExW( NULL, NULL, 0, 0, NULL );
+
+    ret = UnregisterClassW( cls.lpszClassName, cls.hInstance );
+    ok( ret, "UnregisterClassW failed, error %lu\n", GetLastError() );
 
     pSetThreadDpiAwarenessContext( old_ctx );
 }
