@@ -721,7 +721,6 @@ static void test_layout(void)
 
     rbi.fMask = RBBIM_CHILDSIZE;
     ok(SendMessageA(hRebar, RB_GETBANDINFOA, 0, (LPARAM)&rbi), "RB_GETBANDINFOA failed\n");
-    todo_wine
     compare(rbi.cyChild, 10, "%d");
 
     DestroyWindow(hRebar);
