@@ -174,6 +174,12 @@ static inline int is_desktop_window( const struct window *win )
     return !win->parent;  /* only desktop windows have no parent */
 }
 
+/* check if window is a toplevel or desktop window */
+static bool is_toplevel( const struct window *win )
+{
+    return !win->parent || is_desktop_window( win->parent );
+}
+
 /* check if window is orphaned */
 static int is_orphan_window( struct window *win )
 {
@@ -305,7 +311,7 @@ static void map_point_raw_to_virt( struct desktop *desktop, int *x, int *y )
 /* get the per-monitor DPI for a window */
 static struct ratio get_monitor_dpi( struct window *win )
 {
-    while (win->parent && !is_desktop_window( win->parent )) win = win->parent;
+    while (!is_toplevel( win )) win = win->parent;
     return win->shared->dpi;
 }
 
@@ -414,7 +420,6 @@ static int set_parent_window( struct window *win, struct window *parent )
         if (is_desktop_window( parent )) set_window_monitor_dpi( win );
         else SHARED_WRITE_BEGIN( win->shared, window_shm_t )
         {
-            shared->dpi_context = parent->shared->dpi_context;
             shared->dpi         = parent->shared->dpi;
             shared->raw_dpi     = parent->shared->raw_dpi;
         }
@@ -604,8 +609,8 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     mod_handle_t class_instance, bool ansi, struct ratio dpi,
-                                     struct ratio raw_dpi )
+                                     mod_handle_t class_instance, bool ansi, unsigned int dpi_context,
+                                     struct ratio dpi, struct ratio raw_dpi )
 {
     data_size_t extra_size, private_size;
     struct window *win = NULL;
@@ -674,8 +679,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
         shared->class           = class_locator;
-        /* FIXME: NTUSER_DPI_PER_MONITOR_AWARE_V2 isn't implemented */
-        shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
+        shared->dpi_context     = is_toplevel( win ) ? dpi_context : parent->shared->dpi_context;
         shared->fnid            = fnid;
         shared->private_size    = private_size;
         shared->dpi             = dpi;
@@ -1893,7 +1897,7 @@ static struct region *expose_window( struct window *win, const struct rectangle 
         }
     }
 
-    if (win->parent && !is_desktop_window( win->parent ))
+    if (!is_toplevel( win ))
     {
         /* make it relative to the old window pos for subtracting */
         offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
@@ -1946,7 +1950,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
 
     /* update window monitor dpi for toplevel windows */
-    if (!win->parent || is_desktop_window( win->parent )) set_window_monitor_dpi( win );
+    if (is_toplevel( win )) set_window_monitor_dpi( win );
 
     /* keep children at the same position relative to top right corner when the parent is mirrored */
     if (win->ex_style & WS_EX_LAYOUTRTL)
@@ -2213,7 +2217,6 @@ DECL_HANDLER(create_window)
     struct window *win, *parent = NULL, *owner = NULL;
     struct unicode_str cls_name = get_req_unicode_str();
     struct atom_table *table = get_user_atom_table();
-    unsigned int dpi_context = req->dpi_context;
     atom_t atom = req->atom;
 
     reply->handle = 0;
@@ -2244,18 +2247,15 @@ DECL_HANDLER(create_window)
 
     if (!atom) atom = find_atom( table, cls_name );
 
-    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi, req->dpi, req->raw_dpi ))) return;
-
-    /* FIXME: NTUSER_DPI_PER_MONITOR_AWARE_V2 isn't implemented */
-    if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( dpi_context )) dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
+    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi,
+                               req->dpi_context, req->dpi, req->raw_dpi )))
+        return;
 
     SHARED_WRITE_BEGIN( win->shared, window_shm_t )
     {
-        shared->dpi_context     = dpi_context;
         shared->info.instance   = req->instance;
         if (parent && !is_desktop_window( parent ))
         {
-            shared->dpi_context = parent->shared->dpi_context;
             shared->dpi         = parent->shared->dpi;
             shared->raw_dpi     = parent->shared->raw_dpi;
         }
@@ -2353,7 +2353,7 @@ DECL_HANDLER(get_desktop_window)
     if (!desktop->top_window && req->force)  /* create it */
     {
         if (!(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, info->dpi, info->raw_dpi )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2368,7 +2368,7 @@ DECL_HANDLER(get_desktop_window)
         atom_t atom = add_atom( table, name );
 
         if (!info && !(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, info->dpi, info->raw_dpi )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, NTUSER_DPI_PER_MONITOR_AWARE, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;

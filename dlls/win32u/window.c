@@ -5675,6 +5675,12 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     struct ratio dpi, raw_dpi;
     WND *win;
 
+    if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( dpi_context ) && dpi_context != NTUSER_DPI_PER_MONITOR_AWARE)
+    {
+        FIXME( "DPI context %#x not implemented\n", dpi_context );
+        dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
+    }
+
     if (parent && parent != get_desktop_window()) dpi = get_win_monitor_dpi( parent, &raw_dpi );
     else dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
 
