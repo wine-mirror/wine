@@ -704,6 +704,28 @@ static void test_layout(void)
 
     DestroyWindow(hRebar);
 
+    /* VARHEIGHT with cyIntegral == 0 and cyChild == 0 */
+    hRebar = create_rebar_control(0);
+    SetWindowLongA(hRebar, GWL_STYLE, GetWindowLongA(hRebar, GWL_STYLE) | RBS_AUTOSIZE);
+    rbi.cbSize = REBARBANDINFOA_V6_SIZE;
+    rbi.fMask = RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE;
+    rbi.fStyle = RBBS_VARIABLEHEIGHT;
+    rbi.cx = 90;
+    rbi.cxMinChild = 50;
+    rbi.cyMinChild = 10;
+    rbi.cyMaxChild = 200;
+    rbi.cyIntegral = 0;
+    rbi.cyChild = 0;
+    rbi.hwndChild = build_toolbar(0, hRebar);
+    SendMessageA(hRebar, RB_INSERTBANDA, -1, (LPARAM)&rbi);
+
+    rbi.fMask = RBBIM_CHILDSIZE;
+    ok(SendMessageA(hRebar, RB_GETBANDINFOA, 0, (LPARAM)&rbi), "RB_GETBANDINFOA failed\n");
+    todo_wine
+    compare(rbi.cyChild, 10, "%d");
+
+    DestroyWindow(hRebar);
+
     rbsize_results_free();
 }
 
