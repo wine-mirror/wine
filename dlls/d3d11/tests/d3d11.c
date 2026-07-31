@@ -16125,8 +16125,10 @@ static void test_swapchain_views(void)
 static void test_swapchain_flip(void)
 {
     ID3D11Texture2D *backbuffer_0, *backbuffer_1, *backbuffer_2, *offscreen;
+    ID3D11RenderTargetView *backbuffer_0_rtv, *backbuffer_0_rtv_srgb;
+    ID3D11RenderTargetView *backbuffer_1_rtv_srgb, *offscreen_rtv;
     ID3D11ShaderResourceView *backbuffer_0_srv, *backbuffer_1_srv;
-    ID3D11RenderTargetView *backbuffer_0_rtv, *offscreen_rtv;
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11InputLayout *input_layout;
     ID3D11DeviceContext *context;
@@ -16205,6 +16207,7 @@ static void test_swapchain_flip(void)
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
     static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
     static const float blue[] = {0.0f, 0.0f, 1.0f, 0.5f};
+    static const float grey[] = {0.5, 0.5f, 0.5f, 0.5f};
 
     if (!(device = create_device(NULL)))
     {
@@ -16294,6 +16297,21 @@ static void test_swapchain_flip(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
+    /* Test SRGB rtv for UNORM swapchain common for Unity games for Win10 */
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    rtv_desc.Texture2D.MipSlice = 0;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_0, &rtv_desc,
+            &backbuffer_0_rtv_srgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv_srgb, grey);
+        color = get_texture_color(backbuffer_0, 320, 240); /* grey */
+        ok(compare_color(color, 0x80bcbcbc, 1), "Got unexpected srgb color 0x%08lx.\n", color);
+        ID3D11RenderTargetView_Release(backbuffer_0_rtv_srgb);
+    }
+
     ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, red);
 
     ID3D11DeviceContext_Draw(context, 4, 0);
@@ -16311,6 +16329,18 @@ static void test_swapchain_flip(void)
      * rendering finishes before the V-sync interval is over. I haven't found
      * any productive use for more than one buffer. */
     IDXGISwapChain_Present(swapchain, 0, 0);
+
+    /* Check RTVs created after present/rotate are properly handled/offset accordingly */
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_0, &rtv_desc,
+            &backbuffer_1_rtv_srgb);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_1_rtv_srgb, grey);
+        color = get_texture_color(backbuffer_0, 320, 240); /* grey */
+        todo_wine ok(compare_color(color, 0x80bcbcbc, 1), "Got unexpected srgb color 0x%08lx.\n", color);
+        ID3D11RenderTargetView_Release(backbuffer_1_rtv_srgb);
+    }
 
     ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, green);
 
