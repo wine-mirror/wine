@@ -336,7 +336,6 @@ NTSTATUS WINAPI BCryptUnregisterProvider( const WCHAR *provider )
 }
 
 #define MAX_HASH_OUTPUT_BYTES 64
-#define MAX_HASH_BLOCK_BITS 1024
 
 /* ordered by class, keep in sync with enum alg_id */
 static const struct
@@ -345,7 +344,7 @@ static const struct
     ULONG        class;
     ULONG        object_length;
     ULONG        hash_length;
-    ULONG        block_bits;
+    ULONG        hash_block_length;
     enum ecc_curve_id curve_id;
     enum chain_mode   chain_mode;
 }
@@ -356,13 +355,13 @@ builtin_algorithms[] =
     { BCRYPT_AES_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,              654,    0,    0 },
     { BCRYPT_AES_GMAC_ALGORITHM,   BCRYPT_CIPHER_INTERFACE,              654,    0,    0, 0, CHAIN_MODE_GCM },
     { BCRYPT_RC4_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,              654,    0,    0 },
-    { BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                286,   32,  512 },
-    { BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                382,   48, 1024 },
-    { BCRYPT_SHA512_ALGORITHM,     BCRYPT_HASH_INTERFACE,                382,   64, 1024 },
-    { BCRYPT_SHA1_ALGORITHM,       BCRYPT_HASH_INTERFACE,                278,   20,  512 },
-    { BCRYPT_MD5_ALGORITHM,        BCRYPT_HASH_INTERFACE,                274,   16,  512 },
-    { BCRYPT_MD4_ALGORITHM,        BCRYPT_HASH_INTERFACE,                270,   16,  512 },
-    { BCRYPT_MD2_ALGORITHM,        BCRYPT_HASH_INTERFACE,                270,   16,  128 },
+    { BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                286,   32,   64 },
+    { BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                382,   48,  128 },
+    { BCRYPT_SHA512_ALGORITHM,     BCRYPT_HASH_INTERFACE,                382,   64,  128 },
+    { BCRYPT_SHA1_ALGORITHM,       BCRYPT_HASH_INTERFACE,                278,   20,   64 },
+    { BCRYPT_MD5_ALGORITHM,        BCRYPT_HASH_INTERFACE,                274,   16,   64 },
+    { BCRYPT_MD4_ALGORITHM,        BCRYPT_HASH_INTERFACE,                270,   16,   64 },
+    { BCRYPT_MD2_ALGORITHM,        BCRYPT_HASH_INTERFACE,                270,   16,   16 },
     { BCRYPT_RSA_ALGORITHM,        BCRYPT_ASYMMETRIC_ENCRYPTION_INTERFACE, 0,      0,    0 },
     { BCRYPT_DH_ALGORITHM,         BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     { BCRYPT_ECDH_ALGORITHM,       BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
@@ -713,6 +712,12 @@ static NTSTATUS get_generic_alg_property( enum alg_id id, const WCHAR *prop, UCH
     {
         if (!builtin_algorithms[id].hash_length) return STATUS_NOT_SUPPORTED;
         return get_dword_property( buf, size, ret_size, builtin_algorithms[id].hash_length );
+    }
+
+    if (!wcscmp( prop, BCRYPT_HASH_BLOCK_LENGTH ))
+    {
+        if (!builtin_algorithms[id].hash_block_length) return STATUS_NOT_SUPPORTED;
+        return get_dword_property( buf, size, ret_size, builtin_algorithms[id].hash_block_length );
     }
 
     if (!wcscmp( prop, BCRYPT_ALGORITHM_NAME ))
