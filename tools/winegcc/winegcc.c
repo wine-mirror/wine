@@ -424,7 +424,7 @@ static struct strarray build_tool_name( const char *target_name, struct tool_nam
     if (cc_cmd && !strncmp( tool.llvm_base, "clang", 5 ))
     {
         ret = strarray_fromstring( cc_cmd, " " );
-        if (is_llvm_pe_target( target )) add_clang_options( target_name, &ret );
+        if (is_llvm_pe_target( target ) || is_arm64x) add_clang_options( target_name, &ret );
         return ret;
     }
 
