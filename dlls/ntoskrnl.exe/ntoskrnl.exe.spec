@@ -421,7 +421,7 @@
 @ stub IoGetLowerDeviceObject
 @ stdcall IoGetRelatedDeviceObject(ptr)
 @ stdcall IoGetRequestorProcess(ptr)
-@ stub IoGetRequestorProcessId
+@ stdcall IoGetRequestorProcessId(ptr)
 @ stub IoGetRequestorSessionId
 @ stdcall IoGetStackLimits(ptr ptr)
 @ stub IoGetTopLevelIrp
