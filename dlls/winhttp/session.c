@@ -923,6 +923,12 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
 
         if (!validate_buffer( buffer, buflen, sizeof(cert_chain) )) return FALSE;
+        if (!request->server_cert)
+        {
+            SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
+            *(CERT_CHAIN_CONTEXT **)buffer = NULL;
+            return FALSE;
+        }
         if (!CertGetCertificateChain(NULL, request->server_cert, NULL, NULL, &chainPara, 0, NULL, &cert_chain)) return FALSE;
 
         *(CERT_CHAIN_CONTEXT **)buffer = (CERT_CHAIN_CONTEXT *)cert_chain;
