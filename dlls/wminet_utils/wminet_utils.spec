@@ -44,7 +44,7 @@
 @ stub QualifierSet_BeginEnumeration
 @ stub QualifierSet_Delete
 @ stub QualifierSet_EndEnumeration
-@ stub QualifierSet_Get
+@ stdcall QualifierSet_Get(long ptr wstr long ptr ptr)
 @ stub QualifierSet_GetNames
 @ stub QualifierSet_Next
 @ stub QualifierSet_Put
