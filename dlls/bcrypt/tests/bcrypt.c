@@ -5149,6 +5149,12 @@ static void test_TLS_PRF(void)
     ok(size == sizeof(buf), "size = %lu\n", size);
     ok(!memcmp(buf, expect2, sizeof(expect2)), "wrong data\n");
 
+    /* label is optional */
+    param_buffers[1].cbBuffer   = 0;
+    param_buffers[1].pvBuffer   = NULL;
+    status = BCryptKeyDerivation(key, &params, buf, sizeof(buf), &size, 0);
+    ok(!status, "got %#lx\n", status);
+
     status = BCryptDuplicateKey(key, &key2, NULL, 0, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 

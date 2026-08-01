@@ -4233,7 +4233,7 @@ static NTSTATUS key_derivation_tls_prf( const struct key *key, BCryptBufferDesc 
             break;
         }
     }
-    if (!label || !seed || (tls1_2 && !mac)) return STATUS_INVALID_PARAMETER;
+    if (!seed || (tls1_2 && !mac)) return STATUS_INVALID_PARAMETER;
 
     if (tls1_2)
         error = SymCryptTlsPrf1_2( mac, key->s.secret, key->s.secret_len, label, label_len, seed, seed_len,
