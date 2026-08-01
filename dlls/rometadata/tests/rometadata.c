@@ -1,6 +1,6 @@
 /*
  * Copyright 2024 Zhiyi Zhang for CodeWeavers
- * Copyright 2025 Vibhav Pant
+ * Copyright 2025-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1499,6 +1499,50 @@ static void test_IMetaDataImport(void)
             ok(set_method == mdMethodDefNil, "got set_method %#x\n", set_method);
         winetest_pop_context();
     }
+
+    henum = NULL;
+    buf_count = 0;
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, &typedef1, 1, &buf_count);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    i = 0;
+    while (hr == S_OK && i < buf_count)
+    {
+        ULONG j = 0, buf_count2 = 0;
+        mdCustomAttribute attr;
+
+        henum2 = NULL;
+        winetest_push_context("i=%lu,typedef1=%s", i, debugstr_mdToken(typedef1));
+        hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum2, typedef1, mdTokenNil, &attr, 1, &buf_count2);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        while (hr == S_OK && j < buf_count2)
+        {
+            mdToken obj = mdTokenNil, type = mdTokenNil;
+            const BYTE *blob = NULL;
+            ULONG blob_len = 0;
+
+            winetest_push_context("j=%lu,attr=%s", j, debugstr_mdToken(attr));
+            hr = IMetaDataImport_GetCustomAttributeProps(md_import, attr, &obj, &type, &blob, &blob_len);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(obj == typedef1, "got obj %s != %s\n", debugstr_mdToken(obj), debugstr_mdToken(typedef1));
+            ok(TypeFromToken(type) == mdtMemberRef || TypeFromToken(type) == mdtMethodDef, "got type %s\n", debugstr_mdToken(type));
+            ok(!!blob, "got blob %p\n", blob);
+            ok(!!blob_len, "got blob_len %lu\n", blob_len);
+            if (++j < buf_count2)
+            {
+                hr = IMetaDataImport_EnumCustomAttributes(md_import, &henum2, typedef1, mdTokenNil, &attr, 1, NULL);
+                ok(SUCCEEDED(hr), "got hr %#lx\n", hr);
+            }
+            winetest_pop_context();
+        }
+        IMetaDataImport_CloseEnum(md_import, henum2);
+        if (++i < buf_count)
+        {
+            hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, &typedef1, 1, NULL);
+            ok(SUCCEEDED(hr), "got hr %#lx\n", hr);
+        }
+        winetest_pop_context();
+    }
+    IMetaDataImport_CloseEnum(md_import, henum);
     IMetaDataImport_Release(md_import);
 }
 
