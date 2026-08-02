@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const struct {
+static const struct keyword {
     const WCHAR *word;
     int token;
     BOOL no_nl;
@@ -90,25 +90,38 @@ static BOOL is_identifier_first_char(WCHAR c)
     return iswalpha(c) || c == '$' || c == '_' || c == '\\';
 }
 
-static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
+static int compare_keyword(const WCHAR *ptr, const WCHAR *end, const WCHAR *word)
 {
-    const WCHAR *p1 = ctx->ptr;
+    const WCHAR *p1 = ptr;
     const WCHAR *p2 = word;
 
-    while(p1 < ctx->end && *p2) {
+    while(p1 < end && *p2) {
         if(*p1 != *p2)
             return *p1 - *p2;
         p1++;
         p2++;
     }
 
-    if(*p2 || (p1 < ctx->end && is_identifier_char(*p1)))
+    if(*p2)
+        return -1;
+    else if(p1 < end && is_identifier_char(*p1))
         return 1;
+    else
+        return 0;
+}
 
-    if(lval)
-        *lval = word;
-    ctx->ptr = p1;
-    return 0;
+static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
+{
+    int ret;
+
+    ret = compare_keyword(ctx->ptr, ctx->end, word);
+    if(!ret) {
+        if(lval)
+            *lval = word;
+        ctx->ptr += lstrlenW(word);
+    }
+
+    return ret;
 }
 
 /* ECMA-262 3rd Edition    7.3 */
@@ -131,23 +144,21 @@ int hex_to_int(WCHAR c)
     return -1;
 }
 
-static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
+static const struct keyword * find_keyword(parser_ctx_t *ctx, const WCHAR *ptr, const WCHAR *end)
 {
     int min = 0, max = ARRAY_SIZE(keywords)-1, r, i;
 
     while(min <= max) {
         i = (min+max)/2;
 
-        r = check_keyword(ctx, keywords[i].word, lval);
+        r = compare_keyword(ptr, end, keywords[i].word);
         if(!r) {
             if(ctx->script->version < keywords[i].min_version) {
                 TRACE("ignoring keyword %s in incompatible mode\n",
                       debugstr_w(keywords[i].word));
-                ctx->ptr -= lstrlenW(keywords[i].word);
-                return 0;
+                return NULL;
             }
-            ctx->implicit_nl_semicolon = keywords[i].no_nl;
-            return keywords[i].token;
+            return &keywords[i];
         }
 
         if(r > 0)
@@ -156,7 +167,22 @@ static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
             max = i-1;
     }
 
-    return 0;
+    return NULL;
+}
+
+static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
+{
+    const struct keyword *keyword;
+
+    keyword = find_keyword(ctx, ctx->ptr, ctx->end);
+    if(!keyword)
+        return 0;
+
+    if(lval)
+        *lval = keyword->word;
+    ctx->ptr += lstrlenW(keyword->word);
+    ctx->implicit_nl_semicolon = keyword->no_nl;
+    return keyword->token;
 }
 
 static BOOL skip_html_comment(parser_ctx_t *ctx)
