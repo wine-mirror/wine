@@ -1,0 +1,43 @@
+# Global rules for building a Winelib program     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# MODULE       : name of the main module being built
+# APPMODE      : program mode (-mwindows,-mconsole)
+# EXTRALIBS    : extra libraries to link in (optional)
+# EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DLLFLAGS    = @DLLFLAGS@
+DEFS        = -D__WINESRC__ $(EXTRADEFS)
+ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
+
+@MAKE_RULES@
+
+all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
+
+$(MODULE) $(MODULE).so $(MODULE).fake: $(OBJS) Makefile.in
+	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
+
+# Rules for installation
+
+.PHONY: install_prog install_prog.so install_prog.fake
+
+install_prog.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
+	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
+
+install_prog.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
+	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
+
+install_prog: $(MODULE) $(DESTDIR)$(bindir) dummy
+	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(bindir)/$(MODULE)
+
+install install-lib:: install_prog$(DLLEXT) install_prog$(FAKEEXT)
+
+uninstall::
+	$(RM) $(DESTDIR)$(bindir)/$(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
+
+clean::
+	$(RM) $(MODULE)

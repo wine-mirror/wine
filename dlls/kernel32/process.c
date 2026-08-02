@@ -2892,7 +2892,7 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 
     if ((nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )))
     {
-        if (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        if (IMAGE_SUBSYSTEM_IS_CONSOLE( nt->OptionalHeader.Subsystem ))
             flags |= PDB32_CONSOLE_PROC;
     }
     if (!AreFileApisANSI()) flags |= PDB32_FILE_APIS_OEM;

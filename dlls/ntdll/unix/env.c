@@ -1400,7 +1400,7 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
     wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
     wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
 
-    if (main_image_info.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    if (!IMAGE_SUBSYSTEM_IS_CONSOLE( main_image_info.SubSystemType ))
         return;
 
     /* mark tty handles for kernelbase, see init_console */
@@ -2184,16 +2184,16 @@ void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
 
     info->debug_flags   = params->DebugFlags;
     info->console_flags = params->ConsoleFlags;
-    if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    if (IMAGE_SUBSYSTEM_IS_CONSOLE( pe_info->subsystem ))
         info->console   = wine_server_obj_handle( params->ConsoleHandle );
     if ((process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES) ||
-        (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI && !(params->dwFlags & STARTF_USESTDHANDLES)))
+        (IMAGE_SUBSYSTEM_IS_CONSOLE( pe_info->subsystem ) && !(params->dwFlags & STARTF_USESTDHANDLES)))
     {
-        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdInput ))
+        if (IMAGE_SUBSYSTEM_IS_CONSOLE( pe_info->subsystem ) || !is_console_handle( params->hStdInput ))
             info->hstdin    = wine_server_obj_handle( params->hStdInput );
-        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdOutput ))
+        if (IMAGE_SUBSYSTEM_IS_CONSOLE( pe_info->subsystem ) || !is_console_handle( params->hStdOutput ))
             info->hstdout   = wine_server_obj_handle( params->hStdOutput );
-        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdError ))
+        if (IMAGE_SUBSYSTEM_IS_CONSOLE( pe_info->subsystem ) || !is_console_handle( params->hStdError ))
             info->hstderr   = wine_server_obj_handle( params->hStdError );
     }
     info->x             = params->dwX;

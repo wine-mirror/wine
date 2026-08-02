@@ -2380,7 +2380,7 @@ void init_console( void )
         BOOL no_window = params->ConsoleHandle == CONSOLE_HANDLE_ALLOC_NO_WINDOW;
         HMODULE mod = GetModuleHandleW( NULL );
         params->ConsoleHandle = NULL;
-        if (RtlImageNtHeader( mod )->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        if (IMAGE_SUBSYSTEM_IS_CONSOLE( RtlImageNtHeader( mod )->OptionalHeader.Subsystem ))
             alloc_console( no_window );
     }
     else if (params->ConsoleHandle && params->ConsoleHandle != CONSOLE_HANDLE_SHELL_NO_WINDOW)

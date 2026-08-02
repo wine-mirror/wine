@@ -1412,7 +1412,7 @@ NTSTATUS server_init_process_done(void)
         req->ldt_copy = wine_server_client_ptr( &wine_ldt_copy );
 #endif
         req->entry    = wine_server_client_ptr( (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint );
-        req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
+        req->gui      = !IMAGE_SUBSYSTEM_IS_CONSOLE( nt->OptionalHeader.Subsystem );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
