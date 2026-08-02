@@ -12055,22 +12055,22 @@ static void test_intersect(void)
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXIntersect(NULL, &ray_pos, &ray_dir, &hit, &face_index, &u, &v, &dist, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, NULL, &ray_dir, &hit, &face_index, &u, &v, &dist, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, NULL, &hit, &face_index, &u, &v, &dist, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, &face_index, NULL, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, NULL, &count);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, NULL, NULL, NULL, NULL, NULL, &all_hits, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, &hit, NULL, NULL, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         hit = FALSE;
         face_index = 0xdeadbeef;
@@ -12079,14 +12079,14 @@ static void test_intersect(void)
         all_hits = NULL;
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, &all_hits, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(hit, "Expected a hit.\n");
-        todo_wine ok(!face_index, "Got unexpected face index %lu.\n", face_index);
-        todo_wine ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
-        todo_wine ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
-        todo_wine ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
-        todo_wine ok(count == 2, "Got unexpected hit count %lu.\n", count);
-        todo_wine ok(!!all_hits, "Expected a hit buffer.\n");
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 2, "Got unexpected hit count %lu.\n", count);
+        ok(!!all_hits, "Expected a hit buffer.\n");
         if (all_hits)
         {
             ok(ID3DXBuffer_GetBufferSize(all_hits) == 2 * sizeof(*hit_info),
@@ -12109,11 +12109,11 @@ static void test_intersect(void)
         dist = -1.0f;
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos_second, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, NULL, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(hit, "Expected a hit.\n");
-        todo_wine ok(face_index == 1, "Got unexpected face index %lu.\n", face_index);
-        todo_wine ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
-        todo_wine ok(count == 2, "Got unexpected hit count %lu.\n", count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(face_index == 1, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 2, "Got unexpected hit count %lu.\n", count);
 
         hit = TRUE;
         face_index = 0xdeadbeef;
@@ -12122,9 +12122,9 @@ static void test_intersect(void)
         all_hits = NULL;
         hr = D3DXIntersect((ID3DXBaseMesh *)mesh, &ray_pos_miss, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, &all_hits, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(!hit, "Expected no hit.\n");
-        todo_wine ok(!count, "Got unexpected hit count %lu.\n", count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!hit, "Expected no hit.\n");
+        ok(!count, "Got unexpected hit count %lu.\n", count);
         ok(!all_hits, "Expected no hit buffer.\n");
         ok(face_index == 0xdeadbeef, "Got unexpected face index %lu.\n", face_index);
         ok(u == -1.0f, "Got unexpected u %.8e.\n", u);
@@ -12132,10 +12132,10 @@ static void test_intersect(void)
         ok(dist == -1.0f, "Got unexpected distance %.8e.\n", dist);
 
         hr = D3DXIntersectSubset(NULL, 0, &ray_pos, &ray_dir, &hit, NULL, NULL, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, NULL,
                 NULL, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         hr = mesh->lpVtbl->OptimizeInplace(mesh, D3DXMESHOPT_ATTRSORT, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
@@ -12151,14 +12151,14 @@ static void test_intersect(void)
         all_hits = NULL;
         hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, &all_hits, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(hit, "Expected a hit.\n");
-        todo_wine ok(!face_index, "Got unexpected face index %lu.\n", face_index);
-        todo_wine ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
-        todo_wine ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
-        todo_wine ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
-        todo_wine ok(count == 1, "Got unexpected hit count %lu.\n", count);
-        todo_wine ok(!!all_hits, "Expected a hit buffer.\n");
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
+        ok(!!all_hits, "Expected a hit buffer.\n");
         if (all_hits)
         {
             ok(ID3DXBuffer_GetBufferSize(all_hits) == sizeof(*hit_info),
@@ -12178,13 +12178,13 @@ static void test_intersect(void)
         u = v = -1.0f;
         hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 1, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, NULL, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(hit, "Expected a hit.\n");
-        todo_wine ok(face_index == 2, "Got unexpected face index %lu.\n", face_index);
-        todo_wine ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
-        todo_wine ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
-        todo_wine ok(compare(dist, 2.0f), "Got unexpected distance %.8e.\n", dist);
-        todo_wine ok(count == 1, "Got unexpected hit count %lu.\n", count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(face_index == 2, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(u, 0.25f), "Got unexpected u %.8e.\n", u);
+        ok(compare(v, 0.25f), "Got unexpected v %.8e.\n", v);
+        ok(compare(dist, 2.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
 
         hit = TRUE;
         face_index = 0xdeadbeef;
@@ -12193,8 +12193,8 @@ static void test_intersect(void)
         all_hits = NULL;
         hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 2, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, &all_hits, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(!hit, "Expected no hit.\n");
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!hit, "Expected no hit.\n");
         ok(face_index == 0xdeadbeef, "Got unexpected face index %lu.\n", face_index);
         ok(u == -1.0f, "Got unexpected u %.8e.\n", u);
         ok(v == -1.0f, "Got unexpected v %.8e.\n", v);
@@ -12226,11 +12226,11 @@ static void test_intersect(void)
         dist = -1.0f;
         hr = D3DXIntersectSubset((ID3DXBaseMesh *)mesh, 0, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, NULL, &count);
-        todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(hit, "Expected a hit.\n");
-        todo_wine ok(!face_index, "Got unexpected face index %lu.\n", face_index);
-        todo_wine ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
-        todo_wine ok(count == 1, "Got unexpected hit count %lu.\n", count);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hit, "Expected a hit.\n");
+        ok(!face_index, "Got unexpected face index %lu.\n", face_index);
+        ok(compare(dist, 1.0f), "Got unexpected distance %.8e.\n", dist);
+        ok(count == 1, "Got unexpected hit count %lu.\n", count);
 
         mesh->lpVtbl->Release(mesh);
         winetest_pop_context();
@@ -12251,7 +12251,7 @@ static void test_intersect(void)
         count = 0xdeadbeef;
         hr = D3DXIntersect((ID3DXBaseMesh *)decl_mesh, &ray_pos, &ray_dir, &hit, &face_index,
                 &u, &v, &dist, NULL, &count);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         decl_mesh->lpVtbl->Release(decl_mesh);
         winetest_pop_context();
