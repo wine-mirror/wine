@@ -7662,6 +7662,20 @@ HRESULT WINAPI D3DXIntersect(ID3DXBaseMesh *mesh, const D3DXVECTOR3 *ray_pos, co
     return E_NOTIMPL;
 }
 
+/*************************************************************************
+ * D3DXIntersectSubset    (D3DX9_36.@)
+ */
+HRESULT WINAPI D3DXIntersectSubset(ID3DXBaseMesh *mesh, DWORD attrib_id, const D3DXVECTOR3 *ray_pos,
+        const D3DXVECTOR3 *ray_dir, BOOL *hit, DWORD *face_index, float *u, float *v, float *distance,
+        ID3DXBuffer **all_hits, DWORD *count_of_hits)
+{
+    FIXME("mesh %p, attrib_id %lu, ray_pos %p, ray_dir %p, hit %p, face_index %p, u %p, v %p, distance %p, "
+            "all_hits %p, count_of_hits %p stub!\n", mesh, attrib_id, ray_pos, ray_dir, hit, face_index, u, v,
+            distance, all_hits, count_of_hits);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXTessellateNPatches(ID3DXMesh *mesh, const DWORD *adjacency_in, float num_segs,
         BOOL quadratic_normals, ID3DXMesh **mesh_out, ID3DXBuffer **adjacency_out)
 {
