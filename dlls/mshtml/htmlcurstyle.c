@@ -1201,7 +1201,6 @@ dispex_static_data_t MSCurrentStyleCSSProperties_dispex = {
     .disp_tid     = DispHTMLCurrentStyle_tid,
     .iface_tids   = MSCurrentStyleCSSProperties_iface_tids,
     .init_info    = MSCurrentStyleCSSProperties_init_dispex_info,
-    .js_flags     = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)

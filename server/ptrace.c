@@ -43,12 +43,10 @@
 #ifdef HAVE_SYS_THR_H
 # include <sys/thr.h>
 #endif
-#ifdef HAVE_SYS_UIO_H
-# include <sys/uio.h>
-#endif
 #include <unistd.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 
 #include "file.h"
@@ -181,8 +179,15 @@ void sigchld_callback(void)
 static int get_ptrace_pid( struct thread *thread )
 {
 #ifdef linux  /* linux always uses thread id */
-    return thread->unix_tid;
+    if (thread->unix_tid != -1) return thread->unix_tid;
 #endif
+    return thread->unix_pid;
+}
+
+/* return the Unix tid to use in ptrace calls for a given thread */
+static int get_ptrace_tid( struct thread *thread )
+{
+    if (thread->unix_tid != -1) return thread->unix_tid;
     return thread->unix_pid;
 }
 
@@ -254,17 +259,21 @@ int send_thread_signal( struct thread *thread, int sig )
 {
     int ret = -1;
 
-    if (thread->unix_tid != -1)
+    if (thread->unix_pid != -1)
     {
-        ret = tkill( thread->unix_pid, thread->unix_tid, sig );
-        if (ret == -1 && errno == ENOSYS) ret = kill( thread->unix_pid, sig );
-    }
-    if (ret == -1 && errno == ESRCH) /* thread got killed */
-    {
-        thread->unix_pid = -1;
-        thread->unix_tid = -1;
-    }
+        if (thread->unix_tid != -1)
+        {
+            ret = tkill( thread->unix_pid, thread->unix_tid, sig );
+            if (ret == -1 && errno == ENOSYS) ret = kill( thread->unix_pid, sig );
+        }
+        else ret = kill( thread->unix_pid, sig );
 
+        if (ret == -1 && errno == ESRCH) /* thread got killed */
+        {
+            thread->unix_pid = -1;
+            thread->unix_tid = -1;
+        }
+    }
     if (debug_level && ret != -1)
         fprintf( stderr, "%04x: *sent signal* %s\n", thread->id, get_signal_name( sig ));
     return (ret != -1);
@@ -313,6 +322,16 @@ static int read_thread_long( struct thread *thread, void *addr, unsigned long *d
     return 0;
 }
 
+static int read_thread_int( struct thread *thread, void *addr, unsigned int *data )
+{
+    unsigned long long_data;
+    int ret;
+
+    ret = read_thread_long( thread, addr, &long_data );
+    *data = long_data;
+    return ret;
+}
+
 /* write a long to a thread address space */
 static long write_thread_long( struct thread *thread, void *addr, unsigned long data, unsigned long mask )
 {
@@ -342,81 +361,20 @@ static struct thread *get_ptrace_thread( struct process *process )
     return NULL;
 }
 
-#ifdef HAVE_PROCESS_VM_READV
-static int read_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
+/* read data from a process memory space */
+int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
 {
-    static int not_supported;
-    struct iovec local, remote;
-    ssize_t len;
-
-    if (not_supported) return -1;
-    if (thread->unix_pid == -1 || !is_process_init_done( thread->process ))
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-
-    local.iov_len = remote.iov_len = size;
-    local.iov_base = dest;
-    remote.iov_base = (void *)(unsigned long)ptr;
-    len = process_vm_readv( thread->unix_pid, &local, 1, &remote, 1, 0 );
-    if (len < 0 && (errno == ENOSYS || errno == EPERM))
-    {
-        not_supported = 1;
-        return -1;
-    }
-    if (len == size) return 1;
-    set_error( STATUS_PARTIAL_COPY );
-    return 0;
-}
-#else
-static int read_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
-{
-    return -1;
-}
-#endif
-
-#ifdef HAVE_PROCESS_VM_WRITEV
-static int write_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, const char *src,
-                                    data_size_t *written )
-{
-    static int not_supported;
-    struct iovec local, remote;
-    ssize_t len;
-
-    if (not_supported) return -1;
-    if (thread->unix_pid == -1 || !is_process_init_done( thread->process ))
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-
-    local.iov_len = remote.iov_len = size;
-    local.iov_base = (void *)src;
-    remote.iov_base = (void *)(unsigned long)ptr;
-    len = process_vm_writev( thread->unix_pid, &local, 1, &remote, 1, 0 );
-    if (len < 0 && (errno == ENOSYS || errno == EPERM))
-    {
-        not_supported = 1;
-        return -1;
-    }
-
-    if (written) *written = max( len, 0 );
-    if (len != size) set_error( STATUS_PARTIAL_COPY );
-    return len == size;
-}
-#else
-static int write_process_memory_vm( struct thread *thread, client_ptr_t ptr, data_size_t size, const char *src,
-                                    data_size_t *written )
-{
-    return -1;
-}
-#endif
-
-static int read_process_memory_ptrace( struct thread *thread, client_ptr_t ptr, data_size_t size, char *dest )
-{
+    struct thread *thread = get_ptrace_thread( process );
     unsigned int first_offset, last_offset, len;
     unsigned long data, *addr;
+
+    if (!thread) return 0;
+
+    if ((unsigned long)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
 
     first_offset = ptr % sizeof(long);
     last_offset = (size + first_offset) % sizeof(long);
@@ -432,7 +390,7 @@ static int read_process_memory_ptrace( struct thread *thread, client_ptr_t ptr, 
             char procmem[24];
             int fd;
 
-            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", thread->process->unix_pid );
+            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", process->unix_pid );
             if ((fd = open( procmem, O_RDONLY )) != -1)
             {
                 ssize_t ret = pread( fd, dest, size, ptr );
@@ -470,29 +428,11 @@ static int read_process_memory_ptrace( struct thread *thread, client_ptr_t ptr, 
     return !len;
 }
 
-/* read data from a process memory space */
-int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
-{
-    struct thread *thread = get_ptrace_thread( process );
-    int ret;
-
-    if (!thread) return 0;
-
-    if ((unsigned long)ptr != ptr)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-
-    if ((ret = read_process_memory_vm( thread, ptr, size, dest )) != -1) return ret;
-    return read_process_memory_ptrace( thread, ptr, size, dest );
-}
-
 /* make sure we can write to the whole address range */
 /* len is the total size (in longs) */
 static int check_process_write_access( struct thread *thread, long *addr, data_size_t len )
 {
-    size_t page = thread->process->page_size / sizeof(long);
+    size_t page = get_page_size() / sizeof(long);
 
     for (;;)
     {
@@ -504,14 +444,23 @@ static int check_process_write_access( struct thread *thread, long *addr, data_s
     return (write_thread_long( thread, addr + len - 1, 0, 0 ) != -1);
 }
 
-static int write_process_memory_ptrace( struct thread *thread, client_ptr_t ptr, data_size_t size, const char *src,
-                                        data_size_t *written )
+/* write data to a process memory space */
+int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
+    struct thread *thread = get_ptrace_thread( process );
     int ret = 0;
     long data = 0;
     data_size_t len;
     long *addr;
     unsigned long first_mask, first_offset, last_mask, last_offset;
+
+    if (!thread) return 0;
+
+    if ((unsigned long)ptr != ptr)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
 
     /* compute the mask for the first long */
     first_mask = ~0;
@@ -540,7 +489,7 @@ static int write_process_memory_ptrace( struct thread *thread, client_ptr_t ptr,
             char procmem[24];
             int fd;
 
-            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", thread->process->unix_pid );
+            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", process->unix_pid );
             if ((fd = open( procmem, O_WRONLY )) != -1)
             {
                 ssize_t r = pwrite( fd, src, size, ptr );
@@ -580,27 +529,36 @@ static int write_process_memory_ptrace( struct thread *thread, client_ptr_t ptr,
     done:
         resume_after_ptrace( thread );
     }
-    if (ret && written) *written = size;
     return ret;
 }
 
-/* write data to a process memory space */
-int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src,
-                          data_size_t *written )
+/* retrieve an LDT selector entry */
+void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
+                         unsigned int *limit, unsigned char *flags )
 {
-    struct thread *thread = get_ptrace_thread( process );
-    int ret;
-
-    if (!thread) return 0;
-
-    if ((unsigned long)ptr != ptr)
+    if (!thread->process->ldt_copy)
     {
         set_error( STATUS_ACCESS_DENIED );
-        return 0;
+        return;
     }
+    if (entry >= 8192)
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return;
+    }
+    if (suspend_for_ptrace( thread ))
+    {
+        unsigned int flags_buf;
+        unsigned long addr = (unsigned long)thread->process->ldt_copy + (entry * 4);
 
-    if ((ret = write_process_memory_vm( thread, ptr, size, src, written )) != -1) return ret;
-    return write_process_memory_ptrace( thread, ptr, size, src, written );
+        if (read_thread_int( thread, (void *)addr, base ) == -1) goto done;
+        if (read_thread_int( thread, (void *)(addr + (8192 * 4)), limit ) == -1) goto done;
+        addr = (unsigned long)thread->process->ldt_copy + (2 * 8192 * 4) + (entry & ~3);
+        if (read_thread_int( thread, (void *)addr, &flags_buf ) == -1) goto done;
+        *flags = flags_buf >> (entry & 3) * 8;
+    done:
+        resume_after_ptrace( thread );
+    }
 }
 
 
@@ -626,7 +584,7 @@ void init_thread_context( struct thread *thread )
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
-    int i;
+    int i, pid = get_ptrace_tid(thread);
     long data[8];
 
     /* all other regs are handled on the client side */
@@ -645,7 +603,7 @@ void get_thread_context( struct thread *thread, struct context_data *context, un
     {
         if (i == 4 || i == 5) continue;
         errno = 0;
-        data[i] = ptrace( PTRACE_PEEKUSER, thread->unix_tid, DR_OFFSET(i), 0 );
+        data[i] = ptrace( PTRACE_PEEKUSER, pid, DR_OFFSET(i), 0 );
         if ((data[i] == -1) && errno)
         {
             file_set_error();
@@ -682,7 +640,7 @@ done:
 /* set the thread x86 registers */
 void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
-    int pid = thread->unix_tid;
+    int pid = get_ptrace_tid( thread );
 
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
@@ -740,7 +698,7 @@ void init_thread_context( struct thread *thread )
         struct dbreg dbregs;
 
         memset( &dbregs, 0, sizeof(dbregs) );
-        ptrace( PTRACE_SETDBREGS, thread->unix_tid, (caddr_t)&dbregs, 0 );
+        ptrace( PTRACE_SETDBREGS, get_ptrace_tid( thread ), (caddr_t)&dbregs, 0 );
         resume_after_ptrace( thread );
     }
     thread->system_regs = 0;
@@ -749,6 +707,7 @@ void init_thread_context( struct thread *thread )
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
+    int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
 
     /* all other regs are handled on the client side */
@@ -756,7 +715,7 @@ void get_thread_context( struct thread *thread, struct context_data *context, un
 
     if (!suspend_for_ptrace( thread )) return;
 
-    if (ptrace( PTRACE_GETDBREGS, thread->unix_tid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
+    if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
     else
     {
 #ifdef DBREG_DRX
@@ -790,6 +749,7 @@ void get_thread_context( struct thread *thread, struct context_data *context, un
 /* set the thread x86 registers */
 void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
+    int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
 
     /* all other regs are handled on the client side */
@@ -826,7 +786,7 @@ void set_thread_context( struct thread *thread, const struct context_data *conte
     dbregs.dr6 = context->debug.i386_regs.dr6;
     dbregs.dr7 = context->debug.i386_regs.dr7;
 #endif
-    if (ptrace( PTRACE_SETDBREGS, thread->unix_tid, (caddr_t)&dbregs, 0 ) != -1)
+    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t)&dbregs, 0 ) != -1)
     {
         thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
     }

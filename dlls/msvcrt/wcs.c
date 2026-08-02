@@ -28,7 +28,6 @@
 #include <wctype.h>
 #include "msvcrt.h"
 #include "winnls.h"
-#include "winternl.h"
 #include "wtypes.h"
 #include "wine/debug.h"
 

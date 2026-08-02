@@ -826,6 +826,9 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
                     memcpy(dbuf, sbuf, row_byte_count);
                     dbuf += dst_map.row_pitch;
                 }
+
+                if (same_sub_resource)
+                    free(tmp_buffer);
             }
         }
         else
@@ -901,6 +904,9 @@ do { \
                 dbuf += dst_map.row_pitch;
                 last_sy = sy;
             }
+
+            if (same_sub_resource)
+                free(tmp_buffer);
         }
     }
     else
@@ -957,19 +963,6 @@ do { \
             dTopRight    = dbuf + ((dst_width - 1) * bpp);
             dBottomLeft  = dTopLeft + ((dst_height - 1) * dst_map.row_pitch);
             dBottomRight = dBottomLeft + ((dst_width - 1) * bpp);
-
-            if (same_sub_resource &&
-                    !(dst_box->bottom <= src_box->top || src_box->bottom <= dst_box->top
-                    || dst_box->right <= src_box->left || src_box->right <= dst_box->left)
-                    && fx->fx & (WINEDDBLTFX_MIRRORLEFTRIGHT | WINEDDBLTFX_MIRRORUPDOWN | WINEDDBLTFX_ROTATE180
-                    | WINEDDBLTFX_ROTATE270 | WINEDDBLTFX_ROTATE90))
-            {
-                if ((tmp_buffer = malloc(src_height * src_map.row_pitch)))
-                {
-                    memcpy(tmp_buffer, sbase, src_height * src_map.row_pitch);
-                    sbase = tmp_buffer;
-                }
-            }
 
             if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
             {
@@ -1119,8 +1112,6 @@ error:
         FIXME("    Unsupported flags %#x.\n", flags);
 
 release:
-    free(tmp_buffer);
-
     if (upload && hr == WINED3D_OK)
     {
         struct wined3d_bo_address data;
@@ -1388,7 +1379,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     BOOL scale, convert, resolve, resolve_typeless = FALSE;
     const struct wined3d_format *resolve_format = NULL;
     const struct wined3d_color_key *colour_key = NULL;
-    DWORD dst_location, valid_locations;
+    DWORD src_location, dst_location, valid_locations;
     struct wined3d_context *context;
     enum wined3d_blit_op blit_op;
     RECT src_rect, dst_rect;
@@ -1622,6 +1613,13 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
 
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
 
+    if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE && !resolve_typeless
+            && ((scale && !context->d3d_info->scaled_resolve)
+            || convert || !wined3d_is_colour_blit(blit_op)))
+        src_location = WINED3D_LOCATION_RB_RESOLVED;
+    else
+        src_location = src_texture->resource.draw_binding;
+
     if (!(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
         dst_location = dst_texture->resource.map_binding;
     else if (dst_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
@@ -1631,7 +1629,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
         dst_location = dst_texture->resource.draw_binding;
 
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
-            src_texture, src_sub_resource_idx, src_texture->resource.draw_binding, &src_rect,
+            src_texture, src_sub_resource_idx, src_location, &src_rect,
             dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, colour_key, filter, resolve_format);
 
     context_release(context);

@@ -2,10 +2,6 @@ MODULE    = ddraw.dll
 IMPORTLIB = ddraw
 IMPORTS   = dxguid uuid wined3d user32 gdi32 advapi32
 
-VER_FILEDESCRIPTION_STR = "Wine DirectDraw"
-VER_PRODUCTVERSION      = 5,3,1,904
-VER_OLESELFREGISTER     = 1
-
 SOURCES = \
 	clipper.c \
 	ddraw.c \
@@ -18,5 +14,6 @@ SOURCES = \
 	palette.c \
 	surface.c \
 	utils.c \
+	version.rc \
 	vertexbuffer.c \
 	viewport.c

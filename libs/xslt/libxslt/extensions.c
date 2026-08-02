@@ -16,21 +16,15 @@
 #include <string.h>
 #include <limits.h>
 
-#ifdef WITH_MODULES
-  #ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-  #else
-    #include <dlfcn.h>
-  #endif
-#endif
-
 #include <libxml/xmlmemory.h>
 #include <libxml/tree.h>
 #include <libxml/hash.h>
 #include <libxml/xmlerror.h>
 #include <libxml/parserInternals.h>
 #include <libxml/xpathInternals.h>
+#ifdef WITH_MODULES
+#include <libxml/xmlmodule.h>
+#endif
 #include <libxml/list.h>
 #include <libxml/xmlIO.h>
 #include <libxml/threads.h>
@@ -41,8 +35,8 @@
 #include "imports.h"
 #include "extensions.h"
 
-#include <stdlib.h>             /* for _MAX_PATH & getenv */
 #ifdef _WIN32
+#include <stdlib.h>             /* for _MAX_PATH */
 #ifndef PATH_MAX
 #define PATH_MAX _MAX_PATH
 #endif
@@ -343,13 +337,16 @@ typedef void (*exsltRegisterFunction) (void);
 static int
 xsltExtModuleRegisterDynamic(const xmlChar * URI)
 {
-    void *m;
+
+    xmlModulePtr m;
     exsltRegisterFunction regfunc;
     xmlChar *ext_name;
     char module_filename[PATH_MAX];
     const xmlChar *ext_directory = NULL;
     const xmlChar *protocol = NULL;
     xmlChar *i, *regfunc_name;
+    void *vregfunc;
+    int rc;
 
     /* check for bad inputs */
     if (URI == NULL)
@@ -410,7 +407,7 @@ xsltExtModuleRegisterDynamic(const xmlChar * URI)
 
     /* build the module filename, and confirm the module exists */
     xmlStrPrintf((xmlChar *) module_filename, sizeof(module_filename),
-                 "%s/%s%s", ext_directory, ext_name, MODULE_EXTENSION);
+                 "%s/%s%s", ext_directory, ext_name, LIBXML_MODULE_EXTENSION);
 
 #ifdef WITH_XSLT_DEBUG_EXTENSIONS
     xsltGenericDebug(xsltGenericDebugContext,
@@ -432,16 +429,12 @@ xsltExtModuleRegisterDynamic(const xmlChar * URI)
 #endif
 
     /* attempt to open the module */
-#ifdef _WIN32
-    m = LoadLibraryA(module_filename);
-#else
-    m = dlopen(module_filename, RTLD_LOCAL | RTLD_NOW);
-#endif
+    m = xmlModuleOpen(module_filename, 0);
     if (NULL == m) {
 
 #ifdef WITH_XSLT_DEBUG_EXTENSIONS
 	xsltGenericDebug(xsltGenericDebugContext,
-                     "dlopen failed for plugin: %s\n", module_filename);
+                     "xmlModuleOpen failed for plugin: %s\n", module_filename);
 #endif
 
         xmlFree(ext_name);
@@ -452,12 +445,10 @@ xsltExtModuleRegisterDynamic(const xmlChar * URI)
     regfunc_name = xmlStrdup(ext_name);
     regfunc_name = xmlStrcat(regfunc_name, BAD_CAST "_init");
 
-#ifdef _WIN32
-    regfunc = (void *) GetProcAddress(m, (const char *) regfunc_name);
-#else
-    regfunc = dlsym(m, (const char *) regfunc_name);
-#endif
-    if (regfunc != NULL) {
+    vregfunc = NULL;
+    rc = xmlModuleSymbol(m, (const char *) regfunc_name, &vregfunc);
+    regfunc = vregfunc;
+    if (0 == rc) {
         /*
 	 * Call the module's init function.  Note that this function
 	 * calls xsltRegisterExtModuleFull which will add the module
@@ -473,16 +464,12 @@ xsltExtModuleRegisterDynamic(const xmlChar * URI)
 
 #ifdef WITH_XSLT_DEBUG_EXTENSIONS
 	xsltGenericDebug(xsltGenericDebugContext,
-                     "dlsym failed for plugin: %s, regfunc: %s\n",
+                     "xmlModuleSymbol failed for plugin: %s, regfunc: %s\n",
                      module_filename, regfunc_name);
 #endif
 
         /* if regfunc not found unload the module immediately */
-#ifdef _WIN32
-        FreeLibrary(m);
-#else
-        dlclose(m);
-#endif
+        xmlModuleClose(m);
     }
 
     xmlFree(ext_name);
@@ -2277,18 +2264,12 @@ xsltRegisterTestModule(void)
 }
 
 static void
-xsltHashScannerModuleFree(void *payload,
+xsltHashScannerModuleFree(void *payload ATTRIBUTE_UNUSED,
                           void *data ATTRIBUTE_UNUSED,
                           const xmlChar *name ATTRIBUTE_UNUSED)
 {
 #ifdef WITH_MODULES
-#ifdef _WIN32
-    FreeLibrary(payload);
-#else
-    dlclose(payload);
-#endif
-#else
-    (void) payload;
+    xmlModuleClose(payload);
 #endif
 }
 

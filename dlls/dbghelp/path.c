@@ -27,6 +27,7 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -505,18 +506,18 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
     return mf->matched == 4;
 }
 
-BOOL path_find_symbol_file(const struct module* module,
-                           const WCHAR *full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
+BOOL path_find_symbol_file(const struct process* pcs, const struct module* module,
+                           PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                            SYMSRV_INDEX_INFOW *info, BOOL* is_unmatched)
 {
     struct module_find  mf;
     WCHAR              *ptr, *ext;
     const WCHAR*        filename;
-    WCHAR              *searchPath = module->process->search_path;
+    WCHAR              *searchPath = pcs->search_path;
     WCHAR               buffer[MAX_PATH];
 
-    TRACE("(module = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx)\n",
-          module, debugstr_w(full_path), debugstr_guid(guid), dw1, dw2);
+    TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx)\n",
+          pcs, debugstr_a(full_path), debugstr_guid(guid), dw1, dw2);
 
     mf.info = info;
     mf.guid = guid;
@@ -525,8 +526,7 @@ BOOL path_find_symbol_file(const struct module* module,
     mf.matched = 0;
     mf.buffer = is_pdb ? info->pdbfile : info->dbgfile;
 
-    if (wcslen(full_path) + 1 >= ARRAY_SIZE(info->file)) return FALSE;
-    wcscpy(info->file, full_path);
+    MultiByteToWideChar(CP_ACP, 0, full_path, -1, info->file, MAX_PATH);
     filename = file_name(info->file);
     mf.is_pdb = is_pdb;
     *is_unmatched = FALSE;
@@ -603,15 +603,15 @@ WCHAR *get_dos_file_name(const WCHAR *filename)
     {
         char *unix_path;
         len = WideCharToMultiByte(CP_UNIXCP, 0, filename, -1, NULL, 0, NULL, NULL);
-        unix_path = malloc(len * sizeof(WCHAR));
+        unix_path = heap_alloc(len * sizeof(WCHAR));
         WideCharToMultiByte(CP_UNIXCP, 0, filename, -1, unix_path, len, NULL, NULL);
         dos_path = wine_get_dos_file_name(unix_path);
-        free(unix_path);
+        heap_free(unix_path);
     }
     else
     {
         len = lstrlenW(filename);
-        dos_path = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+        dos_path = heap_alloc((len + 1) * sizeof(WCHAR));
         memcpy(dos_path, filename, (len + 1) * sizeof(WCHAR));
     }
     return dos_path;
@@ -658,7 +658,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
     if ((env = process_getenv(process, L"WINEBUILDDIR")))
     {
         len = lstrlenW(env);
-        if (!(buf = malloc((len + wcslen(L"\\programs\\") + machine_dir_len +
+        if (!(buf = heap_alloc((len + wcslen(L"\\programs\\") + machine_dir_len +
                                 2 * lstrlenW(name) + 1) * sizeof(WCHAR)))) return FALSE;
         wcscpy(buf, env);
         end = buf + len;
@@ -692,7 +692,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
         lstrcpyW(p, name);
         if (try_match_file(buf, match, param)) goto found;
 
-        free(buf);
+        heap_free(buf);
     }
 
     for (i = 0;; i++)
@@ -701,19 +701,19 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
         swprintf(env_name, ARRAY_SIZE(env_name), L"WINEDLLDIR%u", i);
         if (!(env = process_getenv(process, env_name))) return FALSE;
         len = wcslen(env) + machine_dir_len + wcslen(name) + 1;
-        if (!(buf = malloc(len * sizeof(WCHAR)))) return FALSE;
+        if (!(buf = heap_alloc(len * sizeof(WCHAR)))) return FALSE;
         swprintf(buf, len, L"%s%s%s", env, get_machine_dir(machine_dir, name), name);
         if (try_match_file(buf, match, param)) goto found;
         swprintf(buf, len, L"%s\\%s", env, name);
         if (try_match_file(buf, match, param)) goto found;
-        free(buf);
+        heap_free(buf);
     }
 
     return FALSE;
 
 found:
     TRACE("found %s\n", debugstr_w(buf));
-    free(buf);
+    heap_free(buf);
     return TRUE;
 }
 
@@ -730,7 +730,7 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
 
     size = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL)
         + WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
-    if (!(buf = malloc(size))) return FALSE;
+    if (!(buf = heap_alloc(size))) return FALSE;
 
     for (iter = path;; iter = next + 1)
     {
@@ -744,14 +744,14 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
             {
                 ret = try_match_file(dos_path, match, param);
                 if (ret) TRACE("found %s\n", debugstr_w(dos_path));
-                HeapFree(GetProcessHeap(), 0, dos_path);
+                heap_free(dos_path);
                 if (ret) break;
             }
         }
         if (*next != ':') break;
     }
 
-    free(buf);
+    heap_free(buf);
     return ret;
 }
 

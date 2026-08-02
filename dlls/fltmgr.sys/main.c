@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/fltkernel.h"
@@ -148,90 +149,4 @@ done:
 void WINAPI FltFreeSecurityDescriptor(PSECURITY_DESCRIPTOR descriptor)
 {
     ExFreePool(descriptor);
-}
-
-NTSTATUS WINAPI FltAllocateContext(PFLT_FILTER filter, FLT_CONTEXT_TYPE context, SIZE_T size, POOL_TYPE type, PFLT_CONTEXT *out)
-{
-    FIXME("%p, %d, %Iu, %u, %p\n", filter, context, size, type, *out);
-    return STATUS_NOT_SUPPORTED;
-}
-
-void WINAPI FltReleaseContext(PFLT_CONTEXT context)
-{
-    FIXME("%p\n", context);
-}
-
-NTSTATUS WINAPI FltGetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT  fileobject, PFLT_CONTEXT  *context)
-{
-    FIXME("%p, %p, %p\n", instance, fileobject, context);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltSetStreamContext(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, FLT_SET_CONTEXT_OPERATION operation,
-        PFLT_CONTEXT new_context, PFLT_CONTEXT *old_context)
-{
-    FIXME("%p, %p, %d, %p, %p\n", instance, fileobject, operation, new_context, old_context);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltQueryInformationFile(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, PVOID information,
-        ULONG length, FILE_INFORMATION_CLASS file_information_class, PULONG ret_len)
-{
-    FIXME("%p, %p, %p, %lu, %d, %p\n", instance, fileobject, information, length, file_information_class, ret_len);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltGetFileNameInformationUnsafe(PFILE_OBJECT fileobject, PFLT_INSTANCE instance,
-        FLT_FILE_NAME_OPTIONS options, PFLT_FILE_NAME_INFORMATION *FileNameInformation)
-{
-    FIXME("%p, %p, %lu, %p\n", fileobject, instance, options, FileNameInformation);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltReadFile(PFLT_INSTANCE instance, PFILE_OBJECT fileobject, PLARGE_INTEGER offset,
-        ULONG length, PVOID buffer, FLT_IO_OPERATION_FLAGS flags, PULONG read,
-        PFLT_COMPLETED_ASYNC_IO_CALLBACK callback, PVOID context)
-{
-    FIXME("%p, %p, %p, %lu, %p, 0x%lx, %p, %p, %p\n", instance, fileobject, offset, length, buffer, flags, read, callback, context);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltParseFileNameInformation(PFLT_FILE_NAME_INFORMATION information)
-{
-    FIXME("%p\n", information);
-    return STATUS_NOT_SUPPORTED;
-}
-
-void WINAPI FltReleaseFileNameInformation(PFLT_FILE_NAME_INFORMATION information)
-{
-    FIXME("%p\n", information);
-}
-
-NTSTATUS WINAPI FltGetFileNameInformation(PFLT_CALLBACK_DATA callback, FLT_FILE_NAME_OPTIONS options, PFLT_FILE_NAME_INFORMATION *information)
-{
-    FIXME("%p, %lu, %p\n", callback, options, information);
-    return STATUS_NOT_SUPPORTED;
-}
-
-NTSTATUS WINAPI FltCreateCommunicationPort(PFLT_FILTER filter, PFLT_PORT *port, POBJECT_ATTRIBUTES attributes,
-        PVOID cookie, PFLT_CONNECT_NOTIFY  connect_callback, PFLT_DISCONNECT_NOTIFY disconnect_callback,
-        PFLT_MESSAGE_NOTIFY message_callback, LONG max_connections)
-{
-    FIXME("%p, %p, %p, %p, %p, %p, %p, %ld\n", filter, port, attributes, cookie, connect_callback, disconnect_callback,
-                        message_callback, max_connections);
-    return STATUS_NOT_SUPPORTED;
-}
-
-void WINAPI FltCloseCommunicationPort (PFLT_PORT ServerPort)
-{
-    FIXME("%p\n", ServerPort);
-}
-
-NTSTATUS WINAPI FltEnumerateVolumes (PFLT_FILTER filter, PFLT_VOLUME *volumes, ULONG size, PULONG returned)
-{
-    FIXME("%p, %p, %lu, %p\n", filter, volumes, size, returned);
-
-    if (returned)
-        *returned = 0;
-    return STATUS_NOT_SUPPORTED;
 }

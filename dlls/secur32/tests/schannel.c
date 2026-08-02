@@ -27,7 +27,6 @@
 #include <security.h>
 #define SCHANNEL_USE_BLACKLISTS
 #include <schannel.h>
-#include <ncrypt.h>
 
 #include "wine/test.h"
 
@@ -536,7 +535,7 @@ static void test_remote_cert(PCCERT_CONTEXT remote_cert)
         cert_cnt++;
     }
 
-    ok(cert_cnt == 4, "cert_cnt = %u\n", cert_cnt);
+    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
     ok(incl_remote, "context does not contain cert itself\n");
 }
 
@@ -1040,7 +1039,9 @@ static void test_communication(void)
     status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    todo_wine
     ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08lx\n", status);
+    todo_wine
     ok(buffers[0].pBuffers[0].cbBuffer == 0, "Output buffer size was not set to 0.\n");
 
     buffers[1].cBuffers = 1;
@@ -1370,14 +1371,11 @@ static void test_communication(void)
 
     /* Incomplete data */
     buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
-    buffers[0].pBuffers[1].cbBuffer = 1;
     buffers[0].pBuffers[0].cbBuffer = (data[3]<<8) | data[4];
     status = DecryptMessage(&context, &buffers[0], 0, NULL);
     ok(status == SEC_E_INCOMPLETE_MESSAGE, "Expected SEC_E_INCOMPLETE_MESSAGE, got %08lx\n", status);
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_MISSING, "Expected first buffer to be SECBUFFER_MISSING\n");
     ok(buffers[0].pBuffers[0].cbBuffer == 5, "Expected first buffer to be a five bytes\n");
-    ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_MISSING, "Unexpected buffer type\n");
-    ok(buffers[0].pBuffers[1].cbBuffer == 5, "Unexpected buffer size\n");
 
     /* Renegotiate */
     buffers[0].pBuffers[0].BufferType = SECBUFFER_DATA;
@@ -2050,65 +2048,6 @@ static void test_connection_shutdown(void)
     FreeCredentialsHandle( &cred_handle );
 }
 
-static void test_ncrypt_key_credentials(void)
-{
-    SCHANNEL_CRED schanCred;
-    CredHandle cred;
-    SECURITY_STATUS st;
-    CRYPT_DATA_BLOB pfx;
-    HCERTSTORE store;
-    const CERT_CONTEXT *cert;
-    NCRYPT_KEY_HANDLE ncrypt_key = 0;
-    DWORD key_spec = 0;
-    BOOL free_key = FALSE;
-    BOOL ret;
-
-    pfx.pbData = (BYTE *)pfxdata;
-    pfx.cbData = sizeof(pfxdata);
-    store = PFXImportCertStore(&pfx, NULL, CRYPT_EXPORTABLE | PKCS12_ALWAYS_CNG_KSP);
-    ok(store != NULL, "PFXImportCertStore failed: %lu\n", GetLastError());
-    if (!store) return;
-
-    cert = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL);
-    ok(cert != NULL, "CertFindCertificateInStore failed: %lu\n", GetLastError());
-    if (!cert)
-    {
-        CertCloseStore(store, 0);
-        return;
-    }
-
-    /* Verify the key is NCrypt. */
-    ret = CryptAcquireCertificatePrivateKey(cert, CRYPT_ACQUIRE_ALLOW_NCRYPT_KEY_FLAG, NULL,
-        &ncrypt_key, &key_spec, &free_key);
-    ok(ret, "CryptAcquireCertificatePrivateKey failed: %lu\n", GetLastError());
-    todo_wine
-    ok(key_spec == CERT_NCRYPT_KEY_SPEC,
-       "expected CERT_NCRYPT_KEY_SPEC, got %lu\n", key_spec);
-
-    /* AcquireCredentialsHandle should succeed with an NCrypt key. */
-    init_cred(&schanCred);
-    schanCred.cCreds = 1;
-    schanCred.paCred = &cert;
-    st = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND,
-        NULL, &schanCred, NULL, NULL, &cred, NULL);
-    ok(st == SEC_E_OK, "AcquireCredentialsHandleA outbound with NCrypt key failed: %08lx\n", st);
-    if (st == SEC_E_OK) FreeCredentialsHandle(&cred);
-
-    st = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_INBOUND,
-        NULL, &schanCred, NULL, NULL, &cred, NULL);
-    ok(st == SEC_E_OK, "AcquireCredentialsHandleA inbound with NCrypt key failed: %08lx\n", st);
-    if (st == SEC_E_OK) FreeCredentialsHandle(&cred);
-
-    /* Clean up the key handle. */
-    if (ret && key_spec == CERT_NCRYPT_KEY_SPEC)
-        NCryptFreeObject(ncrypt_key);
-    else if (ret && free_key)
-        CryptReleaseContext(ncrypt_key, 0);
-
-    CertFreeCertificateContext(cert);
-    CertCloseStore(store, 0);
-}
-
 START_TEST(schannel)
 {
     WSADATA wsa_data;
@@ -2117,7 +2056,6 @@ START_TEST(schannel)
 
     test_cread_attrs();
     testAcquireSecurityContext();
-    test_ncrypt_key_credentials();
     test_InitializeSecurityContext();
     test_communication();
     test_application_protocol_negotiation();

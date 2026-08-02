@@ -174,7 +174,7 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(ptr long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ cdecl __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
@@ -1089,7 +1089,7 @@
 @ cdecl _vswprintf_l(ptr wstr ptr ptr)
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr)
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr)
-@ cdecl _vwprintf_l(wstr ptr ptr)
+# stub _vwprintf_l(wstr ptr ptr)
 # stub _vwprintf_p(wstr ptr)
 # stub _vwprintf_p_l(wstr ptr ptr)
 # stub _vwprintf_s_l(wstr ptr ptr)
@@ -1194,7 +1194,7 @@
 @ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen (wstr wstr) _wpopen
-@ varargs _wprintf_l(wstr ptr)
+# stub _wprintf_l(wstr ptr)
 # stub _wprintf_p(wstr)
 # stub _wprintf_p_l(wstr ptr)
 # stub _wprintf_s_l(wstr ptr)

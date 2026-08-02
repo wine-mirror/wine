@@ -135,7 +135,6 @@ static inline const char * __wine_dbg_cdecl wine_dbg_vsprintf( const char *forma
     char buffer[200];
 
     vsnprintf( buffer, sizeof(buffer), format, args );
-    buffer[sizeof(buffer) - 1] = 0;
     return __wine_dbg_strdup( buffer );
 }
 
@@ -157,7 +156,6 @@ static inline int __wine_dbg_cdecl wine_dbg_vprintf( const char *format, va_list
     char buffer[1024];
 
     vsnprintf( buffer, sizeof(buffer), format, args );
-    buffer[sizeof(buffer) - 1] = 0;
     return __wine_dbg_output( buffer );
 }
 

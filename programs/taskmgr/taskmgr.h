@@ -51,6 +51,7 @@ typedef struct _IO_COUNTERS {
 typedef struct
 {
 	/* Window size & position settings */
+	BOOL	Maximized;
 	int	Left;
 	int	Top;
 	int	Right;

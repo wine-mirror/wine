@@ -135,7 +135,7 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
     IEnumUnknown *enumdecoders = NULL;
     IUnknown *unkdecoderinfo = NULL;
     GUID vendor;
-    HRESULT res;
+    HRESULT res, res_wine;
     ULONG num_fetched;
     BOOL matches, found;
 
@@ -148,6 +148,7 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
     while (IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched) == S_OK)
     {
         IWICBitmapDecoderInfo *decoderinfo = NULL;
+        IWICWineDecoder *wine_decoder = NULL;
 
         res = IUnknown_QueryInterface(unkdecoderinfo, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
         if (FAILED(res)) goto next;
@@ -170,12 +171,27 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
         res = IWICBitmapDecoder_Initialize(*decoder, pIStream, metadataOptions);
         if (FAILED(res))
         {
-            IWICBitmapDecoder_Release(*decoder);
-            *decoder = NULL;
-            goto next;
+            res_wine = IWICBitmapDecoder_QueryInterface(*decoder, &IID_IWICWineDecoder, (void **)&wine_decoder);
+            if (FAILED(res_wine))
+            {
+                IWICBitmapDecoder_Release(*decoder);
+                *decoder = NULL;
+                goto next;
+            }
+
+            res_wine = IWICWineDecoder_Initialize(wine_decoder, pIStream, metadataOptions);
+            if (FAILED(res_wine))
+            {
+                IWICBitmapDecoder_Release(*decoder);
+                *decoder = NULL;
+                goto next;
+            }
+
+            res = res_wine;
         }
 
     next:
+        if (wine_decoder) IWICWineDecoder_Release(wine_decoder);
         if (decoderinfo) IWICBitmapDecoderInfo_Release(decoderinfo);
         IUnknown_Release(unkdecoderinfo);
         if (found) break;
@@ -790,21 +806,6 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapFromHBITMAP(IWICImagingFactory2
         GetDIBits(hdc, hbm, 0, 0, NULL, bmi, DIB_RGB_COLORS);
         bmi->bmiHeader.biHeight = -bm.bmHeight;
         GetDIBits(hdc, hbm, 0, bm.bmHeight, buffer, bmi, DIB_RGB_COLORS);
-
-        if (!hpal &&
-            (IsEqualGUID(&format, &GUID_WICPixelFormat1bppIndexed) ||
-            IsEqualGUID(&format, &GUID_WICPixelFormat4bppIndexed) ||
-            IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed)))
-        {
-            num_palette_entries = bmi->bmiHeader.biClrUsed ? bmi->bmiHeader.biClrUsed : (UINT)(1 << bmi->bmiHeader.biBitCount);
-            for (UINT i = 0; i < num_palette_entries; i++)
-            {
-                entry[i].peRed = bmi->bmiColors[i].rgbRed;
-                entry[i].peGreen = bmi->bmiColors[i].rgbGreen;
-                entry[i].peBlue = bmi->bmiColors[i].rgbBlue;
-                entry[i].peFlags = 0;
-            }
-        }
 
         DeleteDC(hdc);
         IWICBitmapLock_Release(lock);

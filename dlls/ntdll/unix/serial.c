@@ -53,6 +53,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -375,15 +376,14 @@ static NTSTATUS get_properties(int fd, SERIAL_COMMPROP *prop)
     prop->ServiceMask       = SP_SERIALCOMM;
     prop->MaxTxQueue        = 4096;
     prop->MaxRxQueue        = 4096;
-    prop->MaxBaud           = BAUD_USER;
+    prop->MaxBaud           = BAUD_115200;
     prop->ProvSubType       = PST_RS232;
     prop->ProvCapabilities  = PCF_DTRDSR | PCF_PARITY_CHECK | PCF_RTSCTS | PCF_TOTALTIMEOUTS | PCF_INTTIMEOUTS;
     prop->SettableParams    = SP_BAUD | SP_DATABITS | SP_HANDSHAKING |
                               SP_PARITY | SP_PARITY_CHECK | SP_STOPBITS ;
     prop->SettableBaud      = BAUD_075 | BAUD_110 | BAUD_134_5 | BAUD_150 |
                               BAUD_300 | BAUD_600 | BAUD_1200 | BAUD_1800 | BAUD_2400 | BAUD_4800 |
-                              BAUD_7200 | BAUD_9600 | BAUD_14400 | BAUD_19200 | BAUD_38400 |
-                              BAUD_56K | BAUD_57600 | BAUD_115200 | BAUD_128K | BAUD_USER ;
+                              BAUD_9600 | BAUD_19200 | BAUD_38400 | BAUD_57600 | BAUD_115200 ;
     prop->SettableData       = DATABITS_5 | DATABITS_6 | DATABITS_7 | DATABITS_8 ;
     prop->SettableStopParity = STOPBITS_10 | STOPBITS_15 | STOPBITS_20 |
                 PARITY_NONE | PARITY_ODD |PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
@@ -611,13 +611,13 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
                  "hardware. I hope you know what you are doing.  Any disruption Wine\n"
                  "has caused to your linux system can be undone with setserial\n"
                  "(see man setserial). If you have incapacitated a Hayes type modem,\n"
-                 "reset it and it will probably recover.\n", sbr->BaudRate, arby);
+                 "reset it and it will probably recover.\n", (int)sbr->BaudRate, arby);
             ioctl(fd, TIOCSSERIAL, &nuts);
             cfsetospeed( &port, B38400 );
         }
         break;
 #else     /* Don't have linux/serial.h or lack TIOCSSERIAL */
-        ERR("baudrate %d\n", sbr->BaudRate);
+        ERR("baudrate %d\n", (int)sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
     }
@@ -858,7 +858,7 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
 
 static NTSTATUS set_queue_size(int fd, const SERIAL_QUEUE_SIZE* sqs)
 {
-    FIXME("insize %d outsize %d unimplemented stub\n", sqs->InSize, sqs->OutSize);
+    FIXME("insize %d outsize %d unimplemented stub\n", (int)sqs->InSize, (int)sqs->OutSize);
     return STATUS_SUCCESS;
 }
 
@@ -1100,7 +1100,7 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
             DWORD events = check_events( fd, commio->evtmask,
                                          &new_irq_info, &commio->irq_info,
                                          new_mstat, commio->mstat, commio->pending_write );
-            TRACE("events %#x\n", events);
+            TRACE("events %#x\n", (int)events);
             if (events)
             {
                 *commio->events = events;

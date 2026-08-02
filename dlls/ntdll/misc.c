@@ -22,6 +22,7 @@
 #include <time.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 #include "wmistr.h"
@@ -438,18 +439,6 @@ ULONG WINAPI EtwEventWrite( REGHANDLE handle, const EVENT_DESCRIPTOR *descriptor
     EVENT_DATA_DESCRIPTOR *data )
 {
     FIXME("(%s, %p, %lu, %p): stub\n", wine_dbgstr_longlong(handle), descriptor, count, data);
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
- *                  EtwEventWriteEx (NTDLL.@)
- */
-ULONG WINAPI EtwEventWriteEx( REGHANDLE handle, const EVENT_DESCRIPTOR *descriptor, ULONG64 filter,
-                            ULONG flags, const GUID *activity_id, const GUID *related_activity_id,
-                            ULONG data_count, EVENT_DATA_DESCRIPTOR *data )
-{
-    FIXME( "(%s, %p, %#I64x, %lu, %p, %p, %lu, %p): stub\n", wine_dbgstr_longlong(handle), descriptor, filter,
-           flags, activity_id, related_activity_id, data_count, data );
     return ERROR_SUCCESS;
 }
 

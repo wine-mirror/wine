@@ -138,7 +138,6 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE       },
     {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3          },
     {"GL_ARB_texture_filter_anisotropic",   ARB_TEXTURE_FILTER_ANISOTROPIC},
-    {"GL_ARB_texture_filter_minmax",        ARB_TEXTURE_FILTER_MINMAX     },
     {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT             },
     {"GL_ARB_texture_gather",               ARB_TEXTURE_GATHER            },
     {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT   },
@@ -1307,11 +1306,9 @@ cards_nvidia_binary[] =
     {"RTX 4070",                    CARD_NVIDIA_GEFORCE_RTX4070},
     {"RTX 4060 Ti 16GB",            CARD_NVIDIA_GEFORCE_RTX4060TI16G},
     {"RTX 4060 Ti 8GB",             CARD_NVIDIA_GEFORCE_RTX4060TI8G},
-    {"RTX 4060M",                   CARD_NVIDIA_GEFORCE_RTX4060M},
     {"RTX 4060",                    CARD_NVIDIA_GEFORCE_RTX4060},
     {"Tesla T4",                    CARD_NVIDIA_TESLA_T4},
     {"Ampere A10",                  CARD_NVIDIA_AMPERE_A10},
-    {"NVIDIA A10G",                 CARD_NVIDIA_AMPERE_A10G},
     {"RTX 3090 Ti",                 CARD_NVIDIA_GEFORCE_RTX3090TI},
     {"RTX 3090",                    CARD_NVIDIA_GEFORCE_RTX3090},
     {"RTX 3080 Ti",                 CARD_NVIDIA_GEFORCE_RTX3080TI},
@@ -1666,8 +1663,6 @@ cards_intel[] =
  * drivers: R700, RV790, R680, RV535, RV516, R410, RS485, RV360, RV351. */
 cards_amd_mesa[] =
 {
-    /* Navi 4x */
-    {"gfx1200",                     CARD_AMD_RADEON_RX_NAVI_44},
     /* Navi 10/14 */
     {"NAVI10",                      CARD_AMD_RADEON_RX_NAVI_10},
     {"NAVI14",                      CARD_AMD_RADEON_RX_NAVI_14},
@@ -3979,6 +3974,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter_gl *adapter_gl, 
             if (!GL_EXTCALL(wglGetPixelFormatAttribivARB(dc, format_id, 0, attrib_count, attribs, values)))
                 continue;
 
+            cfg->iPixelFormat = format_id;
             cfg->redSize = values[0];
             cfg->greenSize = values[1];
             cfg->blueSize = values[2];
@@ -4011,7 +4007,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter_gl *adapter_gl, 
 
             TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
                     "depth=%d, stencil=%d, samples=%d, windowDrawable=%d\n",
-                    format_id, cfg->iPixelType, cfg->doubleBuffer,
+                    cfg->iPixelFormat, cfg->iPixelType, cfg->doubleBuffer,
                     cfg->redSize, cfg->greenSize, cfg->blueSize, cfg->alphaSize,
                     cfg->depthSize, cfg->stencilSize, cfg->numSamples, cfg->windowDrawable);
 
@@ -4044,6 +4040,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter_gl *adapter_gl, 
                 continue;
             }
 
+            cfg->iPixelFormat = format_id;
             cfg->redSize = pfd.cRedBits;
             cfg->greenSize = pfd.cGreenBits;
             cfg->blueSize = pfd.cBlueBits;
@@ -4060,7 +4057,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter_gl *adapter_gl, 
 
             TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, "
                     "depth=%d, stencil=%d, windowDrawable=%d\n",
-                    format_id, cfg->iPixelType, cfg->doubleBuffer,
+                    cfg->iPixelFormat, cfg->iPixelType, cfg->doubleBuffer,
                     cfg->redSize, cfg->greenSize, cfg->blueSize, cfg->alphaSize,
                     cfg->depthSize, cfg->stencilSize, cfg->windowDrawable);
 
@@ -4944,7 +4941,6 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->viewport_array_index_any_shader = !!gl_info->supported[ARB_SHADER_VIEWPORT_LAYER_ARRAY];
     d3d_info->stencil_export = !!gl_info->supported[ARB_SHADER_STENCIL_EXPORT];
     d3d_info->simple_instancing = !!gl_info->supported[ARB_INSTANCED_ARRAYS];
-    d3d_info->min_max_filtering = !!gl_info->supported[ARB_TEXTURE_FILTER_MINMAX];
     d3d_info->unconditional_npot = !!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO];
     d3d_info->draw_base_vertex_offset = !!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX];
     d3d_info->vertex_bgra = !!gl_info->supported[ARB_VERTEX_ARRAY_BGRA];

@@ -43,15 +43,6 @@ struct share_del_params
     DWORD reserved;
 };
 
-struct share_getinfo_params
-{
-    const WCHAR *server;
-    const WCHAR *share;
-    DWORD level;
-    void *buffer;
-    ULONG *size;
-};
-
 struct wksta_getinfo_params
 {
     const WCHAR *server;
@@ -74,7 +65,6 @@ enum samba_funcs
     unix_server_getinfo,
     unix_share_add,
     unix_share_del,
-    unix_share_getinfo,
     unix_wksta_getinfo,
     unix_change_password,
     unix_funcs_count

@@ -45,7 +45,7 @@ extern HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version);
 extern HRESULT assembly_get_vtable_fixups(ASSEMBLY *assembly, VTableFixup **fixups, DWORD *count);
 extern HRESULT assembly_get_native_entrypoint(ASSEMBLY *assembly, NativeEntryPointFunc *func);
 
-#define WINE_MONO_VERSION "11.2.0"
+#define WINE_MONO_VERSION "10.0.0"
 
 /* Mono embedding */
 typedef struct _MonoDomain MonoDomain;
@@ -124,7 +124,6 @@ typedef struct supported_runtime
 {
     struct list entry;
     LPWSTR version;
-    LPWSTR sku;
 } supported_runtime;
 
 extern WCHAR **private_path;
@@ -180,6 +179,7 @@ extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* na
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
 extern MonoDomain* (CDECL *mono_domain_get)(void);
 extern MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
+extern BOOL (CDECL *mono_domain_set)(MonoDomain *domain, BOOL force);
 extern void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name);
 extern MonoImage* (CDECL *mono_get_corlib)(void);
 extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
@@ -195,9 +195,8 @@ extern MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, v
 extern void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
 extern void (CDECL *mono_runtime_quit)(void);
 extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
+extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 extern void (CDECL *mono_thread_manage)(void);
-extern MonoDomain* (CDECL *mono_threads_attach_coop)(MonoDomain *domain, void *attach_cookie);
-extern void (CDECL *mono_threads_detach_coop)(MonoDomain *orig_domain, void *attach_cookie);
 extern void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 extern void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 
@@ -210,8 +209,10 @@ extern void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode);
 
 extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv);
 
+extern HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj, IUnknown **ppUnk);
+
 extern HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
-    IUnknown **result);
+    MonoDomain *domain, MonoObject **result);
 
 HRESULT WINAPI CLRMetaHost_ExitProcess(ICLRMetaHost* iface, INT32 iExitCode);
 

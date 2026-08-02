@@ -768,9 +768,6 @@ typedef enum _D3DKMT_ESCAPETYPE
     D3DKMT_ESCAPE_SETDRIVERUPDATESTATUS,
     D3DKMT_ESCAPE_DRT_TEST,
     D3DKMT_ESCAPE_DIAGNOSTICS,
-    /* Wine-specific escape codes */
-    D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE = 0x80000000,
-    D3DKMT_ESCAPE_SET_PRESENT_RECT_WINE = 0x80000001,
 } D3DKMT_ESCAPETYPE;
 
 typedef struct _D3DKMT_ESCAPE
@@ -812,6 +809,22 @@ typedef struct _D3DKMT_CREATEKEYEDMUTEX
     D3DKMT_HANDLE hSharedHandle;
     D3DKMT_HANDLE hKeyedMutex;
 } D3DKMT_CREATEKEYEDMUTEX;
+
+typedef struct _D3DDDICB_SIGNALFLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT SignalAtSubmission : 1;
+            UINT EnqueueCpuEvent : 1;
+            UINT AllowFenceRewind : 1;
+            UINT Reserved : 28;
+            UINT DXGK_SIGNAL_FLAG_INTERNAL0 : 1;
+        };
+        UINT Value;
+    };
+} D3DDDICB_SIGNALFLAGS;
 
 typedef struct _D3DKMT_CREATEKEYEDMUTEX2_FLAGS
 {
@@ -863,46 +876,67 @@ typedef struct _D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE
     UINT PrivateRuntimeDataSize;
 } D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE;
 
-typedef struct _D3DKMT_ACQUIREKEYEDMUTEX
-{
-    D3DKMT_HANDLE hKeyedMutex;
-    UINT64 Key;
-    LARGE_INTEGER *pTimeout;
-    UINT64 FenceValue;
-} D3DKMT_ACQUIREKEYEDMUTEX;
+typedef ULONGLONG D3DGPU_VIRTUAL_ADDRESS;
 
-typedef struct _D3DKMT_RELEASEKEYEDMUTEX
-{
-    D3DKMT_HANDLE hKeyedMutex;
-    UINT64 Key;
-    UINT64 FenceValue;
-} D3DKMT_RELEASEKEYEDMUTEX;
+#ifndef D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 Reserved0
+#endif
 
-typedef struct _D3DKMT_ACQUIREKEYEDMUTEX2
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS
 {
-    D3DKMT_HANDLE hKeyedMutex;
-    UINT64 Key;
-    LARGE_INTEGER *pTimeout;
-    UINT64 FenceValue;
-    VOID *pPrivateRuntimeData;
-    UINT PrivateRuntimeDataSize;
-} D3DKMT_ACQUIREKEYEDMUTEX2;
+    union
+    {
+        struct
+        {
+            UINT Shared : 1;
+            UINT NtSecuritySharing : 1;
+            UINT CrossAdapter : 1;
+            UINT TopOfPipeline : 1;
+            UINT NoSignal : 1;
+            UINT NoWait : 1;
+            UINT NoSignalMaxValueOnTdr : 1;
+            UINT NoGPUAccess : 1;
+            UINT Reserved : 23;
+            UINT D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 : 1;
+        };
+        UINT Value;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS;
 
-typedef struct _D3DKMT_RELEASEKEYEDMUTEX2
-{
-    D3DKMT_HANDLE hKeyedMutex;
-    UINT64 Key;
-    UINT64 FenceValue;
-    VOID *pPrivateRuntimeData;
-    UINT PrivateRuntimeDataSize;
-} D3DKMT_RELEASEKEYEDMUTEX2;
+typedef UINT D3DDDI_VIDEO_PRESENT_TARGET_ID;
 
-typedef struct _D3DKMT_OPENNTHANDLEFROMNAME
+typedef enum _D3DDDI_SYNCHRONIZATIONOBJECT_TYPE
 {
-    DWORD dwDesiredAccess;
-    OBJECT_ATTRIBUTES *pObjAttrib;
-    HANDLE hNtHandle;
-} D3DKMT_OPENNTHANDLEFROMNAME;
+    D3DDDI_SYNCHRONIZATION_MUTEX = 1,
+    D3DDDI_SEMAPHORE = 2,
+    D3DDDI_FENCE = 3,
+    D3DDDI_CPU_NOTIFICATION = 4,
+    D3DDDI_MONITORED_FENCE = 5,
+    D3DDDI_PERIODIC_MONITORED_FENCE = 6,
+    D3DDDI_SYNCHRONIZATION_TYPE_LIMIT
+} D3DDDI_SYNCHRONIZATIONOBJECT_TYPE;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT Reserved[16];
+        } Reserved;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO;
 
 typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT
 {
@@ -910,6 +944,53 @@ typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT
     D3DDDI_SYNCHRONIZATIONOBJECTINFO Info;
     D3DKMT_HANDLE hSyncObject;
 } D3DKMT_CREATESYNCHRONIZATIONOBJECT;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO2
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT64 FenceValue;
+        } Fence;
+        struct
+        {
+            HANDLE Event;
+        } CPUNotification;
+        struct
+        {
+            UINT64 InitialFenceValue;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } MonitoredFence;
+        struct
+        {
+            D3DKMT_HANDLE hAdapter;
+            D3DDDI_VIDEO_PRESENT_TARGET_ID VidPnTargetId;
+            UINT64 Time;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } PeriodicMonitoredFence;
+        struct
+        {
+            UINT64 Reserved[8];
+        } Reserved;
+    };
+    D3DKMT_HANDLE SharedHandle;
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO2;
 
 typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT2
 {
@@ -961,25 +1042,6 @@ typedef struct _D3DKMT_DESTROYSYNCHRONIZATIONOBJECT
 {
     D3DKMT_HANDLE hSyncObject;
 } D3DKMT_DESTROYSYNCHRONIZATIONOBJECT;
-
-typedef struct _D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU
-{
-    D3DKMT_HANDLE hDevice;
-    UINT ObjectCount;
-    const D3DKMT_HANDLE *ObjectHandleArray;
-    const UINT64 *FenceValueArray;
-    D3DDDICB_SIGNALFLAGS Flags;
-} D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU;
-
-typedef struct _D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU
-{
-    D3DKMT_HANDLE hDevice;
-    UINT ObjectCount;
-    const D3DKMT_HANDLE *ObjectHandleArray;
-    const UINT64 *FenceValueArray;
-    HANDLE hAsyncEvent;
-    D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS Flags;
-} D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU;
 
 typedef struct _D3DKMT_CREATESTANDARDALLOCATIONFLAGS
 {
@@ -1224,9 +1286,6 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-NTSTATUS WINAPI D3DKMTAcquireKeyedMutex( D3DKMT_ACQUIREKEYEDMUTEX *params );
-NTSTATUS WINAPI D3DKMTAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params );
-NTSTATUS WINAPI D3DKMTCheckOcclusion( const D3DKMT_CHECKOCCLUSION *desc );
 NTSTATUS WINAPI D3DKMTCheckVidPnExclusiveOwnership(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc);
 NTSTATUS WINAPI D3DKMTCloseAdapter(const D3DKMT_CLOSEADAPTER *desc);
 NTSTATUS WINAPI D3DKMTCreateAllocation( D3DKMT_CREATEALLOCATION *params );
@@ -1245,14 +1304,12 @@ NTSTATUS WINAPI D3DKMTDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params 
 NTSTATUS WINAPI D3DKMTDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params );
 NTSTATUS WINAPI D3DKMTEnumAdapters2(D3DKMT_ENUMADAPTERS2 *desc);
 NTSTATUS WINAPI D3DKMTEscape( const D3DKMT_ESCAPE *desc );
-NTSTATUS WINAPI D3DKMTOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc );
 NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc);
 NTSTATUS WINAPI D3DKMTOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc );
 NTSTATUS WINAPI D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID * desc );
 NTSTATUS WINAPI D3DKMTOpenKeyedMutex( D3DKMT_OPENKEYEDMUTEX *params );
 NTSTATUS WINAPI D3DKMTOpenKeyedMutex2( D3DKMT_OPENKEYEDMUTEX2 *params );
 NTSTATUS WINAPI D3DKMTOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE *params );
-NTSTATUS WINAPI D3DKMTOpenNtHandleFromName( D3DKMT_OPENNTHANDLEFROMNAME *params );
 NTSTATUS WINAPI D3DKMTOpenResource( D3DKMT_OPENRESOURCE *params );
 NTSTATUS WINAPI D3DKMTOpenResource2( D3DKMT_OPENRESOURCE *params );
 NTSTATUS WINAPI D3DKMTOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *params );
@@ -1265,14 +1322,9 @@ NTSTATUS WINAPI D3DKMTQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params );
 NTSTATUS WINAPI D3DKMTQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params );
 NTSTATUS WINAPI D3DKMTQueryStatistics(D3DKMT_QUERYSTATISTICS *stats);
 NTSTATUS WINAPI D3DKMTQueryVideoMemoryInfo(D3DKMT_QUERYVIDEOMEMORYINFO *desc);
-NTSTATUS WINAPI D3DKMTReleaseKeyedMutex( D3DKMT_RELEASEKEYEDMUTEX *params );
-NTSTATUS WINAPI D3DKMTReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params );
 NTSTATUS WINAPI D3DKMTSetQueuedLimit(D3DKMT_SETQUEUEDLIMIT *desc);
 NTSTATUS WINAPI D3DKMTSetVidPnSourceOwner(const D3DKMT_SETVIDPNSOURCEOWNER *desc);
 NTSTATUS WINAPI D3DKMTShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr, UINT access, HANDLE *handle );
-NTSTATUS WINAPI D3DKMTSignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params );
-NTSTATUS WINAPI D3DKMTWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params );
-
 
 #ifdef __cplusplus
 }

@@ -1680,10 +1680,7 @@ static void shader_sm4_read_instruction_modifier(uint32_t modifier, struct wined
 
             if ((components & 0xfff0) != (components & 0xf) * 0x1110)
                 FIXME("Components (%#x) have different data types.\n", components);
-            if (data_type >= ARRAY_SIZE(data_type_table))
-                FIXME("Unhandled data type %u\n", data_type);
-            else
-                ins->resource_data_type = data_type_table[data_type];
+            ins->resource_data_type = data_type_table[data_type];
             break;
         }
 
@@ -1692,10 +1689,7 @@ static void shader_sm4_read_instruction_modifier(uint32_t modifier, struct wined
             enum wined3d_sm4_resource_type resource_type
                     = (modifier & WINED3D_SM5_MODIFIER_RESOURCE_TYPE_MASK) >> WINED3D_SM5_MODIFIER_RESOURCE_TYPE_SHIFT;
 
-            if (resource_type >= ARRAY_SIZE(resource_type_table))
-                FIXME("Unhandled resource type %u\n", resource_type);
-            else
-                ins->resource_type = resource_type_table[resource_type];
+            ins->resource_type = resource_type_table[resource_type];
             break;
         }
 

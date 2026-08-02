@@ -1,42 +1,21 @@
 # CI script for creating the docker image used for Wine builds
 
-.build-image:
+build-image:
   stage: image
   rules:
     - if: $CI_PIPELINE_SOURCE == 'push' && $CI_PROJECT_PATH == "wine/wine" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - tools/gitlab/image.yml
         - tools/gitlab/image.docker
-  image: quay.io/buildah/stable
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   variables:
-    STORAGE_DRIVER: vfs
-    IMAGE_SOURCE: $CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:trixie
-    IMAGE_DEST: $CI_REGISTRY_IMAGE:debian-trixie
-    DOCKER_FILE: $CI_PROJECT_DIR/tools/gitlab/image.docker
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | buildah login --username="$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bookworm"
+    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-bookworm"
+    DOCKER_FILE: "$CI_PROJECT_DIR/tools/gitlab/image.docker"
   script:
-    - echo "$CI_DEPENDENCY_PROXY_PASSWORD" | buildah login --username="$CI_DEPENDENCY_PROXY_USER" --password-stdin $CI_DEPENDENCY_PROXY_SERVER
-    - buildah build --from $IMAGE_SOURCE --platform=linux/$ARCH --tag $IMAGE_DEST-$ARCH --file $DOCKER_FILE --env "ARCH=$ARCH"
-    - buildah push $IMAGE_DEST-$ARCH
-
-build-image-amd64:
-  extends: .build-image
-  variables:
-    ARCH: "amd64"
-
-build-image-arm64:
-  extends: .build-image
-  tags:
-    - arm64
-  variables:
-    ARCH: "arm64"
-
-build-image:
-  extends: .build-image
-  needs: ["build-image-amd64", "build-image-arm64"]
-  script:
-    - buildah manifest create $IMAGE_DEST
-    - buildah manifest add $IMAGE_DEST docker://$IMAGE_DEST-amd64
-    - buildah manifest add $IMAGE_DEST docker://$IMAGE_DEST-arm64
-    - buildah manifest push --all $IMAGE_DEST
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"},\"$CI_DEPENDENCY_PROXY_SERVER\":{\"auth\":\"$(printf "%s:%s" "$CI_DEPENDENCY_PROXY_USER" "$CI_DEPENDENCY_PROXY_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - sed -i "1iFROM $IMAGE_SOURCE" "$DOCKER_FILE"
+    - /kaniko/executor --context "$CI_PROJECT_DIR" --dockerfile "$DOCKER_FILE" --destination "$IMAGE_LOCAL"

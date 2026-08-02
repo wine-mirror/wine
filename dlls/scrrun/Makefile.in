@@ -1,10 +1,8 @@
 MODULE    = scrrun.dll
 IMPORTLIB = scrrun
-IMPORTS   = uuid oleaut32 version advapi32 kernelbase
+IMPORTS   = uuid oleaut32 version advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
-
-VER_PRODUCTVERSION = 5,8,7600,16385
 
 SOURCES = \
 	dictionary.c \

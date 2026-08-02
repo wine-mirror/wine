@@ -8409,36 +8409,6 @@ interface IHTMLDOMAttribute2 : IDispatch
 }
 
 /*****************************************************************************
- *    IHTMLDOMAttribute3 interface
- */
-[
-    odl,
-    oleautomation,
-    dual,
-    uuid(30510468-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IHTMLDOMAttribute3 : IDispatch
-{
-    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
-    HRESULT nodeValue([in] VARIANT v);
-
-    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
-    HRESULT nodeValue([retval, out] VARIANT *p);
-
-    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
-    HRESULT value([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
-    HRESULT value([retval, out] BSTR *p);
-
-    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_SPECIFIED)]
-    HRESULT specified([retval, out] VARIANT_BOOL *p);
-
-    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_OWNERELEMENT)]
-    HRESULT ownerElement([retval, out] IHTMLElement2 **p);
-}
-
-/*****************************************************************************
  *    IHTMLDOMTextNode interface
  */
 [
@@ -8959,58 +8929,6 @@ interface IHTMLAttributeCollection3 : IDispatch
 }
 
 /*****************************************************************************
- *    IHTMLAttributeCollection4 interface
- */
-[
-    odl,
-    oleautomation,
-    dual,
-    uuid(305106fa-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IHTMLAttributeCollection4 : IDispatch
-{
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_GETNAMEDITEMNS)]
-    HRESULT getNamedItemNS(
-            [in] VARIANT *pvarNS,
-            [in] BSTR bstrName,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_SETNAMEDITEMNS)]
-    HRESULT setNamedItemNS(
-            [in] IHTMLDOMAttribute2 *pNodeIn,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_REMOVENAMEDITEMNS)]
-    HRESULT removeNamedItemNS(
-            [in] VARIANT *pvarNS,
-            [in] BSTR bstrName,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_GETNAMEDITEM)]
-    HRESULT getNamedItem(
-            [in] BSTR bstrName,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_SETNAMEDITEM)]
-    HRESULT setNamedItem(
-            [in] IHTMLDOMAttribute2 *pNodeIn,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_REMOVENAMEDITEM)]
-    HRESULT removeNamedItem(
-            [in] BSTR bstrName,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_ITEM)]
-    HRESULT item(
-            [in] long index,
-            [out, retval] IHTMLDOMAttribute2 **ppNodeOut);
-
-    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_LENGTH)]
-    HRESULT length([out, retval] long *p);
-}
-
-/*****************************************************************************
  *    DispHTMLAttributeCollection dispinterface
  */
 [
@@ -9053,30 +8971,6 @@ methods:
 
     [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION3_IE8_LENGTH)]
     long ie8_length();
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_GETNAMEDITEMNS)]
-    IHTMLDOMAttribute2 *getNamedItemNS([in] VARIANT *pvarNS, [in] BSTR bstrName);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_SETNAMEDITEMNS)]
-    IHTMLDOMAttribute2 *setNamedItemNS([in] IHTMLDOMAttribute2 *pNodeIn);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_REMOVENAMEDITEMNS)]
-    IHTMLDOMAttribute2 *removeNamedItemNS([in] VARIANT *pvarNS, [in] BSTR bstrName);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_GETNAMEDITEM)]
-    IHTMLDOMAttribute2 *ie9_getNamedItem([in] BSTR bstrName);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_SETNAMEDITEM)]
-    IHTMLDOMAttribute2 *ie9_setNamedItem([in] IHTMLDOMAttribute2 *pNodeIn);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_REMOVENAMEDITEM)]
-    IHTMLDOMAttribute2 *ie9_removeNamedItem([in] BSTR bstrName);
-
-    [id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_ITEM)]
-    IHTMLDOMAttribute2 *ie9_item([in] long index);
-
-    [propget, id(DISPID_IHTMLATTRIBUTECOLLECTION4_IE9_LENGTH)]
-    long ie9_length();
 
     [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
     IDispatch *constructor();
@@ -16332,70 +16226,6 @@ methods:
     void setSelectionRange([in] long start, [in] long end);
 }
 
-[
-    odl,
-    oleautomation,
-    dual,
-    uuid(3050f2bc-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IHTMLOptionButtonElement : IDispatch
-{
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_VALUE), displaybind, bindable]
-    HRESULT value([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_VALUE), displaybind, bindable]
-    HRESULT value([retval, out] BSTR *p);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_TYPE)]
-    HRESULT type([retval, out] BSTR *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_NAME), displaybind, bindable]
-    HRESULT name([in] BSTR v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_NAME), displaybind, bindable]
-    HRESULT name([retval, out] BSTR *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_CHECKED), bindable]
-    HRESULT checked([in] VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_CHECKED), bindable]
-    HRESULT checked([retval, out] VARIANT_BOOL *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DEFAULTCHECKED), bindable]
-    HRESULT defaultChecked([in] VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DEFAULTCHECKED), bindable]
-    HRESULT defaultChecked([retval, out] VARIANT_BOOL *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_ONCHANGE), displaybind, bindable]
-    HRESULT onchange([in] VARIANT v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_ONCHANGE), displaybind, bindable]
-    HRESULT onchange([retval, out] VARIANT *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DISABLED), displaybind, bindable]
-    HRESULT disabled([in] VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DISABLED), displaybind, bindable]
-    HRESULT disabled([retval, out] VARIANT_BOOL *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_STATUS)]
-    HRESULT status([in] VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_STATUS)]
-    HRESULT status([retval, out] VARIANT_BOOL *p);
-
-    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_INDETERMINATE), bindable]
-    HRESULT indeterminate([in] VARIANT_BOOL v);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_INDETERMINATE), bindable]
-    HRESULT indeterminate([retval, out] VARIANT_BOOL *p);
-
-    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_FORM)]
-    HRESULT form([retval, out] IHTMLFormElement* *p);
-};
-
-
 /*****************************************************************************
  *    HTMLInputElement coclass
  */
@@ -16419,7 +16249,7 @@ coclass HTMLInputElement
  /* interface IHTMLInputHiddenElement; */
  /* interface IHTMLInputButtonElement; */
  /* interface IHTMLInputFileElement; */
-    interface IHTMLOptionButtonElement;
+ /* interface IHTMLOptionButtonElement; */
  /* interface IHTMLInputImage; */
  /* interface IHTMLInputElement3; */
  /* interface IHTMLInputRangeElement; */
@@ -30284,46 +30114,6 @@ coclass DOMParser
 {
     [default] dispinterface DispDOMParser;
     interface IDOMParser;
-}
-
-/*****************************************************************************
- *    IDOMXmlSerializer interface
- */
-[
-    object,
-    oleautomation,
-    dual,
-    uuid(3051077d-98b5-11cf-bb82-00aa00bdce0b)
-]
-interface IDOMXmlSerializer : IDispatch
-{
-    [id(DISPID_IDOMXMLSERIALIZER_SERIALIZETOSTRING)]
-    HRESULT serializeToString([in] IHTMLDOMNode *node, [retval, out] BSTR *pString);
-}
-
-/*****************************************************************************
- *    DispXMLSerializer dispinterface
- */
-[
-    hidden,
-    uuid(305900ad-98b5-11cf-bb82-00aa00bdce0b)
-]
-dispinterface DispXMLSerializer
-{
-properties:
-methods:
-    [id(DISPID_IDOMXMLSERIALIZER_SERIALIZETOSTRING)]
-    BSTR serializeToString([in] IHTMLDOMNode *node);
-}
-
-[
-    noncreatable,
-    uuid(3051077e-98b5-11cf-bb82-00aa00bdce0b)
-]
-coclass XMLSerializer
-{
-    [default] dispinterface DispXMLSerializer;
-    interface IDOMXmlSerializer;
 }
 
 /*****************************************************************************

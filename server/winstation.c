@@ -25,6 +25,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -69,12 +70,26 @@ struct type_descr winstation_type =
 
 static const struct object_ops winstation_ops =
 {
-    .size         = sizeof(struct winstation),
-    .type         = &winstation_type,
-    .dump         = winstation_dump,
-    .lookup_name  = winstation_lookup_name,
-    .close_handle = winstation_close_handle,
-    .destroy      = winstation_destroy,
+    sizeof(struct winstation),    /* size */
+    &winstation_type,             /* type */
+    winstation_dump,              /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    default_map_access,           /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    default_get_full_name,        /* get_full_name */
+    winstation_lookup_name,       /* lookup_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
+    no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
+    winstation_close_handle,      /* close_handle */
+    winstation_destroy            /* destroy */
 };
 
 
@@ -95,12 +110,26 @@ struct type_descr desktop_type =
 
 static const struct object_ops desktop_ops =
 {
-    .size         = sizeof(struct desktop),
-    .type         = &desktop_type,
-    .dump         = desktop_dump,
-    .link_name    = desktop_link_name,
-    .close_handle = desktop_close_handle,
-    .destroy      = desktop_destroy,
+    sizeof(struct desktop),       /* size */
+    &desktop_type,                /* type */
+    desktop_dump,                 /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    default_map_access,           /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    default_get_full_name,        /* get_full_name */
+    no_lookup_name,               /* lookup_name */
+    desktop_link_name,            /* link_name */
+    default_unlink_name,          /* unlink_name */
+    no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
+    desktop_close_handle,         /* close_handle */
+    desktop_destroy               /* destroy */
 };
 
 /* create a winstation object */
@@ -267,7 +296,6 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             desktop->global_hooks = NULL;
             desktop->close_timeout = NULL;
             desktop->foreground_input = NULL;
-            desktop->foreground_pid = 0;
             desktop->users = 0;
             list_init( &desktop->threads );
             desktop->clip_flags = 0;
@@ -278,7 +306,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_init( &desktop->hotkeys );
             list_init( &desktop->pointers );
 
-            if (!(desktop->shared = alloc_shared_object( sizeof(*desktop->shared) )))
+            if (!(desktop->shared = alloc_shared_object()))
             {
                 release_object( desktop );
                 return NULL;
@@ -295,7 +323,6 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                 shared->cursor.clip.right = 0;
                 shared->cursor.clip.bottom = 0;
                 memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
-                shared->keystate_serial = 1;
                 shared->monitor_serial = winstation->monitor_serial;
             }
             SHARED_WRITE_END;

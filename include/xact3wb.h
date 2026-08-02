@@ -19,7 +19,7 @@
 #ifndef __XACT3WB_H__
 #define __XACT3WB_H__
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef DWORD WAVEBANKOFFSET;
 
@@ -149,6 +149,6 @@ typedef struct WAVEBANKDATA
 } WAVEBANKDATA, *LPWAVEBANKDATA;
 typedef const WAVEBANKDATA *LPCWAVEBANKDATA;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __XACT3WB_H__ */

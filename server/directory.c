@@ -28,6 +28,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "ddk/wdm.h"
 
@@ -62,9 +63,26 @@ static void object_type_dump( struct object *obj, int verbose );
 
 static const struct object_ops object_type_ops =
 {
-    .size = sizeof(struct object_type),
-    .type = &objtype_type,
-    .dump = object_type_dump,
+    sizeof(struct object_type),   /* size */
+    &objtype_type,                /* type */
+    object_type_dump,             /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    default_map_access,           /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    default_get_full_name,        /* get_full_name */
+    no_lookup_name,               /* lookup_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
+    no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
+    no_close_handle,              /* close_handle */
+    no_destroy                    /* destroy */
 };
 
 
@@ -95,11 +113,26 @@ static void directory_destroy( struct object *obj );
 
 static const struct object_ops directory_ops =
 {
-    .size        = sizeof(struct directory),
-    .type        = &directory_type,
-    .dump        = directory_dump,
-    .lookup_name = directory_lookup_name,
-    .destroy     = directory_destroy,
+    sizeof(struct directory),     /* size */
+    &directory_type,              /* type */
+    directory_dump,               /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    default_map_access,           /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    default_get_full_name,        /* get_full_name */
+    directory_lookup_name,        /* lookup_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
+    no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
+    no_close_handle,              /* close_handle */
+    directory_destroy             /* destroy */
 };
 
 static struct directory *root_directory;
@@ -130,7 +163,6 @@ static struct type_descr *types[] =
     &key_type,
     &apc_reserve_type,
     &completion_reserve_type,
-    &alpc_port_type,
 };
 
 static void object_type_dump( struct object *obj, int verbose )
@@ -395,18 +427,14 @@ void init_directories( struct fd *intl_fd )
     static const WCHAR event_high_pagedW[] = {'H','i','g','h','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR event_high_nonpgW[] = {'H','i','g','h','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR keyed_event_crit_sectW[] = {'C','r','i','t','S','e','c','O','u','t','O','f','M','e','m','o','r','y','E','v','e','n','t'};
-    static const struct
+    static const struct unicode_str kernel_events[] =
     {
-        struct unicode_str name;
-        int initial_state;
-    } kernel_events[] =
-    {
-        { { event_low_memW, sizeof(event_low_memW) }, 0 },
-        { { event_low_pagedW, sizeof(event_low_pagedW) }, 0 },
-        { { event_low_nonpgW, sizeof(event_low_nonpgW) }, 0 },
-        { { event_high_memW, sizeof(event_high_memW) }, 1 },
-        { { event_high_pagedW, sizeof(event_high_pagedW) }, 1 },
-        { { event_high_nonpgW, sizeof(event_high_nonpgW) }, 1 }
+        { event_low_memW, sizeof(event_low_memW) },
+        { event_low_pagedW, sizeof(event_low_pagedW) },
+        { event_low_nonpgW, sizeof(event_low_nonpgW) },
+        { event_high_memW, sizeof(event_high_memW) },
+        { event_high_pagedW, sizeof(event_high_pagedW) },
+        { event_high_nonpgW, sizeof(event_high_nonpgW) }
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
@@ -419,7 +447,7 @@ void init_directories( struct fd *intl_fd )
     static const struct unicode_str session_str = {sessionW, sizeof(sessionW)};
 
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel, *dir_nls;
-    struct object *named_pipe_device, *mailslot_device, *null_device, *atom_table;
+    struct object *named_pipe_device, *mailslot_device, *null_device;
     struct mapping *session_mapping;
     unsigned int i;
 
@@ -460,10 +488,7 @@ void init_directories( struct fd *intl_fd )
 
     /* events */
     for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
-    {
-        release_object( create_event( &dir_kernel->obj, &kernel_events[i].name, OBJ_PERMANENT,
-                                      1, kernel_events[i].initial_state, NULL ));
-    }
+        release_object( create_event( &dir_kernel->obj, &kernel_events[i], OBJ_PERMANENT, 1, 0, NULL ));
     release_object( create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, OBJ_PERMANENT, NULL ));
 
     /* mappings */
@@ -474,14 +499,6 @@ void init_directories( struct fd *intl_fd )
     session_mapping = create_session_mapping( &dir_kernel->obj, &session_str, OBJ_PERMANENT, NULL );
     set_session_mapping( session_mapping );
     release_object( session_mapping );
-
-    atom_table = create_atom_table();
-    set_global_atom_table( atom_table );
-    release_object( atom_table );
-
-    atom_table = create_atom_table();
-    set_user_atom_table( atom_table );
-    release_object( atom_table );
 
     release_object( named_pipe_device );
     release_object( mailslot_device );

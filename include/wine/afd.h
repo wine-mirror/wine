@@ -115,7 +115,7 @@ struct afd_recv_params_32
     int msg_flags;
 };
 
-#pragma pack(push,4)
+#include <pshpack4.h>
 struct afd_poll_params
 {
     LONGLONG timeout;
@@ -157,7 +157,7 @@ struct afd_poll_params_32
         int status;
     } sockets[1];
 };
-#pragma pack(pop)
+#include <poppack.h>
 
 struct afd_event_select_params
 {

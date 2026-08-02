@@ -23,8 +23,6 @@ import "oaidl.idl";
 #define threading(model)
 #endif
 
-cpp_quote("EXTERN_C const GUID IID_IEnterActivityWithNoLock;")
-
 typedef DWORD_PTR INSTID;
 typedef DWORD_PTR RESID;
 typedef DWORD     RESOURCERATING;

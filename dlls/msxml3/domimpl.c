@@ -38,7 +38,7 @@ typedef struct _domimpl
 {
     DispatchEx dispex;
     IXMLDOMImplementation IXMLDOMImplementation_iface;
-    LONG refcount;
+    LONG ref;
 } domimpl;
 
 static inline domimpl *impl_from_IXMLDOMImplementation( IXMLDOMImplementation *iface )
@@ -46,30 +46,32 @@ static inline domimpl *impl_from_IXMLDOMImplementation( IXMLDOMImplementation *i
     return CONTAINING_RECORD(iface, domimpl, IXMLDOMImplementation_iface);
 }
 
-static HRESULT WINAPI domimpl_QueryInterface(IXMLDOMImplementation *iface, REFIID riid, void **obj)
+static HRESULT WINAPI domimpl_QueryInterface(
+    IXMLDOMImplementation *iface,
+    REFIID riid,
+    void** ppvObject )
 {
-    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
+    domimpl *This = impl_from_IXMLDOMImplementation( iface );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-
-    if (IsEqualGUID(riid, &IID_IXMLDOMImplementation) ||
-        IsEqualGUID(riid, &IID_IDispatch) ||
-        IsEqualGUID(riid, &IID_IUnknown))
+    if ( IsEqualGUID( riid, &IID_IXMLDOMImplementation ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *obj = iface;
+        *ppvObject = iface;
     }
-    else if (dispex_query_interface(&domimpl->dispex, riid, obj))
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
-        return *obj ? S_OK : E_NOINTERFACE;
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
-        *obj = NULL;
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
-    IXMLDOMImplementation_AddRef(iface);
+    IXMLDOMImplementation_AddRef( iface );
 
     return S_OK;
 }
@@ -77,60 +79,69 @@ static HRESULT WINAPI domimpl_QueryInterface(IXMLDOMImplementation *iface, REFII
 static ULONG WINAPI domimpl_AddRef(IXMLDOMImplementation *iface)
 {
     domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    ULONG refcount = InterlockedIncrement(&domimpl->refcount);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    return refcount;
+    ULONG ref = InterlockedIncrement(&domimpl->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
+    return ref;
 }
 
 static ULONG WINAPI domimpl_Release(IXMLDOMImplementation *iface)
 {
     domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    ULONG refcount = InterlockedDecrement(&domimpl->refcount);
+    ULONG ref = InterlockedDecrement(&domimpl->ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
-    if (!refcount)
+    if (!ref)
         free(domimpl);
 
-    return refcount;
+    return ref;
 }
 
-static HRESULT WINAPI domimpl_GetTypeInfoCount(IXMLDOMImplementation *iface, UINT *count)
+static HRESULT WINAPI domimpl_GetTypeInfoCount(
+    IXMLDOMImplementation *iface,
+    UINT* pctinfo )
 {
-    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    return IDispatchEx_GetTypeInfoCount(&domimpl->dispex.IDispatchEx_iface, count);
+    domimpl *This = impl_from_IXMLDOMImplementation( iface );
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
-static HRESULT WINAPI domimpl_GetTypeInfo(IXMLDOMImplementation *iface, UINT index, LCID lcid, ITypeInfo **ti)
+static HRESULT WINAPI domimpl_GetTypeInfo(
+    IXMLDOMImplementation *iface,
+    UINT iTInfo, LCID lcid,
+    ITypeInfo** ppTInfo )
 {
-    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    return IDispatchEx_GetTypeInfo(&domimpl->dispex.IDispatchEx_iface, index, lcid, ti);
+    domimpl *This = impl_from_IXMLDOMImplementation( iface );
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
-static HRESULT WINAPI domimpl_GetIDsOfNames(IXMLDOMImplementation *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+static HRESULT WINAPI domimpl_GetIDsOfNames(
+    IXMLDOMImplementation *iface,
+    REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
 {
-    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    return IDispatchEx_GetIDsOfNames(&domimpl->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
+    domimpl *This = impl_from_IXMLDOMImplementation( iface );
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI domimpl_Invoke(IXMLDOMImplementation *iface, DISPID dispIdMember,
-        REFIID riid, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result,
-        EXCEPINFO *ei, UINT *puArgErr)
+static HRESULT WINAPI domimpl_Invoke(
+    IXMLDOMImplementation *iface,
+    DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
+    EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
-    domimpl *domimpl = impl_from_IXMLDOMImplementation(iface);
-    return IDispatchEx_Invoke(&domimpl->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, flags,
-            params, result, ei, puArgErr);
+    domimpl *This = impl_from_IXMLDOMImplementation( iface );
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI domimpl_hasFeature(IXMLDOMImplementation *iface, BSTR feature, BSTR version, VARIANT_BOOL *hasFeature)
+static HRESULT WINAPI domimpl_hasFeature(IXMLDOMImplementation* This, BSTR feature, BSTR version, VARIANT_BOOL *hasFeature)
 {
     BOOL bValidFeature = FALSE;
     BOOL bValidVersion = FALSE;
 
-    TRACE("%p, %s, %s, %p.\n", iface, debugstr_w(feature), debugstr_w(version), hasFeature);
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(feature), debugstr_w(version), hasFeature);
 
     if(!feature || !hasFeature)
         return E_INVALIDARG;
@@ -183,7 +194,7 @@ HRESULT create_dom_implementation(IXMLDOMImplementation **ret)
         return E_OUTOFMEMORY;
 
     object->IXMLDOMImplementation_iface.lpVtbl = &domimpl_vtbl;
-    object->refcount = 1;
+    object->ref = 1;
     init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMImplementation_iface, &domimpl_dispex);
 
     *ret = &object->IXMLDOMImplementation_iface;

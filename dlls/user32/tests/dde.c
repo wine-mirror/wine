@@ -1850,7 +1850,6 @@ static void test_DdeCreateDataHandle(void)
     HSZ item;
     LPBYTE ptr;
     WCHAR item_str[] = {'i','t','e','m',0};
-    const char* data1234 = "data1234";
 
     dde_inst = 0;
     dde_inst2 = 0;
@@ -1884,7 +1883,7 @@ static void test_DdeCreateDataHandle(void)
     item = DdeCreateStringHandleA(dde_inst2, "item", CP_WINANSI);
     ok(item != NULL, "Expected non-NULL hsz\n");
 
-    hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", 5, 0, item, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
 
     /* 0 instance id
      * This block tests an invalid instance Id.  The correct behaviour is that if the instance Id
@@ -1894,7 +1893,7 @@ static void test_DdeCreateDataHandle(void)
      */
     DdeGetLastError(dde_inst);
     DdeGetLastError(dde_inst2);
-    hdata = DdeCreateDataHandle(0, (LPBYTE)"data", 5, 0, item, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(0, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
     ok(err == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
@@ -1941,16 +1940,18 @@ static void test_DdeCreateDataHandle(void)
 
     /* cbOff is non-zero */
     DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)(data1234 + 2), 5, 2, item, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 2, item, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
 
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(!memcmp(ptr, "\0\0ta1234", size), "Expected %s, got %s\n",
-       wine_dbgstr_an("\0\0ta1234", 7), wine_dbgstr_an((char*)ptr, 7));
-    ok(size == 7, "Expected 7, got %ld\n", size);
+    ok(size == 262, "Expected 262, got %ld\n", size);
+    todo_wine
+    {
+        ok(ptr && !*ptr, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
+    }
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1960,7 +1961,7 @@ static void test_DdeCreateDataHandle(void)
 
     /* NULL item */
     DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", 5, 0, 0, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, 0, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
@@ -1968,7 +1969,7 @@ static void test_DdeCreateDataHandle(void)
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
     ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
-    ok(size == 5, "Expected 5, got %ld\n", size);
+    ok(size == 260, "Expected 260, got %ld\n", size);
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1978,7 +1979,7 @@ static void test_DdeCreateDataHandle(void)
 
     /* NULL item */
     DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", 5, 0, (HSZ)0xdeadbeef, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, (HSZ)0xdeadbeef, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
@@ -1986,7 +1987,7 @@ static void test_DdeCreateDataHandle(void)
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
     ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
-    ok(size == 5, "Expected 5, got %ld\n", size);
+    ok(size == 260, "Expected 260, got %ld\n", size);
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1996,7 +1997,7 @@ static void test_DdeCreateDataHandle(void)
 
     /* invalid clipboard format */
     DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", 5, 0, item, 0xdeadbeef, 0);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", MAX_PATH, 0, item, 0xdeadbeef, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
@@ -2004,7 +2005,7 @@ static void test_DdeCreateDataHandle(void)
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
     ok(!lstrcmpA((LPSTR)ptr, "data"), "Expected data, got %s\n", ptr);
-    ok(size == 5, "Expected 5, got %ld\n", size);
+    ok(size == 260, "Expected 260, got %ld\n", size);
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -2166,17 +2167,6 @@ static void test_PackDDElParam(void)
     ret = FreeDDElParam(WM_DDE_ACK, lparam);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
-    lparam = PackDDElParam(WM_DDE_ACK, 0, 0);
-    ptr = GlobalLock((HGLOBAL)lparam);
-    ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(ptr[0] == 0, "Expected 0, got %08Ix\n", ptr[0]);
-    ok(ptr[1] == 0, "Expected 0, got %08Ix\n", ptr[1]);
-    ret = GlobalUnlock((HGLOBAL)lparam);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
-
-    ret = FreeDDElParam(WM_DDE_ACK, lparam);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-
     lparam = PackDDElParam(WM_DDE_DATA, 0xcafe, 0xbeef);
     ptr = GlobalLock((HGLOBAL)lparam);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
@@ -2319,20 +2309,6 @@ static void test_UnpackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(lo == 0xcafebabe, "Expected 0xcafebabe, got %08Ix\n", lo);
     ok(hi == 0xdeadbeef, "Expected 0xdeadbeef, got %08Ix\n", hi);
-
-    lo = 0xdead;
-    hi = 0xbeef;
-    ret = UnpackDDElParam(WM_DDE_ACK, 0, &lo, &hi);
-    ok(ret == FALSE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0, "Expected 0xcafebabe, got %08Ix\n", lo);
-    ok(hi == 0, "Expected 0xdeadbeef, got %08Ix\n", hi);
-
-    lo = 0xdead;
-    hi = 0xbeef;
-    ret = UnpackDDElParam(WM_DDE_ACK, MAKELPARAM(server, topic), &lo, &hi);
-    ok(ret == FALSE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0, "Expected 0xcafebabe, got %08Ix\n", lo);
-    ok(hi == 0, "Expected 0xdeadbeef, got %08Ix\n", hi);
 
     lo = 0xdead;
     hi = 0xbeef;

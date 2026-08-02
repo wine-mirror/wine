@@ -25,6 +25,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
@@ -39,14 +40,13 @@ WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 typedef struct
 {
-    LIST_ENTRY                   entry;
-    ULONG_PTR                   *count;
-    void                        *unknown;
-    PVECTORED_EXCEPTION_HANDLER *func;
+    struct list                 entry;
+    PVECTORED_EXCEPTION_HANDLER func;
+    ULONG                       count;
 } VECTORED_HANDLER;
 
-static LIST_ENTRY vectored_exception_handlers = { &vectored_exception_handlers, &vectored_exception_handlers };
-static LIST_ENTRY vectored_continue_handlers  = { &vectored_continue_handlers, &vectored_continue_handlers };
+static struct list vectored_exception_handlers = LIST_INIT(vectored_exception_handlers);
+static struct list vectored_continue_handlers  = LIST_INIT(vectored_continue_handlers);
 
 static RTL_CRITICAL_SECTION vectored_handlers_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -99,37 +99,35 @@ static const char *debugstr_exception_code( DWORD code )
 }
 
 
-static VECTORED_HANDLER *add_vectored_handler( LIST_ENTRY *handler_list, ULONG first,
+static VECTORED_HANDLER *add_vectored_handler( struct list *handler_list, ULONG first,
                                                PVECTORED_EXCEPTION_HANDLER func )
 {
-    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) + sizeof(*handler->count) );
+    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
     if (handler)
     {
         handler->func = RtlEncodePointer( func );
-        handler->count = (ULONG_PTR *)(handler + 1);
-        *handler->count = 1;
+        handler->count = 1;
         RtlEnterCriticalSection( &vectored_handlers_section );
-        if (first) InsertHeadList( handler_list, &handler->entry );
-        else InsertTailList( handler_list, &handler->entry );
+        if (first) list_add_head( handler_list, &handler->entry );
+        else list_add_tail( handler_list, &handler->entry );
         RtlLeaveCriticalSection( &vectored_handlers_section );
     }
     return handler;
 }
 
 
-static ULONG remove_vectored_handler( LIST_ENTRY *handler_list, VECTORED_HANDLER *handler )
+static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLER *handler )
 {
-    PLIST_ENTRY mark, entry;
+    struct list *ptr;
     ULONG ret = FALSE;
 
     RtlEnterCriticalSection( &vectored_handlers_section );
-    mark = handler_list;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    LIST_FOR_EACH( ptr, handler_list )
     {
-        VECTORED_HANDLER *curr_handler = CONTAINING_RECORD( entry, VECTORED_HANDLER, entry );
+        VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
         if (curr_handler == handler)
         {
-            if (!--*curr_handler->count) RemoveEntryList( entry );
+            if (!--curr_handler->count) list_remove( ptr );
             else handler = NULL;  /* don't free it yet */
             ret = TRUE;
             break;
@@ -140,49 +138,6 @@ static ULONG remove_vectored_handler( LIST_ENTRY *handler_list, VECTORED_HANDLER
     return ret;
 }
 
-#if defined(__x86_64__) && !defined(__arm64ec__)
-/*
- * Some vectored exception handlers restore nonvolatile registers before
- * returning. Preserve the caller state across the callback.
- */
-extern LONG WINAPI call_vectored_handler( EXCEPTION_POINTERS *ptr, PVECTORED_EXCEPTION_HANDLER func );
-__ASM_GLOBAL_FUNC( call_vectored_handler,
-                    "pushq %rbx\n\t"
-                    __ASM_SEH(".seh_pushreg %rbx\n\t")
-                    "pushq %rsi\n\t"
-                    __ASM_SEH(".seh_pushreg %rsi\n\t")
-                    "pushq %rdi\n\t"
-                    __ASM_SEH(".seh_pushreg %rdi\n\t")
-                    "pushq %rbp\n\t"
-                    __ASM_SEH(".seh_pushreg %rbp\n\t")
-                    "pushq %r12\n\t"
-                    __ASM_SEH(".seh_pushreg %r12\n\t")
-                    "pushq %r13\n\t"
-                    __ASM_SEH(".seh_pushreg %r13\n\t")
-                    "pushq %r14\n\t"
-                    __ASM_SEH(".seh_pushreg %r14\n\t")
-                    "pushq %r15\n\t"
-                    __ASM_SEH(".seh_pushreg %r15\n\t")
-                    "subq $0x28,%rsp\n\t"
-                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
-                    __ASM_SEH(".seh_endprologue\n\t")
-                    "callq *%rdx\n\t"
-                    "addq $0x28,%rsp\n\t"
-                    "popq %r15\n\t"
-                    "popq %r14\n\t"
-                    "popq %r13\n\t"
-                    "popq %r12\n\t"
-                    "popq %rbp\n\t"
-                    "popq %rdi\n\t"
-                    "popq %rsi\n\t"
-                    "popq %rbx\n\t"
-                    "ret" )
-#else
-static inline LONG call_vectored_handler( EXCEPTION_POINTERS *ptr, PVECTORED_EXCEPTION_HANDLER func )
-{
-    return func( ptr );
-}
-#endif
 
 /**********************************************************************
  *           call_vectored_handlers
@@ -191,23 +146,21 @@ static inline LONG call_vectored_handler( EXCEPTION_POINTERS *ptr, PVECTORED_EXC
  */
 static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    struct list *ptr;
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
     EXCEPTION_POINTERS except_ptrs;
     PVECTORED_EXCEPTION_HANDLER func;
     VECTORED_HANDLER *handler, *to_free = NULL;
-    PLIST_ENTRY mark, entry;
 
     except_ptrs.ExceptionRecord = rec;
     except_ptrs.ContextRecord = context;
 
     RtlEnterCriticalSection( &vectored_handlers_section );
-
-    mark = &vectored_exception_handlers;
-    entry = mark->Flink;
-    while (entry != mark)
+    ptr = list_head( &vectored_exception_handlers );
+    while (ptr)
     {
-        handler = CONTAINING_RECORD( entry, VECTORED_HANDLER, entry );
-        ++*handler->count;
+        handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
+        handler->count++;
         func = RtlDecodePointer( handler->func );
         RtlLeaveCriticalSection( &vectored_handlers_section );
         RtlFreeHeap( GetProcessHeap(), 0, to_free );
@@ -215,14 +168,14 @@ static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 
         TRACE( "calling handler at %p code=%lx flags=%lx\n",
                func, rec->ExceptionCode, rec->ExceptionFlags );
-        ret = call_vectored_handler( &except_ptrs, func );
+        ret = func( &except_ptrs );
         TRACE( "handler at %p returned %lx\n", func, ret );
 
         RtlEnterCriticalSection( &vectored_handlers_section );
-        entry = entry->Flink;
-        if (!--*handler->count)  /* removed during execution */
+        ptr = list_next( &vectored_exception_handlers, ptr );
+        if (!--handler->count)  /* removed during execution */
         {
-            RemoveEntryList( &handler->entry );
+            list_remove( &handler->entry );
             to_free = handler;
         }
         if (ret == EXCEPTION_CONTINUE_EXECUTION) break;
@@ -348,6 +301,16 @@ NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
 }
 
 #endif
+
+/*******************************************************************
+ *         nested_exception_handler
+ */
+EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                       CONTEXT *context, void *dispatch )
+{
+    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)) return ExceptionContinueSearch;
+    return ExceptionNestedException;
+}
 
 
 /*******************************************************************
@@ -502,7 +465,7 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
  *
  * IsBadStringPtrA replacement for ntdll, to catch exception in debug traces.
  */
-BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
     __TRY
@@ -523,7 +486,7 @@ BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
  *
  * IsBadStringPtrW replacement for ntdll, to catch exception in debug traces.
  */
-BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
     __TRY

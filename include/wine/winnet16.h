@@ -25,7 +25,7 @@
 #include <windef.h>
 #include <wine/windef16.h>
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 /*
  * Remote printing
@@ -61,7 +61,7 @@ typedef struct
 
 } JOBSTRUCT16, *LPJOBSTRUCT16;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #define WNPRJ_QSTATUS           0x0007
 #define WNPRJ_DEVSTATUS         0x0FF8

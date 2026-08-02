@@ -104,7 +104,7 @@ extern "C" {
 #define SS_SECURITY_VIOLATION		0xE2 /* Replaces SS_INVALID_MODE */
 /*** END DEFS */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 /* SRB - HOST ADAPTER INQUIRY - SC_HA_INQUIRY */
 typedef struct tagSRB32_HaInquiry {
@@ -237,7 +237,7 @@ typedef struct tagASPI32BUFF {
     DWORD AB_Reserved;		/* 0 */
 } ASPI32BUFF, *PASPI32BUFF;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 /* Prototypes */
 extern DWORD __cdecl SendASPI32Command (PSRB);

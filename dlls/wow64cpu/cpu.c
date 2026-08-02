@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -30,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thunk_32to64
 {
     BYTE  ljmp;   /* jump far, absolute indirect */
@@ -44,12 +45,9 @@ struct thunk_opcodes
     struct thunk_32to64 syscall_thunk;
     struct thunk_32to64 unix_thunk;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static BYTE DECLSPEC_ALIGN(4096) code_buffer[0x1000];
-
-UINT cs32_sel = 0;
-UINT ss32_sel = 0;
 
 static USHORT cs64_sel;
 static USHORT ds64_sel;
@@ -134,12 +132,12 @@ static void copy_context_64to32( I386_CONTEXT *ctx32, DWORD flags, AMD64_CONTEXT
         ctx32->Eip    = ctx64->Rip;
         ctx32->EFlags = ctx64->EFlags;
         ctx32->SegCs  = ctx64->SegCs;
-        ctx32->SegSs  = ctx64->SegSs;
+        ctx32->SegSs  = ds64_sel;
     }
     if (flags & CONTEXT_I386_SEGMENTS)
     {
-        ctx32->SegDs = ctx64->SegDs;
-        ctx32->SegEs = ctx64->SegEs;
+        ctx32->SegDs = ds64_sel;
+        ctx32->SegEs = ds64_sel;
         ctx32->SegFs = fs32_sel;
         ctx32->SegGs = ds64_sel;
     }
@@ -185,8 +183,6 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
                    "movl %ebp,0xb4(%r13)\n\t"   /* context->Ebp */
                    "movl (%r14),%edx\n\t"
                    "movl %edx,0xb8(%r13)\n\t"   /* context->Eip */
-                   "movl cs32_sel(%rip),%edx\n\t"
-                   "movl %edx,0xbc(%r13)\n\t"   /* context->SegCs */
                    "pushfq\n\t"
                    "popq %rdx\n\t"
                    "movl %edx,0xc0(%r13)\n\t"   /* context->EFlags */
@@ -253,15 +249,12 @@ __ASM_GLOBAL_FUNC( unix_call_32to64,
                    "movl %ebp,0xb4(%r13)\n\t"   /* context->Ebp */
                    "movl (%r14),%edx\n\t"
                    "movl %edx,0xb8(%r13)\n\t"   /* context->Eip */
-                   "movl cs32_sel(%rip),%edx\n\t"
-                   "movl %edx,0xbc(%r13)\n\t"   /* context->SegCs */
                    "leaq 20(%r14),%rdx\n\t"
                    "movl %edx,0xc4(%r13)\n\t"   /* context->Esp */
                    "movq 4(%r14),%rcx\n\t"      /* handle */
                    "movl 12(%r14),%edx\n\t"     /* code */
                    "movl 16(%r14),%r8d\n\t"     /* args */
                    "callq *__wine_unix_call_dispatcher(%rip)\n\t"
-                   "movl %eax,0xb0(%r13)\n\t"   /* context->Eax */
                    "btrl $0,-4(%r13)\n\t"       /* cpu->Flags & WOW64_CPURESERVED_FLAG_RESET_STATE */
                    "jc .Lsyscall_32to64_return\n\t"
                    "movl 0xb8(%r13),%edx\n\t"   /* context->Eip */
@@ -290,11 +283,7 @@ __ASM_GLOBAL_FUNC( BTCpuSimulate,
                    ".seh_endprologue\n\t"
                    "movq %gs:0x30,%r12\n\t"
                    "movq 0x1488(%r12),%rcx\n\t" /* NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED] */
-                   "leaq 4(%rcx),%r13\n\t"      /* cpu->Context */
-                   "movl cs32_sel(%rip),%eax\n\t"
-                   "movl %eax,0xbc(%r13)\n\t"   /* context->SegCs */
-                   "movl ss32_sel(%rip),%eax\n\t"
-                   "movl %eax,0xc8(%r13)\n\t"   /* context->SegSs */
+                   "leaq 4(%rcx),%r13\n"        /* cpu->Context */
                    "jmp syscall_32to64_return\n" )
 
 
@@ -307,7 +296,6 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     SIZE_T size = sizeof(*thunk);
     ULONG old_prot;
     CONTEXT context;
-    I386_CONTEXT context_i386;
     HMODULE module;
     UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     void **p__wine_unix_call_dispatcher;
@@ -329,11 +317,6 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     cs64_sel = context.SegCs;
     ds64_sel = context.SegDs;
     fs32_sel = context.SegFs;
-
-    context_i386.ContextFlags = CONTEXT_I386_CONTROL;
-    RtlWow64GetThreadContext( GetCurrentThread(), &context_i386 );
-    cs32_sel = context_i386.SegCs;
-    ss32_sel = context_i386.SegSs;
 
     thunk->syscall_thunk.ljmp  = 0xff;
     thunk->syscall_thunk.modrm = 0x2d;
@@ -428,7 +411,6 @@ NTSTATUS WINAPI BTCpuResetToConsistentState( EXCEPTION_POINTERS *ptrs )
     context->Rip = (ULONG64)syscall_32to64;
     context->SegCs = cs64_sel;
     context->Rsp = context->R14;
-    context->SegSs = ds64_sel;
     /* fixup machine frame */
     machine_frame = (struct machine_frame *)(((ULONG_PTR)(ptrs->ExceptionRecord + 1) + 15) & ~15);
     machine_frame->rip = context->Rip;

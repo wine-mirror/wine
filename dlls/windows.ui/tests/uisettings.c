@@ -22,7 +22,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winstring.h"
-#include "weakreference.h"
 
 #include "roapi.h"
 
@@ -148,8 +147,6 @@ static void test_AccentColor( IUISettings3 *uisettings3 )
     DWORD default_palette_len = sizeof(default_palette);
     DWORD accent_palette[8];
     DWORD accent_palette_len = sizeof(accent_palette);
-    Color value;
-    HRESULT hr;
 
     if (!get_accent_palette( default_palette, &default_palette_len )) default_palette_len = 0;
 
@@ -157,10 +154,16 @@ static void test_AccentColor( IUISettings3 *uisettings3 )
     ok( delete_accent_palette(), "failed to delete AccentPalette key.\n");
     ok( !get_accent_palette( accent_palette, &accent_palette_len ), "AccentPalette should not be available.\n" );
 
-    hr = IUISettings3_GetColorValue( uisettings3, UIColorType_Accent, &value );
-    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
-
+    test_single_accent( uisettings3, UIColorType_Accent, 0x00d77800 );
     ok( get_accent_palette( accent_palette, &accent_palette_len ), "failed to retrieve AccentPalette key.\n" );
+
+    /* default values */
+    test_single_accent( uisettings3, UIColorType_AccentDark1, 0x009e5a00 );
+    test_single_accent( uisettings3, UIColorType_AccentDark2, 0x00754200 );
+    test_single_accent( uisettings3, UIColorType_AccentDark3, 0x00422600 );
+    test_single_accent( uisettings3, UIColorType_AccentLight1, 0x00e39c42 );
+    test_single_accent( uisettings3, UIColorType_AccentLight2, 0x00edb976 );
+    test_single_accent( uisettings3, UIColorType_AccentLight3, 0x00ffd8a6 );
 
     test_single_accent( uisettings3, UIColorType_Accent, accent_palette[3] );
     test_single_accent( uisettings3, UIColorType_AccentDark1, accent_palette[4] );
@@ -173,118 +176,12 @@ static void test_AccentColor( IUISettings3 *uisettings3 )
     if (default_palette_len) set_accent_palette( default_palette, default_palette_len );
 }
 
-static void test_UIElementColor( IUISettings *uisettings )
-{
-    static const struct
-    {
-        enum UIElementType type;
-        int syscolor_index;
-    }
-    tests[] =
-    {
-        { UIElementType_ActiveCaption, COLOR_ACTIVECAPTION },
-        { UIElementType_Background, COLOR_BACKGROUND },
-        { UIElementType_ButtonFace, COLOR_BTNFACE },
-        { UIElementType_ButtonText, COLOR_BTNTEXT },
-        { UIElementType_CaptionText, COLOR_CAPTIONTEXT },
-        { UIElementType_GrayText, COLOR_GRAYTEXT },
-        { UIElementType_Highlight, COLOR_HIGHLIGHT },
-        { UIElementType_HighlightText, COLOR_HIGHLIGHTTEXT },
-        { UIElementType_Hotlight, COLOR_HOTLIGHT },
-        { UIElementType_InactiveCaption, COLOR_INACTIVECAPTION },
-        { UIElementType_InactiveCaptionText, COLOR_INACTIVECAPTIONTEXT },
-        { UIElementType_Window, COLOR_WINDOW },
-        { UIElementType_WindowText, COLOR_WINDOWTEXT },
-        { UIElementType_AccentColor, -1 },
-        { UIElementType_TextHigh, -1 },
-        { UIElementType_TextMedium, -1 },
-        { UIElementType_TextLow, -1 },
-        { UIElementType_TextContrastWithHigh, -1 },
-        { UIElementType_NonTextHigh, -1 },
-        { UIElementType_NonTextMediumHigh, -1 },
-        { UIElementType_NonTextMedium, -1 },
-        { UIElementType_NonTextMediumLow, -1 },
-        { UIElementType_NonTextLow, -1 },
-        { UIElementType_PageBackground, -1 },
-        { UIElementType_PopupBackground, -1 },
-        { UIElementType_OverlayOutsidePopup, -1 },
-        { (UIElementType)12345, -1 } /* Invalid UIElementType */
-    };
-    Color color;
-    HRESULT hr;
-
-    for (int i = 0; i < ARRAY_SIZE( tests ); i++)
-    {
-        winetest_push_context( "%d", i );
-
-        memset( &color, 0xff, sizeof(color) );
-        hr = IUISettings_UIElementColor( uisettings, tests[i].type, &color );
-        ok( hr == S_OK, "got hr %#lx.\n", hr );
-        if (tests[i].syscolor_index == -1)
-        {
-            ok( color.A == 0 && color.R == 0 && color.G == 0 && color.B == 0,
-                "Got unexpected color %d %d %d %d.\n", color.A, color.R, color.G, color.B );
-        }
-        else
-        {
-            COLORREF colorref = GetSysColor( tests[i].syscolor_index );
-            ok( color.A == 0xff && color.R == GetRValue( colorref )
-                && color.G == GetGValue( colorref ) && color.B == GetBValue( colorref ),
-                "Got unexpected color %d %d %d %d.\n", color.A, color.R, color.G, color.B );
-        }
-
-        winetest_pop_context();
-    }
-
-    /* Crash on Windows */
-    if (0)
-    {
-    hr = IUISettings_UIElementColor( uisettings, UIElementType_ActiveCaption, NULL );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    }
-}
-
-static void test_AnimationsEnabled( IUISettings *uisettings )
-{
-    BOOL client_area_animation, ret;
-    boolean enabled;
-    HRESULT hr;
-
-    /* Crash on Windows */
-    if (0)
-    {
-    hr = IUISettings_get_AnimationsEnabled( uisettings, NULL );
-    ok( hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr );
-    }
-
-    ret = SystemParametersInfoW( SPI_GETCLIENTAREAANIMATION, 0, &client_area_animation, 0 );
-    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
-    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
-
-    ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(!client_area_animation), 0 );
-    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
-    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    ok( enabled == !client_area_animation, "Expected %d, got %d.\n", !client_area_animation, enabled );
-
-    ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(client_area_animation), 0 );
-    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
-    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
-}
-
 static void test_UISettings(void)
 {
     static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
     IActivationFactory *factory;
-    IUISettings2 *uisettings2;
     IUISettings3 *uisettings3;
     IInspectable *inspectable;
-    DOUBLE text_scale_factor;
-    IUISettings *uisettings;
     DWORD default_theme;
     UIColorType type;
     Color value;
@@ -320,35 +217,14 @@ static void test_UISettings(void)
         goto skip_uisettings3;
     }
 
-    check_interface( inspectable, &IID_IInspectable, TRUE );
     check_interface( inspectable, &IID_IAgileObject, TRUE );
-    check_interface( inspectable, &IID_IUISettings, TRUE );
-    check_interface( inspectable, &IID_IUISettings2, TRUE );
-    check_interface( inspectable, &IID_IUISettings3, TRUE );
-    check_interface( inspectable, &IID_IWeakReferenceSource, TRUE );
-    check_interface( inspectable, &IID_IWeakReference, FALSE );
 
-    hr = IInspectable_QueryInterface( inspectable, &IID_IUISettings, (void **)&uisettings );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    hr = IInspectable_QueryInterface( inspectable, &IID_IUISettings2, (void **)&uisettings2 );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-
-    text_scale_factor = 12345.6;
-    hr = IUISettings2_get_TextScaleFactor( uisettings2, &text_scale_factor );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    ok( text_scale_factor >= 1.0 && text_scale_factor <= 2.25, "got text_scale_factor %f.\n", text_scale_factor );
-
-    IUISettings2_Release( uisettings2 );
-
-    test_AnimationsEnabled( uisettings );
     test_AccentColor( uisettings3 );
 
     default_theme = get_app_theme();
 
     /* Light Theme */
     if (!set_app_theme( 1 )) goto done;
-
-    test_UIElementColor( uisettings );
 
     reset_color( &value );
     type = UIColorType_Foreground;
@@ -367,8 +243,6 @@ static void test_UISettings(void)
     /* Dark Theme */
     if (!set_app_theme( 0 )) goto done;
 
-    test_UIElementColor( uisettings );
-
     reset_color( &value );
     type = UIColorType_Foreground;
     hr = IUISettings3_GetColorValue( uisettings3, type, &value );
@@ -385,131 +259,9 @@ static void test_UISettings(void)
 
 done:
     set_app_theme( default_theme );
-    IUISettings_Release( uisettings );
     IUISettings3_Release( uisettings3 );
 
 skip_uisettings3:
-    IInspectable_Release( inspectable );
-    ref = IActivationFactory_Release( factory );
-    ok( ref == 1, "got ref %ld.\n", ref );
-}
-
-static void test_UISettings_weak_ref(void)
-{
-    static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
-    IWeakReferenceSource *weak_reference_source;
-    IInspectable *inspectable, *inspectable2;
-    IWeakReference *weak_reference;
-    IActivationFactory *factory;
-    IUISettings *uisettings;
-    IUnknown *unknown;
-    HSTRING str;
-    HRESULT hr;
-    LONG ref;
-
-    hr = WindowsCreateString( uisettings_name, wcslen( uisettings_name ), &str );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-
-    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
-    if (hr == REGDB_E_CLASSNOTREG)
-    {
-        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( uisettings_name ) );
-        return;
-    }
-
-    hr = RoActivateInstance( str, &inspectable );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    WindowsDeleteString( str );
-
-    hr = IInspectable_QueryInterface( inspectable, &IID_IWeakReferenceSource, (void **)&weak_reference_source );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    hr = IWeakReferenceSource_GetWeakReference( weak_reference_source, &weak_reference );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    IWeakReferenceSource_Release( weak_reference_source );
-
-    check_interface( weak_reference, &IID_IUnknown, TRUE );
-    check_interface( weak_reference, &IID_IWeakReference, TRUE );
-    check_interface( weak_reference, &IID_IInspectable, FALSE );
-    check_interface( weak_reference, &IID_IAgileObject, FALSE );
-    check_interface( weak_reference, &IID_IUISettings, FALSE );
-
-    hr = IWeakReference_Resolve( weak_reference, &IID_IUnknown, (IInspectable **)&unknown );
-    ok( hr == S_OK && unknown, "got hr %#lx.\n", hr );
-    hr = IWeakReference_Resolve( weak_reference, &IID_IInspectable, &inspectable2 );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    ok( (void *)inspectable2 == (void *)unknown, "Interfaces are not the same.\n" );
-    IInspectable_Release( inspectable2 );
-    hr = IWeakReference_Resolve( weak_reference, &IID_IUISettings, (IInspectable **)&uisettings );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-    ok( (void *)uisettings == (void *)unknown, "Interfaces are not the same.\n" );
-    IUISettings_Release( uisettings );
-    IUnknown_Release( unknown );
-
-    /* Free inspectable, weak reference should fail to resolve now */
-    IInspectable_Release( inspectable );
-
-    inspectable2 = (void *)0xdeadbeef;
-    hr = IWeakReference_Resolve( weak_reference, &IID_IInspectable, &inspectable2 );
-    ok( hr == S_OK && !inspectable2, "got hr %#lx.\n", hr );
-
-    IWeakReference_Release( weak_reference );
-    ref = IActivationFactory_Release( factory );
-    ok( ref == 1, "got ref %ld.\n", ref );
-}
-
-static void test_AccessibilitySettings(void)
-{
-    static const WCHAR *class_name = RuntimeClass_Windows_UI_ViewManagement_AccessibilitySettings;
-    HIGHCONTRASTW high_contrast = {0};
-    IAccessibilitySettings *settings;
-    IActivationFactory *factory;
-    IInspectable *inspectable;
-    boolean value;
-    HSTRING str;
-    HRESULT hr;
-    BOOL ret;
-    LONG ref;
-
-    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
-
-    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
-    if (FAILED( hr ))
-    {
-        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
-        WindowsDeleteString( str );
-        return;
-    }
-
-    check_interface( factory, &IID_IUnknown, TRUE );
-    check_interface( factory, &IID_IInspectable, TRUE );
-    check_interface( factory, &IID_IActivationFactory, TRUE );
-    check_interface( factory, &IID_IAgileObject, FALSE );
-    check_interface( factory, &IID_IAccessibilitySettings, FALSE );
-
-    hr = RoActivateInstance( str, &inspectable );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    WindowsDeleteString( str );
-
-    hr = IInspectable_QueryInterface( inspectable, &IID_IAccessibilitySettings, (void **)&settings );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-
-    check_interface( inspectable, &IID_IUnknown, TRUE );
-    check_interface( inspectable, &IID_IInspectable, TRUE );
-    check_interface( inspectable, &IID_IAgileObject, TRUE );
-    check_interface( inspectable, &IID_IAccessibilitySettings, TRUE );
-
-    hr = IAccessibilitySettings_get_HighContrast( settings, &value );
-    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-
-    high_contrast.cbSize = sizeof(high_contrast);
-    ret = SystemParametersInfoW( SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0 );
-    ok( ret, "SystemParametersInfoW failed, error %lu.\n", GetLastError() );
-    ok( value == !!(high_contrast.dwFlags & HCF_HIGHCONTRASTON), "Got unexpected high contrast value.\n" );
-
-    IAccessibilitySettings_Release( settings );
     IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
@@ -523,8 +275,6 @@ START_TEST(uisettings)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_UISettings();
-    test_UISettings_weak_ref();
-    test_AccessibilitySettings();
 
     RoUninitialize();
 }

@@ -26,7 +26,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(unsigned*,parser_ctx_t*,const char*);
-static void override_generic_error(parser_ctx_t*,HRESULT);
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr);
 
@@ -53,7 +52,6 @@ static statement_t *new_assign_statement(parser_ctx_t*,unsigned,expression_t*,ex
 static statement_t *new_set_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,unsigned,dim_decl_t*);
 static statement_t *new_redim_statement(parser_ctx_t*,unsigned,BOOL,redim_decl_t*);
-static statement_t *new_erase_statement(parser_ctx_t*,unsigned,const WCHAR*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_foreach_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,statement_t*);
@@ -64,13 +62,13 @@ static statement_t *new_const_statement(parser_ctx_t*,unsigned,const_decl_t*);
 static statement_t *new_select_statement(parser_ctx_t*,unsigned,expression_t*,case_clausule_t*);
 static statement_t *new_with_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*);
 
-static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,unsigned,BOOL,dim_list_t*);
+static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,BOOL,dim_list_t*);
 static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
 static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,unsigned,expression_t*,statement_t*);
-static function_decl_t *new_function_decl(parser_ctx_t*,unsigned,unsigned,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
+static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
-static const_decl_t *new_const_decl(parser_ctx_t*,unsigned,const WCHAR*,expression_t*);
+static const_decl_t *new_const_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_t*,case_clausule_t*);
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
@@ -94,15 +92,6 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %define api.prefix {parser_}
 %define api.pure
 %start Program
-
-/* Resolve dangling Else / End If conflicts via precedence: the empty
- * EndIf_opt rule gets lower precedence than tELSE and tEND so that
- * shift (binding to innermost If) always wins. The remaining 8
- * shift/reduce conflicts are benign colon-chain ambiguities where
- * bison's default shift gives the correct greedy behavior. */
-%nonassoc LOWER_THAN_ELSE
-%nonassoc tELSE tEND
-%expect 8
 
 %union {
     const WCHAR *string;
@@ -132,7 +121,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
 %token <string> tCALL tSUB tFUNCTION tGET tLET tCONST
-%token <string> tDIM tREDIM tPRESERVE tERASE
+%token <string> tDIM tREDIM tPRESERVE
 %token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
 %token <string> tSELECT tCASE tWITH
@@ -147,15 +136,12 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <dbl> tDouble
 %token <date> tDate
 
-%right tNOT
-%left '=' tNEQ '>' '<' tGTEQ tLTEQ tIS
-
 %type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt BodyStatements IfStatement Else_opt
-%type <statement> GlobalDimDeclaration StatementsBody StatementsBody_opt
+%type <statement> GlobalDimDeclaration
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression ExpressionNl_opt
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
-%type <expression> UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
-%type <expression> NumericLiteralExpression
+%type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
+%type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> DoType Preserve_opt
@@ -163,8 +149,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
-%type <uint> Storage Storage_opt IntegerValue SubFirstArgOp
-%type <expression> SubFirstArgRest
+%type <uint> Storage Storage_opt IntegerValue
 %type <dim_decl> DimDeclList DimDecl MemberDeclList MemberDecl
 %type <dim_list> DimList
 %type <redim_decl> ReDimDeclList ReDimDecl
@@ -186,13 +171,8 @@ SourceElements
     : /* empty */
     | SourceElements GlobalDimDeclaration StSep
                                             { source_add_statement(ctx, $2); }
-    | SourceElements SimpleStatement StSep  { source_add_statement(ctx, $2); }
-    | SourceElements ClassDeclaration StSep { source_add_class(ctx, $2); }
-
-/* A Class declaration is reachable only here at script global scope, not from
-   the shared SimpleStatement used by every body, so a Class anywhere else is
-   rejected as a syntax error (see the tCLASS rule in SimpleStatement), while
-   still being allowed after another statement, e.g. Dim x : Class C. */
+    | SourceElements StatementNl            { source_add_statement(ctx, $2); }
+    | SourceElements ClassDeclaration       { source_add_class(ctx, $2); }
 
 GlobalDimDeclaration
     : tPRIVATE tCONST ConstDeclList         { $$ = new_const_statement(ctx, @$, $3); CHECK_ERROR; }
@@ -218,13 +198,6 @@ StatementsNl_opt
 StatementsNl
     : SimpleStatement StSep                 { $$ = $1; }
     | SimpleStatement StSep StatementsNl    { $$ = link_statements($1, $3); }
-    | SimpleStatement tEND tIF              { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_FIRST_STATEMENT); YYABORT; }
-    | SimpleStatement tEND tSELECT         { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_FIRST_STATEMENT); YYABORT; }
-    | SimpleStatement tEND tWHILE          { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
-    | SimpleStatement tWEND                { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
-    | SimpleStatement tLOOP DoType Expression
-                                            { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
-    | SimpleStatement tLOOP                { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
 
 StatementNl
     : Statement tNL                         { $$ = $1; }
@@ -239,101 +212,46 @@ Statement
 SimpleStatement
     : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
-    | CallExpression Arguments SubFirstArgOp Expression SubFirstArgRest
-                                            { expression_t *first_arg, *combined;
-                                              call_expression_t *call_expr;
-                                              first_arg = new_unary_expression(ctx, EXPR_BRACKETS, $2);
-                                              CHECK_ERROR;
-                                              combined = new_binary_expression(ctx, $3, first_arg, $4);
-                                              CHECK_ERROR;
-                                              combined->next = $5;
-                                              call_expr = new_call_expression(ctx, $1, combined);
-                                              CHECK_ERROR;
-                                              $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
                                             { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
     | tREDIM Preserve_opt ReDimDeclList     { $$ = new_redim_statement(ctx, @$, $2, $3); CHECK_ERROR; }
-    | tERASE Identifier                    { $$ = new_erase_statement(ctx, @$, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, @$, STAT_WHILE, $2, $4); CHECK_ERROR; }
-    | tWHILE Expression StSep StatementsNl_opt error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WEND); YYABORT; }
     | tDO DoType Expression StSep StatementsNl_opt tLOOP
                                             { $$ = new_while_statement(ctx, @$, $2 ? STAT_WHILELOOP : STAT_UNTIL, $3, $5);
                                               CHECK_ERROR; }
-    | tDO DoType Expression StSep StatementsNl_opt error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LOOP); YYABORT; }
     | tDO StSep StatementsNl_opt tLOOP DoType Expression
                                             { $$ = new_while_statement(ctx, @4, $5 ? STAT_DOWHILE : STAT_DOUNTIL, $6, $3);
                                               CHECK_ERROR; }
     | tDO StSep StatementsNl_opt tLOOP      { $$ = new_while_statement(ctx, @$, STAT_DOWHILE, NULL, $3); CHECK_ERROR; }
-    | tDO StSep StatementsNl_opt error      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LOOP); YYABORT; }
-    | tDO error                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WHILE_UNTIL_EOS); YYABORT; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, @$, $1); CHECK_ERROR; }
-    | tCLASS                                { /* A Class is only valid at global scope (see SourceElements). The real
-                                                ClassDeclaration wins the shift there, so this rule only matches in a
-                                                body, where it reports the syntax error native reports. It is needed:
-                                                without it, error recovery surfaces a different, context-dependent
-                                                error code instead of the plain syntax error. */
-                                              ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR); YYABORT; }
-    | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0, @2); CHECK_ERROR; }
-    | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0, @2); CHECK_ERROR; }
-    | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @2); CHECK_ERROR; }
-    | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0, @2); CHECK_ERROR; }
-    | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0, @2); CHECK_ERROR; }
-    | tSET CallExpression '=' Expression    { if($2->type == EXPR_ME) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_INVALID_USE_OF_ME); YYABORT; }
-                                             $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
+    | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0, @$); CHECK_ERROR; }
+    | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0, @$); CHECK_ERROR; }
+    | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @$); CHECK_ERROR; }
+    | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0, @$); CHECK_ERROR; }
+    | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0, @$); CHECK_ERROR; }
+    | tSET CallExpression '=' Expression    { $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0, @$); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, @$, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, @$, FALSE); CHECK_ERROR; }
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, @$, $2); CHECK_ERROR; }
-    | tFOR MemberExpression '=' Expression tTO Expression Step_opt StSep StatementsNl_opt tNEXT
-                                            { if($2->obj_expr) {
-                                                  ctx->error_loc = @3;
-                                                  ctx->hres = MAKE_VBSERROR(VBSE_INVALID_FOR_CONTROL);
-                                                  CHECK_ERROR;
-                                              }
-                                              $$ = new_forto_statement(ctx, @$, $2->identifier, $4, $6, $7, $9);
-                                              CHECK_ERROR; }
-    | tFOR MemberExpression '=' Expression error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_TO); YYABORT; }
-    | tFOR MemberExpression '=' Expression tTO Expression Step_opt StSep StatementsNl_opt error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
-    | tFOR tEACH MemberExpression tIN Expression StSep StatementsNl_opt tNEXT
-                                            { if($3->obj_expr) {
-                                                  ctx->error_loc = @4;
-                                                  ctx->hres = MAKE_VBSERROR(VBSE_INVALID_FOR_CONTROL);
-                                                  CHECK_ERROR;
-                                              }
-                                              $$ = new_foreach_statement(ctx, @$, $3->identifier, $5, $7); }
-    | tFOR tEACH MemberExpression error     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
-    | tFOR tEACH MemberExpression tIN Expression StSep StatementsNl_opt error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
-    | tFOR tEACH error                      { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
-    | tFOR error                            { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    | tFOR Identifier '=' Expression tTO Expression Step_opt StSep StatementsNl_opt tNEXT
+                                            { $$ = new_forto_statement(ctx, @$, $2, $4, $6, $7, $9); CHECK_ERROR; }
+    | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt tNEXT
+                                            { $$ = new_foreach_statement(ctx, @$, $3, $5, $7); }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, @$, $3, $5); }
-    | tSELECT tCASE Expression StSep CaseClausules tEND error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SELECT); YYABORT; }
-    | tSELECT error                         { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CASE); YYABORT; }
     | tWITH Expression StSep StatementsNl_opt tEND tWITH
                                             { $$ = new_with_statement(ctx, @$, $2, $4); }
-    | tWITH Expression StSep StatementsNl_opt tEND error
-                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WITH); YYABORT; }
-    | tPROPERTY tGET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
-    | tPROPERTY tLET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
-    | tPROPERTY tSET                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_INSIDE_CLASS); YYABORT; }
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
-    | CallExpression '.' error              { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
     | tDOT tIdentifier                      { expression_t *dot_expr = new_expression(ctx, EXPR_DOT, sizeof(*dot_expr)); CHECK_ERROR;
                                               $$ = new_member_expression(ctx, dot_expr, $2); CHECK_ERROR; }
-    | tDOT error                            { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 Preserve_opt
     : /* empty */                           { $$ = FALSE; }
@@ -344,9 +262,9 @@ MemberDeclList
     | MemberDecl ',' MemberDeclList         { $1->next = $3; $$ = $1; }
 
 MemberDecl
-    : MemberIdentifier                      { $$ = new_dim_decl(ctx, $1, @1, FALSE, NULL); CHECK_ERROR; }
-    | MemberIdentifier '(' DimList ')'      { $$ = new_dim_decl(ctx, $1, @1, TRUE, $3); CHECK_ERROR; }
-    | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, @1, TRUE, NULL); CHECK_ERROR; }
+    : MemberIdentifier                      { $$ = new_dim_decl(ctx, $1, FALSE, NULL); CHECK_ERROR; }
+    | MemberIdentifier '(' DimList ')'      { $$ = new_dim_decl(ctx, $1, TRUE, $3); CHECK_ERROR; }
+    | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, TRUE, NULL); CHECK_ERROR; }
 
 ReDimDecl
     : tIdentifier '(' ArgumentList ')'      { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
@@ -354,32 +272,30 @@ ReDimDecl
 ReDimDeclList
     : ReDimDecl                             { $$ = $1; }
     | ReDimDecl ',' ReDimDeclList           { $1->next = $3; $$ = $1; }
-    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
-
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
     | DimDecl ',' DimDeclList               { $1->next = $3; $$ = $1; }
-    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 DimDecl
-    : Identifier                            { $$ = new_dim_decl(ctx, $1, @1, FALSE, NULL); CHECK_ERROR; }
-    | Identifier '(' DimList ')'            { $$ = new_dim_decl(ctx, $1, @1, TRUE, $3); CHECK_ERROR; }
-    | Identifier tEMPTYBRACKETS             { $$ = new_dim_decl(ctx, $1, @1, TRUE, NULL); CHECK_ERROR; }
+    : Identifier                            { $$ = new_dim_decl(ctx, $1, FALSE, NULL); CHECK_ERROR; }
+    | Identifier '(' DimList ')'            { $$ = new_dim_decl(ctx, $1, TRUE, $3); CHECK_ERROR; }
+    | Identifier tEMPTYBRACKETS             { $$ = new_dim_decl(ctx, $1, TRUE, NULL); CHECK_ERROR; }
 
 DimList
     : IntegerValue                          { $$ = new_dim(ctx, $1, NULL); }
     | IntegerValue ',' DimList              { $$ = new_dim(ctx, $1, $3); }
-    | error                                 { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_INTEGER_CONSTANT); YYABORT; }
 
 ConstDeclList
     : ConstDecl                             { $$ = $1; }
     | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
-    | error                                 { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
 
 ConstDecl
-    : Identifier '=' Expression             { $$ = new_const_decl(ctx, @1, $1, $3); CHECK_ERROR; }
-    | Identifier error                      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_ASSIGN); YYABORT; }
+    : Identifier '=' ConstExpression        { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
+
+ConstExpression
+    : LiteralExpression                     { $$ = $1; }
+    | '-' NumericLiteralExpression          { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
 
 DoType
     : tWHILE        { $$ = TRUE; }
@@ -389,47 +305,15 @@ Step_opt
     : /* empty */                           { $$ = NULL;}
     | tSTEP Expression                      { $$ = $2; }
 
-SubFirstArgRest
-    : /* empty */                           { $$ = NULL; }
-    | ',' ArgumentList                      { $$ = $2; }
-
-SubFirstArgOp
-    : '+'                                   { $$ = EXPR_ADD; }
-    | '-'                                   { $$ = EXPR_SUB; }
-    | '*'                                   { $$ = EXPR_MUL; }
-    | '/'                                   { $$ = EXPR_DIV; }
-    | '\\'                                  { $$ = EXPR_IDIV; }
-    | '^'                                   { $$ = EXPR_EXP; }
-    | '&'                                   { $$ = EXPR_CONCAT; }
-    | '<'                                   { $$ = EXPR_LT; }
-    | '>'                                   { $$ = EXPR_GT; }
-    | tLTEQ                                 { $$ = EXPR_LTEQ; }
-    | tGTEQ                                 { $$ = EXPR_GTEQ; }
-    | tNEQ                                  { $$ = EXPR_NEQUAL; }
-    | tMOD                                  { $$ = EXPR_MOD; }
-    | tAND                                  { $$ = EXPR_AND; }
-    | tOR                                   { $$ = EXPR_OR; }
-    | tXOR                                  { $$ = EXPR_XOR; }
-    | tEQV                                  { $$ = EXPR_EQV; }
-    | tIMP                                  { $$ = EXPR_IMP; }
-    | tIS                                   { $$ = EXPR_IS; }
-
 IfStatement
-    : tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt tEND tIF
-                                                { $$ = new_if_statement(ctx, @$, $2, $6, $7, $8); CHECK_ERROR; }
-    | tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt error
-                                                { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END); YYABORT; }
+    : tIF Expression tTHEN tNL StatementsNl_opt ElseIfs_opt Else_opt tEND tIF
+                                               { $$ = new_if_statement(ctx, @$, $2, $5, $6, $7); CHECK_ERROR; }
     | tIF Expression tTHEN Statement EndIf_opt { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
     | tIF Expression tTHEN Statement tELSE Statement EndIf_opt
-                                                { $$ = new_if_statement(ctx, @$, $2, $4, NULL, $6); CHECK_ERROR; }
-    | tIF Expression tTHEN Statement tELSE EndIf_opt
-                                                { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
-    | tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt tEND error
-                                                { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IF); YYABORT; }
-    | tIF Expression error                       { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_THEN); YYABORT; }
+                                               { $$ = new_if_statement(ctx, @$, $2, $4, NULL, $6); CHECK_ERROR; }
 
 EndIf_opt
-    : /* empty */ %prec LOWER_THAN_ELSE
+    : /* empty */
     | tEND tIF
 
 ElseIfs_opt
@@ -441,27 +325,12 @@ ElseIfs
     | ElseIf ElseIfs                        { $1->next = $2; $$ = $1; }
 
 ElseIf
-    : tELSEIF Expression tTHEN StSep StatementsNl_opt
+    : tELSEIF Expression tTHEN StSep_opt StatementsNl_opt
                                             { $$ = new_elseif_decl(ctx, @$, $2, $5); }
-    | tELSEIF Expression tTHEN StatementsBody_opt
-                                            { $$ = new_elseif_decl(ctx, @$, $2, $4); }
 
 Else_opt
     : /* empty */                           { $$ = NULL; }
-    | tELSE StSep StatementsBody_opt        { $$ = $3; }
-    | tELSE StatementsBody                  { $$ = $2; }
-    | tELSE tEND tIF                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
-
-StatementsBody_opt
-    : /* empty */                           { $$ = NULL; }
-    | SimpleStatement                       { $$ = $1; }
-    | SimpleStatement StSep StatementsBody_opt
-                                            { $1->next = $3; $$ = $1; }
-
-StatementsBody
-    : SimpleStatement                       { $$ = $1; }
-    | SimpleStatement StSep StatementsBody_opt
-                                            { $1->next = $3; $$ = $1; }
+    | tELSE StSep_opt StatementsNl_opt      { $$ = $3; }
 
 CaseClausules
     : /* empty */                                                      { $$ = NULL; }
@@ -506,19 +375,22 @@ OrExpression
     | OrExpression tOR AndExpression            { $$ = new_binary_expression(ctx, EXPR_OR, $1, $3); CHECK_ERROR; }
 
 AndExpression
-    : EqualityExpression                            { $$ = $1; }
-    | AndExpression tAND EqualityExpression         { $$ = new_binary_expression(ctx, EXPR_AND, $1, $3); CHECK_ERROR; }
+    : NotExpression                             { $$ = $1; }
+    | AndExpression tAND NotExpression          { $$ = new_binary_expression(ctx, EXPR_AND, $1, $3); CHECK_ERROR; }
+
+NotExpression
+    : EqualityExpression            { $$ = $1; }
+    | tNOT NotExpression            { $$ = new_unary_expression(ctx, EXPR_NOT, $2); CHECK_ERROR; }
 
 EqualityExpression
-    : ConcatExpression                              { $$ = $1; }
-    | tNOT EqualityExpression                       { $$ = new_unary_expression(ctx, EXPR_NOT, $2); CHECK_ERROR; }
-    | EqualityExpression '=' EqualityExpression     { $$ = new_binary_expression(ctx, EXPR_EQUAL, $1, $3); CHECK_ERROR; }
-    | EqualityExpression tNEQ EqualityExpression    { $$ = new_binary_expression(ctx, EXPR_NEQUAL, $1, $3); CHECK_ERROR; }
-    | EqualityExpression '>' EqualityExpression     { $$ = new_binary_expression(ctx, EXPR_GT, $1, $3); CHECK_ERROR; }
-    | EqualityExpression '<' EqualityExpression     { $$ = new_binary_expression(ctx, EXPR_LT, $1, $3); CHECK_ERROR; }
-    | EqualityExpression tGTEQ EqualityExpression   { $$ = new_binary_expression(ctx, EXPR_GTEQ, $1, $3); CHECK_ERROR; }
-    | EqualityExpression tLTEQ EqualityExpression   { $$ = new_binary_expression(ctx, EXPR_LTEQ, $1, $3); CHECK_ERROR; }
-    | EqualityExpression tIS EqualityExpression     { $$ = new_binary_expression(ctx, EXPR_IS, $1, $3); CHECK_ERROR; }
+    : ConcatExpression                          { $$ = $1; }
+    | EqualityExpression '=' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_EQUAL, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tNEQ ConcatExpression  { $$ = new_binary_expression(ctx, EXPR_NEQUAL, $1, $3); CHECK_ERROR; }
+    | EqualityExpression '>' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_GT, $1, $3); CHECK_ERROR; }
+    | EqualityExpression '<' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_LT, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tGTEQ ConcatExpression { $$ = new_binary_expression(ctx, EXPR_GTEQ, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tLTEQ ConcatExpression { $$ = new_binary_expression(ctx, EXPR_LTEQ, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tIS ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_IS, $1, $3); CHECK_ERROR; }
 
 ConcatExpression
     : AdditiveExpression                        { $$ = $1; }
@@ -586,14 +458,10 @@ IntegerValue
 
 PrimaryExpression
     : tEXPRLBRACKET Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
-    | tEXPRLBRACKET Expression error          { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_RPAREN); YYABORT; }
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
-    : tCLASS Identifier StSep ClassBody tEND tCLASS             { $4->name = $2; $4->loc = @2; $$ = $4; }
-    | tCLASS Identifier tEND tCLASS         { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
-    | tCLASS Identifier StSep ClassBody tEND error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CLASS); YYABORT; }
-    | tCLASS error                          { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+    : tCLASS Identifier StSep ClassBody tEND tCLASS StSep       { $4->name = $2; $$ = $4; }
 
 ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
@@ -608,48 +476,21 @@ ClassBody
 
 PropertyDecl
     : Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
-                                    { $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPGET, $1, $5, $7); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPGET, $1, $5, $7); CHECK_ERROR; }
     | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
     | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
-    | Storage_opt tPROPERTY tLET Identifier error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
-    | Storage_opt tPROPERTY tSET Identifier error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
-    | Storage_opt tPROPERTY error   { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LET_SET_GET); YYABORT; }
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
 
 FunctionDecl
     : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, NULL, $5); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, NULL, $5); CHECK_ERROR; }
     | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tSUB Identifier StSep BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
-    | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
+                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
     | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, NULL, $5); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, NULL, $5); CHECK_ERROR; }
     | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
-    | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
-    | Storage_opt tSUB Identifier error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
-    | Storage_opt tFUNCTION Identifier error
-                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
-    | Storage_opt tSUB error        { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
-    | Storage_opt tFUNCTION error   { override_generic_error(ctx, MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER)); YYABORT; }
+                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
 
 Storage_opt
     : /* empty*/                    { $$ = 0; }
@@ -657,7 +498,6 @@ Storage_opt
 
 Storage
     : tPUBLIC tDEFAULT              { $$ = STORAGE_IS_DEFAULT; }
-    | tDEFAULT tPRIVATE             { ctx->error_loc = @1; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_MUST_BE_PUBLIC); CHECK_ERROR; }
     | tPUBLIC                       { $$ = 0; }
     | tPRIVATE                      { $$ = STORAGE_IS_PRIVATE; }
 
@@ -715,38 +555,12 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
     if(ctx->error_loc == -1)
         ctx->error_loc = *loc;
     if(ctx->hres == S_OK) {
-        switch(ctx->last_token) {
-        case tLOOP:
-            ctx->hres = MAKE_VBSERROR(VBSE_LOOP_WITHOUT_DO);
-            break;
-        case tNEXT:
-            ctx->hres = MAKE_VBSERROR(VBSE_UNEXPECTED_NEXT);
-            break;
-        case tInt:
-        case tDouble:
-        case tString:
-            /* A literal can only start an expression, so a misplaced literal
-               means the statement should have ended before it. Error
-               productions override this in contexts expecting an identifier. */
-            ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT);
-            break;
-        default:
-            WARN("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
-            ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR);
-        }
+        FIXME("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
+        ctx->hres = E_FAIL;
     }else {
         WARN("%s: %08lx\n", debugstr_w(ctx->code + *loc), ctx->hres);
     }
     return 0;
-}
-
-/* Replace the generic code chosen by parser_error with a context-specific
-   one, keeping specific errors reported by the lexer or other productions. */
-static void override_generic_error(parser_ctx_t *ctx, HRESULT hres)
-{
-    if(ctx->hres == MAKE_VBSERROR(VBSE_SYNTAX_ERROR)
-            || ctx->hres == MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT))
-        ctx->hres = hres;
 }
 
 static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
@@ -769,12 +583,8 @@ static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
 
 static void source_add_class(parser_ctx_t *ctx, class_decl_t *class_decl)
 {
-    class_decl_t **iter;
-
-    /* Append to keep classes in source order, so a redefinition is reported at the later declaration. */
-    class_decl->next = NULL;
-    for(iter = &ctx->class_decls; *iter; iter = &(*iter)->next);
-    *iter = class_decl;
+    class_decl->next = ctx->class_decls;
+    ctx->class_decls = class_decl;
 }
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr)
@@ -920,7 +730,7 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
 {
     call_expression_t *call_expr;
 
-    if(callee_expr->type == EXPR_MEMBER || callee_expr->type == EXPR_ME)
+    if(callee_expr->type == EXPR_MEMBER)
         return new_call_expression(ctx, callee_expr, arguments);
     if(callee_expr->type != EXPR_CALL) {
         FIXME("Unhandled for expr type %u\n", callee_expr->type);
@@ -934,8 +744,8 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
     }
 
     if(call_expr->args->next) {
-        ctx->hres = MAKE_VBSERROR(VBSE_CANNOT_USE_PARENS_CALLING_SUB);
-        ctx->error_loc = ctx->ptr - ctx->code;
+        FIXME("Invalid syntax: invalid use of parentheses for arguments\n");
+        ctx->hres = E_FAIL;
         return NULL;
     }
 
@@ -1036,7 +846,7 @@ static statement_t *new_set_statement(parser_ctx_t *ctx, unsigned loc, expressio
     return &stat->stat;
 }
 
-static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, unsigned loc, BOOL is_array, dim_list_t *dims)
+static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL is_array, dim_list_t *dims)
 {
     dim_decl_t *decl;
 
@@ -1045,7 +855,6 @@ static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, unsigned l
         return NULL;
 
     decl->name = name;
-    decl->loc = loc;
     decl->is_array = is_array;
     decl->dims = dims;
     decl->next = NULL;
@@ -1101,18 +910,6 @@ static statement_t *new_redim_statement(parser_ctx_t *ctx, unsigned loc, BOOL pr
 
     stat->preserve = preserve;
     stat->redim_decls = decls;
-    return &stat->stat;
-}
-
-static statement_t *new_erase_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier)
-{
-    erase_statement_t *stat;
-
-    stat = new_statement(ctx, STAT_ERASE, sizeof(*stat), loc);
-    if(!stat)
-        return NULL;
-
-    stat->identifier = identifier;
     return &stat->stat;
 }
 
@@ -1258,8 +1055,8 @@ static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL 
     return arg_decl;
 }
 
-static function_decl_t *new_function_decl(parser_ctx_t *ctx, unsigned loc, unsigned name_loc, const WCHAR *name,
-        function_type_t type, unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
+static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, function_type_t type,
+        unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
 {
     function_decl_t *decl;
     BOOL is_default = FALSE;
@@ -1268,7 +1065,8 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, unsigned loc, unsig
         if(type == FUNC_PROPGET || type == FUNC_FUNCTION || type == FUNC_SUB) {
             is_default = TRUE;
         }else {
-            ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET);
+            FIXME("Invalid default property\n");
+            ctx->hres = E_FAIL;
             return NULL;
         }
     }
@@ -1283,8 +1081,6 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, unsigned loc, unsig
     decl->is_default = is_default;
     decl->args = arg_decl;
     decl->body = body;
-    decl->loc = loc;
-    decl->name_loc = name_loc;
     decl->next = NULL;
     decl->next_prop_func = NULL;
     return decl;
@@ -1310,32 +1106,10 @@ static class_decl_t *new_class_decl(parser_ctx_t *ctx)
     if(!class_decl)
         return NULL;
 
-    class_decl->loc = 0;
     class_decl->funcs = NULL;
     class_decl->props = NULL;
     class_decl->next = NULL;
     return class_decl;
-}
-
-static unsigned count_args(arg_decl_t *args)
-{
-    unsigned cnt = 0;
-    while(args) { cnt++; args = args->next; }
-    return cnt;
-}
-
-static BOOL check_property_args(function_decl_t *a, function_decl_t *b)
-{
-    unsigned a_cnt = count_args(a->args);
-    unsigned b_cnt = count_args(b->args);
-
-    /* Property Get takes N args, Property Let/Set takes N+1 */
-    if(a->type == FUNC_PROPGET)
-        return (b_cnt == a_cnt + 1);
-    if(b->type == FUNC_PROPGET)
-        return (a_cnt == b_cnt + 1);
-    /* Let vs Set: same arg count */
-    return (a_cnt == b_cnt);
 }
 
 static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_decl, function_decl_t *decl)
@@ -1343,25 +1117,17 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
     function_decl_t *iter;
 
     for(iter = class_decl->funcs; iter; iter = iter->next) {
-        if(decl->is_default && iter->is_default) {
-            ctx->error_loc = iter->loc;
-            ctx->hres = MAKE_VBSERROR(VBSE_MULTIPLE_DEFAULT_MEMBERS);
-            return NULL;
-        }
         if(!wcsicmp(iter->name, decl->name)) {
-            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION
-                    || iter->type == FUNC_SUB || iter->type == FUNC_FUNCTION) {
-                WARN("%s::%s redefined\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
-                ctx->error_loc = iter->name_loc;
-                ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
+                FIXME("Redefinition of %s::%s\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                ctx->hres = E_FAIL;
                 return NULL;
             }
 
             while(1) {
                 if(iter->type == decl->type) {
-                    WARN("%s::%s redefined\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
-                    ctx->error_loc = iter->name_loc;
-                    ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+                    FIXME("Redefinition of %s::%s\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                    ctx->hres = E_FAIL;
                     return NULL;
                 }
                 if(!iter->next_prop_func)
@@ -1369,11 +1135,6 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
                 iter = iter->next_prop_func;
             }
 
-            if(!check_property_args(iter, decl)) {
-                ctx->error_loc = decl->loc;
-                ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_ARG_COUNT_MISMATCH);
-                return NULL;
-            }
             iter->next_prop_func = decl;
             return class_decl;
         }
@@ -1406,43 +1167,15 @@ static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, d
     return class_decl;
 }
 
-static BOOL is_const_expression(expression_t *expr)
-{
-    switch(expr->type) {
-    case EXPR_INT:
-    case EXPR_DOUBLE:
-    case EXPR_STRING:
-    case EXPR_BOOL:
-    case EXPR_DATE:
-    case EXPR_EMPTY:
-    case EXPR_NULL:
-    case EXPR_NOTHING:
-        return TRUE;
-    case EXPR_NEG: {
-        unary_expression_t *unary = (unary_expression_t*)expr;
-        return unary->subexpr->type == EXPR_INT || unary->subexpr->type == EXPR_DOUBLE;
-    }
-    default:
-        return FALSE;
-    }
-}
-
-static const_decl_t *new_const_decl(parser_ctx_t *ctx, unsigned loc, const WCHAR *name, expression_t *expr)
+static const_decl_t *new_const_decl(parser_ctx_t *ctx, const WCHAR *name, expression_t *expr)
 {
     const_decl_t *decl;
-
-    if(!is_const_expression(expr)) {
-        ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LITERAL_CONSTANT);
-        ctx->error_loc = ctx->ptr - ctx->code - 1;
-        return NULL;
-    }
 
     decl = parser_alloc(ctx, sizeof(*decl));
     if(!decl)
         return NULL;
 
     decl->name = name;
-    decl->loc = loc;
     decl->value_expr = expr;
     decl->next = NULL;
     return decl;

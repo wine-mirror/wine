@@ -29,6 +29,7 @@
 #include <dlfcn.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "unixlib.h"
 
 static IS8 (*pCT_init)(IU16 ctn, IU16 pn);

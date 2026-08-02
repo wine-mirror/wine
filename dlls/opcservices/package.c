@@ -237,10 +237,7 @@ static HRESULT WINAPI opc_part_enum_MoveNext(IOpcPartEnumerator *iface, BOOL *ha
     if (has_part_collection_changed(part_enum))
         return OPC_E_ENUM_COLLECTION_CHANGED;
 
-    if (part_enum->pos == part_enum->part_set->count)
-        return OPC_E_ENUM_CANNOT_MOVE_NEXT;
-
-    if (part_enum->pos == ~(size_t)0 || part_enum->pos < part_enum->part_set->count)
+    if (part_enum->part_set->count && (part_enum->pos == ~(size_t)0 || part_enum->pos < part_enum->part_set->count))
         part_enum->pos++;
 
     *has_next = part_enum->pos < part_enum->part_set->count;
@@ -260,10 +257,10 @@ static HRESULT WINAPI opc_part_enum_MovePrevious(IOpcPartEnumerator *iface, BOOL
     if (has_part_collection_changed(part_enum))
         return OPC_E_ENUM_COLLECTION_CHANGED;
 
-    if (part_enum->pos == ~(size_t)0)
-        return OPC_E_ENUM_CANNOT_MOVE_PREVIOUS;
+    if (part_enum->pos != ~(size_t)0)
+        part_enum->pos--;
 
-    *has_previous = --part_enum->pos != ~(size_t)0;
+    *has_previous = part_enum->pos != ~(size_t)0;
 
     return S_OK;
 }
@@ -1608,8 +1605,7 @@ static HRESULT opc_package_add_default_content_type(struct content_types *types,
 static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPart *part)
 {
     struct content_type *cur;
-    BSTR ext;
-    WCHAR *content_type;
+    BSTR ext, content_type;
     BOOL added = FALSE;
     IOpcPartUri *name;
     HRESULT hr;
@@ -1653,7 +1649,7 @@ static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPar
         hr = opc_package_add_default_content_type(types, ext, content_type);
 
     SysFreeString(ext);
-    CoTaskMemFree(content_type);
+    SysFreeString(content_type);
 
     return hr;
 }
@@ -2020,10 +2016,13 @@ HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *
     IXmlWriter *writer;
     HRESULT hr;
 
+    if (flags != OPC_WRITE_FORCE_ZIP32)
+        FIXME("Unsupported write flags %#x.\n", flags);
+
     if (FAILED(hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL)))
         return hr;
 
-    if (FAILED(hr = compress_create_archive(stream, flags != OPC_WRITE_FORCE_ZIP32, &archive)))
+    if (FAILED(hr = compress_create_archive(stream, &archive)))
     {
         IXmlWriter_Release(writer);
         return hr;
@@ -2041,15 +2040,13 @@ HRESULT opc_package_write(IOpcPackage *package, OPC_WRITE_FLAGS flags, IStream *
     /* Parts. */
     if (SUCCEEDED(hr))
         hr = opc_package_write_parts(archive, package, writer);
-    if (SUCCEEDED(hr))
-        hr = compress_finalize_archive(archive);
 
     if (rels)
         IOpcRelationshipSet_Release(rels);
     if (uri)
         IOpcUri_Release(uri);
 
-    compress_release_archive(archive);
+    compress_finalize_archive(archive);
     IXmlWriter_Release(writer);
 
     return hr;

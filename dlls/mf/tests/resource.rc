@@ -94,18 +94,6 @@ nv12frame.bmp RCDATA nv12frame.bmp
 nv12frame-2d.bmp RCDATA nv12frame-2d.bmp
 
 /* Generated from running the tests on Windows */
-/* @makedep: nv12frame-crop.bmp */
-nv12frame-crop.bmp RCDATA nv12frame-crop.bmp
-
-/* Generated from running the tests on Windows */
-/* @makedep: nv12frame-crop-1d.bmp */
-nv12frame-crop-1d.bmp RCDATA nv12frame-crop-1d.bmp
-
-/* Generated from running the tests on Windows */
-/* @makedep: nv12frame-crop-2d.bmp */
-nv12frame-crop-2d.bmp RCDATA nv12frame-crop-2d.bmp
-
-/* Generated from running the tests on Windows */
 /* @makedep: nv12frame-grabber.bmp */
 nv12frame-grabber.bmp RCDATA nv12frame-grabber.bmp
 
@@ -120,10 +108,6 @@ nv12frame-flip-2d.bmp RCDATA nv12frame-flip-2d.bmp
 /* Generated from running the tests on Windows */
 /* @makedep: i420frame.bmp */
 i420frame.bmp RCDATA i420frame.bmp
-
-/* Generated from running the tests on Windows */
-/* @makedep: i420frame.bmp */
-i420frame-2d.bmp RCDATA i420frame-2d.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: rgb32frame.bmp */
@@ -178,6 +162,10 @@ rgb555frame.bmp RCDATA rgb555frame.bmp
 rgb555frame-flip.bmp RCDATA rgb555frame-flip.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: iv50frame.bin */
+iv50frame.bin RCDATA iv50frame.bin
+
+/* Generated from running the tests on Windows */
 /* @makedep: rgb24frame.bmp */
 rgb24frame.bmp RCDATA rgb24frame.bmp
 
@@ -189,12 +177,3 @@ rgb24frame.bmp RCDATA rgb24frame.bmp
  */
 /* @makedep: test.mp4 */
 test.mp4 RCDATA test.mp4
-
-/* Generated with:
- *  gst-launch-1.0 videotestsrc num-buffers=60 pattern=smpte100 ! \
- *      video/x-raw,format=I420,width=72,height=64,framerate=30000/1001 ! \
- *      videoflip method=clockwise ! videoconvert ! \
- *      x264enc ! mp4mux ! filesink location=dlls/mf/tests/test-unaligned.mp4
- */
-/* @makedep: test-unaligned.mp4 */
-test-unaligned.mp4 RCDATA test-unaligned.mp4

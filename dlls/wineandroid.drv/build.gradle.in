@@ -18,29 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-if (GradleVersion.current() < GradleVersion.version("9.4.0")) {
-    throw new GradleException("Gradle 9.4.0+ required")
-}
-
 apply plugin: 'com.android.application'
 
 buildscript
 {
     repositories
     {
-        google()
-        mavenCentral()
+        jcenter()
     }
     dependencies
     {
-        classpath "com.android.tools.build:gradle:9.1.0"
+        classpath "com.android.tools.build:gradle:2.2.1"
     }
-}
-
-repositories
-{
-    google()
-    mavenCentral()
 }
 
 def get_srcdir()
@@ -63,39 +52,32 @@ def add_icon_task( dir, scale )
     }
 }
 
-def checksum_task = tasks.create( "checksumAssets", Exec )
+def checksum_task()
 {
-    commandLine "sh", "-c",
-                "(test -d assets && " +
-                "rm -f assets/files.sum assets/sums.sum && " +
-                "sha256sum \$(find assets -type f -print) | sed 's/ assets\\// /' >files.sum && " +
-                "sha256sum files.sum >sums.sum && " +
-                "mv files.sum sums.sum assets) || rm -rf assets";
+    return tasks.create( "checksumAssets", Exec ) {
+        commandLine "sh", "-c",
+                    "(test -d assets && " +
+                    "rm -f assets/files.sum assets/sums.sum && " +
+                    "sha256sum \$(find assets -type f -print) | sed 's/ assets\\// /' >files.sum && " +
+                    "sha256sum files.sum >sums.sum && " +
+                    "mv files.sum sums.sum assets) || rm -rf assets";
+    }
 }
 
-def icon_tasks = [
-    add_icon_task( "ldpi", 0.75 ),
-    add_icon_task( "mdpi", 1 ),
-    add_icon_task( "hdpi", 1.5 ),
-    add_icon_task( "xhdpi", 2 ),
-    add_icon_task( "xxhdpi", 3 ),
-    add_icon_task( "xxxhdpi", 4 )
-]
-
-tasks.configureEach
+tasks.whenTaskAdded
 {
-    if (name.equals( "preBuild" ) ||
-        name.equals( "processDebugResources" ) ||
-        name.equals( "processDebugNavigationResources" ) ||
-        name.equals( "mergeDebugResources" ))
+    if (name.equals( "generateDebugResources" ))
     {
-        dependsOn icon_tasks
+        dependsOn add_icon_task( "ldpi", 0.75 )
+        dependsOn add_icon_task( "mdpi", 1 )
+        dependsOn add_icon_task( "hdpi", 1.5 )
+        dependsOn add_icon_task( "xhdpi", 2 )
+        dependsOn add_icon_task( "xxhdpi", 3 )
+        dependsOn add_icon_task( "xxxhdpi", 4 )
     }
-    if (name.equals( "preBuild" ) ||
-        name.equals( "generateDebugAssets" ) ||
-        name.equals( "mergeDebugAssets" ))
+    if (name.equals( "generateDebugAssets" ))
     {
-        dependsOn checksum_task
+        dependsOn checksum_task()
     }
 }
 
@@ -106,16 +88,16 @@ tasks.withType(JavaCompile)
 
 android
 {
-    namespace "org.winehq.wine"
-    compileSdkVersion 36
+    compileSdkVersion 25
+    buildToolsVersion "25.0.3"
 
     defaultConfig
     {
         applicationId "org.winehq.wine"
-        minSdkVersion 28
-        targetSdkVersion 28
+        minSdkVersion 17
         versionCode 1
         versionName "@PACKAGE_VERSION@"
+        setProperty( "archivesBaseName", "wine" )
     }
 
     sourceSets
@@ -126,27 +108,5 @@ android
         main.java.excludes = [ "build" ]
         main.res.srcDirs = [ "res" ]
         main.manifest.srcFile get_srcdir() + "/AndroidManifest.xml"
-    }
-
-    compileOptions
-    {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        compileOptions.targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-
-configurations.configureEach
-{
-    exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib"
-}
-
-androidComponents
-{
-    onVariants(selector().all())
-    { variant ->
-        variant.outputs.forEach
-        { output ->
-            output.outputFileName.set("wine-${variant.name}.apk")
-        }
     }
 }

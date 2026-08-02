@@ -17,14 +17,6 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.security.cryptography.idl";
-import "windows.security.credentials.idl";
-
-namespace Windows.Security.Cryptography {
-    runtimeclass CryptographicBuffer;
-}
-namespace Windows.Security.Credentials {
-    runtimeclass KeyCredentialManager;
-}
+#include "windows.security.cryptography.idl"
+#include "windows.security.credentials.idl"

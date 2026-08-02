@@ -21,7 +21,6 @@
 #define COBJMACROS
 
 #include <stdint.h>
-#include <intrin.h>
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -132,7 +131,7 @@ enum opentype_cmap_table_encoding
 };
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
-#pragma pack(push,2)
+#include "pshpack2.h"
 struct tt_head
 {
     USHORT majorVersion;
@@ -842,7 +841,7 @@ struct kern_subtable_header
     uint16_t coverage;
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 enum TT_NAME_WINDOWS_ENCODING_ID
 {
@@ -1335,90 +1334,6 @@ static DWORD table_read_dword(const struct dwrite_fonttable *table, unsigned int
     return ptr ? *ptr : 0;
 }
 
-HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
-    void **table_context, UINT32 *table_size, BOOL *found)
-{
-    void *table_directory_context, *sfnt_context;
-    const struct ot_table_record *table_record = NULL;
-    const struct ot_table_dir *table_dir = NULL;
-    UINT32 table_offset = 0;
-    UINT16 table_count;
-    HRESULT hr;
-
-    if (found) *found = FALSE;
-    if (table_size) *table_size = 0;
-
-    *table_data = NULL;
-    *table_context = NULL;
-
-    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
-    {
-        const struct ttc_header *ttc_header;
-        void * ttc_context;
-
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
-                sizeof(*ttc_header), &ttc_context);
-        if (SUCCEEDED(hr))
-        {
-            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
-                hr = E_INVALIDARG;
-            else
-            {
-                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
-                        sizeof(*table_dir), &sfnt_context);
-            }
-            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
-        }
-    }
-    else
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
-                sizeof(*table_dir), &sfnt_context);
-
-    if (FAILED(hr))
-        return hr;
-
-    table_count = GET_BE_WORD(table_dir->numTables);
-    table_offset += sizeof(*table_dir);
-
-    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
-
-    hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
-            table_count * sizeof(*table_record), &table_directory_context);
-    if (hr == S_OK)
-    {
-        UINT16 i;
-
-        for (i = 0; i < table_count; ++i)
-        {
-            if (table_record->tag == tag)
-            {
-                UINT32 offset = GET_BE_DWORD(table_record->offset);
-                UINT32 length = GET_BE_DWORD(table_record->length);
-
-                if (found)
-                    *found = TRUE;
-                if (table_size)
-                    *table_size = length;
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset,
-                        length, table_context);
-                break;
-            }
-            table_record++;
-        }
-
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_directory_context);
-    }
-
-    return hr;
-}
-
-static HRESULT opentype_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag,
-        struct dwrite_fonttable *table)
-{
-    return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
-}
-
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
@@ -1456,9 +1371,6 @@ static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 static HRESULT opentype_ttf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
-    struct file_stream_desc stream_desc = { .stream = stream };
-    const struct colr_header *colr_header;
-    struct dwrite_fonttable colr;
     const DWORD *header;
     void *context;
     HRESULT hr;
@@ -1467,25 +1379,15 @@ static HRESULT opentype_ttf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
     if (FAILED(hr))
         return hr;
 
-    if (GET_BE_DWORD(*header) == 0x10000)
-        stream_desc.face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
+    if (GET_BE_DWORD(*header) == 0x10000) {
+        *font_count = 1;
+        *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
+        *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
+    }
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
-    if (stream_desc.face_type != DWRITE_FONT_FACE_TYPE_TRUETYPE)
-        return S_FALSE;
-
-    opentype_get_font_table(&stream_desc, MS_COLR_TAG, &colr);
-    if (colr.data && (colr_header = table_read_ensure(&colr, 0, sizeof(*header)))
-            && colr_header->version && !colr_header->num_baseglyph_records)
-    {
-        FIXME("COLR version %d, skipping font.\n", GET_BE_WORD(colr_header->version));
-        return S_FALSE;
-    }
-    *font_count = 1;
-    *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
-    *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
-    return S_OK;
+    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
 }
 
 static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
@@ -1513,7 +1415,7 @@ static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
-#pragma pack(push,1)
+#include "pshpack1.h"
     /* Specified in Adobe TechNote #5178 */
     struct pfm_header {
         WORD  dfVersion;
@@ -1522,7 +1424,7 @@ static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *fo
         DWORD dfDevice;
         char  data1[12];
     };
-#pragma pack(pop)
+#include "poppack.h"
     struct type1_header {
         WORD tag;
         char data[14];
@@ -1621,6 +1523,90 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, BOOL *supported, DW
 
     *supported = is_face_type_supported(*face_type);
     return S_OK;
+}
+
+HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
+    void **table_context, UINT32 *table_size, BOOL *found)
+{
+    void *table_directory_context, *sfnt_context;
+    const struct ot_table_record *table_record = NULL;
+    const struct ot_table_dir *table_dir = NULL;
+    UINT32 table_offset = 0;
+    UINT16 table_count;
+    HRESULT hr;
+
+    if (found) *found = FALSE;
+    if (table_size) *table_size = 0;
+
+    *table_data = NULL;
+    *table_context = NULL;
+
+    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
+    {
+        const struct ttc_header *ttc_header;
+        void * ttc_context;
+
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
+                sizeof(*ttc_header), &ttc_context);
+        if (SUCCEEDED(hr))
+        {
+            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
+                hr = E_INVALIDARG;
+            else
+            {
+                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
+                        sizeof(*table_dir), &sfnt_context);
+            }
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
+        }
+    }
+    else
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
+                sizeof(*table_dir), &sfnt_context);
+
+    if (FAILED(hr))
+        return hr;
+
+    table_count = GET_BE_WORD(table_dir->numTables);
+    table_offset += sizeof(*table_dir);
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
+            table_count * sizeof(*table_record), &table_directory_context);
+    if (hr == S_OK)
+    {
+        UINT16 i;
+
+        for (i = 0; i < table_count; ++i)
+        {
+            if (table_record->tag == tag)
+            {
+                UINT32 offset = GET_BE_DWORD(table_record->offset);
+                UINT32 length = GET_BE_DWORD(table_record->length);
+
+                if (found)
+                    *found = TRUE;
+                if (table_size)
+                    *table_size = length;
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset,
+                        length, table_context);
+                break;
+            }
+            table_record++;
+        }
+
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_directory_context);
+    }
+
+    return hr;
+}
+
+static HRESULT opentype_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag,
+        struct dwrite_fonttable *table)
+{
+    return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
 }
 
 /**********
@@ -2081,7 +2067,7 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
     }
 
     if (metrics->underlineThickness == 0)
-        metrics->underlineThickness = (metrics->designUnitsPerEm + 7) / 14;
+        metrics->underlineThickness = metrics->designUnitsPerEm / 14;
     if (metrics->strikethroughThickness == 0)
         metrics->strikethroughThickness = metrics->underlineThickness;
 
@@ -2404,26 +2390,19 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         codepage = get_name_record_codepage(platform, encoding);
         get_name_record_locale(platform, lang_id, locale, ARRAY_SIZE(locale));
 
-        if (length)
+        if (codepage)
         {
-            if (codepage)
-            {
-                DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
-                name_string = malloc(sizeof(WCHAR) * (len+1));
-                MultiByteToWideChar(codepage, 0, name, length, name_string, len);
-                name_string[len] = 0;
-            }
-            else
-            {
-                length /= sizeof(WCHAR);
-                name_string = heap_strdupnW(name, length);
-                for (i = 0; i < length; i++)
-                    name_string[i] = GET_BE_WORD(name_string[i]);
-            }
+            DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
+            name_string = malloc(sizeof(WCHAR) * (len+1));
+            MultiByteToWideChar(codepage, 0, name, length, name_string, len);
+            name_string[len] = 0;
         }
         else
         {
-            name_string = calloc(1, sizeof(*name_string));
+            length /= sizeof(WCHAR);
+            name_string = heap_strdupnW(name, length);
+            for (i = 0; i < length; i++)
+                name_string[i] = GET_BE_WORD(name_string[i]);
         }
 
         TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
@@ -3541,6 +3520,17 @@ static unsigned int opentype_layout_is_glyph_covered(const struct dwrite_fonttab
     return -1;
 }
 
+static inline unsigned int dwrite_popcount(unsigned int x)
+{
+#if defined(__MINGW32__)
+    return __builtin_popcount(x);
+#else
+    x -= x >> 1 & 0x55555555;
+    x = (x & 0x33333333) + (x >> 2 & 0x33333333);
+    return ((x + (x >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
+#endif
+}
+
 static float opentype_scale_gpos_be_value(WORD value, float emsize, UINT16 upem)
 {
     return (short)GET_BE_WORD(value) * emsize / upem;
@@ -3919,7 +3909,7 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
 
     coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_singlepos_format1, coverage));
     value_format = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_singlepos_format1, value_format));
-    value_len = __popcnt(value_format);
+    value_len = dwrite_popcount(value_format);
 
     glyph = context->u.pos.glyphs[context->cur];
 
@@ -4028,8 +4018,8 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
         value_format1 = GET_BE_WORD(format1->value_format1) & 0xff;
         value_format2 = GET_BE_WORD(format1->value_format2) & 0xff;
 
-        value_len1 = __popcnt(value_format1);
-        value_len2 = __popcnt(value_format2);
+        value_len1 = dwrite_popcount(value_format1);
+        value_len2 = dwrite_popcount(value_format2);
         pairvalue_len = FIELD_OFFSET(struct ot_gpos_pairvalue, data) + value_len1 * sizeof(WORD) +
                 value_len2 * sizeof(WORD);
 
@@ -4067,8 +4057,8 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
         class1_count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_pairpos_format2, class1_count));
         class2_count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_pairpos_format2, class2_count));
 
-        value_len1 = __popcnt(value_format1);
-        value_len2 = __popcnt(value_format2);
+        value_len1 = dwrite_popcount(value_format1);
+        value_len2 = dwrite_popcount(value_format2);
 
         format2 = table_read_ensure(table, subtable_offset, FIELD_OFFSET(struct ot_gpos_pairpos_format2,
                 values[class1_count * class2_count * (value_len1 + value_len2)]));
@@ -4832,7 +4822,7 @@ static unsigned int shaping_features_get_mask(const struct shaping_features *fea
 unsigned int shape_get_feature_1_mask(const struct shaping_features *features, unsigned int tag)
 {
     unsigned int shift, mask = shaping_features_get_mask(features, tag, &shift);
-    return mask ? ((1 << shift) & mask) : 0;
+    return (1 << shift) & mask;
 }
 
 static void opentype_layout_get_glyph_range_for_text(struct scriptshaping_context *context, unsigned int start_char,
@@ -6012,27 +6002,6 @@ static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
             (codepoint >= 0xfff0 && codepoint <= 0xfff8) ||
             (codepoint >= 0x1d173 && codepoint <= 0x1d17a) ||
             (codepoint >= 0xe0000 && codepoint <= 0xe0fff);
-}
-
-/*
-    * 0009..000D # TABs, FF, CR
-    * 0020       # SPACE
-    * 0085       # NL
-    * 00A0       # NBSP
-    * 1680       # OGHAM SPACE MARK
-    * 2000..200A # NQSP, MQSP, ENSP, EMSP, 3/MSP, 4/MSP, 6/MSP, FSP, PSP, THSP, HSP
-    * 2028..2029 # LSEP, PSEP
-    * 202F       # NNBSP
-    * 205F       # MMSP
-    * 3000       # IDSP
-*/
-bool opentype_is_whitespace(unsigned int codepoint)
-{
-    return (codepoint >= 0x9 && codepoint <= 0xd) ||
-            codepoint == 0x20 || codepoint == 0x85 || codepoint == 0xa0 ||
-            codepoint == 0x1680 || (codepoint >= 0x2000 && codepoint <= 0x200a) ||
-            codepoint == 0x2028 || codepoint == 0x2029 || codepoint == 0x202f ||
-            codepoint == 0x205f || codepoint == 0x3000;
 }
 
 static unsigned int opentype_is_diacritic(unsigned int codepoint)

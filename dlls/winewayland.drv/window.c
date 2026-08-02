@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 
 #include "waylanddrv.h"
 
@@ -48,7 +49,7 @@ static int wayland_win_data_cmp_rb(const void *key,
     return 0;
 }
 
-static pthread_mutex_t win_data_mutex;
+static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct rb_tree win_data_rb = { wayland_win_data_cmp_rb };
 
 /***********************************************************************
@@ -105,17 +106,32 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 }
 
 /***********************************************************************
+ *           wayland_win_data_get_nolock
+ *
+ * Return the data structure associated with a window. This function does
+ * not lock the win_data_mutex, so it must be externally synchronized.
+ */
+struct wayland_win_data *wayland_win_data_get_nolock(HWND hwnd)
+{
+    struct rb_entry *rb_entry;
+
+    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
+        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
+
+    return NULL;
+}
+
+/***********************************************************************
  *           wayland_win_data_get
  *
  * Lock and return the data structure associated with a window.
  */
 struct wayland_win_data *wayland_win_data_get(HWND hwnd)
 {
-    struct rb_entry *entry;
+    struct wayland_win_data *data;
 
     pthread_mutex_lock(&win_data_mutex);
-    if ((entry = rb_get(&win_data_rb, hwnd)))
-        return RB_ENTRY_VALUE(entry, struct wayland_win_data, entry);
+    if ((data = wayland_win_data_get_nolock(hwnd))) return data;
     pthread_mutex_unlock(&win_data_mutex);
 
     return NULL;
@@ -139,11 +155,10 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     DWORD style;
 
     conf->rect = data->rects.window;
+    conf->client_rect = data->rects.client;
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
 
-    TRACE("window=%s style=%#x\n", wine_dbgstr_rect(&conf->rect), style);
-
-    conf->minimized = !!(style & WS_MINIMIZE);
+    TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
 
     /* The fullscreen state is implied by the window position and style. */
     if (data->is_fullscreen)
@@ -158,8 +173,8 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
         window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
     }
 
-    conf->resizeable = data->resizeable;
     conf->state = window_state;
+    conf->scale = NtUserGetSystemDpiForProcess(0) / 96.0;
     conf->visible = (style & WS_VISIBLE) == WS_VISIBLE;
     conf->managed = data->managed;
 }
@@ -168,47 +183,33 @@ static void reapply_cursor_clipping(void)
 {
     RECT rect;
     UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE);
-    if (NtUserGetClipCursor(&rect)) NtUserClipCursor(&rect);
+    if (NtUserGetClipCursor(&rect )) NtUserClipCursor(&rect);
     NtUserSetThreadDpiAwarenessContext(context);
 }
 
-static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *data, struct wayland_surface *owner_surface)
+static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *data, struct wayland_surface *toplevel_surface)
 {
+    struct wayland_client_surface *client = data->client_surface;
     struct wayland_surface *surface;
     enum wayland_surface_role role;
     BOOL visible;
-    DWORD exstyle = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
-    struct wl_region *input_region;
 
     TRACE("hwnd=%p\n", data->hwnd);
 
-    visible = ((NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE) &&
-               (!(exstyle & WS_EX_LAYERED) || data->layered_attribs_set);
-
+    visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     if (!visible) role = WAYLAND_SURFACE_ROLE_NONE;
-    else if (owner_surface) role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
+    else if (toplevel_surface) role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
     else role = WAYLAND_SURFACE_ROLE_TOPLEVEL;
 
     /* we can temporarily clear the role of a surface but cannot assign a different one after it's set */
     if ((surface = data->wayland_surface) && role && surface->role && surface->role != role)
     {
-        /* Make sure any attached client surface is detached before we destroy the surface.
-         * They will be reattached when win32u updates them again after WindowPosChanged.
-         */
+        if (client) wayland_client_surface_detach(client);
+        wayland_surface_destroy(data->wayland_surface);
         data->wayland_surface = NULL;
-        update_client_surfaces(data->hwnd);
-        wayland_surface_destroy(surface);
     }
 
     if (!(surface = data->wayland_surface) && !(surface = wayland_surface_create(data->hwnd))) return FALSE;
-
-    /* Pass through mouse events for layered, transparent windows, to match
-     * Windows behavior. */
-    input_region = ((exstyle & WS_EX_TRANSPARENT) && (exstyle & WS_EX_LAYERED)) ?
-                   wl_compositor_create_region(process_wayland.wl_compositor) :
-                   NULL;
-    wl_surface_set_input_region(surface->wl_surface, input_region);
-    if (input_region) wl_region_destroy(input_region);
 
     /* If the window is a visible toplevel make it a wayland
      * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
@@ -222,10 +223,11 @@ static BOOL wayland_win_data_create_wayland_surface(struct wayland_win_data *dat
         wayland_surface_make_toplevel(surface);
         break;
     case WAYLAND_SURFACE_ROLE_SUBSURFACE:
-        wayland_surface_make_subsurface(surface, owner_surface);
+        wayland_surface_make_subsurface(surface, toplevel_surface);
         break;
     }
 
+    if (visible && client) wayland_client_surface_attach(client, data->hwnd);
     wayland_win_data_get_config(data, &surface->window);
 
     /* Size/position changes affect the effective pointer constraint, so update
@@ -251,20 +253,15 @@ static void wayland_surface_update_state_toplevel(struct wayland_surface *surfac
      * window state to determine and update the Wayland state. */
     if (!processing_config)
     {
-        xdg_toplevel_set_min_size(surface->xdg_toplevel, 0, 0);
-        xdg_toplevel_set_max_size(surface->xdg_toplevel, 0, 0);
-
          /* First do all state unsettings, before setting new state. Some
           * Wayland compositors misbehave if the order is reversed. */
         if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-            !surface->window.minimized)
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
         {
             xdg_toplevel_unset_maximized(surface->xdg_toplevel);
         }
         if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-            !surface->window.minimized)
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
         {
             xdg_toplevel_unset_fullscreen(surface->xdg_toplevel);
         }
@@ -278,10 +275,6 @@ static void wayland_surface_update_state_toplevel(struct wayland_surface *surfac
            !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
         {
             xdg_toplevel_set_fullscreen(surface->xdg_toplevel, NULL);
-        }
-        if (surface->window.minimized)
-        {
-            xdg_toplevel_set_minimized(surface->xdg_toplevel);
         }
     }
     else
@@ -303,7 +296,7 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
         wayland_surface_update_state_toplevel(surface);
         break;
     case WAYLAND_SURFACE_ROLE_SUBSURFACE:
-        TRACE("hwnd=%p subsurface owner=%p\n", surface->hwnd, surface->owner_hwnd);
+        TRACE("hwnd=%p subsurface parent=%p\n", surface->hwnd, surface->toplevel_hwnd);
         /* Although subsurfaces don't have a dedicated surface config mechanism,
          * we use the config fields to mark them as updated. */
         surface->processing.serial = 1;
@@ -410,6 +403,7 @@ void WAYLAND_DestroyWindow(HWND hwnd)
 
     if (!(data = wayland_win_data_get(hwnd))) return;
     wayland_win_data_destroy(data);
+    wayland_destroy_gl_drawable(hwnd);
 }
 
 /***********************************************************************
@@ -428,62 +422,112 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const str
     return TRUE;
 }
 
+static HICON get_icon_info(HICON icon, ICONINFO *ii)
+{
+    return icon && NtUserGetIconInfo(icon, ii, NULL, NULL, NULL, 0) ? icon : NULL;
+}
+
+static HICON get_window_icon(HWND hwnd, UINT type, HICON icon, ICONINFO *ret)
+{
+    icon = get_icon_info(icon, ret);
+    if (!icon)
+    {
+        icon = get_icon_info((HICON)send_message(hwnd, WM_GETICON, type, 0), ret);
+        if (!icon)
+            icon = get_icon_info((HICON)NtUserGetClassLongPtrW(hwnd, GCLP_HICON), ret);
+        if (!icon && type == ICON_BIG)
+        {
+            icon = LoadImageW(0, (const WCHAR *)IDI_WINLOGO, IMAGE_ICON, 0, 0,
+                              LR_SHARED | LR_DEFAULTSIZE);
+            icon = get_icon_info(icon, ret);
+        }
+    }
+    return icon;
+}
+
 /***********************************************************************
  *           WAYLAND_WindowPosChanged
  */
-void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
+void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
                               const struct window_rects *new_rects, struct window_surface *surface)
 {
-    HWND owner = NtUserGetAncestor(hwnd, GA_ROOT);
-    struct wayland_surface *owner_surface;
-    struct wayland_win_data *data, *owner_data;
-    BOOL managed, fullscreen = swp_flags & WINE_SWP_FULLSCREEN;
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    struct wayland_surface *toplevel_surface;
+    struct wayland_client_surface *client;
+    struct wayland_win_data *data, *toplevel_data;
+    BOOL managed, needs_icon;
 
     TRACE("hwnd %p new_rects %s after %p flags %08x\n", hwnd, debugstr_window_rects(new_rects), insert_after, swp_flags);
 
     /* Get the managed state with win_data unlocked, as is_window_managed
      * may need to query win_data information about other HWNDs and thus
      * acquire the lock itself internally. */
-    if (!(managed = is_window_managed(hwnd, swp_flags, fullscreen)) && surface) owner = owner_hint;
+    if (!(managed = is_window_managed(hwnd, swp_flags, fullscreen)) && surface) toplevel = owner_hint;
 
     if (!(data = wayland_win_data_get(hwnd))) return;
-    owner_data = owner && owner != hwnd ? wayland_win_data_get(owner) : NULL;
-    owner_surface = owner_data ? owner_data->wayland_surface : NULL;
+    toplevel_data = toplevel && toplevel != hwnd ? wayland_win_data_get_nolock(toplevel) : NULL;
+    toplevel_surface = toplevel_data ? toplevel_data->wayland_surface : NULL;
 
     data->rects = *new_rects;
     data->is_fullscreen = fullscreen;
-    data->resizeable = swp_flags & WINE_SWP_RESIZABLE;
     data->managed = managed;
 
     if (!surface)
     {
+        if ((client = data->client_surface))
+        {
+            if (toplevel && NtUserIsWindowVisible(hwnd))
+                wayland_client_surface_attach(client, toplevel);
+            else
+                wayland_client_surface_detach(client);
+        }
+
         if (data->wayland_surface)
         {
             wayland_surface_destroy(data->wayland_surface);
             data->wayland_surface = NULL;
         }
     }
-    else if (wayland_win_data_create_wayland_surface(data, owner_surface))
+    else if (wayland_win_data_create_wayland_surface(data, toplevel_surface))
     {
         wayland_win_data_update_wayland_state(data);
     }
 
-    if (owner_data) wayland_win_data_release(owner_data);
+    needs_icon = data->wayland_surface && !data->wayland_surface->big_icon_buffer &&
+                 wayland_surface_is_toplevel(data->wayland_surface) &&
+                 process_wayland.xdg_toplevel_icon_manager_v1;
+
     wayland_win_data_release(data);
+
+    if (needs_icon)
+    {
+        HICON big, small;
+        ICONINFO ii, ii_small;
+        big = get_window_icon(hwnd, ICON_BIG, 0, &ii);
+        small = get_window_icon(hwnd, ICON_SMALL, 0, &ii_small);
+
+        if((data = wayland_win_data_get(hwnd)))
+        {
+            if (big) wayland_surface_set_icon(data->wayland_surface, ICON_BIG, &ii);
+            if (small) wayland_surface_set_icon(data->wayland_surface, ICON_SMALL, &ii_small);
+
+            wayland_win_data_release(data);
+        }
+    }
 }
 
 static void wayland_configure_window(HWND hwnd)
 {
     struct wayland_surface *surface;
-    INT width, height;
+    INT width, height, window_width, window_height;
+    INT window_surf_width, window_surf_height;
     UINT flags = 0;
     uint32_t state;
     DWORD style;
     BOOL needs_enter_size_move = FALSE;
     BOOL needs_exit_size_move = FALSE;
-    BOOL restoring_from_minimize = FALSE;
     struct wayland_win_data *data;
-    RECT rect, surface_rect;
+    RECT rect;
 
     if (!(data = wayland_win_data_get(hwnd))) return;
     if (!(surface = data->wayland_surface))
@@ -514,8 +558,8 @@ static void wayland_configure_window(HWND hwnd)
      * size adherence, in order to avoid spurious resizes. */
     if (state)
     {
-        width = surface->processing.rect.right - surface->processing.rect.left;
-        height = surface->processing.rect.bottom - surface->processing.rect.top;
+        width = surface->processing.width;
+        height = surface->processing.height;
     }
     else
     {
@@ -542,44 +586,27 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_FRAMECHANGED;
     }
 
-    surface_rect = map_rect_to_surface(surface, surface->window.rect);
+    wayland_surface_coords_from_window(surface,
+                                       surface->window.rect.right -
+                                           surface->window.rect.left,
+                                       surface->window.rect.bottom -
+                                           surface->window.rect.top,
+                                       &window_surf_width, &window_surf_height);
 
     /* If the window is already fullscreen and its size is compatible with what
      * the compositor is requesting, don't force a resize, since some applications
      * are very insistent on a particular fullscreen size (which may not match
      * the monitor size). */
     if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-        wayland_surface_config_is_compatible(&surface->processing, surface_rect,
+        wayland_surface_config_is_compatible(&surface->processing,
+                                             window_surf_width, window_surf_height,
                                              surface->window.state))
     {
         flags |= SWP_NOSIZE;
     }
 
-    /* Detect a restore from an application-initiated minimize: the last
-     * requested config placed the window at the offscreen sentinel position
-     * with WS_MINIMIZE, and the compositor is now sending a configure. Ack
-     * the configure to avoid a protocol violation and send SC_RESTORE so
-     * Win32 runs the full restore sequence (clearing WS_MINIMIZE, restoring
-     * position/size, sending WM_SIZE, etc.), which triggers a new configure
-     * cycle. */
-    restoring_from_minimize = surface->window.rect.left <= -32000 &&
-                              surface->window.rect.top  <= -32000 &&
-                              surface->window.minimized;
-    if (restoring_from_minimize)
-    {
-        TRACE("hwnd=%p restoring from minimize\n", hwnd);
-        surface->current = surface->processing;
-        memset(&surface->processing, 0, sizeof(surface->processing));
-        xdg_surface_ack_configure(surface->xdg_surface,
-                                  surface->current.serial);
-        wayland_win_data_release(data);
-        send_message(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-        return;
-    }
-
-    SetRect(&rect, 0, 0, width, height);
-    rect = map_rect_from_surface(surface, rect);
-    OffsetRect(&rect, data->rects.window.left, data->rects.window.top);
+    wayland_surface_coords_to_window(surface, width, height,
+                                     &window_width, &window_height);
 
     wayland_win_data_release(data);
 
@@ -589,11 +616,10 @@ static void wayland_configure_window(HWND hwnd)
     if (needs_exit_size_move) send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
     flags |= SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
-    if (rect.left == rect.right || rect.bottom == rect.top) flags |= SWP_NOSIZE;
+    if (window_width == 0 || window_height == 0) flags |= SWP_NOSIZE;
 
     style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
-    if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE)
-        && !(state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
+    if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE))
         NtUserSetWindowLong(hwnd, GWL_STYLE, style ^ WS_MAXIMIZE, FALSE);
 
     /* The Wayland maximized and fullscreen states are very strict about
@@ -607,6 +633,8 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_NOSENDCHANGING;
     }
 
+    SetRect(&rect, 0, 0, window_width, window_height);
+    OffsetRect(&rect, data->rects.window.left, data->rects.window.top);
     NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);
 }
 
@@ -624,7 +652,7 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         wayland_configure_window(hwnd);
         return 0;
     case WM_WAYLAND_SET_FOREGROUND:
-        NtUserSetForegroundWindowInternal(hwnd);
+        NtUserSetForegroundWindow(hwnd);
         return 0;
     default:
         FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (long)wp, lp);
@@ -638,23 +666,6 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
-}
-
-/*****************************************************************
- *		WAYLAND_SetLayeredWindowAttributes
- */
-void WAYLAND_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha, DWORD flags)
-{
-    struct wayland_win_data *data;
-    struct wayland_surface *surface;
-
-    if (!(data = wayland_win_data_get(hwnd))) return;
-
-    if ((surface = data->wayland_surface))
-        wayland_surface_set_opacity(surface, alpha, flags);
-    data->layered_attribs_set = TRUE;
-
-    wayland_win_data_release(data);
 }
 
 static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
@@ -674,52 +685,25 @@ static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
 }
 
 /*****************************************************************
- *		WAYLAND_SetWindowIcons
+ *		WAYLAND_SetWindowIcon
  */
-void WAYLAND_SetWindowIcons(HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small)
+void WAYLAND_SetWindowIcon(HWND hwnd, UINT type, HICON icon)
 {
-    struct wayland_surface *surface;
     struct wayland_win_data *data;
+    ICONINFO ii;
 
-    TRACE("hwnd=%p icon=%p ii=%p icon_small=%p ii_small=%p\n", hwnd, icon, ii, icon_small, ii_small);
+    TRACE("hwnd=%p type=%u icon=%p\n", hwnd, type, icon);
 
     if (process_wayland.xdg_toplevel_icon_manager_v1)
     {
-        if ((data = wayland_win_data_get(hwnd)))
+        icon = get_window_icon(hwnd, type, icon, &ii);
+        if (icon && (data = wayland_win_data_get(hwnd)))
         {
-            if ((surface = data->wayland_surface))
-            {
-                wayland_surface_set_icon_buffer(surface, ICON_BIG, ii);
-                if (icon_small) wayland_surface_set_icon_buffer(surface, ICON_SMALL, ii_small);
-                if (wayland_surface_is_toplevel(surface))
-                    wayland_surface_assign_icon(surface);
-            }
+            if (data->wayland_surface && wayland_surface_is_toplevel(data->wayland_surface))
+                wayland_surface_set_icon(data->wayland_surface, type, &ii);
             wayland_win_data_release(data);
         }
     }
-}
-
-/***********************************************************************
- *		WAYLAND_SetWindowStyle
- */
-void WAYLAND_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
-{
-    struct wayland_win_data *data;
-    struct wayland_surface *surface;
-    DWORD changed = style->styleNew ^ style->styleOld;
-
-    if (hwnd == NtUserGetDesktopWindow()) return;
-    if (!(data = wayland_win_data_get(hwnd))) return;
-
-    /* Changing WS_EX_LAYERED resets attributes */
-    if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED))
-    {
-        if ((surface = data->wayland_surface))
-            wayland_surface_set_opacity(surface, 0, 0);
-        data->layered_attribs_set = FALSE;
-    }
-
-    wayland_win_data_release(data);
 }
 
 /*****************************************************************
@@ -791,50 +775,42 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT 
     return ret;
 }
 
-/***********************************************************************
- *          WAYLAND_UpdateLayeredWindow
+/**********************************************************************
+ *          get_client_surface
  */
-void WAYLAND_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags)
+struct wayland_client_surface *get_client_surface(HWND hwnd)
 {
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    struct wayland_client_surface *client;
     struct wayland_win_data *data;
-    struct wayland_surface *surface;
 
-    if (!(data = wayland_win_data_get(hwnd))) return;
-
-    if ((surface = data->wayland_surface))
-        wayland_surface_set_opacity(surface, alpha, flags);
-
-    wayland_win_data_release(data);
-}
-
-void set_client_surface(HWND hwnd, struct wayland_client_surface *new_client)
-{
-    HWND toplevel = new_client->client.toplevel;
-    RECT rect = new_client->client.monitor_rect;
-    struct wayland_client_surface *old_client;
-    struct wayland_win_data *data;
-    BOOL visible = FALSE;
-
-    /* ownership is shared with the callers, the last caller to release
-     * its reference will also destroy it and clear our pointer. */
-    if(toplevel) visible = NtUserIsWindowVisible(hwnd);
-    if (!(data = wayland_win_data_get(hwnd))) return;
-
-    if (new_client != data->client_surface)
+    if ((data = wayland_win_data_get(hwnd)))
     {
-        if ((old_client = data->client_surface))
-            wayland_client_surface_attach(old_client, NULL, NULL);
-
-        if ((data->client_surface = new_client))
-        {
-            if (toplevel && visible)
-                wayland_client_surface_attach(new_client, toplevel, &rect);
-            else
-                wayland_client_surface_attach(new_client, NULL, NULL);
-        }
+        /* ownership is shared with one of the callers, the last caller to release
+         * its reference will also destroy it and clear our pointer. */
+        if ((client = data->client_surface)) InterlockedIncrement(&client->ref);
+    }
+    else
+    {
+        client = NULL;
     }
 
+    if (!client && !(client = wayland_client_surface_create(hwnd)))
+    {
+        if (data) wayland_win_data_release(data);
+        return NULL;
+    }
+    if (!data) return client;
+
+    if (toplevel && NtUserIsWindowVisible(hwnd))
+        wayland_client_surface_attach(client, toplevel);
+    else
+        wayland_client_surface_detach(client);
+
+    if (!data->client_surface) data->client_surface = client;
+
     wayland_win_data_release(data);
+    return client;
 }
 
 BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region)
@@ -883,12 +859,26 @@ struct wayland_shm_buffer *get_window_surface_contents(HWND hwnd)
     return shm_buffer;
 }
 
-void wayland_window_init(void)
+void ensure_window_surface_contents(HWND hwnd)
 {
-    pthread_mutexattr_t attr;
+    struct wayland_surface *wayland_surface;
+    struct wayland_win_data *data;
 
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&win_data_mutex, &attr);
-    pthread_mutexattr_destroy(&attr);
+    if (!(data = wayland_win_data_get(hwnd))) return;
+
+    if ((wayland_surface = data->wayland_surface))
+    {
+        wayland_surface_ensure_contents(wayland_surface);
+
+        /* Handle any processed configure request, to ensure the related
+         * surface state is applied by the compositor. */
+        if (wayland_surface->processing.serial &&
+            wayland_surface->processing.processed &&
+            wayland_surface_reconfigure(wayland_surface))
+        {
+            wl_surface_commit(wayland_surface->wl_surface);
+        }
+    }
+
+    wayland_win_data_release(data);
 }

@@ -18,6 +18,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windows.h>
 #include <ntsecapi.h>
 

@@ -504,7 +504,7 @@ static  void	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR lParam, DWO
  * ###################################################
  */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 #define MCI_MAX_THUNKS      32
 
 static struct mci_thunk
@@ -518,7 +518,7 @@ static struct mci_thunk
     MCIDEVICEID id;
 } *MCI_Thunks;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 static CRITICAL_SECTION mci_cs;
 static CRITICAL_SECTION_DEBUG mci_critsect_debug =

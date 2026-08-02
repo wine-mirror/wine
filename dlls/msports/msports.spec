@@ -1,8 +1,8 @@
 @ stub ComDBClaimNextFreePort
 @ stub ComDBClaimPort
-@ stdcall ComDBClose(long)
+@ stub ComDBClose
 @ stub ComDBGetCurrentPortUsage
-@ stdcall ComDBOpen(ptr)
+@ stub ComDBOpen
 @ stub ComDBReleasePort
 @ stub ComDBResizeDatabase
 @ stub ParallelPortPropPageProvider

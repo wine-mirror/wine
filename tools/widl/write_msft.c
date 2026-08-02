@@ -2006,13 +2006,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             break;
 
         case ATTR_VERSION:
-        {
-            const version_t *version = attr->u.pval;
-            unsigned short major = version ? version->major : 0, minor = version ? version->minor : 0;
-
-            typeinfo->version = (minor << 16) | major;
+            typeinfo->version = attr->u.ival;
             break;
-        }
+
         default:
             break;
         }
@@ -2511,10 +2507,7 @@ static void set_name(msft_typelib_t *typelib)
 
 static void set_version(msft_typelib_t *typelib)
 {
-    unsigned short major, minor;
-
-    get_version( typelib->typelib->attrs, &major, &minor );
-    typelib->typelib_header.version = (minor << 16) | major;
+    typelib->typelib_header.version = get_attrv( typelib->typelib->attrs, ATTR_VERSION );
 }
 
 static void set_guid(msft_typelib_t *typelib)

@@ -813,7 +813,7 @@ static void get_display_name( WCHAR dest[MAX_PATH], const WCHAR *path, LPCITEMID
             if ((res = wine_get_dos_file_name( buffer )))
             {
                 lstrcpynW( dest, res, MAX_PATH );
-                HeapFree( GetProcessHeap(), 0, res );
+                heap_free( res );
             }
         }
         else lstrcpynW( dest, path + 8, MAX_PATH );
@@ -1409,6 +1409,7 @@ IFSFldr_PersistFolder3_Initialize (IPersistFolder3 * iface, LPCITEMIDLIST pidl)
         if (IsEqualCLSID( This->pclsid, &CLSID_MyDocuments ))
         {
             if (!SHGetSpecialFolderPathW( 0, wszTemp, CSIDL_PERSONAL, FALSE )) return E_FAIL;
+            PathAddBackslashW( wszTemp );
         }
         else lstrcpyW( wszTemp, L"\\\\?\\unix\\" );
     }

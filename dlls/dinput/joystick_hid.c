@@ -23,6 +23,7 @@
 #include <math.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -33,15 +34,15 @@
 
 #include "ddk/hidclass.h"
 #include "ddk/hidsdi.h"
-#include "cfgmgr32.h"
+#include "setupapi.h"
 #include "devguid.h"
 #include "dinput.h"
+#include "setupapi.h"
 
 #include "dinput_private.h"
 #include "device_private.h"
 
 #include "initguid.h"
-#include "devpkey.h"
 
 #include "wine/debug.h"
 #include "wine/hid.h"
@@ -49,254 +50,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x47,0x67,0x50,0xc5,0xe1,0xa6 );
+DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_GUID( device_path_guid, 0x00000000, 0x0000, 0x0000, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf8 );
-
-/*
- * Version 1 UUID timestamps are a count of the number of 100 nanosecond
- * intervals since 00:00:00.00, 15 October 1582 (the date of Gregorian
- * reform to the Christian calendar). FILETIME is a count of the number of 100
- * nanosecond intervals since 00:00:00.00, 1 January 1601. In order to convert
- * a FILETIME value to a UUID timestamp, we need to add:
- * - 17 days in October 1582.
- * - 30 days in November 1582.
- * - 31 days in December 1582.
- * - 18 years between January 1583 and January 1601.
- * - 5 leap days in those 18 years.
- */
-#define UUID_TIME_TO_SYSTEM_TIME_DAYS ((ULONG64)((365 * 18) + 5 + 17 + 30 + 31))
-#define UUID_TIME_TO_SYSTEM_TIME_NS_DIFFERENCE ((UUID_TIME_TO_SYSTEM_TIME_DAYS) * 24 * 60 * 60 * 10000000)
-DEFINE_GUID( dinput_joystick_uuid_init, 0x00000000, 0x0000, 0x1000, 0x80, 0x00, 0x00, 0x00, 'D', 'E', 'S', 'T' );
-
-static GUID create_instance_uuid(void)
-{
-    GUID tmp = dinput_joystick_uuid_init;
-    static LONG clock_seq;
-    ULARGE_INTEGER time;
-    ULONG cur_seq;
-
-    GetSystemTimeAsFileTime( (FILETIME *)&time );
-    time.QuadPart += UUID_TIME_TO_SYSTEM_TIME_NS_DIFFERENCE;
-    tmp.Data1 = (time.QuadPart & 0xffffffff);
-    tmp.Data2 = ((time.QuadPart >> 32) & 0xffff);
-    tmp.Data3 |= ((time.QuadPart >> 48) & 0x0fff);
-    cur_seq = InterlockedIncrement( &clock_seq );
-    tmp.Data4[1] |= (cur_seq & 0xff);
-    tmp.Data4[0] |= ((cur_seq & 0x3f00) >> 8);
-    return tmp;
-}
-
-static CRITICAL_SECTION joystick_cache_cs;
-static CRITICAL_SECTION_DEBUG joystick_cache_cs_debug =
-{
-    0, 0, &joystick_cache_cs,
-    { &joystick_cache_cs_debug.ProcessLocksList, &joystick_cache_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": joystick_cache_cs") }
-};
-static CRITICAL_SECTION joystick_cache_cs = { &joystick_cache_cs_debug, -1, 0, 0, 0, 0 };
-
-static struct list joystick_cache = LIST_INIT( joystick_cache );
-
-#define MAX_JOY_ID  16
-
-struct cache_entry
-{
-    struct list             entry;
-    DIDEVICEINSTANCEW       instance;
-    DWORD                   joy_id;
-    WCHAR                   path[MAX_PATH];
-};
-
-static const char *debugstr_device_instance( const DIDEVICEINSTANCEW *instance )
-{
-    return wine_dbg_sprintf( "product: %04x:%04x, instance: %s", LOWORD(instance->guidProduct.Data1),
-                             HIWORD(instance->guidProduct.Data1), debugstr_guid( &instance->guidInstance ) );
-}
-
-static HRESULT cache_entry_create( const DIDEVICEINSTANCEW *instance, DWORD joy_id,
-                                   const WCHAR *path, struct cache_entry **out )
-{
-    struct cache_entry *entry;
-
-    if (!(entry = calloc( 1, sizeof(*entry) ))) return E_OUTOFMEMORY;
-    entry->instance = *instance;
-    entry->joy_id = joy_id;
-    wcscpy( entry->path, path );
-    CharLowerW( entry->path );
-
-    *out = entry;
-    return S_OK;
-}
-
-static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, DWORD joy_id, const WCHAR *path )
-{
-    struct cache_entry *entry, *next;
-    HRESULT hr;
-
-#define SWAP(x) MAKELONG( HIWORD(x), LOWORD(x) )
-    LIST_FOR_EACH_ENTRY( next, &joystick_cache, struct cache_entry, entry )
-    {
-        if (SWAP( next->instance.guidProduct.Data1 ) > SWAP( instance->guidProduct.Data1 )) break;
-        if (SWAP( next->instance.guidProduct.Data1 ) < SWAP( instance->guidProduct.Data1 )) continue;
-        if (*path && !*next->path)
-        {
-            instance->guidInstance = next->instance.guidInstance;
-            TRACE( "Reusing instance %s, path %s, joy_id %#lx\n", debugstr_device_instance( instance ),
-                   debugstr_w( path ), next->joy_id );
-            next->instance = *instance;
-            wcscpy( next->path, path );
-            CharLowerW( next->path );
-            return S_OK;
-        }
-    }
-#undef SWAP
-
-    if (FAILED(hr = cache_entry_create( instance, joy_id, path, &entry ))) return hr;
-    TRACE( "Created instance %s, path %s, joy_id %#lx\n", debugstr_device_instance( instance ),
-           debugstr_w( path ), joy_id );
-    list_add_before( &next->entry, &entry->entry );
-
-    return S_OK;
-}
-
-static void save_registry_instances( HKEY root )
-{
-    struct cache_entry *entry;
-    DWORD vidpid = 0, index = -1;
-    WCHAR buffer[MAX_PATH];
-
-    TRACE( "Saving cached instance GUIDs\n" );
-
-    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-    {
-        index = (entry->instance.guidProduct.Data1 == vidpid) ? index + 1 : 0;
-        vidpid = entry->instance.guidProduct.Data1;
-
-        swprintf( buffer, ARRAY_SIZE(buffer), L"VID_%04X&PID_%04X\\Calibration\\%u",
-                  LOWORD(vidpid), HIWORD(vidpid), index );
-        RegSetKeyValueW( root, buffer, L"GUID", REG_BINARY, (BYTE *)&entry->instance.guidInstance,
-                         sizeof(entry->instance.guidInstance) );
-        if (entry->joy_id >= MAX_JOY_ID) RegDeleteKeyValueW( root, buffer, L"Joystick Id" );
-        else RegSetKeyValueW( root, buffer, L"Joystick Id", REG_BINARY, (BYTE *)&entry->joy_id,
-                              sizeof(entry->joy_id) );
-
-        TRACE( "Saved %04x:%04x index %lu, guid %s, joy_id %#lx\n", LOWORD(vidpid), HIWORD(vidpid), index,
-               debugstr_guid( &entry->instance.guidInstance ), entry->joy_id );
-    }
-}
-
-static void load_registry_product_instances( HKEY root, DWORD vidpid )
-{
-    WCHAR name[MAX_PATH];
-
-    for (DWORD i = 0; !RegEnumKeyW( root, i, name, ARRAY_SIZE(name) ); i++)
-    {
-        DIDEVICEINSTANCEW instance = {.guidProduct = dinput_pidvid_guid };
-        DWORD len = sizeof(GUID), joy_id, len_id = sizeof(joy_id);
-
-        instance.guidProduct.Data1 = vidpid;
-        if (RegGetValueW( root, name, L"GUID", RRF_RT_REG_BINARY, NULL, &instance.guidInstance, &len )) continue;
-        if (RegGetValueW( root, name, L"Joystick Id", RRF_RT_REG_BINARY, NULL, &joy_id, &len_id )) joy_id = MAX_JOY_ID + 1;
-
-        TRACE( "Loaded %04x:%04x index %s, guid %s, joy_id %#lx\n", LOWORD(vidpid), HIWORD(vidpid), debugstr_w( name ),
-               debugstr_guid( &instance.guidInstance ), joy_id );
-
-        insert_cache_entry( &instance, joy_id, L"" );
-    }
-}
-
-static void load_registry_instances( HKEY root )
-{
-    WCHAR name[MAX_PATH], buffer[MAX_PATH];
-    HKEY hkey;
-
-    TRACE( "Loading cached instance GUIDs\n" );
-
-    for (DWORD i = 0; !RegEnumKeyW( root, i, name, ARRAY_SIZE(name) ); i++)
-    {
-        UINT vid, pid;
-
-        if (swscanf( name, L"VID_%04X&PID_%04X", &vid, &pid ) != 2) continue;
-        swprintf( buffer, ARRAY_SIZE(buffer), L"VID_%04X&PID_%04X\\Calibration", vid, pid );
-
-        if (RegOpenKeyExW( root, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &hkey )) continue;
-        load_registry_product_instances( hkey, MAKELONG(vid, pid) );
-        RegCloseKey( hkey );
-    }
-}
-
-static void assign_joystick_ids(void)
-{
-    DWORD ids = ((1 << MAX_JOY_ID) - 1) | (1 << (MAX_JOY_ID + 1));
-    struct cache_entry *entry;
-
-    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-    {
-        if (!*entry->path || entry->joy_id >= MAX_JOY_ID) continue;
-        if (!(ids & (1 << entry->joy_id))) entry->joy_id = MAX_JOY_ID + 1;
-        else ids &= ~(1 << entry->joy_id);
-
-        TRACE( "Reusing joy_id %#lx for instance %s, path %s\n", entry->joy_id,
-               debugstr_device_instance( &entry->instance ), debugstr_w( entry->path ) );
-    }
-
-    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-    {
-        if (!*entry->path || entry->joy_id < MAX_JOY_ID) continue;
-        BitScanForward( &entry->joy_id, ids );
-        if (entry->joy_id < MAX_JOY_ID) ids &= ~(1 << entry->joy_id);
-
-        TRACE( "Assigned joy_id %#lx to instance %s, path %s\n", entry->joy_id,
-               debugstr_device_instance( &entry->instance ), debugstr_w( entry->path ) );
-    }
-}
-
-static HRESULT get_instance_from_guid( const GUID *guid, DIDEVICEINSTANCEW *instance, DWORD *joy_id, WCHAR *path )
-{
-    struct cache_entry *entry;
-    HRESULT hr = DI_OK;
-
-    if (!memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
-    {
-        wcscpy( path, *(const WCHAR **)guid );
-        return S_OK;
-    }
-
-    EnterCriticalSection( &joystick_cache_cs );
-
-    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-    {
-        GUID guid_joystick = GUID_Joystick;
-        guid_joystick.Data1 += entry->joy_id;
-        if (!*entry->path) continue;
-        if (IsEqualGUID( &guid_joystick, guid )) break;
-        if (IsEqualGUID( &entry->instance.guidProduct, guid )) break;
-        if (IsEqualGUID( &entry->instance.guidInstance, guid )) break;
-    }
-    if (&entry->entry == &joystick_cache) hr = DIERR_DEVICENOTREG;
-    else
-    {
-        *instance = entry->instance;
-        *joy_id = entry->joy_id;
-        wcscpy( path, entry->path );
-    }
-
-    LeaveCriticalSection( &joystick_cache_cs );
-
-    if (FAILED(hr)) WARN( "guid %s not found\n", debugstr_guid(guid) );
-    return hr;
-}
-
-void hid_joystick_cleanup_devices(void)
-{
-    struct list *ptr;
-
-    while ((ptr = list_head( &joystick_cache )))
-    {
-        struct cache_entry *entry = LIST_ENTRY( ptr, struct cache_entry, entry );
-        list_remove( &entry->entry );
-        free( entry );
-    }
-}
 
 struct pid_control_report
 {
@@ -425,7 +180,6 @@ struct hid_joystick
     WCHAR device_path[MAX_PATH];
     HIDD_ATTRIBUTES attrs;
     HIDP_CAPS caps;
-    DWORD joy_id;
 
     char *input_report_buf;
     char *output_report_buf;
@@ -1051,7 +805,7 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
     case (DWORD_PTR)DIPROP_JOYSTICKID:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
-        value->dwData = impl->joy_id;
+        value->dwData = impl->base.instance.guidInstance.Data3;
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
@@ -1534,7 +1288,7 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
             {
                 usages = impl->usages_buf + count;
                 if (usages->UsagePage != HID_USAGE_PAGE_BUTTON)
-                    WARN( "unimplemented usage page %x.\n", usages->UsagePage );
+                    FIXME( "unimplemented usage page %x.\n", usages->UsagePage );
                 else if (usages->Usage >= 128)
                     FIXME( "ignoring extraneous button %d.\n", usages->Usage );
                 else
@@ -1661,58 +1415,25 @@ static DWORD device_type_for_version( DWORD type, DWORD version )
     }
 }
 
-static HRESULT get_device_interfaces( GUID class, DEVINSTID_W instance, WCHAR **paths )
-{
-    for (;;)
-    {
-        ULONG size, flags = CM_GET_DEVICE_INTERFACE_LIST_PRESENT;
-        CONFIGRET ret;
-
-        if (CM_Get_Device_Interface_List_SizeW( &size, &class, instance, flags )) return DIERR_DEVICENOTREG;
-        if (!(*paths = malloc( size * sizeof(**paths) ))) return E_OUTOFMEMORY;
-        if (!(ret = CM_Get_Device_Interface_ListW( &class, instance, *paths, size, flags ))) return DI_OK;
-        free( *paths );
-        *paths = NULL;
-        if (ret != CR_BUFFER_SMALL) return DIERR_DEVICENOTREG;
-    }
-}
-
-static HRESULT get_winexinput_interfaces( const WCHAR *hid_path, WCHAR **paths )
-{
-    WCHAR instance_id[MAX_DEVICE_ID_LEN];
-    ULONG size = sizeof(instance_id);
-    DEVPROPTYPE type;
-    WCHAR *tmp;
-
-    if (CM_Get_Device_Interface_PropertyW( hid_path, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0 )) return DIERR_DEVICENOTREG;
-    CharUpperW( instance_id );
-
-    if (!(tmp = wcsstr( instance_id, L"&IG_" ))) return DIERR_DEVICENOTREG;
-    memcpy( tmp, L"&XI_", sizeof(L"&XI_") - sizeof(WCHAR) );
-
-    return get_device_interfaces( GUID_DEVINTERFACE_WINEXINPUT, instance_id, paths );
-}
-
-static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
+static HRESULT hid_joystick_device_try_open( const WCHAR *path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
                                              HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance,
                                              DWORD version )
 {
     BOOL has_accelerator, has_brake, has_clutch, has_z, has_pov;
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
     HIDP_LINK_COLLECTION_NODE nodes[256];
-    DWORD type, button_count = 0;
+    DWORD type, size, button_count = 0;
     HIDP_BUTTON_CAPS buttons[10];
-    WCHAR *override_paths;
     HIDP_VALUE_CAPS value;
     HANDLE device_file;
     ULONG node_count;
     NTSTATUS status;
-    BOOL override;
+    UINT32 handle;
     USHORT count;
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
-    if (device_file == INVALID_HANDLE_VALUE) return E_FAIL;
+    if (device_file == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
 
     if (!HidD_GetPreparsedData( device_file, &preparsed_data )) goto failed;
     if (!HidD_GetAttributes( device_file, attrs )) goto failed;
@@ -1730,21 +1451,14 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
     if (!HidD_GetProductString( device_file, instance->tszInstanceName, MAX_PATH * sizeof(WCHAR) )) goto failed;
     if (!HidD_GetProductString( device_file, instance->tszProductName, MAX_PATH * sizeof(WCHAR) )) goto failed;
 
-    if (device_instance_is_disabled( instance->tszInstanceName, &override )) goto failed;
-    if (override && !wcsstr( path, L"&XI_" ) && SUCCEEDED(get_winexinput_interfaces( path, &override_paths )))
+    if (!DeviceIoControl( device_file, IOCTL_HID_GET_WINE_RAWINPUT_HANDLE, NULL, 0, &handle, sizeof(handle), &size, NULL ))
     {
-        HidD_FreePreparsedData( preparsed_data );
-        CloseHandle( device_file );
-
-        TRACE( "Overriding %s device path with %s\n", debugstr_w(path), debugstr_w(override_paths) );
-        wcscpy( path, override_paths );
-        free( override_paths );
-
-        return hid_joystick_device_try_open( path, device, preparsed, attrs, caps, instance, version );
+        ERR( "failed to get raw input handle, error %lu\n", GetLastError() );
+        goto failed;
     }
 
-    instance->dwSize = sizeof(DIDEVICEINSTANCEW);
-    instance->guidInstance = create_instance_uuid();
+    instance->guidInstance = hid_joystick_guid;
+    instance->guidInstance.Data1 ^= handle;
     instance->guidProduct = dinput_pidvid_guid;
     instance->guidProduct.Data1 = MAKELONG( attrs->VendorID, attrs->ProductID );
     instance->guidFFDriver = GUID_NULL;
@@ -1859,79 +1573,105 @@ failed:
     return DIERR_DEVICENOTREG;
 }
 
-HRESULT hid_joystick_refresh_devices(void)
+static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *instance,
+                                         WCHAR *device_path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
+                                         HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DWORD version )
 {
-    static const WCHAR *dinput_path = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
-                                       "PrivateProperties\\DirectInput";
-
-    WCHAR *paths = NULL;
-    HANDLE device;
-    HANDLE mutex;
-    HRESULT hr;
-    HKEY root;
+    char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
+    SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
+    SP_DEVINFO_DATA devinfo = {.cbSize = sizeof(devinfo)};
+    WCHAR device_id[MAX_PATH], *tmp;
+    HDEVINFO set, xi_set;
+    BOOL override;
+    UINT32 i = 0;
     GUID hid;
 
-    TRACE( "\n" );
+    TRACE( "index %d, guid %s\n", index, debugstr_guid( guid ) );
 
     HidD_GetHidGuid( &hid );
 
-    if (RegCreateKeyExW( HKEY_CURRENT_USER, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root, NULL ))
-        return DIERR_DEVICENOTREG;
+    set = SetupDiGetClassDevsW( &hid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
+    if (set == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
+    xi_set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_WINEXINPUT, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
 
-    EnterCriticalSection( &joystick_cache_cs );
-
-    mutex = CreateMutexW( NULL, FALSE, L"__wine_dinput_reg_mutex" );
-    WaitForSingleObject( mutex, INFINITE );
-
-    hid_joystick_cleanup_devices();
-    load_registry_instances( root );
-
-    hr = get_device_interfaces( hid, NULL, &paths );
-    for (WCHAR *path = paths; SUCCEEDED(hr) && *path; path = path + wcslen( path ) + 1)
+    *device = NULL;
+    *preparsed = NULL;
+    while (SetupDiEnumDeviceInterfaces( set, NULL, &hid, i++, &iface ))
     {
-        DIDEVICEINSTANCEW instance = {.dwSize = sizeof(instance)};
-        HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
-        PHIDP_PREPARSED_DATA preparsed;
-        HIDP_CAPS caps;
+        detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+        if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, &devinfo ))
+            continue;
+        if (FAILED(hid_joystick_device_try_open( detail->DevicePath, device, preparsed,
+                                                 attrs, caps, instance, version )))
+            continue;
 
-        if (FAILED(hid_joystick_device_try_open( path, &device, &preparsed, &attrs, &caps, &instance, 0x0800 ))) continue;
-        hr = insert_cache_entry( &instance, MAX_JOY_ID + 1, path );
-        HidD_FreePreparsedData( preparsed );
-        CloseHandle( device );
+        if (device_instance_is_disabled( instance, &override ))
+            goto next;
+
+        if (override && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
+            (tmp = wcsstr( device_id, L"&IG_" )))
+        {
+            memcpy( tmp, L"&XI_", sizeof(L"&XI_") - sizeof(WCHAR) );
+            if (!SetupDiOpenDeviceInfoW( xi_set, device_id, NULL, 0, &devinfo ))
+                goto next;
+            if (!SetupDiEnumDeviceInterfaces( xi_set, &devinfo, &GUID_DEVINTERFACE_WINEXINPUT, 0, &iface ))
+                goto next;
+            if (!SetupDiGetDeviceInterfaceDetailW( xi_set, &iface, detail, sizeof(buffer), NULL, &devinfo ))
+                goto next;
+
+            CloseHandle( *device );
+            HidD_FreePreparsedData( *preparsed );
+            if (FAILED(hid_joystick_device_try_open( detail->DevicePath, device, preparsed,
+                                                     attrs, caps, instance, version )))
+                continue;
+        }
+
+        /* enumerate device by GUID */
+        if (IsEqualGUID( guid, &instance->guidProduct ) || IsEqualGUID( guid, &instance->guidInstance )) break;
+
+        /* enumerate all devices */
+        if (index >= 0 && !index--) break;
+
+    next:
+        CloseHandle( *device );
+        HidD_FreePreparsedData( *preparsed );
+        *device = NULL;
+        *preparsed = NULL;
     }
-    free( paths );
 
-    assign_joystick_ids();
-    save_registry_instances( root );
-    ReleaseMutex( mutex );
-    CloseHandle( mutex );
+    if (xi_set != INVALID_HANDLE_VALUE) SetupDiDestroyDeviceInfoList( xi_set );
+    SetupDiDestroyDeviceInfoList( set );
+    if (!*device || !*preparsed) return DIERR_DEVICENOTREG;
 
-    LeaveCriticalSection( &joystick_cache_cs );
-    RegCloseKey( root );
-
-    return hr;
+    lstrcpynW( device_path, detail->DevicePath, MAX_PATH );
+    return DI_OK;
 }
 
 HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version, int index )
 {
-    struct cache_entry *entry;
-    HRESULT hr = DI_OK;
+    HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
+    PHIDP_PREPARSED_DATA preparsed;
+    WCHAR device_path[MAX_PATH];
+    GUID guid = GUID_NULL;
+    HIDP_CAPS caps;
+    HANDLE device;
+    HRESULT hr;
 
-    EnterCriticalSection( &joystick_cache_cs );
+    TRACE( "type %#lx, flags %#lx, instance %p, version %#lx, index %d\n", type, flags, instance, version, index );
 
-    LIST_FOR_EACH_ENTRY( entry, &joystick_cache, struct cache_entry, entry )
-        if (*entry->path && !index--) break;
-    if (&entry->entry == &joystick_cache) hr = DIERR_DEVICENOTREG;
-    else
-    {
-        *instance = entry->instance;
-        instance->dwDevType = device_type_for_version( instance->dwDevType, version ) | DIDEVTYPE_HID;
-    }
+    hr = hid_joystick_device_open( index, &guid, instance, device_path, &device, &preparsed,
+                                   &attrs, &caps, version );
+    if (hr != DI_OK) return hr;
 
-    LeaveCriticalSection( &joystick_cache_cs );
+    HidD_FreePreparsedData( preparsed );
+    CloseHandle( device );
 
-    if (FAILED(hr)) WARN( "index %u not found\n", index );
-    return hr;
+    TRACE( "found device %s, usage %04x:%04x, product %s, instance %s, name %s\n", debugstr_w(device_path),
+           instance->wUsagePage, instance->wUsage, debugstr_guid( &instance->guidProduct ),
+           debugstr_guid( &instance->guidInstance ), debugstr_w(instance->tszInstanceName) );
+
+    return DI_OK;
 }
 
 static BOOL init_object_properties( struct dinput_device *device, UINT index, struct hid_value_caps *caps,
@@ -2284,34 +2024,34 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
             .dwHow = DIPH_DEVICE,
         },
     };
-    DIDEVICEINSTANCEW instance = {.dwSize = sizeof(instance)};
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     struct hid_joystick *impl = NULL;
-    WCHAR device_path[MAX_PATH];
     USAGE_AND_PAGE *usages;
-    DWORD size, joy_id = 0;
     char *buffer;
     HRESULT hr;
+    DWORD size;
 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
 
-    if (FAILED(hr = get_instance_from_guid( guid, &instance, &joy_id, device_path ))) return hr;
-
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     dinput_device_init( &impl->base, &hid_joystick_vtbl, guid, dinput );
-    impl->joy_id = joy_id;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
-    wcscpy( impl->device_path, device_path );
 
-    hr = hid_joystick_device_try_open( impl->device_path, &impl->device, &impl->preparsed, &attrs,
-                                       &impl->caps, &impl->base.instance, dinput->dwVersion );
+    if (memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
+        hr = hid_joystick_device_open( -1, guid, &impl->base.instance, impl->device_path, &impl->device, &impl->preparsed,
+                                       &attrs, &impl->caps, dinput->dwVersion );
+    else
+    {
+        wcscpy( impl->device_path, *(const WCHAR **)guid );
+        hr = hid_joystick_device_try_open( impl->device_path, &impl->device, &impl->preparsed, &attrs,
+                                           &impl->caps, &impl->base.instance, dinput->dwVersion );
+    }
     if (hr != DI_OK) goto failed;
 
-    impl->base.instance.guidInstance = instance.guidInstance; /* use the instance GUID from the cache */
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->attrs = attrs;
     list_init( &impl->effect_list );

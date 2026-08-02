@@ -845,7 +845,7 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     }
 
     TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
-          lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
+          (int)lfsz.lf.lfHeight, (int)lfsz.lf.lfWidth, (int)lfsz.lf.lfWeight,
           lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
     lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
     lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
@@ -1130,7 +1130,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%d,%d\n",
 	  buflen,
 	  gm.gmBlackBoxX, gm.gmBlackBoxY, gm.gmCellIncX, gm.gmCellIncY,
-	  gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+	  (int)gm.gmptGlyphOrigin.x, (int)gm.gmptGlyphOrigin.y);
 
     gi.width = gm.gmBlackBoxX;
     gi.height = gm.gmBlackBoxY;
@@ -1369,7 +1369,7 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     }
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
-           physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
+          (int)(physdev->x11dev->dc_rect.left + x), (int)(physdev->x11dev->dc_rect.top + y));
 
     elts = malloc( sizeof(XGlyphElt16) * count );
 
@@ -1512,7 +1512,7 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         y_offset = y_src;
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
-    if (client_side_graphics) pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
+    pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
 }
@@ -2103,7 +2103,7 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
             rc.bottom = max( pt[0].y, pt[1].y );
 
             TRACE( "%u gradient %s colors %04x,%04x,%04x,%04x -> %04x,%04x,%04x,%04x\n",
-                   mode, wine_dbgstr_rect( &rc ),
+                   (int)mode, wine_dbgstr_rect( &rc ),
                    colors[0].red, colors[0].green, colors[0].blue, colors[0].alpha,
                    colors[1].red, colors[1].green, colors[1].blue, colors[1].alpha );
 
@@ -2203,6 +2203,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
+    NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
     NULL,                               /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */

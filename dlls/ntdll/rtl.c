@@ -27,11 +27,12 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
 #include "ntuser.h"
-#include "zlib.h"
+#include "tomcrypt.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
@@ -883,7 +884,10 @@ void WINAPI RtlAssert(void *assertion, void *filename, ULONG linenumber, char *m
  */
 DWORD WINAPI RtlComputeCrc32(DWORD dwInitial, const BYTE *pData, INT iLen)
 {
-    return crc32( dwInitial, pData, iLen );
+    crc32_state state = { .crc = ~dwInitial };
+
+    crc32_update( &state, pData, iLen );
+    return ~state.crc;
 }
 
 
@@ -1018,47 +1022,45 @@ ULONG WINAPI RtlRandomEx( ULONG *seed )
 }
 
 /***********************************************************************
- * get_process_cookie (internal)
+ * get_pointer_obfuscator (internal)
  */
-static ULONG get_process_cookie(void)
+static DWORD_PTR get_pointer_obfuscator( void )
 {
-    static ULONG process_cookie;
+    static DWORD_PTR pointer_obfuscator;
 
-    if (!process_cookie)
+    if (!pointer_obfuscator)
     {
-        ULONG cookie;
+        ULONG seed = NtGetTickCount();
+        ULONG_PTR rand;
 
-        NtQueryInformationProcess( GetCurrentProcess(), ProcessCookie, &cookie, sizeof(cookie), NULL );
-        InterlockedCompareExchange( (LONG volatile *)&process_cookie, cookie, 0 );
+        /* generate a random value for the obfuscator */
+        rand = RtlUniform( &seed );
+
+        /* handle 64bit pointers */
+        rand ^= (ULONG_PTR)RtlUniform( &seed ) << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+
+        /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
+        rand |= (ULONG_PTR)0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+
+        InterlockedCompareExchangePointer( (void**) &pointer_obfuscator, (void*) rand, NULL );
     }
-    return process_cookie;
-}
 
-#define BIT_COUNT_IN_POINTER (sizeof(void *) * 8)
+    return pointer_obfuscator;
+}
 
 /*************************************************************************
  * RtlEncodePointer   [NTDLL.@]
  */
 PVOID WINAPI RtlEncodePointer( PVOID ptr )
 {
-    ULONG cookie = get_process_cookie();
-    ULONG rotate = cookie % BIT_COUNT_IN_POINTER;
-    ULONG_PTR ptrval = (ULONG_PTR)ptr ^ cookie;
-
-    return (void *)((ptrval >> rotate) | (ptrval << ((BIT_COUNT_IN_POINTER - rotate) % BIT_COUNT_IN_POINTER)));
+    DWORD_PTR ptrval = (DWORD_PTR) ptr;
+    return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }
 
-/*************************************************************************
- * RtlDecodePointer   [NTDLL.@]
- */
 PVOID WINAPI RtlDecodePointer( PVOID ptr )
 {
-    ULONG cookie = get_process_cookie();
-    ULONG rotate = cookie % BIT_COUNT_IN_POINTER;
-    ULONG_PTR ptrval = (ULONG_PTR)ptr;
-
-    ptrval = (ptrval << rotate) | (ptrval >> ((BIT_COUNT_IN_POINTER - rotate) % BIT_COUNT_IN_POINTER));
-    return (void *)(ptrval ^ cookie);
+    DWORD_PTR ptrval = (DWORD_PTR) ptr;
+    return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }
 
 /******************************************************************************

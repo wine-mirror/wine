@@ -9,14 +9,6 @@
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
  *
- * In addition to the permissions in the GNU Lesser General Public License,
- * the authors give you unlimited permission to link the compiled version
- * of this file with other programs, and to distribute those programs
- * without any restriction coming from the use of this file.  (The GNU
- * Lesser General Public License restrictions do apply in other respects;
- * for example, they cover modification of the file, and distribution when
- * not linked into another program.)
- *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -101,7 +93,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "directmanipulation.h"
 #include "devguid.h"
 #include "propkey.h"
-#include "thumbcache.h"
 
 #define __WINE_INIT_NPI_MODULEID
 #include "netiodef.h"
@@ -112,8 +103,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_ISFHelper,                0x1fe68efb,0x1874,0x9812,0x56,0xdc,0x00,0x00,0x00,0x00,0x00,0x00);
 DEFINE_GUID(IID_IProxyManager,            0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
-DEFINE_GUID(IID_IEnterActivityWithNoLock, 0xd7174f82,0x36b8,0x4aa8,0x80,0x0a,0xe9,0x63,0xab,0x2d,0xfa,0xb9);
-DEFINE_GUID(IID_ICallbackWithNoReentrancyToApplicationSTA, 0x0a299774,0x3e4e,0xfc42,0x1d,0x9d,0x72,0xce,0xe1,0x05,0xca,0x57);
 
 DEFINE_GUID(FMTID_SummaryInformation,0xF29F85E0,0x4FF9,0x1068,0xAB,0x91,0x08,0x00,0x2B,0x27,0xB3,0xD9);
 DEFINE_GUID(FMTID_DocSummaryInformation,0xD5CDD502,0x2E9C,0x101B,0x93,0x97,0x08,0x00,0x2B,0x2C,0xF9,0xAE);

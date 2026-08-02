@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.management.deployment.idl";
-
-namespace Windows.Management.Deployment {
-    runtimeclass PackageManager;
-}
+#include "windows.management.deployment.idl"

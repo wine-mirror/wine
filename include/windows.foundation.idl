@@ -30,8 +30,6 @@ import "windows.foundation.collections.idl";
 namespace Windows.Foundation.Collections {
     interface IPropertySet;
 
-    runtimeclass PropertySet;
-
     declare {
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, HSTRING>;
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *>;
@@ -57,20 +55,6 @@ namespace Windows.Foundation.Collections {
                  Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>,
                  Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>
     {
-    }
-
-    [
-        activatable(Windows.Foundation.FoundationContract, 1.0),
-        contract(Windows.Foundation.FoundationContract, 1.0),
-        marshaling_behavior(agile),
-        threading(both)
-    ]
-    runtimeclass PropertySet
-    {
-        [default] interface Windows.Foundation.Collections.IPropertySet;
-        interface Windows.Foundation.Collections.IObservableMap<HSTRING, IInspectable *>;
-        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
-        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
     }
 
     [
@@ -125,16 +109,22 @@ namespace Windows.Foundation {
         interface Windows.Foundation.Collections.IIterable<HSTRING>;
         interface Windows.Foundation.Collections.IIterable<IInspectable *>;
         interface Windows.Foundation.Collections.IIterable<IWwwFormUrlDecoderEntry *>;
+#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IIterable<Uri *>;
+#endif
         interface Windows.Foundation.Collections.IIterator<HSTRING>;
         interface Windows.Foundation.Collections.IIterator<IInspectable *>;
         interface Windows.Foundation.Collections.IIterator<IWwwFormUrlDecoderEntry *>;
+#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IIterator<Uri *>;
+#endif
         interface Windows.Foundation.Collections.IVectorView<BYTE>;
         interface Windows.Foundation.Collections.IVectorView<HSTRING>;
         interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
         interface Windows.Foundation.Collections.IVectorView<IWwwFormUrlDecoderEntry *>;
+#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IVectorView<Windows.Foundation.Uri *>;
+#endif
         interface Windows.Foundation.Collections.IVector<HSTRING>;
         interface Windows.Foundation.Collections.IVector<IInspectable *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING> *>;
@@ -144,14 +134,19 @@ namespace Windows.Foundation {
         interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<HSTRING>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<UINT32>;
+#ifndef _WINTYPES
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Uri *>;
+#endif
         interface Windows.Foundation.AsyncOperationProgressHandler<UINT32, UINT32>;
         interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT32, UINT32>;
         interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<boolean>;
+        interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<UINT32>;
+#ifndef _WINTYPES
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *>;
+#endif
         interface Windows.Foundation.IAsyncOperationWithProgress<UINT32, UINT32>;
         interface Windows.Foundation.IReference<BYTE>;
         interface Windows.Foundation.IReference<DOUBLE>;
@@ -385,25 +380,25 @@ namespace Windows.Foundation {
         HRESULT GetPoint([out, retval] Windows.Foundation.Point *value);
         HRESULT GetSize([out, retval] Windows.Foundation.Size *value);
         HRESULT GetRect([out, retval] Windows.Foundation.Rect *value);
-        HRESULT GetUInt8Array([out] UINT32 *value_size, [out, size_is(, *value_size)] BYTE **value);
-        HRESULT GetInt16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT16 **value);
-        HRESULT GetUInt16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT16 **value);
-        HRESULT GetInt32Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT32 **value);
-        HRESULT GetUInt32Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT32 **value);
-        HRESULT GetInt64Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT64 **value);
-        HRESULT GetUInt64Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT64 **value);
-        HRESULT GetSingleArray([out] UINT32 *value_size, [out, size_is(, *value_size)] FLOAT **value);
-        HRESULT GetDoubleArray([out] UINT32 *value_size, [out, size_is(, *value_size)] DOUBLE **value);
-        HRESULT GetChar16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] WCHAR **value);
-        HRESULT GetBooleanArray([out] UINT32 *value_size, [out, size_is(, *value_size)] boolean **value);
-        HRESULT GetStringArray([out] UINT32 *value_size, [out, size_is(, *value_size)] HSTRING **value);
-        HRESULT GetInspectableArray([out] UINT32 *value_size, [out, size_is(, *value_size)] IInspectable ***value);
-        HRESULT GetGuidArray([out] UINT32 *value_size, [out, size_is(, *value_size)] GUID **value);
-        HRESULT GetDateTimeArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.DateTime **value);
-        HRESULT GetTimeSpanArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.TimeSpan **value);
-        HRESULT GetPointArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Point **value);
-        HRESULT GetSizeArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Size **value);
-        HRESULT GetRectArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Rect **value);
+        HRESULT GetUInt8Array([out] UINT32 *value_size, [out, size_is(*value_size)] BYTE **value);
+        HRESULT GetInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT16 **value);
+        HRESULT GetUInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT16 **value);
+        HRESULT GetInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT32 **value);
+        HRESULT GetUInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT32 **value);
+        HRESULT GetInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT64 **value);
+        HRESULT GetUInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT64 **value);
+        HRESULT GetSingleArray([out] UINT32 *value_size, [out, size_is(*value_size)] FLOAT **value);
+        HRESULT GetDoubleArray([out] UINT32 *value_size, [out, size_is(*value_size)] DOUBLE **value);
+        HRESULT GetChar16Array([out] UINT32 *value_size, [out, size_is(*value_size)] WCHAR **value);
+        HRESULT GetBooleanArray([out] UINT32 *value_size, [out, size_is(*value_size)] boolean **value);
+        HRESULT GetStringArray([out] UINT32 *value_size, [out, size_is(*value_size)] HSTRING **value);
+        HRESULT GetInspectableArray([out] UINT32 *value_size, [out, size_is(*value_size)] IInspectable ***value);
+        HRESULT GetGuidArray([out] UINT32 *value_size, [out, size_is(*value_size)] GUID **value);
+        HRESULT GetDateTimeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.DateTime **value);
+        HRESULT GetTimeSpanArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.TimeSpan **value);
+        HRESULT GetPointArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Point **value);
+        HRESULT GetSizeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Size **value);
+        HRESULT GetRectArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Rect **value);
     }
 
     [
@@ -578,6 +573,7 @@ namespace Windows.Foundation {
     {
     }
 
+#ifndef _WINTYPES
     [
         activatable(Windows.Foundation.IUriRuntimeClassFactory, Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -604,6 +600,7 @@ namespace Windows.Foundation {
         interface Windows.Foundation.Collections.IVectorView<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.IWwwFormUrlDecoderEntry *>;
     }
+#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),

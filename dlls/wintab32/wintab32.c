@@ -24,7 +24,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"
-#include "ntuser.h"
+#include "winuser.h"
 #include "winerror.h"
 #define NOFIX32
 #include "wintab.h"
@@ -33,8 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
-static HINSTANCE wintab_instance;
-static HWND hwndTablet = NULL;
+HWND hwndDefault = NULL;
 static CRITICAL_SECTION_DEBUG csTablet_debug =
 {
     0, 0, &csTablet,
@@ -42,6 +41,11 @@ static CRITICAL_SECTION_DEBUG csTablet_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csTablet") }
 };
 CRITICAL_SECTION csTablet = { &csTablet_debug, -1, 0, 0, 0, 0 };
+
+int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
+int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet) = NULL;
+int  (CDECL *pAttachEventQueueToTablet)(HWND hOwner) = NULL;
+UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
@@ -52,7 +56,6 @@ static VOID TABLET_Register(void)
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS;
     wndClass.lpfnWndProc = TABLET_WindowProc;
-    wndClass.hInstance = wintab_instance;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 0;
     wndClass.hCursor = NULL;
@@ -66,24 +69,28 @@ static VOID TABLET_Unregister(void)
     UnregisterClassW(L"WineTabletClass", NULL);
 }
 
-static BOOL WINAPI create_internal_window(INIT_ONCE *once, void *param, void **context)
+static HMODULE load_graphics_driver(void)
 {
-    TABLET_Register();
-    hwndTablet = CreateWindowW(L"WineTabletClass", L"Tablet", 0,
-                                0, 0, 0, 0, HWND_MESSAGE, 0, wintab_instance, 0);
+    static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
+    static const WCHAR displayW[] = L"}\\0000";
 
-    if (!hwndTablet)
-        ERR("error creating internal window: %lu\n", GetLastError());
+    HMODULE ret = 0;
+    HKEY hkey;
+    DWORD size;
+    WCHAR path[MAX_PATH];
+    WCHAR key[ARRAY_SIZE(key_pathW) + ARRAY_SIZE(displayW) + 40];
+    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), L"__wine_display_device_guid" ));
 
-    return TRUE;
-}
-
-HWND TABLET_GetInternalWindow(void)
-{
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-    InitOnceExecuteOnce(&init_once, create_internal_window, NULL, NULL);
-
-    return hwndTablet;
+    if (!guid_atom) return 0;
+    memcpy( key, key_pathW, sizeof(key_pathW) );
+    if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
+    lstrcatW( key, displayW );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
+    size = sizeof(path);
+    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
+    RegCloseKey( hkey );
+    TRACE( "%s %p\n", debugstr_w(path), ret );
+    return ret;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
@@ -93,13 +100,25 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     {
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
-            wintab_instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
+            TABLET_Register();
+            hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet",
+                                        WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
+            if (hwndDefault)
+            {
+                HMODULE module = load_graphics_driver();
+                pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
+                pAttachEventQueueToTablet = (void *)GetProcAddress(module, "AttachEventQueueToTablet");
+                pGetCurrentPacket = (void *)GetProcAddress(module, "GetCurrentPacket");
+                pWTInfoW = (void *)GetProcAddress(module, "WTInfoW");
+            }
+            else
+                return FALSE;
             break;
         case DLL_PROCESS_DETACH:
             if (lpReserved) break;
             TRACE("Detaching\n");
-            if (hwndTablet) DestroyWindow(hwndTablet);
+            if (hwndDefault) DestroyWindow(hwndDefault);
             TABLET_Unregister();
             DeleteCriticalSection(&csTablet);
             break;
@@ -119,34 +138,38 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
     switch(uMsg)
     {
+        case WM_NCCREATE:
+            return TRUE;
+
         case WT_PACKET:
             {
                 WTPACKET packet;
                 LPOPENCONTEXT handler;
-                if (NtUserMessageCall(hwnd, NtUserWintabPacket, 0, 0, &packet, NtUserWintabDriverCall, FALSE))
+                if (pGetCurrentPacket)
                 {
+                    pGetCurrentPacket(&packet);
                     handler = AddPacketToContextQueue(&packet,(HWND)lParam);
                     if (handler && handler->context.lcOptions & CXO_MESSAGES)
                        TABLET_PostTabletMessage(handler, _WT_PACKET(handler->context.lcMsgBase),
                                    (WPARAM)packet.pkSerialNumber,
                                    (LPARAM)handler->handle, FALSE);
                 }
-                return 0;
+                break;
             }
         case WT_PROXIMITY:
             {
                 WTPACKET packet;
                 LPOPENCONTEXT handler;
-                if (NtUserMessageCall(hwnd, NtUserWintabPacket, 0, 0, &packet, NtUserWintabDriverCall, FALSE))
+                if (pGetCurrentPacket)
                 {
+                    pGetCurrentPacket(&packet);
                     handler = AddPacketToContextQueue(&packet,(HWND)wParam);
                     if (handler)
                         TABLET_PostTabletMessage(handler, WT_PROXIMITY,
                                                 (WPARAM)handler->handle, lParam, TRUE);
                 }
-                return 0;
+                break;
             }
     }
-
-    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    return 0;
 }

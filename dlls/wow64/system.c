@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -176,7 +177,6 @@ static NTSTATUS put_system_proc_info( SYSTEM_PROCESS_INFORMATION32 *info32,
             prev = proc32;
         }
         outpos += proc_len + proc->ProcessName.MaximumLength;
-        outpos = (outpos + 7) & ~(ULONG_PTR)7;
         inpos += proc->NextEntryOffset;
         if (!proc->NextEntryOffset) break;
     }
@@ -680,7 +680,6 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
 
     case SystemCpuSetInformation:  /* SYSTEM_CPU_SET_INFORMATION */
     case SystemSupportedProcessorArchitectures:  /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
-    case SystemSupportedProcessorArchitectures2: /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
         if (!query || query_len < sizeof(LONG)) return STATUS_INVALID_PARAMETER;
         handle = LongToHandle( *(LONG *)query );
         return NtQuerySystemInformationEx( class, &handle, sizeof(handle), ptr, len, retlen );

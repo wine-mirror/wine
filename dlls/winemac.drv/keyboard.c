@@ -37,34 +37,149 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
-static BOOL is_ime_hkl( HKL hkl )
-{
-    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
-    switch (HIWORD(hkl))
-    {
-    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
-    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
-    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
-    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
-    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
-    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
-    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
-    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
-    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
-    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
-    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
-    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
-    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
-    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
-    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
-    }
-}
+
+/* Carbon-style modifier mask definitions from <Carbon/HIToolbox/Events.h>. */
+enum {
+    cmdKeyBit       = 8,
+    shiftKeyBit     = 9,
+    alphaLockBit    = 10,
+    optionKeyBit    = 11,
+    controlKeyBit   = 12,
+};
+
+enum {
+    cmdKey      = 1 << cmdKeyBit,
+    shiftKey    = 1 << shiftKeyBit,
+    alphaLock   = 1 << alphaLockBit,
+    optionKey   = 1 << optionKeyBit,
+    controlKey  = 1 << controlKeyBit,
+};
+
+
+/* Mac virtual key code definitions from <Carbon/HIToolbox/Events.h>. */
+enum {
+    kVK_ANSI_A              = 0x00,
+    kVK_ANSI_S              = 0x01,
+    kVK_ANSI_D              = 0x02,
+    kVK_ANSI_F              = 0x03,
+    kVK_ANSI_H              = 0x04,
+    kVK_ANSI_G              = 0x05,
+    kVK_ANSI_Z              = 0x06,
+    kVK_ANSI_X              = 0x07,
+    kVK_ANSI_C              = 0x08,
+    kVK_ANSI_V              = 0x09,
+    kVK_ISO_Section         = 0x0A,
+    kVK_ANSI_B              = 0x0B,
+    kVK_ANSI_Q              = 0x0C,
+    kVK_ANSI_W              = 0x0D,
+    kVK_ANSI_E              = 0x0E,
+    kVK_ANSI_R              = 0x0F,
+    kVK_ANSI_Y              = 0x10,
+    kVK_ANSI_T              = 0x11,
+    kVK_ANSI_1              = 0x12,
+    kVK_ANSI_2              = 0x13,
+    kVK_ANSI_3              = 0x14,
+    kVK_ANSI_4              = 0x15,
+    kVK_ANSI_6              = 0x16,
+    kVK_ANSI_5              = 0x17,
+    kVK_ANSI_Equal          = 0x18,
+    kVK_ANSI_9              = 0x19,
+    kVK_ANSI_7              = 0x1A,
+    kVK_ANSI_Minus          = 0x1B,
+    kVK_ANSI_8              = 0x1C,
+    kVK_ANSI_0              = 0x1D,
+    kVK_ANSI_RightBracket   = 0x1E,
+    kVK_ANSI_O              = 0x1F,
+    kVK_ANSI_U              = 0x20,
+    kVK_ANSI_LeftBracket    = 0x21,
+    kVK_ANSI_I              = 0x22,
+    kVK_ANSI_P              = 0x23,
+    kVK_Return              = 0x24,
+    kVK_ANSI_L              = 0x25,
+    kVK_ANSI_J              = 0x26,
+    kVK_ANSI_Quote          = 0x27,
+    kVK_ANSI_K              = 0x28,
+    kVK_ANSI_Semicolon      = 0x29,
+    kVK_ANSI_Backslash      = 0x2A,
+    kVK_ANSI_Comma          = 0x2B,
+    kVK_ANSI_Slash          = 0x2C,
+    kVK_ANSI_N              = 0x2D,
+    kVK_ANSI_M              = 0x2E,
+    kVK_ANSI_Period         = 0x2F,
+    kVK_Tab                 = 0x30,
+    kVK_Space               = 0x31,
+    kVK_ANSI_Grave          = 0x32,
+    kVK_Delete              = 0x33,
+    kVK_Escape              = 0x35,
+    kVK_RightCommand        = 0x36, /* invented for Wine; co-opt unused key code */
+    kVK_Command             = 0x37,
+    kVK_Shift               = 0x38,
+    kVK_CapsLock            = 0x39,
+    kVK_Option              = 0x3A,
+    kVK_Control             = 0x3B,
+    kVK_RightShift          = 0x3C,
+    kVK_RightOption         = 0x3D,
+    kVK_RightControl        = 0x3E,
+    kVK_Function            = 0x3F,
+    kVK_F17                 = 0x40,
+    kVK_ANSI_KeypadDecimal  = 0x41,
+    kVK_ANSI_KeypadMultiply = 0x43,
+    kVK_ANSI_KeypadPlus     = 0x45,
+    kVK_ANSI_KeypadClear    = 0x47,
+    kVK_VolumeUp            = 0x48,
+    kVK_VolumeDown          = 0x49,
+    kVK_Mute                = 0x4A,
+    kVK_ANSI_KeypadDivide   = 0x4B,
+    kVK_ANSI_KeypadEnter    = 0x4C,
+    kVK_ANSI_KeypadMinus    = 0x4E,
+    kVK_F18                 = 0x4F,
+    kVK_F19                 = 0x50,
+    kVK_ANSI_KeypadEquals   = 0x51,
+    kVK_ANSI_Keypad0        = 0x52,
+    kVK_ANSI_Keypad1        = 0x53,
+    kVK_ANSI_Keypad2        = 0x54,
+    kVK_ANSI_Keypad3        = 0x55,
+    kVK_ANSI_Keypad4        = 0x56,
+    kVK_ANSI_Keypad5        = 0x57,
+    kVK_ANSI_Keypad6        = 0x58,
+    kVK_ANSI_Keypad7        = 0x59,
+    kVK_F20                 = 0x5A,
+    kVK_ANSI_Keypad8        = 0x5B,
+    kVK_ANSI_Keypad9        = 0x5C,
+    kVK_JIS_Yen             = 0x5D,
+    kVK_JIS_Underscore      = 0x5E,
+    kVK_JIS_KeypadComma     = 0x5F,
+    kVK_F5                  = 0x60,
+    kVK_F6                  = 0x61,
+    kVK_F7                  = 0x62,
+    kVK_F3                  = 0x63,
+    kVK_F8                  = 0x64,
+    kVK_F9                  = 0x65,
+    kVK_JIS_Eisu            = 0x66,
+    kVK_F11                 = 0x67,
+    kVK_JIS_Kana            = 0x68,
+    kVK_F13                 = 0x69,
+    kVK_F16                 = 0x6A,
+    kVK_F14                 = 0x6B,
+    kVK_F10                 = 0x6D,
+    kVK_F12                 = 0x6F,
+    kVK_F15                 = 0x71,
+    kVK_Help                = 0x72,
+    kVK_Home                = 0x73,
+    kVK_PageUp              = 0x74,
+    kVK_ForwardDelete       = 0x75,
+    kVK_F4                  = 0x76,
+    kVK_End                 = 0x77,
+    kVK_F2                  = 0x78,
+    kVK_PageDown            = 0x79,
+    kVK_F1                  = 0x7A,
+    kVK_LeftArrow           = 0x7B,
+    kVK_RightArrow          = 0x7C,
+    kVK_DownArrow           = 0x7D,
+    kVK_UpArrow             = 0x7E,
+};
+
+extern const CFStringRef kTISTypeKeyboardLayout;
 
 /* Indexed by Mac virtual keycode values defined above. */
 static const struct {
@@ -341,9 +456,7 @@ static struct list layout_list = LIST_INIT( layout_list );
 struct layout
 {
     struct list entry;
-    LANGID lang;
-    /* "Layout Id", used by NtUserGetKeyboardLayoutName / LoadKeyboardLayoutW */
-    WORD layout_id;
+    HKL hkl;
     TISInputSourceRef input_source;
     BOOL enabled; /* is the input source enabled - ie displayed in the input source selector UI */
 };
@@ -442,10 +555,27 @@ static DWORD get_lcid(CFStringRef lang)
     return locale->inotneutral ? entry->id : locale->idefaultlanguage;
 }
 
-static HKL get_layout_hkl(struct layout *layout, LCID locale)
+static HKL get_hkl(CFStringRef lang, CFStringRef type)
 {
-    if (!layout->layout_id) return UlongToHandle(MAKELONG(locale, layout->lang));
-    return UlongToHandle(MAKELONG(locale, layout->layout_id));
+    ULONG_PTR lcid = get_lcid(lang);
+    struct layout *layout;
+
+    /* Look for the last occurrence of this lcid in the list and if
+       present use that value + 0x10000 */
+    LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
+    {
+        ULONG_PTR hkl = HandleToUlong(layout->hkl);
+
+        if (LOWORD(hkl) == lcid)
+        {
+            lcid = (hkl & ~0xe0000000) + 0x10000;
+            break;
+        }
+    }
+
+    if (!CFEqual(type, kTISTypeKeyboardLayout)) lcid |= 0xe0000000;
+
+    return (HKL)lcid;
 }
 
 /******************************************************************
@@ -481,7 +611,6 @@ static struct layout *get_layout_from_source(TISInputSourceRef input)
  */
 static void update_layout_list(void)
 {
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     CFArrayRef sources;
     struct layout *layout;
     int i;
@@ -500,28 +629,18 @@ static void update_layout_list(void)
         layout = get_layout_from_source(input);
         if (!layout)
         {
-            static WORD next_layout_id = 1;
-
             CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
-            LANGID lang = get_lcid(CFDictionaryGetValue(dict, macdrv_input_source_lang_key));
-            HKL lang_hkl = UlongToPtr(MAKELONG(lang, lang));
-            UINT index = 0;
+            CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
 
-            LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
-                if (layout->lang == lang) index++;
-
-            layout = calloc(1, sizeof(*layout));
+            layout = malloc(sizeof(*layout));
             layout->input_source = (TISInputSourceRef)CFRetain(input);
-            layout->lang = lang;
-            if (is_ime_hkl(lang_hkl) && !index) layout->layout_id = 0; /* HKL has a builtin IME */
-            else if (!CFEqual(type, kTISTypeKeyboardLayout)) layout->layout_id = 0xe000 | next_layout_id++;
-            else if (index) layout->layout_id = 0xf000 | next_layout_id++;
+            layout->hkl = get_hkl(lang, type);
 
             list_add_tail(&layout_list, &layout->entry);
-            TRACE("adding new layout %p\n", get_layout_hkl(layout, locale));
+            TRACE("adding new layout %p\n", layout->hkl);
         }
         else
-            TRACE("enabling already existing layout %p\n", get_layout_hkl(layout, locale));
+            TRACE("enabling already existing layout %p\n", layout->hkl);
 
         layout->enabled = TRUE;
     }
@@ -536,7 +655,6 @@ static void update_layout_list(void)
  */
 HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
 {
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     struct layout *layout;
     HKL ret = 0;
 
@@ -544,7 +662,7 @@ HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
 
     update_layout_list();
     layout = get_layout_from_source(input);
-    if (layout) ret = get_layout_hkl(layout, locale);
+    if (layout) ret = layout->hkl;
 
     pthread_mutex_unlock(&layout_list_mutex);
 
@@ -1106,51 +1224,52 @@ void macdrv_hotkey_press(const macdrv_event *event)
 
 
 /***********************************************************************
- *              ImeToAsciiEx (MACDRV.@)
+ *              ImeProcessKey (MACDRV.@)
  */
-UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc)
+UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_state)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    WORD scan = HIWORD(lparam) & 0x1ff, vkey = LOWORD(wparam);
+    BOOL repeat = !!(lparam >> 30), pressed = !(lparam >> 31);
     unsigned int flags;
-    int keyc;
-    bool ret;
-    BOOL repeat = !!(vsc & KF_REPEAT);
+    int keyc, done = 0;
 
-    TRACE("himc %p, vkey %#x state %p repeat %u\n",
-          himc, vkey, state, repeat);
+    TRACE("himc %p, scan %#x, vkey %#x, repeat %u, pressed %u\n",
+          himc, scan, vkey, repeat, pressed);
 
-    if (!state) return STATUS_SUCCESS;
+    if (!macdrv_using_input_method()) return 0;
 
-    if (vsc & KF_UP)
+    if (!pressed)
     {
         /* Only key down events should be sent to the Cocoa input context. We do
            not handle key ups, and instead let those go through as a normal
            WM_KEYUP. */
-        return STATUS_NOT_IMPLEMENTED;
+        return 0;
     }
 
     switch (vkey)
     {
-        case VK_KANA:
-        case VK_KANJI:
-            TRACE("Skipping metakey\n");
-            return STATUS_NOT_IMPLEMENTED;
+        case VK_SHIFT:
+        case VK_CONTROL:
+        case VK_CAPITAL:
+        case VK_MENU:
+        return 0;
     }
 
     flags = thread_data->last_modifiers;
-    if (state[VK_SHIFT] & 0x80)
+    if (key_state[VK_SHIFT] & 0x80)
         flags |= NX_SHIFTMASK;
     else
         flags &= ~(NX_SHIFTMASK | NX_DEVICELSHIFTKEYMASK | NX_DEVICERSHIFTKEYMASK);
-    if (state[VK_CAPITAL] & 0x01)
+    if (key_state[VK_CAPITAL] & 0x01)
         flags |= NX_ALPHASHIFTMASK;
     else
         flags &= ~NX_ALPHASHIFTMASK;
-    if (state[VK_CONTROL] & 0x80)
+    if (key_state[VK_CONTROL] & 0x80)
         flags |= NX_CONTROLMASK;
     else
         flags &= ~(NX_CONTROLMASK | NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK);
-    if (state[VK_MENU] & 0x80)
+    if (key_state[VK_MENU] & 0x80)
         flags |= NX_COMMANDMASK;
     else
         flags &= ~(NX_COMMANDMASK | NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK);
@@ -1162,9 +1281,11 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc)
     if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey)) return 0;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
-    ret = macdrv_send_keydown_to_input_source(keyc, flags, repeat, himc);
-    NtUserMsgWaitForMultipleObjectsEx(0, NULL, 0, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
-    return ret ? STATUS_SUCCESS : STATUS_NOT_IMPLEMENTED;
+
+    macdrv_send_keydown_to_input_source(flags, repeat, keyc, himc, &done);
+    while (!done) NtUserMsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
+
+    return done > 0;
 }
 
 
@@ -1179,8 +1300,6 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     TRACE("hkl %p flags %04x\n", hkl, flags);
 
-    NtUserPostMessage( NULL, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, is_ime_hkl(hkl) );
-
     if (hkl == thread_data->active_keyboard_layout)
         return TRUE;
 
@@ -1189,7 +1308,7 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
     {
-        if (HIWORD(hkl) == layout->layout_id ? layout->layout_id : layout->lang)
+        if (layout->hkl == hkl)
         {
             if (macdrv_select_input_source(layout->input_source))
             {
@@ -1233,7 +1352,7 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
     scan = (lparam >> 16) & 0x1FF;
     for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2scan); keyc++)
     {
-        if (thread_data->keyc2scan[keyc] == scan && scan)
+        if (thread_data->keyc2scan[keyc] == scan)
         {
             const UCKeyboardLayout *uchr;
             UInt32 deadKeyState = 0;
@@ -1326,7 +1445,6 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
  */
 UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 {
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     int count = 0;
     struct layout *layout;
 
@@ -1342,7 +1460,7 @@ UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
         if (list)
         {
             if (count >= size) break;
-            list[count] = get_layout_hkl(layout, locale);
+            list[count] = layout->hkl;
             TRACE("\t%d: %p\n", count, list[count]);
         }
         count++;

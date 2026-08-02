@@ -30,7 +30,7 @@
 @ stub MFCreateByteCacheFile
 @ stub MFCreateCacheManager
 @ stub MFCreateCredentialCache
-@ stdcall MFCreateDeviceSource(ptr ptr)
+@ stub MFCreateDeviceSource
 @ stub MFCreateDeviceSourceActivate
 @ stub MFCreateDrmNetNDSchemePlugin
 @ stub MFCreateFileBlockMap
@@ -82,5 +82,5 @@
 @ stub MFReadSequencerSegmentOffset
 @ stdcall MFRequireProtectedEnvironment(ptr)
 @ stdcall MFShutdownObject(ptr)
-@ stdcall MFTranscodeGetAudioOutputAvailableTypes(ptr long ptr ptr)
+@ stub MFTranscodeGetAudioOutputAvailableTypes
 @ stub MergePropertyStore

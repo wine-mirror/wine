@@ -84,7 +84,6 @@ struct winetest_thread_data
     char strings[2000];              /* buffer for debug strings */
     char context[8][128];            /* data to print before messages */
     unsigned int context_count;      /* number of context prefixes */
-    int condition;                   /* current condition */
 };
 
 extern struct winetest_thread_data *winetest_get_thread_data(void);
@@ -94,7 +93,7 @@ extern int winetest_vprintf( const char *msg, va_list args );
 extern int winetest_get_time(void);
 
 extern int winetest_get_mainargs( char*** pargv );
-extern void winetest_wait_child_process( const PROCESS_INFORMATION *info );
+extern void winetest_wait_child_process( HANDLE process );
 
 #ifdef STANDALONE
 #define START_TEST(name) \
@@ -365,26 +364,15 @@ static int winetest_vok( int condition, const char *msg, va_list args )
     }
 }
 
-static void winetest_ok_( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-static inline void winetest_ok_( const char *msg, ... )
+static void winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
+static inline void winetest_ok( int condition, const char *msg, ... )
 {
     va_list valist;
 
     va_start(valist, msg);
-    winetest_vok(winetest_get_thread_data()->condition, msg, valist);
+    winetest_vok(condition, msg, valist);
     va_end(valist);
 }
-
-static inline int winetest_should_log( int condition )
-{
-    struct winetest_thread_data *data = winetest_get_thread_data();
-    data->condition = condition;
-
-    /* if test is todo, then we would always log, otherwise we only log if test failed. */
-    return data->todo_level || !condition;
-}
-
-#define winetest_ok(cond, ...) (winetest_should_log(cond) ? winetest_ok_(__VA_ARGS__) : winetest_ok_(NULL))
 
 static void winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static inline void winetest_trace( const char *msg, ... )
@@ -693,14 +681,14 @@ int winetest_get_mainargs( char ***pargv )
     return winetest_argc;
 }
 
-void winetest_wait_child_process( const PROCESS_INFORMATION *info )
+void winetest_wait_child_process( HANDLE process )
 {
     DWORD ret;
 
-    winetest_ok( info->hProcess != NULL, "No child process handle (CreateProcess failed?)\n" );
-    if (!info->hProcess) return;
+    winetest_ok( process != NULL, "No child process handle (CreateProcess failed?)\n" );
+    if (!process) return;
 
-    ret = WaitForSingleObject( info->hProcess, 30000 );
+    ret = WaitForSingleObject( process, 30000 );
     if (ret == WAIT_TIMEOUT)
         winetest_ok( 0, "Timed out waiting for the child process\n" );
     else if (ret != WAIT_OBJECT_0)
@@ -709,12 +697,13 @@ void winetest_wait_child_process( const PROCESS_INFORMATION *info )
     else
     {
         DWORD exit_code;
-        GetExitCodeProcess( info->hProcess, &exit_code );
+        GetExitCodeProcess( process, &exit_code );
         if (exit_code > 255)
         {
+            DWORD pid = GetProcessId( process );
             winetest_print_lock();
             if (winetest_color) winetest_printf( winetest_color_bright_red );
-            winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)info->dwProcessId );
+            winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
             if (winetest_color) winetest_printf( winetest_color_reset );
             winetest_print_unlock();
             InterlockedIncrement( &winetest_failures );
@@ -726,10 +715,6 @@ void winetest_wait_child_process( const PROCESS_INFORMATION *info )
             winetest_print_unlock();
             while (exit_code-- > 0) InterlockedIncrement( &winetest_failures );
         }
-
-        if (!CloseHandle( info->hProcess ))
-            ok( 0, "failed to close process handle, error %lu\n", GetLastError() );
-        CloseHandle( info->hThread );
     }
 }
 
@@ -877,7 +862,6 @@ int main( int argc, char **argv )
     }
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
-    if (GetEnvironmentVariableA( "WINETEST_MUTE_THRESHOLD", p, sizeof(p) )) winetest_mute_threshold = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_FLAKY", p, sizeof(p) )) winetest_report_flaky = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_TIME", p, sizeof(p) )) winetest_time = atoi(p);

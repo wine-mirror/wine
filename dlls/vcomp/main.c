@@ -135,7 +135,7 @@ static void copy_va_list_data(void **args, va_list valist, int args_count)
         args[i] = va_arg(valist, void *);
 }
 
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(__arm64ec__)
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 static inline char interlocked_cmpxchg8(char *dest, char xchg, char compare)
 {
@@ -169,7 +169,7 @@ static inline short interlocked_xchg_add16(short *dest, short incr)
     return ret;
 }
 
-#else  /* __i386__ || __x86_64__ */
+#else  /* __GNUC__ */
 
 #ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_1
 static inline char interlocked_cmpxchg8(char *dest, char xchg, char compare)
@@ -229,7 +229,7 @@ static short interlocked_xchg_add16(short *dest, short incr)
 }
 #endif
 
-#endif  /* __i386__ || __x86_64__ */
+#endif  /* __GNUC__ */
 
 static inline struct vcomp_thread_data *vcomp_get_thread_data(void)
 {
@@ -878,15 +878,6 @@ int CDECL _vcomp_get_thread_num(void)
 double CDECL omp_get_wtime(void)
 {
     return GetTickCount() / 1000.0;
-}
-
-double CDECL omp_get_wtick(void)
-{
-    DWORD adjust, increment;
-    BOOL disable;
-    if (GetSystemTimeAdjustment(&adjust, &increment, &disable))
-        return (double)increment / 10000000.0;
-    return 1 / 1000.0;
 }
 
 void CDECL omp_set_dynamic(int val)

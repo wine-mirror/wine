@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 
@@ -138,11 +139,26 @@ static int token_set_sd( struct object *obj, const struct security_descriptor *s
 
 static const struct object_ops token_ops =
 {
-    .size    = sizeof(struct token),
-    .type    = &token_type,
-    .dump    = token_dump,
-    .set_sd  = token_set_sd,
-    .destroy = token_destroy,
+    sizeof(struct token),      /* size */
+    &token_type,               /* type */
+    token_dump,                /* dump */
+    no_add_queue,              /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
+    no_signal,                 /* signal */
+    no_get_fd,                 /* get_fd */
+    default_map_access,        /* map_access */
+    default_get_sd,            /* get_sd */
+    token_set_sd,              /* set_sd */
+    no_get_full_name,          /* get_full_name */
+    no_lookup_name,            /* lookup_name */
+    no_link_name,              /* link_name */
+    NULL,                      /* unlink_name */
+    no_open_file,              /* open_file */
+    no_kernel_obj_list,        /* get_kernel_obj_list */
+    no_close_handle,           /* close_handle */
+    token_destroy              /* destroy */
 };
 
 static void token_dump( struct object *obj, int verbose )
@@ -1076,7 +1092,7 @@ int check_object_access(struct token *token, struct object *obj, unsigned int *a
     if (!token)
         token = current->token ? current->token : current->process->token;
 
-    mapping.all = map_obj_access( obj, GENERIC_ALL );
+    mapping.all = obj->ops->map_access( obj, GENERIC_ALL );
 
     if (!obj->sd)
     {
@@ -1084,9 +1100,9 @@ int check_object_access(struct token *token, struct object *obj, unsigned int *a
         return TRUE;
     }
 
-    mapping.read  = map_obj_access( obj, GENERIC_READ );
-    mapping.write = map_obj_access( obj, GENERIC_WRITE );
-    mapping.exec  = map_obj_access( obj, GENERIC_EXECUTE );
+    mapping.read  = obj->ops->map_access( obj, GENERIC_READ );
+    mapping.write = obj->ops->map_access( obj, GENERIC_WRITE );
+    mapping.exec = obj->ops->map_access( obj, GENERIC_EXECUTE );
 
     res = token_access_check( token, obj->sd, *access, NULL, NULL,
                               &mapping, access, &status ) == STATUS_SUCCESS &&
@@ -1524,14 +1540,7 @@ DECL_HANDLER(get_token_info)
         reply->session_id = token->session_id;
         reply->primary = token->primary;
         reply->impersonation_level = token->impersonation_level;
-        reply->elevation_type = token->elevation;
-        /* Tokens with TokenElevationTypeDefault are considered elevated for the
-           purposes of GetTokenInformation(TokenElevation) if they belong to the
-           admins group. */
-        if (token->elevation == TokenElevationTypeDefault)
-            reply->is_elevated = token_sid_present( token, &builtin_admins_sid, FALSE );
-        else
-            reply->is_elevated = token->elevation == TokenElevationTypeFull;
+        reply->elevation = token->elevation;
         reply->group_count = list_count( &token->groups );
         reply->privilege_count = list_count( &token->privileges );
         release_object( token );

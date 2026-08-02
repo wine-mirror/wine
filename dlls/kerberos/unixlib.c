@@ -44,6 +44,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winbase.h"
@@ -458,17 +459,11 @@ fail:
     return FALSE;
 }
 
-static OM_uint32 get_context_flags( gss_ctx_id_t ctx )
+static BOOL is_dce_style_context( gss_ctx_id_t ctx )
 {
     OM_uint32 ret, minor_status, flags;
     ret = pgss_inquire_context( &minor_status, ctx, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
-    return ret == GSS_S_COMPLETE ? flags : 0;
-}
-
-static BOOL is_dce_style_context( gss_ctx_id_t ctx )
-{
-    OM_uint32 flags = get_context_flags( ctx );
-    return flags & GSS_C_DCE_STYLE;
+    return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
 }
 
 static NTSTATUS status_gss_to_sspi( OM_uint32 status )
@@ -559,7 +554,6 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
     if (flags & GSS_C_DCE_STYLE)     ret |= ASC_RET_USED_DCE_STYLE;
     if (flags & GSS_C_IDENTIFY_FLAG) ret |= ASC_RET_IDENTIFY;
-    if (flags & GSS_C_EXTENDED_ERROR_FLAG) ret |= ASC_RET_EXTENDED_ERROR;
     return ret;
 }
 
@@ -722,7 +716,6 @@ static ULONG flags_isc_req_to_gss( ULONG flags )
     if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
     if (flags & ISC_REQ_USE_DCE_STYLE)   ret |= GSS_C_DCE_STYLE;
     if (flags & ISC_REQ_IDENTIFY)        ret |= GSS_C_IDENTIFY_FLAG;
-    if (flags & ISC_REQ_EXTENDED_ERROR)  ret |= GSS_C_EXTENDED_ERROR_FLAG;
     return ret;
 }
 
@@ -738,7 +731,6 @@ static ULONG flags_gss_to_isc_ret( ULONG flags )
     if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
     if (flags & GSS_C_DCE_STYLE)     ret |= ISC_RET_USED_DCE_STYLE;
     if (flags & GSS_C_IDENTIFY_FLAG) ret |= ISC_RET_IDENTIFY;
-    if (flags & GSS_C_EXTENDED_ERROR_FLAG) ret |= ISC_RET_EXTENDED_ERROR;
     return ret;
 }
 
@@ -758,8 +750,6 @@ static NTSTATUS initialize_context( void *args )
     output_token.value  = NULL;
 
     if (params->target_name && (status = import_name( params->target_name, &target ))) return status;
-
-    if (req_flags & GSS_C_CONF_FLAG) req_flags |= GSS_C_INTEG_FLAG;
 
     ret = pgss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
                                  GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
@@ -981,52 +971,24 @@ static NTSTATUS seal_message( void *args )
 {
     struct seal_message_params *params = args;
     gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
-    OM_uint32 flags = get_context_flags( ctx );
 
-    if (params->qop != SECQOP_WRAP_NO_ENCRYPT && !(flags & GSS_C_CONF_FLAG))
-        return SEC_E_UNSUPPORTED_FUNCTION;
-
-    if (flags & GSS_C_DCE_STYLE) return seal_message_vector( ctx, params );
+    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, params );
     return seal_message_no_vector( ctx, params );
 }
 
-static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, struct unseal_message_params *params )
+static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_message_params *params )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
     int conf_state;
-
-    if (params->stream_length)
-    {
-        iov[0].type          = GSS_IOV_BUFFER_TYPE_STREAM;
-        iov[0].buffer.length = params->stream_length;
-        iov[0].buffer.value  = params->stream;
-
-        iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-        iov[1].buffer.length = 0;
-        iov[1].buffer.value  = NULL;
-
-        ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 2 );
-        TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
-        if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
-        if (ret == GSS_S_COMPLETE)
-        {
-            *params->data = iov[1].buffer.value;
-            *params->data_length = iov[1].buffer.length;
-
-            if (params->qop)
-                *params->qop = conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT;
-        }
-        return status_gss_to_sspi( ret );
-    }
 
     iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[0].buffer.length = 0;
     iov[0].buffer.value  = NULL;
 
     iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = *params->data_length;
-    iov[1].buffer.value  = *params->data;
+    iov[1].buffer.length = params->data_length;
+    iov[1].buffer.value  = params->data;
 
     iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[2].buffer.length = 0;
@@ -1050,35 +1012,25 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
+    DWORD len_data, len_token;
     int conf_state;
 
-    if (params->stream_length)
-    {
-        input.length = params->stream_length;
-        input.value = params->stream;
-    }
-    else
-    {
-        input.length = *params->data_length + params->token_length;
-        if (!(input.value = malloc( input.length ))) return STATUS_NO_MEMORY;
-        memcpy( input.value, *params->data, *params->data_length );
-        memcpy( (char *)input.value + *params->data_length, params->token, params->token_length );
-    }
+    len_data = params->data_length;
+    len_token = params->token_length;
+
+    input.length = len_data + len_token;
+    if (!(input.value = malloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
+    memcpy( input.value, params->data, len_data );
+    memcpy( (char *)input.value + len_data, params->token, len_token );
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
-    if (input.value != params->stream) free( input.value );
+    free( input.value );
     TRACE( "gss_unwrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         if (params->qop) *params->qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-        if (params->stream_length)
-        {
-            memcpy( params->stream, output.value, output.length );
-            *params->data = params->stream;
-            *params->data_length = output.length;
-        }
-        else memcpy( *params->data, output.value, output.length );
+        memcpy( params->data, output.value, len_data );
         pgss_release_buffer( &minor_status, &output );
     }
 
@@ -1275,12 +1227,6 @@ static NTSTATUS wow64_make_signature( void *args )
     return make_signature( &params );
 }
 
-struct SecPkgContext_SessionKey32
-{
-    ULONG SessionKeyLength;
-    PTR32 SessionKey;
-};
-
 static NTSTATUS wow64_query_context_attributes( void *args )
 {
     struct
@@ -1295,17 +1241,6 @@ static NTSTATUS wow64_query_context_attributes( void *args )
         params32->attr,
         ULongToPtr(params32->buf),
     };
-    SecPkgContext_SessionKey key;
-
-    if (params.attr == SECPKG_ATTR_SESSION_KEY)
-    {
-        struct SecPkgContext_SessionKey32 *key32 = (struct SecPkgContext_SessionKey32 *)params.buf;
-
-        key.SessionKeyLength = key32->SessionKeyLength;
-        key.SessionKey = ULongToPtr(key32->SessionKey);
-        params.buf = &key;
-    }
-
     return query_context_attributes( &params );
 }
 
@@ -1419,10 +1354,8 @@ static NTSTATUS wow64_unseal_message( void *args )
     struct
     {
         UINT64 context;
-        PTR32 stream;
-        ULONG stream_length;
         PTR32 data;
-        PTR32 data_length;
+        ULONG data_length;
         PTR32 token;
         ULONG token_length;
         PTR32 qop;
@@ -1430,10 +1363,8 @@ static NTSTATUS wow64_unseal_message( void *args )
     struct unseal_message_params params =
     {
         params32->context,
-        ULongToPtr(params32->stream),
-        params32->stream_length,
         ULongToPtr(params32->data),
-        ULongToPtr(params32->data_length),
+        params32->data_length,
         ULongToPtr(params32->token),
         params32->token_length,
         ULongToPtr(params32->qop),

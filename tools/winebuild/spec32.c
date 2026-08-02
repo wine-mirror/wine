@@ -423,12 +423,26 @@ void output_exports( DLLSPEC *spec )
             const char *symbol;
 
             if (!odp) continue;
-            if (odp->flags & FLAG_FORWARD)
-                symbol = odp->link_name;
-            else if (odp->flags & FLAG_EXT_LINK)
-                symbol = strmake( "%s_%s", asm_name("__wine_spec_ext_link"), odp->link_name );
-            else
-                symbol = asm_name( get_link_name( odp ));
+
+            switch (odp->type)
+            {
+            case TYPE_EXTERN:
+            case TYPE_STDCALL:
+            case TYPE_VARARGS:
+            case TYPE_CDECL:
+                if (odp->flags & FLAG_FORWARD)
+                    symbol = odp->link_name;
+                else if (odp->flags & FLAG_EXT_LINK)
+                    symbol = strmake( "%s_%s", asm_name("__wine_spec_ext_link"), odp->link_name );
+                else
+                    symbol = asm_name( get_link_name( odp ));
+                break;
+            case TYPE_STUB:
+                symbol = asm_name( get_stub_name( odp, spec ));
+                break;
+            default:
+                assert( 0 );
+            }
 
             output( "\t.ascii \" -export:%s=%s,@%u%s%s\"\n",
                     odp->name ? odp->name : strmake( "_noname%u", i ),
@@ -472,25 +486,38 @@ void output_exports( DLLSPEC *spec )
     {
         ORDDEF *odp = exports->ordinals[i];
         if (!odp) output( "\t%s 0\n", is_pe() ? ".long" : get_asm_ptr_keyword() );
-        else if (odp->flags & FLAG_FORWARD)
+        else switch(odp->type)
         {
-            output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
-            fwd_size += strlen(odp->link_name) + 1;
-        }
-        else if ((odp->flags & FLAG_IMPORT) && (target.cpu == CPU_i386 || target.cpu == CPU_x86_64))
-        {
-            name = odp->name ? odp->name : odp->export_name;
-            if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
-            else output( "\t%s %s_%u\n", func_ptr, asm_name("__wine_spec_imp"), i );
-            needs_imports = 1;
-        }
-        else if (odp->flags & FLAG_EXT_LINK)
-        {
-            output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_ext_link"), odp->link_name );
-        }
-        else
-        {
-            output( "\t%s %s\n", func_ptr, asm_name( get_link_name( odp )));
+        case TYPE_EXTERN:
+        case TYPE_STDCALL:
+        case TYPE_VARARGS:
+        case TYPE_CDECL:
+            if (odp->flags & FLAG_FORWARD)
+            {
+                output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
+                fwd_size += strlen(odp->link_name) + 1;
+            }
+            else if ((odp->flags & FLAG_IMPORT) && (target.cpu == CPU_i386 || target.cpu == CPU_x86_64))
+            {
+                name = odp->name ? odp->name : odp->export_name;
+                if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
+                else output( "\t%s %s_%u\n", func_ptr, asm_name("__wine_spec_imp"), i );
+                needs_imports = 1;
+            }
+            else if (odp->flags & FLAG_EXT_LINK)
+            {
+                output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_ext_link"), odp->link_name );
+            }
+            else
+            {
+                output( "\t%s %s\n", func_ptr, asm_name( get_link_name( odp )));
+            }
+            break;
+        case TYPE_STUB:
+            output( "\t%s %s\n", func_ptr, asm_name( get_stub_name( odp, spec )) );
+            break;
+        default:
+            assert(0);
         }
     }
 
@@ -704,37 +731,6 @@ static void output_load_config(void)
 
 
 /*******************************************************************
- *         output_crt_sections
- *
- * Generate the start/end symbols for .CRT$X?? sections. The start symbol is put into
- * .CRT$X?A, the end .CRT$X?Z. Since the linker sort .CRT$X?? sections by name, these symbols
- * will end up at the right location.
- */
-void output_crt_sections(void)
-{
-    static const char sections[] = "ict";
-    int i;
-
-    for (i = 0; sections[i]; i++)
-    {
-        char *symbol_name = strmake( "__x%c_a", sections[i] );
-        output( "\t.section .CRT$X%cA\n", toupper( sections[i] ) );
-        output( "\t.globl %s\n", asm_name( symbol_name ) );
-        output( "\t.balign %u\n", get_ptr_size() );
-        output( "%s:\n", asm_name( symbol_name ) );
-        output( "\t%s 0\n", get_asm_ptr_keyword() );
-
-        symbol_name = strmake( "__x%c_z", sections[i] );
-        output( "\t.section .CRT$X%cZ\n", toupper( sections[i] ) );
-        output( "\t.globl %s\n", asm_name( symbol_name ) );
-        output( "\t.balign %u\n", get_ptr_size() );
-        output( "%s:\n", asm_name( symbol_name ) );
-        output( "\t%s 0\n", get_asm_ptr_keyword() );
-    }
-}
-
-
-/*******************************************************************
  *         output_module
  *
  * Output the module data.
@@ -742,6 +738,7 @@ void output_crt_sections(void)
 void output_module( DLLSPEC *spec )
 {
     int machine = 0;
+    int i;
     unsigned int page_size = 0x1000;
     const char *data_dirs[16] = { NULL };
 
@@ -751,7 +748,6 @@ void output_module( DLLSPEC *spec )
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
         return;  /* nothing to do */
     case PLATFORM_APPLE:
         output( "\t.text\n" );
@@ -808,7 +804,8 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* SizeOfInitializedData */
     output( "\t.long 0\n" );              /* SizeOfUninitializedData */
 
-    STRARRAY_FOR_EACH( sym, &spec_extra_ld_symbols ) output( "\t.globl %s\n", asm_name(sym) );
+    for (i = 0; i < spec_extra_ld_symbols.count; i++)
+        output( "\t.globl %s\n", asm_name(spec_extra_ld_symbols.str[i]) );
 
     /* note: we expand the AddressOfEntryPoint field on 64-bit by overwriting the BaseOfCode field */
     output( "\t%s %s\n",                  /* AddressOfEntryPoint */
@@ -845,7 +842,7 @@ void output_module( DLLSPEC *spec )
         data_dirs[0] = ".L__wine_spec_exports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
     if (has_imports())
         data_dirs[1] = ".L__wine_spec_imports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-    if (spec->resources.count)
+    if (spec->nb_resources)
         data_dirs[2] = ".L__wine_spec_resources"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
     if (has_delay_imports())
         data_dirs[13] = ".L__wine_spec_delay_imports"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT] */
@@ -873,7 +870,6 @@ void output_spec32_file( DLLSPEC *spec )
     output_imports( spec );
     if (needs_get_pc_thunk) output_get_pc_thunk();
     output_load_config();
-    output_crt_sections();
     output_resources( spec );
     output_gnu_stack_note();
     close_output_file();
@@ -888,6 +884,7 @@ struct sec_data
     unsigned int flags;
     unsigned int file_size;
     unsigned int virt_size;
+    unsigned int filepos;
     unsigned int rva;
 };
 
@@ -933,9 +930,10 @@ static unsigned int current_rva(void)
     return pe.sec[pe.sec_count - 1].rva + pe.sec[pe.sec_count - 1].virt_size;
 }
 
-static unsigned int align_pos( unsigned int pos, unsigned int align )
+static unsigned int current_filepos(void)
 {
-    return (pos + align - 1) & ~(align - 1);
+    if (!pe.sec_count) return pe.file_align;
+    return pe.sec[pe.sec_count - 1].filepos + pe.sec[pe.sec_count - 1].file_size;
 }
 
 static unsigned int flush_output_to_section( const char *name, int dir_idx, unsigned int flags )
@@ -950,8 +948,9 @@ static unsigned int flush_output_to_section( const char *name, int dir_idx, unsi
     sec->size      = output_buffer_pos;
     sec->flags     = flags;
     sec->rva       = current_rva();
-    sec->file_size = align_pos( sec->size, pe.file_align );
-    sec->virt_size = align_pos( sec->size, pe.section_align );
+    sec->filepos   = current_filepos();
+    sec->file_size = (sec->size + pe.file_align - 1) & ~(pe.file_align - 1);
+    sec->virt_size = (sec->size + pe.section_align - 1) & ~(pe.section_align - 1);
     if (dir_idx >= 0) set_dir( dir_idx, sec->rva, sec->size );
     init_output_buffer();
     pe.sec_count++;
@@ -1048,32 +1047,33 @@ static int apiset_hash_cmp( const void *h1, const void *h2 )
 static void output_apiset_section( const struct apiset *apiset )
 {
     struct apiset_hash_entry *hash;
-    unsigned int i, j, str_pos, value_pos, hash_pos, size, count = apiset->entries.count;
+    struct apiset_entry *e;
+    unsigned int i, j, str_pos, value_pos, hash_pos, size;
 
     init_output_buffer();
 
-    value_pos = 0x1c /* header */ + count * 0x18; /* names */
+    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
     str_pos = value_pos;
-    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
         str_pos += 0x14 * max( 1, e->val_count );  /* values */
 
     hash_pos = str_pos + ((apiset->str_pos * 2 + 3) & ~3);
-    size = hash_pos + count * 8;  /* hashes */
+    size = hash_pos + apiset->count * 8;  /* hashes */
 
     /* header */
 
     put_dword( 6 );      /* Version */
     put_dword( size );   /* Size */
     put_dword( 0 );      /* Flags */
-    put_dword( count );  /* Count */
+    put_dword( apiset->count );  /* Count */
     put_dword( 0x1c );   /* EntryOffset */
     put_dword( hash_pos ); /* HashOffset */
     put_dword( apiset_hash_factor );   /* HashFactor */
 
     /* name entries */
 
-    value_pos = 0x1c /* header */ + count * 0x18; /* names */
-    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
+    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
     {
         put_dword( 1 );  /* Flags */
         put_dword( str_pos + e->name_off * 2 );  /* NameOffset */
@@ -1086,7 +1086,7 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* values */
 
-    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
     {
         if (!e->val_count)
         {
@@ -1121,16 +1121,14 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* hash table */
 
-    hash = xmalloc( count * sizeof(*hash) );
-    i = 0;
-    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
+    hash = xmalloc( apiset->count * sizeof(*hash) );
+    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
     {
         hash[i].hash = e->hash;
         hash[i].index = i;
-        i++;
     }
-    qsort( hash, count, sizeof(*hash), apiset_hash_cmp );
-    for (i = 0; i < count; i++)
+    qsort( hash, apiset->count, sizeof(*hash), apiset_hash_cmp );
+    for (i = 0; i < apiset->count; i++)
     {
         put_dword( hash[i].hash );
         put_dword( hash[i].index );
@@ -1144,7 +1142,7 @@ static void output_apiset_section( const struct apiset *apiset )
 static void output_pe_file( DLLSPEC *spec, const char signature[32] )
 {
     const unsigned int lfanew = 0x40 + 32;
-    unsigned int i, filepos, code_size = 0, data_size = 0;
+    unsigned int i, code_size = 0, data_size = 0;
 
     init_output_buffer();
 
@@ -1266,20 +1264,18 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     }
 
     /* sections */
-    filepos = align_pos( output_buffer_pos + pe.sec_count * 40, pe.file_align );
     for (i = 0; i < pe.sec_count; i++)
     {
         put_data( pe.sec[i].name, 8 );    /* Name */
         put_dword( pe.sec[i].size );      /* VirtualSize */
         put_dword( pe.sec[i].rva );       /* VirtualAddress */
         put_dword( pe.sec[i].file_size ); /* SizeOfRawData */
-        put_dword( filepos );             /* PointerToRawData */
+        put_dword( pe.sec[i].filepos );   /* PointerToRawData */
         put_dword( 0 );                   /* PointerToRelocations */
         put_dword( 0 );                   /* PointerToLinenumbers */
         put_word( 0 );                    /* NumberOfRelocations */
         put_word( 0 );                    /* NumberOfLinenumbers */
         put_dword( pe.sec[i].flags );     /* Characteristics  */
-        filepos += pe.sec[i].file_size;
     }
     align_output( pe.file_align );
 
@@ -1332,7 +1328,7 @@ void output_fake_module( DLLSPEC *spec )
     }
 
     /* .edata section */
-    if (pe.exp_count || spec->exports.nb_entry_points)
+    if (pe.exp_count)
     {
         unsigned int exp_rva = current_rva() + 40; /* sizeof(IMAGE_EXPORT_DIRECTORY) */
         unsigned int pos, str_rva = exp_rva + 10 * pe.exp_count;
@@ -1380,7 +1376,7 @@ void output_data_module( DLLSPEC *spec )
     pe.section_align = pe.file_align = get_section_alignment();
 
     output_pe_exports( spec );
-    if (spec->apiset.entries.count) output_apiset_section( &spec->apiset );
+    if (spec->apiset.count) output_apiset_section( &spec->apiset );
     output_pe_file( spec, builtin_signature );
 }
 
@@ -1436,22 +1432,30 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
         {
         case TYPE_EXTERN:
             is_data = 1;
-            break;
-        case TYPE_STUB:
-            is_private = 1;
             /* fall through */
+        case TYPE_VARARGS:
+        case TYPE_CDECL:
+            /* try to reduce output */
+            if(!import_only && (strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD)))
+                output( "=%s", odp->link_name );
+            break;
         case TYPE_STDCALL:
-            if (!kill_at && target.cpu == CPU_i386) output( "@%d", get_args_size( odp ));
-            break;
-        default:
-            break;
-        }
-        if (!import_only)
         {
-            if (odp->flags & FLAG_FORWARD)
+            int at_param = get_args_size( odp );
+            if (!kill_at && target.cpu == CPU_i386) output( "@%d", at_param );
+            if (import_only) break;
+            if  (odp->flags & FLAG_FORWARD)
                 output( "=%s", odp->link_name );
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
                 output( "=%s", get_link_name( odp ));
+            break;
+        }
+        case TYPE_STUB:
+            if (!kill_at && target.cpu == CPU_i386) output( "@%d", get_args_size( odp ));
+            is_private = 1;
+            break;
+        default:
+            assert(0);
         }
         output( " @%d", odp->ordinal );
         if (!odp->name || (odp->flags & FLAG_ORDINAL)) output( " NONAME" );
@@ -1460,6 +1464,7 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
         output( "\n" );
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
+    if (spec32) free_dll_spec( spec32 );
 }
 
 
@@ -1468,7 +1473,7 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
  */
 void make_builtin_files( struct strarray files )
 {
-    int fd;
+    int i, fd;
     struct
     {
         unsigned short e_magic;
@@ -1476,20 +1481,14 @@ void make_builtin_files( struct strarray files )
         unsigned int   e_lfanew;
     } header;
 
-    if (strip_command.count)  /* strip the files first */
+    for (i = 0; i < files.count; i++)
     {
-        struct strarray args = strip_command;
-        strarray_addall( &args, files );
-        spawn( args );
-    }
-
-    STRARRAY_FOR_EACH( file, &files )
-    {
-        if ((fd = open( file, O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
+        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
+            fatal_perror( "Cannot open %s", files.str[i] );
         if (read( fd, &header, sizeof(header) ) == sizeof(header) && !memcmp( &header.e_magic, "MZ", 2 ))
         {
             if (header.e_lfanew < sizeof(header) + sizeof(builtin_signature))
-                fatal_error( "%s: Not enough space (%x) for Wine signature\n", file, header.e_lfanew );
+                fatal_error( "%s: Not enough space (%x) for Wine signature\n", files.str[i], header.e_lfanew );
             write( fd, builtin_signature, sizeof(builtin_signature) );
 
             if (prefer_native)
@@ -1505,7 +1504,7 @@ void make_builtin_files( struct strarray files )
                 }
             }
         }
-        else fatal_error( "%s: Unrecognized file format\n", file );
+        else fatal_error( "%s: Unrecognized file format\n", files.str[i] );
         close( fd );
     }
 }
@@ -1653,17 +1652,18 @@ static void fixup_elf64( const char *name, int fd, void *header, size_t header_s
  */
 void fixup_constructors( struct strarray files )
 {
-    int fd, size;
+    int i, fd, size;
     unsigned int header[64];
 
-    STRARRAY_FOR_EACH( file, &files )
+    for (i = 0; i < files.count; i++)
     {
-        if ((fd = open( file, O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
+        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
+            fatal_perror( "Cannot open %s", files.str[i] );
         size = read( fd, &header, sizeof(header) );
         if (size > 5)
         {
-            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( file, fd, header, size );
-            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( file, fd, header, size );
+            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( files.str[i], fd, header, size );
+            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( files.str[i], fd, header, size );
         }
         close( fd );
     }

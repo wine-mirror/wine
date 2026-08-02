@@ -2241,11 +2241,6 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETFONT:
 	    return TOOLTIPS_GetFont (infoPtr);
 
-        case WM_GETOBJECT:
-            if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
-                return 0x10018;
-	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
-
 	case WM_GETTEXT:
 	    return TOOLTIPS_OnWMGetText (infoPtr, wParam, (LPWSTR)lParam);
 
@@ -2313,15 +2308,25 @@ TOOLTIPS_Register (void)
 
     hTooltipIcons[TTI_NONE] = NULL;
     hTooltipIcons[TTI_INFO] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_INFO_SM), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_INFO_SM), IMAGE_ICON, 0, 0, 0);
     hTooltipIcons[TTI_WARNING] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_WARN_SM), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_WARN_SM), IMAGE_ICON, 0, 0, 0);
     hTooltipIcons[TTI_ERROR] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_ERROR_SM), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_ERROR_SM), IMAGE_ICON, 0, 0, 0);
     hTooltipIcons[TTI_INFO_LARGE] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_INFO_MD), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_INFO_MD), IMAGE_ICON, 0, 0, 0);
     hTooltipIcons[TTI_WARNING_LARGE] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_WARN_MD), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_WARN_MD), IMAGE_ICON, 0, 0, 0);
     hTooltipIcons[TTI_ERROR_LARGE] = LoadImageW(COMCTL32_hModule,
-        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_ERROR_MD), IMAGE_ICON, 0, 0, LR_SHARED);
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_ERROR_MD), IMAGE_ICON, 0, 0, 0);
+}
+
+
+VOID
+TOOLTIPS_Unregister (void)
+{
+    int i;
+    for (i = TTI_INFO; i <= TTI_ERROR; i++)
+        DestroyIcon(hTooltipIcons[i]);
+    UnregisterClassW (TOOLTIPS_CLASSW, NULL);
 }

@@ -1,5 +1,5 @@
-2 stdcall SHChangeNotifyRegister(long long long long long ptr)
-4 stdcall SHChangeNotifyDeregister(long)
+2 stub SHChangeNotifyRegister
+4 stub SHChangeNotifyDeregister
 5 stub CreateStorageItemFromPath_FullTrustCaller
 6 stub CreateStorageItemFromPath_FullTrustCaller_ForPackage
 7 stub GatherProviderSettings
@@ -7,26 +7,26 @@
 9 stub PathContainedByManifestedKnownFolder_FullTrustCaller_ForPackage
 10 stub RegisterChangeNotifications
 11 stub UnregisterChangeNotifications
-27 stdcall ILSaveToStream(ptr ptr)
-28 stdcall SHILCreateFromPath(ptr ptr ptr)
-42 stdcall IsLFNDriveW(wstr)
-68 stdcall SHGetSetSettings(ptr long long)
-74 stdcall SHCreateStdEnumFmtEtc(long ptr ptr)
-75 stdcall PathYetAnotherMakeUniqueName(ptr wstr wstr wstr)
+27 stub ILSaveToStream
+28 stub SHILCreateFromPath
+42 stub IsLFNDriveW
+68 stub SHGetSetSettings
+74 stub SHCreateStdEnumFmtEtc
+75 stub PathYetAnotherMakeUniqueName
 77 stub @
-90 stdcall SHFindFiles(ptr ptr)
+90 stub SHFindFiles
 95 stub @
-100 stdcall SHRestricted(long)
-147 stdcall SHCLSIDFromString(ptr ptr)
+100 stub SHRestricted
+147 stub SHCLSIDFromString
 172 stub @
 243 stub @
 244 stub @
 245 stub SHTestTokenMembership
 264 stub @
-644 stdcall SHChangeNotification_Lock(long long ptr ptr)
-645 stdcall SHChangeNotification_Unlock(long)
+644 stub SHChangeNotification_Lock
+645 stub SHChangeNotification_Unlock
 660 stub @
-680 stdcall IsUserAnAdmin()
+680 stub IsUserAnAdmin
 740 stub @
 750 stub @
 761 stub @
@@ -134,7 +134,7 @@
 @ stdcall -private DllMain(long long ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stdcall DragQueryFileW(long long ptr long)
+@ stub DragQueryFileW
 @ stub EnumShellItemsFromEnumFullIdList
 @ stub GetCommandProviderForFolderType
 @ stub GetFileUndoText
@@ -177,98 +177,98 @@
 @ stub GrantPathAccess_FullTrustCaller_ForPackage
 @ stub GrantWorkingDirectoryAccess_FullTrustCaller_ForPackage
 @ stub HideExtension
-@ stdcall ILAppendID(ptr ptr long)
-@ stdcall ILClone(ptr)
-@ stdcall ILCloneFirst(ptr)
-@ stdcall ILCombine(ptr ptr)
-@ stdcall ILFindChild(ptr ptr)
-@ stdcall ILFindLastID(ptr)
-@ stdcall ILFree(ptr)
-@ stdcall ILGetNext(ptr)
-@ stdcall ILGetSize(ptr)
-@ stdcall ILIsEqual(ptr ptr)
-@ stdcall ILIsParent(ptr ptr long)
-@ stdcall ILRemoveLastID(ptr)
+@ stub ILAppendID
+@ stub ILClone
+@ stub ILCloneFirst
+@ stub ILCombine
+@ stub ILFindChild
+@ stub ILFindLastID
+@ stub ILFree
+@ stub ILGetNext
+@ stub ILGetSize
+@ stub ILIsEqual
+@ stub ILIsParent
+@ stub ILRemoveLastID
 @ stub IsLibraryCreatedByPolicy
 @ stub IsLibraryPolicyEnabled
 @ stub IsNameListedUnderKey
 @ stub NeverProvidedByJunction
-@ stdcall PathCleanupSpec(ptr ptr)
-@ stdcall PathIsExe(ptr)
-@ stdcall PathMakeUniqueName(ptr long ptr ptr ptr)
+@ stub PathCleanupSpec
+@ stub PathIsExe
+@ stub PathMakeUniqueName
 @ stub QueryStorageAccess_FullTrustCaller_ForPackage
 @ stub QueryStorageAccess_FullTrustCaller_ForToken
 @ stub RebaseOnDriveLetter
 @ stub RebaseOnVolumeID
 @ stub RegistryVerbs_GetHandlerMultiSelectModel
-@ stdcall SHAssocEnumHandlers(wstr long ptr)
-@ stdcall SHAssocEnumHandlersForProtocolByApplication(wstr ptr ptr)
-@ stdcall SHBindToFolderIDListParent(ptr ptr ptr ptr ptr)
+@ stub SHAssocEnumHandlers
+@ stub SHAssocEnumHandlersForProtocolByApplication
+@ stub SHBindToFolderIDListParent
 @ stub SHBindToFolderIDListParentEx
-@ stdcall SHBindToObject(ptr ptr ptr ptr ptr)
-@ stdcall SHBindToParent(ptr ptr ptr ptr)
-@ stdcall SHChangeNotify(long long ptr ptr)
+@ stub SHBindToObject
+@ stub SHBindToParent
+@ stub SHChangeNotify
 @ stub SHChangeNotifyRegisterThread
 @ stub SHCoCreateInstanceWorker
 @ stub SHCreateAssocHandler
-@ stdcall SHCreateAssociationRegistration(ptr ptr)
-@ stdcall SHCreateDataObject(ptr long ptr ptr ptr ptr)
+@ stub SHCreateAssociationRegistration
+@ stub SHCreateDataObject
 @ stub SHCreateDefaultExtractIcon
-@ stdcall SHCreateDirectory(long ptr)
-@ stdcall SHCreateDirectoryExA(long str ptr)
-@ stdcall SHCreateDirectoryExW(long wstr ptr)
-@ stdcall SHCreateItemFromIDList(ptr ptr ptr)
-@ stdcall SHCreateItemFromParsingName(wstr ptr ptr ptr)
-@ stdcall SHCreateItemFromRelativeName(ptr wstr ptr ptr ptr)
-@ stdcall SHCreateItemInKnownFolder(ptr long wstr ptr ptr)
-@ stdcall SHCreateItemWithParent(ptr ptr ptr ptr ptr)
+@ stub SHCreateDirectory
+@ stub SHCreateDirectoryExA
+@ stub SHCreateDirectoryExW
+@ stub SHCreateItemFromIDList
+@ stub SHCreateItemFromParsingName
+@ stub SHCreateItemFromRelativeName
+@ stub SHCreateItemInKnownFolder
+@ stub SHCreateItemWithParent
 @ stub SHCreateItemWithParentAndChildId
-@ stdcall SHCreateShellItemArray(ptr ptr long ptr ptr)
-@ stdcall SHCreateShellItemArrayFromDataObject(ptr ptr ptr)
-@ stdcall SHCreateShellItemArrayFromIDLists(long ptr ptr)
-@ stdcall SHCreateShellItemArrayFromShellItem(ptr ptr ptr)
+@ stub SHCreateShellItemArray
+@ stub SHCreateShellItemArrayFromDataObject
+@ stub SHCreateShellItemArrayFromIDLists
+@ stub SHCreateShellItemArrayFromShellItem
 @ stub SHCreateShellItemArrayWithFolderParent
 @ stub SHFileOperationWithAdditionalFlags
-@ stdcall SHFlushSFCache()
-@ stdcall SHGetDesktopFolder(ptr)
-@ stdcall SHGetFileInfoW(wstr long ptr long long)
-@ stdcall SHGetFolderLocation(long long long long ptr)
-@ stdcall SHGetFolderPathA(long long long long ptr)
-@ stdcall SHGetFolderPathAndSubDirA(long long long long str ptr)
-@ stdcall SHGetFolderPathAndSubDirW(long long long long wstr ptr)
-@ stdcall SHGetFolderPathEx(ptr long ptr ptr long)
-@ stdcall SHGetFolderPathW(long long long long ptr)
-@ stdcall SHGetIDListFromObject(ptr ptr)
-@ stdcall SHGetInstanceExplorer(ptr)
-@ stdcall SHGetItemFromObject(ptr ptr ptr)
-@ stdcall SHGetKnownFolderIDList(ptr long ptr ptr)
+@ stub SHFlushSFCache
+@ stub SHGetDesktopFolder
+@ stub SHGetFileInfoW
+@ stub SHGetFolderLocation
+@ stub SHGetFolderPathA
+@ stub SHGetFolderPathAndSubDirA
+@ stub SHGetFolderPathAndSubDirW
+@ stub SHGetFolderPathEx
+@ stub SHGetFolderPathW
+@ stub SHGetIDListFromObject
+@ stub SHGetInstanceExplorer
+@ stub SHGetItemFromObject
+@ stub SHGetKnownFolderIDList
 @ stub SHGetKnownFolderIDList_Internal
-@ stdcall SHGetKnownFolderItem(ptr long long ptr ptr)
-@ stdcall SHGetKnownFolderPath(ptr long ptr ptr)
-@ stdcall SHGetNameFromIDList(ptr long ptr)
-@ stdcall SHGetPathFromIDListEx(ptr ptr long long)
-@ stdcall SHGetPathFromIDListW(ptr ptr)
-@ stdcall SHGetSpecialFolderLocation(long long ptr)
-@ stdcall SHGetSpecialFolderPathA(long ptr long long)
-@ stdcall SHGetSpecialFolderPathW(long ptr long long)
-@ stdcall SHGetStockIconInfo(long long ptr)
+@ stub SHGetKnownFolderItem
+@ stub SHGetKnownFolderPath
+@ stub SHGetNameFromIDList
+@ stub SHGetPathFromIDListEx
+@ stub SHGetPathFromIDListW
+@ stub SHGetSpecialFolderLocation
+@ stub SHGetSpecialFolderPathA
+@ stub SHGetSpecialFolderPathW
+@ stub SHGetStockIconInfo
 @ stub SHGetTemporaryPropertyForItem
-@ stdcall SHHandleUpdateImage(ptr)
+@ stub SHHandleUpdateImage
 @ stub SHKnownFolderFromCSIDL
 @ stub SHKnownFolderToCSIDL
-@ stdcall SHOpenFolderAndSelectItems(ptr long ptr long)
-@ stdcall SHParseDisplayName(wstr ptr ptr long ptr)
+@ stub SHOpenFolderAndSelectItems
+@ stub SHParseDisplayName
 @ stub SHPrepareKnownFoldersCommon
 @ stub SHPrepareKnownFoldersUser
 @ stub SHResolveLibrary
 @ stub SHSetFolderPathA
 @ stub SHSetFolderPathW
 @ stub SHSetKnownFolderPath
-@ stdcall SHSetLocalizedName(wstr wstr long)
-@ stdcall SHSetTemporaryPropertyForItem(ptr ptr ptr)
+@ stub SHSetLocalizedName
+@ stub SHSetTemporaryPropertyForItem
 @ stub SHSysErrorMessageBox
-@ stdcall SHUpdateImageA(str long long long)
-@ stdcall SHUpdateImageW(wstr long long long)
+@ stub SHUpdateImageA
+@ stub SHUpdateImageW
 @ stub STORAGE_AddItemToRecentDocs
 @ stub STORAGE_AddNewFolderToFrequentPlaces
 @ stub STORAGE_CEnumFiles_CreateInstance
@@ -312,9 +312,9 @@
 @ stub SendNotificationsForLibraryItem
 @ stub SerializeLinkToText
 @ stub SetThreadFlags
-@ stdcall ShellExecuteA(long str str str str long)
-@ stdcall ShellExecuteExW(long)
-@ stdcall ShellExecuteW(long wstr wstr wstr wstr long)
+@ stub ShellExecuteA
+@ stub ShellExecuteExW
+@ stub ShellExecuteW
 @ stub StateRepoVerbsCache_Destroy
 @ stub StateRepoVerbsCache_GetContextMenuVerbs
 @ stub StateRepoVerbsCache_RebuildCacheAsync

@@ -1,10 +1,11 @@
 MODULE    = qdvd.dll
 IMPORTS   = strmbase strmiids uuid ole32 msvcrt
 
-VER_PRODUCTVERSION = 6,5,1,904
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	graph.c \
 	navigator.c \
 	qdvd_classes.idl \
-	qdvd_main.c
+	qdvd_main.c \
+	version.rc

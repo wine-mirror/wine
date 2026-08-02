@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -36,8 +37,7 @@ static FILE_OBJECTID_BUFFER windir_id, sysdir_id;
 
 static inline NTSTATUS get_file_id( HANDLE handle, FILE_OBJECTID_BUFFER *id )
 {
-    IO_STATUS_BLOCK32 io32;
-    IO_STATUS_BLOCK io = { .Pointer = &io32 };
+    IO_STATUS_BLOCK io;
 
     return NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, id, sizeof(*id) );
 }
@@ -954,4 +954,33 @@ NTSTATUS WINAPI wow64_NtWriteFileGather( UINT *args )
                                 iosb_32to64( &io, io32 ), segments, len, offset, key );
     put_iosb( io32, &io );
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_wine_nt_to_unix_file_name
+ */
+NTSTATUS WINAPI wow64_wine_nt_to_unix_file_name( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    char *nameA = get_ptr( &args );
+    ULONG *size = get_ptr( &args );
+    UINT disposition = get_ulong( &args );
+
+    struct object_attr64 attr;
+
+    return wine_nt_to_unix_file_name( objattr_32to64_redirect( &attr, attr32 ), nameA, size, disposition );
+}
+
+
+/**********************************************************************
+ *           wow64_wine_unix_to_nt_file_name
+ */
+NTSTATUS WINAPI wow64_wine_unix_to_nt_file_name( UINT *args )
+{
+    const char *name = get_ptr( &args );
+    WCHAR *buffer = get_ptr( &args );
+    ULONG *size = get_ptr( &args );
+
+    return wine_unix_to_nt_file_name( name, buffer, size );
 }

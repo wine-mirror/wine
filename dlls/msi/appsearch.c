@@ -178,8 +178,17 @@ static WCHAR *search_file( MSIPACKAGE *package, WCHAR *path, struct signature *s
     if (attr == INVALID_FILE_ATTRIBUTES || (attr & FILE_ATTRIBUTE_DIRECTORY))
         return NULL;
 
-    if (!(buffer = msi_get_file_version_info( package, path )))
+    size = msi_get_file_version_info( package, path, 0, NULL );
+    if (!size)
         return wcsdup(path);
+
+    buffer = malloc(size);
+    if (!buffer)
+        return NULL;
+
+    size = msi_get_file_version_info( package, path, size, buffer );
+    if (!size)
+        goto done;
 
     if (!VerQueryValueW(buffer, L"\\", (LPVOID)&info, &size) || !info)
         goto done;
@@ -647,14 +656,17 @@ static UINT file_version_matches( MSIPACKAGE *package, const struct signature *s
                                   BOOL *matches )
 {
     UINT len;
-    VS_FIXEDFILEINFO *info = NULL;
     void *version;
+    VS_FIXEDFILEINFO *info = NULL;
+    DWORD size = msi_get_file_version_info( package, filePath, 0, NULL );
 
     *matches = FALSE;
 
-    if (!(version = msi_get_file_version_info( package, filePath ))) return ERROR_SUCCESS;
+    if (!size) return ERROR_SUCCESS;
+    if (!(version = malloc( size ))) return ERROR_OUTOFMEMORY;
 
-    VerQueryValueW( version, L"\\", (void **)&info, &len );
+    if (msi_get_file_version_info( package, filePath, size, version ))
+        VerQueryValueW( version, L"\\", (void **)&info, &len );
 
     if (info)
     {

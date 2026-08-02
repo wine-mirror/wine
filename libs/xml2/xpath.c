@@ -228,7 +228,6 @@ xmlXPathIsInf(double val) {
 
 static xmlNs xmlXPathXMLNamespaceStruct = {
     NULL,
-    NULL,
     XML_NAMESPACE_DECL,
     XML_XML_NAMESPACE,
     BAD_CAST "xml",

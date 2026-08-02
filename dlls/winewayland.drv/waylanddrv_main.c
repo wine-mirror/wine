@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 
 #include "waylanddrv.h"
 
@@ -43,17 +44,13 @@ static const struct user_driver_funcs waylanddrv_funcs =
     .pReleaseKbdTables = WAYLAND_ReleaseKbdTables,
     .pSetCursor = WAYLAND_SetCursor,
     .pSetCursorPos = WAYLAND_SetCursorPos,
-    .pSetLayeredWindowAttributes = WAYLAND_SetLayeredWindowAttributes,
-    .pSetWindowIcons = WAYLAND_SetWindowIcons,
-    .pSetWindowStyle = WAYLAND_SetWindowStyle,
+    .pSetWindowIcon = WAYLAND_SetWindowIcon,
     .pSetWindowText = WAYLAND_SetWindowText,
     .pSysCommand = WAYLAND_SysCommand,
-    .pUpdateLayeredWindow = WAYLAND_UpdateLayeredWindow,
     .pUpdateDisplayDevices = WAYLAND_UpdateDisplayDevices,
     .pWindowMessage = WAYLAND_WindowMessage,
     .pWindowPosChanged = WAYLAND_WindowPosChanged,
     .pWindowPosChanging = WAYLAND_WindowPosChanging,
-    .pCreateClientSurface = WAYLAND_CreateClientSurface,
     .pCreateWindowSurface = WAYLAND_CreateWindowSurface,
     .pVulkanInit = WAYLAND_VulkanInit,
     .pOpenGLInit = WAYLAND_OpenGLInit,
@@ -68,7 +65,7 @@ static void wayland_init_process_name(void)
     DWORD utf8_size;
     int i;
 
-    appname = RtlGetCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
+    appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
     if ((p = wcsrchr(appname, '/'))) appname = p + 1;
     if ((p = wcsrchr(appname, '\\'))) appname = p + 1;
     appname_len = lstrlenW(appname);

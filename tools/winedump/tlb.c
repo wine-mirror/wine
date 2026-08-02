@@ -1032,7 +1032,7 @@ struct bitstream
     WORD        current;
 };
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct sltg_typeinfo_header
 {
     short magic;
@@ -1106,7 +1106,7 @@ struct sltg_variable
   short varflags; /* only present if magic & 0x20 */
 #endif
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static const char *lookup_code(const BYTE *table, DWORD table_size, struct bitstream *bits)
 {

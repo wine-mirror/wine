@@ -214,12 +214,12 @@ HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *capt
     *caption = NULL;
 
     len = GetWindowTextLengthW(window->hwnd) + 1;
-    if (!(str = malloc(len * sizeof(WCHAR))))
+    if (!(str = heap_alloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
     GetWindowTextW(window->hwnd, str, len);
     *caption = SysAllocString(str);
-    free(str);
+    heap_free(str);
     return *caption ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -233,14 +233,6 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG s
         return E_INVALIDARG;
     if (!window->pPin->peer)
         return VFW_E_NOT_CONNECTED;
-
-    /* Preserve the current visibility.
-     * Using IsWindowVisible() has the side effect that a visible child of an
-     * invisible window will be hidden by this call, but that's what native
-     * does. */
-    style = (style & ~WS_VISIBLE);
-    if (IsWindowVisible(window->hwnd))
-        style |= WS_VISIBLE;
 
     SetWindowLongW(window->hwnd, GWL_STYLE, style);
     SetWindowPos(window->hwnd, 0, 0, 0, 0, 0,

@@ -84,7 +84,7 @@
 @ stdcall DwmSetIconicThumbnail(long long long)
 @ stdcall DwmSetPresentParameters(ptr ptr)
 @ stdcall DwmSetWindowAttribute(long long ptr long)
-@ stdcall DwmShowContact(long long)
+# @ stub DwmShowContact
 # @ stub DwmTetherContact
 # @ stub DwmTransitionOwnedWindow
 @ stdcall DwmUnregisterThumbnail(long)

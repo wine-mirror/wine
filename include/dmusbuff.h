@@ -40,13 +40,13 @@
 typedef struct _DMUS_EVENTHEADER DMUS_EVENTHEADER, *LPDMUS_EVENTHEADER;
 
 /* actual structure*/ 
-#pragma pack(push,4)
+#include <pshpack4.h>
 struct _DMUS_EVENTHEADER {
     DWORD           cbEvent;
     DWORD           dwChannelGroup;
     REFERENCE_TIME  rtDelta;
     DWORD           dwFlags;
 };
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_BUFFER_H */

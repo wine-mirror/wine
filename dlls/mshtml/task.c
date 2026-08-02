@@ -501,15 +501,15 @@ thread_data_t *get_thread_data(BOOL create)
     return thread_data;
 }
 
-double get_time_stamp(void)
+ULONGLONG get_time_stamp(void)
 {
     FILETIME time;
 
     /* 1601 to 1970 is 369 years plus 89 leap days */
-    const ULONGLONG time_epoch = (ULONGLONG)(369 * 365 + 89) * 86400 * 10000000;
+    const ULONGLONG time_epoch = (ULONGLONG)(369 * 365 + 89) * 86400 * 1000;
 
     GetSystemTimeAsFileTime(&time);
-    return (((ULONGLONG)time.dwHighDateTime << 32 | time.dwLowDateTime) - time_epoch) * 0.0001;
+    return (((ULONGLONG)time.dwHighDateTime << 32) + time.dwLowDateTime) / 10000 - time_epoch;
 }
 
 void unblock_tasks_and_timers(thread_data_t *thread_data)

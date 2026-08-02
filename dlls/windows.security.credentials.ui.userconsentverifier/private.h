@@ -35,8 +35,9 @@
 #define WIDL_using_Windows_Security_Credentials_UI
 #include "windows.security.credentials.ui.h"
 
-#include "async_private.h"
+#include "provider.h"
 
+typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
 extern HRESULT async_operation_user_consent_verifier_availability_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                                                           IAsyncOperation_UserConsentVerifierAvailability **out );
 

@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(icon);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -70,7 +70,7 @@ typedef struct
 #define NE_RSCTYPE_ICON        0x8003
 #define NE_RSCTYPE_GROUP_ICON  0x800e
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #if 0
 static void dumpIcoDirEntry ( LPicoICONDIRENTRY entry )

@@ -1323,7 +1323,7 @@ static ULONG WINAPI HttpSecurity_Release(IHttpSecurity *iface)
 static HRESULT WINAPI HttpSecurity_GetWindow(IHttpSecurity *iface, REFGUID rguidReason, HWND *phwnd)
 {
     if(IsEqualGUID(rguidReason, &IID_IHttpSecurity))
-        CHECK_EXPECT2(GetWindow_IHttpSecurity);
+        CHECK_EXPECT(GetWindow_IHttpSecurity);
     else if(IsEqualGUID(rguidReason, &IID_IWindowForBindingUI))
         CHECK_EXPECT2(GetWindow_IWindowForBindingUI);
     else if(IsEqualGUID(rguidReason, &IID_ICodeInstall))
@@ -2860,7 +2860,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
         url_a = (flags & BINDTEST_INVALID_CN) ? "https://" WINEHQ_IP "/robots.txt" : "https://test.winehq.org/tests/hello.html";
         break;
     case FTP_TEST:
-        url_a = "ftp://test.winehq.org/welcome%2emsg";
+        url_a = "ftp://ftp.winehq.org/welcome%2emsg";
         break;
     default:
         url_a = "winetest:test";
@@ -3255,15 +3255,10 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                 CHECK_CALLED(QueryInterface_IHttpSecurity);
                 CHECK_CALLED(QueryService_IHttpSecurity);
                 CHECK_CALLED(OnSecurityProblem);
-                if(onsecurityproblem_hres == S_FALSE)
-                    CHECK_CALLED(GetWindow_IHttpSecurity);
-                else
-                    CHECK_NOT_CALLED(GetWindow_IHttpSecurity);
             }else {
                 CHECK_NOT_CALLED(QueryInterface_IHttpSecurity);
                 CHECK_NOT_CALLED(QueryService_IHttpSecurity);
                 CHECK_NOT_CALLED(OnSecurityProblem);
-                CHECK_NOT_CALLED(GetWindow_IHttpSecurity);
             }
         }
         if(!no_callback) {

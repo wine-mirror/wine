@@ -17,10 +17,6 @@
 #	define	NeedFunctionPrototypes	1
 #endif
 
-#ifdef _MSC_VER
-#	define	NeedFunctionPrototypes	1
-#endif
-
 #ifdef	_NO_PROTO
 #	undef	NeedFunctionPrototypes
 #endif

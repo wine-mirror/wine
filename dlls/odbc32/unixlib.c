@@ -30,6 +30,7 @@
 #include <dlfcn.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -324,10 +325,10 @@ static HANDLE create_hkcu_key( const WCHAR *path, ULONG path_size )
 
     sid = ((TOKEN_USER *)sid_data)->User.Sid;
     len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
-                   MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
-                             MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+                   (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                                  MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", sid->SubAuthority[i] );
+        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
     buffer[len++] = '\\';
 
     ascii_to_unicode( bufferW, buffer, len );
@@ -550,8 +551,8 @@ done:
     NtClose( key );
 }
 
-/* use the driver name to look up the driver filename */
-static WCHAR *get_driver_filename( const WCHAR *name )
+/* unixODBC returns the driver filename in the description, use it to look up the driver name */
+static WCHAR *get_driver_name( const WCHAR *filename )
 {
     struct drivers drivers;
     HANDLE key_odbcinst, key_driver;
@@ -568,14 +569,13 @@ static WCHAR *get_driver_filename( const WCHAR *name )
         WCHAR buffer[1024];
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
-        if (wcsicmp( name, drivers.names[i] )) continue;
         if ((key_driver = open_key( key_odbcinst, drivers.names[i], wcslen(drivers.names[i]) * sizeof(WCHAR) )))
         {
             if (query_value( key_driver, driverW, sizeof(driverW), info, sizeof(buffer) ) && info->Type == REG_SZ &&
-                (ret = malloc( info->DataLength + sizeof(WCHAR) )))
+                !wcsnicmp( (const WCHAR *)info->Data, filename, info->DataLength / sizeof(WCHAR) ) &&
+                (ret = malloc( (wcslen(drivers.names[i]) + 1) * sizeof(WCHAR) )))
             {
-                memcpy( ret, info->Data, info->DataLength );
-                ret[info->DataLength / sizeof(WCHAR)] = 0;
+                wcscpy( ret, drivers.names[i] );
                 break;
             }
             NtClose( key_driver );
@@ -632,28 +632,27 @@ static void replicate_odbc_to_registry( BOOL is_user, SQLHENV env )
     while (SUCCESS((ret = pSQLDataSourcesW( env, dir, dsn, sizeof(dsn), &len_dsn, desc, sizeof(desc), &len_desc ))))
     {
         HANDLE key_source;
-        WCHAR buffer[1024], *filename = get_driver_filename( desc );
+        WCHAR buffer[1024], *name = get_driver_name( desc );
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
         dir = SQL_FETCH_NEXT;
-        if (!filename) continue;
-        if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && desc[0])
+        if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && name)
         {
-            set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)desc,
-                       (wcslen(desc) + 1) * sizeof(WCHAR) );
+            set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)name,
+                       (wcslen(name) + 1) * sizeof(WCHAR) );
         }
+        free( name );
 
         if ((key_source = create_key( key_odbcini, dsn, len_dsn * sizeof(WCHAR) )))
         {
             static const WCHAR driverW[] = {'D','r','i','v','e','r'};
             if (!query_value( key_source, driverW, sizeof(driverW), info, sizeof(buffer) ))
             {
-                set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)filename,
-                           (wcslen(filename) + 1) * sizeof(WCHAR) );
+                set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)desc,
+                           (len_desc + 1) * sizeof(WCHAR) );
             }
             NtClose( key_source );
         }
-        free( filename );
     }
 
     NtClose( key_sources );
@@ -687,7 +686,7 @@ static void replicate_to_registry(void)
     }
     else
     {
-        TRACE( "error %d opening an SQL environment\n", ret );
+        TRACE( "error %d opening an SQL environment\n", (int)ret );
         WARN( "external ODBC settings have not been replicated to the Wine registry\n" );
     }
 }

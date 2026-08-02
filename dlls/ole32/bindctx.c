@@ -30,6 +30,7 @@
 #include "objbase.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -122,8 +123,8 @@ static ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
     if (!refcount)
     {
         BindCtxImpl_ReleaseBoundObjects(&context->IBindCtx_iface);
-        HeapFree(GetProcessHeap(), 0, context->bindCtxTable);
-        free(context);
+        heap_free(context->bindCtxTable);
+        heap_free(context);
     }
 
     return refcount;
@@ -503,7 +504,7 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, IBindCtx **bind_context)
         return E_INVALIDARG;
     }
 
-    if (!(object = calloc(1, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IBindCtx_iface.lpVtbl = &VT_BindCtxImpl;

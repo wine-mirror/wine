@@ -34,6 +34,7 @@
 #include <pthread.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "initguid.h"
 #include "audioclient.h"
@@ -51,7 +52,6 @@ struct oss_stream
     UINT flags;
     AUDCLNT_SHAREMODE share;
     HANDLE event;
-    HANDLE timer_thread;
 
     int fd;
 
@@ -221,6 +221,27 @@ static void get_default_device(EDataFlow flow, char device[OSS_DEVNODE_SIZE])
     TRACE("Default devnode: %s\n", ai.devnode);
     oss_clean_devnode(device, ai.devnode);
     return;
+}
+
+static NTSTATUS oss_process_attach(void *args)
+{
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS oss_main_loop(void *args)
+{
+    struct main_loop_params *params = args;
+    NtSetEvent(params->event, NULL);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS oss_get_endpoint_ids(void *args)
@@ -404,9 +425,6 @@ static int get_oss_format(const WAVEFORMATEX *fmt)
 {
     WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)fmt;
 
-    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE && fmt->wBitsPerSample != fmtex->Samples.wValidBitsPerSample)
-        return -1;
-
     if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
@@ -416,15 +434,7 @@ static int get_oss_format(const WAVEFORMATEX *fmt)
         case 16:
             return AFMT_S16_LE;
         case 24:
-            /* According to the docs AFMT_S24_LE means a 24 bit sample in the
-             * LSB of a 32-bit container; AFMT_S24_PACKED means instead a packed
-             * 24-bit sample. In FreeBSD instead AFMT_S24_LE means a packed
-             * sample and AFMT_S24_PACKED does not exist. */
-#ifdef AFMT_S24_PACKED
-            return AFMT_S24_PACKED;
-#else
             return AFMT_S24_LE;
-#endif
         case 32:
             return AFMT_S32_LE;
         }
@@ -466,12 +476,14 @@ static WAVEFORMATEXTENSIBLE *clone_format(const WAVEFORMATEX *fmt)
     return ret;
 }
 
-static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd, const WAVEFORMATEX *fmt)
+static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
+                                const WAVEFORMATEX *fmt, WAVEFORMATEXTENSIBLE *out)
 {
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
     int tmp, oss_format;
     double tenth;
     HRESULT ret = S_OK;
+    WAVEFORMATEXTENSIBLE *closest;
 
     tmp = oss_format = get_oss_format(fmt);
     if(oss_format < 0)
@@ -494,24 +506,35 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd, const WAVEFORMA
     if(fmt->nChannels == 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
+    closest = clone_format(fmt);
+    if(!closest)
+        return E_OUTOFMEMORY;
+
     tmp = fmt->nSamplesPerSec;
     if(ioctl(fd, SNDCTL_DSP_SPEED, &tmp) < 0){
         WARN("SPEED failed: %d (%s)\n", errno, strerror(errno));
+        free(closest);
         return E_FAIL;
     }
     tenth = fmt->nSamplesPerSec * 0.1;
     if(tmp > fmt->nSamplesPerSec + tenth || tmp < fmt->nSamplesPerSec - tenth){
         ret = S_FALSE;
+        closest->Format.nSamplesPerSec = tmp;
     }
 
     tmp = fmt->nChannels;
     if(ioctl(fd, SNDCTL_DSP_CHANNELS, &tmp) < 0){
         WARN("CHANNELS failed: %d (%s)\n", errno, strerror(errno));
+        free(closest);
         return E_FAIL;
     }
     if(tmp != fmt->nChannels){
         ret = S_FALSE;
+        closest->Format.nChannels = tmp;
     }
+
+    if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        closest->dwChannelMask = get_channel_mask(closest->Format.nChannels);
 
     if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
             fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
@@ -524,6 +547,20 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd, const WAVEFORMA
         if(fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED)
             ret = S_FALSE;
     }
+
+    if(ret == S_FALSE && !out)
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if(ret == S_FALSE){
+        closest->Format.nBlockAlign =
+            closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
+        closest->Format.nAvgBytesPerSec =
+            closest->Format.nBlockAlign * closest->Format.nSamplesPerSec;
+        if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            closest->Samples.wValidBitsPerSample = closest->Format.wBitsPerSample;
+        memcpy(out, closest, closest->Format.cbSize + sizeof(WAVEFORMATEX));
+    }
+    free(closest);
 
     TRACE("returning: %08x\n", (unsigned)ret);
     return ret;
@@ -575,7 +612,7 @@ static NTSTATUS oss_create_stream(void *args)
     TRACE("min_channels: %d\n", ai.min_channels);
     TRACE("max_channels: %d\n", ai.max_channels);
 
-    params->result = setup_oss_device(params->share, stream->fd, params->fmt);
+    params->result = setup_oss_device(params->share, stream->fd, params->fmt, NULL);
     if(FAILED(params->result))
         goto exit;
 
@@ -588,12 +625,6 @@ static NTSTATUS oss_create_stream(void *args)
 
     stream->period = params->period;
     stream->period_frames = muldiv(params->fmt->nSamplesPerSec, params->period, 10000000);
-
-    if (stream->period_frames == 0)
-    {
-        params->result = E_INVALIDARG;
-        goto exit;
-    }
 
     stream->bufsize_frames = muldiv(params->duration, params->fmt->nSamplesPerSec, 10000000);
     if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
@@ -633,10 +664,10 @@ static NTSTATUS oss_release_stream(void *args)
     struct oss_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
-    if(stream->timer_thread){
+    if(params->timer_thread){
         stream->please_quit = TRUE;
-        NtWaitForSingleObject(stream->timer_thread, FALSE, NULL);
-        NtClose(stream->timer_thread);
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
     }
 
     close(stream->fd);
@@ -654,6 +685,66 @@ static NTSTATUS oss_release_stream(void *args)
 
     params->result = S_OK;
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS oss_start(void *args)
+{
+    struct start_params *params = args;
+    struct oss_stream *stream = handle_get_stream(params->stream);
+
+    oss_lock(stream);
+
+    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_EVENTHANDLE_NOT_SET);
+
+    if(stream->playing)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
+
+    stream->playing = TRUE;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
+static NTSTATUS oss_stop(void *args)
+{
+    struct stop_params *params = args;
+    struct oss_stream *stream = handle_get_stream(params->stream);
+
+    oss_lock(stream);
+
+    if(!stream->playing)
+        return oss_unlock_result(stream, &params->result, S_FALSE);
+
+    stream->playing = FALSE;
+    stream->in_oss_frames = 0;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
+static NTSTATUS oss_reset(void *args)
+{
+    struct reset_params *params = args;
+    struct oss_stream *stream = handle_get_stream(params->stream);
+
+    oss_lock(stream);
+
+    if(stream->playing)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
+
+    if(stream->getbuf_last)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_BUFFER_OPERATION_PENDING);
+
+    if(stream->flow == eRender){
+        stream->written_frames = 0;
+        stream->last_pos_frames = 0;
+    }else{
+        stream->written_frames += stream->held_frames;
+    }
+    stream->held_frames = 0;
+    stream->lcl_offs_frames = 0;
+    stream->in_oss_frames = 0;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
 }
 
 static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frames)
@@ -803,9 +894,10 @@ static void oss_read_data(struct oss_stream *stream)
     }
 }
 
-static void oss_timer_loop(void *args)
+static NTSTATUS oss_timer_loop(void *args)
 {
-    struct oss_stream *stream = args;
+    struct timer_loop_params *params = args;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER delay, now, next;
     int adjust;
 
@@ -840,68 +932,8 @@ static void oss_timer_loop(void *args)
     }
 
     oss_unlock(stream);
-}
 
-static NTSTATUS oss_start(void *args)
-{
-    struct start_params *params = args;
-    struct oss_stream *stream = handle_get_stream(params->stream);
-    static const WCHAR name[] = {'a','u','d','i','o','_','c','l','i','e','n','t','_','t','i','m','e','r',0};
-
-    oss_lock(stream);
-
-    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
-        return oss_unlock_result(stream, &params->result, AUDCLNT_E_EVENTHANDLE_NOT_SET);
-
-    if(stream->playing)
-        return oss_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
-
-    stream->playing = TRUE;
-    if (!stream->timer_thread) create_unix_thread( &stream->timer_thread, name, oss_timer_loop, stream );
-
-    return oss_unlock_result(stream, &params->result, S_OK);
-}
-
-static NTSTATUS oss_stop(void *args)
-{
-    struct stop_params *params = args;
-    struct oss_stream *stream = handle_get_stream(params->stream);
-
-    oss_lock(stream);
-
-    if(!stream->playing)
-        return oss_unlock_result(stream, &params->result, S_FALSE);
-
-    stream->playing = FALSE;
-    stream->in_oss_frames = 0;
-
-    return oss_unlock_result(stream, &params->result, S_OK);
-}
-
-static NTSTATUS oss_reset(void *args)
-{
-    struct reset_params *params = args;
-    struct oss_stream *stream = handle_get_stream(params->stream);
-
-    oss_lock(stream);
-
-    if(stream->playing)
-        return oss_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
-
-    if(stream->getbuf_last)
-        return oss_unlock_result(stream, &params->result, AUDCLNT_E_BUFFER_OPERATION_PENDING);
-
-    if(stream->flow == eRender){
-        stream->written_frames = 0;
-        stream->last_pos_frames = 0;
-    }else{
-        stream->written_frames += stream->held_frames;
-    }
-    stream->held_frames = 0;
-    stream->lcl_offs_frames = 0;
-    stream->in_oss_frames = 0;
-
-    return oss_unlock_result(stream, &params->result, S_OK);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS oss_get_render_buffer(void *args)
@@ -1109,13 +1141,25 @@ static NTSTATUS oss_is_format_supported(void *args)
     struct is_format_supported_params *params = args;
     int fd;
 
+    params->result = S_OK;
+
+    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
+        params->result = E_POINTER;
+    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        params->result = E_INVALIDARG;
+    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+        params->result = E_INVALIDARG;
+    if(FAILED(params->result))
+        return STATUS_SUCCESS;
+
     fd = open_device(params->device, params->flow);
     if(fd < 0){
         WARN("Unable to open device %s: %d (%s)\n", params->device, errno, strerror(errno));
         params->result = AUDCLNT_E_DEVICE_INVALIDATED;
         return STATUS_SUCCESS;
     }
-    params->result = setup_oss_device(params->share, fd, params->fmt_in);
+    params->result = setup_oss_device(params->share, fd, params->fmt_in, params->fmt_out);
     close(fd);
 
     return STATUS_SUCCESS;
@@ -1632,16 +1676,16 @@ static NTSTATUS oss_aux_message(void *args)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    oss_process_attach,
     oss_not_implemented,
-    oss_not_implemented,
-    oss_not_implemented,
-    oss_not_implemented,
+    oss_main_loop,
     oss_get_endpoint_ids,
     oss_create_stream,
     oss_release_stream,
     oss_start,
     oss_stop,
     oss_reset,
+    oss_timer_loop,
     oss_get_render_buffer,
     oss_release_render_buffer,
     oss_get_capture_buffer,
@@ -1677,15 +1721,6 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 typedef UINT PTR32;
 
-static NTSTATUS oss_wow64_process_attach(void *args)
-{
-    SYSTEM_BASIC_INFORMATION info;
-
-    NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-    zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS oss_wow64_test_connect(void *args)
 {
     struct
@@ -1700,6 +1735,19 @@ static NTSTATUS oss_wow64_test_connect(void *args)
     oss_test_connect(&params);
     params32->priority = params.priority;
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS oss_wow64_main_loop(void *args)
+{
+    struct
+    {
+        PTR32 event;
+    } *params32 = args;
+    struct main_loop_params params =
+    {
+        .event = ULongToHandle(params32->event)
+    };
+    return oss_main_loop(&params);
 }
 
 static NTSTATUS oss_wow64_get_endpoint_ids(void *args)
@@ -1766,11 +1814,13 @@ static NTSTATUS oss_wow64_release_stream(void *args)
     struct
     {
         stream_handle stream;
+        PTR32 timer_thread;
         HRESULT result;
     } *params32 = args;
     struct release_stream_params params =
     {
         .stream = params32->stream,
+        .timer_thread = ULongToHandle(params32->timer_thread)
     };
     oss_release_stream(&params);
     params32->result = params.result;
@@ -1835,6 +1885,7 @@ static NTSTATUS oss_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
+        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
@@ -1843,6 +1894,7 @@ static NTSTATUS oss_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
+        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     oss_is_format_supported(&params);
     params32->result = params.result;
@@ -2122,16 +2174,16 @@ static NTSTATUS oss_wow64_aux_message(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    oss_wow64_process_attach,
+    oss_process_attach,
     oss_not_implemented,
-    oss_not_implemented,
-    oss_not_implemented,
+    oss_wow64_main_loop,
     oss_wow64_get_endpoint_ids,
     oss_wow64_create_stream,
     oss_wow64_release_stream,
     oss_start,
     oss_stop,
     oss_reset,
+    oss_timer_loop,
     oss_wow64_get_render_buffer,
     oss_release_render_buffer,
     oss_wow64_get_capture_buffer,

@@ -20,10 +20,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.media.devices.idl";
-
-namespace Windows.Media.Devices {
-    runtimeclass MediaDevice;
-}
+#include "windows.media.devices.idl"

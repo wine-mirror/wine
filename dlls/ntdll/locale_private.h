@@ -443,11 +443,7 @@ static inline NTSTATUS utf8_mbstowcs( WCHAR *dst, unsigned int dstlen, unsigned 
         {
             res -= 0x10000;
             *dst++ = 0xd800 | (res >> 10);
-            if (dst == dstend)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-                break;
-            }
+            if (dst == dstend) break;
             *dst++ = 0xdc00 | (res & 0x3ff);
         }
         else

@@ -21,6 +21,8 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -48,9 +50,9 @@ typedef struct
 {
     DispatchEx dispex;
     IXMLDOMNodeList IXMLDOMNodeList_iface;
-    LONG refcount;
-    struct domnode *parent;
-    struct domnode *current;
+    LONG ref;
+    xmlNodePtr parent;
+    xmlNodePtr current;
     IEnumVARIANT *enumvariant;
 } xmlnodelist;
 
@@ -70,11 +72,14 @@ static inline xmlnodelist *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
     return CONTAINING_RECORD(iface, xmlnodelist, IXMLDOMNodeList_iface);
 }
 
-static HRESULT WINAPI xmlnodelist_QueryInterface(IXMLDOMNodeList *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI xmlnodelist_QueryInterface(
+    IXMLDOMNodeList *iface,
+    REFIID riid,
+    void** ppvObject )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
@@ -84,15 +89,15 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(IXMLDOMNodeList *iface, REFIID 
     }
     else if (IsEqualGUID( riid, &IID_IEnumVARIANT ))
     {
-        if (!list->enumvariant)
+        if (!This->enumvariant)
         {
-            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &nodelist_enumvariant, &list->enumvariant);
+            HRESULT hr = create_enumvariant((IUnknown*)iface, FALSE, &nodelist_enumvariant, &This->enumvariant);
             if (FAILED(hr)) return hr;
         }
 
-        return IEnumVARIANT_QueryInterface(list->enumvariant, &IID_IEnumVARIANT, ppvObject);
+        return IEnumVARIANT_QueryInterface(This->enumvariant, &IID_IEnumVARIANT, ppvObject);
     }
-    else if (dispex_query_interface(&list->dispex, riid, ppvObject))
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }
@@ -103,161 +108,181 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(IXMLDOMNodeList *iface, REFIID 
         return E_NOINTERFACE;
     }
 
-    IXMLDOMNodeList_AddRef(iface);
+    IXMLDOMNodeList_AddRef( iface );
 
     return S_OK;
 }
 
-static ULONG WINAPI xmlnodelist_AddRef(IXMLDOMNodeList *iface)
+static ULONG WINAPI xmlnodelist_AddRef(
+    IXMLDOMNodeList *iface )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    ULONG refcount = InterlockedIncrement(&list->refcount);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    return refcount;
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("%p, refcount %lu.\n", iface, ref);
+    return ref;
 }
 
-static void xmlnode_list_release_current(xmlnodelist *list)
+static ULONG WINAPI xmlnodelist_Release(
+    IXMLDOMNodeList *iface )
 {
-    if (list->current && list->current != list->parent)
-        domnode_release(list->current);
-    list->current = NULL;
-}
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-static ULONG WINAPI xmlnodelist_Release(IXMLDOMNodeList *iface)
-{
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    ULONG refcount = InterlockedDecrement(&list->refcount);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    if (!refcount)
+    if (!ref)
     {
-        xmlnode_list_release_current(list);
-        domnode_release(list->parent);
-        if (list->enumvariant) IEnumVARIANT_Release(list->enumvariant);
-        free(list);
+        xmldoc_release( This->parent->doc );
+        if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
+        free( This );
     }
 
-    return refcount;
+    return ref;
 }
 
-static HRESULT WINAPI xmlnodelist_GetTypeInfoCount(IXMLDOMNodeList *iface, UINT *count)
+static HRESULT WINAPI xmlnodelist_GetTypeInfoCount(
+    IXMLDOMNodeList *iface,
+    UINT* pctinfo )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    return IDispatchEx_GetTypeInfoCount(&list->dispex.IDispatchEx_iface, count);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
-static HRESULT WINAPI xmlnodelist_GetTypeInfo(IXMLDOMNodeList *iface, UINT index, LCID lcid, ITypeInfo **ti)
+static HRESULT WINAPI xmlnodelist_GetTypeInfo(
+    IXMLDOMNodeList *iface,
+    UINT iTInfo,
+    LCID lcid,
+    ITypeInfo** ppTInfo )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    return IDispatchEx_GetTypeInfo(&list->dispex.IDispatchEx_iface, index, lcid, ti);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
-static HRESULT WINAPI xmlnodelist_GetIDsOfNames(IXMLDOMNodeList *iface, REFIID riid,
-        LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId)
+static HRESULT WINAPI xmlnodelist_GetIDsOfNames(
+    IXMLDOMNodeList *iface,
+    REFIID riid,
+    LPOLESTR* rgszNames,
+    UINT cNames,
+    LCID lcid,
+    DISPID* rgDispId )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    return IDispatchEx_GetIDsOfNames(&list->dispex.IDispatchEx_iface,
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
         riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI xmlnodelist_Invoke(IXMLDOMNodeList *iface, DISPID dispIdMember,
-        REFIID riid, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result,
-        EXCEPINFO *ei, UINT *puArgErr)
+static HRESULT WINAPI xmlnodelist_Invoke(
+    IXMLDOMNodeList *iface,
+    DISPID dispIdMember,
+    REFIID riid,
+    LCID lcid,
+    WORD wFlags,
+    DISPPARAMS* pDispParams,
+    VARIANT* pVarResult,
+    EXCEPINFO* pExcepInfo,
+    UINT* puArgErr )
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    return IDispatchEx_Invoke(&list->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
-            flags, params, result, ei, puArgErr);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI xmlnodelist_get_item(IXMLDOMNodeList *iface, LONG index, IXMLDOMNode **node)
+static HRESULT WINAPI xmlnodelist_get_item(
+        IXMLDOMNodeList* iface,
+        LONG index,
+        IXMLDOMNode** listItem)
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    struct list *p;
-    LONG i = 0;
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    xmlNodePtr curr;
+    LONG nodeIndex = 0;
 
-    TRACE("%p, %ld, %p.\n", iface, index, node);
+    TRACE("%p, %ld, %p.\n", iface, index, listItem);
 
-    if (!node)
+    if(!listItem)
         return E_INVALIDARG;
 
-    *node = NULL;
+    *listItem = NULL;
 
     if (index < 0)
         return S_FALSE;
 
-    p = list_head(&list->parent->children);
-    while (p)
+    curr = This->parent->children;
+    while(curr)
     {
-        if (i++ == index) break;
-        p = list_next(&list->parent->children, p);
+        if(nodeIndex++ == index) break;
+        curr = curr->next;
     }
-    if (!p)
-        return S_FALSE;
+    if(!curr) return S_FALSE;
 
-    return create_node(LIST_ENTRY(p, struct domnode, entry), node);
-}
+    *listItem = create_node( curr );
 
-static HRESULT WINAPI xmlnodelist_get_length(IXMLDOMNodeList *iface, LONG *length)
-{
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-
-    TRACE("%p, %p.\n", iface, length);
-
-    if (!length)
-        return E_INVALIDARG;
-
-    *length = list_count(&list->parent->children);
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnodelist_nextNode(IXMLDOMNodeList *iface, IXMLDOMNode **node)
+static HRESULT WINAPI xmlnodelist_get_length(
+        IXMLDOMNodeList* iface,
+        LONG* listLength)
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-    HRESULT hr;
 
-    TRACE("%p, %p.\n", iface, node);
+    xmlNodePtr curr;
+    LONG nodeCount = 0;
 
-    if (!node)
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+
+    TRACE("(%p)->(%p)\n", This, listLength);
+
+    if(!listLength)
         return E_INVALIDARG;
 
-    *node = NULL;
-
-    /* First iteration */
-    if (list->current == list->parent)
+    curr = This->parent->children;
+    while (curr)
     {
-        list->current = domnode_get_first_child(list->parent);
-        if (list->current) domnode_addref(list->current);
+        nodeCount++;
+        curr = curr->next;
     }
 
-    if (!list->current)
-        return S_FALSE;
-
-    hr = create_node(list->current, node);
-    domnode_release(list->current);
-    list->current = domnode_get_next_sibling(list->current);
-    if (list->current) domnode_addref(list->current);
-
-    return hr;
-}
-
-static HRESULT WINAPI xmlnodelist_reset(IXMLDOMNodeList *iface)
-{
-    xmlnodelist *list = impl_from_IXMLDOMNodeList(iface);
-
-    TRACE("%p.\n", iface);
-
-    xmlnode_list_release_current(list);
-    list->current = list->parent;
+    *listLength = nodeCount;
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnodelist__newEnum(IXMLDOMNodeList *iface, IUnknown **enumv)
+static HRESULT WINAPI xmlnodelist_nextNode(
+        IXMLDOMNodeList* iface,
+        IXMLDOMNode** nextItem)
 {
-    TRACE("%p, %p.\n", iface, enumv);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
+    TRACE("(%p)->(%p)\n", This, nextItem );
+
+    if(!nextItem)
+        return E_INVALIDARG;
+
+    *nextItem = NULL;
+
+    if (!This->current)
+        return S_FALSE;
+
+    *nextItem = create_node( This->current );
+    This->current = This->current->next;
+    return S_OK;
+}
+
+static HRESULT WINAPI xmlnodelist_reset(
+        IXMLDOMNodeList* iface)
+{
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+
+    TRACE("%p\n", This);
+    This->current = This->parent->children;
+    return S_OK;
+}
+
+static HRESULT WINAPI xmlnodelist__newEnum(
+        IXMLDOMNodeList* iface,
+        IUnknown** enumv)
+{
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
+    TRACE("(%p)->(%p)\n", This, enumv);
     return create_enumvariant((IUnknown*)iface, TRUE, &nodelist_enumvariant, (IEnumVARIANT**)enumv);
 }
 
@@ -295,7 +320,7 @@ static HRESULT xmlnodelist_get_dispid(IUnknown *iface, BSTR name, DWORD flags, D
 static HRESULT xmlnodelist_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei)
 {
-    xmlnodelist *list = impl_from_IXMLDOMNodeList((IXMLDOMNodeList *)iface);
+    xmlnodelist *This = impl_from_IXMLDOMNodeList( (IXMLDOMNodeList*)iface );
 
     TRACE("%p, %ld, %lx, %x, %p, %p, %p.\n", iface, id, lcid, flags, params, res, ei);
 
@@ -308,7 +333,7 @@ static HRESULT xmlnodelist_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
                 IXMLDOMNode *disp = NULL;
 
                 V_VT(res) = VT_DISPATCH;
-                IXMLDOMNodeList_get_item(&list->IXMLDOMNodeList_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
+                IXMLDOMNodeList_get_item(&This->IXMLDOMNodeList_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
                 V_DISPATCH(res) = (IDispatch*)disp;
                 break;
             }
@@ -341,7 +366,7 @@ static HRESULT xmlnodelist_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
                     return hr;
                 }
 
-                IXMLDOMNodeList_get_item(&list->IXMLDOMNodeList_iface, V_I4(&index), &item);
+                IXMLDOMNodeList_get_item(&This->IXMLDOMNodeList_iface, V_I4(&index), &item);
                 V_VT(res) = VT_DISPATCH;
                 V_DISPATCH(res) = (IDispatch*)item;
                 break;
@@ -361,40 +386,38 @@ static HRESULT xmlnodelist_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t xmlnodelist_dispex_vtbl =
-{
+static const dispex_static_data_vtbl_t xmlnodelist_dispex_vtbl = {
     xmlnodelist_get_dispid,
     xmlnodelist_invoke
 };
 
-static const tid_t xmlnodelist_iface_tids[] =
-{
+static const tid_t xmlnodelist_iface_tids[] = {
     IXMLDOMNodeList_tid,
     0
 };
-
-static dispex_static_data_t xmlnodelist_dispex =
-{
+static dispex_static_data_t xmlnodelist_dispex = {
     &xmlnodelist_dispex_vtbl,
     IXMLDOMNodeList_tid,
     NULL,
     xmlnodelist_iface_tids
 };
 
-HRESULT create_children_nodelist(struct domnode *node, IXMLDOMNodeList **list)
+IXMLDOMNodeList* create_children_nodelist( xmlNodePtr node )
 {
-    xmlnodelist *object;
+    xmlnodelist *This;
 
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
+    This = malloc(sizeof(*This));
+    if ( !This )
+        return NULL;
 
-    object->IXMLDOMNodeList_iface.lpVtbl = &xmlnodelist_vtbl;
-    object->refcount = 1;
-    object->current = object->parent = domnode_addref(node);
+    This->IXMLDOMNodeList_iface.lpVtbl = &xmlnodelist_vtbl;
+    This->ref = 1;
+    This->parent = node;
+    This->current = node->children;
+    This->enumvariant = NULL;
+    xmldoc_add_ref( node->doc );
 
-    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMNodeList_iface, &xmlnodelist_dispex);
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMNodeList_iface, &xmlnodelist_dispex);
 
-    *list = &object->IXMLDOMNodeList_iface;
-
-    return S_OK;
+    return &This->IXMLDOMNodeList_iface;
 }

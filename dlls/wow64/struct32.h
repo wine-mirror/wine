@@ -75,13 +75,6 @@ typedef struct
 
 typedef struct
 {
-    WORD  Level;
-    WORD  Sbz;
-    ULONG ObjectType;
-} OBJECT_TYPE_LIST32;
-
-typedef struct
-{
     CONTEXT_CHUNK All;
     CONTEXT_CHUNK Legacy;
     CONTEXT_CHUNK XState;
@@ -748,114 +741,5 @@ typedef struct
     ULONG PagefileLimit;
     LARGE_INTEGER TimeLimit;
 } QUOTA_LIMITS32;
-
-typedef struct
-{
-    DWORD Length;
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-    SECURITY_CONTEXT_TRACKING_MODE ContextTrackingMode;
-    BOOLEAN EffectiveOnly;
-} SECURITY_QUALITY_OF_SERVICE32;
-
-typedef struct
-{
-    ULONG Flags;
-    SECURITY_QUALITY_OF_SERVICE32 SecurityQos;
-    ULONG MaxMessageLength;
-    ULONG MemoryBandwidth;
-    ULONG MaxPoolUsage;
-    ULONG MaxSectionSize;
-    ULONG MaxViewSize;
-    ULONG MaxTotalSectionSize;
-    ULONG DupObjectTypes;
-} ALPC_PORT_ATTRIBUTES32;
-
-typedef struct
-{
-    union
-    {
-        struct
-        {
-            USHORT DataLength;
-            USHORT TotalLength;
-        } DUMMYSTRUCTNAME1;
-        ULONG Length;
-    } DUMMYUNIONNAME1;
-    union
-    {
-        struct
-        {
-            USHORT Type;
-            USHORT DataInfoOffset;
-        } DUMMYSTRUCTNAME2;
-        ULONG ZeroInit;
-    } DUMMYUNIONNAME2;
-    union
-    {
-        CLIENT_ID32 ClientId;
-        double DoNotUseThisField;
-    } DUMMYUNIONNAME3;
-    ULONG MessageId;
-    union
-    {
-        ULONG ClientViewSize;
-        ULONG CallbackId;
-    } DUMMYUNIONNAME4;
-} ALPC_PORT_MESSAGE32, *PALPC_PORT_MESSAGE32, ALPC_PORT_MESSAGE_HEADER32, *PALPC_PORT_MESSAGE_HEADER32;
-
-typedef struct
-{
-    ULONG AllocatedAttributes;
-    ULONG ValidAttributes;
-} ALPC_MESSAGE_ATTRIBUTES32, *PALPC_MESSAGE_ATTRIBUTES32;
-
-typedef struct
-{
-    ULONG Flags;
-    ULONG QoSPointer;
-    ULONG ContextHandle;
-} ALPC_SECURITY_ATTR32, *PALPC_SECURITY_ATTR32;
-
-typedef struct
-{
-    ULONG Flags;
-    ULONG SectionHandle;
-    ULONG ViewBase;
-    ULONG ViewSize;
-} ALPC_VIEW_ATTR32, *PALPC_VIEW_ATTR32;
-
-typedef struct
-{
-    ULONG PortContext;
-    ULONG MessageContext;
-    ULONG Sequence;
-    ULONG MessageId;
-    ULONG CallbackId;
-} ALPC_CONTEXT_ATTR32, *PALPC_CONTEXT_ATTR32;
-
-typedef struct
-{
-    ULONG Flags;
-    ULONG Handle;
-    ULONG ObjectType;
-    ULONG DesiredAccess;
-} ALPC_HANDLE_ATTR32, *PALPC_HANDLE_ATTR32;
-
-typedef struct
-{
-    ULONGLONG TokenId;
-    ULONGLONG AuthenticationId;
-    ULONGLONG ModifiedId;
-} ALPC_TOKEN_ATTR32, *PALPC_TOKEN_ATTR32;
-
-typedef struct
-{
-    ULONG Event;
-} ALPC_DIRECT_ATTR32, *PALPC_DIRECT_ATTR32;
-
-typedef struct
-{
-    ULONGLONG Ticket;
-} ALPC_WORK_ON_BEHALF_ATTR32, *PALPC_WORK_ON_BEHALF_ATTR32;
 
 #endif /* __WOW64_STRUCT32_H */

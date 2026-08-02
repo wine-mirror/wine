@@ -21,7 +21,7 @@
 #include "ndrtypes.h"
 
 /* there can't be any alignment with the structures in this file */
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct _NDR_PROC_HEADER
 {
@@ -222,7 +222,7 @@ typedef struct _NDR_EHD_CONTEXT
     unsigned char param_num;
 } NDR_EHD_CONTEXT;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 struct async_call_data
 {

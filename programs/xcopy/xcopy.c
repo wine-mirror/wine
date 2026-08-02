@@ -326,35 +326,6 @@ static BOOL XCOPY_ProcessExcludeList(WCHAR* parms) {
 }
 
 /* =========================================================================
- * XCOPY_IsSameFile
- *
- * Checks if the two paths reference to the same file.
- * Copied from WCMD builtins.c, and tab-adjusted.
- * ========================================================================= */
-static BOOL XCOPY_IsSameFile(const WCHAR *name1, const WCHAR *name2)
-{
-    BOOL ret = FALSE;
-    HANDLE file1 = INVALID_HANDLE_VALUE, file2 = INVALID_HANDLE_VALUE;
-    BY_HANDLE_FILE_INFORMATION info1, info2;
-
-    file1 = CreateFileW(name1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-    if (file1 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file1, &info1)) {
-        file2 = CreateFileW(name2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-        if (file2 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file2, &info2)) {
-            ret = info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
-                && info1.nFileIndexHigh == info2.nFileIndexHigh
-                && info1.nFileIndexLow == info2.nFileIndexLow;
-        }
-    }
-
-    if (file1 != INVALID_HANDLE_VALUE)
-        CloseHandle(file1);
-    if (file2 != INVALID_HANDLE_VALUE)
-        CloseHandle(file2);
-    return ret;
-}
-
-/* =========================================================================
    XCOPY_DoCopy - Recursive function to copy files based on input parms
      of a stem and a spec
 
@@ -388,7 +359,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
     /* Search 1 - Look for matching files */
     h = FindFirstFileW(inputpath, finddata);
-    while (h != INVALID_HANDLE_VALUE && !ret && findres) {
+    while (h != INVALID_HANDLE_VALUE && findres) {
 
         skipFile = FALSE;
 
@@ -520,9 +491,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             }
 
             if (!skipFile &&
-                destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT) &&
-                !XCOPY_IsSameFile(copyFrom, copyTo)) {
-
+                destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
                 DWORD count;
                 char  answer[10];
                 BOOL  answered = FALSE;
@@ -557,7 +526,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* Output a status message */
             if (!skipFile) {
-                if (!(flags & OPT_QUIET) && !(flags & OPT_SRCPROMPT)) {
+                if (!(flags & OPT_QUIET)) {
                     if (flags & OPT_FULL)
                         XCOPY_wprintf(L"%1 -> %2\n", copyFrom, copyTo);
                     else
@@ -575,21 +544,20 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
                     /* Skip copy */
                 } else if (CopyFileW(copyFrom, copyTo, FALSE) == 0) {
-                    skipFile = TRUE;
-                    if (XCOPY_IsSameFile(copyFrom, copyTo)) {
-                        XCOPY_wprintf(XCOPY_LoadMessage(STRING_NOCOPYTOSELF));
-                        ret = RC_INITERROR;
-                    } else {
-                        DWORD error = GetLastError();
-                        XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
-                               copyFrom, copyTo, error);
-                        XCOPY_FailMessage(error);
 
-                        if (!(flags & OPT_IGNOREERRORS)) {
-                            ret = RC_WRITEERROR;
-                        }
+                    DWORD error = GetLastError();
+                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
+                           copyFrom, copyTo, error);
+                    XCOPY_FailMessage(error);
+
+                    if (flags & OPT_IGNOREERRORS) {
+                        skipFile = TRUE;
+                    } else {
+                        ret = RC_WRITEERROR;
+                        goto cleanup;
                     }
                 } else {
+
                     if (!skipFile) {
                         /* If keeping attributes, update the destination attributes
                            otherwise remove the read only attribute                 */
@@ -612,14 +580,12 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
         }
 
         /* Find next file */
-        if (!ret) {
-            findres = FindNextFileW(h, finddata);
-        }
+        findres = FindNextFileW(h, finddata);
     }
     FindClose(h);
 
     /* Search 2 - do subdirs */
-    if (!ret && (flags & OPT_RECURSIVE)) {
+    if (flags & OPT_RECURSIVE) {
 
         /* If /E is supplied, create the directory now */
         if ((flags & OPT_EMPTYDIR) &&
@@ -661,6 +627,8 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
         }
         FindClose(h);
     }
+
+cleanup:
 
     /* free up memory */
     HeapFree(GetProcessHeap(), 0, finddata);
@@ -795,8 +763,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                                    OPT_REMOVEARCH;    break;
 
                 /* E can be /E or /EXCLUDE */
-                case 'E': if (wcslen(p) >= 8 &&
-                              CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                case 'E': if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
                                              p, 8, L"EXCLUDE:", -1) == CSTR_EQUAL) {
                             if (XCOPY_ProcessExcludeList(&p[8])) {
                               XCOPY_FailMessage(ERROR_INVALID_PARAMETER);

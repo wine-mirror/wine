@@ -1399,19 +1399,9 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   This->idxFrames[This->lLastFrame].dwChunkLength = size;
 
   /* update AVISTREAMINFO structure if necessary */
-  if (This->sInfo.dwSampleSize)
-  {
-    unsigned int block;
+  if (This->sInfo.dwLength <= This->lLastFrame)
+    This->sInfo.dwLength = This->lLastFrame + 1;
 
-    size = 0;
-    for (block = 0; block <= This->lLastFrame; block++)
-      size += This->idxFrames[block].dwChunkLength;
-    This->sInfo.dwLength = max(This->sInfo.dwLength, size / This->sInfo.dwSampleSize);
-  }
-  else
-  {
-    This->sInfo.dwLength = max(This->sInfo.dwLength, This->lLastFrame + 1);
-  }
   return AVIERR_OK;
 }
 
@@ -1999,8 +1989,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
   assert(This != NULL);
   assert(This->paf != NULL);
   assert(This->paf->hmmio != NULL);
-  if (!This->sInfo.dwSampleSize)
-    assert(This->sInfo.dwStart <= pos && pos < This->sInfo.dwLength);
+  assert(This->sInfo.dwStart <= pos && pos < This->sInfo.dwLength);
   assert(pos <= This->lLastFrame);
 
   /* should we read as much as block gives us? */

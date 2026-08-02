@@ -1613,6 +1613,15 @@ coclass FreeThreadedDOMDocument40
 }
 
 [
+    uuid(88d96a06-f192-11d4-a65f-0040963251e5),
+]
+coclass FreeThreadedDOMDocument60
+{
+    [default] interface IXMLDOMDocument3;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+}
+
+[
     helpstring("Free threaded XML DOM Document"),
     progid("Msxml2.FreeThreadedDOMDocument"),
     vi_progid("Msxml2.FreeThreadedDOMDocument"),
@@ -1654,6 +1663,14 @@ coclass XMLHTTP40
 }
 
 [
+    uuid(88d96a0a-f192-11d4-a65f-0040963251e5)
+]
+coclass XMLHTTP60
+{
+    [default] interface IXMLHTTPRequest;
+}
+
+[
     helpstring("XML HTTP"),
     progid("Msxml2.XMLHTTP"),
     vi_progid("Msxml2.XMLHTTP"),
@@ -1681,6 +1698,14 @@ coclass ServerXMLHTTP30
     uuid(88d969c6-f192-11d4-a65f-0040963251e5)
 ]
 coclass ServerXMLHTTP40
+{
+    [default] interface IServerXMLHTTPRequest2;
+}
+
+[
+    uuid(88d96a0b-f192-11d4-a65f-0040963251e5)
+]
+coclass ServerXMLHTTP60
 {
     [default] interface IServerXMLHTTPRequest2;
 }
@@ -1761,6 +1786,14 @@ coclass XSLTemplate30
     uuid(88d969c3-f192-11d4-a65f-0040963251e5)
 ]
 coclass XSLTemplate40
+{
+    [default] interface IXSLTemplate;
+}
+
+[
+    uuid(88d96a08-f192-11d4-a65f-0040963251e5)
+]
+coclass XSLTemplate60
 {
     [default] interface IXSLTemplate;
 }
@@ -3257,6 +3290,15 @@ coclass SAXXMLReader40
 }
 
 [
+    uuid(88d96a0c-f192-11d4-a65f-0040963251e5)
+]
+coclass SAXXMLReader60
+{
+    [default] interface IVBSAXXMLReader;
+    interface ISAXXMLReader;
+}
+
+[
     helpstring("SAX XML Reader"),
     progid("Msxml2.SAXXMLReader"),
     vi_progid("Msxml2.SAXXMLReader"),
@@ -3331,6 +3373,26 @@ coclass MXHTMLWriter40
 }
 
 [
+    uuid(88d96a10-f192-11d4-a65f-0040963251e5)
+]
+coclass MXHTMLWriter60
+{
+    [default] interface IMXWriter;
+
+    interface ISAXContentHandler;
+    interface ISAXDeclHandler;
+    interface ISAXDTDHandler;
+    interface ISAXErrorHandler;
+    interface ISAXLexicalHandler;
+
+    interface IVBSAXContentHandler;
+    interface IVBSAXDeclHandler;
+    interface IVBSAXDTDHandler;
+    interface IVBSAXErrorHandler;
+    interface IVBSAXLexicalHandler;
+}
+
+[
     helpstring("MXXMLWriter 3.0"),
     progid("Msxml2.MXXMLWriter.3.0"),
     vi_progid("Msxml2.MXXMLWriter"),
@@ -3358,6 +3420,26 @@ coclass MXXMLWriter30
     uuid(88d969c8-f192-11d4-a65f-0040963251e5),
 ]
 coclass MXXMLWriter40
+{
+    [default] interface IMXWriter;
+
+    interface ISAXContentHandler;
+    interface ISAXDeclHandler;
+    interface ISAXDTDHandler;
+    interface ISAXErrorHandler;
+    interface ISAXLexicalHandler;
+
+    interface IVBSAXContentHandler;
+    interface IVBSAXDeclHandler;
+    interface IVBSAXDTDHandler;
+    interface IVBSAXErrorHandler;
+    interface IVBSAXLexicalHandler;
+}
+
+[
+    uuid(88d96a0f-f192-11d4-a65f-0040963251e5)
+]
+coclass MXXMLWriter60
 {
     [default] interface IMXWriter;
 
@@ -3417,6 +3499,15 @@ coclass MXNamespaceManager40
 }
 
 [
+    uuid(88d96a11-f192-11d4-a65f-0040963251e5)
+]
+coclass MXNamespaceManager60
+{
+    [default] interface IVBMXNamespaceManager;
+    interface IMXNamespaceManager;
+}
+
+[
     helpstring("SAXAttributes 3.0"),
     progid("Msxml2.SAXAttributes.3.0"),
     vi_progid("Msxml2.SAXAttributes"),
@@ -3434,6 +3525,16 @@ coclass SAXAttributes30
     uuid(88d969ca-f192-11d4-a65f-0040963251e5),
 ]
 coclass SAXAttributes40
+{
+    [default] interface IMXAttributes;
+    interface IVBSAXAttributes;
+    interface ISAXAttributes;
+}
+
+[
+    uuid(88d96a0e-f192-11d4-a65f-0040963251e5)
+]
+coclass SAXAttributes60
 {
     [default] interface IMXAttributes;
     interface IVBSAXAttributes;

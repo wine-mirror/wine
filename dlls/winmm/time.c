@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <errno.h>
+#include <time.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -236,6 +237,32 @@ void	TIME_MMTimeStop(void)
 }
 
 /**************************************************************************
+ * 				timeGetSystemTime	[WINMM.@]
+ */
+MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
+{
+    if (wSize >= sizeof(*lpTime)) {
+        lpTime->wType = TIME_MS;
+        lpTime->u.ms = timeGetTime();
+    }
+
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeGetTime		[WINMM.@]
+ */
+DWORD WINAPI timeGetTime(void)
+{
+    LARGE_INTEGER now, freq;
+
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&freq);
+
+    return (now.QuadPart * 1000) / freq.QuadPart;
+}
+
+/**************************************************************************
  * 				timeSetEvent		[WINMM.@]
  */
 MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
@@ -315,4 +342,57 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
     }
     WakeConditionVariable(&TIME_cv);
     return TIMERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				timeGetDevCaps		[WINMM.@]
+ */
+MMRESULT WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, UINT wSize)
+{
+    TRACE("(%p, %u)\n", lpCaps, wSize);
+
+    if (lpCaps == 0) {
+        WARN("invalid lpCaps\n");
+        return TIMERR_NOCANDO;
+    }
+
+    if (wSize < sizeof(TIMECAPS)) {
+        WARN("invalid wSize\n");
+        return TIMERR_NOCANDO;
+    }
+
+    lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
+    lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
+    return TIMERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				timeBeginPeriod		[WINMM.@]
+ */
+MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
+{
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
+	return TIMERR_NOCANDO;
+
+    if (wPeriod > MMSYSTIME_MININTERVAL)
+    {
+        WARN("Stub; we set our timer resolution at minimum\n");
+    }
+
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeEndPeriod		[WINMM.@]
+ */
+MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
+{
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
+	return TIMERR_NOCANDO;
+
+    if (wPeriod > MMSYSTIME_MININTERVAL)
+    {
+        WARN("Stub; we set our timer resolution at minimum\n");
+    }
+    return 0;
 }

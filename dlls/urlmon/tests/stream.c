@@ -65,9 +65,12 @@
 
 DEFINE_EXPECT(QueryInterface_IServiceProvider);
 DEFINE_EXPECT(OnStartBinding);
+DEFINE_EXPECT(OnProgress_FINDINGRESOURCE);
+DEFINE_EXPECT(OnProgress_CONNECTING);
 DEFINE_EXPECT(OnProgress_SENDINGREQUEST);
 DEFINE_EXPECT(OnProgress_MIMETYPEAVAILABLE);
 DEFINE_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+DEFINE_EXPECT(OnProgress_DOWNLOADINGDATA);
 DEFINE_EXPECT(OnProgress_ENDDOWNLOADDATA);
 DEFINE_EXPECT(OnStopBinding);
 DEFINE_EXPECT(OnDataAvailable);
@@ -137,6 +140,12 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
                                            ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     switch(ulStatusCode) {
+        case BINDSTATUS_FINDINGRESOURCE:
+            CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
+            break;
+        case BINDSTATUS_CONNECTING:
+            CHECK_EXPECT(OnProgress_CONNECTING);
+            break;
         case BINDSTATUS_SENDINGREQUEST:
             CHECK_EXPECT(OnProgress_SENDINGREQUEST);
             break;
@@ -147,17 +156,15 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
             CHECK_EXPECT(OnProgress_BEGINDOWNLOADDATA);
             ok(szStatusText != NULL, "szStatusText == NULL\n");
             break;
+        case BINDSTATUS_DOWNLOADINGDATA:
+            CHECK_EXPECT2(OnProgress_DOWNLOADINGDATA);
+            break;
         case BINDSTATUS_ENDDOWNLOADDATA:
             CHECK_EXPECT(OnProgress_ENDDOWNLOADDATA);
             ok(szStatusText != NULL, "szStatusText == NULL\n");
             break;
         case BINDSTATUS_CACHEFILENAMEAVAILABLE:
             ok(szStatusText != NULL, "szStatusText == NULL\n");
-            break;
-        case BINDSTATUS_CONNECTING:
-        case BINDSTATUS_FINDINGRESOURCE:
-        case BINDSTATUS_DOWNLOADINGDATA:
-            ok(0, "unexpected code %ld\n", ulStatusCode);
             break;
         default:
             todo_wine { ok(0, "unexpected code %ld\n", ulStatusCode); }

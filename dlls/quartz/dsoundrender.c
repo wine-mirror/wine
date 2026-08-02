@@ -34,6 +34,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+/* NOTE: buffer can still be filled completely,
+ * but we start waiting until only this amount is buffered
+ */
+static const REFERENCE_TIME DSoundRenderer_Max_Fill = 150 * 10000;
+
 struct dsound_render
 {
     struct strmbase_filter filter;
@@ -59,7 +64,7 @@ struct dsound_render
      * to immediately unblock the streaming thread. */
     HANDLE flush_event;
     REFERENCE_TIME stream_start;
-    BOOL eos, eos_complete_pending;
+    BOOL eos;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -150,7 +155,7 @@ static void update_positions(struct dsound_render *filter, DWORD *seqwritepos, D
         *seqwritepos = filter->writepos;
 }
 
-static void get_write_pos(struct dsound_render *filter,
+static HRESULT get_write_pos(struct dsound_render *filter,
         DWORD *ret_writepos, REFERENCE_TIME write_at, DWORD *pfree)
 {
     DWORD writepos, min_writepos, playpos;
@@ -205,6 +210,8 @@ static void get_write_pos(struct dsound_render *filter,
         WARN("Delta too big %s/%s, too far ahead.\n", debugstr_time(delta_t), debugstr_time(max_lag));
         aheadbytes = pos_from_time(filter, delta_t);
         WARN("Advancing %lu bytes.\n", aheadbytes);
+        if (delta_t >= DSoundRenderer_Max_Fill)
+            return S_FALSE;
         *ret_writepos = (min_writepos + aheadbytes) % filter->buf_size;
     }
 end:
@@ -212,6 +219,13 @@ end:
         *pfree = playpos - *ret_writepos;
     else
         *pfree = filter->buf_size + playpos - *ret_writepos;
+    if (time_from_pos(filter, filter->buf_size - *pfree) >= DSoundRenderer_Max_Fill)
+    {
+        TRACE("Blocked: too full %s / %s\n", debugstr_time(time_from_pos(filter, filter->buf_size - *pfree)),
+                debugstr_time(DSoundRenderer_Max_Fill));
+        return S_FALSE;
+    }
+    return S_OK;
 }
 
 static HRESULT send_sample_data(struct dsound_render *filter,
@@ -225,30 +239,9 @@ static HRESULT send_sample_data(struct dsound_render *filter,
         BYTE *buf1, *buf2;
 
         if (filter->filter.state == State_Running)
-        {
-            get_write_pos(filter, &writepos, tStart, &free);
-            hr = free ? S_OK : S_FALSE;
-        }
+            hr = get_write_pos(filter, &writepos, tStart, &free);
         else
-        {
             hr = S_FALSE;
-        }
-
-        if (hr == S_OK)
-        {
-            hr = IDirectSoundBuffer_Lock(filter->dsbuffer, writepos, min(free, size),
-                    (void **)&buf1, &size1, (void **)&buf2, &size2, 0);
-            if (hr != DS_OK)
-            {
-                ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
-                break;
-            }
-            if (!(size1 + size2))
-            {
-                IDirectSoundBuffer_Unlock(filter->dsbuffer, buf1, size1, buf2, size2);
-                hr = S_FALSE;
-            }
-        }
 
         if (hr != S_OK)
         {
@@ -260,6 +253,14 @@ static HRESULT send_sample_data(struct dsound_render *filter,
             continue;
         }
         tStart = -1;
+
+        hr = IDirectSoundBuffer_Lock(filter->dsbuffer, writepos, min(free, size),
+                (void **)&buf1, &size1, (void **)&buf2, &size2, 0);
+        if (hr != DS_OK)
+        {
+            ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
+            break;
+        }
 
         if (data)
         {
@@ -348,22 +349,6 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
     return send_sample_data(filter, start, pbSrcStream, cbSrcStream);
 }
 
-static void complete_eos(struct dsound_render *filter)
-{
-    IFilterGraph *graph = filter->filter.graph;
-    IMediaEventSink *event_sink;
-
-    if (filter->filter.state == State_Running && graph
-            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
-            &IID_IMediaEventSink, (void **)&event_sink)))
-    {
-        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
-                (LONG_PTR)&filter->filter.IBaseFilter_iface);
-        IMediaEventSink_Release(event_sink);
-    }
-    SetEvent(filter->state_event);
-}
-
 static DWORD WINAPI render_thread_run(void *arg)
 {
     struct dsound_render *filter = arg;
@@ -376,18 +361,14 @@ static DWORD WINAPI render_thread_run(void *arg)
     {
         IMediaSample *sample;
 
-        if (filter->eos && (filter->filter.state == State_Stopped || !filter->queued_sample_count))
+        if (filter->eos)
         {
-            BOOL complete_pending;
-
-            complete_pending = WaitForSingleObject(filter->flush_event, 0) && filter->eos_complete_pending;
-            filter->eos_complete_pending = FALSE;
             LeaveCriticalSection(&filter->render_cs);
+            TRACE("Got EOS.\n");
             /* Clear the buffer. */
             send_sample_data(filter, -1, NULL, filter->buf_size);
-            if (complete_pending)
-                complete_eos(filter);
-            TRACE("Render thread exiting on EOS.\n");
+
+            TRACE("Render thread exiting.\n");
             return 0;
         }
 
@@ -529,15 +510,24 @@ static void dsound_render_sink_disconnect(struct strmbase_sink *iface)
 static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
-    BOOL complete_pending;
+    IFilterGraph *graph = filter->filter.graph;
+    IMediaEventSink *event_sink;
 
     EnterCriticalSection(&filter->render_cs);
     filter->eos = TRUE;
-    filter->eos_complete_pending = complete_pending = (filter->filter.state == State_Running);
     LeaveCriticalSection(&filter->render_cs);
     WakeConditionVariable(&filter->render_cv);
-    if (!complete_pending)
-        complete_eos(filter);
+
+    if (filter->filter.state == State_Running && graph
+            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+            &IID_IMediaEventSink, (void **)&event_sink)))
+    {
+        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+                (LONG_PTR)&filter->filter.IBaseFilter_iface);
+        IMediaEventSink_Release(event_sink);
+    }
+    SetEvent(filter->state_event);
+
     return S_OK;
 }
 
@@ -554,7 +544,6 @@ static HRESULT dsound_render_sink_end_flush(struct strmbase_sink *iface)
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
 
     EnterCriticalSection(&filter->filter.stream_cs);
-    filter->eos_complete_pending = FALSE;
     if (filter->eos && filter->filter.state != State_Stopped)
     {
         WaitForSingleObject(filter->render_thread, INFINITE);

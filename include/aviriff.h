@@ -21,7 +21,7 @@
 #define AVIRIFF_H
 
 /* All definitions here are packed structures of on-disk formats */
-#pragma pack(push,2)
+#include <pshpack2.h>
 
 typedef struct _riffchunk
 {
@@ -324,6 +324,6 @@ typedef struct _avifieldindex_chunk {
     } aIndex[ANYSIZE_ARRAY];
 } AVIFIELDINDEX, * PAVIFIELDINDEX;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif  /* AVIRIFF_H */

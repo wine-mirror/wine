@@ -1034,9 +1034,6 @@ static BOOL parse_acl( const WCHAR *string, DWORD *flags, ACL *acl, DWORD *ret_s
             goto err;
         string++;
 
-        while (*string == ' ')
-            string++;
-
         acesize = sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + sidlen;
         length += acesize;
         if (ace)

@@ -130,16 +130,10 @@ extern int call_filter( int (*func)(PEXCEPTION_POINTERS), void *arg, void *ebp )
 
 __ASM_GLOBAL_FUNC( call_filter,
                    "pushl %ebp\n\t"
-                   "pushl %ebx\n\t"
-                   "pushl %esi\n\t"
-                   "pushl %edi\n\t"
-                   "pushl 24(%esp)\n\t"
-                   "movl 32(%esp), %ebp\n\t"
-                   "call *24(%esp)\n\t"
+                   "pushl 12(%esp)\n\t"
+                   "movl 20(%esp), %ebp\n\t"
+                   "call *12(%esp)\n\t"
                    "popl %ebp\n\t"
-                   "popl %edi\n\t"
-                   "popl %esi\n\t"
-                   "popl %ebx\n\t"
                    "popl %ebp\n\t"
                    "ret" );
 
@@ -716,7 +710,7 @@ int CDECL _except_handler4_common( ULONG *cookie, void (*check_cookie)(void),
                     __DestructExceptionObject(rec);
 
                     /* Unwind all higher frames, this one will handle the exception */
-                    RtlUnwind(frame, 0, rec, 0);
+                    _global_unwind2((EXCEPTION_REGISTRATION_RECORD*)frame);
                     msvcrt_local_unwind4( cookie, frame, trylevel, &frame->_ebp );
 
                     /* Set our trylevel to the enclosing block, and call the __finally

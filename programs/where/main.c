@@ -26,7 +26,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(where);
 
 static BOOL found;
-static BOOL quiet_mode;
 
 static void search(const WCHAR *search_path, const WCHAR *pattern)
 {
@@ -57,8 +56,7 @@ static void search(const WCHAR *search_path, const WCHAR *pattern)
             {
                 if (PathCombineW(match_path, search_path, match.cFileName))
                 {
-                    if (!quiet_mode)
-                        printf("%ls\n", match_path);
+                    printf("%ls\n", match_path);
                     found = TRUE;
                 }
             }
@@ -73,22 +71,11 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     WCHAR *pattern, *colon, *search_paths, *search_path, *next_search_path;
     int i;
 
-    for (i = 1; i < argc; i++)
+    for (i = 0; i < argc; i++)
     {
-        if (argv[i][0] == '/' && wcslen(argv[i]) == 2)
+        if (argv[i][0] == '/')
         {
-            switch (towupper(argv[i][1]))
-            {
-            case 'Q': quiet_mode = TRUE; break;
-            default:
-                FIXME("Unsupported option %s\n", wine_dbgstr_w(argv[i]));
-                return 1;
-
-            }
-        }
-        else if (argv[i][0] == '/')
-        {
-            FIXME("Unsupported option %s\n", wine_dbgstr_w(argv[i]));
+            FIXME("Unsupported option %ls\n", argv[i]);
             return 1;
         }
     }
@@ -127,8 +114,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     if (!found)
     {
-        if (!quiet_mode)
-            fputs("File not found\n", stderr);
+        fputs("File not found\n", stderr);
         return 1;
     }
 

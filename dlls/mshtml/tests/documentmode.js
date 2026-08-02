@@ -21,10 +21,6 @@ var tests = [];
 
 var svg_ns = "http://www.w3.org/2000/svg";
 
-if(performance.now) {
-    var t = performance.now();
-    ok(t - performance.timing.navigationStart < 2000, "performance.now() more than 2 sec away from navigationStart: " + t + " vs " + performance.timing.navigationStart);
-}
 ok(performance.timing.navigationStart > 0, "navigationStart <= 0");
 ok(performance.timing.fetchStart == performance.timing.navigationStart, "fetchStart != navigationStart");
 ok(performance.timing.domainLookupStart >= performance.timing.fetchStart, "domainLookupStart < fetchStart");
@@ -333,15 +329,10 @@ sync_test("builtin_toString", function() {
     if(v < 11) {
         test("eventObject", document.createEventObject(), "MSEventObj");
         test("selection", document.selection, "MSSelection");
-        test("XDomainRequest", new XDomainRequest(), "XDomainRequest");
     }
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
         test("doctype", document.doctype, "DocumentType");
-        test("domParser", new DOMParser(), "DOMParser");
-        test("svgDocument", new DOMParser().parseFromString("<tag>foobar</tag>", "image/svg+xml"), v < 11 ? "Document" : "XMLDocument");
-        test("xhtmlDocument", new DOMParser().parseFromString("<tag>foobar</tag>", "application/xhtml+xml"), v < 11 ? "Document" : "XMLDocument");
-        test("xmlDocument", new DOMParser().parseFromString("<tag>foobar</tag>", "text/xml"), v < 11 ? "Document" : "XMLDocument");
 
         test("Event", document.createEvent("Event"), "Event");
         test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
@@ -355,8 +346,6 @@ sync_test("builtin_toString", function() {
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 11) {
-        test("crypto", window.msCrypto, "Crypto");
-        test("crypto.subtle", window.msCrypto.subtle, "SubtleCrypto");
         test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
     }
     if(v >= 9) {
@@ -386,7 +375,6 @@ sync_test("builtin_obj", function() {
         ok(!(f.apply instanceof Function), "f.apply instance of Function");
         ok(!(f.call instanceof Function), "f.call instance of Function");
         ok(!("arguments" in f), "arguments in f");
-        ok(!("caller" in f), "caller in f");
         ok(!("length" in f), "length in f");
         e = 0;
         try {
@@ -405,9 +393,6 @@ sync_test("builtin_obj", function() {
         ok(e === "[object Window]", "window.toString with null context = " + e);
         e = window.toString.call(external.nullDisp);
         ok(e === "[object Window]", "window.toString with nullDisp context = " + e);
-
-        test_own_props(f, "createElement", [ "arguments", "caller", "prototype" ], [ "prototype" ]);
-        ok(f.arguments === null, "createElement arguments = " + f.arguments);
     }
 
     e = 0;
@@ -497,10 +482,10 @@ sync_test("builtin_obj", function() {
         enumerator.moveNext();
         ok(enumerator.atEnd(), "enumerator not at end");
     }else {
-        elem1 = f.call.call(f, document, "div");
+        elem = f.call.call(f, document, "div");
         f = f.bind(document);
-        elem1 = f.apply(null, ["style"]);
-        document.body.appendChild(elem1);
+        elem = f.apply(null, ["style"]);
+        document.body.appendChild(elem);
 
         try {
             var enumerator = new Enumerator(document.getElementsByTagName("style"));
@@ -513,116 +498,6 @@ sync_test("builtin_obj", function() {
         f.call = function() { };
         ok(f.apply === 0, "changed f.apply = ", f.apply);
         ok(f.call instanceof Function, "changed f.call not instance of Function");
-
-        e = Array.isArray(document.body.childNodes);
-        ok(e === false, "isArray(childNodes) returned " + e);
-        e = Array.prototype.toString.call(Number);
-        ok(e === "[object Function]", "Array.toString(Number) = " + e);
-    }
-
-    function test_toString(msg, constr, err) {
-        var e = 0;
-        if(typeof(err) === "string") {
-            e = constr.prototype.toString.call(document.body);
-            ok(e === err, msg + ".toString(body) = " + e);
-            return;
-        }
-        try {
-            constr.prototype.toString.call(document.body);
-        }catch(ex) {
-            e = ex.number;
-        }
-        ok(e === err - 0x80000000, "[" + msg + ".toString(body)] e = " + e);
-    }
-
-    test_toString("Array", Array, v < 9 ? 0xa13a7 : "[object HTMLBodyElement]");
-    test_toString("Boolean", Boolean, 0xa1392);
-    test_toString("Date", Date, 0xa138e);
-    test_toString("RegExp", RegExp, 0xa1398);
-    test_toString("Number", Number, 0xa1389);
-    test_toString("String", String, 0xa138d);
-
-    if(v >= 9) {
-        var obj = { length: 2 };
-        obj[0] = "foo";
-        obj[1] = "bar";
-        e = Array.prototype.toString.call(obj);
-        ok(e === "[object Object]", "Array.toString(array-like object) = " + e);
-
-        obj = Object.create(null);
-        obj.length = 2;
-        obj[0] = "foo";
-        obj[1] = "bar";
-        e = Array.prototype.toString.call(obj);
-        ok(e === "[object Object]", "Array.toString(array-like object with no prototype) = " + e);
-
-        e = 0;
-        try {
-            Array.prototype.toString.call(null);
-        }catch(ex) {
-            e = ex.number;
-        }
-        ok(e === 0xa138f - 0x80000000, "Array.toString(null) e = " + e);
-    }
-
-    (function(a, b, c) {
-        ok(a === document.body.childNodes[0], "a = " + a);
-        ok(b === document.body.childNodes[1], "b = " + b);
-        ok(c === document.body.childNodes[2], "c = " + c);
-    }).apply(null, document.body.childNodes);
-
-    elem1[0] = "a";
-    elem1[1] = "b";
-    if(v < 9) {
-        try {
-            (function(a, b) {}).apply(null, elem1);
-        }catch(ex) {
-            e = ex.number;
-        }
-        ok(e === 0xa13a4 - 0x80000000, "[function.apply with elem without length] e = " + e);
-    }else {
-        (function(a, b) {
-            ok(a === undefined, "a = " + a);
-            ok(b === undefined, "b = " + b);
-        }).apply(null, elem1);
-    }
-
-    elem1.length = 2;
-    (function(a, b) {
-        ok(a === "a", "a = " + a);
-        ok(b === "b", "b = " + b);
-    }).apply(null, elem1);
-
-    elem1 = new Object;
-    elem1[0] = "c";
-    elem1[1] = "d";
-    if(v < 9) {
-        try {
-            (function(c, d) {}).apply(null, elem1);
-        }catch(ex) {
-            e = ex.number;
-        }
-        ok(e === 0xa13a4 - 0x80000000, "[function.apply with Object without length] e = " + e);
-    }else {
-        (function(c, d) {
-            ok(c === undefined, "c = " + c);
-            ok(d === undefined, "d = " + d);
-        }).apply(null, elem1);
-    }
-
-    elem1.length = 2;
-    if(v < 9) {
-        try {
-            (function(c, d) {}).apply(null, elem1);
-        }catch(ex) {
-            e = ex.number;
-        }
-        ok(e === 0xa13a4 - 0x80000000, "[function.apply with Object with length] e = " + e);
-    }else {
-        (function(c, d) {
-            ok(c === "c", "c = " + c);
-            ok(d === "d", "d = " + d);
-        }).apply(null, elem1);
     }
 });
 
@@ -696,100 +571,6 @@ sync_test("elem_props", function() {
     test_exposed("fileSize", v < 11);
 });
 
-sync_test("attr_props", function() {
-    var v = document.documentMode, elem = document.createElement("div"), attr;
-
-    elem.innerHTML = '<span id="test"></span>';
-    elem = elem.getElementsByTagName("span")[0];
-    attr = elem.getAttributeNode("id");
-
-    if(v < 8)
-        ok(elem.attributes.length > 50, "attributes.length = " + elem.attributes.length);
-    else {
-        todo_wine_if(v === 8).
-        ok(elem.attributes.length === 1, "attributes.length = " + elem.attributes.length);
-        todo_wine_if(v === 8).
-        ok(elem.attributes[0] === attr, "attributes[0] != attr");
-    }
-
-    function test_exposed(prop, expect) {
-        if(expect)
-            ok(prop in attr, prop + " not found in attribute.");
-        else
-            ok(!(prop in attr), prop + " found in attribute.");
-    }
-
-    function test_attr(expando, specified) {
-        var r = attr.expando;
-        ok(r === expando, attr.name + " attr.expando = " + r);
-        r = attr.specified;
-        ok(r === specified, attr.name + " attr.specified = " + r);
-    }
-
-    test_exposed("appendChild", true);
-    test_exposed("attributes", true);
-    test_exposed("childNodes", true);
-    test_exposed("cloneNode", true);
-    test_exposed("compareDocumentPosition", v >= 9);
-    test_exposed("expando", true);
-    test_exposed("firstChild", true);
-    test_exposed("hasChildNodes", true);
-    test_exposed("insertBefore", true);
-    test_exposed("isDefaultNamespace", v >= 9);
-    test_exposed("isEqualNode", v >= 9);
-    test_exposed("isSameNode", v >= 9);
-    test_exposed("isSupported", v >= 9);
-    test_exposed("lastChild", true);
-    test_exposed("localName", v >= 9);
-    test_exposed("lookupNamespaceURI", v >= 9);
-    test_exposed("lookupPrefix", v >= 9);
-    test_exposed("name", true);
-    test_exposed("namespaceURI", v >= 9);
-    test_exposed("nextSibling", true);
-    test_exposed("nodeName", true);
-    test_exposed("nodeType", true);
-    test_exposed("nodeValue", true);
-    test_exposed("ownerDocument", true);
-    test_exposed("ownerElement", v >= 8);
-    test_exposed("parentNode", true);
-    test_exposed("prefix", v >= 9);
-    test_exposed("previousSibling", true);
-    test_exposed("removeChild", true);
-    test_exposed("replaceChild", true);
-    test_exposed("specified", true);
-    test_exposed("textContent", v >= 9);
-    test_exposed("value", true);
-    test_attr(false, true);
-
-    elem.setAttribute("test", "wine");
-    elem.setAttribute("z-index", "foobar");
-    elem.setAttribute("innerText", "test");
-    elem.setAttribute("removeAttribute", "funcattr");
-
-    attr = elem.getAttributeNode("test");
-    test_attr(true, true);
-
-    attr = elem.getAttributeNode("z-index");
-    test_attr(true, true);
-
-    attr = elem.getAttributeNode("innerText");
-    if(v < 8)
-        ok(attr === null, "innerText attr != null");
-    else
-        todo_wine_if(v === 8).
-        ok(attr !== null, "innerText attr = null");
-
-    attr = elem.getAttributeNode("removeAttribute");
-    test_attr(true, true);
-
-    attr = elem.getAttributeNode("tabIndex");
-    if(v < 8)
-        test_attr(false, false);
-    else
-        todo_wine_if(v === 8).
-        ok(attr === null, "tabIndex attr not null.");
-});
-
 sync_test("doc_props", function() {
     function test_exposed(prop, expect, is_todo) {
         var ok_ = is_todo ? todo_wine.ok : ok;
@@ -855,82 +636,6 @@ sync_test("docfrag_props", function() {
     test_exposed("compareDocumentPosition", v >= 9);
 });
 
-sync_test("frame_props", function() {
-    var elem = document.createElement("frame");
-
-    function test_exposed(prop, expect, is_todo) {
-        var ok_ = is_todo ? todo_wine.ok : ok;
-        if(expect)
-            ok_(prop in elem, prop + " not found in element.");
-        else
-            ok_(!(prop in elem), prop + " found in element.");
-    }
-
-    var v = document.documentMode;
-
-    test_exposed("allowTransparency", v < 9, v >= 9);
-    test_exposed("border", true);
-    test_exposed("borderColor", true, true);
-    test_exposed("contentDocument", v >= 8, v < 8);
-    test_exposed("contentWindow", true);
-    test_exposed("dataFld", v < 11, v < 11);
-    test_exposed("dataFormatAs", v < 11, v < 11);
-    test_exposed("dataSrc", v < 11, v < 11);
-    test_exposed("frameBorder", true);
-    test_exposed("frameSpacing", true);
-    test_exposed("getSVGDocument", true, true);
-    test_exposed("height", true, true);
-    test_exposed("longDesc", true);
-    test_exposed("marginHeight", true);
-    test_exposed("marginWidth", true);
-    test_exposed("name", true);
-    test_exposed("noResize", true);
-    test_exposed("onload", true);
-    test_exposed("onreadystatechange", v < 11, v >= 11);
-    test_exposed("readyState", v < 11, v >= 11);
-    test_exposed("scrolling", true);
-    test_exposed("security", v >= 9, v >= 9);
-    test_exposed("src", true);
-    test_exposed("width", true, true);
-    test_exposed("ie8_frameBorder", false);
-    test_exposed("ie8_longDesc", false);
-    test_exposed("ie8_src", false);
-
-    elem = document.createElement("iframe");
-
-    test_exposed("align", true);
-    test_exposed("allowTransparency", v < 9, v >= 9);
-    test_exposed("border", true);
-    test_exposed("borderColor", false);
-    test_exposed("contentDocument", v >= 8, v < 8);
-    test_exposed("contentWindow", true);
-    test_exposed("dataFld", v < 11, v < 11);
-    test_exposed("dataFormatAs", v < 11, v < 11);
-    test_exposed("dataSrc", v < 11, v < 11);
-    test_exposed("frameBorder", true);
-    test_exposed("frameSpacing", true);
-    test_exposed("getSVGDocument", true, true);
-    test_exposed("height", true);
-    test_exposed("hspace", true);
-    test_exposed("longDesc", true);
-    test_exposed("marginHeight", true);
-    test_exposed("marginWidth", true);
-    test_exposed("name", true);
-    test_exposed("noResize", true);
-    test_exposed("onload", true);
-    test_exposed("onreadystatechange", v < 11, v >= 11);
-    test_exposed("readyState", v < 11, v >= 11);
-    test_exposed("sandbox", v >= 10, v >= 10);
-    test_exposed("scrolling", true);
-    test_exposed("security", v >= 9, v >= 9);
-    test_exposed("src", true);
-    test_exposed("vspace", true);
-    test_exposed("width", true);
-    test_exposed("ie8_frameBorder", false);
-    test_exposed("ie8_longDesc", false);
-    test_exposed("ie8_src", false);
-});
-
 sync_test("textnode_props", function() {
     var node = document.createTextNode("testNode");
 
@@ -989,12 +694,8 @@ sync_test("window_props", function() {
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
-    test_exposed("msCrypto", v >= 11);
     test_exposed("Document", v >= 9);
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
-    test_exposed("XMLDocument", v >= 11);
-    test_exposed("DOMParser", v >= 9);
-    test_exposed("XDomainRequest", v < 11);
     test_exposed("MutationObserver", v >= 11);
     test_exposed("PageTransitionEvent", v >= 11);
     test_exposed("ProgressEvent", v >= 10);
@@ -1015,57 +716,6 @@ sync_test("domimpl_props", function() {
     test_exposed("createDocument", v >= 9);
     test_exposed("createDocumentType", v >= 9);
     test_exposed("createHTMLDocument", v >= 9);
-});
-
-sync_test("perf_props", function() {
-    var obj = window.performance, name = "Performance";
-    var v = document.documentMode;
-
-    function test_exposed(prop, expect) {
-        if(expect)
-            ok(prop in obj, prop + " not found in " + name + ".");
-        else
-            ok(!(prop in obj), prop + " found in " + name + ".");
-    }
-
-    test_exposed("navigation", true);
-    test_exposed("timing", true);
-    test_exposed("toJSON", v >= 9);
-    test_exposed("toString", true);
-    test_exposed("now", v >= 10);
-
-    obj = window.performance.navigation, name = "PerformanceNavigation";
-
-    test_exposed("redirectCount", true);
-    test_exposed("type", true);
-    test_exposed("toJSON", v >= 9);
-    test_exposed("toString", true);
-
-    obj = window.performance.timing, name = "PerformanceTiming";
-
-    test_exposed("connectEnd", true);
-    test_exposed("connectStart", true);
-    test_exposed("domComplete", true);
-    test_exposed("domContentLoadedEventEnd", true);
-    test_exposed("domContentLoadedEventStart", true);
-    test_exposed("domInteractive", true);
-    test_exposed("domLoading", true);
-    test_exposed("domainLookupEnd", true);
-    test_exposed("domainLookupStart", true);
-    test_exposed("fetchStart", true);
-    test_exposed("loadEventEnd", true);
-    test_exposed("loadEventStart", true);
-    test_exposed("msFirstPaint", true);
-    test_exposed("navigationStart", true);
-    test_exposed("redirectEnd", true);
-    test_exposed("redirectStart", true);
-    test_exposed("requestStart", true);
-    test_exposed("responseEnd", true);
-    test_exposed("responseStart", true);
-    test_exposed("unloadEventEnd", true);
-    test_exposed("unloadEventStart", true);
-    test_exposed("toJSON", v >= 9);
-    test_exposed("toString", true);
 });
 
 sync_test("xhr_props", function() {
@@ -1268,9 +918,7 @@ sync_test("constructor props", function() {
     test_exposed(Image, "create", v < 9);
     test_exposed(Option, "create", v < 9);
     test_exposed(XMLHttpRequest, "create", true);
-    if(v >= 9)  test_exposed(DOMParser, "create", false);
     if(v >= 11) test_exposed(MutationObserver, "create", false);
-    if(v < 11)  test_exposed(XDomainRequest, "create", true);
 });
 
 sync_test("createElement_inline_attr", function() {
@@ -2892,6 +2540,7 @@ sync_test("elem_attr", function() {
     ok(r === (v < 9 ? "test" : "string"), "onclick attr = " + r);
     r = elem.removeAttribute("onclick");
     ok(r === (v < 9 ? true : undefined), "removeAttribute returned " + r);
+    todo_wine_if(v >= 9).
     ok(elem.onclick === null, "removed onclick = " + elem.onclick);
 
     elem.setAttribute("ondblclick", arr);
@@ -3169,39 +2818,6 @@ sync_test("elem_attrNS", function() {
     ok(r === "13", "numattr = " + r);
 });
 
-
-var rec;
-
-sync_test("event attr", function() {
-    document.body.innerHTML = '<div></div>';
-    var elem = document.body.firstChild, prev;
-    var v = document.documentMode;
-
-    ok(elem.onclick === null, "elem.onclick = " + elem.onclick);
-    elem.setAttribute("onclick", "rec += 'attr';");
-    if (v < 8)
-        ok(elem.onclick === "rec += 'attr';", "elem.onclick = " + elem.onclick);
-    else
-        todo_wine_if(v == 8).
-        ok(typeof(elem.onclick) === "function", "elem.onclick = " + elem.onclick);
-    rec = "";
-    elem.click();
-    todo_wine_if(v == 8).
-    ok(rec === (v < 8 ? "" : "attr"), "unexpected rec = " + rec );
-
-    elem.setAttribute("onclick", "rec += 'attr2';");
-    rec = "";
-    elem.click();
-    todo_wine_if(v == 8).
-    ok(rec === (v < 8 ? "" : "attr2"), "unexpected rec = " + rec );
-
-    elem.onclick = "rec += 'prop';";
-    ok(elem.onclick === (v < 9 ? "rec += 'prop';" : null), "elem.onclick = " + elem.onclick);
-    rec = "";
-    elem.click();
-    ok(rec === "", "unexpected rec = " + rec );
-});
-
 sync_test("builtins_diffs", function() {
     var v = document.documentMode;
 
@@ -3303,24 +2919,6 @@ sync_test("nullDisp", function() {
     ok(new Object(nullDisp) != nullDisp, "new Object(nullDisp) == nullDisp");
     r = (nullDisp instanceof Object);
     ok(r === false, "nullDisp instance of Object");
-
-    try {
-        r = Object.prototype.valueOf.call(null);
-        ok(v < 10, "expected exception calling valueOf on null");
-        ok(r === null, "valueOf null != null");
-    }catch(e) {
-        ok(v >= 10, "did not expect exception calling valueOf on null");
-        ok(e.number === 0xa138f - 0x80000000, "valueOf on null threw " + e.number);
-    }
-
-    try {
-        r = Object.prototype.valueOf.call(nullDisp);
-        ok(v < 10, "expected exception calling valueOf on nullDisp");
-        ok(r === nullDisp, "valueOf on nullDisp != nullDisp");
-    }catch(e) {
-        ok(v >= 10, "did not expect exception calling valueOf on nullDisp");
-        ok(e.number === 0xa138f - 0x80000000, "valueOf on nullDisp threw " + e.number);
-    }
 
     if(v >= 8) {
         r = JSON.stringify.call(null, nullDisp);
@@ -3548,13 +3146,6 @@ sync_test("__proto__", function() {
         ok(e.number === 0xa13b6 - 0x80000000 && e.name === "TypeError",
             "changing __proto__ on non-extensible object threw exception " + e.number + " (" + e.name + ")");
     }
-
-    obj = document.createElement("img");
-    obj.__proto__ = ctor.prototype;
-    document.body.setAttribute.call(obj, "height", "101");
-    r = document.body.getAttribute.call(obj, "height");
-    ok(r === "101", "getAttribute(height) = " + r);
-    ok(!("getAttribute" in obj), "getAttribute exposed in obj");
 });
 
 sync_test("__defineGetter__", function() {
@@ -3740,82 +3331,6 @@ sync_test("__defineSetter__", function() {
     ok(x.setterVal === 9, "x.setterVal after setting bar = " + x.setterVal);
 });
 
-sync_test("Crypto", function() {
-    if(!window.msCrypto) return;
-
-    var list = [
-        [ "Int8Array",    65536 ],
-        [ "Uint8Array",   65536 ],
-        [ "Int16Array",   32768 ],
-        [ "Uint16Array",  32768 ],
-        [ "Int32Array",   16384 ],
-        [ "Uint32Array",  16384 ]
-    ];
-    for(var i = 0; i < list.length; i++) {
-        var constr = list[i][0];
-        arr = (window[constr])(list[i][1]);
-
-        ok(arr[0] === 0, constr + "[0] = " + arr[0]);
-        ok(arr[1] === 0, constr + "[1] = " + arr[1]);
-        r = msCrypto.getRandomValues(arr);
-        ok(r === arr, "getRandomValues returned " + r);
-
-        arr = (window[constr])(list[i][1]+1);
-        try {
-            msCrypto.getRandomValues(arr);
-        }catch(ex) {
-            var n = ex.number >>> 0;
-            todo_wine.
-            ok(ex.name === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw " + ex.name);
-            todo_wine.
-            ok(n === 0, "getRandomValues(oversized " + constr + ") threw code " + n);
-            todo_wine.
-            ok(ex.message === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw message " + ex.message);
-        }
-    }
-
-    try {
-        msCrypto.getRandomValues(null);
-        ok(false, "getRandomValues(null) did not throw exception");
-    }catch(e) {
-        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(null) threw " + e.number);
-    }
-    try {
-        msCrypto.getRandomValues(external.nullDisp);
-        ok(false, "getRandomValues(nullDisp) did not throw exception");
-    }catch(e) {
-        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(nullDisp) threw " + e.number);
-    }
-    try {
-        msCrypto.getRandomValues([1,2,3]);
-        ok(false, "getRandomValues([1,2,3]) did not throw exception");
-    }catch(e) {
-        ok(e.number === 0x70057 - 0x80000000, "getRandomValues([1,2,3]) threw " + e.number);
-    }
-    arr = Float32Array(2);
-    try {
-        msCrypto.getRandomValues(arr);
-        ok(false, "getRandomValues(Float32Array) did not throw exception");
-    }catch(ex) {
-        var n = ex.number >>> 0;
-        todo_wine.
-        ok(ex.name === "TypeMismatchError", "getRandomValues(Float32Array) threw " + ex.name);
-        todo_wine.
-        ok(n === 0, "getRandomValues(Float32Array) threw code " + n);
-    }
-    arr = Float64Array(2);
-    try {
-        msCrypto.getRandomValues(arr);
-        ok(false, "getRandomValues(Float64Array) did not throw exception");
-    }catch(ex) {
-        var n = ex.number >>> 0;
-        todo_wine.
-        ok(ex.name === "TypeMismatchError", "getRandomValues(Float64Array) threw " + ex.name);
-        todo_wine.
-        ok(n === 0, "getRandomValues(Float64Array) threw code " + n);
-    }
-});
-
 sync_test("MutationObserver", function() {
     if (!window.MutationObserver) {
         return;
@@ -3985,65 +3500,6 @@ sync_test("form", function() {
     ok(form[0] === "test", "form[0] = " + form[0]);
 });
 
-sync_test("indexed hostobj props", function() {
-    var v = document.documentMode;
-    if(v < 9)
-        return;
-    function getter() { return 42; }
-
-    function check(obj, value) {
-        var name = Object.prototype.toString.call(obj).slice(8, -1);
-        if(value === undefined)
-            ok(typeof(obj[0]) === "object", name + "[0] = " + obj[0]);
-        else
-            ok(obj[0] === value, name + "[0] post-del = " + obj[0]);
-
-        Object.defineProperty(obj, "0", { get: getter, set: undefined, configurable: true, enumerable: false });
-        var desc = Object.getOwnPropertyDescriptor(obj, "0");
-        ok(desc.value === undefined, name + "[0] value = " + desc.value);
-        ok(desc.get === getter, name + "[0] get = " + desc.get);
-        ok(desc.set === undefined, name + "[0] set = " + desc.set);
-        ok(desc.writable === undefined, name + "[0] writable = " + desc.writable);
-        ok(desc.enumerable === false, name + "[0] enumerable = " + desc.enumerable);
-        ok(desc.configurable === true, name + "[0] configurable = " + desc.configurable);
-
-        ok(obj[0] === 42, name + "[0] = " + obj[0]);
-        delete obj["0"];
-
-        desc = Object.getOwnPropertyDescriptor(obj, "0");
-        if(value === undefined)
-            ok(typeof(desc.value) === "object", name + "[0] value post-del = " + desc.value);
-        else
-            ok(desc.value === value, name + "[0] value post-del = " + desc.value);
-        ok(desc.get === undefined, name + "[0] get post-del = " + desc.get);
-        ok(desc.set === undefined, name + "[0] set post-del = " + desc.set);
-        ok(desc.writable === true, name + "[0] writable post-del = " + desc.writable);
-        todo_wine.
-        ok(desc.enumerable === true, name + "[0] enumerable post-del = " + desc.enumerable);
-        ok(desc.configurable === true, name + "[0] configurable post-del = " + desc.configurable);
-        if(value === undefined)
-            ok(typeof(obj[0]) === "object", name + "[0] post-del = " + obj[0]);
-        else
-            ok(obj[0] === value, name + "[0] post-del = " + obj[0]);
-        ok(obj.hasOwnProperty("0"), "0 not a prop of " + name);
-    }
-
-    document.body.innerHTML = "<style>div { margin-left: 1px; }</style>";
-    var e = document.createElement("select");
-    e.innerHTML = '<option value="wine"/>'
-    e.setAttribute("class", "wine");
-
-    check(document.all);
-    check(document.childNodes);
-    check(document.styleSheets);
-    check(document.styleSheets[0].rules);
-    check(document.body.getClientRects());
-    check(e);
-    check(e.attributes);
-    if(v > 9)
-        check(e.classList, "wine");
-});
-
 function test_own_props(obj, name, props, todos, flaky) {
     var v = document.documentMode, prop, expected = {}, enumerated = Object.getOwnPropertyNames(obj).sort();
 
@@ -4107,7 +3563,6 @@ sync_test("prototypes", function() {
     check(window.navigator, Navigator.prototype, "navigator");
     check(Navigator.prototype, Object.prototype, "navigator prototype");
     check(document.body, HTMLBodyElement.prototype, "body element");
-    check(new DOMParser().parseFromString("<tag>foobar</tag>", "text/xml").getElementsByTagName("tag")[0], Element.prototype, "xml element");
     check(HTMLBodyElement.prototype, HTMLElement.prototype, "body prototype");
     check(HTMLElement.prototype, Element.prototype, "html element prototype");
     check(Element.prototype, Node.prototype, "element prototype");
@@ -4119,7 +3574,6 @@ sync_test("prototypes", function() {
     else {
         check(document, HTMLDocument.prototype, "html document");
         check(HTMLDocument.prototype, Document.prototype, "html document prototype");
-        check(XMLDocument.prototype, Document.prototype, "xml document prototype");
     }
     check(Document.prototype, Node.prototype, "document prototype");
     check(window, Window.prototype, "window");
@@ -4127,20 +3581,12 @@ sync_test("prototypes", function() {
     check(new XMLHttpRequest(), XMLHttpRequest.prototype, "xhr");
     check(XMLHttpRequest.prototype, Object.prototype, "xhr prototype");
     check(XMLHttpRequest, Function.prototype, "xhr constructor");
-    if(v < 11) {
-        check(new XDomainRequest(), XDomainRequest.prototype, "xdr");
-        check(XDomainRequest.prototype, Object.prototype, "xdr prototype");
-        check(XDomainRequest, Function.prototype, "xdr constructor");
-    }
     check(document.createElement("img"), HTMLImageElement.prototype, "img elem");
     check(HTMLImageElement.prototype, HTMLElement.prototype, "img elem prototype");
     check(Image, Function.prototype, "Image constructor");
     check(document.createElement("option"), HTMLOptionElement.prototype, "option elem");
     check(HTMLOptionElement.prototype, HTMLElement.prototype, "option elem prototype");
     check(Option, Function.prototype, "Option constructor");
-    check(new DOMParser(), DOMParser.prototype, "dom parser");
-    check(DOMParser.prototype, Object.prototype, "dom parser prototype");
-    check(DOMParser, Function.prototype, "dom parser constructor");
     if(v >= 11) {
         check(new MutationObserver(function() {}), MutationObserver.prototype, "mutation observer");
         check(MutationObserver.prototype, Object.prototype, "mutation observer prototype");
@@ -4286,12 +3732,6 @@ sync_test("prototypes", function() {
     }else {
         ok(!("Console" in window), "Console found in window");
     }
-    if(v >= 11) {
-        check(msCrypto, Crypto.prototype, "crypto");
-        check(Crypto.prototype, Object.prototype, "crypto prototype");
-    }else {
-        ok(!("msCrypto" in window), "msCrypto found in window");
-    }
     if(v >= 10) {
         check(window.matchMedia("(hover:hover)"), MediaQueryList.prototype, "media query");
         check(MediaQueryList.prototype, Object.prototype, "media query prototype");
@@ -4325,13 +3765,6 @@ sync_test("prototypes", function() {
     check(Attr.prototype, Node.prototype, "attr prototype");
     check(document.createDocumentFragment(), DocumentFragment.prototype, "fragment");
     check(DocumentFragment.prototype, Node.prototype, "fragment prototype");
-
-    try {
-        HTMLAreaElement.prototype.toString.call(document.createElement("a"));
-        ok(false, "Area element's toString on Anchor element didn't fail");
-    } catch(e) {
-        ok(e.number == 0xffff - 0x80000000, "Area element's toString on Anchor element threw exception " + e.number);
-    }
 });
 
 sync_test("prototype props", function() {
@@ -4347,11 +3780,8 @@ sync_test("prototype props", function() {
         test_own_props(constr.prototype, name, props, todos, flaky);
     }
 
-    check(Attr, [ "expando", "name", "ownerElement", "specified", "value" ]);
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(Comment, [ "text" ]);
-    if(v >= 11)
-        check(Crypto, [ "getRandomValues", "subtle" ]);
     check(CSSStyleDeclaration, [
         ["alignContent",11], ["alignItems",11], ["alignSelf",11], "alignmentBaseline", ["animation",10], ["animationDelay",10],
         ["animationDirection",10], ["animationDuration",10], ["animationFillMode",10], ["animationIterationCount",10], ["animationName",10],
@@ -4452,7 +3882,6 @@ sync_test("prototype props", function() {
     ]);
     check(DocumentFragment, [ ["attachEvent",9,10], ["detachEvent",9,10], "querySelector", "querySelectorAll", "removeNode", "replaceNode", "swapNode" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
-    check(DOMParser, [ "parseFromString" ]);
     check(Element, [
         "childElementCount", "clientHeight", "clientLeft", "clientTop", "clientWidth", ["fireEvent",9,10], "firstElementChild",
         "getAttribute", "getAttributeNS", "getAttributeNode", "getAttributeNodeNS", "getBoundingClientRect", "getClientRects",
@@ -4480,16 +3909,6 @@ sync_test("prototype props", function() {
         "defaultPrevented", "eventPhase", "initEvent", "isTrusted", "preventDefault", "srcElement",
         "stopImmediatePropagation", "stopPropagation", "target", "timeStamp", "type"
     ], [ "AT_TARGET", "BUBBLING_PHASE", "CAPTURING_PHASE" ]);
-    check(HTMLAnchorElement, [
-        "Methods", "charset", "coords", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "hash", "host", "hostname", "href", "hreflang", "mimeType",
-        "name", "nameProp", "pathname", "port", "protocol", "protocolLong", "rel", "rev", "search", "shape", "target", ["text",10], "toString", "type", "urn"
-    ], [ "charset", "coords", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "hreflang", "shape", ["text",10], "type" ]);
-    check(HTMLAreaElement, [ "alt", "coords", "hash", "host", "hostname", "href", "noHref", "pathname", "port", "protocol", "search", "shape", "target", "toString" ], null, [ "rel" ]);
-    check(HTMLButtonElement, [
-        ["autofocus",10], ["checkValidity",10], "createTextRange", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10],
-        "form", ["formAction",10], ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], "name",
-        ["setCustomValidity",10], "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10]
-    ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10] ]);
     if(v >= 11)
         check(HTMLDocument, []);
     check(HTMLElement, [
@@ -4516,100 +3935,11 @@ sync_test("prototype props", function() {
         "scrollIntoView", "setActive", "setCapture", "sourceIndex", ["spellcheck",10], "style", "swapNode", "tabIndex", ["tagUrn",9,9], "title",
         "uniqueID", "uniqueNumber"
     ], [ ["dataset",11], ["draggable",10], ["hidden",11], ["msGetInputContext",11], ["onmscontentzoom",10] ]);
-    check(HTMLEmbedElement, [
-        "getSVGDocument", "height", "hidden", ["msPlayToDisabled",11], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11],
-        "name", "palette", "pluginspage", ["readyState",11], "src", "units", "width"
-    ], [ "getSVGDocument", ["msPlayToDisabled",11], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], ["readyState",11] ]);
-    check(HTMLFormElement, [
-        "acceptCharset", "action", ["autocomplete",10], ["checkValidity",10], "elements", "encoding", "enctype", "item",
-        "length", "method", "name", "namedItem", ["noValidate",10], "reset", "submit", "tags", "target", "urns"
-    ], [ "_newEnum", "acceptCharset", ["autocomplete",10], "namedItem", "urns" ]);
-    check(HTMLFrameElement, [
-        "border", "borderColor", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "frameBorder", "frameSpacing",
-        "getSVGDocument", "height", "longDesc", "marginHeight", "marginWidth", "name", "noResize", "onload", "scrolling", "security", "src", "width"
-    ], [
-        "allowTransparency", "borderColor", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "height", "onload",
-        ["onreadystatechange",11], ["readyState",11], "security", "width"
-    ]);
-    check(HTMLHeadElement, [ "profile" ]);
-    check(HTMLHtmlElement, [ "version" ]);
-    check(HTMLIFrameElement, [
-        "align", "border", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10],
-        "frameBorder", "frameSpacing", "getSVGDocument", "height", "hspace", "longDesc", "marginHeight", "marginWidth",
-        "name", "noResize", "onload", ["sandbox",10], "scrolling", "security", "src", "vspace", "width"
-    ], [
-        "allowTransparency", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "getSVGDocument", "onload",
-        ["onreadystatechange",11], ["readyState",11], ["sandbox",10], "security"
-    ]);
-    check(HTMLImageElement, [
-        "align", "alt", "border", "complete", ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "dynsrc", "fileCreatedDate",
-        "fileModifiedDate", ["fileSize",9,10], "fileUpdatedDate", "height", "href", "hspace", "isMap", "longDesc", "loop", "lowsrc", "mimeType",
-        ["msPlayToDisabled",10], ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",10], "name", "nameProp", "naturalHeight", "naturalWidth",
-        "protocol", "src", "start", "useMap", "vrml", "vspace", "width"
-    ], [
-        ["crossOrigin",11], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "longDesc", ["msPlayToDisabled",10], ["msPlayToPreferredSourceUri",11],
-        ["msPlayToPrimary",10], "naturalHeight", "naturalWidth"
-    ]);
-    check(HTMLInputElement, [
-        "accept", "align", "alt", ["autocomplete",10], ["autofocus",10], "border", "checked", ["checkValidity",10], "complete", "createTextRange", ["dataFld",9,10],
-        ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultChecked", "defaultValue", "dynsrc", ["files",10], "form", ["formAction",10], ["formEnctype",10], ["formMethod",10],
-        ["formNoValidate",10], ["formTarget",10], "height", "hspace", "indeterminate", ["list",10], "loop", "lowsrc", ["max",10], "maxLength", ["min",10], ["multiple",10],
-        "name", ["pattern",10], ["placeholder",10], "readOnly", ["required",10], "select", "selectionEnd", "selectionStart", ["setCustomValidity",10], "setSelectionRange",
-        "size", "src", "start", "status", ["step",10], ["stepDown",10], ["stepUp",10], "type", "useMap", ["validationMessage",10], ["validity",10], "value",
-        ["valueAsNumber",10], "vrml", "vspace", "width", ["willValidate",10]
-    ], [
-        "accept", ["autocomplete",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["files",10],["list",10], ["max",10], ["min",10], ["multiple",10],
-        ["pattern",10], ["placeholder",10], ["readyState",11], ["required",10], ["step",10], ["stepDown",10], ["stepUp",10], "useMap", ["valueAsNumber",10]
-    ]);
-    check(HTMLLabelElement, [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form", "htmlFor" ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form" ]);
-    check(HTMLLinkElement, [ "charset", "href", "hreflang", "media", "rel", "rev", "sheet", ["styleSheet",9,10], "target", "type" ],
-                           [ "charset", "hreflang", ["onreadystatechange",11], ["readyState",11], "sheet", ["styleSheet",11], "target" ]);
-    check(HTMLMetaElement, [ "charset", "content", "httpEquiv", "name", "scheme", "url" ], [ "scheme" ]);
-    check(HTMLObjectElement, [
-        "BaseHref", "align", "alt", "altHtml", "archive", "border", ["checkValidity",10], "classid", "code", "codeBase", "codeType", "contentDocument", "data",
-        ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "declare", "form", "getSVGDocument", "height", "hspace", ["msPlayToDisabled",11],
-        ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], "name", "namedRecordset", "object", ["readyState",11], "recordset", ["setCustomValidity",10],
-        "standby", "type", "useMap", ["validationMessage",10], ["validity",10], "vspace", "width", ["willValidate",10]
-    ], [
-        "alt", "archive", "border", "contentDocument", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "declare", "getSVGDocument", ["msPlayToDisabled",11],
-        ["msPlayToPreferredSourceUri",11], ["msPlayToPrimary",11], ["onreadystatechange",11], ["readyState",11], "standby", "useMap"
-    ]);
-    check(HTMLOptionElement, [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultSelected", "form", "index", "label", "selected", "text", "value" ],
-                             [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "label" ]);
-    check(HTMLScriptElement, [ ["async",10], "charset", "defer", "event", "htmlFor", "src", "text", "type" ], [ ["async",10], "charset", ["readyState",11] ], [ "crossOrigin" ]);
-    check(HTMLSelectElement, [
-        "add", ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form", "item", "length",
-        "multiple", "name", "namedItem", "options", "remove", ["required",10], "selectedIndex", ["setCustomValidity",10], "size", "tags",
-        "type", "urns", ["validationMessage",10], ["validity",10], "value", ["willValidate",10]
-    ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "namedItem", ["required",10], "urns" ]);
-    check(HTMLStyleElement, [ "media", "sheet", ["styleSheet",9,10], "type" ], [ ["onreadystatechange",11] ]);
     check(HTMLTableCellElement, [
         "abbr", "align", "axis", "background", "bgColor", "borderColor", "borderColorDark", "borderColorLight",
         "cellIndex", "ch", "chOff", "colSpan", "headers", "height", "noWrap", "rowSpan", "scope", "vAlign", "width"
     ], [ "abbr", "axis", "ch", "chOff", "headers", "scope" ]);
     check(HTMLTableDataCellElement, []);
-    check(HTMLTableElement, [
-        "align", "background", "bgColor", "border", "borderColor", "borderColorDark", "borderColorLight", "caption", "cellPadding", "cells", "cellSpacing", "cols",
-        "createCaption", "createTBody", "createTFoot", "createTHead", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataPageSize",9,10], ["dataSrc",9,10], "deleteCaption",
-        "deleteRow", "deleteTFoot", "deleteTHead", ["firstPage",9,10], "frame", "height", "insertRow", ["lastPage",9,10], "moveRow", ["nextPage",9,10],
-        ["previousPage",9,10], ["refresh",9,10], "rows", "rules", "summary", "tBodies", "tFoot", "tHead", "width"
-    ], [
-        "createTBody", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataPageSize",11], ["dataSrc",9,10], ["firstPage",11], ["lastPage",11], ["nextPage",11],
-        ["onreadystatechange",11], ["previousPage",11], ["readyState",11], ["refresh",11]
-    ]);
-    check(HTMLTableRowElement, [
-        "align", "bgColor", "borderColor", "borderColorDark", "borderColorLight", "cells", "ch", "chOff",
-        "deleteCell", "height", "insertCell", "rowIndex", "sectionRowIndex", "vAlign"
-    ], [ "ch", "chOff", "height" ]);
-    check(HTMLTextAreaElement, [
-        ["autofocus",10], ["checkValidity",10], "cols", "createTextRange", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "defaultValue", "form",
-        ["maxLength",10], "name", ["placeholder",10], "readOnly", ["required",10], "rows", "select", "selectionEnd", "selectionStart", ["setCustomValidity",10],
-        "setSelectionRange", "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10], "wrap"
-    ], [
-        ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["maxLength",10], ["placeholder",10], ["required",10], "selectionEnd", "selectionStart",
-        "setSelectionRange"
-    ]);
-    check(HTMLTitleElement, [ "text" ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
     check(KeyboardEvent, [
         "DOM_KEY_LOCATION_JOYSTICK", "DOM_KEY_LOCATION_LEFT", "DOM_KEY_LOCATION_MOBILE",
@@ -4640,8 +3970,6 @@ sync_test("prototype props", function() {
         "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
         "textDecorationNone", "textDecorationOverline", "textDecorationUnderline"
     ]);
-    check(NamedNodeMap, [ "getNamedItem", "getNamedItemNS", "item", "length", "removeNamedItem", "removeNamedItemNS",
-                          "setNamedItem", "setNamedItemNS" ]);
     check(Node, [
         "ATTRIBUTE_NODE", "CDATA_SECTION_NODE", "COMMENT_NODE", "DOCUMENT_FRAGMENT_NODE",  "DOCUMENT_NODE",
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
@@ -4661,246 +3989,27 @@ sync_test("prototype props", function() {
     ]);
     if(v >= 11)
         check(PageTransitionEvent, [ "persisted" ]);
-    check(Performance, [
-        "clearMarks", "clearMeasures", "clearResourceTimings", "getEntries", "getEntriesByName", "getEntriesByType", "getMarks",
-        "getMeasures", "mark", "measure", "navigation", ["now",10], "setResourceTimingBufferSize", "timing", "toJSON"
-    ], [
-        "clearMarks", "clearMeasures", "clearResourceTimings", "getEntries", "getEntriesByName", "getEntriesByType", "getMarks",
-        "getMeasures", "mark", "measure", "setResourceTimingBufferSize"
-    ]);
-    check(PerformanceNavigation, [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "redirectCount", "toJSON", "type" ], [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ]);
-    check(PerformanceTiming, [
-        "connectEnd", "connectStart", "domComplete", "domContentLoadedEventEnd", "domContentLoadedEventStart", "domInteractive", "domLoading",
-        "domainLookupEnd", "domainLookupStart", "fetchStart", "loadEventEnd", "loadEventStart", "msFirstPaint", "navigationStart", "redirectEnd",
-        "redirectStart", "requestStart", "responseEnd", "responseStart", "toJSON", "unloadEventEnd", "unloadEventStart"
-    ]);
     if(v >= 10)
         check(ProgressEvent, [ "initProgressEvent", "lengthComputable", "loaded", "total" ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
     check(StyleSheet, [ "disabled", "href", "media", "ownerNode", "parentStyleSheet", "title", "type" ]);
-    if(v >= 11)
-        check(SubtleCrypto, [ "decrypt", "deriveKey", "digest", "encrypt", "exportKey", "generateKey", "importKey", "sign", "unwrapKey", "verify", "wrapKey" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
-    if(v < 11)
-        check(XDomainRequest, [ "abort", "contentType", "onerror", "onload", "onprogress", "ontimeout", "open", "responseText", "send", "timeout" ]);
-    if(v >= 11)
-        check(XMLDocument, []);
-    check(XMLHttpRequest, [
-        "DONE", "HEADERS_RECEIVED", "LOADING", "OPENED", "UNSENT", "abort", "addEventListener", "dispatchEvent", "getAllResponseHeaders", "getResponseHeader", ["msCaching",11],
-        ["msCachingEnabled",11], ["onabort",10], ["onerror",10], "onload", ["onloadend",10], ["onloadstart",10], ["onprogress",10], "onreadystatechange", "ontimeout", "open",
-        ["overrideMimeType",11], "readyState", "removeEventListener", ["response",10], "responseBody", "responseText", ["responseType",10], "responseXML", "send",
-        "setRequestHeader", "status", "statusText", "timeout", ["upload",10], ["withCredentials",10]
-    ], [ "DONE", "HEADERS_RECEIVED", "LOADING", "OPENED", "UNSENT", ["msCaching",11], ["msCachingEnabled",11] ]);
-    check(XMLSerializer, [ "serializeToString" ]);
 });
 
 sync_test("constructors", function() {
-    var v = document.documentMode, i, r, old;
+    var v = document.documentMode, i, r;
     if(v < 9)
         return;
 
-    var ctors = [ "DOMParser", "Image", "Option", "XMLHttpRequest" ];
-    if (v < 11)
-        ctors.push("XDomainRequest");
+    var ctors = [ "Image", "Option", "XMLHttpRequest" ];
     if (v >= 11)
         ctors.push("MutationObserver");
     for(i = 0; i < ctors.length; i++) {
         r = ctors[i];
         ok(window.hasOwnProperty(r), r + " not prop of window");
         ok(!(r in Window.prototype), r + " is a prop of window's prototype");
-        ok(window[r].toString() === "\nfunction " + r + "() {\n    [native code]\n}\n", r + ".toString() = " + window[r].toString());
-
-        ok(window[r].hasOwnProperty("arguments"), "arguments not a prop of " + r);
-        ok(window[r].hasOwnProperty("caller"), "caller not a prop of " + r);
-        ok(window[r].hasOwnProperty("prototype"), "prototype not a prop of " + r);
-        ok(!window[r].hasOwnProperty("length"), "length is a prop of " + r);
     }
     ok(window.Image.prototype === window.HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
     ok(window.Option.prototype === window.HTMLOptionElement.prototype, "Option.prototype != HTMLOptionElement.prototype");
-
-    ok(typeof(XMLHttpRequest.create) === "function", "XMLHttpRequest.create not a function");
-    ok(XMLHttpRequest.create.toString() === "\nfunction create() {\n    [native code]\n}\n", "XMLHttpRequest.create.toString() = " + XMLHttpRequest.create.toString());
-    ok(XMLHttpRequest.create() instanceof XMLHttpRequest, "XMLHttpRequest.create did not return XMLHttpRequest instance");
-    ok(XMLHttpRequest.create.call(Object) instanceof XMLHttpRequest, "XMLHttpRequest.create with Object 'this' did not return XMLHttpRequest instance");
-    try {
-        new XMLHttpRequest.create();
-        ok(false, "new XMLHttpRequest.create() did not throw");
-    }catch(e) {
-        ok(e.number === 0x0ffff - 0x80000000, "new XMLHttpRequest.create() threw " + e.number);
-    }
-    test_own_props(XMLHttpRequest.create, "XMLHttpRequest.create", [ "arguments", "caller", "prototype" ], [ "prototype" ]);
-
-    r = Object.getOwnPropertyDescriptor(HTMLMetaElement, "prototype");
-    ok(r.value === HTMLMetaElement.prototype, "HTMLMetaElement.prototype value = " + r.value);
-    ok(!("get" in r), "HTMLMetaElement.prototype has getter");
-    ok(!("set" in r), "HTMLMetaElement.prototype has setter");
-    ok(r.writable === false, "HTMLMetaElement.prototype writable = " + r.writable);
-    ok(r.enumerable === false, "HTMLMetaElement.prototype enumerable = " + r.enumerable);
-    ok(r.configurable === false, "HTMLMetaElement.prototype configurable = " + r.configurable);
-
-    old = HTMLMetaElement.prototype;
-    HTMLMetaElement.prototype = Object.prototype;
-    ok(HTMLMetaElement.prototype === old, "HTMLMetaElement.prototype = " + HTMLMetaElement.prototype);
-
-    r = (delete HTMLMetaElement.prototype);
-    ok(r === false, "delete HTMLMetaElement.prototype returned " + r);
-    ok(HTMLMetaElement.hasOwnProperty("prototype"), "prototype not a prop anymore of HTMLMetaElement");
-
-    old = window.HTMLMetaElement;
-    r = (delete window.HTMLMetaElement);
-    ok(r === true, "delete HTMLMetaElement returned " + r);
-    ok(!window.hasOwnProperty("HTMLMetaElement"), "HTMLMetaElement still a property of window");
-    window.HTMLMetaElement = old;
-
-    old = HTMLMetaElement.prototype.constructor;
-    r = (delete HTMLMetaElement.prototype.constructor);
-    ok(r === true, "delete HTMLMetaElement.prototype.constructor returned " + r);
-    ok(!HTMLMetaElement.prototype.hasOwnProperty("constructor"), "constructor still a property of HTMLMetaElement.prototype");
-    HTMLMetaElement.prototype.constructor = old;
-});
-
-sync_test("typed arrays", function() {
-    if (document.documentMode < 10)
-        return;
-
-    function check(constr) {
-        ok(Object.getPrototypeOf(constr) === Function.prototype, "unexpected " + constr + " porototype " + Object.getPrototypeOf(constr));
-        ok(Object.getPrototypeOf(constr.prototype) === Object.prototype,
-           "unexpected " + constr + " porototype's prototype " + Object.getPrototypeOf(constr.prototype));
-        test_own_props(constr, constr,
-                       ["BYTES_PER_ELEMENT", "arguments", "caller", "length", "prototype"],
-                       ["arguments", "caller"]);
-        test_own_props(constr.prototype, constr + ".prototype",
-                       ["BYTES_PER_ELEMENT", "buffer", "byteLength", "byteOffset", "constructor", "length", "set", "subarray"],
-                       ["BYTES_PER_ELEMENT"]);
-    }
-
-    check(Int8Array);
-    check(Int16Array);
-    check(Int32Array);
-    check(Uint8Array);
-    check(Uint16Array);
-    check(Uint32Array);
-    check(Float32Array);
-    check(Float64Array);
-});
-
-async_test("window own props", function() {
-    if(!Object.getOwnPropertyNames) {
-        next_test();
-        return;
-    }
-    var iframe = document.createElement("iframe");
-
-    iframe.onload = function() {
-        iframe.contentWindow.testprop = "foobar";
-
-        test_own_props(iframe.contentWindow, "window", [
-            ["ANGLE_instanced_arrays",11], "ActiveXObject", ["AesGcmEncryptResult",11], ["AnimationEvent",10], ["ApplicationCache",10], "Array", ["ArrayBuffer",10], "Attr",
-            "Audio", ["AudioTrack",10], ["AudioTrackList",10], "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "Boolean", "CDATASection", "CSSFontFaceRule", "CSSImportRule",
-            ["CSSKeyframeRule",10], ["CSSKeyframesRule",10], "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRule", "CSSRuleList", "CSSStyleDeclaration", "CSSStyleRule",
-            "CSSStyleSheet", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CharacterData", "ClientRect", "ClientRectList", ["CloseEvent",10],
-            "CollectGarbage", "Comment", "CompositionEvent", ["Console",10], "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CustomEvent",
-            ["DOMError",10], "DOMException", "DOMImplementation", "DOMParser", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11], ["DOMTokenList",10],
-            "DataTransfer", ["DataView",10], "Date", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11], ["DeviceOrientationEvent",11], ["DeviceRotationRate",11],
-            "Document", "DocumentFragment", "DocumentType", "DragEvent", ["EXT_texture_filter_anisotropic",11], "Element", "Enumerator", "Error", ["ErrorEvent",10], "EvalError",
-            "Event", "EventException", ["File",10], ["FileList",10], ["FileReader",10], ["Float32Array",10], ["Float64Array",10], "FocusEvent", ["FormData",10], "Function",
-            "Geolocation", ["HTMLAllCollection",11], "HTMLAnchorElement", "HTMLAppletElement", "HTMLAreaElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBGSoundElement",
-            "HTMLBRElement", "HTMLBaseElement", "HTMLBaseFontElement", "HTMLBlockElement", "HTMLBodyElement", "HTMLButtonElement", "HTMLCanvasElement", "HTMLCollection",
-            "HTMLDDElement", "HTMLDListElement", "HTMLDTElement", ["HTMLDataListElement",10], "HTMLDirectoryElement", "HTMLDivElement", ["HTMLDocument",11], "HTMLElement",
-            "HTMLEmbedElement", "HTMLFieldSetElement", "HTMLFontElement", "HTMLFormElement", "HTMLFrameElement", "HTMLFrameSetElement", "HTMLHRElement", "HTMLHeadElement",
-            "HTMLHeadingElement", "HTMLHtmlElement", "HTMLIFrameElement", "HTMLImageElement", "HTMLInputElement", "HTMLIsIndexElement", "HTMLLIElement", "HTMLLabelElement",
-            "HTMLLegendElement", "HTMLLinkElement", "HTMLMapElement", "HTMLMarqueeElement", "HTMLMediaElement", "HTMLMenuElement", "HTMLMetaElement", "HTMLModElement",
-            "HTMLNextIdElement", "HTMLOListElement", "HTMLObjectElement", "HTMLOptGroupElement", "HTMLOptionElement", "HTMLParagraphElement", "HTMLParamElement", "HTMLPhraseElement",
-            "HTMLPreElement", ["HTMLProgressElement",10], "HTMLQuoteElement", "HTMLScriptElement", "HTMLSelectElement", "HTMLSourceElement", "HTMLSpanElement", "HTMLStyleElement",
-            "HTMLTableCaptionElement", "HTMLTableCellElement", "HTMLTableColElement", "HTMLTableDataCellElement", "HTMLTableElement", "HTMLTableHeaderCellElement",
-            "HTMLTableRowElement", "HTMLTableSectionElement", "HTMLTextAreaElement", "HTMLTitleElement", ["HTMLTrackElement",10], "HTMLUListElement", "HTMLUnknownElement",
-            "HTMLVideoElement", "History", ["IDBCursor",10], ["IDBCursorWithValue",10], ["IDBDatabase",10], ["IDBFactory",10], ["IDBIndex",10], ["IDBKeyRange",10],
-            ["IDBObjectStore",10], ["IDBOpenDBRequest",10], ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "Image", "ImageData", "Infinity",
-            ["Int16Array",10], ["Int32Array",10], ["Int8Array",10], ["Intl",11], "JSON", ["Key",11], ["KeyOperation",11], ["KeyPair",11], "KeyboardEvent", "Location",
-            "MSBehaviorUrnsCollection", ["MSBlobBuilder",10], ["MSCSSMatrix",10], "MSCSSProperties", "MSCSSRuleList", "MSCompatibleInfo", "MSCompatibleInfoCollection",
-            "MSCurrentStyleCSSProperties", "MSEventObj", ["MSGesture",10], ["MSGestureEvent",10], ["MSGraphicsTrust",11], ["MSInputMethodContext",11], ["MSManipulationEvent",10],
-            ["MSMediaKeyError",11], ["MSMediaKeyMessageEvent",11], ["MSMediaKeyNeededEvent",11], ["MSMediaKeySession",11], ["MSMediaKeys",11], "MSMimeTypesCollection",
-            ["MSNamespaceInfo",0,9], ["MSNamespaceInfoCollection",0,9], "MSPluginsCollection", ["MSPointerEvent",10], ["MSPopupWindow",0,10], ["MSRangeCollection",10],
-            ["MSSelection",0,10], "MSSiteModeEvent", ["MSStream",10], ["MSStreamReader",10], "MSStyleCSSProperties", ["Map",11], "Math", "MediaError", "MediaList",
-            ["MediaQueryList",10], ["MediaSource",11], ["MessageChannel",10], "MessageEvent", ["MessagePort",10], ["MimeType",11], ["MimeTypeArray",11], "MouseEvent",
-            "MouseWheelEvent", "MutationEvent", ["MutationObserver",11], ["MutationRecord",11], "NaN", "NamedNodeMap", "Navigator", "Node", "NodeFilter", "NodeIterator", "NodeList",
-            "Number", ["OES_element_index_uint",11], ["OES_standard_derivatives",11], ["OES_texture_float",11], ["OES_texture_float_linear",11], "Object", "Option",
-            ["PageTransitionEvent",11], "Performance", "PerformanceEntry", "PerformanceMark", "PerformanceMeasure", "PerformanceNavigation", ["PerformanceNavigationTiming",11],
-            "PerformanceResourceTiming", "PerformanceTiming", ["Plugin",11], ["PluginArray",11], ["PointerEvent",11], ["PopStateEvent",10], "Position", "PositionError",
-            "ProcessingInstruction", ["ProgressEvent",10], "Range", "RangeError", "RangeException", "ReferenceError", "RegExp", "SVGAElement", "SVGAngle", "SVGAnimatedAngle",
-            "SVGAnimatedBoolean", "SVGAnimatedEnumeration", "SVGAnimatedInteger", "SVGAnimatedLength", "SVGAnimatedLengthList", "SVGAnimatedNumber", "SVGAnimatedNumberList",
-            "SVGAnimatedPreserveAspectRatio", "SVGAnimatedRect", "SVGAnimatedString", "SVGAnimatedTransformList", "SVGCircleElement", "SVGClipPathElement",
-            ["SVGComponentTransferFunctionElement",10], "SVGDefsElement", "SVGDescElement", "SVGElement", "SVGElementInstance", "SVGElementInstanceList", "SVGEllipseElement",
-            "SVGException", ["SVGFEBlendElement",10], ["SVGFEColorMatrixElement",10], ["SVGFEComponentTransferElement",10], ["SVGFECompositeElement",10],
-            ["SVGFEConvolveMatrixElement",10], ["SVGFEDiffuseLightingElement",10], ["SVGFEDisplacementMapElement",10], ["SVGFEDistantLightElement",10], ["SVGFEFloodElement",10],
-            ["SVGFEFuncAElement",10], ["SVGFEFuncBElement",10], ["SVGFEFuncGElement",10], ["SVGFEFuncRElement",10], ["SVGFEGaussianBlurElement",10], ["SVGFEImageElement",10],
-            ["SVGFEMergeElement",10], ["SVGFEMergeNodeElement",10], ["SVGFEMorphologyElement",10], ["SVGFEOffsetElement",10], ["SVGFEPointLightElement",10],
-            ["SVGFESpecularLightingElement",10], ["SVGFESpotLightElement",10], ["SVGFETileElement",10], ["SVGFETurbulenceElement",10], ["SVGFilterElement",10], "SVGGElement",
-            "SVGGradientElement", "SVGImageElement", "SVGLength", "SVGLengthList", "SVGLineElement", "SVGLinearGradientElement", "SVGMarkerElement", "SVGMaskElement", "SVGMatrix",
-            "SVGMetadataElement", "SVGNumber", "SVGNumberList", "SVGPathElement", "SVGPathSeg", "SVGPathSegArcAbs", "SVGPathSegArcRel", "SVGPathSegClosePath", "SVGPathSegCurvetoCubicAbs",
-            "SVGPathSegCurvetoCubicRel", "SVGPathSegCurvetoCubicSmoothAbs", "SVGPathSegCurvetoCubicSmoothRel", "SVGPathSegCurvetoQuadraticAbs", "SVGPathSegCurvetoQuadraticRel",
-            "SVGPathSegCurvetoQuadraticSmoothAbs", "SVGPathSegCurvetoQuadraticSmoothRel", "SVGPathSegLinetoAbs", "SVGPathSegLinetoHorizontalAbs", "SVGPathSegLinetoHorizontalRel",
-            "SVGPathSegLinetoRel", "SVGPathSegLinetoVerticalAbs", "SVGPathSegLinetoVerticalRel", "SVGPathSegList", "SVGPathSegMovetoAbs", "SVGPathSegMovetoRel", "SVGPatternElement",
-            "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement", "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement", "SVGSVGElement",
-            "SVGScriptElement", "SVGStopElement", "SVGStringList", "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTSpanElement", "SVGTextContentElement", "SVGTextElement",
-            "SVGTextPathElement", "SVGTextPositioningElement", "SVGTitleElement", "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement", "SVGViewElement", "SVGZoomAndPan",
-            "SVGZoomEvent", "Screen", "ScriptEngine", "ScriptEngineBuildVersion", "ScriptEngineMajorVersion", "ScriptEngineMinorVersion", "Selection", ["Set",11], ["SourceBuffer",11],
-            ["SourceBufferList",11], "Storage", "StorageEvent", "String", "StyleMedia", "StyleSheet", "StyleSheetList", "StyleSheetPageList", ["SubtleCrypto",11], "SyntaxError", "Text",
-            "TextEvent", "TextMetrics", "TextRange", "TextRangeCollection", ["TextTrack",10], ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges",
-            ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker", "TypeError", "UIEvent", "URIError", ["URL",10], ["Uint16Array",10], ["Uint32Array",10], ["Uint8Array",10],
-            ["Uint8ClampedArray",11], "VBArray", ["ValidityState",10], ["VideoPlaybackQuality",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WeakMap",11],
-            ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11], ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11],
-            ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11], ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WebSocket",10], "WheelEvent", "Window",
-            ["Worker",10], ["XDomainRequest",0,10], ["XMLDocument",11], "XMLHttpRequest", ["XMLHttpRequestEventTarget",10], "XMLSerializer", "decodeURI", "decodeURIComponent", "encodeURI",
-            "encodeURIComponent", "escape", "eval", "isFinite", "isNaN", "parseFloat", "parseInt", "testprop", "undefined", "unescape"
-        ], [
-            ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
-            "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CDATASection", ["CloseEvent",10],
-            "CompositionEvent", "ControlRangeCollection", "Coordinates", ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
-            "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
-            ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
-            "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10],
-            "FocusEvent", ["FormData",10], "Geolocation", "GetObject", ["HTMLAllCollection",11], "HTMLAppletElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBaseElement",
-            "HTMLBaseFontElement", "HTMLBGSoundElement", "HTMLBlockElement", "HTMLBRElement", "HTMLCanvasElement", ["HTMLDataListElement",10], "HTMLDDElement", "HTMLDirectoryElement",
-            "HTMLDivElement", "HTMLDListElement", "HTMLDTElement", "HTMLFieldSetElement", "HTMLFontElement", "HTMLFrameSetElement", "HTMLHeadingElement", "HTMLHRElement", "HTMLIsIndexElement",
-            "HTMLLegendElement", "HTMLLIElement", "HTMLMapElement", "HTMLMarqueeElement", "HTMLMediaElement", "HTMLMenuElement", "HTMLModElement", "HTMLNextIdElement", "HTMLOListElement",
-            "HTMLOptGroupElement", "HTMLParagraphElement", "HTMLParamElement", "HTMLPhraseElement", "HTMLPreElement", ["HTMLProgressElement",10], "HTMLQuoteElement", "HTMLSourceElement",
-            "HTMLSpanElement", "HTMLTableCaptionElement", "HTMLTableColElement", "HTMLTableHeaderCellElement", "HTMLTableSectionElement", ["HTMLTrackElement",10], "HTMLUListElement",
-            "HTMLVideoElement", ["IDBCursor",10], ["IDBCursorWithValue",10], ["IDBDatabase",10], ["IDBFactory",10], ["IDBIndex",10], ["IDBKeyRange",10], ["IDBObjectStore",10], ["IDBOpenDBRequest",10],
-            ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "ImageData", ["Intl",11], ["Key",11], ["KeyOperation",11],
-            ["KeyPair",11], "Location", "MediaError", "MediaList", ["MediaSource",11], ["MessageChannel",10], ["MessagePort",10], ["MimeType",11], ["MimeTypeArray",9,10], "MouseWheelEvent",
-            "MSBehaviorUrnsCollection", ["MSBlobBuilder",10], "MSCompatibleInfo", "MSCompatibleInfoCollection", ["MSCSSMatrix",10], ["MSGesture",10], ["MSGestureEvent",10], ["MSGraphicsTrust",11],
-            ["MSInputMethodContext",11], ["MSManipulationEvent",10], ["MSMediaKeyError",11], ["MSMediaKeyMessageEvent",11], ["MSMediaKeyNeededEvent",11], ["MSMediaKeys",11], ["MSMediaKeySession",11],
-            "MSMimeTypesCollection", ["MSNamespaceInfo",0,9], "MSPluginsCollection", ["MSPointerEvent",10], ["MSPopupWindow",0,10], ["MSRangeCollection",10], "MSSiteModeEvent", ["MSStream",10],
-            ["MSStreamReader",10], "MutationEvent", ["MutationRecord",11], "NodeFilter", "NodeIterator", ["OES_element_index_uint",11], ["OES_standard_derivatives",11], ["OES_texture_float",11],
-            ["OES_texture_float_linear",11], "PerformanceEntry", "PerformanceMark", "PerformanceMeasure", ["PerformanceNavigationTiming",11], "PerformanceResourceTiming", ["Plugin",11],
-            ["PluginArray",9,10], ["PointerEvent",11], ["PopStateEvent",10], "Position", "PositionError", "ProcessingInstruction", "RangeException", "RegExpError", "Selection", ["SourceBuffer",11],
-            ["SourceBufferList",11], "StyleMedia", "StyleSheetPageList", "SVGAElement", "SVGAngle", "SVGAnimatedAngle", "SVGAnimatedBoolean", "SVGAnimatedEnumeration",
-            "SVGAnimatedInteger", "SVGAnimatedLength", "SVGAnimatedLengthList", "SVGAnimatedNumber", "SVGAnimatedNumberList", "SVGAnimatedPreserveAspectRatio", "SVGAnimatedRect", "SVGAnimatedString",
-            "SVGAnimatedTransformList", "SVGClipPathElement", ["SVGComponentTransferFunctionElement",10], "SVGDefsElement", "SVGDescElement", "SVGElementInstance", "SVGElementInstanceList",
-            "SVGEllipseElement", "SVGException", ["SVGFEBlendElement",10], ["SVGFEColorMatrixElement",10], ["SVGFEComponentTransferElement",10], ["SVGFECompositeElement",10],
-            ["SVGFEConvolveMatrixElement",10], ["SVGFEDiffuseLightingElement",10], ["SVGFEDisplacementMapElement",10], ["SVGFEDistantLightElement",10], ["SVGFEFloodElement",10], ["SVGFEFuncAElement",10],
-            ["SVGFEFuncBElement",10], ["SVGFEFuncGElement",10], ["SVGFEFuncRElement",10], ["SVGFEGaussianBlurElement",10], ["SVGFEImageElement",10], ["SVGFEMergeElement",10], ["SVGFEMergeNodeElement",10],
-            ["SVGFEMorphologyElement",10], ["SVGFEOffsetElement",10], ["SVGFEPointLightElement",10], ["SVGFESpecularLightingElement",10], ["SVGFESpotLightElement",10], ["SVGFETileElement",10],
-            ["SVGFETurbulenceElement",10], ["SVGFilterElement",10], "SVGGElement", "SVGGradientElement", "SVGImageElement", "SVGLength", "SVGLengthList", "SVGLinearGradientElement", "SVGLineElement",
-            "SVGMarkerElement", "SVGMaskElement", "SVGMatrix", "SVGMetadataElement", "SVGNumber", "SVGNumberList", "SVGPathElement", "SVGPathSeg", "SVGPathSegArcAbs", "SVGPathSegArcRel",
-            "SVGPathSegClosePath", "SVGPathSegCurvetoCubicAbs", "SVGPathSegCurvetoCubicRel", "SVGPathSegCurvetoCubicSmoothAbs", "SVGPathSegCurvetoCubicSmoothRel", "SVGPathSegCurvetoQuadraticAbs",
-            "SVGPathSegCurvetoQuadraticRel", "SVGPathSegCurvetoQuadraticSmoothAbs", "SVGPathSegCurvetoQuadraticSmoothRel", "SVGPathSegLinetoAbs", "SVGPathSegLinetoHorizontalAbs",
-            "SVGPathSegLinetoHorizontalRel", "SVGPathSegLinetoRel", "SVGPathSegLinetoVerticalAbs", "SVGPathSegLinetoVerticalRel", "SVGPathSegList", "SVGPathSegMovetoAbs", "SVGPathSegMovetoRel",
-            "SVGPatternElement", "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement", "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement",
-            "SVGScriptElement", "SVGStopElement", "SVGStringList", "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTextElement", "SVGTextPathElement", "SVGTitleElement",
-            "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement", "SVGViewElement", "SVGZoomAndPan", "SVGZoomEvent", "TextEvent", "TextMetrics", "TextRangeCollection", ["TextTrack",10],
-            ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges", ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker",
-            ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
-            ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11], ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11],
-            ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WebSocket",10], "WheelEvent", ["Worker",10],
-            ["XMLHttpRequestEventTarget",10]
-        ]);
-        next_test();
-    }
-
-    iframe.src = "about:blank";
-    document.body.appendChild(iframe);
 });

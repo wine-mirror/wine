@@ -29,6 +29,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "commdlg.h"
@@ -227,7 +228,7 @@ static LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
-        if (!(str = malloc(BUFFILEALLOC))) return FALSE;
+        if (!(str = heap_alloc(BUFFILEALLOC))) return FALSE;
 	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID,
                       (LPARAM)str);
 
@@ -251,13 +252,13 @@ static LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 	    SetBkColor( lpdis->hDC, oldBk );
 	    SetTextColor( lpdis->hDC, oldText );
 	}
-        free(str);
+        heap_free(str);
 	return TRUE;
     }
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst2)
     {
-        if (!(str = malloc(BUFFILEALLOC)))
+        if (!(str = heap_alloc(BUFFILEALLOC)))
             return FALSE;
 	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID,
                       (LPARAM)str);
@@ -280,13 +281,13 @@ static LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 	    SetTextColor( lpdis->hDC, oldText );
 	}
 	DrawIconEx( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hFolder, 16, 16, 0, 0, DI_NORMAL );
-        free(str);
+        heap_free(str);
 	return TRUE;
     }
     if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2)
     {
         char root[] = "a:";
-        if (!(str = malloc(BUFFILEALLOC)))
+        if (!(str = heap_alloc(BUFFILEALLOC)))
             return FALSE;
 	SendMessageW(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID,
                       (LPARAM)str);
@@ -314,7 +315,7 @@ static LONG FD31_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 	    SetTextColor( lpdis->hDC, oldText );
 	}
 	DrawIconEx( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon, 16, 16, 0, 0, DI_NORMAL );
-        free(str);
+        heap_free(str);
 	return TRUE;
     }
     return FALSE;
@@ -414,11 +415,11 @@ static LRESULT FD31_DirListDblClick( const FD31_DATA *lfs )
   /* get the raw string (with brackets) */
   lRet = SendDlgItemMessageW(hWnd, lst2, LB_GETCURSEL, 0, 0);
   if (lRet == LB_ERR) return TRUE;
-  pstr = malloc(BUFFILEALLOC);
+  pstr = heap_alloc(BUFFILEALLOC);
   SendDlgItemMessageW(hWnd, lst2, LB_GETTEXT, lRet,
 		     (LPARAM)pstr);
   lstrcpyW( tmpstr, pstr );
-  free(pstr);
+  heap_free(pstr);
   /* get the selected directory in tmpstr */
   if (tmpstr[0] == '[')
     {
@@ -453,12 +454,12 @@ static LRESULT FD31_FileListSelect( const FD31_DATA *lfs )
         return TRUE;
 
     /* set the edit control to the chosen file */
-    if ((pstr = malloc(BUFFILEALLOC)))
+    if ((pstr = heap_alloc(BUFFILEALLOC)))
     {
         SendDlgItemMessageW(hWnd, lst1, LB_GETTEXT, lRet,
                        (LPARAM)pstr);
         SetDlgItemTextW( hWnd, edt1, pstr );
-        free(pstr);
+        heap_free(pstr);
     }
     if (lfs->hook)
     {
@@ -620,11 +621,11 @@ static LRESULT FD31_DiskChange( const FD31_DATA *lfs )
     lRet = SendDlgItemMessageW(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
     if (lRet == LB_ERR)
         return 0;
-    pstr = malloc(BUFFILEALLOC);
+    pstr = heap_alloc(BUFFILEALLOC);
     SendDlgItemMessageW(hWnd, cmb2, CB_GETLBTEXT, lRet,
                          (LPARAM)pstr);
     wsprintfW(diskname, L"%c:", pstr[2]);
-    free(pstr);
+    heap_free(pstr);
 
     return FD31_Validate( lfs, diskname, cmb2, lRet, TRUE );
 }
@@ -725,7 +726,7 @@ static LPWSTR FD31_MapStringPairsToW(LPCSTR strA, UINT size)
     if (n < size) n = size;
 
     len = MultiByteToWideChar( CP_ACP, 0, strA, n, NULL, 0 );
-    x = malloc(len * sizeof(WCHAR));
+    x = heap_alloc(len * sizeof(WCHAR));
     MultiByteToWideChar( CP_ACP, 0, strA, n, x, len );
     return x;
 }
@@ -740,7 +741,7 @@ static LPWSTR FD31_DupToW(LPCSTR str, DWORD size)
     LPWSTR strW = NULL;
     if (str && (size > 0))
     {
-        strW = malloc(size * sizeof(WCHAR));
+        strW = heap_alloc(size * sizeof(WCHAR));
         if (strW) MultiByteToWideChar( CP_ACP, 0, str, -1, strW, size );
     }
     return strW;
@@ -781,7 +782,7 @@ static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, 
         int len;
         LoadStringW(COMDLG32_hInstance, open ? IDS_OPEN_FILE : IDS_SAVE_AS, buf, ARRAY_SIZE(buf));
         len = lstrlenW(buf)+1;
-        title_tmp = malloc(len * sizeof(WCHAR));
+        title_tmp = heap_alloc(len * sizeof(WCHAR));
         memcpy(title_tmp, buf, len * sizeof(WCHAR));
         ofnW->lpstrTitle = title_tmp;
     }
@@ -814,14 +815,14 @@ static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, 
  */
 static void FD31_FreeOfnW(OPENFILENAMEW *ofnW)
 {
-    free((void *)ofnW->lpstrFilter);
-    free(ofnW->lpstrCustomFilter);
-    free(ofnW->lpstrFile);
-    free(ofnW->lpstrFileTitle);
-    free((void *)ofnW->lpstrInitialDir);
-    free((void *)ofnW->lpstrTitle);
+    heap_free((void *)ofnW->lpstrFilter);
+    heap_free(ofnW->lpstrCustomFilter);
+    heap_free(ofnW->lpstrFile);
+    heap_free(ofnW->lpstrFileTitle);
+    heap_free((void *)ofnW->lpstrInitialDir);
+    heap_free((void *)ofnW->lpstrTitle);
     if (!IS_INTRESOURCE(ofnW->lpTemplateName))
-        free((void *)ofnW->lpTemplateName);
+        heap_free((void *)ofnW->lpTemplateName);
 }
 
 /************************************************************************
@@ -839,9 +840,9 @@ static void FD31_DestroyPrivate(PFD31_DATA lfs)
     if (lfs->ofnA)
     {
         FD31_FreeOfnW(lfs->ofnW);
-        free(lfs->ofnW);
+        heap_free(lfs->ofnW);
     }
-    free(lfs);
+    heap_free(lfs);
     RemovePropA(hwnd, FD31_OFN_PROP);
 }
 
@@ -913,7 +914,7 @@ static BOOL FD31_GetTemplate(PFD31_DATA lfs)
  */
 static PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType, BOOL IsUnicode)
 {
-    FD31_DATA *lfs = calloc(1, sizeof(*lfs));
+    FD31_DATA *lfs = heap_alloc_zero(sizeof(*lfs));
 
     TRACE("alloc private buf %p\n", lfs);
     if (!lfs) return NULL;
@@ -935,7 +936,7 @@ static PFD31_DATA FD31_AllocPrivate(LPARAM lParam, UINT dlgType, BOOL IsUnicode)
         if (lfs->ofnA->Flags & OFN_ENABLEHOOK)
             if (lfs->ofnA->lpfnHook)
                 lfs->hook = TRUE;
-        lfs->ofnW = calloc(1, lfs->ofnA->lStructSize);
+        lfs->ofnW = heap_alloc_zero(lfs->ofnA->lStructSize);
         lfs->ofnW->lStructSize = lfs->ofnA->lStructSize;
         FD31_MapOfnStructA(lfs->ofnA, lfs->ofnW, lfs->open);
     }

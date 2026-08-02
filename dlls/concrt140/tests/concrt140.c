@@ -19,7 +19,7 @@
 #include "wine/test.h"
 
 #ifdef __i386__
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -28,7 +28,7 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
 static ULONG_PTR (WINAPI *call_thiscall_func3)( void *func,

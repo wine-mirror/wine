@@ -20,25 +20,6 @@
 #include "audioclient.h"
 #include "mmdeviceapi.h"
 
-#ifdef WINE_UNIX_LIB
-/* helper to create a thread on the Unix side */
-static inline NTSTATUS create_unix_thread( HANDLE *handle, const WCHAR *name,
-                                           void (*entry)(void *), void *param )
-{
-    DWORD priority = THREAD_PRIORITY_TIME_CRITICAL;
-    THREAD_NAME_INFORMATION info;
-    NTSTATUS status;
-
-    if (!(status = PsCreateSystemThread( handle, THREAD_ALL_ACCESS, NULL, 0, NULL, entry, param )))
-    {
-        RtlInitUnicodeString( &info.ThreadName, name );
-        NtSetInformationThread( *handle, ThreadNameInformation, &info, sizeof(info) );
-        NtSetInformationThread( *handle, ThreadBasePriority, &priority, sizeof(priority) );
-    }
-    return status;
-}
-#endif
-
 typedef UINT64 stream_handle;
 
 enum driver_priority
@@ -53,6 +34,11 @@ struct endpoint
 {
     unsigned int name;
     unsigned int device;
+};
+
+struct main_loop_params
+{
+    HANDLE event;
 };
 
 struct get_endpoint_ids_params
@@ -83,6 +69,7 @@ struct create_stream_params
 struct release_stream_params
 {
     stream_handle stream;
+    HANDLE timer_thread;
     HRESULT result;
 };
 
@@ -102,6 +89,11 @@ struct reset_params
 {
     stream_handle stream;
     HRESULT result;
+};
+
+struct timer_loop_params
+{
+    stream_handle stream;
 };
 
 struct get_render_buffer_params
@@ -144,6 +136,7 @@ struct is_format_supported_params
     EDataFlow flow;
     AUDCLNT_SHAREMODE share;
     const WAVEFORMATEX *fmt_in;
+    WAVEFORMATEXTENSIBLE *fmt_out;
     HRESULT result;
 };
 
@@ -323,14 +316,14 @@ enum unix_funcs
 {
     process_attach,
     process_detach,
-    main_loop_start,
-    main_loop_stop,
+    main_loop,
     get_endpoint_ids,
     create_stream,
     release_stream,
     start,
     stop,
     reset,
+    timer_loop,
     get_render_buffer,
     release_render_buffer,
     get_capture_buffer,

@@ -22,6 +22,7 @@
 #include <float.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "ntdll_misc.h"
 
 double math_error( int type, const char *name, double arg1, double arg2, double retval )
@@ -37,7 +38,7 @@ int CDECL abs( int i )
     return i >= 0 ? i : -i;
 }
 
-#ifdef __i386__
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
 
 #define FPU_DOUBLE(var) double var; \
     __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var) : )
@@ -99,4 +100,4 @@ LONGLONG CDECL _ftol(void)
     return (LONGLONG)x;
 }
 
-#endif /* __i386__ */
+#endif /* (defined(__GNUC__) || defined(__clang__)) && defined(__i386__) */

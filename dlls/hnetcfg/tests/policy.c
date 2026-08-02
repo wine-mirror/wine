@@ -22,6 +22,7 @@
 #include "ole2.h"
 #include "oleauto.h"
 #include "olectl.h"
+#include "dispex.h"
 
 #include "wine/test.h"
 
@@ -39,7 +40,6 @@ static void test_policy2_rules(INetFwPolicy2 *policy2)
     HRESULT hr;
     INetFwRules *rules, *rules2;
     INetFwServiceRestriction *restriction;
-    IUnknown *rulesenum;
 
     hr = INetFwPolicy2_QueryInterface(policy2, &IID_INetFwRules, (void**)&rules);
     ok(hr == E_NOINTERFACE, "got 0x%08lx\n", hr);
@@ -68,19 +68,6 @@ static void test_policy2_rules(INetFwPolicy2 *policy2)
 
     hr = INetFwRules_get__NewEnum(rules, NULL);
     ok(hr == E_POINTER, "got %08lx\n", hr);
-
-    hr = INetFwRules_get__NewEnum(rules, &rulesenum);
-    ok(hr == S_OK, "got %08lx\n", hr);
-    if(rulesenum)
-    {
-        IEnumVARIANT *enumvar;
-
-        hr = IUnknown_QueryInterface(rulesenum, &IID_IEnumVARIANT, (void**)&enumvar);
-        ok(hr == S_OK, "got %08lx\n", hr);
-        IEnumVARIANT_Release(enumvar);
-
-        IUnknown_Release(rulesenum);
-    }
 
     INetFwRules_Release(rules);
     INetFwRules_Release(rules2);
@@ -341,48 +328,27 @@ static void test_IUPnPNAT(void)
     IUPnPNAT_Release(nat);
 }
 
-static void test_manager(void)
+START_TEST(policy)
 {
     INetFwMgr *manager;
     HRESULT hr;
-    VARIANT allowed, restricted;
-    WCHAR image[MAX_PATH];
-    DWORD ret;
-    BSTR str;
 
-    hr = CoCreateInstance(&CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
-                          &IID_INetFwMgr, (void **)&manager);
-    if (FAILED(hr))
+    CoInitialize(NULL);
+
+    hr = CoCreateInstance(&CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_INetFwMgr, (void**)&manager);
+    if(FAILED(hr))
     {
         win_skip("NetFwMgr object is not supported: %08lx\n", hr);
         CoUninitialize();
         return;
     }
 
-    ret = GetModuleFileNameW(NULL, image, ARRAY_SIZE(image));
-    ok(ret, "GetModuleFileName failed: %lu\n", GetLastError());
-    str = SysAllocString(image);
-
-    VariantInit(&allowed);
-    VariantInit(&restricted);
-    hr = INetFwMgr_IsPortAllowed(manager, str, NET_FW_IP_VERSION_ANY, 80, NULL, NET_FW_IP_PROTOCOL_TCP, &allowed,
-                                 &restricted);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    ok(V_VT(&allowed) == VT_BOOL, "got %u\n", V_VT(&allowed));
-    ok(V_VT(&restricted) == VT_BOOL, "got %u\n", V_VT(&restricted));
-
-    SysFreeString(str);
     INetFwMgr_Release(manager);
-}
-
-START_TEST(policy)
-{
-    CoInitialize(NULL);
 
     test_interfaces();
     test_NetFwAuthorizedApplication();
     test_IUPnPNAT();
-    test_manager();
 
     CoUninitialize();
 }

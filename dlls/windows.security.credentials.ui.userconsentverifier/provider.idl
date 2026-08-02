@@ -1,0 +1,46 @@
+/*
+ * Copyright 2022 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "propidl.idl";
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Security.Credentials.UI {
+    /* type-pruning version of AsyncOperationCompletedHandler<T> */
+    delegate HRESULT WineAsyncOperationCompletedHandler([in] IInspectable *async, [in] AsyncStatus status);
+
+    [
+        uuid(83f377ee-c799-11ec-9d64-0242ac120002)
+    ]
+    interface IWineAsyncInfoImpl : IUnknown
+    {
+        [propput] HRESULT Completed([in] WineAsyncOperationCompletedHandler *handler);
+        [propget] HRESULT Completed([out, retval] WineAsyncOperationCompletedHandler **handler);
+        [propget] HRESULT Result([out, retval] PROPVARIANT *result);
+        HRESULT Start();
+    }
+}

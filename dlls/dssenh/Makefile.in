@@ -1,6 +1,5 @@
 MODULE    = dssenh.dll
-IMPORTS   = $(SYMCRYPT_PE_LIBS) crypt32 advapi32
-EXTRAINCL = $(SYMCRYPT_PE_CFLAGS)
+IMPORTS   = bcrypt crypt32 advapi32
 
 SOURCES = \
 	main.c \

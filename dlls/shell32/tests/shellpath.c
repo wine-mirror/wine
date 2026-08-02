@@ -1314,33 +1314,6 @@ static const struct knownFolderDef known_folders[] = {
                  NULL,
                  0,
                  0),
-    KNOWN_FOLDER(FOLDERID_AccountPictures,
-                 NO_CSIDL,
-                 "AccountPictures",
-                 KF_CATEGORY_PERUSER,
-                 FOLDERID_RoamingAppData, GUID_NULL,
-                 "Microsoft\\Windows\\AccountPictures",
-                 NULL,
-                 FILE_ATTRIBUTE_READONLY,
-                 KFDF_PRECREATE | KFDF_ROAMABLE),
-    KNOWN_FOLDER(FOLDERID_Screenshots,
-                 NO_CSIDL,
-                 "Screenshots",
-                 KF_CATEGORY_PERUSER,
-                 FOLDERID_Pictures, GUID_NULL,
-                 "Screenshots",
-                 NULL,
-                 0,
-                 KFDF_PRECREATE | KFDF_ROAMABLE),
-    KNOWN_FOLDER(FOLDERID_AppDataDocuments,
-                 NO_CSIDL,
-                 "AppDataDocuments",
-                 KF_CATEGORY_PERUSER,
-                 FOLDERID_LocalAppData, GUID_NULL,
-                 "Documents",
-                 NULL,
-                 0,
-                 KFDF_PRECREATE | KFDF_ROAMABLE),
 };
 #undef KNOWN_FOLDER
 BOOL known_folder_found[ARRAY_SIZE(known_folders)];
@@ -1847,7 +1820,7 @@ static void test_NonExistentPath(void)
                 startup.wShowWindow = SW_SHOWNORMAL;
                 CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL,
                  &startup, &info);
-                wait_child_process( &info );
+                wait_child_process( info.hProcess );
 
                 /* restore original values: */
                 trace("Restoring CSIDL_FAVORITES to %s\n", originalPath);
@@ -2001,19 +1974,6 @@ if (0) { /* crashes */
     todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08lx\n", hr);
     ok(path == NULL, "path set\n");
 #endif
-
-    /* check UserProgramFiles */
-    path = NULL;
-    hr = pSHGetKnownFolderPath(&FOLDERID_UserProgramFiles, KF_FLAG_CREATE, NULL, &path);
-    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
-    ok(path != NULL, "path not set\n");
-    path2 = NULL;
-    len = ExpandEnvironmentStringsW(L"%LOCALAPPDATA%\\Programs", NULL, -1);
-    path2 = CoTaskMemAlloc(sizeof(WCHAR) * (len + 1));
-    ExpandEnvironmentStringsW(L"%LOCALAPPDATA%\\Programs", path2, len);
-    ok(!wcsicmp(path, path2), "expected equal paths got %s\n", debugstr_w(path));
-    CoTaskMemFree(path);
-    CoTaskMemFree(path2);
 }
 
 static BOOL is_in_strarray(const WCHAR *needle, const char *hay)

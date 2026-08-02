@@ -54,7 +54,9 @@ struct app_icon_entry
 {
     UINT32 width;
     UINT32 height;
+    UINT32 size;
     UINT32 icon;
+    UINT64 png;
 };
 
 /* macdrv_app_quit_request params */

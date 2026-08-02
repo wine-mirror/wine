@@ -49,7 +49,7 @@ typedef enum {
 
 typedef ULONG DVD_SESSION_ID, *PDVD_SESSION_ID;
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef struct _DVD_COPY_PROTECT_KEY {
     ULONG KeyLength;
@@ -193,6 +193,6 @@ typedef struct _DVD_MANUFACTURER_DESCRIPTOR
 #define DVD_DISCKEY_SIZE 2048
 #define DVD_SECTOR_PROTECTED            0x00000020
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __NTDDCDVD_H */

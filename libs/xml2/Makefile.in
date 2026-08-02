@@ -1,10 +1,11 @@
-STATICLIB = libxml2.a
+EXTLIB    = libxml2.a
 EXTRAINCL = $(XML2_PE_CFLAGS)
 EXTRADEFS = -DHAVE_VA_COPY
 
 SOURCES = \
 	HTMLparser.c \
 	HTMLtree.c \
+	SAX.c \
 	SAX2.c \
 	buf.c \
 	catalog.c \

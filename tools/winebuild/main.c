@@ -66,7 +66,6 @@ struct strarray as_command = { 0 };
 struct strarray cc_command = { 0 };
 struct strarray ld_command = { 0 };
 struct strarray nm_command = { 0 };
-struct strarray strip_command = { 0 };
 char *cpu_option = NULL;
 char *fpu_option = NULL;
 char *arch_option = NULL;
@@ -183,7 +182,6 @@ static const char usage_str[] =
 "       --data-only           Generate a data-only dll (i.e. without any executable code)\n"
 "   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
 "   -D SYM                    Ignored for C flags compatibility\n"
-"       --disable-dynamicbase Disable 'ASLR' address space layout randomization (default: ASLR on)\n"
 "   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
 "   -E, --export=FILE         Export the symbols defined in the .spec or .def file\n"
 "       --external-symbols    Allow linking to external symbols\n"
@@ -207,7 +205,6 @@ static const char usage_str[] =
 "   -r, --res=RSRC.RES        Load resources from RSRC.RES\n"
 "       --safeseh             Mark object files as SEH compatible\n"
 "       --save-temps          Do not delete the generated intermediate files\n"
-"       --strip-cmd=STRIP     Command to use for stripping (default: none)\n"
 "       --subsystem=SUBSYS    Set the subsystem (one of native, windows, console, wince)\n"
 "   -u, --undefined=SYMBOL    Add an undefined reference to SYMBOL when linking\n"
 "   -v, --verbose             Display the programs invoked\n"
@@ -235,7 +232,6 @@ enum long_options_values
     LONG_OPT_ASCMD,
     LONG_OPT_CCCMD,
     LONG_OPT_DATA_ONLY,
-    LONG_OPT_DISABLE_DYNAMICBASE,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
     LONG_OPT_FIXUP_CTORS,
@@ -248,7 +244,6 @@ enum long_options_values
     LONG_OPT_SAFE_SEH,
     LONG_OPT_SAVE_TEMPS,
     LONG_OPT_STATICLIB,
-    LONG_OPT_STRIPCMD,
     LONG_OPT_SUBSYSTEM,
     LONG_OPT_VERSION,
     LONG_OPT_WITHOUT_DLLTOOL,
@@ -271,7 +266,6 @@ static const struct long_option long_options[] =
     { "as-cmd",              1, LONG_OPT_ASCMD },
     { "cc-cmd",              1, LONG_OPT_CCCMD },
     { "data-only",           0, LONG_OPT_DATA_ONLY },
-    { "disable-dynamicbase", 0, LONG_OPT_DISABLE_DYNAMICBASE },
     { "external-symbols",    0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",         0, LONG_OPT_FAKE_MODULE },
     { "large-address-aware", 0, LONG_OPT_LARGE_ADDRESS_AWARE },
@@ -281,7 +275,6 @@ static const struct long_option long_options[] =
     { "prefer-native",       0, LONG_OPT_PREFER_NATIVE },
     { "safeseh",             0, LONG_OPT_SAFE_SEH },
     { "save-temps",          0, LONG_OPT_SAVE_TEMPS },
-    { "strip-cmd",           1, LONG_OPT_STRIPCMD },
     { "subsystem",           1, LONG_OPT_SUBSYSTEM },
     { "version",             0, LONG_OPT_VERSION },
     { "without-dlltool",     0, LONG_OPT_WITHOUT_DLLTOOL },
@@ -443,9 +436,6 @@ static void option_callback( int optc, char *optarg )
     case LONG_OPT_DEF:
         set_exec_mode( MODE_DEF );
         break;
-    case LONG_OPT_DISABLE_DYNAMICBASE:
-        main_spec->dll_characteristics &= ~IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
-        break;
     case LONG_OPT_EXE:
         set_exec_mode( MODE_EXE );
         if (!main_spec->subsystem) main_spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
@@ -503,9 +493,6 @@ static void option_callback( int optc, char *optarg )
     case LONG_OPT_SAVE_TEMPS:
         save_temps = 1;
         break;
-    case LONG_OPT_STRIPCMD:
-        strip_command = strarray_fromstring( optarg, " " );
-        break;
     case LONG_OPT_SUBSYSTEM:
         set_subsystem( optarg, main_spec );
         break;
@@ -527,22 +514,27 @@ static void option_callback( int optc, char *optarg )
 static struct strarray load_resources( struct strarray files, DLLSPEC *spec )
 {
     struct strarray ret = empty_strarray;
+    int i;
 
     switch (spec->type)
     {
     case SPEC_WIN16:
-        STRARRAY_FOR_EACH( file, &res_files ) load_res16_file( file, spec );
+        for (i = 0; i < res_files.count; i++) load_res16_file( res_files.str[i], spec );
         return files;
 
     case SPEC_WIN32:
-        STRARRAY_FOR_EACH( file, &res_files )
-            if (!load_res32_file( file, spec ))
-                fatal_error( "%s is not a valid Win32 resource file\n", file );
+        for (i = 0; i < res_files.count; i++)
+        {
+            if (!load_res32_file( res_files.str[i], spec ))
+                fatal_error( "%s is not a valid Win32 resource file\n", res_files.str[i] );
+        }
 
         /* load any resource file found in the remaining arguments */
-        STRARRAY_FOR_EACH( file, &files )
-            if (!load_res32_file( file, spec ))
-                strarray_add( &ret, file ); /* not a resource file, keep it in the list */
+        for (i = 0; i < files.count; i++)
+        {
+            if (!load_res32_file( files.str[i], spec ))
+                strarray_add( &ret, files.str[i] ); /* not a resource file, keep it in the list */
+        }
         break;
     }
     return ret;
@@ -562,12 +554,6 @@ static int parse_input_file( DLLSPEC *spec )
     return result;
 }
 
-static void check_target(void)
-{
-    if (is_pe()) return;
-    if (target.cpu == CPU_i386 || target.cpu == CPU_x86_64) return;
-    fatal_error( "Non-PE builds are not supported on this platform.\n" );
-}
 
 /*******************************************************************
  *         main
@@ -579,6 +565,7 @@ int main(int argc, char **argv)
 
     init_signals( exit_on_signal );
     target = init_argv0_target( argv[0] );
+    if (target.platform == PLATFORM_CYGWIN) target.platform = PLATFORM_MINGW;
     if (is_pe()) unwind_tables = 1;
 
     files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
@@ -605,11 +592,9 @@ int main(int argc, char **argv)
         else
         {
             spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
-            if (spec->dll_characteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
-                spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
+            spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
         }
 
-        check_target();
         files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
         if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));
@@ -641,7 +626,6 @@ int main(int argc, char **argv)
         close_output_file();
         break;
     case MODE_IMPLIB:
-        check_target();
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         output_import_lib( spec, files );

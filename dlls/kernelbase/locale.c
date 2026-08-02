@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define WINNORMALIZEAPI
 #include "windef.h"
 #include "winbase.h"
@@ -655,21 +656,6 @@ static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid 
     if (!(entry = find_lcname_entry( name ))) return NULL;
     *lcid = entry->id;
     return get_locale_data( entry->idx );
-}
-
-
-static const NLS_LOCALE_DATA *find_locale_from_geoid( GEOID id )
-{
-    const NLS_LOCALE_DATA *locale;
-
-    for (unsigned int i = 0; i < locale_table->nb_lcnames; i++)
-    {
-        if (!lcnames_index[i].name) continue;  /* skip invariant locale */
-        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
-        locale = get_locale_data( lcnames_index[i].idx );
-        if (locale->igeoid == id) return locale;
-    }
-    return NULL;
 }
 
 
@@ -1791,10 +1777,8 @@ invalid:
 static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
                          WCHAR *buffer, int len, LANGID lang )
 {
-    WCHAR tmp[12], tmp2[12];
+    WCHAR tmp[12];
     const WCHAR *str = tmp;
-    const NLS_LOCALE_DATA *locale;
-    ULONG id;
     int ret;
 
     switch (type)
@@ -1833,36 +1817,15 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
         str = geo->currsymbol;
         break;
     case GEO_RFC1766:
-        if (!lang) lang = GetUserDefaultLangID();
-        if (!GetLocaleInfoW( lang, LOCALE_SISO639LANGNAME, tmp2, ARRAY_SIZE(tmp2) )) return 0;
-        swprintf( tmp, ARRAY_SIZE(tmp), L"%s-%s", tmp2, geo->iso2 );
-        wcslwr( tmp );
-        break;
     case GEO_LCID:
-        if (!lang) lang = GetUserDefaultLangID();
-        if (!GetLocaleInfoW( lang, LOCALE_ILANGUAGE | LOCALE_RETURN_NUMBER, (WCHAR *)&id, 2 )) return 0;
-        swprintf( tmp, ARRAY_SIZE(tmp), L"%08X", id );
-        break;
     case GEO_FRIENDLYNAME:
-        if ((locale = find_locale_from_geoid( geo->id )))
-        {
-            str = locale_strings + locale->sengcountry + 1; /* FIXME: localization */
-            break;
-        }
-        FIXME( "no GEO_FRIENDLYNAME found for id %lu\n", geo->id );
-        return 0;
     case GEO_OFFICIALNAME:
+    case GEO_TIMEZONES:
+    case GEO_OFFICIALLANGUAGES:
+    case GEO_NAME:
         FIXME( "type %u is not supported\n", type );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return 0;
-    case GEO_TIMEZONES:
-        return 0;  /* not supported on Windows */
-    case GEO_OFFICIALLANGUAGES:
-        return 0;  /* not supported on Windows */
-    case GEO_NAME:
-        if (geo->class == GEOCLASS_NATION) str = geo->iso2;
-        else swprintf( tmp, ARRAY_SIZE(tmp), L"%03u", geo->uncode );
-        break;
     default:
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
@@ -7302,9 +7265,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetUserGeoID( GEOID id )
         swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", geo->id );
         RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
 
-        if (geo->class == GEOCLASS_NATION && wcscmp( geo->iso2, L"XX" ))
-            RegSetValueExW( hkey, L"Name", 0, REG_SZ,
-                            (BYTE *)geo->iso2, (lstrlenW(geo->iso2) + 1) * sizeof(WCHAR) );
+        if (geo->class == GEOCLASS_NATION || wcscmp( geo->iso2, L"XX" ))
+            lstrcpyW( bufferW, geo->iso2 );
+        else
+            swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03u", geo->uncode );
+        RegSetValueExW( hkey, L"Name", 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
     return TRUE;

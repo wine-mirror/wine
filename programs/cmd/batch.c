@@ -27,15 +27,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 static RETURN_CODE WCMD_batch_main_loop(void)
 {
     RETURN_CODE return_code = NO_ERROR;
-    enum read_parse_line rpl;
-    CMD_NODE *node;
-
     /* Work through the file line by line until an exit is called. */
-    while ((rpl = WCMD_ReadAndParseLine(&node)) != RPL_EOF)
+    while (!context->skip_rest)
     {
-        switch (rpl)
+        CMD_NODE *node;
+
+        switch (WCMD_ReadAndParseLine(NULL, &node))
         {
-        case RPL_EOF: break; /* never reached; get rid of warning */
+        case RPL_EOF:
+            context->skip_rest = TRUE;
+            break;
         case RPL_SUCCESS:
             if (node)
             {
@@ -50,97 +51,51 @@ static RETURN_CODE WCMD_batch_main_loop(void)
     }
 
     /* If there are outstanding setlocal's to the current context, unwind them. */
-    if (WCMD_is_in_context(NULL))
-        while (WCMD_endlocal() == NO_ERROR) {}
+    while (WCMD_endlocal() == NO_ERROR) {}
 
     return return_code;
 }
 
-static struct batch_file *find_or_alloc_batch_file(const WCHAR *file)
-{
-    struct batch_file *batchfile;
-    struct batch_context *ctx;
-    HANDLE h;
-    unsigned int i;
-
-    if (!file) return NULL;
-    for (ctx = context; ctx; ctx = ctx->prev_context)
-    {
-        if (ctx->batch_file && !wcscmp(ctx->batch_file->path_name, file))
-            return ctx->batch_file;
-    }
-    batchfile = xalloc(sizeof(*batchfile));
-    batchfile->ref_count = 0;
-    batchfile->path_name = xstrdupW(file);
-
-    h = CreateFileW(file, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE || !GetFileTime(h, NULL, NULL, &batchfile->last_modified))
-        memset(&batchfile->last_modified, 0, sizeof(batchfile->last_modified));
-    CloseHandle(h);
-
-    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-    {
-        batchfile->cache[i].label = NULL;
-        batchfile->cache[i].age = 0;
-    }
-    return batchfile;
-}
-
-static struct batch_context *push_batch_context(WCHAR *command, struct batch_file *batch_file, ULONGLONG pos)
-{
-    struct batch_context *prev = context;
-
-    context = xalloc(sizeof(struct batch_context));
-    context->file_position.QuadPart = pos;
-    context->command = command;
-    memset(context->shift_count, 0x00, sizeof(context->shift_count));
-    context->prev_context = prev;
-    context->batch_file = batch_file;
-    if (batch_file) batch_file->ref_count++;
-
-    return context;
-}
-
-static struct batch_context *pop_batch_context(struct batch_context *ctx)
-{
-    struct batch_context *prev = ctx->prev_context;
-    struct batch_file *batchfile = ctx->batch_file;
-    if (batchfile && --batchfile->ref_count == 0)
-    {
-        unsigned int i;
-
-        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-            free((void *)batchfile->cache[i].label);
-        free(batchfile->path_name);
-        free(batchfile);
-        ctx->batch_file = NULL;
-    }
-    free(ctx);
-    return prev;
-}
-
 /****************************************************************************
- * WCMD_call_batch
+ * WCMD_batch
  *
  * Open and execute a batch file.
  * On entry *command includes the complete command line beginning with the name
  * of the batch file (if a CALL command was entered the CALL has been removed).
  * *file is the name of the file, which might not exist and may not have the
- * .BAT suffix on.
+ * .BAT suffix on. Called is 1 for a CALL, 0 otherwise.
  *
  * We need to handle recursion correctly, since one batch program might call another.
  * So parameters for this batch file are held in a BATCH_CONTEXT structure.
+ *
+ * To support call within the same batch program, another input parameter is
+ * a label to goto once opened.
  */
+
 RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
 {
-    RETURN_CODE return_code;
+    BATCH_CONTEXT *prev_context;
+    RETURN_CODE return_code = NO_ERROR;
 
-    context = push_batch_context(command, find_or_alloc_batch_file(file), 0);
+    /* Create a context structure for this batch file. */
+    prev_context = context;
+    context = malloc(sizeof (BATCH_CONTEXT));
+    context->file_position.QuadPart = 0;
+    context->batchfileW = xstrdupW(file);
+    context->command = command;
+    memset(context->shift_count, 0x00, sizeof(context->shift_count));
+    context->prev_context = prev_context;
+    context->skip_rest = FALSE;
+
     return_code = WCMD_batch_main_loop();
-    context = pop_batch_context(context);
 
-    return return_code;
+    free(context->batchfileW);
+    free(context);
+    context = prev_context;
+
+    if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
+        errorlevel = return_code;
+    return errorlevel;
 }
 
 /*******************************************************************
@@ -251,7 +206,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
 }
 
 /****************************************************************************
- * WCMD_fgets_helper
+ * WCMD_fgets
  *
  * Gets one line from a file/console and puts it into buffer buf
  * Pre:  buf has size noChars
@@ -263,72 +218,64 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
  *       NULL on error or EOF
  */
 
-static WCHAR *WCMD_fgets_helper(WCHAR *buf, DWORD noChars, HANDLE h, UINT code_page)
-{
-    DWORD charsRead;
-
-    if (!WCMD_read_console(h, buf, noChars, &charsRead))
-    {
-        LARGE_INTEGER filepos;
-        char *bufA, *p;
-
-        bufA = xalloc(noChars);
-
-        /* Save current file position */
-        filepos.QuadPart = 0;
-        if (GetFileType(h) == FILE_TYPE_DISK && SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT))
-        {
-            if (!ReadFile(h, bufA, noChars, &charsRead, NULL) || charsRead == 0)
-            {
-                free(bufA);
-                return NULL;
-            }
-
-            /* Find first EOL */
-            for (p = bufA; p < bufA + charsRead; p = CharNextExA(code_page, p, 0))
-            {
-                if (p[0] == L'\n') break;
-            }
-            if (p < bufA + charsRead)
-            {
-                /* Sets file pointer to the start of the next line, if any */
-                filepos.QuadPart += p - bufA + 1;
-                SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
-            }
-        }
-        else
-        {
-            for (p = bufA; p < bufA + noChars; p++)
-            {
-                if (!ReadFile(h, p, 1, &charsRead, NULL) || (!charsRead && p == bufA))
-                {
-                    free(bufA);
-                    return NULL;
-                }
-                /* FIXME: not multibyte charset compliant */
-                if (!charsRead || p[0] == '\n') break;
-            }
-        }
-
-        charsRead = MultiByteToWideChar(code_page, 0, bufA, p - bufA, buf, noChars - 1);
-        free(bufA);
-    }
-
-    while (charsRead && (buf[charsRead - 1] == L'\n' || buf[charsRead - 1] == L'\r')) charsRead--;
-    buf[charsRead] = L'\0';
-
-    return buf;
-}
-
-static UINT get_current_code_page(void)
-{
-    UINT code_page = GetConsoleOutputCP();
-    return code_page ? code_page : GetOEMCP();
-}
-
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 {
-    return WCMD_fgets_helper(buf, noChars, h, get_current_code_page());
+  DWORD charsRead;
+  BOOL status;
+  DWORD i;
+
+  /* We can't use the native f* functions because of the filename syntax differences
+     between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
+
+  if (VerifyConsoleIoHandle(h) && ReadConsoleW(h, buf, noChars, &charsRead, NULL) && charsRead) {
+      if (!charsRead) return NULL;
+
+      /* Find first EOL */
+      for (i = 0; i < charsRead; i++) {
+          if (buf[i] == '\n' || buf[i] == '\r')
+              break;
+      }
+  }
+  else {
+      LARGE_INTEGER filepos;
+      char *bufA;
+      UINT cp;
+      const char *p;
+
+      cp = GetOEMCP();
+      bufA = xalloc(noChars);
+
+      /* Save current file position */
+      filepos.QuadPart = 0;
+      SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT);
+
+      status = ReadFile(h, bufA, noChars, &charsRead, NULL);
+      if (!status || charsRead == 0) {
+          free(bufA);
+          return NULL;
+      }
+
+      /* Find first EOL */
+      for (p = bufA; p < (bufA + charsRead); p = CharNextExA(cp, p, 0)) {
+          if (*p == '\n' || *p == '\r')
+              break;
+      }
+
+      /* Sets file pointer to the start of the next line, if any */
+      filepos.QuadPart += p - bufA + 1 + (*p == '\r' ? 1 : 0);
+      SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
+
+      i = MultiByteToWideChar(cp, 0, bufA, p - bufA, buf, noChars);
+      free(bufA);
+  }
+
+  /* Truncate at EOL (or end of buffer) */
+  if (i == noChars)
+    i--;
+
+  buf[i] = '\0';
+
+  return buf;
 }
 
 /****************************************************************************
@@ -382,7 +329,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   BOOL  doneModifier    = FALSE;
 
   /* Search forwards until find invalid character modifier */
-  for (; *lastModifier && wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
+  for (; wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
     /* Special case '$' to skip until : found */
     if (*lastModifier == L'$') {
       if (!(pos = wcschr(pos, L':'))) return; /* Invalid syntax */
@@ -421,8 +368,8 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
      Special case param 0 - With %~0 you get the batch label which was called
      whereas if you start applying other modifiers to it, you get the filename
      the batch label is in                                                     */
-  if (*lastModifier == '0' && modifierLen > 1 && context->batch_file) {
-    lstrcpyW(outputparam, context->batch_file->path_name);
+  if (*lastModifier == '0' && modifierLen > 1) {
+    lstrcpyW(outputparam, context->batchfileW);
   } else if ((*lastModifier >= '0' && *lastModifier <= '9')) {
     lstrcpyW(outputparam,
             WCMD_parameter (context -> command,
@@ -536,11 +483,14 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 
     /* 4. Handle 'z' : File length (File doesn't have to exist) */
     if (wmemchr(firstModifier, 'z', modifierLen) != NULL) {
+      /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
+      ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
+                                  fileInfo.nFileSizeLow;
+
       doneModifier = TRUE;
       if (exists) {
-        ULONG64 fullsize = ((ULONG64)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
         if (finaloutput[0] != 0x00) lstrcatW(finaloutput, L" ");
-        wsprintfW(thisoutput, L"%I64u", fullsize);
+        wsprintfW(thisoutput, L"%u", fullsize);
         lstrcatW(finaloutput, thisoutput);
       }
     }
@@ -655,26 +605,29 @@ RETURN_CODE WCMD_call(WCHAR *command)
 {
     RETURN_CODE return_code;
     WCHAR buffer[MAXSTRING];
-    WCHAR *start;
-
     WCMD_expand(command, buffer);
 
-    /* (call) shall return 1, while (call ) returns 0 */
-    start = WCMD_skip_leading_spaces(buffer);
-    if (*start == L'\0')
-        return_code = errorlevel = start == buffer ? ERROR_INVALID_FUNCTION : NO_ERROR;
     /* Run other program if no leading ':' */
-    else if (*start != ':')
+    if (*command != ':')
     {
-        WCMD_call_command(start);
-        /* If the thing we try to run does not exist, call returns 1 */
-        if (errorlevel == RETURN_CODE_CANT_LAUNCH)
-            errorlevel = ERROR_INVALID_FUNCTION;
-        return_code = errorlevel;
+        if (*WCMD_skip_leading_spaces(buffer) == L'\0')
+            /* FIXME it's incomplete as (call) should return 1, and (call ) should return 0...
+             * but we need to get the untouched string in command
+             */
+            return_code = errorlevel = NO_ERROR;
+        else
+        {
+            WCMD_call_command(buffer);
+            /* If the thing we try to run does not exist, call returns 1 */
+            if (errorlevel == RETURN_CODE_CANT_LAUNCH)
+                errorlevel = ERROR_INVALID_FUNCTION;
+            return_code = errorlevel;
+        }
     }
-    else if (WCMD_is_in_context(NULL))
+    else if (context)
     {
         WCHAR gotoLabel[MAX_PATH];
+        BATCH_CONTEXT *prev_context;
 
         lstrcpyW(gotoLabel, param1);
 
@@ -682,7 +635,14 @@ RETURN_CODE WCMD_call(WCHAR *command)
            as for loop variables do not survive a call                    */
         WCMD_save_for_loop_context(TRUE);
 
-        context = push_batch_context(buffer, context->batch_file, context->file_position.QuadPart);
+        prev_context = context;
+        context = malloc(sizeof (BATCH_CONTEXT));
+        context->file_position = prev_context->file_position; /* will be overwritten by WCMD_GOTO below */
+        context->batchfileW = prev_context->batchfileW;
+        context->command = buffer;
+        memset(context->shift_count, 0x00, sizeof(context->shift_count));
+        context->prev_context = prev_context;
+        context->skip_rest = FALSE;
 
         /* FIXME as commands here can temper with param1 global variable (ugly) */
         lstrcpyW(param1, gotoLabel);
@@ -690,18 +650,17 @@ RETURN_CODE WCMD_call(WCHAR *command)
 
         WCMD_batch_main_loop();
 
-        context = pop_batch_context(context);
+        free(context);
+        context = prev_context;
         return_code = errorlevel;
 
         /* Restore the for loop context */
         WCMD_restore_for_loop_context();
-    }
-    else
-    {
-        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
-        return_code = ERROR_INVALID_FUNCTION;
-    }
-    return return_code;
+  } else {
+      WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
+      return_code = ERROR_INVALID_FUNCTION;
+  }
+  return return_code;
 }
 
 void WCMD_set_label_end(WCHAR *string)
@@ -713,9 +672,9 @@ void WCMD_set_label_end(WCHAR *string)
     if ((p = wcspbrk(string, labelEndsW))) *p = L'\0';
 }
 
-static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING], UINT code_page)
+static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING])
 {
-    while (WCMD_fgets_helper(candidate, MAXSTRING, h, code_page))
+    while (WCMD_fgets(candidate, MAXSTRING, h))
     {
         WCHAR *str = candidate;
 
@@ -742,139 +701,27 @@ static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING],
     return FALSE;
 }
 
-static LARGE_INTEGER li_not_found = {.QuadPart = 0x7fffffffffffffffll};
-
-static void insert_label_cache_entry(const WCHAR *label, LARGE_INTEGER from, LARGE_INTEGER at)
-{
-    struct batch_file *batchfile = context->batch_file;
-    unsigned int i, worst_index = ~0u, worst_age = 0;
-
-    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-        if (batchfile->cache[i].label)
-            batchfile->cache[i].age++;
-        else
-            worst_index = i;
-    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-    {
-        if (batchfile->cache[i].label && !lstrcmpiW(batchfile->cache[i].label, label) &&
-            batchfile->cache[i].position.QuadPart == at.QuadPart)
-        {
-            batchfile->cache[i].age = 0;
-            /* decrease 'from' position if we have a larger match */
-            if (batchfile->cache[i].from.QuadPart > from.QuadPart)
-                batchfile->cache[i].from.QuadPart = from.QuadPart;
-            return;
-        }
-    }
-    if (worst_index == ~0u) /* all cache lines are used, find lru */
-    {
-        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-        {
-            if (batchfile->cache[i].age > worst_age)
-            {
-                worst_index = i;
-                worst_age = batchfile->cache[i].age;
-            }
-        }
-    }
-    free((void*)batchfile->cache[worst_index].label);
-    batchfile->cache[worst_index].label = xstrdupW(label);
-    batchfile->cache[worst_index].from = from;
-    batchfile->cache[worst_index].position = at;
-    batchfile->cache[worst_index].age = 0;
-}
-
-static BOOL find_label_cache_entry(const WCHAR *label, LARGE_INTEGER from, LARGE_INTEGER *at)
-{
-    struct batch_file *batchfile = context->batch_file;
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-        batchfile->cache[i].age++;
-    for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-    {
-        if (batchfile->cache[i].label && !lstrcmpiW(batchfile->cache[i].label, label) &&
-            batchfile->cache[i].from.QuadPart <= from.QuadPart &&
-            from.QuadPart <= batchfile->cache[i].position.QuadPart)
-        {
-            *at = batchfile->cache[i].position;
-            batchfile->cache[i].age = 0;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static void check_if_valid_label_cache(HANDLE h)
-{
-    struct batch_file *batchfile = context->batch_file;
-    FILETIME last;
-    unsigned int i;
-
-    if (!GetFileTime(h, NULL, NULL, &last) ||
-        batchfile->last_modified.dwHighDateTime != last.dwHighDateTime ||
-        batchfile->last_modified.dwLowDateTime  != last.dwLowDateTime)
-    {
-        TRACE("Invalidating cache\n");
-        batchfile->last_modified = last;
-        for (i = 0; i < ARRAY_SIZE(batchfile->cache); i++)
-        {
-            free((void *)batchfile->cache[i].label);
-            batchfile->cache[i].label = NULL;
-        }
-    }
-}
-
 BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
 {
     LARGE_INTEGER where = *pos, zeroli = {.QuadPart = 0};
     WCHAR candidate[MAXSTRING];
-    UINT code_page = get_current_code_page();
 
     if (!*label) return FALSE;
 
-    check_if_valid_label_cache(h);
-
     if (!SetFilePointerEx(h, *pos, NULL, FILE_BEGIN)) return FALSE;
-    if (find_label_cache_entry(label, *pos, pos))
+    while (find_next_label(h, ~(ULONGLONG)0, candidate))
     {
-        if (pos->QuadPart != li_not_found.QuadPart) return TRUE;
-    }
-    else
-    {
-        while (find_next_label(h, ~(ULONGLONG)0, candidate, code_page))
-        {
-            TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
-            if (!lstrcmpiW(candidate, label))
-            {
-                BOOL ret = SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
-                if (ret)
-                    insert_label_cache_entry(label, where, *pos);
-                return ret;
-            }
-        }
-        insert_label_cache_entry(label, where, li_not_found);
+        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+        if (!lstrcmpiW(candidate, label))
+            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
     }
     TRACE("Label not found, trying from beginning of file\n");
     if (!SetFilePointerEx(h, zeroli, NULL, FILE_BEGIN)) return FALSE;
-    if (find_label_cache_entry(label, zeroli, pos))
+    while (find_next_label(h, where.QuadPart, candidate))
     {
-        if (pos->QuadPart != li_not_found.QuadPart) return TRUE;
-    }
-    else
-    {
-        while (find_next_label(h, where.QuadPart, candidate, code_page))
-        {
-            TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
-            if (!lstrcmpiW(candidate, label))
-            {
-                BOOL ret = SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
-                if (ret)
-                    insert_label_cache_entry(label, zeroli, *pos);
-                return ret;
-            }
-        }
-        insert_label_cache_entry(label, where, li_not_found);
+        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+        if (!lstrcmpiW(candidate, label))
+            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
     }
     TRACE("Reached wrap point, label not found\n");
     return FALSE;

@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 
 #include "wine/list.h"
 
@@ -34,61 +35,50 @@
 #include "object.h"
 #include "process.h"
 #include "user.h"
-#include "file.h"
 #include "winuser.h"
 #include "winternl.h"
 
-/* also defined in win32u/ntuser_private.h */
-#define MAKE_WNDPROC(index)     ((UINT_PTR)(UINT)MAKELONG(index, 0xffff))
-
 struct window_class
 {
-    struct list         entry;           /* entry in process list */
-    struct winstation  *winstation;      /* winstation the class was created on */
-    struct process     *process;         /* process owning the class */
-    int                 count;           /* reference count */
-    atom_t              atom;            /* class atom for versioned class */
-    unsigned int        fnid;            /* builtin control FNID, or 0 */
-    client_ptr_t        client_ptr;      /* pointer to class in client address space */
-    bool                ansi;            /* class wndproc is ansi */
-    class_shm_t        *shared;          /* class in session shared memory */
+    struct list     entry;           /* entry in process list */
+    struct process *process;         /* process owning the class */
+    int             count;           /* reference count */
+    int             local;           /* local class? */
+    atom_t          atom;            /* class atom */
+    atom_t          base_atom;       /* base class atom for versioned class */
+    mod_handle_t    instance;        /* module instance */
+    unsigned int    style;           /* class style */
+    int             win_extra;       /* number of window extra bytes */
+    client_ptr_t    client_ptr;      /* pointer to class in client address space */
+    int             nb_extra_bytes;  /* number of extra bytes */
+    char            extra_bytes[1];  /* extra bytes storage */
 };
 
-C_ASSERT( sizeof(class_shm_t) == offsetof(class_shm_t, extra[0]) );
-
-static struct window_class *create_class( struct process *process, int local, int cls_extra )
+static struct window_class *create_class( struct process *process, int extra_bytes, int local )
 {
     struct window_class *class;
 
-    if (!(class = mem_alloc( sizeof(*class) ))) return NULL;
+    if (!(class = mem_alloc( sizeof(*class) + extra_bytes - 1 ))) return NULL;
 
     class->process = (struct process *)grab_object( process );
     class->count = 0;
-    class->ansi = false;
-
-    if (!(class->shared = alloc_shared_object( offsetof(class_shm_t, extra[cls_extra]) ))) goto failed;
-
+    class->local = local;
+    class->nb_extra_bytes = extra_bytes;
+    memset( class->extra_bytes, 0, extra_bytes );
     /* other fields are initialized by caller */
 
     /* local classes have priority so we put them first in the list */
     if (local) list_add_head( &process->classes, &class->entry );
     else list_add_tail( &process->classes, &class->entry );
     return class;
-
-failed:
-    free( class );
-    return NULL;
 }
 
 static void destroy_class( struct window_class *class )
 {
-    struct atom_table *table = get_user_atom_table();
-
-    release_atom( table, class->atom );
-    release_atom( table, class->shared->info.atom );
+    release_global_atom( NULL, class->atom );
+    release_global_atom( NULL, class->base_atom );
     list_remove( &class->entry );
     release_object( class->process );
-    if (class->shared) free_shared_object( class->shared );
     free( class );
 }
 
@@ -105,27 +95,28 @@ void destroy_process_classes( struct process *process )
 
 static struct window_class *find_class( struct process *process, atom_t atom, mod_handle_t instance )
 {
-    struct window_class *class;
-    int is_win16;
+    struct list *ptr;
 
-    LIST_FOR_EACH_ENTRY( class, &process->classes, struct window_class, entry )
+    LIST_FOR_EACH( ptr, &process->classes )
     {
-        const class_shm_t *shared = class->shared;
+        int is_win16;
+        struct window_class *class = LIST_ENTRY( ptr, struct window_class, entry );
         if (class->atom != atom) continue;
-        is_win16 = !(shared->info.instance >> 16);
-        if (!instance || !shared->local || shared->info.instance == instance ||
-            (!is_win16 && ((shared->info.instance & ~0xffff) == (instance & ~0xffff)))) return class;
+        is_win16 = !(class->instance >> 16);
+        if (!instance || !class->local || class->instance == instance ||
+            (!is_win16 && ((class->instance & ~0xffff) == (instance & ~0xffff)))) return class;
     }
     return NULL;
 }
 
-struct window_class *grab_class( struct process *process, atom_t atom, mod_handle_t instance, struct obj_locator *locator )
+struct window_class *grab_class( struct process *process, atom_t atom,
+                                 mod_handle_t instance, int *extra_bytes )
 {
     struct window_class *class = find_class( process, atom, instance );
     if (class)
     {
         class->count++;
-        *locator = get_shared_object_locator( class->shared );
+        *extra_bytes = class->win_extra;
     }
     else set_error( STATUS_INVALID_HANDLE );
     return class;
@@ -139,50 +130,25 @@ void release_class( struct window_class *class )
 
 int is_desktop_class( struct window_class *class )
 {
-    return class->shared->info.atom == DESKTOP_ATOM && !class->shared->local;
+    return (class->atom == DESKTOP_ATOM && !class->local);
 }
 
-int is_message_class( struct window_class *class )
+int is_hwnd_message_class( struct window_class *class )
 {
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
     static const struct unicode_str name = { messageW, sizeof(messageW) };
-    struct atom_table *table = get_user_atom_table();
-    return !class->shared->local && class->shared->info.atom == find_atom( table, &name );
+
+    return (!class->local && class->atom == find_global_atom( NULL, &name ));
 }
 
 int get_class_style( struct window_class *class )
 {
-    return class->shared->info.style;
+    return class->style;
 }
 
 atom_t get_class_atom( struct window_class *class )
 {
-    return class->shared->info.atom;
-}
-
-unsigned int get_class_fnid( struct window_class *class, data_size_t *extra_size, data_size_t *private_size )
-{
-    *extra_size = class->shared->info.win_extra;
-
-    if ((class->fnid & ~0x7fff) != 0x8000) *private_size = 0;
-    else switch (class->fnid & 0x7fff)
-    {
-    case NTUSER_WNDPROC_DIALOG: *private_size = 0; break;
-    case NTUSER_WNDPROC_MDICLIENT: *private_size = 0; break;
-    default: *private_size = *extra_size; break;
-    }
-
-    return class->fnid;
-}
-
-client_ptr_t get_class_wndproc( struct window_class *class, bool *is_ansi )
-{
-    client_ptr_t wndproc = class->shared->info.wndproc;
-    UINT index = LOWORD(wndproc);
-
-    /* builtin wndproc can be both ansi or unicode, otherwise use the class wndproc kind */
-    if (wndproc != MAKE_WNDPROC(index) || index >= NTUSER_NB_PROCS) *is_ansi = !!class->ansi;
-    return wndproc;
+    return class->base_atom;
 }
 
 client_ptr_t get_class_client_ptr( struct window_class *class )
@@ -190,98 +156,72 @@ client_ptr_t get_class_client_ptr( struct window_class *class )
     return class->client_ptr;
 }
 
-static struct unicode_str integral_atom_name( WCHAR *buffer, atom_t atom )
-{
-    struct unicode_str name;
-    char tmp[16];
-    int ret = snprintf( tmp, sizeof(tmp), "#%u", atom );
-    for (int i = ret; i >= 0; i--) buffer[i] = tmp[i];
-    name.len = ret * sizeof(WCHAR);
-    name.str = buffer;
-    return name;
-}
-
 /* create a window class */
 DECL_HANDLER(create_class)
 {
     struct window_class *class;
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_user_atom_table();
-    unsigned int name_offset = 0;
-    atom_t atom = req->atom;
-    struct class_info info;
-    WCHAR buffer[16];
-    bool local;
+    atom_t atom, base_atom;
 
-    if (name.len < sizeof(info)) return set_error( STATUS_INVALID_PARAMETER );
-    memcpy( &info, name.str, sizeof(info) );
-    name.str += sizeof(info) / sizeof(WCHAR);
-    name.len -= sizeof(info);
-
-    if (atom && !name.len) name = integral_atom_name( buffer, atom );
-    if (!atom && !(atom = add_atom( table, &name ))) return;
-
-    if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
+    if (name.len)
     {
-        struct unicode_str base = name;
-
-        name_offset = req->name_offset;
-        base.str += name_offset;
-        base.len -= name_offset * sizeof(WCHAR);
-
-        if (!(info.atom = add_atom( table, &base )))
+        atom = add_global_atom( NULL, &name );
+        if (!atom) return;
+        if (req->name_offset && req->name_offset < name.len / sizeof(WCHAR))
         {
-            release_atom( table, atom );
-            return;
+            name.str += req->name_offset;
+            name.len -= req->name_offset * sizeof(WCHAR);
+
+            base_atom = add_global_atom( NULL, &name );
+            if (!base_atom)
+            {
+                release_global_atom( NULL, atom );
+                return;
+            }
+        }
+        else
+        {
+            base_atom = atom;
+            grab_global_atom( NULL, atom );
         }
     }
     else
     {
-        info.atom = grab_atom( table, atom );
+        base_atom = atom = req->atom;
+        if (!grab_global_atom( NULL, atom )) return;
+        grab_global_atom( NULL, base_atom );
     }
 
-    local = !req->fnid && !(info.style & CS_GLOBALCLASS);
-    class = find_class( current->process, atom, info.instance );
-    if (class && !class->shared->local == !local)
+    class = find_class( current->process, atom, req->instance );
+    if (class && !class->local == !req->local)
     {
         set_win32_error( ERROR_CLASS_ALREADY_EXISTS );
-        release_atom( table, atom );
-        release_atom( table, info.atom );
+        release_global_atom( NULL, atom );
+        release_global_atom( NULL, base_atom );
         return;
     }
-    if (info.cls_extra > 4096 || info.win_extra > 4096)
+    if (req->extra < 0 || req->extra > 4096 || req->win_extra < 0 || req->win_extra > 4096)
     {
         /* don't allow stupid values here */
         set_error( STATUS_INVALID_PARAMETER );
-        release_atom( table, atom );
-        release_atom( table, info.atom );
+        release_global_atom( NULL, atom );
+        release_global_atom( NULL, base_atom );
         return;
     }
 
-    if (!(class = create_class( current->process, local, info.cls_extra )))
+    if (!(class = create_class( current->process, req->extra, req->local )))
     {
-        release_atom( table, atom );
-        release_atom( table, info.atom );
+        release_global_atom( NULL, atom );
+        release_global_atom( NULL, base_atom );
         return;
     }
     class->atom       = atom;
-    class->fnid       = req->fnid;
+    class->base_atom  = base_atom;
+    class->instance   = req->instance;
+    class->style      = req->style;
+    class->win_extra  = req->win_extra;
     class->client_ptr = req->client_ptr;
-    class->ansi       = !!req->ansi;
-
-    SHARED_WRITE_BEGIN( class->shared, class_shm_t )
-    {
-        memcpy( (void *)shared->name, name.str, name.len );
-        shared->name_offset  = name_offset;
-        shared->name_len     = name.len;
-        shared->local        = local;
-        memcpy( (void *)&shared->info, &info, sizeof(info) );
-        memset( (void *)shared->extra, 0, info.cls_extra );
-    }
-    SHARED_WRITE_END;
-
-    reply->locator   = get_shared_object_locator( class->shared );
-    reply->atom      = info.atom;
+    reply->atom = atom;
 }
 
 /* destroy a window class */
@@ -289,10 +229,9 @@ DECL_HANDLER(destroy_class)
 {
     struct window_class *class;
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_user_atom_table();
     atom_t atom = req->atom;
 
-    if (!atom) atom = find_atom( table, &name );
+    if (name.len) atom = find_global_atom( NULL, &name );
 
     if (!(class = find_class( current->process, atom, req->instance )))
         set_win32_error( ERROR_CLASS_DOES_NOT_EXIST );
@@ -313,97 +252,50 @@ DECL_HANDLER(set_class_info)
 
     if (!class) return;
 
-    if (class->process != current->process)
+    if (req->flags && class->process != current->process)
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
 
-    SHARED_WRITE_BEGIN( class->shared, class_shm_t )
+    if (req->extra_size > sizeof(req->extra_value) ||
+        req->extra_offset < -1 ||
+        req->extra_offset > class->nb_extra_bytes - (int)req->extra_size)
     {
-        switch (req->offset)
-        {
-        case GCL_STYLE:
-            reply->old_info = shared->info.style;
-            shared->info.style = req->new_info;
-            break;
-        case GCL_CBWNDEXTRA:
-            if (req->new_info > 4096)
-            {
-                set_error( STATUS_INVALID_PARAMETER );
-                return;
-            }
-            reply->old_info = shared->info.win_extra;
-            shared->info.win_extra = req->new_info;
-            break;
-        case GCL_CBCLSEXTRA:
-            set_win32_error( ERROR_INVALID_INDEX );
-            break;
-        case GCLP_HMODULE:
-            reply->old_info = shared->info.instance;
-            shared->info.instance = req->new_info;
-            break;
-        case GCLP_WNDPROC:
-            reply->old_info = shared->info.wndproc;
-            shared->info.wndproc = req->new_info;
-            class->ansi = !!req->ansi;
-            break;
-        case GCLP_HCURSOR:
-            reply->old_info = shared->info.cursor;
-            shared->info.cursor = req->new_info;
-            break;
-        case GCLP_HBRBACKGROUND:
-            reply->old_info = shared->info.background;
-            shared->info.background = req->new_info;
-            break;
-        case GCLP_HICON:
-            reply->old_info = shared->info.icon;
-            shared->info.icon = req->new_info;
-            break;
-        case GCLP_HICONSM:
-            reply->old_info = shared->info.icon_small;
-            shared->info.icon_small = req->new_info;
-            break;
-        case GCLP_MENUNAME:
-            reply->old_info = shared->info.menu_name;
-            shared->info.menu_name = req->new_info;
-            break;
-        default:
-            if (req->size > sizeof(req->new_info) || req->offset < 0 ||
-                req->offset > class->shared->info.cls_extra - (int)req->size)
-            {
-                set_win32_error( ERROR_INVALID_INDEX );
-                return;
-            }
-            memcpy( &reply->old_info, (char *)shared->extra + req->offset, req->size );
-            memcpy( (char *)shared->extra + req->offset, &req->new_info, req->size );
-            break;
-        }
-    }
-    SHARED_WRITE_END;
-}
-
-
-/* get some information in a class */
-DECL_HANDLER(get_class_info)
-{
-    struct window_class *class;
-
-    if (!(class = get_window_class( req->window ))) return;
-
-    switch (req->offset)
-    {
-    case GCLP_HBRBACKGROUND:
-    case GCLP_HCURSOR:
-    case GCLP_HICON:
-    case GCLP_HICONSM:
-    case GCLP_WNDPROC:
-    case GCLP_MENUNAME:
-        /* not supported */
-        set_win32_error( ERROR_INVALID_HANDLE );
-        break;
-    default:
         set_win32_error( ERROR_INVALID_INDEX );
-        break;
+        return;
     }
+    if ((req->flags & SET_CLASS_WINEXTRA) && (req->win_extra < 0 || req->win_extra > 4096))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (req->extra_offset != -1)
+    {
+        memcpy( &reply->old_extra_value, class->extra_bytes + req->extra_offset, req->extra_size );
+    }
+    else if (req->flags & SET_CLASS_EXTRA)
+    {
+        set_win32_error( ERROR_INVALID_INDEX );
+        return;
+    }
+
+    reply->old_atom      = class->atom;
+    reply->old_style     = class->style;
+    reply->old_extra     = class->nb_extra_bytes;
+    reply->old_win_extra = class->win_extra;
+    reply->old_instance  = class->instance;
+    reply->base_atom     = class->base_atom;
+
+    if (req->flags & SET_CLASS_ATOM)
+    {
+        if (!grab_global_atom( NULL, req->atom )) return;
+        release_global_atom( NULL, class->atom );
+        class->atom = req->atom;
+    }
+    if (req->flags & SET_CLASS_STYLE) class->style = req->style;
+    if (req->flags & SET_CLASS_WINEXTRA) class->win_extra = req->win_extra;
+    if (req->flags & SET_CLASS_INSTANCE) class->instance = req->instance;
+    if (req->flags & SET_CLASS_EXTRA) memcpy( class->extra_bytes + req->extra_offset,
+                                              &req->extra_value, req->extra_size );
 }

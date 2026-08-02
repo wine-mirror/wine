@@ -29,7 +29,7 @@
 #include "winbase.h"
 #include "winedump.h"
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef enum {
     SLDF_HAS_ID_LIST = 0x00000001,
@@ -154,7 +154,7 @@ typedef struct lnk_string_tag
     } str;
 } lnk_string;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 static unsigned offset;
 

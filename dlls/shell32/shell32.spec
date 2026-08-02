@@ -171,8 +171,8 @@
  179 stdcall -ordinal SHGetNewLinkInfoA(str str ptr ptr long)
  180 stdcall -ordinal SHGetNewLinkInfoW(wstr wstr ptr ptr long)
  181 stdcall -noname RegisterShellHook(long long)
- 182 varargs -ordinal ShellMessageBoxW(long long wstr wstr long) shlwapi.ShellMessageBoxW
- 183 varargs -ordinal ShellMessageBoxA(long long str str long) shlwapi.ShellMessageBoxA
+ 182 varargs -ordinal ShellMessageBoxW(long long wstr wstr long)
+ 183 varargs -ordinal ShellMessageBoxA(long long str str long)
  184 stdcall -noname ArrangeWindows(long long ptr long ptr)
  185 stub SHHandleDiskFull
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
@@ -261,7 +261,6 @@
  704 stdcall -noname GUIDFromStringW(wstr ptr)
  709 stdcall SHGetSetFolderCustomSettings(ptr wstr long)
  714 stdcall -noname PathIsTemporaryW(wstr)
- 716 stdcall SHMultiFileProperties(ptr long)
  723 stdcall -noname SHCreateSessionKey(long ptr)
  727 stdcall SHGetImageList(long ptr ptr)
  730 stdcall -noname RestartDialogEx(long wstr long long)
@@ -362,7 +361,6 @@
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
 @ stdcall SHEnumerateUnreadMailAccountsW(ptr long ptr long)
-@ stdcall SHEvaluateSystemCommandTemplate(wstr ptr ptr ptr)
 @ stdcall SHExtractIconsW(wstr long long long ptr ptr long long) user32.PrivateExtractIconsW
 @ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)
@@ -417,6 +415,7 @@
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(ptr)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
+@ stdcall SHMultiFileProperties(ptr long)
 @ stdcall SHOpenFolderAndSelectItems(ptr long ptr long)
 @ stdcall SHOpenWithDialog(long ptr)
 @ stdcall SHParseDisplayName(wstr ptr ptr long ptr)

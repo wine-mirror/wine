@@ -31,6 +31,7 @@
 #include "ddk/wdm.h"
 #include "wine/test.h"
 
+static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static void     (WINAPI *pRtlOpenCrossProcessEmulatorWorkConnection)(HANDLE,HANDLE*,void**);
@@ -38,17 +39,12 @@ static void *   (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char *);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INFO*);
+static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
-#ifndef __arm__
-static NTSTATUS (WINAPI *pNtSetLdtEntries)(ULONG,ULONG,ULONG,ULONG,ULONG,ULONG);
-#endif
-#ifdef __x86_64__
-static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
-#endif
 #ifdef _WIN64
+static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
-static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
 static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopAllCrossProcessWorkFromWorkList)(CROSS_PROCESS_WORK_HDR*,BOOLEAN*);
 static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopCrossProcessWorkFromFreeList)(CROSS_PROCESS_WORK_HDR*);
@@ -57,19 +53,18 @@ static BOOLEAN (WINAPI *pRtlWow64PushCrossProcessWorkOntoWorkList)(CROSS_PROCESS
 static BOOLEAN (WINAPI *pRtlWow64RequestCrossProcessHeavyFlush)(CROSS_PROCESS_WORK_HDR*);
 static void (WINAPI *pProcessPendingCrossProcessEmulatorWork)(void);
 #else
-static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64IsProcessorFeaturePresent)(ULONG);
 static NTSTATUS (WINAPI *pNtWow64QueryInformationProcess64)(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
-static BOOL old_wow64;  /* Wine old-style wow64 */
-static void *code_mem;
 #endif
 
 static BOOL is_win64 = sizeof(void *) > sizeof(int);
 static BOOL is_wow64;
+static BOOL old_wow64;  /* Wine old-style wow64 */
+static void *code_mem;
 
 #ifdef __i386__
 static USHORT current_machine = IMAGE_FILE_MACHINE_I386;
@@ -109,7 +104,6 @@ static void init(void)
 
     if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
-#ifndef _WIN64
     if (is_wow64)
     {
         TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
@@ -120,10 +114,10 @@ static void init(void)
             old_wow64 = !peb64->LdrData;
         }
     }
-#endif
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
     GET_PROC( NtMapViewOfSectionEx );
+    GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlOpenCrossProcessEmulatorWorkConnection );
@@ -131,16 +125,11 @@ static void init(void)
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetSharedInfoProcess );
-    GET_PROC( RtlWow64IsWowGuestMachineSupported );
-#ifndef __arm__
-    GET_PROC( NtSetLdtEntries );
-#endif
-#ifdef __x86_64__
-    GET_PROC( KiUserExceptionDispatcher );
-#endif
-#ifdef _WIN64
-    GET_PROC( RtlWow64GetCpuAreaInfo );
     GET_PROC( RtlWow64GetThreadContext );
+    GET_PROC( RtlWow64IsWowGuestMachineSupported );
+#ifdef _WIN64
+    GET_PROC( KiUserExceptionDispatcher );
+    GET_PROC( RtlWow64GetCpuAreaInfo );
     GET_PROC( RtlWow64GetThreadSelectorEntry );
     GET_PROC( RtlWow64PopAllCrossProcessWorkFromWorkList );
     GET_PROC( RtlWow64PopCrossProcessWorkFromFreeList );
@@ -149,7 +138,6 @@ static void init(void)
     GET_PROC( RtlWow64RequestCrossProcessHeavyFlush );
     GET_PROC( ProcessPendingCrossProcessEmulatorWork );
 #else
-    GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64GetNativeSystemInformation );
     GET_PROC( NtWow64IsProcessorFeaturePresent );
@@ -163,11 +151,8 @@ static void init(void)
     {
         SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
         HANDLE process = GetCurrentProcess();
-        NTSTATUS status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures2, &process,
+        NTSTATUS status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process,
                                                        sizeof(process), machines, sizeof(machines), NULL );
-        if (status)
-            status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process,
-                                                  sizeof(process), machines, sizeof(machines), NULL );
         if (!status)
             for (int i = 0; machines[i].Machine; i++)
                 trace( "machine %04x kernel %u user %u native %u process %u wow64 %u\n",
@@ -194,10 +179,8 @@ static void init(void)
 
     trace( "current %04x native %04x\n", current_machine, native_machine );
 
-#ifndef _WIN64
     if (native_machine == IMAGE_FILE_MACHINE_AMD64)
         code_mem = VirtualAlloc( NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-#endif
 }
 
 static BOOL create_process_machine( char *cmdline, DWORD flags, USHORT machine, PROCESS_INFORMATION *pi )
@@ -218,18 +201,14 @@ static BOOL create_process_machine( char *cmdline, DWORD flags, USHORT machine, 
     return ret;
 }
 
-static void test_process_architecture( SYSTEM_INFORMATION_CLASS class, HANDLE process, USHORT expect_machine, USHORT expect_native )
+static void test_process_architecture( HANDLE process, USHORT expect_machine, USHORT expect_native )
 {
     SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     NTSTATUS status;
     ULONG i, len;
 
-    if (class == SystemSupportedProcessorArchitectures &&
-        native_machine == IMAGE_FILE_MACHINE_ARM64 && expect_machine == IMAGE_FILE_MACHINE_AMD64)
-        expect_machine = IMAGE_FILE_MACHINE_ARM64;
-
     len = 0xdead;
-    status = pNtQuerySystemInformationEx( class, &process, sizeof(process),
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                           machines, sizeof(machines), &len );
     ok( !status, "failed %lx\n", status );
     ok( !(len & 3), "wrong len %lx\n", len );
@@ -249,15 +228,11 @@ static void test_process_architecture( SYSTEM_INFORMATION_CLASS class, HANDLE pr
         if (machines[i].WoW64Container)
             ok( is_machine_32bit( machines[i].Machine ) && !is_machine_32bit( native_machine ),
                 "wrong wow64 %x\n", machines[i].Machine);
-
-        if (class == SystemSupportedProcessorArchitectures && native_machine == IMAGE_FILE_MACHINE_ARM64)
-            ok( machines[i].Machine != IMAGE_FILE_MACHINE_AMD64,
-                "SystemSupportedProcessorArchitectures returned AMD64\n");
     }
     ok( !*(DWORD *)&machines[i], "missing terminating null\n" );
 
     len = i * sizeof(machines[0]);
-    status = pNtQuerySystemInformationEx( class, &process, sizeof(process),
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                           machines, len, &len );
     ok( status == STATUS_BUFFER_TOO_SMALL, "failed %lx\n", status );
     ok( len == (i + 1) * sizeof(machines[0]), "wrong len %lu\n", len );
@@ -267,8 +242,7 @@ static void test_process_architecture( SYSTEM_INFORMATION_CLASS class, HANDLE pr
         USHORT current = 0xdead, native = 0xbeef;
         status = pRtlWow64GetProcessMachines( process, &current, &native );
         ok( !status, "failed %lx\n", status );
-        if (expect_machine != IMAGE_FILE_MACHINE_I386 &&
-            expect_machine != IMAGE_FILE_MACHINE_ARMNT)
+        if (expect_machine == expect_native)
             ok( current == 0, "wrong current machine %x / %x\n", current, expect_machine );
         else
             ok( current == expect_machine, "wrong current machine %x / %x\n", current, expect_machine );
@@ -328,7 +302,7 @@ static void test_process_machine( HANDLE process, HANDLE thread,
     }
 }
 
-static void test_query_architectures(SYSTEM_INFORMATION_CLASS class)
+static void test_query_architectures(void)
 {
     static char cmd_sysnative[] = "C:\\windows\\sysnative\\cmd.exe /c exit";
     static char cmd_system32[] = "C:\\windows\\system32\\cmd.exe /c exit";
@@ -339,7 +313,6 @@ static void test_query_architectures(SYSTEM_INFORMATION_CLASS class)
     NTSTATUS status;
     HANDLE process;
     ULONG i, len;
-    USHORT machine;
 #ifdef __arm64ec__
     BOOL is_arm64ec = TRUE;
 #else
@@ -349,50 +322,49 @@ static void test_query_architectures(SYSTEM_INFORMATION_CLASS class)
     if (!pNtQuerySystemInformationEx) return;
 
     process = GetCurrentProcess();
-    status = pNtQuerySystemInformationEx( class, &process, sizeof(process),
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                           machines, sizeof(machines), &len );
     if (status == STATUS_INVALID_INFO_CLASS)
     {
-        win_skip( "SystemSupportedProcessorArchitectures%s not supported\n",
-                  class == SystemSupportedProcessorArchitectures2 ? "2" : "" );
+        win_skip( "SystemSupportedProcessorArchitectures not supported\n" );
         return;
     }
     ok( !status, "failed %lx\n", status );
 
     process = (HANDLE)0xdeadbeef;
-    status = pNtQuerySystemInformationEx( class, &process, sizeof(process),
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                           machines, sizeof(machines), &len );
     ok( status == STATUS_INVALID_HANDLE, "failed %lx\n", status );
     process = (HANDLE)0xdeadbeef;
-    status = pNtQuerySystemInformationEx( class, &process, 3,
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, 3,
                                           machines, sizeof(machines), &len );
     ok( status == STATUS_INVALID_PARAMETER || broken(status == STATUS_INVALID_HANDLE),
         "failed %lx\n", status );
     process = GetCurrentProcess();
-    status = pNtQuerySystemInformationEx( class, &process, 3,
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, 3,
                                           machines, sizeof(machines), &len );
     ok( status == STATUS_INVALID_PARAMETER || broken( status == STATUS_SUCCESS),
         "failed %lx\n", status );
-    status = pNtQuerySystemInformationEx( class, NULL, 0,
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, NULL, 0,
                                           machines, sizeof(machines), &len );
     ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
 
     winetest_push_context( "current" );
-    test_process_architecture( class, GetCurrentProcess(), current_machine,
+    test_process_architecture( GetCurrentProcess(), is_win64 ? native_machine : current_machine,
                                native_machine );
     test_process_machine( GetCurrentProcess(), GetCurrentThread(), current_machine,
                           is_arm64ec ? native_machine : current_machine );
     winetest_pop_context();
 
     winetest_push_context( "zero" );
-    test_process_architecture( class, 0, 0, native_machine );
+    test_process_architecture( 0, 0, native_machine );
     winetest_pop_context();
 
-    machine = (is_win64 && native_machine == IMAGE_FILE_MACHINE_ARM64) ? current_machine : IMAGE_FILE_MACHINE_AMD64;
-    if (create_process_machine( is_win64 ? cmd_system32 : cmd_sysnative, CREATE_SUSPENDED, machine, &pi ))
+    if (CreateProcessA( NULL, is_win64 ? cmd_system32 : cmd_sysnative, NULL, NULL,
+                        FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
     {
         winetest_push_context( "system32" );
-        test_process_architecture( class, pi.hProcess, machine, native_machine );
+        test_process_architecture( pi.hProcess, native_machine, native_machine );
         test_process_machine( pi.hProcess, pi.hThread,
                               is_win64 ? current_machine : native_machine, native_machine );
         TerminateProcess( pi.hProcess, 0 );
@@ -404,7 +376,7 @@ static void test_query_architectures(SYSTEM_INFORMATION_CLASS class)
                         FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
     {
         winetest_push_context( "syswow64" );
-        test_process_architecture( class, pi.hProcess, IMAGE_FILE_MACHINE_I386, native_machine );
+        test_process_architecture( pi.hProcess, IMAGE_FILE_MACHINE_I386, native_machine );
         test_process_machine( pi.hProcess, pi.hThread, IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_I386 );
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
@@ -418,7 +390,7 @@ static void test_query_architectures(SYSTEM_INFORMATION_CLASS class)
         if (create_process_machine( cmd_system32, CREATE_SUSPENDED, machine, &pi ))
         {
             winetest_push_context( "%04x", machine );
-            test_process_architecture( class, pi.hProcess, machine, native_machine );
+            test_process_architecture( pi.hProcess, native_machine, native_machine );
             test_process_machine( pi.hProcess, pi.hThread, machine, native_machine );
             TerminateProcess( pi.hProcess, 0 );
             CloseHandle( pi.hProcess );
@@ -1200,7 +1172,6 @@ static void test_selectors(void)
     THREAD_DESCRIPTOR_INFORMATION info;
     NTSTATUS status;
     ULONG base, limit, sel, retlen;
-    union { LDT_ENTRY entry; ULONG ul[2]; } ds_entry = { .ul[0] = 0 };
     I386_CONTEXT context = { CONTEXT_I386_CONTROL | CONTEXT_I386_SEGMENTS };
 
 #ifdef _WIN64
@@ -1299,7 +1270,6 @@ static void test_selectors(void)
             ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
             ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
             ok( info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
-            ds_entry.entry = info.Entry;
         }
         else if (sel == context.SegFs)  /* TEB selector */
         {
@@ -1324,9 +1294,8 @@ static void test_selectors(void)
         else if (!status)
         {
             ok( retlen == sizeof(info.Entry), "len set %lu\n", retlen );
-            trace( "succeeded for %04lx base %lx limit %lx type %x\n",
+            trace( "succeeded for %lx base %lx limit %lx type %x\n",
                    sel, base, limit, info.Entry.HighWord.Bits.Type );
-            ok( !(sel & 4), "succeeded for LDT selector %04lx\n", sel );
         }
         else
         {
@@ -1337,29 +1306,6 @@ static void test_selectors(void)
             ok( retlen == 0xdeadbeef, "len set %lu\n", retlen );
         }
     }
-
-    status = pNtSetLdtEntries( 0, ds_entry.ul[0], ds_entry.ul[1], 0, ds_entry.ul[0], ds_entry.ul[1] );
-    if (status != STATUS_NOT_IMPLEMENTED)
-    {
-        ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
-
-        status = pNtSetLdtEntries( 0x000f, ds_entry.ul[0], ds_entry.ul[1], 0x001f, ds_entry.ul[0], ds_entry.ul[1] );
-        ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
-
-        info.Selector = 0x000f;
-        memset(&info.Entry, 0x9a, sizeof(info.Entry));
-        status = GET_ENTRY( &info, sizeof(info), NULL );
-        ok(!status, "wrong status %lx\n", status);
-        ok(!memcmp(&ds_entry, &info.Entry, sizeof(ds_entry)), "entries do not match\n");
-
-        info.Selector = 0x001f;
-        memset(&info.Entry, 0x9a, sizeof(info.Entry));
-        status = GET_ENTRY( &info, sizeof(info), NULL );
-        ok(!status, "wrong status %lx\n", status);
-        ok(!memcmp(&ds_entry, &info.Entry, sizeof(ds_entry)), "entries do not match\n");
-    }
-    else skip( "NtSetLdtEntries not supported\n" );
-
 #undef GET_ENTRY
 #endif /* __arm__ */
 }
@@ -2326,10 +2272,8 @@ static NTSTATUS call_func64( ULONG64 func64, int nb_args, ULONG64 *args )
     return func( func64, nb_args, args );
 }
 
-static struct
-{
-    ULONG64 main, ntdll, wow64, xtajit, wow64win, wow64base, wow64con, wow64cpu;
-} modules;
+static ULONG64 main_module, ntdll_module, wow64_module, wow64base_module, wow64con_module,
+               wow64cpu_module, xtajit_module, wow64win_module;
 
 static void enum_modules64( void (*func)(ULONG64,const WCHAR *) )
 {
@@ -2437,10 +2381,10 @@ static void check_module( ULONG64 base, const WCHAR *name )
         if ((p = wcsrchr( module, '\\' ))) p++;
         else p = module;
         ok( !wcsicmp( name, p ), "wrong name %s / %s\n", debugstr_w(name), debugstr_w(module));
-        modules.main = base;
+        main_module = base;
         return;
     }
-#define CHECK_MODULE(mod) do { if (!wcsicmp( name, L"" #mod ".dll" )) { modules.mod = base; return; } } while(0)
+#define CHECK_MODULE(mod) do { if (!wcsicmp( name, L"" #mod ".dll" )) { mod ## _module = base; return; } } while(0)
     CHECK_MODULE(ntdll);
     CHECK_MODULE(wow64);
     CHECK_MODULE(wow64base);
@@ -2462,14 +2406,14 @@ static void test_modules(void)
     enum_modules64( check_module );
     todo_wine_if( old_wow64 )
     {
-    ok( modules.main, "main module not found\n" );
-    ok( modules.ntdll, "64-bit ntdll not found\n" );
-    ok( modules.wow64, "wow64.dll not found\n" );
+    ok( main_module, "main module not found\n" );
+    ok( ntdll_module, "64-bit ntdll not found\n" );
+    ok( wow64_module, "wow64.dll not found\n" );
     if (native_machine == IMAGE_FILE_MACHINE_ARM64)
-        ok( modules.xtajit, "xtajit.dll not found\n" );
+        ok( xtajit_module, "xtajit.dll not found\n" );
     else
-        ok( modules.wow64cpu, "wow64cpu.dll not found\n" );
-    ok( modules.wow64win, "wow64win.dll not found\n" );
+        ok( wow64cpu_module, "wow64cpu.dll not found\n" );
+    ok( wow64win_module, "wow64win.dll not found\n" );
     }
 }
 
@@ -2548,10 +2492,10 @@ static void test_nt_wow64(void)
                                                       MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
             ok( !status, "NtWow64AllocateVirtualMemory64 failed %lx\n", status );
             status = pNtWow64WriteVirtualMemory64( process, ptr, str, sizeof(str), &res );
-            todo_wine_if(status == STATUS_SUCCESS)
+            todo_wine
             ok( status == STATUS_PARTIAL_COPY || broken( status == STATUS_ACCESS_VIOLATION ),
                 "NtWow64WriteVirtualMemory64 failed %lx\n", status );
-            todo_wine_if(status == STATUS_SUCCESS)
+            todo_wine
             ok( !res || broken(res) /* win10 1709 */, "wrong size %s\n", wine_dbgstr_longlong(res) );
         }
         ptr = 0x9876543210ull;
@@ -2643,7 +2587,7 @@ static void test_nt_wow64(void)
 
         if (native_machine == IMAGE_FILE_MACHINE_ARM64)
         {
-            KUSER_SHARED_DATA *user_shared_data = ULongToPtr( 0x7ffe0000 );
+            KSHARED_USER_DATA *user_shared_data = ULongToPtr( 0x7ffe0000 );
 
             ok( user_shared_data->ProcessorFeatures[PF_ARM_V8_INSTRUCTIONS_AVAILABLE], "no ARM_V8\n" );
             ok( user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE], "no MMX\n" );
@@ -2818,7 +2762,7 @@ static void test_init_block(void)
         }
 #undef CHECK_FUNC
 
-        if (size && (ptr64 = get_proc_address64( modules.ntdll, "LdrSystemDllInitBlock" )))
+        if (size && (ptr64 = get_proc_address64( ntdll_module, "LdrSystemDllInitBlock" )))
         {
             DWORD buffer[64];
             HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
@@ -2834,16 +2778,16 @@ static void test_init_block(void)
 
 static void test_memory_notifications(void)
 {
-    HMODULE module = (HMODULE)(ULONG_PTR)modules.xtajit;
+    HMODULE module = (HMODULE)(ULONG_PTR)xtajit_module;
     WOW64INFO *info;
     DWORD i;
 
-    if (!modules.xtajit)
+    if (!xtajit_module)
     {
         skip( "xtajit.dll not loaded\n" );
         return;
     }
-    if ((ULONG_PTR)module != modules.xtajit)
+    if ((ULONG_PTR)module != xtajit_module)
     {
         skip( "xtajit.dll loaded above 4G\n" );
         return;
@@ -2905,9 +2849,9 @@ static void test_iosb(void)
 
     if (!is_wow64) return;
     if (!code_mem) return;
-    if (!modules.ntdll) return;
-    read_func = get_proc_address64( modules.ntdll, "NtReadFile" );
-    flush_func = get_proc_address64( modules.ntdll, "NtFlushBuffersFile" );
+    if (!ntdll_module) return;
+    read_func = get_proc_address64( ntdll_module, "NtReadFile" );
+    flush_func = get_proc_address64( ntdll_module, "NtFlushBuffersFile" );
 
     /* async calls set iosb32 but not iosb64 */
 
@@ -3048,7 +2992,7 @@ static void test_iosb(void)
 static NTSTATUS invoke_syscall( const char *name, ULONG args32[] )
 {
     ULONG64 args64[] = { -1, PtrToUlong( args32 ) };
-    ULONG64 func = get_proc_address64( modules.wow64, "Wow64SystemServiceEx" );
+    ULONG64 func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
     BYTE *syscall = (BYTE *)GetProcAddress( GetModuleHandleA("ntdll.dll"), name );
 
     ok( syscall != NULL, "syscall %s not found\n", name );
@@ -3071,9 +3015,9 @@ static void test_syscalls(void)
 
     if (!is_wow64) return;
     if (!code_mem) return;
-    if (!modules.ntdll) return;
+    if (!ntdll_module) return;
 
-    func = get_proc_address64( modules.wow64, "Wow64SystemServiceEx" );
+    func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
     ok( func, "Wow64SystemServiceEx not found\n" );
 
     event = CreateEventA( NULL, FALSE, FALSE, NULL );
@@ -3155,9 +3099,9 @@ static void test_cpu_area(void)
 
     if (!is_wow64) return;
     if (!code_mem) return;
-    if (!modules.ntdll) return;
+    if (!ntdll_module) return;
 
-    if ((ptr = get_proc_address64( modules.ntdll, "RtlWow64GetCurrentCpuArea" )))
+    if ((ptr = get_proc_address64( ntdll_module, "RtlWow64GetCurrentCpuArea" )))
     {
         USHORT machine = 0xdead;
         ULONG64 context, context_ex;
@@ -3185,9 +3129,9 @@ static void test_exception_dispatcher(void)
 
     if (!is_wow64) return;
     if (!code_mem) return;
-    if (!modules.ntdll) return;
+    if (!ntdll_module) return;
 
-    ptr = get_proc_address64( modules.ntdll, "KiUserExceptionDispatcher" );
+    ptr = get_proc_address64( ntdll_module, "KiUserExceptionDispatcher" );
     ok( ptr, "KiUserExceptionDispatcher not found\n" );
 
     if (pNtWow64ReadVirtualMemory64)
@@ -3205,220 +3149,13 @@ static void test_exception_dispatcher(void)
         status = pNtWow64ReadVirtualMemory64( process, hook_ptr, &hook, sizeof(hook), &res );
         ok( !status, "NtWow64ReadVirtualMemory64 failed %lx\n", status );
 
-        expect = get_proc_address64( modules.wow64, "Wow64PrepareForException" );
+        expect = get_proc_address64( wow64_module, "Wow64PrepareForException" );
         ok( hook == expect, "hook %I64x set to %I64x / %I64x\n", hook_ptr, hook, expect );
         NtClose( process );
     }
 }
 
 #endif  /* _WIN64 */
-
-#ifdef __arm64ec__
-
-struct doorbell_params
-{
-    ULONG *doorbell;
-    ULONG64 suspend_rip;
-    BOOL syscall;
-    BOOL suspend;
-};
-
-static DWORD WINAPI doorbell_thread( void *arg )
-{
-    CHPE_V2_CPU_AREA_INFO *chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
-    struct doorbell_params *params = arg;
-    ULONG signaled_doorbell = -1;
-    NTSTATUS status;
-    HANDLE event;
-    CONTEXT ctx;
-    LONG i = 0;
-
-    RtlCaptureContext( &ctx );
-
-    if (InterlockedIncrement( &i ) == 1)
-    {
-        params->suspend_rip = ctx.Rip;
-
-        if (params->syscall) chpe->InSyscallCallback = 1;
-        else chpe->InSimulation = 1;
-        params->doorbell = chpe->SuspendDoorbell;
-        ok( params->doorbell != NULL, "doorbell is not available\n" );
-        while (!(signaled_doorbell = *params->doorbell)) YieldProcessor();
-        chpe->InSyscallCallback = chpe->InSimulation = 0;
-
-        /* syscalls, including waits, continue working */
-        event = CreateEventW( NULL, FALSE, TRUE, NULL );
-        ok( event != NULL, "CreateEvent failed\n" );
-        status = NtWaitForSingleObject( event, FALSE, NULL );
-        ok( !status, "NtWaitForSingleObject failed\n" );
-        status = NtClose( event );
-        ok( !status, "NtClose failed\n" );
-
-        NtContinue( &ctx, FALSE );
-        ok( 0, "NtContinue failed\n" );
-    }
-
-    ok( !*params->doorbell, "doorbell = %lx\n", *params->doorbell );
-    ok( signaled_doorbell == -1, "signaled_doorbell = %lx\n", signaled_doorbell );
-    params->doorbell = NULL;
-    return 0;
-}
-
-struct pipe_read_params
-{
-    CHPE_V2_CPU_AREA_INFO *chpe;
-    HANDLE pipe;
-    HANDLE event;
-    int flush;
-};
-
-static DWORD WINAPI pipe_read_thread( void *arg )
-{
-    struct pipe_read_params *params = arg;
-    IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
-    char c;
-
-    params->chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
-    NtSetEvent( params->event, NULL );
-    if (params->flush)
-    {
-        int i;
-        for (i = 0; i < 100; i++) NtFlushInstructionCache( GetCurrentProcess, pipe_read_thread, 4 );
-    }
-    status = NtReadFile( params->pipe, NULL, NULL, NULL, &iosb, &c, sizeof(c), NULL, 0 );
-    ok( !status, "NtReadFile failed: %lx\n", status );
-    return 0;
-}
-
-struct nested_continue_params
-{
-    HANDLE event;
-    ULONG64 suspend_rip;
-    LONG pass;
-};
-
-static DWORD WINAPI nested_continue_thread( void *arg )
-{
-    CHPE_V2_CPU_AREA_INFO *chpe = NtCurrentTeb()->ChpeV2CpuAreaInfo;
-    struct nested_continue_params *params = arg;
-    CONTEXT ctx, nested_ctx;
-
-    RtlCaptureContext( &ctx );
-    if (InterlockedIncrement( &params->pass ) != 1) return 0;
-
-    params->suspend_rip = ctx.Rip;
-    chpe->InSyscallCallback = 1;
-    NtSetEvent( params->event, NULL );
-    while (!*chpe->SuspendDoorbell) YieldProcessor();
-
-    /* with InSyscallCallback set, NtContinue does not suspend */
-    RtlCaptureContext( &nested_ctx );
-    if (InterlockedIncrement( &params->pass ) == 2) NtContinue( &nested_ctx, FALSE );
-    chpe->InSyscallCallback = 0;
-
-    /* with InSimulation set, NtContinue does not suspend */
-    chpe->InSimulation = 1;
-    RtlCaptureContext( &nested_ctx );
-    if (InterlockedIncrement( &params->pass ) == 4) NtContinue( &nested_ctx, FALSE );
-    chpe->InSimulation = 0;
-
-    NtContinue( &ctx, FALSE );
-    return 0;
-}
-
-static void test_suspend_doorbell(void)
-{
-    struct nested_continue_params nested_params;
-    struct pipe_read_params read_params;
-    struct doorbell_params params;
-    HANDLE thread, pipe;
-    CONTEXT ctx;
-    DWORD ret, pass;
-    char c = 0;
-
-    for (pass = 0; pass < 4; pass++)
-    {
-        memset( &params, 0, sizeof(params) );
-        params.suspend = (pass & 1) != 0;
-        params.syscall = (pass & 2) != 0;
-
-        thread = CreateThread( NULL, 0, doorbell_thread, &params, 0, NULL );
-        ok( thread != NULL, "CreateThread failed\n" );
-
-        while (!params.doorbell) YieldProcessor();
-        ok( !*params.doorbell, "doorbell = %lx\n", *params.doorbell );
-
-        if (params.suspend) SuspendThread( thread );
-
-        memset( &ctx, 0xcc, sizeof(ctx) );
-        ctx.ContextFlags = CONTEXT_FULL;
-        GetThreadContext( thread, &ctx );
-        ok( ctx.Rip == params.suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, params.suspend_rip );
-
-        if (params.suspend) ResumeThread( thread );
-
-        WaitForSingleObject( thread, INFINITE );
-        ok( !params.doorbell, "thread did not reset doorbell\n" );
-
-        CloseHandle( thread );
-    }
-
-    for (read_params.flush = 0; read_params.flush < 2; read_params.flush++)
-    {
-        CreatePipe( &read_params.pipe, &pipe, NULL, 0 );
-        read_params.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-        thread = CreateThread( NULL, 0, pipe_read_thread, &read_params, 0, NULL );
-
-        ret = WaitForSingleObject( read_params.event, 10000 );
-        ok( ret == 0, "wait failed %lx\n", ret );
-
-        /* hammer the thread with suspend requests, making sure we never hit a syscall callback */
-        for (pass = 0; pass < 100; pass++)
-        {
-            ret = SuspendThread( thread );
-            ok( !ret, "SuspendThread failed: %lu\n", GetLastError() );
-            ctx.ContextFlags = CONTEXT_FULL;
-            ret = GetThreadContext( thread, &ctx );
-            ok( ret, "GetThreadContext failed: %lu\n", GetLastError() );
-
-            ok( !read_params.chpe->InSyscallCallback, "InSyscallCallback = %x\n",
-                read_params.chpe->InSyscallCallback );
-
-            ret = ResumeThread( thread );
-            ok( ret == 1, "ResumeThread failed: %lu\n", GetLastError() );
-        }
-
-        WriteFile( pipe, &c, sizeof(c), NULL, NULL );
-        ret = WaitForSingleObject( thread, 10000 );
-        ok( ret == 0, "wait failed %lx\n", ret );
-
-        CloseHandle( thread );
-        CloseHandle( pipe );
-        CloseHandle( read_params.pipe );
-        CloseHandle( read_params.event );
-    }
-
-    nested_params.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    nested_params.pass = 0;
-    thread = CreateThread( NULL, 0, nested_continue_thread, &nested_params, 0, NULL );
-
-    ret = WaitForSingleObject( nested_params.event, 10000 );
-    ok( ret == 0, "wait failed %lx\n", ret );
-
-    ctx.ContextFlags = CONTEXT_FULL;
-    GetThreadContext( thread, &ctx );
-    ok( ctx.Rip == nested_params.suspend_rip, "Rip = %llx, expected %llx\n", ctx.Rip, params.suspend_rip );
-
-    ret = WaitForSingleObject( thread, 10000 );
-    ok( ret == 0, "wait failed %lx\n", ret );
-    ok( nested_params.pass == 6, "pass = %lu\n", nested_params.pass );
-
-    CloseHandle( nested_params.event );
-    CloseHandle( thread );
-}
-
-#endif /* __arm64ec__ */
 
 static void test_arm64ec(void)
 {
@@ -3447,8 +3184,7 @@ static void test_arm64ec(void)
 START_TEST(wow64)
 {
     init();
-    test_query_architectures(SystemSupportedProcessorArchitectures);
-    test_query_architectures(SystemSupportedProcessorArchitectures2);
+    test_query_architectures();
     test_peb_teb();
     test_selectors();
     test_image_mappings();
@@ -3461,9 +3197,6 @@ START_TEST(wow64)
     test_init_block();
     test_iosb();
     test_syscalls();
-#endif
-#ifdef __arm64ec__
-    test_suspend_doorbell();
 #endif
     test_memory_notifications();
     test_cpu_area();

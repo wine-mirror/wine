@@ -429,7 +429,7 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Lock(IDirectSoundCaptureBuff
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
     HRESULT hres = DS_OK;
 
-    TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %lu\n", This, dwReadCusor,
+    TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %ld\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
 
@@ -451,21 +451,19 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Lock(IDirectSoundCaptureBuff
     EnterCriticalSection(&(This->device->lock));
 
     if (This->device->client) {
-        if ( dwReadCusor >= This->device->buflen || !dwReadBytes || dwReadBytes > This->device->buflen) {
-            *lpdwAudioBytes1 = 0;
-            *lplpvAudioPtr1 = NULL;
-            if (lplpvAudioPtr2)
-                *lplpvAudioPtr2 = NULL;
-            if (lpdwAudioBytes2)
-                *lpdwAudioBytes2 = 0;
-            hres = DSERR_INVALIDPARAM;
+        *lplpvAudioPtr1 = This->device->buffer + dwReadCusor;
+        if ( (dwReadCusor + dwReadBytes) > This->device->buflen) {
+            *lpdwAudioBytes1 = This->device->buflen - dwReadCusor;
+	    if (lplpvAudioPtr2)
+            	*lplpvAudioPtr2 = This->device->buffer;
+	    if (lpdwAudioBytes2)
+		*lpdwAudioBytes2 = dwReadBytes - *lpdwAudioBytes1;
         } else {
-            *lplpvAudioPtr1 = This->device->buffer + dwReadCusor;
-            *lpdwAudioBytes1 = min(dwReadBytes, This->device->buflen - dwReadCusor);
-            if (lpdwAudioBytes2)
-                *lpdwAudioBytes2 = dwReadBytes - *lpdwAudioBytes1;
-            if (lplpvAudioPtr2)
-                *lplpvAudioPtr2 = dwReadBytes - *lpdwAudioBytes1 ? This->device->buffer : NULL;
+            *lpdwAudioBytes1 = dwReadBytes;
+	    if (lplpvAudioPtr2)
+            	*lplpvAudioPtr2 = 0;
+	    if (lpdwAudioBytes2)
+            	*lpdwAudioBytes2 = 0;
         }
     } else {
         TRACE("invalid call\n");
@@ -746,8 +744,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         }
 
         err = IAudioClient_Initialize(device->client,
-                AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST
-                | AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
+                AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
                 200 * 100000, 0, device->pwfx, NULL);
         if(FAILED(err)){
             WARN("Initialize failed: %08lx\n", err);
@@ -968,24 +965,43 @@ static DWORD WINAPI DSOUND_capture_thread(void *user)
     return 0;
 }
 
+static struct _TestFormat {
+    DWORD flag;
+    DWORD rate;
+    DWORD depth;
+    WORD channels;
+} formats_to_test[] = {
+    { WAVE_FORMAT_1M08, 11025, 8, 1 },
+    { WAVE_FORMAT_1M16, 11025, 16, 1 },
+    { WAVE_FORMAT_1S08, 11025, 8, 2 },
+    { WAVE_FORMAT_1S16, 11025, 16, 2 },
+    { WAVE_FORMAT_2M08, 22050, 8, 1 },
+    { WAVE_FORMAT_2M16, 22050, 16, 1 },
+    { WAVE_FORMAT_2S08, 22050, 8, 2 },
+    { WAVE_FORMAT_2S16, 22050, 16, 2 },
+    { WAVE_FORMAT_4M08, 44100, 8, 1 },
+    { WAVE_FORMAT_4M16, 44100, 16, 1 },
+    { WAVE_FORMAT_4S08, 44100, 8, 2 },
+    { WAVE_FORMAT_4S16, 44100, 16, 2 },
+    { WAVE_FORMAT_48M08, 48000, 8, 1 },
+    { WAVE_FORMAT_48M16, 48000, 16, 1 },
+    { WAVE_FORMAT_48S08, 48000, 8, 2 },
+    { WAVE_FORMAT_48S16, 48000, 16, 2 },
+    { WAVE_FORMAT_96M08, 96000, 8, 1 },
+    { WAVE_FORMAT_96M16, 96000, 16, 1 },
+    { WAVE_FORMAT_96S08, 96000, 8, 2 },
+    { WAVE_FORMAT_96S16, 96000, 16, 2 },
+    {0}
+};
+
 static HRESULT DirectSoundCaptureDevice_Initialize(
     DirectSoundCaptureDevice ** ppDevice,
     LPCGUID lpcGUID)
 {
-    static const DWORD all_formats =
-            WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 |
-            WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16 |
-            WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 |
-            WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
-            WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 |
-            WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
-            WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 |
-            WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
-            WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 |
-            WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16;
     HRESULT hr;
     GUID devGUID;
     IMMDevice *mmdevice;
+    struct _TestFormat *fmt;
     DirectSoundCaptureDevice *device;
     IAudioClient *client;
 
@@ -1031,10 +1047,13 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
         return DSERR_NODRIVER;
     }
 
-    /* We use AUTOCONVERTPCM, so all formats are supported. */
-    device->drvcaps.dwFormats = all_formats;
-    device->drvcaps.dwChannels = 2;
-
+    for(fmt = formats_to_test; fmt->flag; ++fmt){
+        if(DSOUND_check_supported(client, fmt->rate, fmt->depth, fmt->channels)){
+            device->drvcaps.dwFormats |= fmt->flag;
+            if(fmt->channels > device->drvcaps.dwChannels)
+                device->drvcaps.dwChannels = fmt->channels;
+        }
+    }
     IAudioClient_Release(client);
 
     *ppDevice = device;

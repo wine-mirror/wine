@@ -30,7 +30,6 @@
 #include "wininet.h"
 #include "winineti.h"
 #include "winsock2.h"
-#include "ws2tcpip.h"
 
 #include "wine/test.h"
 
@@ -588,7 +587,6 @@ static void InternetSetFilePointer_test(const char *host, const char *path)
 {
     BYTE expect_response[8192], buf[8192];
     HINTERNET hi = 0, hic = 0, hor = 0;
-    HANDLE file = INVALID_HANDLE_VALUE;
     BOOL res, expected;
     DWORD count, size, i, pos, err;
 
@@ -708,8 +706,6 @@ static void InternetSetFilePointer_test(const char *host, const char *path)
     expected = pos == INVALID_SET_FILE_POINTER && err == ERROR_INTERNET_INVALID_OPERATION;
     ok(expected, "Expected ERROR_INTERNET_INVALID_OPERATION. Got %lu\n", err);
 
-    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     SET_EXPECT(INTERNET_STATUS_HANDLE_CLOSING);
     InternetCloseHandle(hor);
 
@@ -847,88 +843,6 @@ static void InternetSetFilePointer_test(const char *host, const char *path)
 
     CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
     CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-
-    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
-    SET_EXPECT(INTERNET_STATUS_HANDLE_CLOSING);
-    InternetCloseHandle(hor);
-
-    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
-    hor = HttpOpenRequestA(hic, NULL, path, NULL, NULL, NULL,
-                           INTERNET_FLAG_RELOAD,
-                           0xdeadbead);
-    ok(hor != 0x0, "HttpOpenRequest failed: %lu\n", GetLastError());
-    if(hor == 0x0) goto abort;
-    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
-
-    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER);
-
-    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
-    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
-    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
-    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
-
-    res = HttpSendRequestA(hor, NULL, 0, NULL, 0);
-    err = !res ? GetLastError() : NO_ERROR;
-    expected = res && err == NO_ERROR;
-    ok(expected, "HttpSendRequest failed: %lu\n", err);
-
-    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
-    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
-    CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
-    CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-
-    SetLastError(0xdeadbeef);
-    res = InternetReadFile(hor, buf, 10, &count);
-    err = !res ? GetLastError() : NO_ERROR;
-    ok(res, "InternetReadFile failed: %lu\n", err);
-    ok(count, "InternetReadFile returned no content\n");
-
-    SetLastError(0xdeadbeef);
-    pos = InternetSetFilePointer(hor, INT_MAX, NULL, FILE_BEGIN, 0);
-    err = pos == INVALID_SET_FILE_POINTER ? GetLastError() : NO_ERROR;
-    expected = pos == INT_MAX && err == NO_ERROR;
-    ok(expected, "Expected position %#x. Got %#lx. GetLastError() %lu\n", INT_MAX, pos, err);
-
-    SetLastError(0xdeadbeef);
-    res = InternetReadFile(hor, buf, 1024, &count);
-    err = !res ? GetLastError() : NO_ERROR;
-    ok(!res, "InternetReadFile succeeded unexpectedly\n");
-    ok(err == ERROR_NOACCESS, "InternetReadFile unexpected error %lu\n", err);
-
-    SetLastError(0xdeadbeef);
-    res = InternetReadFile(hor, buf, 1024, &count);
-    err = !res ? GetLastError() : NO_ERROR;
-    ok(!res, "InternetReadFile succeeded unexpectedly\n");
-    ok(err == ERROR_INTERNET_INCORRECT_HANDLE_STATE, "InternetReadFile unexpected error %lu\n", err);
-
-    SetLastError(0xdeadbeef);
-    pos = InternetSetFilePointer(hor, 0, NULL, FILE_BEGIN, 0);
-    err = pos == INVALID_SET_FILE_POINTER ? GetLastError() : NO_ERROR;
-    expected = pos == INVALID_SET_FILE_POINTER && err == ERROR_INTERNET_INVALID_OPERATION;
-    ok(expected, "Expected position %#x. Got %#lx. GetLastError() %lu\n", INVALID_SET_FILE_POINTER, pos, err);
-
-    count = 0;
-    SetLastError(0xdeadbeef);
-    res = InternetQueryDataAvailable(hor, &count, 0x0, 0x0);
-    err = !res ? GetLastError() : NO_ERROR;
-    ok(!res, "InternetQueryDataAvailable succeeded unexpectedly\n");
-    ok(err == ERROR_INTERNET_INCORRECT_HANDLE_STATE, "InternetQueryDataAvailable unexpected error %lu\n", err);
-    ok(count == 0, "InternetQueryDataAvailable unexpected count: %lu\n", count);
-
-    size = ARRAY_SIZE(buf);
-    res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buf, &size);
-    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed with error %ld\n", GetLastError());
-
-    res = TRUE;
-    res = InternetSetOptionA(hor, INTERNET_OPTION_HTTP_DECODING, &res, sizeof(res));
-    ok(res, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %ld\n", GetLastError());
-
-    res = InternetLockRequestFile(hor, &file);
-    if (res)
-        InternetUnlockRequestFile(file);
-    ok(res, "InternetLockRequestFile failed: %ld\n", GetLastError());
 
 abort:
     SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION);
@@ -6813,97 +6727,6 @@ static void test_pac(int port)
     close_request(&req);
 }
 
-struct af_priority_callback_data
-{
-    int resolving_count;
-    char *resolving;
-    int resolved_count;
-    char *resolved;
-    int connecting_count;
-    char *connecting[64];
-    int connected_count;
-    char *connected;
-};
-
-static VOID WINAPI af_priority_callback(HINTERNET hi, DWORD_PTR context, DWORD status,
-        void *info, DWORD info_len)
-{
-    struct af_priority_callback_data *data = (struct af_priority_callback_data *)context;
-
-    ok(!!data, "got NULL.\n");
-
-    switch (status)
-    {
-        case INTERNET_STATUS_RESOLVING_NAME:
-            ++data->resolving_count;
-            data->resolving = strdup(info);
-            break;
-        case INTERNET_STATUS_NAME_RESOLVED:
-            ++data->resolved_count;
-            data->resolved = strdup(info);
-            break;
-        case INTERNET_STATUS_CONNECTING_TO_SERVER:
-            ok(data->connecting_count < ARRAY_SIZE(data->connecting), "got %d.\n", data->connecting_count);
-            data->connecting[data->connecting_count++] = strdup(info);
-            break;
-        case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            ++data->connected_count;
-            data->connected = strdup(info);
-            break;
-    }
-}
-
-static void test_af_priority(int port)
-{
-    struct af_priority_callback_data data = { 0 };
-    HINTERNET ses, con, req;
-    struct addrinfo *addr_info, hints;
-    int i, ret;
-    BOOL bret;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_socktype = SOCK_STREAM;
-    ret = getaddrinfo("localhost", NULL, &hints, &addr_info);
-    ok(!ret, "got error %d.\n", ret);
-    if (addr_info->ai_family != AF_INET6)
-    {
-        skip("AF_INET6 not available for localhost.\n");
-        freeaddrinfo(addr_info);
-        return;
-    }
-    freeaddrinfo(addr_info);
-
-    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
-    ok( ses != NULL, "InternetOpenA failed\n" );
-    pInternetSetStatusCallbackA(ses, &af_priority_callback);
-
-    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&data);
-    ok( con != NULL, "InternetConnectA failed %lu\n", GetLastError() );
-    req = HttpOpenRequestA(con, "GET", "/test1", NULL, NULL, NULL, 0, (DWORD_PTR)&data);
-    ok( req != NULL, "HttpOpenRequestA failed %lu\n", GetLastError());
-    bret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    ok(bret, "HttpSendRequest failed with error %lu\n", GetLastError());
-
-    ok(data.resolving_count == 1, "got %d.\n", data.resolving_count);
-    ok(data.resolving && !strcmp(data.resolving, "localhost"), "got %s.\n", debugstr_a(data.resolving));
-    free(data.resolving);
-    ok(data.resolved_count == 1, "got %d.\n", data.resolved_count);
-    ok(data.resolved && !strcmp(data.resolved, "[::1]"), "got %s.\n", debugstr_a(data.resolved));
-    free(data.resolved);
-    ok(data.connecting_count == 2, "got %d.\n", data.connecting_count);
-    ok(data.connecting[0] && !strcmp(data.connecting[0], "[::1]"), "got %s.\n", debugstr_a(data.connecting[0]));
-    ok(data.connecting[1] && !strcmp(data.connecting[1], "127.0.0.1"), "got %s.\n", debugstr_a(data.connecting[1]));
-    for (i = 0; i < ARRAY_SIZE(data.connecting); ++i)
-        free(data.connecting[i]);
-    ok(data.connected_count == 1, "got %d.\n", data.connected_count);
-    ok(data.connected && !strcmp(data.connected, "127.0.0.1"), "got %s.\n", debugstr_a(data.connected));
-    free(data.connected);
-
-    InternetCloseHandle(req);
-    InternetCloseHandle(con);
-    InternetCloseHandle(ses);
-}
-
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -6924,7 +6747,6 @@ static void test_http_connection(void)
         return;
     }
 
-    test_af_priority(si.port);
     test_basic_request(si.port, "GET", "/test1");
     test_proxy_indirect(si.port);
     test_proxy_direct(si.port);

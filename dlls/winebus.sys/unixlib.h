@@ -38,34 +38,33 @@ struct device_desc
     UINT version;
     UINT input;
     UINT uid;
-    UINT bus_type;
     BOOL is_gamepad;
     BOOL is_hidraw;
+    BOOL is_bluetooth;
 
     WCHAR manufacturer[MAX_PATH];
     WCHAR product[MAX_PATH];
     WCHAR serialnumber[MAX_PATH];
 };
 
-struct device_options
+struct sdl_bus_options
 {
-    struct list entry;
-    UINT vid;
-    UINT pid;
-    INT hidraw;
+    BOOL split_controllers;
+    BOOL map_controllers;
+    /* freed after bus_init */
+    UINT mappings_count;
+    char **mappings;
 };
 
-struct bus_options
+struct udev_bus_options
 {
-    BOOL disable_sdl;
     BOOL disable_hidraw;
     BOOL disable_input;
     BOOL disable_udevd;
-    BOOL split_controllers;
-    BOOL map_controllers;
-    UINT mappings_count;
-    struct list devices;
-    char **mappings;
+};
+
+struct iohid_bus_options
+{
 };
 
 enum bus_event_type
@@ -74,14 +73,6 @@ enum bus_event_type
     BUS_EVENT_TYPE_DEVICE_REMOVED,
     BUS_EVENT_TYPE_DEVICE_CREATED,
     BUS_EVENT_TYPE_INPUT_REPORT,
-};
-
-enum bus_type
-{
-    BUS_TYPE_UNKNOWN,
-    BUS_TYPE_USB,
-    BUS_TYPE_BLUETOOTH,
-    BUS_TYPE_COUNT,
 };
 
 struct bus_event
@@ -159,9 +150,9 @@ enum unix_funcs
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
-    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u, is_hidraw %u, bus_type %u}",
+    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u, is_hidraw %u, is_bluetooth %u}",
                             desc->vid, desc->pid, desc->version, desc->input, desc->uid,
-                            desc->is_gamepad, desc->is_hidraw, desc->bus_type);
+                            desc->is_gamepad, desc->is_hidraw, desc->is_bluetooth);
 }
 
 static inline BOOL is_xbox_gamepad(WORD vid, WORD pid)

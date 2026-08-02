@@ -2,9 +2,6 @@ MODULE    = dmscript.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
-VER_FILEDESCRIPTION_STR = "Wine DirectMusic Scripting"
-VER_PRODUCTVERSION      = 5,3,0,900
-
 SOURCES = \
 	dmobject.c \
 	dmscript.idl \

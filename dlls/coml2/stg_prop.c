@@ -50,6 +50,7 @@
 #include "winuser.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "oleauto.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);

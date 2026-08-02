@@ -51,8 +51,8 @@ extern const WCHAR expect_path_end[];
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-#define hid_device_start( a, b ) hid_device_start_( __FILE__, __LINE__, a, b, 1000 )
-BOOL hid_device_start_( const char *file, int line, struct hid_device_desc *desc, UINT count, DWORD timeout );
+#define hid_device_start( a, b ) hid_device_start_( a, b, 1000 )
+BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout );
 void hid_device_stop( struct hid_device_desc *desc, UINT count );
 BOOL bus_device_start(void);
 void bus_device_stop(void);
@@ -64,9 +64,11 @@ void cleanup_registry_keys(void);
 void dinput_test_init_( const char *file, int line );
 void dinput_test_exit(void);
 
-HRESULT dinput_test_create_device_instance( DWORD version, const GUID *guid_inst, IDirectInputDevice8W **device );
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
 DWORD WINAPI dinput_test_device_thread( void *stop_event );
+
+#define fill_context( a, b ) fill_context_( __FILE__, __LINE__, a, b )
+void fill_context_( const char *file, int line, char *buffer, SIZE_T size );
 
 #define check_member_( file, line, val, exp, fmt, member )                                         \
     ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )
@@ -116,34 +118,5 @@ DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HANDLE *eve
 
 #define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
 HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries );
-
-static inline const char *debugstr_ok( const char *cond )
-{
-    int c, n = 0;
-    /* skip possible casts */
-    while ((c = *cond++))
-    {
-        if (c == '(') n++;
-        if (!n) break;
-        if (c == ')') n--;
-    }
-    if (!strchr( cond - 1, '(' )) return wine_dbg_sprintf( "got %s", cond - 1 );
-    return wine_dbg_sprintf( "%.*s returned", (int)strcspn( cond - 1, "( " ), cond - 1 );
-}
-
-#define ok_eq( e, r, t, f, ... )                                                                   \
-    do                                                                                             \
-    {                                                                                              \
-        t v = (r);                                                                                 \
-        ok( v == (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
-    } while (0)
-#define ok_ne( e, r, t, f, ... )                                                                   \
-    do                                                                                             \
-    {                                                                                              \
-        t v = (r);                                                                                 \
-        ok( v != (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
-    } while (0)
-#define ok_ret( e, r ) ok_eq( e, r, UINT_PTR, "%Iu, error %ld", GetLastError() )
-#define ok_hr( e, r ) ok_eq( e, r, HRESULT, "%#lx" )
 
 #endif /* __WINE_DINPUT_TEST_H */

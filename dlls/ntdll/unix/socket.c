@@ -68,6 +68,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winioctl.h"
 #define USE_WS_PREFIX
@@ -572,15 +573,6 @@ struct ip_hdr
     ULONG daddr;
 };
 
-struct ipv6_pseudo_header
-{
-    struct in6_addr src;
-    struct in6_addr dst;
-    UINT32 next_len; /* incapsulated packet length in network byte order */
-    BYTE zero[3];
-    BYTE next_header;
-};
-
 struct icmp_hdr
 {
     BYTE type;
@@ -596,12 +588,12 @@ struct icmp_hdr
     } un;
 };
 
-static unsigned int chksum_add( BYTE *data, unsigned int count, unsigned int sum )
+/* rfc 1071 checksum */
+static unsigned short chksum(BYTE *data, unsigned int count)
 {
-    unsigned int carry = 0;
-    unsigned short s;
+    unsigned int sum = 0, carry = 0;
+    unsigned short check, s;
 
-    assert( !(count % 2) );
     while (count > 1)
     {
         s = *(unsigned short *)data;
@@ -612,18 +604,9 @@ static unsigned int chksum_add( BYTE *data, unsigned int count, unsigned int sum
         count -= 2;
     }
     sum += carry; /* This won't produce another carry */
-    return sum;
-}
-
-/* rfc 1071 checksum */
-static unsigned short chksum( BYTE *data, unsigned int count, unsigned int sum )
-{
-    unsigned short check;
-
-    sum = chksum_add( data, count & ~1u, sum );
     sum = (sum & 0xffff) + (sum >> 16);
 
-    if (count % 2) sum += data[count - 1]; /* LE-only */
+    if (count) sum += *data; /* LE-only */
 
     sum = (sum & 0xffff) + (sum >> 16);
     /* fold in any carry */
@@ -631,60 +614,6 @@ static unsigned short chksum( BYTE *data, unsigned int count, unsigned int sum )
 
     check = ~sum;
     return check;
-}
-
-static void set_ipv6_addr_from_pktinfo( struct msghdr *hdr, struct in6_addr *addr )
-{
-#ifdef IPV6_PKTINFO
-    struct in6_pktinfo *info;
-    struct cmsghdr *cmsg;
-
-    for (cmsg = CMSG_FIRSTHDR( hdr ); cmsg; cmsg = CMSG_NXTHDR( hdr, cmsg ))
-    {
-        if (cmsg->cmsg_level != IPPROTO_IPV6) continue;
-        if (cmsg->cmsg_type != IPV6_PKTINFO) continue;
-        info = (struct in6_pktinfo *)CMSG_DATA( cmsg );
-        *addr = info->ipi6_addr;
-        return;
-    }
-#endif
-}
-
-static ssize_t fixup_icmpv6_over_dgram( struct msghdr *hdr, void *buf, union unix_sockaddr *unix_addr,
-                                      HANDLE handle, ssize_t recv_len )
-{
-    struct ipv6_pseudo_header ip_h;
-    struct icmp_hdr *icmp_h = buf;
-    unsigned int fixup_status;
-    unsigned int sum;
-
-    if (recv_len < sizeof(*icmp_h)) return recv_len;
-
-    SERVER_START_REQ( socket_get_icmp_id )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->icmp_seq = icmp_h->un.echo.sequence;
-        if (!(fixup_status = wine_server_call( req )))
-            icmp_h->un.echo.id = reply->icmp_id;
-    }
-    SERVER_END_REQ;
-
-    if (fixup_status)
-    {
-        WARN( "socket_get_icmp_id returned %#x.\n", fixup_status );
-        return recv_len;
-    }
-
-    memset( &ip_h, 0, sizeof(ip_h) );
-    ip_h.src = unix_addr->in6.sin6_addr;
-    set_ipv6_addr_from_pktinfo( hdr, &ip_h.dst );
-    ip_h.next_len = htonl( recv_len );
-    ip_h.next_header = IPPROTO_ICMPV6;
-    sum = chksum_add( (BYTE *)&ip_h, sizeof(ip_h), 0 );
-    icmp_h->checksum = 0;
-    icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len, sum );
-
-    return recv_len;
 }
 
 static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *unix_addr,
@@ -706,9 +635,6 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
 
     buf = hdr->msg_iov[0].iov_base;
     buf_len = hdr->msg_iov[0].iov_len;
-
-    if (unix_addr->addr.sa_family == AF_INET6)
-        return fixup_icmpv6_over_dgram( hdr, buf, unix_addr, handle, recv_len );
 
     if (recv_len + sizeof(ip_h) > buf_len)
         *status = STATUS_BUFFER_OVERFLOW;
@@ -774,10 +700,10 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
         if (!fixup_status)
         {
             icmp_h->checksum = 0;
-            icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h), 0 );
+            icmp_h->checksum = chksum( (BYTE *)icmp_h, recv_len - sizeof(ip_h) );
         }
     }
-    ip_h.checksum = chksum( (BYTE *)&ip_h, sizeof(ip_h), 0 );
+    ip_h.checksum = chksum( (BYTE *)&ip_h, sizeof(ip_h) );
     memcpy( buf, &ip_h, min( sizeof(ip_h), buf_len ));
 
     return recv_len;
@@ -901,7 +827,7 @@ static BOOL is_icmp_over_dgram( int fd )
     int val;
 
     len = sizeof(val);
-    if (getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, (char *)&val, &len ) || (val != IPPROTO_ICMP && val != IPPROTO_ICMPV6))
+    if (getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, (char *)&val, &len ) || val != IPPROTO_ICMP)
         return FALSE;
 
     len = sizeof(val);
@@ -2092,7 +2018,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             {
                 ws_linger->l_onoff = unix_linger.l_onoff;
                 ws_linger->l_linger = unix_linger.l_linger;
-                io->Status = STATUS_SUCCESS;
                 io->Information = sizeof(*ws_linger);
             }
 
@@ -2164,7 +2089,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             else
             {
                 io->Information = len;
-                io->Status = status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
             break;
         }
@@ -2381,7 +2306,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             else
             {
                 io->Information = len;
-                io->Status = status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
             break;
         }
@@ -2618,7 +2543,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 ws_dev->irdaDeviceHints2 = unix_dev->hints[1];
                 ws_dev->irdaCharSet = unix_dev->charset;
             }
-            io->Status = status = STATUS_SUCCESS;
+            status = STATUS_SUCCESS;
             break;
         }
 #endif

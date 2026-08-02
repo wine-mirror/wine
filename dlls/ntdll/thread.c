@@ -24,6 +24,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -256,8 +257,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     ULONG flags = suspended ? THREAD_CREATE_FLAGS_CREATE_SUSPENDED : 0;
     ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
     PS_ATTRIBUTE_LIST *attr_list = (PS_ATTRIBUTE_LIST *)buffer;
-    struct _ACTIVATION_CONTEXT *actctx;
-    HANDLE handle;
+    HANDLE handle, actctx;
     TEB *teb;
     ULONG ret;
     NTSTATUS status;

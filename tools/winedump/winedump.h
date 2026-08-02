@@ -143,8 +143,6 @@ extern void *dump_base;
 extern size_t dump_total_len;
 
 BOOL globals_dump_sect(const char*);
-BOOL globals_dump_sect_with_option(const char *, const char *, const char **);
-BOOL globals_dump_sect_with_range(const char *, unsigned *, unsigned *);
 
 /* Names to use for output DLL */
 #define OUTPUT_DLL_NAME \
@@ -230,8 +228,7 @@ void            dump_data_offset( const unsigned char *ptr, unsigned int size, u
 void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
 const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
-int             dump_strA( const char *str, size_t len );
-int             dump_strW( const WCHAR *str, size_t len );
+void            dump_unicode_str( const unsigned short *str, int len );
 const char*     get_hexint64_str( DWORD64 l );
 const char*     get_uint64_str( DWORD64 l );
 const char*     get_guid_str(const GUID* guid);
@@ -278,7 +275,7 @@ extern void tlb_dump_resource( void *ptr, size_t size, const char *prefix );
 
 BOOL            codeview_dump_symbols(const void* root, unsigned long start, unsigned long size);
 BOOL            codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
-BOOL            codeview_dump_types_from_block(const void* table, unsigned long len, unsigned int cvtyp_from, unsigned int cvtyp_to);
+BOOL            codeview_dump_types_from_block(const void* table, unsigned long len);
 void            codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx);
 void            codeview_dump_linetab2(const char* linetab, DWORD size, const PDB_STRING_TABLE*, const char* pfx);
 const char*     pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned ofs);

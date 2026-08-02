@@ -84,16 +84,6 @@ static IXAudio2 *create_xaudio2(void)
     return audio;
 }
 
-#define check_refcount(a, b) check_refcount_(__LINE__, a, b)
-static void check_refcount_(int line, IUnknown *unk, LONG expected)
-{
-    LONG ref;
-
-    IUnknown_AddRef(unk);
-    ref = IUnknown_Release(unk);
-    ok_(__FILE__, line)(ref == expected, "got refcount %ld, expected %ld.\n", ref, expected);
-}
-
 static void test_interfaces(IXAudio2 *audio)
 {
     const GUID *td[] =
@@ -842,126 +832,6 @@ static void test_looping(IXAudio2 *xa)
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
 
-struct test_xapo
-{
-    IXAPO IXAPO_iface;
-};
-
-static struct test_xapo test_xapo;
-static BOOL test_xapo_supports_ixapo;
-static BOOL test_xapo_supports_ixapo27;
-
-static HRESULT WINAPI test_xapo_QueryInterface(IXAPO *iface, REFIID riid, void **ppvObject)
-{
-    if (IsEqualGUID(riid, &IID_IUnknown))
-        *ppvObject = &test_xapo.IXAPO_iface;
-    else if (test_xapo_supports_ixapo && IsEqualGUID(riid, &IID_IXAPO))
-        *ppvObject = &test_xapo.IXAPO_iface;
-    else if (test_xapo_supports_ixapo27 && IsEqualGUID(riid, &IID_IXAPO27))
-        *ppvObject = &test_xapo.IXAPO_iface;
-    else
-        *ppvObject = NULL;
-
-    if(*ppvObject)
-        return S_OK;
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI test_xapo_AddRef(IXAPO *iface)
-{
-    return 1;
-}
-
-static ULONG WINAPI test_xapo_Release(IXAPO *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI test_xapo_GetRegistrationProperties(IXAPO *iface,
-    XAPO_REGISTRATION_PROPERTIES **props)
-{
-    XAPO_REGISTRATION_PROPERTIES *p;
-
-    *props = CoTaskMemAlloc(sizeof(**props));
-    memset(*props, 0, sizeof(**props));
-    p = *props;
-    p->MinInputBufferCount = 1;
-    p->MaxInputBufferCount = 1000;
-    p->MinOutputBufferCount = 1;
-    p->MaxOutputBufferCount = 1000;
-    return S_OK;
-}
-
-static HRESULT WINAPI test_xapo_IsInputFormatSupported(IXAPO *iface,
-        const WAVEFORMATEX *output_fmt, const WAVEFORMATEX *input_fmt,
-        WAVEFORMATEX **supported_fmt)
-{
-    return S_OK;
-}
-
-static HRESULT WINAPI test_xapo_IsOutputFormatSupported(IXAPO *iface,
-        const WAVEFORMATEX *input_fmt, const WAVEFORMATEX *output_fmt,
-        WAVEFORMATEX **supported_fmt)
-{
-    return S_OK;
-}
-
-static HRESULT WINAPI test_xapo_Initialize(IXAPO *iface, const void *data,
-        UINT32 data_len)
-{
-    return S_OK;
-}
-
-static void WINAPI test_xapo_Reset(IXAPO *iface)
-{
-}
-
-static HRESULT WINAPI test_xapo_LockForProcess(IXAPO *iface, UINT32 in_params_count,
-        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *in_params,
-        UINT32 out_params_count,
-        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *out_params)
-{
-    return S_OK;
-}
-
-static void WINAPI test_xapo_UnlockForProcess(IXAPO *iface)
-{
-}
-
-static void WINAPI test_xapo_Process(IXAPO *iface, UINT32 in_params_count,
-        const XAPO_PROCESS_BUFFER_PARAMETERS *in_params,
-        UINT32 out_params_count,
-        XAPO_PROCESS_BUFFER_PARAMETERS *out_params, BOOL enabled)
-{
-}
-
-static UINT32 WINAPI test_xapo_CalcInputFrames(IXAPO *iface, UINT32 output_frames)
-{
-    return 0;
-}
-
-static UINT32 WINAPI test_xapo_CalcOutputFrames(IXAPO *iface, UINT32 input_frames)
-{
-    return 0;
-}
-
-static const IXAPOVtbl test_xapo_vtbl = {
-    test_xapo_QueryInterface,
-    test_xapo_AddRef,
-    test_xapo_Release,
-    test_xapo_GetRegistrationProperties,
-    test_xapo_IsInputFormatSupported,
-    test_xapo_IsOutputFormatSupported,
-    test_xapo_Initialize,
-    test_xapo_Reset,
-    test_xapo_LockForProcess,
-    test_xapo_UnlockForProcess,
-    test_xapo_Process,
-    test_xapo_CalcInputFrames,
-    test_xapo_CalcOutputFrames,
-};
-
 static void test_submix(IXAudio2 *xa)
 {
     HRESULT hr;
@@ -970,58 +840,14 @@ static void test_submix(IXAudio2 *xa)
     IXAudio2SubmixVoice *sub, *sub2;
     XAUDIO2_SEND_DESCRIPTOR send_desc = { 0 };
     XAUDIO2_VOICE_SENDS sends = { 1, &send_desc };
-    XAUDIO2_EFFECT_DESCRIPTOR effect;
-    XAUDIO2_EFFECT_CHAIN chain;
-
-    check_refcount((IUnknown *)xa, 1);
 
     IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08lx\n", hr);
 
-    effect.InitialState = TRUE;
-    effect.OutputChannels = 2;
-    effect.pEffect = NULL;
-
-    chain.EffectCount = 1;
-    chain.pEffectDescriptors = &effect;
-
-    if (XAUDIO2_VER >= 8)
-    {
-        /* These tests with invalid effect crash on earlier xaudio2 versions. */
-        hr = IXAudio2MasteringVoice_SetEffectChain(master, NULL);
-        ok(!hr, "got %#lx\n", hr);
-        hr = IXAudio2MasteringVoice_SetEffectChain(master, &chain);
-        ok(hr == XAUDIO2_E_INVALID_CALL, "got %#lx\n", hr);
-
-        hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, &chain);
-        ok(hr == XAUDIO2_E_INVALID_CALL, "got %#lx\n", hr);
-        test_xapo.IXAPO_iface.lpVtbl = &test_xapo_vtbl;
-
-        test_xapo_supports_ixapo = FALSE;
-        test_xapo_supports_ixapo27 = FALSE;
-        effect.pEffect = (IUnknown *)&test_xapo.IXAPO_iface;
-        hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, &chain);
-        ok(hr == XAUDIO2_E_INVALID_CALL, "got %#lx\n", hr);
-
-        test_xapo_supports_ixapo27 = TRUE;
-        hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, &chain);
-        ok(hr == XAUDIO2_E_INVALID_CALL, "got %#lx\n", hr);
-        hr = IXAudio2MasteringVoice_SetEffectChain(master, &chain);
-        ok(hr == XAUDIO2_E_INVALID_CALL, "got %#lx\n", hr);
-
-        test_xapo_supports_ixapo = TRUE;
-        test_xapo_supports_ixapo27 = FALSE;
-        hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, &chain);
-        ok(!hr, "got %#lx.\n", hr);
-        IXAudio2SubmixVoice_DestroyVoice(sub);
-    }
-
     hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, NULL);
     ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
-
-    check_refcount((IUnknown *)xa, 1);
 
     IXAudio2SubmixVoice_GetVoiceDetails(sub, &details);
     ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
@@ -1052,14 +878,6 @@ static void test_submix(IXAudio2 *xa)
     IXAudio2SubmixVoice_GetVoiceDetails(sub2, &details);
     ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
     ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-
-    IXAudio2MasteringVoice_DestroyVoice(master);
-    memset(&details, 0xcc, sizeof(details));
-    IXAudio2MasteringVoice_GetVoiceDetails(master, &details);
-    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
-    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
-
-    check_refcount((IUnknown *)xa, 1);
 
     sends.SendCount = 0;
     hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
@@ -1439,30 +1257,6 @@ static void test_setchannelvolumes(IXAudio2 *xa)
     IXAudio2MasteringVoice_DestroyVoice(master);
 }
 
-#if XAUDIO2_VER >= 8
-static void test_XAudio2CreateWithVersionInfo(void)
-{
-    IXAudio2 *audio;
-    HRESULT hr;
-    HMODULE mod = GetModuleHandleA("xaudio2_8.dll");
-    HRESULT (WINAPI *pXAudio2CreateWithVersionInfo)(IXAudio2**, UINT32, XAUDIO2_PROCESSOR, DWORD);
-    pXAudio2CreateWithVersionInfo = (void *)GetProcAddress(mod, "XAudio2CreateWithVersionInfo");
-
-    if(!pXAudio2CreateWithVersionInfo){ /* not available up to win10-1709 */
-        win_skip("Function XAudio2CreateWithVersionInfo not present in xaudio2_8.dll\n");
-        return;
-    }
-
-    hr = pXAudio2CreateWithVersionInfo(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR, 0);
-    ok(hr == S_OK, "got %#lx.\n", hr);
-    IXAudio2_Release(audio);
-
-    hr = pXAudio2CreateWithVersionInfo(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR, ~0);
-    ok(hr == S_OK, "got %#lx.\n", hr);
-    IXAudio2_Release(audio);
-}
-#endif
-
 static UINT32 check_has_devices(IXAudio2 *xa)
 {
     HRESULT hr;
@@ -1488,10 +1282,6 @@ START_TEST(xaudio2)
 
     if (!(audio = create_xaudio2()))
         return;
-
-#if XAUDIO2_VER >= 8
-    test_XAudio2CreateWithVersionInfo();
-#endif
 
     test_interfaces(audio);
 

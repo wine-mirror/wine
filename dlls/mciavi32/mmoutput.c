@@ -472,14 +472,6 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
     }
 
 paint_frame:
-    if (!(wma->hdd = DrawDibOpen()))
-    {
-	ERR("DrawDibOpen() failed.\n");
-	free(wma->outdata);
-	wma->outdata = NULL;
-	return FALSE;
-    }
-
     hDC = wma->hWndPaint ? GetDC(wma->hWndPaint) : 0;
     if (hDC)
     {
@@ -596,29 +588,23 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
 {
     void* 		pBitmapData;
     LPBITMAPINFO	pBitmapInfo;
-    DWORD		frame;
 
     if (!hDC || !wma->inbih)
 	return 0;
 
-    if (wma->dwCurrVideoFrame >= wma->dwPlayableVideoFrames)
-        frame = wma->dwPlayableVideoFrames - 1;
-    else
-        frame = wma->dwCurrVideoFrame;
+    TRACE("Painting frame %lu (cached %lu)\n", wma->dwCurrVideoFrame, wma->dwCachedFrame);
 
-    TRACE("Painting frame %lu (cached %lu)\n", frame, wma->dwCachedFrame);
-
-    if (frame != wma->dwCachedFrame)
+    if (wma->dwCurrVideoFrame != wma->dwCachedFrame)
     {
-        if (!wma->lpVideoIndex[frame].dwOffset)
+        if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset)
 	    return 0;
 
-        if (wma->lpVideoIndex[frame].dwSize)
+        if (wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize)
         {
-            mmioSeek(wma->hFile, wma->lpVideoIndex[frame].dwOffset, SEEK_SET);
-            mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[frame].dwSize);
+            mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
+            mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
 
-            wma->inbih->biSizeImage = wma->lpVideoIndex[frame].dwSize;
+            wma->inbih->biSizeImage = wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize;
 
             if (wma->hic && ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
                                          wma->outbih, wma->outdata) != ICERR_OK)
@@ -628,7 +614,7 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
             }
         }
 
-        wma->dwCachedFrame = frame;
+        wma->dwCachedFrame = wma->dwCurrVideoFrame;
     }
 
     if (wma->hic) {
@@ -639,9 +625,12 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
         pBitmapInfo = (LPBITMAPINFO)wma->inbih;
     }
 
-    DrawDibDraw(wma->hdd, hDC, wma->dest.left, wma->dest.top, wma->dest.right - wma->dest.left, wma->dest.bottom - wma->dest.top,
-                &pBitmapInfo->bmiHeader, pBitmapData,
-                wma->source.left, wma->source.top, wma->source.right - wma->source.left, wma->source.bottom - wma->source.top, 0);
+    StretchDIBits(hDC,
+                  wma->dest.left, wma->dest.top,
+                  wma->dest.right - wma->dest.left, wma->dest.bottom - wma->dest.top,
+                  wma->source.left, wma->source.top,
+                  wma->source.right - wma->source.left, wma->source.bottom - wma->source.top,
+                  pBitmapData, pBitmapInfo, DIB_RGB_COLORS, SRCCOPY);
 
     return (wma->ash_video.dwScale / (double)wma->ash_video.dwRate) * 1000000;
 }

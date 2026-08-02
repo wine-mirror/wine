@@ -61,7 +61,6 @@ xsltEvalXPathPredicate(xsltTransformContextPtr ctxt, xmlXPathCompExprPtr comp,
     int oldNsNr;
     xmlNsPtr *oldNamespaces;
     xmlNodePtr oldInst;
-    xmlNodePtr oldNode;
     int oldProximityPosition, oldContextSize;
 
     if ((ctxt == NULL) || (ctxt->inst == NULL)) {
@@ -70,7 +69,6 @@ xsltEvalXPathPredicate(xsltTransformContextPtr ctxt, xmlXPathCompExprPtr comp,
         return(0);
     }
 
-    oldNode = ctxt->xpathCtxt->node;
     oldContextSize = ctxt->xpathCtxt->contextSize;
     oldProximityPosition = ctxt->xpathCtxt->proximityPosition;
     oldNsNr = ctxt->xpathCtxt->nsNr;
@@ -98,9 +96,8 @@ xsltEvalXPathPredicate(xsltTransformContextPtr ctxt, xmlXPathCompExprPtr comp,
 	ctxt->state = XSLT_STATE_STOPPED;
 	ret = 0;
     }
-
-    ctxt->xpathCtxt->node = oldNode;
     ctxt->xpathCtxt->nsNr = oldNsNr;
+
     ctxt->xpathCtxt->namespaces = oldNamespaces;
     ctxt->inst = oldInst;
     ctxt->xpathCtxt->contextSize = oldContextSize;
@@ -140,7 +137,7 @@ xsltEvalXPathStringNs(xsltTransformContextPtr ctxt, xmlXPathCompExprPtr comp,
     }
 
     oldInst = ctxt->inst;
-    oldNode = ctxt->xpathCtxt->node;
+    oldNode = ctxt->node;
     oldPos = ctxt->xpathCtxt->proximityPosition;
     oldSize = ctxt->xpathCtxt->contextSize;
     oldNsNr = ctxt->xpathCtxt->nsNr;
@@ -170,7 +167,7 @@ xsltEvalXPathStringNs(xsltTransformContextPtr ctxt, xmlXPathCompExprPtr comp,
 	 "xsltEvalXPathString: returns %s\n", ret));
 #endif
     ctxt->inst = oldInst;
-    ctxt->xpathCtxt->node = oldNode;
+    ctxt->node = oldNode;
     ctxt->xpathCtxt->contextSize = oldSize;
     ctxt->xpathCtxt->proximityPosition = oldPos;
     ctxt->xpathCtxt->nsNr = oldNsNr;
@@ -871,3 +868,5 @@ xsltTemplateProcess(xsltTransformContextPtr ctxt ATTRIBUTE_UNUSED, xmlNodePtr no
 
     return(0);
 }
+
+

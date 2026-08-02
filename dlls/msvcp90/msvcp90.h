@@ -36,6 +36,7 @@ typedef SSIZE_T streamsize;
 
 void __cdecl _invalid_parameter_noinfo(void);
 BOOL __cdecl __uncaught_exception(void);
+int __cdecl _callnewh(size_t);
 
 void __cdecl operator_delete(void*);
 void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
@@ -733,7 +734,6 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
 
-void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 void __cdecl DECLSPEC_NORETURN _Xinvalid_argument(const char*);
 void __cdecl DECLSPEC_NORETURN _Xlength_error(const char*);

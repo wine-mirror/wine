@@ -2,12 +2,12 @@
 
 .wine-test:
   stage: test
-  image: $CI_REGISTRY/wine/wine:debian-trixie
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   interruptible: true
   variables:
     GIT_STRATEGY: none
     GECKO_VER: 2.47.4
-    MONO_VER: 11.2.0
+    MONO_VER: 10.0.0
   cache:
     - key: wine-gecko-$GECKO_VER
       paths:
@@ -47,22 +47,10 @@
     - wineserver -w
     - printf '\e[0Ksection_end:%s:wine_test_prepare_env\r\e[0K' "$(date +%s)"
 
-.wine-test-windows:
-  stage: test
-  interruptible: true
-  variables:
-    GIT_STRATEGY: none
-    # Non-ascii characters in authors name may get into the output of kernel32:process test which cause
-    # qemu-agent.py in Windows to fail with: UnicodeDecodeError: 'utf-8' codec can't decode byte ...
-    CI_COMMIT_AUTHOR: ""
-    CI_COMMIT_DESCRIPTION: ""
-    CI_COMMIT_MESSAGE: ""
-    GITLAB_USER_NAME: ""
-
 test-linux-64:
   extends: .wine-test
   variables:
-    INCLUDE_TESTS: "dinput ntoskrnl.exe"
+    INCLUDE_TESTS: "dinput"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
@@ -79,13 +67,15 @@ test-linux-64:
 
 test-linux-32:
   extends: .wine-test
+  variables:
+    EXCLUDE_TESTS: "d3d11:d3d11 d3d9:d3d9ex d3d9:visual"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
     - job: build-linux
   script:
     - export WINETEST_COLOR=1
-    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -J winetest.xml
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -J winetest.xml -n $EXCLUDE_TESTS
   artifacts:
     when: always
     paths:
@@ -94,7 +84,10 @@ test-linux-32:
       junit: winetest.xml
 
 test-win10-21h2-32:
-  extends: .wine-test-windows
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
@@ -122,7 +115,10 @@ test-win10-21h2-32:
       junit: winetest.xml
 
 test-win10-21h2-64:
-  extends: .wine-test-windows
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
@@ -158,11 +154,6 @@ debian-32:
   script:
     - wine usr/local/lib/wine/i386-windows/winetest.exe -q
 
-debian-wow64:
-  extends: debian-32
-  variables:
-    WINEARCH: "wow64"
-
 debian-64:
   extends: .wine-test
   rules:
@@ -173,7 +164,10 @@ debian-64:
     - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q
 
 win10-21h2-32:
-  extends: .wine-test-windows
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
@@ -184,7 +178,10 @@ win10-21h2-32:
     - ./winetest.exe -q
 
 win10-21h2-64:
-  extends: .wine-test-windows
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:

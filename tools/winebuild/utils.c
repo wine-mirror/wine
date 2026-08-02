@@ -57,6 +57,23 @@ void fatal_error( const char *msg, ... )
     exit(1);
 }
 
+void fatal_perror( const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    if (input_file_name)
+    {
+        fprintf( stderr, "%s:", input_file_name );
+        if (current_line)
+            fprintf( stderr, "%d:", current_line );
+        fputc( ' ', stderr );
+    }
+    vfprintf( stderr, msg, valist );
+    perror( " " );
+    va_end( valist );
+    exit(1);
+}
+
 void error( const char *msg, ... )
 {
     va_list valist;
@@ -121,18 +138,18 @@ static struct strarray get_tools_path(void)
 static const char *find_binary( const char *prefix, const char *name )
 {
     struct strarray dirs = get_tools_path();
-    unsigned int maxlen = 0;
+    unsigned int i, maxlen = 0;
     struct stat st;
     char *p, *file;
 
     if (strchr( name, '/' )) return name;
     if (!prefix) prefix = "";
-    STRARRAY_FOR_EACH( dir, &dirs ) maxlen = max( maxlen, strlen(dir) + 2 );
+    for (i = 0; i < dirs.count; i++) maxlen = max( maxlen, strlen(dirs.str[i]) + 2 );
     file = xmalloc( maxlen + strlen(prefix) + strlen(name) + sizeof(EXEEXT) + 1 );
 
-    STRARRAY_FOR_EACH( dir, &dirs )
+    for (i = 0; i < dirs.count; i++)
     {
-        strcpy( file, dir );
+        strcpy( file, dirs.str[i] );
         p = file + strlen(file);
         if (p == file) *p++ = '.';
         if (p[-1] != '/') *p++ = '/';
@@ -227,11 +244,7 @@ struct strarray find_tool( const char *name, const char * const *names )
         names++;
     }
 
-    if (!file && cc_command.count)
-    {
-        file = find_clang_tool( cc_command, strmake( "llvm-%s", name ));
-        if (!file) file = find_clang_tool( cc_command, name );
-    }
+    if (!file && cc_command.count) file = find_clang_tool( cc_command, name );
     if (!file) file = find_binary( "llvm", name );
     if (!file) file = find_clang_tool( empty_strarray, strmake( "llvm-%s", name ));
     if (!file) file = find_clang_tool( empty_strarray, name );
@@ -261,6 +274,7 @@ struct strarray get_as_command(void)
 {
     struct strarray args = empty_strarray;
     const char *file;
+    unsigned int i;
     int using_cc = 0;
 
     if (cc_command.count)
@@ -296,7 +310,8 @@ struct strarray get_as_command(void)
         if (cpu_option) strarray_add( &args, strmake("-mcpu=%s", cpu_option) );
         if (fpu_option) strarray_add( &args, strmake("-mfpu=%s", fpu_option) );
         if (arch_option) strarray_add( &args, strmake("-march=%s", arch_option) );
-        STRARRAY_FOR_EACH( path, &tools_path ) strarray_add( &args, strmake("-B%s", path ));
+        for (i = 0; i < tools_path.count; i++)
+            strarray_add( &args, strmake("-B%s", tools_path.str[i] ));
         return args;
     }
 
@@ -345,7 +360,6 @@ struct strarray get_ld_command(void)
             break;
         case PLATFORM_MINGW:
         case PLATFORM_WINDOWS:
-        case PLATFORM_WINDOWS_GNU:
             strarray_add( &args, "-m" );
             strarray_add( &args, (force_pointer_size == 8) ? "i386pep" : "i386pe" );
             break;
@@ -355,6 +369,10 @@ struct strarray get_ld_command(void)
             break;
         }
     }
+
+    if (target.cpu == CPU_ARM && !is_pe())
+        strarray_add( &args, "--no-wchar-size-warning" );
+
     return args;
 }
 
@@ -602,6 +620,42 @@ DLLSPEC *alloc_dll_spec(void)
 }
 
 
+static void free_exports( struct exports *entries )
+{
+    free( entries->entry_points );
+    free( entries->names );
+    free( entries->ordinals );
+}
+
+
+/*******************************************************************
+ *         free_dll_spec
+ *
+ * Free dll spec file descriptor
+ */
+void free_dll_spec( DLLSPEC *spec )
+{
+    int i;
+
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        free( odp->name );
+        free( odp->export_name );
+        free( odp->link_name );
+    }
+    free_exports( &spec->exports );
+    free_exports( &spec->native_exports );
+    free( spec->file_name );
+    free( spec->dll_name );
+    free( spec->c_name );
+    free( spec->init_func );
+    free( spec->entry_points );
+    free( spec->resources );
+    free( spec );
+}
+
+
 /*******************************************************************
  *         make_c_identifier
  *
@@ -626,37 +680,47 @@ char *make_c_identifier( const char *str )
  *
  * Generate an internal name for a stub entry point.
  */
-static const char *get_stub_name( const ORDDEF *odp )
+const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
 {
+    static char *buffer;
+
+    free( buffer );
     if (odp->name || odp->export_name)
     {
-        char *p, *buffer = strmake( "__wine_stub_%s", odp->name ? odp->name : odp->export_name );
+        char *p;
+        buffer = strmake( "__wine_stub_%s", odp->name ? odp->name : odp->export_name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
+        free( buffer );
     }
-    return strmake( "__wine_stub_%d", odp->ordinal );
+    buffer = strmake( "__wine_stub_%s_%d", make_c_identifier(spec->file_name), odp->ordinal );
+    return buffer;
 }
 
 /* return the stdcall-decorated name for an entry point */
 const char *get_abi_name( const ORDDEF *odp, const char *name )
 {
+    static char *buffer;
+    char *ret;
+
     if (target.cpu != CPU_i386) return name;
 
     switch (odp->type)
     {
-    case TYPE_STUB:
     case TYPE_STDCALL:
         if (is_pe())
         {
             if (odp->flags & FLAG_THISCALL) return name;
-            if (odp->flags & FLAG_FASTCALL) return strmake( "@%s@%u", name, get_args_size( odp ));
-            if (!kill_at) return strmake( "%s@%u", name, get_args_size( odp ));
+            if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", name, get_args_size( odp ));
+            else if (!kill_at) ret = strmake( "%s@%u", name, get_args_size( odp ));
+            else return name;
         }
         else
         {
-            if (odp->flags & FLAG_THISCALL) return strmake( "__thiscall_%s", name );
-            if (odp->flags & FLAG_FASTCALL) return strmake( "__fastcall_%s", name );
+            if (odp->flags & FLAG_THISCALL) ret = strmake( "__thiscall_%s", name );
+            else if (odp->flags & FLAG_FASTCALL) ret = strmake( "__fastcall_%s", name );
+            else return name;
         }
         break;
 
@@ -665,20 +729,22 @@ const char *get_abi_name( const ORDDEF *odp, const char *name )
         {
             int args = get_args_size( odp );
             if (odp->flags & FLAG_REGISTER) args += get_ptr_size();  /* context argument */
-            return strmake( "%s@%u", name, args );
+            ret = strmake( "%s@%u", name, args );
         }
+        else return name;
         break;
 
     default:
-        break;
+        return name;
     }
-    return name;
+
+    free( buffer );
+    buffer = ret;
+    return ret;
 }
 
 const char *get_link_name( const ORDDEF *odp )
 {
-    if (odp->type == TYPE_STUB && !(odp->flags & FLAG_SYSCALL)) return get_stub_name( odp );
-
     return get_abi_name( odp, odp->link_name );
 }
 
@@ -744,17 +810,20 @@ unsigned int get_args_size( const ORDDEF *odp )
 /* return the assembly name for a C symbol */
 const char *asm_name( const char *sym )
 {
+    static char *buffer;
+
     switch (target.platform)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
         if (target.cpu != CPU_i386) return sym;
         if (sym[0] == '@') return sym;  /* fastcall */
         /* fall through */
     case PLATFORM_APPLE:
         if (sym[0] == '.' && sym[1] == 'L') return sym;
-        return strmake( "_%s", sym );
+        free( buffer );
+        buffer = strmake( "_%s", sym );
+        return buffer;
     default:
         return sym;
     }
@@ -781,7 +850,6 @@ void output_function_header( const char *func, int global )
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
         if (target.cpu == CPU_ARM64EC) output( ".section .text,\"xr\",discard,%s\n\t", name );
         output( "\t.def %s\n\t.scl 2\n\t.type 32\n\t.endef\n", name );
         if (global) output( "\t.globl %s\n", name );
@@ -803,7 +871,6 @@ void output_function_size( const char *name )
     case PLATFORM_APPLE:
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
         break;
     default:
         output( "\t.size %s, .-%s\n", name, name );
@@ -895,7 +962,6 @@ void output_gnu_stack_note(void)
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
     case PLATFORM_APPLE:
         break;
     default:
@@ -907,20 +973,26 @@ void output_gnu_stack_note(void)
 /* return a global symbol declaration for an assembly symbol */
 const char *asm_globl( const char *func )
 {
+    static char *buffer;
+
+    free( buffer );
     switch (target.platform)
     {
     case PLATFORM_APPLE:
-        return strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU:
     {
         const char *name = asm_name( func );
-        return strmake( "\t.globl %s\n%s:", name, name );
+        buffer = strmake( "\t.globl %s\n%s:", name, name );
+        break;
     }
     default:
-        return strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
+        buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
+        break;
     }
+    return buffer;
 }
 
 const char *get_asm_ptr_keyword(void)
@@ -949,11 +1021,10 @@ const char *get_asm_export_section(void)
 {
     switch (target.platform)
     {
-    case PLATFORM_APPLE:       return ".data";
+    case PLATFORM_APPLE:   return ".data";
     case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU: return ".section .edata";
-    default:                   return ".section .data";
+    case PLATFORM_WINDOWS: return ".section .edata";
+    default:               return ".section .data";
     }
 }
 
@@ -961,11 +1032,8 @@ const char *get_asm_rodata_section(void)
 {
     switch (target.platform)
     {
-    case PLATFORM_APPLE:       return ".const";
-    case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU: return ".section .rdata";
-    default:                   return ".section .rodata";
+    case PLATFORM_APPLE: return ".const";
+    default:             return ".section .rodata";
     }
 }
 
@@ -973,11 +1041,10 @@ const char *get_asm_rsrc_section(void)
 {
     switch (target.platform)
     {
-    case PLATFORM_APPLE:       return ".data";
+    case PLATFORM_APPLE:   return ".data";
     case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU: return ".section .rsrc";
-    default:                   return ".section .data";
+    case PLATFORM_WINDOWS: return ".section .rsrc";
+    default:               return ".section .data";
     }
 }
 
@@ -985,10 +1052,7 @@ const char *get_asm_string_section(void)
 {
     switch (target.platform)
     {
-    case PLATFORM_APPLE:       return ".cstring";
-    case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
-    case PLATFORM_WINDOWS_GNU: return ".section .rdata";
-    default:                   return ".section .rodata";
+    case PLATFORM_APPLE: return ".cstring";
+    default:             return ".section .rodata";
     }
 }

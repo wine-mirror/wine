@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct property_set_header
 {
@@ -83,7 +83,7 @@ struct property_data
     } u;
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 static HRESULT (WINAPI *pPropVariantChangeType)
     (PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
@@ -129,7 +129,6 @@ static UINT get_type( UINT uiProperty )
     case PID_LASTPRINTED:
     case PID_CREATE_DTM:
     case PID_LASTSAVE_DTM:
-    case PID_EDITTIME:
          return VT_FILETIME;
 
     case PID_WORDCOUNT:

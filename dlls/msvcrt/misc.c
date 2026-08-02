@@ -213,6 +213,8 @@ void* CDECL bsearch(const void *key, const void *base, size_t nmemb,
  */
 #ifdef __i386__
 
+# if defined(__GNUC__) || defined(__clang__)
+
 __ASM_GLOBAL_FUNC(_chkesp,
                   "jnz 1f\n\t"
                   "ret\n"
@@ -239,6 +241,16 @@ void CDECL chkesp_fail(void)
   ERR("Stack pointer incorrect after last function call - Bad prototype/spec entry?\n");
   DebugBreak();
 }
+
+# else  /* __GNUC__ || __clang__ */
+
+/**********************************************************************/
+
+void CDECL _chkesp(void)
+{
+}
+
+# endif  /* __GNUC__ || __clang__ */
 
 #endif  /* __i386__ */
 

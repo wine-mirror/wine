@@ -6639,13 +6639,11 @@ static void test_shader_semantics(void)
     },
     invalid_2[] =
     {
-        0xfffe0400,
-        0x0000ffff
+        0xfffe0400
     },
     invalid_3[] =
     {
-        0xfffe0000,
-        0x0000ffff
+        0xfffe0000
     },
     vs_1_1[] =
     {

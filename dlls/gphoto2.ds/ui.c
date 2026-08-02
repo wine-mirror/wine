@@ -127,7 +127,7 @@ static void PopulateImageList(HIMAGELIST *iList, HWND list)
                          IMAGE_BITMAP, (LPARAM)static_bitmap);
             RedrawWindow(progress_dialog,NULL,NULL,RDW_INTERNALPAINT|RDW_UPDATENOW|RDW_ALLCHILDREN);
         }
-        DestroyWindow(progress_dialog);
+        EndDialog(progress_dialog,0);
 }
 
 static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -239,7 +239,7 @@ HWND TransferringDialogBox(HWND dialog, LONG progress)
 
 	if (progress == -1)
 	{
-		DestroyWindow(dialog);
+		EndDialog(dialog,0);
 		return NULL;
 	}
 

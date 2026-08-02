@@ -1837,7 +1837,7 @@ typedef struct tagRGBTRIPLE {
   BYTE rgbtRed;
 } RGBTRIPLE;
 
-#pragma pack(push,2)
+#include <pshpack2.h>
 typedef struct
 {
     WORD    bfType;
@@ -1846,7 +1846,7 @@ typedef struct
     WORD    bfReserved2;
     DWORD   bfOffBits;
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
-#pragma pack(pop)
+#include <poppack.h>
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -2032,7 +2032,7 @@ typedef struct _BLENDFUNCTION
 
 
 /* Metafile header structure */
-#pragma pack(push,2)
+#include <pshpack2.h>
 typedef struct
 {
     WORD       mtType;
@@ -2043,7 +2043,7 @@ typedef struct
     DWORD      mtMaxRecord;
     WORD       mtNoParameters;
 } METAHEADER, *PMETAHEADER, *LPMETAHEADER;
-#pragma pack(pop)
+#include <poppack.h>
 
 /* Metafile typical record structure */
 typedef struct
@@ -3957,7 +3957,6 @@ WINGDIAPI UINT        WINAPI GetEnhMetaFileDescriptionW(HENHMETAFILE,UINT,LPWSTR
 #define                      GetEnhMetaFileDescription WINELIB_NAME_AW(GetEnhMetaFileDescription)
 WINGDIAPI UINT        WINAPI GetEnhMetaFileHeader(HENHMETAFILE,UINT,LPENHMETAHEADER);
 WINGDIAPI UINT        WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE,UINT,LPPALETTEENTRY);
-WINGDIAPI UINT        WINAPI GetEnhMetaFilePixelFormat(HENHMETAFILE,UINT,PIXELFORMATDESCRIPTOR*);
 WINGDIAPI DWORD       WINAPI GetFontData(HDC,DWORD,DWORD,LPVOID,DWORD);
 WINGDIAPI DWORD       WINAPI GetFontLanguageInfo(HDC);
 WINGDIAPI DWORD       WINAPI GetFontUnicodeRanges(HDC,LPGLYPHSET);

@@ -16,8 +16,8 @@
 @ stdcall DsGetSiteNameA(str ptr)
 @ stdcall DsGetSiteNameW(wstr ptr)
 @ stub DsMergeForestTrustInformationW
-@ stdcall DsRoleFreeMemory(ptr) dsrole.DsRoleFreeMemory
-@ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr) dsrole.DsRoleGetPrimaryDomainInformation
+@ stdcall DsRoleFreeMemory(ptr)
+@ stdcall DsRoleGetPrimaryDomainInformation(wstr long ptr)
 @ stub DsValidateSubnetName
 @ stub I_BrowserDebugCall
 @ stub I_BrowserDebugTrace
@@ -99,7 +99,7 @@
 @ stdcall NetGetAnyDCName(wstr wstr ptr)
 @ stdcall NetGetDCName(wstr wstr ptr)
 @ stub NetGetDisplayInformationIndex
-@ stdcall NetGetJoinInformation(wstr ptr ptr) wkscli.NetGetJoinInformation
+@ stdcall NetGetJoinInformation(wstr ptr ptr)
 @ stub NetGroupAdd
 @ stdcall NetGroupAddUser(wstr wstr wstr)
 @ stub NetGroupDel
@@ -203,10 +203,10 @@
 @ stdcall NetShareGetInfo(wstr wstr long ptr)
 @ stub NetShareSetInfo
 @ stdcall NetStatisticsGet(wstr wstr long long ptr)
-@ stdcall NetUseAdd(wstr long ptr ptr) wkscli.NetUseAdd
-@ stdcall NetUseDel(wstr wstr long) wkscli.NetUseDel
-@ stdcall NetUseEnum(wstr long ptr long ptr ptr ptr) wkscli.NetUseEnum
-@ stdcall NetUseGetInfo(ptr ptr long ptr) wkscli.NetUseGetInfo
+@ stdcall NetUseAdd(wstr long ptr ptr)
+@ stdcall NetUseDel(wstr wstr long)
+@ stdcall NetUseEnum(wstr long ptr long ptr ptr ptr)
+@ stdcall NetUseGetInfo(ptr ptr long ptr)
 @ stdcall NetUserAdd(wstr long ptr ptr)
 @ stdcall NetUserChangePassword(wstr wstr wstr wstr)
 @ stdcall NetUserDel(wstr wstr)
@@ -218,8 +218,6 @@
 @ stub NetUserModalsSet
 @ stub NetUserSetGroups
 @ stub NetUserSetInfo
-@ stdcall NetValidatePasswordPolicy(wstr ptr long ptr ptr)
-@ stdcall NetValidatePasswordPolicyFree(ptr)
 @ stdcall NetWkstaGetInfo(wstr long ptr)
 @ stub NetWkstaSetInfo
 @ stub NetWkstaTransportAdd

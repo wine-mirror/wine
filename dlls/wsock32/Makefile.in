@@ -2,9 +2,8 @@ MODULE    = wsock32.dll
 IMPORTLIB = wsock32
 IMPORTS   = mswsock ws2_32 iphlpapi
 
-VER_PRODUCTVERSION = 4,0,0,0
-
 SOURCES = \
 	protocol.c \
 	service.c \
-	socket.c
+	socket.c \
+	version.rc

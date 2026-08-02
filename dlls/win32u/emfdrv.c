@@ -468,6 +468,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pGetFontUnicodeRanges */
     NULL,                            /* pGetGlyphIndices */
     NULL,                            /* pGetGlyphOutline */
+    NULL,                            /* pGetICMProfile */
     NULL,                            /* pGetImage */
     NULL,                            /* pGetKerningPairs */
     NULL,                            /* pGetNearestColor */

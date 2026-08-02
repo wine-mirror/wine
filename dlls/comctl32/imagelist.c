@@ -71,7 +71,6 @@ struct _IMAGELIST
     INT         nOvlIdx[MAX_OVERLAYIMAGE]; /* 38: overlay images index */
 
     /* not yet found out */
-    DWORD   magic;
     HBRUSH  hbrBlend25;
     HBRUSH  hbrBlend50;
     INT     cInitial;
@@ -85,7 +84,7 @@ struct _IMAGELIST
 #define IMAGELIST_MAGIC 0x53414D58
 
 /* Header used by ImageList_Read() and ImageList_Write() */
-#pragma pack(push,2)
+#include "pshpack2.h"
 typedef struct _ILHEAD
 {
     USHORT	usMagic;
@@ -99,7 +98,7 @@ typedef struct _ILHEAD
     WORD	flags;
     SHORT	ovls[4];
 } ILHEAD;
-#pragma pack(pop)
+#include "poppack.h"
 
 /* internal image list data used for Drag & Drop operations */
 typedef struct
@@ -180,7 +179,7 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
  * imagelist_copy_images()
  *
  * Copies a block of count images from offset src in the list to offset dest.
- * Images are copied a row at a time. Assumes hdcSrc and hdcDest are different.
+ * Images are copied a row at at time. Assumes hdcSrc and hdcDest are different.
  */
 static inline void imagelist_copy_images( HIMAGELIST himl, HDC hdcSrc, HDC hdcDest,
                                           UINT src, UINT count, UINT dest )
@@ -721,7 +720,6 @@ ImageList_Copy (HIMAGELIST himlDst, INT iDst,	HIMAGELIST himlSrc,
                       hdcBmp, 0, 0, SRCCOPY);
 
         /* image */
-        SelectObject (hdcBmp, hbmTempImage);
         BitBlt       (himlSrc->hdcImage, ptSrc.x, ptSrc.y, himlSrc->cx, himlSrc->cy,
                       hdcBmp, 0, 0, SRCCOPY);
         /* delete temporary bitmaps */
@@ -2972,7 +2970,6 @@ failed:
     return result;
 }
 
-#if __WINE_COMCTL32_VERSION == 6
 /*************************************************************************
  * ImageList_WriteEx [COMCTL32.@]
  */
@@ -2981,7 +2978,6 @@ HRESULT WINAPI ImageList_WriteEx(HIMAGELIST himl, DWORD flags, IStream *pstm)
     FIXME("%p %#lx %p: semi-stub\n", himl, flags, pstm);
     return ImageList_Write(himl, pstm) ? S_OK : E_FAIL;
 }
-#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 /*************************************************************************
  * ImageList_Write [COMCTL32.@]
@@ -3127,7 +3123,6 @@ ImageList_SetColorTable(HIMAGELIST himl, UINT uStartIndex, UINT cEntries, const 
     return SetDIBColorTable(himl->hdcImage, uStartIndex, cEntries, prgb);
 }
 
-#if __WINE_COMCTL32_VERSION == 6
 /*************************************************************************
  * ImageList_CoCreateInstance [COMCTL32.@]
  *
@@ -3153,7 +3148,6 @@ ImageList_CoCreateInstance (REFCLSID rclsid, const IUnknown *punkOuter, REFIID r
 
     return ImageListImpl_CreateInstance(punkOuter, riid, ppv);
 }
-#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 
 /*************************************************************************
@@ -3216,7 +3210,6 @@ static ULONG WINAPI ImageListImpl_Release(IImageList2 *iface)
         if (This->hbrBlend50) DeleteObject (This->hbrBlend50);
 
         This->IImageList2_iface.lpVtbl = NULL;
-        This->magic = 0;
         Free(This->item_flags);
         Free(This);
     }
@@ -3663,11 +3656,6 @@ static HRESULT WINAPI ImageListImpl_Initialize(IImageList2 *iface, INT cx, INT c
         grow = 256;
     }
 
-    /* Some applications mistakenly use a very large initial image count. Limit it to something reasonable */
-    if (initial > USHRT_MAX)
-        WARN("Image count has been truncated\n");
-    initial = min(initial, USHRT_MAX);
-
     himl->cx        = cx;
     himl->cy        = cy;
     himl->flags     = flags;
@@ -3805,7 +3793,7 @@ static BOOL is_valid(HIMAGELIST himl)
     BOOL valid;
     __TRY
     {
-        valid = himl && himl->magic == IMAGELIST_MAGIC;
+        valid = himl && himl->IImageList2_iface.lpVtbl == &ImageListImpl_Vtbl;
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3852,7 +3840,6 @@ static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID ii
     if (!This) return E_OUTOFMEMORY;
 
     This->IImageList2_iface.lpVtbl = &ImageListImpl_Vtbl;
-    This->magic = IMAGELIST_MAGIC;
     This->ref = 1;
 
     ret = IImageList2_QueryInterface(&This->IImageList2_iface, iid, ppv);

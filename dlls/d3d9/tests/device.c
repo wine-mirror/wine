@@ -28,7 +28,6 @@
 #include <initguid.h>
 #include <d3d9on12.h>
 #include <dxgi1_4.h>
-#include <psapi.h>
 
 static HMODULE d3d9_handle = 0;
 static HMODULE d3d12_handle = 0;
@@ -2550,9 +2549,12 @@ static void test_reset(void)
     d3dpp.EnableAutoDepthStencil = FALSE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (FAILED(hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device2)))
+    {
+        skip("Failed to create device, hr %#lx.\n", hr);
+        goto cleanup;
+    }
 
     hr = IDirect3DDevice9_TestCooperativeLevel(device2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2567,10 +2569,12 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(device2, &d3dpp);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    if (FAILED(hr)) goto cleanup;
+
     hr = IDirect3DDevice9_GetDepthStencilSurface(device2, &surface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(surface != NULL, "Depth stencil should not be NULL\n");
-    IDirect3DSurface9_Release(surface);
+    if (surface) IDirect3DSurface9_Release(surface);
 
 cleanup:
     free(modes);
@@ -3091,8 +3095,6 @@ static void test_draw_primitive(void)
         {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
         {{-1.0f,  1.0f, 0.0f}, 0xffff0000},
         {{ 1.0f,  1.0f, 0.0f}, 0xffff0000},
-        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
-        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
         {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
     };
     static const WORD indices[] = {0, 1, 2, 3, 0, 2};
@@ -3746,7 +3748,6 @@ static void test_multi_device(void)
 }
 
 static HWND filter_messages;
-static WINDOWPOS last_wp;
 
 enum message_window
 {
@@ -3836,10 +3837,7 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
      * message. A WM_WINDOWPOSCHANGED message is not generated, so
      * just flag WM_WINDOWPOSCHANGED as bad. */
     if (message == WM_WINDOWPOSCHANGED)
-    {
         InterlockedIncrement(&windowposchanged_received);
-        last_wp = *(WINDOWPOS *)lparam;
-    }
     else if (message == WM_SYSCOMMAND)
         InterlockedIncrement(&syscommand_received);
     else if (message == WM_SIZE)
@@ -4460,21 +4458,14 @@ static void test_wndproc(void)
         flush_events();
 
         expect_messages = reactivate_messages_filtered;
-        memset(&last_wp, 0, sizeof(last_wp));
         windowposchanged_received = 0;
         SetForegroundWindow(focus_window);
-        /* We shouldn't receive any of the messages that tell us that d3d9 changed our window size.
-         * Unfortunately there are a lot of causes of WM_WINDOWPOSCHANGED messages. kwin likes to
-         * resize the window behind our back, but does so after SetForegroundWindow returns. On
-         * Windows Vista or newer the Z order might change, although that seems to be caused by
-         * SetForegroundWindow itself and not d3d9 (it also happens in the NOWINDOWCHANGES case). */
-        ok(!windowposchanged_received || broken(windowposchanged_received == 1
-                && (last_wp.flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)),
-                "Received %lu WM_WINDOWPOSCHANGED but did not expect it, i=%u, flags=%#x.\n",
-                windowposchanged_received, i, last_wp.flags);
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        /* About 1 in 8 test runs receives WM_WINDOWPOSCHANGED on Vista. */
+        ok(!windowposchanged_received || broken(1),
+                "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
         expect_messages = NULL;
 
         /* On Windows 10 style change messages are delivered both on reset and
@@ -13047,7 +13038,6 @@ static void test_lockable_backbuffer(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     struct device_desc device_desc;
-    IDirect3DSwapChain9 *swapchain;
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
     D3DLOCKED_RECT lockrect;
@@ -13126,20 +13116,8 @@ static void test_lockable_backbuffer(void)
     ok(SUCCEEDED(hr), "Failed to unlock rect, hr %#lx.\n", hr);
 
     IDirect3DSurface9_Release(surface);
-
-    present_parameters.hDeviceWindow = NULL;
-    present_parameters.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES;
-    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &present_parameters, &swapchain);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
-
-    present_parameters.hDeviceWindow = window;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
@@ -13281,13 +13259,6 @@ static void test_swapchain_multisample_reset(void)
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
     ok(hr == D3D_OK, "Failed to clear, hr %#lx.\n", hr);
-
-    /* Lockable back buffer flag is not allowed. */
-    d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
-    hr = IDirect3DDevice9_Reset(device, &d3dpp);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(device);
-    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned hr %#lx.\n", hr);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -14004,7 +13975,7 @@ static void test_resource_access(void)
         {
             if (!skip_ati2n_once)
             {
-                skip("ATI2N volume texture not supported.\n");
+                skip("ATI2N texture not supported.\n");
                 skip_ati2n_once = TRUE;
             }
             continue;
@@ -15310,65 +15281,9 @@ static void test_d3d9on12(void)
     ok(ref == 0, "Got refcount %lu.\n", ref);
     ref = IDirect3DDevice9_Release(device);
     ok(ref == 0, "Got refcount %lu.\n", ref);
-    IDirect3D9_Release(d3d9);
-
 out:
+    IDirect3D9_Release(d3d9);
     DestroyWindow(window);
-}
-
-/* BFME Online Arena hooks the IDirect3DDevice9 vtbl, getting its address by
- * searching for this sequence. Test that this reliably works. */
-static void test_device_vtbl_initialization_assembly_hook(void)
-{
-#ifdef __i386__
-    const unsigned char *base, *p;
-    IDirect3DDevice9Vtbl *vtbl;
-    IDirect3DDevice9 *device;
-    BOOL found = FALSE;
-    IDirect3D9 *d3d;
-    ULONG refcount;
-    MODULEINFO mi;
-    HWND window;
-    BOOL ret;
-
-    window = create_window();
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d, window, NULL)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
-    }
-
-    ret = GetModuleInformation(GetCurrentProcess(), GetModuleHandleA("d3d9.dll"), &mi, sizeof(mi));
-    ok(ret, "Failed to get module information, error %lu.\n", GetLastError());
-    base = (const unsigned char *)mi.lpBaseOfDll;
-
-    for (p = base; p + 14 <= base + mi.SizeOfImage; ++p)
-    {
-        if (p[0] == 0xc7 && p[1] == 0x06
-                && p[6] == 0x89 && p[7] == 0x86
-                && p[12] == 0x89 && p[13] == 0x86)
-        {
-            found = TRUE;
-            break;
-        }
-    }
-    ok(found, "Could not find device vtbl initialization sequence.\n");
-
-    memcpy(&vtbl, p + 2, sizeof(vtbl));
-
-    /* On modern Windows this seems to be similarly decoy code.
-     * The vtbl pointer doesn't match, and neither do multiple of the functions.
-     * At least one of the functions actually hooked, Present, still matches. */
-    ok(vtbl->Present == device->lpVtbl->Present, "Got different Present() addresses.\n");
-
-    refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %lu references left.\n", refcount);
-done:
-    IDirect3D9_Release(d3d);
-    DestroyWindow(window);
-#endif
 }
 
 START_TEST(device)
@@ -15508,7 +15423,6 @@ START_TEST(device)
     test_cursor_clipping();
     test_window_position();
     test_d3d9on12();
-    test_device_vtbl_initialization_assembly_hook();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

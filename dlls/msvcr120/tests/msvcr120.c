@@ -38,10 +38,14 @@
 
 #include <locale.h>
 
+_ACRTIMP float __cdecl nexttowardf(float, double);
+_ACRTIMP double __cdecl nexttoward(double, double);
+_ACRTIMP double __cdecl nexttowardl(double, double);
+
 #define _MAX__TIME64_T     (((__time64_t)0x00000007 << 32) | 0x93406FFF)
 
 #ifdef __i386__
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -50,7 +54,7 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
 static ULONG_PTR (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );

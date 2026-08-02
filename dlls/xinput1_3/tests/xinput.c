@@ -255,12 +255,6 @@ static void test_get_dsoundaudiodevice(void)
             trace("Headset microphone not attached\n");
     }
 
-    result = pXInputGetDSoundAudioDeviceGuids(0, NULL, &soundCapture);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned %lu\n", result);
-
-    result = pXInputGetDSoundAudioDeviceGuids(0, &soundRender, NULL);
-    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned %lu\n", result);
-
     result = pXInputGetDSoundAudioDeviceGuids(XUSER_MAX_COUNT+1, &soundRender, &soundCapture);
     ok(result == ERROR_BAD_ARGUMENTS, "XInputGetDSoundAudioDeviceGuids returned %lu\n", result);
 }

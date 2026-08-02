@@ -1142,8 +1142,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, POINT *oldorg )
  */
 BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, POINT *oldorg )
 {
-    /* From Windows 2000 this is a NOP returning FALSE */
-    return FALSE;
+    return SetBrushOrgEx( hdc, x, y, oldorg );
 }
 
 /***********************************************************************
@@ -1440,6 +1439,17 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
     return ret;
 }
 
+/***********************************************************************
+ *           GetMiterLimit  (GDI32.@)
+ */
+BOOL WINAPI GetMiterLimit( HDC hdc, FLOAT *limit )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (limit) *limit = dc_attr->miter_limit;
+    return TRUE;
+}
+
 /*******************************************************************
  *           SetMiterLimit  (GDI32.@)
  */
@@ -1449,7 +1459,9 @@ BOOL WINAPI SetMiterLimit( HDC hdc, FLOAT limit, FLOAT *old_limit )
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_SetMiterLimit( dc_attr, limit )) return 0;
     if (limit < 1.0f) return FALSE;
-    return NtGdiSetMiterLimit( hdc, *(DWORD *)&limit, old_limit );
+    if (old_limit) *old_limit = dc_attr->miter_limit;
+    dc_attr->miter_limit = limit;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2423,7 +2435,8 @@ BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
  */
 BOOL WINAPI CancelDC(HDC hdc)
 {
-    return NtGdiCancelDC( hdc );
+    FIXME( "stub\n" );
+    return TRUE;
 }
 
 /***********************************************************************

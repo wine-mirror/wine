@@ -29,7 +29,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifndef WINSHLWAPI
 #ifndef _SHLWAPI_
@@ -1103,7 +1103,7 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *);
 typedef struct _DLLVERSIONINFO2 {
     DLLVERSIONINFO info1;
     DWORD          dwFlags;    /* Reserved */
-    ULONGLONG      ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
+    ULONGLONG DECLSPEC_ALIGN(8) ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
 } DLLVERSIONINFO2;
 
 #define DLLVER_MAJOR_MASK 0xFFFF000000000000
@@ -1210,7 +1210,7 @@ WINSHLWAPI HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWS
 
 WINSHLWAPI BOOL WINAPI SHIsLowMemoryMachine(DWORD type);
 
-#pragma pack(pop)
+#include <poppack.h>
 
 WINSHLWAPI HANDLE WINAPI SHAllocShared(const void *data, DWORD size, DWORD pid);
 WINSHLWAPI BOOL WINAPI SHFreeShared(HANDLE handle, DWORD pid);

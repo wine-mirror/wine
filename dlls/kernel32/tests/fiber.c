@@ -133,14 +133,8 @@ static void test_ConvertThreadToFiber(void)
 
     if (pConvertThreadToFiber)
     {
-        ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
-        ok( !NtCurrentTeb()->Tib.FiberData || NtCurrentTeb()->Tib.FiberData == (void *)0x1e00,
-            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
         fibers[0] = pConvertThreadToFiber(&testparam);
         ok(fibers[0] != NULL, "ConvertThreadToFiber failed with error %lu\n", GetLastError());
-        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
-        ok( NtCurrentTeb()->Tib.FiberData && NtCurrentTeb()->Tib.FiberData != (void *)0x1e00,
-            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiber(&testparam);
@@ -159,12 +153,8 @@ static void test_ConvertThreadToFiberEx(void)
 
     if (pConvertThreadToFiberEx)
     {
-        ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
         fibers[0] = pConvertThreadToFiberEx(&testparam, 0);
         ok(fibers[0] != NULL, "ConvertThreadToFiberEx failed with error %lu\n", GetLastError());
-        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
-        ok( NtCurrentTeb()->Tib.FiberData && NtCurrentTeb()->Tib.FiberData != (void *)0x1e00,
-            "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
 
         SetLastError(0xdeadbeef);
         ret = pConvertThreadToFiberEx(&testparam, 0);
@@ -181,15 +171,8 @@ static void test_ConvertFiberToThread(void)
 {
     if (pConvertFiberToThread)
     {
-        BOOL ret;
-        ok( NtCurrentTeb()->HasFiberData, "not a fiber\n" );
-        ret = pConvertFiberToThread();
+        BOOL ret = pConvertFiberToThread();
         ok(ret, "ConvertFiberToThread failed with error %lu\n", GetLastError());
-        ok( !NtCurrentTeb()->HasFiberData, "still a fiber\n" );
-        ok( !NtCurrentTeb()->Tib.FiberData, "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
-        ret = pConvertFiberToThread();
-        ok(!ret, "Got non NULL ret.\n");
-        ok(GetLastError() == ERROR_ALREADY_THREAD, "Got unexpected error %lu.\n", GetLastError());
     }
     else
     {
@@ -199,9 +182,6 @@ static void test_ConvertFiberToThread(void)
 
 static void test_FiberHandling(void)
 {
-    ok( !NtCurrentTeb()->HasFiberData, "already a fiber\n" );
-    ok( NtCurrentTeb()->Tib.FiberData == (void *)0x1e00, "wrong data %p\n", NtCurrentTeb()->Tib.FiberData );
-
     fiberCount = 0;
     fibers[0] = pCreateFiber(0,FiberMainProc,&testparam);
     ok(fibers[0] != NULL, "CreateFiber failed with error %lu\n", GetLastError());
@@ -352,9 +332,12 @@ static void test_FiberLocalStorage(void)
         /* FLS limits are increased since Win10 18312. */
         ok(count && (count <= 127 || (count > 4000 && count < 4096)), "Got unexpected count %u.\n", count);
 
-        if (!peb->SparePointers[0] /* was FlsCallback */)
+        if (!peb->FlsCallback)
         {
             ok(pRtlFlsSetValue && pRtlFlsGetValue, "Missing RtlFlsGetValue / RtlFlsSetValue.\n");
+            ok(!peb->FlsBitmap, "Got unexpected FlsBitmap %p.\n", peb->FlsBitmap);
+            ok(!peb->FlsListHead.Flink && !peb->FlsListHead.Blink, "Got nonzero FlsListHead.\n");
+            ok(!peb->FlsHighIndex, "Got unexpected FlsHighIndex %lu.\n", peb->FlsHighIndex);
 
             fls_list_head = fls_data->fls_list_entry.Flink;
 
@@ -552,7 +535,7 @@ static void test_FiberLocalStorage(void)
             ok(!status, "Got unexpected status %#lx, i %u.\n", status, i);
         }
 
-        if (g_fls_data)
+        if (!peb->FlsCallback)
         {
             ok(g_fls_data->fls_high_index == 0xfef, "Got unexpected fls_high_index %#lx.\n",
                     g_fls_data->fls_high_index);

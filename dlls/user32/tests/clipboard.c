@@ -228,7 +228,9 @@ static void run_process( const char *args )
     ok( CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
         "CreateProcess %s failed\n", cmd );
 
-    wait_child_process( &info );
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hProcess );
+    CloseHandle( info.hThread );
 }
 
 static WNDPROC old_proc;
@@ -454,7 +456,7 @@ static void test_RegisterClipboardFormatA(void)
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
     len = GlobalGetAtomNameA((ATOM)format_id, buf, ARRAY_SIZE(buf));
-    ok(len == 0 || lstrcmpA(buf, "my_cool_clipboard_format") != 0,
+    todo_wine ok(len == 0 || lstrcmpA(buf, "my_cool_clipboard_format") != 0,
        "format_id should not be a valid global atom\n");
     ok(len != 0 || GetLastError() == ERROR_INVALID_HANDLE,
        "err %ld\n", GetLastError());
@@ -464,11 +466,14 @@ static void test_RegisterClipboardFormatA(void)
     ok(atom_id == 0, "FindAtomA should fail, but it returned %x (format_id=%x)\n", atom_id, format_id);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %ld\n", GetLastError());
 
+    todo_wine
+    {
     /* this relies on the clipboard and global atom table being different */
     SetLastError(0xdeadbeef);
     atom_id = GlobalFindAtomA("my_cool_clipboard_format");
     ok(atom_id == 0, "GlobalFindAtomA should fail, but it returned %x (format_id=%x)\n", atom_id, format_id);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %ld\n", GetLastError());
+    }
 
     for (format_id = 0; format_id < 0x10fff; format_id++)
     {
@@ -2338,15 +2343,9 @@ static void test_string_data_process( int i )
         data = GetClipboardData( CF_TEXT );
         if (test_data[i].len >= sizeof(WCHAR))
         {
-            UINT cp = GetACP();
-
-            if (cp != CP_UTF8)
-                GetLocaleInfoW( GetUserDefaultLCID(), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                                (LPWSTR)&cp, sizeof(cp)/sizeof(WCHAR) );
-
             ok( data != 0, "could not get data\n" );
             len = GlobalSize( data );
-            len2 = WideCharToMultiByte( cp, 0, bufferW, test_data[i].len / sizeof(WCHAR),
+            len2 = WideCharToMultiByte( CP_ACP, 0, bufferW, test_data[i].len / sizeof(WCHAR),
                                         bufferA, ARRAY_SIZE(bufferA), NULL, NULL );
             bufferA[len2 - 1] = 0;
             ok( len == len2, "wrong size %u / %u\n", len, len2 );

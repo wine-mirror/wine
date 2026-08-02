@@ -30,12 +30,12 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <math.h>
-#include <intrin.h>
 #include <limits.h>
 #include <float.h>
 #define LIBVKD3D_SHADER_SOURCE
 #include <vkd3d_shader.h>
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
@@ -178,7 +178,7 @@ enum complex_fixup
     COMPLEX_FIXUP_YUV  = 6,
 };
 
-#pragma pack(push,2)
+#include <pshpack2.h>
 struct color_fixup_desc
 {
     unsigned short x_sign_fixup : 1;
@@ -190,7 +190,7 @@ struct color_fixup_desc
     unsigned short w_sign_fixup : 1;
     unsigned short w_source : 3;
 };
-#pragma pack(pop)
+#include <poppack.h>
 
 struct fragment_caps
 {
@@ -227,7 +227,6 @@ struct wined3d_d3d_info
     uint32_t shader_output_interpolation : 1;
     uint32_t viewport_array_index_any_shader : 1;
     uint32_t simple_instancing : 1;
-    uint32_t min_max_filtering : 1;
     uint32_t stencil_export : 1;
     /* If zero, only conditional NPOT textures are supported, via
      * WINED3D_GL_NORMALIZED_TEXRECT. */
@@ -434,7 +433,13 @@ static inline unsigned short float_32_to_16(const float *in)
 
 static inline unsigned int wined3d_popcount(unsigned int x)
 {
-    return __popcnt(x);
+#if defined(__MINGW32__)
+    return __builtin_popcount(x);
+#else
+    x -= x >> 1 & 0x55555555;
+    x = (x & 0x33333333) + (x >> 2 & 0x33333333);
+    return ((x + (x >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
+#endif
 }
 
 static inline int wined3d_uint32_compare(uint32_t x, uint32_t y)
@@ -1453,6 +1458,9 @@ enum wined3d_ffp_ps_fog_mode
  * into the shader code
  */
 
+#define WINED3D_PSARGS_PROJECTED (1u << 3)
+#define WINED3D_PSARGS_TEXTRANSFORM_SHIFT 4
+#define WINED3D_PSARGS_TEXTRANSFORM_MASK 0xfu
 #define WINED3D_PSARGS_TEXTYPE_SHIFT 2
 #define WINED3D_PSARGS_TEXTYPE_MASK 0x3u
 
@@ -1471,16 +1479,16 @@ struct ps_compile_args
     enum wined3d_vertex_processing_mode vp_mode;
     enum wined3d_ffp_ps_fog_mode fog;
     DWORD                       tex_types; /* ps 1 - 3, 16 textures */
+    WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
+    WORD                        srgb_correction;
     WORD shadow; /* WINED3D_MAX_FRAGMENT_SAMPLERS, 16 */
     WORD texcoords_initialized; /* WINED3D_MAX_FFP_TEXTURES, 8 */
-    DWORD srgb_correction : 1;
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
     DWORD rt_alpha_swizzle : 8; /* WINED3D_MAX_RENDER_TARGETS, 8 */
     DWORD dual_source_blend : 1;
-    DWORD projected : 4;
-    DWORD padding : 13;
+    DWORD padding : 18;
 };
 
 enum fog_src_type
@@ -2066,6 +2074,7 @@ extern const struct wined3d_light WINED3D_default_light;
 
 struct wined3d_pixel_format
 {
+    int iPixelFormat; /* WGL pixel format */
     int iPixelType; /* WGL pixel type e.g. WGL_TYPE_RGBA_ARB, WGL_TYPE_RGBA_FLOAT_ARB or WGL_TYPE_COLORINDEX_ARB */
     int redSize, greenSize, blueSize, alphaSize, colorSize;
     int depthSize, stencilSize;
@@ -2149,10 +2158,8 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_RX_NAVI_10      = 0x731f,
     CARD_AMD_RADEON_RX_NAVI_14      = 0x7340,
     CARD_AMD_RADEON_RX_NAVI_21      = 0x73bf,
-    CARD_AMD_RADEON_RX_NAVI_44      = 0x7590,
     CARD_AMD_RADEON_PRO_V620        = 0x73a1,
     CARD_AMD_RADEON_PRO_V620_VF     = 0x73ae,
-    CARD_AMD_RADEON_RX_6700_XT      = 0x73df,
     CARD_AMD_VANGOGH                = 0x163f,
     CARD_AMD_RAPHAEL                = 0x164e,
 
@@ -2319,9 +2326,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_GEFORCE_RTX3090TI   = 0x2203,
     CARD_NVIDIA_TESLA_T4            = 0x1eb8,
     CARD_NVIDIA_AMPERE_A10          = 0x2236,
-    CARD_NVIDIA_AMPERE_A10G         = 0x2237,
     CARD_NVIDIA_GEFORCE_RTX4060     = 0x2882,
-    CARD_NVIDIA_GEFORCE_RTX4060M    = 0x28a0,
     CARD_NVIDIA_GEFORCE_RTX4060TI8G = 0x2803,
     CARD_NVIDIA_GEFORCE_RTX4060TI16G = 0x2805,
     CARD_NVIDIA_GEFORCE_RTX4070     = 0x2786,
@@ -2409,8 +2414,7 @@ enum wined3d_pci_device
     CARD_INTEL_IPP580_1             = 0x193a,
     CARD_INTEL_IPP580_2             = 0x193d,
     CARD_INTEL_UHD617               = 0x87c0,
-    CARD_INTEL_UHD620_1             = 0x3ea0,
-    CARD_INTEL_UHD620_2             = 0x5917,
+    CARD_INTEL_UHD620               = 0x3ea0,
     CARD_INTEL_HD615                = 0x591e,
     CARD_INTEL_HD620                = 0x5916,
     CARD_INTEL_HD630_1              = 0x5912,
@@ -2632,6 +2636,16 @@ BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter);
 ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size);
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount);
 
+enum wined3d_projection_type
+{
+    WINED3D_PROJECTION_NONE    = 0,
+    WINED3D_PROJECTION_COUNT3  = 1,
+    WINED3D_PROJECTION_COUNT4  = 2
+};
+
+/*****************************************************************************
+ * Fixed function pipeline replacements
+ */
 #define ARG_UNUSED          0xff
 struct texture_stage_op
 {
@@ -2648,8 +2662,8 @@ struct texture_stage_op
     struct color_fixup_desc color_fixup;
     unsigned                tex_type : 3;
     unsigned                tmp_dst : 1;
-    unsigned                projected : 1;
-    unsigned                padding : 11;
+    unsigned                projected : 2;
+    unsigned                padding : 10;
 };
 
 struct ffp_frag_settings
@@ -2805,11 +2819,6 @@ struct wined3d_ffp_vs_constants
 
     /* States not used by the HLSL pipeline. */
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
-    struct wined3d_ffp_point_clamp_constants
-    {
-        float min, max;
-    } point_clamp;
-    float padding2[2]; /* Align to 16-bytes. */
 };
 
 struct wined3d_ffp_ps_constants
@@ -2860,25 +2869,15 @@ enum wined3d_push_constants
     WINED3D_PUSH_CONSTANTS_COUNT,
 };
 
-/* States part of the Direct3D 1-9 FFP, which are also used when
+/* Pixel shader states part of the Direct3D 1-9 FFP, which are also used when
  * using shaders, which are not implemented as uniforms.
  * These eventually make their way into vs_compile_args / ps_compile_args, but
  * those structs also include states other than the FFP states. */
-
-struct wined3d_extra_vs_args
-{
-    uint8_t clip_planes;
-    bool pixel_fog;
-    bool flat_shading;
-    bool ortho_fog;
-};
-
 struct wined3d_extra_ps_args
 {
     bool point_sprite;
     bool flat_shading;
     bool fog_enable;
-    bool srgb_write;
     enum wined3d_fog_mode fog_mode;
     enum wined3d_cmp_func alpha_func;
     uint32_t texcoord_index[WINED3D_MAX_FFP_TEXTURES];
@@ -2971,6 +2970,7 @@ struct wined3d_state
 
     uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
+    struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_viewport viewports[WINED3D_MAX_VIEWPORTS];
     unsigned int viewport_count;
     RECT scissor_rects[WINED3D_MAX_VIEWPORTS];
@@ -2984,7 +2984,6 @@ struct wined3d_state
     uint32_t sample_mask;
     struct wined3d_depth_stencil_state *depth_stencil_state;
     unsigned int stencil_ref;
-    struct wined3d_extra_vs_args extra_vs_args;
     struct wined3d_extra_ps_args extra_ps_args;
     bool depth_bounds_enable;
     float depth_bounds_min, depth_bounds_max;
@@ -3248,7 +3247,6 @@ struct wined3d_resource_ops
     ULONG (*resource_decref)(struct wined3d_resource *resource);
     void (*resource_preload)(struct wined3d_resource *resource);
     void (*resource_unload)(struct wined3d_resource *resource);
-    unsigned int (*resource_get_sub_resource_count)(struct wined3d_resource *resource);
     HRESULT (*resource_sub_resource_get_desc)(struct wined3d_resource *resource,
             unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
     void (*resource_sub_resource_get_map_pitch)(struct wined3d_resource *resource,
@@ -3307,6 +3305,12 @@ static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
 static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 {
     return resource->resource_ops->resource_decref(resource);
+}
+
+static inline HRESULT wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
+{
+    return resource->resource_ops->resource_sub_resource_get_desc(resource, sub_resource_idx, desc);
 }
 
 static inline void wined3d_resource_get_sub_resource_map_pitch(struct wined3d_resource *resource,
@@ -3530,13 +3534,6 @@ static inline bool wined3d_texture_is_full_rect(const struct wined3d_texture *te
     return true;
 }
 
-static inline void wined3d_texture_set_dirty(struct wined3d_texture *texture)
-{
-    texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
-}
-
-static const uint32_t wined3d_texture_sysmem_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
-
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, uint32_t flags,
@@ -3547,12 +3544,6 @@ void wined3d_texture_download_from_texture(struct wined3d_texture *dst_texture, 
         struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx);
 void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_bo_address *data, uint32_t location);
-void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        struct wined3d_context *context, struct wined3d_bo_address *data);
-HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
-        unsigned int layer_count, unsigned int level_count, uint32_t flags, struct wined3d_device *device,
-        void *parent, const struct wined3d_parent_ops *parent_ops, void *sub_resources,
-        const struct wined3d_texture_ops *texture_ops);
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, uint32_t location);
 void wined3d_texture_load(struct wined3d_texture *texture,
@@ -3698,8 +3689,10 @@ struct wined3d_cs
     struct list query_poll_list;
     BOOL queries_flushed;
 
-    HANDLE event;
+    HANDLE event, present_event;
     LONG waiting_for_event;
+    LONG waiting_for_present;
+    LONG pending_presents;
 };
 
 static inline void wined3d_device_context_lock(struct wined3d_device_context *context)
@@ -3781,8 +3774,6 @@ void wined3d_device_context_emit_set_depth_stencil_view(struct wined3d_device_co
         struct wined3d_rendertarget_view *view);
 void wined3d_device_context_emit_set_extra_ps_args(struct wined3d_device_context *context,
         const struct wined3d_extra_ps_args *args);
-void wined3d_device_context_emit_set_extra_vs_args(struct wined3d_device_context *context,
-        const struct wined3d_extra_vs_args *args);
 void wined3d_device_context_emit_set_feature_level(struct wined3d_device_context *context,
         enum wined3d_feature_level level);
 void wined3d_device_context_emit_set_index_buffer(struct wined3d_device_context *context, struct wined3d_buffer *buffer,
@@ -3817,6 +3808,8 @@ void wined3d_device_context_emit_set_texture(struct wined3d_device_context *cont
         struct wined3d_shader_resource_view *view);
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,
         enum wined3d_texture_stage_state state, unsigned int value);
+void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 void wined3d_device_context_emit_set_unordered_access_views(struct wined3d_device_context *context,
         enum wined3d_pipeline pipeline, unsigned int start_idx, unsigned int count,
         struct wined3d_unordered_access_view *const *views, const unsigned int *initial_count);
@@ -3986,13 +3979,10 @@ void wined3d_rendertarget_view_get_box(struct wined3d_rendertarget_view *view,
         struct wined3d_box *box);
 void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view,
         uint32_t location);
-bool wined3d_rendertarget_view_is_full_clear(const struct wined3d_rendertarget_view *rtv,
-        const RECT *draw_rect, const RECT *clear_rect);
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, uint32_t location);
 void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, uint32_t location);
-bool wined3d_rendertarget_view_use_cpu_clear(struct wined3d_rendertarget_view *view);
 void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view,
         uint32_t location);
 DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_view *view)
@@ -4061,8 +4051,6 @@ struct wined3d_decoder_output_view
 
 void wined3d_decoder_output_view_cleanup(struct wined3d_decoder_output_view *view);
 
-HRESULT wined3d_swapchain_desc_validate_flags(const struct wined3d_swapchain_desc *desc);
-
 struct wined3d_swapchain_state
 {
     struct wined3d *wined3d;
@@ -4109,7 +4097,6 @@ struct wined3d_swapchain
     RECT front_buffer_update;
     unsigned int swap_interval;
     unsigned int max_frame_latency;
-    HANDLE frame_latency_semaphore;
 
     /* Performance tracking */
     LARGE_INTEGER last_present_time;
@@ -4117,7 +4104,6 @@ struct wined3d_swapchain
 
     struct wined3d_swapchain_state state;
     HWND win_handle;
-    HDC dc;
 };
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate);
@@ -4216,8 +4202,8 @@ static inline void wined3d_lock_cleanup(CRITICAL_SECTION *lock)
     DeleteCriticalSection(lock);
 }
 
-#ifdef __WINE_CRT_PRINTF_ATTR
-#define PRINTF_ATTR(fmt,args) __WINE_CRT_PRINTF_ATTR(fmt, args)
+#ifdef __GNUC__
+#define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #else
 #define PRINTF_ATTR(fmt,args)
 #endif
@@ -4494,6 +4480,8 @@ void get_identity_matrix(struct wined3d_matrix *mat);
 void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned int index, struct wined3d_matrix *mat);
 void get_texture_matrix(const struct wined3d_stateblock_state *state,
         const unsigned int tex, struct wined3d_matrix *mat);
+void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
+        float *out_min, float *out_max);
 
 struct wined3d_palette
 {
@@ -4542,8 +4530,6 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth);
 #define WINED3D_FORMAT_ATTR_MAPPABLE                0x00000400
 #define WINED3D_FORMAT_ATTR_CAST_TO_BLOCK           0x00000800
 #define WINED3D_FORMAT_ATTR_PLANAR                  0x00001000
-#define WINED3D_FORMAT_ATTR_SHADOW                  0x00002000
-#define WINED3D_FORMAT_ATTR_UNSIGNED                0x00004000
 
 /* Pixel format capabilities */
 #define WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING     0x00000001
@@ -4557,6 +4543,7 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth);
 #define WINED3D_FORMAT_CAP_SRGB_READ                    0x00000100
 #define WINED3D_FORMAT_CAP_SRGB_WRITE                   0x00000200
 #define WINED3D_FORMAT_CAP_VTF                          0x00000400
+#define WINED3D_FORMAT_CAP_SHADOW                       0x00000800
 #define WINED3D_FORMAT_CAP_TEXTURE                      0x00001000
 #define WINED3D_FORMAT_CAP_GEN_MIPMAP                   0x00002000
 #define WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE             0x00004000
@@ -4567,6 +4554,13 @@ struct wined3d_rational
 {
     UINT numerator;
     UINT denominator;
+};
+
+struct wined3d_color_key_conversion
+{
+    enum wined3d_format_id dst_format;
+    void (*convert)(const BYTE *src, unsigned int src_pitch, BYTE *dst, unsigned int dst_pitch,
+            unsigned int width, unsigned int height, const struct wined3d_color_key *colour_key);
 };
 
 enum wined3d_channel_type
@@ -4604,7 +4598,7 @@ struct wined3d_format
     UINT block_height;
     UINT block_byte_count;
 
-    struct wined3d_format *plane_formats[2];
+    enum wined3d_format_id plane_formats[2];
     unsigned int uv_width, uv_height;
 
     enum wined3d_ffp_emit_idx emit_idx;
@@ -4646,6 +4640,8 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors);
 BOOL wined3d_format_is_depth_view(enum wined3d_format_id resource_format_id,
         enum wined3d_format_id view_format_id);
+const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
+        const struct wined3d_texture *texture, BOOL need_alpha_ck);
 uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct wined3d_uvec4 *value);
 BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
         enum wined3d_format_id format2);
@@ -4713,7 +4709,7 @@ static inline BOOL needs_srgb_write(const struct wined3d_d3d_info *d3d_info,
         const struct wined3d_state *state, const struct wined3d_fb_state *fb)
 {
     return (!(d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-            || state->extra_ps_args.srgb_write)
+            || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
             && fb->render_targets[0] && fb->render_targets[0]->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
 }
 

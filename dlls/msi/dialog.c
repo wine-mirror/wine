@@ -1183,7 +1183,7 @@ struct msi_scrolltext_info
 static LRESULT WINAPI MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct msi_scrolltext_info *info;
-    LRESULT r;
+    HRESULT r;
 
     TRACE( "%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam );
 
@@ -1363,8 +1363,6 @@ static LRESULT WINAPI MSIComboBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     struct msi_combobox_info *info;
     LRESULT r;
     DWORD j;
-    LPWSTR value, text = NULL;
-    INT index, len;
 
     TRACE( "%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam );
 
@@ -1376,31 +1374,6 @@ static LRESULT WINAPI MSIComboBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
 
     switch (msg)
     {
-    case WM_COMMAND:
-        if (HIWORD(wParam) == CBN_SELCHANGE)
-        {
-            index = SendMessageW( hWnd, CB_GETCURSEL, 0, 0 );
-            if (index != CB_ERR)
-            {
-                value = (LPWSTR)SendMessageW( hWnd, CB_GETITEMDATA, index, 0 );
-                if (value) SetWindowTextW( hWnd, value );
-                else
-                {
-                    len = (INT)SendMessageW( hWnd, CB_GETLBTEXTLEN, index, 0 );
-                    if (len != CB_ERR && len >= 0)
-                    {
-                        text = (LPWSTR)malloc( (len + 1) * sizeof(WCHAR) );
-                        if (text)
-                        {
-                            SendMessageW( hWnd, CB_GETLBTEXT, index, (LPARAM)text );
-                            SetWindowTextW( hWnd, text );
-                            free( text );
-                        }
-                    }
-                }
-            }
-        }
-        break;
     case WM_NCDESTROY:
         for (j = 0; j < info->num_items; j++)
             free( info->items[j] );
@@ -1424,7 +1397,7 @@ static UINT combobox_add_item( MSIRECORD *rec, void *param )
 
     info->items[info->addpos_items] = wcsdup( value );
 
-    pos = SendMessageW( info->hwnd, CB_ADDSTRING, 0, (LPARAM)(text ? text : value) );
+    pos = SendMessageW( info->hwnd, CB_ADDSTRING, 0, (LPARAM)text );
     SendMessageW( info->hwnd, CB_SETITEMDATA, pos, (LPARAM)info->items[info->addpos_items] );
     info->addpos_items++;
 
@@ -1537,8 +1510,7 @@ static UINT dialog_combobox_handler( msi_dialog *dialog, struct control *control
 static void dialog_combobox_update( msi_dialog *dialog, struct control *control )
 {
     struct msi_combobox_info *info;
-    LPWSTR value, tmp, text = NULL;
-    INT len;
+    LPWSTR value, tmp;
     DWORD j;
 
     info = GetPropW( control->hwnd, L"MSIDATA" );
@@ -1552,31 +1524,21 @@ static void dialog_combobox_update( msi_dialog *dialog, struct control *control 
 
     for (j = 0; j < info->num_items; j++)
     {
-        tmp = (LPWSTR)SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
-        if (!tmp)
-        {
-            len = (INT)SendMessageW( control->hwnd, CB_GETLBTEXTLEN, j, 0 );
-            if (len != CB_ERR && len >= 0)
-            {
-                text = (LPWSTR)malloc( (len + 1) * sizeof(WCHAR) );
-                if (text)
-                SendMessageW( control->hwnd, CB_GETLBTEXT, j, (LPARAM)text );
-            }
-        }
-
-        if ((tmp && !wcscmp( value, tmp )) || (text && !wcscmp( value, text )))
-        {
-            SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
-            SetWindowTextW( control->hwnd, tmp ? tmp : text );
-            free( value );
-            if (text) free( text );
-            return;
-        }
-        if (text) free( text );
+        tmp = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
+        if (!wcscmp( value, tmp ))
+            break;
     }
 
-    SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
-    SetWindowTextW( control->hwnd, value );
+    if (j < info->num_items)
+    {
+        SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
+    }
+    else
+    {
+        SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
+        SetWindowTextW( control->hwnd, value );
+    }
+
     free( value );
 }
 
@@ -1798,7 +1760,7 @@ static void mask_next_control( struct msi_maskedit_info *info, HWND hWnd )
 static LRESULT WINAPI MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct msi_maskedit_info *info;
-    LRESULT r;
+    HRESULT r;
 
     TRACE("%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam);
 
@@ -2421,7 +2383,7 @@ static LRESULT WINAPI MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wPara
 {
     struct msi_selection_tree_info *info;
     TVHITTESTINFO tvhti;
-    LRESULT r;
+    HRESULT r;
 
     TRACE("%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam);
 
@@ -3159,7 +3121,7 @@ static LONGLONG vcl_get_cost( msi_dialog *dialog )
 static void dialog_vcl_add_drives( msi_dialog *dialog, struct control *control )
 {
     ULARGE_INTEGER total, unused;
-    LONGLONG cost;
+    LONGLONG difference, cost;
     WCHAR size_text[MAX_PATH];
     WCHAR cost_text[MAX_PATH];
     LPWSTR drives, ptr;
@@ -3181,8 +3143,8 @@ static void dialog_vcl_add_drives( msi_dialog *dialog, struct control *control )
     ptr = drives;
     while (*ptr)
     {
-        if (!GetVolumeInformationW(ptr, NULL, 0, NULL, 0, &flags, NULL, 0) || (flags & FILE_READ_ONLY_VOLUME) ||
-            !GetDiskFreeSpaceExW(ptr, &unused, &total, NULL))
+        if (GetVolumeInformationW(ptr, NULL, 0, NULL, 0, &flags, NULL, 0) &&
+            flags & FILE_READ_ONLY_VOLUME)
         {
             ptr += lstrlenW(ptr) + 1;
             continue;
@@ -3194,6 +3156,9 @@ static void dialog_vcl_add_drives( msi_dialog *dialog, struct control *control )
         lvitem.pszText = ptr;
         lvitem.cchTextMax = lstrlenW(ptr) + 1;
         SendMessageW( control->hwnd, LVM_INSERTITEMW, 0, (LPARAM)&lvitem );
+
+        GetDiskFreeSpaceExW(ptr, &unused, &total, NULL);
+        difference = unused.QuadPart - cost;
 
         StrFormatByteSizeW(total.QuadPart, size_text, MAX_PATH);
         lvitem.iSubItem = 1;
@@ -3212,7 +3177,7 @@ static void dialog_vcl_add_drives( msi_dialog *dialog, struct control *control )
         lvitem.cchTextMax = lstrlenW(cost_text) + 1;
         SendMessageW( control->hwnd, LVM_SETITEMW, 0, (LPARAM)&lvitem );
 
-        StrFormatByteSizeW(unused.QuadPart - cost, size_text, MAX_PATH);
+        StrFormatByteSizeW(difference, size_text, MAX_PATH);
         lvitem.iSubItem = 4;
         lvitem.pszText = size_text;
         lvitem.cchTextMax = lstrlenW(size_text) + 1;

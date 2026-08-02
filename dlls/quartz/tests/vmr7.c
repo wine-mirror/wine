@@ -27,8 +27,6 @@
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
-static const GUID MEDIASUBTYPE_IV50 = {mmioFOURCC('I','V','5','0'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-
 static IBaseFilter *create_vmr7(DWORD mode)
 {
     IBaseFilter *filter = NULL;
@@ -1730,28 +1728,15 @@ static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hw
     hr = IVideoWindow_put_WindowStyle(window, style | WS_MINIMIZE);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
-    hr = IVideoWindow_put_WindowStyle(window, (style | WS_VISIBLE | WS_POPUP) & ~WS_CLIPCHILDREN);
+    hr = IVideoWindow_put_WindowStyle(window, style & ~WS_CLIPCHILDREN);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IVideoWindow_get_WindowStyle(window, &style);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW | WS_POPUP), "Got style %#lx.\n", style);
+    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#lx.\n", style);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW | WS_POPUP), "Got style %#lx.\n", style);
-
-    hr = IVideoWindow_put_WindowStyle(window, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IVideoWindow_get_WindowStyle(window, &style);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(style == WS_CLIPSIBLINGS, "Got style %#lx.\n", style);
-
-    style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style == WS_CLIPSIBLINGS, "Got style %#lx.\n", style);
-
-    hr = IVideoWindow_put_WindowStyle(window, WS_OVERLAPPEDWINDOW);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#lx.\n", style);
 
     flaky_wine
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
@@ -1795,8 +1780,8 @@ static HWND get_top_window(void)
 
 static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
 {
-    LONG state, style;
     HRESULT hr;
+    LONG state;
     HWND top;
 
     SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -1843,14 +1828,6 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
     ok(IsIconic(hwnd), "Window should be minimized.\n");
     ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
-
-    hr = IVideoWindow_put_WindowStyle(window, WS_OVERLAPPEDWINDOW);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    hr = IVideoWindow_get_WindowStyle(window, &style);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(style == (WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | WS_MINIMIZE),
-            "Got style %#lx.\n", style);
 
     hr = IVideoWindow_put_WindowState(window, SW_RESTORE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2134,15 +2111,6 @@ static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hw
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == OAFALSE, "Got state %ld.\n", state);
 
-    style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style == (WS_OVERLAPPEDWINDOW | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS), "Got style %#lx.\n", style);
-
-    hr = IVideoWindow_put_WindowStyle(window, WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CHILD);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok(style == (WS_OVERLAPPEDWINDOW | WS_CHILD), "Got style %#lx.\n", style);
-
     hr = IVideoWindow_put_Owner(window, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -2153,15 +2121,15 @@ static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hw
     parent = GetAncestor(hwnd, GA_PARENT);
     ok(parent == GetDesktopWindow(), "Got parent %p.\n", parent);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#lx.\n", style);
+    ok(!(style & WS_CHILD), "Got style %#lx.\n", style);
 
     ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
     top_hwnd = get_top_window();
-    ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
+    ok(top_hwnd == hwnd, "Got top window %p.\n", top_hwnd);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == OAFALSE, "Got state %ld.\n", state);
+    ok(state == OATRUE, "Got state %ld.\n", state);
 }
 
 struct notify_message_params
@@ -3277,8 +3245,8 @@ static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter *iface, DWORD_PT
     ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
     ok(info->dwFlags == VMRSample_TimeValid, "Got flags %#lx.\n", info->dwFlags);
     todo_wine ok(info->lpSurf == presenter->surfaces[5 - presenter->got_PresentImage], "Got unexpected surface.\n");
-    ok(!info->rtStart, "Got start time %I64d.\n", info->rtStart);
-    ok(info->rtEnd == 10000000, "Got end time %I64d.\n", info->rtEnd);
+    ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
+    ok(info->rtEnd == 10000000, "Got end time %s.\n", wine_dbgstr_longlong(info->rtEnd));
     todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %ld.\n", info->szAspectRatio.cx);
     todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %ld.\n", info->szAspectRatio.cy);
     ok(EqualRect(&info->rcSrc, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&info->rcSrc));
@@ -3338,8 +3306,6 @@ static ULONG WINAPI allocator_Release(IVMRSurfaceAllocator *iface)
     return InterlockedDecrement(&presenter->refcount);
 }
 
-static unsigned int allocatesurface_count;
-
 static HRESULT WINAPI allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
         DWORD_PTR cookie, VMRALLOCATIONINFO *info, DWORD *buffer_count, IDirectDrawSurface7 **surface)
 {
@@ -3348,7 +3314,6 @@ static HRESULT WINAPI allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
     HRESULT hr;
 
     if (winetest_debug > 1) trace("AllocateSurface()\n");
-    ++allocatesurface_count;
 
     ok(!presenter->surfaces[0], "Surface should not already exist.\n");
 
@@ -3519,7 +3484,6 @@ static void test_renderless_formats(void)
         .IVMRImagePresenter_iface.lpVtbl = &presenter_vtbl,
         .refcount = 1,
     };
-    unsigned int prev_allocatesurface_count;
     struct presenter presenter2 = presenter;
     IVMRSurfaceAllocatorNotify *notify;
     RECT rect = {0, 0, 640, 480};
@@ -3540,7 +3504,6 @@ static void test_renderless_formats(void)
         const GUID *subtype;
         WORD depth;
         DWORD compression;
-        BOOL must_fail;
     }
     tests[] =
     {
@@ -3549,8 +3512,6 @@ static void test_renderless_formats(void)
         {&MEDIASUBTYPE_YV12,    12, mmioFOURCC('Y','V','1','2')},
         {&MEDIASUBTYPE_UYVY,    16, mmioFOURCC('U','Y','V','Y')},
         {&MEDIASUBTYPE_YUY2,    16, mmioFOURCC('Y','U','Y','2')},
-        {&MEDIASUBTYPE_IV50,    16, mmioFOURCC('I','V','5','0')},
-        {&MEDIASUBTYPE_WAVE,    16, mmioFOURCC('W','A','V','E'), TRUE},
     };
 
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
@@ -3570,7 +3531,7 @@ static void test_renderless_formats(void)
 
     hr = IVMRSurfaceAllocatorNotify_SetDDrawDevice(notify, ddraw, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     presenter.ddraw = ddraw;
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref = get_refcount(ddraw);
     todo_wine ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
@@ -3596,25 +3557,17 @@ static void test_renderless_formats(void)
         vih.bmiHeader.biBitCount = tests[i].depth;
         vih.bmiHeader.biCompression = tests[i].compression;
 
-        prev_allocatesurface_count = allocatesurface_count;
         hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-        /* Wine currently creates surfaces during IPin::ReceiveConnection()
-         * instead of IMemAllocator::SetProperties(), so accept those extra
-         * failures here for now. */
-        if (tests[i].must_fail)
-            ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
-        else
-            ok(hr == S_OK || hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
-        todo_wine_if(i < 5) ok(allocatesurface_count == prev_allocatesurface_count,
-                "Got allocatesurface_count %u, prev_allocatesurface_count %u.\n",
-                allocatesurface_count, prev_allocatesurface_count);
+        /* Connection never fails on native, but Wine currently creates
+         * surfaces during IPin::ReceiveConnection() instead of
+         * IMemAllocator::SetProperties(), so let that fail here for now. */
         if (hr != S_OK)
         {
-            if (!tests[i].must_fail)
-                skip("Format is not supported, hr %#lx.\n", hr);
+            skip("Format is not supported, hr %#lx.\n", hr);
             winetest_pop_context();
             continue;
         }
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IMemInputPin_GetAllocator(input, &allocator);
         todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3624,7 +3577,6 @@ static void test_renderless_formats(void)
             hr = IMemInputPin_GetAllocator(input, &allocator);
         }
 
-        prev_allocatesurface_count = allocatesurface_count;
         req_props.cbBuffer = vih.bmiHeader.biWidth * vih.bmiHeader.biHeight * vih.bmiHeader.biBitCount / 8;
         hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
         if (hr != S_OK)
@@ -3640,11 +3592,6 @@ static void test_renderless_formats(void)
         }
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
-
-        todo_wine ok(allocatesurface_count == prev_allocatesurface_count + 1,
-                "Got allocatesurface_count %u, prev_allocatesurface_count %u.\n",
-                allocatesurface_count, prev_allocatesurface_count);
-
         hr = IMemAllocator_Commit(allocator);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -3708,41 +3655,19 @@ static void test_default_presenter_allocate(void)
         .biPlanes = 1,
     };
 
-    /* This works as BITMAPINFOHEADER + the three color masks for BI_BITFIELDS. */
-    BITMAPV4HEADER bitmap_v4_header =
-    {
-        .bV4Size = sizeof(BITMAPV4HEADER),
-        .bV4Width = 32,
-        .bV4Height = 16,
-        .bV4Planes = 1,
-        .bV4BitCount = 16,
-        .bV4V4Compression = BI_BITFIELDS,
-        .bV4RedMask = 0x00ff0000,
-        .bV4GreenMask = 0x0000ff00,
-        .bV4BlueMask = 0x000000ff,
-        .bV4AlphaMask = 0,
-    };
-
     static const struct
     {
         WORD depth;
         DWORD compression;
-        BOOL v4;
-        BOOL expect_failure;
+        DDPIXELFORMAT format;
     }
     tests[] =
     {
         {32, BI_RGB},
-        {16, BI_RGB, .expect_failure = TRUE},
-        {24, BI_RGB, .expect_failure = TRUE},
         {12, mmioFOURCC('N','V','1','2')},
         {12, mmioFOURCC('Y','V','1','2')},
         {16, mmioFOURCC('U','Y','V','Y')},
         {16, mmioFOURCC('Y','U','Y','2')},
-        {32, BI_BITFIELDS},
-        {16, BI_BITFIELDS, .expect_failure = TRUE},
-        {24, BI_BITFIELDS, .expect_failure = TRUE},
-        {32, BI_BITFIELDS, .v4 = TRUE, .expect_failure = TRUE},
     };
 
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
@@ -3761,6 +3686,7 @@ static void test_default_presenter_allocate(void)
     info.dwInterlaceFlags = 0;
     info.szNativeSize.cx = info.szAspectRatio.cx = 640;
     info.szNativeSize.cy = info.szAspectRatio.cy = 480;
+    info.lpHdr = &bitmap_header;
     info.lpPixFmt = NULL;
 
     for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -3769,25 +3695,10 @@ static void test_default_presenter_allocate(void)
         HRESULT expect_hr;
         DWORD count = 2;
 
-        winetest_push_context("Test %u: Compression %#lx, depth %u", i, tests[i].compression, tests[i].depth);
+        winetest_push_context("Compression %#lx, depth %u", tests[i].compression, tests[i].depth);
 
-        if (tests[i].v4 || tests[i].compression == BI_BITFIELDS)
-        {
-            info.lpHdr = (BITMAPINFOHEADER *)&bitmap_v4_header;
-            bitmap_v4_header.bV4BitCount = tests[i].depth;
-            bitmap_v4_header.bV4V4Compression = tests[i].compression;
-            if (tests[i].v4)
-                bitmap_v4_header.bV4Size = sizeof(bitmap_v4_header);
-            else
-                bitmap_v4_header.bV4Size = sizeof(BITMAPINFOHEADER);
-        }
-        else
-        {
-            bitmap_header.biBitCount = tests[i].depth;
-            bitmap_header.biCompression = tests[i].compression;
-            info.lpHdr = &bitmap_header;
-            bitmap_header.biSize = sizeof(BITMAPINFOHEADER);
-        }
+        bitmap_header.biBitCount = tests[i].depth;
+        bitmap_header.biCompression = tests[i].compression;
 
         ddraw = create_ddraw(window);
 
@@ -3800,7 +3711,7 @@ static void test_default_presenter_allocate(void)
         desc.dwWidth = desc.dwHeight = 32;
         desc.dwBackBufferCount = 2;
         desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
-        if (tests[i].compression != BI_RGB && tests[i].compression != BI_BITFIELDS)
+        if (tests[i].compression)
         {
             desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
             desc.ddpfPixelFormat.dwFourCC = tests[i].compression;
@@ -3828,14 +3739,11 @@ static void test_default_presenter_allocate(void)
 
         IDirectDraw7_Release(ddraw);
 
-        if (tests[i].expect_failure)
-            expect_hr = tests[i].v4 ? DDERR_INVALIDPIXELFORMAT : E_FAIL;
         hr = IVMRSurfaceAllocator_AllocateSurface(allocator, 0, &info, &count, &frontbuffer);
         ok(hr == expect_hr, "Got hr %#lx.\n", hr);
-        if (FAILED(hr))
+        if (hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE)
         {
-            if (hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE)
-                skip("Format is not supported.\n");
+            skip("Format is not supported.\n");
             winetest_pop_context();
             continue;
         }
@@ -3856,7 +3764,7 @@ static void test_default_presenter_allocate(void)
         ok(desc.dwHeight == 16, "Got height %lu.\n", desc.dwHeight);
         ok(desc.ddpfPixelFormat.dwSize == sizeof(desc.ddpfPixelFormat),
                 "Got size %lu.\n", desc.ddpfPixelFormat.dwSize);
-        if (tests[i].compression != BI_RGB && tests[i].compression != BI_BITFIELDS)
+        if (tests[i].compression)
         {
             ok(desc.ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
             ok(desc.ddpfPixelFormat.dwFourCC == bitmap_header.biCompression,

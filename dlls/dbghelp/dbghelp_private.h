@@ -415,7 +415,6 @@ enum format_info
     DFI_MACHO,
     DFI_DWARF,
     DFI_PDB,
-    DFI_OLD_PDB,
     DFI_LAST
 };
 
@@ -441,9 +440,6 @@ struct module_format_vtable
 
     /* index management */
     enum method_result          (*request_symref_t)(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
-    enum method_result          (*lookup_by_address)(struct module_format *modfmt, DWORD_PTR address, symref_t *symref);
-    enum method_result          (*lookup_by_name)(struct module_format *modfmt, const char *name, symref_t *symref);
-    enum method_result          (*enumerate_symbols)(struct module_format *modfmt, const WCHAR *match, BOOL (*cb)(symref_t, const char *, void *), void *user);
 
     /* types management */
     enum method_result          (*find_type)(struct module_format *modfmt, const char *name, symref_t *ref);
@@ -478,8 +474,7 @@ struct module_format
         struct elf_module_info*         elf_info;
         struct dwarf2_module_info_s*    dwarf2_info;
         struct pe_module_info*          pe_info;
-        struct macho_module_info*       macho_info;
-        struct old_pdb_module_info*     old_pdb_info;
+        struct macho_module_info*	macho_info;
         struct pdb_module_info*         pdb_info;
     } u;
 };
@@ -505,12 +500,7 @@ struct module
     /* specific information for debug types */
     struct module_format*       format_info[DFI_LAST];
     unsigned                    debug_format_bitmask;
-    /* Hack for fast symdef deref...
-     * Note: if ever we need another backend with dedicated symref_t support,
-     * we could always use the 3 non-zero lower bits of symref_t to match a
-     * debug backend.
-     */
-    struct module_format       *ops_symref_modfmt;
+    struct module_format       *ops_symref_modfmt; /* HACK for fast access to the ops table */
 
     /* memory allocation pool */
     struct pool                 pool;
@@ -827,20 +817,25 @@ extern BOOL         module_is_wine_host(const WCHAR* module_name, const WCHAR* e
 extern BOOL         module_refresh_list(struct process *pcs);
 
 /* msc.c */
-extern BOOL         pdb_load_debug_info(struct module *module, const SYMSRV_INDEX_INFOW *info, BOOL unmatched);
-extern BOOL         pe_load_debug_directory(struct module* module,
+extern BOOL         pe_load_debug_directory(const struct process* pcs,
+                                            struct module* module,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 extern DWORD        msc_get_file_indexinfo(void* image, const IMAGE_DEBUG_DIRECTORY* dbgdir, DWORD size,
                                            SYMSRV_INDEX_INFOW* info);
-extern DWORD        pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
-extern DWORD        dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
-extern BOOL         old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
+struct pdb_cmd_pair {
+    const char*         name;
+    DWORD*              pvalue;
+};
+extern BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
+    union ctx *context, struct pdb_cmd_pair *cpair);
+extern DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
+extern DWORD dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
 
 /* path.c */
-extern BOOL         path_find_symbol_file(const struct module *module,
-                                          const WCHAR *full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
+extern BOOL         path_find_symbol_file(const struct process *pcs, const struct module *module,
+                                          PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                                           SYMSRV_INDEX_INFOW *info, BOOL *unmatched);
 extern WCHAR *get_dos_file_name(const WCHAR *filename) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC;
 extern BOOL         search_dll_path(const struct process* process, const WCHAR *name, WORD machine,
@@ -849,16 +844,7 @@ extern BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)
 extern const WCHAR* file_name(const WCHAR* str);
 extern const char* file_nameA(const char* str);
 
-/* pdb.c */
-extern BOOL         pdb_init_modfmt(const struct msc_debug_info *msc_dbg,
-                                    const WCHAR *filename, BOOL *has_linenumber_info);
-extern BOOL         pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
-struct _PDB_FPO_DATA;
-extern BOOL         pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
-                                                    const char* cmd, WOW64_CONTEXT *context);
-
 /* pe_module.c */
-extern unsigned     pe_clone_sections_table(struct module *module, IMAGE_SECTION_HEADER **sections);
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth, BOOL* is_builtin);
 extern struct module*
                     pe_load_native_module(struct process* pcs, const WCHAR* name,
@@ -866,7 +852,8 @@ extern struct module*
 extern struct module*
                     pe_load_builtin_module(struct process* pcs, const WCHAR* name,
                                            DWORD64 base, DWORD64 size);
-extern BOOL         pe_load_debug_info(struct module* module);
+extern BOOL         pe_load_debug_info(const struct process* pcs,
+                                       struct module* module);
 extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size);
 extern BOOL         pe_unmap_directory(struct module* module, int dirno, const char*);
 extern DWORD        pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
@@ -913,13 +900,14 @@ extern int __cdecl  symt_cmp_addr(const void* p1, const void* p2);
 extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si);
 extern void         symbol_setname(SYMBOL_INFO* si, const char* name);
 extern BOOL         symt_match_stringAW(const char *string, const WCHAR *re, BOOL _case);
-extern symref_t     symt_find_nearest(struct module* module, DWORD_PTR addr);
+extern struct symt_ht*
+                    symt_find_nearest(struct module* module, DWORD_PTR addr);
 extern struct symt_ht*
                     symt_find_symbol_at(struct module* module, DWORD_PTR addr);
 extern struct symt_module*
                     symt_new_module(struct module* module);
 extern struct symt_compiland*
-                    symt_new_compiland(struct module* module, symref_t parent, const char *filename);
+                    symt_new_compiland(struct module* module, const char *filename);
 extern struct symt_public*
                     symt_new_public(struct module* module,
                                     struct symt_compiland* parent,
@@ -935,7 +923,7 @@ extern struct symt_data*
                                              symref_t type);
 extern struct symt_function*
                     symt_new_function(struct module* module,
-                                      symref_t compiland,
+                                      struct symt_compiland* parent,
                                       const char* name,
                                       ULONG_PTR addr, ULONG_PTR size,
                                       symref_t type, DWORD_PTR user);
@@ -1094,3 +1082,15 @@ extern struct symt_function*
 #define IFC_DEPTH_MASK   0x3FFFFFFF
 #define IFC_MODE(x)      ((x) & ~IFC_DEPTH_MASK)
 #define IFC_DEPTH(x)     ((x) & IFC_DEPTH_MASK)
+
+/* temporary helpers for PDB rewriting */
+struct _PDB_FPO_DATA;
+extern BOOL pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
+                                            const char* cmd, struct pdb_cmd_pair* cpair);
+extern BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
+                                   union ctx *context, struct pdb_cmd_pair *cpair);
+struct pdb_reader;
+extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
+extern void pdb_reader_dispose(struct pdb_reader *pdb);
+extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
+extern BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, symref_t *symref);

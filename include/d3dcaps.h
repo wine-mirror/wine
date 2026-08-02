@@ -22,7 +22,7 @@
 #include <ddraw.h>
 
 #ifdef __i386__
-#pragma pack(push,4)
+#include <pshpack4.h>
 #endif
 
 typedef struct _D3DTRANSFORMCAPS {
@@ -433,7 +433,7 @@ typedef struct _D3DDEVINFO_TEXTURING {
 } D3DDEVINFO_TEXTURING, *LPD3DDEVINFO_TEXTURING;
 
 #ifdef __i386__
-#pragma pack(pop)
+#include <poppack.h>
 #endif
 
 #endif

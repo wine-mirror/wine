@@ -18,9 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-#include "wine/strmbase.h"
-#include "wine/debug.h"
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -43,7 +41,7 @@ static HRESULT enum_pins_create(struct strmbase_filter *filter, IEnumPins **out)
     if (!out)
         return E_POINTER;
 
-    if (!(object = calloc(1, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         *out = NULL;
         return E_OUTOFMEMORY;
@@ -102,7 +100,7 @@ static ULONG WINAPI enum_pins_Release(IEnumPins *iface)
     if (!refcount)
     {
         IBaseFilter_Release(&enum_pins->filter->IBaseFilter_iface);
-        free(enum_pins);
+        heap_free(enum_pins);
     }
     return refcount;
 }

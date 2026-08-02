@@ -59,6 +59,7 @@
 #include "commctrl.h"
 #include "prsht.h"
 #include "comctl32.h"
+#include "uxtheme.h"
 
 #include "wine/debug.h"
 
@@ -67,7 +68,7 @@
 /******************************************************************************
  * Data structures
  */
-#pragma pack(push,2)
+#include "pshpack2.h"
 
 typedef struct
 {
@@ -89,7 +90,7 @@ typedef struct
   short cy;
   DWORD id;
 } MyDLGITEMTEMPLATEEX;
-#pragma pack(pop)
+#include "poppack.h"
 
 struct _PSP
 {
@@ -1630,11 +1631,8 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   {
       SetWindowSubclass(hwndPage, PROPSHEET_WizardSubclassProc, 1, 0);
   }
-
-#if __WINE_COMCTL32_VERSION == 6
   if (!(psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD))
       EnableThemeDialogTexture (hwndPage, ETDT_ENABLETAB);
-#endif
 
   return TRUE;
 }

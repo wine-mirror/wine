@@ -29,6 +29,8 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 #include "dshow.h"
 #include "mfidl.h"
 #include "wine/debug.h"
@@ -138,6 +140,8 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out);
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out);
 HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out);
 HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out);
+HRESULT resampler_create(IUnknown *outer, IUnknown **out);
+HRESULT color_convert_create(IUnknown *outer, IUnknown **out);
 HRESULT mp3_sink_class_factory_create(IUnknown *outer, IUnknown **out);
 HRESULT mpeg4_sink_class_factory_create(IUnknown *outer, IUnknown **out);
 
@@ -163,7 +167,7 @@ HRESULT wg_transform_push_quartz(wg_transform_t transform, struct wg_sample *sam
 HRESULT wg_transform_push_dmo(wg_transform_t transform, IMediaBuffer *media_buffer,
         DWORD flags, REFERENCE_TIME time_stamp, REFERENCE_TIME time_length, struct wg_sample_queue *queue);
 HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD mf_sample_size, DWORD *flags, bool *preserve_timestamps);
+        DWORD sample_size, DWORD *flags);
 HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *sample);
 HRESULT wg_transform_read_dmo(wg_transform_t transform, DMO_OUTPUT_DATA_BUFFER *buffer);
 
@@ -181,6 +185,8 @@ bool wg_video_format_is_rgb(enum wg_video_format format);
 
 HRESULT aac_decoder_create(REFIID riid, void **ret);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
+HRESULT video_processor_create(REFIID riid, void **ret);
+
 HRESULT h264_encoder_create(REFIID riid, void **ret);
 
 extern const GUID MFAudioFormat_RAW_AAC;

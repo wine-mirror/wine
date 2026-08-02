@@ -38,15 +38,10 @@
 46 stub -noname ClassicAdjustWindowRectEx
 47 stdcall DrawThemeBackgroundEx(ptr ptr long long ptr ptr)
 48 stub -noname GetThemeParseErrorInfo
-49 stub @
 60 stub -noname CreateThemeDataFromObjects
 61 stdcall OpenThemeDataEx(ptr wstr long)
 62 stub -noname ServerClearStockObjects
 63 stub -noname MarkSelection
-95 stdcall GetImmersiveColorFromColorSetEx(long long long long)
-96 stdcall -noname GetImmersiveColorTypeFromName(wstr)
-98 stdcall GetImmersiveUserColorSetPreference(long long)
-100 stdcall -noname GetImmersiveColorNamedTypeByIndex(long)
 104 stdcall -noname RefreshImmersiveColorPolicyState()
 132 stdcall -noname ShouldAppsUseDarkMode()
 133 stdcall -noname AllowDarkModeForWindow(ptr long)
@@ -84,7 +79,6 @@
 @ stdcall GetThemeBackgroundContentRect(ptr ptr long long ptr ptr)
 @ stdcall GetThemeBackgroundExtent(ptr ptr long long ptr ptr)
 @ stdcall GetThemeBackgroundRegion(ptr ptr long long ptr ptr)
-@ stdcall GetThemeBitmap(ptr long long long long ptr)
 @ stdcall GetThemeBool(ptr long long long ptr)
 @ stdcall GetThemeColor(ptr long long long ptr)
 @ stdcall GetThemeDocumentationProperty(wstr wstr wstr long)
@@ -99,7 +93,6 @@
 @ stdcall GetThemePosition(ptr long long long ptr)
 @ stdcall GetThemePropertyOrigin(ptr long long long ptr)
 @ stdcall GetThemeRect(ptr long long long ptr)
-@ stdcall GetThemeStream(ptr long long long ptr ptr ptr)
 @ stdcall GetThemeString(ptr long long long wstr long)
 @ stdcall GetThemeSysBool(ptr long)
 @ stdcall GetThemeSysColor(ptr long)

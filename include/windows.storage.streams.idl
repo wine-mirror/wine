@@ -20,9 +20,11 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "eventtoken.idl";
 import "windows.foundation.idl";
+#endif
 
 namespace Windows.Storage {
     interface IStorageFile;
@@ -30,11 +32,11 @@ namespace Windows.Storage {
 
 namespace Windows.Storage.Streams {
     typedef enum ByteOrder ByteOrder;
-    typedef enum InputStreamOptions InputStreamOptions;
     typedef enum UnicodeEncoding UnicodeEncoding;
     interface IBuffer;
     interface IBufferFactory;
     interface IBufferStatics;
+    interface IBufferByteAccess;
     interface IContentTypeProvider;
     interface IDataWriter;
     interface IDataWriterFactory;
@@ -49,18 +51,20 @@ namespace Windows.Storage.Streams {
     runtimeclass Buffer;
     runtimeclass DataWriter;
     runtimeclass DataWriterStoreOperation;
+#ifndef _WINTYPES
     runtimeclass InMemoryRandomAccessStream;
     runtimeclass RandomAccessStream;
     runtimeclass RandomAccessStreamReference;
+    runtimeclass DataReader;
+    runtimeclass DataReaderLoadOperation;
+#endif
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
-        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IInputStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IOutputStream *>;
-        interface Windows.Foundation.IAsyncOperation<UINT32>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
-        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IInputStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IOutputStream *>;
+#ifndef _WINTYPES
         interface Windows.Foundation.Collections.IIterable<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *>;
@@ -72,17 +76,12 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.RandomAccessStreamReference *>;
-        interface Windows.Foundation.AsyncOperationProgressHandler<UINT64,UINT64>;
-        interface Windows.Foundation.AsyncOperationProgressHandler<Windows.Storage.Streams.IBuffer *,UINT32>;
-        interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<Windows.Storage.Streams.IBuffer *,UINT32>;
-        interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT64,UINT64>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.RandomAccessStreamReference *>;
-        interface Windows.Foundation.IAsyncOperationWithProgress<UINT64,UINT64>;
-        interface Windows.Foundation.IAsyncOperationWithProgress<Windows.Storage.Streams.IBuffer *,UINT32>;
+#endif
     }
 
     [
@@ -91,7 +90,7 @@ namespace Windows.Storage.Streams {
     enum ByteOrder
     {
         LittleEndian = 0,
-        BigEndian    = 1,
+        BigEndian    = 1
     };
 
     [
@@ -102,7 +101,7 @@ namespace Windows.Storage.Streams {
     {
         None      = 0x0,
         Partial   = 0x1,
-        ReadAhead = 0x2,
+        ReadAhead = 0x2
     };
 
     [
@@ -124,6 +123,15 @@ namespace Windows.Storage.Streams {
         [propget] HRESULT Capacity([out, retval] UINT32 *value);
         [propget] HRESULT Length([out, retval] UINT32 *value);
         [propput] HRESULT Length([in] UINT32 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(905a0fef-bc53-11df-8c49-001e4fc686da)
+    ]
+    interface IBufferByteAccess : IUnknown
+    {
+        [propget] HRESULT Buffer([out, retval] BYTE **value);
     }
 
     [
@@ -152,11 +160,36 @@ namespace Windows.Storage.Streams {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        uuid(97d098a5-3b99-4de9-88a5-e11d2f50c795)
+        uuid(E2B50029-B4C1-4314-A4B8-FB813A2F275E)
     ]
-    interface IContentTypeProvider : IInspectable
+    interface IDataReader : IInspectable
     {
-        [propget] HRESULT ContentType([out, retval] HSTRING *value);
+        [propget] HRESULT UnconsumedBufferLength([out] [retval] UINT32* value);
+        [propget] HRESULT UnicodeEncoding([out] [retval] Windows.Storage.Streams.UnicodeEncoding* value);
+        [propput] HRESULT UnicodeEncoding([in] Windows.Storage.Streams.UnicodeEncoding value);
+        [propget] HRESULT ByteOrder([out] [retval] Windows.Storage.Streams.ByteOrder* value);
+        [propput] HRESULT ByteOrder([in] Windows.Storage.Streams.ByteOrder value);
+        [propget] HRESULT InputStreamOptions([out] [retval] Windows.Storage.Streams.InputStreamOptions* value);
+        [propput] HRESULT InputStreamOptions([in] Windows.Storage.Streams.InputStreamOptions value);
+        HRESULT ReadByte([out] [retval] BYTE* value);
+        HRESULT ReadBytes([in] UINT32 __valueSize, [out] [size_is(__valueSize)] BYTE* value);
+        HRESULT ReadBuffer([in] UINT32 length, [out] [retval] Windows.Storage.Streams.IBuffer** buffer);
+        HRESULT ReadBoolean([out] [retval] boolean* value);
+        HRESULT ReadGuid([out] [retval] GUID* value);
+        HRESULT ReadInt16([out] [retval] INT16* value);
+        HRESULT ReadInt32([out] [retval] INT32* value);
+        HRESULT ReadInt64([out] [retval] INT64* value);
+        HRESULT ReadUInt16([out] [retval] UINT16* value);
+        HRESULT ReadUInt32([out] [retval] UINT32* value);
+        HRESULT ReadUInt64([out] [retval] UINT64* value);
+        HRESULT ReadSingle([out] [retval] FLOAT* value);
+        HRESULT ReadDouble([out] [retval] DOUBLE* value);
+        HRESULT ReadString([in] UINT32 codeUnitCount, [out] [retval] HSTRING* value);
+        HRESULT ReadDateTime([out] [retval] Windows.Foundation.DateTime* value);
+        HRESULT ReadTimeSpan([out] [retval] Windows.Foundation.TimeSpan* value);
+        HRESULT LoadAsync([in] UINT32 count, [out] [retval] Windows.Storage.Streams.DataReaderLoadOperation** operation);
+        HRESULT DetachBuffer([out] [retval] Windows.Storage.Streams.IBuffer** buffer);
+        HRESULT DetachStream([out] [retval] Windows.Storage.Streams.IInputStream** stream);
     }
 
     [
@@ -196,6 +229,16 @@ namespace Windows.Storage.Streams {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.Streams.DataReader),
+        uuid(D7527847-57DA-4E15-914C-06806699A098)
+    ]
+    interface IDataReaderFactory : IInspectable
+    {
+        HRESULT CreateDataReader([in] Windows.Storage.Streams.IInputStream* inputStream, [out] [retval] Windows.Storage.Streams.DataReader** dataReader);
+    }
+    
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Storage.Streams.DataWriter),
         uuid(338c67c2-8b84-4c2b-9c50-7b8767847a1f)
     ]
@@ -208,25 +251,12 @@ namespace Windows.Storage.Streams {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        uuid(905a0fe2-bc53-11df-8c49-001e4fc686da)
+        exclusiveto(Windows.Storage.Streams.DataReader),
+        uuid(11FCBFC8-F93A-471B-B121-F379E349313C)
     ]
-    interface IInputStream : IInspectable
-        requires Windows.Foundation.IClosable
+    interface IDataReaderStatics : IInspectable
     {
-        HRESULT ReadAsync(
-            [in] Windows.Storage.Streams.IBuffer *buffer,
-            [in] UINT32 count,
-            [in] Windows.Storage.Streams.InputStreamOptions options,
-            [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Storage.Streams.IBuffer *, UINT32> **operation);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        uuid(43929d18-5ec9-4b5a-919c-4205b0c804b6)
-    ]
-    interface IInputStreamReference : IInspectable
-    {
-        HRESULT OpenSequentialReadAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IInputStream *> **operation);
+        HRESULT FromBuffer([in] Windows.Storage.Streams.IBuffer* buffer, [out] [retval] Windows.Storage.Streams.DataReader** dataReader);
     }
 
     [
@@ -242,18 +272,7 @@ namespace Windows.Storage.Streams {
         HRESULT FlushAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
     }
 
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Storage.Streams.RandomAccessStream),
-        uuid(524cedcf-6e29-4ce5-9573-6b753db66c3a)
-    ]
-    interface IRandomAccessStreamStatics : IInspectable
-    {
-        [overload("CopyAsync")] HRESULT CopyAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
-        [overload("CopyAsync")] HRESULT CopySizeAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [in] UINT64 bytesToCopy, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
-        HRESULT CopyAndCloseAsync([in] Windows.Storage.Streams.IInputStream *source, [in] Windows.Storage.Streams.IOutputStream *dest, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT64, UINT64> **operation);
-    }
-
+#ifndef _WINTYPES
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(905a0fe1-bc53-11df-8c49-001e4fc686da),
@@ -313,7 +332,9 @@ namespace Windows.Storage.Streams {
             Windows.Storage.Streams.IContentTypeProvider
     {
     }
+#endif
 
+#ifndef _WINDOWS_STORAGE
     [
         activatable(Windows.Storage.Streams.IBufferFactory, Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -340,6 +361,28 @@ namespace Windows.Storage.Streams {
     }
 
     [
+        activatable(Windows.Storage.Streams.IDataReaderFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Storage.Streams.IDataReaderStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass DataReader
+    {
+        [default] interface Windows.Storage.Streams.IDataReader;
+        interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataReaderLoadOperation
+    {
+        [default] interface Windows.Foundation.IAsyncOperation<UINT32>;
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
@@ -347,7 +390,9 @@ namespace Windows.Storage.Streams {
     {
         [default] interface Windows.Foundation.IAsyncOperation<UINT32>;
     }
+#endif
 
+#ifndef _WINTYPES
     [
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -379,5 +424,6 @@ namespace Windows.Storage.Streams {
     {
         [default] interface Windows.Storage.Streams.IRandomAccessStreamReference;
     }
+#endif
 
 }

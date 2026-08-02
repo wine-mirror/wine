@@ -4,5 +4,4 @@ IMPORTS = combase
 SOURCES = \
 	captions.c \
 	classes.idl \
-	main.c \
-	transcoder.c
+	main.c

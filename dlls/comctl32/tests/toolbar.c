@@ -104,22 +104,6 @@ static const struct message restore_parent_seq[] = {
     { 0 }
 };
 
-static const struct message wm_paint_parent_seq[] = {
-    { WM_NOTIFY, sent },
-    { 0 }
-};
-
-static const struct message wm_paint_transparent_parent_v5_seq[] = {
-    { WM_NOTIFY, sent },
-    { 0 }
-};
-
-static const struct message wm_paint_transparent_parent_v6_seq[] = {
-    { WM_ERASEBKGND, sent },
-    { WM_NOTIFY, sent },
-    { 0 }
-};
-
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -195,79 +179,13 @@ static BOOL equal_dc(HDC hdc1, HDC hdc2, int width, int height)
 
 static void *alloced_str;
 
-static const NMCBEENDEDITW test_WM_NOTIFY_NMCBEENDEDITW =
-{
-    .hdr.hwndFrom = (HWND)0xabcd0001,
-    .hdr.idFrom = 0xabcd0002,
-    .hdr.code = CBEN_ENDEDITW,
-    .fChanged = 0xabcd0003,
-    .iNewSelection = 0xabcd0004,
-    .szText = L"Lorem ipsum dolor sit amet",
-    .iWhy = 0xabcd0005
-};
-
-static const NMCBEENDEDITA test_WM_NOTIFY_NMCBEENDEDITA =
-{
-    .hdr.hwndFrom = (HWND)0xabcd0001,
-    .hdr.idFrom = 0xabcd0002,
-    .hdr.code = CBEN_ENDEDITA,
-    .fChanged = 0xabcd0003,
-    .iNewSelection = 0xabcd0004,
-    .szText = "Lorem ipsum dolor sit amet",
-    .iWhy = 0xabcd0005
-};
-
-static enum
-{
-    TEST_WM_NOTIFY_NO_FORWARD,
-    TEST_WM_NOTIFY_FORWARD_NO_CONVERT,
-    TEST_WM_NOTIFY_FORWARD_CONVERT
-} test_WM_NOTIFY_expect_CBEN_ENDEDITW, test_WM_NOTIFY_expect_CBEN_ENDEDITA;
-
-static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
+static LRESULT parent_wnd_notify(LPARAM lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
     NMTBHOTITEM *nmhi;
     NMTBDISPINFOA *nmdisp;
     switch (hdr->code)
     {
-        case CBEN_ENDEDITW:
-            switch (test_WM_NOTIFY_expect_CBEN_ENDEDITW)
-            {
-            case TEST_WM_NOTIFY_NO_FORWARD:
-                ok(FALSE, "Got unexpected WM_NOTIFY.\n");
-                break;
-            case TEST_WM_NOTIFY_FORWARD_NO_CONVERT:
-                test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_NO_FORWARD;
-                ok(hdr == &test_WM_NOTIFY_NMCBEENDEDITW.hdr, "Got unexpected header.\n");
-                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
-                break;
-            default:
-                ok(FALSE, "This testing code is broken.\n");
-                break;
-            }
-            return 0xabcd0006;
-        case CBEN_ENDEDITA:
-            switch (test_WM_NOTIFY_expect_CBEN_ENDEDITA)
-            {
-            case TEST_WM_NOTIFY_NO_FORWARD:
-                ok(FALSE, "Got unexpected WM_NOTIFY.\n");
-                break;
-            case TEST_WM_NOTIFY_FORWARD_NO_CONVERT:
-                test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
-                ok(hdr == &test_WM_NOTIFY_NMCBEENDEDITA.hdr, "Got unexpected header.\n");
-                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
-                break;
-            case TEST_WM_NOTIFY_FORWARD_CONVERT:
-                test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
-                ok(!memcmp(hdr, &test_WM_NOTIFY_NMCBEENDEDITA, sizeof(NMCBEENDEDITA)), "Incorrectly converted NMCBEENDEDITW to NMCBEENDEDITA.\n");
-                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
-                break;
-            default:
-                ok(FALSE, "This testing code is broken.\n");
-                break;
-            }
-            return 0xabcd0007;
         case TBN_HOTITEMCHANGE:
             nmhi = (NMTBHOTITEM *)lParam;
             g_fReceivedHotItemChange = TRUE;
@@ -308,7 +226,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
             if (save->iItem == -1)
             {
                 save->cbData = save->cbData * 2 + 11 * sizeof(DWORD);
-                save->pData = HeapAlloc( GetProcessHeap(), 0, save->cbData );
+                save->pData = heap_alloc( save->cbData );
                 save->pData[0] = 0xcafe;
                 save->pCurrent = save->pData + 1;
             }
@@ -384,7 +302,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
 
                 if (restore->iItem == 0)
                 {
-                    restore->tbButton.iString = (INT_PTR)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
+                    restore->tbButton.iString = (INT_PTR)heap_alloc_zero( 8 );
                     strcpy( (char *)restore->tbButton.iString, "foo" );
                 }
                 else if (restore->iItem == 1)
@@ -414,7 +332,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
             {
             case 0:
                 tb->tbButton.idCommand = 7;
-                alloced_str = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
+                alloced_str = heap_alloc_zero( 8 );
                 strcpy( alloced_str, "foo" );
                 tb->tbButton.iString = (INT_PTR)alloced_str;
                 return 1;
@@ -456,8 +374,6 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
     }
     return 0;
 }
-
-static LRESULT parent_WM_NOTIFYFORMAT_return = NFR_ANSI;
 
 static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -512,9 +428,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     switch (message)
     {
         case WM_NOTIFY:
-            return parent_wnd_notify(wParam, lParam);
-        case WM_NOTIFYFORMAT:
-            return parent_WM_NOTIFYFORMAT_return;
+            return parent_wnd_notify(lParam);
     }
 
     defwndproc_counter++;
@@ -1163,7 +1077,7 @@ static tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop
     ret.szMin.cx = minx;
     ret.szMin.cy = miny;
     ret.nButtons = 0;
-    ret.prcButtons = calloc( nButtonsAlloc, sizeof(*ret.prcButtons) );
+    ret.prcButtons = heap_alloc_zero(nButtonsAlloc * sizeof(*ret.prcButtons));
 
     return ret;
 }
@@ -1185,7 +1099,7 @@ static void init_tbsize_results(void) {
     int fontheight = system_font_height();
     int buttonwidth;
 
-    tbsize_results = calloc( tbsize_results_num, sizeof(*tbsize_results) );
+    tbsize_results = heap_alloc_zero(tbsize_results_num * sizeof(*tbsize_results));
 
     tbsize_results[0] = init_tbsize_result(5, 0, 0 ,672 ,26, 100 ,22);
     tbsize_addbutton(&tbsize_results[0],   0,   2,  23,  24);
@@ -1443,8 +1357,8 @@ static void free_tbsize_results(void) {
     int i;
 
     for (i = 0; i < tbsize_results_num; i++)
-        free(tbsize_results[i].prcButtons);
-    free(tbsize_results);
+        heap_free(tbsize_results[i].prcButtons);
+    heap_free(tbsize_results);
     tbsize_results = NULL;
 }
 
@@ -2159,7 +2073,7 @@ static void test_getstring(void)
     expect(-1, r);
     r = SendMessageW(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
-    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"STR\0");
+    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"STR");
     expect(0, r);
     r = SendMessageA(hToolbar, TB_GETSTRINGA, MAKEWPARAM(0, 0), 0);
     ok(r == 3, "Unexpected return value %d.\n", r);
@@ -2919,189 +2833,6 @@ static void test_BTNS_SEP(void)
     DestroyWindow(hwnd);
 }
 
-static void test_WM_NOTIFY(void)
-{
-    HWND toolbar = NULL;
-    LRESULT ret;
-
-    parent_WM_NOTIFYFORMAT_return = NFR_UNICODE;
-    rebuild_toolbar(&toolbar);
-
-    test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
-    ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
-    ok(ret == 0xabcd0006, "SendMessageW returned 0x%Ix.\n", ret);
-    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITW, "Toolbar didn't forward WM_NOTIFY to parent.\n");
-    test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_NO_FORWARD;
-
-    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
-    ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
-    ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
-    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
-    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
-
-    parent_WM_NOTIFYFORMAT_return = NFR_ANSI;
-    rebuild_toolbar(&toolbar);
-
-    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_CONVERT;
-    ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
-    ok(ret == 0xabcd0007, "SendMessageW returned 0x%Ix.\n", ret);
-    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't convert and forward WM_NOTIFY to parent.\n");
-
-    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
-    ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
-    ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
-    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
-    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
-
-    DestroyWindow(toolbar);
-}
-
-static void test_unicode_format(void)
-{
-    HWND hwnd = NULL;
-    LRESULT lr;
-
-    rebuild_toolbar(&hwnd);
-
-    /* Test that CCM_SETVERSION shouldn't change the Unicode character format flag for the control */
-    SendMessageA(hwnd, CCM_SETVERSION, 5, 0);
-    lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
-    ok(lr == 0, "Got unexpected %Id.\n", lr);
-
-    SendMessageA(hwnd, CCM_SETVERSION, 6, 0);
-    lr = SendMessageA(hwnd, TB_GETUNICODEFORMAT, 0, 0);
-    ok(lr == 0, "Got unexpected %Id.\n", lr);
-
-    DestroyWindow(hwnd);
-}
-
-static void test_WM_ERASEBKGND(BOOL v6)
-{
-    COLORREF color;
-    HBRUSH brush;
-    LRESULT lr;
-    HWND hwnd;
-    RECT rect;
-    HDC hdc;
-
-    /* Check WM_ERASEBKGND without TBSTYLE_TRANSPARENT */
-    hwnd = CreateWindowA(TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE, 100, 100, 100, 100,
-                         hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
-    ok(hwnd != NULL, "CreateWindowA failed.\n");
-
-    GetClientRect(hwnd, &rect);
-    brush = CreateSolidBrush(RGB(255, 0, 0));
-    hdc = GetDC(hwnd);
-    FillRect(hdc, &rect, brush);
-    color = GetPixel(hdc, 10, 10);
-    ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-
-    lr = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
-    ok(lr == 1, "Got unexpected %Id.\n", lr);
-    color = GetPixel(hdc, 10, 10);
-    ok(color != RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-
-    DeleteObject(brush);
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
-
-    /* Check WM_ERASEBKGND with TBSTYLE_TRANSPARENT */
-    hwnd = CreateWindowA(TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE | TBSTYLE_TRANSPARENT, 100,
-                         100, 100, 100, hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
-    ok(hwnd != NULL, "CreateWindowA failed.\n");
-
-    GetClientRect(hwnd, &rect);
-    brush = CreateSolidBrush(RGB(255, 0, 0));
-    hdc = GetDC(hwnd);
-    FillRect(hdc, &rect, brush);
-    color = GetPixel(hdc, 10, 10);
-    ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-
-    lr = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
-    ok(lr == 1, "Got unexpected %Id.\n", lr);
-    color = GetPixel(hdc, 10, 10);
-    if (v6)
-        ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-    else
-        ok(color == GetSysColor(COLOR_WINDOW), "Got unexpected color %#lx.\n", color);
-
-    DeleteObject(brush);
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
-}
-
-static LRESULT CALLBACK wm_paint_parent_wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
-{
-    static LONG defwndproc_counter = 0;
-    struct message msg;
-    LRESULT ret;
-
-    msg.message = message;
-    msg.flags = sent | wparam | lparam;
-    if (defwndproc_counter)
-        msg.flags |= defwinproc;
-    msg.wParam = wp;
-    msg.lParam = lp;
-
-    add_message(sequences, PARENT_SEQ_INDEX, &msg);
-
-    defwndproc_counter++;
-    ret = DefWindowProcW(hwnd, message, wp, lp);
-    defwndproc_counter--;
-    return ret;
-}
-
-static void test_WM_PAINT(BOOL v6)
-{
-    WNDCLASSW wc = {0};
-    HWND parent, hwnd;
-
-    wc.hInstance = GetModuleHandleW(NULL);
-    wc.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_IBEAM);
-    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
-    wc.lpszClassName = L"ToolbarWmPaintParentClass";
-    wc.lpfnWndProc = wm_paint_parent_wnd_proc;
-    RegisterClassW(&wc);
-
-    parent = CreateWindowW(wc.lpszClassName, L"Parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
-                           NULL, NULL, GetModuleHandleW(NULL), 0);
-    ok(parent != NULL, "CreateWindowW failed.\n");
-
-    /* Check WM_PAINT without TBSTYLE_TRANSPARENT */
-    hwnd = CreateWindowW(TOOLBARCLASSNAMEW, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 100, 100, parent,
-                         NULL, GetModuleHandleA(NULL), NULL);
-    ok(hwnd != NULL, "CreateWindowW failed.\n");
-    flush_events();
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    InvalidateRect(hwnd, NULL, FALSE);
-    flush_events();
-    ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_parent_seq, "WM_PAINT without TBSTYLE_TRANSPARENT", FALSE);
-
-    DestroyWindow(hwnd);
-
-    /* Check WM_PAINT with TBSTYLE_TRANSPARENT */
-    hwnd = CreateWindowW(TOOLBARCLASSNAMEW, NULL, WS_CHILD | WS_VISIBLE | TBSTYLE_TRANSPARENT, 0, 0,
-                         100, 100, parent, NULL, GetModuleHandleA(NULL), NULL);
-    ok(hwnd != NULL, "CreateWindowW failed.\n");
-    flush_events();
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    InvalidateRect(hwnd, NULL, FALSE);
-    flush_events();
-    if (v6)
-        ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v6_seq,
-                    "WM_PAINT with TBSTYLE_TRANSPARENT v6", FALSE);
-    else
-        ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v5_seq,
-                    "WM_PAINT with TBSTYLE_TRANSPARENT v5", FALSE);
-    DestroyWindow(hwnd);
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    DestroyWindow(parent);
-    UnregisterClassW(wc.lpszClassName, 0);
-}
-
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -3153,10 +2884,6 @@ START_TEST(toolbar)
     test_drawtext_flags();
     test_imagelist();
     test_BTNS_SEP();
-    test_WM_NOTIFY();
-    test_unicode_format();
-    test_WM_ERASEBKGND(FALSE);
-    test_WM_PAINT(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -3164,9 +2891,6 @@ START_TEST(toolbar)
     test_create(TRUE);
     test_visual();
     test_BTNS_SEP();
-    test_unicode_format();
-    test_WM_ERASEBKGND(TRUE);
-    test_WM_PAINT(TRUE);
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {

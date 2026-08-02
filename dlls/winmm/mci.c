@@ -204,7 +204,7 @@ static LPWSTR MCI_strdupAtoW( LPCSTR str )
     return ret;
 }
 
-static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
+static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
 {
     if (msg < DRV_RESERVED) return 0;
 
@@ -248,7 +248,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             DWORD_PTR *ptr;
 
             ptr = malloc(sizeof(DWORD_PTR) + sizeof(*mci_openW));
-            if (!ptr) return MCIERR_OUT_OF_MEMORY;
+            if (!ptr) return -1;
 
             *ptr++ = *dwParam2; /* save the previous pointer */
             *dwParam2 = (DWORD_PTR)ptr;
@@ -278,7 +278,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             if (HIWORD(dwParam1))
                 memcpy(&mci_openW->dwStyle, &mci_openA->dwStyle, sizeof(MCI_ANIM_OPEN_PARMSW) - sizeof(MCI_OPEN_PARMSW));
         }
-        return 0;
+        return 1;
 
     case MCI_WINDOW:
         if (dwParam1 & MCI_ANIM_WINDOW_TEXT)
@@ -287,7 +287,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             MCI_ANIM_WINDOW_PARMSW *mci_windowW;
 
             mci_windowW = malloc(sizeof(*mci_windowW));
-            if (!mci_windowW) return MCIERR_OUT_OF_MEMORY;
+            if (!mci_windowW) return -1;
 
             *dwParam2 = (DWORD_PTR)mci_windowW;
 
@@ -299,6 +299,8 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
                 mci_windowW->hWnd = mci_windowA->hWnd;
             if (dwParam1 & MCI_ANIM_WINDOW_STATE)
                 mci_windowW->nCmdShow = mci_windowA->nCmdShow;
+
+            return 1;
         }
         return 0;
 
@@ -310,7 +312,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             DWORD_PTR *ptr;
 
             ptr = malloc(sizeof(*mci_sysinfoW) + sizeof(DWORD_PTR));
-            if (!ptr) return MCIERR_OUT_OF_MEMORY;
+            if (!ptr) return -1;
 
             *ptr++ = *dwParam2; /* save the previous pointer */
             *dwParam2 = (DWORD_PTR)ptr;
@@ -324,6 +326,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             mci_sysinfoW->lpstrReturn = malloc(mci_sysinfoW->dwRetSize * sizeof(WCHAR));
             mci_sysinfoW->dwNumber = mci_sysinfoA->dwNumber;
             mci_sysinfoW->wDeviceType = mci_sysinfoA->wDeviceType;
+            return 1;
         }
         return 0;
     case MCI_INFO:
@@ -333,7 +336,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             DWORD_PTR *ptr;
 
             ptr = malloc(sizeof(*mci_infoW) + sizeof(DWORD_PTR));
-            if (!ptr) return MCIERR_OUT_OF_MEMORY;
+            if (!ptr) return -1;
 
             *ptr++ = *dwParam2; /* save the previous pointer */
             *dwParam2 = (DWORD_PTR)ptr;
@@ -347,8 +350,8 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             mci_infoW->lpstrReturn = malloc(mci_infoW->dwRetSize * sizeof(WCHAR));
             if (dwParam1 & MCI_DGV_INFO_ITEM)
                 mci_infoW->dwItem = mci_infoA->dwItem;
+            return 1;
         }
-        return 0;
     case MCI_SAVE:
     case MCI_LOAD:
     case MCI_CAPTURE:
@@ -358,7 +361,7 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             MCI_OVLY_LOAD_PARMSW *mci_loadW;
 
             mci_loadW = malloc(sizeof(*mci_loadW));
-            if (!mci_loadW) return MCIERR_OUT_OF_MEMORY;
+            if (!mci_loadW) return -1;
 
             *dwParam2 = (DWORD_PTR)mci_loadW;
             if (dwParam1 & MCI_NOTIFY)
@@ -369,8 +372,8 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
                 (MCI_CAPTURE == msg && dwParam1 & MCI_DGV_CAPTURE_AT) ||
                 (MCI_RESTORE == msg && dwParam1 & MCI_DGV_RESTORE_AT))
                 mci_loadW->rc = mci_loadA->rc;
+            return 1;
         }
-        return 0;
     case MCI_SOUND:
     case MCI_ESCAPE:
         {   /* All these commands have the same layout: callback + string */
@@ -378,14 +381,14 @@ static DWORD MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
             MCI_VD_ESCAPE_PARMSW *mci_vd_escapeW;
 
             mci_vd_escapeW = malloc(sizeof(*mci_vd_escapeW));
-            if (!mci_vd_escapeW) return MCIERR_OUT_OF_MEMORY;
+            if (!mci_vd_escapeW) return -1;
 
             *dwParam2 = (DWORD_PTR)mci_vd_escapeW;
             if (dwParam1 & MCI_NOTIFY)
                 mci_vd_escapeW->dwCallback = mci_vd_escapeA->dwCallback;
             mci_vd_escapeW->lpstrCommand = MCI_strdupAtoW(mci_vd_escapeA->lpstrCommand);
+            return 1;
         }
-        return 0;
     case MCI_SETAUDIO:
     case MCI_SETVIDEO:
         if (!(dwParam1 & (MCI_DGV_SETVIDEO_QUALITY | MCI_DGV_SETVIDEO_ALG
@@ -498,6 +501,7 @@ static void MCI_UnmapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
         break;
 
     default:
+        FIXME("Message %s needs unmapping\n", MCI_MessageToString(msg));
         break;
     }
 }
@@ -2278,18 +2282,20 @@ DWORD WINAPI mciSendCommandW(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, 
 DWORD WINAPI mciSendCommandA(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD ret;
+    int mapped;
 
-    TRACE("(%08x, %s, %08Ix, %08Ix)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
+    TRACE("(%08x, %s, %08Ix, %08Ix)\n",
+	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
-    ret = MCI_MapMsgAtoW(wMsg, dwParam1, &dwParam2);
-    if (ret)
+    mapped = MCI_MapMsgAtoW(wMsg, dwParam1, &dwParam2);
+    if (mapped == -1)
     {
         FIXME("message %04x mapping failed\n", wMsg);
-        return ret;
+        return MCIERR_OUT_OF_MEMORY;
     }
     ret = mciSendCommandW(wDevID, wMsg, dwParam1, dwParam2);
-
-    MCI_UnmapMsgAtoW(wMsg, dwParam1, dwParam2, ret);
+    if (mapped)
+        MCI_UnmapMsgAtoW(wMsg, dwParam1, dwParam2, ret);
     return ret;
 }
 

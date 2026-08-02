@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "winbase.h"
 #include "winnls.h"

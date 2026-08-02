@@ -19,6 +19,7 @@
  */
 
 #pragma makedep header
+#pragma makedep register
 
 #include "xaudio2.idl"
 #include "xaudio2fx.idl"

@@ -1803,7 +1803,7 @@
 @ cdecl -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z(str) msvcp120.?_Xout_of_range@std@@YAXPEBD@Z
 @ stub -arch=win32 ?_Xoverflow_error@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xoverflow_error@std@@YAXPEBD@Z
-@ cdecl ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z(long) msvcp120.?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
+@ stub ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
 @ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) msvcp120.?_Xruntime_error@std@@YAXPBD@Z
 @ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) msvcp120.?_Xruntime_error@std@@YAXPEBD@Z
 # extern ?adopt_lock@std@@3Uadopt_lock_t@1@B
@@ -3679,7 +3679,7 @@
 @ cdecl _Cnd_timedwait(ptr ptr ptr) msvcp120._Cnd_timedwait
 @ cdecl _Cnd_unregister_at_thread_exit(ptr) msvcp120._Cnd_unregister_at_thread_exit
 @ cdecl _Cnd_wait(ptr ptr) msvcp120._Cnd_wait
-@ cdecl _Cosh(double double) msvcp120._Cosh
+@ stub _Cosh
 @ extern _Denorm msvcp120._Denorm
 @ stub _Dint
 @ stub _Dnorm
@@ -3690,7 +3690,7 @@
 @ stub _Dunscale
 @ extern _Eps msvcp120._Eps
 @ cdecl _Exp(ptr double long) msvcp120._Exp
-@ cdecl _FCosh(float float) msvcp120._FCosh
+@ stub _FCosh
 @ extern _FDenorm msvcp120._FDenorm
 @ stub _FDint
 @ stub _FDnorm
@@ -3705,7 +3705,7 @@
 @ stub _FPlsw
 @ stub _FPmsw
 # extern _FRteps
-@ cdecl _FSinh(float float) msvcp120._FSinh
+@ stub _FSinh
 @ extern _FSnan msvcp120._FSnan
 # extern _FXbig
 @ stub _FXp_addh
@@ -3729,7 +3729,7 @@
 @ cdecl _Getwctypes(ptr ptr ptr ptr) msvcp120._Getwctypes
 @ extern _Hugeval msvcp120._Hugeval
 @ extern _Inf msvcp120._Inf
-@ cdecl _LCosh(double double) msvcp120._LCosh
+@ stub _LCosh
 @ extern _LDenorm msvcp120._LDenorm
 @ stub _LDint
 @ cdecl _LDscale(ptr long) msvcp120._LDscale
@@ -3744,7 +3744,7 @@
 @ stub _LPmsw
 @ stub _LPoly
 # extern _LRteps
-@ cdecl _LSinh(double double) msvcp120._LSinh
+@ stub _LSinh
 @ extern _LSnan msvcp120._LSnan
 # extern _LXbig
 @ stub _LXp_addh
@@ -3782,7 +3782,7 @@
 @ stub _Pmsw
 @ stub _Poly
 # extern _Rteps
-@ cdecl _Sinh(double double) msvcp120._Sinh
+@ stub _Sinh
 @ extern _Snan msvcp120._Snan
 @ cdecl _Stod(ptr ptr long) msvcp120._Stod
 @ cdecl _Stodx(ptr ptr long ptr) msvcp120._Stodx

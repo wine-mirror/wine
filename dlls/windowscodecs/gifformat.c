@@ -37,7 +37,6 @@ struct gif_decoder
 {
     struct decoder decoder;
     GifFileType *gif;
-    IStream *stream;  /* kept to allow on-demand frame decoding */
 };
 
 static inline struct gif_decoder *impl_from_decoder(struct decoder *iface)
@@ -45,7 +44,7 @@ static inline struct gif_decoder *impl_from_decoder(struct decoder *iface)
     return CONTAINING_RECORD(iface, struct gif_decoder, decoder);
 }
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct logical_screen_descriptor
 {
@@ -77,7 +76,7 @@ struct image_descriptor
      */
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 static HRESULT load_LSD_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
@@ -244,7 +243,7 @@ HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv)
 
 static HRESULT load_GCE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#pragma pack(push,1)
+#include "pshpack1.h"
     struct graphic_control_extension
     {
         BYTE packed;
@@ -256,7 +255,7 @@ static HRESULT load_GCE_metadata(MetadataHandler *handler, IStream *stream, cons
          USHORT delay;
          BYTE transparent_color_index;
     } gce_data;
-#pragma pack(pop)
+#include "poppack.h"
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
@@ -319,7 +318,7 @@ HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv)
 
 static HRESULT load_APE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#pragma pack(push,1)
+#include "pshpack1.h"
     struct application_extension
     {
         BYTE extension_introducer;
@@ -327,7 +326,7 @@ static HRESULT load_APE_metadata(MetadataHandler *handler, IStream *stream, cons
         BYTE block_size;
         BYTE application[11];
     } ape_data;
-#pragma pack(pop)
+#include "poppack.h"
     HRESULT hr;
     ULONG bytesread, data_size, i;
     MetadataItem *result;
@@ -443,13 +442,13 @@ static HRESULT create_gifcomment_item(char *data, MetadataItem **item)
 
 static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#pragma pack(push,1)
+#include "pshpack1.h"
     struct gif_extension
     {
         BYTE extension_introducer;
         BYTE extension_label;
     } ext_data;
-#pragma pack(pop)
+#include "poppack.h"
     HRESULT hr;
     ULONG bytesread, data_size;
     MetadataItem *result;
@@ -608,7 +607,7 @@ static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
     if (dststride < rc->Width)
         return E_INVALIDARG;
 
-    if ((dststride * (rc->Height - 1)) + rc->Width > dstbuffersize)
+    if ((dststride * rc->Height) > dstbuffersize)
         return E_INVALIDARG;
 
     row_offset = rc->X;
@@ -647,13 +646,6 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     return bytesread;
 }
 
-static void gif_seek_stream(GifFileType *gif, int offset)
-{
-    LARGE_INTEGER seek;
-    seek.QuadPart = offset;
-    IStream_Seek((IStream *)gif->UserData, seek, STREAM_SEEK_SET, NULL);
-}
-
 static HRESULT CDECL gif_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
 {
     struct gif_decoder *decoder = impl_from_decoder(iface);
@@ -664,31 +656,17 @@ static HRESULT CDECL gif_decoder_initialize(struct decoder *iface, IStream *stre
     seek.QuadPart = 0;
     IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
 
-    /* keep stream for on-demand frame decoding */
-    IStream_AddRef(stream);
-    decoder->stream = stream;
-
     /* read all data from the stream */
     decoder->gif = DGifOpen((void *)stream, _gif_inputfunc);
     if (!decoder->gif)
-    {
-        IStream_Release(stream);
-        decoder->stream = NULL;
         return E_FAIL;
-    }
 
-    /* Set up seek function for on-demand frame decoding */
-    decoder->gif->seekFunc = gif_seek_stream;
-
-    /* Only scan frame headers, skip pixel data for on-demand decoding */
-    ret = DGifSlurpHeaders(decoder->gif);
+    ret = DGifSlurp(decoder->gif);
     if (ret == GIF_ERROR)
-    {
-        DGifCloseFile(decoder->gif);
-        IStream_Release(stream);
-        decoder->stream = NULL;
         return E_FAIL;
-    }
+
+    /* make sure we don't use the stream after this method returns */
+    decoder->gif->UserData = NULL;
 
     st->flags = WICBitmapDecoderCapabilityCanDecodeAllImages |
                 WICBitmapDecoderCapabilityCanDecodeSomeImages |
@@ -780,14 +758,6 @@ static HRESULT CDECL gif_decoder_copy_pixels(struct decoder *iface, UINT frame,
         return E_INVALIDARG;
 
     image = &decoder->gif->SavedImages[frame];
-
-    /* Decode this frame's pixel data on demand */
-    if (!image->RasterBits)
-    {
-        decoder->gif->UserData = (void *)decoder->stream;
-        if (DGifDecodeFrame(decoder->gif, frame) == GIF_ERROR)
-            return E_FAIL;
-    }
 
     if (image->ImageDesc.Interlace)
         return copy_interlaced_pixels(image->RasterBits, image->ImageDesc.Width,
@@ -901,8 +871,6 @@ static void CDECL gif_decoder_destroy(struct decoder *iface)
 {
     struct gif_decoder *decoder = impl_from_decoder(iface);
 
-    if (decoder->stream)
-        IStream_Release(decoder->stream);
     DGifCloseFile(decoder->gif);
     free(decoder);
 }
@@ -1447,7 +1415,7 @@ static inline int read_byte(struct input_stream *in, unsigned char *byte)
     return 0;
 }
 
-static HRESULT gif_compress(IStream *out_stream, const BYTE *in_data, ULONG in_size, int color_bits)
+static HRESULT gif_compress(IStream *out_stream, const BYTE *in_data, ULONG in_size)
 {
     struct input_stream in;
     struct output_stream out;
@@ -1461,7 +1429,7 @@ static HRESULT gif_compress(IStream *out_stream, const BYTE *in_data, ULONG in_s
     out.gif_block.len = 0;
     out.out = out_stream;
 
-    init_code_bits = suffix = max(2, color_bits);
+    init_code_bits = suffix = 8;
     if (IStream_Write(out.out, &suffix, sizeof(suffix), NULL) != S_OK)
         return E_FAIL;
 
@@ -1566,7 +1534,6 @@ static HRESULT WINAPI GifFrameEncode_Commit(IWICBitmapFrameEncode *iface)
             if (hr == S_OK)
             {
                 struct image_descriptor imd;
-                int colors, color_bits = 1;
 
                 /* Image Descriptor */
                 imd.left = 0;
@@ -1581,33 +1548,23 @@ static HRESULT WINAPI GifFrameEncode_Commit(IWICBitmapFrameEncode *iface)
                 }
                 /* FIXME: interlace flag */
                 hr = IStream_Write(This->encoder->stream, &imd, sizeof(imd), NULL);
-                if (hr == S_OK)
+                if (hr == S_OK && This->colors)
                 {
-                    if (This->colors)
+                    UINT i;
+
+                    /* Local Color Table */
+                    memset(gif_palette, 0, sizeof(gif_palette));
+                    for (i = 0; i < This->colors; i++)
                     {
-                        UINT i;
-
-                        /* Local Color Table */
-                        memset(gif_palette, 0, sizeof(gif_palette));
-                        for (i = 0; i < This->colors; i++)
-                        {
-                            gif_palette[i][0] = (This->palette[i] >> 16) & 0xff;
-                            gif_palette[i][1] = (This->palette[i] >> 8) & 0xff;
-                            gif_palette[i][2] = This->palette[i] & 0xff;
-                        }
-                        hr = IStream_Write(This->encoder->stream, gif_palette, sizeof(gif_palette), NULL);
-                        if (hr == S_OK)
-                            colors = This->colors;
+                        gif_palette[i][0] = (This->palette[i] >> 16) & 0xff;
+                        gif_palette[i][1] = (This->palette[i] >> 8) & 0xff;
+                        gif_palette[i][2] = This->palette[i] & 0xff;
                     }
-                    else
-                        colors = This->encoder->colors;
-
+                    hr = IStream_Write(This->encoder->stream, gif_palette, sizeof(gif_palette), NULL);
                     if (hr == S_OK)
                     {
-                        while ((1 << color_bits) < colors) color_bits++;
-
                         /* Image Data */
-                        hr = gif_compress(This->encoder->stream, This->image_data, This->width * This->height, color_bits);
+                        hr = gif_compress(This->encoder->stream, This->image_data, This->width * This->height);
                         if (hr == S_OK)
                             This->committed = TRUE;
                     }

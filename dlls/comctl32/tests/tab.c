@@ -363,12 +363,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
     /* dump sent structure data */
     if (message == WM_DRAWITEM)
-    {
-        HBRUSH brush = CreateSolidBrush(RGB(255, 0, 0));
         g_drawitem = *(DRAWITEMSTRUCT*)lParam;
-        FillRect(g_drawitem.hDC, &g_drawitem.rcItem, brush);
-        DeleteObject(brush);
-    }
 
     if (message == WM_NOTIFY)
     {
@@ -1390,10 +1385,8 @@ static void test_TCS_OWNERDRAWFIXED(void)
         BYTE lparam[sizeof(LPARAM)+1];
     } item;
     ULONG_PTR itemdata;
-    COLORREF color;
     HWND hTab;
     BOOL ret;
-    HDC hdc;
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH|TCS_OWNERDRAWFIXED, TCIF_TEXT|TCIF_IMAGE, 4);
     ok(hTab != NULL, "Failed to create tab control\n");
@@ -1476,27 +1469,6 @@ static void test_TCS_OWNERDRAWFIXED(void)
     ok(g_drawitem.itemData == itemdata ||
        broken(sizeof(void *) == 4 && g_drawitem.itemData == 0xdededede), /* Win7-32-bit */
        "got 0x%Ix, expected 0x%Ix\n", g_drawitem.itemData, itemdata);
-
-    DestroyWindow(hTab);
-
-    /* Test that drawing the text of a TCS_OWNERDRAWFIXED tab shouldn't be able to overwrite the tab item background */
-    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED | WS_VISIBLE, TCIF_TEXT | TCIF_IMAGE, 1);
-    ok(hTab != NULL, "Failed to create tab control.\n");
-
-    memset(&g_drawitem, 0, sizeof(g_drawitem));
-    RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
-
-    /* Check the draw rect from WM_DRAWITEM */
-    ok(g_drawitem.rcItem.top == 0 && g_drawitem.rcItem.left == 0 && g_drawitem.rcItem.right > 0 &&
-       g_drawitem.rcItem.bottom > 0, "Got unexpected rect %s.\n", wine_dbgstr_rect(&g_drawitem.rcItem));
-    /* Check that tab item background is not overwritten */
-    hdc = GetDC(hTab);
-    color = GetPixel(hdc, 1, 1);
-    ok(color != RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-    /* Check that text was drawn */
-    color = GetPixel(hdc, 2, 2);
-    ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
-    ReleaseDC(hTab, hdc);
 
     DestroyWindow(hTab);
 }
@@ -1648,6 +1620,20 @@ static void test_TCM_GETROWCOUNT(void)
     DestroyWindow(hTab);
 }
 
+static void test_WM_GETOBJECT(void)
+{
+    HWND hTab;
+    DWORD objid;
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 2);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    objid = SendMessageA(hTab, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+    ok(objid == 0x1000f, "Unexpected objid %lu.\n", objid);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1687,6 +1673,7 @@ START_TEST(tab)
     test_create();
     test_TCN_SELCHANGING();
     test_TCM_GETROWCOUNT();
+    test_WM_GETOBJECT();
 
     uninit_winevent_hook();
 

@@ -557,7 +557,7 @@ BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWOR
 
         TRACE("dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  rop=%06x\n",
               hdc, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
-              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
+              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), (int)rop );
 
         if (!ret)
         {
@@ -624,7 +624,7 @@ BOOL WINAPI NtGdiStretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT h
               hdcSrc, src.log_x, src.log_y, src.log_width, src.log_height,
               src.x, src.y, src.width, src.height, wine_dbgstr_rect(&src.visrect),
               hdcDst, dst.log_x, dst.log_y, dst.log_width, dst.log_height,
-              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), rop );
+              dst.x, dst.y, dst.width, dst.height, wine_dbgstr_rect(&dst.visrect), (int)rop );
 
         if (!ret)
         {
@@ -855,8 +855,8 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     COLORREF oldBackground;
     COLORREF oldForeground;
     int oldStretchMode;
+    DIBSECTION dib;
     DC *dc_src;
-    DC *dc_work;
 
     if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
         TRACE("Cannot mirror\n");
@@ -873,9 +873,12 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     if (oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         dc_src->attr->stretch_blt_mode = COLORONCOLOR;
     hdcWork = NtGdiCreateCompatibleDC( hdcDest );
-    if (NtGdiGetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
+    if ((get_gdi_object_type( hdcDest ) != NTGDI_OBJ_MEMDC ||
+         NtGdiExtGetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
+                             sizeof(dib), &dib ) == sizeof(BITMAP)) &&
+        NtGdiGetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
     {
-        /* the alpha channel should be ignored. use a 24-bpp bitmap as copy */
+        /* screen DCs or DDBs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */
         BITMAPINFO info;
         info.bmiHeader.biSize = sizeof(info.bmiHeader);
         info.bmiHeader.biWidth = widthDest;
@@ -887,11 +890,6 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     }
     else bmpWork = NtGdiCreateCompatibleBitmap( hdcDest, widthDest, heightDest );
     oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
-
-    if (!(dc_work = get_dc_ptr(hdcWork))) goto error;
-    dc_work->attr->stretch_blt_mode = COLORONCOLOR;
-    release_dc_ptr( dc_work );
-
     if (!NtGdiStretchBlt( hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc,
                           widthSrc, heightSrc, SRCCOPY, 0 ))
     {
@@ -1070,7 +1068,7 @@ BOOL WINAPI NtGdiPlgBlt( HDC hdcDest, const POINT *lpPoint, HDC hdcSrc, INT nXSr
 
     TRACE("hdcSrc=%p %d,%d,%dx%d -> hdcDest=%p %d,%d,%d,%d,%d,%d\n",
           hdcSrc, nXSrc, nYSrc, nWidth, nHeight, hdcDest,
-          plg[0].x, plg[0].y, plg[1].x, plg[1].y, plg[2].x, plg[2].y);
+          (int)plg[0].x, (int)plg[0].y, (int)plg[1].x, (int)plg[1].y, (int)plg[2].x, (int)plg[2].y);
 
     /* X components */
     xf.eM11 = (plg[1].x*(rect[2].y - rect[0].y) - plg[2].x*(rect[1].y - rect[0].y) - plg[0].x*(rect[2].y - rect[1].y)) / det;

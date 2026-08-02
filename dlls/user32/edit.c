@@ -147,16 +147,6 @@ static inline BOOL notify_parent(const EDITSTATE *es, INT code)
     return IsWindow(hwnd);
 }
 
-static EDITSTATE *get_control_state( HWND hwnd )
-{
-    return (EDITSTATE *)NtUserGetPrivateData( hwnd, 0, sizeof(EDITSTATE *) );
-}
-
-static EDITSTATE *set_control_state( HWND hwnd, EDITSTATE *state )
-{
-    return (EDITSTATE *)NtUserSetPrivateData( hwnd, 0, sizeof(EDITSTATE *), (LONG_PTR)state );
-}
-
 static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap);
 
 /*********************************************************************
@@ -198,7 +188,7 @@ static inline void EDIT_EM_EmptyUndoBuffer(EDITSTATE *es)
  * applications with an expected version 0f 4.0 or higher.
  *
  */
-DWORD get_app_version(void)
+static DWORD get_app_version(void)
 {
     static DWORD version;
     if (!version)
@@ -397,17 +387,10 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
 		tabdef.pTabStops = es->tabs;
 		tabdef.iTabOrigin = 0;
 
-		if (es->style & ES_PASSWORD)
-			hr = ScriptStringAnalyse(udc, &es->password_char, line_def->net_length,
-                                                  (1.5*line_def->net_length+16), -1,
-                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB|SSA_PASSWORD, -1,
-                                                  NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
-		else
-			hr = ScriptStringAnalyse(udc, &es->text[index], line_def->net_length,
-                                                  (1.5*line_def->net_length+16), -1,
-                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1,
-                                                  NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
-
+		hr = ScriptStringAnalyse(udc, &es->text[index], line_def->net_length,
+                                         (1.5*line_def->net_length+16), -1,
+                                         SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1,
+                                         NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
 		if (FAILED(hr))
 		{
 			WARN("ScriptStringAnalyse failed (%lx)\n",hr);
@@ -2977,12 +2960,15 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
  *	EM_SETPASSWORDCHAR
  *
  */
-static BOOL EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
+static void EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
 {
 	LONG style;
 
+	if (es->style & ES_MULTILINE)
+		return;
+
 	if (es->password_char == c)
-		return TRUE;
+		return;
 
         style = GetWindowLongW( es->hwndSelf, GWL_STYLE );
 	es->password_char = c;
@@ -2995,7 +2981,6 @@ static BOOL EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
 	}
 	EDIT_InvalidateUniscribeData(es);
 	EDIT_UpdateText(es, NULL, TRUE);
-	return TRUE;
 }
 
 
@@ -4400,7 +4385,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 
 	if (!(es = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*es))))
 		return FALSE;
-        set_control_state( hwnd, es );
+        SetWindowLongPtrW( hwnd, 0, (LONG_PTR)es );
 
        /*
         *      Note: since the EDITSTATE has not been fully initialized yet,
@@ -4489,7 +4474,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 	return TRUE;
 
 cleanup:
-	set_control_state( es->hwndSelf, NULL );
+	SetWindowLongPtrW(es->hwndSelf, 0, 0);
 	EDIT_InvalidateUniscribeData(es);
 	HeapFree(GetProcessHeap(), 0, es->first_line_def);
 	HeapFree(GetProcessHeap(), 0, es->undo_text);
@@ -4575,7 +4560,7 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 		pc = pp;
 	}
 
-	set_control_state( es->hwndSelf, NULL );
+	SetWindowLongPtrW( es->hwndSelf, 0, 0 );
 	HeapFree(GetProcessHeap(), 0, es->undo_text);
 	HeapFree(GetProcessHeap(), 0, es);
 
@@ -4600,13 +4585,11 @@ static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
  */
 LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-	EDITSTATE *es = get_control_state( hwnd );
+	EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW( hwnd, 0 );
 	LRESULT result = 0;
 	POINT pt;
 
         TRACE("hwnd=%p msg=%x (%s) wparam=%Ix lparam=%Ix\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), wParam, lParam);
-
-	if (msg == WM_NCCREATE) NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_EDIT) );
 
 	if (!es && msg != WM_NCCREATE)
 		return DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
@@ -4761,7 +4744,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		    MultiByteToWideChar(CP_ACP, 0, &charA, 1, &charW, 1);
 		}
 
-		result = EDIT_EM_SetPasswordChar(es, charW);
+		EDIT_EM_SetPasswordChar(es, charW);
 		break;
 	}
 
@@ -5080,10 +5063,6 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 	case WM_VSCROLL:
 		result = EDIT_WM_VScroll(es, LOWORD(wParam), (short)HIWORD(wParam));
 		break;
-
-        case WM_CAPTURECHANGED:
-            es->bCaptureState = FALSE;
-            break;
 
         case WM_MOUSEWHEEL:
                 {

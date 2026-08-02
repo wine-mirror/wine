@@ -17,15 +17,16 @@
  */
 
 #ifdef __WIDL__
-#pragma makedep header install winmd
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
 import "windows.applicationmodel.activation.idl";
 import "windows.applicationmodel.core.idl";
+#endif
 
 namespace Windows.ApplicationModel.Core {
     runtimeclass AppListEntry;
@@ -241,7 +242,6 @@ namespace Windows.ApplicationModel {
     }
 
     [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.ApplicationModel.Package),
         uuid(5f738b61-f86a-4917-93d1-f1ee9d3b35d9),
         version(0x0a000000)
@@ -404,12 +404,12 @@ namespace Windows.ApplicationModel {
         [default] interface Windows.ApplicationModel.IPackage;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage3;
-        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageWithMetadata; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.ApplicationModel.IPackage4; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackage5; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8; */
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageWithMetadata;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.ApplicationModel.IPackage4;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackage5;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8;
     }
 
     [
@@ -419,7 +419,7 @@ namespace Windows.ApplicationModel {
     runtimeclass PackageStatus
     {
         [default] interface Windows.ApplicationModel.IPackageStatus;
-        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackageStatus2; */
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackageStatus2;
     }
 
     [

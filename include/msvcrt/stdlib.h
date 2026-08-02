@@ -12,7 +12,7 @@
 #include <corecrt_wstdlib.h>
 #include <limits.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 typedef struct
 {
@@ -39,7 +39,6 @@ typedef struct
 #define _MAX_DIR            _MAX_FNAME
 #define _MAX_EXT            _MAX_FNAME
 #define _MAX_PATH           260
-#define _MAX_ENV            32767
 #endif
 
 /* Make the secure string functions (names end in "_s") truncate their output */
@@ -208,16 +207,15 @@ _ACRTIMP DECLSPEC_NORETURN void __cdecl _Exit(int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl _exit(int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl abort(void);
 _ACRTIMP int           __cdecl abs(int);
-extern int             __cdecl at_quick_exit(void (__cdecl*)(void));
 extern int             __cdecl atexit(void (__cdecl *)(void));
 _ACRTIMP double        __cdecl atof(const char*);
 _ACRTIMP int           __cdecl atoi(const char*);
 _ACRTIMP int           __cdecl _atoi_l(const char*,_locale_t);
 _ACRTIMP __msvcrt_long __cdecl atol(const char*);
 _ACRTIMP __int64       __cdecl atoll(const char*);
-#if !defined(__i386__) || defined(_MSC_VER) || defined(__MINGW32__)
-_ACRTIMP div_t         __cdecl div(int,int);
-_ACRTIMP ldiv_t        __cdecl ldiv(__msvcrt_long,__msvcrt_long);
+#ifndef __i386__
+_ACRTIMP div_t  __cdecl div(int,int);
+_ACRTIMP ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
 _ACRTIMP lldiv_t       __cdecl lldiv(__int64,__int64);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl exit(int);
@@ -227,7 +225,6 @@ _ACRTIMP __msvcrt_long __cdecl labs(__msvcrt_long);
 _ACRTIMP __int64       __cdecl llabs(__int64);
 _ACRTIMP int           __cdecl mblen(const char*,size_t);
 _ACRTIMP void          __cdecl perror(const char*);
-_ACRTIMP DECLSPEC_NORETURN void __cdecl quick_exit(int);
 _ACRTIMP int           __cdecl rand(void);
 _ACRTIMP errno_t       __cdecl rand_s(unsigned int*);
 _ACRTIMP void          __cdecl srand(unsigned int);
@@ -301,7 +298,7 @@ static inline unsigned __int64 __cdecl strtoull(const char *ptr, char **endptr, 
 static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
 static inline char* ultoa(__msvcrt_ulong value, char* str, int radix) { return _ultoa(value, str, radix); }
 
-#if defined(__i386__) && !defined(_MSC_VER) && !defined(__MINGW32__)
+#ifdef __i386__
 static inline div_t __wine_msvcrt_div(int num, int denom)
 {
     extern unsigned __int64 div(int,int);
@@ -324,6 +321,6 @@ static inline ldiv_t __wine_msvcrt_ldiv(__msvcrt_long num, __msvcrt_long denom)
 #define ldiv(num,denom) __wine_msvcrt_ldiv(num,denom)
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_STDLIB_H */

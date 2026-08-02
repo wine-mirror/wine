@@ -1681,7 +1681,7 @@ static void test_midi(void)
     DMUS_MIDI_PMSG *midi;
     DMUS_PATCH_PMSG *patch;
     DMUS_TEMPO_PARAM tempo_param;
-#pragma pack(push,1)
+#include <pshpack1.h>
     struct
     {
         char magic[4];
@@ -1701,7 +1701,7 @@ static void test_midi(void)
     {
         .magic = "MTrk",
     };
-#pragma pack(pop)
+#include <poppack.h>
     load_resource(L"test.mid", test_mid);
     /* This is a MIDI file with wrong track length. */
     load_resource(L"bogus.mid", bogus_mid);
@@ -4090,7 +4090,7 @@ static void test_wave_pmsg(unsigned num_repeats)
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, 1000000, &length);
     ok(hr == S_OK, "got %#lx\n", hr);
     /* assuming not modified tempo */
-    length = ceil((1000000 * 120.0 * DMUS_PPQ) / 600000000.0);
+    length = round((1000000 * 120.0 * DMUS_PPQ) / 600000000.0);
 
     for (i = 0; i <= num_repeats; i++)
     {

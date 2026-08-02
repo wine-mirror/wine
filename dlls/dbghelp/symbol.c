@@ -231,7 +231,7 @@ struct symt_module* symt_new_module(struct module* module)
     return sym;
 }
 
-struct symt_compiland* symt_new_compiland(struct module* module, symref_t parent, const char *filename)
+struct symt_compiland* symt_new_compiland(struct module* module, const char *filename)
 {
     struct symt_compiland*    sym;
     symref_t*                 p;
@@ -241,17 +241,13 @@ struct symt_compiland* symt_new_compiland(struct module* module, symref_t parent
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag  = SymTagCompiland;
-        sym->container = parent;
+        sym->container = symt_ptr_to_symref(&module->top->symt);
         sym->address   = 0;
         sym->filename  = pool_strdup(&module->pool, filename);
         vector_init(&sym->vchildren, sizeof(symref_t), 0);
         sym->user      = NULL;
-        if (symt_is_symref_ptr(parent))
-        {
-            if (parent != symt_ptr_to_symref(&module->top->symt)) FIXME("Unexpected parent\n");
-            p = vector_add(&module->top->vchildren, &module->pool);
-            if (p) *p = symt_ptr_to_symref(&sym->symt);
-        }
+        p = vector_add(&module->top->vchildren, &module->pool);
+        if (p) *p = symt_ptr_to_symref(&sym->symt);
     }
     return sym;
 }
@@ -268,7 +264,7 @@ struct symt_public* symt_new_public(struct module* module,
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%Ix\n",
                          debugstr_w(module->modulename), debugstr_a(name), address);
     if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
-        symt_find_nearest(module, address))
+        symt_find_nearest(module, address) != NULL)
         return NULL;
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -323,7 +319,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
 
 static struct symt_function* init_function_or_inlinesite(struct module* module,
                                                          DWORD tag,
-                                                         symref_t container,
+                                                         struct symt* container,
                                                          const char* name,
                                                          symref_t sig_type,
                                                          DWORD_PTR user,
@@ -335,7 +331,7 @@ static struct symt_function* init_function_or_inlinesite(struct module* module,
     {
         sym->symt.tag   = tag;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        sym->container  = container;
+        sym->container  = symt_ptr_to_symref(container);
         sym->type       = sig_type;
         vector_init(&sym->vlines,  sizeof(struct line_info), 0);
         vector_init(&sym->vchildren, sizeof(symref_t), 0);
@@ -346,7 +342,7 @@ static struct symt_function* init_function_or_inlinesite(struct module* module,
 }
 
 struct symt_function* symt_new_function(struct module* module,
-                                        symref_t compiland,
+                                        struct symt_compiland* compiland,
                                         const char* name,
                                         ULONG_PTR addr, ULONG_PTR size,
                                         symref_t sig_type, DWORD_PTR user)
@@ -356,20 +352,17 @@ struct symt_function* symt_new_function(struct module* module,
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%Ix-%Ix\n",
                          debugstr_w(module->modulename), debugstr_a(name), addr, addr + size - 1);
 
-    if ((sym = init_function_or_inlinesite(module, SymTagFunction, compiland, name, sig_type, user, 1)))
+    if ((sym = init_function_or_inlinesite(module, SymTagFunction, &compiland->symt, name, sig_type, user, 1)))
     {
         symref_t* p;
         sym->ranges[0].low = addr;
         sym->ranges[0].high = addr + size;
         sym->next_inlinesite = NULL; /* first of list */
-        if (symt_is_symref_ptr(compiland))
+        symt_add_module_ht(module, (struct symt_ht*)sym);
+        if (compiland)
         {
-            symt_add_module_ht(module, (struct symt_ht*)sym);
-            if (compiland)
-            {
-                p = vector_add(&((struct symt_compiland*)SYMT_SYMREF_TO_PTR(compiland))->vchildren, &module->pool);
-                if (p) *p = symt_ptr_to_symref(&sym->symt);
-            }
+            p = vector_add(&compiland->vchildren, &module->pool);
+            if (p) *p = symt_ptr_to_symref(&sym->symt);
         }
     }
     return sym;
@@ -386,7 +379,7 @@ struct symt_function* symt_new_inlinesite(struct module* module,
     struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding inline site %s\n", debugstr_a(name));
-    if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, symt_ptr_to_symref(container), name, sig_type, user, num_ranges)))
+    if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, container, name, sig_type, user, num_ranges)))
     {
         symref_t* p;
         assert(container);
@@ -439,8 +432,6 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
         WARN("Duplicate addition of line number in %s\n", debugstr_a(func->hash_elt.name));
         return;
     }
-    /* clear previous last */
-    if (prev) prev->is_last = 0;
     if (!last_matches)
     {
         /* we shouldn't have line changes on first line of function */
@@ -451,6 +442,8 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
         dli->line_number    = 0;
         dli->u.source_file  = source_idx;
     }
+    /* clear previous last */
+    if (prev) prev->is_last = 0;
     dli = vector_add(&func->vlines, &module->pool);
     dli->is_source_file = 0;
     dli->is_first       = 0; /* only a source file can be first */
@@ -796,7 +789,7 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
                 {
                 case loc_tlsrel:
                     sym_info->Flags |= SYMFLAG_TLSREL;
-                    break;
+                    /* fall through */
                 case loc_absolute:
                     symt_get_address(sym, &sym_info->Address);
                     break;
@@ -878,105 +871,6 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
     return TRUE;
 }
 
-static BOOL symt_fill_sym_info_from_symref(struct module_pair* pair, const struct symt_function* func, symref_t symref, SYMBOL_INFO* sym_info)
-{
-    DWORD tag;
-    DWORD64 size;
-    WCHAR *name;
-    DWORD data_kind, offset;
-
-    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_SYMTAG, &tag))
-        return FALSE;
-
-    sym_info->Tag = tag;
-    if (symt_is_symref_ptr(symref))
-        return symt_fill_sym_info(pair, func, SYMT_SYMREF_TO_PTR(symref), sym_info);
-
-    /* FIXME this isn't optimal; perhaps implement SymGetInfoTypeEx to support multiple
-     * queries at once!
-     */
-    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_TYPE, &sym_info->TypeIndex))
-        sym_info->TypeIndex = 0;
-    sym_info->Index = symt_symref_to_index(pair->effective, symref);
-    sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
-    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_ADDRESS, &sym_info->Address))
-        sym_info->Address = 0;
-    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_LENGTH, &size) &&
-        (!sym_info->TypeIndex ||
-         !symt_get_info_from_index(pair->effective, sym_info->TypeIndex, TI_GET_LENGTH, &size)))
-        size = 0;
-    sym_info->Size = (DWORD)size;
-    sym_info->ModBase = pair->requested->module.BaseOfImage;
-    sym_info->Flags = 0;
-    sym_info->Value = 0;
-    sym_info->Register = 0;
-    sym_info->Scope = 0; /* FIXME */
-
-    /* FIXME we're swinging back & forth between ANSI & UNICODE... */
-    if (symt_get_info_from_symref(pair->effective, symref, TI_GET_SYMNAME, &name) && name)
-    {
-        SIZE_T len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
-        char *buffer;
-        char *tmp;
-
-        if (len && (buffer = malloc(len)))
-        {
-            WideCharToMultiByte(CP_ACP, 0, name, -1, buffer, len, NULL, NULL);
-            if (sym_info->Tag == SymTagPublicSymbol && (dbghelp_options & SYMOPT_UNDNAME) &&
-                (tmp = __unDName(NULL, buffer, 0, malloc, free, UNDNAME_NAME_ONLY)) != NULL)
-            {
-                symbol_setname(sym_info, tmp);
-                free(tmp);
-            }
-            else
-                symbol_setname(sym_info, buffer);
-            free(buffer);
-        }
-        else symbol_setname(sym_info, "");
-        LocalFree(name);
-    }
-    else symbol_setname(sym_info, "");
-
-    switch (sym_info->Tag)
-    {
-    case SymTagData:
-        if (symt_get_info_from_symref(pair->effective, symref, TI_GET_DATAKIND, &data_kind))
-            switch (data_kind)
-            {
-            case DataIsGlobal:
-            case DataIsFileStatic:
-            case DataIsStaticLocal:
-                if (symt_get_info_from_symref(pair->effective, symref, TI_GET_ADDRESSOFFSET, &offset))
-                    sym_info->Flags |= SYMFLAG_TLSREL;
-                break;
-            case DataIsConstant:
-                if (symt_get_info_from_symref(pair->effective, symref, TI_GET_VALUE, &sym_info->Value))
-                    sym_info->Flags |= SYMFLAG_VALUEPRESENT;
-                break;
-            default:
-                FIXME("Unhandled kind (%lu) in sym data\n", data_kind);
-                break;
-            }
-        else WARN("Couldn't get data kind\n");
-        break;
-    case SymTagUDT:
-    case SymTagEnum:
-    case SymTagFunctionType:
-    case SymTagPointerType:
-    case SymTagArrayType:
-    case SymTagBaseType:
-    case SymTagTypedef:
-        break;
-    default:
-        FIXME("%Ix => %lu %s %lu %I64x\n",
-              symref, sym_info->Tag, debugstr_a(sym_info->Name), sym_info->Size, sym_info->Address);
-    }
-
-    TRACE_(dbghelp_symt)("%Ix => %s %lu %I64x\n",
-                         symref, debugstr_a(sym_info->Name), sym_info->Size, sym_info->Address);
-    return TRUE;
-}
-
 struct sym_enum
 {
     PSYM_ENUMERATESYMBOLS_CALLBACK      cb;
@@ -989,52 +883,23 @@ struct sym_enum
 };
 
 static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
-                        const struct symt_function* func, symref_t symref)
+                        const struct symt_function* func, const struct symt* sym)
 {
-    if (!symt_fill_sym_info_from_symref(pair, func, symref, se->sym_info)) return FALSE;
+    if (!symt_fill_sym_info(pair, func, sym, se->sym_info)) return FALSE;
     if (se->index && se->sym_info->Index != se->index) return FALSE;
     if (se->tag && se->sym_info->Tag != se->tag) return FALSE;
     if (se->addr && !(se->addr >= se->sym_info->Address && se->addr < se->sym_info->Address + se->sym_info->Size)) return FALSE;
     return !se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
-struct symbol_enum_method
-{
-    struct module_pair *pair;
-    const struct sym_enum *se;
-};
-
-static BOOL symbol_enum_method_cb(symref_t symref, const char *name, void *user)
-{
-    struct symbol_enum_method *sem = user;
-
-    sem->se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
-    sem->se->sym_info->MaxNameLen = sizeof(sem->se->buffer) - sizeof(SYMBOL_INFO);
-
-    send_symbol(sem->se, sem->pair, NULL, symref);
-    return TRUE;
-}
-
 static BOOL symt_enum_module(struct module_pair* pair, const WCHAR* match,
                              const struct sym_enum* se)
 {
-    struct module_format_vtable_iterator iter = {};
     void*                       ptr;
     struct symt_ht*             sym = NULL;
     struct hash_table_iter      hti;
     WCHAR*                      nameW;
     BOOL                        ret;
-
-    while ((module_format_vtable_iterator_next(pair->effective, &iter,
-                                               MODULE_FORMAT_VTABLE_INDEX(enumerate_symbols))))
-    {
-        struct symbol_enum_method sem = {pair, se};
-        enum method_result result = iter.modfmt->vtable->enumerate_symbols(iter.modfmt, match, symbol_enum_method_cb, &sem);
-
-        if (result == MR_SUCCESS) return TRUE;
-        if (result == MR_FAILURE) return FALSE;
-        /* fall back in all the other cases */
-    }
 
     hash_table_iter_init(&pair->effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
@@ -1047,7 +912,7 @@ static BOOL symt_enum_module(struct module_pair* pair, const WCHAR* match,
         {
             se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
-            if (send_symbol(se, pair, NULL, symt_ptr_to_symref(&sym->symt))) return TRUE;
+            if (send_symbol(se, pair, NULL, &sym->symt)) return TRUE;
         }
     }
     return FALSE;
@@ -1169,7 +1034,7 @@ static int symt_get_best_at(struct module* module, int idx_sorttab)
 }
 
 /* assume addr is in module */
-static struct symt_ht* symt_find_nearest_internal(struct module* module, DWORD_PTR addr)
+struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
 {
     int         mid, high, low;
     ULONG64     ref_addr, ref_size;
@@ -1215,61 +1080,18 @@ static struct symt_ht* symt_find_nearest_internal(struct module* module, DWORD_P
     return module->addr_sorttab[low];
 }
 
-symref_t symt_find_nearest(struct module *module, DWORD_PTR addr)
-{
-    static int recursive;
-    struct module_format_vtable_iterator iter = {};
-
-    /* prevent recursive lookup inside backend */
-    if (!recursive++)
-    {
-        while ((module_format_vtable_iterator_next(module, &iter,
-                                                   MODULE_FORMAT_VTABLE_INDEX(lookup_by_address))))
-        {
-            symref_t symref;
-            enum method_result result = iter.modfmt->vtable->lookup_by_address(iter.modfmt, addr, &symref);
-            if (result == MR_SUCCESS)
-            {
-                recursive--;
-                return symref;
-            }
-            /* fall back in all the other cases */
-        }
-    }
-    recursive--;
-    return symt_ptr_to_symref(&symt_find_nearest_internal(module, addr)->symt);
-}
-
-static symref_t symt_find_symref_at(struct module* module, DWORD_PTR addr)
-{
-    symref_t nearest = symt_find_nearest(module, addr);
-    if (nearest)
-    {
-        ULONG64 symaddr, symsize;
-        if (symt_get_info_from_symref(module, nearest, TI_GET_ADDRESS, &symaddr))
-        {
-            /* some symbols are defined without size, so grab size for their type (if any) */
-            if (!symt_get_info_from_symref(module, nearest, TI_GET_LENGTH, &symsize) || !symsize)
-            {
-                DWORD symtype;
-                if (!symt_get_info_from_symref(module, nearest, TI_GET_TYPE, &symtype) ||
-                    !symt_get_info_from_index(module, symtype, TI_GET_LENGTH, &symsize))
-                    symsize = 1;
-            }
-        }
-        if (addr < symaddr || addr >= symaddr + symsize)
-            nearest = 0;
-    }
-    return nearest;
-}
-
-/* callers really expect a symt ptr from here, so fail when found
- * symbol is a symref
- */
 struct symt_ht* symt_find_symbol_at(struct module* module, DWORD_PTR addr)
 {
-    symref_t nearest = symt_find_symref_at(module, addr);
-    return (symt_is_symref_ptr(nearest)) ? (struct symt_ht*)SYMT_SYMREF_TO_PTR(nearest) : NULL;
+    struct symt_ht* nearest = symt_find_nearest(module, addr);
+    if (nearest)
+    {
+        ULONG64     symaddr, symsize;
+        symt_get_address(&nearest->symt, &symaddr);
+        symt_get_length(module, &nearest->symt, &symsize);
+        if (addr < symaddr || addr >= symaddr + symsize)
+            nearest = NULL;
+    }
+    return nearest;
 }
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
@@ -1309,7 +1131,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
             HeapFree(GetProcessHeap(), 0, nameW);
             if (ret)
             {
-                if (send_symbol(se, pair, func, symt_ptr_to_symref(lsym))) return FALSE;
+                if (send_symbol(se, pair, func, lsym)) return FALSE;
             }
             break;
         case SymTagLabel:
@@ -1604,7 +1426,6 @@ BOOL WINAPI SymEnumSymbolsW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
     return doSymEnumSymbols(hProcess, BaseOfDll, Mask, sym_enumW, &sew);
 }
 
-#ifndef _WIN64
 struct sym_enumerate
 {
     void*                       ctx;
@@ -1631,7 +1452,6 @@ BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
     
     return SymEnumSymbols(hProcess, BaseOfDll, NULL, sym_enumerate_cb, &se);
 }
-#endif
 
 struct sym_enumerate64
 {
@@ -1664,16 +1484,16 @@ BOOL WINAPI SymEnumerateSymbols64(HANDLE hProcess, DWORD64 BaseOfDll,
  *		SymFromAddr (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
+BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address, 
                         DWORD64* Displacement, PSYMBOL_INFO Symbol)
 {
     struct module_pair  pair;
-    symref_t symref;
+    struct symt_ht*     sym;
 
     if (!module_init_pair(&pair, hProcess, Address)) return FALSE;
-    if (!(symref = symt_find_symref_at(pair.effective, Address))) return FALSE;
+    if ((sym = symt_find_symbol_at(pair.effective, Address)) == NULL) return FALSE;
 
-    symt_fill_sym_info_from_symref(&pair, NULL, symref, Symbol);
+    symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
     if (Displacement)
         *Displacement = (Address >= Symbol->Address) ? (Address - Symbol->Address) : (DWORD64)-1;
     return TRUE;
@@ -1763,7 +1583,6 @@ BOOL WINAPI SymGetSymFromAddr64(HANDLE hProcess, DWORD64 Address,
 static BOOL find_name(struct process* pcs, struct module* module, const char* name,
                       SYMBOL_INFO* symbol)
 {
-    struct module_format_vtable_iterator iter = {};
     struct hash_table_iter      hti;
     void*                       ptr;
     struct symt_ht*             sym = NULL;
@@ -1772,19 +1591,6 @@ static BOOL find_name(struct process* pcs, struct module* module, const char* na
     pair.pcs = pcs;
     if (!(pair.requested = module)) return FALSE;
     if (!module_get_debug(&pair)) return FALSE;
-
-    while ((module_format_vtable_iterator_next(pair.effective, &iter,
-                                               MODULE_FORMAT_VTABLE_INDEX(lookup_by_name))))
-    {
-        symref_t symref;
-        enum method_result result = iter.modfmt->vtable->lookup_by_name(iter.modfmt, name, &symref);
-        if (result == MR_SUCCESS)
-        {
-            symt_fill_sym_info_from_symref(&pair, NULL, symref, symbol);
-            return TRUE;
-        }
-        if (result != MR_NOT_FOUND) return FALSE;
-    }
 
     hash_table_iter_init(&pair.effective->ht_symbols, &hti, name);
     while ((ptr = hash_table_iter_up(&hti)))
@@ -1971,7 +1777,6 @@ static void init_lineinfo(struct lineinfo_t* line_info, BOOL unicode)
     line_info->address = 0;
 }
 
-#ifndef _WIN64
 static BOOL lineinfo_copy_toA32(const struct lineinfo_t* line_info, IMAGEHLP_LINE* l32)
 {
     if (line_info->unicode) return FALSE;
@@ -1981,7 +1786,6 @@ static BOOL lineinfo_copy_toA32(const struct lineinfo_t* line_info, IMAGEHLP_LIN
     l32->Address = line_info->address;
     return TRUE;
 }
-#endif
 
 static BOOL lineinfo_copy_toA64(const struct lineinfo_t* line_info, IMAGEHLP_LINE64* l64)
 {
@@ -2128,7 +1932,6 @@ BOOL WINAPI SymGetSymNext64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
     return FALSE;
 }
 
-#ifndef _WIN64
 /***********************************************************************
  *		SymGetSymNext (DBGHELP.@)
  */
@@ -2138,7 +1941,6 @@ BOOL WINAPI SymGetSymNext(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
-#endif
 
 /***********************************************************************
  *		SymGetSymPrev64 (DBGHELP.@)
@@ -2150,7 +1952,6 @@ BOOL WINAPI SymGetSymPrev64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
     return FALSE;
 }
 
-#ifndef _WIN64
 /***********************************************************************
  *		SymGetSymPrev (DBGHELP.@)
  */
@@ -2160,9 +1961,7 @@ BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
-#endif
 
-#ifndef _WIN64
 /******************************************************************
  *		SymGetLineFromAddr (DBGHELP.@)
  *
@@ -2179,7 +1978,6 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     if (!get_line_from_addr(hProcess, dwAddr, pdwDisplacement, &line_info)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
-#endif
 
 /******************************************************************
  *		SymGetLineFromAddr64 (DBGHELP.@)
@@ -2277,7 +2075,6 @@ BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
     return lineinfo_copy_toA64(&line_info, Line);
 }
 
-#ifndef _WIN64
 /******************************************************************
  *             SymGetLinePrev (DBGHELP.@)
  *
@@ -2293,7 +2090,6 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     if (!symt_get_func_line_prev(hProcess, &line_info, Line->Key, Line->Address)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
-#endif
 
 /******************************************************************
  *             SymGetLinePrevW64 (DBGHELP.@)
@@ -2369,7 +2165,6 @@ BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
     return lineinfo_copy_toA64(&line_info, Line);
 }
 
-#ifndef _WIN64
 /******************************************************************
  *		SymGetLineNext (DBGHELP.@)
  *
@@ -2385,7 +2180,6 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
     if (!symt_get_func_line_next(hProcess, &line_info, Line->Key, Line->Address)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
-#endif
 
 /******************************************************************
  *		SymGetLineNextW64 (DBGHELP.@)
@@ -2403,7 +2197,6 @@ BOOL WINAPI SymGetLineNextW64(HANDLE hProcess, PIMAGEHLP_LINEW64 Line)
     return lineinfo_copy_toW64(&line_info, Line);
 }
 
-#ifndef _WIN64
 /***********************************************************************
  *		SymUnDName (DBGHELP.@)
  */
@@ -2412,7 +2205,6 @@ BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, PSTR UnDecName, DWORD UnDecNameLeng
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
                                 UNDNAME_COMPLETE) != 0;
 }
-#endif
 
 /***********************************************************************
  *		SymUnDName64 (DBGHELP.@)
@@ -2874,7 +2666,9 @@ BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBO
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
     if ((symref = symt_index_to_symref(pair.effective, index)) == 0) return FALSE;
-    return symt_fill_sym_info_from_symref(&pair, NULL, symref, symbol);
+    if (!symt_is_symref_ptr(symref)) return FALSE;
+    symt_fill_sym_info(&pair, NULL, (struct symt*)symref, symbol);
+    return TRUE;
 }
 
 /******************************************************************

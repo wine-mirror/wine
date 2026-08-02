@@ -369,6 +369,115 @@ BOOL WINAPI RegisterShellHook(
 }
 
 /*************************************************************************
+ * ShellMessageBoxW				[SHELL32.182]
+ *
+ * See ShellMessageBoxA.
+ *
+ * NOTE:
+ * shlwapi.ShellMessageBoxWrapW is a duplicate of shell32.ShellMessageBoxW
+ * because we can't forward to it in the .spec file since it's exported by
+ * ordinal. If you change the implementation here please update the code in
+ * shlwapi as well.
+ */
+int WINAPIV ShellMessageBoxW(
+	HINSTANCE hInstance,
+	HWND hWnd,
+	LPCWSTR lpText,
+	LPCWSTR lpCaption,
+	UINT uType,
+	...)
+{
+	WCHAR	szText[100],szTitle[100];
+	LPCWSTR pszText = szText, pszTitle = szTitle;
+	LPWSTR  pszTemp;
+	va_list args;
+	int	ret;
+
+	va_start(args, uType);
+	/* wvsprintfA(buf,fmt, args); */
+
+	TRACE("(%p,%p,%p,%p,%08x)\n",
+	    hInstance,hWnd,lpText,lpCaption,uType);
+
+	if (IS_INTRESOURCE(lpCaption))
+	  LoadStringW(hInstance, LOWORD(lpCaption), szTitle, ARRAY_SIZE(szTitle));
+	else
+	  pszTitle = lpCaption;
+
+	if (IS_INTRESOURCE(lpText))
+	  LoadStringW(hInstance, LOWORD(lpText), szText, ARRAY_SIZE(szText));
+	else
+	  pszText = lpText;
+
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
+		       pszText, 0, 0, (LPWSTR)&pszTemp, 0, &args);
+
+	va_end(args);
+
+	ret = MessageBoxW(hWnd,pszTemp,pszTitle,uType);
+        LocalFree(pszTemp);
+	return ret;
+}
+
+/*************************************************************************
+ * ShellMessageBoxA				[SHELL32.183]
+ *
+ * Format and output an error message.
+ *
+ * PARAMS
+ *  hInstance [I] Instance handle of message creator
+ *  hWnd      [I] Window handle of message creator
+ *  lpText    [I] Resource Id of title or LPSTR
+ *  lpCaption [I] Resource Id of title or LPSTR
+ *  uType     [I] Type of error message
+ *
+ * RETURNS
+ *  A return value from MessageBoxA().
+ *
+ * NOTES
+ *     Exported by ordinal
+ */
+int WINAPIV ShellMessageBoxA(
+	HINSTANCE hInstance,
+	HWND hWnd,
+	LPCSTR lpText,
+	LPCSTR lpCaption,
+	UINT uType,
+	...)
+{
+	char	szText[100],szTitle[100];
+	LPCSTR  pszText = szText, pszTitle = szTitle;
+	LPSTR   pszTemp;
+	va_list args;
+	int	ret;
+
+	va_start(args, uType);
+	/* wvsprintfA(buf,fmt, args); */
+
+	TRACE("(%p,%p,%p,%p,%08x)\n",
+	    hInstance,hWnd,lpText,lpCaption,uType);
+
+	if (IS_INTRESOURCE(lpCaption))
+	  LoadStringA(hInstance, LOWORD(lpCaption), szTitle, sizeof(szTitle));
+	else
+	  pszTitle = lpCaption;
+
+	if (IS_INTRESOURCE(lpText))
+	  LoadStringA(hInstance, LOWORD(lpText), szText, sizeof(szText));
+	else
+	  pszText = lpText;
+
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
+		       pszText, 0, 0, (LPSTR)&pszTemp, 0, &args);
+
+	va_end(args);
+
+	ret = MessageBoxA(hWnd,pszTemp,pszTitle,uType);
+        LocalFree(pszTemp);
+	return ret;
+}
+
+/*************************************************************************
  * SHRegisterDragDrop				[SHELL32.86]
  *
  * Probably equivalent to RegisterDragDrop but under Windows 95 it could use the
@@ -425,90 +534,6 @@ HRESULT WINAPI SHRevokeDragDrop(HWND hWnd)
     return RevokeDragDrop(hWnd);
 }
 
-
-typedef struct InternalDropSource{
-    IDropSource       IDropSource_iface;
-    LONG Ref;
-} InternalDropSource;
-
-static inline InternalDropSource *impl_from_IDropSource(IDropSource *iface)
-{
-    return CONTAINING_RECORD(iface, InternalDropSource, IDropSource_iface);
-}
-
-static HRESULT WINAPI InternalDropSource_QueryInterface(IDropSource *iface, REFIID riid, void **ppvObj)
-{
-    InternalDropSource *This = impl_from_IDropSource(iface);
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObj);
-
-    *ppvObj = NULL;
-
-    if(IsEqualIID(riid, &IID_IDropSource)  || IsEqualIID(riid, &IID_IUnknown) )
-    {
-        *ppvObj = &This->IDropSource_iface;
-        IUnknown_AddRef ((IUnknown *) (*ppvObj));
-        TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
-        return S_OK;
-    }
-
-    WARN("-- Interface: E_NOINTERFACE\n");
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI InternalDropSource_AddRef(IDropSource *iface)
-{
-    InternalDropSource *This = impl_from_IDropSource(iface);
-    TRACE("(%p)->(%lu)\n", This, This->Ref);
-    return InterlockedIncrement(&This->Ref);
-}
-
-static ULONG WINAPI InternalDropSource_Release(IDropSource *iface)
-{
-    ULONG refcount;
-    InternalDropSource *This = impl_from_IDropSource(iface);
-    TRACE("(%p)->(%lu)\n", This, This->Ref);
-    refcount =  InterlockedDecrement(&This->Ref);
-
-    if(refcount == 0)
-        free(This);
-
-    return refcount;
-}
-
-static HRESULT WINAPI InternalDropSource_QueryContinueDrag(
-    IDropSource *iface,
-    BOOL fEscapePressed,
-    DWORD grfKeyState)
-{
-    InternalDropSource *This = impl_from_IDropSource(iface);
-    TRACE("(%p)\n",This);
-
-    if (fEscapePressed)
-        return DRAGDROP_S_CANCEL;
-    else if (!(grfKeyState & MK_LBUTTON) && !(grfKeyState & MK_RBUTTON))
-        return DRAGDROP_S_DROP;
-    else
-        return S_OK;
-}
-
-static HRESULT WINAPI InternalDropSource_GiveFeedback(
-    IDropSource *iface,
-    DWORD dwEffect)
-{
-    InternalDropSource *This = impl_from_IDropSource(iface);
-    TRACE("(%p)\n",This);
-
-    return DRAGDROP_S_USEDEFAULTCURSORS;
-}
-
-static const IDropSourceVtbl dropsourcevtbl =
-{
-    InternalDropSource_QueryInterface,
-    InternalDropSource_AddRef,
-    InternalDropSource_Release,
-    InternalDropSource_QueryContinueDrag,
-    InternalDropSource_GiveFeedback
-};
 /*************************************************************************
  * SHDoDragDrop					[SHELL32.88]
  *
@@ -529,29 +554,9 @@ HRESULT WINAPI SHDoDragDrop(
 	DWORD dwOKEffect,
 	LPDWORD pdwEffect)
 {
-    HRESULT hr;
-    LPDROPSOURCE dropSource = lpDropSource;
     FIXME("(%p %p %p 0x%08lx %p):stub.\n",
-          hWnd, lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
-    if(lpDropSource == NULL)
-    {
-        /*This function should create a IDropSource object if the lpDropSource parameter was NULL.
-         * Delphi's drag and drop functions expect this to work when it detects Windows Vista or above */
-       InternalDropSource*  dummy = calloc(1, sizeof(InternalDropSource));
-       if(!dummy)
-           return E_OUTOFMEMORY;
-
-       dummy->IDropSource_iface.lpVtbl = &dropsourcevtbl;
-       dummy->Ref = 1;
-       dropSource = &dummy->IDropSource_iface;
-    }
-    hr = DoDragDrop(lpDataObject, dropSource, dwOKEffect, pdwEffect);
-    if(lpDropSource == NULL)
-    {
-        /*Source was created internally, free*/
-        InternalDropSource_Release(dropSource);
-    }
-    return hr;
+    hWnd, lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
+	return DoDragDrop(lpDataObject, lpDropSource, dwOKEffect, pdwEffect);
 }
 
 /*************************************************************************
@@ -966,21 +971,22 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
  	*      uFlags[in]  -  flags on call to SHAddToRecentDocs
 	*      pv[in]      -  document path/pidl on call to SHAddToRecentDocs
 	*/
-	IShellLinkW *psl = NULL;
+	IShellLinkA *psl = NULL;
 	IPersistFile *pPf = NULL;
 	HRESULT hres;
-	WCHAR desc[MAX_PATH], *path, *widelink, *doc_nameW;
+	CHAR desc[MAX_PATH];
+	WCHAR widelink[MAX_PATH];
 
 	CoInitialize(0);
 
 	hres = CoCreateInstance( &CLSID_ShellLink,
 				 NULL,
 				 CLSCTX_INPROC_SERVER,
-				 &IID_IShellLinkW,
+				 &IID_IShellLinkA,
 				 (LPVOID )&psl);
 	if(SUCCEEDED(hres)) {
 
-	    hres = IShellLinkW_QueryInterface(psl, &IID_IPersistFile,
+	    hres = IShellLinkA_QueryInterface(psl, &IID_IPersistFile,
 					     (LPVOID *)&pPf);
 	    if(FAILED(hres)) {
 		/* bombed */
@@ -989,64 +995,42 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    }
 
 	    /* Set the document path or pidl */
-        if (uFlags == SHARD_PIDL) hres = IShellLinkW_SetIDList(psl, pv);
-        else if (uFlags == SHARD_PATHW) hres = IShellLinkW_SetPath(psl, pv);
-        else if (uFlags == SHARD_PATHA)
-        {
-            if (!(path = strdupAtoW(pv)))
-            {
-                IPersistFile_Release(pPf);
-                IShellLinkW_Release(psl);
-                goto fail;
-            }
-            hres = IShellLinkW_SetPath(psl, path);
-            free(path);
-        }
-        else FIXME("unsupported flags %08x\n", uFlags);
-
+	    if (uFlags == SHARD_PIDL) {
+                hres = IShellLinkA_SetIDList(psl, pv);
+	    } else {
+                hres = IShellLinkA_SetPath(psl, pv);
+	    }
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed Set{IDList|Path} %08lx\n", hres);
 		goto fail;
 	    }
 
-        wcscpy(desc, L"Shortcut to ");
-        if (!(doc_nameW = strdupAtoW(doc_name)))
-        {
-            IPersistFile_Release(pPf);
-            IShellLinkW_Release(psl);
-            goto fail;
-        }
-        wcscat(desc, doc_nameW);
-        free(doc_nameW);
-        hres = IShellLinkW_SetDescription(psl, desc);
+	    lstrcpyA(desc, "Shortcut to ");
+	    lstrcatA(desc, doc_name);
+	    hres = IShellLinkA_SetDescription(psl, desc);
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed SetDescription %08lx\n", hres);
 		goto fail;
 	    }
 
-        if (!(widelink = strdupAtoW(new_lnk_filepath)))
-        {
-            IPersistFile_Release(pPf);
-            IShellLinkW_Release(psl);
-            goto fail;
-        }
+	    MultiByteToWideChar(CP_ACP, 0, new_lnk_filepath, -1,
+				widelink, MAX_PATH);
 	    /* create the short cut */
 	    hres = IPersistFile_Save(pPf, widelink, TRUE);
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed IPersistFile::Save %08lx\n", hres);
 		IPersistFile_Release(pPf);
-		IShellLinkW_Release(psl);
-        free(widelink);
+		IShellLinkA_Release(psl);
 		goto fail;
 	    }
 	    hres = IPersistFile_SaveCompleted(pPf, widelink);
 	    IPersistFile_Release(pPf);
-	    IShellLinkW_Release(psl);
-        free(widelink);
-	    TRACE("shortcut %s has been created, result=%08lx\n", new_lnk_filepath, hres);
+	    IShellLinkA_Release(psl);
+	    TRACE("shortcut %s has been created, result=%08lx\n",
+		  new_lnk_filepath, hres);
 	}
 	else {
 	    ERR("CoCreateInstance failed, hres=%08lx\n", hres);

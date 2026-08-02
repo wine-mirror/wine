@@ -300,20 +300,6 @@ static void propset_private_tests(void)
        "Shouldn't be able to set DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1: "
        "support = 0x%lx\n",support);
 
-    if (support & KSPROPERTY_SUPPORT_GET) {
-        DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA data;
-        ULONG bytes;
-        data.DeviceId = DSDEVID_DefaultPlayback;
-
-        rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
-                              DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1,
-                              NULL, 0, &data, sizeof(data) - 1, &bytes);
-        ok(rc==E_INVALIDARG, "Query buffer size failed: 0x%lx\n",rc);
-        rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
-                              DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1,
-                              NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK || broken(rc == 0x88780078), "Couldn't get description: 0x%lx\n",rc);
-    }
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
                                    DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A,
@@ -423,23 +409,15 @@ static void propset_private_tests(void)
 
     if (support & KSPROPERTY_SUPPORT_GET) {
         DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_DATA data;
-        ULONG bytes = 0;
+        ULONG bytes;
 
         data.Callback = callback;
         data.Context = 0;
 
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
-                                DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
-                                NULL, 0, &data, 1, &bytes);
-        ok(rc == E_INVALIDARG, "Unexpected rc 0x%lx\n", rc);
-        ok(bytes == sizeof(data), "Unexpected bytes %lu\n", bytes);
-
-        bytes = 0;
-        rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
-                                DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
-                                NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc == DS_OK, "Couldn't enumerate: 0x%lx\n", rc);
-        ok(bytes == sizeof(data), "Unexpected bytes %lu\n", bytes);
+                              DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE,
+                              NULL, 0, &data, sizeof(data), &bytes);
+        ok(rc==DS_OK, "Couldn't enumerate: 0x%lx\n",rc);
     }
 
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_1 */

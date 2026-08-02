@@ -712,7 +712,7 @@
 @ cdecl __AdjustPointer(ptr ptr)
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
-@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ cdecl __CppXcptFilter(long ptr)
 @ stub __CxxCallUnwindDelDtor
 @ stub __CxxCallUnwindDtor
@@ -1645,7 +1645,7 @@
 @ cdecl _vswprintf_p(ptr long wstr ptr)
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr)
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr)
-@ cdecl _vwprintf_l(wstr ptr ptr)
+@ stub _vwprintf_l
 @ stub _vwprintf_p
 @ stub _vwprintf_p_l
 @ stub _vwprintf_s_l
@@ -1742,7 +1742,7 @@
 @ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen(wstr wstr)
-@ varargs _wprintf_l(wstr ptr)
+@ stub _wprintf_l
 @ stub _wprintf_p
 @ stub _wprintf_p_l
 @ stub _wprintf_s_l

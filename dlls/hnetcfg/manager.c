@@ -204,12 +204,7 @@ static HRESULT WINAPI fw_manager_IsPortAllowed(
 
     FIXME("%p, %s, %u, %ld, %s, %u, %p, %p\n", This, debugstr_w(imageFileName),
           ipVersion, portNumber, debugstr_w(localAddress), ipProtocol, allowed, restricted);
-
-    V_VT(allowed) = VT_BOOL;
-    V_BOOL(allowed) = VARIANT_TRUE;
-    V_VT(restricted) = VT_BOOL;
-    V_BOOL(restricted) = VARIANT_FALSE;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI fw_manager_IsIcmpTypeAllowed(

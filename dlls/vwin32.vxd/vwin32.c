@@ -46,14 +46,14 @@ typedef struct tagDIOCRegs {
 #define VWIN32_DIOC_SIMCTRLC      5 /* Simulate Ctrl-C */
 #define VWIN32_DIOC_DOS_DRIVEINFO 6 /* This is Interrupt 21h Function 730X commands */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 typedef struct tagMID {
     WORD  midInfoLevel;
     DWORD midSerialNum;
     BYTE  midVolLabel[11];
     BYTE  midFileSysType[8];
 } MID, *PMID;
-#pragma pack(pop)
+#include <poppack.h>
 
 extern void WINAPI __wine_call_int_handler16( BYTE intnum, CONTEXT *context );
 

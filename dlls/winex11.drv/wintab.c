@@ -35,11 +35,6 @@
 #include "wine/debug.h"
 #include "wintab.h"
 
-#ifdef SONAME_LIBXI
-
-#include <X11/Xlib.h>
-#include <X11/extensions/XInput.h>
-
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
 #define WT_MAX_NAME_LEN 256
@@ -256,6 +251,12 @@ typedef struct tagWTPACKET {
         ORIENTATION pkOrientation;
         ROTATION pkRotation; /* 1.1 */
 } WTPACKET, *LPWTPACKET;
+
+
+#ifdef SONAME_LIBXI
+
+#include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
 
 static int           motion_type;
 static int           button_press_type;
@@ -485,7 +486,7 @@ static void disable_system_cursors(void)
 /***********************************************************************
  *           x11drv_tablet_load_info
  */
-static BOOL load_tablet_info( HWND hwnd )
+NTSTATUS x11drv_tablet_load_info( void *hwnd )
 {
     static const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     static const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
@@ -842,7 +843,7 @@ static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
             return i;
         }
 
-    ERR("Could not map device id %d to a cursor\n",  deviceid);
+    ERR("Could not map device id %d to a cursor\n", (int) deviceid);
     return -1;
 }
 
@@ -1003,9 +1004,9 @@ static BOOL proximity_event( HWND hwnd, XEvent *event )
 }
 
 /***********************************************************************
- *           tablet_attach_queue
+ *           x11drv_tablet_attach_queue
  */
-static BOOL tablet_attach_queue( HWND owner )
+NTSTATUS x11drv_tablet_attach_queue( void *owner )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     int             num_devices;
@@ -1017,7 +1018,7 @@ static BOOL tablet_attach_queue( HWND owner )
     XEventClass     event_list[7];
     Window          win = X11DRV_get_whole_window( owner );
 
-    if (!win || !xinput_handle) return FALSE;
+    if (!win || !xinput_handle) return 0;
 
     TRACE("Creating context for window %p (%lx)  %i cursors\n", owner, win, gNumCursors);
 
@@ -1091,8 +1092,18 @@ static BOOL tablet_attach_queue( HWND owner )
     X11DRV_check_error();
 
     if (NULL != devices) pXFreeDeviceList(devices);
-    return TRUE;
+    return 0;
 }
+
+/***********************************************************************
+ *           x11drv_tablet_get_packet
+ */
+NTSTATUS x11drv_tablet_get_packet( void *packet )
+{
+    *(WTPACKET *)packet = gMsgPacket;
+    return 1;
+}
+
 
 static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 {
@@ -1106,10 +1117,15 @@ static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 }
 
 /***********************************************************************
- *           get_tablet_info
+ *           x11drv_tablet_info
  */
-static UINT get_tablet_info( UINT wCategory, UINT nIndex, void *lpOutput )
+NTSTATUS x11drv_tablet_info( void *arg )
 {
+    struct tablet_info_params *params = arg;
+    UINT wCategory = params->category;
+    UINT nIndex = params->index;
+    void *lpOutput = params->output;
+
     /*
      * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
      * lpOutput == NULL signifies the user only wishes
@@ -1535,32 +1551,20 @@ static UINT get_tablet_info( UINT wCategory, UINT nIndex, void *lpOutput )
     return rc;
 }
 
-/***********************************************************************
- *           X11DRV_WintabProc
- */
-LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer )
-{
-    switch (msg)
-    {
-    case NtUserWintabAttach:
-        return tablet_attach_queue( hwnd );
-    case NtUserWintabInfo:
-        return get_tablet_info( wparam, lparam, buffer );
-    case NtUserWintabInit:
-        return load_tablet_info( hwnd );
-    case NtUserWintabPacket:
-        *(WTPACKET *)buffer = gMsgPacket;
-        return 1;
-    }
-    return 0;
-}
-
 #else /* SONAME_LIBXI */
 
 /***********************************************************************
- *           X11DRV_WintabProc
+ *           x11drv_tablet_attach_queue
  */
-LRESULT X11DRV_WintabProc( HWND hwmd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer )
+NTSTATUS x11drv_tablet_attach_queue( void *owner )
+{
+    return 0;
+}
+
+/***********************************************************************
+ *           x11drv_tablet_get_packet
+ */
+NTSTATUS x11drv_tablet_get_packet( void *arg )
 {
     return 0;
 }

@@ -25,7 +25,7 @@
 #include <winsock2.h>
 #endif /* !defined(_WINSOCK2API_) */
 
-#pragma pack(push,4)
+#include <pshpack4.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,6 @@ INT      WINAPI WSCInstallProvider(const LPGUID,LPCWSTR,const LPWSAPROTOCOL_INFO
 INT      WINAPI WSCDeinstallProvider(LPGUID,LPINT);
 INT      WINAPI WSCEnableNSProvider(LPGUID,BOOL);
 INT      WINAPI WSCEnumProtocols(LPINT,LPWSAPROTOCOL_INFOW,LPDWORD,LPINT);
-INT      WINAPI WSCEnumProtocols32(LPINT,LPWSAPROTOCOL_INFOW,LPDWORD,LPINT);
 INT      WINAPI WSCGetApplicationCategory(LPCWSTR,DWORD,LPCWSTR,DWORD,DWORD*,LPINT);
 INT      WINAPI WSCGetProviderInfo(LPGUID,WSC_PROVIDER_INFO_TYPE,PBYTE,size_t*,DWORD,LPINT);
 INT      WINAPI WSCGetProviderPath(LPGUID,LPWSTR,LPINT,LPINT);
@@ -59,6 +58,6 @@ INT      WINAPI WSCWriteProviderOrder(LPDWORD,DWORD);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* !defined(_WINSOCK2SPI_) */

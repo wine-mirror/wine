@@ -256,7 +256,6 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
 }
 
 /**
@@ -690,9 +689,6 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.volume", &synth->overflow.volume);
     fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
-
-    fluid_settings_getint(settings, "synth.note-cut", &i);
-    synth->msgs_note_cut_mode = i;
 
     /* register the callbacks */
     fluid_settings_callback_num(settings, "synth.gain",
@@ -1751,14 +1747,8 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
                 fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-                FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
                 break; /* FLUID_OK */
             }
-        }
-        else
-        {
-            static const char* poly_mono_str[] = {"OMNI_OFF","OMNI_ON","POLY_OFF","POLY_ON"};
-            FLUID_LOG(FLUID_WARN, "Failed to set channel %d to %s: Operation illegal, because channel is currently no basic channel.", channum, poly_mono_str[num - OMNI_OFF]);
         }
 
         return FLUID_FAILED;
@@ -5217,7 +5207,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
 
         FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
                   chan, key, vel, synth->storeid,
-                  (float) ticks / synth->sample_rate,
+                  (float) ticks / 44100.0f,
                   (fluid_curtime() - synth->start) / 1000.0f,
                   0.0f,
                   k);
@@ -6884,7 +6874,6 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 && (fluid_voice_get_id(voice) != synth->noteid))
         {
             enum fluid_midi_channel_type type = synth->channel[chan]->channel_type;
-            enum fluid_msgs_note_cut note_cut_mode = synth->msgs_note_cut_mode;
 
             /* Id of voices that was sustained by sostenuto */
             if(fluid_voice_is_sostenuto(voice))
@@ -6892,17 +6881,21 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            if(note_cut_mode == FLUID_MSGS_DISABLED || (note_cut_mode == FLUID_MSGS_DRUM_CUT && type == CHANNEL_TYPE_MELODIC))
+            switch(type)
             {
-                /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
-                 * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
-                fluid_voice_noteoff(voice);
-            }
-            else // i.e. if((note_cut_mode == FLUID_MSGS_ALL_CUT) || (note_cut_mode == FLUID_MSGS_DRUM_CUT && type == CHANNEL_TYPE_DRUM))
-            {
-                /* release the voice, this should make riding hi-hats or snares sound more realistic (Discussion #1196)
-                 * Note however, that this is not a SF2 compliant behavior, see #1466 */
-                fluid_voice_off(voice);
+                case CHANNEL_TYPE_DRUM:
+                    /* release the voice, this should make riding hi-hats or snares sound more
+                     * realistic (Discussion #1196) */
+                    fluid_voice_off(voice);
+                    break;
+                case CHANNEL_TYPE_MELODIC:
+                    /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
+                     * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
+                    fluid_voice_noteoff(voice);
+                    break;
+                default:
+                    FLUID_LOG(FLUID_ERR, "This should never happen: unknown channel type %d", (int)type);
+                    break;
             }
         }
     }
@@ -7718,7 +7711,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     };
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
-    int is_realtime = FALSE, i;
+    int is_realtime = FALSE, i, coef;
     fluid_real_t converted_sf2_generator_value, q;
 
     // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
@@ -7793,7 +7786,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_FILTERFC:
             fluid_clip(data_lsb, 0, 127);
-            // Yes, DO NOT use data here, Uplift.mid doesn't set DATA_MSB=64, therefore we would always get a negative value after subtracting 8192.
+            // Yes, DO NOT use data here, Uplift.mid doesn't set MSB=64, therefore we would always get a negative value after subtracting 8192.
             // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
             // conversion continues below!
             converted_sf2_generator_value = (data_lsb * 62 /* Hz */);
@@ -7806,25 +7799,20 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             synth->channel[chan]->awe32_filter_coeff = data_lsb;
             return;
 
-        // Note: The description in the official "SB AWE32 Developer's Information Pack" is probably wrong.
-        // There it says: "Positive data value causes a positive phase (from 0 to maximum) filter modulation
-        //  [...] negative data value causes a negative phase [...]"
-        // That doesn't make sense. A filter is a causual system - you cannot change its phase independently
-        // of the rest. The text a few section above has it correct, there they speak of the filter's
-        // cutoff frequency. In that sense, this is probably intended to behave similar to the logic in SF2.
-        // PS: Same applies to the GEN_MODENVTOFILTERFC below!
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_DBG, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
-            break;
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
 
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_DBG, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
-            break;
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
 
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
@@ -7848,9 +7836,9 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             return;
     }
 
+    coef = synth->channel[chan]->awe32_filter_coeff;
     if(sf2_gen == GEN_FILTERFC)
     {
-        int coef = synth->channel[chan]->awe32_filter_coeff;
         // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 1000Hz gives a closer signal to the SB! hardware filter...
         converted_sf2_generator_value -= 1000;
         q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);

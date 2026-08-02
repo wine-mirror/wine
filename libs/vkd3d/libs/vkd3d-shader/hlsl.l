@@ -19,10 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-%top{
-#include "config.h"
-}
-
 %{
 #define YY_NO_UNISTD_H
 #include "hlsl.h"
@@ -87,6 +83,7 @@ ComputeShader           {return KW_COMPUTESHADER;       }
 compile                 {return KW_COMPILE;             }
 CompileShader           {return KW_COMPILESHADER;       }
 const                   {return KW_CONST;               }
+ConstructGSWithSO       {return KW_CONSTRUCTGSWITHSO;   }
 continue                {return KW_CONTINUE;            }
 DepthStencilState       {return KW_DEPTHSTENCILSTATE;   }
 DepthStencilView        {return KW_DEPTHSTENCILVIEW;    }
@@ -109,8 +106,6 @@ inline                  {return KW_INLINE;              }
 inout                   {return KW_INOUT;               }
 InputPatch              {return KW_INPUTPATCH;          }
 LineStream              {return KW_LINESTREAM;          }
-line                    {return KW_LINE;                }
-lineadj                 {return KW_LINEADJ;             }
 linear                  {return KW_LINEAR;              }
 matrix                  {return KW_MATRIX;              }
 namespace               {return KW_NAMESPACE;           }
@@ -124,7 +119,6 @@ pass                    {return KW_PASS;                }
 PixelShader             {return KW_PIXELSHADER;         }
 PointStream             {return KW_POINTSTREAM;         }
 pixelshader             {return KW_PIXELSHADER;         }
-point                   {return KW_POINT;               }
 RasterizerOrderedBuffer           {return KW_RASTERIZERORDEREDBUFFER;            }
 RasterizerOrderedStructuredBuffer {return KW_RASTERIZERORDEREDSTRUCTUREDBUFFER;  }
 RasterizerOrderedTexture1D        {return KW_RASTERIZERORDEREDTEXTURE1D;         }
@@ -161,7 +155,6 @@ static                  {return KW_STATIC;              }
 string                  {return KW_STRING;              }
 String                  {return KW_STRING;              }
 struct                  {return KW_STRUCT;              }
-StructuredBuffer        {return KW_STRUCTUREDBUFFER;    }
 switch                  {return KW_SWITCH;              }
 tbuffer                 {return KW_TBUFFER;             }
 (?i:technique)          {return KW_TECHNIQUE;           }
@@ -182,8 +175,6 @@ TextureCube             {return KW_TEXTURECUBE;         }
 textureCUBE             {return KW_TEXTURECUBE;         }
 TextureCubeArray        {return KW_TEXTURECUBEARRAY;    }
 TriangleStream          {return KW_TRIANGLESTREAM;      }
-triangle                {return KW_TRIANGLE;            }
-triangleadj             {return KW_TRIANGLEADJ;         }
 true                    {return KW_TRUE;                }
 typedef                 {return KW_TYPEDEF;             }
 unsigned                {return KW_UNSIGNED;            }
@@ -220,15 +211,15 @@ while                   {return KW_WHILE;               }
 {IDENTIFIER}            {
                             struct hlsl_ctx *ctx = yyget_extra(yyscanner);
 
+                            yylval->name = hlsl_strdup(ctx, yytext);
                             if (hlsl_version_ge(ctx, 5, 1) && !strcmp(yytext, "ConstantBuffer"))
                                 return KW_CONSTANTBUFFER;
-
-                            yylval->name = hlsl_strdup(ctx, yytext);
-                            if (hlsl_get_var(ctx->cur_scope, yytext) || hlsl_get_function(ctx, yytext))
+                            else if (hlsl_get_var(ctx->cur_scope, yytext) || hlsl_get_function(ctx, yytext))
                                 return VAR_IDENTIFIER;
-                            if (hlsl_get_type(ctx->cur_scope, yytext, true, true))
+                            else if (hlsl_get_type(ctx->cur_scope, yytext, true, true))
                                 return TYPE_IDENTIFIER;
-                            return NEW_IDENTIFIER;
+                            else
+                                return NEW_IDENTIFIER;
                         }
 
 {STRING}                {
@@ -242,18 +233,15 @@ while                   {return KW_WHILE;               }
                         }
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
-                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
-                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
+                            yylval->floatval = atof(yytext);
                             return C_FLOAT;
                         }
 [0-9]+\.([eE][+-]?[0-9]+)?[h|H|f|F]? {
-                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
-                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
+                            yylval->floatval = atof(yytext);
                             return C_FLOAT;
                         }
 [0-9]+[eE][+-]?[0-9]+[h|H|f|F]? {
-                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
-                            yylval->floatval = vkd3d_parse_float(yytext, ctx->c_locale);
+                            yylval->floatval = atof(yytext);
                             return C_FLOAT;
                         }
 0x[0-9a-fA-F]+[lL]?     {
@@ -352,7 +340,7 @@ while                   {return KW_WHILE;               }
 <pp>{ANY}               {}
 
 {ANY}                   {
-                            return (unsigned char)yytext[0];
+                            return yytext[0];
                         }
 
 %%

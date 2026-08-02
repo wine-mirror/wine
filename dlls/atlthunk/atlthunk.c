@@ -31,7 +31,7 @@ struct AtlThunkData_t {
 };
 
 /* Thunk replaces the first argument and jumps to provided proc. */
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thunk_code
 {
 #if defined(__x86_64__)
@@ -52,7 +52,7 @@ struct thunk_code
     DWORD pad;
 #endif
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 #define THUNK_POOL_SIZE (4096 / sizeof(struct thunk_code))
 

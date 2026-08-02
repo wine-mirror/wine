@@ -28,7 +28,7 @@
 #include "winuser.h"
 #include "winver.h"
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef struct
 {
@@ -423,7 +423,7 @@ typedef struct
     BYTE Data[168];
 } RESOURCE;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 struct tagASSEMBLY;
 typedef struct tagASSEMBLY ASSEMBLY;

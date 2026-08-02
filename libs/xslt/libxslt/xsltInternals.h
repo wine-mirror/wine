@@ -1799,9 +1799,6 @@ struct _xsltTransformContext {
     xsltNewLocaleFunc newLocale;
     xsltFreeLocaleFunc freeLocale;
     xsltGenSortKeyFunc genSortKey;
-
-    /* Wine extension */
-    void *userData;
 };
 
 /**

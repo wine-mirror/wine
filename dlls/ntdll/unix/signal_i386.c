@@ -52,6 +52,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
@@ -148,9 +149,9 @@ typedef struct ucontext
 #define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
-#define FPU_sig(context)     ((void *)(context)->uc_mcontext.fpregs)
-#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (void *)((FLOATING_SAVE_AREA *)FPU_sig(context) + 1) : NULL)
-#define XState_sig(fpu)      (((unsigned int *)((XSAVE_FORMAT *)(fpu))->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)((XSAVE_FORMAT *)(fpu) + 1) : NULL)
+#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
+#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XSAVE_FORMAT *)(FPU_sig(context) + 1) : NULL)
+#define XState_sig(fpu)      (((unsigned int *)fpu->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(fpu + 1) : NULL)
 
 #ifdef __ANDROID__
 /* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
@@ -163,7 +164,7 @@ __ASM_GLOBAL_FUNC( rt_sigreturn,
 struct modify_ldt_s
 {
     unsigned int  entry_number;
-    unsigned int  base_addr;
+    void         *base_addr;
     unsigned int  limit;
     unsigned int  seg_32bit : 1;
     unsigned int  contents : 2;
@@ -316,7 +317,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
 #define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((void *)&(context)->uc_mcontext->__fs.__fpu_fcw)
+#define FPUX_sig(context)    ((XSAVE_FORMAT *)&(context)->uc_mcontext->__fs.__fpu_fcw)
 #define XState_sig(context)  NULL  /* FIXME */
 
 #elif defined(__NetBSD__)
@@ -346,7 +347,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define ERROR_sig(context)     ((context)->uc_mcontext.__gregs[_REG_ERR])
 
 #define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((void *)&((context)->uc_mcontext.__fpregs))
+#define FPUX_sig(context)    ((XSAVE_FORMAT *)&((context)->uc_mcontext.__fpregs))
 #define XState_sig(context)  NULL  /* FIXME */
 
 #define T_MCHK T_MCA
@@ -385,6 +386,8 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #else
 #error You must define the signal context functions for your platform
 #endif /* linux */
+
+static ULONG first_ldt_entry = 32;
 
 enum i386_trap_code
 {
@@ -475,7 +478,8 @@ C_ASSERT( sizeof(struct callback_stack_layout) == 0x1c );
 
 struct syscall_frame
 {
-    UINT                  restore_flags;  /* 000 */
+    WORD                  syscall_flags;  /* 000 */
+    WORD                  restore_flags;  /* 002 */
     UINT                  eflags;         /* 004 */
     UINT                  eip;            /* 008 */
     UINT                  esp;            /* 00c */
@@ -499,12 +503,13 @@ struct syscall_frame
         XSAVE_FORMAT       xsave;
         FLOATING_SAVE_AREA fsave;
     } u;
+    /* Leave space for the whole set of YMM registers. They're not used in
+     * 32-bit mode, but some processors fault if they're not in writable memory.
+     */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate; /* 240 */
 };
 
 C_ASSERT( sizeof(struct syscall_frame) == 0x280 );
-
-#define RESTORE_FLAGS_INCOMPLETE_FRAME_CONTEXT 0x00008000
 
 struct x86_thread_data
 {
@@ -516,23 +521,28 @@ struct x86_thread_data
     UINT               dr3;           /* 1e8 */
     UINT               dr6;           /* 1ec */
     UINT               dr7;           /* 1f0 */
-    UINT               frame_size;    /* 1f4 syscall frame size including xstate */
-    UINT               fpcw;          /* 1f8 FPU control word */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 1f4 syscall table */
+    struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
+    UINT64             xstate_features_mask;   /* 1fc  */
+    UINT               xstate_features_size;   /* 204 */
 };
 
-C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct teb_data *)0)->cpu_data) );
+C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame_size ) == 0x1f4 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, fpcw ) == 0x1f8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_table ) == 0x1f4 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstate_features_size ) == 0x204 );
 
-static unsigned int frame_size;
-static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
-static UINT64 xstate_extended_features;
+/* flags to control the behavior of the syscall dispatcher */
+#define SYSCALL_HAVE_XSAVE    1
+#define SYSCALL_HAVE_XSAVEC   2
+#define SYSCALL_HAVE_FXSAVE   4
 
-static inline struct x86_thread_data *x86_thread_data( struct thread_data *data )
+static unsigned int syscall_flags;
+
+static inline struct x86_thread_data *x86_thread_data(void)
 {
-    if (!data->teb) return NULL;
-    return (struct x86_thread_data *)get_teb_data(data)->cpu_data;
+    return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
 static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
@@ -553,38 +563,43 @@ NTSTATUS unwind_builtin_dll( void *args )
 
 
 /***********************************************************************
- *           ldt_is_system
+ *           is_gdt_sel
  */
-static inline int ldt_is_system( WORD sel )
+static inline int is_gdt_sel( WORD sel )
 {
-    return is_gdt_sel( sel ) || ((sel >> 3) < 32);
+    return !(sel & 4);
 }
 
 
 /***********************************************************************
- *           get_current_thread_data
+ *           ldt_is_system
  */
-static inline struct thread_data *get_current_thread_data(void)
+static inline int ldt_is_system( WORD sel )
+{
+    return is_gdt_sel( sel ) || ((sel >> 3) < first_ldt_entry);
+}
+
+
+/***********************************************************************
+ *           get_current_teb
+ *
+ * Get the current teb based on the stack pointer.
+ */
+static inline TEB *get_current_teb(void)
 {
     unsigned long esp;
     __asm__("movl %%esp,%0" : "=g" (esp) );
-    return (struct thread_data *)(esp & ~signal_stack_mask);
+    return (TEB *)((esp & ~signal_stack_mask) + teb_offset);
 }
 
 
-static inline BOOL is_16bit( const ucontext_t *sigcontext )
+/***********************************************************************
+ *           is_inside_syscall
+ */
+static BOOL is_inside_syscall( ucontext_t *sigcontext )
 {
-    /* Note that during switch from 16-bit mode to linear mode, CS may
-     * be set to system segment before FS is restored. Fortunately, in
-     * this case SS is still non-system segment. This is why both CS
-     * and SS are checked.
-     */
-    return !ldt_is_system(CS_sig(sigcontext)) || !ldt_is_system(SS_sig(sigcontext));
-}
-
-static inline void *get_exception_stack( struct thread_data *data, const ucontext_t *sigcontext )
-{
-    return is_16bit(sigcontext) ? data->teb->SystemReserved1[0] : (void *)(ESP_sig(sigcontext) & ~3);
+    return ((char *)ESP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
+            (char *)ESP_sig(sigcontext) <= (char *)x86_thread_data()->syscall_frame);
 }
 
 
@@ -618,7 +633,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 
     if (xstate_buffer)
     {
-        xctx->XState.Length = xstate_size;
+        xctx->XState.Length = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
         xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
         context->ContextFlags |= CONTEXT_XSTATE;
 
@@ -660,11 +675,10 @@ static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext
 
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
-    if ((thread_data = x86_thread_data( get_current_thread_data() )))
-    {
-        set_fs( thread_data->fs );
-        set_gs( thread_data->gs );
-    }
+    thread_data = (struct x86_thread_data *)get_current_teb()->GdiTebBatch;
+    set_fs( thread_data->fs );
+    set_gs( thread_data->gs );
+
     libc_sigacthandler( signal, siginfo, sigcontext );
 }
 
@@ -697,22 +711,36 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
 
 /***********************************************************************
  *           init_handler
+ *
+ * Handler initialization when the full context is not needed.
+ * Return the stack pointer to use for pushing the exception data.
  */
-static inline struct thread_data *init_handler( const ucontext_t *sigcontext )
+static inline void *init_handler( const ucontext_t *sigcontext )
 {
-    struct thread_data *data = get_current_thread_data();
-    struct x86_thread_data *x86_data;
+    TEB *teb = get_current_teb();
 
     clear_alignment_flag();
 
-    if ((x86_data = x86_thread_data( data )))
-    {
 #ifndef __sun  /* see above for Solaris handling */
-        set_fs( x86_data->fs );
-        set_gs( x86_data->gs );
-#endif
+    {
+        struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
+        set_fs( thread_data->fs );
+        set_gs( thread_data->gs );
     }
-    return data;
+#endif
+
+    if (!ldt_is_system(CS_sig(sigcontext)) || !ldt_is_system(SS_sig(sigcontext)))  /* 16-bit mode */
+    {
+        /*
+         * Win16 or DOS protected mode. Note that during switch
+         * from 16-bit mode to linear mode, CS may be set to system
+         * segment before FS is restored. Fortunately, in this case
+         * SS is still non-system segment. This is why both CS and SS
+         * are checked.
+         */
+        return teb->SystemReserved1[0];
+    }
+    return (void *)(ESP_sig(sigcontext) & ~3);
 }
 
 
@@ -721,7 +749,7 @@ static inline struct thread_data *init_handler( const ucontext_t *sigcontext )
  *
  * Save the thread FPU context.
  */
-static inline void save_fpu( I386_FLOATING_SAVE_AREA *fsave )
+static inline void save_fpu( CONTEXT *context )
 {
     struct
     {
@@ -735,10 +763,11 @@ static inline void save_fpu( I386_FLOATING_SAVE_AREA *fsave )
     }
     float_status;
 
-    __asm__ __volatile__( "fnsave %0; fwait" : "=m" (*fsave) );
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
 
     /* Reset unmasked exceptions status to avoid firing an exception. */
-    memcpy(&float_status, fsave, sizeof(float_status));
+    memcpy(&float_status, &context->FloatSave, sizeof(float_status));
     float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
 
     __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
@@ -764,11 +793,11 @@ static inline void restore_fpu( const CONTEXT *context )
  *
  * Build a context structure from the signal info.
  */
-static void save_context( struct thread_data *data, CONTEXT *context, const ucontext_t *sigcontext )
+static inline void save_context( struct xcontext *xcontext, const ucontext_t *sigcontext )
 {
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
-    void *fpux = FPUX_sig(sigcontext);
-    struct x86_thread_data *x86_data = x86_thread_data( data );
+    XSAVE_FORMAT *fpux = FPUX_sig(sigcontext);
+    CONTEXT *context = &xcontext->c;
 
     memset(context, 0, sizeof(*context));
     context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
@@ -788,15 +817,12 @@ static void save_context( struct thread_data *data, CONTEXT *context, const ucon
     context->SegFs        = LOWORD(FS_sig(sigcontext));
     context->SegGs        = LOWORD(GS_sig(sigcontext));
     context->SegSs        = LOWORD(SS_sig(sigcontext));
-    if (x86_data)
-    {
-        context->Dr0 = x86_data->dr0;
-        context->Dr1 = x86_data->dr1;
-        context->Dr2 = x86_data->dr2;
-        context->Dr3 = x86_data->dr3;
-        context->Dr6 = x86_data->dr6;
-        context->Dr7 = x86_data->dr7;
-    }
+    context->Dr0          = x86_thread_data()->dr0;
+    context->Dr1          = x86_thread_data()->dr1;
+    context->Dr2          = x86_thread_data()->dr2;
+    context->Dr3          = x86_thread_data()->dr3;
+    context->Dr6          = x86_thread_data()->dr6;
+    context->Dr7          = x86_thread_data()->dr7;
 
     if (fpu)
     {
@@ -808,64 +834,11 @@ static void save_context( struct thread_data *data, CONTEXT *context, const ucon
         XSAVE_AREA_HEADER *xs;
 
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-        memcpy( context->ExtendedRegisters, fpux, sizeof(context->ExtendedRegisters) );
-        if (!fpu) fpux_to_fpu( &context->FloatSave, (XSAVE_FORMAT *)&context->ExtendedRegisters );
-        if (xstate_extended_features && (xs = XState_sig(fpux))) context_init_xstate( context, xs );
+        memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
+        if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
+        if (xstate_extended_features() && (xs = XState_sig(fpux))) context_init_xstate( context, xs );
     }
-    if (!fpu && !fpux)
-    {
-        save_fpu( &context->FloatSave );
-        context->ContextFlags |= CONTEXT_FLOATING_POINT;
-    }
-}
-
-
-/***********************************************************************
- *           fixup_frame_fpu_state
- *
- * Set FP frame state not saved in __wine_unix_call_dispatcher from sigcontext.
- */
-static void fixup_frame_fpu_state( struct syscall_frame *frame, const ucontext_t *sigcontext )
-{
-    I386_FLOATING_SAVE_AREA fsave_buf, *fsave = FPU_sig(sigcontext);
-    void *fpux = FPUX_sig(sigcontext);
-
-    memset( &frame->xstate, 0, sizeof(frame->xstate) );
-    if (user_shared_data->XState.CompactionEnabled)
-        frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
-    if (fpux)
-    {
-        memcpy( &frame->u.xsave, fpux, sizeof(frame->u.xsave) );
-        if (!user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
-        {
-            fpux_to_fpu( &fsave_buf, &frame->u.xsave );
-            frame->u.fsave = fsave_buf;
-        }
-        frame->xstate.Mask = XSTATE_MASK_LEGACY;
-    }
-    else
-    {
-        if (!fsave)
-        {
-            save_fpu( &fsave_buf );
-            fsave = &fsave_buf;
-        }
-        if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
-            fpu_to_fpux( &frame->u.xsave, fsave );
-        else
-            frame->u.fsave = *fsave;
-    }
-    /* Clear register stack. */
-    if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
-    {
-        frame->u.xsave.TagWord = 0;
-        frame->u.xsave.StatusWord = 0;
-    }
-    else
-    {
-        frame->u.fsave.TagWord = 0xffffffff;
-        frame->u.fsave.StatusWord = 0xffff0000;
-    }
+    if (!fpu && !fpux) save_fpu( context );
 }
 
 
@@ -874,21 +847,18 @@ static void fixup_frame_fpu_state( struct syscall_frame *frame, const ucontext_t
  *
  * Restore the signal info from the context.
  */
-static void restore_context( struct thread_data *data, const CONTEXT *context, ucontext_t *sigcontext )
+static inline void restore_context( const struct xcontext *xcontext, ucontext_t *sigcontext )
 {
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
-    void *fpux = FPUX_sig(sigcontext);
-    struct x86_thread_data *x86_data = x86_thread_data( data );
+    XSAVE_FORMAT *fpux = FPUX_sig(sigcontext);
+    const CONTEXT *context = &xcontext->c;
 
-    if (x86_data)
-    {
-        x86_data->dr0 = context->Dr0;
-        x86_data->dr1 = context->Dr1;
-        x86_data->dr2 = context->Dr2;
-        x86_data->dr3 = context->Dr3;
-        x86_data->dr6 = context->Dr6;
-        x86_data->dr7 = context->Dr7;
-    }
+    x86_thread_data()->dr0 = context->Dr0;
+    x86_thread_data()->dr1 = context->Dr1;
+    x86_thread_data()->dr2 = context->Dr2;
+    x86_thread_data()->dr3 = context->Dr3;
+    x86_thread_data()->dr6 = context->Dr6;
+    x86_thread_data()->dr7 = context->Dr7;
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
     ECX_sig(sigcontext) = context->Ecx;
@@ -907,7 +877,7 @@ static void restore_context( struct thread_data *data, const CONTEXT *context, u
     SS_sig(sigcontext)  = context->SegSs;
 
     if (fpu) *fpu = context->FloatSave;
-    if (fpux) memcpy( fpux, context->ExtendedRegisters, sizeof(context->ExtendedRegisters) );
+    if (fpux) memcpy( fpux, context->ExtendedRegisters, sizeof(*fpux) );
     if (!fpu && !fpux) restore_fpu( context );
 }
 
@@ -920,7 +890,7 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
-        get_syscall_frame(get_thread_data())->restore_flags |= LOWORD(CONTEXT_INTEGER);
+        x86_thread_data()->syscall_frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
     return status;
 }
 
@@ -950,23 +920,19 @@ void *get_wow_context( CONTEXT *context )
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret = STATUS_SUCCESS;
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
-    struct x86_thread_data *x86_data = x86_thread_data( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
-    if (self && !frame) return STATUS_ACCESS_DENIED;
-
-    if ((flags & CONTEXT_XSTATE) && xstate_extended_features)
+    if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
 
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-            context_ex->XState.Length > xstate_size)
+            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
             return STATUS_INVALID_PARAMETER;
-        if ((xs->Mask & xstate_extended_features)
+        if ((xs->Mask & xstate_extended_features())
             && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
             return STATUS_BUFFER_OVERFLOW;
     }
@@ -974,12 +940,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     /* debug registers require a server call */
     if (self && (flags & CONTEXT_DEBUG_REGISTERS))
-        self = (x86_data->dr0 == context->Dr0 &&
-                x86_data->dr1 == context->Dr1 &&
-                x86_data->dr2 == context->Dr2 &&
-                x86_data->dr3 == context->Dr3 &&
-                x86_data->dr6 == context->Dr6 &&
-                x86_data->dr7 == context->Dr7);
+        self = (x86_thread_data()->dr0 == context->Dr0 &&
+                x86_thread_data()->dr1 == context->Dr1 &&
+                x86_thread_data()->dr2 == context->Dr2 &&
+                x86_thread_data()->dr3 == context->Dr3 &&
+                x86_thread_data()->dr6 == context->Dr6 &&
+                x86_thread_data()->dr7 == context->Dr7);
 
     if (!self)
     {
@@ -987,12 +953,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         if (ret || !self) return ret;
         if (flags & CONTEXT_DEBUG_REGISTERS)
         {
-            x86_data->dr0 = context->Dr0;
-            x86_data->dr1 = context->Dr1;
-            x86_data->dr2 = context->Dr2;
-            x86_data->dr3 = context->Dr3;
-            x86_data->dr6 = context->Dr6;
-            x86_data->dr7 = context->Dr7;
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
         }
     }
 
@@ -1030,7 +996,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     else if (flags & CONTEXT_FLOATING_POINT)
     {
-        if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
+        if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
         {
             fpu_to_fpux( &frame->u.xsave, &context->FloatSave );
         }
@@ -1046,8 +1012,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
         UINT64 mask = frame->xstate.Mask;
 
-        if (user_shared_data->XState.CompactionEnabled)
-            frame->xstate.CompactionMask |= xstate_extended_features;
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
         copy_xstate( &frame->xstate, xs, xs->Mask );
         if (xs->CompactionMask) frame->xstate.Mask |= mask & ~xs->CompactionMask;
     }
@@ -1066,14 +1031,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
-    struct x86_thread_data *x86_data = x86_thread_data( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
     NTSTATUS ret;
-
-    if (self && !frame) return STATUS_ACCESS_DENIED;
 
     /* debug registers require a server call */
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
@@ -1115,11 +1076,11 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
-            if (!user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
+            if (!(cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR))
             {
                 context->FloatSave = frame->u.fsave;
             }
-            else if (!user_shared_data->XState.CompactionEnabled ||
+            else if (!xstate_compaction_enabled ||
                      (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
             {
                 fpux_to_fpu( &context->FloatSave, &frame->u.xsave );
@@ -1135,7 +1096,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         {
             XSAVE_FORMAT *xs = (XSAVE_FORMAT *)context->ExtendedRegisters;
 
-            if (!user_shared_data->XState.CompactionEnabled ||
+            if (!xstate_compaction_enabled ||
                 (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
             {
                 memcpy( xs, &frame->u.xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
@@ -1149,8 +1110,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 xs->ControlWord = 0x37f;
             }
 
-            if (!user_shared_data->XState.CompactionEnabled ||
-                (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
+            if (!xstate_compaction_enabled || (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
             {
                 memcpy( xs->XmmRegisters, frame->u.xsave.XmmRegisters, sizeof( xs->XmmRegisters ));
                 xs->MxCsr      = frame->u.xsave.MxCsr;
@@ -1165,30 +1125,20 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
             context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
-        if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features)
+        if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features())
         {
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
             XSAVE_AREA_HEADER *xstate = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
             UINT64 mask;
 
             if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-                context_ex->XState.Length > xstate_size)
+                context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
                 return STATUS_INVALID_PARAMETER;
 
-            if (user_shared_data->XState.CompactionEnabled)
-            {
-                frame->xstate.CompactionMask |= xstate_extended_features;
-                mask = xstate->CompactionMask & xstate_extended_features;
-                xstate->Mask = frame->xstate.Mask & mask;
-                xstate->CompactionMask = 0x8000000000000000 | mask;
-            }
-            else
-            {
-                mask = xstate->Mask & xstate_extended_features;
-                xstate->Mask = frame->xstate.Mask & mask;
-                xstate->CompactionMask = 0;
-            }
-
+            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
+            xstate->Mask = frame->xstate.Mask & mask;
+            xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
             memset( xstate->Reserved2, 0, sizeof(xstate->Reserved2) );
             if (xstate->Mask)
             {
@@ -1202,27 +1152,27 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         /* update the cached version of the debug registers */
         if (needed_flags & CONTEXT_DEBUG_REGISTERS)
         {
-            x86_data->dr0 = context->Dr0;
-            x86_data->dr1 = context->Dr1;
-            x86_data->dr2 = context->Dr2;
-            x86_data->dr3 = context->Dr3;
-            x86_data->dr6 = context->Dr6;
-            x86_data->dr7 = context->Dr7;
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
         }
         set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
     }
 
     if (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_i386))
-        TRACE( "%p: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n", handle,
+        TRACE( "%p: eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n", handle,
                context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
     if (context->ContextFlags & (CONTEXT_CONTROL & ~CONTEXT_i386))
-        TRACE( "%p: ebp=%08x esp=%08x eip=%08x cs=%04x ss=%04x flags=%08x\n", handle,
+        TRACE( "%p: ebp=%08lx esp=%08lx eip=%08lx cs=%04lx ss=%04lx flags=%08lx\n", handle,
                context->Ebp, context->Esp, context->Eip, context->SegCs, context->SegSs, context->EFlags );
     if (context->ContextFlags & (CONTEXT_SEGMENTS & ~CONTEXT_i386))
-        TRACE( "%p: ds=%04x es=%04x fs=%04x gs=%04x\n", handle,
+        TRACE( "%p: ds=%04lx es=%04lx fs=%04lx gs=%04lx\n", handle,
                context->SegDs, context->SegEs, context->SegFs, context->SegGs );
     if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
-        TRACE( "%p: dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n", handle,
+        TRACE( "%p: dr0=%08lx dr1=%08lx dr2=%08lx dr3=%08lx dr6=%08lx dr7=%08lx\n", handle,
                context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
 
     return STATUS_SUCCESS;
@@ -1318,14 +1268,13 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
  *
  * Check for fault caused by invalid %gs value (some copy protection schemes mess with it).
  */
-static BOOL check_invalid_gs( struct thread_data *data, ucontext_t *sigcontext, CONTEXT *context )
+static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
 {
     unsigned int prefix_count = 0;
     const BYTE *instr = (BYTE *)context->Eip;
-    struct x86_thread_data *x86_data = x86_thread_data( data );
+    WORD system_gs = x86_thread_data()->gs;
 
-    if (!x86_data) return FALSE;
-    if (context->SegGs == x86_data->gs) return FALSE;
+    if (context->SegGs == system_gs) return FALSE;
     if (!ldt_is_system( context->SegCs )) return FALSE;
     /* only handle faults in system libraries */
     if (virtual_is_valid_code_address( instr, 1 )) return FALSE;
@@ -1347,8 +1296,8 @@ static BOOL check_invalid_gs( struct thread_data *data, ucontext_t *sigcontext, 
         instr++;
         continue;
     case 0x65:  /* %gs: */
-        TRACE( "%04x/%04x at %p, fixing up\n", context->SegGs, x86_data->gs, instr );
-        GS_sig(sigcontext) = x86_data->gs;
+        TRACE( "%04lx/%04x at %p, fixing up\n", context->SegGs, system_gs, instr );
+        GS_sig(sigcontext) = system_gs;
         return TRUE;
     default:
         return FALSE;
@@ -1356,7 +1305,7 @@ static BOOL check_invalid_gs( struct thread_data *data, ucontext_t *sigcontext, 
 }
 
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 union atl_thunk
 {
     struct
@@ -1398,7 +1347,7 @@ union atl_thunk
         WORD  inst2;
     } t5;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 /**********************************************************************
  *		check_atl_thunk
@@ -1481,33 +1430,46 @@ static BOOL check_atl_thunk( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONT
 
 
 /***********************************************************************
+ *           setup_exception_record
+ *
+ * Setup the exception record and context on the thread stack.
+ */
+static void *setup_exception_record( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, struct xcontext *xcontext )
+{
+    void *stack = init_handler( sigcontext );
+
+    rec->ExceptionAddress = (void *)EIP_sig( sigcontext );
+    save_context( xcontext, sigcontext );
+    return stack;
+}
+
+/***********************************************************************
  *           setup_raise_exception
  *
  * Change context to setup a call to a raise exception function.
  */
-static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcontext,
+static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
                                    EXCEPTION_RECORD *rec, struct xcontext *xcontext )
 {
     CONTEXT *context = &xcontext->c;
     XSAVE_AREA_HEADER *src_xs;
     struct exc_stack_layout *stack;
-    void *stack_ptr;
     size_t stack_size;
-    NTSTATUS status;
+    unsigned int xstate_size;
+    NTSTATUS status = send_debug_event( rec, context, TRUE, TRUE );
 
-    status = send_debug_event( data, rec, context, TRUE, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
     {
-        restore_context( data, context, sigcontext );
+        restore_context( xcontext, sigcontext );
         return;
     }
 
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    stack_ptr = get_exception_stack( data, sigcontext );
+    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
     stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
-    stack = virtual_setup_exception( data, stack_ptr, stack_size, rec );
+    stack = virtual_setup_exception( stack_ptr, stack_size, rec );
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;
     stack->rec          = *rec;
@@ -1520,7 +1482,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, sizeof(*dst_xs) );
-        dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000000 | xstate_extended_features : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
         copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
@@ -1542,17 +1504,28 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
 
 
 /***********************************************************************
+ *           setup_exception
+ *
+ * Do the full setup to raise an exception from an exception record.
+ */
+static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
+{
+    struct xcontext xcontext;
+    void *stack = setup_exception_record( sigcontext, rec, &xcontext );
+
+    setup_raise_exception( sigcontext, stack, rec, &xcontext );
+}
+
+
+/***********************************************************************
  *           call_user_apc_dispatcher
  */
-NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
                                    PNTAPCFUNC func, NTSTATUS status )
 {
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     ULONG esp = context ? context->Esp : frame->esp;
     struct apc_stack_layout *stack = (struct apc_stack_layout *)esp - 1;
-
-    if (flags) FIXME( "flags %#x are not supported.\n", flags );
 
     if (!context)
     {
@@ -1578,24 +1551,27 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, unsigned int flags, ULONG_P
 /***********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-void call_raise_user_exception_dispatcher( struct thread_data *data )
+void call_raise_user_exception_dispatcher(void)
 {
-    get_syscall_frame(data)->eip = (DWORD)pKiRaiseUserExceptionDispatcher;
+    x86_thread_data()->syscall_frame->eip = (DWORD)pKiRaiseUserExceptionDispatcher;
 }
 
 
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS call_user_exception_dispatcher( struct thread_data *data, EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
+    ULONG esp = (frame->esp - sizeof(struct exc_stack_layout)) & ~3;
     struct exc_stack_layout *stack;
     XSAVE_AREA_HEADER *src_xs;
+    unsigned int xstate_size;
 
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    stack = (struct exc_stack_layout *)((frame->esp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
+    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+    stack = (struct exc_stack_layout *)((esp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;
     stack->rec          = *rec;
@@ -1608,7 +1584,7 @@ NTSTATUS call_user_exception_dispatcher( struct thread_data *data, EXCEPTION_REC
         context_init_xstate( &stack->context, dst_xs );
         assert( !((ULONG_PTR)dst_xs & 63) );
         memset( dst_xs, 0, sizeof(*dst_xs) );
-        dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000000 | xstate_extended_features : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
         copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
@@ -1639,29 +1615,21 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
-                   "movl 8(%ebp),%ebx\n\t"     /* user_esp */
                    "movl 0x18(%ebp),%edx\n\t"  /* teb */
-                   "pushl 4(%ebx)\n\t"         /* id */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
-                   "subl 0x1f4(%edx),%esp\n\t" /* x86_thread_data()->frame_size */
+                   "subl $0x280,%esp\n\t"      /* sizeof(struct syscall_frame) */
+                   "subl 0x204(%edx),%esp\n\t" /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%esp\n\t"
                    "leal 8(%ebp),%eax\n\t"
                    "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
-                   "movl 0x218(%edx),%edi\n\t" /* thread_data->syscall_frame */
-                   "movl %edi,0x3c(%esp)\n\t"  /* frame->prev_frame */
-                   "movl %esp,0x218(%edx)\n\t" /* thread_data->syscall_frame */
-                   "testl $1,0x21c(%edx)\n\t"  /* thread_data->syscall_trace */
-                   "jz 1f\n\t"
-                   "subl $4,%esp\n\t"
-                   "push 12(%ebx)\n\t"         /* len */
-                   "push 8(%ebx)\n\t"          /* args */
-                   "push 4(%ebx)\n\t"          /* id */
-                   "call " __ASM_NAME("trace_usercall") "\n"
-                   "1:\tmovl 0x14(%ebp),%ecx\n\t" /* func */
+                   "movl 0x1f8(%edx),%ecx\n\t" /* x86_thread_data()->syscall_frame */
+                   "movl (%ecx),%eax\n\t"      /* frame->syscall_flags */
+                   "movl %eax,(%esp)\n\t"
+                   "movl %ecx,0x3c(%esp)\n\t"  /* frame->prev_frame */
+                   "movl %esp,0x1f8(%edx)\n\t" /* x86_thread_data()->syscall_frame */
+                   "movl 0x14(%ebp),%ecx\n\t"  /* func */
                    /* switch to user stack */
-                   "movl %ebx,%esp\n\t"
-                   "fnclex\n\t"
-                   "fldcw 0x40(%edi)\n\t"      /* prev_frame->fsave.ControlWord */
+                   "movl 8(%ebp),%esp\n\t"
                    "xorl %ebp,%ebp\n\t"
                    "jmpl *%ecx" )
 
@@ -1672,10 +1640,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
-                   "movl 16(%esp),%ebx\n"      /* teb */
-                   "movl 0x218(%ebx),%eax\n\t" /* thread_data->syscall_frame */
+                   "movl 16(%esp),%edx\n"      /* teb */
+                   "movl 0x1f8(%edx),%eax\n\t" /* x86_thread_data()->syscall_frame */
                    "movl 0x3c(%eax),%ecx\n\t"  /* frame->prev_frame */
-                   "movl %ecx,0x218(%ebx)\n\t" /* thread_data->syscall_frame */
+                   "movl %ecx,0x1f8(%edx)\n\t" /* x86_thread_data()->syscall_frame */
                    "movl 0x38(%eax),%ebp\n\t"  /* frame->syscall_cfa */
                    "subl $8,%ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1687,25 +1655,13 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movl 4(%esp),%esi\n\t"     /* ret_ptr */
                    "movl 8(%esp),%edi\n\t"     /* ret_len */
                    "movl 12(%esp),%eax\n\t"    /* status */
-                   "leal -20(%ebp),%esp\n\t"
+                   "leal -16(%ebp),%esp\n\t"
                    "movl 0x0c(%ebp),%ecx\n\t"  /* ret_ptr */
                    "movl %esi,(%ecx)\n\t"
                    "movl 0x10(%ebp),%ecx\n\t"  /* ret_len */
                    "movl %edi,(%ecx)\n\t"
-                   "popl (%ebx)\n\t"           /* teb->Tib.ExceptionList */
-                   "popl %edx\n\t"             /* id */
-                   "testl $1,0x21c(%ebx)\n\t"  /* thread_data->syscall_trace */
-                   "jz 1f\n\t"
-                   "pushl %eax\n\t"            /* status */
-                   "subl $8,%esp\n\t"
-                   "pushl %edx\n\t"            /* id */
-                   "pushl %eax\n\t"            /* status */
-                   "pushl %edi\n\t"            /* ret_len */
-                   "pushl %esi\n\t"            /* ret_ptr */
-                   "call " __ASM_NAME("trace_userret") "\n\t"
-                   "addl $24,%esp\n\t"
-                   "popl %eax\n\t"             /* status */
-                   "1:\tpopl %edi\n\t"
+                   "popl 0(%edx)\n\t"          /* teb->Tib.ExceptionList */
+                   "popl %edi\n\t"
                    __ASM_CFI(".cfi_same_value %edi\n\t")
                    "popl %esi\n\t"
                    __ASM_CFI(".cfi_same_value %esi\n\t")
@@ -1743,12 +1699,12 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
  */
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     ULONG esp = (frame->esp - offsetof(struct callback_stack_layout, args_data[len])) & ~3;
     struct callback_stack_layout *stack = (struct callback_stack_layout *)esp;
 
-    if ((char *)get_kernel_stack( data ) + min_kernel_stack > (char *)&frame) return STATUS_STACK_OVERFLOW;
+    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
+        return STATUS_STACK_OVERFLOW;
 
     stack->eip  = frame->eip;
     stack->id   = id;
@@ -1756,7 +1712,7 @@ NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_p
     stack->len  = len;
     stack->esp  = frame->esp;
     memcpy( stack->args_data, args, len );
-    return call_user_mode_callback( esp, ret_ptr, ret_len, pKiUserCallbackDispatcher, data->teb );
+    return call_user_mode_callback( esp, ret_ptr, ret_len, pKiUserCallbackDispatcher, NtCurrentTeb() );
 }
 
 
@@ -1765,11 +1721,8 @@ NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_p
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
-
-    if (!frame->prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
-    user_mode_callback_return( ret_ptr, ret_len, status, data->teb );
+    if (!x86_thread_data()->syscall_frame->prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
+    user_mode_callback_return( ret_ptr, ret_len, status, NtCurrentTeb() );
 }
 
 
@@ -1803,7 +1756,7 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
  *
  * Handle an interrupt.
  */
-static BOOL handle_interrupt( struct thread_data *data, unsigned int interrupt, ucontext_t *sigcontext,
+static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, void *stack,
                               EXCEPTION_RECORD *rec, struct xcontext *xcontext )
 {
     CONTEXT *context = &xcontext->c;
@@ -1840,7 +1793,7 @@ static BOOL handle_interrupt( struct thread_data *data, unsigned int interrupt, 
         rec->ExceptionInformation[0] = context->Eax;
         rec->ExceptionInformation[1] = context->Ecx;
         rec->ExceptionInformation[2] = context->Edx;
-        setup_raise_exception( data, sigcontext, rec, xcontext );
+        setup_raise_exception( sigcontext, stack, rec, xcontext );
         return TRUE;
     default:
         return FALSE;
@@ -1853,47 +1806,48 @@ static BOOL handle_interrupt( struct thread_data *data, unsigned int interrupt, 
  *
  * Handle a page fault happening during a system call.
  */
-static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *sigcontext, void *stack_ptr,
+static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
                                   EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct syscall_frame *frame;
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     UINT i, *stack;
 
-    if (!is_inside_syscall( data, ESP_sig(sigcontext) )) return FALSE;
+    if (!is_inside_syscall( sigcontext )) return FALSE;
 
-    TRACE( "code=%x flags=%x addr=%p ip=%08x\n",
+    TRACE( "code=%lx flags=%lx addr=%p ip=%08lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
     for (i = 0; i < rec->NumberParameters; i++)
         TRACE( " info[%d]=%08lx\n", i, rec->ExceptionInformation[i] );
-    TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
+    TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
           context->Eax, context->Ebx, context->Ecx,
           context->Edx, context->Esi, context->Edi );
-    TRACE(" ebp=%08x esp=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
+    TRACE(" ebp=%08lx esp=%08lx cs=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
           context->Ebp, context->Esp, context->SegCs, context->SegDs,
           context->SegEs, context->SegFs, context->SegGs, context->EFlags );
 
-    if (data->jmp_buf)
+    if (ntdll_get_thread_data()->jmp_buf)
     {
         TRACE( "returning to handler\n" );
         /* push stack frame for calling longjmp */
         stack = stack_ptr;
         *(--stack) = 1;
-        *(--stack) = (DWORD)data->jmp_buf;
+        *(--stack) = (DWORD)ntdll_get_thread_data()->jmp_buf;
         *(--stack) = 0xdeadbabe;  /* return address */
         ESP_sig(sigcontext) = (DWORD)stack;
         EIP_sig(sigcontext) = (DWORD)longjmp;
-        data->jmp_buf = NULL;
-        return TRUE;
+        ntdll_get_thread_data()->jmp_buf = NULL;
     }
-    if ((frame = get_syscall_frame( data )))
+    else
     {
-        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
-        EAX_sig(sigcontext) = rec->ExceptionCode;
-        EBP_sig(sigcontext) = (DWORD)&frame->ebp;
+        TRACE( "returning to user mode ip=%08x ret=%08lx\n", frame->eip, rec->ExceptionCode );
+        stack = (UINT *)frame;
+        *(--stack) = rec->ExceptionCode;
+        *(--stack) = (UINT)frame;
+        *(--stack) = 0xdeadbabe;  /* return address */
+        ESP_sig(sigcontext) = (DWORD)stack;
         EIP_sig(sigcontext) = (DWORD)__wine_syscall_dispatcher_return;
-        return TRUE;
     }
-    return FALSE;
+    return TRUE;
 }
 
 
@@ -1902,9 +1856,9 @@ static BOOL handle_syscall_fault( struct thread_data *data, ucontext_t *sigconte
  *
  * Handle a trap exception during a system call.
  */
-static BOOL handle_syscall_trap( struct thread_data *data, ucontext_t *sigcontext, siginfo_t *siginfo )
+static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
 {
-    struct syscall_frame *frame = get_syscall_frame( data );
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
 
     /* disallow single-stepping through a syscall */
 
@@ -1919,13 +1873,10 @@ static BOOL handle_syscall_trap( struct thread_data *data, ucontext_t *sigcontex
         extern void __wine_unix_call_dispatcher_prolog_end(void);
 
         EIP_sig( sigcontext ) = (ULONG)__wine_unix_call_dispatcher_prolog_end;
-        fixup_frame_fpu_state( frame, sigcontext );
     }
-    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ &&
-             (is_inside_syscall( data, ESP_sig(sigcontext) ) ||
-              is_inside_signal_stack( data, (void *)ESP_sig(sigcontext) )))
+    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ && is_inside_syscall( sigcontext ))
     {
-        TRACE_(seh)( "ignoring HWBKPT eip=%p\n", (void *)EIP_sig(sigcontext) );
+        TRACE_(seh)( "ignoring HWBKPT in syscall eip=%p\n", (void *)EIP_sig(sigcontext) );
         return TRUE;
     }
     else return FALSE;
@@ -1948,17 +1899,14 @@ static BOOL handle_syscall_trap( struct thread_data *data, ucontext_t *sigcontex
  *
  * Handler for SIGSEGV and related errors.
  */
-static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
-    void *stack = get_exception_stack( data, sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
     struct xcontext xcontext;
-    EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)EIP_sig( sigcontext ) };
+    ucontext_t *ucontext = sigcontext;
+    void *stack = setup_exception_record( sigcontext, &rec, &xcontext );
 
-    save_context( data, &xcontext.c, sigcontext );
-
-    switch (TRAP_sig(sigcontext))
+    switch (TRAP_sig(ucontext))
     {
     case TRAP_x86_OFLOW:   /* Overflow exception */
         rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
@@ -1975,9 +1923,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     case TRAP_x86_SEGNPFLT:  /* Segment not present exception */
     case TRAP_x86_PROTFLT:   /* General protection fault */
         {
-            WORD err = ERROR_sig(sigcontext);
+            WORD err = ERROR_sig(ucontext);
             if (!err && (rec.ExceptionCode = is_privileged_instr( &xcontext.c ))) break;
-            if ((err & 7) == 2 && handle_interrupt( data, err >> 3, sigcontext, &rec, &xcontext )) return;
+            if ((err & 7) == 2 && handle_interrupt( err >> 3, ucontext, stack, &rec, &xcontext )) return;
             rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec.NumberParameters = 2;
             rec.ExceptionInformation[0] = 0;
@@ -1986,15 +1934,15 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
             else
             {
                 rec.ExceptionInformation[1] = 0xffffffff;
-                if (check_invalid_gs( data, sigcontext, &xcontext.c )) return;
+                if (check_invalid_gs( ucontext, &xcontext.c )) return;
             }
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
         rec.NumberParameters = 2;
-        rec.ExceptionInformation[0] = (ERROR_sig(sigcontext) >> 1) & 0x09;
+        rec.ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;
         rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        if (!virtual_handle_fault( data, &rec, stack )) return;
+        if (!virtual_handle_fault( &rec, stack )) return;
         if (rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
             rec.ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
         {
@@ -2002,7 +1950,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
             NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
                                        &flags, sizeof(flags), NULL );
             if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) &&
-                check_atl_thunk( sigcontext, &rec, &xcontext.c ))
+                check_atl_thunk( ucontext, &rec, &xcontext.c ))
                 return;
 
             /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
@@ -2013,13 +1961,13 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         /* FIXME: pass through exception handler first? */
         if (xcontext.c.EFlags & 0x00040000)
         {
-            EFL_sig(sigcontext) &= ~0x00040000;  /* disable AC flag */
+            EFL_sig(ucontext) &= ~0x00040000;  /* disable AC flag */
             return;
         }
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(sigcontext) );
+        WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(ucontext) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -2030,8 +1978,8 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
-    if (handle_syscall_fault( data, sigcontext, stack, &rec, &xcontext.c )) return;
-    setup_raise_exception( data, sigcontext, &rec, &xcontext );
+    if (handle_syscall_fault( ucontext, stack, &rec, &xcontext.c )) return;
+    setup_raise_exception( ucontext, stack, &rec, &xcontext );
 }
 
 
@@ -2040,18 +1988,16 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGTRAP.
  */
-static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
     struct xcontext xcontext;
-    EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)EIP_sig( sigcontext ) };
+    ucontext_t *ucontext = sigcontext;
+    void *stack = setup_exception_record( sigcontext, &rec, &xcontext );
 
-    if (handle_syscall_trap( data, sigcontext, siginfo )) return;
+    if (handle_syscall_trap( ucontext, siginfo )) return;
 
-    save_context( data, &xcontext.c, sigcontext );
-
-    switch (TRAP_sig(sigcontext))
+    switch (TRAP_sig(ucontext))
     {
     case TRAP_x86_TRCTRAP:  /* Single-step exception */
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
@@ -2079,7 +2025,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         rec.ExceptionInformation[2] = 0; /* FIXME */
         break;
     }
-    setup_raise_exception( data, sigcontext, &rec, &xcontext );
+    setup_raise_exception( sigcontext, stack, &rec, &xcontext );
 }
 
 
@@ -2088,16 +2034,14 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGFPE.
  */
-static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
     struct xcontext xcontext;
-    EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)EIP_sig( sigcontext ) };
+    ucontext_t *ucontext = sigcontext;
+    void *stack = setup_exception_record( sigcontext, &rec, &xcontext );
 
-    save_context( data, &xcontext.c, sigcontext );
-
-    switch (TRAP_sig(sigcontext))
+    switch (TRAP_sig(ucontext))
     {
     case TRAP_x86_DIVIDE:   /* Division by zero exception */
         rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
@@ -2122,11 +2066,11 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
         if (is_old_wow64()) rec.ExceptionInformation[rec.NumberParameters++] = ((XSAVE_FORMAT *)xcontext.c.ExtendedRegisters)->MxCsr;
         break;
     default:
-        WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(sigcontext) );
+        WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(ucontext) );
         rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
-    setup_raise_exception( data, sigcontext, &rec, &xcontext );
+    setup_raise_exception( sigcontext, stack, &rec, &xcontext );
 }
 
 
@@ -2135,9 +2079,8 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGINT.
  */
-static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
     HANDLE handle;
 
     init_handler( sigcontext );
@@ -2153,17 +2096,11 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGABRT.
  */
-static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
-    struct xcontext xcontext;
-    EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_WINE_ASSERTION,
-                             .ExceptionFlags = EXCEPTION_NONCONTINUABLE,
-                             .ExceptionAddress = (void *)EIP_sig( sigcontext ) };
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EXCEPTION_NONCONTINUABLE };
 
-    save_context( data, &xcontext.c, sigcontext );
-    setup_raise_exception( data, sigcontext, &rec, &xcontext );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -2172,13 +2109,11 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGQUIT.
  */
-static void quit_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
-
-    if (is_inside_syscall( data, ESP_sig(sigcontext) )) abort_thread( 0 );
-    user_mode_abort_thread( 0, get_syscall_frame( data ));
+    init_handler( sigcontext );
+    if (!is_inside_syscall( sigcontext )) user_mode_abort_thread( 0, x86_thread_data()->syscall_frame );
+    abort_thread( 0 );
 }
 
 
@@ -2187,44 +2122,34 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *
  * Handler for SIGUSR1, used to signal a thread that it got suspended.
  */
-static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    ucontext_t *sigcontext = _sigcontext;
-    struct thread_data *data = init_handler( sigcontext );
+    ucontext_t *ucontext = sigcontext;
 
-    if (!data->teb)
+    init_handler( sigcontext );
+
+    if (is_inside_syscall( ucontext ))
     {
-        server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL, NULL );
-    }
-    else if (is_inside_syscall( data, ESP_sig(sigcontext) ))
-    {
-        struct syscall_frame *frame = get_syscall_frame( data );
+        struct syscall_frame *frame = x86_thread_data()->syscall_frame;
         ULONG64 saved_compaction = 0;
         struct xcontext *context;
 
-        context = (struct xcontext *)(((ULONG_PTR)ESP_sig(sigcontext) - sizeof(*context)) & ~15);
-        if ((char *)context < (char *)get_kernel_stack( data ))
+        context = (struct xcontext *)(((ULONG_PTR)ESP_sig(ucontext) - sizeof(*context)) & ~15);
+        if ((char *)context < (char *)ntdll_get_thread_data()->kernel_stack)
         {
             ERR_(seh)( "kernel stack overflow.\n" );
             return;
         }
         context->c.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
-        if (frame->restore_flags & RESTORE_FLAGS_INCOMPLETE_FRAME_CONTEXT)
-        {
-            frame->restore_flags &= ~RESTORE_FLAGS_INCOMPLETE_FRAME_CONTEXT;
-            frame->eflags = 0x202;
-            fixup_frame_fpu_state( frame, sigcontext );
-        }
         NtGetContextThread( GetCurrentThread(), &context->c );
-        if (xstate_extended_features)
+        if (xstate_extended_features())
         {
-            if (user_shared_data->XState.CompactionEnabled)
-                frame->xstate.CompactionMask |= xstate_extended_features;
+            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
             context_init_xstate( &context->c, &frame->xstate );
             saved_compaction = frame->xstate.CompactionMask;
         }
         wait_suspend( &context->c );
-        if (xstate_extended_features) frame->xstate.CompactionMask = saved_compaction;
+        if (xstate_extended_features()) frame->xstate.CompactionMask = saved_compaction;
         if (context->c.ContextFlags & 0x40)
         {
             /* xstate is updated directly in frame's xstate */
@@ -2237,10 +2162,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
     {
         struct xcontext context;
 
-        save_context( data, &context.c, sigcontext );
+        save_context( &context, ucontext );
         context.c.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
         wait_suspend( &context.c );
-        restore_context( data, &context.c, sigcontext );
+        restore_context( &context, ucontext );
     }
 }
 
@@ -2249,12 +2174,63 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  *           LDT support
  */
 
-static WORD gdt_fs_sel;
+#define LDT_SIZE 8192
 
-void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+#define LDT_FLAGS_DATA      0x13  /* Data segment */
+#define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
+
+struct ldt_copy
 {
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+} __wine_ldt_copy;
+
+static WORD gdt_fs_sel;
+static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
+static const LDT_ENTRY null_entry;
+
+static inline void *ldt_get_base( LDT_ENTRY ent )
+{
+    return (void *)(ent.BaseLow |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseMid << 16 |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseHi << 24);
+}
+
+static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
+{
+    unsigned int limit = ent.LimitLow | (ent.HighWord.Bits.LimitHi << 16);
+    if (ent.HighWord.Bits.Granularity) limit = (limit << 12) | 0xfff;
+    return limit;
+}
+
+static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
+{
+    LDT_ENTRY entry;
+
+    entry.BaseLow                   = (WORD)(ULONG_PTR)base;
+    entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
+    entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
+    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+    entry.LimitLow                  = (WORD)limit;
+    entry.HighWord.Bits.LimitHi     = limit >> 16;
+    entry.HighWord.Bits.Dpl         = 3;
+    entry.HighWord.Bits.Pres        = 1;
+    entry.HighWord.Bits.Type        = flags;
+    entry.HighWord.Bits.Sys         = 0;
+    entry.HighWord.Bits.Reserved_0  = 0;
+    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
+    return entry;
+}
+
+static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+{
+    int index = sel >> 3;
+
 #ifdef linux
-    struct modify_ldt_s ldt_info = { .entry_number = sel >> 3 };
+    struct modify_ldt_s ldt_info = { index };
 
     ldt_info.base_addr       = ldt_get_base( entry );
     ldt_info.limit           = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
@@ -2268,7 +2244,7 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 #elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
     /* The kernel will only let us set LDTs with user priority level */
     if (entry.HighWord.Bits.Pres && entry.HighWord.Bits.Dpl != 3) entry.HighWord.Bits.Dpl = 3;
-    if (i386_set_ldt(sel >> 3, (union descriptor *)&entry, 1) < 0)
+    if (i386_set_ldt(index, (union descriptor *)&entry, 1) < 0)
     {
         perror("i386_set_ldt");
         fprintf( stderr, "Did you reconfigure the kernel with \"options USER_LDT\"?\n" );
@@ -2278,13 +2254,13 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     struct ssd ldt_mod;
 
     ldt_mod.sel  = sel;
-    ldt_mod.bo   = ldt_get_base( entry );
+    ldt_mod.bo   = (unsigned long)ldt_get_base( entry );
     ldt_mod.ls   = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
     ldt_mod.acc1 = entry.HighWord.Bytes.Flags1;
     ldt_mod.acc2 = entry.HighWord.Bytes.Flags2 >> 4;
     if (sysi86(SI86DSCR, &ldt_mod) == -1) perror("sysi86");
 #elif defined(__APPLE__)
-    if (i386_set_ldt(sel >> 3, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
 #elif defined(__GNU__)
     if (i386_set_ldt(mach_thread_self(), sel, (descriptor_list_t)&entry, 1) != KERN_SUCCESS)
         perror("i386_set_ldt");
@@ -2292,6 +2268,12 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     fprintf( stderr, "No LDT support on this platform\n" );
     exit(1);
 #endif
+
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
+                                    LDT_FLAGS_ALLOCATED);
 }
 
 static void ldt_set_fs( WORD sel, TEB *teb )
@@ -2299,8 +2281,11 @@ static void ldt_set_fs( WORD sel, TEB *teb )
     if (sel == gdt_fs_sel)
     {
 #ifdef __linux__
-        struct modify_ldt_s ldt_info = { .entry_number = sel >> 3, .base_addr = PtrToUlong( teb ),
-                                         .limit = page_size - 1, .seg_32bit = 1 };
+        struct modify_ldt_s ldt_info = { sel >> 3 };
+
+        ldt_info.base_addr = teb;
+        ldt_info.limit     = page_size - 1;
+        ldt_info.seg_32bit = 1;
         if (set_thread_area( &ldt_info ) < 0) perror( "set_thread_area" );
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
         i386_set_fsbase( teb );
@@ -2313,38 +2298,92 @@ static void ldt_set_fs( WORD sel, TEB *teb )
 /**********************************************************************
  *           get_thread_ldt_entry
  */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info, ULONG len )
+NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
 {
-    THREAD_BASIC_INFORMATION tbi;
-    NTSTATUS status = STATUS_SUCCESS;
+    THREAD_DESCRIPTOR_INFORMATION *info = data;
+    unsigned int status = STATUS_SUCCESS;
 
     if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
     if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
 
-    if (handle == GetCurrentThread())
+    if (is_gdt_sel( info->Selector ))
     {
-        TEB *teb = NtCurrentTeb();
-        if (!teb) return STATUS_ACCESS_DENIED;
-        tbi.TebBaseAddress = teb;
-        tbi.ClientId = teb->ClientId;
+        if (!(info->Selector & ~3))
+            info->Entry = null_entry;
+        else if ((info->Selector | 3) == get_cs())
+            info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+        else if ((info->Selector | 3) == get_ds())
+            info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        else if ((info->Selector | 3) == get_fs())
+            info->Entry = ldt_make_entry( NtCurrentTeb(), 0xfff, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        else
+            return STATUS_UNSUCCESSFUL;
     }
     else
     {
-        if ((status = NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL )))
-            return status;
+        SERVER_START_REQ( get_selector_entry )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->entry = info->Selector >> 3;
+            status = wine_server_call( req );
+            if (!status)
+            {
+                if (reply->flags)
+                    info->Entry = ldt_make_entry( (void *)reply->base, reply->limit, reply->flags );
+                else
+                    status = STATUS_UNSUCCESSFUL;
+            }
+        }
+        SERVER_END_REQ;
     }
-
-    if (is_gdt_sel( info->Selector ))
-    {
-        if (!(info->Selector & ~3)) info->Entry = null_entry;
-        else if ((info->Selector | 3) == get_cs()) info->Entry = ldt_make_cs32_entry();
-        else if ((info->Selector | 3) == get_ds()) info->Entry = ldt_make_ds32_entry();
-        else if ((info->Selector | 3) == get_fs()) info->Entry = ldt_make_fs32_entry( tbi.TebBaseAddress );
-        else return STATUS_UNSUCCESSFUL;
-    }
-    else status = ldt_get_entry( info->Selector, tbi.ClientId, &info->Entry );
+    if (status == STATUS_SUCCESS && ret_len)
+        /* yes, that's a bit strange, but it's the way it is */
+        *ret_len = sizeof(info->Entry);
 
     return status;
+}
+
+
+/******************************************************************************
+ *           NtSetLdtEntries   (NTDLL.@)
+ *           ZwSetLdtEntries   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
+{
+    sigset_t sigset;
+
+    if (sel1 >> 16 || sel2 >> 16) return STATUS_INVALID_LDT_DESCRIPTOR;
+    if (sel1 && (sel1 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
+    if (sel2 && (sel2 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
+
+    server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+    if (sel1) ldt_set_entry( sel1, entry1 );
+    if (sel2) ldt_set_entry( sel2, entry2 );
+    server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+   return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *             signal_init_threading
+ */
+void signal_init_threading(void)
+{
+#ifdef __linux__
+    /* the preloader may have allocated it already */
+    gdt_fs_sel = get_fs();
+    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
+    {
+        struct modify_ldt_s ldt_info = { -1 };
+
+        ldt_info.seg_32bit = 1;
+        ldt_info.usable = 1;
+        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
+        else gdt_fs_sel = 0;
+    }
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
+#endif
 }
 
 
@@ -2357,13 +2396,37 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 
     if (!gdt_fs_sel)
     {
-        thread_data->fs = ldt_alloc_entry( ldt_make_fs32_entry( teb ));
-        if (!thread_data->fs) return STATUS_TOO_MANY_THREADS;
+        static int first_thread = 1;
+        sigset_t sigset;
+        int idx;
+        LDT_ENTRY entry = ldt_make_entry( teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+        if (first_thread)  /* no locking for first thread */
+        {
+            /* leave some space if libc is using the LDT for %gs */
+            if (!is_gdt_sel( get_gs() )) first_ldt_entry = 512;
+            idx = first_ldt_entry;
+            ldt_set_entry( (idx << 3) | 7, entry );
+            first_thread = 0;
+        }
+        else
+        {
+            server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+            {
+                if (__wine_ldt_copy.flags[idx]) continue;
+                ldt_set_entry( (idx << 3) | 7, entry );
+                break;
+            }
+            server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
+        }
+        thread_data->fs = (idx << 3) | 7;
     }
     else thread_data->fs = gdt_fs_sel;
 
     teb->WOW32Reserved = __wine_syscall_dispatcher;
-    thread_data->frame_size = frame_size;
+    thread_data->xstate_features_size = xstate_features_size;
     return STATUS_SUCCESS;
 }
 
@@ -2374,39 +2437,31 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 void signal_free_thread( TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
+    sigset_t sigset;
 
-    if (!gdt_fs_sel) ldt_free_entry( thread_data->fs );
+    if (gdt_fs_sel) return;
+
+    server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+    __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
+    server_leave_uninterrupted_section( &ldt_mutex, &sigset );
 }
 
 
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process( TEB *teb )
+void signal_init_process(void)
 {
     struct sigaction sig_act;
+    void *kernel_stack = (char *)ntdll_get_thread_data()->kernel_stack + kernel_stack_size;
 
-    if (user_shared_data->XState.Size) xstate_size = user_shared_data->XState.Size - sizeof(XSAVE_FORMAT);
-    frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
-    xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
+    x86_thread_data()->syscall_frame = (struct syscall_frame *)((ULONG_PTR)((char *)kernel_stack
+                                       - sizeof(struct syscall_frame) - xstate_features_size) & ~(ULONG_PTR)63);
+    x86_thread_data()->xstate_features_size = xstate_features_size;
 
-#ifdef __linux__
-    gdt_fs_sel = get_fs(); /* the preloader may have allocated it already */
-    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
-    {
-        struct modify_ldt_s ldt_info = { .entry_number = -1, .seg_32bit = 1, .usable = 1 };
-        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
-        else gdt_fs_sel = 0;
-    }
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
-    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
-#endif
-
-    /* leave some space if libc is using the LDT for %gs */
-    if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) memset( ldt_bitmap, 0xff, 512 / 8 );
-
-    alloc_syscall_frame( (frame_size + 63) & ~63 );
-    signal_alloc_thread( teb );
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
@@ -2439,19 +2494,20 @@ void signal_init_process( TEB *teb )
 
 
 /***********************************************************************
- *           init_syscall_frame
+ *           call_init_thunk
  */
-void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
+                      struct syscall_frame *frame, void *syscall_cfa )
 {
-    struct thread_data *data = get_thread_data();
-    struct syscall_frame *frame = get_syscall_frame( data );
-    struct x86_thread_data *thread_data = x86_thread_data( data );
+    struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
     CONTEXT *ctx, context = { CONTEXT_ALL };
     DWORD *stack;
 
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();
-    assert( thread_data->frame_size == frame_size );
+    thread_data->syscall_table = KeServiceDescriptorTable;
+    thread_data->xstate_features_mask = xstate_supported_features_mask;
+    assert( thread_data->xstate_features_size == xstate_features_size );
 
     context.SegCs  = get_cs();
     context.SegDs  = get_ds();
@@ -2467,9 +2523,9 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     context.FloatSave.ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
-    if ((ctx = get_cpu_area( data, IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
+    if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
 
-    if (data->suspend)
+    if (suspend)
     {
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
         wait_suspend( &context );
@@ -2478,10 +2534,10 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~3) - 1;
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-    memset( &frame->xstate, 0, sizeof(frame->xstate) );
-    if (user_shared_data->XState.CompactionEnabled)
-        frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
-    signal_set_full_context( ctx );
+    memset( frame, 0, sizeof(*frame) );
+    if (xstate_compaction_enabled)
+        frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
+    NtSetContextThread( GetCurrentThread(), ctx );
 
     stack = (DWORD *)ctx;
     *(--stack) = 0;
@@ -2491,8 +2547,13 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
     *(--stack) = 0xdeadbabe;
     frame->esp = (DWORD)stack;
     frame->eip = (DWORD)pLdrInitializeThunk;
+    frame->prev_frame    = NULL;
+    frame->syscall_flags = syscall_flags;
+    frame->syscall_cfa   = syscall_cfa;
+    frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -2513,34 +2574,31 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    "leal 8(%ebp),%edx\n\t"      /* syscall_cfa */
                    /* set syscall frame */
-                   "movl 16(%ebp),%ecx\n\t"     /* teb */
-                   "movl 0x218(%ecx),%eax\n\t"  /* thread_data->syscall_frame */
+                   "movl 20(%ebp),%ecx\n\t"     /* teb */
+                   "movl 0x1f8(%ecx),%eax\n\t"  /* x86_thread_data()->syscall_frame */
                    "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
-                   "movl %esp,%eax\n\t"
-                   "subl 0x1f4(%ecx),%eax\n\t"  /* x86_thread_data()->frame_size */
+                   "leal -0x280(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
+                   "subl 0x204(%ecx),%eax\n\t"  /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%eax\n\t"
-                   "movl %eax,0x218(%ecx)\n"    /* thread_data->syscall_frame */
-                   "1:\tmovl $0,(%eax)\n\t"     /* frame->restore_flags */
-                   "movl %edx,0x38(%eax)\n\t"   /* frame->syscall_cfa */
-                   "movl $0,0x3c(%eax)\n\t"     /* frame->prev_frame */
-                   "fnstcw 0x1f8(%ecx)\n\t"     /* thread_data->fpcw */
+                   "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
                    /* switch to kernel stack */
-                   "leal -4(%eax),%esp\n\t"
+                   "1:\tleal -8(%eax),%esp\n\t"
+                   "pushl %edx\n\t"             /* syscall_cfa */
+                   "pushl %eax\n\t"             /* syscall_frame */
                    "pushl %ecx\n\t"             /* teb */
+                   "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */
-                   "call " __ASM_NAME("init_syscall_frame") "\n\t"
-                   "addl $16,%esp\n\t"
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "call " __ASM_NAME("call_init_thunk") )
 
 
 /***********************************************************************
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
-                   "movl %fs:0x218,%ecx\n\t"       /* thread_data->syscall_frame */
-                   "movl $0,(%ecx)\n\t"            /* frame->restore_flags */
+                   "movl %fs:0x1f8,%ecx\n\t"       /* x86_thread_data()->syscall_frame */
+                   "movw $0,0x02(%ecx)\n\t"        /* frame->restore_flags */
                    "popl 0x08(%ecx)\n\t"           /* frame->eip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    __ASM_CFI_REG_IS_AT1(eip, ecx, 0x08)
@@ -2548,7 +2606,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "popl 0x04(%ecx)\n\t"           /* frame->eflags */
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_prolog_end")) "\n\t"
+                   __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_prolog_end")) "\n"
+                   __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movl %esp,0x0c(%ecx)\n\t"      /* frame->esp */
                    __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
                    "movw %cs,0x10(%ecx)\n\t"
@@ -2577,10 +2636,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-                   "addl %fs:0x214,%ebx\n\t"       /* thread_data->syscall_table */
-                   "cmpb $0,0x7ffe0285\n\t"        /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
+                   "addl %fs:0x1f4,%ebx\n\t"       /* x86_thread_data()->syscall_table */
+                   "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
                    "jz 2f\n\t"
-                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
+                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
                    "xorl %edx,%edx\n\t"
                    "andl $7,%eax\n\t"
                    "xorl %edi,%edi\n\t"
@@ -2590,7 +2649,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %edi,0x24c(%ecx)\n\t"
                    "movl %edi,0x250(%ecx)\n\t"
                    "movl %edi,0x254(%ecx)\n\t"
-                   "testl $2,0x7ffe03ec\n\t"       /* user_shared_data->XState.CompactionEnabled */
+                   "testl $2,(%ecx)\n\t"           /* frame->syscall_flags & SYSCALL_HAVE_XSAVEC */
                    "jz 1f\n\t"
                    "movl %edi,0x258(%ecx)\n\t"
                    "movl %edi,0x25c(%ecx)\n\t"
@@ -2605,11 +2664,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* The xsavec instruction is not supported by
                     * binutils < 2.25. */
                    ".byte 0x0f, 0xc7, 0x61, 0x40\n\t" /* xsavec 0x40(%ecx) */
-                   "fnstcw 0x40(%ecx)\n\t"         /* frame->fsave.ControlWord */
                    "jmp 4f\n"
                    "1:\txsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
-                   "2:\tcmpb $0,0x7ffe027a\n\t"    /* user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] */
+                   "2:\ttestl $4,(%ecx)\n\t"       /* frame->syscall_flags & SYSCALL_HAVE_FXSAVE */
                    "jz 3f\n\t"
                    "fxsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
@@ -2624,13 +2682,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_offset %ebx,-12\n\t")
                    __ASM_CFI(".cfi_offset %esi,-16\n\t")
                    __ASM_CFI(".cfi_offset %edi,-20\n\t")
-                   "fnclex\n\t"
-                   "fldcw %fs:0x1f8\n\t"           /* thread_data->fpcw */
                    "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
                    "andl $0xfff,%edx\n\t"          /* syscall number */
                    "cmpl 8(%ebx),%edx\n\t"         /* table->ServiceLimit */
-                   "jae "__ASM_LOCAL_LABEL("bad_syscall") "\n\t"
-                   "pushl 0x1c(%esp)\n\t"          /* frame->eax */
+                   "jae 6f\n\t"
                    "movl 12(%ebx),%eax\n\t"        /* table->ArgumentTable */
                    "movzbl (%eax,%edx,1),%ecx\n\t"
                    "movl (%ebx),%eax\n\t"          /* table->ServiceTable */
@@ -2640,28 +2695,22 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %esp,%edi\n\t"
                    "cld\n\t"
                    "rep; movsl\n\t"
-                   "movl (%eax,%edx,4),%edi\n\t"
-                   "testl $1,%fs:0x21c\n\t"        /* thread_data->syscall_trace */
-                   "jnz " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
-                   "call *%edi\n\t"
+                   "call *(%eax,%edx,4)\n\t"
                    "leal -0x34(%ebp),%esp\n"
 
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
-                   "movl 0(%esp),%ecx\n\t"         /* frame->restore_flags */
-                   "testl $0x68,%ecx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
-                   "jnz 1f\n\t"
-                   "fnclex\n\t"
-                   "fldcw 0x40(%esp)\n\t"          /* frame->fsave.ControlWord */
-                   "jmp 3f\n"
-                   "1:\tcmpb $0,0x7ffe0285\n\t"    /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
+                   "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
+                   "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
+                   "jz 3f\n\t"
+                   "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 1f\n\t"
                    "movl %eax,%esi\n\t"
-                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
-                   "movl 0x7ffe03dc,%edx\n\t"
+                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
+                   "movl %fs:0x200,%edx\n\t"       /* x86_thread_data()->xstate_features_mask high dword */
                    "xrstor 0x40(%esp)\n\t"
                    "movl %esi,%eax\n\t"
                    "jmp 3f\n"
-                   "1:\tcmpb $0,0x7ffe027a\n\t"    /* user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] */
+                   "1:\ttestl $4,%ecx\n\t"         /* SYSCALL_HAVE_FXSAVE */
                    "jz 2f\n\t"
                    "fxrstor 0x40(%esp)\n\t"
                    "jmp 3f\n"
@@ -2673,7 +2722,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* push ebp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_remember_state\n")
                    __ASM_CFI_CFA_IS_AT2(esp, 0xb8, 0x00) /* frame->syscall_cfa */
-                   "testl $0x7,%ecx\n\t"           /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
+                   "testl $0x7 << 16,%ecx\n\t"     /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
                    "movl 0x20(%esp),%ebx\n\t"
                    "movl 0x08(%esp),%ecx\n\t"      /* frame->eip */
@@ -2693,7 +2742,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* pop esp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
 
-                   "1:\ttestl $0x2,%ecx\n\t"       /* CONTEXT_INTEGER */
+                   "1:\ttestl $0x2 << 16,%ecx\n\t" /* CONTEXT_INTEGER */
                    "jz 1f\n\t"
                    "movl 0x1c(%esp),%eax\n\t"
                    "movl 0x24(%esp),%ecx\n\t"
@@ -2725,43 +2774,15 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "popl %ds\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "iret\n"
-
                    /* pop ebp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
-                   __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
-                   "movl %esp,%eax\n\t"
-                   "subl $16,%esp\n\t"
-                   "movl -0x38(%ebp),%esi\n\t"     /* syscall_id */
-                   "movl %esi,(%esp)\n\t"          /* id */
-                   "movl %eax,4(%esp)\n\t"         /* args */
-                   "movl %esi,%edx\n\t"
-                   "andl $0xfff,%edx\n\t"          /* syscall number */
-                   "movl 12(%ebx),%eax\n\t"        /* table->ArgumentTable */
-                   "movzbl (%eax,%edx,1),%edx\n\t"
-                   "movl %edx,8(%esp)\n\t"         /* len */
-                   "call " __ASM_NAME("trace_syscall") "\n\t"
-                   "addl $16,%esp\n\t"
-                   "call *%edi\n"
 
-                   __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
-                   "pushl %eax\n\t"
-                   "pushl %eax\n\t"
-                   "pushl %eax\n\t"                /* retval */
-                   "pushl %esi\n\t"                /* id */
-                   "call " __ASM_NAME("trace_sysret") "\n\t"
-                   "movl 8(%esp),%eax\n\t"         /* retval */
-                   "leal -0x34(%ebp),%esp\n\t"     /* frame */
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
-
-                   __ASM_LOCAL_LABEL("bad_syscall") ":\n\t"
-                   "movl $0xc000001c,%eax\n\t"     /* STATUS_INVALID_SYSTEM_SERVICE */
+                   "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
-                   "movl -0x38(%ebp),%esi\n\t"     /* syscall id */
-                   "leal -0x34(%ebp),%esp\n\t"     /* frame */
-                   "testl $1,%fs:0x21c\n\t"        /* thread_data->syscall_trace */
-                   "jnz " __ASM_LOCAL_LABEL("trace_syscall_ret") "\n\t"
+                   "movl 8(%esp),%eax\n\t"
+                   "movl 4(%esp),%esp\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
@@ -2769,12 +2790,13 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
  *           __wine_unix_call_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
-                   "movl %fs:0x218,%ecx\n\t"   /* thread_data->syscall_frame */
-                   "movl $0x8000,(%ecx)\n\t"   /* frame->restore_flags <- RESTORE_FLAGS_INCOMPLETE_FRAME_CONTEXT */
+                   "movl %fs:0x1f8,%ecx\n\t"   /* x86_thread_data()->syscall_frame */
+                   "movw $0,0x02(%ecx)\n\t"    /* frame->restore_flags */
                    "popl 0x08(%ecx)\n\t"       /* frame->eip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    __ASM_CFI_REG_IS_AT1(eip, ecx, 0x08)
-                   __ASM_GLOBL(__ASM_NAME("__wine_unix_call_dispatcher_prolog_end")) "\n\t"
+                   __ASM_GLOBL(__ASM_NAME("__wine_unix_call_dispatcher_prolog_end")) "\n"
+                   __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") ":\n\t"
                    "leal 0x10(%esp),%edx\n\t"
                    "movl %edx,0x0c(%ecx)\n\t"  /* frame->esp */
                    __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
@@ -2792,7 +2814,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_REG_IS_AT1(esi, ecx, 0x30)
                    "movl %ebp,0x34(%ecx)\n\t"
                    __ASM_CFI_REG_IS_AT1(ebp, ecx, 0x34)
-                   "fnstcw 0x40(%ecx)\n\t"     /* frame->fsave.ControlWord */
                    "movl 12(%esp),%edx\n\t"    /* args */
                    "movl %edx,-16(%ecx)\n\t"
                    "movl (%esp),%eax\n\t"      /* handle */
@@ -2806,14 +2827,10 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_offset %ebx,-12\n\t")
                    __ASM_CFI(".cfi_offset %esi,-16\n\t")
                    __ASM_CFI(".cfi_offset %edi,-20\n\t")
-                   "fnclex\n\t"
-                   "fldcw %fs:0x1f8\n\t"       /* thread_data->fpcw */
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
-                   "testl $0x7fff,(%esp)\n\t"  /* frame->restore_flags */
+                   "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
                    "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
-                   "fnclex\n\t"
-                   "fldcw 0x40(%esp)\n\t"      /* frame->fsave.ControlWord */
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */

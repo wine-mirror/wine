@@ -18,10 +18,9 @@
  */
 
 #pragma makedep register
+
+#ifdef __WIDL__
 #pragma winrt ns_prefix
+#endif
 
-import "windows.devices.geolocation.idl";
-
-namespace Windows.Devices.Geolocation {
-    runtimeclass Geolocator;
-}
+#include "windows.devices.geolocation.idl"

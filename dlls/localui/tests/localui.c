@@ -42,6 +42,7 @@ static PMONITORUI (WINAPI *pInitializePrintMonitorUI)(VOID);
 static PMONITORUI pui;
 static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
+static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
 
 static LPBYTE pi_buffer;
 static DWORD pi_numports;
@@ -269,6 +270,7 @@ START_TEST(localui)
         if (numentries > 2) {
             pAddPortUI = pui->pfnAddPortUI;
             pConfigurePortUI = pui->pfnConfigurePortUI;
+            pDeletePortUI = pui->pfnDeletePortUI;
         }
     }
 

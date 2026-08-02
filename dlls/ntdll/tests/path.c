@@ -665,9 +665,9 @@ static void test_nt_names(void)
         { NULL, L"\\??\\C:\\windows\\SyStEm32\\", STATUS_FILE_IS_A_DIRECTORY },
         { NULL, L"\\??\\C:\\windows\\system32\\\\", STATUS_OBJECT_NAME_INVALID },
         { NULL, L"\\??\\C:\\windows\\system32\\foobar\\", STATUS_OBJECT_NAME_NOT_FOUND },
-        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, STATUS_NOT_A_DIRECTORY },
+        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID },
         { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND },
-        { NULL, L"\\??\\C:\\windows\\system32\\Kernel32.Dll\\", STATUS_OBJECT_NAME_INVALID, STATUS_NOT_A_DIRECTORY },
+        { NULL, L"\\??\\C:\\windows\\system32\\Kernel32.Dll\\", STATUS_OBJECT_NAME_INVALID },
         { NULL, L"\\??\\C:\\windows\\system32\\Kernel32.Dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND },
         { NULL, L"\\??\\C:\\windows\\sys\001", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\", NULL, STATUS_OBJECT_NAME_INVALID },
@@ -691,9 +691,9 @@ static void test_nt_names(void)
         { L"\\??\\C:\\windows\\", L"SyStEm32\\", STATUS_FILE_IS_A_DIRECTORY },
         { L"\\??\\C:\\windows\\", L"system32\\\\", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\", L"system32\\foobar\\", STATUS_OBJECT_NAME_NOT_FOUND },
-        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, STATUS_NOT_A_DIRECTORY },
+        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND },
-        { L"\\??\\C:\\windows\\", L"system32\\Kernel32.Dll\\", STATUS_OBJECT_NAME_INVALID, STATUS_NOT_A_DIRECTORY },
+        { L"\\??\\C:\\windows\\", L"system32\\Kernel32.Dll\\", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\", L"system32\\Kernel32.Dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND },
         { L"\\??\\C:\\windows\\", L"\\system32\\kernel32.dll", STATUS_INVALID_PARAMETER },
         { L"\\??\\C:\\windows\\", L"/system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
@@ -739,81 +739,6 @@ static void test_nt_names(void)
     }
 }
 
-static void test_RtlSetCurrentDirectory_U(void)
-{
-    CURDIR *cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory;
-    WCHAR curdir[MAX_PATH], name[MAX_PATH + 4];
-    HANDLE prev_handle;
-    UNICODE_STRING us;
-    unsigned int len;
-    NTSTATUS status;
-    BOOL bret;
-
-    bret = GetCurrentDirectoryW( ARRAY_SIZE(curdir), curdir );
-    ok( bret, "got error %ld.\n", GetLastError() );
-    ok( curdir[wcslen(curdir) - 1] != '\\' || curdir[wcslen(curdir) - 2] == ':', "got %s.\n", debugstr_w(curdir));
-    ok( !!cd->Handle && cd->Handle != INVALID_HANDLE_VALUE, "got %p.\n", cd->Handle );
-    len = cd->DosPath.Length / sizeof(WCHAR);
-    ok( cd->DosPath.Buffer[len - 1] == '\\' , "got %s.\n", debugstr_wn(cd->DosPath.Buffer, len) );
-
-    prev_handle = cd->Handle;
-    RtlInitUnicodeString( &us, curdir );
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-
-    prev_handle = cd->Handle;
-    cd->DosPath.Length = 0;
-    cd->DosPath.Buffer[0] = 0;
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-
-    prev_handle = cd->Handle;
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle == prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-    prev_handle = cd->Handle;
-
-    wcscpy( name, L"." );
-    RtlInitUnicodeString( &us, name );
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-    prev_handle = cd->Handle;
-    wcscpy( name, L"\\\\?\\" );
-    wcscat( name, curdir );
-    RtlInitUnicodeString( &us, name );
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-    prev_handle = cd->Handle;
-
-    wcscat( curdir, L"\\" );
-    RtlInitUnicodeString( &us, curdir );
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-
-    wcscpy( name, curdir );
-    wcscat( name, L"cdtestdir1" );
-    bret = CreateDirectoryW( L"cdtestdir1", NULL );
-    ok( bret, "got %ld.\n", GetLastError() );
-
-    prev_handle = cd->Handle;
-    RtlInitUnicodeString( &us, name );
-    status = RtlSetCurrentDirectory_U( &us );
-    ok( !status, "got %#lx.\n", status );
-    ok( cd->Handle != prev_handle, "got %p, %p.\n", cd->Handle, prev_handle );
-
-    bret = MoveFileW( L"..\\cdtestdir1", L"..\\cdtestdir2" );
-    ok( !bret && GetLastError() == ERROR_SHARING_VIOLATION, "got bret %d, error %ld.\n", bret, GetLastError() );
-
-    bret = SetCurrentDirectoryW( curdir );
-    ok( bret, "got error %ld.\n", GetLastError() );
-    bret = RemoveDirectoryW( L"cdtestdir1" );
-    ok( bret, "got error %ld.\n", GetLastError() );
-}
 
 START_TEST(path)
 {
@@ -830,7 +755,6 @@ START_TEST(path)
     pRtlDosPathNameToNtPathName_U_WithStatus = (void *)GetProcAddress(mod, "RtlDosPathNameToNtPathName_U_WithStatus");
     pNtOpenFile             = (void *)GetProcAddress(mod, "NtOpenFile");
 
-    test_RtlSetCurrentDirectory_U();
     test_RtlDetermineDosPathNameType_U();
     test_RtlIsDosDeviceName_U();
     test_RtlIsNameLegalDOS8Dot3();

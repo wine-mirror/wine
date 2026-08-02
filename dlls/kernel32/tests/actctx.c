@@ -28,51 +28,16 @@
 
 #include "oaidl.h"
 #include "initguid.h"
-#include "wine/asm.h"
 
-#ifdef __ASM_USE_FASTCALL_WRAPPER
-
-extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
-__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
-                   "popl %ecx\n\t"
-                   "popl %eax\n\t"
-                   "xchgl (%esp),%ecx\n\t"
-                   "jmp *%eax" );
-extern void * WINAPI wrap_fastcall_func2( void *func, const void *a, const void *b );
-__ASM_STDCALL_FUNC( wrap_fastcall_func2, 12,
-                   "popl %edx\n\t"
-                   "popl %eax\n\t"
-                   "popl %ecx\n\t"
-                   "xchgl (%esp),%edx\n\t"
-                   "jmp *%eax" );
-
-#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
-#define call_fastcall_func2(func,a,b) wrap_fastcall_func2(func,a,b)
-
-#else  /* __ASM_USE_FASTCALL_WRAPPER */
-
-#define call_fastcall_func1(func,a) func(a)
-#define call_fastcall_func2(func,a,b) func(a,b)
-
-#endif  /* __ASM_USE_FASTCALL_WRAPPER */
 static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWSTR,SIZE_T,SIZE_T*);
 
-static NTSTATUS (NTAPI *pRtlActivateActivationContext)(ULONG,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
-static NTSTATUS (NTAPI *pRtlActivateActivationContextEx)(ULONG,TEB *,struct _ACTIVATION_CONTEXT *,ULONG_PTR *);
-static PRTL_ACTIVATION_CONTEXT_STACK_FRAME (FASTCALL *pRtlActivateActivationContextUnsafeFast)(PRTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED,
-                                                                                               struct _ACTIVATION_CONTEXT *);
-static VOID (FASTCALL *pRtlDeactivateActivationContextUnsafeFast)(PRTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED);
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
-static VOID (NTAPI *pRtlFreeThreadActivationContextStack)(VOID);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
 static VOID    (NTAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
-static NTSTATUS(NTAPI *pRtlQueryInformationActiveActivationContext)(ULONG,PVOID,SIZE_T,SIZE_T *);
-
-#define NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED 0x8 /* RTL_ACTIVATION_CONTEXT_STACK_FRAME.Flags */
 
 #ifdef __i386__
 #define ARCH "x86"
-#elif defined __aarch64__ || defined __arm64ec__
+#elif defined __aarch64__ || defined__arm64ec__
 #define ARCH "arm64"
 #elif defined __x86_64__
 #define ARCH "amd64"
@@ -2231,9 +2196,7 @@ static void test_allowDelayedBinding(void)
 
 static void test_actctx(void)
 {
-    RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
     ULONG_PTR cookie;
-    NTSTATUS status;
     HANDLE handle;
     BOOL b;
 
@@ -2246,62 +2209,6 @@ static void test_actctx(void)
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info0, __LINE__);
         test_runlevel_info(handle, &runlevel_info0, __LINE__);
-        ReleaseActCtx(handle);
-    }
-
-    /* Test flags for normal frames */
-    if (!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL))
-    {
-        skip("Could not create manifest file\n");
-        return;
-    }
-    handle = test_create("test1.manifest");
-    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError());
-    DeleteFileA("test1.manifest");
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        b = ActivateActCtx(handle, &cookie);
-        ok(b, "ActivateActCtx failed: %lu\n", GetLastError());
-
-        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
-        ok(!frame->Previous, "Got unexpected Previous.\n");
-        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
-
-        b = DeactivateActCtx(0, cookie);
-        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
-        b = GetCurrentActCtx(&handle);
-        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
-        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
-
-        status = pRtlActivateActivationContext(0, handle, &cookie);
-        ok(status == STATUS_SUCCESS,  "Got unexpected status %#lx.\n", status);
-
-        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
-        ok(!frame->Previous, "Got unexpected Previous.\n");
-        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
-
-        b = DeactivateActCtx(0, cookie);
-        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
-        b = GetCurrentActCtx(&handle);
-        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
-        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
-
-        status = pRtlActivateActivationContextEx(0, NtCurrentTeb(), handle, &cookie);
-        ok(status == STATUS_SUCCESS,  "Got unexpected status %#lx.\n", status);
-
-        frame = NtCurrentTeb()->ActivationContextStackPointer->ActiveFrame;
-        ok(!frame->Previous, "Got unexpected Previous.\n");
-        ok(frame->ActivationContext == handle, "Got unexpected ActivationContext.\n");
-        ok(frame->Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED, "Got unexpected Flags %#lx.\n", frame->Flags);
-
-        b = DeactivateActCtx(0, cookie);
-        ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
-        b = GetCurrentActCtx(&handle);
-        ok(handle == NULL, "handle = %p, expected NULL\n", handle);
-        ok(b, "GetCurrentActCtx failed: %lu\n", GetLastError());
-
         ReleaseActCtx(handle);
     }
 
@@ -2825,7 +2732,9 @@ static void run_child_process(void)
     sprintf(cmdline, "\"%s\" %s manifest1", argv[0], argv[1]);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
-    wait_child_process( &pi );
+    wait_child_process( pi.hProcess );
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
     DeleteFileA(path);
 }
 
@@ -3186,15 +3095,9 @@ static BOOL init_funcs(void)
     pQueryActCtxSettingsW = (void *)GetProcAddress( hLibrary, "QueryActCtxSettingsW" );
 
     hLibrary = GetModuleHandleA("ntdll.dll");
-    X(RtlActivateActivationContext);
-    X(RtlActivateActivationContextEx);
-    X(RtlActivateActivationContextUnsafeFast);
-    X(RtlDeactivateActivationContextUnsafeFast);
     X(RtlFindActivationContextSectionString);
-    X(RtlFreeThreadActivationContextStack);
     X(RtlCreateUnicodeStringFromAsciiz);
     X(RtlFreeUnicodeString);
-    X(RtlQueryInformationActiveActivationContext);
 #undef X
 
     return TRUE;
@@ -3848,31 +3751,8 @@ static void test_one_sxs_and_one_local_2(void)
     clean_sxs_info(&dll);
 }
 
-#define check_redirected_flag(a, b) _check_redirected_flag(__LINE__, a, b)
-static void _check_redirected_flag(int line, HMODULE module, BOOL redirected)
-{
-    LIST_ENTRY *root = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    BOOL found_dll = FALSE;
 
-    for (LIST_ENTRY *entry = root->Flink; entry != root; entry = entry->Flink)
-    {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-
-        if (mod->DllBase != module)
-            continue;
-
-        if (redirected)
-            ok_(__FILE__, line)(mod->Flags & LDR_REDIRECTED, "Got unexpected flags %#lx.\n", mod->Flags);
-        else
-            ok_(__FILE__, line)(!(mod->Flags & LDR_REDIRECTED), "Got unexpected flags %#lx.\n", mod->Flags);
-
-        found_dll = TRUE;
-        break;
-    }
-    ok(found_dll, "Couldn't find module %p in module list.\n", module);
-}
-
-/* Test GetModuleHandleA() with DLL base names in different context states */
+/* Test if we can get a module handle from loaded normal dll while context is active */
 static void test_one_with_sxs_and_GetModuleHandleA(void)
 {
     sxs_info dll;
@@ -3887,38 +3767,18 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
     extract_resource("dummy.dll", "TESTDLL", path_dll_local);
 
     module = LoadLibraryA(path_dll_local);
-    check_redirected_flag(module, FALSE);
 
     fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, FALSE);
     success = ActivateActCtx(dll.handle_context, &dll.cookie);
     ok(success, "ActivateActCtx failed: %ld\n", GetLastError());
 
-    /* Loaded normal dll can't be found while context is active */
     module_temp = GetModuleHandleA("sxs_dll.dll");
     ok (module_temp == 0, "Expected 0, got %p\n", module_temp);
 
-    dll.module = LoadLibraryA("sxs_dll.dll");
-    ok(dll.module != NULL && dll.module != module, "LoadLibrary failed\n");
-    check_redirected_flag(dll.module, TRUE);
-
-    /* Loaded SxS dll should be found while context is active */
-    module_temp = GetModuleHandleA("sxs_dll.dll");
-    ok(module_temp == dll.module, "Got unexpected module.\n");
-
     DeactivateActCtx(0, dll.cookie);
-    check_redirected_flag(dll.module, TRUE);
-
-    /* Normal loaded dll should be found while context is inactive */
-    module_temp = GetModuleHandleA("sxs_dll.dll");
-    ok(module_temp == module, "Got unexpected module.\n");
 
     if (module)
         FreeLibrary(module);
-
-    /* Loaded SxS dll can't be found while context is inactive */
-    module_temp = GetModuleHandleA("sxs_dll.dll");
-    ok(module_temp == NULL, "Got unexpected module.\n");
-
     if (dll.module)
         FreeLibrary(dll.module);
     if (*path_dll_local)
@@ -4548,7 +4408,10 @@ static void run_child_process_two_dll(int run)
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
-    wait_child_process( &pi );
+    wait_child_process( pi.hProcess );
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 }
 
 static const detailed_info_t detailed_info3 =
@@ -4628,145 +4491,6 @@ static void test_manifest_resource_name_omitted(void)
     ok(err == ERROR_INVALID_PARAMETER, "got %lu\n", err);
 }
 
-static void test_RtlQueryInformationActiveActivationContext(void)
-{
-    ACTIVATION_CONTEXT_BASIC_INFORMATION basic;
-    ULONG_PTR cookie;
-    NTSTATUS status;
-    HANDLE context;
-    SIZE_T size;
-    BOOL ret;
-
-    if (!create_manifest_file( "test1.manifest", manifest1, -1, NULL, NULL ))
-    {
-        skip("Could not create manifest file.\n");
-        return;
-    }
-    context = test_create( "test1.manifest" );
-    ok( context != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError() );
-    DeleteFileA( "test1.manifest" );
-    ret = ActivateActCtx( context, &cookie );
-    ok( ret, "ActivateActCtx failed, error %lu.\n", GetLastError() );
-
-    status = pRtlQueryInformationActiveActivationContext( ActivationContextBasicInformation, &basic,
-                                                          sizeof(basic), &size );
-    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
-    ok( size == sizeof(ACTIVATION_CONTEXT_BASIC_INFORMATION), "Size mismatch.\n" );
-    ok( basic.dwFlags == 0, "Got unexpected flags %#lx.\n", basic.dwFlags );
-    ok( basic.hActCtx == context, "Got unexpected handle.\n" );
-    ReleaseActCtx( basic.hActCtx );
-
-    ret = DeactivateActCtx( 0, cookie );
-    ok( ret, "DeactivateActCtx failed, error %lu.\n", GetLastError() );
-    ReleaseActCtx( context );
-}
-
-static void test_RtlActivateActivationContextUnsafeFast(void)
-{
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_EXTENDED frame_extended1 = {0}, frame_extended2 = {0};
-    HANDLE context1, context2, current_context;
-    BOOL ret;
-
-    ret = GetCurrentActCtx(&current_context);
-    ok(ret, "GetCurrentActCtx failed.\n");
-    ok(!current_context, "Got unexpected handle.\n");
-
-    if (!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL))
-    {
-        skip("Could not create manifest file 1.\n");
-        return;
-    }
-    if (!create_manifest_file("test2.manifest", manifest1_1, -1, NULL, NULL))
-    {
-        skip("Could not create manifest file 2.\n");
-        DeleteFileA("test1.manifest");
-        return;
-    }
-    context1 = test_create("test1.manifest");
-    ok(context1 != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError());
-    DeleteFileA("test1.manifest");
-    context2 = test_create("test2.manifest");
-    ok(context2 != INVALID_HANDLE_VALUE, "Failed to create context, error %lu.\n", GetLastError());
-    DeleteFileA("test2.manifest");
-
-    /* Size and Format don't seem to be checked */
-    frame_extended1.Size = 0;
-    frame_extended1.Format = 0xdeadbeef;
-    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
-    ok(frame_extended1.Size == 0, "Got unexpected Size %#Ix.\n", frame_extended1.Size);
-    ok(frame_extended1.Format == 0xdeadbeef, "Got unexpected Format %#lx.\n", frame_extended1.Format);
-    ok(!frame_extended1.Frame.Previous, "Got unexpected Previous.\n");
-    ok(frame_extended1.Frame.ActivationContext == context1, "Got unexpected ActivationContext.\n");
-    ok(!(frame_extended1.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
-       "Got unexpected Flags %#lx.\n", frame_extended1.Frame.Flags);
-
-    ret = GetCurrentActCtx(&current_context);
-    ok(current_context == context1, "Got unexpected handle.\n");
-    ReleaseActCtx(current_context);
-
-    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended1);
-    ret = GetCurrentActCtx(&current_context);
-    ok(ret, "GetCurrentActCtx failed.\n");
-    ok(!current_context, "Got unexpected handle.\n");
-
-    /* Normal call */
-    frame_extended1.Size = sizeof(frame_extended1);
-    frame_extended1.Format = 0;
-    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
-    ok(frame_extended1.Size == sizeof(frame_extended1), "Got unexpected Size %#Ix.\n", frame_extended1.Size);
-    ok(frame_extended1.Format == 0, "Got unexpected Format %#lx.\n", frame_extended1.Format);
-    ok(!frame_extended1.Frame.Previous, "Got unexpected Previous.\n");
-    ok(frame_extended1.Frame.ActivationContext == context1, "Got unexpected ActivationContext.\n");
-    ok(!(frame_extended1.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
-       "Got unexpected Flags %#lx.\n", frame_extended1.Frame.Flags);
-
-    ret = GetCurrentActCtx(&current_context);
-    ok(current_context == context1, "Got unexpected handle.\n");
-    ReleaseActCtx(current_context);
-
-    /* Activate another activation context */
-    frame_extended2.Size = sizeof(frame_extended2);
-    frame_extended2.Format = 0;
-    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended2, context2);
-    ok(frame_extended2.Size == sizeof(frame_extended2), "Got unexpected Size %#Ix.\n", frame_extended2.Size);
-    ok(frame_extended2.Format == 0, "Got unexpected Format %#lx.\n", frame_extended2.Format);
-    ok(frame_extended2.Frame.Previous == &frame_extended1.Frame, "Got unexpected Previous.\n");
-    ok(frame_extended2.Frame.ActivationContext == context2, "Got unexpected ActivationContext.\n");
-    ok(!(frame_extended2.Frame.Flags & NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED),
-       "Got unexpected Flags %#lx.\n", frame_extended2.Frame.Flags);
-
-    ret = GetCurrentActCtx(&current_context);
-    ok(current_context == context2, "Got unexpected handle.\n");
-    ReleaseActCtx(current_context);
-
-    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended2);
-    ret = GetCurrentActCtx(&current_context);
-    ok(current_context == context1, "Got unexpected handle.\n");
-    ReleaseActCtx(current_context);
-
-    call_fastcall_func1( pRtlDeactivateActivationContextUnsafeFast, &frame_extended1);
-    ret = GetCurrentActCtx(&current_context);
-    ok(ret, "GetCurrentActCtx failed.\n");
-    ok(!current_context, "Got unexpected handle.\n");
-
-    /* Test freeing an unsafe frame. Not crashing means RtlFreeThreadActivationContextStack() must
-     * be able to handle it, most likely by checking the frame flags */
-    frame_extended1.Size = sizeof(frame_extended1);
-    call_fastcall_func2( pRtlActivateActivationContextUnsafeFast, &frame_extended1, context1);
-
-    ret = GetCurrentActCtx(&current_context);
-    ok(current_context == context1, "Got unexpected handle.\n");
-    ReleaseActCtx(current_context);
-
-    pRtlFreeThreadActivationContextStack();
-    ret = GetCurrentActCtx(&current_context);
-    ok(ret, "GetCurrentActCtx failed.\n");
-    ok(!current_context, "Got unexpected handle.\n");
-
-    ReleaseActCtx(context2);
-    ReleaseActCtx(context1);
-}
-
 START_TEST(actctx)
 {
     int argc;
@@ -4806,7 +4530,5 @@ START_TEST(actctx)
     run_child_process();
     test_compatibility();
     test_settings();
-    test_RtlQueryInformationActiveActivationContext();
-    test_RtlActivateActivationContextUnsafeFast();
     for (int i = 1; i <= 6; i++) run_child_process_two_dll(i);
 }

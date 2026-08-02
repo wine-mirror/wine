@@ -2,4 +2,4 @@ TESTDLL = windows.media.dll
 IMPORTS = combase
 
 SOURCES = \
-	media.c
+	captions.c

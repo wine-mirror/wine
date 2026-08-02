@@ -428,11 +428,6 @@ const UINT D3D12_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS = 4;
 const UINT D3D12_VIDEO_DECODE_MIN_BITSTREAM_OFFSET_ALIGNMENT = 256;
 const UINT D3D12_VIDEO_DECODE_MIN_HISTOGRAM_OFFSET_ALIGNMENT = 256;
 const UINT D3D12_VIDEO_DECODE_STATUS_MACROBLOCKS_AFFECTED_UNKNOWN = 0xffffffff;
-const UINT D3D12_VIDEO_ENCODER_AV1_INVALID_DPB_RESOURCE_INDEX = 0xff;
-const UINT D3D12_VIDEO_ENCODER_AV1_MAX_TILE_COLS = 64;
-const UINT D3D12_VIDEO_ENCODER_AV1_MAX_TILE_ROWS = 64;
-const UINT D3D12_VIDEO_ENCODER_AV1_SUPERRES_DENOM_MIN = 9;
-const UINT D3D12_VIDEO_ENCODER_AV1_SUPERRES_NUM = 8;
 const UINT D3D12_VIDEO_PROCESS_MAX_FILTERS = 32;
 const UINT D3D12_VIDEO_PROCESS_STEREO_VIEWS = 2;
 const UINT D3D12_VIEWPORT_AND_SCISSORRECT_MAX_INDEX = 15;
@@ -4621,9 +4616,7 @@ typedef enum D3D12_RENDER_PASS_FLAGS
     D3D12_RENDER_PASS_FLAG_NONE = 0x0,
     D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1,
     D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2,
-    D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4,
-    D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH = 0x8,
-    D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_STENCIL = 0x10,
+    D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4
 } D3D12_RENDER_PASS_FLAGS;
 cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_RENDER_PASS_FLAGS);")
 
@@ -4767,7 +4760,7 @@ typedef enum D3D12_BARRIER_SYNC
     D3D12_BARRIER_SYNC_NONE = 0x0,
     D3D12_BARRIER_SYNC_ALL = 0x1,
     D3D12_BARRIER_SYNC_DRAW = 0x2,
-    D3D12_BARRIER_SYNC_INDEX_INPUT = 0x4,
+    D3D12_BARRIER_SYNC_INPUT_ASSEMBLER = 0x4,
     D3D12_BARRIER_SYNC_VERTEX_SHADING = 0x8,
     D3D12_BARRIER_SYNC_PIXEL_SHADING = 0x10,
     D3D12_BARRIER_SYNC_DEPTH_STENCIL = 0x20,
@@ -4781,7 +4774,6 @@ typedef enum D3D12_BARRIER_SYNC
     D3D12_BARRIER_SYNC_ALL_SHADING = 0x1000,
     D3D12_BARRIER_SYNC_NON_PIXEL_SHADING = 0x2000,
     D3D12_BARRIER_SYNC_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO = 0x4000,
-    D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW = 0x8000,
     D3D12_BARRIER_SYNC_VIDEO_DECODE = 0x100000,
     D3D12_BARRIER_SYNC_VIDEO_PROCESS = 0x200000,
     D3D12_BARRIER_SYNC_VIDEO_ENCODE = 0x400000,
@@ -5039,113 +5031,6 @@ cpp_quote("DEFINE_GUID(CLSID_D3D12SDKConfiguration,          0x7cda6aca, 0xa03e,
 interface ID3D12SDKConfiguration : IUnknown
 {
     HRESULT SetSDKVersion(UINT version, const char *path);
-}
-
-[
-    uuid(8aaf9303-ad25-48b9-9a57-d9c37e009d9f),
-    object,
-    local,
-    pointer_default(unique)
-]
-interface ID3D12SDKConfiguration1 : ID3D12SDKConfiguration
-{
-    HRESULT CreateDeviceFactory(
-        [in] UINT sdk_version,
-        [in] const char *sdk_path,
-        [in] REFIID riid,
-        [out] void **ppv);
-
-    void FreeUnusedSDKs();
-}
-
-typedef enum D3D12_DEVICE_FACTORY_FLAGS
-{
-    D3D12_DEVICE_FACTORY_FLAG_NONE = 0,
-    D3D12_DEVICE_FACTORY_FLAG_ALLOW_RETURNING_EXISTING_DEVICE = 0x1,
-    D3D12_DEVICE_FACTORY_FLAG_ALLOW_RETURNING_INCOMPATIBLE_EXISTING_DEVICE = 0x2,
-    D3D12_DEVICE_FACTORY_FLAG_DISALLOW_STORING_NEW_DEVICE_AS_SINGLETON = 0x4,
-} D3D12_DEVICE_FACTORY_FLAGS;
-cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_DEVICE_FACTORY_FLAGS)")
-
-[
-    uuid(61f307d3-d34e-4e7c-8374-3ba4de23cccb),
-    object,
-    local,
-    pointer_default(unique)
-]
-interface ID3D12DeviceFactory : IUnknown
-{
-    HRESULT InitializeFromGlobalState();
-    HRESULT ApplyToGlobalState();
-    HRESULT SetFlags(D3D12_DEVICE_FACTORY_FLAGS flags);
-    D3D12_DEVICE_FACTORY_FLAGS GetFlags();
-
-    HRESULT GetConfigurationInterface(
-        [in] REFCLSID clsid,
-        [in] REFIID iid,
-        [out] void **ppv);
-
-    HRESULT EnableExperimentalFeatures(
-        [in] UINT num_features,
-        [in] const IID *iids,
-        [in] void *configuration_structs,
-        [in] UINT *configuration_struct_sizes);
-
-    HRESULT CreateDevice(
-        [in, optional] IUnknown *adapter,
-        [in] D3D_FEATURE_LEVEL feature_level,
-        [in] REFIID riid,
-        [out] void **ppv_device);
-}
-
-typedef enum D3D12_DEVICE_FLAGS
-{
-    D3D12_DEVICE_FLAG_NONE = 0,
-    D3D12_DEVICE_FLAG_DEBUG_LAYER_ENABLED = 0x1,
-    D3D12_DEVICE_FLAG_GPU_BASED_VALIDATION_ENABLED = 0x2,
-    D3D12_DEVICE_FLAG_SYNCHRONIZED_COMMAND_QUEUE_VALIDATION_DISABLED = 0x4,
-    D3D12_DEVICE_FLAG_DRED_AUTO_BREADCRUMBS_ENABLED = 0x8,
-    D3D12_DEVICE_FLAG_DRED_PAGE_FAULT_REPORTING_ENABLED = 0x10,
-    D3D12_DEVICE_FLAG_DRED_WATSON_REPORTING_ENABLED = 0x20,
-    D3D12_DEVICE_FLAG_DRED_BREADCRUMB_CONTEXT_ENABLED = 0x40,
-    D3D12_DEVICE_FLAG_DRED_USE_MARKERS_ONLY_BREADCRUMBS = 0x80,
-    D3D12_DEVICE_FLAG_SHADER_INSTRUMENTATION_ENABLED = 0x100,
-    D3D12_DEVICE_FLAG_AUTO_DEBUG_NAME_ENABLED = 0x200,
-    D3D12_DEVICE_FLAG_FORCE_LEGACY_STATE_VALIDATION = 0x400,
-} D3D12_DEVICE_FLAGS;
-cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_DEVICE_FLAGS)")
-
-typedef struct D3D12_DEVICE_CONFIGURATION_DESC
-{
-    D3D12_DEVICE_FLAGS Flags;
-    UINT GpuBasedValidationFlags;
-    UINT SDKVersion;
-    UINT NumEnabledExperimentalFeatures;
-} D3D12_DEVICE_CONFIGURATION_DESC;
-
-[
-    uuid(78dbf87b-f766-422b-a61c-c8c446bdb9ad),
-    object,
-    local,
-    pointer_default(unique)
-]
-interface ID3D12DeviceConfiguration : IUnknown
-{
-    D3D12_DEVICE_CONFIGURATION_DESC GetDesc();
-    HRESULT GetEnabledExperimentalFeatures(
-        [out] GUID *guids,
-        [in] UINT num_guids);
-
-    HRESULT SerializeVersionedRootSignature(
-        [in] const D3D12_VERSIONED_ROOT_SIGNATURE_DESC *desc,
-        [out] ID3DBlob **result,
-        [out, optional] ID3DBlob **error);
-
-    HRESULT CreateVersionedRootSignatureDeserializer(
-        [in] const void *blob,
-        [in] SIZE_T size,
-        [in] REFIID riid,
-        [out] void **deserializer);
 }
 
 typedef enum D3D12_AXIS_SHADING_RATE

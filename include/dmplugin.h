@@ -27,7 +27,7 @@
 #include <objbase.h>
 #include <mmsystem.h>
 #include <dmusici.h>
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -291,6 +291,6 @@ DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack)
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_PLUGIN_H */

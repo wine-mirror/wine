@@ -1,4 +1,4 @@
-STATICLIB = libvkd3d.a
+EXTLIB    = libvkd3d.a
 EXTRAINCL = $(VKD3D_PE_CFLAGS) -I$(srcdir)/include/private -I$(srcdir)/libs/vkd3d -I$(srcdir)/libs/vkd3d-shader
 EXTRADEFS = \
 	-DWINE_NO_NAMELESS_EXTENSION \
@@ -7,7 +7,6 @@ EXTRADEFS = \
 	-DLIBVKD3D_UTILS_SOURCE
 
 SOURCES = \
-	config.h \
 	libs/vkd3d-common/blob.c \
 	libs/vkd3d-common/debug.c \
 	libs/vkd3d-common/error.c \
@@ -32,6 +31,7 @@ SOURCES = \
 	libs/vkd3d-shader/spirv.c \
 	libs/vkd3d-shader/tpf.c \
 	libs/vkd3d-shader/vkd3d_shader_main.c \
+	libs/vkd3d-utils/reflection.c \
 	libs/vkd3d-utils/vkd3d_utils_main.c \
 	libs/vkd3d/cache.c \
 	libs/vkd3d/command.c \

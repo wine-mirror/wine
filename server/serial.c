@@ -40,6 +40,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -84,21 +85,42 @@ struct serial
 
 static const struct object_ops serial_ops =
 {
-    .size     = sizeof(struct serial),
-    .type     = &file_type,
-    .dump     = serial_dump,
-    .get_fd   = serial_get_fd,
-    .get_sync = default_fd_get_sync,
-    .destroy  = serial_destroy,
+    sizeof(struct serial),        /* size */
+    &file_type,                   /* type */
+    serial_dump,                  /* dump */
+    add_queue,                    /* add_queue */
+    remove_queue,                 /* remove_queue */
+    default_fd_signaled,          /* signaled */
+    no_satisfied,                 /* satisfied */
+    no_signal,                    /* signal */
+    serial_get_fd,                /* get_fd */
+    default_map_access,           /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    no_get_full_name,             /* get_full_name */
+    no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
+    no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
+    no_close_handle,              /* close_handle */
+    serial_destroy                /* destroy */
 };
 
 static const struct fd_ops serial_fd_ops =
 {
-    .get_fd_type    = serial_get_fd_type,
-    .get_file_info  = default_fd_get_file_info,
-    .ioctl          = serial_ioctl,
-    .queue_async    = serial_queue_async,
-    .reselect_async = serial_reselect_async,
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    serial_get_fd_type,           /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
+    default_fd_get_file_info,     /* get_file_info */
+    no_fd_get_volume_info,        /* get_volume_info */
+    serial_ioctl,                 /* ioctl */
+    default_fd_cancel_async,      /* cancel_async */
+    serial_queue_async,           /* queue_async */
+    serial_reselect_async         /* reselect_async */
 };
 
 /* check if the given fd is a serial port */

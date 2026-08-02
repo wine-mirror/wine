@@ -17,7 +17,6 @@
  */
 
 #ifdef __WIDL__
-#pragma makedep header install winmd
 #pragma winrt ns_prefix
 #endif
 
@@ -169,19 +168,6 @@ namespace Windows.Media
     interface IAutoRepeatModeChangeRequestedEventArgs : IInspectable
     {
         [propget] HRESULT RequestedAutoRepeatMode([out, retval] Windows.Media.MediaPlaybackAutoRepeatMode *value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Media.ImageDisplayProperties),
-        uuid(cd0bc7ef-54e7-411f-9933-f0e98b0a96d2)
-    ]
-    interface IImageDisplayProperties : IInspectable
-    {
-        [propget] HRESULT Title([out, retval] HSTRING *value);
-        [propput] HRESULT Title([in] HSTRING value);
-        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
-        [propput] HRESULT Subtitle([in] HSTRING value);
     }
 
     [
@@ -377,16 +363,6 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Media.SystemMediaTransportControls),
-        uuid(43ba380a-eca4-4832-91ab-d415fae484c6)
-    ]
-    interface ISystemMediaTransportControlsStatics : IInspectable
-    {
-        HRESULT GetForCurrentView([out, retval] Windows.Media.SystemMediaTransportControls **controls);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.SystemMediaTransportControlsTimelineProperties),
         uuid(5125316a-c3a2-475b-8507-93534dc88f15)
     ]
@@ -402,19 +378,6 @@ namespace Windows.Media
         [propput] HRESULT MaxSeekTime([in] Windows.Foundation.TimeSpan value);
         [propget] HRESULT Position([out, retval] Windows.Foundation.TimeSpan *value);
         [propput] HRESULT Position([in] Windows.Foundation.TimeSpan value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Media.VideoDisplayProperties),
-        uuid(5609fdb1-5d2d-4872-8170-45dee5bc2f5c)
-    ]
-    interface IVideoDisplayProperties : IInspectable
-    {
-        [propget] HRESULT Title([out, retval] HSTRING *value);
-        [propput] HRESULT Title([in] HSTRING value);
-        [propget] HRESULT Subtitle([out, retval] HSTRING *value);
-        [propput] HRESULT Subtitle([in] HSTRING value);
     }
 
     [
@@ -445,7 +408,7 @@ namespace Windows.Media
     {
         [default] interface Windows.Media.IMusicDisplayProperties;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IMusicDisplayProperties2;
-        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3; */
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3;
     }
 
     [
@@ -534,6 +497,6 @@ namespace Windows.Media
     runtimeclass VideoDisplayProperties
     {
         [default] interface Windows.Media.IVideoDisplayProperties;
-        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IVideoDisplayProperties2; */
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IVideoDisplayProperties2;
     }
 }

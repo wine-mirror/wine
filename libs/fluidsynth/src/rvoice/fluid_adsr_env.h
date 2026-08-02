@@ -24,9 +24,6 @@
 #include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /*
  * envelope data
  */
@@ -42,7 +39,7 @@ struct _fluid_env_data_t
 /* Indices for envelope tables */
 enum fluid_voice_envelope_index
 {
-    FLUID_VOICE_ENVDELAY=0,
+    FLUID_VOICE_ENVDELAY,
     FLUID_VOICE_ENVATTACK,
     FLUID_VOICE_ENVHOLD,
     FLUID_VOICE_ENVDECAY,
@@ -59,9 +56,9 @@ typedef struct _fluid_adsr_env_t fluid_adsr_env_t;
 struct _fluid_adsr_env_t
 {
     fluid_env_data_t data[FLUID_VOICE_ENVLAST];
-    unsigned int section; // type fluid_adsr_env_section_t, but declare it unsigned to make C++ happy
     unsigned int count;
     fluid_real_t val;         /* the current value of the envelope */
+    fluid_adsr_env_section_t section;
 };
 
 /* For performance, all functions are inlined */
@@ -139,14 +136,14 @@ fluid_adsr_env_set_val(fluid_adsr_env_t *env, fluid_real_t val)
 static FLUID_INLINE fluid_adsr_env_section_t
 fluid_adsr_env_get_section(fluid_adsr_env_t *env)
 {
-    return (fluid_adsr_env_section_t)env->section;
+    return env->section;
 }
 
 static FLUID_INLINE void
 fluid_adsr_env_set_section(fluid_adsr_env_t *env,
                            fluid_adsr_env_section_t section)
 {
-    env->section = (unsigned int)section;
+    env->section = section;
     env->count = 0;
 }
 
@@ -166,7 +163,4 @@ fluid_adsr_env_get_max_val(fluid_adsr_env_t *env)
     }
 }
 
-#ifdef __cplusplus
-}
-#endif
 #endif

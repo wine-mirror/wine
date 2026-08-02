@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
-#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "binding.h"
@@ -850,7 +849,7 @@ static void HTMLFrameElement_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLFrameElement_unlink(DispatchEx *dispex)
 {
     HTMLFrameElement *This = frame_from_DispatchEx(dispex);
-    HTMLElement_unlink(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->framebase.nsframe);
 }
 
@@ -906,25 +905,6 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .bind_to_tree          = HTMLFrameElement_bind_to_tree,
 };
 
-static void HTMLFrameElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
-{
-    static const dispex_hook_t base2_hooks[] = {
-        {DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW,      .noattr = TRUE},
-        {DISPID_IHTMLFRAMEBASE2_READYSTATE,         .noattr = TRUE},
-        {DISPID_UNKNOWN}
-    };
-    static const dispex_hook_t hooks[] = {
-        {DISPID_IHTMLFRAMEELEMENT3_CONTENTDOCUMENT, .noattr = TRUE},
-        {DISPID_IHTMLFRAMEELEMENT3_IE8_LONGDESC,    .noattr = TRUE},
-        {DISPID_UNKNOWN}
-    };
-    dispex_info_add_interface(info, IHTMLFrameBase_tid, NULL);
-    dispex_info_add_interface(info, IHTMLFrameBase2_tid, base2_hooks);
-    dispex_info_add_interface(info, IHTMLFrameElement3_tid, hooks);
-
-    HTMLElement_init_dispex_info(info, mode);
-}
-
 static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -940,13 +920,20 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
+static const tid_t HTMLFrameElement_iface_tids[] = {
+    IHTMLFrameBase_tid,
+    IHTMLFrameBase2_tid,
+    IHTMLFrameElement3_tid,
+    0
+};
+
 dispex_static_data_t HTMLFrameElement_dispex = {
     .id           = OBJID_HTMLFrameElement,
     .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLFrameElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLFrameElement_tid,
-    .init_info    = HTMLFrameElement_init_dispex_info,
-    .js_flags     = HOSTOBJ_VOLATILE_PROPS
+    .iface_tids   = HTMLFrameElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -1297,7 +1284,7 @@ static void HTMLIFrame_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
 static void HTMLIFrame_unlink(DispatchEx *dispex)
 {
     HTMLIFrame *This = iframe_from_DispatchEx(dispex);
-    HTMLElement_unlink(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->framebase.nsiframe);
 }
 
@@ -1353,25 +1340,6 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
 };
 
-static void HTMLIFrameElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
-{
-    static const dispex_hook_t base2_hooks[] = {
-        {DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW,       .noattr = TRUE},
-        {DISPID_IHTMLFRAMEBASE2_READYSTATE,          .noattr = TRUE},
-        {DISPID_UNKNOWN}
-    };
-    static const dispex_hook_t hooks[] = {
-        {DISPID_IHTMLIFRAMEELEMENT3_CONTENTDOCUMENT, .noattr = TRUE},
-        {DISPID_IHTMLIFRAMEELEMENT3_IE8_LONGDESC,    .noattr = TRUE},
-        {DISPID_UNKNOWN}
-    };
-    dispex_info_add_interface(info, IHTMLFrameBase_tid, NULL);
-    dispex_info_add_interface(info, IHTMLFrameBase2_tid, base2_hooks);
-    dispex_info_add_interface(info, IHTMLIFrameElement3_tid, hooks);
-
-    HTMLElement_init_dispex_info(info, mode);
-}
-
 static const event_target_vtbl_t HTMLIFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
@@ -1388,8 +1356,11 @@ static const event_target_vtbl_t HTMLIFrameElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLIFrameElement_iface_tids[] = {
+    IHTMLFrameBase_tid,
+    IHTMLFrameBase2_tid,
     IHTMLIFrameElement_tid,
     IHTMLIFrameElement2_tid,
+    IHTMLIFrameElement3_tid,
     0
 };
 
@@ -1399,8 +1370,7 @@ dispex_static_data_t HTMLIFrameElement_dispex = {
     .vtbl         = &HTMLIFrameElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLIFrame_tid,
     .iface_tids   = HTMLIFrameElement_iface_tids,
-    .init_info    = HTMLIFrameElement_init_dispex_info,
-    .js_flags     = HOSTOBJ_VOLATILE_PROPS
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

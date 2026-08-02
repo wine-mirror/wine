@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
@@ -394,7 +395,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH UnregisterWaitEx( HANDLE handle, HANDLE event )
  */
 DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
-    return WaitForSingleObjectEx( handle, timeout, FALSE );
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
 }
 
 
@@ -403,18 +404,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObject( HANDLE handle, DWORD timeout
  */
 DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObjectEx( HANDLE handle, DWORD timeout, BOOL alertable )
 {
-    NTSTATUS status;
-    LARGE_INTEGER time;
-
-    status = NtWaitForSingleObject( normalize_std_handle( handle ), alertable,
-                                    get_nt_timeout( &time, timeout ) );
-
-    if (NT_ERROR(status))
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        status = WAIT_FAILED;
-    }
-    return status;
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
 }
 
 
@@ -446,9 +436,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HAND
     }
     for (i = 0; i < count; i++) hloc[i] = normalize_std_handle( handles[i] );
 
-    status = NtWaitForMultipleObjects( count, hloc, wait_all ? WaitAll : WaitAny, alertable,
+    status = NtWaitForMultipleObjects( count, hloc, !wait_all, alertable,
                                        get_nt_timeout( &time, timeout ) );
-    if (NT_ERROR(status))
+    if (HIWORD(status))  /* is it an error code? */
     {
         SetLastError( RtlNtStatusToDosError(status) );
         status = WAIT_FAILED;
@@ -1834,50 +1824,3 @@ __ASM_STDCALL_FUNC(InterlockedDecrement, 4,
                   "ret $4")
 
 #endif  /* __i386__ */
-
-
-/***********************************************************************
- * Synchronization barrier functions
- ***********************************************************************/
-
-
-/***********************************************************************
- *           InitializeSynchronizationBarrier  (kernelbase.@)
- */
-BOOL WINAPI InitializeSynchronizationBarrier( SYNCHRONIZATION_BARRIER *barrier, LONG thread_count, LONG spin_count )
-{
-    if (thread_count <= 0 || spin_count < -1)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    return set_ntstatus( RtlInitBarrier( barrier, thread_count, spin_count ));
-}
-
-
-/***********************************************************************
- *           DeleteSynchronizationBarrier  (kernelbase.@)
- */
-BOOL WINAPI DeleteSynchronizationBarrier( SYNCHRONIZATION_BARRIER *barrier )
-{
-    RtlDeleteBarrier( barrier );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           EnterSynchronizationBarrier  (kernelbase.@)
- */
-BOOL WINAPI EnterSynchronizationBarrier( SYNCHRONIZATION_BARRIER *barrier, DWORD flags )
-{
-    static const DWORD valid_flags = SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY
-                                     | SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE;
-    static unsigned int once;
-
-    if (flags & ~valid_flags) RtlRaiseStatus( STATUS_INVALID_PARAMETER );
-
-    if (flags & ~SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE && !once++)
-        FIXME( "flags %#lx are not implemented.\n", flags );
-
-    return RtlBarrier( barrier, flags & SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE ? 0 : 0x10000 );
-}

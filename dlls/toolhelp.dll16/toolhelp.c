@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -174,7 +174,7 @@ typedef struct _NE_MODULE
     SIZE_T    mapping_size;     /* size of the file mapping */
 } NE_MODULE;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #define TDB_MAGIC    ('T' | ('D' << 8))
 

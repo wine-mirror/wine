@@ -37,6 +37,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/debug.h"
 
 #include "localspl_private.h"

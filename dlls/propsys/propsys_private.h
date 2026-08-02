@@ -19,10 +19,3 @@
  */
 
 HRESULT PropertyStore_CreateInstance(IUnknown *outer, REFIID riid, void **ppv);
-
-static inline const char *debugstr_propkey(const PROPERTYKEY *key)
-{
-    if (!key)
-        return "(null)";
-    return wine_dbg_sprintf("{%s,%04lx}", wine_dbgstr_guid(&key->fmtid), key->pid);
-}

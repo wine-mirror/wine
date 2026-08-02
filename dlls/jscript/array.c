@@ -948,14 +948,8 @@ static HRESULT Array_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
     TRACE("\n");
 
     array = array_this(vthis);
-    if(!array) {
-        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5) {
-            if(is_undefined(vthis) || is_null(vthis))
-                return JS_E_OBJECT_EXPECTED;
-            return Object_toString(ctx, vthis, flags, argc, argv, r);
-        }
+    if(!array)
         return JS_E_ARRAY_EXPECTED;
-    }
 
     return array_join(ctx, &array->dispex, array->length, L",", 1, to_string, r);
 }

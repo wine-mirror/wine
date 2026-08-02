@@ -1179,7 +1179,7 @@ static HRESULT HTMLStorage_delete(DispatchEx *dispex, DISPID id)
     return HTMLStorage_removeItem(&This->IHTMLStorage_iface, This->props[idx]);
 }
 
-static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
+static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
     HTMLStorage *This = impl_from_DispatchEx(dispex);
@@ -1298,7 +1298,6 @@ dispex_static_data_t Storage_dispex = {
     .vtbl       = &Storage_dispex_vtbl,
     .disp_tid   = IHTMLStorage_tid,
     .iface_tids = HTMLStorage_iface_tids,
-    .js_flags   = HOSTOBJ_VOLATILE_FILL | HOSTOBJ_VOLATILE_PROPS,
 };
 
 static HRESULT build_session_origin(IUri *uri, BSTR hostname, BSTR *ret)

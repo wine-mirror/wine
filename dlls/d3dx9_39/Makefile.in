@@ -4,13 +4,11 @@ IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32 wined3d
 PARENTSRC = ../d3dx9_36
 DELAYIMPORTS = windowscodecs
 
-VER_FILEDESCRIPTION_STR = "Wine D3DX9"
-VER_PRODUCTVERSION      = 9,24,949,2307
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	animation.c \
 	core.c \
-	d3dx_helpers.c \
 	effect.c \
 	font.c \
 	line.c \
@@ -24,6 +22,9 @@ SOURCES = \
 	sprite.c \
 	surface.c \
 	texture.c \
+	txc_compress_dxtn.c \
+	txc_fetch_dxtn.c \
 	util.c \
+	version.rc \
 	volume.c \
 	xfile.c

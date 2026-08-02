@@ -27,7 +27,7 @@
 
 #include "unixlib.h"
 
-struct audio_session {
+typedef struct audio_session {
     GUID guid;
     struct list clients;
 
@@ -43,7 +43,7 @@ struct audio_session {
     GUID grouping_param;
 
     struct list entry;
-};
+} AudioSession;
 
 typedef struct audio_session_wrapper {
     IAudioSessionControl2 IAudioSessionControl2_iface;
@@ -75,6 +75,8 @@ struct audio_client {
     UINT32 channel_count;
     stream_handle stream;
 
+    HANDLE timer_thread;
+
     struct audio_session *session;
     struct audio_session_wrapper *session_wrapper;
 
@@ -86,7 +88,7 @@ extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
 extern void MMDevEnum_Free(void);
 
 typedef struct _DriverFuncs {
-    unixlib_module_t module;
+    HMODULE module;
     unixlib_handle_t module_unixlib;
     WCHAR module_name[64];
 
@@ -127,15 +129,8 @@ extern BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow 
 extern HRESULT load_devices_from_reg(void);
 extern HRESULT load_driver_devices(EDataFlow flow);
 
+extern void main_loop_stop(void);
+
 extern const WCHAR drv_keyW[];
 
-extern HRESULT get_audio_session(const GUID *sessionguid, IMMDevice *device, UINT channels,
-                                 struct audio_session **out);
-extern HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
-                                         struct audio_session_wrapper **out);
 extern HRESULT get_audio_sessions(IMMDevice *device, GUID **ret, int *ret_count);
-
-extern struct audio_session_wrapper *session_wrapper_create(struct audio_client *client);
-
-extern void sessions_lock(void);
-extern void sessions_unlock(void);

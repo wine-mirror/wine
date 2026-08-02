@@ -33,7 +33,7 @@
 
 static CHAR CURR_DIR[MAX_PATH];
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 struct CFHEADER
 {
@@ -114,7 +114,7 @@ static const struct
     { 'H','e','l','l','o',' ','W','o','r','l','d','!' }
 };
 
-#pragma pack(pop)
+#include <poppack.h>
 
 struct mem_data
 {

@@ -1,0 +1,8 @@
+MODULE = windows.devices.sensors.dll
+IMPORTS = combase uuid
+
+SOURCES = \
+	accelerometer.c \
+	async.c \
+	classes.idl \
+	main.c

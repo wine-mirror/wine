@@ -11,7 +11,7 @@
 #include <corecrt.h>
 #include <sys/types.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifndef _DEV_T_DEFINED
 # ifdef _CRTDLL
@@ -99,7 +99,7 @@ struct _stat32i64 {
   short st_uid;
   short st_gid;
   _dev_t st_rdev;
-  __int64 _CRT_ALIGN(8) st_size;
+  __int64 DECLSPEC_ALIGN(8) st_size;
   __time32_t st_atime;
   __time32_t st_mtime;
   __time32_t st_ctime;
@@ -127,7 +127,7 @@ struct _stati64 {
   short          st_uid;
   short          st_gid;
   _dev_t st_rdev;
-  __int64 _CRT_ALIGN(8) st_size;
+  __int64 DECLSPEC_ALIGN(8) st_size;
   time_t st_atime;
   time_t st_mtime;
   time_t st_ctime;
@@ -141,7 +141,7 @@ struct _stat64 {
   short          st_uid;
   short          st_gid;
   _dev_t st_rdev;
-  __int64 _CRT_ALIGN(8) st_size;
+  __int64 DECLSPEC_ALIGN(8) st_size;
   __time64_t     st_atime;
   __time64_t     st_mtime;
   __time64_t     st_ctime;
@@ -222,6 +222,6 @@ static inline int umask(int fd) { return _umask(fd); }
 #define _UMASK_DEFINED
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_SYS_STAT_H */

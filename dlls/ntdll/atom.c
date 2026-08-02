@@ -26,6 +26,7 @@
 #include <ctype.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "ntdll_misc.h"
 
@@ -144,10 +145,10 @@ static NTSTATUS is_integral_atom( LPCWSTR atomstr, size_t len, RTL_ATOM* pAtom )
         if (len > MAX_ATOM_LEN) return STATUS_INVALID_PARAMETER;
         return STATUS_MORE_ENTRIES;
     }
-    else if ((atom = LOWORD( atomstr )) >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
+    else atom = LOWORD( atomstr );
 done:
-    if (atom >= MAXINTATOM) atom = 0;
-    if (!(*pAtom = atom)) return STATUS_INVALID_PARAMETER;
+    if (!atom || atom >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
+    *pAtom = atom;
     return STATUS_SUCCESS;
 }
 
@@ -161,9 +162,8 @@ NTSTATUS WINAPI RtlDeleteAtomFromAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom 
 
     if ((status = lock_atom_table( table ))) return status;
 
-    if (!atom) status = STATUS_INVALID_HANDLE;
-    else if (atom < MAXINTATOM) status = STATUS_SUCCESS;
-    else if (RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM, (RTL_HANDLE **)&handle ))
+    if (atom >= MAXINTATOM && RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM,
+                                                     (RTL_HANDLE **)&handle ))
     {
         if (handle->entry->Flags) status = STATUS_WAS_LOCKED;
         else if (!--handle->entry->ReferenceCount)

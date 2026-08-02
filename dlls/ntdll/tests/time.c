@@ -42,10 +42,8 @@ static NTSTATUS (WINAPI *pRtlQueryTimeZoneInformation)( RTL_TIME_ZONE_INFORMATIO
 static NTSTATUS (WINAPI *pRtlQueryDynamicTimeZoneInformation)( RTL_DYNAMIC_TIME_ZONE_INFORMATION *);
 static BOOL     (WINAPI *pRtlQueryUnbiasedInterruptTime)( ULONGLONG *time );
 
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(__arm64ec__)
 static BOOL     (WINAPI *pRtlQueryPerformanceCounter)(LARGE_INTEGER*);
 static BOOL     (WINAPI *pRtlQueryPerformanceFrequency)(LARGE_INTEGER*);
-#endif
 
 static NTSTATUS (WINAPI *pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter)(ULONG, ULONGLONG *, ULONGLONG *, ULONGLONG *);
 static HRESULT (WINAPI *pConvertAuxiliaryCounterToPerformanceCounter)(ULONGLONG, ULONGLONG *, ULONGLONG *);
@@ -158,7 +156,7 @@ static UINT64 multiply_tsc(UINT64 a, UINT64 b)
 static void test_RtlQueryPerformanceCounter(void)
 {
     struct hypervisor_shared_data *hsd;
-    KUSER_SHARED_DATA *usd = (void *)0x7ffe0000;
+    KSHARED_USER_DATA *usd = (void *)0x7ffe0000;
     LARGE_INTEGER frequency, counter;
     NTSTATUS status;
     UINT64 tsc0, tsc1;
@@ -420,7 +418,7 @@ static ULONGLONG read_ksystem_time(volatile KSYSTEM_TIME *time)
 
 static void test_user_shared_data_time(void)
 {
-    KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
+    KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
     SYSTEM_TIMEOFDAY_INFORMATION timeofday;
     ULONGLONG t1, t2, t3;
     NTSTATUS status;
@@ -541,10 +539,8 @@ START_TEST(time)
     pRtlQueryDynamicTimeZoneInformation =
         (void *)GetProcAddress(mod, "RtlQueryDynamicTimeZoneInformation");
     pRtlQueryUnbiasedInterruptTime = (void *)GetProcAddress(mod, "RtlQueryUnbiasedInterruptTime");
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(__arm64ec__)
     pRtlQueryPerformanceCounter = (void *)GetProcAddress(mod, "RtlQueryPerformanceCounter");
     pRtlQueryPerformanceFrequency = (void *)GetProcAddress(mod, "RtlQueryPerformanceFrequency");
-#endif
     pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter =
         (void *)GetProcAddress(mod, "NtConvertBetweenAuxiliaryCounterAndPerformanceCounter");
 

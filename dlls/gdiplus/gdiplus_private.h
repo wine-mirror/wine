@@ -52,20 +52,6 @@
 #define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
 
 
-struct span
-{
-    /* Represents a horizontal span between two scanline intersections */
-    int x[2];
-    int y;
-};
-
-struct span_list
-{
-    struct span *spans;
-    size_t capacity;
-    size_t length;
-};
-
 COLORREF ARGB2COLORREF(ARGB color);
 HBITMAP ARGB2BMP(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
@@ -163,11 +149,7 @@ extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
 typedef struct region_element region_element;
 extern void delete_element(region_element *element);
 
-extern GpStatus get_region_hrgn(struct region_element *element, const RECT *bounds, HRGN *hrgn);
-
 extern GpStatus get_hatch_data(GpHatchStyle hatchstyle, const unsigned char **result);
-
-extern GpStatus region_element_to_spans(const struct region_element *element, const RECT *bounds, struct span_list *spans);
 
 static inline INT gdip_round(REAL x)
 {
@@ -479,9 +461,7 @@ struct GpMetafile{
     GpUnit unit;
     MetafileType metafile_type;
     HENHMETAFILE hemf;
-    HMETAFILE hwmf;
     int preserve_hemf; /* if true, hemf belongs to the app and should not be deleted */
-    int preserve_hwmf; /* if true, hwmf belongs to the app and should not be deleted */
 
     /* recording */
     HDC record_dc;

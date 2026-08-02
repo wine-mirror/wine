@@ -98,7 +98,6 @@ namespace Windows {
             }
 
             [
-                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 activatable(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
                 static(Windows.Media.Devices.IMediaDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
@@ -108,7 +107,6 @@ namespace Windows {
             }
 
             [
-                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile)
             ]
             runtimeclass DefaultAudioRenderDeviceChangedEventArgs
@@ -117,7 +115,6 @@ namespace Windows {
             }
 
             [
-                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile)
             ]
             runtimeclass DefaultAudioCaptureDeviceChangedEventArgs

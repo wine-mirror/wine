@@ -19,26 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "inspectable.idl";
-import "asyncinfo.idl";
-import "eventtoken.idl";
-import "windowscontracts.idl";
-import "windows.foundation.idl";
-import "windows.devices.enumeration.idl";
-import "windows.devices.radios.idl";
-import "windows.networking.idl";
-import "windows.networking.sockets.idl";
-import "windows.storage.streams.idl";
-import "windows.devices.bluetooth.idl";
-import "windows.devices.bluetooth.advertisement.idl";
-
-namespace Windows.Devices.Bluetooth {
-    runtimeclass BluetoothAdapter;
-    runtimeclass BluetoothDevice;
-    runtimeclass BluetoothLEDevice;
-}
-namespace Windows.Devices.Bluetooth.Advertisement {
-    runtimeclass BluetoothLEAdvertisementWatcher;
-}
+#include "windows.devices.bluetooth.idl"

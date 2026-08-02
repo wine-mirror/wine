@@ -31,7 +31,6 @@
 
 @interface WineOpenGLContext ()
 @property (retain, nonatomic) NSView* latentView;
-@property (nullable, weak) NSView *view;    /* redeclare this to avoid NSOpenGLContext's deprecation warnings */
 
     + (NSView*) dummyView;
     - (void) wine_updateBackingSize:(const CGSize*)size;
@@ -40,7 +39,6 @@
 
 
 @implementation WineOpenGLContext
-@dynamic view;
 @synthesize latentView, needsUpdate, needsReattach;
 
     - (void) dealloc
@@ -75,6 +73,9 @@
     // need to destroy and recreate the surface or we get weird behavior.
     - (void) resetSurfaceIfBackingSizeChanged
     {
+        if (!retina_enabled)
+            return;
+
         int view_backing[2];
         if (macdrv_get_view_backing_size((macdrv_view)self.view, view_backing) &&
             (view_backing[0] != backing_size[0] || view_backing[1] != backing_size[1]))
@@ -84,8 +85,6 @@
             macdrv_set_view_backing_size((macdrv_view)self.view, view_backing);
 
             NSView* save = self.view;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             if ([NSThread isMainThread])
             {
                 [super clearDrawable];
@@ -95,20 +94,18 @@
                 [super clearDrawable];
                 [super setView:save];
             });
-#pragma clang diagnostic pop
         }
     }
 
-    /* This is a no-op if either dimension of the size is zero. */
     - (void) wine_updateBackingSize:(const CGSize*)size
     {
         GLint enabled;
 
+        if (!retina_enabled)
+            return;
+
         if (size)
         {
-            if (size->width == 0 || size->height == 0)
-                return;
-
             if (CGLIsEnabled(self.CGLContextObj, kCGLCESurfaceBackingSize, &enabled) != kCGLNoError)
                 enabled = 0;
 

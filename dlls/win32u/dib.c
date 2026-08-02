@@ -69,6 +69,7 @@
 #include <assert.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -180,7 +181,7 @@ static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const 
     }
     else
     {
-        WARN( "(%u): unknown/wrong size for header\n", info->biSize );
+        WARN( "(%u): unknown/wrong size for header\n", (int)info->biSize );
         return FALSE;
     }
 
@@ -492,7 +493,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     RECT rect;
 
     TRACE("%d %d %d %d <- %d %d %d %d rop %08x\n", xDst, yDst, widthDst, heightDst,
-          xSrc, ySrc, widthSrc, heightSrc, rop);
+          xSrc, ySrc, widthSrc, heightSrc, (int)rop);
 
     src_bits.ptr = (void*)bits;
     src_bits.is_copy = FALSE;
@@ -1348,9 +1349,6 @@ INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UIN
 
     if (err) goto done;
 
-    if (!is_bitmapobj_dib( bmp ) && (src_info->bmiHeader.biBitCount != 1 && src_info->bmiHeader.biBitCount != 32))
-        goto done;
-
     /* fill out the src colour table, if it needs one */
     if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
         fill_default_color_table( src_info );
@@ -1444,7 +1442,7 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
     height = abs( height );
 
     TRACE( "hdc=%p, init=%u, bits=%p, data=%p, coloruse=%u (bitmap: width=%d, height=%d)\n",
-           hdc, init, bits, data, coloruse, width, height );
+           hdc, (int)init, bits, data, coloruse, width, height );
 
     if (hdc == NULL)
         handle = NtGdiCreateBitmap( width, height, 1, 1, NULL );
@@ -1492,10 +1490,10 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
     if (!(bmp = calloc( 1, sizeof(*bmp) ))) return 0;
 
     TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
-          info->bmiHeader.biWidth, info->bmiHeader.biHeight,
+          (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
           info->bmiHeader.biPlanes, info->bmiHeader.biBitCount,
           info->bmiHeader.biCompression == BI_BITFIELDS? "BI_BITFIELDS" : "BI_RGB",
-          info->bmiHeader.biSizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+          (int)info->bmiHeader.biSizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
     bmp->dib.dsBm.bmType       = 0;
     bmp->dib.dsBm.bmWidth      = info->bmiHeader.biWidth;

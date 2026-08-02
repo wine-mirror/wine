@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.graphics.capture.idl";
-
-namespace Windows.Graphics.Capture {
-    runtimeclass GraphicsCaptureSession;
-}
+#include "windows.graphics.capture.idl"

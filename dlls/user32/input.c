@@ -742,87 +742,18 @@ BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT count,
     return FALSE;
 }
 
-BOOL WINAPI GetPointerDeviceProperties( HANDLE device, UINT32 *count,
-                                        POINTER_DEVICE_PROPERTY *properties)
-{
-    FIXME( "device %p, count %p, info %p stub!\n", device, count, properties );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-
-BOOL WINAPI GetPointerPenInfo( UINT32 id, POINTER_PEN_INFO *info )
-{
-    UINT32 count = 1;
-
-    TRACE( "id %u, info %p\n", id, info );
-
-    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), &count, &count, info );
-}
-
 BOOL WINAPI GetPointerTouchInfo( UINT32 id, POINTER_TOUCH_INFO *info )
 {
-    UINT32 count = 1;
-
-    TRACE( "id %u, info %p stub!\n", id, info );
-
-    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), &count, &count, info );
-}
-
-BOOL WINAPI GetRawPointerDeviceData( UINT32 id, UINT32 hist_count, UINT32 prop_count,
-                                     POINTER_DEVICE_PROPERTY *properties, LONG *values )
-{
-    FIXME( "id %u, count %u, prop_count %u, properties %p, values %p stub!\n",
-           id, hist_count, prop_count, properties, values );
+    FIXME( "id %u, info %p stub!\n", id, info );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
 
 BOOL WINAPI GetPointerTouchInfoHistory( UINT32 id, UINT32 *count, POINTER_TOUCH_INFO *info )
 {
-    UINT32 pointers = 1;
-
-    TRACE( "id %u, count %p, info %p\n", id, count, info );
-
-    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), count, &pointers, info );
-}
-
-BOOL WINAPI GetPointerPenInfoHistory( UINT32 id, UINT32 *count, POINTER_PEN_INFO *info )
-{
-    UINT32 pointers = 1;
-
-    TRACE( "id %u, count %p, info %p\n", id, count, info );
-
-    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), count, &pointers, info );
-}
-
-BOOL WINAPI GetPointerFrameTouchInfo( UINT32 id, UINT32 *count, POINTER_TOUCH_INFO *info )
-{
-    UINT32 entries = 1;
-
-    TRACE( "id %u, count %p, info %p\n", id, count, info );
-
-    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), &entries, count, info );
-}
-
-BOOL WINAPI GetPointerFramePenInfo( UINT32 id, UINT32 *count, POINTER_PEN_INFO *info )
-{
-    UINT32 entries = 1;
-
-    TRACE( "id %u, count %p, info %p\n", id, count, info );
-
-    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), &entries, count, info );
-}
-
-BOOL WINAPI GetPointerFrameTouchInfoHistory( UINT32 id, UINT32 *entries, UINT32 *pointers, POINTER_TOUCH_INFO *info )
-{
-    TRACE( "id %u, entries %p, pointers %p, info %p\n", id, entries, pointers, info );
-    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), entries, pointers, info );
-}
-
-BOOL WINAPI GetPointerFramePenInfoHistory( UINT32 id, UINT32 *entries, UINT32 *pointers, POINTER_PEN_INFO *info )
-{
-    TRACE( "id %u, entries %p, pointers %p, info %p\n", id, entries, pointers, info );
-    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), entries, pointers, info );
+    FIXME( "id %u, count %p, info %p stub!\n", id, count, info );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
 
@@ -884,25 +815,4 @@ HSYNTHETICPOINTERDEVICE WINAPI CreateSyntheticPointerDevice(POINTER_INPUT_TYPE t
     FIXME( "type %ld, max_count %ld, mode %d stub!\n", type, max_count, mode);
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return NULL;
-}
-
-/***********************************************************************
- *           DelegateInput (USER32.@)
- *
- * Undocumented. Function prototype might be wrong.
- */
-UINT_PTR WINAPI DelegateInput(void *p1, void *p2, void *p3, void *p4, void *p5, void *p6)
-{
-    FIXME( "p1 %p p2 %p p3 %p p4 %p p5 %p p6 %p stub!\n", p1, p2, p3, p4, p5, p6 );
-    return 1;
-}
-
-/***********************************************************************
- *           UndelegateInput (USER32.@)
- *
- * Undocumented. Function prototype might be wrong.
- */
-void WINAPI UndelegateInput(void *p1, void *p2)
-{
-    FIXME( "p1 %p p2 %p stub!\n", p1, p2 );
 }

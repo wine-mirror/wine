@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "sapiddk.h"
-
 #include "wine/list.h"
 
 struct async_task
@@ -65,11 +63,3 @@ enum type_id
 
 HRESULT get_typeinfo( enum type_id tid, ITypeInfo **typeinfo );
 void release_typelib( void );
-
-HRESULT parse_sapi_xml( const WCHAR *contents, DWORD parse_flag, BOOL persist, SPVSTATE *global_state,
-                        SPVTEXTFRAG **frag_list );
-
-static inline BOOL isxmlspace( WCHAR c )
-{
-    return c == ' ' || c == '\r' || c == '\n' || c == '\t';
-}

@@ -34,6 +34,7 @@
 #include <gst/tag/tag.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "dshow.h"
 

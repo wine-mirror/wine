@@ -2,9 +2,6 @@ MODULE    = dmcompos.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
-VER_FILEDESCRIPTION_STR = "Wine DirectMusic Composer"
-VER_PRODUCTVERSION      = 5,3,0,900
-
 SOURCES = \
 	chordmap.c \
 	chordmaptrack.c \
@@ -12,4 +9,5 @@ SOURCES = \
 	dmcompos.idl \
 	dmcompos_main.c \
 	dmobject.c \
-	signposttrack.c
+	signposttrack.c \
+	version.rc

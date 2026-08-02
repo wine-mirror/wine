@@ -172,7 +172,7 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     return ERROR_SUCCESS;
 }
 
-static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string, BOOL expand)
+static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
 {
     if (!string)
     {
@@ -184,8 +184,7 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string,
         return ERROR_SUCCESS;
     }
 
-    return RegSetValueExW(hKey, value_name, 0, expand ? REG_EXPAND_SZ : REG_SZ,
-            (const BYTE*)string, sizeof(WCHAR)*(lstrlenW(string) + 1));
+    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(lstrlenW(string) + 1));
 }
 
 static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
@@ -221,11 +220,11 @@ DWORD save_service_config(struct service_entry *entry)
     if (err != ERROR_SUCCESS)
         goto cleanup;
 
-    if ((err = reg_set_string_value(hKey, L"DisplayName", entry->config.lpDisplayName, FALSE))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"ImagePath", entry->config.lpBinaryPathName, TRUE))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"Group", entry->config.lpLoadOrderGroup, FALSE))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"ObjectName", entry->config.lpServiceStartName, FALSE))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"Description", entry->description, FALSE))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"DisplayName", entry->config.lpDisplayName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ImagePath", entry->config.lpBinaryPathName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Group", entry->config.lpLoadOrderGroup))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ObjectName", entry->config.lpServiceStartName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Description", entry->description))) goto cleanup;
     if ((err = reg_set_multisz_value(hKey, L"DependOnService", entry->dependOnServices))) goto cleanup;
     if ((err = reg_set_multisz_value(hKey, L"DependOnGroup", entry->dependOnGroups))) goto cleanup;
     if ((err = reg_set_dword_value(hKey, L"Start", entry->config.dwStartType))) goto cleanup;
@@ -520,12 +519,9 @@ BOOL validate_service_config(struct service_entry *entry)
     case SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS:
     case SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS:
         /* These can be only run as LocalSystem */
-        if (entry->config.lpServiceStartName &&
-            wcsicmp(entry->config.lpServiceStartName, L"LocalSystem") != 0 &&
-            wcsicmp(entry->config.lpServiceStartName, L".\\LocalSystem") != 0)
+        if (entry->config.lpServiceStartName && wcsicmp(entry->config.lpServiceStartName, L"LocalSystem") != 0)
         {
-            WINE_ERR("Service %s is interactive but has the disallowed account name %s\n",
-                     wine_dbgstr_w(entry->name), wine_dbgstr_w(entry->config.lpServiceStartName));
+            WINE_ERR("Service %s is interactive but has a start name\n", wine_dbgstr_w(entry->name));
             return FALSE;
         }
         break;

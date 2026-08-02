@@ -31,12 +31,9 @@
 #ifdef HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
-#ifdef __APPLE__
-#include <sys/ioctl.h>
-#include <sys/kern_event.h>
-#endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -159,7 +156,7 @@ static NTSTATUS unix_nsi_get_parameter_ex( void *args )
     return nsi_get_parameter_ex( params );
 }
 
-#if defined(HAVE_LINUX_RTNETLINK_H) || defined(__APPLE__)
+#ifdef HAVE_LINUX_RTNETLINK_H
 static struct
 {
     const NPI_MODULEID *module;
@@ -185,8 +182,7 @@ static NTSTATUS add_notification( const NPI_MODULEID *module, UINT32 table )
     return STATUS_SUCCESS;
 }
 
-#if defined(HAVE_LINUX_RTNETLINK_H)
-static NTSTATUS poll_events(void)
+static NTSTATUS poll_netlink(void)
 {
     static int netlink_fd = -1;
     char buffer[PIPE_BUF];
@@ -247,86 +243,13 @@ static NTSTATUS poll_events(void)
     }
     return STATUS_SUCCESS;
 }
-#elif defined(__APPLE__)
-static NTSTATUS poll_events(void)
-{
-    static int sock = -1;
-
-    if (sock == -1)
-    {
-        static const struct kev_request req =
-        {
-            .vendor_code = KEV_VENDOR_APPLE,
-            .kev_class = KEV_NETWORK_CLASS,
-            .kev_subclass = KEV_ANY_SUBCLASS,
-        };
-
-        if ((sock = socket( PF_SYSTEM, SOCK_RAW, SYSPROTO_EVENT )) == -1)
-        {
-            ERR( "PF_SYSTEM socket creation failed, errno %d.\n", errno );
-            return STATUS_NOT_IMPLEMENTED;
-        }
-
-        if (ioctl( sock, SIOCSKEVFILT, &req ) == -1)
-        {
-            close( sock );
-            sock = -1;
-            ERR( "SIOCSKEVFILT failed, errno %d.\n", errno );
-            return STATUS_NOT_IMPLEMENTED;
-        }
-    }
-
-    while (1)
-    {
-        struct kern_event_msg msg;
-        NTSTATUS status;
-        int len;
-
-        len = recv( sock, &msg, sizeof(msg), 0 );
-        if (len < sizeof(msg))
-        {
-            if (errno == EINTR) continue;
-            ERR( "error receiving, len %d, errno %d.\n", len, errno );
-            return STATUS_UNSUCCESSFUL;
-        }
-
-        if (msg.kev_subclass == KEV_INET_SUBCLASS)
-        {
-            switch (msg.event_code)
-            {
-                case KEV_INET_NEW_ADDR:
-                case KEV_INET_CHANGED_ADDR:
-                case KEV_INET_ADDR_DELETED:
-                    if ((status = add_notification( &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE))) return status;
-                    break;
-            }
-        }
-        else if (msg.kev_subclass == KEV_INET6_SUBCLASS)
-        {
-            switch (msg.event_code)
-            {
-                case KEV_INET6_NEW_USER_ADDR:
-                case KEV_INET6_CHANGED_ADDR:
-                case KEV_INET6_ADDR_DELETED:
-                case KEV_INET6_NEW_LL_ADDR:
-                case KEV_INET6_NEW_RTADV_ADDR:
-                    if ((status = add_notification( &NPI_MS_IPV6_MODULEID, NSI_IP_UNICAST_TABLE))) return status;
-                    break;
-            }
-        }
-        if (queued_notification_count) break;
-    }
-
-    return STATUS_SUCCESS;
-}
-#endif
 
 static NTSTATUS unix_nsi_get_notification( void *args )
 {
     struct nsi_get_notification_params *params = (struct nsi_get_notification_params *)args;
     NTSTATUS status;
 
-    if (!queued_notification_count && (status = poll_events())) return status;
+    if (!queued_notification_count && (status = poll_netlink())) return status;
     assert( queued_notification_count );
     params->module = *queued_notifications[0].module;
     params->table = queued_notifications[0].table;
@@ -343,7 +266,9 @@ static NTSTATUS unix_nsi_get_notification( void *args )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    icmp_get_reply,
+    icmp_cancel_listen,
+    icmp_close,
+    icmp_listen,
     icmp_send_echo,
     unix_nsi_enumerate_all_ex,
     unix_nsi_get_all_parameters_ex,

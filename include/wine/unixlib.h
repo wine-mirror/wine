@@ -1,5 +1,5 @@
 /*
- * Definitions for Wine Unix libraries
+ * Definitions for Unix libraries
  *
  * Copyright (C) 2021 Alexandre Julliard
  *
@@ -18,34 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep install
-#endif
-
 #ifndef __WINE_WINE_UNIXLIB_H
 #define __WINE_WINE_UNIXLIB_H
 
-#include <winternl.h>
+#include "winternl.h"
 
 typedef UINT64 unixlib_handle_t;
-typedef UINT64 unixlib_module_t;
 
 #ifdef WINE_UNIX_LIB
 
 typedef NTSTATUS (*unixlib_entry_t)( void *args );
 
-extern DECLSPEC_EXPORT NTSTATUS __wine_unix_lib_init(void);
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_funcs[];
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
 
-/* some useful private helpers from ntdll */
-
-#ifdef __WINESRC__
-
-NTSYSAPI const WCHAR *ntdll_get_build_dir(void);
-NTSYSAPI const WCHAR *ntdll_get_data_dir(void);
-NTSYSAPI NTSTATUS ntdll_get_dos_file_name( const char *unix_name, WCHAR **dos, UINT disposition );
-NTSYSAPI NTSTATUS ntdll_get_unix_file_name( const WCHAR *dos, char **unix_name, UINT disposition );
+/* some useful helpers from ntdll */
+NTSYSAPI const char *ntdll_get_build_dir(void);
+NTSYSAPI const char *ntdll_get_data_dir(void);
+NTSYSAPI DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
+NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
+NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
+NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 
 /* exception handling */
 
@@ -79,10 +72,6 @@ NTSYSAPI void ntdll_set_exception_jmp_buf( jmp_buf jmp );
 
 NTSYSAPI BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG limit,
                                           BYTE *arguments, ULONG index );
-NTSYSAPI void ntdll_add_syscall_debug_info( UINT idx, const char **syscall_names,
-                                            const char **usercall_names );
-
-#endif  /* __WINESRC__ */
 
 /* wide char string functions */
 
@@ -250,16 +239,6 @@ static inline ULONG ntdll_wcstoul( const WCHAR *s, WCHAR **end, int base )
     return negative ? -ret : ret;
 }
 
-NTSYSAPI DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
-NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
-NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
-NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
-
-/* C23 requires these functions to be defined as macros */
-#undef wcschr
-#undef wcsrchr
-#undef wcspbrk
-
 #define iswspace(ch)       ntdll_iswspace(ch)
 #define wcslen(str)        ntdll_wcslen(str)
 #define wcscpy(dst,src)    ntdll_wcscpy(dst,src)
@@ -281,9 +260,6 @@ NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 extern unixlib_handle_t __wine_unixlib_handle;
 extern NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * );
 extern NTSTATUS WINAPI __wine_init_unix_call(void);
-extern NTSTATUS WINAPI __wine_load_unix_lib( const UNICODE_STRING *name, unixlib_module_t *lib,
-                                             unixlib_handle_t *handle );
-extern NTSTATUS WINAPI __wine_unload_unix_lib( unixlib_module_t lib );
 
 #ifdef __arm64ec__
 NTSTATUS __wine_unix_call_arm64ec( unixlib_handle_t handle, unsigned int code, void *args );

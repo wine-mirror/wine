@@ -6,9 +6,6 @@
 @ stdcall A_SHAFinal(ptr ptr)
 @ stdcall A_SHAInit(ptr)
 @ stdcall A_SHAUpdate(ptr ptr long)
-@ stdcall AlpcGetHeaderSize(long)
-@ stdcall AlpcInitializeMessageAttribute(long ptr long ptr)
-@ stdcall AlpcGetMessageAttribute(ptr long)
 @ stdcall ApiSetQueryApiSetPresence(ptr ptr)
 @ stdcall ApiSetQueryApiSetPresenceEx(ptr ptr ptr)
 @ stub CsrAllocateCaptureBuffer
@@ -56,7 +53,6 @@
 @ stdcall EtwEventSetInformation(int64 long ptr long)
 @ stdcall EtwEventUnregister(int64)
 @ stdcall EtwEventWrite(int64 ptr long ptr)
-@ stdcall EtwEventWriteEx(int64 ptr int64 long ptr ptr long ptr)
 @ stdcall EtwEventWriteString(int64 long int64 wstr)
 @ stdcall EtwEventWriteTransfer(int64 ptr ptr ptr long ptr)
 @ stdcall EtwGetTraceEnableFlags(int64)
@@ -104,7 +100,7 @@
 @ stub LdrInitShimEngineDynamic
 @ stdcall LdrInitializeThunk(ptr long long long)
 @ stub LdrLoadAlternateResourceModule
-@ stdcall LdrLoadDll(wstr ptr ptr ptr)
+@ stdcall LdrLoadDll(wstr long ptr ptr)
 @ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stdcall LdrProcessRelocationBlock(ptr long ptr long)
 @ stdcall LdrQueryImageFileExecutionOptions(ptr wstr long ptr long ptr)
@@ -133,19 +129,18 @@
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
-@ stdcall -syscall=0x0002 NtAcceptConnectPort(ptr long ptr long ptr ptr)
-@ stdcall -syscall=0x0000 NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
-@ stdcall -syscall=0x0029 NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
+@ stdcall -syscall NtAcceptConnectPort(ptr long ptr long ptr ptr)
+@ stdcall -syscall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
-@ stdcall -syscall=0x0059 NtAccessCheckByTypeAndAuditAlarm(ptr long ptr ptr ptr ptr long long long ptr long ptr long ptr ptr ptr)
+# @ stub NtAccessCheckByTypeAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultList
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarmByHandle
-@ stdcall -syscall=0x0047 NtAddAtom(ptr long ptr)
+@ stdcall -syscall NtAddAtom(ptr long ptr)
 # @ stub NtAddBootEntry
 @ stdcall -syscall NtAdjustGroupsToken(long long ptr long ptr ptr)
-@ stdcall -syscall=0x0041 NtAdjustPrivilegesToken(long long ptr long ptr ptr)
-@ stdcall -syscall NtAlertMultipleThreadByThreadId(ptr long ptr ptr)
+@ stdcall -syscall NtAdjustPrivilegesToken(long long ptr long ptr ptr)
 @ stdcall -syscall NtAlertResumeThread(long ptr)
 @ stdcall -syscall NtAlertThread(long)
 @ stdcall -syscall NtAlertThreadByThreadId(ptr)
@@ -153,25 +148,19 @@
 @ stdcall -syscall NtAllocateReserveObject(ptr ptr long)
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
-@ stdcall -syscall=0x0018 NtAllocateVirtualMemory(long ptr long ptr long long)
+@ stdcall -syscall NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall -syscall NtAllocateVirtualMemoryEx(long ptr ptr long long ptr long)
-@ stdcall -syscall NtAlpcAcceptConnectPort(ptr ptr long ptr ptr ptr ptr ptr long)
-@ stdcall -syscall NtAlpcConnectPort(ptr ptr ptr ptr long ptr ptr ptr ptr ptr ptr)
-@ stdcall -syscall NtAlpcCreatePort(ptr ptr ptr)
-@ stdcall -syscall NtAlpcDisconnectPort(ptr long)
-@ stdcall -syscall NtAlpcImpersonateClientOfPort(ptr ptr ptr)
-@ stdcall -syscall NtAlpcSendWaitReceivePort(ptr long ptr ptr ptr ptr ptr ptr)
-@ stub -syscall=0x004c NtApphelpCacheControl
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
-@ stdcall -syscall=0x0005 NtCallbackReturn(ptr long long)
-@ stdcall -syscall=0x005d NtCancelIoFile(long ptr)
+@ stdcall -syscall NtCallbackReturn(ptr long long)
+# @ stub NtCancelDeviceWakeupRequest
+@ stdcall -syscall NtCancelIoFile(long ptr)
 @ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelSynchronousIoFile(long ptr ptr)
-@ stdcall -syscall=0x0061 NtCancelTimer(long ptr)
-@ stdcall -syscall=0x003e NtClearEvent(long)
-@ stdcall -syscall=0x000f NtClose(long)
-@ stdcall -syscall=0x003b NtCloseObjectAuditAlarm(ptr long long)
+@ stdcall -syscall NtCancelTimer(long ptr)
+@ stdcall -syscall NtClearEvent(long)
+@ stdcall -syscall NtClose(long)
+# @ stub NtCloseObjectAuditAlarm
 @ stdcall -syscall NtCommitTransaction(long long)
 # @ stub NtCompactKeys
 @ stdcall -syscall NtCompareObjects(ptr ptr)
@@ -179,18 +168,18 @@
 @ stdcall -syscall NtCompleteConnectPort(ptr)
 # @ stub NtCompressKey
 @ stdcall -syscall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stdcall -syscall=0x0043 NtContinue(ptr long)
+@ stdcall -syscall NtContinue(ptr long)
 @ stdcall -syscall NtContinueEx(ptr ptr)
 @ stdcall -syscall NtConvertBetweenAuxiliaryCounterAndPerformanceCounter(long ptr ptr ptr)
-@ stdcall -syscall=0x00a6 NtCreateDebugObject(ptr long ptr long)
+@ stdcall -syscall NtCreateDebugObject(ptr long ptr long)
 @ stdcall -syscall NtCreateDirectoryObject(ptr long ptr)
-@ stdcall -syscall=0x0048 NtCreateEvent(ptr long ptr long long)
+@ stdcall -syscall NtCreateEvent(ptr long ptr long long)
 # @ stub NtCreateEventPair
-@ stdcall -syscall=0x0055 NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
+@ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall -syscall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall -syscall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
-@ stdcall -syscall=0x001d NtCreateKey(ptr long ptr long ptr long ptr)
+@ stdcall -syscall NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall -syscall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
 @ stdcall -syscall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall -syscall NtCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr)
@@ -200,13 +189,13 @@
 @ stdcall -syscall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall -syscall NtCreatePort(ptr ptr long long ptr)
 # @ stub NtCreateProcess
-@ stub -syscall=0x004d NtCreateProcessEx
+# @ stub NtCreateProcessEx
 # @ stub NtCreateProfile
-@ stdcall -syscall=0x004a NtCreateSection(ptr long ptr ptr long long long)
+@ stdcall -syscall NtCreateSection(ptr long ptr ptr long long long)
 @ stdcall -syscall NtCreateSectionEx(ptr long ptr ptr long long long ptr long)
 @ stdcall -syscall NtCreateSemaphore(ptr long ptr long long)
 @ stdcall -syscall NtCreateSymbolicLinkObject(ptr long ptr ptr)
-@ stdcall -syscall=0x004e NtCreateThread(ptr long ptr long ptr ptr ptr long)
+@ stdcall -syscall NtCreateThread(ptr long ptr long ptr ptr ptr long)
 @ stdcall -syscall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
 @ stdcall -syscall NtCreateTimer(ptr long ptr long)
 @ stdcall -syscall NtCreateToken(ptr long ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr)
@@ -216,34 +205,35 @@
 @ stdcall -arch=i386 NtCurrentTeb()
 @ stdcall -syscall NtDebugActiveProcess(long long)
 @ stdcall -syscall NtDebugContinue(long ptr long)
-@ stdcall -syscall=0x0034 NtDelayExecution(long ptr)
+@ stdcall -syscall NtDelayExecution(long ptr)
 @ stdcall -syscall NtDeleteAtom(long)
 # @ stub NtDeleteBootEntry
 @ stdcall -syscall NtDeleteFile(ptr)
 @ stdcall -syscall NtDeleteKey(long)
 # @ stub NtDeleteObjectAuditAlarm
 @ stdcall -syscall NtDeleteValueKey(long ptr)
-@ stdcall -syscall=0x0007 NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
+@ stdcall -syscall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall -syscall NtDisplayString(ptr)
-@ stdcall -syscall=0x003c NtDuplicateObject(long long long ptr long long long)
-@ stdcall -syscall=0x0042 NtDuplicateToken(long long ptr long long ptr)
+@ stdcall -syscall NtDuplicateObject(long long long ptr long long long)
+@ stdcall -syscall NtDuplicateToken(long long ptr long long ptr)
 # @ stub NtEnumerateBootEntries
-@ stdcall -syscall=0x0032 NtEnumerateKey(long long long ptr long ptr)
+# @ stub NtEnumerateBus
+@ stdcall -syscall NtEnumerateKey(long long long ptr long ptr)
 # @ stub NtEnumerateSystemEnvironmentValuesEx
-@ stdcall -syscall=0x0013 NtEnumerateValueKey(long long long ptr long ptr)
+@ stdcall -syscall NtEnumerateValueKey(long long long ptr long ptr)
 # @ stub NtExtendSection
 @ stdcall -syscall NtFilterToken(long long ptr ptr ptr ptr)
-@ stdcall -syscall=0x0014 NtFindAtom(ptr long ptr)
-@ stdcall -syscall=0x004b NtFlushBuffersFile(long ptr)
+@ stdcall -syscall NtFindAtom(ptr long ptr)
+@ stdcall -syscall NtFlushBuffersFile(long ptr)
 @ stdcall -syscall NtFlushBuffersFileEx(long long ptr long ptr)
 @ stdcall -syscall NtFlushInstructionCache(long ptr long)
 @ stdcall -syscall NtFlushKey(long)
 @ stdcall -syscall NtFlushProcessWriteBuffers()
-@ stdcall -syscall NtFlushVirtualMemory(long ptr ptr ptr)
+@ stdcall -syscall NtFlushVirtualMemory(long ptr ptr long)
 # @ stub NtFlushWriteBuffer
 # @ stub NtFreeUserPhysicalPages
-@ stdcall -syscall=0x001e NtFreeVirtualMemory(long ptr ptr long)
-@ stdcall -syscall=0x0039 NtFsControlFile(long long ptr ptr ptr long ptr long ptr long)
+@ stdcall -syscall NtFreeVirtualMemory(long ptr ptr long)
+@ stdcall -syscall NtFsControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall -norelay -syscall NtGetContextThread(long ptr)
 @ stdcall -syscall NtGetCurrentProcessorNumber()
 # @ stub NtGetDevicePowerState
@@ -254,12 +244,12 @@
 @ stdcall NtGetTickCount()
 @ stdcall -syscall NtGetWriteWatch(long long ptr long ptr ptr ptr)
 @ stdcall -syscall NtImpersonateAnonymousToken(long)
-@ stdcall -syscall=0x001f NtImpersonateClientOfPort(long ptr)
+# @ stub NtImpersonateClientOfPort
 # @ stub NtImpersonateThread
 @ stdcall -syscall NtInitializeNlsFiles(ptr ptr ptr)
 # @ stub NtInitializeRegistry
 @ stdcall -syscall NtInitiatePowerAction (long long long long)
-@ stdcall -syscall=0x004f NtIsProcessInJob(long long)
+@ stdcall -syscall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall -syscall NtListenPort(ptr ptr)
 @ stdcall -syscall NtLoadDriver(ptr)
@@ -273,116 +263,119 @@
 @ stdcall -syscall NtMakePermanentObject(long)
 @ stdcall -syscall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
-@ stub -syscall=0x0003 NtMapUserPhysicalPagesScatter
-@ stdcall -syscall=0x0028 NtMapViewOfSection(long long ptr long long ptr ptr long long long)
+# @ stub NtMapUserPhysicalPagesScatter
+@ stdcall -syscall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
 @ stdcall -syscall NtMapViewOfSectionEx(long long ptr ptr ptr long long ptr long)
 # @ stub NtModifyBootEntry
 @ stdcall -syscall NtNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long)
 @ stdcall -syscall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
 @ stdcall -syscall NtNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long)
-@ stdcall -syscall=0x0058 NtOpenDirectoryObject(ptr long ptr)
-@ stdcall -syscall=0x0040 NtOpenEvent(ptr long ptr)
+@ stdcall -syscall NtOpenDirectoryObject(ptr long ptr)
+@ stdcall -syscall NtOpenEvent(ptr long ptr)
 # @ stub NtOpenEventPair
-@ stdcall -syscall=0x0033 NtOpenFile(ptr long ptr ptr long long)
+@ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
 @ stdcall -syscall NtOpenIoCompletion(ptr long ptr)
 @ stdcall -syscall NtOpenJobObject(ptr long ptr)
-@ stdcall -syscall=0x0012 NtOpenKey(ptr long ptr)
+@ stdcall -syscall NtOpenKey(ptr long ptr)
 @ stdcall -syscall NtOpenKeyEx(ptr long ptr long)
 @ stdcall -syscall NtOpenKeyTransacted(ptr long ptr long)
 @ stdcall -syscall NtOpenKeyTransactedEx(ptr long ptr long long)
 @ stdcall -syscall NtOpenKeyedEvent(ptr long ptr)
 @ stdcall -syscall NtOpenMutant(ptr long ptr)
 # @ stub NtOpenObjectAuditAlarm
-@ stdcall -syscall=0x0026 NtOpenProcess(ptr long ptr ptr)
+@ stdcall -syscall NtOpenProcess(ptr long ptr ptr)
 @ stdcall -syscall NtOpenProcessToken(long long ptr)
-@ stdcall -syscall=0x0030 NtOpenProcessTokenEx(long long long ptr)
-@ stdcall -syscall=0x0037 NtOpenSection(ptr long ptr)
+@ stdcall -syscall NtOpenProcessTokenEx(long long long ptr)
+@ stdcall -syscall NtOpenSection(ptr long ptr)
 @ stdcall -syscall NtOpenSemaphore(ptr long ptr)
 @ stdcall -syscall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall -syscall NtOpenThread(ptr long ptr ptr)
-@ stdcall -syscall=0x0024 NtOpenThreadToken(long long long ptr)
-@ stdcall -syscall=0x002f NtOpenThreadTokenEx(long long long long ptr)
+@ stdcall -syscall NtOpenThreadToken(long long long ptr)
+@ stdcall -syscall NtOpenThreadTokenEx(long long long long ptr)
 @ stdcall -syscall NtOpenTimer(ptr long ptr)
 # @ stub NtPlugPlayControl
-@ stdcall -syscall=0x005f NtPowerInformation(long ptr long ptr long)
+@ stdcall -syscall NtPowerInformation(long ptr long ptr long)
 @ stdcall -syscall NtPrivilegeCheck(ptr ptr ptr)
 # @ stub NtPrivilegeObjectAuditAlarm
 # @ stub NtPrivilegedServiceAuditAlarm
-@ stdcall -syscall=0x0050 NtProtectVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall NtProtectVirtualMemory(long ptr ptr long ptr)
 @ stdcall -syscall NtPulseEvent(long ptr)
-@ stdcall -syscall=0x003d NtQueryAttributesFile(ptr ptr)
+@ stdcall -syscall NtQueryAttributesFile(ptr ptr)
 # @ stub NtQueryBootEntryOrder
 # @ stub NtQueryBootOptions
 # @ stub NtQueryDebugFilterState
-@ stdcall -syscall=0x0015 NtQueryDefaultLocale(long ptr)
-@ stdcall -syscall=0x0044 NtQueryDefaultUILanguage(ptr)
-@ stdcall -syscall=0x0035 NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
+@ stdcall -syscall NtQueryDefaultLocale(long ptr)
+@ stdcall -syscall NtQueryDefaultUILanguage(ptr)
+@ stdcall -syscall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall -syscall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
-@ stdcall -syscall=0x0056 NtQueryEvent(long long ptr long ptr)
+@ stdcall -syscall NtQueryEvent(long long ptr long ptr)
 @ stdcall -syscall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall -syscall NtQueryInformationAtom(long long ptr long ptr)
-@ stdcall -syscall=0x0011 NtQueryInformationFile(long ptr ptr long long)
+@ stdcall -syscall NtQueryInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtQueryInformationJobObject(long long ptr long ptr)
 # @ stub NtQueryInformationPort
-@ stdcall -syscall=0x0019 NtQueryInformationProcess(long long ptr long ptr)
-@ stdcall -syscall=0x0025 NtQueryInformationThread(long long ptr long ptr)
-@ stdcall -syscall=0x0021 NtQueryInformationToken(long long ptr long ptr)
+@ stdcall -syscall NtQueryInformationProcess(long long ptr long ptr)
+@ stdcall -syscall NtQueryInformationThread(long long ptr long ptr)
+@ stdcall -syscall NtQueryInformationToken(long long ptr long ptr)
 @ stdcall -syscall NtQueryInstallUILanguage(ptr)
 # @ stub NtQueryIntervalProfile
 @ stdcall -syscall NtQueryIoCompletion(long long ptr long ptr)
-@ stdcall -syscall=0x0016 NtQueryKey(long long ptr long ptr)
+@ stdcall -syscall NtQueryKey(long long ptr long ptr)
 @ stdcall -syscall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall -syscall NtQueryMultipleValueKey(long ptr long ptr long ptr)
 @ stdcall -syscall NtQueryMutant(long long ptr long ptr)
-@ stdcall -syscall=0x0010 NtQueryObject(long long ptr long ptr)
+@ stdcall -syscall NtQueryObject(long long ptr long ptr)
 # @ stub NtQueryOpenSubKeys
-@ stdcall -syscall=0x0031 NtQueryPerformanceCounter(ptr ptr)
+@ stdcall -syscall NtQueryPerformanceCounter(ptr ptr)
 # @ stub NtQueryPortInformationProcess
 # @ stub NtQueryQuotaInformationFile
-@ stdcall -syscall=0x0051 NtQuerySection(long long ptr long ptr)
+@ stdcall -syscall NtQuerySection(long long ptr long ptr)
 @ stdcall -syscall NtQuerySecurityObject(long long ptr long ptr)
 @ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall -syscall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall -syscall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall -syscall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
-@ stdcall -syscall=0x0036 NtQuerySystemInformation(long ptr long ptr)
+@ stdcall -syscall NtQuerySystemInformation(long ptr long ptr)
 @ stdcall -syscall NtQuerySystemInformationEx(long ptr long ptr long ptr)
-@ stdcall -syscall=0x005a NtQuerySystemTime(ptr)
-@ stdcall -syscall=0x0038 NtQueryTimer(ptr long ptr long ptr)
+@ stdcall -syscall NtQuerySystemTime(ptr)
+@ stdcall -syscall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall -syscall NtQueryTimerResolution(ptr ptr ptr)
-@ stdcall -syscall=0x0017 NtQueryValueKey(long ptr long ptr long ptr)
-@ stdcall -syscall=0x0023 NtQueryVirtualMemory(long ptr long ptr long ptr)
-@ stdcall -syscall=0x0049 NtQueryVolumeInformationFile(long ptr ptr long long)
-@ stdcall -syscall=0x0045 NtQueueApcThread(long ptr long long long)
+@ stdcall -syscall NtQueryValueKey(long ptr long ptr long ptr)
+@ stdcall -syscall NtQueryVirtualMemory(long ptr long ptr long ptr)
+@ stdcall -syscall NtQueryVolumeInformationFile(long ptr ptr long long)
+@ stdcall -syscall NtQueueApcThread(long ptr long long long)
 @ stdcall -syscall NtQueueApcThreadEx(long long ptr long long long)
-@ stdcall -syscall NtQueueApcThreadEx2(long long long ptr long long long)
 @ stdcall -syscall NtRaiseException(ptr ptr long)
 @ stdcall -syscall NtRaiseHardError(long long long ptr long ptr)
-@ stdcall -syscall=0x0006 NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall=0x002e NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall=0x0054 NtReadRequestData(long ptr long ptr long ptr)
-@ stdcall -syscall=0x003f NtReadVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
+# @ stub NtReadRequestData
+@ stdcall -syscall NtReadVirtualMemory(long ptr ptr long ptr)
+# @ stub NtRegisterNewDevice
 @ stdcall -syscall NtRegisterThreadTerminatePort(ptr)
 @ stdcall -syscall NtReleaseKeyedEvent(long ptr long ptr)
-@ stdcall -syscall=0x0020 NtReleaseMutant(long ptr)
-@ stdcall -syscall=0x000a NtReleaseSemaphore(long long ptr)
-@ stdcall -syscall=0x0009 NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtReleaseMutant(long ptr)
+# @ stub NtReleaseProcessMutant
+@ stdcall -syscall NtReleaseSemaphore(long long ptr)
+@ stdcall -syscall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
 @ stdcall -syscall NtRemoveProcessDebug(long long)
 @ stdcall -syscall NtRenameKey(long ptr)
 @ stdcall -syscall NtReplaceKey(ptr long ptr)
-@ stdcall -syscall=0x000c NtReplyPort(long ptr)
-@ stdcall -syscall=0x000b NtReplyWaitReceivePort(ptr ptr ptr ptr)
-@ stdcall -syscall=0x002b NtReplyWaitReceivePortEx(long ptr ptr ptr ptr)
+# @ stub NtReplyPort
+@ stdcall -syscall NtReplyWaitReceivePort(ptr ptr ptr ptr)
+# @ stub NtReplyWaitReceivePortEx
 # @ stub NtReplyWaitReplyPort
+# @ stub NtRequestDeviceWakeup
 # @ stub NtRequestPort
-@ stdcall -syscall=0x0022 NtRequestWaitReplyPort(ptr ptr ptr)
+@ stdcall -syscall NtRequestWaitReplyPort(ptr ptr ptr)
+# @ stub NtRequestWakeupLatency
 @ stdcall -syscall NtResetEvent(long ptr)
 @ stdcall -syscall NtResetWriteWatch(long ptr long)
 @ stdcall -syscall NtRestoreKey(long long long)
 @ stdcall -syscall NtResumeProcess(long)
-@ stdcall -syscall=0x0052 NtResumeThread(long ptr)
+@ stdcall -syscall NtResumeThread(long ptr)
 @ stdcall -syscall NtRollbackTransaction(long long)
 @ stdcall -syscall NtSaveKey(long long)
 # @ stub NtSaveKeyEx
@@ -396,25 +389,27 @@
 @ stdcall -syscall NtSetDefaultLocale(long long)
 @ stdcall -syscall NtSetDefaultUILanguage(long)
 @ stdcall -syscall NtSetEaFile(long ptr ptr long)
-@ stdcall -syscall=0x000e NtSetEvent(long ptr)
-@ stdcall -syscall=0x002d NtSetEventBoostPriority(long)
+@ stdcall -syscall NtSetEvent(long ptr)
+# @ stub NtSetEventBoostPriority
 # @ stub NtSetHighEventPair
 # @ stub NtSetHighWaitLowEventPair
+# @ stub NtSetHighWaitLowThread
 @ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
-@ stdcall -syscall=0x0027 NtSetInformationFile(long ptr ptr long long)
+@ stdcall -syscall NtSetInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtSetInformationJobObject(long long ptr long)
 @ stdcall -syscall NtSetInformationKey(long long ptr long)
-@ stdcall -syscall=0x005c NtSetInformationObject(long long ptr long)
-@ stdcall -syscall=0x001c NtSetInformationProcess(long long ptr long)
-@ stdcall -syscall=0x000d NtSetInformationThread(long long ptr long)
+@ stdcall -syscall NtSetInformationObject(long long ptr long)
+@ stdcall -syscall NtSetInformationProcess(long long ptr long)
+@ stdcall -syscall NtSetInformationThread(long long ptr long)
 @ stdcall -syscall NtSetInformationToken(long long ptr long)
 @ stdcall -syscall NtSetInformationVirtualMemory(long long ptr ptr ptr long)
 @ stdcall -syscall NtSetIntervalProfile(long long)
 @ stdcall -syscall NtSetIoCompletion(ptr long long long long)
 @ stdcall -syscall NtSetIoCompletionEx(ptr ptr long long long long)
-@ stdcall -syscall NtSetLdtEntries(long long long long long long)
+@ stdcall -syscall NtSetLdtEntries(long int64 long int64)
 # @ stub NtSetLowEventPair
 # @ stub NtSetLowWaitHighEventPair
+# @ stub NtSetLowWaitHighThread
 # @ stub NtSetQuotaInformationFile
 @ stdcall -syscall NtSetSecurityObject(long long ptr)
 # @ stub NtSetSystemEnvironmentValue
@@ -423,10 +418,10 @@
 # @ stub NtSetSystemPowerState
 @ stdcall -syscall NtSetSystemTime(ptr ptr)
 @ stdcall -syscall NtSetThreadExecutionState(long ptr)
-@ stdcall -syscall=0x0062 NtSetTimer(long ptr ptr ptr long long ptr)
+@ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall -syscall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
-@ stdcall -syscall=0x0060 NtSetValueKey(long ptr long long ptr long)
+@ stdcall -syscall NtSetValueKey(long ptr long long ptr long)
 @ stdcall -syscall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtShutdownSystem(long)
 @ stdcall -syscall NtSignalAndWaitForSingleObject(long long long ptr)
@@ -436,40 +431,40 @@
 @ stdcall -syscall NtSuspendThread(long ptr)
 @ stdcall -syscall NtSystemDebugControl(long ptr long ptr long ptr)
 @ stdcall -syscall NtTerminateJobObject(long long)
-@ stdcall -syscall=0x002c NtTerminateProcess(long long)
-@ stdcall -syscall=0x0053 NtTerminateThread(long long)
+@ stdcall -syscall NtTerminateProcess(long long)
+@ stdcall -syscall NtTerminateThread(long long)
 @ stdcall -syscall NtTestAlert()
 @ stdcall -syscall NtTraceControl(long ptr long ptr long long)
-@ stub -syscall=0x005e NtTraceEvent
+# @ stub NtTraceEvent
 # @ stub NtTranslateFilePath
 @ stdcall -syscall NtUnloadDriver(ptr)
 @ stdcall -syscall NtUnloadKey(ptr)
 # @ stub NtUnloadKeyEx
 @ stdcall -syscall NtUnlockFile(long ptr ptr ptr ptr)
 @ stdcall -syscall NtUnlockVirtualMemory(long ptr ptr long)
-@ stdcall -syscall=0x002a NtUnmapViewOfSection(long ptr)
+@ stdcall -syscall NtUnmapViewOfSection(long ptr)
 @ stdcall -syscall NtUnmapViewOfSectionEx(long ptr long)
 # @ stub NtVdmControl
+# @ stub NtW32Call
 @ stdcall -syscall NtWaitForAlertByThreadId(ptr ptr)
 @ stdcall -syscall NtWaitForDebugEvent(long long ptr ptr)
 @ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
-@ stdcall -syscall=0x005b NtWaitForMultipleObjects(long ptr long long ptr)
-@ stub -syscall=0x001a NtWaitForMultipleObjects32
-@ stdcall -syscall=0x0004 NtWaitForSingleObject(long long ptr)
+@ stdcall -syscall NtWaitForMultipleObjects(long ptr long long ptr)
+# @ stub NtWaitForProcessMutant
+@ stdcall -syscall NtWaitForSingleObject(long long ptr)
 # @ stub NtWaitHighEventPair
 # @ stub NtWaitLowEventPair
-@ stdcall -syscall=0x0001 NtWorkerFactoryWorkerReady(ptr)
-@ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr long long ptr long long)
+@ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr int64 ptr long long)
 @ stdcall -syscall -arch=win32 NtWow64GetNativeSystemInformation(long ptr long ptr)
 @ stdcall -syscall -arch=win32 NtWow64IsProcessorFeaturePresent(long)
 @ stdcall -syscall -arch=win32 NtWow64QueryInformationProcess64(long long ptr long ptr)
-@ stdcall -syscall -arch=win32 NtWow64ReadVirtualMemory64(long long long ptr long long ptr)
-@ stdcall -syscall -arch=win32 NtWow64WriteVirtualMemory64(long long long ptr long long ptr)
-@ stdcall -syscall=0x0008 NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall=0x001b NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
-@ stdcall -syscall=0x0057 NtWriteRequestData(long ptr long ptr long ptr)
-@ stdcall -syscall=0x003a NtWriteVirtualMemory(long ptr ptr long ptr)
-@ stdcall -syscall=0x0046 NtYieldExecution()
+@ stdcall -syscall -arch=win32 NtWow64ReadVirtualMemory64(long int64 ptr int64 ptr)
+@ stdcall -syscall -arch=win32 NtWow64WriteVirtualMemory64(long int64 ptr int64 ptr)
+@ stdcall -syscall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall -syscall NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
+# @ stub NtWriteRequestData
+@ stdcall -syscall NtWriteVirtualMemory(long ptr ptr long ptr)
+@ stdcall -syscall NtYieldExecution()
 @ stdcall NtdllDefWindowProc_A(long long long long)
 @ stdcall NtdllDefWindowProc_W(long long long long)
 @ stdcall NtdllDialogWndProc_A(long long long long)
@@ -489,7 +484,7 @@
 @ stdcall RtlAcquireSRWLockShared(ptr)
 @ stdcall RtlActivateActivationContext(long ptr ptr)
 @ stdcall RtlActivateActivationContextEx(long ptr ptr ptr)
-@ stdcall -fastcall RtlActivateActivationContextUnsafeFast(ptr ptr)
+@ stub RtlActivateActivationContextUnsafeFast
 @ stdcall RtlAddAccessAllowedAce(ptr long long ptr)
 @ stdcall RtlAddAccessAllowedAceEx(ptr long long long ptr)
 @ stdcall RtlAddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
@@ -535,7 +530,6 @@
 @ stdcall RtlAreBitsSet(ptr long long)
 # @ stub RtlAssert2
 @ stdcall RtlAssert(ptr ptr long str)
-@ stdcall RtlBarrier(ptr long)
 # @ stub RtlCancelTimer
 @ stdcall -norelay RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr)
@@ -596,7 +590,6 @@
 @ stub RtlCreatePropertySet
 @ stdcall RtlCreateQueryDebugBuffer(long long)
 @ stdcall RtlCreateRegistryKey(long wstr)
-@ stdcall RtlCreateServiceSid(ptr ptr ptr)
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
 # @ stub RtlCreateSystemVolumeInformationFolder
 @ stub RtlCreateTagHeap
@@ -612,7 +605,7 @@
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)
 @ stdcall RtlDeactivateActivationContext(long long)
-@ stdcall -fastcall RtlDeactivateActivationContextUnsafeFast(ptr)
+@ stub RtlDeactivateActivationContextUnsafeFast
 @ stub RtlDebugPrintTimes
 @ stdcall RtlDecodePointer(ptr)
 @ stdcall RtlDecodeSystemPointer(ptr) RtlDecodePointer
@@ -622,7 +615,6 @@
 @ stdcall RtlDelete(ptr)
 @ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)
-@ stdcall RtlDeleteBarrier(ptr)
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stdcall -arch=!i386 RtlDeleteGrowableFunctionTable(ptr)
 @ stdcall RtlDeleteElementGenericTable(ptr ptr)
@@ -804,7 +796,6 @@
 @ stdcall RtlImpersonateSelf(long)
 @ stdcall RtlInitAnsiString(ptr str)
 @ stdcall RtlInitAnsiStringEx(ptr str)
-@ stdcall RtlInitBarrier(ptr long long)
 @ stdcall RtlInitCodePageTable(ptr ptr)
 # @ stub RtlInitMemoryStream
 @ stdcall RtlInitNlsTables(ptr ptr ptr ptr)
@@ -951,14 +942,14 @@
 @ stdcall RtlQueryHeapInformation(long long ptr long ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stdcall RtlQueryInformationActivationContext(long long ptr long ptr long ptr)
-@ stdcall RtlQueryInformationActiveActivationContext(long ptr long ptr)
+@ stub RtlQueryInformationActiveActivationContext
 @ stub RtlQueryInterfaceMemoryStream
 @ stdcall RtlQueryPackageIdentity(long ptr ptr ptr ptr ptr)
 @ stdcall RtlQueryPerformanceCounter(ptr)
 @ stdcall RtlQueryPerformanceFrequency(ptr)
 @ stub RtlQueryProcessBackTraceInformation
 @ stdcall RtlQueryProcessDebugInformation(long long ptr)
-@ stdcall RtlQueryProcessHeapInformation(ptr)
+@ stub RtlQueryProcessHeapInformation
 @ stub RtlQueryProcessLockInformation
 @ stdcall RtlQueryProcessPlaceholderCompatibilityMode()
 @ stub RtlQueryProperties
@@ -1213,341 +1204,341 @@
 @ stdcall WinSqmSetIfMaxDWORD(long long long)
 @ stdcall WinSqmStartSession(ptr long long)
 @ extern -arch=win32 Wow64Transition
-@ stdcall -private ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
-@ stdcall -private ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
-@ stdcall -private ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
+@ stdcall -private -syscall ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
+@ stdcall -private -syscall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
+@ stdcall -private -syscall ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
 # @ stub ZwAccessCheckByType
-@ stdcall -private ZwAccessCheckByTypeAndAuditAlarm(ptr long ptr ptr ptr ptr long long long ptr long ptr long ptr ptr ptr) NtAccessCheckByTypeAndAuditAlarm
+# @ stub ZwAccessCheckByTypeAndAuditAlarm
 # @ stub ZwAccessCheckByTypeResultList
 # @ stub ZwAccessCheckByTypeResultListAndAuditAlarm
 # @ stub ZwAccessCheckByTypeResultListAndAuditAlarmByHandle
-@ stdcall -private ZwAddAtom(ptr long ptr) NtAddAtom
+@ stdcall -private -syscall ZwAddAtom(ptr long ptr) NtAddAtom
 # @ stub ZwAddBootEntry
-@ stdcall -private ZwAdjustGroupsToken(long long ptr long ptr ptr) NtAdjustGroupsToken
-@ stdcall -private ZwAdjustPrivilegesToken(long long ptr long ptr ptr) NtAdjustPrivilegesToken
-@ stdcall -private ZwAlertMultipleThreadByThreadId(ptr long ptr ptr) NtAlertMultipleThreadByThreadId
-@ stdcall -private ZwAlertResumeThread(long ptr) NtAlertResumeThread
-@ stdcall -private ZwAlertThread(long) NtAlertThread
-@ stdcall -private ZwAlertThreadByThreadId(ptr) NtAlertThreadByThreadId
-@ stdcall -private ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
-@ stdcall -private ZwAllocateReserveObject(ptr ptr long) NtAllocateReserveObject
+@ stdcall -private -syscall ZwAdjustGroupsToken(long long ptr long ptr ptr) NtAdjustGroupsToken
+@ stdcall -private -syscall ZwAdjustPrivilegesToken(long long ptr long ptr ptr) NtAdjustPrivilegesToken
+@ stdcall -private -syscall ZwAlertResumeThread(long ptr) NtAlertResumeThread
+@ stdcall -private -syscall ZwAlertThread(long) NtAlertThread
+@ stdcall -private -syscall ZwAlertThreadByThreadId(ptr) NtAlertThreadByThreadId
+@ stdcall -private -syscall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
+@ stdcall -private -syscall ZwAllocateReserveObject(ptr ptr long) NtAllocateReserveObject
 # @ stub ZwAllocateUserPhysicalPages
-@ stdcall -private ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
-@ stdcall -private ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
-@ stdcall -private ZwAllocateVirtualMemoryEx(long ptr ptr long long ptr long) NtAllocateVirtualMemoryEx
-@ stdcall -private ZwAlpcAcceptConnectPort(ptr ptr long ptr ptr ptr ptr ptr long) NtAlpcAcceptConnectPort
-@ stdcall -private ZwAlpcConnectPort(ptr ptr ptr ptr long ptr ptr ptr ptr ptr ptr) NtAlpcConnectPort
-@ stdcall -private ZwAlpcCreatePort(ptr ptr ptr) NtAlpcCreatePort
-@ stdcall -private ZwAlpcDisconnectPort(ptr long) NtAlpcDisconnectPort
-@ stdcall -private ZwAlpcImpersonateClientOfPort(ptr ptr ptr) NtAlpcImpersonateClientOfPort
-@ stdcall -private ZwAlpcSendWaitReceivePort(ptr long ptr ptr ptr ptr ptr ptr) NtAlpcSendWaitReceivePort
-@ stdcall -private ZwApphelpCacheControl() NtApphelpCacheControl
-@ stdcall -private ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
-@ stdcall -private ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
-@ stdcall -private ZwCallbackReturn(ptr long long) NtCallbackReturn
-@ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
-@ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
-@ stdcall -private ZwCancelSynchronousIoFile(long ptr ptr) NtCancelSynchronousIoFile
-@ stdcall -private ZwCancelTimer(long ptr) NtCancelTimer
-@ stdcall -private ZwClearEvent(long) NtClearEvent
-@ stdcall -private ZwClose(long) NtClose
-@ stdcall -private ZwCloseObjectAuditAlarm(ptr long long) NtCloseObjectAuditAlarm
-@ stdcall -private ZwCommitTransaction(long long) NtCommitTransaction
+@ stdcall -private -syscall ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
+@ stdcall -private -syscall ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
+@ stdcall -private -syscall ZwAllocateVirtualMemoryEx(long ptr ptr long long ptr long) NtAllocateVirtualMemoryEx
+@ stdcall -private -syscall ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
+@ stdcall -private -syscall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
+@ stdcall -private -syscall ZwCallbackReturn(ptr long long) NtCallbackReturn
+# @ stub ZwCancelDeviceWakeupRequest
+@ stdcall -private -syscall ZwCancelIoFile(long ptr) NtCancelIoFile
+@ stdcall -private -syscall ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
+@ stdcall -private -syscall ZwCancelSynchronousIoFile(long ptr ptr) NtCancelSynchronousIoFile
+@ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
+@ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
+@ stdcall -private -syscall ZwClose(long) NtClose
+# @ stub ZwCloseObjectAuditAlarm
+@ stdcall -private -syscall ZwCommitTransaction(long long) NtCommitTransaction
 # @ stub ZwCompactKeys
-@ stdcall -private ZwCompareObjects(ptr ptr) NtCompareObjects
-@ stdcall -private ZwCompareTokens(ptr ptr ptr) NtCompareTokens
-@ stdcall -private ZwCompleteConnectPort(ptr) NtCompleteConnectPort
+@ stdcall -private -syscall ZwCompareObjects(ptr ptr) NtCompareObjects
+@ stdcall -private -syscall ZwCompareTokens(ptr ptr ptr) NtCompareTokens
+@ stdcall -private -syscall ZwCompleteConnectPort(ptr) NtCompleteConnectPort
 # @ stub ZwCompressKey
-@ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
-@ stdcall -private ZwContinue(ptr long) NtContinue
-@ stdcall -private ZwContinueEx(ptr ptr) NtContinueEx
-@ stdcall -private ZwConvertBetweenAuxiliaryCounterAndPerformanceCounter(long ptr ptr ptr) NtConvertBetweenAuxiliaryCounterAndPerformanceCounter
-@ stdcall -private ZwCreateDebugObject(ptr long ptr long) NtCreateDebugObject
-@ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
-@ stdcall -private ZwCreateEvent(ptr long ptr long long) NtCreateEvent
+@ stdcall -private -syscall ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
+@ stdcall -private -syscall ZwContinue(ptr long) NtContinue
+@ stdcall -private -syscall ZwContinueEx(ptr ptr) NtContinueEx
+@ stdcall -private -syscall ZwConvertBetweenAuxiliaryCounterAndPerformanceCounter(long ptr ptr ptr) NtConvertBetweenAuxiliaryCounterAndPerformanceCounter
+@ stdcall -private -syscall ZwCreateDebugObject(ptr long ptr long) NtCreateDebugObject
+@ stdcall -private -syscall ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
+@ stdcall -private -syscall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
 # @ stub ZwCreateEventPair
-@ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
-@ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
-@ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
+@ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
+@ stdcall -private -syscall ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
+@ stdcall -private -syscall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
-@ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
-@ stdcall -private ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
-@ stdcall -private ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
-@ stdcall -private ZwCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr) NtCreateLowBoxToken
-@ stdcall -private ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
-@ stdcall -private ZwCreateMutant(ptr long ptr long) NtCreateMutant
-@ stdcall -private ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
-@ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
-@ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
+@ stdcall -private -syscall ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
+@ stdcall -private -syscall ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
+@ stdcall -private -syscall ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
+@ stdcall -private -syscall ZwCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr) NtCreateLowBoxToken
+@ stdcall -private -syscall ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
+@ stdcall -private -syscall ZwCreateMutant(ptr long ptr long) NtCreateMutant
+@ stdcall -private -syscall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
+@ stdcall -private -syscall ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
+@ stdcall -private -syscall ZwCreatePort(ptr ptr long long ptr) NtCreatePort
 # @ stub ZwCreateProcess
-@ stdcall -private ZwCreateProcessEx() NtCreateProcessEx
+# @ stub ZwCreateProcessEx
 # @ stub ZwCreateProfile
-@ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
-@ stdcall -private ZwCreateSectionEx(ptr long ptr ptr long long long ptr long) NtCreateSectionEx
-@ stdcall -private ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
-@ stdcall -private ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
-@ stdcall -private ZwCreateThread(ptr long ptr long ptr ptr ptr long) NtCreateThread
-@ stdcall -private ZwCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr) NtCreateThreadEx
-@ stdcall -private ZwCreateTimer(ptr long ptr long) NtCreateTimer
-@ stdcall -private ZwCreateToken(ptr long ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtCreateToken
-@ stdcall -private ZwCreateTransaction(ptr long ptr ptr long long long long ptr ptr) NtCreateTransaction
-@ stdcall -private ZwCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr) NtCreateUserProcess
+@ stdcall -private -syscall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
+@ stdcall -private -syscall ZwCreateSectionEx(ptr long ptr ptr long long long ptr long) NtCreateSectionEx
+@ stdcall -private -syscall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
+@ stdcall -private -syscall ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
+@ stdcall -private -syscall ZwCreateThread(ptr long ptr long ptr ptr ptr long) NtCreateThread
+@ stdcall -private -syscall ZwCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr) NtCreateThreadEx
+@ stdcall -private -syscall ZwCreateTimer(ptr long ptr long) NtCreateTimer
+@ stdcall -private -syscall ZwCreateToken(ptr long ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtCreateToken
+@ stdcall -private -syscall ZwCreateTransaction(ptr long ptr ptr long long long long ptr ptr) NtCreateTransaction
+@ stdcall -private -syscall ZwCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr) NtCreateUserProcess
 # @ stub ZwCreateWaitablePort
-@ stdcall -private ZwDebugActiveProcess(long long) NtDebugActiveProcess
-@ stdcall -private ZwDebugContinue(long ptr long) NtDebugContinue
-@ stdcall -private ZwDelayExecution(long ptr) NtDelayExecution
-@ stdcall -private ZwDeleteAtom(long) NtDeleteAtom
+@ stdcall -private -syscall ZwDebugActiveProcess(long long) NtDebugActiveProcess
+@ stdcall -private -syscall ZwDebugContinue(long ptr long) NtDebugContinue
+@ stdcall -private -syscall ZwDelayExecution(long ptr) NtDelayExecution
+@ stdcall -private -syscall ZwDeleteAtom(long) NtDeleteAtom
 # @ stub ZwDeleteBootEntry
-@ stdcall -private ZwDeleteFile(ptr) NtDeleteFile
-@ stdcall -private ZwDeleteKey(long) NtDeleteKey
+@ stdcall -private -syscall ZwDeleteFile(ptr) NtDeleteFile
+@ stdcall -private -syscall ZwDeleteKey(long) NtDeleteKey
 # @ stub ZwDeleteObjectAuditAlarm
-@ stdcall -private ZwDeleteValueKey(long ptr) NtDeleteValueKey
-@ stdcall -private ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
-@ stdcall -private ZwDisplayString(ptr) NtDisplayString
-@ stdcall -private ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
-@ stdcall -private ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
+@ stdcall -private -syscall ZwDeleteValueKey(long ptr) NtDeleteValueKey
+@ stdcall -private -syscall ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
+@ stdcall -private -syscall ZwDisplayString(ptr) NtDisplayString
+@ stdcall -private -syscall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
+@ stdcall -private -syscall ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
 # @ stub ZwEnumerateBootEntries
-@ stdcall -private ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
+# @ stub ZwEnumerateBus
+@ stdcall -private -syscall ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
 # @ stub ZwEnumerateSystemEnvironmentValuesEx
-@ stdcall -private ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
+@ stdcall -private -syscall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 # @ stub ZwExtendSection
-@ stdcall -private ZwFilterToken(long long ptr ptr ptr ptr) NtFilterToken
-@ stdcall -private ZwFindAtom(ptr long ptr) NtFindAtom
-@ stdcall -private ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
-@ stdcall -private ZwFlushBuffersFileEx(long long ptr long ptr) NtFlushBuffersFileEx
-@ stdcall -private ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
-@ stdcall -private ZwFlushKey(long) NtFlushKey
-@ stdcall -private ZwFlushProcessWriteBuffers() NtFlushProcessWriteBuffers
-@ stdcall -private ZwFlushVirtualMemory(long ptr ptr ptr) NtFlushVirtualMemory
+@ stdcall -private -syscall ZwFilterToken(long long ptr ptr ptr ptr) NtFilterToken
+@ stdcall -private -syscall ZwFindAtom(ptr long ptr) NtFindAtom
+@ stdcall -private -syscall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
+@ stdcall -private -syscall ZwFlushBuffersFileEx(long long ptr long ptr) NtFlushBuffersFileEx
+@ stdcall -private -syscall ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
+@ stdcall -private -syscall ZwFlushKey(long) NtFlushKey
+@ stdcall -private -syscall ZwFlushProcessWriteBuffers() NtFlushProcessWriteBuffers
+@ stdcall -private -syscall ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
 # @ stub ZwFlushWriteBuffer
 # @ stub ZwFreeUserPhysicalPages
-@ stdcall -private ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
-@ stdcall -private ZwFsControlFile(long long ptr ptr ptr long ptr long ptr long) NtFsControlFile
-@ stdcall -private -norelay ZwGetContextThread(long ptr) NtGetContextThread
-@ stdcall -private ZwGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
+@ stdcall -private -syscall ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
+@ stdcall -private -syscall ZwFsControlFile(long long ptr ptr ptr long ptr long ptr long) NtFsControlFile
+@ stdcall -private -norelay -syscall ZwGetContextThread(long ptr) NtGetContextThread
+@ stdcall -private -syscall ZwGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
 # @ stub ZwGetDevicePowerState
-@ stdcall -private ZwGetNextProcess(ptr long long long ptr) NtGetNextProcess
-@ stdcall -private ZwGetNextThread(ptr ptr long long long ptr) NtGetNextThread
-@ stdcall -private ZwGetNlsSectionPtr(long long long ptr ptr) NtGetNlsSectionPtr
+@ stdcall -private -syscall ZwGetNextProcess(ptr long long long ptr) NtGetNextProcess
+@ stdcall -private -syscall ZwGetNextThread(ptr ptr long long long ptr) NtGetNextThread
+@ stdcall -private -syscall ZwGetNlsSectionPtr(long long long ptr ptr) NtGetNlsSectionPtr
 # @ stub ZwGetPlugPlayEvent
-@ stdcall -private ZwGetWriteWatch(long long ptr long ptr ptr ptr) NtGetWriteWatch
-@ stdcall -private ZwImpersonateAnonymousToken(long) NtImpersonateAnonymousToken
-@ stdcall -private ZwImpersonateClientOfPort(long ptr) NtImpersonateClientOfPort
+@ stdcall -private ZwGetTickCount() NtGetTickCount
+@ stdcall -private -syscall ZwGetWriteWatch(long long ptr long ptr ptr ptr) NtGetWriteWatch
+@ stdcall -private -syscall ZwImpersonateAnonymousToken(long) NtImpersonateAnonymousToken
+# @ stub ZwImpersonateClientOfPort
 # @ stub ZwImpersonateThread
-@ stdcall -private ZwInitializeNlsFiles(ptr ptr ptr) NtInitializeNlsFiles
+@ stdcall -private -syscall ZwInitializeNlsFiles(ptr ptr ptr) NtInitializeNlsFiles
 # @ stub ZwInitializeRegistry
-@ stdcall -private ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
-@ stdcall -private ZwIsProcessInJob(long long) NtIsProcessInJob
+@ stdcall -private -syscall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
+@ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
-@ stdcall -private ZwListenPort(ptr ptr) NtListenPort
-@ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
-@ stdcall -private ZwLoadKey2(ptr ptr long) NtLoadKey2
-@ stdcall -private ZwLoadKey(ptr ptr) NtLoadKey
-@ stdcall -private ZwLoadKeyEx(ptr ptr long long long long ptr ptr) NtLoadKeyEx
-@ stdcall -private ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
+@ stdcall -private -syscall ZwListenPort(ptr ptr) NtListenPort
+@ stdcall -private -syscall ZwLoadDriver(ptr) NtLoadDriver
+@ stdcall -private -syscall ZwLoadKey2(ptr ptr long) NtLoadKey2
+@ stdcall -private -syscall ZwLoadKey(ptr ptr) NtLoadKey
+@ stdcall -private -syscall ZwLoadKeyEx(ptr ptr long long long long ptr ptr) NtLoadKeyEx
+@ stdcall -private -syscall ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 # @ stub ZwLockProductActivationKeys
 # @ stub ZwLockRegistryKey
-@ stdcall -private ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
-@ stdcall -private ZwMakePermanentObject(long) NtMakePermanentObject
-@ stdcall -private ZwMakeTemporaryObject(long) NtMakeTemporaryObject
+@ stdcall -private -syscall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
+@ stdcall -private -syscall ZwMakePermanentObject(long) NtMakePermanentObject
+@ stdcall -private -syscall ZwMakeTemporaryObject(long) NtMakeTemporaryObject
 # @ stub ZwMapUserPhysicalPages
-@ stdcall -private ZwMapUserPhysicalPagesScatter() NtMapUserPhysicalPagesScatter
-@ stdcall -private ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
-@ stdcall -private ZwMapViewOfSectionEx(long long ptr ptr ptr long long ptr long) NtMapViewOfSectionEx
+# @ stub ZwMapUserPhysicalPagesScatter
+@ stdcall -private -syscall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
+@ stdcall -private -syscall ZwMapViewOfSectionEx(long long ptr ptr ptr long long ptr long) NtMapViewOfSectionEx
 # @ stub ZwModifyBootEntry
-@ stdcall -private ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
-@ stdcall -private ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
-@ stdcall -private ZwNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long) NtNotifyChangeMultipleKeys
-@ stdcall -private ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
-@ stdcall -private ZwOpenEvent(ptr long ptr) NtOpenEvent
+@ stdcall -private -syscall ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
+@ stdcall -private -syscall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
+@ stdcall -private -syscall ZwNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long) NtNotifyChangeMultipleKeys
+@ stdcall -private -syscall ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
+@ stdcall -private -syscall ZwOpenEvent(ptr long ptr) NtOpenEvent
 # @ stub ZwOpenEventPair
-@ stdcall -private ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
-@ stdcall -private ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
-@ stdcall -private ZwOpenJobObject(ptr long ptr) NtOpenJobObject
-@ stdcall -private ZwOpenKey(ptr long ptr) NtOpenKey
-@ stdcall -private ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
-@ stdcall -private ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
-@ stdcall -private ZwOpenKeyTransactedEx(ptr long ptr long long) NtOpenKeyTransactedEx
-@ stdcall -private ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
-@ stdcall -private ZwOpenMutant(ptr long ptr) NtOpenMutant
+@ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
+@ stdcall -private -syscall ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
+@ stdcall -private -syscall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
+@ stdcall -private -syscall ZwOpenKey(ptr long ptr) NtOpenKey
+@ stdcall -private -syscall ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
+@ stdcall -private -syscall ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
+@ stdcall -private -syscall ZwOpenKeyTransactedEx(ptr long ptr long long) NtOpenKeyTransactedEx
+@ stdcall -private -syscall ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
+@ stdcall -private -syscall ZwOpenMutant(ptr long ptr) NtOpenMutant
 # @ stub ZwOpenObjectAuditAlarm
-@ stdcall -private ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
-@ stdcall -private ZwOpenProcessToken(long long ptr) NtOpenProcessToken
-@ stdcall -private ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
-@ stdcall -private ZwOpenSection(ptr long ptr) NtOpenSection
-@ stdcall -private ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
-@ stdcall -private ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
-@ stdcall -private ZwOpenThread(ptr long ptr ptr) NtOpenThread
-@ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
-@ stdcall -private ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
-@ stdcall -private ZwOpenTimer(ptr long ptr) NtOpenTimer
+@ stdcall -private -syscall ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
+@ stdcall -private -syscall ZwOpenProcessToken(long long ptr) NtOpenProcessToken
+@ stdcall -private -syscall ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
+@ stdcall -private -syscall ZwOpenSection(ptr long ptr) NtOpenSection
+@ stdcall -private -syscall ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
+@ stdcall -private -syscall ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
+@ stdcall -private -syscall ZwOpenThread(ptr long ptr ptr) NtOpenThread
+@ stdcall -private -syscall ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
+@ stdcall -private -syscall ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
+@ stdcall -private -syscall ZwOpenTimer(ptr long ptr) NtOpenTimer
 # @ stub ZwPlugPlayControl
-@ stdcall -private ZwPowerInformation(long ptr long ptr long) NtPowerInformation
-@ stdcall -private ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
+@ stdcall -private -syscall ZwPowerInformation(long ptr long ptr long) NtPowerInformation
+@ stdcall -private -syscall ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
 # @ stub ZwPrivilegeObjectAuditAlarm
 # @ stub ZwPrivilegedServiceAuditAlarm
-@ stdcall -private ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
-@ stdcall -private ZwPulseEvent(long ptr) NtPulseEvent
-@ stdcall -private ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
+@ stdcall -private -syscall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
+@ stdcall -private -syscall ZwPulseEvent(long ptr) NtPulseEvent
+@ stdcall -private -syscall ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
 # @ stub ZwQueryBootEntryOrder
 # @ stub ZwQueryBootOptions
 # @ stub ZwQueryDebugFilterState
-@ stdcall -private ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
-@ stdcall -private ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
-@ stdcall -private ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
-@ stdcall -private ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
-@ stdcall -private ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
-@ stdcall -private ZwQueryEvent(long long ptr long ptr) NtQueryEvent
-@ stdcall -private ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
-@ stdcall -private ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
-@ stdcall -private ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
-@ stdcall -private ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
+@ stdcall -private -syscall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
+@ stdcall -private -syscall ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
+@ stdcall -private -syscall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
+@ stdcall -private -syscall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
+@ stdcall -private -syscall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
+@ stdcall -private -syscall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
+@ stdcall -private -syscall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
+@ stdcall -private -syscall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
+@ stdcall -private -syscall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
+@ stdcall -private -syscall ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
 # @ stub ZwQueryInformationPort
-@ stdcall -private ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
-@ stdcall -private ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
-@ stdcall -private ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
-@ stdcall -private ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
+@ stdcall -private -syscall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
+@ stdcall -private -syscall ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
+@ stdcall -private -syscall ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
+@ stdcall -private -syscall ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
 # @ stub ZwQueryIntervalProfile
-@ stdcall -private ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
-@ stdcall -private ZwQueryKey(long long ptr long ptr) NtQueryKey
-@ stdcall -private ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
-@ stdcall -private ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
-@ stdcall -private ZwQueryMutant(long long ptr long ptr) NtQueryMutant
-@ stdcall -private ZwQueryObject(long long ptr long ptr) NtQueryObject
+@ stdcall -private -syscall ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
+@ stdcall -private -syscall ZwQueryKey(long long ptr long ptr) NtQueryKey
+@ stdcall -private -syscall ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
+@ stdcall -private -syscall ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
+@ stdcall -private -syscall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
+@ stdcall -private -syscall ZwQueryObject(long long ptr long ptr) NtQueryObject
 # @ stub ZwQueryOpenSubKeys
-@ stdcall -private ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
+@ stdcall -private -syscall ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
 # @ stub ZwQueryPortInformationProcess
 # @ stub ZwQueryQuotaInformationFile
-@ stdcall -private ZwQuerySection(long long ptr long ptr) NtQuerySection
-@ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
-@ stdcall -private ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
-@ stdcall -private ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
-@ stdcall -private ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
-@ stdcall -private ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
-@ stdcall -private ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
-@ stdcall -private ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
-@ stdcall -private ZwQuerySystemTime(ptr) NtQuerySystemTime
-@ stdcall -private ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
-@ stdcall -private ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
-@ stdcall -private ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
-@ stdcall -private ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
-@ stdcall -private ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
-@ stdcall -private ZwQueueApcThread(long ptr long long long) NtQueueApcThread
-@ stdcall -private ZwQueueApcThreadEx(long long ptr long long long) NtQueueApcThreadEx
-@ stdcall -private ZwQueueApcThreadEx2(long long long ptr long long long) NtQueueApcThreadEx2
-@ stdcall -private ZwRaiseException(ptr ptr long) NtRaiseException
-@ stdcall -private ZwRaiseHardError(long long long ptr long ptr) NtRaiseHardError
-@ stdcall -private ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
-@ stdcall -private ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
-@ stdcall -private ZwReadRequestData(long ptr long ptr long ptr) NtReadRequestData
-@ stdcall -private ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
-@ stdcall -private ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
-@ stdcall -private ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
-@ stdcall -private ZwReleaseMutant(long ptr) NtReleaseMutant
-@ stdcall -private ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
-@ stdcall -private ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
-@ stdcall -private ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
-@ stdcall -private ZwRemoveProcessDebug(long long) NtRemoveProcessDebug
-@ stdcall -private ZwRenameKey(long ptr) NtRenameKey
-@ stdcall -private ZwReplaceKey(ptr long ptr) NtReplaceKey
-@ stdcall -private ZwReplyPort(long ptr) NtReplyPort
-@ stdcall -private ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
-@ stdcall -private ZwReplyWaitReceivePortEx(long ptr ptr ptr ptr) NtReplyWaitReceivePortEx
+@ stdcall -private -syscall ZwQuerySection(long long ptr long ptr) NtQuerySection
+@ stdcall -private -syscall ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
+@ stdcall -private -syscall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
+@ stdcall -private -syscall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
+@ stdcall -private -syscall ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
+@ stdcall -private -syscall ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
+@ stdcall -private -syscall ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
+@ stdcall -private -syscall ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
+@ stdcall -private -syscall ZwQuerySystemTime(ptr) NtQuerySystemTime
+@ stdcall -private -syscall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
+@ stdcall -private -syscall ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
+@ stdcall -private -syscall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
+@ stdcall -private -syscall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
+@ stdcall -private -syscall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
+@ stdcall -private -syscall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
+@ stdcall -private -syscall ZwQueueApcThreadEx(long long ptr long long long) NtQueueApcThreadEx
+@ stdcall -private -syscall ZwRaiseException(ptr ptr long) NtRaiseException
+@ stdcall -private -syscall ZwRaiseHardError(long long long ptr long ptr) NtRaiseHardError
+@ stdcall -private -syscall ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
+@ stdcall -private -syscall ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
+# @ stub ZwReadRequestData
+@ stdcall -private -syscall ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
+# @ stub ZwRegisterNewDevice
+@ stdcall -private -syscall ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
+@ stdcall -private -syscall ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
+@ stdcall -private -syscall ZwReleaseMutant(long ptr) NtReleaseMutant
+# @ stub ZwReleaseProcessMutant
+@ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
+@ stdcall -private -syscall ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
+@ stdcall -private -syscall ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
+@ stdcall -private -syscall ZwRemoveProcessDebug(long long) NtRemoveProcessDebug
+@ stdcall -private -syscall ZwRenameKey(long ptr) NtRenameKey
+@ stdcall -private -syscall ZwReplaceKey(ptr long ptr) NtReplaceKey
+# @ stub ZwReplyPort
+@ stdcall -private -syscall ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
+# @ stub ZwReplyWaitReceivePortEx
 # @ stub ZwReplyWaitReplyPort
+# @ stub ZwRequestDeviceWakeup
 # @ stub ZwRequestPort
-@ stdcall -private ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
-@ stdcall -private ZwResetEvent(long ptr) NtResetEvent
-@ stdcall -private ZwResetWriteWatch(long ptr long) NtResetWriteWatch
-@ stdcall -private ZwRestoreKey(long long long) NtRestoreKey
-@ stdcall -private ZwResumeProcess(long) NtResumeProcess
-@ stdcall -private ZwResumeThread(long ptr) NtResumeThread
-@ stdcall -private ZwRollbackTransaction(long long) NtRollbackTransaction
-@ stdcall -private ZwSaveKey(long long) NtSaveKey
+@ stdcall -private -syscall ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
+# @ stub ZwRequestWakeupLatency
+@ stdcall -private -syscall ZwResetEvent(long ptr) NtResetEvent
+@ stdcall -private -syscall ZwResetWriteWatch(long ptr long) NtResetWriteWatch
+@ stdcall -private -syscall ZwRestoreKey(long long long) NtRestoreKey
+@ stdcall -private -syscall ZwResumeProcess(long) NtResumeProcess
+@ stdcall -private -syscall ZwResumeThread(long ptr) NtResumeThread
+@ stdcall -private -syscall ZwRollbackTransaction(long long) NtRollbackTransaction
+@ stdcall -private -syscall ZwSaveKey(long long) NtSaveKey
 # @ stub ZwSaveKeyEx
 # @ stub ZwSaveMergedKeys
-@ stdcall -private ZwSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtSecureConnectPort
+@ stdcall -private -syscall ZwSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtSecureConnectPort
 # @ stub ZwSetBootEntryOrder
 # @ stub ZwSetBootOptions
-@ stdcall -private ZwSetContextThread(long ptr) NtSetContextThread
-@ stdcall -private ZwSetDebugFilterState(long long long) NtSetDebugFilterState
+@ stdcall -private -syscall ZwSetContextThread(long ptr) NtSetContextThread
+@ stdcall -private -syscall ZwSetDebugFilterState(long long long) NtSetDebugFilterState
 # @ stub ZwSetDefaultHardErrorPort
-@ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
-@ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
-@ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
-@ stdcall -private ZwSetEvent(long ptr) NtSetEvent
-@ stdcall -private ZwSetEventBoostPriority(long) NtSetEventBoostPriority
+@ stdcall -private -syscall ZwSetDefaultLocale(long long) NtSetDefaultLocale
+@ stdcall -private -syscall ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
+@ stdcall -private -syscall ZwSetEaFile(long ptr ptr long) NtSetEaFile
+@ stdcall -private -syscall ZwSetEvent(long ptr) NtSetEvent
+# @ stub ZwSetEventBoostPriority
 # @ stub ZwSetHighEventPair
 # @ stub ZwSetHighWaitLowEventPair
-@ stdcall -private ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject
-@ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
-@ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
-@ stdcall -private ZwSetInformationKey(long long ptr long) NtSetInformationKey
-@ stdcall -private ZwSetInformationObject(long long ptr long) NtSetInformationObject
-@ stdcall -private ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
-@ stdcall -private ZwSetInformationThread(long long ptr long) NtSetInformationThread
-@ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
-@ stdcall -private ZwSetInformationVirtualMemory(long long ptr ptr ptr long) NtSetInformationVirtualMemory
-@ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
-@ stdcall -private ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
-@ stdcall -private ZwSetIoCompletionEx(ptr ptr long long long long) NtSetIoCompletionEx
-@ stdcall -private ZwSetLdtEntries(long long long long long long) NtSetLdtEntries
+# @ stub ZwSetHighWaitLowThread
+@ stdcall -private -syscall ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject
+@ stdcall -private -syscall ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
+@ stdcall -private -syscall ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
+@ stdcall -private -syscall ZwSetInformationKey(long long ptr long) NtSetInformationKey
+@ stdcall -private -syscall ZwSetInformationObject(long long ptr long) NtSetInformationObject
+@ stdcall -private -syscall ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
+@ stdcall -private -syscall ZwSetInformationThread(long long ptr long) NtSetInformationThread
+@ stdcall -private -syscall ZwSetInformationToken(long long ptr long) NtSetInformationToken
+@ stdcall -private -syscall ZwSetInformationVirtualMemory(long long ptr ptr ptr long) NtSetInformationVirtualMemory
+@ stdcall -private -syscall ZwSetIntervalProfile(long long) NtSetIntervalProfile
+@ stdcall -private -syscall ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
+@ stdcall -private -syscall ZwSetIoCompletionEx(ptr ptr long long long long) NtSetIoCompletionEx
+@ stdcall -private -syscall ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
 # @ stub ZwSetLowEventPair
 # @ stub ZwSetLowWaitHighEventPair
+# @ stub ZwSetLowWaitHighThread
 # @ stub ZwSetQuotaInformationFile
-@ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
+@ stdcall -private -syscall ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 # @ stub ZwSetSystemEnvironmentValue
 # @ stub ZwSetSystemEnvironmentValueEx
-@ stdcall -private ZwSetSystemInformation(long ptr long) NtSetSystemInformation
+@ stdcall -private -syscall ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 # @ stub ZwSetSystemPowerState
-@ stdcall -private ZwSetSystemTime(ptr ptr) NtSetSystemTime
-@ stdcall -private ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
-@ stdcall -private ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
-@ stdcall -private ZwSetTimerResolution(long long ptr) NtSetTimerResolution
+@ stdcall -private -syscall ZwSetSystemTime(ptr ptr) NtSetSystemTime
+@ stdcall -private -syscall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
+@ stdcall -private -syscall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
+@ stdcall -private -syscall ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 # @ stub ZwSetUuidSeed
-@ stdcall -private ZwSetValueKey(long ptr long long ptr long) NtSetValueKey
-@ stdcall -private ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
-@ stdcall -private ZwShutdownSystem(long) NtShutdownSystem
-@ stdcall -private ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
+@ stdcall -private -syscall ZwSetValueKey(long ptr long long ptr long) NtSetValueKey
+@ stdcall -private -syscall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
+@ stdcall -private -syscall ZwShutdownSystem(long) NtShutdownSystem
+@ stdcall -private -syscall ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
 # @ stub ZwStartProfile
 # @ stub ZwStopProfile
-@ stdcall -private ZwSuspendProcess(long) NtSuspendProcess
-@ stdcall -private ZwSuspendThread(long ptr) NtSuspendThread
-@ stdcall -private ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
-@ stdcall -private ZwTerminateJobObject(long long) NtTerminateJobObject
-@ stdcall -private ZwTerminateProcess(long long) NtTerminateProcess
-@ stdcall -private ZwTerminateThread(long long) NtTerminateThread
-@ stdcall -private ZwTestAlert() NtTestAlert
-@ stdcall -private ZwTraceControl(long ptr long ptr long long) NtTraceControl
-@ stdcall -private ZwTraceEvent() NtTraceEvent
+@ stdcall -private -syscall ZwSuspendProcess(long) NtSuspendProcess
+@ stdcall -private -syscall ZwSuspendThread(long ptr) NtSuspendThread
+@ stdcall -private -syscall ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
+@ stdcall -private -syscall ZwTerminateJobObject(long long) NtTerminateJobObject
+@ stdcall -private -syscall ZwTerminateProcess(long long) NtTerminateProcess
+@ stdcall -private -syscall ZwTerminateThread(long long) NtTerminateThread
+@ stdcall -private -syscall ZwTestAlert() NtTestAlert
+@ stdcall -private -syscall ZwTraceControl(long ptr long ptr long long) NtTraceControl
+# @ stub ZwTraceEvent
 # @ stub ZwTranslateFilePath
-@ stdcall -private ZwUnloadDriver(ptr) NtUnloadDriver
-@ stdcall -private ZwUnloadKey(ptr) NtUnloadKey
+@ stdcall -private -syscall ZwUnloadDriver(ptr) NtUnloadDriver
+@ stdcall -private -syscall ZwUnloadKey(ptr) NtUnloadKey
 # @ stub ZwUnloadKeyEx
-@ stdcall -private ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
-@ stdcall -private ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
-@ stdcall -private ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
-@ stdcall -private ZwUnmapViewOfSectionEx(long ptr long) NtUnmapViewOfSectionEx
+@ stdcall -private -syscall ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
+@ stdcall -private -syscall ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
+@ stdcall -private -syscall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
+@ stdcall -private -syscall ZwUnmapViewOfSectionEx(long ptr long) NtUnmapViewOfSectionEx
 # @ stub ZwVdmControl
-@ stdcall -private ZwWaitForAlertByThreadId(ptr ptr) NtWaitForAlertByThreadId
-@ stdcall -private ZwWaitForDebugEvent(long long ptr ptr) NtWaitForDebugEvent
-@ stdcall -private ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
-@ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
-@ stdcall -private ZwWaitForMultipleObjects32() NtWaitForMultipleObjects32
-@ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
+# @ stub ZwW32Call
+@ stdcall -private -syscall ZwWaitForAlertByThreadId(ptr ptr) NtWaitForAlertByThreadId
+@ stdcall -private -syscall ZwWaitForDebugEvent(long long ptr ptr) NtWaitForDebugEvent
+@ stdcall -private -syscall ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
+@ stdcall -private -syscall ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
+# @ stub ZwWaitForProcessMutant
+@ stdcall -private -syscall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 # @ stub ZwWaitHighEventPair
 # @ stub ZwWaitLowEventPair
-@ stdcall -private ZwWorkerFactoryWorkerReady(ptr) NtWorkerFactoryWorkerReady
-@ stdcall -private -arch=win32 ZwWow64AllocateVirtualMemory64(long ptr long long ptr long long) NtWow64AllocateVirtualMemory64
-@ stdcall -private -arch=win32 ZwWow64GetNativeSystemInformation(long ptr long ptr) NtWow64GetNativeSystemInformation
-@ stdcall -private -arch=win32 ZwWow64IsProcessorFeaturePresent(long) NtWow64IsProcessorFeaturePresent
-@ stdcall -private -arch=win32 ZwWow64QueryInformationProcess64(long long ptr long ptr) NtWow64QueryInformationProcess64
-@ stdcall -private -arch=win32 ZwWow64ReadVirtualMemory64(long long long ptr long long ptr) NtWow64ReadVirtualMemory64
-@ stdcall -private -arch=win32 ZwWow64WriteVirtualMemory64(long long long ptr long long ptr) NtWow64WriteVirtualMemory64
-@ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
-@ stdcall -private ZwWriteFileGather(long long ptr ptr ptr ptr long ptr ptr) NtWriteFileGather
-@ stdcall -private ZwWriteRequestData(long ptr long ptr long ptr) NtWriteRequestData
-@ stdcall -private ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
-@ stdcall -private ZwYieldExecution() NtYieldExecution
+@ stdcall -private -syscall -arch=win32 ZwWow64AllocateVirtualMemory64(long ptr int64 ptr long long) NtWow64AllocateVirtualMemory64
+@ stdcall -private -syscall -arch=win32 ZwWow64GetNativeSystemInformation(long ptr long ptr) NtWow64GetNativeSystemInformation
+@ stdcall -private -syscall -arch=win32 ZwWow64IsProcessorFeaturePresent(long) NtWow64IsProcessorFeaturePresent
+@ stdcall -private -syscall -arch=win32 ZwWow64QueryInformationProcess64(long long ptr long ptr) NtWow64QueryInformationProcess64
+@ stdcall -private -syscall -arch=win32 ZwWow64ReadVirtualMemory64(long int64 ptr int64 ptr) NtWow64ReadVirtualMemory64
+@ stdcall -private -syscall -arch=win32 ZwWow64WriteVirtualMemory64(long int64 ptr int64 ptr) NtWow64WriteVirtualMemory64
+@ stdcall -private -syscall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
+@ stdcall -private -syscall ZwWriteFileGather(long long ptr ptr ptr ptr long ptr ptr) NtWriteFileGather
+# @ stub ZwWriteRequestData
+@ stdcall -private -syscall ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
+@ stdcall -private -syscall ZwYieldExecution() NtYieldExecution
 @ cdecl -private -arch=i386 _CIcos()
 @ cdecl -private -arch=i386 _CIlog()
 @ cdecl -private -arch=i386 _CIpow()
@@ -1780,3 +1771,7 @@
 @ cdecl wine_get_version()
 @ cdecl wine_get_build_id()
 @ cdecl wine_get_host_version(ptr ptr)
+
+# Filesystem
+@ stdcall -syscall wine_nt_to_unix_file_name(ptr ptr ptr long)
+@ stdcall -syscall wine_unix_to_nt_file_name(str ptr ptr)

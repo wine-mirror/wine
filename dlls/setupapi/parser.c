@@ -1825,17 +1825,10 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
     field = &file->fields[line->first_field + index];
     for (i = index; i < line->nb_fields; i++, field++)
     {
-        const WCHAR *p = field->text;
+        const WCHAR *p;
         DWORD value = 0;
         int d;
-
-        if (*p == '0')
-        {
-            ++p;
-            if (*p == 'X' || *p == 'x')
-                ++p;
-        }
-        for (; *p && (d = xdigit_to_int(*p)) != -1; p++)
+        for (p = field->text; *p && (d = xdigit_to_int(*p)) != -1; p++)
         {
             if ((value <<= 4) > 255)
             {

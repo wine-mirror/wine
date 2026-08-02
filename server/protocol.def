@@ -34,7 +34,6 @@
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
-typedef unsigned int d3dkmt_handle_t;
 typedef unsigned int atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
@@ -144,7 +143,7 @@ struct context_data
     union
     {
         struct { unsigned int eip, ebp, esp, eflags, cs, ss; } i386_regs;
-        struct { unsigned __int64 rip, rsp;
+        struct { unsigned __int64 rip, rbp, rsp;
                  unsigned int cs, ss, flags, __pad; } x86_64_regs;
         struct { unsigned int sp, lr, pc, cpsr; } arm_regs;
         struct { unsigned __int64 sp, pc, pstate; } arm64_regs;
@@ -152,7 +151,7 @@ struct context_data
     union
     {
         struct { unsigned int eax, ebx, ecx, edx, esi, edi; } i386_regs;
-        struct { unsigned __int64 rax, rbx, rcx, rdx, rbp, rsi, rdi,
+        struct { unsigned __int64 rax,rbx, rcx, rdx, rsi, rdi,
                                   r8, r9, r10, r11, r12, r13, r14, r15; } x86_64_regs;
         struct { unsigned int r[13]; } arm_regs;
         struct { unsigned __int64 x[31]; } arm64_regs;
@@ -267,12 +266,6 @@ struct property_data
     lparam_t       data;     /* data stored in property */
 };
 
-struct ratio
-{
-    unsigned short num;
-    unsigned short den;
-};
-
 /* structure to specify window rectangles */
 struct rectangle
 {
@@ -356,7 +349,6 @@ union hw_input
         unsigned int   flags;   /* event flags */
         unsigned int   time;    /* event time */
         lparam_t       info;    /* extra info */
-        unsigned int   raw_count; /* number of rawinput POINT in varargs */
     } mouse;
     struct
     {
@@ -515,13 +507,10 @@ enum apc_type
 struct user_apc
 {
     enum apc_type    type;     /* APC_USER */
-    unsigned int     flags;    /* SERVER_USER_APC_* flags */
+    int              __pad;
     client_ptr_t     func;     /* void (__stdcall *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR); */
     apc_param_t      args[3];  /* arguments for user function */
 };
-
-#define SERVER_USER_APC_SPECIAL               0x01
-#define SERVER_USER_APC_CALLBACK_DATA_CONTEXT 0x02
 
 union apc_call
 {
@@ -913,9 +902,8 @@ struct monitor_info
 {
     struct rectangle raw;     /* host / physical position of the monitor rect */
     struct rectangle virt;    /* client / virtual position of the monitor rect */
-    unsigned int     flags;   /* MONITOR_FLAG_* flags for the monitor */
-    struct ratio     dpi;     /* effective DPI for the monitor */
-    struct ratio     raw_dpi; /* raw DPI for the monitor */
+    unsigned int     flags;  /* MONITOR_FLAG_* flags for the monitor */
+    unsigned int     dpi;    /* physical DPI for the monitor */
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -977,29 +965,8 @@ union udp_endpoint
     } ipv6;
 };
 
-enum d3dkmt_type
-{
-    D3DKMT_ADAPTER      = 1,
-    D3DKMT_DEVICE       = 2,
-    D3DKMT_SOURCE       = 3,
-    D3DKMT_MUTEX        = 4,
-    D3DKMT_SYNC         = 5,
-    D3DKMT_RESOURCE     = 6,
-    D3DKMT_ALLOCATION   = 7,
-};
-
 /****************************************************************/
 /* shared session mapping structures */
-
-struct obj_locator
-{
-    object_id_t          id;               /* object unique id, object data is valid if != 0 */
-    mem_size_t           offset;           /* offset of the object in session shared memory */
-};
-
-#define MAX_ATOM_LEN     255
-#define WH_WINEVENT      (WH_MAXHOOK + 1)
-#define NB_HOOKS         (WH_WINEVENT - WH_MINHOOK + 1)
 
 struct shared_cursor
 {
@@ -1015,18 +982,15 @@ typedef volatile struct
     struct shared_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
     unsigned __int64     monitor_serial;   /* winstation monitor update counter */
-    unsigned __int64     keystate_serial;  /* keystate update counter */
 } desktop_shm_t;
 
 typedef volatile struct
 {
-    timeout_t            access_time;      /* last time the queue was accessed */
+    int                  hooks_count[WH_MAX - WH_MIN + 2]; /* active hooks count */
     unsigned int         wake_mask;        /* wakeup mask */
     unsigned int         wake_bits;        /* wakeup bits */
     unsigned int         changed_mask;     /* changed wakeup mask */
     unsigned int         changed_bits;     /* changed wakeup bits */
-    unsigned int         internal_bits;    /* internal queue bits */
-    int                  hooks_count[NB_HOOKS];  /* active hooks count */
 } queue_shm_t;
 
 typedef volatile struct
@@ -1043,64 +1007,13 @@ typedef volatile struct
     int                  cursor_count;     /* cursor show count */
     unsigned char        keystate[256];    /* key state */
     int                  keystate_lock;    /* keystate is locked */
-    unsigned __int64     keystate_serial;  /* keystate update counter at last sync */
 } input_shm_t;
-
-struct class_info
-{
-    atom_t               atom;               /* class atom */
-    unsigned int         style;              /* class style */
-    unsigned int         cls_extra;          /* number of class extra bytes */
-    unsigned int         win_extra;          /* number of window extra bytes */
-    user_handle_t        cursor;             /* default cursor */
-    user_handle_t        background;         /* default background */
-    user_handle_t        icon;               /* default icon */
-    user_handle_t        icon_small;         /* default cursor (small) */
-    mod_handle_t         instance;           /* module instance */
-    client_ptr_t         wndproc;            /* class window proc */
-    client_ptr_t         menu_name;          /* pointer to menu name in client address space */
-};
-
-typedef volatile struct
-{
-    data_size_t          name_offset;        /* offset in WCHAR of the unversioned class name, constant */
-    data_size_t          name_len;           /* len in bytes of the class name, constant */
-    WCHAR                name[MAX_ATOM_LEN]; /* class name, constant */
-    unsigned short       local;              /* class is local, constant */
-    struct class_info    info;               /* class info (GCLP_*) */
-    char                 extra[];            /* extra bytes storage */
-} class_shm_t;
-
-struct window_info
-{
-    lparam_t             id;               /* window id */
-    mod_handle_t         instance;         /* creator instance */
-    lparam_t             user_data;        /* user-specific data */
-    client_ptr_t         wndproc;          /* window proc */
-};
-
-typedef volatile struct
-{
-    struct obj_locator   class;            /* object locator for the window class shared object */
-    unsigned int         dpi_context;      /* DPI awareness context */
-    unsigned int         fnid;             /* builtin class FNID, or 0 */
-    unsigned int         ansi;             /* window wndproc is ansi */
-    int                  __pad;
-    struct ratio         dpi;              /* effective DPI of the window monitor */
-    struct ratio         raw_dpi;          /* raw DPI of the window monitor */
-    data_size_t          private_size;     /* length of private extra bytes range */
-    data_size_t          extra_size;       /* size of the extra info */
-    struct window_info   info;             /* window info (GWLP_*) */
-    char                 extra[];          /* extra bytes storage */
-} window_shm_t;
 
 typedef volatile union
 {
     desktop_shm_t        desktop;
     queue_shm_t          queue;
     input_shm_t          input;
-    class_shm_t          class;
-    window_shm_t         window;
 } object_shm_t;
 
 typedef volatile struct
@@ -1110,10 +1023,11 @@ typedef volatile struct
     object_shm_t         shm;              /* object shared data */
 } shared_object_t;
 
-typedef volatile struct
+struct obj_locator
 {
-    struct user_entry user_entries[MAX_USER_HANDLES];
-} session_shm_t;
+    object_id_t          id;               /* object unique id, object data is valid if != 0 */
+    mem_size_t           offset;           /* offset of the object in session shared memory */
+};
 
 /****************************************************************/
 /* Request declarations */
@@ -1157,7 +1071,6 @@ typedef volatile struct
     unsigned int access;       /* wanted access rights */
     unsigned int flags;        /* thread creation flags */
     int          request_fd;   /* fd for request pipe */
-    int          is_system;    /* system thread (kernel mode only) */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     thread_id_t  tid;          /* thread id */
@@ -1169,7 +1082,6 @@ typedef volatile struct
 @REQ(get_startup_info)
 @REPLY
     data_size_t  info_size;    /* size of startup info */
-    int          debugged;     /* being debugged? */
     unsigned short machine;    /* architecture for the new process */
     VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);   /* environment */
@@ -1180,6 +1092,7 @@ typedef volatile struct
 @REQ(init_process_done)
     client_ptr_t teb;          /* TEB of new thread (in process address space) */
     client_ptr_t peb;          /* PEB of new process (in process address space) */
+    client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
 @REPLY
     int          suspend;      /* is process suspended? */
 @END
@@ -1192,13 +1105,11 @@ typedef volatile struct
     int          debug_level;  /* new debug level */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
-    unsigned int page_size;    /* client page size */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
     timeout_t    server_start; /* server start time */
     unsigned int session_id;   /* process session id */
-    obj_handle_t inproc_device;/* inproc device fd in flight with this handle */
     data_size_t  info_size;    /* total size of startup info */
     VARARG(machines,ushorts);  /* array of supported machines */
 @END
@@ -1246,9 +1157,8 @@ typedef volatile struct
     timeout_t    end_time;         /* process end time */
     unsigned int session_id;       /* process session id */
     int          exit_code;        /* process exit code */
-    unsigned short priority;       /* priority class */
+    int          priority;         /* priority class */
     unsigned short base_priority;  /* process base priority */
-    unsigned short disable_boost;  /* disable process priority boost */
     unsigned short machine;        /* process architecture */
     VARARG(image,pe_image_info);   /* image info for main exe */
 @END
@@ -1291,18 +1201,14 @@ typedef volatile struct
 /* Set a process information */
 @REQ(set_process_info)
     obj_handle_t handle;       /* process handle */
-    affinity_t   affinity;     /* affinity mask */
-    int          priority;     /* priority class */
-    int          base_priority; /* process base priority */
-    int          disable_boost; /* disable process priority boost */
-    obj_handle_t token;        /* primary token */
     int          mask;         /* setting mask (see below) */
+    int          priority;     /* priority class */
+    affinity_t   affinity;     /* affinity mask */
+    obj_handle_t token;        /* primary token */
 @END
-#define SET_PROCESS_INFO_PRIORITY      0x01
-#define SET_PROCESS_INFO_BASE_PRIORITY 0x02
-#define SET_PROCESS_INFO_DISABLE_BOOST 0x04
-#define SET_PROCESS_INFO_AFFINITY      0x08
-#define SET_PROCESS_INFO_TOKEN         0x10
+#define SET_PROCESS_INFO_PRIORITY 0x01
+#define SET_PROCESS_INFO_AFFINITY 0x02
+#define SET_PROCESS_INFO_TOKEN    0x04
 
 
 /* Retrieve information about a thread */
@@ -1323,10 +1229,9 @@ typedef volatile struct
     data_size_t  desc_len;      /* description length in bytes */
     VARARG(desc,unicode_str);   /* description string */
 @END
-#define GET_THREAD_INFO_FLAG_DBG_HIDDEN    0x01
-#define GET_THREAD_INFO_FLAG_TERMINATED    0x02
-#define GET_THREAD_INFO_FLAG_LAST          0x04
-#define GET_THREAD_INFO_FLAG_DISABLE_BOOST 0x08
+#define GET_THREAD_INFO_FLAG_DBG_HIDDEN 0x01
+#define GET_THREAD_INFO_FLAG_TERMINATED 0x02
+#define GET_THREAD_INFO_FLAG_LAST       0x04
 
 
 /* Retrieve information about thread times */
@@ -1348,7 +1253,6 @@ typedef volatile struct
     affinity_t   affinity;     /* affinity mask */
     client_ptr_t entry_point;  /* thread entry point */
     obj_handle_t token;        /* impersonation token */
-    int          disable_boost;/* disable thread priority boost */
     unsigned int mask;         /* setting mask (see below) */
     VARARG(desc,unicode_str);  /* description string */
 @END
@@ -1359,7 +1263,6 @@ typedef volatile struct
 #define SET_THREAD_INFO_ENTRYPOINT      0x10
 #define SET_THREAD_INFO_DESCRIPTION     0x20
 #define SET_THREAD_INFO_DBG_HIDDEN      0x40
-#define SET_THREAD_INFO_DISABLE_BOOST   0x80
 
 
 /* Suspend a thread */
@@ -1381,7 +1284,6 @@ typedef volatile struct
 /* Queue an APC for a thread or process */
 @REQ(queue_apc)
     obj_handle_t handle;       /* thread or process handle */
-    obj_handle_t reserve_handle; /* APC object optional reserve handle */
     VARARG(call,apc_call);     /* call arguments */
 @REPLY
     obj_handle_t handle;       /* APC handle */
@@ -1485,9 +1387,8 @@ typedef volatile struct
     VARARG(call,apc_call);     /* APC call arguments */
     VARARG(contexts,contexts); /* suspend context(s) */
 @END
-#define SELECT_ALERTABLE           1
-#define SELECT_INTERRUPTIBLE       2
-#define SELECT_COOPERATIVE_SUSPEND 4
+#define SELECT_ALERTABLE     1
+#define SELECT_INTERRUPTIBLE 2
 
 
 /* Create an event */
@@ -1861,13 +1762,9 @@ enum server_fd_type
     mem_size_t   size;          /* mapping size */
     unsigned int flags;         /* SEC_* flags */
     obj_handle_t shared_file;   /* shared mapping file handle */
-    data_size_t  name_len;      /* length of file name  */
-    data_size_t  ver_len;       /* length of version resource  */
     data_size_t  total;         /* total required buffer size in bytes */
     VARARG(image,pe_image_info);/* image info for SEC_IMAGE mappings */
-    VARARG(version,version_res,ver_len);/* version resource for SEC_IMAGE mappings */
-    VARARG(name,unicode_str,name_len);  /* filename for SEC_IMAGE mappings */
-    VARARG(exp_name,string);    /* exported name for SEC_IMAGE mappings */
+    VARARG(name,unicode_str);   /* filename for SEC_IMAGE mappings */
 @END
 
 
@@ -1894,7 +1791,6 @@ enum server_fd_type
     obj_handle_t mapping;       /* file mapping handle */
     client_ptr_t base;          /* view base address (page-aligned) */
     mem_size_t   size;          /* view size */
-    mem_size_t   offset;        /* offset into the image */
     unsigned int entry;         /* entry point in mapped view */
     unsigned short machine;     /* machine in the mapped view */
 @END
@@ -2073,8 +1969,6 @@ struct process_info
     obj_handle_t handle;       /* process handle */
     client_ptr_t addr;         /* addr to write to */
     VARARG(data,bytes);        /* data to write */
-@REPLY
-    data_size_t written;       /* number of bytes written */
 @END
 
 
@@ -2282,6 +2176,17 @@ struct process_info
 @END
 
 
+/* Fetch a selector entry for a thread */
+@REQ(get_selector_entry)
+    obj_handle_t  handle;      /* thread handle */
+    int           entry;       /* LDT entry */
+@REPLY
+    unsigned int  base;        /* selector base */
+    unsigned int  limit;       /* selector limit */
+    unsigned char flags;       /* selector flags */
+@END
+
+
 /* Add an atom */
 @REQ(add_atom)
     VARARG(name,unicode_str);  /* atom name */
@@ -2315,28 +2220,10 @@ struct process_info
 @END
 
 
-/* Add a user atom */
-@REQ(add_user_atom)
-    VARARG(name,unicode_str);  /* atom name */
-@REPLY
-    atom_t        atom;        /* resulting atom */
-@END
-
-
-/* Get a user atom name */
-@REQ(get_user_atom_name)
-    atom_t       atom;         /* atom handle */
-@REPLY
-    data_size_t  total;        /* actual length of atom name */
-    VARARG(name,unicode_str);  /* atom name */
-@END
-
-
 /* Get a handle for the current thread message queue */
 @REQ(get_msg_queue_handle)
 @REPLY
     obj_handle_t handle;       /* handle to the queue */
-    obj_handle_t idle_event;   /* handle to the process idle event */
 @END
 
 
@@ -2357,7 +2244,7 @@ struct process_info
 @REQ(set_queue_mask)
     unsigned int wake_mask;    /* wakeup bits mask */
     unsigned int changed_mask; /* changed bits mask */
-    int          poll_events;  /* whether to poll queue fd */
+    int          skip_wait;    /* will we skip waiting if signaled? */
 @REPLY
     unsigned int wake_bits;    /* current wake bits */
     unsigned int changed_bits; /* current changed bits */
@@ -2419,7 +2306,7 @@ enum message_type
     user_handle_t   win;       /* window handle */
     union hw_input  input;     /* input data */
     unsigned int    flags;     /* flags (see below) */
-    VARARG(extra,bytes);       /* HID report data / raw input data */
+    VARARG(report,bytes);      /* HID report data */
 @REPLY
     int             wait;      /* do we need to wait for a reply? */
     int             prev_x;    /* previous cursor position */
@@ -2427,8 +2314,7 @@ enum message_type
     int             new_x;     /* new cursor position */
     int             new_y;
 @END
-#define SEND_HWMSG_INJECTED    0x01  /* message is injected from application */
-#define SEND_HWMSG_RAWINPUT    0x02  /* don't generate WM_INPUT x / y updates */
+#define SEND_HWMSG_INJECTED    0x01
 
 
 /* Get a message from the current queue */
@@ -2545,8 +2431,6 @@ enum message_type
     obj_handle_t handle;        /* handle to comm port, socket or file */
     client_ptr_t iosb;          /* I/O status block (NULL=all) */
     int          only_thread;   /* cancel matching this thread */
-@REPLY
-    obj_handle_t cancel_handle;
 @END
 
 
@@ -2647,18 +2531,18 @@ enum message_type
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
-    mod_handle_t   class_instance; /* class module instance */
     mod_handle_t   instance;    /* module instance */
     unsigned int   dpi_context; /* thread DPI context */
     unsigned int   style;       /* window style */
     unsigned int   ex_style;    /* window extended style */
-    unsigned int   ansi;        /* window created as ansi */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */
     user_handle_t  parent;      /* full handle of parent */
     user_handle_t  owner;       /* full handle of owner */
+    int            extra;       /* number of extra bytes */
     client_ptr_t   class_ptr;   /* pointer to class in client address space */
+    unsigned int   dpi_context; /* window DPI context */
 @END
 
 
@@ -2690,42 +2574,44 @@ enum message_type
 /* Get information from a window handle */
 @REQ(get_window_info)
     user_handle_t  handle;      /* handle to the window */
-    int            offset;      /* offset of the info */
-    data_size_t    size;        /* size of the info value to read */
 @REPLY
+    user_handle_t  full_handle; /* full 32-bit handle */
     user_handle_t  last_active; /* last active popup */
-    lparam_t       info;        /* current window info value */
-@END
-
-
-/* Initialize some window information */
-@REQ(init_window_info)
-    user_handle_t  handle;        /* handle to the window */
-    unsigned int   style;         /* window style */
-    unsigned int   ex_style;      /* window extended style */
-@REPLY
+    process_id_t   pid;         /* process owning the window */
+    thread_id_t    tid;         /* thread owning the window */
+    atom_t         atom;        /* class atom */
+    int            is_unicode;  /* ANSI or unicode */
+    unsigned int   dpi_context; /* window DPI context */
 @END
 
 
 /* Set some information in a window */
 @REQ(set_window_info)
+    unsigned short flags;         /* flags for fields to set (see below) */
+    short int      is_unicode;    /* ANSI or unicode */
     user_handle_t  handle;        /* handle to the window */
-    int            offset;        /* offset of the info */
-    data_size_t    size;          /* size of the info value to write */
-    lparam_t       new_info;      /* new window info value */
-    unsigned int   new_ansi;      /* new window info is ansi */
-    unsigned int   internal;      /* set internal control info */
+    unsigned int   style;         /* window style */
+    unsigned int   ex_style;      /* window extended style */
+    data_size_t    extra_size;    /* size to set in extra bytes */
+    mod_handle_t   instance;      /* creator instance */
+    lparam_t       user_data;     /* user-specific data */
+    lparam_t       extra_value;   /* value to set in extra bytes or window id */
+    int            extra_offset;  /* offset to set in extra bytes */
 @REPLY
-    lparam_t       old_info;      /* previous window info value */
-    unsigned int   old_ansi;      /* previous window info is ansi */
+    unsigned int   old_style;     /* old window style */
+    unsigned int   old_ex_style;  /* old window extended style */
+    mod_handle_t   old_instance;  /* old creator instance */
+    lparam_t       old_user_data; /* old user-specific data */
+    lparam_t       old_extra_value; /* old value in extra bytes */
+    lparam_t       old_id;        /* old window id */
 @END
-
-
-/* Set the window builtin class FNID */
-@REQ(set_window_fnid)
-    user_handle_t  handle;        /* handle to the window */
-    atom_t         atom;          /* class atom */
-@END
+#define SET_WIN_STYLE     0x01
+#define SET_WIN_EXSTYLE   0x02
+#define SET_WIN_ID        0x04
+#define SET_WIN_INSTANCE  0x08
+#define SET_WIN_USERDATA  0x10
+#define SET_WIN_EXTRA     0x20
+#define SET_WIN_UNICODE   0x40
 
 
 /* Set the parent of a window */
@@ -2735,6 +2621,7 @@ enum message_type
 @REPLY
     user_handle_t  old_parent;  /* old parent window */
     user_handle_t  full_parent; /* full handle of new parent */
+    unsigned int   dpi_context; /* new DPI context */
 @END
 
 
@@ -2776,7 +2663,7 @@ enum message_type
     user_handle_t  parent;        /* parent window */
     int            x;             /* point in parent coordinates */
     int            y;
-    struct ratio   dpi;           /* dpi for the point coordinates */
+    int            dpi;           /* dpi for the point coordinates */
 @REPLY
     int            count;         /* total count of children */
     VARARG(children,user_handles); /* children handles */
@@ -2801,6 +2688,7 @@ enum message_type
 @REQ(set_window_pos)
     unsigned short swp_flags;     /* SWP_* flags */
     unsigned short paint_flags;   /* paint flags (see below) */
+    unsigned int   monitor_dpi;   /* DPI of the window's monitor */
     user_handle_t  handle;        /* handle to the window */
     user_handle_t  previous;      /* previous window in Z order */
     struct rectangle window;      /* window rectangle (in parent coords) */
@@ -2819,7 +2707,7 @@ enum message_type
 @REQ(get_window_rectangles)
     user_handle_t  handle;        /* handle to the window */
     int            relative;      /* coords relative to (see below) */
-    struct ratio   dpi;           /* DPI to map to, or zero for per-monitor DPI */
+    int            dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
     struct rectangle window;      /* window rectangle */
     struct rectangle client;      /* client rectangle */
@@ -2853,7 +2741,7 @@ enum coords_relative
 @REQ(get_windows_offset)
     user_handle_t  from;          /* handle to the first window */
     user_handle_t  to;            /* handle to the second window */
-    struct ratio   dpi;           /* DPI to map to, or zero for per-monitor DPI */
+    int            dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
     int            x;             /* x coordinate offset */
     int            y;             /* y coordinate offset */
@@ -3145,11 +3033,10 @@ enum coords_relative
 @END
 
 
-/* Get/Set the time of the input event */
-@REQ(set_user_input_time)
-    int          set;             /* update queue input time */
+/* Get the time of the last input event */
+@REQ(get_last_input_time)
 @REPLY
-    unsigned int time;            /* time of the last session-wide user input */
+    unsigned int time;
 @END
 
 
@@ -3170,7 +3057,6 @@ enum coords_relative
 /* Set the system foreground window */
 @REQ(set_foreground_window)
     user_handle_t  handle;        /* handle to the foreground window */
-    int            internal;      /* foreground change comes from the host */
 @REPLY
     user_handle_t  previous;      /* handle to the previous foreground window */
     int            send_msg_old;  /* whether we have to send a msg to the old window */
@@ -3311,16 +3197,17 @@ enum caret_state
 
 /* Create a window class */
 @REQ(create_class)
+    int            local;          /* is it a local class? */
     atom_t         atom;           /* class atom */
-    unsigned int   fnid;           /* FNID for builtin classes, or 0 */
-    unsigned int   ansi;           /* class wndproc is ansi */
+    unsigned int   style;          /* class style */
+    mod_handle_t   instance;       /* module instance */
+    int            extra;          /* number of extra class bytes */
+    int            win_extra;      /* number of window extra bytes */
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
     data_size_t    name_offset;    /* base class name offset for specified atom */
-    VARARG(info,class_info);       /* class info */
     VARARG(name,unicode_str);      /* class name */
 @REPLY
-    struct obj_locator locator;    /* locator for the shared class object */
-    atom_t             atom;       /* resulting class atom */
+    atom_t         atom;           /* resulting class atom */
 @END
 
 
@@ -3331,30 +3218,34 @@ enum caret_state
     VARARG(name,unicode_str);      /* class name */
 @REPLY
     client_ptr_t   client_ptr;     /* pointer to class in client address space */
-    user_handle_t  background;     /* class default background */
-    client_ptr_t   menu_name;      /* pointer to menu name in client address space */
 @END
 
 
 /* Set some information in a class */
 @REQ(set_class_info)
-    user_handle_t  window;        /* handle to the window */
-    int            offset;        /* offset of the info */
-    data_size_t    size;          /* size of the info value to write */
-    lparam_t       new_info;      /* new class info value */
-    unsigned int   ansi;          /* new class info is ansi */
-@REPLY
-    lparam_t       old_info;      /* previous class info value */
-@END
-
-/* Get some information in a class */
-@REQ(get_class_info)
     user_handle_t  window;         /* handle to the window */
-    int            offset;         /* offset of the info */
-    data_size_t    size;           /* size of the info value to read */
+    unsigned int   flags;          /* flags for info to set (see below) */
+    atom_t         atom;           /* class atom */
+    unsigned int   style;          /* class style */
+    int            win_extra;      /* number of window extra bytes */
+    mod_handle_t   instance;       /* module instance */
+    int            extra_offset;   /* offset to set in extra bytes */
+    data_size_t    extra_size;     /* size to set in extra bytes */
+    lparam_t       extra_value;    /* value to set in extra bytes */
 @REPLY
-    lparam_t       info;           /* current class info value */
+    atom_t         old_atom;       /* previous class atom */
+    atom_t         base_atom;      /* base class atom */
+    mod_handle_t   old_instance;   /* previous module instance */
+    lparam_t       old_extra_value; /* old value in extra bytes */
+    unsigned int   old_style;      /* previous class style */
+    int            old_extra;      /* previous number of class extra bytes */
+    int            old_win_extra;  /* previous number of window extra bytes */
 @END
+#define SET_CLASS_ATOM      0x0001
+#define SET_CLASS_STYLE     0x0002
+#define SET_CLASS_WINEXTRA  0x0004
+#define SET_CLASS_INSTANCE  0x0008
+#define SET_CLASS_EXTRA     0x0010
 
 
 /* Open the clipboard */
@@ -3888,8 +3779,7 @@ struct handle_info
     unsigned int   session_id;    /* token session id */
     int            primary;       /* is the token primary or impersonation? */
     int            impersonation_level; /* level of impersonation */
-    int            elevation_type; /* elevation type (TokenElevation*) */
-    int            is_elevated;   /* is the token elevated as per GetTokenInformation(TokenElevation) */
+    int            elevation;     /* elevation type */
     int            group_count;   /* the number of groups the token is a member of */
     int            privilege_count; /* the number of privileges the token has */
 @END
@@ -4038,7 +3928,6 @@ struct handle_info
 
 /* Allocate an arbitrary user handle */
 @REQ(alloc_user_handle)
-    unsigned short type;          /* user object type */
 @REPLY
     user_handle_t  handle;        /* allocated handle */
 @END
@@ -4046,7 +3935,6 @@ struct handle_info
 
 /* Free an arbitrary user handle */
 @REQ(free_user_handle)
-    unsigned short type;          /* user object type */
     user_handle_t  handle;        /* handle to free*/
 @END
 
@@ -4176,7 +4064,7 @@ struct handle_info
     obj_handle_t handle;       /* process handle */
 @END
 
-/* Iterate processes using global process list */
+/* Itererate processes using global process list */
 @REQ(get_next_process)
     obj_handle_t last;         /* process handle to start with */
     unsigned int access;       /* desired access for returned handle */
@@ -4205,131 +4093,4 @@ struct handle_info
     int period;                /* auto-repeat period in ms */
 @REPLY
     int enable;                /* previous state of auto-repeat enable */
-@END
-
-
-enum inproc_sync_type
-{
-    INPROC_SYNC_UNKNOWN   = 0,
-    INPROC_SYNC_INTERNAL  = 1,
-    INPROC_SYNC_EVENT     = 2,
-    INPROC_SYNC_MUTEX     = 3,
-    INPROC_SYNC_SEMAPHORE = 4,
-};
-
-/* Get the in-process synchronization fd associated with the waitable handle */
-@REQ(get_inproc_sync_fd)
-    obj_handle_t handle;        /* handle to the object */
-@REPLY
-    int           type;         /* inproc sync type */
-    unsigned int access;        /* handle access rights */
-@END
-
-
-/* Get the in-process synchronization fd for the current thread user APC alerts */
-@REQ(get_inproc_alert_fd)
-@REPLY
-    obj_handle_t handle;        /* alert fd is in flight with this handle */
-@END
-
-
-/* Create a global d3dkmt object */
-@REQ(d3dkmt_object_create)
-    unsigned int        type;           /* d3dkmt object type */
-    int                 fd;             /* host specific fd */
-    unsigned int        value;          /* initial value for keyed mutex */
-    VARARG(runtime,bytes);              /* client runtime data */
-@REPLY
-    d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    obj_handle_t        handle;         /* internal handle of the server object */
-@END
-
-
-/* Update a global/shared d3dkmt object runtime data */
-@REQ(d3dkmt_object_update)
-    unsigned int        type;           /* d3dkmt object type */
-    d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    VARARG(runtime,bytes);              /* client runtime data */
-@END
-
-
-/* Query a global/shared d3dkmt object */
-@REQ(d3dkmt_object_query)
-    unsigned int        type;           /* d3dkmt object type */
-    d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    obj_handle_t        handle;         /* shared object handle */
-@REPLY
-    data_size_t         runtime_size;   /* size of client runtime data */
-@END
-
-
-/* Open a global/shared d3dkmt object */
-@REQ(d3dkmt_object_open)
-    unsigned int        type;           /* d3dkmt object type */
-    d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    obj_handle_t        handle;         /* shared object handle */
-@REPLY
-    d3dkmt_handle_t     global;         /* global d3dkmt handle */
-    obj_handle_t        handle;         /* internal handle of the server object */
-    data_size_t         runtime_size;   /* size of client runtime data */
-    VARARG(runtime,bytes);              /* client runtime data */
-@END
-
-
-/* Share d3dkmt objects together */
-@REQ(d3dkmt_share_objects)
-    d3dkmt_handle_t     resource;       /* resource global handle */
-    d3dkmt_handle_t     mutex;          /* mutex global handle */
-    d3dkmt_handle_t     sync;           /* sync global handle */
-    unsigned int        access;         /* wanted access rights */
-    VARARG(objattr,object_attributes);  /* object attributes */
-@REPLY
-    obj_handle_t        handle;         /* shared object handle */
-@END
-
-
-/* Open a shared d3dkmt object from a name */
-@REQ(d3dkmt_object_open_name)
-    unsigned int        type;           /* d3dkmt object type */
-    unsigned int        access;         /* wanted access rights */
-    unsigned int        attributes;     /* object attributes */
-    obj_handle_t        rootdir;        /* root directory */
-    VARARG(name,unicode_str);           /* object name */
-@REPLY
-    obj_handle_t        handle;         /* shared object handle */
-@END
-
-
-/* Acquire a global d3dkmt keyed mutex */
-@REQ(d3dkmt_mutex_acquire)
-    d3dkmt_handle_t     mutex;          /* mutex global handle */
-    unsigned int        key_value;      /* the key to acquire/wait for */
-    obj_handle_t        wait_handle;    /* previously returned wait handle */
-    unsigned int        wait_status;    /* status returned from previous wait */
-@REPLY
-    unsigned __int64    fence_value;    /* semaphore fence value */
-    data_size_t         runtime_size;   /* size of client runtime data */
-    obj_handle_t        wait_handle;    /* wait handle for pending acquire */
-    VARARG(runtime,bytes);              /* client runtime data */
-@END
-
-
-/* Release a global d3dkmt keyed mutex */
-@REQ(d3dkmt_mutex_release)
-    d3dkmt_handle_t     mutex;          /* mutex global handle */
-    int                 abandon;        /* mutex is being abandonned */
-    unsigned int        key_value;      /* the key to release */
-    unsigned __int64    fence_value;    /* semaphore fence value */
-    data_size_t         runtime_size;   /* size of client runtime data */
-    VARARG(runtime,bytes);              /* client runtime data */
-@END
-
-
-/* Create a new ALPC object */
-@REQ(alpc_create_port)
-    unsigned int        flags;          /* flags in port attributes */
-    mem_size_t          max_msg_len;    /* max message length in port attributes */
-    VARARG(obj_attr,object_attributes); /* object attributes */
-@REPLY
-    obj_handle_t        handle;         /* handle to the ALPC port */
 @END

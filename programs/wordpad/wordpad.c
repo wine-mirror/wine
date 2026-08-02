@@ -765,7 +765,7 @@ static void preview_exit(HWND hMainWnd)
     HWND hEditorWnd = GetDlgItem(hMainWnd, IDC_EDITOR);
 
     set_bar_states();
-    ShowWindow(hEditorWnd, SW_SHOW);
+    ShowWindow(hEditorWnd, TRUE);
 
     close_preview(hMainWnd);
 
@@ -2249,7 +2249,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
             barState[index] = 1 << BANDID_STATUSBAR;
             set_bar_states();
             barState[index] = tmp;
-            ShowWindow(hEditorWnd, SW_HIDE);
+            ShowWindow(hEditorWnd, FALSE);
 
             init_preview(hWnd, wszFileName);
 
@@ -2774,7 +2774,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     HWND hRulerWnd;
     POINTL EditPoint;
     DWORD bMaximized;
-    WINDOWPLACEMENT wp;
+    MONITORINFO info;
+    HMONITOR monitor;
+    int x, y;
 
     InitCommonControlsEx(&classes);
 
@@ -2809,24 +2811,23 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     RegisterClassExW(&wc);
 
     registry_read_winrect(&rc);
-    registry_read_maximized(&bMaximized);
+    monitor = MonitorFromRect(&rc, MONITOR_DEFAULTTOPRIMARY);
+    info.cbSize = sizeof(info);
+    GetMonitorInfoW(monitor, &info);
+
+    x = rc.left;
+    y = rc.top;
+    IntersectRect(&info.rcWork, &info.rcWork, &rc);
+    if (IsRectEmpty(&info.rcWork))
+        x = y = CW_USEDEFAULT;
 
     hMainWnd = CreateWindowExW(0, L"WORDPADTOP", L"Wine Wordpad", WS_CLIPCHILDREN|WS_OVERLAPPEDWINDOW,
-                               CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
-                               NULL, NULL, hInstance, NULL);
+            x, y, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
+    registry_read_maximized(&bMaximized);
     if ((nCmdShow == SW_SHOWNORMAL || nCmdShow == SW_SHOWDEFAULT)
 	     && bMaximized)
         nCmdShow = SW_SHOWMAXIMIZED;
-
-    wp.length = sizeof(wp);
-    wp.flags = 0;
-    wp.showCmd = nCmdShow;
-    wp.ptMinPosition.x = -1;
-    wp.ptMinPosition.y = -1;
-    wp.ptMaxPosition.x = -1;
-    wp.ptMaxPosition.y = -1;
-    wp.rcNormalPosition = rc;
-    SetWindowPlacement(hMainWnd, &wp);
+    ShowWindow(hMainWnd, nCmdShow);
 
     set_caption(NULL);
     set_bar_states();

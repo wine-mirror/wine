@@ -77,7 +77,7 @@
 @ stub PSFormatPropertyValue
 @ stub PSGetItemPropertyHandler
 @ stub PSGetItemPropertyHandlerWithCreateObject
-@ stdcall PSGetNameFromPropertyKey(ptr ptr)
+@ stub PSGetNameFromPropertyKey
 @ stub PSGetNamedPropertyFromPropertyStorage
 @ stdcall PSGetPropertyDescription(ptr ptr ptr)
 @ stub PSGetPropertyDescriptionByName
@@ -116,7 +116,7 @@
 @ stub PropVariantToDoubleVector
 @ stub PropVariantToDoubleVectorAlloc
 @ stub PropVariantToDoubleWithDefault
-@ stdcall PropVariantToFileTime(ptr long ptr)
+@ stub PropVariantToFileTime
 @ stub PropVariantToFileTimeVector
 @ stub PropVariantToFileTimeVectorAlloc
 @ stdcall PropVariantToGUID(ptr ptr)
@@ -143,7 +143,7 @@
 @ stub PropVariantToUInt16VectorAlloc
 @ stub PropVariantToUInt16WithDefault
 @ stdcall PropVariantToUInt32(ptr ptr)
-@ stdcall PropVariantToUInt32Vector(ptr ptr long ptr)
+@ stub PropVariantToUInt32Vector
 @ stub PropVariantToUInt32VectorAlloc
 @ stdcall PropVariantToUInt32WithDefault(ptr long)
 @ stdcall PropVariantToUInt64(ptr ptr)

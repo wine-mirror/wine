@@ -22,6 +22,7 @@
 #include "commctrl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
@@ -84,7 +85,7 @@ static ULONG WINAPI Window_Release(IAccessible *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref)
-        free(This);
+        heap_free(This);
     return ref;
 }
 
@@ -504,7 +505,7 @@ HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
     if(!IsWindow(hwnd))
         return E_FAIL;
 
-    window = calloc(1, sizeof(Window));
+    window = heap_alloc_zero(sizeof(Window));
     if(!window)
         return E_OUTOFMEMORY;
 

@@ -203,8 +203,6 @@ done:
 typedef struct
 {
     IDispatch IDispatch_iface;
-    IUnknown IUnknown_inner;
-    IUnknown *outer_unk;
     void * pvThis;
     ITypeInfo * pTypeInfo;
     LONG ref;
@@ -215,27 +213,65 @@ static inline StdDispatch *impl_from_IDispatch(IDispatch *iface)
     return CONTAINING_RECORD(iface, StdDispatch, IDispatch_iface);
 }
 
-static inline StdDispatch *impl_from_IUnknown(IUnknown *iface)
+/******************************************************************************
+ * IDispatch_QueryInterface {OLEAUT32}
+ *
+ * See IUnknown_QueryInterface.
+ */
+static HRESULT WINAPI StdDispatch_QueryInterface(
+  LPDISPATCH iface,
+  REFIID riid,
+  void** ppvObject)
 {
-    return CONTAINING_RECORD(iface, StdDispatch, IUnknown_inner);
+    StdDispatch *This = impl_from_IDispatch(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    if (IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObject = iface;
+        IDispatch_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI StdDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **obj)
+/******************************************************************************
+ * IDispatch_AddRef {OLEAUT32}
+ *
+ * See IUnknown_AddRef.
+ */
+static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
 {
-    StdDispatch *dispatch = impl_from_IDispatch(iface);
-    return IUnknown_QueryInterface(dispatch->outer_unk, riid, obj);
+    StdDispatch *This = impl_from_IDispatch(iface);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("%p, refcount %lu.\n", iface, refCount);
+
+    return refCount;
 }
 
-static ULONG WINAPI StdDispatch_AddRef(IDispatch *iface)
+/******************************************************************************
+ * IDispatch_Release {OLEAUT32}
+ *
+ * See IUnknown_Release.
+ */
+static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
 {
-    StdDispatch *dispatch = impl_from_IDispatch(iface);
-    return IUnknown_AddRef(dispatch->outer_unk);
-}
+    StdDispatch *This = impl_from_IDispatch(iface);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-static ULONG WINAPI StdDispatch_Release(IDispatch *iface)
-{
-    StdDispatch *dispatch = impl_from_IDispatch(iface);
-    return IUnknown_Release(dispatch->outer_unk);
+    TRACE("%p, refcount %lu.\n", iface, refCount);
+
+    if (!refCount)
+    {
+        ITypeInfo_Release(This->pTypeInfo);
+        CoTaskMemFree(This);
+    }
+
+    return refCount;
 }
 
 /******************************************************************************
@@ -386,66 +422,17 @@ static const IDispatchVtbl StdDispatch_VTable =
   StdDispatch_Invoke
 };
 
-static HRESULT WINAPI std_dispatch_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
-{
-    StdDispatch *dispatch = impl_from_IUnknown(iface);
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-    {
-        *obj = iface;
-    }
-    else if (IsEqualIID(riid, &IID_IDispatch))
-    {
-        *obj = &dispatch->IDispatch_iface;
-    }
-    else
-    {
-        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-        *obj = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*obj);
-    return S_OK;
-}
-
-static ULONG WINAPI std_dispatch_inner_AddRef(IUnknown *iface)
-{
-    StdDispatch *dispatch = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedIncrement(&dispatch->ref);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    return refcount;
-}
-
-static ULONG WINAPI std_dispatch_inner_Release(IUnknown *iface)
-{
-    StdDispatch *dispatch = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedDecrement(&dispatch->ref);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    if (!refcount)
-    {
-        ITypeInfo_Release(dispatch->pTypeInfo);
-        CoTaskMemFree(dispatch);
-    }
-
-    return refcount;
-}
-
-static const IUnknownVtbl std_dispatch_inner_vtbl =
-{
-    std_dispatch_inner_QueryInterface,
-    std_dispatch_inner_AddRef,
-    std_dispatch_inner_Release,
-};
-
 /******************************************************************************
  * CreateStdDispatch [OLEAUT32.32]
+ *
+ * Create and return a standard IDispatch object.
+ *
+ * RETURNS
+ *  Success: S_OK. ppunkStdDisp contains the new object.
+ *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  Outer unknown appears to be completely ignored.
  */
 HRESULT WINAPI CreateStdDispatch(
         IUnknown* punkOuter,
@@ -465,14 +452,14 @@ HRESULT WINAPI CreateStdDispatch(
         return E_OUTOFMEMORY;
 
     pStdDispatch->IDispatch_iface.lpVtbl = &StdDispatch_VTable;
-    pStdDispatch->IUnknown_inner.lpVtbl = &std_dispatch_inner_vtbl;
-    pStdDispatch->outer_unk = punkOuter ? punkOuter : &pStdDispatch->IUnknown_inner;
-    pStdDispatch->ref = 1;
     pStdDispatch->pvThis = pvThis;
     pStdDispatch->pTypeInfo = ptinfo;
-    ITypeInfo_AddRef(ptinfo);
+    pStdDispatch->ref = 1;
 
-    *stddisp = &pStdDispatch->IUnknown_inner;
+    /* we keep a reference to the type info so prevent it from
+     * being destroyed until we are done with it */
+    ITypeInfo_AddRef(ptinfo);
+    *stddisp = (IUnknown*)&pStdDispatch->IDispatch_iface;
 
     return S_OK;
 }

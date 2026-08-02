@@ -31,6 +31,7 @@
 #include "controls.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 
@@ -123,16 +124,6 @@ static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 
 static LRESULT LISTBOX_GetItemRect( const LB_DESCR *descr, INT index, RECT *rect );
 
-static LB_DESCR *get_control_state( HWND hwnd )
-{
-    return (LB_DESCR *)NtUserGetPrivateData( hwnd, 0, sizeof(LB_DESCR *) );
-}
-
-static LB_DESCR *set_control_state( HWND hwnd, LB_DESCR *state )
-{
-    return (LB_DESCR *)NtUserSetPrivateData( hwnd, 0, sizeof(LB_DESCR *), (LONG_PTR)state );
-}
-
 /*
    For listboxes without LBS_NODATA, an array of LB_ITEMDATA is allocated
    to store the states of each item into descr->u.items.
@@ -158,7 +149,7 @@ static BOOL resize_storage(LB_DESCR *descr, UINT items_size)
         items_size = (items_size + LB_ARRAY_GRANULARITY - 1) & ~(LB_ARRAY_GRANULARITY - 1);
         if ((descr->style & (LBS_NODATA | LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) != LBS_NODATA)
         {
-            items = realloc(descr->u.items, items_size * get_sizeof_item(descr));
+            items = heap_realloc(descr->u.items, items_size * get_sizeof_item(descr));
             if (!items)
             {
                 SEND_NOTIFICATION(descr, LBN_ERRSPACE);
@@ -467,31 +458,18 @@ static void LISTBOX_UpdateSize( LB_DESCR *descr )
     descr->height = rect.bottom - rect.top;
     if (!(descr->style & LBS_NOINTEGRALHEIGHT) && !(descr->style & LBS_OWNERDRAWVARIABLE))
     {
-        int height = descr->height;
         INT remaining;
         RECT rect;
 
-        /* The whole point of integral height is to ensure that partial items
-         * aren't displayed. Native seems to fail to take the horizontal
-         * scrollbar into account (while successfully taking into account e.g.
-         * WS_EX_CLIENTEDGE), so it ends up obscuring partial items anyway.
-         *
-         * It's not clear if native is trying to work from
-         * the window rect as opposed to the client rect [and badly
-         * reimplementing AdjustWindowRect()] or poorly working around the case
-         * where the horizontal scrollbar is repeatedly toggled (which could
-         * unnecessarily shrink the scrollbar every time it happens). */
-        if (GetWindowLongW( descr->self, GWL_STYLE ) & WS_HSCROLL)
-            height += GetSystemMetrics( SM_CYHSCROLL );
-
         GetWindowRect( descr->self, &rect );
         if(descr->item_height != 0)
-            remaining = height % descr->item_height;
+            remaining = descr->height % descr->item_height;
         else
             remaining = 0;
-        if ((height > descr->item_height) && remaining)
+        if ((descr->height > descr->item_height) && remaining)
         {
-            TRACE( "[%p]: changing height %d -> %d\n", descr->self, height, height - remaining );
+            TRACE("[%p]: changing height %d -> %d\n",
+                  descr->self, descr->height, descr->height - remaining );
             NtUserSetWindowPos( descr->self, 0, 0, 0, rect.right - rect.left,
                                 rect.bottom - rect.top - remaining,
                                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
@@ -1811,7 +1789,7 @@ static void LISTBOX_ResetContent( LB_DESCR *descr )
 
     if (!(descr->style & LBS_NODATA))
         for (i = descr->nb_items - 1; i >= 0; i--) LISTBOX_DeleteItem(descr, i);
-    free( descr->u.items );
+    HeapFree( GetProcessHeap(), 0, descr->u.items );
     descr->nb_items      = 0;
     descr->top_item      = 0;
     descr->selected_item = -1;
@@ -2611,7 +2589,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
         descr->owner = lphc->self;
     }
 
-    set_control_state( descr->self, descr );
+    SetWindowLongPtrW( descr->self, 0, (LONG_PTR)descr );
 
 /*    if (wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) descr->style &= ~LBS_NOTIFY;
  */
@@ -2656,7 +2634,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 {
     LISTBOX_ResetContent( descr );
-    set_control_state( descr->self, NULL );
+    SetWindowLongPtrW( descr->self, 0, 0 );
     HeapFree( GetProcessHeap(), 0, descr );
     return TRUE;
 }
@@ -2667,11 +2645,9 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
  */
 LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
-    LB_DESCR *descr = get_control_state( hwnd );
+    LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
     HEADCOMBO *lphc = NULL;
     LRESULT ret;
-
-    if (msg == WM_CREATE || msg == WM_NCCREATE) NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_LISTBOX) );
 
     if (!descr)
     {
@@ -2682,7 +2658,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	    CREATESTRUCTW *lpcs = (CREATESTRUCTW *)lParam;
             if (lpcs->style & LBS_COMBOBOX) lphc = lpcs->lpCreateParams;
             if (!LISTBOX_Create( hwnd, lphc )) return -1;
-            TRACE("creating hwnd %p descr %p\n", hwnd, get_control_state( hwnd ) );
+            TRACE("creating hwnd %p descr %p\n", hwnd, (void *)GetWindowLongPtrW( hwnd, 0 ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */

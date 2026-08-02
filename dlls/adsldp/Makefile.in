@@ -1,6 +1,6 @@
 MODULE    = adsldp.dll
 IMPORTS   = ole32 oleaut32 secur32 activeds uuid
-DELAYIMPORTS = wldap32
+DELAYIMPORTS = netapi32 wldap32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

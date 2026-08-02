@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "gdi_private.h"
 #include "ntuser.h"
 #include "winreg.h"

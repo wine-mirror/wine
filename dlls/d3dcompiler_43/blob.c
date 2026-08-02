@@ -214,7 +214,7 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
     return add;
 }
 
-static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UINT part, UINT flags, ID3DBlob **blob)
+static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
 {
     const struct vkd3d_shader_code src_dxbc = {.code = data, .size = data_size};
     struct vkd3d_shader_dxbc_section_desc *sections;
@@ -230,8 +230,8 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UIN
         return D3DERR_INVALIDCALL;
     }
 
-    if (part > D3D_BLOB_TEST_COMPILE_REPORT
-            || (part < D3D_BLOB_TEST_ALTERNATE_SHADER && part > D3D_BLOB_DEBUG_NAME))
+    if (part > D3D_BLOB_TEST_COMPILE_PERF
+            || (part < D3D_BLOB_TEST_ALTERNATE_SHADER && part > D3D_BLOB_XNA_SHADER))
     {
         WARN("Invalid D3D_BLOB_PART: part %s\n", debug_d3dcompiler_d3d_blob_part(part));
         return D3DERR_INVALIDCALL;
@@ -299,7 +299,7 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UIN
     {
         dst_dxbc = sections[0].data;
     }
-    else if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL)) < 0)
+    else if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL) < 0))
     {
         WARN("Failed to serialise DXBC, ret %d.\n", ret);
         hr = E_FAIL;
@@ -390,7 +390,7 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
             sections[section_count++] = *src_section;
     }
 
-    if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL)) < 0)
+    if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL) < 0))
     {
         WARN("Failed to serialise DXBC, ret %d.\n", ret);
         hr = E_FAIL;

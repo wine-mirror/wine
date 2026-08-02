@@ -1,6 +1,5 @@
 MODULE    = dplay.dll
 IMPORTS   = dplayx
 
-VER_FILEDESCRIPTION_STR = "Wine DirectPlay"
-VER_PRODUCTVERSION      = 5,3,0,900
-VER_OLESELFREGISTER     = 1
+SOURCES = \
+	version.rc

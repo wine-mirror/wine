@@ -1,0 +1,3 @@
+[submodule "dxvk-uwp"]
+	path = dxvk-uwp
+	url = git@github.com:Rosentti/dxvk-uwp.git

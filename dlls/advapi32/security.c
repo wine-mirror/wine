@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -276,8 +277,7 @@ GetEffectiveRightsFromAclW( PACL pacl, PTRUSTEEW pTrustee, PACCESS_MASK pAccessR
 {
     FIXME("%p %p %p - stub\n", pacl, pTrustee, pAccessRights);
 
-    *pAccessRights = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-    return 0;
+    return 1;
 }
 
 /*	##############################################
@@ -3190,15 +3190,6 @@ BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE handle, SAFER_OBJECT_INF
 }
 
 /******************************************************************************
- * SaferiIsExecutableFileType   [ADVAPI32.@]
- */
-BOOL WINAPI SaferiIsExecutableFileType(const WCHAR *path, BOOLEAN shell_execute)
-{
-    FIXME("(%s, %u) stub\n", debugstr_w(path), shell_execute);
-    return FALSE;
-}
-
-/******************************************************************************
  * LookupSecurityDescriptorPartsA   [ADVAPI32.@]
  */
 DWORD WINAPI LookupSecurityDescriptorPartsA(TRUSTEEA *owner, TRUSTEEA *group, ULONG *access_count,
@@ -3220,15 +3211,4 @@ DWORD WINAPI LookupSecurityDescriptorPartsW(TRUSTEEW *owner, TRUSTEEW *group, UL
     FIXME("(%p %p %p %p %p %p %p) stub\n", owner, group, access_count,
           access_list, audit_count, audit_list, descriptor);
     return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- * AddConditionalAce [ADVAPI32.@]
- */
-BOOL WINAPI AddConditionalAce(PACL acl, DWORD ace_revision, DWORD ace_flags, UCHAR ace_type,
-                               DWORD access_mask, PSID sid, PWCHAR condition, DWORD *length)
-{
-    FIXME("(%p %lx %lx %x %lx %p %s %p) stub\n", acl, ace_revision, ace_flags, ace_type,
-           access_mask, sid, debugstr_w(condition), length);
-    return FALSE;
 }

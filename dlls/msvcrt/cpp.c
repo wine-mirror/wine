@@ -53,18 +53,6 @@ extern const vtable_ptr bad_cast_vtable;
 extern const vtable_ptr __non_rtti_object_vtable;
 extern const vtable_ptr type_info_vtable;
 
-#ifdef RTTI_USE_RVA
-static inline void *rtti_rva( unsigned int rva, uintptr_t base )
-{
-    return (void *)(base + rva);
-}
-#else
-static inline void *rtti_rva( const void *ptr, uintptr_t base )
-{
-    return (void *)ptr;
-}
-#endif
-
 /* get the vtable pointer for a C++ object */
 static inline const vtable_ptr *get_vtable( void *obj )
 {
@@ -80,12 +68,9 @@ static inline const rtti_object_locator *get_obj_locator( void *cppobj )
 static uintptr_t get_obj_locator_base( const rtti_object_locator *ptr )
 {
 #ifdef RTTI_USE_RVA
-    void *base;
     if (ptr->signature) return (uintptr_t)ptr - ptr->object_locator;
-    return (uintptr_t)RtlPcToFileHeader( (void *)ptr, &base );
-#else
-    return 0;
 #endif
+    return rtti_rva_base( ptr );
 }
 
 static void dump_obj_locator( const rtti_object_locator *ptr )
@@ -566,43 +551,46 @@ __ASM_VTABLE(__non_rtti_object,
 __ASM_BLOCK_END
 
 #if _MSVCR_VER >= 80
-DEFINE_RTTI_DATA( exception_old, 0, ".?AVexception@@" )
-DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@std@@", exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@std@@", exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@std@@", bad_typeid_rtti_base_descriptor, exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_alloc, 0, ".?AVbad_alloc@std@@", exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA0( exception_old, 0, ".?AVexception@@" )
+DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@std@@" )
+DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@" )
+DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@std@@" )
+DEFINE_RTTI_DATA1( bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@" )
 #else
-DEFINE_RTTI_DATA( bad_typeid, 0, ".?AVbad_typeid@@", exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( bad_cast, 0, ".?AVbad_cast@@", exception_rtti_base_descriptor )
-DEFINE_RTTI_DATA( __non_rtti_object, 0, ".?AV__non_rtti_object@@", bad_typeid_rtti_base_descriptor, exception_rtti_base_descriptor )
+DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" )
+DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" )
+DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" )
 #endif
 
-DEFINE_CXX_TYPE( exception, exception_dtor )
-DEFINE_CXX_TYPE( bad_typeid, bad_typeid_dtor, exception_cxx_type_info )
-DEFINE_CXX_TYPE( bad_cast, bad_cast_dtor, exception_cxx_type_info )
-DEFINE_CXX_TYPE( __non_rtti_object, __non_rtti_object_dtor, bad_typeid_cxx_type_info, exception_cxx_type_info )
+DEFINE_CXX_DATA0( exception, exception_dtor )
+DEFINE_CXX_DATA1( bad_typeid, &exception_cxx_type_info, bad_typeid_dtor )
+DEFINE_CXX_DATA1( bad_cast, &exception_cxx_type_info, bad_cast_dtor )
+DEFINE_CXX_DATA2( __non_rtti_object, &bad_typeid_cxx_type_info,
+        &exception_cxx_type_info, __non_rtti_object_dtor )
 #if _MSVCR_VER >= 80
-DEFINE_CXX_TYPE( bad_alloc, bad_alloc_dtor, exception_cxx_type_info )
+DEFINE_CXX_DATA1( bad_alloc, &exception_cxx_type_info, bad_alloc_dtor )
 #endif
 
 void msvcrt_init_exception(void *base)
 {
-    INIT_RTTI(type_info, base);
-    INIT_RTTI(exception, base);
+#ifdef RTTI_USE_RVA
+    init_type_info_rtti(base);
+    init_exception_rtti(base);
 #if _MSVCR_VER >= 80
-    INIT_RTTI(exception_old, base);
-    INIT_RTTI(bad_alloc, base);
+    init_exception_old_rtti(base);
+    init_bad_alloc_rtti(base);
 #endif
-    INIT_RTTI(bad_typeid, base);
-    INIT_RTTI(bad_cast, base);
-    INIT_RTTI(__non_rtti_object, base);
+    init_bad_typeid_rtti(base);
+    init_bad_cast_rtti(base);
+    init___non_rtti_object_rtti(base);
 
-    INIT_CXX_TYPE(exception, base);
-    INIT_CXX_TYPE(bad_typeid, base);
-    INIT_CXX_TYPE(bad_cast, base);
-    INIT_CXX_TYPE(__non_rtti_object, base);
+    init_exception_cxx(base);
+    init_bad_typeid_cxx(base);
+    init_bad_cast_cxx(base);
+    init___non_rtti_object_cxx(base);
 #if _MSVCR_VER >= 80
-    INIT_CXX_TYPE(bad_alloc, base);
+    init_bad_alloc_cxx(base);
+#endif
 #endif
 }
 
@@ -903,20 +891,10 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[CXX_EXCEPTION_PARAMS];
 
-    if (type && type->flags & TYPE_FLAG_WINRT)
-    {
-        /* This is a WinRT exception, which contains a pointer to winrt_exception_info just before the object.
-         * We use the exception_type field inside that struct as the actual value for exception type. */
-         winrt_exception_info **info = *(winrt_exception_info ***)object - 1;
-
-         type = (*info)->exception_type;
-         (*info)->set_exception_info( info );
-    }
-
     args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
-    if (CXX_EXCEPTION_PARAMS == 4) args[3] = cxx_rva_base( type );
+    if (CXX_EXCEPTION_PARAMS == 4) args[3] = rtti_rva_base( type );
     for (;;) RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, CXX_EXCEPTION_PARAMS, args );
 }
 
@@ -940,13 +918,13 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         {
             const cxx_exception_type *et = (cxx_exception_type*)rec->ExceptionInformation[2];
             uintptr_t base = (CXX_EXCEPTION_PARAMS == 4) ? rec->ExceptionInformation[3] : 0;
-            const cxx_type_info_table *tit = cxx_rva( et->type_info_table, base );
+            const cxx_type_info_table *tit = rtti_rva( et->type_info_table, base );
             int i;
 
             for (i=0; i<tit->count; i++)
             {
-                const cxx_type_info *cti = cxx_rva( tit->info[i], base );
-                const type_info *except_ti = cxx_rva( cti->type_info, base );
+                const cxx_type_info *cti = rtti_rva( tit->info[i], base );
+                const type_info *except_ti = rtti_rva( cti->type_info, base );
                 if (ti==except_ti || !strcmp(ti->mangled, except_ti->mangled))
                 {
                     ret = 1;
@@ -959,8 +937,6 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         }
     }
     __EXCEPT_PAGE_FAULT
-    {
-    }
     __ENDTRY
 
     if(ret == -1)

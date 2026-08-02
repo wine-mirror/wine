@@ -22,7 +22,6 @@
 #define __WINE_SERVER_OBJECT_H
 
 #include <poll.h>
-#include <stdbool.h>
 #include <sys/time.h>
 #include "wine/server_protocol.h"
 #include "wine/list.h"
@@ -81,12 +80,10 @@ struct object_ops
     int  (*signaled)(struct object *,struct wait_queue_entry *);
     /* wait satisfied */
     void (*satisfied)(struct object *,struct wait_queue_entry *);
-    /* signal/reset an object */
-    int  (*signal)(struct object *,unsigned int,int);
+    /* signal an object */
+    int  (*signal)(struct object *, unsigned int);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
-    /* return a sync that can be used to wait/signal the object */
-    struct object *(*get_sync)(struct object *);
     /* map access rights to the specific rights for this object */
     unsigned int (*map_access)(struct object *, unsigned int);
     /* returns the security descriptor of the object */
@@ -94,7 +91,7 @@ struct object_ops
     /* sets the security descriptor of the object */
     int (*set_sd)( struct object *, const struct security_descriptor *, unsigned int );
     /* get the object full name */
-    WCHAR *(*get_full_name)(struct object *, data_size_t, data_size_t *);
+    WCHAR *(*get_full_name)(struct object *, data_size_t *);
     /* lookup a name if an object has a namespace */
     struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int,struct object *);
     /* link an object's name into a parent object */
@@ -149,7 +146,7 @@ extern void *memdup( const void *data, size_t len ) __WINE_ALLOC_SIZE(2) __WINE_
 extern void *alloc_object( const struct object_ops *ops );
 extern void namespace_add( struct namespace *namespace, struct object_name *ptr );
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
-extern WCHAR *default_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len ) __WINE_DEALLOC(free) __WINE_MALLOC;
+extern WCHAR *default_get_full_name( struct object *obj, data_size_t *ret_len ) __WINE_DEALLOC(free) __WINE_MALLOC;
 extern void dump_object_name( struct object *obj );
 extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, struct unicode_str *name_left );
@@ -169,18 +166,29 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
-extern struct fd *get_obj_fd( struct object *obj );
-extern struct object *get_obj_sync( struct object *obj );
+extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
+extern void no_satisfied( struct object *obj, struct wait_queue_entry *entry );
+extern int no_signal( struct object *obj, unsigned int access );
+extern struct fd *no_get_fd( struct object *obj );
+extern unsigned int default_map_access( struct object *obj, unsigned int access );
+extern struct security_descriptor *default_get_sd( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
+extern WCHAR *no_get_full_name( struct object *obj, data_size_t *ret_len );
+extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
+                                      unsigned int attributes, struct object *root );
+extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );
+extern void default_unlink_name( struct object *obj, struct object_name *name );
+extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
+                                    unsigned int options );
+extern struct list *no_kernel_obj_list( struct object *obj );
+extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
+extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
 extern void close_objects(void);
 #endif
-
-struct reserve *reserve_obj_associate_apc( struct process *process, obj_handle_t handle, struct object *apc );
-void reserve_obj_unbind( struct reserve *reserve );
 
 static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
 static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
@@ -194,22 +202,6 @@ static inline unsigned int map_access( unsigned int access, const struct generic
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-static inline unsigned int default_map_access( struct object *obj, unsigned int access )
-{
-    return map_access( access, &obj->ops->type->mapping );
-}
-
-static inline unsigned int map_obj_access( struct object *obj, unsigned int access )
-{
-    if (obj->ops->map_access) return obj->ops->map_access( obj, access );
-    return default_map_access( obj, access );
-}
-
-static inline void unlink_name( struct object_name *name )
-{
-    list_remove( &name->entry );
-}
-
 static inline void *mem_append( void *ptr, const void *src, data_size_t len )
 {
     if (!len) return ptr;
@@ -220,13 +212,7 @@ static inline void *mem_append( void *ptr, const void *src, data_size_t len )
 /* event functions */
 
 struct event;
-struct event_sync;
 struct keyed_event;
-
-extern struct event_sync *create_server_internal_sync( int manual, int signaled );
-extern struct object *create_internal_sync( int manual, int signaled );
-extern void signal_sync( struct object *sync );
-extern void reset_sync( struct object *sync );
 
 extern struct event *create_event( struct object *root, const struct unicode_str *name,
                                    unsigned int attr, int manual_reset, int initial_state,
@@ -241,20 +227,6 @@ extern void reset_event( struct event *event );
 /* mutex functions */
 
 extern void abandon_mutexes( struct thread *thread );
-extern void abandon_d3dkmt_mutexes( struct thread *thread );
-
-/* in-process synchronization functions */
-
-struct inproc_sync;
-extern int get_inproc_device_fd(void);
-extern int get_inproc_sync_fd( struct inproc_sync *sync );
-extern struct inproc_sync *create_inproc_internal_sync( int manual, int signaled );
-extern struct inproc_sync *create_inproc_event_sync( int manual, int signaled );
-extern struct inproc_sync *create_inproc_semaphore_sync( unsigned int initial, unsigned int max );
-extern struct inproc_sync *create_inproc_mutex_sync( thread_id_t owner, unsigned int count );
-extern void abandon_inproc_mutexes( thread_id_t owner );
-extern void signal_inproc_sync( struct inproc_sync *sync );
-extern void reset_inproc_sync( struct inproc_sync *sync );
 
 /* serial functions */
 
@@ -288,8 +260,9 @@ static inline int is_machine_64bit( unsigned short machine )
 }
 static inline int is_machine_supported( unsigned short machine )
 {
-    for (unsigned int i = 0; i < supported_machines_count; i++)
-        if (supported_machines[i] == machine) return 1;
+    unsigned int i;
+    for (i = 0; i < supported_machines_count; i++) if (supported_machines[i] == machine) return 1;
+    if (native_machine == IMAGE_FILE_MACHINE_ARM64) return machine == IMAGE_FILE_MACHINE_AMD64;
     return 0;
 }
 
@@ -302,17 +275,10 @@ extern void init_signals(void);
 
 /* atom functions */
 
-extern struct object *create_atom_table(void);
-extern void set_global_atom_table( struct object *obj );
-extern void set_user_atom_table( struct object *obj );
-
-struct atom_table;
-extern struct atom_table *get_global_atom_table(void);
-extern struct atom_table *get_user_atom_table(void);
-extern atom_t add_atom( struct atom_table *table, const struct unicode_str *str );
-extern atom_t find_atom( struct atom_table *table, const struct unicode_str *str );
-extern atom_t grab_atom( struct atom_table *table, atom_t atom );
-extern void release_atom( struct atom_table *table, atom_t atom );
+extern atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str );
+extern atom_t find_global_atom( struct winstation *winstation, const struct unicode_str *str );
+extern int grab_global_atom( struct winstation *winstation, atom_t atom );
+extern void release_global_atom( struct winstation *winstation, atom_t atom );
 
 /* directory functions */
 
@@ -371,7 +337,6 @@ extern struct type_descr mapping_type;
 extern struct type_descr key_type;
 extern struct type_descr apc_reserve_type;
 extern struct type_descr completion_reserve_type;
-extern struct type_descr alpc_port_type;
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002

@@ -35,7 +35,7 @@ static int deltax = 0, deltay = 0;
 static int width = 0, height = 0;
 static BOOL isAldus, isEnhanced;
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct
 {
 	DWORD		key;
@@ -45,7 +45,7 @@ typedef struct
 	DWORD		reserved;
 	WORD		checksum;
 } APMFILEHEADER;
-#pragma pack(pop)
+#include "poppack.h"
 
 #define APMHEADER_KEY	0x9AC6CDD7l
 

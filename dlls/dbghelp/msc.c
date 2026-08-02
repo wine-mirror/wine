@@ -48,6 +48,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
+static const GUID null_guid;
+
 struct pdb_stream_name
 {
     const char* name;
@@ -59,6 +61,7 @@ enum pdb_kind {PDB_JG, PDB_DS};
 struct pdb_file_info
 {
     enum pdb_kind               kind;
+    struct pdb_reader          *pdb_reader; /* new pdb reader */
     const char*                 image;
     struct pdb_stream_name*     stream_dict;
     unsigned                    fpoext_stream;
@@ -77,7 +80,7 @@ struct pdb_file_info
 
 /* FIXME: don't make it static */
 #define CV_MAX_MODULES          32
-struct old_pdb_module_info
+struct pdb_module_info
 {
     unsigned                    used_subfiles;
     struct pdb_file_info        pdb_files[CV_MAX_MODULES];
@@ -92,6 +95,18 @@ struct cv_module_snarf
     unsigned                                    dbgsubsect_size;
     const PDB_STRING_TABLE*                     strimage;
 };
+
+BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream)
+{
+    struct pdb_module_info*     pdb_info;
+
+    if (!modfmt) return FALSE;
+    pdb_info = modfmt->u.pdb_info;
+    *pdb = pdb_info->pdb_files[0].pdb_reader;
+    if (fpoext_stream)
+        *fpoext_stream = pdb_info->pdb_files[0].fpoext_stream;
+    return TRUE;
+}
 
 /*========================================================================
  * Debug file access helper routines
@@ -134,6 +149,7 @@ struct cv_defined_module
     unsigned int        first_type_index;
     unsigned int        last_type_index;
     struct symt**       defined_types; /* when old reader */
+    struct pdb_reader  *pdb; /* new reader: hack */
 };
 /* FIXME: don't make it static */
 #define CV_MAX_MODULES          32
@@ -650,12 +666,25 @@ static struct symt* codeview_fetch_type(struct codeview_type_parse* ctp,
 
 static symref_t codeview_fetch_symref(struct codeview_type_parse* ctp, unsigned typeno)
 {
-    return symt_ptr_to_symref(codeview_fetch_type(ctp, typeno));
+    symref_t symref;
+
+    if (!cv_hack_ptr_to_symref(ctp->module->format_info[DFI_PDB]->u.pdb_info->pdb_files[0].pdb_reader, typeno, &symref))
+    {
+        symref = symt_ptr_to_symref(codeview_fetch_type(ctp, typeno));
+    }
+
+    return symref;
 }
 
 static symref_t codeview_get_symref(struct module *module, unsigned typeno)
 {
-    return symt_ptr_to_symref(codeview_get_type(typeno, TRUE));
+    symref_t symref;
+
+    if (!cv_hack_ptr_to_symref(module->format_info[DFI_PDB]->u.pdb_info->pdb_files[0].pdb_reader, typeno, &symref))
+    {
+        symref = symt_ptr_to_symref(codeview_get_type(typeno, TRUE));
+    }
+    return symref;
 }
 
 static UINT32 codeview_compute_hash(const char* ptr, unsigned len)
@@ -1519,6 +1548,7 @@ static BOOL codeview_parse_type_table(struct codeview_type_parse* ctp)
     unsigned int                i, curr_type;
     const union codeview_type*  type;
 
+    cv_current_module->pdb = ctp->module->format_info[DFI_PDB]->u.pdb_info->pdb_files[0].pdb_reader;
     cv_current_module->first_type_index = ctp->header.first_index;
     cv_current_module->last_type_index = ctp->header.last_index;
     cv_current_module->defined_types = calloc(ctp->header.last_index - ctp->header.first_index,
@@ -2295,10 +2325,11 @@ static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info
         if (symt_check_tag(&p->symt, SymTagCompiland) && !strcmp(p->filename, objname))
             return p;
     }
-    return symt_new_compiland(msc_dbg->module, symt_ptr_to_symref(&msc_dbg->module->top->symt), objname);
+    return symt_new_compiland(msc_dbg->module, objname);
 }
 
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
+                           unsigned stream_id,
                            const BYTE* root, unsigned offset, unsigned size,
                            const struct cv_module_snarf* cvmod,
                            const char* objname)
@@ -2404,7 +2435,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GPROC32_16t:
 	case S_LPROC32_16t:
             if (top_func) FIXME("nested function\n");
-            if ((top_func = symt_new_function(msc_dbg->module, symt_ptr_to_symref(&compiland->symt),
+            if ((top_func = symt_new_function(msc_dbg->module, compiland,
                                               terminate_string(&sym->proc_v1.p_name),
                                               codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
                                               sym->proc_v1.proc_len,
@@ -2421,7 +2452,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GPROC32_ST:
 	case S_LPROC32_ST:
             if (top_func) FIXME("nested function\n");
-            if ((top_func = symt_new_function(msc_dbg->module, symt_ptr_to_symref(&compiland->symt),
+            if ((top_func = symt_new_function(msc_dbg->module, compiland,
                                               terminate_string(&sym->proc_v2.p_name),
                                               codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
                                               sym->proc_v2.proc_len,
@@ -2438,7 +2469,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GPROC32:
 	case S_LPROC32:
             if (top_func) FIXME("nested function\n");
-            if ((top_func = symt_new_function(msc_dbg->module, symt_ptr_to_symref(&compiland->symt),
+            if ((top_func = symt_new_function(msc_dbg->module, compiland,
                                               sym->proc_v3.name,
                                               codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
                                               sym->proc_v3.proc_len,
@@ -2689,7 +2720,15 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
              */
             if (!sym->local_v3.varflags.enreg_global && !sym->local_v3.varflags.enreg_static)
             {
-                length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
+                if (stream_id)
+                {
+                    loc.kind = loc_user + 1 /* loc_cv_defrange for new PDB reader (see pdb.c) */;
+                    loc.reg = stream_id;
+                    loc.offset = (const BYTE*)sym - root;
+                    length += codeview_defrange_length(sym);
+                }
+                else
+                    length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
                 symt_add_func_local(msc_dbg->module, curr_func,
                                     sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
                                     &loc, block,
@@ -2714,11 +2753,10 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 }
                 else
                 {
-                    const union codeview_symbol* end_sym;
                     /* skip all records until paired S_INLINESITE_END */
-                    end_sym = (const union codeview_symbol*)(root + sym->inline_site_v3.pEnd);
-                    if (end_sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
-                    length = sym->inline_site_v3.pEnd - i + end_sym->generic.len + 2;
+                    sym = (const union codeview_symbol*)(root + sym->inline_site_v3.pEnd);
+                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site_v3.pEnd - i + sym->generic.len;
                 }
             }
             break;
@@ -2737,11 +2775,10 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 }
                 else
                 {
-                    const union codeview_symbol* end_sym;
                     /* skip all records until paired S_INLINESITE_END */
-                    end_sym = (const union codeview_symbol*)(root + sym->inline_site2_v3.pEnd);
-                    if (end_sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
-                    length = sym->inline_site2_v3.pEnd - i + end_sym->generic.len + 2;
+                    sym = (const union codeview_symbol*)(root + sym->inline_site2_v3.pEnd);
+                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site2_v3.pEnd - i + sym->generic.len;
                 }
             }
             break;
@@ -2790,7 +2827,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 if (symt_check_tag(&parent->symt, SymTagFunction))
                 {
                     struct symt_function* pfunc = (struct symt_function*)parent;
-                    top_func = symt_new_function(msc_dbg->module, symt_ptr_to_symref(&compiland->symt), pfunc->hash_elt.name,
+                    top_func = symt_new_function(msc_dbg->module, compiland, pfunc->hash_elt.name,
                                                  codeview_get_address(msc_dbg, sym->sepcode_v3.sect, sym->sepcode_v3.off),
                                                  sym->sepcode_v3.length, pfunc->type, i);
                     curr_func = top_func;
@@ -2811,19 +2848,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 FIXME("Unexpected S_FRAMEPROC %d (%p %p) %x\n", top_frame_size, top_func, curr_func, i);
             break;
 
-        case S_GMANPROC:
-        case S_LMANPROC:
-            /* skip whole record and sub-records */
-            i = sym->managed_proc_v3.pend;
-            sym = (const union codeview_symbol*)(root + i);
-            if (i + sizeof(sym->generic) > size || sym->generic.id != S_END)
-            {
-                FIXME("Wrong relocation after managed proc, aborting\n");
-                return FALSE;
-            }
-            length = 2 + sym->generic.len;
-            break;
-
         /* the symbols we can safely ignore for now */
         case S_SKIP:
         case S_TRAMPOLINE:
@@ -2833,9 +2857,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_EXPORT:
         case S_CALLSITEINFO:
         case S_ARMSWITCHTABLE:
-        case S_TOKENREF:
-        case S_OEM:
-        case S_MANSLOT:
             /* even if S_LOCAL groks all the S_DEFRANGE* records following itself,
              * those kinds of records can also be present after a S_FILESTATIC record
              * so silence them until (at least) S_FILESTATIC is supported
@@ -2940,13 +2961,11 @@ static BOOL codeview_snarf_sym_hashtable(const struct msc_debug_info* msc_dbg, c
     if (hashsize < sizeof(DBI_HASH_HEADER) ||
         hash_hdr->signature != 0xFFFFFFFF ||
         hash_hdr->version != 0xeffe0000 + 19990810 ||
-        !hash_hdr->hash_records_size ||
         (hash_hdr->hash_records_size % sizeof(DBI_HASH_RECORD)) != 0 ||
         sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE > hashsize ||
         (hashsize - (sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
     {
-        if (hash_hdr->hash_records_size)
-            FIXME("Incorrect hash structure\n");
+        FIXME("Incorrect hash structure\n");
         return FALSE;
     }
 
@@ -3172,7 +3191,7 @@ static void pdb_free(void* buffer)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-static void pdb_free_file(struct pdb_file_info* pdb_file)
+static void pdb_free_file(struct pdb_file_info* pdb_file, BOOL unmap)
 {
     switch (pdb_file->kind)
     {
@@ -3187,8 +3206,11 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
     }
     HeapFree(GetProcessHeap(), 0, pdb_file->stream_dict);
     pdb_file->stream_dict = NULL;
-    UnmapViewOfFile(pdb_file->image);
-    pdb_file->image = NULL;
+    if (unmap)
+    {
+        UnmapViewOfFile(pdb_file->image);
+        pdb_file->image = NULL;
+    }
 }
 
 static struct pdb_stream_name* pdb_load_stream_name_table(const char* str, unsigned cb)
@@ -3266,11 +3288,13 @@ static void pdb_module_remove(struct module_format* modfmt)
 {
     unsigned    i;
 
-    for (i = 0; i < modfmt->u.old_pdb_info->used_subfiles; i++)
+    for (i = 0; i < modfmt->u.pdb_info->used_subfiles; i++)
     {
-        pdb_free_file(&modfmt->u.old_pdb_info->pdb_files[i]);
-        if (modfmt->u.old_pdb_info->pdb_files[i].image)
-            UnmapViewOfFile(modfmt->u.old_pdb_info->pdb_files[i].image);
+        pdb_free_file(&modfmt->u.pdb_info->pdb_files[i], TRUE);
+        if (modfmt->u.pdb_info->pdb_files[i].image)
+            UnmapViewOfFile(modfmt->u.pdb_info->pdb_files[i].image);
+        if (modfmt->u.pdb_info->pdb_files[i].pdb_reader)
+            pdb_reader_dispose(modfmt->u.pdb_info->pdb_files[i].pdb_reader);
     }
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
@@ -3604,9 +3628,10 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file, const char* image)
     return pdb_file->stream_dict != NULL;
 }
 
-static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
+static BOOL pdb_process_internal(const struct process *pcs,
+                                 const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
-                                 struct old_pdb_module_info *pdb_module_info,
+                                 struct pdb_module_info *pdb_module_info,
                                  unsigned module_index,
                                  BOOL *has_linenumber_info);
 
@@ -3719,11 +3744,12 @@ DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     return ERROR_BAD_FORMAT;
 }
 
-static void pdb_process_symbol_imports(const struct msc_debug_info *msc_dbg,
+static void pdb_process_symbol_imports(const struct process *pcs,
+                                       const struct msc_debug_info *msc_dbg,
                                        const PDB_SYMBOLS *symbols,
                                        const void *symbols_image,
                                        const char *image,
-                                       struct old_pdb_module_info *pdb_module_info,
+                                       struct pdb_module_info *pdb_module_info,
                                        unsigned module_index)
 {
     if (module_index == -1 && symbols && symbols->pdbimport_size)
@@ -3741,7 +3767,6 @@ static void pdb_process_symbol_imports(const struct msc_debug_info *msc_dbg,
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {
-            WCHAR               buffer[MAX_PATH];
             SYMSRV_INDEX_INFOW info;
             BOOL line_info;
 
@@ -3749,10 +3774,9 @@ static void pdb_process_symbol_imports(const struct msc_debug_info *msc_dbg,
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
             TRACE("got for %s: age=%u ts=%x\n",
                   debugstr_a(imp->filename), imp->Age, imp->TimeDateStamp);
-            MultiByteToWideChar(CP_ACP, 0, imp->filename, -1, buffer, ARRAY_SIZE(buffer));
-            if (path_find_symbol_file(msc_dbg->module, buffer, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
+            if (path_find_symbol_file(pcs, msc_dbg->module, imp->filename, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
                                       &msc_dbg->module->module.PdbUnmatched))
-                pdb_process_internal(msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
+                pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
         }
@@ -3768,9 +3792,10 @@ static void pdb_process_symbol_imports(const struct msc_debug_info *msc_dbg,
     cv_current_module->allowed = TRUE;
 }
 
-static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
+static BOOL pdb_process_internal(const struct process *pcs,
+                                 const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
-                                 struct old_pdb_module_info *pdb_module_info,
+                                 struct pdb_module_info *pdb_module_info,
                                  unsigned module_index,
                                  BOOL *has_linenumber_info)
 {
@@ -3796,11 +3821,22 @@ static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
         return FALSE;
     }
 
-    CloseHandle(hFile);
     CloseHandle(hMap);
     /* old pdb reader */
     if (!pdb_init(pdb_file, image))
     {
+        CloseHandle(hFile);
+        UnmapViewOfFile(image);
+        return FALSE;
+    }
+    if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
+    {
+        pdb_file->pdb_reader = NULL;
+        CloseHandle(hFile);
+    }
+    else if (!(pdb_file->pdb_reader = pdb_hack_reader_init(msc_dbg->module, hFile, msc_dbg->sectp, msc_dbg->nsect)))
+    {
+        CloseHandle(hFile);
         UnmapViewOfFile(image);
         return FALSE;
     }
@@ -3843,9 +3879,12 @@ static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
 
         files_image = pdb_read_strings(pdb_file);
 
-        pdb_process_symbol_imports(msc_dbg, &symbols, symbols_image, image,
+        pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
                                    pdb_module_info, module_index);
-        pdb_process_types(msc_dbg, pdb_file);
+        if (!pdb_file->pdb_reader)
+        {
+            pdb_process_types(msc_dbg, pdb_file);
+        }
 
         ipi_image = pdb_read_stream(pdb_file, 4);
         ipi_ok = pdb_init_type_parse(msc_dbg, pdb_file, &ipi_ctp, ipi_image);
@@ -3854,7 +3893,7 @@ static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
          * streams' loading can succeed them.
          */
         globalimage = pdb_read_stream(pdb_file, symbols.gsym_stream);
-        if (globalimage)
+        if (globalimage && !pdb_file->pdb_reader)
         {
             const BYTE* data;
             unsigned global_size = pdb_get_stream_size(pdb_file, symbols.gsym_stream);
@@ -3887,19 +3926,22 @@ static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
             {
                 struct cv_module_snarf cvmod = {ipi_ok ? &ipi_ctp : NULL, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
                     files_image};
-                codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size,
+                codeview_snarf(msc_dbg, pdb_file->pdb_reader ? sfile.stream : 0, modimage, sizeof(DWORD), sfile.symbol_size,
                                &cvmod, file_name);
 
                 if (sfile.lineno_size && sfile.lineno2_size)
                     FIXME("Both line info present... preferring second\n");
                 if (sfile.lineno2_size)
                 {
-                    if (((SymGetOptions() & SYMOPT_LOAD_LINES) && codeview_snarf_linetab2(msc_dbg, &cvmod)))
+                    if (pdb_file->pdb_reader ||
+                        ((SymGetOptions() & SYMOPT_LOAD_LINES) && codeview_snarf_linetab2(msc_dbg, &cvmod)))
                         *has_linenumber_info = TRUE;
                 }
                 else if (sfile.lineno_size)
                 {
-                    if ((SymGetOptions() & SYMOPT_LOAD_LINES) &&
+                    if (pdb_file->pdb_reader)
+                        FIXME("New PDB reader doesn't support old line format\n");
+                    else if ((SymGetOptions() & SYMOPT_LOAD_LINES) &&
                              codeview_snarf_linetab(msc_dbg,
                                                     modimage + sfile.symbol_size,
                                                     sfile.lineno_size,
@@ -3941,13 +3983,13 @@ static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
         pdb_free(ipi_image);
     }
     else
-        pdb_process_symbol_imports(msc_dbg, NULL, NULL, image,
+        pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image,
                                    pdb_module_info, module_index);
 
     pdb_free(symbols_image);
     pdb_free(files_image);
 
-    pdb_free_file(pdb_file);
+    pdb_free_file(pdb_file, pdb_file->pdb_reader != NULL);
 
     return TRUE;
 }
@@ -3958,41 +4000,70 @@ static const struct module_format_vtable old_pdb_module_format_vtable =
     NULL,
     NULL,
     NULL,
-    NULL,
-    NULL,
-    NULL,
     pdb_location_compute,
 };
 
-static BOOL old_pdb_process_file(const struct msc_debug_info *msc_dbg,
-                                 const WCHAR *filename, BOOL *has_linenumber_info)
+static BOOL pdb_process_file(const struct process *pcs,
+                             const struct msc_debug_info *msc_dbg,
+                             const char *filename, const GUID *guid, DWORD timestamp, DWORD age)
 {
     struct module_format*       modfmt;
-    struct old_pdb_module_info* pdb_module_info;
-    BOOL                        ret;
+    struct pdb_module_info*     pdb_module_info;
+    SYMSRV_INDEX_INFOW          info;
+    BOOL                        unmatched;
 
-    if (!(modfmt = HeapAlloc(GetProcessHeap(), 0,
-                             sizeof(struct module_format) + sizeof(struct old_pdb_module_info))))
-        return FALSE;
-
-    pdb_module_info = (void*)(modfmt + 1);
-    msc_dbg->module->format_info[DFI_OLD_PDB] = modfmt;
-    modfmt->module         = msc_dbg->module;
-    modfmt->vtable         = &old_pdb_module_format_vtable;
-    modfmt->u.old_pdb_info = pdb_module_info;
-
-    memset(cv_zmodules, 0, sizeof(cv_zmodules));
-    codeview_init_basic_types(msc_dbg->module);
-    ret = pdb_process_internal(msc_dbg, filename,
-                               msc_dbg->module->format_info[DFI_OLD_PDB]->u.old_pdb_info, -1, has_linenumber_info);
-    codeview_clear_type_table();
-    if (!ret)
+    if (!msc_dbg->module->dont_load_symbols &&
+        path_find_symbol_file(pcs, msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched) &&
+        (modfmt = HeapAlloc(GetProcessHeap(), 0,
+                            sizeof(struct module_format) + sizeof(struct pdb_module_info))))
     {
-        msc_dbg->module->format_info[DFI_OLD_PDB] = NULL;
+        BOOL ret, has_linenumber_info;
+
+        pdb_module_info = (void*)(modfmt + 1);
+        msc_dbg->module->format_info[DFI_PDB] = modfmt;
+        modfmt->module      = msc_dbg->module;
+        modfmt->vtable      = &old_pdb_module_format_vtable;
+        modfmt->u.pdb_info  = pdb_module_info;
+
+        memset(cv_zmodules, 0, sizeof(cv_zmodules));
+        codeview_init_basic_types(msc_dbg->module);
+        ret = pdb_process_internal(pcs, msc_dbg, info.pdbfile,
+                                   msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1, &has_linenumber_info);
+        codeview_clear_type_table();
+        if (ret)
+        {
+            msc_dbg->module->module.SymType = SymPdb;
+            msc_dbg->module->module.PdbSig = info.sig;
+            msc_dbg->module->module.PdbAge = info.age;
+            msc_dbg->module->module.PdbSig70 = info.guid;
+            msc_dbg->module->module.PdbUnmatched = unmatched;
+            wcscpy(msc_dbg->module->module.LoadedPdbName, info.pdbfile);
+
+            /* FIXME: we could have a finer grain here */
+            msc_dbg->module->module.LineNumbers = has_linenumber_info;
+            msc_dbg->module->module.GlobalSymbols = TRUE;
+            msc_dbg->module->module.TypeInfo = TRUE;
+            msc_dbg->module->module.SourceIndexed = TRUE;
+            msc_dbg->module->module.Publics = TRUE;
+
+            return TRUE;
+        }
+        msc_dbg->module->format_info[DFI_PDB] = NULL;
         HeapFree(GetProcessHeap(), 0, modfmt);
     }
-    return ret;
+    msc_dbg->module->module.SymType = SymNone;
+    if (guid)
+        msc_dbg->module->module.PdbSig70 = *guid;
+    else
+        memset(&msc_dbg->module->module.PdbSig70, 0, sizeof(GUID));
+    msc_dbg->module->module.PdbSig = 0;
+    msc_dbg->module->module.PdbAge = age;
+    return FALSE;
 }
+
+/*========================================================================
+ * Process CodeView debug information.
+ */
 
 #define MAKESIG(a,b,c,d)        ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 #define CODEVIEW_NB09_SIG       MAKESIG('N','B','0','9')
@@ -4000,43 +4071,8 @@ static BOOL old_pdb_process_file(const struct msc_debug_info *msc_dbg,
 #define CODEVIEW_NB11_SIG       MAKESIG('N','B','1','1')
 #define CODEVIEW_RSDS_SIG       MAKESIG('R','S','D','S')
 
-BOOL pdb_load_debug_info(struct module *module, const SYMSRV_INDEX_INFOW *info, BOOL unmatched)
-{
-    BOOL                        has_linenumber_info, ret;
-    struct msc_debug_info       msc_dbg = {.module = module};
-
-    msc_dbg.nsect = pe_clone_sections_table(module, (IMAGE_SECTION_HEADER**)&msc_dbg.sectp);
-    if (!msc_dbg.nsect) return FALSE;
-    if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
-        ret = old_pdb_process_file(&msc_dbg, info->pdbfile, &has_linenumber_info);
-    else
-        ret = pdb_init_modfmt(&msc_dbg, info->pdbfile, &has_linenumber_info);
-
-    HeapFree(GetProcessHeap(), 0, (void*)msc_dbg.sectp);
-    if (ret)
-    {
-        module->module.SymType = SymPdb;
-        module->module.PdbSig70 = info->guid;
-        module->module.PdbSig = info->sig;
-        module->module.PdbAge = info->age;
-        module->module.PdbUnmatched = unmatched;
-        wcscpy(module->module.LoadedPdbName, info->pdbfile);
-        module->module.CVSig = info->sig ? CODEVIEW_NB10_SIG : CODEVIEW_RSDS_SIG;
-        /* FIXME: we could have a finer grain here */
-        module->module.LineNumbers = has_linenumber_info;
-        module->module.GlobalSymbols = TRUE;
-        module->module.TypeInfo = TRUE;
-        module->module.SourceIndexed = TRUE;
-        module->module.Publics = TRUE;
-    }
-    return ret;
-}
-
-/*========================================================================
- * Process CodeView debug information.
- */
-
-static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
+static BOOL codeview_process_info(const struct process *pcs,
+                                  const struct msc_debug_info *msc_dbg)
 {
     const DWORD*                signature = (const DWORD*)msc_dbg->root;
     BOOL                        ret = FALSE;
@@ -4093,7 +4129,7 @@ static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
 
             if (ent->SubSection == sstAlignSym)
             {
-                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL, NULL);
+                codeview_snarf(msc_dbg, 0, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL, NULL);
 
                 if (SymGetOptions() & SYMOPT_LOAD_LINES)
                 {
@@ -4130,22 +4166,45 @@ static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
     }
 
     case CODEVIEW_NB10_SIG:
-    case CODEVIEW_RSDS_SIG:
-        /* should be loaded directly through pe_load_debug_info() */
+    {
+        const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)msc_dbg->root;
+        ret = pdb_process_file(pcs, msc_dbg, pdb->name, NULL, pdb->timestamp, pdb->age);
         break;
+    }
+    case CODEVIEW_RSDS_SIG:
+    {
+        const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
+
+        TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
+              wine_dbgstr_guid(&rsds->guid), rsds->age, debugstr_a(rsds->name));
+        /* gcc/mingw and clang can emit build-id information, but with an empty PDB filename.
+         * Don't search for the .pdb file in that case.
+         */
+        if (rsds->name[0])
+            ret = pdb_process_file(pcs, msc_dbg, rsds->name, &rsds->guid, 0, rsds->age);
+        else
+            ret = TRUE;
+        break;
+    }
     default:
         ERR("Unknown CODEVIEW signature %08lx in module %s\n",
             *signature, debugstr_w(msc_dbg->module->modulename));
         break;
     }
-
+    if (ret)
+    {
+        msc_dbg->module->module.CVSig = *signature;
+        if (*signature == CODEVIEW_RSDS_SIG)
+            memcpy(msc_dbg->module->module.CVData, msc_dbg->root,
+                   sizeof(msc_dbg->module->module.CVData));
+    }
     return ret;
 }
 
 /*========================================================================
  * Process debug directory.
  */
-BOOL pe_load_debug_directory(struct module* module,
+BOOL pe_load_debug_directory(const struct process* pcs, struct module* module, 
                              const BYTE* mapping,
                              const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                              const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg)
@@ -4181,7 +4240,7 @@ BOOL pe_load_debug_directory(struct module* module,
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW)
             {
                 msc_dbg.root = mapping + dbg[i].PointerToRawData;
-                if ((ret = codeview_process_info(&msc_dbg))) goto done;
+                if ((ret = codeview_process_info(pcs, &msc_dbg))) goto done;
             }
         }
     
@@ -4231,6 +4290,25 @@ typedef struct _FPO_DATA
         ret = FALSE;
     }
     __ENDTRY
+
+    /* we haven't found yet any debug information, fallback to unmatched pdb */
+    if (!ret && module->module.SymType == SymDeferred)
+    {
+        SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
+        char buffer[MAX_PATH];
+        char *ext;
+        DWORD options;
+
+        WideCharToMultiByte(CP_ACP, 0, module->module.LoadedImageName, -1, buffer, ARRAY_SIZE(buffer), 0, NULL);
+        ext = strrchr(buffer, '.');
+        if (ext) strcpy(ext + 1, "pdb"); else strcat(buffer, ".pdb");
+        options = SymGetOptions();
+        SymSetOptions(options | SYMOPT_LOAD_ANYTHING);
+        ret = pdb_process_file(pcs, &msc_dbg, buffer, &null_guid, 0, 0);
+        SymSetOptions(options);
+        if (!ret && module->dont_load_symbols)
+            module->module.TimeDateStamp = 0;
+    }
 
     return ret;
 }
@@ -4309,18 +4387,19 @@ DWORD dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     return msc_get_file_indexinfo(image, dbg, num_directories, info);
 }
 
-BOOL old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context)
+BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
+                            union ctx *context, struct pdb_cmd_pair *cpair)
 {
     struct module_pair          pair;
-    struct old_pdb_module_info* pdb_info;
+    struct pdb_module_info*     pdb_info;
     PDB_FPO_DATA*               fpoext;
     unsigned                    i, size;
     PDB_STRING_TABLE*           strbase;
     BOOL                        ret = TRUE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
-    if (!pair.effective->format_info[DFI_OLD_PDB]) return FALSE;
-    pdb_info = pair.effective->format_info[DFI_OLD_PDB]->u.old_pdb_info;
+    if (!pair.effective->format_info[DFI_PDB]) return FALSE;
+    pdb_info = pair.effective->format_info[DFI_PDB]->u.pdb_info;
     TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
@@ -4342,7 +4421,7 @@ BOOL old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx 
                       debugstr_a(pdb_get_string_table_entry(strbase, fpoext[i].str_offset)));
                 ret = pdb_fpo_unwind_parse_cmd_string(csw, &fpoext[i],
                                                       pdb_get_string_table_entry(strbase, fpoext[i].str_offset),
-                                                      &context->x86);
+                                                      cpair);
                 break;
             }
         }

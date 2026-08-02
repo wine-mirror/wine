@@ -1,6 +1,5 @@
 TESTDLL   = comdlg32.dll
 IMPORTS   = uuid shell32 ole32 comdlg32 winspool user32 gdi32
-EXTRADLLFLAGS = -Wl,--subsystem,console:5.2
 
 SOURCES = \
 	filedlg.c \

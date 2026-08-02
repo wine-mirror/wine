@@ -34,7 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef struct tagSRB16_HaInquiry {
   BYTE	SRB_Cmd;
@@ -127,7 +127,7 @@ typedef union tagSRB16 {
     SRB_GDEVBlock16       devtype;
 } SRB16, *LPSRB16;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 static FARPROC16 ASPIChainFunc = NULL;
 static FARPROC16 exec_postproc16;

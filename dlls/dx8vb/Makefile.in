@@ -3,8 +3,7 @@ IMPORTS   = uuid ole32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-VER_PRODUCTVERSION = 5,3,1,902
-
 SOURCES = \
 	dx8vb.idl \
-	main.c
+	main.c \
+	version.rc

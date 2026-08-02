@@ -782,7 +782,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     MSG msg;
     HACCEL hAccel;
     WNDCLASSEXW class;
-    WINDOWPLACEMENT wp;
+    HMONITOR monitor;
+    MONITORINFO info;
+    INT x, y;
 
     InitCommonControls();
 
@@ -808,8 +810,21 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     if (!RegisterClassExW(&class)) return FALSE;
 
     /* Setup windows */
+
+    monitor = MonitorFromRect( &main_rect, MONITOR_DEFAULTTOPRIMARY );
+    info.cbSize = sizeof(info);
+    GetMonitorInfoW( monitor, &info );
+
+    x = main_rect.left;
+    y = main_rect.top;
+    if (main_rect.left >= info.rcWork.right ||
+        main_rect.top >= info.rcWork.bottom ||
+        main_rect.right < info.rcWork.left ||
+        main_rect.bottom < info.rcWork.top)
+        x = y = CW_USEDEFAULT;
+
     Globals.hMainWnd =
-        CreateWindowW(L"Notepad", L"Notepad", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        CreateWindowW(L"Notepad", L"Notepad", WS_OVERLAPPEDWINDOW, x, y,
                       main_rect.right - main_rect.left, main_rect.bottom - main_rect.top,
                       NULL, NULL, Globals.hInstance, NULL);
     if (!Globals.hMainWnd)
@@ -821,15 +836,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     NOTEPAD_InitData();
     DIALOG_FileNew();
 
-    wp.length = sizeof(wp);
-    wp.flags = 0;
-    wp.showCmd = show;
-    wp.ptMinPosition.x = -1;
-    wp.ptMinPosition.y = -1;
-    wp.ptMaxPosition.x = -1;
-    wp.ptMaxPosition.y = -1;
-    wp.rcNormalPosition = main_rect;
-    SetWindowPlacement(Globals.hMainWnd, &wp);
+    ShowWindow(Globals.hMainWnd, show);
     UpdateWindow(Globals.hMainWnd);
     DragAcceptFiles(Globals.hMainWnd, TRUE);
 

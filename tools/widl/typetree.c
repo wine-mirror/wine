@@ -55,9 +55,7 @@ type_t *make_type(enum type_type type)
     t->impl_name = NULL;
     t->param_name = NULL;
     t->short_name = NULL;
-    t->winmd_short_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
-    memset(&t->md, 0, sizeof(t->md));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
     t->ignore = (parse_only != 0);
@@ -97,342 +95,71 @@ const char *type_get_decl_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
-const char *type_get_record_specifier( type_t *type )
+const char *type_get_name(const type_t *type, enum name_type name_type)
 {
-    switch (type_get_type_detect_alias( type ))
-    {
-    case TYPE_ENUM:               return "enum";
-    case TYPE_STRUCT:             return "struct";
-    case TYPE_ENCAPSULATED_UNION: return "struct";
-    case TYPE_UNION:              return "union";
-    default: assert( 0 ); break; /* shouldn't be here */
-    }
-}
-
-const char *type_get_name( const type_t *type, enum name_type name_type, bool record )
-{
-    const char *name;
-    char *args;
-
-    switch (name_type)
-    {
-    case NAME_DEFAULT: name = type->qualified_name ? type->qualified_name : type->name; break;
-    case NAME_C: name = type->c_name ? type->c_name : type->name; break;
-    default: assert(0);
+    switch(name_type) {
+    case NAME_DEFAULT:
+        return type->qualified_name ? type->qualified_name : type->name;
+    case NAME_C:
+        return type->c_name ? type->c_name : type->name;
     }
 
-    if (type_is_alias( type )) return name;
-    switch (type_get_type_detect_alias( type ))
-    {
-    case TYPE_ALIAS:              return NULL;
-    case TYPE_APICONTRACT:        return NULL;
-    case TYPE_BASIC:              return NULL;
-    case TYPE_BITFIELD:           return NULL;
-    case TYPE_FUNCTION:           return NULL;
-    case TYPE_POINTER:            return NULL;
-
-    case TYPE_ENCAPSULATED_UNION: return record ? name : NULL;
-    case TYPE_ENUM:               return record ? name : NULL;
-    case TYPE_STRUCT:             return record ? name : NULL;
-    case TYPE_UNION:              return record ? name : NULL;
-
-    case TYPE_COCLASS:            return name;
-    case TYPE_INTERFACE:          return name;
-    case TYPE_MODULE:             return name;
-    case TYPE_VOID:               return "void";
-    case TYPE_PARAMETER:          return name;
-
-    case TYPE_RUNTIMECLASS:
-        return type_get_name( type_runtimeclass_get_default_iface( type, TRUE ), name_type, false );
-    case TYPE_DELEGATE:
-        return type_get_name( type_delegate_get_iface( type ), name_type, false );
-
-    case TYPE_ARRAY:
-        if (type->name && type_array_is_decl_as_ptr( type )) return type->name;
-        return NULL;
-
-    case TYPE_PARAMETERIZED_TYPE:
-    {
-        type_t *iface = type_parameterized_type_get_real_type( type );
-        if (type_get_type( iface ) == TYPE_DELEGATE) iface = type_delegate_get_iface( iface );
-        args = format_parameterized_type_args( type, "", "_logical" );
-        name = strmake( "%s<%s>", iface->name, args );
-        free( args );
-        return name;
-    }
-    }
-
-    /* shouldn't be here */
     assert(0);
+    return NULL;
 }
 
-void append_basic_type( struct strbuf *str, const type_t *type )
-{
-    int sign = type_basic_get_sign( type );
-    const char *prefix = sign > 0 ? "unsigned " : sign < 0 ? "signed " : "";
-
-    switch (type_basic_get_type( type ))
-    {
-    case TYPE_BASIC_INT8:            return strappend( str, "%ssmall", prefix );
-    case TYPE_BASIC_INT16:           return strappend( str, "%sshort", prefix );
-    case TYPE_BASIC_INT:             return strappend( str, "%sint", prefix );
-    case TYPE_BASIC_INT3264:         return strappend( str, "%s__int3264", prefix );
-    case TYPE_BASIC_BYTE:            return strappend( str, "%sbyte", prefix );
-    case TYPE_BASIC_CHAR:            return strappend( str, "%schar", prefix );
-    case TYPE_BASIC_WCHAR:           return strappend( str, "%swchar_t", prefix );
-    case TYPE_BASIC_FLOAT:           return strappend( str, "%sfloat", prefix );
-    case TYPE_BASIC_DOUBLE:          return strappend( str, "%sdouble", prefix );
-    case TYPE_BASIC_ERROR_STATUS_T:  return strappend( str, "%serror_status_t", prefix );
-    case TYPE_BASIC_HANDLE:          return strappend( str, "%shandle_t", prefix );
-    case TYPE_BASIC_INT32:           return strappend( str, sign > 0 ? "UINT32" : "INT32" );
-    case TYPE_BASIC_LONG:            return strappend( str, sign > 0 ? "ULONG" : "LONG" );
-    case TYPE_BASIC_INT64:           return strappend( str, sign > 0 ? "UINT64" : "INT64" );
-    case TYPE_BASIC_HYPER:           return strappend( str, sign > 0 ? "MIDL_uhyper" : "hyper" );
-    }
-}
-
-bool needs_space_after( const type_t *type )
-{
-    if (type_is_alias( type )) return true;
-    if (type_get_type( type ) == TYPE_POINTER) return false;
-    if (type_get_type( type ) != TYPE_ARRAY) return true;
-    if (!type_array_is_decl_as_ptr( type )) return true;
-    if (type->name) return true;
-    return false;
-}
-
-bool decl_needs_parens( const type_t *type )
-{
-    if (type_is_alias( type )) return false;
-    if (is_array( type ) && !type_array_is_decl_as_ptr( type )) return true;
-    if (type_get_type( type ) == TYPE_FUNCTION) return true;
-    return false;
-}
-
-void append_pointer_left( struct strbuf *str, const type_t *type, const char *callconv )
-{
-    if (needs_space_after( type )) strappend( str, " " );
-    if (decl_needs_parens( type )) strappend( str, "(" );
-    if (callconv && type_get_type_detect_alias( type ) == TYPE_FUNCTION)
-    {
-        const char *explicit_callconv = get_attrp( type->attrs, ATTR_CALLCONV );
-        if (explicit_callconv) callconv = explicit_callconv;
-        if (*callconv) strappend( str, "%s ", callconv );
-    }
-    strappend( str, "*" );
-}
-
-void append_type_left( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
-                       const char *callconv )
-{
-    bool is_const = !!(decl_spec->qualifier & TYPE_QUALIFIER_CONST);
-    type_t *type = decl_spec->type;
-    const char *name;
-
-    if (decl_spec->func_specifier & FUNCTION_SPECIFIER_INLINE) strappend( str, "inline " );
-    if (is_const && (type_is_alias( type ) || !is_ptr( type ))) strappend( str, "const " );
-
-    if ((name = type_get_name( type, name_type, false ))) return strappend( str, "%s", name );
-
-    switch (type_get_type_detect_alias( type ))
-    {
-    case TYPE_ENUM:
-    case TYPE_STRUCT:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_UNION:
-    {
-        const char *specifier = type_get_record_specifier( type ), *decl_name;
-        if (!(decl_name = type_get_decl_name( type, name_type ))) decl_name = "";
-        return strappend( str, "%s %s", specifier, decl_name );
-    }
-
-    case TYPE_POINTER:
-        append_type_left( str, type_pointer_get_ref( type ), name_type, NULL );
-        append_pointer_left( str, type_pointer_get_ref_type( type ), callconv );
-        if (is_const) strappend( str, "const " );
-        return;
-
-    case TYPE_ARRAY:
-    {
-        bool as_pointer = type_array_is_decl_as_ptr( type );
-        append_type_left( str, type_array_get_element( type ), name_type, as_pointer ? NULL : callconv );
-        if (as_pointer) append_pointer_left( str, type_array_get_element_type( type ), callconv );
-        return;
-    }
-
-    case TYPE_FUNCTION:
-        append_type_left( str, type_function_get_ret( type ), name_type, callconv );
-
-        /* A pointer to a function has to write the calling convention inside
-         * the parentheses. There's no way to handle that here, so we have to
-         * use an extra parameter to tell us whether to write the calling
-         * convention or not. */
-        if (callconv)
-        {
-            const char *explicit_callconv = get_attrp( type->attrs, ATTR_CALLCONV );
-            if (explicit_callconv) callconv = explicit_callconv;
-            if (*callconv) strappend( str, " %s ", callconv );
-        }
-        return;
-
-    case TYPE_BASIC:
-        return append_basic_type( str, type );
-
-    case TYPE_BITFIELD:
-        type = type_bitfield_get_field( type );
-        if (!type_is_alias( type )) return append_basic_type( str, type );
-        return strappend( str, "%s", type_get_name( type, name_type, false ) );
-
-    case TYPE_INTERFACE:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_RUNTIMECLASS:
-    case TYPE_DELEGATE:
-    case TYPE_VOID:
-    case TYPE_ALIAS:
-    case TYPE_PARAMETERIZED_TYPE:
-    case TYPE_PARAMETER:
-        /* handled elsewhere */
-        assert( 0 );
-        break;
-
-    case TYPE_APICONTRACT:
-        /* shouldn't be here */
-        assert( 0 );
-        break;
-    }
-}
-
-void append_type_right( struct strbuf *str, const type_t *type, const char *callconv, bool is_field )
-{
-    if (type_is_alias( type )) return;
-
-    switch (type_get_type( type ))
-    {
-    case TYPE_ARRAY:
-    {
-        type_t *elem = type_array_get_element_type( type );
-        if (type_array_is_decl_as_ptr( type ))
-        {
-            if (decl_needs_parens( elem )) strappend( str, ")" );
-        }
-        else
-        {
-            if (is_conformant_array( type )) strappend( str, "[%s]", is_field ? "1" : "" );
-            else strappend( str, "[%u]", type_array_get_dim( type ) );
-        }
-        append_type_right( str, elem, callconv, false );
-        break;
-    }
-
-    case TYPE_FUNCTION:
-    {
-        const var_list_t *args = type_function_get_args( type );
-        const var_t *arg;
-
-        strappend( str, "(" );
-        if (!args) strappend( str, "void" );
-        else LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
-        {
-            append_declspec( str, &arg->declspec, NAME_DEFAULT, callconv, false, arg->name );
-            if (arg->entry.next != args) strappend( str, "," );
-        }
-        strappend( str, ")" );
-
-        append_type_right( str, type_function_get_rettype( type ), callconv, false );
-        break;
-    }
-
-    case TYPE_POINTER:
-    {
-        type_t *ref = type_pointer_get_ref_type( type );
-        if (decl_needs_parens( ref )) strappend( str, ")" );
-        append_type_right( str, ref, callconv, false );
-        break;
-    }
-
-    case TYPE_BITFIELD:
-        strappend( str, " : %u", type_bitfield_get_bits( type )->cval );
-        break;
-
-    case TYPE_VOID:
-    case TYPE_BASIC:
-    case TYPE_ENUM:
-    case TYPE_STRUCT:
-    case TYPE_ENCAPSULATED_UNION:
-    case TYPE_UNION:
-    case TYPE_ALIAS:
-    case TYPE_MODULE:
-    case TYPE_COCLASS:
-    case TYPE_INTERFACE:
-    case TYPE_RUNTIMECLASS:
-    case TYPE_DELEGATE:
-    case TYPE_PARAMETERIZED_TYPE:
-    case TYPE_PARAMETER: break;
-    case TYPE_APICONTRACT:
-        /* not supposed to be here */
-        assert( 0 );
-        break;
-    }
-}
-
-void append_declspec( struct strbuf *str, const decl_spec_t *decl_spec, enum name_type name_type,
-                      const char *callconv, bool is_field, const char *name )
-{
-    const type_t *type = decl_spec->type;
-    if (type) append_type_left( str, decl_spec, name_type, callconv );
-    if (name) strappend( str, "%s%s", !type || needs_space_after( type ) ? " " : "", name );
-    if (type) append_type_right( str, type, callconv, is_field );
-}
-
-static void append_namespace( struct strbuf *str, const struct namespace *namespace,
-                              const char *separator, const char *abi_prefix )
+static size_t append_namespace(char **buf, size_t *len, size_t pos, struct namespace *namespace, const char *separator, const char *abi_prefix)
 {
     int nested = namespace && !is_global_namespace(namespace);
     const char *name = nested ? namespace->name : abi_prefix;
-    if (!name) return;
-    if (nested) append_namespace( str, namespace->parent, separator, abi_prefix );
-    strappend( str, "%s%s", name, separator );
+    size_t n = 0;
+    if (!name) return 0;
+    if (nested) n += append_namespace(buf, len, pos + n, namespace->parent, separator, abi_prefix);
+    n += strappend(buf, len, pos + n, "%s%s", name, separator);
+    return n;
 }
 
-static void append_namespaces( struct strbuf *str, const struct namespace *namespace, const char *prefix,
-                               const char *separator, const char *suffix, const char *abi_prefix )
+static size_t append_namespaces(char **buf, size_t *len, size_t pos, struct namespace *namespace, const char *prefix,
+                                const char *separator, const char *suffix, const char *abi_prefix)
 {
     int nested = namespace && !is_global_namespace(namespace);
-    strappend( str, "%s", prefix );
-    if (nested) append_namespace( str, namespace, separator, abi_prefix );
-    if (suffix) strappend( str, "%s", suffix );
+    size_t n = 0;
+    n += strappend(buf, len, pos + n, "%s", prefix);
+    if (nested) n += append_namespace(buf, len, pos + n, namespace, separator, abi_prefix);
+    if (suffix) n += strappend(buf, len, pos + n, "%s", suffix);
     else if (nested)
     {
-        str->pos -= strlen( separator );
-        str->buf[str->pos] = 0;
+        n -= strlen(separator);
+        (*buf)[n] = 0;
     }
+    return n;
 }
 
-static void append_pointer_stars( struct strbuf *str, type_t *type )
+static size_t append_pointer_stars(char **buf, size_t *len, size_t pos, type_t *type)
 {
-    for (; type && type_is_ptr( type ); type = type_pointer_get_ref_type( type ))
-        strappend( str, "*" );
+    size_t n = 0;
+    for (; type && type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) n += strappend(buf, len, pos + n, "*");
+    return n;
 }
 
-static size_t append_type_signature( struct strbuf *str, type_t *type );
+static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t *type);
 
-static size_t append_var_list_signature( struct strbuf *str, var_list_t *var_list )
+static size_t append_var_list_signature(char **buf, size_t *len, size_t pos, var_list_t *var_list)
 {
     var_t *var;
     size_t n = 0;
 
-    if (!var_list) strappend( str, ";" );
+    if (!var_list) n += strappend(buf, len, pos + n, ";");
     else LIST_FOR_EACH_ENTRY(var, var_list, var_t, entry)
     {
-        strappend( str, ";" );
-        append_type_signature( str, var->declspec.type );
+        n += strappend(buf, len, pos + n, ";");
+        n += append_type_signature(buf, len, pos + n, var->declspec.type);
     }
 
     return n;
 }
 
-static size_t append_type_signature( struct strbuf *str, type_t *type )
+static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t *type)
 {
     const struct uuid *uuid;
     size_t n = 0;
@@ -441,71 +168,72 @@ static size_t append_type_signature( struct strbuf *str, type_t *type )
     switch (type->type_type)
     {
     case TYPE_INTERFACE:
-        if (!strcmp( type->name, "IInspectable" )) strappend( str, "cinterface(IInspectable)" );
-        else if (type->signature) strappend( str, "%s", type->signature );
+        if (!strcmp(type->name, "IInspectable")) n += strappend(buf, len, pos + n, "cinterface(IInspectable)");
+        else if (type->signature) n += strappend(buf, len, pos + n, "%s", type->signature);
         else
         {
             if (!(uuid = get_attrp( type->attrs, ATTR_UUID )))
                 error_at( &type->where, "cannot compute type signature, no uuid found for type %s.\n", type->name );
 
-            strappend( str, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}", uuid->Data1,
-                       uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1], uuid->Data4[2],
-                       uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7] );
+            n += strappend(buf, len, pos + n, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                           uuid->Data1, uuid->Data2, uuid->Data3,
+                           uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
+                           uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
         }
         return n;
     case TYPE_DELEGATE:
-        strappend( str, "delegate(" );
-        append_type_signature( str, type_delegate_get_iface( type ) );
-        strappend( str, ")" );
+        n += strappend(buf, len, pos + n, "delegate(");
+        n += append_type_signature(buf, len, pos + n, type_delegate_get_iface(type));
+        n += strappend(buf, len, pos + n, ")");
         return n;
     case TYPE_RUNTIMECLASS:
-        strappend( str, "rc(" );
-        append_namespaces( str, type->namespace, "", ".", type->name, NULL );
-        strappend( str, ";" );
-        append_type_signature( str, type_runtimeclass_get_default_iface( type, TRUE ) );
-        strappend( str, ")" );
+        n += strappend(buf, len, pos + n, "rc(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        n += strappend(buf, len, pos + n, ";");
+        n += append_type_signature(buf, len, pos + n, type_runtimeclass_get_default_iface(type, TRUE));
+        n += strappend(buf, len, pos + n, ")");
         return n;
     case TYPE_POINTER:
-        append_type_signature( str, type->details.pointer.ref.type );
+        n += append_type_signature(buf, len, pos + n, type->details.pointer.ref.type);
         return n;
     case TYPE_ALIAS:
-        if (!strcmp( type->name, "boolean" )) strappend( str, "b1" );
-        else if (!strcmp( type->name, "GUID" )) strappend( str, "g16" );
-        else if (!strcmp( type->name, "HSTRING" )) strappend( str, "string" );
-        else append_type_signature( str, type->details.alias.aliasee.type );
+        if (!strcmp(type->name, "boolean")) n += strappend(buf, len, pos + n, "b1");
+        else if (!strcmp(type->name, "GUID")) n += strappend(buf, len, pos + n, "g16");
+        else if (!strcmp(type->name, "HSTRING")) n += strappend(buf, len, pos + n, "string");
+        else n += append_type_signature(buf, len, pos + n, type->details.alias.aliasee.type);
         return n;
     case TYPE_STRUCT:
-        strappend( str, "struct(" );
-        append_namespaces( str, type->namespace, "", ".", type->name, NULL );
-        append_var_list_signature( str, type->details.structure->fields );
-        strappend( str, ")" );
+        n += strappend(buf, len, pos + n, "struct(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        n += append_var_list_signature(buf, len, pos + n, type->details.structure->fields);
+        n += strappend(buf, len, pos + n, ")");
         return n;
     case TYPE_BASIC:
         switch (type_basic_get_type(type))
         {
         case TYPE_BASIC_INT16:
-            strappend( str, type_basic_get_sign( type ) <= 0 ? "i2" : "u2" );
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i2" : "u2");
             return n;
         case TYPE_BASIC_INT:
         case TYPE_BASIC_INT32:
         case TYPE_BASIC_LONG:
-            strappend( str, type_basic_get_sign( type ) <= 0 ? "i4" : "u4" );
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i4" : "u4");
             return n;
         case TYPE_BASIC_INT64:
-            strappend( str, type_basic_get_sign( type ) <= 0 ? "i8" : "u8" );
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) <= 0 ? "i8" : "u8");
             return n;
         case TYPE_BASIC_INT8:
             assert(type_basic_get_sign(type) > 0); /* signature string for signed char isn't specified */
-            strappend( str, "u1" );
+            n += strappend(buf, len, pos + n, "u1");
             return n;
         case TYPE_BASIC_FLOAT:
-            strappend( str, "f4" );
+            n += strappend(buf, len, pos + n, "f4");
             return n;
         case TYPE_BASIC_DOUBLE:
-            strappend( str, "f8" );
+            n += strappend(buf, len, pos + n, "f8");
             return n;
         case TYPE_BASIC_BYTE:
-            strappend( str, "u1" );
+            n += strappend(buf, len, pos + n, "u1");
             return n;
         case TYPE_BASIC_INT3264:
         case TYPE_BASIC_CHAR:
@@ -518,11 +246,11 @@ static size_t append_type_signature( struct strbuf *str, type_t *type )
             break;
         }
     case TYPE_ENUM:
-        strappend( str, "enum(" );
-        append_namespaces( str, type->namespace, "", ".", type->name, NULL );
-        if (is_attr( type->attrs, ATTR_FLAGS )) strappend( str, ";u4" );
-        else strappend( str, ";i4" );
-        strappend( str, ")" );
+        n += strappend(buf, len, pos + n, "enum(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        if (is_attr(type->attrs, ATTR_FLAGS)) n += strappend(buf, len, pos + n, ";u4");
+        else n += strappend(buf, len, pos + n, ";i4");
+        n += strappend(buf, len, pos + n, ")");
         return n;
     case TYPE_ARRAY:
     case TYPE_ENCAPSULATED_UNION:
@@ -545,48 +273,31 @@ static size_t append_type_signature( struct strbuf *str, type_t *type )
     return n;
 }
 
-char *format_namespace( const struct namespace *namespace, const char *prefix, const char *separator,
-                        const char *suffix, const char *abi_prefix )
+char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix, const char *abi_prefix)
 {
-    struct strbuf str = {0};
-    append_namespaces( &str, namespace, prefix, separator, suffix, abi_prefix );
-    return str.buf;
+    size_t len = 0;
+    char *buf = NULL;
+    append_namespaces(&buf, &len, 0, namespace, prefix, separator, suffix, abi_prefix);
+    return buf;
 }
 
-char *format_parameterized_type_name( const type_t *type, const typeref_list_t *params )
+char *format_parameterized_type_name(type_t *type, typeref_list_t *params)
 {
-    struct strbuf str = {0};
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
     typeref_t *ref;
 
-    strappend( &str, "%s<", type->name );
+    pos += strappend(&buf, &len, pos, "%s<", type->name);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        strappend( &str, "%s", type->qualified_name );
-        append_pointer_stars( &str, ref->type );
-        if (list_next( params, &ref->entry )) strappend( &str, "," );
+        pos += strappend(&buf, &len, pos, "%s", type->qualified_name);
+        pos += append_pointer_stars(&buf, &len, pos, ref->type);
+        if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ",");
     }
-    strappend( &str, " >" );
+    pos += strappend(&buf, &len, pos, " >");
 
-    return str.buf;
-}
-
-char *format_parameterized_type_args( const type_t *type, const char *prefix, const char *suffix )
-{
-    struct strbuf str = {0};
-    typeref_list_t *params;
-    typeref_t *ref;
-
-    params = type->details.parameterized.params;
-    if (params) LIST_FOR_EACH_ENTRY( ref, params, typeref_t, entry )
-    {
-        assert( ref->type->type_type != TYPE_POINTER );
-        strappend( &str, "%s%s%s", prefix, ref->type->name, suffix );
-        if (list_next( params, &ref->entry )) strappend( &str, ", " );
-    }
-
-    if (!str.buf) return xstrdup( "" );
-    return str.buf;
+    return buf;
 }
 
 static char const *parameterized_type_shorthands[][2] = {
@@ -598,116 +309,109 @@ static char const *parameterized_type_shorthands[][2] = {
 
 static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *params, const char *prefix, const char *separator)
 {
-    struct strbuf str = {0};
     const char *tmp, *ns_prefix = "__x_", *abi_prefix = NULL;
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
     int i, count = params ? list_count(params) : 0;
     typeref_t *ref;
 
     if (!strcmp(separator, "__C")) ns_prefix = "_C";
     else if (use_abi_namespace) abi_prefix = "ABI";
 
-    append_namespaces( &str, type->namespace, ns_prefix, separator, "", abi_prefix );
-    strappend( &str, "%s%s_%d", prefix, type->name, count );
+    pos += append_namespaces(&buf, &len, pos, type->namespace, ns_prefix, separator, "", abi_prefix);
+    pos += strappend(&buf, &len, pos, "%s%s_%d", prefix, type->name, count);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        if ((tmp = type->param_name)) strappend( &str, "_%s", tmp );
-        else append_namespaces( &str, type->namespace, "_", "__C", type->name, NULL );
+        if ((tmp = type->param_name)) pos += strappend(&buf, &len, pos, "_%s", tmp);
+        else pos += append_namespaces(&buf, &len, pos, type->namespace, "_", "__C", type->name, NULL);
     }
 
     for (i = 0; i < ARRAY_SIZE(parameterized_type_shorthands); ++i)
     {
-        if ((tmp = strstr( str.buf, parameterized_type_shorthands[i][0] )) &&
-            (tmp - str.buf) == strlen( ns_prefix ) + (abi_prefix ? 5 : 0))
+        if ((tmp = strstr(buf, parameterized_type_shorthands[i][0])) &&
+            (tmp - buf) == strlen(ns_prefix) + (abi_prefix ? 5 : 0))
         {
            tmp += strlen(parameterized_type_shorthands[i][0]);
-           strcpy( str.buf, parameterized_type_shorthands[i][1] );
-           memmove( str.buf + 3, tmp, str.len - (tmp - str.buf) );
+           strcpy(buf, parameterized_type_shorthands[i][1]);
+           memmove(buf + 3, tmp, len - (tmp - buf));
         }
     }
 
-    return str.buf;
+    return buf;
 }
 
 static char *format_parameterized_type_signature(type_t *type, typeref_list_t *params)
 {
-    struct strbuf str = {0};
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
     typeref_t *ref;
     const struct uuid *uuid;
 
     if (!(uuid = get_attrp( type->attrs, ATTR_UUID )))
         error_at( &type->where, "cannot compute type signature, no uuid found for type %s.\n", type->name );
 
-    strappend( &str, "pinterface({%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}", uuid->Data1,
-               uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1], uuid->Data4[2],
-               uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7] );
+    pos += strappend(&buf, &len, pos, "pinterface({%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                     uuid->Data1, uuid->Data2, uuid->Data3,
+                     uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
+                     uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
-        strappend( &str, ";" );
-        append_type_signature( &str, ref->type );
+        pos += strappend(&buf, &len, pos, ";");
+        pos += append_type_signature(&buf, &len, pos, ref->type);
     }
-    strappend( &str, ")" );
+    pos += strappend(&buf, &len, pos, ")");
 
-    return str.buf;
+    return buf;
 }
 
 static char *format_parameterized_type_short_name(type_t *type, typeref_list_t *params, const char *prefix)
 {
-    struct strbuf str = {0};
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
     typeref_t *ref;
 
-    strappend( &str, "%s%s", prefix, type->name );
+    pos += strappend(&buf, &len, pos, "%s%s", prefix, type->name);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        if (type->short_name) strappend( &str, "_%s", type->short_name );
-        else strappend( &str, "_%s", type->name );
+        if (type->short_name) pos += strappend(&buf, &len, pos, "_%s", type->short_name);
+        else pos += strappend(&buf, &len, pos, "_%s", type->name);
     }
 
-    return str.buf;
+    return buf;
 }
 
 static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *params, const char *prefix)
 {
-    struct strbuf str = {0};
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
     typeref_t *ref;
     type_t *iface;
 
-    strappend( &str, "%s%s_impl<", prefix, type->name );
+    pos += strappend(&buf, &len, pos, "%s%s_impl<", prefix, type->name);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
         if (type->type_type == TYPE_RUNTIMECLASS)
         {
-            strappend( &str, "ABI::Windows::Foundation::Internal::AggregateType<%s", type->qualified_name );
-            append_pointer_stars( &str, ref->type );
+            pos += strappend(&buf, &len, pos, "ABI::Windows::Foundation::Internal::AggregateType<%s", type->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
             iface = type_runtimeclass_get_default_iface(type, TRUE);
-            strappend( &str, ", %s", iface->qualified_name );
-            append_pointer_stars( &str, ref->type );
-            strappend( &str, " >" );
+            pos += strappend(&buf, &len, pos, ", %s", iface->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
+            pos += strappend(&buf, &len, pos, " >");
         }
         else
         {
-            strappend( &str, "%s", type->qualified_name );
-            append_pointer_stars( &str, ref->type );
+            pos += strappend(&buf, &len, pos, "%s", type->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
         }
-        if (list_next( params, &ref->entry )) strappend( &str, ", " );
+        if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ", ");
     }
-    strappend( &str, " >" );
+    pos += strappend(&buf, &len, pos, " >");
 
-    return str.buf;
-}
-
-static char *format_parameterized_type_winmd_short_name(type_t *type, typeref_list_t *params)
-{
-    struct strbuf str = {0};
-    unsigned int count = 0;
-
-    strappend(&str, "%s", type->name);
-    if (params) count = list_count(params);
-    if (count) strappend(&str, "`%u", count);
-
-    return str.buf;
+    return buf;
 }
 
 type_t *type_new_function(var_list_t *args)
@@ -1043,7 +747,6 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
     iface->details.iface->inherit = inherit;
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
-    iface->details.iface->runtime_class = NULL;
     iface->details.iface->requires = requires;
     define_type(iface, where);
     compute_method_indexes(iface);
@@ -1141,24 +844,6 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-static void set_constructor_runtimeclass(type_t *runtimeclass, attr_list_t *attrs)
-{
-    const attr_t *attr;
-    if (!attrs) return;
-    LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
-    {
-        if (attr->type == ATTR_ACTIVATABLE || attr->type == ATTR_COMPOSABLE)
-        {
-            const expr_t *value = attr->u.pval;
-            if (value->type == EXPR_MEMBER && value->u.var->declspec.type->type_type == TYPE_INTERFACE &&
-                value->u.var->declspec.type->details.iface)
-            {
-                value->u.var->declspec.type->details.iface->runtime_class = runtimeclass;
-            }
-        }
-    }
-}
-
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
         typeref_list_t *ifaces, const struct location *where)
 {
@@ -1167,10 +852,10 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
 
     runtimeclass->attrs = check_runtimeclass_attrs(runtimeclass->name, attrs);
     runtimeclass->details.runtimeclass.ifaces = ifaces;
-    set_constructor_runtimeclass(runtimeclass, attrs);
     define_type(runtimeclass, where);
-    if (!type_runtimeclass_get_ifaces(runtimeclass) && !get_attrp(runtimeclass->attrs, ATTR_STATIC))
-        error_loc("runtimeclass %s must have at least one interface or static factory\n", runtimeclass->name);
+    if (!type_runtimeclass_get_default_iface(runtimeclass, FALSE) &&
+        !get_attrp(runtimeclass->attrs, ATTR_STATIC))
+        error_loc("runtimeclass %s must have a default interface or static factory\n", runtimeclass->name);
 
     if (ifaces) LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
     {
@@ -1208,7 +893,6 @@ type_t *type_apicontract_declare(char *name, struct namespace *namespace)
 type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs, const struct location *where)
 {
     apicontract->attrs = check_apicontract_attrs(apicontract->name, attrs);
-    apicontract->attrs = append_attr(apicontract->attrs, attr_int(*where, ATTR_APICONTRACT, 1));
     define_type(apicontract, where);
     return apicontract;
 }
@@ -1488,9 +1172,9 @@ static type_t *replace_type_parameters_in_type(type_t *type, typeref_list_t *ori
         return type;
     case TYPE_ARRAY:
         t = replace_type_parameters_in_type(type->details.array.elem.type, orig, repl);
-        if (t == type->details.array.elem.type) return type;
+        if (t == t->details.array.elem.type) return type;
         type = duptype(type, 0);
-        type->details.array.elem.type = t;
+        t->details.array.elem.type = t;
         return type;
     case TYPE_FUNCTION:
         t = duptype(type, 0);
@@ -1543,7 +1227,6 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     new_type->c_name = format_parameterized_type_c_name(type, params, "", "_C");
     new_type->short_name = format_parameterized_type_short_name(type, params, "");
     new_type->param_name = format_parameterized_type_c_name(type, params, "", "__C");
-    new_type->winmd_short_name = format_parameterized_type_winmd_short_name(type, params);
 
     if (new_type->type_type == TYPE_DELEGATE)
     {

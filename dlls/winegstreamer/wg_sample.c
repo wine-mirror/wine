@@ -52,7 +52,6 @@ struct sample
         {
             IMFSample *sample;
             IMFMediaBuffer *buffer;
-            IMF2DBuffer2 *buffer2d;
         } mf;
         struct
         {
@@ -80,16 +79,8 @@ static void mf_sample_destroy(struct wg_sample *wg_sample)
 
     TRACE_(mfplat)("wg_sample %p.\n", wg_sample);
 
-    if (sample->u.mf.buffer2d)
-    {
-        IMF2DBuffer2_Unlock2D(sample->u.mf.buffer2d);
-        IMF2DBuffer2_Release(sample->u.mf.buffer2d);
-    }
-    else
-    {
-        IMFMediaBuffer_Unlock(sample->u.mf.buffer);
-        IMFMediaBuffer_Release(sample->u.mf.buffer);
-    }
+    IMFMediaBuffer_Unlock(sample->u.mf.buffer);
+    IMFMediaBuffer_Release(sample->u.mf.buffer);
     IMFSample_Release(sample->u.mf.sample);
 }
 
@@ -101,47 +92,21 @@ static const struct wg_sample_ops mf_sample_ops =
 HRESULT wg_sample_create_mf(IMFSample *mf_sample, struct wg_sample **out)
 {
     DWORD current_length, max_length;
-    BYTE *scanline0, *buffer = NULL;
-    IMF2DBuffer2 *buffer2d;
     struct sample *sample;
-    HRESULT hr = S_OK;
-    LONG pitch = 0;
+    BYTE *buffer;
+    HRESULT hr;
 
     if (!(sample = calloc(1, sizeof(*sample))))
         return E_OUTOFMEMORY;
     if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(mf_sample, &sample->u.mf.buffer)))
         goto fail;
-    if (SUCCEEDED(IMFMediaBuffer_QueryInterface(sample->u.mf.buffer, &IID_IMF2DBuffer2, (void **)&buffer2d)))
-    {
-        /* The result of ConvertToContiguousBuffer() can be an existing 2D buffer, which does
-         * not need to be contiguous by the definition of 'contiguous' for buffers. For 2D
-         * buffers, call Lock2DSize() and set up GStreamer to output with the correct stride.
-         * This avoids Lock() copying the entire contents into a linear buffer even though the
-         * current contents are about to be overwritten, and avoids Unlock() copying the new
-         * contents. Resolves performance issues on lower spec hardware. */
-        if (SUCCEEDED(hr = IMF2DBuffer2_Lock2DSize(buffer2d, MF2DBuffer_LockFlags_ReadWrite, &scanline0, &pitch, &buffer, &max_length)))
-        {
-            IMFMediaBuffer_Release(sample->u.mf.buffer);
-            sample->u.mf.buffer = NULL;
-            sample->u.mf.buffer2d = buffer2d;
-            IMF2DBuffer2_GetContiguousLength(buffer2d, &current_length);
-        }
-        else
-        {
-            IMF2DBuffer2_Release(buffer2d);
-        }
-        if (FAILED(hr))
-            goto fail;
-    }
-
-    if (!buffer && FAILED(hr = IMFMediaBuffer_Lock(sample->u.mf.buffer, &buffer, &max_length, &current_length)))
+    if (FAILED(hr = IMFMediaBuffer_Lock(sample->u.mf.buffer, &buffer, &max_length, &current_length)))
         goto fail;
 
     IMFSample_AddRef((sample->u.mf.sample = mf_sample));
     sample->wg_sample.data = (UINT_PTR)buffer;
     sample->wg_sample.size = current_length;
     sample->wg_sample.max_size = max_length;
-    sample->wg_sample.stride = pitch;
     sample->ops = &mf_sample_ops;
 
     *out = &sample->wg_sample;
@@ -374,11 +339,10 @@ HRESULT wg_transform_push_mf(wg_transform_t transform, IMFSample *sample,
 }
 
 HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD mf_sample_size, DWORD *flags, bool *preserve_timestamps)
+        DWORD sample_size, DWORD *flags)
 {
     struct wg_sample *wg_sample;
     IMFMediaBuffer *buffer;
-    DWORD sample_size;
     HRESULT hr;
 
     TRACE_(mfplat)("transform %#I64x, sample %p, flags %p.\n", transform, sample, flags);
@@ -404,27 +368,10 @@ HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
         IMFSample_SetUINT32(sample, &MFSampleExtension_CleanPoint, 1);
     if (wg_sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY)
         IMFSample_SetUINT32(sample, &MFSampleExtension_Discontinuity, 1);
-    if (preserve_timestamps)
-        *preserve_timestamps = !!(wg_sample->flags & WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS);
 
     if (SUCCEEDED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
     {
-        if (wg_sample->stride && mf_sample_size)
-        {
-            /* The sample size must match the frame size calculated with default alignment, which
-             * differs from the length of the contiguous buffer if the buffer has extra width, either
-             * to conform with 2D alignment or because MF_MT_FRAME_SIZE was set to a width greater
-             * than that of the actual video frame. MF allows a frame to be placed in a wider 2D buffer. */
-            sample_size = min(mf_sample_size, wg_sample->size);
-        }
-        else
-        {
-            if (wg_sample->stride)
-                FIXME("Expected an MF sample size.\n");
-            sample_size = wg_sample->size;
-        }
-
-        hr = IMFMediaBuffer_SetCurrentLength(buffer, sample_size);
+        hr = IMFMediaBuffer_SetCurrentLength(buffer, wg_sample->size);
         IMFMediaBuffer_Release(buffer);
     }
 
@@ -482,7 +429,7 @@ HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *wg_
     }
 
     if (FAILED(hr = IMediaSample_SetActualDataLength(sample->u.quartz.sample, wg_sample->size)))
-        ERR("SetActualDataLength() returned %#lx.\n", hr);
+        return hr;
 
     if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
     {

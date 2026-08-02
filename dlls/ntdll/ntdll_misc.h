@@ -35,8 +35,6 @@
 
 #define NTDLL_TLS_ERRNO 16  /* TLS slot for _errno() */
 
-#define NTDLL_ACTCTX_STACK_FRAME_HEAP_ALLOCATED 0x8 /* RTL_ACTIVATION_CONTEXT_STACK_FRAME.Flags */
-
 #ifdef __i386__
 static const USHORT current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)
@@ -57,6 +55,8 @@ extern NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *conte
 extern NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id );
 extern EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
                                                            CONTEXT *context, void *dispatch );
+extern EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                              CONTEXT *context, void *dispatch );
 extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec );
 extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr );
 extern void WINAPI process_breakpoint(void);
@@ -138,7 +138,7 @@ extern void heap_thread_detach(void);
     TRACE( "rax=%016I64x rbx=%016I64x rcx=%016I64x rdx=%016I64x\n", (c)->Rax, (c)->Rbx, (c)->Rcx, (c)->Rdx ); \
     TRACE( "rsi=%016I64x rdi=%016I64x  r8=%016I64x  r9=%016I64x\n", (c)->Rsi, (c)->Rdi, (c)->R8, (c)->R9 ); \
     TRACE( "r10=%016I64x r11=%016I64x r12=%016I64x r13=%016I64x\n", (c)->R10, (c)->R11, (c)->R12, (c)->R13 ); \
-    TRACE( "r14=%016I64x r15=%016I64x mxcsr=%08lx cs=%04x ss=%04x\n", (c)->R14, (c)->R15, (c)->MxCsr, (c)->SegCs, (c)->SegSs ); \
+    TRACE( "r14=%016I64x r15=%016I64x mxcsr=%08lx\n", (c)->R14, (c)->R15, (c)->MxCsr ); \
     } while(0)
 #elif defined(__arm__)
 # define TRACE_CONTEXT(c) do { \

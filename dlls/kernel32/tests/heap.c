@@ -38,12 +38,8 @@
 #define HEAP_VALIDATE_ALL     0x20000000
 #define HEAP_VALIDATE_PARAMS  0x40000000
 
-#define REGION_ALIGN        0x10000
-#define INITIAL_COMMIT_ALIGN (0x400 * sizeof(void *))
 #define BLOCK_ALIGN         (2 * sizeof(void *) - 1)
 #define ALIGN_BLOCK_SIZE(x) (((x) + BLOCK_ALIGN) & ~BLOCK_ALIGN)
-
-#define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
 
 /* use function pointers to avoid warnings for invalid parameter tests */
 static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
@@ -59,6 +55,7 @@ static HGLOBAL (WINAPI *pLocalAlloc)(UINT,SIZE_T);
 static HGLOBAL (WINAPI *pLocalFree)(HLOCAL);
 static BOOL (WINAPI *pHeapQueryInformation)(HANDLE,HEAP_INFORMATION_CLASS,void*,SIZE_T,SIZE_T*);
 static BOOL (WINAPI *pHeapSetInformation)(HANDLE,HEAP_INFORMATION_CLASS,void*,SIZE_T);
+static UINT (WINAPI *pGlobalFlags)(HGLOBAL);
 static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
 
 static void load_functions(void)
@@ -74,6 +71,7 @@ static void load_functions(void)
     LOAD_FUNC( kernel32, HeapSetInformation );
     LOAD_FUNC( kernel32, GetPhysicallyInstalledSystemMemory );
     LOAD_FUNC( kernel32, GlobalAlloc );
+    LOAD_FUNC( kernel32, GlobalFlags );
     LOAD_FUNC( kernel32, GlobalFree );
     LOAD_FUNC( kernel32, LocalAlloc );
     LOAD_FUNC( kernel32, LocalFree );
@@ -573,7 +571,8 @@ static void test_HeapCreate(void)
     ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
     ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
     ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
-    todo_wine ok( entries[0].Region.dwCommittedSize == 0x400 * sizeof(void *),
+    todo_wine
+    ok( entries[0].Region.dwCommittedSize == 0x400 * sizeof(void *),
         "got Region.dwCommittedSize %#lx\n", entries[0].Region.dwCommittedSize );
     ok( entries[0].Region.dwUnCommittedSize == 0x10000 - entries[0].Region.dwCommittedSize ||
         entries[0].Region.dwUnCommittedSize == 0x10000 * sizeof(void *) - entries[0].Region.dwCommittedSize /* win7 */,
@@ -748,9 +747,6 @@ static void test_HeapCreate(void)
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
     ok( count == 4, "got count %lu\n", count );
-    todo_wine ok( entries->Region.dwCommittedSize == INITIAL_COMMIT_ALIGN, "got %#lx.\n", entries->Region.dwCommittedSize );
-    ok( entries->Region.dwUnCommittedSize == REGION_ALIGN - entries->Region.dwCommittedSize, "got %#lx.\n",
-        entries->Region.dwUnCommittedSize );
     ok( !memcmp( entries + 16, entries, 1 * sizeof(entry) ), "entries differ\n" );
     ok( memcmp( entries + 17, entries + 2, 2 * sizeof(entry) ), "entries differ\n" );
 
@@ -1548,7 +1544,7 @@ static void test_GlobalAlloc(void)
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
     tmp_mem = pGlobalFree( mem );
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
-    if (0) /* crashes on Windows */
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = pGlobalFree( mem );
@@ -1591,7 +1587,7 @@ static void test_GlobalAlloc(void)
     tmp_mem = GlobalReAlloc( mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (0) /* crashes on Windows */
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( mem );
@@ -1625,7 +1621,7 @@ static void test_GlobalAlloc(void)
     tmp_mem = GlobalReAlloc( invalid_mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (0) /* crashes on Windows */
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( invalid_mem );
@@ -2338,7 +2334,7 @@ static void test_LocalAlloc(void)
     tmp_mem = LocalReAlloc( mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (0) /* crashes on Windows */
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( mem );
@@ -2371,7 +2367,7 @@ static void test_LocalAlloc(void)
     tmp_mem = LocalReAlloc( invalid_mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (0) /* crashes on Windows */
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( invalid_mem );
@@ -3402,7 +3398,12 @@ static void test_debug_heap( const char *argv0, DWORD flags )
     sprintf( buffer, "%s heap.c 0x%lx", argv0, flags );
     ret = CreateProcessA( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
     ok( ret, "failed to create child process error %lu\n", GetLastError() );
-    wait_child_process( &info );
+    if (ret)
+    {
+        wait_child_process( info.hProcess );
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
+    }
     RegDeleteValueA( hkey, "GlobalFlag" );
     RegCloseKey( hkey );
     RegDeleteKeyA( HKEY_LOCAL_MACHINE, keyname );
@@ -3452,48 +3453,6 @@ static void test_heap_layout( HANDLE handle, DWORD global_flag, DWORD heap_flags
         ok( heap->ffeeffee == 0xffeeffee, "got ffeeffee %#x\n", heap->ffeeffee );
         ok( heap->auto_flags == (heap_flags & HEAP_GROWABLE) || !heap->auto_flags,
             "got auto_flags %#x\n", heap->auto_flags );
-    }
-}
-
-static void test_heap_tail_zeroing( DWORD heap_flags )
-{
-    static const ULONG_PTR large_block_min_size = 65536 * (2 * sizeof(void *));
-    HANDLE heap = GetProcessHeap();
-    size_t size, size_aligned;
-    ULONG_PTR v, expected;
-    char *p1, *p2;
-
-    if (heap_flags & HEAP_PAGE_ALLOCS)
-    {
-        /* This behaves differently, no support yet. */
-        skip( "Skipping test with HEAP_PAGE_ALLOCS.\n" );
-        return;
-    }
-
-    for (size = 1; size <= 1048576 * 2; size *= 2)
-    {
-        winetest_push_context( "heap_flags %#lx, size %Iu", heap_flags, size );
-        p1 = pHeapAlloc( heap, 0, size + 1 );
-        ok( !!p1, "got NULL.\n" );
-        size_aligned = ROUND_SIZE(size + 1, sizeof(void *) - 1);
-        /* This and read access below is going to make valgrind or ASAN unhappy but the purpose of this test is
-         * to specifically check what happens with the tail bytes following the allocation. */
-        if (!(heap_flags & (HEAP_VALIDATE_PARAMS | HEAP_VALIDATE_ALL)))
-            memset( p1, 0xcc, size_aligned );
-        pHeapFree( heap, 0, p1 );
-
-        /* We are not guarenteed to get the same pointer here but that often happens, especially when the test
-         * is run first, and spoling the data before that adds certainity to the results. */
-        p2 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, size + 1 );
-        ok( !!p2, "got NULL.\n" );
-        v = 0;
-        memcpy( &v, p2 + size, size_aligned - size );
-        expected = 0;
-        if (size_aligned - size > 1 && size + 1 < large_block_min_size && heap_flags & HEAP_TAIL_CHECKING_ENABLED)
-            memset( (char *)&expected + 1, 0xab, size_aligned - size - 1 );
-        ok( v == expected, "got %#Ix, expected %#Ix.\n", v, expected );
-        pHeapFree( heap, 0, p2 );
-        winetest_pop_context();
     }
 }
 
@@ -3576,7 +3535,6 @@ static void test_child_heap( const char *arg )
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
     test_heap_checks( heap_flags );
-    test_heap_tail_zeroing( heap_flags );
 }
 
 static void test_GetPhysicallyInstalledSystemMemory(void)
@@ -3662,9 +3620,9 @@ static void test_GlobalMemoryStatus(void)
 
     ok( memex.dwMemoryLoad == expect.dwMemoryLoad, "got dwMemoryLoad %lu\n", memex.dwMemoryLoad );
     ok( memex.ullTotalPhys == expect.ullTotalPhys, "got ullTotalPhys %#I64x\n", memex.ullTotalPhys );
-    flaky ok( IS_WITHIN_RANGE( memex.ullAvailPhys, expect.ullAvailPhys ), "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
+    ok( IS_WITHIN_RANGE( memex.ullAvailPhys, expect.ullAvailPhys ), "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
     ok( memex.ullTotalPageFile == expect.ullTotalPageFile, "got ullTotalPageFile %#I64x\n", memex.ullTotalPageFile );
-    flaky ok( IS_WITHIN_RANGE( memex.ullAvailPageFile, expect.ullAvailPageFile ), "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
+    ok( IS_WITHIN_RANGE( memex.ullAvailPageFile, expect.ullAvailPageFile ), "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
     ok( memex.ullTotalVirtual == expect.ullTotalVirtual, "got ullTotalVirtual %#I64x\n", memex.ullTotalVirtual );
     ok( memex.ullAvailVirtual <= expect.ullAvailVirtual, "got ullAvailVirtual %#I64x\n", memex.ullAvailVirtual );
     ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
@@ -3687,13 +3645,12 @@ static void test_GlobalMemoryStatus(void)
 #undef IS_WITHIN_RANGE
 }
 
-static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size, SIZE_T *commit_size )
+static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size )
 {
     MEMORY_BASIC_INFORMATION info, info2;
     SIZE_T size;
     char *p;
 
-    *commit_size = 0;
     size = VirtualQuery( mem, &info, sizeof(info) );
     ok( size == sizeof(info), "got %Iu.\n", size );
 
@@ -3702,11 +3659,10 @@ static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size, SIZE_T 
     while (1)
     {
         size = VirtualQuery( p, &info2, sizeof(info2) );
-        if (!size) break;
+        ok( size == sizeof(info), "got %Iu.\n", size );
         if (info2.AllocationBase != info.AllocationBase)
             break;
         ok( info2.State == MEM_RESERVE || info2.State == MEM_COMMIT, "got %#lx.\n", info2.State );
-        if (info2.State == MEM_COMMIT) *commit_size += info2.RegionSize;
         p += info2.RegionSize;
     }
 
@@ -3714,39 +3670,32 @@ static void get_valloc_info( void *mem, char **base, SIZE_T *alloc_size, SIZE_T 
     *alloc_size = p - *base;
 }
 
-static void test_heap_size( SIZE_T initial_commit_size )
+static void test_heap_size( SIZE_T initial_size )
 {
-    static const SIZE_T init_grow_size = 0x100000, max_grow_size = 0xfd0000, test_alloc_size = 0x60000;
+    static const SIZE_T default_heap_size = 0x10000, init_grow_size = 0x100000, max_grow_size = 0xfd0000;
 
     BOOL initial_subheap = TRUE, max_size_reached = FALSE;
-    SIZE_T alloc_size, committed_size, current_subheap_size, expected, commit_size, initial_committed_size;
+    SIZE_T alloc_size, current_subheap_size;
     char *base, *current_base;
-    BOOL subheap_changed;
     unsigned int i;
     HANDLE heap;
     void *p;
 
-    winetest_push_context( "init size %#Ix", initial_commit_size );
-    heap = HeapCreate( HEAP_NO_SERIALIZE, initial_commit_size, 0 );
-    get_valloc_info( heap, &current_base, &alloc_size, &committed_size );
+    winetest_push_context( "init size %#Ix", initial_size );
+    heap = HeapCreate( HEAP_NO_SERIALIZE, initial_size, 0 );
+    get_valloc_info( heap, &current_base, &alloc_size );
 
-    commit_size = ROUND_SIZE( initial_commit_size, INITIAL_COMMIT_ALIGN - 1 );
-    expected = ROUND_SIZE( commit_size + 1, REGION_ALIGN - 1 );
-
-    ok( alloc_size == expected, "got %#Ix, expected %#Ix.\n", alloc_size, expected );
-    expected = max( commit_size, INITIAL_COMMIT_ALIGN );
-    todo_wine_if( (!initial_commit_size || (initial_commit_size & (REGION_ALIGN - 1)))
-                   && !(initial_commit_size > REGION_ALIGN - INITIAL_COMMIT_ALIGN && initial_commit_size < REGION_ALIGN))
-    ok( committed_size == expected, "got commit size %#Ix, expected %#Ix.\n", committed_size, expected );
+    ok( alloc_size == initial_size + default_heap_size || broken( (initial_size && alloc_size == initial_size)
+        || (!initial_size && (alloc_size == default_heap_size * sizeof(void*))) ) /* Win7 */,
+        "got %#Ix.\n", alloc_size );
 
     current_subheap_size = alloc_size;
-    initial_committed_size = committed_size;
-    commit_size = 0;
     for (i = 0; i < 100; ++i)
     {
-        p = HeapAlloc( heap, 0, test_alloc_size );
-        get_valloc_info( p, &base, &alloc_size, &committed_size );
-        if ((subheap_changed = (base != current_base)))
+        winetest_push_context( "i %u, current_subheap_size %#Ix", i, current_subheap_size );
+        p = HeapAlloc( heap, 0, 0x60000 );
+        get_valloc_info( p, &base, &alloc_size );
+        if (base != current_base)
         {
             current_base = base;
             if (initial_subheap)
@@ -3760,18 +3709,8 @@ static void test_heap_size( SIZE_T initial_commit_size )
                 if (current_subheap_size == max_grow_size)
                     max_size_reached = TRUE;
             }
-            commit_size = 0x1000;
-            initial_committed_size = 0;
         }
-
-        winetest_push_context( "i %u, current_subheap_size %#Ix, subheap_changed %d", i, current_subheap_size,
-                               subheap_changed );
-        commit_size += test_alloc_size + 0x1000;
         ok( alloc_size == current_subheap_size, "got %#Ix.\n", alloc_size );
-        expected = max( initial_committed_size, commit_size );
-        todo_wine_if(commit_size != 0x5b0000 && expected != initial_commit_size)
-        ok( committed_size == expected, "got %#Ix, expected %#Ix, commit_size %#Ix, initial_committed_size %#Ix. p %p.\n",
-            committed_size, expected, commit_size, initial_committed_size, p );
         winetest_pop_context();
     }
     ok( max_size_reached, "Did not reach maximum subheap size.\n" );
@@ -3783,24 +3722,10 @@ static void test_heap_size( SIZE_T initial_commit_size )
 static void test_heap_sizes(void)
 {
     unsigned int i;
-    SIZE_T size, commit_size, round_size = 0x400 * sizeof(void*);
+    SIZE_T size, round_size = 0x400 * sizeof(void*);
     char *base;
 
     test_heap_size( 0 );
-    test_heap_size( 1 );
-    test_heap_size( 0x100 );
-    test_heap_size( 0xf00 );
-    test_heap_size( 0xfff );
-    test_heap_size( 0x1000 );
-    test_heap_size( 0xe000 );
-    test_heap_size( 0xe001 );
-    test_heap_size( 0xf000 );
-    test_heap_size( 0xf001 );
-    test_heap_size( 0xffff );
-    test_heap_size( 0x10000 );
-    test_heap_size( 0x20fff );
-    test_heap_size( 0x30000 );
-    test_heap_size( 0x30001 );
     test_heap_size( 0x80000 );
     test_heap_size( 0x150000 );
 
@@ -3808,58 +3733,11 @@ static void test_heap_sizes(void)
     {
         HANDLE heap = HeapCreate( 0, i * 0x100, i * 0x100 );
         ok( heap != NULL, "%x: creation failed\n", i * 0x100 );
-        get_valloc_info( heap, &base, &size, &commit_size );
+        get_valloc_info( heap, &base, &size );
         ok( size == ((i * 0x100 + round_size - 1) & ~(round_size - 1)),
             "%x: wrong size %Ix\n", i * 0x100, size );
         HeapDestroy( heap );
     }
-}
-
-static void test_HeapSummary(void)
-{
-    HANDLE heap;
-    HEAP_SUMMARY heap_summary;
-    BOOL ret;
-    DWORD err;
-    void *p;
-
-    /* setup */
-
-    heap = HeapCreate( 0, 0, 0 ); /* growable heap */
-    ok( heap != NULL, "creation failed\n" );
-
-    HeapAlloc( heap , 0, 0x100 );
-    HeapAlloc( heap , 0, 0x200 );
-    p = HeapAlloc( heap , 0, 0x300 );
-    HeapAlloc( heap, 0, 0x60000 );
-    HeapFree( heap, 0, p );
-
-    memset( &heap_summary, 0, sizeof(heap_summary) );
-
-    /* test cases */
-
-    ret = HeapSummary( heap, 0, &heap_summary );
-    err = GetLastError();
-    ok( !ret, "HeapSummary() with cb != sizeof(HEAP_SUMMARY) returned TRUE\n" );
-    ok( err == ERROR_INVALID_PARAMETER,
-        "HeapSummary() with cb != sizeof(HEAP_SUMMARY) set last error to %lu\n", err );
-
-    heap_summary.cb = sizeof(heap_summary);
-    ret = HeapSummary( heap, 0, &heap_summary );
-    ok( ret, "HeapSummary() returned FALSE\n" );
-
-    ok( heap_summary.cbAllocated == 0x100 + 0x200 + 0x60000,
-        "HeapSummary: wrong cbAllocated value %#Ix\n", heap_summary.cbAllocated );
-    ok( heap_summary.cbCommitted >= heap_summary.cbAllocated,
-        "HeapSummary: cbCommitted %#Ix < cbAllocated %#Ix\n",
-        heap_summary.cbCommitted, heap_summary.cbAllocated );
-    ok( heap_summary.cbReserved >= heap_summary.cbCommitted,
-        "HeapSummary: cbReserved %#Ix < cbCommitted %#Ix\n",
-        heap_summary.cbReserved, heap_summary.cbCommitted );
-
-    /* cleanup */
-
-    HeapDestroy( heap );
 }
 
 START_TEST(heap)
@@ -3882,8 +3760,6 @@ START_TEST(heap)
 
     test_GetPhysicallyInstalledSystemMemory();
     test_GlobalMemoryStatus();
-    test_HeapSummary();
-    test_heap_tail_zeroing( 0 );
 
     if (pRtlGetNtGlobalFlags)
     {

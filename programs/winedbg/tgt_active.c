@@ -63,8 +63,12 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de);
  *		dbg_attach_debuggee
  *
  * Sets the debuggee to <pid>
+ * cofe instructs winedbg what to do when first exception is received 
+ * (break=FALSE, continue=TRUE)
+ * wfe is set to TRUE if dbg_attach_debuggee should also proceed with all debug events
+ * until the first exception is received (aka: attach to an already running process)
  */
-BOOL dbg_attach_debuggee(DWORD pid, BOOL verbose)
+BOOL dbg_attach_debuggee(DWORD pid)
 {
     if (pid == GetCurrentProcessId())
     {
@@ -88,8 +92,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL verbose)
     SetEnvironmentVariableA("DBGHELP_NOLIVE", NULL);
 
     dbg_curr_process->active_debuggee = TRUE;
-    if (verbose)
-        dbg_printf("WineDbg attached to pid %04lx\n", pid);
+    dbg_printf("WineDbg attached to pid %04lx\n", pid);
     dbg_curr_pid = pid;
     dbg_curr_thread = NULL;
     dbg_curr_tid = 0;
@@ -312,21 +315,20 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
 
-void fetch_module_name(void *name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
+void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
 {
-    DWORD len;
-    if (dbg_curr_process->active_debuggee && (len = GetMappedFileNameW( dbg_curr_process->handle, mod_addr, buffer, bufsz )))
+    memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
+    if (!buffer[0] && !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
     {
-        /* FIXME: proper NT->Dos conversion */
-        static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+        if (GetMappedFileNameW( dbg_curr_process->handle, mod_addr, buffer, bufsz ))
+        {
+            /* FIXME: proper NT->Dos conversion */
+            static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
-        if (!wcsncmp( buffer, nt_prefixW, 4 ))
-            memmove( buffer, buffer + 4, (len - 4 + 1) * sizeof(WCHAR) );
-    }
-    else
-    {
-        memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
-        if (!buffer[0])
+            if (!wcsncmp( buffer, nt_prefixW, 4 ))
+                memmove( buffer, buffer + 4, (lstrlenW(buffer + 4) + 1) * sizeof(WCHAR) );
+        }
+        else
             swprintf(buffer, bufsz, L"DLL_%08lx", (ULONG_PTR)mod_addr);
     }
 }
@@ -605,17 +607,23 @@ void     dbg_active_wait_for_first_exception(void)
     wait_exception();
 }
 
-static BOOL dbg_active_wait_for_startup(DEBUG_EVENT* de, DWORD timeout)
+static BOOL dbg_active_wait_for_startup(DEBUG_EVENT* de)
 {
-    DWORD64 tc, tc_last = GetTickCount64() + timeout;
-
     dbg_interactiveP = FALSE;
-    while (dbg_num_processes() && (tc = GetTickCount64()) <= tc_last && WaitForDebugEvent(de, tc_last - tc))
+    while (dbg_num_processes() && WaitForDebugEvent(de, INFINITE))
     {
-        if (de->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) return FALSE;
-        if (dbg_handle_debug_event(de)) return TRUE;
+        switch (de->dwDebugEventCode)
+        {
+        case CREATE_PROCESS_DEBUG_EVENT:
+        case CREATE_THREAD_DEBUG_EVENT:
+        case LOAD_DLL_DEBUG_EVENT:
+        case EXCEPTION_DEBUG_EVENT:
+            if (dbg_handle_debug_event(de)) return TRUE;
+            break;
+        default:
+            return FALSE;
+        }
     }
-    de->dwDebugEventCode = 0;
     return FALSE;
 }
 
@@ -837,14 +845,14 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
     /* try the form <myself> pid */
     if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
     {
-        if (!dbg_attach_debuggee(pid, TRUE))
+        if (!dbg_attach_debuggee(pid))
             return start_error_init;
     }
     /* try the form <myself> pid evt (Win32 JIT debugger) */
     else if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
              str2int(argv[1], &evt) && evt != 0)
     {
-        if (!dbg_attach_debuggee(pid, TRUE))
+        if (!dbg_attach_debuggee(pid))
         {
             /* don't care about result */
             SetEvent((HANDLE)evt);
@@ -924,9 +932,9 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     if (input == INVALID_HANDLE_VALUE) return start_error_parse;
 
     /* debuggee can terminate before we get the first exception.
-     * so wait either until first exception, or process detach, or timeout
+     * so detect end of attach load sequence, and then print information.
      */
-    if (dbg_curr_process->active_debuggee && !(first_exception = dbg_active_wait_for_startup(&de, 10000)))
+    if (dbg_curr_process->active_debuggee && !(first_exception = dbg_active_wait_for_startup(&de)))
     {
         dbg_printf("Couldn't get first exception for process %04lx %ls%s.\n"
                    "No backtrace available\n",
@@ -939,10 +947,8 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     if (!first_exception)
     {
         /* continue managing debug events, in case the exception event comes after current debug event */
-        if (de.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
-            dbg_handle_debug_event(&de);
-        else
-            dbg_active_wait_for_first_exception();
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        dbg_active_wait_for_first_exception();
     }
     if (output != INVALID_HANDLE_VALUE)
     {
@@ -1089,46 +1095,10 @@ static BOOL tgt_process_active_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY
 #endif
 }
 
-BOOL dbg_fetch_active_thread_name(DWORD tid, WCHAR **description)
-{
-    static HRESULT (WINAPI *my_GetThreadDescription)(HANDLE, PWSTR*) = NULL;
-    static BOOL resolved = FALSE;
-    HANDLE h;
-    WCHAR *result = NULL;
-
-    if (!resolved)
-    {
-        HMODULE kernelbase = GetModuleHandleA("kernelbase.dll");
-        if (kernelbase)
-            my_GetThreadDescription = (void *)GetProcAddress(kernelbase, "GetThreadDescription");
-        resolved = TRUE;
-    }
-
-    if (my_GetThreadDescription && (h = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, tid)))
-    {
-        WCHAR *descr;
-        if (my_GetThreadDescription(h, &descr) == S_OK)
-        {
-            if (*descr) result = wcsdup(descr);
-            LocalFree(descr);
-        }
-        CloseHandle(h);
-    }
-    if (!result) return FALSE;
-    *description = result;
-    return TRUE;
-}
-
-static BOOL tgt_process_active_fetch_thread_name(const struct dbg_thread *thread, WCHAR **description)
-{
-    return dbg_fetch_active_thread_name(thread->tid, description);
-}
-
 static struct be_process_io be_process_active_io =
 {
     tgt_process_active_close_process,
     tgt_process_active_read,
     tgt_process_active_write,
-    tgt_process_active_get_selector,
-    tgt_process_active_fetch_thread_name,
+    tgt_process_active_get_selector
 };

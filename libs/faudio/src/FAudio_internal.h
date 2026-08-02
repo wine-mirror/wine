@@ -27,7 +27,6 @@
 #include "FAudio.h"
 #include "FAPOBase.h"
 #include <stdarg.h>
-#include <stdbool.h>
 
 
 #ifdef FAUDIO_WIN32_PLATFORM
@@ -163,7 +162,7 @@ extern void FAudio_Log(char const *msg);
 
 #define FAudio_strlen(ptr) SDL_strlen(ptr)
 #define FAudio_strcmp(str1, str2) SDL_strcmp(str1, str2)
-#define FAudio_strncmp(str1, str2, size) SDL_strncmp(str1, str2, size)
+#define FAudio_strncmp(str1, str2, size) SDL_strncmp(str1, str1, size)
 #define FAudio_strlcpy(ptr1, ptr2, size) SDL_strlcpy(ptr1, ptr2, size)
 
 #define FAudio_pow(x, y) SDL_pow(x, y)
@@ -299,22 +298,20 @@ typedef enum FAudioVoiceType
 	FAUDIO_VOICE_MASTER
 } FAudioVoiceType;
 
-struct queued_buffer
+typedef struct FAudioBufferEntry FAudioBufferEntry;
+struct FAudioBufferEntry
 {
 	FAudioBuffer buffer;
 	FAudioBufferWMA bufferWMA;
-	uint32_t loop_bytes, play_bytes;
-	bool sent_OnStartBuffer;
-	bool internal;
-
-	/* Byte offset of the first block in this buffer. This is usually zero,
-	 * but will be nonzero if the previous buffer did not have an aligned
-	 * size. */
-	uint32_t first_block_offset;
+	FAudioBufferEntry *next;
 };
 
-typedef void (FAUDIOCALL * FAudioDecodeCallback)(FAudioVoice *voice,
-	const void *src, float *dst, uint32_t block_offset, uint32_t sample_count);
+typedef void (FAUDIOCALL * FAudioDecodeCallback)(
+	FAudioVoice *voice,
+	FAudioBuffer *buffer,	/* Buffer to decode */
+	float *decodeCache,	/* Decode into here */
+	uint32_t samples	/* Samples to decode */
+);
 
 typedef void (FAUDIOCALL * FAudioResampleCallback)(
 	float *restrict dCache,
@@ -427,7 +424,6 @@ struct FAudio
 	LinkedList *sources;
 	LinkedList *submixes;
 	LinkedList *callbacks;
-	FAudioMutex refLock; // FIXME: refcount should be an SDL_AtomicInt instead -flibit
 	FAudioMutex sourceLock;
 	FAudioMutex submixLock;
 	FAudioMutex callbackLock;
@@ -527,28 +523,13 @@ struct FAudioVoice
 			FAudioResampleCallback resample;
 			FAudioVoiceCallback *callback;
 
-			/* Number of samples in a block, where the byte size of
-			 * a block is format->nBlockAlign.
-			 *
-			 * This is 1 for PCM formats, but depends on the format
-			 * for ADPCM. For WMV it is not used. */
-			uint32_t samples_per_block;
-
 			/* Dynamic */
 			uint8_t active;
 			float freqRatio;
+			uint8_t newBuffer;
 			uint64_t totalSamples;
-
-			struct queued_buffer *queued_buffers;
-			size_t queued_buffer_count, queued_buffers_capacity;
-			struct queued_buffer *flush_buffers;
-			size_t flush_buffer_count, flush_buffers_capacity;
-
-			/* Data left over from one or more buffers whose size
-			 * was unaligned. */
-			uint8_t *unaligned_data;
-			uint32_t unaligned_size;
-
+			FAudioBufferEntry *bufferList;
+			FAudioBufferEntry *flushList;
 			FAudioMutex bufferLock;
 		} src;
 		struct
@@ -599,8 +580,6 @@ uint32_t FAudio_INTERNAL_VoiceOutputFrequency(
 	const FAudioVoiceSends *pSendList
 );
 extern const float FAUDIO_INTERNAL_MATRIX_DEFAULTS[8][8][64];
-
-bool array_reserve(FAudio *audio, void **elements, size_t *capacity, size_t count, size_t size);
 
 /* Debug */
 
@@ -783,8 +762,13 @@ void FAudio_INTERNAL_InitSIMDFunctions(uint8_t hasSSE2, uint8_t hasNEON);
 
 /* Decoders */
 
-#define DECODE_FUNC(type) extern void FAudio_INTERNAL_Decode##type(FAudioVoice *voice, \
-	const void *src, float *dst, uint32_t block_offset, uint32_t sample_count);
+#define DECODE_FUNC(type) \
+	extern void FAudio_INTERNAL_Decode##type( \
+		FAudioVoice *voice, \
+		FAudioBuffer *buffer, \
+		float *decodeCache, \
+		uint32_t samples \
+	);
 DECODE_FUNC(PCM8)
 DECODE_FUNC(PCM16)
 DECODE_FUNC(PCM24)
@@ -797,7 +781,6 @@ DECODE_FUNC(WMAERROR)
 
 /* WMA decoding */
 
-void decode_wma(FAudioVoice *voice, struct queued_buffer *buffer, float *dst, uint32_t sample_count);
 #ifdef HAVE_WMADEC
 uint32_t FAudio_WMADEC_init(FAudioSourceVoice *pSourceVoice, uint32_t type);
 void FAudio_WMADEC_free(FAudioSourceVoice *voice);
@@ -854,7 +837,7 @@ static inline uint32_t GetMask(uint16_t channels)
 	if (channels == 4) return SPEAKER_QUAD;
 	if (channels == 5) return SPEAKER_4POINT1;
 	if (channels == 6) return SPEAKER_5POINT1;
-	if (channels == 8) return SPEAKER_7POINT1_SURROUND;
+	if (channels == 8) return SPEAKER_7POINT1;
 	FAudio_assert(0 && "Unrecognized speaker layout!");
 	return 0;
 }

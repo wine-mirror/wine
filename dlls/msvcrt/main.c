@@ -142,9 +142,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #endif
     break;
   case DLL_PROCESS_DETACH:
-    _flushall();
-    if (lpvReserved) break;
     msvcrt_free_io();
+    if (lpvReserved) break;
     msvcrt_free_popen_data();
     msvcrt_free_locks();
     msvcrt_free_console();

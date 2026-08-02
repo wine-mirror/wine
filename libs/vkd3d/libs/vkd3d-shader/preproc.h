@@ -38,7 +38,6 @@ struct preproc_buffer
 {
     void *lexer_buffer;
     struct vkd3d_shader_location location;
-    bool eof;
 };
 
 struct preproc_file
@@ -64,7 +63,7 @@ struct preproc_expansion
     struct preproc_text *arg_values;
     /* Back-pointer to the macro, if this expansion a macro body. This is
      * necessary so that argument tokens can be correctly replaced. */
-    const struct preproc_macro *macro;
+    struct preproc_macro *macro;
 };
 
 struct preproc_macro
@@ -109,7 +108,7 @@ struct preproc_ctx
      */
     struct preproc_func_state
     {
-        const struct preproc_macro *macro;
+        struct preproc_macro *macro;
         size_t arg_count;
         enum
         {
@@ -126,6 +125,7 @@ struct preproc_ctx
     int lookahead_token;
 
     bool last_was_newline;
+    bool last_was_eof;
     bool last_was_defined;
 
     bool error;
@@ -137,10 +137,8 @@ void preproc_close_include(struct preproc_ctx *ctx, const struct vkd3d_shader_co
 struct preproc_macro *preproc_find_macro(struct preproc_ctx *ctx, const char *name);
 void preproc_free_macro(struct preproc_macro *macro);
 bool preproc_push_include(struct preproc_ctx *ctx, char *filename, const struct vkd3d_shader_code *code);
-#define preproc_warning(ctx, loc, error, ...) \
-        preproc_warning_(ctx, loc, error, __FUNCTION__, __VA_ARGS__)
-void preproc_warning_(struct preproc_ctx *ctx, const struct vkd3d_shader_location *loc,
-        enum vkd3d_shader_error error, const char *function, const char *format, ...) VKD3D_PRINTF_FUNC(5, 6);
+void preproc_warning(struct preproc_ctx *ctx, const struct vkd3d_shader_location *loc,
+        enum vkd3d_shader_error error, const char *format, ...) VKD3D_PRINTF_FUNC(4, 5);
 
 static inline struct preproc_file *preproc_get_top_file(struct preproc_ctx *ctx)
 {

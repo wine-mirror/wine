@@ -43,7 +43,6 @@
 #include "xsltlocale.h"
 #include "pattern.h"
 #include "transform.h"
-#include "transformInternals.h"
 #include "variables.h"
 #include "numbersInternals.h"
 #include "namespaces.h"
@@ -5758,7 +5757,7 @@ xsltCountKeys(xsltTransformContextPtr ctxt)
  *
  * Resets source node flags and ids stored in 'psvi' member.
  */
-void
+static void
 xsltCleanupSourceDoc(xmlDocPtr doc) {
     xmlNodePtr cur = (xmlNodePtr) doc;
     void **psviPtr;

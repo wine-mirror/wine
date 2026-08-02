@@ -33,7 +33,7 @@
 #include <dmusbuff.h>
 #include <strmif.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -723,6 +723,6 @@ DECLARE_INTERFACE_(IDirectMusicThru,IUnknown)
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_CORE_H */

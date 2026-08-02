@@ -108,14 +108,14 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
     pattern++;
 
     size = wcstol(pattern, NULL, 10);
-    mask = malloc(size);
-    expect = malloc(size);
+    mask = heap_alloc(size);
+    expect = heap_alloc(size);
     memset(mask, 0xff, size);
 
     if (!(pattern = wcschr(pattern, ',')))
     {
-        free(mask);
-        free(expect);
+        heap_free(mask);
+        heap_free(expect);
         return FALSE;
     }
     pattern++;
@@ -132,8 +132,8 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 
     if (!(pattern = wcschr(pattern, ',')))
     {
-        free(mask);
-        free(expect);
+        heap_free(mask);
+        heap_free(expect);
         return FALSE;
     }
     pattern++;
@@ -148,13 +148,13 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
             expect[i / 2] = d << 4;
     }
 
-    actual = malloc(size);
+    actual = heap_alloc(size);
     SetFilePointer(file, offset, NULL, FILE_BEGIN);
     if (!ReadFile(file, actual, size, &ret_size, NULL) || ret_size != size)
     {
-        free(actual);
-        free(expect);
-        free(mask);
+        heap_free(actual);
+        heap_free(expect);
+        heap_free(mask);
         return FALSE;
     }
 
@@ -167,9 +167,9 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
         }
     }
 
-    free(actual);
-    free(expect);
-    free(mask);
+    heap_free(actual);
+    heap_free(expect);
+    heap_free(mask);
 
     /* If there is a following tuple, then we must match that as well. */
     if (ret && (pattern = wcschr(pattern, ',')))
@@ -256,7 +256,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
             if (RegQueryInfoKeyW(subtype_key, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_size, NULL, NULL))
                 continue;
 
-            pattern = malloc(max_size);
+            pattern = heap_alloc(max_size);
 
             for (value_idx = 0; ; ++value_idx)
             {
@@ -284,7 +284,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                         NULL, NULL, (BYTE *)source_clsid_str, &size))
                     CLSIDFromString(source_clsid_str, source_clsid);
 
-                free(pattern);
+                heap_free(pattern);
                 RegCloseKey(subtype_key);
                 RegCloseKey(majortype_key);
                 RegCloseKey(parent_key);
@@ -292,7 +292,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                 return TRUE;
             }
 
-            free(pattern);
+            heap_free(pattern);
             RegCloseKey(subtype_key);
         }
 
@@ -872,7 +872,8 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     HRESULT hr;
     BOOL ret;
 
-    TRACE("filter %p, offset %#I64x, length %ld, buffer %p.\n", filter, offset, length, buffer);
+    TRACE("filter %p, offset %s, length %ld, buffer %p.\n",
+            filter, wine_dbgstr_longlong(offset), length, buffer);
 
     ret = sync_read(filter->file, offset, length, buffer, &read_len);
     if (ret)

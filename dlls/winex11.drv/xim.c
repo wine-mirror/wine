@@ -28,6 +28,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -74,49 +75,8 @@ BOOL xim_in_compose_mode(void)
     return !!ime_comp_buf;
 }
 
-static BOOL is_ime_hkl( HKL hkl )
-{
-    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
-    switch (HIWORD(hkl))
-    {
-    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
-    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
-    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
-    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
-    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
-    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
-    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
-    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
-    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
-    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
-    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
-    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
-    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
-    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
-    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
-    }
-}
-
-static HKL get_ime_hkl( LCID locale )
-{
-    return ULongToHandle( MAKELONG( locale, 0xe001 ) );
-}
-
-static void activate_ime_hkl( HWND hwnd )
-{
-    HKL hkl = NtUserGetKeyboardLayout( 0 );
-    if (!is_ime_hkl( hkl )) NtUserActivateKeyboardLayout( get_ime_hkl( LOWORD(hkl) ), 0 );
-}
-
 static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
 {
-    activate_ime_hkl( hwnd );
     NtUserMessageCall( hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)comp_str,
                        result_str, NtUserImeDriverCall, FALSE );
 }
@@ -169,7 +129,6 @@ static BOOL xic_preedit_state_notify( XIC xic, XPointer user, XPointer arg )
     switch (state)
     {
     case XIMPreeditEnable:
-        activate_ime_hkl( hwnd );
         NtUserPostMessage( hwnd, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, TRUE );
         break;
     case XIMPreeditDisable:
@@ -189,7 +148,6 @@ static int xic_preedit_start( XIC xic, XPointer user, XPointer arg )
     if ((ime_comp_buf = realloc( ime_comp_buf, sizeof(WCHAR) ))) *ime_comp_buf = 0;
     else ERR( "Failed to allocate preedit buffer\n" );
 
-    activate_ime_hkl( hwnd );
     NtUserPostMessage( hwnd, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, TRUE );
     post_ime_update( hwnd, 0, ime_comp_buf, NULL );
 
@@ -372,7 +330,6 @@ void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status )
     }
 
     if (!status) XFree( XmbResetIC( xic ) );
-    XFlush( x11drv_thread_data()->display );
 }
 
 /***********************************************************************
@@ -595,7 +552,6 @@ BOOL X11DRV_SetIMECompositionRect( HWND hwnd, RECT rect )
         XFree( attr );
     }
 
-    XFlush( data->display );
     release_win_data( data );
     return TRUE;
 }

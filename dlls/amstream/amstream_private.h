@@ -22,7 +22,6 @@
 #define __AMSTREAM_PRIVATE_INCLUDED__
 
 #include <stdarg.h>
-#include <stdbool.h>
 
 #include "windef.h"
 #include "winbase.h"

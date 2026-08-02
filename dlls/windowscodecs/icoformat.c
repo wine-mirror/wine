@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct {
     BYTE bWidth;
@@ -51,7 +51,7 @@ typedef struct
     WORD idCount;
 } ICONHEADER;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
@@ -662,9 +662,9 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         goto fail;
     }
 
-    if (This->header.idCount <= index)
+    if (This->header.idCount < index)
     {
-        hr = WINCODEC_ERR_FRAMEMISSING;
+        hr = E_INVALIDARG;
         goto fail;
     }
 

@@ -32,24 +32,14 @@
 /* Ask the system's Bluetooth service to send all incoming authentication requests to Wine. */
 #define IOCTL_WINEBTH_AUTH_REGISTER            CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa8, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINEBTH_RADIO_SEND_AUTH_RESPONSE CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa9, METHOD_BUFFERED, FILE_ANY_ACCESS)
-/* Initiate the authentication procedure with a remote device. */
-#define IOCTL_WINEBTH_RADIO_START_AUTH         CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xaa, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINEBTH_RADIO_REMOVE_DEVICE      CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xab, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-/* Get all primary GATT services for the LE device. */
-#define IOCTL_WINEBTH_LE_DEVICE_GET_GATT_SERVICES CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xc0, METHOD_BUFFERED, FILE_ANY_ACCESS)
-/* Get all characteristics for a GATT service */
-#define IOCTL_WINEBTH_LE_DEVICE_GET_GATT_CHARACTERISTICS CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xc1, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-/* Read the associated value for a GATT characteristic */
-#define IOCTL_WINEBTH_GATT_SERVICE_READ_CHARACTERISITIC_VALUE CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xd0, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,
              0xd5, 0x5e, 0xa1, 0x26, 0xe8 );
 
 #define WINEBTH_AUTH_DEVICE_PATH L"\\??\\WINEBTHAUTH"
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 #define LOCAL_RADIO_DISCOVERABLE 0x0001
 #define LOCAL_RADIO_CONNECTABLE  0x0002
@@ -78,33 +68,6 @@ struct winebth_radio_send_auth_response_params
     unsigned int authenticated : 1;
 };
 
-struct winebth_radio_start_auth_params
-{
-    BTH_ADDR address;
-};
-
-struct winebth_le_device_get_gatt_services_params
-{
-    ULONG count;
-    BTH_LE_GATT_SERVICE services[0];
-};
-
-struct winebth_le_device_get_gatt_characteristics_params
-{
-    BTH_LE_GATT_SERVICE service;
-    ULONG count;
-    BTH_LE_GATT_CHARACTERISTIC characteristics[0];
-};
-
-struct winebth_gatt_service_read_characterisitic_value_params
-{
-    BTH_LE_UUID uuid;
-    UINT16 handle;
-    unsigned int from_device : 1;
-    ULONG size;
-    BYTE buf[1];
-};
-
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINEBTH_H__ */

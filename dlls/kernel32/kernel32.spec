@@ -268,7 +268,7 @@
 @ stdcall CopyLZFile(long long) LZCopy
 @ stdcall CreateActCtxA(ptr)
 @ stdcall -import CreateActCtxW(ptr)
-@ stdcall CreateBoundaryDescriptorA(str long)
+# @ stub CreateBoundaryDescriptorA
 @ stdcall -import CreateBoundaryDescriptorW(wstr long)
 @ stdcall -import CreateConsoleScreenBuffer(long long ptr long ptr)
 @ stdcall -import CreateDirectoryA(str ptr)
@@ -376,7 +376,6 @@
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) NTDLL.TpDisassociateCallback
 @ stdcall DiscardVirtualMemory(ptr long) kernelbase.DiscardVirtualMemory
-@ stdcall DeleteSynchronizationBarrier(ptr)
 @ stdcall DeleteTimerQueue(long)
 @ stdcall -import DeleteTimerQueueEx(long long)
 @ stdcall -import DeleteTimerQueueTimer(long long long)
@@ -425,7 +424,6 @@
 @ stdcall -import EnumResourceTypesExA(long ptr long long long)
 @ stdcall -import EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumResourceTypesW(long ptr long)
-@ stdcall EnterSynchronizationBarrier(ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall -import EnumSystemCodePagesW(ptr long)
 @ stdcall -import EnumSystemFirmwareTables(long ptr long)
@@ -505,7 +503,7 @@
 @ stdcall -import FindFirstVolumeW(ptr long)
 @ stdcall -import FindNextChangeNotification(long)
 @ stdcall -import FindNextFileA(long ptr)
-@ stdcall -import FindNextFileNameW(ptr ptr ptr)
+# @ stub FindNextFileNameW
 @ stdcall -import FindNextFileW(long ptr)
 @ stdcall -import FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
@@ -732,7 +730,6 @@
 # @ stub GetLongPathNameTransactedA
 # @ stub GetLongPathNameTransactedW
 @ stdcall -import GetLongPathNameW(wstr ptr long)
-@ stdcall -import GetMachineTypeAttributes(long ptr)
 @ stdcall GetMailslotInfo(long ptr ptr ptr ptr)
 @ stdcall GetMaximumProcessorCount(long)
 @ stdcall GetMaximumProcessorGroupCount()
@@ -960,7 +957,7 @@
 @ stub HeapSetFlags
 @ stdcall -import HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) NTDLL.RtlSizeHeap
-@ stdcall -import HeapSummary(long long ptr)
+@ stub HeapSummary
 @ stdcall -import HeapUnlock(long)
 @ stub HeapUsage
 @ stdcall -import HeapValidate(long long ptr)
@@ -980,7 +977,6 @@
 @ stdcall -import InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall -import InitializeCriticalSectionEx(ptr long long)
 @ stdcall -import InitializeProcThreadAttributeList(ptr long long ptr)
-@ stdcall InitializeSynchronizationBarrier(ptr long long)
 @ stdcall InitializeSListHead(ptr) NTDLL.RtlInitializeSListHead
 @ stdcall InitializeSRWLock(ptr) NTDLL.RtlInitializeSRWLock
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
@@ -1190,9 +1186,6 @@
 @ stdcall Process32Next (ptr ptr)
 @ stdcall Process32NextW (ptr ptr)
 @ stdcall -import ProcessIdToSessionId(long ptr)
-@ stdcall -import PssCaptureSnapshot(ptr long long ptr)
-@ stdcall -import PssFreeSnapshot(ptr ptr)
-@ stdcall -import PssQuerySnapshot(ptr long ptr long)
 @ stdcall -import PulseEvent(long)
 @ stdcall -import PurgeComm(long long)
 @ stdcall -i386 -private -norelay QT_Thunk() krnl386.exe16.QT_Thunk
@@ -1220,7 +1213,6 @@
 @ stdcall -import QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
-@ stdcall -import QueueUserAPC2(ptr long long long)
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
 @ stdcall -import RaiseException(long long long ptr)
 @ stdcall -import RaiseFailFastException(ptr ptr long)
@@ -1327,15 +1319,15 @@
 @ stdcall -import ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) NTDLL.RtlRestoreLastWin32Error
 @ stdcall -import ResumeThread(long)
-@ cdecl -arch=!i386 RtlAddFunctionTable(ptr long long)
+@ cdecl -arch=!i386 RtlAddFunctionTable(ptr long long) NTDLL.RtlAddFunctionTable
 @ stdcall -norelay -import RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr) NTDLL.RtlCaptureStackBackTrace
 @ stdcall -arch=!i386 RtlCompareMemory(ptr ptr long) NTDLL.RtlCompareMemory
 @ stdcall -arch=!i386 RtlCopyMemory(ptr ptr long) NTDLL.RtlCopyMemory
-@ cdecl -arch=!i386 RtlDeleteFunctionTable(ptr)
+@ cdecl -arch=!i386 RtlDeleteFunctionTable(ptr) NTDLL.RtlDeleteFunctionTable
 @ stdcall RtlFillMemory(ptr long long) NTDLL.RtlFillMemory
-@ cdecl -arch=!i386 RtlInstallFunctionTableCallback(long long long ptr ptr ptr)
-@ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr)
+@ cdecl -arch=!i386 RtlInstallFunctionTableCallback(long long long ptr ptr ptr) NTDLL.RtlInstallFunctionTableCallback
+@ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr) NTDLL.RtlLookupFunctionEntry
 @ stdcall RtlMoveMemory(ptr ptr long) NTDLL.RtlMoveMemory
 @ stdcall RtlPcToFileHeader(ptr ptr) NTDLL.RtlPcToFileHeader
 @ stdcall -arch=arm,x86_64 -norelay RtlRaiseException(ptr) NTDLL.RtlRaiseException
@@ -1721,11 +1713,6 @@
 @ stdcall -import lstrlen(str)
 @ stdcall -import lstrlenA(str)
 @ stdcall -import lstrlenW(wstr)
-@ stdcall timeBeginPeriod(long)
-@ stdcall timeEndPeriod(long)
-@ stdcall timeGetDevCaps(ptr long)
-@ stdcall timeGetSystemTime(ptr long)
-@ stdcall timeGetTime()
 
 ################################################################
 # Wine internal extensions

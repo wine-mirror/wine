@@ -30,6 +30,7 @@
 #include "macdrv_cocoa.h"
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"
@@ -38,6 +39,7 @@
 #include "unixlib.h"
 
 
+extern BOOL skip_single_buffer_flushes;
 extern BOOL allow_vsync;
 extern BOOL allow_set_gamma;
 extern BOOL allow_software_rendering;
@@ -96,8 +98,6 @@ enum macdrv_window_messages
 {
     WM_MACDRV_SET_WIN_REGION = WM_WINE_FIRST_DRIVER_MSG,
     WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS,
-    WM_MACDRV_CREATE_REMOTE_LAYER,
-    WM_MACDRV_RELEASE_REMOTE_LAYER,
 };
 
 struct macdrv_thread_data
@@ -107,7 +107,7 @@ struct macdrv_thread_data
     macdrv_window               capture_window;
     CFDataRef                   keyboard_layout_uchr;
     CGEventSourceKeyboardType   keyboard_type;
-    bool                        iso_keyboard;
+    int                         iso_keyboard;
     CGEventFlags                last_modifiers;
     UInt32                      dead_key_state;
     HKL                         active_keyboard_layout;
@@ -116,11 +116,10 @@ struct macdrv_thread_data
 };
 
 extern struct macdrv_thread_data *macdrv_init_thread_data(void);
-extern pthread_key_t macdrv_thread_data_key;
 
 static inline struct macdrv_thread_data *macdrv_thread_data(void)
 {
-    return pthread_getspecific( macdrv_thread_data_key );
+    return (struct macdrv_thread_data *)(UINT_PTR)NtUserGetThreadInfo()->driver_data;
 }
 
 
@@ -150,19 +149,18 @@ extern void macdrv_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects);
 extern BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask);
-extern struct client_surface *macdrv_CreateClientSurface(HWND hwnd, int pixel_format);
 extern BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface);
-extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
+extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
                                     const struct window_rects *new_rects, struct window_surface *surface);
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor);
 extern BOOL macdrv_GetCursorPos(LPPOINT pos);
-extern void macdrv_SetCapture(HWND hwnd, UINT flags, HWND previous);
+extern void macdrv_SetCapture(HWND hwnd, UINT flags);
 extern void macdrv_SetCursor(HWND hwnd, HCURSOR cursor);
 extern BOOL macdrv_SetCursorPos(INT x, INT y);
 extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey);
 extern void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey);
 extern SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl);
-extern UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc);
+extern UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *state);
 extern UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl);
 extern INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                               LPWSTR bufW, int bufW_size, UINT flags, HKL hkl);
@@ -181,7 +179,8 @@ struct macdrv_win_data
 {
     HWND                hwnd;                   /* hwnd that this private data belongs to */
     macdrv_window       cocoa_window;
-    macdrv_view         client_view;
+    macdrv_view         cocoa_view;
+    macdrv_view         client_cocoa_view;
     struct window_rects rects;                  /* window rects in monitor DPI, relative to parent client area */
     int                 pixel_format;           /* pixel format for GL */
     HANDLE              drag_event;             /* event to signal that Cocoa-driven window dragging has ended */
@@ -191,18 +190,8 @@ struct macdrv_win_data
     unsigned int        ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
     unsigned int        per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     unsigned int        minimized : 1;          /* is window minimized? */
-    unsigned int        fullscreen : 1;         /* is the window visible rect fullscreen? (unrelated to native AppKit/Cocoa fullscreen) */
+    unsigned int        swap_interval : 1;      /* GL swap interval for window */
 };
-
-struct macdrv_client_surface
-{
-    struct client_surface   client;
-    macdrv_view             cocoa_view;
-    macdrv_metal_swapchain  metal_swapchain;
-};
-
-extern struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client);
-extern BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface);
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);
 extern void release_win_data(struct macdrv_win_data *data);
@@ -238,6 +227,7 @@ extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event);
 extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event);
 extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event);
 extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event);
+extern void macdrv_SetCapture(HWND hwnd, UINT flags);
 
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data);
 extern void macdrv_keyboard_changed(const macdrv_event *event);
@@ -251,8 +241,9 @@ extern void macdrv_UpdateClipboard(void);
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type);
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
-extern UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs);
+extern UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **opengl_funcs, const struct opengl_driver_funcs **driver_funcs);
 extern UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs);
+extern void sync_gl_view(struct macdrv_win_data* data, const struct window_rects *old_rects);
 
 extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
                                                    unsigned char *color_bits, int color_size, HBITMAP hbmMask,

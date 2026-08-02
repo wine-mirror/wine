@@ -1,9 +1,6 @@
 MODULE = iertutil.dll
-IMPORTLIB = iertutil
-IMPORTS = ole32 oleaut32 rpcrt4 shlwapi combase
+IMPORTS = combase
 
 SOURCES = \
 	classes.idl \
-	iertutil_classes.idl \
-	main.c \
-	uri.c
+	main.c

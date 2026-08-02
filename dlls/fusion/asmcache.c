@@ -540,7 +540,6 @@ static const IAssemblyCacheVtbl AssemblyCacheVtbl = {
 HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved)
 {
     IAssemblyCacheImpl *cache;
-    WCHAR path[MAX_PATH];
 
     TRACE("(%p, %ld)\n", ppAsmCache, dwReserved);
 
@@ -560,10 +559,6 @@ HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved
         return HRESULT_FROM_WIN32( GetLastError() );
     }
     *ppAsmCache = &cache->IAssemblyCache_iface;
-
-    GetWindowsDirectoryW(path, ARRAY_SIZE(path));
-    wcscat(path, L"\\assembly");
-    create_full_path(path);
     return S_OK;
 }
 

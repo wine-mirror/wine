@@ -122,7 +122,7 @@ void hid_queue_remove_pending_irps( struct hid_queue *queue )
 
     while ((irp = hid_queue_pop_irp( queue )))
     {
-        irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
 }
@@ -163,7 +163,7 @@ static NTSTATUS hid_queue_push_irp( struct hid_queue *queue, IRP *irp )
     KeAcquireSpinLock( &queue->lock, &irql );
 
     IoSetCancelRoutine( irp, read_cancel_routine );
-    if (irp->Cancel && IoSetCancelRoutine( irp, NULL ))
+    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
     {
         /* IRP was canceled before we set cancel routine */
         InitializeListHead( &irp->Tail.Overlay.ListEntry );
@@ -416,7 +416,7 @@ static const WCHAR *find_device_string( const WCHAR *device_id, ULONG index )
 struct completion_params
 {
     HID_XFER_PACKET packet;
-    ULONG report_len;
+    ULONG padding;
     IRP *irp;
 };
 
@@ -428,7 +428,7 @@ static NTSTATUS CALLBACK xfer_completion( DEVICE_OBJECT *device, IRP *irp, void 
     TRACE( "device %p, irp %p, context %p\n", device, irp, context );
 
     orig_irp->IoStatus = irp->IoStatus;
-    if (params->report_len) orig_irp->IoStatus.Information = params->report_len;
+    orig_irp->IoStatus.Information -= params->padding;
     IoCompleteRequest( orig_irp, IO_NO_INCREMENT );
 
     free( params );
@@ -498,8 +498,7 @@ static NTSTATUS hid_device_xfer_report( struct phys_device *pdo, ULONG code, IRP
                                              sizeof(params->packet), TRUE, NULL, NULL );
         break;
     case IOCTL_HID_WRITE_REPORT:
-        /* WriteFile returns the output report length, not the minidriver count */
-        params->report_len = report_len;
+        params->padding = 1 - offset;
         /* fallthrough */
     case IOCTL_HID_SET_FEATURE:
     case IOCTL_HID_SET_OUTPUT_REPORT:

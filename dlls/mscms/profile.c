@@ -1526,13 +1526,3 @@ HPROFILE WINAPI WcsOpenColorProfileW( PROFILE *cdm, PROFILE *camp, PROFILE *gmmp
 
     return OpenColorProfileW( cdm, access, sharing, creation );
 }
-
-/******************************************************************************
- * WcsCreateIccProfile                [MSCMS.@]
- */
-HPROFILE WINAPI WcsCreateIccProfile( HPROFILE profile, DWORD options )
-{
-    FIXME( "%p, %#lx stub!\n", profile, options );
-
-    return NULL;
-}

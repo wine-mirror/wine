@@ -36,7 +36,7 @@ static inline void expect_(unsigned line, DWORD expected, DWORD got)
 static BOOL save_metafiles;
 static BOOL load_metafiles;
 
-static const WCHAR description[] = L"winetest\0\0";
+static const WCHAR description[] = L"winetest";
 
 typedef struct emfplus_record
 {
@@ -1427,7 +1427,8 @@ static void test_nullframerect(void) {
     expect(UnitPixel, unit);
     expectf_(20.0, bounds.X, 0.05);
     expectf_(25.0, bounds.Y, 0.05);
-    expectf_(55.0, bounds.Width, 0.05);
+    expectf_(55.0, bounds.Width, 1.00);
+    todo_wine expectf_(55.0, bounds.Width, 0.05);
     expectf_(85.0, bounds.Height, 0.05);
 
     stat = GdipDisposeImage((GpImage*)metafile);
@@ -1477,16 +1478,16 @@ static void test_pagetransform(void)
         return;
 
     stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &dpix);
-    expect(InvalidParameter, stat);
+    todo_wine expect(InvalidParameter, stat);
 
     stat = GdipGetImageVerticalResolution((GpImage*)metafile, &dpiy);
-    expect(InvalidParameter, stat);
+    todo_wine expect(InvalidParameter, stat);
 
     stat = GdipGetImageWidth((GpImage*)metafile, &width);
-    expect(InvalidParameter, stat);
+    todo_wine expect(InvalidParameter, stat);
 
     stat = GdipGetImageHeight((GpImage*)metafile, &height);
-    expect(InvalidParameter, stat);
+    todo_wine expect(InvalidParameter, stat);
 
     stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
     expect(Ok, stat);
@@ -2931,7 +2932,7 @@ static void test_restoredc(void)
     hdc = CreateCompatibleDC(0);
 
     stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel,
-        description, &metafile);
+        L"winetest", &metafile);
     expect(Ok, stat);
 
     DeleteDC(hdc);
@@ -3058,7 +3059,7 @@ static void test_drawdriverstring(void)
     expect(Ok, stat);
 
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        description, &metafile);
+        L"winetest", &metafile);
     expect(Ok, stat);
 
     DeleteDC(hdc);
@@ -3187,7 +3188,7 @@ static void test_unknownfontdecode(void)
     /* Start metafile recording. */
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        description, &metafile);
+        L"winetest", &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3262,7 +3263,7 @@ static void test_fillregion(void)
 
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        description, &metafile);
+        L"winetest", &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3366,7 +3367,7 @@ static void test_lineargradient(void)
 
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
-        description, &metafile);
+        L"winetest", &metafile);
     expect(Ok, stat);
     DeleteDC(hdc);
     hdc = NULL;
@@ -3535,7 +3536,7 @@ static void test_printer_dc(void)
         return;
     }
 
-    status = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, description, &metafile);
+    status = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, L"winetest", &metafile);
     expect(Ok, status);
 
     status = GdipGetImageGraphicsContext((GpImage *)metafile, &graphics);

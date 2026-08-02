@@ -37,16 +37,8 @@ typedef enum _EXCEPTION_DISPOSITION
 #define EXCEPTION_CONTINUE_SEARCH        0
 #define EXCEPTION_CONTINUE_EXECUTION    -1
 
-#if !defined(USE_COMPILER_EXCEPTIONS) && defined(_MSC_VER)
-#if !defined(__clang_major__) || \
-    (defined(__x86_64__) && !defined(__arm64ec__) && __clang_major__ >= 19) || \
-    (defined(__aarch64__) && __clang_major__ >= 19) || \
-    (defined(__arm64ec__) && __clang_major__ >= 21)
-#define USE_COMPILER_EXCEPTIONS
-#endif
-#endif
 
-#ifdef USE_COMPILER_EXCEPTIONS
+#if defined(_MSC_VER) && defined(USE_COMPILER_EXCEPTIONS)
 #define GetExceptionCode    _exception_code
 #define GetExceptionInformation (struct _EXCEPTION_POINTERS *)_exception_info
 #define AbnormalTermination _abnormal_termination
@@ -54,6 +46,6 @@ typedef enum _EXCEPTION_DISPOSITION
 unsigned long __cdecl _exception_code(void);
 void * __cdecl _exception_info(void);
 int __cdecl _abnormal_termination(void);
-#endif /* USE_COMPILER_EXCEPTIONS */
+#endif /* defined(_MSC_VER) && defined(USE_COMPILER_EXCEPTIONS) */
 
 #endif /* __WINE_EXCPT_H */

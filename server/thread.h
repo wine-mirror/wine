@@ -50,15 +50,12 @@ struct inflight_fd
 struct thread
 {
     struct object          obj;           /* object header */
-    struct object         *sync;          /* sync object for wait/signal */
-    struct inproc_sync    *alert_sync;    /* inproc sync for user apc alerts */
     struct list            entry;         /* entry in system-wide thread list */
     struct list            proc_entry;    /* entry in per-process thread list */
     struct list            desktop_entry; /* entry in per-desktop thread list */
     struct process        *process;
     thread_id_t            id;            /* thread id */
     struct list            mutex_list;    /* list of currently owned mutexes */
-    struct list            d3dkmt_mutexes;/* list of currently owned d3dkmt mutexes */
     unsigned int           system_regs;   /* which system regs have been set */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
@@ -86,11 +83,8 @@ struct thread
     affinity_t             affinity;      /* affinity mask */
     int                    priority;      /* current thread priority */
     int                    base_priority; /* base priority level (relative to process base priority class) */
-    int                    disable_boost; /* disable thread priority boost */
     int                    suspend;       /* suspend count */
-    bool                   is_system;     /* system thread (kernel mode only) */
-    bool                   dbg_hidden;    /* hidden from debugger */
-    bool                   bypass_proc_suspend; /* will still run if the process is suspended */
+    int                    dbg_hidden;    /* hidden from debugger */
     obj_handle_t           desktop;       /* desktop handle */
     int                    desktop_users; /* number of objects using the thread desktop */
     timeout_t              creation_time; /* Thread creation time */
@@ -129,10 +123,8 @@ extern void thread_cancel_apc( struct thread *thread, struct object *owner, enum
 extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
 extern int thread_get_inflight_fd( struct thread *thread, int client );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
-extern int get_effective_thread_priority( struct thread *thread );
 extern unsigned int set_thread_priority( struct thread *thread, int priority );
 extern unsigned int set_thread_base_priority( struct thread *thread, int base_priority );
-extern void set_thread_disable_boost( struct thread *thread, int disable_boost );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
 extern int suspend_thread( struct thread *thread );
 extern int resume_thread( struct thread *thread );
@@ -144,6 +136,8 @@ extern void init_thread_context( struct thread *thread );
 extern void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );
+extern void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
+                                unsigned int *limit, unsigned char *flags );
 
 extern unsigned int global_error;  /* global error code for when no thread is current */
 

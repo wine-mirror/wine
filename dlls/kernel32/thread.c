@@ -23,6 +23,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -54,15 +55,6 @@ __ASM_FASTCALL_FUNC( BaseThreadInitThunk, 12,
                     "call *%edx\n\t"
                     "movl %eax,(%esp)\n\t"
                     "call " __ASM_STDCALL( "RtlExitUserThread", 4 ))
-#elif defined(__x86_64__) && defined(__WINE_PE_BUILD) && !defined(__arm64ec__)
-__ASM_GLOBAL_FUNC( BaseThreadInitThunk,
-                    "subq $0x28,%rsp\n\t"
-                   ".seh_stackalloc 0x28\n\t"
-                   ".seh_endprologue\n\t"
-                    "movq %r8,%rcx\n\t"
-                    "call *%rdx\n\t"
-                    "movl %eax,%ecx\n\t"
-                    "call " __ASM_NAME( "RtlExitUserThread" ))
 #else
 void __fastcall BaseThreadInitThunk( DWORD unknown, LPTHREAD_START_ROUTINE entry, void *arg )
 {

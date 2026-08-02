@@ -134,7 +134,6 @@ typedef struct {
     HWND hwndEdit;
     HWND hwndList;
     HWND hwndContainer;
-    HWND hwndSearchBtn;
 } SearchTab;
 
 typedef struct {
@@ -169,17 +168,6 @@ struct wintype_stringsA {
     char *pszCustomTabs;
 };
 
-struct HHInfo;
-
-typedef struct WebBrowserEvents2Impl
-{
-    IDispatch WebBrowserEvents2Impl_iface;
-
-    struct HHInfo *info;
-    LONG ref;
-    DWORD cookie;
-} WebBrowserEvents2Impl;
-
 typedef struct {
     IOleClientSite IOleClientSite_iface;
     IOleInPlaceSite IOleInPlaceSite_iface;
@@ -191,8 +179,6 @@ typedef struct {
     IOleObject *ole_obj;
     IWebBrowser2 *web_browser;
     HWND hwndWindow;
-
-    WebBrowserEvents2Impl *WebBrowser_events_sink;
 } WebBrowserContainer;
 
 typedef struct {

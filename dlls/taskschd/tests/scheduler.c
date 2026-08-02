@@ -46,6 +46,22 @@ static BOOL is_process_elevated(void)
     return FALSE;
 }
 
+static BOOL check_win_version(int min_major, int min_minor)
+{
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
+    RTL_OSVERSIONINFOEXW rtlver;
+
+    rtlver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    pRtlGetVersion = (void *)GetProcAddress(hntdll, "RtlGetVersion");
+    pRtlGetVersion(&rtlver);
+    return rtlver.dwMajorVersion > min_major ||
+           (rtlver.dwMajorVersion == min_major &&
+            rtlver.dwMinorVersion >= min_minor);
+}
+#define is_win8_plus() check_win_version(6, 2)
+#define is_win10_plus() check_win_version(10, 0)
+
 static void test_Connect(void)
 {
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
@@ -155,11 +171,13 @@ static void test_Connect(void)
     if (!GetEnvironmentVariableW(L"USERDOMAIN", domain_name, len))
     {
          GetComputerNameExW(ComputerNameDnsHostname, domain_name, &len);
+         if (is_win10_plus())
+             wcsupr(domain_name);
     }
 
     hr = ITaskService_get_ConnectedDomain(service, &bstr);
     ok(hr == S_OK, "get_ConnectedDomain error %#lx\n", hr);
-    ok(!lstrcmpiW(domain_name, bstr), "domainname %s != domain name %s\n", wine_dbgstr_w(domain_name), wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(domain_name, bstr), "domainname %s != domain name %s\n", wine_dbgstr_w(domain_name), wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     ITaskService_Release(service);
@@ -255,6 +273,12 @@ static void test_GetFolder(void)
     hr = ITaskFolder_CreateFolder(folder, bslash, v_null, &subfolder);
     todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
+
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping CreateFolder tests because deleting folders requires elevated privileges on Windows 7\n");
+        goto cleanup;
+    }
 
     hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2, v_null, &subfolder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
@@ -410,6 +434,7 @@ static void test_GetFolder(void)
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#lx\n", hr);
 
+ cleanup:
     ITaskFolder_Release(folder);
     ITaskService_Release(service);
 }
@@ -469,6 +494,12 @@ static void test_FolderCollection(void)
     BOOL is_first;
     VARIANT idx;
     static const int vt[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_INT, VT_UINT };
+
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping ITaskFolderCollection tests because deleting folders requires elevated privileges on Windows 7\n");
+        return;
+    }
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -791,6 +822,12 @@ static void test_GetTask(void)
     DATE date;
     IID iid;
     int i;
+
+    if (!is_process_elevated() && !is_win8_plus())
+    {
+        win_skip("Skipping task creation tests because deleting anything requires elevated privileges on Windows 7\n");
+        return;
+    }
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -1426,103 +1463,6 @@ static void test_registration_trigger(ITrigger *trigger)
     IRegistrationTrigger_Release(reg_trigger);
 }
 
-static void test_logon_trigger(ITrigger *trigger)
-{
-    ILogonTrigger *log_trigger;
-    HRESULT hr;
-    TASK_TRIGGER_TYPE2 type;
-    BSTR id, exc_time_limit, start_boundary, end_boundary, delay, user_id;
-    VARIANT_BOOL enabled;
-    static WCHAR id_str[] = L"Trigger_id_test";
-    static WCHAR exc_time_limit_str[] = L"Time_limit_test";
-    static WCHAR start_boundary_str[] = L"2023-01-01T00:00:00";
-    static WCHAR end_boundary_str[] = L"2026-01-01T01:00:00";
-    static WCHAR delay_str[] = L"10H";
-    static WCHAR user_id_str[] = L"User_id_test";
-
-    hr = ITrigger_QueryInterface(trigger, &IID_ILogonTrigger, (void**)&log_trigger);
-    ok(hr == S_OK, "Could not get IRegistrationTrigger iface: %08lx\n", hr);
-
-    hr = ILogonTrigger_get_Type(log_trigger, &type);
-    ok(hr == S_OK, "get_Type failed: %08lx\n", hr);
-    ok(type == TASK_TRIGGER_LOGON, "got %u\n", type);
-
-    hr = ILogonTrigger_get_Id(log_trigger, &id);
-    ok(hr == S_OK, "get_Id failed: %08lx\n", hr);
-    ok(id == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_Id(log_trigger, id_str);
-    ok(hr == S_OK, "put_Id failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_Id(log_trigger, &id);
-    ok(hr == S_OK, "get_Id failed: %08lx\n", hr);
-    ok(!lstrcmpW(id, id_str), "got %s\n", wine_dbgstr_w(id));
-
-    hr = ILogonTrigger_get_ExecutionTimeLimit(log_trigger, &exc_time_limit);
-    ok(hr == S_OK, "get_ExecutionTimeLimit failed: %08lx\n", hr);
-    ok(exc_time_limit == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_ExecutionTimeLimit(log_trigger, exc_time_limit_str);
-    ok(hr == S_OK, "put_ExecutionTimeLimit failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_ExecutionTimeLimit(log_trigger, &exc_time_limit);
-    ok(hr == S_OK, "get_ExecutionTimeLimit failed: %08lx\n", hr);
-    ok(!lstrcmpW(exc_time_limit, exc_time_limit_str), "got %s\n", wine_dbgstr_w(exc_time_limit));
-
-    hr = ILogonTrigger_get_StartBoundary(log_trigger, &start_boundary);
-    ok(hr == S_OK, "get_StartBoundary failed: %08lx\n", hr);
-    ok(start_boundary == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_StartBoundary(log_trigger, start_boundary_str);
-    ok(hr == S_OK, "put_StartBoundary failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_StartBoundary(log_trigger, &start_boundary);
-    ok(hr == S_OK, "get_StartBoundary failed: %08lx\n", hr);
-    ok(!lstrcmpW(start_boundary, start_boundary_str), "got %s\n", wine_dbgstr_w(start_boundary));
-
-    hr = ILogonTrigger_get_EndBoundary(log_trigger, &end_boundary);
-    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
-    ok(end_boundary == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_EndBoundary(log_trigger, end_boundary_str);
-    ok(hr == S_OK, "put_EndBoundary failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_EndBoundary(log_trigger, &end_boundary);
-    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
-    ok(!lstrcmpW(end_boundary, end_boundary_str), "got %s\n", wine_dbgstr_w(end_boundary));
-
-    enabled = VARIANT_FALSE;
-    hr = ILogonTrigger_get_Enabled(log_trigger, &enabled);
-    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
-    ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
-
-    hr = ILogonTrigger_put_Enabled(log_trigger, VARIANT_FALSE);
-    ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
-
-    enabled = VARIANT_TRUE;
-    hr = ILogonTrigger_get_Enabled(log_trigger, &enabled);
-    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
-    ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
-
-    hr = ILogonTrigger_get_Delay(log_trigger, &delay);
-    ok(hr == S_OK, "get_Delay failed: %08lx\n", hr);
-    ok(delay == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_Delay(log_trigger, delay_str);
-    ok(hr == S_OK, "put_Delay failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_Delay(log_trigger, &delay);
-    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
-    ok(!lstrcmpW(delay, delay_str), "got %s\n", wine_dbgstr_w(delay));
-
-    hr = ILogonTrigger_get_UserId(log_trigger, &user_id);
-    ok(hr == S_OK, "get_UserId failed: %08lx\n", hr);
-    ok(user_id == NULL, "test ok!\n");
-
-    hr = ILogonTrigger_put_UserId(log_trigger, user_id_str);
-    ok(hr == S_OK, "put_UserId failed: %08lx\n", hr);
-    hr = ILogonTrigger_get_UserId(log_trigger, &user_id);
-    ok(hr == S_OK, "get_UserId failed: %08lx\n", hr);
-    ok(!lstrcmpW(user_id, user_id_str), "got %s\n", wine_dbgstr_w(user_id));
-
-    ILogonTrigger_Release(log_trigger);
-}
-
 static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = L"task1.exe";
@@ -1663,7 +1603,6 @@ static void test_TaskDefinition(void)
         "      <Command>\"task1.exe\"</Command>\n"
         "    </Exec>\n"
         "  </Actions>\n"
-        "  <Data>MyTestData</Data>\n"
         "</Task>\n";
     static WCHAR xml2[] =
         L"<Task>\n"
@@ -1904,25 +1843,6 @@ static void test_TaskDefinition(void)
 
     IRegistrationInfo_Release(reginfo);
 
-    hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    ok(hr == S_OK, "get_Data error %#lx\n", hr);
-    ok(!lstrcmpW(bstr, L"MyTestData"), "expected \"MyTestData\", got %s\n", wine_dbgstr_w(bstr));
-    SysFreeString(bstr);
-
-    hr = ITaskDefinition_put_Data(taskdef, (BSTR) L"NewTest");
-    ok(hr == S_OK, "put_Data error %#lx\n", hr);
-    bstr = (BSTR)0xdeadbeef;
-    hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    ok(!lstrcmpW(bstr, L"NewTest"), "expected \"NewTest\", got %s\n", wine_dbgstr_w(bstr));
-    SysFreeString(bstr);
-
-    hr = ITaskDefinition_put_Data(taskdef, NULL);
-    ok(hr == S_OK, "put_Data error %#lx\n", hr);
-    bstr = (BSTR)0xdeadbeef;
-    hr = ITaskDefinition_get_Data(taskdef, &bstr);
-    ok(hr == S_OK, "get_Data error %#lx\n", hr);
-    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
-
     hr = ITaskDefinition_put_XmlText(taskdef, xml4);
     ok(hr == S_OK, "put_XmlText error %#lx\n", hr);
     hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
@@ -1947,12 +1867,6 @@ static void test_TaskDefinition(void)
     ok(trigger != NULL, "trigger = NULL\n");
     test_registration_trigger(trigger);
     ITrigger_Release(trigger);
-
-    hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_LOGON, &trigger);
-    ok(hr == S_OK, "Create failed: %08lx\n", hr);
-    ok(trigger != NULL, "trigger = NULL\n");
-    test_logon_trigger(trigger);
-    ITrigger_Release(trigger);
     ITriggerCollection_Release(trigger_col);
 
     hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col2);
@@ -1965,87 +1879,6 @@ static void test_TaskDefinition(void)
     ITaskService_Release(service);
 }
 
-static void test_get_Count_and_Item(void)
-{
-    HRESULT hr;
-    LONG num_tasks;
-    VARIANT v_null, index;
-    ITaskService *service;
-    ITaskFolder *folder, *root;
-    ITaskDefinition *task_def;
-    IRegistrationInfo *reg_info;
-    IActionCollection *actions;
-    IAction *action;
-    IExecAction *exec_action;
-    IRegisteredTask *task1, *ret_task1;
-    IRegisteredTaskCollection *tasks;
-    BSTR ret_task1_name = NULL;
-
-    V_VT(&v_null) = VT_NULL;
-
-    CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void**)&service);
-    ITaskService_Connect(service, v_null, v_null, v_null, v_null);
-
-    ITaskService_GetFolder(service, (BSTR)L"\\", &root);
-    ITaskFolder_CreateFolder(root,(BSTR)L"\\Wine", v_null, &folder);
-
-    ITaskService_NewTask(service, 0, &task_def);
-    ITaskDefinition_get_RegistrationInfo(task_def, &reg_info);
-    IRegistrationInfo_put_Author(reg_info, (BSTR)L"Wine Test");
-
-    ITaskDefinition_get_Actions(task_def, &actions);
-    IActionCollection_Create(actions, TASK_ACTION_EXEC, &action);
-    IAction_QueryInterface(action, &IID_IExecAction, (void**)&exec_action);
-    IExecAction_put_Path(exec_action, (BSTR)L"task1.exe");
-
-    ITaskFolder_RegisterTaskDefinition(folder, (BSTR)L"Task1", task_def, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-    ITaskFolder_GetTasks(folder, TASK_ENUM_HIDDEN, &tasks);
-
-    /* Test get_Count */
-    hr = IRegisteredTaskCollection_get_Count(tasks, NULL);
-    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
-
-    hr = IRegisteredTaskCollection_get_Count(tasks, &num_tasks);
-    ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
-    ok(num_tasks == 1, "expected 1 task, got %ld\n", num_tasks);
-
-    /* Test get_Item */
-    VariantInit(&index);
-    index.vt = VT_UI4;
-    index.uiVal = 1;
-
-    hr = IRegisteredTaskCollection_get_Item(tasks, index, NULL);
-    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
-
-    index.uiVal = 0;
-    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
-
-    index.uiVal = 2;
-    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
-
-    index.uiVal = 1;
-    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
-    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win7 */, "expected S_OK, got %#lx\n", hr);
-
-    if (hr == S_OK)
-    {
-        IRegisteredTask_get_Name(ret_task1, &ret_task1_name);
-        ok(!lstrcmpW(L"Task1", ret_task1_name), "expected name \"Task1\", got %ls\n", ret_task1_name);
-    }
-
-    ITaskFolder_DeleteTask(folder, (BSTR)L"Task1", 0);
-    ITaskFolder_DeleteFolder(root, (BSTR)L"\\Wine", 0);
-    IRegisteredTask_Release(task1);
-    ITaskFolder_Release(folder);
-    ITaskFolder_Release(root);
-    IExecAction_Release(exec_action);
-    IRegistrationInfo_Release(reg_info);
-    ITaskDefinition_Release(task_def);
-    ITaskService_Release(service);
-}
-
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
@@ -2055,7 +1888,6 @@ START_TEST(scheduler)
     test_FolderCollection();
     test_GetTask();
     test_TaskDefinition();
-    test_get_Count_and_Item();
 
     OleUninitialize();
 }

@@ -565,7 +565,7 @@ static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
     GlobalUnlock( data );
     return hr;
 }
-#pragma pack(push,2)
+#include <pshpack2.h>
 struct meta_placeable
 {
     DWORD key;
@@ -575,7 +575,7 @@ struct meta_placeable
     DWORD reserved;
     WORD checksum;
 };
-#pragma pack(pop)
+#include <poppack.h>
 
 static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
 {
@@ -1030,28 +1030,21 @@ static HRESULT save_emf(DataCacheEntry *entry, BOOL contents, IStream *stream)
         }
         data_size = GetWinMetaFileBits(entry->stgmedium.hEnhMetaFile, 0, NULL, MM_ANISOTROPIC, hdc);
         header.dwSize = data_size;
-        if (data_size)
+        data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
+        if (!data)
         {
-            data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
-            if (!data)
-            {
-                ReleaseDC(0, hdc);
-                return E_OUTOFMEMORY;
-            }
-            GetWinMetaFileBits(entry->stgmedium.hEnhMetaFile, header.dwSize, data, MM_ANISOTROPIC, hdc);
-            mfpict = (METAFILEPICT *)data;
-            header.dwObjectExtentX = mfpict->xExt;
-            header.dwObjectExtentY = mfpict->yExt;
+            ReleaseDC(0, hdc);
+            return E_OUTOFMEMORY;
         }
-        else
-            header.dwObjectExtentX = header.dwObjectExtentY = 0;
+        GetWinMetaFileBits(entry->stgmedium.hEnhMetaFile, header.dwSize, data, MM_ANISOTROPIC, hdc);
         ReleaseDC(0, hdc);
+        mfpict = (METAFILEPICT *)data;
+        header.dwObjectExtentX = mfpict->xExt;
+        header.dwObjectExtentY = mfpict->yExt;
         hr = IStream_Write(stream, &header, sizeof(PresentationDataHeader), NULL);
-        if (data_size)
-        {
-            if (hr == S_OK) hr = IStream_Write(stream, data, data_size, NULL);
-            HeapFree(GetProcessHeap(), 0, data);
-        }
+        if (hr == S_OK && data_size)
+            hr = IStream_Write(stream, data, data_size, NULL);
+        HeapFree(GetProcessHeap(), 0, data);
     }
     else if (entry->stgmedium.tymed != TYMED_NULL)
     {

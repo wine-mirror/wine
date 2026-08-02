@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winsock2.h"
@@ -39,8 +40,6 @@
 #include "ntsecapi.h"
 #include "winspool.h"
 #include "ntddstor.h"
-#include "setupapi.h"
-#include "devguid.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -83,18 +82,6 @@ static const struct column col_bios[] =
     { L"SystemBiosMinorVersion",         CIM_UINT8 },
     { L"Version",                        CIM_STRING|COL_FLAG_KEY },
 };
-static const struct column col_cache_memory[] =
-{
-    { L"BlockSize",      CIM_UINT64 },
-    { L"CacheSpeed",     CIM_UINT32 },
-    { L"CacheType",      CIM_UINT16 },
-    { L"DeviceId",       CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"InstalledSize",  CIM_UINT32 },
-    { L"Level",          CIM_UINT16 },
-    { L"MaxCacheSize",   CIM_UINT32 },
-    { L"NumberOfBlocks", CIM_UINT64 },
-    { L"Status",         CIM_STRING },
-};
 static const struct column col_cdromdrive[] =
 {
     { L"DeviceId",    CIM_STRING|COL_FLAG_KEY },
@@ -136,7 +123,6 @@ static const struct column col_desktopmonitor[] =
 {
     { L"Name",                  CIM_STRING },
     { L"PixelsPerXLogicalInch", CIM_UINT32 },
-    { L"Status",                CIM_STRING },
 };
 static const struct column col_directory[] =
 {
@@ -154,9 +140,7 @@ static const struct column col_diskdrive[] =
     { L"Model",         CIM_STRING },
     { L"PNPDeviceID",   CIM_STRING },
     { L"SerialNumber",  CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"Signature",     CIM_UINT32 },
     { L"Size",          CIM_UINT64 },
-    { L"TotalHeads",    CIM_UINT32 },
 };
 static const struct column col_diskdrivetodiskpartition[] =
 {
@@ -189,21 +173,6 @@ static const struct column col_ip4routetable[] =
     { L"InterfaceIndex", CIM_SINT32|COL_FLAG_KEY },
     { L"NextHop",        CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
 };
-
-static const struct column col_localtime[] =
-{
-    { L"Day",          CIM_UINT32 },
-    { L"DayOfWeek",    CIM_UINT32 },
-    { L"Hour",         CIM_UINT32 },
-    { L"Milliseconds", CIM_UINT32 },
-    { L"Minute",       CIM_UINT32 },
-    { L"Month",        CIM_UINT32 },
-    { L"Quarter",      CIM_UINT32 },
-    { L"Second",       CIM_UINT32 },
-    { L"WeekInMonth",  CIM_UINT32 },
-    { L"Year",         CIM_UINT32 },
-};
-
 static const struct column col_logicaldisk[] =
 {
     { L"Caption",            CIM_STRING|COL_FLAG_DYNAMIC },
@@ -220,43 +189,6 @@ static const struct column col_logicaldisktopartition[] =
 {
     { L"Antecedent", CIM_REFERENCE|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"Dependent",  CIM_REFERENCE|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-};
-static const struct column col_msft_phys_disk[] =
-{
-    { L"AdapterSerialNumber",               CIM_STRING },
-    { L"AllocatedSize",                     CIM_UINT64 },
-    { L"BusType",                           CIM_UINT16 },
-    { L"CannotPoolReason",                  CIM_UINT16|CIM_FLAG_ARRAY },
-    { L"CanPool",                           CIM_BOOLEAN },
-    { L"Description",                       CIM_STRING },
-    { L"DeviceId",                          CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { L"EnclosureNumber",                   CIM_UINT16 },
-    { L"FirmwareVersion",                   CIM_STRING },
-    { L"FriendlyName",                      CIM_STRING },
-    { L"FruId",                             CIM_STRING },
-    { L"HealthStatus",                      CIM_UINT16 },
-    { L"IsIndicationEnabled",               CIM_BOOLEAN },
-    { L"IsPartial",                         CIM_BOOLEAN },
-    { L"LogicalSectorSize",                 CIM_UINT64 },
-    { L"Manufacturer",                      CIM_STRING },
-    { L"MediaType",                         CIM_UINT16 },
-    { L"Model",                             CIM_STRING },
-    { L"OperationalDetails",                CIM_STRING|CIM_FLAG_ARRAY },
-    { L"OperationalStatus",                 CIM_UINT16|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { L"OtherCannotPoolReasonDescription",  CIM_STRING },
-    { L"PartNumber",                        CIM_STRING },
-    { L"PhysicalLocation",                  CIM_STRING },
-    { L"PhysicalSectorSize",                CIM_UINT64 },
-    { L"SerialNumber",                      CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"Size",                              CIM_UINT64 },
-    { L"SlotNumber",                        CIM_UINT16 },
-    { L"SoftwareVersion",                   CIM_STRING },
-    { L"SpindleSpeed",                      CIM_UINT32 },
-    { L"SupportedUsages",                   CIM_UINT16|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { L"UniqueId",                          CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"UniqueIdFormat",                    CIM_UINT16 },
-    { L"Usage",                             CIM_UINT16 },
-    { L"VirtualDiskFootprint",              CIM_UINT64 },
 };
 static const struct column col_networkadapter[] =
 {
@@ -456,14 +388,7 @@ static const struct column col_quickfixengineering[] =
 };
 static const struct column col_rawsmbiostables[] =
 {
-    { L"Active",              CIM_BOOLEAN },
-    { L"DmiRevision",         CIM_UINT8 },
-    { L"InstanceName",        CIM_STRING|COL_FLAG_KEY },
-    { L"Size",                CIM_UINT32 },
-    { L"SMBiosData",          CIM_UINT8|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { L"SmbiosMajorVersion",  CIM_UINT8 },
-    { L"SmbiosMinorVersion",  CIM_UINT8 },
-    { L"Used20CallingMethod", CIM_BOOLEAN },
+    { L"SMBiosData", CIM_UINT8|CIM_FLAG_ARRAY },
 };
 static const struct column col_service[] =
 {
@@ -492,11 +417,9 @@ static const struct column col_sid[] =
 };
 static const struct column col_softwarelicensingproduct[] =
 {
-    { L"ApplicationId",     CIM_STRING },
-    { L"LicenseIsAddon",    CIM_BOOLEAN },
-    { L"LicenseStatus",     CIM_UINT32 },
-    { L"PartialProductKey", CIM_STRING },
- };
+    { L"LicenseIsAddon", CIM_BOOLEAN },
+    { L"LicenseStatus",  CIM_UINT32 },
+};
 static const struct column col_sounddevice[] =
 {
     { L"Caption",      CIM_STRING },
@@ -527,8 +450,7 @@ static const struct column col_systemenclosure[] =
     { L"LockPresent",  CIM_BOOLEAN },
     { L"Manufacturer", CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Name",         CIM_STRING },
-    { L"SerialNumber", CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"Tag",          CIM_STRING|COL_FLAG_KEY },
+    { L"Tag",          CIM_STRING },
 };
 static const struct column col_systemsecurity[] =
 {
@@ -571,7 +493,7 @@ static const struct column col_videocontroller[] =
     { L"CurrentScanMode",             CIM_UINT16 },
     { L"CurrentVerticalResolution",   CIM_UINT32 },
     { L"Description",                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"DeviceID",                    CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { L"DeviceId",                    CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"DeviceSpecificPens",          CIM_UINT32 },
     { L"DitherType",                  CIM_UINT32 },
     { L"DriverDate",                  CIM_DATETIME|COL_FLAG_DYNAMIC },
@@ -629,7 +551,7 @@ static const struct column col_winsat[] =
     { L"WinSPRLevel",           CIM_REAL32 },
 };
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct record_associator
 {
     const WCHAR *assocclass;
@@ -664,18 +586,6 @@ struct record_bios
     UINT8        systembiosmajorversion;
     UINT8        systembiosminorversion;
     const WCHAR *version;
-};
-struct record_cache_memory
-{
-    UINT64       block_size;
-    UINT32       cache_speed;
-    UINT16       cache_type;
-    const WCHAR *device_id;
-    UINT32       installed_size;
-    UINT16       level;
-    UINT32       max_cache_size;
-    UINT64       number_of_blocks;
-    const WCHAR *status;
 };
 struct record_cdromdrive
 {
@@ -718,7 +628,6 @@ struct record_desktopmonitor
 {
     const WCHAR *name;
     UINT32       pixelsperxlogicalinch;
-    const WCHAR *status;
 };
 struct record_directory
 {
@@ -736,9 +645,7 @@ struct record_diskdrive
     const WCHAR *model;
     const WCHAR *pnpdevice_id;
     const WCHAR *serialnumber;
-    UINT32       signature;
     UINT64       size;
-    UINT32       total_heads;
 };
 struct record_diskdrivetodiskpartition
 {
@@ -771,21 +678,6 @@ struct record_ip4routetable
     INT32        interfaceindex;
     const WCHAR *nexthop;
 };
-
-struct record_localtime
-{
-    UINT32 day;
-    UINT32 dayofweek;
-    UINT32 hour;
-    UINT32 milliseconds;
-    UINT32 minute;
-    UINT32 month;
-    UINT32 quarter;
-    UINT32 second;
-    UINT32 weekinmonth;
-    UINT32 year;
-};
-
 struct record_logicaldisk
 {
     const WCHAR *caption;
@@ -802,43 +694,6 @@ struct record_logicaldisktopartition
 {
     const WCHAR *antecedent;
     const WCHAR *dependent;
-};
-struct record_msft_phys_disk
-{
-    const WCHAR  *adapter_serial_number;
-    UINT64        allocated_size;
-    UINT16        bus_type;
-    struct array *cannot_pool_reason;
-    int           can_pool;
-    const WCHAR  *description;
-    const WCHAR  *device_id;
-    UINT16        enclosure_number;
-    const WCHAR  *firmware_version;
-    const WCHAR  *friendly_name;
-    const WCHAR  *fru_id;
-    UINT16        health_status;
-    int           is_indication_enabled;
-    int           is_partial;
-    UINT64        logical_sector_size;
-    const WCHAR  *manufacturer;
-    UINT16        media_type;
-    const WCHAR  *model;
-    struct array *operational_details;
-    struct array *operational_status;
-    const WCHAR  *other_cannot_pool_reason_description;
-    const WCHAR  *part_number;
-    const WCHAR  *physical_location;
-    UINT64        physical_sector_size;
-    const WCHAR  *serial_number;
-    UINT64        size;
-    UINT16        slot_number;
-    const WCHAR  *software_version;
-    UINT32        spindle_speed;
-    struct array *supported_usages;
-    const WCHAR  *unique_id;
-    UINT16        unique_id_format;
-    UINT16        usage;
-    UINT64        virtual_disk_footprint;
 };
 struct record_networkadapter
 {
@@ -1038,14 +893,7 @@ struct record_quickfixengineering
 };
 struct record_rawsmbiostables
 {
-    int          active;
-    UINT8        dmi_revision;
-    const WCHAR *instance_name;
-    UINT32       size;
     const struct array *smbiosdata;
-    UINT8        major_version;
-    UINT8        minor_version;
-    int          used_20_calling_method;
 };
 struct record_service
 {
@@ -1074,10 +922,8 @@ struct record_sid
 };
 struct record_softwarelicensingproduct
 {
-    const WCHAR *application_id;
-    int         license_is_addon;
-    UINT32      license_status;
-    const WCHAR *partial_product_key;
+    int    license_is_addon;
+    UINT32 license_status;
 };
 struct record_sounddevice
 {
@@ -1127,7 +973,6 @@ struct record_systemenclosure
     int                 lockpresent;
     const WCHAR        *manufacturer;
     const WCHAR        *name;
-    const WCHAR        *serial_number;
     const WCHAR        *tag;
 };
 struct record_videocontroller
@@ -1209,7 +1054,7 @@ struct record_winsat
     UINT32       winsatassessmentstate;
     FLOAT        winsprlevel;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static const struct record_associator data_associator[] =
 {
@@ -1286,6 +1131,11 @@ static const struct record_physicalmedia data_physicalmedia[] =
     { L"WINEHDISK", L"\\\\.\\PHYSICALDRIVE0" }
 };
 
+static const struct record_rawsmbiostables data_rawsmbiostables[] =
+{
+    { 0 },
+};
+
 static const struct record_qualifier data_qualifier[] =
 {
     { L"__WIN32_PROCESS_GETOWNER_OUT", L"User", CIM_SINT32, FLAVOR_ID, L"ID", 0 },
@@ -1294,13 +1144,12 @@ static const struct record_qualifier data_qualifier[] =
 
 static const struct record_quickfixengineering data_quickfixengineering[] =
 {
-    { L"http://winehq.org", L"Update", L"KB2670838", L"", L"22/2/2022" },
-    { L"http://winehq.org", L"Update", L"KB3140245", L"", L"22/2/2022" },
+    { L"http://winehq.org", L"Update", L"KB1234567", L"", L"22/2/2022" },
 };
 
 static const struct record_softwarelicensingproduct data_softwarelicensingproduct[] =
 {
-    { L"55c92734-d682-4d71-983e-d6ec3f16059f", 0, 1, L"BEEF0" },
+    { 0, 1 },
 };
 
 static const struct record_stdregprov data_stdregprov[] =
@@ -1382,7 +1231,7 @@ static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
     return TRUE;
 }
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct smbios_prologue
 {
     BYTE  calling_method;
@@ -1485,7 +1334,7 @@ struct smbios_processor
     WORD                 core_enabled2;
     WORD                 thread_count2;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
 
@@ -1787,67 +1636,6 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     return status;
 }
 
-typedef struct
-{
-    BYTE    Used20CallingMethod;
-    BYTE    MajorVersion;
-    BYTE    MinorVersion;
-    BYTE    Revision;
-    DWORD   Length;
-    BYTE    SMBIOSTableData[];
-} RawSMBIOSData;
-
-static struct array *get_rawbiosdata( char *buf, UINT len )
-{
-    struct array *ret;
-    UINT8 *ptr;
-
-    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
-    if (!(ptr = malloc( len )))
-    {
-        free( ret );
-        return NULL;
-    }
-    memcpy( ptr, buf, len );
-    ret->elem_size = sizeof(*ptr);
-    ret->count     = len;
-    ret->ptr       = ptr;
-    return ret;
-}
-
-static enum fill_status fill_rawbiosdata( struct table *table, const struct expr *cond )
-{
-    struct record_rawsmbiostables *rec;
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-    UINT row = 0, len;
-    RawSMBIOSData *buf;
-
-    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
-    GetSystemFirmwareTable( RSMB, 0, buf, len );
-
-    rec = (struct record_rawsmbiostables *)table->data;
-    rec->active = -1;
-    rec->dmi_revision = buf->Revision;
-    rec->instance_name = L"SMBiosData";
-    rec->smbiosdata = get_rawbiosdata( (char *)buf + FIELD_OFFSET( RawSMBIOSData, SMBIOSTableData ), buf->Length );
-    rec->size = rec->smbiosdata ? buf->Length : 0;
-    rec->major_version = buf->MajorVersion;
-    rec->minor_version = buf->MinorVersion;
-    rec->used_20_calling_method = buf->Used20CallingMethod ? -1 : 0;
-
-    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
-    else row++;
-
-    free( buf );
-
-    TRACE("created %u rows\n", row);
-    table->num_rows = row;
-    return status;
-}
-
 static enum fill_status fill_cdromdrive( struct table *table, const struct expr *cond )
 {
     WCHAR drive[3], root[] = L"A:\\";
@@ -1887,6 +1675,14 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
     return status;
+}
+
+static UINT get_processor_count(void)
+{
+    SYSTEM_BASIC_INFORMATION info;
+
+    if (NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )) return 1;
+    return info.NumberOfProcessors;
 }
 
 static UINT get_physical_processor_count( const char *buf, UINT len, UINT *num_logical )
@@ -1929,7 +1725,7 @@ static UINT64 get_total_virtual_memory(void)
 
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
-    return status.ullTotalPageFile;
+    return status.ullTotalVirtual;
 }
 
 static UINT64 get_available_virtual_memory(void)
@@ -1938,7 +1734,7 @@ static UINT64 get_available_virtual_memory(void)
 
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
-    return status.ullAvailPageFile;
+    return status.ullAvailVirtual;
 }
 
 static WCHAR *get_computername(void)
@@ -2483,7 +2279,6 @@ static enum fill_status fill_desktopmonitor( struct table *table, const struct e
     rec = (struct record_desktopmonitor *)table->data;
     rec->name                  = L"Generic Non-PnP Monitor";
     rec->pixelsperxlogicalinch = get_pixelsperxlogicalinch();
-    rec->status                = L"OK";
 
     if (match_row( table, row, cond, &status )) row++;
 
@@ -2594,27 +2389,21 @@ done:
 static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
 {
     WCHAR root[] = L"\\\\.\\A:";
-    ULARGE_INTEGER free, total;
+    ULARGE_INTEGER free;
     DISK_GEOMETRY_EX info;
     HANDLE handle;
     DWORD bytes_returned;
 
     free.QuadPart = 512 * 1024 * 1024;
-    if (!GetDiskFreeSpaceExW( dir, NULL, &total, &free ))
+    GetDiskFreeSpaceExW( dir, NULL, NULL, &free );
+
+    root[4] = dir[0];
+    handle = CreateFileW( root, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle != INVALID_HANDLE_VALUE)
     {
-        *disksize = 0;
-        root[4] = dir[0];
-        handle = CreateFileW( root, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
-        if (handle != INVALID_HANDLE_VALUE)
-        {
-            if (DeviceIoControl( handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0, &info, sizeof(info), &bytes_returned, NULL ))
-                *disksize = info.DiskSize.QuadPart;
-            CloseHandle( handle );
-        }
-    }
-    else
-    {
-        *disksize = total.QuadPart;
+        if (DeviceIoControl( handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0, &info, sizeof(info), &bytes_returned, NULL ))
+            *disksize = info.DiskSize.QuadPart;
+        CloseHandle( handle );
     }
     return free.QuadPart;
 }
@@ -2689,10 +2478,8 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             rec->model         = L"Wine Disk Drive";
             rec->pnpdevice_id  = L"IDE\\Disk\\VEN_WINE";
             rec->serialnumber  = get_diskdrive_serialnumber( root[0] );
-            rec->signature     = 0;
             get_freespace( root, &size );
             rec->size          = size;
-            rec->total_heads   = 255;
             if (!match_row( table, row, cond, &status ))
             {
                 free_row_values( table, row );
@@ -2946,34 +2733,6 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
     table->num_rows = row;
 
     free( forwards );
-    return status;
-}
-
-static enum fill_status fill_localtime( struct table *table, const struct expr *cond )
-{
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-    SYSTEMTIME time;
-    struct record_localtime *rec;
-
-    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-    GetLocalTime( &time );
-
-    rec = (struct record_localtime *)table->data;
-    rec->day          = time.wDay;
-    rec->dayofweek    = time.wDayOfWeek;
-    rec->hour         = time.wHour;
-    rec->milliseconds = time.wMilliseconds;
-    rec->minute       = time.wMinute;
-    rec->month        = time.wMonth;
-    rec->quarter      = (time.wMonth - 1) / 3 + 1;
-    rec->second       = time.wSecond;
-    rec->weekinmonth  = (time.wDay - 1) / 7 + 1;
-    rec->year         = time.wYear;
-
-    if (match_row( table, 0, cond, &status )) table->num_rows++;
-
-    TRACE("created %u rows\n", table->num_rows);
     return status;
 }
 
@@ -3365,34 +3124,20 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     }
     for (address = list; address; address = address->Next)
     {
-        if (address->Address.lpSockaddr->sa_family != AF_INET)
-            continue;
         buflen = ARRAY_SIZE( buf );
         if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
-                                 NULL, buf, &buflen ) || !(ptr[i++] = wcsdup( buf )))
-            goto error;
+                                 NULL, buf, &buflen) || !(ptr[i++] = wcsdup( buf )))
+        {
+            for (; i > 0; i--) free( ptr[i - 1] );
+            free( ptr );
+            free( ret );
+            return NULL;
+        }
     }
-
-    for (address = list; address; address = address->Next)
-    {
-        if (address->Address.lpSockaddr->sa_family != AF_INET6)
-            continue;
-        buflen = ARRAY_SIZE( buf );
-        if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
-                                 NULL, buf, &buflen ) || !(ptr[i++] = wcsdup( buf )))
-            goto error;
-    }
-
     ret->elem_size = sizeof(*ptr);
     ret->count     = count;
     ret->ptr       = ptr;
     return ret;
-
-error:
-    for (; i > 0; i--) free( ptr[i - 1] );
-    free( ptr );
-    free( ret );
-    return NULL;
 }
 static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
 {
@@ -3864,7 +3609,7 @@ static WCHAR *get_processor_name( UINT index, const char *buf, UINT len )
 static UINT get_processor_currentclockspeed( UINT index )
 {
     PROCESSOR_POWER_INFORMATION *info;
-    UINT ret = 1000, size = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(PROCESSOR_POWER_INFORMATION);
+    UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
     if ((info = malloc( size )))
@@ -3878,7 +3623,7 @@ static UINT get_processor_currentclockspeed( UINT index )
 static UINT get_processor_maxclockspeed( UINT index )
 {
     PROCESSOR_POWER_INFORMATION *info;
-    UINT ret = 1000, size = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(PROCESSOR_POWER_INFORMATION);
+    UINT ret = 1000, size = get_processor_count() * sizeof(PROCESSOR_POWER_INFORMATION);
     NTSTATUS status;
 
     if ((info = malloc( size )))
@@ -3888,77 +3633,6 @@ static UINT get_processor_maxclockspeed( UINT index )
         free( info );
     }
     return ret;
-}
-
-static enum fill_status fill_cache_memory( struct table *table, const struct expr *cond )
-{
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
-    UINT i, idx, offset = 0, row_count = 0;
-    struct record_cache_memory *rec;
-    ULONG64 cache_size[16] = { 0 };
-    char *buffer = NULL;
-    DWORD size = 1024;
-    WCHAR str[64];
-
-    while (1)
-    {
-        buffer = realloc( buffer, size );
-        if (GetLogicalProcessorInformationEx( RelationCache, (void *)buffer, &size )) break;
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-        {
-            free( buffer );
-            return FILL_STATUS_FAILED;
-        }
-    }
-
-    info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)buffer;
-    while ((char *)info != buffer + size)
-    {
-        if (info->Cache.Level < ARRAY_SIZE(cache_size) && info->Cache.CacheSize)
-        {
-            if (!cache_size[info->Cache.Level]) ++row_count;
-            cache_size[info->Cache.Level] += info->Cache.CacheSize;
-        }
-        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)info + info->Size);
-    }
-
-    if (!resize_table( table, row_count, sizeof(*rec) ))
-    {
-        free( buffer );
-        return FILL_STATUS_FAILED;
-    }
-
-    row_count = 0;
-    idx = 0;
-    for (i = 0; i < ARRAY_SIZE(cache_size); ++i)
-    {
-        if (!cache_size[i]) continue;
-        rec = (struct record_cache_memory *)(table->data + offset);
-        rec->block_size = 1024;
-        rec->cache_speed = 1;
-        rec->cache_type = 5;
-        rec->installed_size = cache_size[i] / rec->block_size;
-        rec->level = i + 2;
-        rec->max_cache_size = rec->installed_size;
-        rec->number_of_blocks = rec->installed_size;
-        swprintf( str, sizeof(str), L"Cache Memory %u", idx );
-        rec->device_id = wcsdup( str );
-        rec->status = L"OK";
-        if (!match_row( table, idx, cond, &status ))
-        {
-            free_row_values( table, idx );
-            ++idx;
-            continue;
-        }
-        offset += sizeof(*rec);
-        ++idx;
-        ++row_count;
-    }
-    TRACE("created %u rows\n", row_count);
-    table->num_rows = row_count;
-    free( buffer );
-    return status;
 }
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
@@ -4593,13 +4267,6 @@ done:
     return ret;
 }
 
-static WCHAR *get_systemenclosure_serialnumber( const char *buf, UINT len )
-{
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_CHASSIS, 0, offsetof(struct smbios_chassis, serial), buf, len );
-    if (!ret) return wcsdup( L"0" );
-    return ret;
-}
-
 static enum fill_status fill_systemenclosure( struct table *table, const struct expr *cond )
 {
     struct record_systemenclosure *rec;
@@ -4620,7 +4287,6 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     rec->lockpresent  = get_systemenclosure_lockpresent( buf, len );
     rec->manufacturer = get_systemenclosure_manufacturer( buf, len );
     rec->name         = L"System Enclosure";
-    rec->serial_number = get_systemenclosure_serialnumber( buf, len );
     rec->tag          = L"System Enclosure 0";
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
@@ -4644,112 +4310,58 @@ struct display_adapter
     WCHAR *driver_date;
     WCHAR *driver_desc;
     WCHAR *driver_version;
-    WCHAR *pnpdevice_id;
     WCHAR *dac_type;
     DWORD  memory_size;
 };
 
-static WCHAR *get_string_devprop( HDEVINFO set, SP_DEVINFO_DATA *dev_info, const DEVPROPKEY *key )
+static struct display_adapter *get_display_adapters( UINT *count )
 {
-    DEVPROPTYPE type;
-    DWORD size;
-    WCHAR *str;
+    DWORD nb_allocated = 2, i = 0, idx_class = 0;
+    HKEY key_class, key_instance;
+    struct display_adapter *ret, *tmp;
+    WCHAR instance[5];
 
-    if (SetupDiGetDevicePropertyW( set, dev_info, key, &type, NULL, 0, &size, 0 ) || GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
-    if (type != DEVPROP_TYPE_STRING && type != DEVPROP_TYPE_STRING_LIST) return NULL;
-    if (!(str = malloc( size ))) return NULL;
-    if (!SetupDiGetDevicePropertyW( set, dev_info, key, &type, (BYTE *)str, size, NULL, 0 ))
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE,
+                       L"System\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}",
+                       0, KEY_ENUMERATE_SUB_KEYS, &key_class )) return NULL;
+
+    if (!(ret = malloc( nb_allocated * sizeof(*ret) )))
     {
-        free(str);
+        RegCloseKey( key_class );
         return NULL;
     }
 
-    return str;
-}
-
-static struct display_adapter *get_display_adapters( UINT *count )
-{
-    static const WCHAR *class_prefix = L"System\\CurrentControlSet\\Control\\Class\\";
-    DWORD nb_allocated = 2, i = 0, idx_devinfo = 0;
-    struct display_adapter *ret, *tmp;
-    HDEVINFO devs;
-    SP_DEVINFO_DATA dev_info = { .cbSize = sizeof(SP_DEVINFO_DATA) };
-
-    if (!(ret = malloc( nb_allocated * sizeof(*ret) ))) return NULL;
-
-    if ((devs = SetupDiGetClassDevsW( &GUID_DEVCLASS_DISPLAY, NULL, NULL, DIGCF_PRESENT )) == INVALID_HANDLE_VALUE) return NULL;
-
-    while(SetupDiEnumDeviceInfo( devs, idx_devinfo++, &dev_info ))
+    while (RegEnumKeyW( key_class, idx_class++, instance, ARRAY_SIZE(instance) ) != ERROR_NO_MORE_ITEMS)
     {
-        WCHAR *driver, *instance_id;
-        UINT key_len;
-        WCHAR *key_path;
-        HKEY key_instance;
-        DWORD size;
-
-        SetupDiGetDeviceInstanceIdW( devs, &dev_info, NULL, 0, &size );
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) continue;
-        if (!(instance_id = malloc( size * sizeof(*instance_id) ))) continue;
-        if (!SetupDiGetDeviceInstanceIdW( devs, &dev_info, instance_id, size, NULL ))
+        if (!RegOpenKeyExW( key_class, instance, 0, KEY_READ, &key_instance ))
         {
-            free( instance_id );
-            continue;
-        }
-        if (!(driver = get_string_devprop( devs, &dev_info, &DEVPKEY_Device_Driver )))
-        {
-            free( instance_id );
-            continue;
-        }
-
-        key_len = wcslen( class_prefix ) + wcslen( driver ) + 1;
-        if (!(key_path = calloc( sizeof(WCHAR), key_len )))
-        {
-            free( driver );
-            free( instance_id );
-            continue;
-        }
-
-        swprintf( key_path, key_len, L"%s%s", class_prefix, driver );
-        free( driver );
-
-        if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, key_path, 0, KEY_QUERY_VALUE, &key_instance ))
-        {
-            free( instance_id );
-            free( key_path );
-            continue;
-        }
-
-        free( key_path );
-
-        ret[i].driver_date = get_reg_value( key_instance, L"DriverDate" );
-        ret[i].driver_desc = get_reg_value( key_instance, L"DriverDesc" );
-        ret[i].driver_version = get_reg_value( key_instance, L"DriverVersion" );
-        ret[i].pnpdevice_id = instance_id;
-        ret[i].dac_type = get_reg_value( key_instance, L"HardwareInformation.DacType" );
-        ret[i].memory_size = get_reg_value_dword( key_instance, L"HardwareInformation.MemorySize" );
-        if (++i >= nb_allocated)
-        {
-            nb_allocated *= 2;
-            if ((tmp = realloc( ret, nb_allocated * sizeof(*ret) ))) ret = tmp;
-            else
+            ret[i].driver_date = get_reg_value( key_instance, L"DriverDate" );
+            ret[i].driver_desc = get_reg_value( key_instance, L"DriverDesc" );
+            ret[i].driver_version = get_reg_value( key_instance, L"DriverVersion" );
+            ret[i].dac_type = get_reg_value( key_instance, L"HardwareInformation.DacType" );
+            ret[i].memory_size = get_reg_value_dword( key_instance, L"HardwareInformation.MemorySize" );
+            if (++i >= nb_allocated)
             {
-                while (--i)
+                nb_allocated *= 2;
+                if ((tmp = realloc( ret, nb_allocated * sizeof(*ret) ))) ret = tmp;
+                else
                 {
-                    free( ret[i].driver_date );
-                    free( ret[i].driver_desc );
-                    free( ret[i].driver_version );
-                    free( ret[i].pnpdevice_id );
-                    free( ret[i].dac_type );
+                    while (--i)
+                    {
+                        free( ret[i].driver_date );
+                        free( ret[i].driver_desc );
+                        free( ret[i].driver_version );
+                        free( ret[i].dac_type );
+                    }
+                    goto done;
                 }
-                RegCloseKey( key_instance );
-                goto done;
             }
+            RegCloseKey( key_instance );
         }
-        RegCloseKey( key_instance );
     }
 
 done:
-    SetupDiDestroyDeviceInfoList( devs );
+    RegCloseKey( key_class );
     if (!i)
     {
         free( ret );
@@ -4771,6 +4383,18 @@ static DWORD get_adapter_vendor_id( const WCHAR *desc )
     if (wcsstr( desc, L"NVIDIA" )) return HW_VENDOR_NVIDIA;
     if (wcsstr( desc, L"Intel" )) return HW_VENDOR_INTEL;
     return HW_VENDOR_WINE;
+}
+
+static WCHAR *get_videocontroller_pnpdeviceid( const WCHAR *desc )
+{
+    static const WCHAR fmtW[] = L"PCI\\VEN_%04X&DEV_0000&SUBSYS_00000000&REV_00\\0&DEADBEEF&0&DEAD";
+    DWORD vendor_id = get_adapter_vendor_id( desc );
+    UINT len = ARRAY_SIZE(fmtW);
+    WCHAR *ret;
+
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, vendor_id );
+    return ret;
 }
 
 static const WCHAR *get_videocontroller_installeddriver( const WCHAR *desc )
@@ -4830,7 +4454,7 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
         rec->driverversion         = adapters[i].driver_version;
         rec->installeddriver       = get_videocontroller_installeddriver( adapters[i].driver_desc );
         rec->name                  = wcsdup( rec->caption );
-        rec->pnpdevice_id          = adapters[i].pnpdevice_id;
+        rec->pnpdevice_id          = get_videocontroller_pnpdeviceid( adapters[i].driver_desc );
         rec->status                = L"OK";
         rec->videoarchitecture     = 2; /* Unknown */
         rec->videomemorytype       = 2; /* Unknown */
@@ -4948,7 +4572,6 @@ static struct table cimv2_builtin_classes[] =
     { L"SystemRestore", C(col_sysrestore), D(data_sysrestore) },
     { L"Win32_BIOS", C(col_bios), 0, 0, NULL, fill_bios },
     { L"Win32_BaseBoard", C(col_baseboard), 0, 0, NULL, fill_baseboard },
-    { L"Win32_CacheMemory", C(col_cache_memory), 0, 0, NULL, fill_cache_memory },
     { L"Win32_CDROMDrive", C(col_cdromdrive), 0, 0, NULL, fill_cdromdrive },
     { L"Win32_ComputerSystem", C(col_compsys), 0, 0, NULL, fill_compsys },
     { L"Win32_ComputerSystemProduct", C(col_compsysproduct), 0, 0, NULL, fill_compsysproduct },
@@ -4959,7 +4582,6 @@ static struct table cimv2_builtin_classes[] =
     { L"Win32_DiskPartition", C(col_diskpartition), 0, 0, NULL, fill_diskpartition },
     { L"Win32_DisplayControllerConfiguration", C(col_displaycontrollerconfig), 0, 0, NULL, fill_displaycontrollerconfig },
     { L"Win32_IP4RouteTable", C(col_ip4routetable), 0, 0, NULL, fill_ip4routetable },
-    { L"Win32_LocalTime", C(col_localtime), 0, 0, NULL, fill_localtime },
     { L"Win32_LogicalDisk", C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
     { L"Win32_LogicalDiskToPartition", C(col_logicaldisktopartition), 0, 0, NULL, fill_logicaldisktopartition },
     { L"Win32_NetworkAdapter", C(col_networkadapter), 0, 0, NULL, fill_networkadapter },
@@ -4985,86 +4607,8 @@ static struct table cimv2_builtin_classes[] =
 
 static struct table wmi_builtin_classes[] =
 {
-    { L"MSSMBios_RawSMBiosTables", C(col_rawsmbiostables), 0, 0, NULL, fill_rawbiosdata },
+    { L"MSSMBios_RawSMBiosTables", C(col_rawsmbiostables), D(data_rawsmbiostables) },
 };
-
-static enum fill_status fill_msft_phys_disk( struct table *table, const struct expr *cond )
-{
-    static UINT16 operational_status[] = { 2 };
-    static struct array operational_status_array =
-    {
-        .elem_size = sizeof(*operational_status),
-        .count = ARRAY_SIZE(operational_status),
-        .ptr = &operational_status,
-    };
-    static UINT16 supported_usages[] = { 1, 2, 3, 4, 5 };
-    static struct array supported_usages_array =
-    {
-        .elem_size = sizeof(*supported_usages),
-        .count = ARRAY_SIZE(supported_usages),
-        .ptr = supported_usages,
-    };
-    WCHAR device_id[10], root[] = L"A:\\";
-    struct record_msft_phys_disk *rec;
-    UINT i, row = 0, offset = 0, index = 0, type;
-    UINT64 size;
-    DWORD drives = GetLogicalDrives();
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-
-    if (!resize_table( table, 2, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-    for (i = 0; i < 26; i++)
-    {
-        if (drives & (1 << i))
-        {
-            root[0] = 'A' + i;
-            type = GetDriveTypeW( root );
-            if (type != DRIVE_FIXED && type != DRIVE_REMOVABLE) continue;
-
-            if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-            get_freespace( root, &size );
-            rec = (struct record_msft_phys_disk *)(table->data + offset);
-            rec->allocated_size         = size;
-            rec->bus_type               = type == DRIVE_FIXED ? 17 /* NVME */: 1 /* USB */;
-            rec->can_pool               = -1;
-            swprintf( device_id, ARRAY_SIZE( device_id ), L"%d", index );
-            rec->device_id              = wcsdup( device_id );
-            rec->firmware_version       = L"1234";
-            rec->friendly_name          = L"Wine disk";
-            rec->health_status          = 0; /* Healthy */
-            rec->logical_sector_size    = 512;
-            rec->media_type             = 4; /* SSD */
-            rec->model                  = wcsdup( L"Wine disk" );
-            rec->operational_status     = dup_array( &operational_status_array );
-            rec->physical_location      = L"Integrated : Bus 0 : Device 0 : Function 0 : Adapter 0 : Port 0";
-            rec->physical_sector_size   = 4096;
-            rec->serial_number          = get_diskdrive_serialnumber( root[0] );
-            rec->size                   = size;
-            rec->supported_usages       = dup_array( &supported_usages_array );
-            rec->unique_id              = wcsdup( rec->serial_number );
-            rec->unique_id_format       = 0; /* Vendor specific */
-            rec->usage                  = 1; /* Auto select */
-            ++index;
-            if (!match_row( table, row, cond, &status ))
-            {
-                free_row_values( table, row );
-                continue;
-            }
-            offset += sizeof(*rec);
-            row++;
-        }
-    }
-    TRACE("created %u rows\n", row);
-    table->num_rows = row;
-    return status;
-}
-
-static struct table win_storage_builtin_classes[] =
-{
-    { L"MSFT_PhysicalDisk", C(col_msft_phys_disk), 0, 0, NULL, fill_msft_phys_disk },
-};
-
 #undef C
 #undef D
 
@@ -5077,7 +4621,7 @@ static const struct
 builtin_namespaces[WBEMPROX_NAMESPACE_LAST] =
 {
     {L"cimv2", cimv2_builtin_classes, ARRAY_SIZE(cimv2_builtin_classes)},
-    {L"Microsoft\\Windows\\Storage", win_storage_builtin_classes, ARRAY_SIZE(win_storage_builtin_classes)},
+    {L"Microsoft\\Windows\\Storage", NULL, 0},
     {L"StandardCimv2", NULL, 0},
     {L"wmi", wmi_builtin_classes, ARRAY_SIZE(wmi_builtin_classes)},
 };

@@ -116,6 +116,7 @@ typedef struct
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -202,7 +203,7 @@ static const char *iocodex(DWORD code)
    for(i=0; i<ARRAY_SIZE(iocodextable); i++)
       if (code==iocodextable[i].code)
 	 return iocodextable[i].codex;
-   snprintf(buffer, sizeof(buffer), "IOCTL_CODE_%x", code);
+   snprintf(buffer, sizeof(buffer), "IOCTL_CODE_%x", (int)code);
    return buffer;
 }
 
@@ -213,40 +214,6 @@ static const char *iocodex(DWORD code)
 #define FRAME_OF_MSF(a) (((int)(a).M * CD_SECS + (a).S) * CD_FRAMES + (a).F)
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
 #define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
-
-typedef struct _SCSI_PASS_THROUGH32
- {
-    USHORT       Length;
-    UCHAR        ScsiStatus;
-    UCHAR        PathId;
-    UCHAR        TargetId;
-    UCHAR        Lun;
-    UCHAR        CdbLength;
-    UCHAR        SenseInfoLength;
-    UCHAR        DataIn;
-    ULONG        DataTransferLength;
-    ULONG        TimeOutValue;
-    ULONG        DataBufferOffset;
-    ULONG        SenseInfoOffset;
-    UCHAR        Cdb[16];
-} SCSI_PASS_THROUGH32, *PSCSI_PASS_THROUGH32;
-
-typedef struct _SCSI_PASS_THROUGH_DIRECT32
- {
-    USHORT       Length;
-    UCHAR        ScsiStatus;
-    UCHAR        PathId;
-    UCHAR        TargetId;
-    UCHAR        Lun;
-    UCHAR        CdbLength;
-    UCHAR        SenseInfoLength;
-    UCHAR        DataIn;
-    ULONG        DataTransferLength;
-    ULONG        TimeOutValue;
-    ULONG        DataBuffer; /* actually, VOID* POINTER_32 */
-    ULONG        SenseInfoOffset;
-    UCHAR        Cdb[16];
-} SCSI_PASS_THROUGH_DIRECT32, *PSCSI_PASS_THROUGH_DIRECT32;
 
 /* The documented format of DVD_LAYER_DESCRIPTOR is wrong. Even the format in the
  * DDK's header is wrong. There are four bytes at the start  defined by
@@ -271,6 +238,36 @@ C_ASSERT(sizeof(internal_dvd_manufacturer_descriptor) == 2053);
 
 static NTSTATUS CDROM_ReadTOC(int, int, CDROM_TOC*);
 static NTSTATUS CDROM_GetStatusCode(int);
+
+
+#ifdef linux
+
+# ifndef IDE6_MAJOR
+#  define IDE6_MAJOR 88
+# endif
+# ifndef IDE7_MAJOR
+#  define IDE7_MAJOR 89
+# endif
+
+# ifdef CDROM_SEND_PACKET
+/* structure for CDROM_PACKET_COMMAND ioctl */
+/* not all Linux versions have all the fields, so we define the
+ * structure ourselves to make sure */
+struct linux_cdrom_generic_command
+{
+    unsigned char          cmd[CDROM_PACKET_SIZE];
+    unsigned char         *buffer;
+    unsigned int           buflen;
+    int                    stat;
+    struct request_sense  *sense;
+    unsigned char          data_direction;
+    int                    quiet;
+    int                    timeout;
+    void                  *reserved[1];
+};
+# endif  /* CDROM_SEND_PACKET */
+
+#endif  /* linux */
 
 /* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom
  * this should be removed when a proper device interface is implemented
@@ -761,37 +758,11 @@ static NTSTATUS CDROM_GetDriveGeometry(int dev, int fd, DISK_GEOMETRY* dg)
  *		CDROM_GetMediaType
  *
  */
-static NTSTATUS CDROM_GetMediaType(int dev, int fd, GET_MEDIA_TYPES* medtype)
+static NTSTATUS CDROM_GetMediaType(int dev, GET_MEDIA_TYPES* medtype)
 {
-    FIXME("semi-stub\n");
+    FIXME(": faking success\n");
     medtype->DeviceType = FILE_DEVICE_CD_ROM;
     medtype->MediaInfoCount = 0;
-
-#if defined(HAVE_SG_IO_HDR_T_INTERFACE_ID) && defined(HAVE_LINUX_CDROM_H)
-    {
-        unsigned char drive_config[8];
-        unsigned char get_config_cmd[10] = { GPCMD_GET_CONFIGURATION, 0, 0xff, 0xff,
-                                             0, 0, 0, 0, sizeof(drive_config), 0 };
-        sg_io_hdr_t iocmd =
-        {
-            .interface_id = 'S',
-            .dxfer_direction = SG_DXFER_FROM_DEV,
-            .cmd_len = sizeof(get_config_cmd),
-            .dxfer_len = sizeof(drive_config),
-            .dxferp = drive_config,
-            .cmdp = get_config_cmd,
-            .timeout = 1000,
-        };
-        int err;
-
-        if ((err = ioctl(fd, SG_IO, &iocmd)))
-            return CDROM_GetStatusCode(err);
-
-        if (iocmd.status == 0 && (drive_config[6] || drive_config[7] >= 0x10))
-            medtype->DeviceType = FILE_DEVICE_DVD;
-    }
-#endif
-
     return STATUS_SUCCESS;
 }
 
@@ -1485,7 +1456,7 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
 #endif
 
     TRACE("RAW_READ_INFO: DiskOffset=%s SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
-          wine_dbgstr_longlong(raw->DiskOffset.QuadPart), raw->SectorCount, raw->TrackMode, buffer, len, sz);
+          wine_dbgstr_longlong(raw->DiskOffset.QuadPart), (int)raw->SectorCount, (int)raw->TrackMode, buffer, (int)len, sz);
 
     if (len < raw->SectorCount * 2352) return STATUS_BUFFER_TOO_SMALL;
 
@@ -1614,44 +1585,50 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
  *        Implements IOCTL_SCSI_PASS_THROUGH_DIRECT
  *
  */
-static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, const SCSI_PASS_THROUGH_DIRECT *in_pkt, SCSI_PASS_THROUGH_DIRECT *out_pkt)
+static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+    int io;
+#elif defined HAVE_SCSIREQ_T_CMD
+    scsireq_t cmd;
     int io;
 #elif defined __APPLE__
     dk_scsi_command_t cmd;
     int io;
 #endif
 
-    if (in_pkt->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
+    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
         return STATUS_BUFFER_TOO_SMALL;
 
-    if (in_pkt->CdbLength > 16)
+    if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
 #ifdef SENSEBUFLEN
-    if (in_pkt->SenseInfoLength > SENSEBUFLEN)
+    if (pPacket->SenseInfoLength > SENSEBUFLEN)
+        return STATUS_INVALID_PARAMETER;
+#elif defined HAVE_REQUEST_SENSE
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
         return STATUS_INVALID_PARAMETER;
 #endif
 
-    if (in_pkt->DataTransferLength > 0 && !in_pkt->DataBuffer)
+    if (pPacket->DataTransferLength > 0 && !pPacket->DataBuffer)
         return STATUS_INVALID_PARAMETER;
 
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     RtlZeroMemory(&cmd, sizeof(cmd));
 
     cmd.interface_id   = 'S';
-    cmd.cmd_len        = in_pkt->CdbLength;
-    cmd.mx_sb_len      = in_pkt->SenseInfoLength;
-    cmd.dxfer_len      = in_pkt->DataTransferLength;
-    cmd.dxferp         = in_pkt->DataBuffer;
-    cmd.cmdp           = (unsigned char*)in_pkt->Cdb;
-    cmd.sbp            = (unsigned char*)out_pkt + in_pkt->SenseInfoOffset;
-    cmd.timeout        = in_pkt->TimeOutValue*1000;
+    cmd.cmd_len        = pPacket->CdbLength;
+    cmd.mx_sb_len      = pPacket->SenseInfoLength;
+    cmd.dxfer_len      = pPacket->DataTransferLength;
+    cmd.dxferp         = pPacket->DataBuffer;
+    cmd.cmdp           = pPacket->Cdb;
+    cmd.sbp            = (unsigned char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.timeout        = pPacket->TimeOutValue*1000;
 
-    switch (in_pkt->DataIn)
+    switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_IN:
         cmd.dxfer_direction = SG_DXFER_FROM_DEV;
@@ -1668,25 +1645,75 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, const SCSI_PASS_THROUGH_DIRE
 
     io = ioctl(fd, SG_IO, &cmd);
 
-    out_pkt->ScsiStatus         = cmd.status;
-    out_pkt->DataTransferLength = in_pkt->DataTransferLength - cmd.resid;
-    out_pkt->SenseInfoLength    = cmd.sb_len_wr;
+    pPacket->ScsiStatus         = cmd.status;
+    pPacket->DataTransferLength -= cmd.resid;
+    pPacket->SenseInfoLength    = cmd.sb_len_wr;
+
+    ret = CDROM_GetStatusCode(io);
+
+#elif defined HAVE_SCSIREQ_T_CMD
+
+    memset(&cmd, 0, sizeof(cmd));
+    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+
+    cmd.cmdlen         = pPacket->CdbLength;
+    cmd.databuf        = pPacket->DataBuffer;
+    cmd.datalen        = pPacket->DataTransferLength;
+    cmd.senselen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.flags |= SCCMD_WRITE;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.flags |= SCCMD_READ;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.flags = 0;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+    }
+
+    io = ioctl(fd, SCIOCCOMMAND, &cmd);
+
+    switch (cmd.retsts)
+    {
+    case SCCMD_OK:         break;
+    case SCCMD_TIMEOUT:    return STATUS_TIMEOUT;
+                           break;
+    case SCCMD_BUSY:       return STATUS_DEVICE_BUSY;
+                           break;
+    case SCCMD_SENSE:      break;
+    case SCCMD_UNKNOWN:    return STATUS_UNSUCCESSFUL;
+                           break;
+    }
+
+    if (pPacket->SenseInfoLength != 0)
+    {
+        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
+	       cmd.sense, pPacket->SenseInfoLength);
+    }
+
+    pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
 
 #elif defined(__APPLE__)
 
     memset(&cmd, 0, sizeof(cmd));
-    memcpy(cmd.cdb, in_pkt->Cdb, in_pkt->CdbLength);
+    memcpy(cmd.cdb, pPacket->Cdb, pPacket->CdbLength);
 
-    cmd.cdbSize        = in_pkt->CdbLength;
-    cmd.buffer         = in_pkt->DataBuffer;
-    cmd.bufferSize     = in_pkt->DataTransferLength;
-    cmd.sense          = (char*)out_pkt + in_pkt->SenseInfoOffset;
-    cmd.senseLen       = in_pkt->SenseInfoLength;
-    cmd.timeout        = in_pkt->TimeOutValue*1000; /* in milliseconds */
+    cmd.cdbSize        = pPacket->CdbLength;
+    cmd.buffer         = pPacket->DataBuffer;
+    cmd.bufferSize     = pPacket->DataTransferLength;
+    cmd.sense          = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.senseLen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
 
-    switch (in_pkt->DataIn)
+    switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_OUT:
         cmd.direction = kSCSIDataTransfer_FromInitiatorToTarget;
@@ -1709,105 +1736,29 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, const SCSI_PASS_THROUGH_DIRE
         switch (cmd.status)
         {
         case kSCSITaskStatus_TaskTimeoutOccurred:     return STATUS_TIMEOUT;
+                                                      break;
         case kSCSITaskStatus_ProtocolTimeoutOccurred: return STATUS_IO_TIMEOUT;
+                                                      break;
         case kSCSITaskStatus_DeviceNotResponding:     return STATUS_DEVICE_BUSY;
+                                                      break;
         case kSCSITaskStatus_DeviceNotPresent:
             return STATUS_NO_SUCH_DEVICE;
+            break;
         case kSCSITaskStatus_DeliveryFailure:
             return STATUS_DEVICE_PROTOCOL_ERROR;
+            break;
         case kSCSITaskStatus_No_Status:
         default:
             return STATUS_UNSUCCESSFUL;
+            break;
         }
     }
 
     if (cmd.status != kSCSITaskStatus_No_Status)
-        out_pkt->ScsiStatus = cmd.status;
+        pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
-
-    /* FIXME: Update DataTransferLength and SenseInfoLength */
 #endif
-    if (ret == STATUS_SUCCESS)
-    {
-        out_pkt->Length = sizeof(*out_pkt);
-        if (out_pkt != in_pkt)
-        {
-            out_pkt->CdbLength       = in_pkt->CdbLength;
-            out_pkt->DataIn          = in_pkt->DataIn;
-            out_pkt->TimeOutValue    = in_pkt->TimeOutValue;
-            out_pkt->DataBuffer      = in_pkt->DataBuffer;
-            out_pkt->SenseInfoOffset = in_pkt->SenseInfoOffset;
-            memcpy(out_pkt->Cdb, in_pkt->Cdb, sizeof(in_pkt->Cdb));
-        }
-    }
-
-    return ret;
-}
-
-static NTSTATUS CDROM_ScsiPassThroughDirect32(int fd, const SCSI_PASS_THROUGH_DIRECT32 *in_pkt32, SCSI_PASS_THROUGH_DIRECT32 *out_pkt32)
-{
-    SCSI_PASS_THROUGH_DIRECT *pkt;
-    ULONG_PTR ptr;
-    NTSTATUS ret;
-
-    if (in_pkt32->Length < sizeof(SCSI_PASS_THROUGH_DIRECT32))
-        return STATUS_BUFFER_TOO_SMALL;
-
-    if (in_pkt32->CdbLength > 16)
-        return STATUS_INVALID_PARAMETER;
-
-#ifdef SENSEBUFLEN
-    if (in_pkt32->SenseInfoLength > SENSEBUFLEN)
-        return STATUS_INVALID_PARAMETER;
-#endif
-
-    if (in_pkt32->SenseInfoLength > 0)
-    {
-        if (in_pkt32->SenseInfoOffset < sizeof(SCSI_PASS_THROUGH_DIRECT32))
-            return STATUS_INVALID_PARAMETER;
-        ptr = (ULONG_PTR)in_pkt32 + in_pkt32->SenseInfoOffset;
-        if (ptr < (ULONG_PTR)in_pkt32)
-            return STATUS_INVALID_PARAMETER;
-        if ((ptr + in_pkt32->SenseInfoLength) < ptr)
-            return STATUS_INVALID_PARAMETER;
-    }
-
-    pkt = calloc(1, sizeof(SCSI_PASS_THROUGH_DIRECT) + in_pkt32->SenseInfoLength);
-    if (!pkt) return STATUS_NO_MEMORY;
-
-    pkt->Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    pkt->CdbLength = in_pkt32->CdbLength;
-    pkt->SenseInfoLength = in_pkt32->SenseInfoLength;
-    pkt->DataIn = in_pkt32->DataIn;
-    pkt->DataTransferLength = in_pkt32->DataTransferLength;
-    pkt->TimeOutValue = in_pkt32->TimeOutValue;
-    pkt->DataBuffer = ULongToPtr(in_pkt32->DataBuffer);
-    pkt->SenseInfoOffset = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    memcpy(pkt->Cdb, in_pkt32->Cdb, sizeof(pkt->Cdb));
-
-    ret = CDROM_ScsiPassThroughDirect(fd, pkt, pkt);
-    if (NT_ERROR(ret)) goto done;
-
-    out_pkt32->Length = sizeof(SCSI_PASS_THROUGH_DIRECT32);
-    out_pkt32->ScsiStatus = pkt->ScsiStatus;
-    out_pkt32->PathId = pkt->PathId;
-    out_pkt32->TargetId = pkt->TargetId;
-    out_pkt32->Lun = pkt->Lun;
-    out_pkt32->CdbLength = pkt->CdbLength;
-    out_pkt32->SenseInfoLength = pkt->SenseInfoLength;
-    out_pkt32->DataIn = pkt->DataIn;
-    out_pkt32->DataTransferLength = pkt->DataTransferLength;
-    out_pkt32->TimeOutValue = pkt->TimeOutValue;
-    out_pkt32->DataBuffer = in_pkt32->DataBuffer;
-    out_pkt32->SenseInfoOffset = in_pkt32->SenseInfoOffset;
-    memcpy(out_pkt32->Cdb, pkt->Cdb, sizeof(out_pkt32->Cdb));
-    memcpy((char*)out_pkt32 + out_pkt32->SenseInfoOffset,
-            (const char*)pkt + pkt->SenseInfoOffset,
-            pkt->SenseInfoLength);
-
-done:
-    free(pkt);
     return ret;
 }
 
@@ -1816,88 +1767,150 @@ done:
  *              Implements IOCTL_SCSI_PASS_THROUGH
  *
  */
-static NTSTATUS CDROM_ScsiPassThrough(int fd, const SCSI_PASS_THROUGH *in_pkt, SCSI_PASS_THROUGH *out_pkt)
+static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+    int io;
+#elif defined HAVE_SCSIREQ_T_CMD
+    scsireq_t cmd;
     int io;
 #elif defined __APPLE__
     dk_scsi_command_t cmd;
     int io;
 #endif
 
-    if (in_pkt->Length < sizeof(SCSI_PASS_THROUGH))
+    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
         return STATUS_BUFFER_TOO_SMALL;
 
-    if (in_pkt->CdbLength > 16)
+    if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
 #ifdef SENSEBUFLEN
-    if (in_pkt->SenseInfoLength > SENSEBUFLEN)
+    if (pPacket->SenseInfoLength > SENSEBUFLEN)
+        return STATUS_INVALID_PARAMETER;
+#elif defined HAVE_REQUEST_SENSE
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
         return STATUS_INVALID_PARAMETER;
 #endif
 
-    if (in_pkt->DataTransferLength > 0 && in_pkt->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
+    if (pPacket->DataTransferLength > 0 && pPacket->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
         return STATUS_INVALID_PARAMETER;
 
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     RtlZeroMemory(&cmd, sizeof(cmd));
 
     cmd.interface_id   = 'S';
-    cmd.dxfer_len      = in_pkt->DataTransferLength;
-    cmd.cmd_len        = in_pkt->CdbLength;
-    cmd.cmdp           = (unsigned char*)in_pkt->Cdb;
-    cmd.mx_sb_len      = in_pkt->SenseInfoLength;
-    cmd.timeout        = in_pkt->TimeOutValue*1000;
+    cmd.dxfer_len      = pPacket->DataTransferLength;
+    cmd.dxferp         = (char*)pPacket + pPacket->DataBufferOffset;
+    cmd.cmd_len        = pPacket->CdbLength;
+    cmd.cmdp           = pPacket->Cdb;
+    cmd.mx_sb_len      = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000;
 
     if(cmd.mx_sb_len > 0)
-        cmd.sbp = (unsigned char*)out_pkt + in_pkt->SenseInfoOffset;
+        cmd.sbp = (unsigned char*)pPacket + pPacket->SenseInfoOffset;
 
-    switch (in_pkt->DataIn)
+    switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_IN:
-        cmd.dxferp = (char*)out_pkt + in_pkt->DataBufferOffset;
         cmd.dxfer_direction = SG_DXFER_FROM_DEV;
-        break;
+                             break;
     case SCSI_IOCTL_DATA_OUT:
-        cmd.dxferp = (char*)in_pkt + in_pkt->DataBufferOffset;
         cmd.dxfer_direction = SG_DXFER_TO_DEV;
-        break;
+                             break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
         cmd.dxfer_direction = SG_DXFER_NONE;
-        break;
+                             break;
     default:
        return STATUS_INVALID_PARAMETER;
     }
 
     io = ioctl(fd, SG_IO, &cmd);
 
-    out_pkt->ScsiStatus         = cmd.status;
-    out_pkt->DataTransferLength = in_pkt->DataTransferLength - cmd.resid;
-    out_pkt->SenseInfoLength    = cmd.sb_len_wr;
+    pPacket->ScsiStatus         = cmd.status;
+    pPacket->DataTransferLength -= cmd.resid;
+    pPacket->SenseInfoLength    = cmd.sb_len_wr;
+
+    ret = CDROM_GetStatusCode(io);
+
+#elif defined HAVE_SCSIREQ_T_CMD
+
+    memset(&cmd, 0, sizeof(cmd));
+    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+
+    if ( pPacket->DataBufferOffset > 0x1000 )
+    {
+        cmd.databuf     = (void*)pPacket->DataBufferOffset;
+    }
+    else
+    {
+        cmd.databuf     = (char*)pPacket + pPacket->DataBufferOffset;
+    }
+
+    cmd.cmdlen         = pPacket->CdbLength;
+    cmd.datalen        = pPacket->DataTransferLength;
+    cmd.senselen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.flags |= SCCMD_WRITE;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.flags |= SCCMD_READ;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.flags = 0;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+    }
+
+    io = ioctl(fd, SCIOCCOMMAND, &cmd);
+
+    switch (cmd.retsts)
+    {
+    case SCCMD_OK:         break;
+    case SCCMD_TIMEOUT:    return STATUS_TIMEOUT;
+                           break;
+    case SCCMD_BUSY:       return STATUS_DEVICE_BUSY;
+                           break;
+    case SCCMD_SENSE:      break;
+    case SCCMD_UNKNOWN:    return STATUS_UNSUCCESSFUL;
+                           break;
+    }
+
+    if (pPacket->SenseInfoLength != 0)
+    {
+        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
+	       cmd.sense, pPacket->SenseInfoLength);
+    }
+
+    pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
 
 #elif defined(__APPLE__)
 
     memset(&cmd, 0, sizeof(cmd));
-    memcpy(cmd.cdb, in_pkt->Cdb, in_pkt->CdbLength);
+    memcpy(cmd.cdb, pPacket->Cdb, pPacket->CdbLength);
 
-    cmd.cdbSize        = in_pkt->CdbLength;
-    cmd.bufferSize     = in_pkt->DataTransferLength;
-    cmd.sense          = (char*)out_pkt + in_pkt->SenseInfoOffset;
-    cmd.senseLen       = in_pkt->SenseInfoLength;
-    cmd.timeout        = in_pkt->TimeOutValue*1000; /* in milliseconds */
+    cmd.cdbSize        = pPacket->CdbLength;
+    cmd.buffer         = (char*)pPacket + pPacket->DataBufferOffset;
+    cmd.bufferSize     = pPacket->DataTransferLength;
+    cmd.sense          = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.senseLen       = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
 
-    switch (in_pkt->DataIn)
+    switch (pPacket->DataIn)
     {
     case SCSI_IOCTL_DATA_OUT:
-        cmd.buffer = (char*)in_pkt + in_pkt->DataBufferOffset;
         cmd.direction = kSCSIDataTransfer_FromInitiatorToTarget;
 	break;
     case SCSI_IOCTL_DATA_IN:
-        cmd.buffer = (char*)out_pkt + in_pkt->DataBufferOffset;
         cmd.direction = kSCSIDataTransfer_FromTargetToInitiator;
 	break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
@@ -1937,106 +1950,10 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, const SCSI_PASS_THROUGH *in_pkt, S
     }
 
     if (cmd.status != kSCSITaskStatus_No_Status)
-        out_pkt->ScsiStatus = cmd.status;
+        pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
-
-    /* FIXME: Update DataTransferLength and SenseInfoLength */
 #endif
-    if (ret == STATUS_SUCCESS)
-    {
-        out_pkt->Length = sizeof(*out_pkt);
-        if (out_pkt != in_pkt)
-        {
-            out_pkt->CdbLength        = in_pkt->CdbLength;
-            out_pkt->DataIn           = in_pkt->DataIn;
-            out_pkt->TimeOutValue     = in_pkt->TimeOutValue;
-            out_pkt->DataBufferOffset = in_pkt->DataBufferOffset;
-            out_pkt->SenseInfoOffset  = in_pkt->SenseInfoOffset;
-            memcpy(out_pkt->Cdb, in_pkt->Cdb, sizeof(in_pkt->Cdb));
-        }
-    }
-
-    return ret;
-}
-
-static NTSTATUS CDROM_ScsiPassThrough32(int fd, const SCSI_PASS_THROUGH32 *in_pkt32, SCSI_PASS_THROUGH32 *out_pkt32)
-{
-    SCSI_PASS_THROUGH *pkt;
-    ULONG_PTR ptr;
-    NTSTATUS ret;
-
-    if (in_pkt32->Length < sizeof(SCSI_PASS_THROUGH32))
-        return STATUS_BUFFER_TOO_SMALL;
-
-    if (in_pkt32->CdbLength > sizeof(in_pkt32->Cdb))
-        return STATUS_INVALID_PARAMETER;
-
-    if (in_pkt32->DataTransferLength > 0)
-    {
-        if (in_pkt32->DataBufferOffset < sizeof(SCSI_PASS_THROUGH32))
-            return STATUS_INVALID_PARAMETER;
-        ptr = (ULONG_PTR)in_pkt32 + in_pkt32->DataBufferOffset;
-        if (ptr < (ULONG_PTR)in_pkt32)
-            return STATUS_INVALID_PARAMETER;
-        if ((ptr + in_pkt32->DataTransferLength) < ptr)
-            return STATUS_INVALID_PARAMETER;
-    }
-
-    if (in_pkt32->SenseInfoLength > 0)
-    {
-        if (in_pkt32->SenseInfoOffset < sizeof(SCSI_PASS_THROUGH32))
-            return STATUS_INVALID_PARAMETER;
-        ptr = (ULONG_PTR)in_pkt32 + in_pkt32->SenseInfoOffset;
-        if (ptr < (ULONG_PTR)in_pkt32)
-            return STATUS_INVALID_PARAMETER;
-        if ((ptr + in_pkt32->SenseInfoLength) < ptr)
-            return STATUS_INVALID_PARAMETER;
-    }
-
-    pkt = calloc(1, sizeof(SCSI_PASS_THROUGH) + in_pkt32->SenseInfoLength + in_pkt32->DataTransferLength);
-    if (!pkt) return STATUS_NO_MEMORY;
-
-    pkt->Length = sizeof(SCSI_PASS_THROUGH);
-    pkt->CdbLength = in_pkt32->CdbLength;
-    pkt->SenseInfoLength = in_pkt32->SenseInfoLength;
-    pkt->DataIn = in_pkt32->DataIn;
-    pkt->DataTransferLength = in_pkt32->DataTransferLength;
-    pkt->TimeOutValue = in_pkt32->TimeOutValue;
-    pkt->DataBufferOffset = sizeof(SCSI_PASS_THROUGH) + in_pkt32->SenseInfoLength;
-    pkt->SenseInfoOffset = sizeof(SCSI_PASS_THROUGH);
-    memcpy(pkt->Cdb, in_pkt32->Cdb, sizeof(pkt->Cdb));
-    if (pkt->DataIn == SCSI_IOCTL_DATA_OUT)
-        memcpy((char*)pkt + pkt->DataBufferOffset,
-                (const char*)in_pkt32 + in_pkt32->DataBufferOffset,
-                in_pkt32->DataTransferLength);
-
-    ret = CDROM_ScsiPassThrough(fd, pkt, pkt);
-    if (NT_ERROR(ret)) goto done;
-
-    out_pkt32->Length = sizeof(SCSI_PASS_THROUGH32);
-    out_pkt32->ScsiStatus = pkt->ScsiStatus;
-    out_pkt32->PathId = pkt->PathId;
-    out_pkt32->TargetId = pkt->TargetId;
-    out_pkt32->Lun = pkt->Lun;
-    out_pkt32->CdbLength = pkt->CdbLength;
-    out_pkt32->SenseInfoLength = pkt->SenseInfoLength;
-    out_pkt32->DataIn = pkt->DataIn;
-    out_pkt32->DataTransferLength = pkt->DataTransferLength;
-    out_pkt32->TimeOutValue = pkt->TimeOutValue;
-    out_pkt32->DataBufferOffset = in_pkt32->DataBufferOffset;
-    out_pkt32->SenseInfoOffset = in_pkt32->SenseInfoOffset;
-    memcpy(out_pkt32->Cdb, pkt->Cdb, sizeof(out_pkt32->Cdb));
-    memcpy((char*)out_pkt32 + out_pkt32->SenseInfoOffset,
-            (const char*)pkt + pkt->SenseInfoOffset,
-            pkt->SenseInfoLength);
-    if (pkt->DataIn == SCSI_IOCTL_DATA_IN)
-        memcpy((char*)out_pkt32 + out_pkt32->DataBufferOffset,
-                (const char*)pkt + pkt->DataBufferOffset,
-                pkt->DataTransferLength);
-
-done:
-    free(pkt);
     return ret;
 }
 
@@ -2288,8 +2205,8 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 	auth_info.type = DVD_LU_SEND_TITLE_KEY;
 	auth_info.lstk.agid = (int)key->SessionId;
 	auth_info.lstk.lba = (int)(key->Parameters.TitleOffset.QuadPart>>11);
-	TRACE("DvdTitleKey session %d Quadpart %s offset 0x%08x\n",
-	      key->SessionId, wine_dbgstr_longlong(key->Parameters.TitleOffset.QuadPart),
+	TRACE("DvdTitleKey session %d Quadpart 0x%08lx offset 0x%08x\n",
+	      (int)key->SessionId, (long)key->Parameters.TitleOffset.QuadPart,
 	      auth_info.lstk.lba);
 	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
 	if (ret == STATUS_SUCCESS)
@@ -2991,7 +2908,7 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         sz = sizeof(GET_MEDIA_TYPES);
         if (in_buffer != NULL || in_size != 0) status = STATUS_INVALID_PARAMETER;
         else if (out_size < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetMediaType(dev, fd, out_buffer);
+        else status = CDROM_GetMediaType(dev, out_buffer);
         break;
 
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
@@ -3108,36 +3025,16 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         else status = CDROM_GetAddress(fd, out_buffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH_DIRECT:
-        if (in_wow64_call())
-        {
-            sz = sizeof(SCSI_PASS_THROUGH_DIRECT32);
-            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
-            else if (out_size < sizeof(SCSI_PASS_THROUGH_DIRECT32)) status = STATUS_BUFFER_TOO_SMALL;
-            else status = CDROM_ScsiPassThroughDirect32(fd, in_buffer, out_buffer);
-        }
-        else
-        {
-            sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
-            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
-            else if (out_size < sizeof(SCSI_PASS_THROUGH_DIRECT)) status = STATUS_BUFFER_TOO_SMALL;
-            else status = CDROM_ScsiPassThroughDirect(fd, in_buffer, out_buffer);
-        }
+        sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
+        if (out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (out_size < sizeof(SCSI_PASS_THROUGH_DIRECT)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ScsiPassThroughDirect(fd, out_buffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH:
-        if (in_wow64_call())
-        {
-            sz = sizeof(SCSI_PASS_THROUGH32);
-            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
-            else if (out_size < sizeof(SCSI_PASS_THROUGH32)) status = STATUS_BUFFER_TOO_SMALL;
-            else status = CDROM_ScsiPassThrough32(fd, in_buffer, out_buffer);
-        }
-        else
-        {
-            sz = sizeof(SCSI_PASS_THROUGH);
-            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
-            else if (out_size < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
-            else status = CDROM_ScsiPassThrough(fd, in_buffer, out_buffer);
-        }
+        sz = sizeof(SCSI_PASS_THROUGH);
+        if (out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (out_size < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_ScsiPassThrough(fd, out_buffer);
         break;
     case IOCTL_SCSI_GET_CAPABILITIES:
         sz = sizeof(IO_SCSI_CAPABILITIES);
@@ -3151,11 +3048,11 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         else if (out_size < sz) status = STATUS_BUFFER_TOO_SMALL;
         else
         {
-            TRACE("before in 0x%08x out 0x%08x\n",in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0,
-                  *(DVD_SESSION_ID *)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
+                  (int)*(DVD_SESSION_ID *)out_buffer);
             status = DVD_StartSession(fd, in_buffer, out_buffer);
-            TRACE("before in 0x%08x out 0x%08x\n",in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0,
-                  *(DVD_SESSION_ID *)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
+                  (int)*(DVD_SESSION_ID *)out_buffer);
         }
         break;
     case IOCTL_DVD_END_SESSION:

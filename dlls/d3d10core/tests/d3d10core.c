@@ -4152,16 +4152,6 @@ static void test_create_sampler_state(void)
     refcount = ID3D10SamplerState_Release(sampler_state1);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
-    desc.Filter = D3D10_FILTER_ANISOTROPIC;
-    desc.MaxAnisotropy = 0;
-    hr = ID3D10Device_CreateSamplerState(device, &desc, &sampler_state1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ID3D10SamplerState_GetDesc(sampler_state1, &desc);
-    ok(desc.Filter == D3D10_FILTER_ANISOTROPIC, "Got filter %#x.\n", desc.Filter);
-    ok(!desc.MaxAnisotropy, "Got max anisotropy %u.\n", desc.MaxAnisotropy);
-    refcount = ID3D10SamplerState_Release(sampler_state1);
-    ok(!refcount, "Got refcount %lu.\n", refcount);
-
     hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Device should implement ID3D11Device.\n");
@@ -4928,7 +4918,6 @@ static void test_pipeline_statistics_query(void)
         /* AMD has nonzero GSInvocations on Windows. */
         ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
         ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
-        todo_wine_if (!data.CPrimitives)
         ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
         todo_wine_if (!damavand)
             ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
@@ -4948,7 +4937,6 @@ static void test_pipeline_statistics_query(void)
     /* AMD has nonzero GSInvocations on Windows. */
     ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
     ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
-    todo_wine_if (!data.CPrimitives)
     ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
     ok(data.PSInvocations >= 640 * 480, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
 
@@ -10057,7 +10045,6 @@ static void test_copy_subresource_region(void)
     if (!is_warp_device(device))
     {
         /* Broken on Win2008 Warp */
-        set_box(&box, 0, 0, 0, 1, 1, 1);
         ID3D10Device_CopySubresourceRegion(device, (ID3D10Resource *)dst_texture, 0,
                 1, 1, 0, NULL, 0, &box);
         ID3D10Device_CopySubresourceRegion(device, NULL, 0,

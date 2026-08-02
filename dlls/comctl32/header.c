@@ -38,6 +38,8 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "vssym32.h"
+#include "uxtheme.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(header);
@@ -107,6 +109,8 @@ static BOOL HEADER_PrepareCallbackItems(const HEADER_INFO *infoPtr, INT iItem, I
 static void HEADER_FreeCallbackItems(HEADER_ITEM *lpItem);
 static LRESULT HEADER_SendNotify(const HEADER_INFO *infoPtr, UINT code, NMHDR *hdr);
 static LRESULT HEADER_SendCtrlCustomDraw(const HEADER_INFO *infoPtr, DWORD dwDrawStage, HDC hdc, const RECT *rect);
+
+static const WCHAR themeClass[] = L"Header";
 
 static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, const HDITEMW *phdi, BOOL fUnicode)
 {
@@ -286,28 +290,25 @@ static void HEADER_GetHotDividerRect(const HEADER_INFO *infoPtr, RECT *r)
 static void
 HEADER_FillItemFrame(HEADER_INFO *infoPtr, HDC hdc, RECT *r, const HEADER_ITEM *item, BOOL hottrack)
 {
-    HBRUSH hbr;
-
-#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme) {
         int state = (item->bDown) ? HIS_PRESSED : (hottrack ? HIS_HOT : HIS_NORMAL);
         DrawThemeBackground (theme, hdc, HP_HEADERITEM, state, r, NULL);
         GetThemeBackgroundContentRect (theme, hdc, HP_HEADERITEM, state, r, r);
-        return;
     }
-#endif
-
-    hbr = CreateSolidBrush(GetBkColor(hdc));
-    FillRect(hdc, r, hbr);
-    DeleteObject(hbr);
+    else
+    {
+        HBRUSH hbr = CreateSolidBrush(GetBkColor(hdc));
+        FillRect(hdc, r, hbr);
+        DeleteObject(hbr);
+    }
 }
 
 static void
 HEADER_DrawItemFrame(HEADER_INFO *infoPtr, HDC hdc, RECT *r, const HEADER_ITEM *item)
 {
-    if (COMCTL32_IsThemed(infoPtr->hwndSelf)) return;
+    if (GetWindowTheme(infoPtr->hwndSelf)) return;
 
     if (!(infoPtr->dwStyle & HDS_FLAT))
     {
@@ -364,47 +365,15 @@ static HRGN create_sort_arrow( INT x, INT y, INT h, BOOL is_up )
     return rgn;
 }
 
-static void HEADER_GetItemTextRect(const HEADER_ITEM *item, HWND hwnd, HDC hdc, BOOL hot_track, RECT *rect)
-{
-#if __WINE_COMCTL32_VERSION == 6
-    HTHEME theme = GetWindowTheme(hwnd);
-
-    if (theme)
-    {
-        int state = item->bDown ? HIS_PRESSED : (hot_track ? HIS_HOT : HIS_NORMAL);
-        GetThemeTextExtent(theme, hdc, HP_HEADERITEM, state, item->pszText, -1,
-                           DT_LEFT | DT_VCENTER | DT_SINGLELINE, NULL, rect);
-        return;
-    }
-#endif
-
-    DrawTextW(hdc, item->pszText, -1, rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_CALCRECT);
-}
-
-static void HEADER_DrawItemText(const HEADER_ITEM *item, HWND hwnd, HDC hdc, BOOL hot_track, RECT *rect)
-{
-#if __WINE_COMCTL32_VERSION == 6
-    HTHEME theme = GetWindowTheme(hwnd);
-
-    if (theme)
-    {
-        int state = item->bDown ? HIS_PRESSED : (hot_track ? HIS_HOT : HIS_NORMAL);
-        DrawThemeText(theme, hdc, HP_HEADERITEM, state, item->pszText, -1,
-                      DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE, 0, rect);
-        return;
-    }
-#endif
-
-    DrawTextW(hdc, item->pszText, -1, rect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE);
-}
-
 static INT
 HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESULT lCDFlags)
 {
     HEADER_ITEM *phdi = &infoPtr->items[iItem];
     RECT r;
     INT  oldBkMode;
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     NMCUSTOMDRAW nmcd;
+    int state = 0;
 
     TRACE("DrawItem(iItem %d bHotTrack %d unicode flag %d)\n", iItem, bHotTrack, (infoPtr->nNotifyFormat == NFR_UNICODE));
 
@@ -412,8 +381,11 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
     if (r.right - r.left == 0)
 	return phdi->rect.right;
 
+    if (theme)
+        state = (phdi->bDown) ? HIS_PRESSED : (bHotTrack ? HIS_HOT : HIS_NORMAL);
+
     /* Set the colors before sending NM_CUSTOMDRAW so that it can change them */
-    SetTextColor(hdc, (bHotTrack && !COMCTL32_IsThemed(infoPtr->hwndSelf)) ? comctl32_color.clrHighlight : comctl32_color.clrBtnText);
+    SetTextColor(hdc, (bHotTrack && !theme) ? comctl32_color.clrHighlight : comctl32_color.clrBtnText);
     SetBkColor(hdc, comctl32_color.clr3dFace);
 
     if (lCDFlags & CDRF_NOTIFYITEMDRAW && !(phdi->fmt & HDF_OWNERDRAW))
@@ -492,7 +464,14 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	    RECT textRect;
 
             SetRectEmpty(&textRect);
-	    HEADER_GetItemTextRect(phdi, infoPtr->hwndSelf, hdc, bHotTrack, &textRect);
+
+	    if (theme) {
+		GetThemeTextExtent(theme, hdc, HP_HEADERITEM, state, phdi->pszText, -1,
+		    DT_LEFT|DT_VCENTER|DT_SINGLELINE, NULL, &textRect);
+	    } else {
+		DrawTextW (hdc, phdi->pszText, -1,
+			&textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
+	    }
 	    cw = textRect.right - textRect.left + 2 * infoPtr->iMargin;
 	}
 
@@ -602,7 +581,14 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	    oldBkMode = SetBkMode(hdc, TRANSPARENT);
 	    r.left  = tx;
 	    r.right = tx + tw;
-	    HEADER_DrawItemText(phdi, infoPtr->hwndSelf, hdc, bHotTrack, &r);
+	    if (theme) {
+		DrawThemeText(theme, hdc, HP_HEADERITEM, state, phdi->pszText,
+			    -1, DT_LEFT|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE,
+			    0, &r);
+	    } else {
+		DrawTextW (hdc, phdi->pszText, -1,
+			&r, DT_LEFT|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
+	    }
 	    if (oldBkMode != TRANSPARENT)
 	        SetBkMode(hdc, oldBkMode);
         }
@@ -624,30 +610,6 @@ HEADER_DrawHotDivider(const HEADER_INFO *infoPtr, HDC hdc)
     DeleteObject(brush);
 }
 
-static void HEADER_DrawRestBackground(HEADER_INFO *infoPtr, HDC hdc, RECT *rect)
-{
-#if __WINE_COMCTL32_VERSION == 6
-    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
-
-    if (theme)
-    {
-        DrawThemeBackground(theme, hdc, HP_HEADERITEM, HIS_NORMAL, rect, NULL);
-        return;
-    }
-#endif
-
-    if (infoPtr->dwStyle & HDS_FLAT)
-    {
-        FillRect(hdc, rect, GetSysColorBrush(COLOR_3DFACE));
-        return;
-    }
-
-    if (infoPtr->dwStyle & HDS_BUTTONS)
-        DrawEdge(hdc, rect, EDGE_RAISED, BF_TOP | BF_LEFT | BF_BOTTOM | BF_SOFT | BF_MIDDLE);
-    else
-        DrawEdge(hdc, rect, EDGE_ETCHED, BF_BOTTOM | BF_MIDDLE);
-}
-
 static void
 HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
 {
@@ -657,6 +619,7 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
     UINT i;
     INT x;
     LRESULT lCDFlags;
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (!infoPtr->bRectsValid)
         HEADER_SetItemBounds(infoPtr);
@@ -672,7 +635,7 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
     hOldFont = SelectObject (hdc, hFont);
 
     /* draw Background */
-    if (infoPtr->uNumItem == 0 && !COMCTL32_IsThemed(infoPtr->hwndSelf)) {
+    if (infoPtr->uNumItem == 0 && theme == NULL) {
         hbrBk = GetSysColorBrush(COLOR_3DFACE);
         FillRect(hdc, &rect, hbrBk);
     }
@@ -687,8 +650,22 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
 
     rcRest = rect;
     rcRest.left = x;
-    if ((x <= rect.right) && RectVisible(hdc, &rcRest) && (infoPtr->uNumItem > 0))
-        HEADER_DrawRestBackground(infoPtr, hdc, &rcRest);
+    if ((x <= rect.right) && RectVisible(hdc, &rcRest) && (infoPtr->uNumItem > 0)) {
+        if (theme != NULL) {
+            DrawThemeBackground(theme, hdc, HP_HEADERITEM, HIS_NORMAL, &rcRest, NULL);
+        }
+        else if (infoPtr->dwStyle & HDS_FLAT) {
+            hbrBk = GetSysColorBrush(COLOR_3DFACE);
+            FillRect(hdc, &rcRest, hbrBk);
+        }
+        else
+        {
+            if (infoPtr->dwStyle & HDS_BUTTONS)
+                DrawEdge (hdc, &rcRest, EDGE_RAISED, BF_TOP|BF_LEFT|BF_BOTTOM|BF_SOFT|BF_MIDDLE);
+            else
+                DrawEdge (hdc, &rcRest, EDGE_ETCHED, BF_BOTTOM|BF_MIDDLE);
+        }
+    }
 
     if (infoPtr->iHotDivider != -1)
         HEADER_DrawHotDivider(infoPtr, hdc);
@@ -1637,7 +1614,7 @@ HEADER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     SelectObject (hdc, hOldFont);
     ReleaseDC (0, hdc);
 
-    COMCTL32_OpenThemeForWindow(hwnd, L"Header");
+    OpenThemeData(hwnd, themeClass);
 
     return 0;
 }
@@ -1646,7 +1623,8 @@ HEADER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 static LRESULT
 HEADER_Destroy (HEADER_INFO *infoPtr)
 {
-    COMCTL32_CloseThemeForWindow(infoPtr->hwndSelf);
+    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
+    CloseThemeData(theme);
     return 0;
 }
 
@@ -1891,6 +1869,7 @@ HEADER_MouseLeave (HEADER_INFO *infoPtr)
     return 0;
 }
 
+
 static LRESULT
 HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 {
@@ -1901,7 +1880,7 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
     /* With theming, hottracking is always enabled */
     BOOL  hotTrackEnabled =
         ((infoPtr->dwStyle & HDS_BUTTONS) && (infoPtr->dwStyle & HDS_HOTTRACK))
-        || COMCTL32_IsThemed (infoPtr->hwndSelf);
+        || (GetWindowTheme (infoPtr->hwndSelf) != NULL);
     INT oldHotItem = infoPtr->iHotItem;
 
     pt.x = (INT)(SHORT)LOWORD(lParam);
@@ -2129,6 +2108,16 @@ static INT HEADER_StyleChanged(HEADER_INFO *infoPtr, WPARAM wStyleType,
     return 0;
 }
 
+/* Update the theme handle after a theme change */
+static LRESULT HEADER_ThemeChanged(const HEADER_INFO *infoPtr)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
+    CloseThemeData(theme);
+    OpenThemeData(infoPtr->hwndSelf, themeClass);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    return 0;
+}
+
 static INT HEADER_SetFilterChangeTimeout(HEADER_INFO *infoPtr, INT timeout)
 {
     INT old_timeout = infoPtr->filter_change_timeout;
@@ -2255,7 +2244,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return HEADER_Size (infoPtr);
 
         case WM_THEMECHANGED:
-            return COMCTL32_ThemeChanged (infoPtr->hwndSelf, L"Header", TRUE, TRUE);
+            return HEADER_ThemeChanged (infoPtr);
 
         case WM_PRINTCLIENT:
         case WM_PAINT:
@@ -2302,4 +2291,11 @@ HEADER_Register (void)
     wndClass.lpszClassName = WC_HEADERW;
 
     RegisterClassW (&wndClass);
+}
+
+
+VOID
+HEADER_Unregister (void)
+{
+    UnregisterClassW (WC_HEADERW, NULL);
 }

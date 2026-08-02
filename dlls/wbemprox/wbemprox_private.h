@@ -290,6 +290,3 @@ static inline BOOL is_digit(WCHAR c)
 {
     return '0' <= c && c <= '9';
 }
-
-extern const WCHAR * const system_props[];
-extern unsigned int system_prop_count;

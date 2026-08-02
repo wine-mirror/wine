@@ -29,8 +29,7 @@ static HRESULT STDMETHODCALLTYPE d2d_stroke_style_QueryInterface(ID2D1StrokeStyl
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_ID2D1StrokeStyle1)
-            || IsEqualGUID(iid, &IID_ID2D1StrokeStyle)
+    if (IsEqualGUID(iid, &IID_ID2D1StrokeStyle)
             || IsEqualGUID(iid, &IID_ID2D1Resource)
             || IsEqualGUID(iid, &IID_IUnknown))
     {

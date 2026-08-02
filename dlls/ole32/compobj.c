@@ -41,6 +41,7 @@
 
 #define COBJMACROS
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -675,6 +676,95 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
     info->state = pv;
 
     return S_OK;
+}
+
+
+/******************************************************************************
+ *              CoTreatAsClass        [OLE32.@]
+ *
+ * Sets the TreatAs value of a class.
+ *
+ * PARAMS
+ *  clsidOld [I] Class to set TreatAs value on.
+ *  clsidNew [I] The class the clsidOld should be treated as.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoGetTreatAsClass
+ */
+HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
+{
+    HKEY hkey = NULL;
+    WCHAR szClsidNew[CHARS_IN_GUID];
+    HRESULT res = S_OK;
+    WCHAR auto_treat_as[CHARS_IN_GUID];
+    LONG auto_treat_as_size = sizeof(auto_treat_as);
+    CLSID id;
+
+    res = COM_OpenKeyForCLSID(clsidOld, NULL, KEY_READ | KEY_WRITE, &hkey);
+    if (FAILED(res))
+        goto done;
+
+    if (IsEqualGUID( clsidOld, clsidNew ))
+    {
+       if (!RegQueryValueW(hkey, L"AutoTreatAs", auto_treat_as, &auto_treat_as_size) &&
+           CLSIDFromString(auto_treat_as, &id) == S_OK)
+       {
+           if (RegSetValueW(hkey, L"TreatAs", REG_SZ, auto_treat_as, sizeof(auto_treat_as)))
+           {
+               res = REGDB_E_WRITEREGDB;
+               goto done;
+           }
+       }
+       else
+       {
+           if (RegDeleteKeyW(hkey, L"TreatAs"))
+               res = REGDB_E_WRITEREGDB;
+           goto done;
+       }
+    }
+    else
+    {
+        if(IsEqualGUID(clsidNew, &CLSID_NULL)){
+           RegDeleteKeyW(hkey, L"TreatAs");
+        }else{
+            if(!StringFromGUID2(clsidNew, szClsidNew, ARRAY_SIZE(szClsidNew))){
+                WARN("StringFromGUID2 failed\n");
+                res = E_FAIL;
+                goto done;
+            }
+
+            if (RegSetValueW(hkey, L"TreatAs", REG_SZ, szClsidNew, sizeof(szClsidNew)) != ERROR_SUCCESS){
+                WARN("RegSetValue failed\n");
+                res = REGDB_E_WRITEREGDB;
+                goto done;
+            }
+        }
+    }
+
+done:
+    if (hkey) RegCloseKey(hkey);
+    return res;
+}
+
+/***********************************************************************
+ *           CoIsOle1Class [OLE32.@]
+ *
+ * Determines whether the specified class an OLE v1 class.
+ *
+ * PARAMS
+ *  clsid [I] Class to test.
+ *
+ * RETURNS
+ *  TRUE if the class is an OLE v1 class, or FALSE otherwise.
+ */
+BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
+{
+  FIXME("%s\n", debugstr_guid(clsid));
+  return FALSE;
 }
 
 /***********************************************************************

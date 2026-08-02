@@ -2,8 +2,6 @@ MODULE    = xinputuap.dll
 IMPORTS   = hid setupapi advapi32 user32
 PARENTSRC = ../xinput1_3
 
-VER_FILEDESCRIPTION_STR = "Wine Common Controller API"
-VER_PRODUCTVERSION      = 10,0,19041,746
-
 SOURCES = \
-	main.c
+	main.c \
+	version.rc

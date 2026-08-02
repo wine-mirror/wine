@@ -79,7 +79,6 @@ static INT64 get_context_duration( const AVFormatContext *ctx )
         if (max_duration == AV_NOPTS_VALUE) max_duration = duration;
     }
 
-    if (max_duration == AV_NOPTS_VALUE) return get_user_time( ctx->duration, AV_TIME_BASE_Q );
     return max_duration;
 }
 
@@ -138,7 +137,6 @@ NTSTATUS demuxer_create( void *arg )
 {
     struct demuxer_create_params *params = arg;
     const char *ext = params->url ? strrchr( params->url, '.' ) : "";
-    BOOL needs_find_stream_info = FALSE;
     const AVInputFormat *format;
     struct demuxer *demuxer;
     int i, ret;
@@ -156,36 +154,16 @@ NTSTATUS demuxer_create( void *arg )
     }
     format = demuxer->ctx->iformat;
 
-    /* Determine if we need a call to avformat_find_stream_info. Some stream information is only
-     * available after calling it. */
     if ((params->duration = get_context_duration( demuxer->ctx )) == AV_NOPTS_VALUE ||
         strstr( format->name, "mp3" ))
-        needs_find_stream_info = TRUE;
-
-    for (i = 0; i < demuxer->ctx->nb_streams && !needs_find_stream_info; i++)
     {
-        /* For H264 streams, sample aspect ratio is sometimes found in its sequence parameter set,
-         * which requires avformat_find_stream_info. */
-        AVStream *stream = demuxer->ctx->streams[i];
-        AVCodecParameters *par = stream->codecpar;
-
-        if (par->codec_id != AV_CODEC_ID_H264) continue;
-
-        /* If sample aspect ratio is available somewhere, skip find stream info. */
-        if (stream->sample_aspect_ratio.den && stream->sample_aspect_ratio.num) continue;
-        if (par->sample_aspect_ratio.den && par->sample_aspect_ratio.num) continue;
-
-        needs_find_stream_info = TRUE;
+        if ((ret = avformat_find_stream_info( demuxer->ctx, NULL )) < 0)
+        {
+            ERR( "Failed to find stream info, error %s.\n", debugstr_averr(ret) );
+            goto failed;
+        }
+        params->duration = get_context_duration( demuxer->ctx );
     }
-
-    if (needs_find_stream_info && (ret = avformat_find_stream_info( demuxer->ctx, NULL )) < 0)
-    {
-        ERR( "Failed to find stream info, error %s.\n", debugstr_averr( ret ) );
-        goto failed;
-    }
-
-    if (params->duration == AV_NOPTS_VALUE) params->duration = get_context_duration( demuxer->ctx );
-
     if (!(demuxer->streams = calloc( demuxer->ctx->nb_streams, sizeof(*demuxer->streams) ))) goto failed;
     if (demuxer_create_streams( demuxer )) goto failed;
 
@@ -333,7 +311,7 @@ NTSTATUS demuxer_seek( void *arg )
 
     TRACE( "demuxer %p, timestamp 0x%s\n", demuxer, wine_dbgstr_longlong( params->timestamp ) );
 
-    if ((ret = avformat_seek_file( demuxer->ctx, -1, 0, timestamp, timestamp, 0 )) < 0)
+    if ((ret = av_seek_frame( demuxer->ctx, -1, timestamp, AVSEEK_FLAG_ANY )) < 0)
     {
         ERR( "Failed to seek demuxer %p, error %s.\n", demuxer, debugstr_averr(ret) );
         return STATUS_UNSUCCESSFUL;
@@ -388,12 +366,11 @@ NTSTATUS demuxer_stream_type( void *arg )
     struct demuxer *demuxer = get_demuxer( params->demuxer );
     AVStream *stream = demuxer->ctx->streams[params->stream];
     AVCodecParameters *par = demuxer->streams[params->stream].filter->par_out;
-    AVRational sar = stream->sample_aspect_ratio;
 
     TRACE( "demuxer %p, stream %u, stream %p, index %u\n", demuxer, params->stream, stream, stream->index );
 
-    if (!sar.den || !sar.num) sar = stream->codecpar->sample_aspect_ratio;
-    return media_type_from_codec_params( par, &sar, &stream->avg_frame_rate, 0, &params->media_type );
+    return media_type_from_codec_params( par, &stream->sample_aspect_ratio,
+                                         &stream->avg_frame_rate, 0, &params->media_type );
 }
 
 #endif /* HAVE_FFMPEG */

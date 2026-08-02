@@ -406,8 +406,8 @@ typedef struct _WS_INT32_DESCRIPTION {
 } WS_INT32_DESCRIPTION;
 
 typedef struct _WS_INT64_DESCRIPTION {
-    INT64 minValue;
-    INT64 maxValue;
+    __int64 DECLSPEC_ALIGN(8) minValue;
+    __int64 DECLSPEC_ALIGN(8) maxValue;
 } WS_INT64_DESCRIPTION;
 
 typedef struct _WS_UINT8_DESCRIPTION {
@@ -426,8 +426,8 @@ typedef struct _WS_UINT32_DESCRIPTION {
 } WS_UINT32_DESCRIPTION;
 
 typedef struct _WS_UINT64_DESCRIPTION {
-    UINT64 minValue;
-    UINT64 maxValue;
+    unsigned __int64 DECLSPEC_ALIGN(8) minValue;
+    unsigned __int64 DECLSPEC_ALIGN(8) maxValue;
 } WS_UINT64_DESCRIPTION;
 
 typedef struct _WS_WSZ_DESCRIPTION {
@@ -673,12 +673,12 @@ typedef struct _WS_XML_INT32_TEXT {
 
 typedef struct _WS_XML_INT64_TEXT {
     WS_XML_TEXT text;
-    INT64 value;
+    __int64 DECLSPEC_ALIGN(8) value;
 } WS_XML_INT64_TEXT;
 
 typedef struct _WS_XML_UINT64_TEXT {
     WS_XML_TEXT text;
-    UINT64 value;
+    unsigned __int64 DECLSPEC_ALIGN(8) value;
 } WS_XML_UINT64_TEXT;
 
 typedef struct _WS_XML_FLOAT_TEXT {
@@ -1232,7 +1232,7 @@ typedef enum {
 } WS_DATETIME_FORMAT;
 
 struct _WS_DATETIME {
-    UINT64 ticks;
+    unsigned __int64 DECLSPEC_ALIGN(8) ticks;
     WS_DATETIME_FORMAT format;
 };
 

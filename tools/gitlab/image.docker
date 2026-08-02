@@ -1,4 +1,4 @@
-FROM debian:trixie
+# FROM line will be added dynamically
 
 WORKDIR /tmp
 
@@ -10,159 +10,69 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     echo '#!/bin/sh' > /usr/sbin/policy-rc.d && \
     echo 'exit 101' >> /usr/sbin/policy-rc.d && \
     chmod +x /usr/sbin/policy-rc.d && \
+    dpkg --add-architecture i386 && \
     apt-get update && \
-    apt-get install -y \
-        autoconf \
-        bison \
-        ca-certificates \
-        ccache \
-        clang \
-        curl \
-        flex \
-        fonts-liberation2 \
-        fonts-noto-cjk \
-        fonts-noto-core \
-        fvwm \
-        gettext \
-        git     \
-        gstreamer1.0-libav \
-        gstreamer1.0-plugins-bad \
-        gstreamer1.0-plugins-base \
-        gstreamer1.0-plugins-good \
-        gstreamer1.0-plugins-ugly \
-        jq \
-        libasound2-dev \
-        libasound2-plugins \
-        libavcodec-dev \
-        libavformat-dev \
-        libavutil-dev \
-        libcapi20-dev \
-        libcups2-dev \
-        libdbus-1-dev \
-        libfontconfig-dev \
-        libfreetype-dev \
-        libgl1-mesa-dev \
-        libgnutls28-dev \
-        libgphoto2-dev \
-        libgstreamer-plugins-base1.0-dev \
-        libgstreamer1.0-dev \
-        libice-dev \
-        libkrb5-dev \
-        libpcap-dev \
-        libpcsclite-dev \
-        libpulse-dev \
-        libsane-dev \
-        libsdl2-dev \
-        libswresample-dev \
-        libswscale-dev \
-        libudev-dev \
-        libusb-1.0-0-dev \
-        libv4l-dev \
-        libvulkan-dev \
-        libwayland-dev \
-        libx11-dev \
-        libxcomposite-dev \
-        libxcursor-dev \
-        libxext-dev \
-        libxi-dev \
-        libxinerama-dev \
-        libxkbcommon-dev \
-        libxkbregistry-dev \
-        libxrandr-dev \
-        libxrender-dev \
-        libxxf86vm-dev \
-        linux-libc-dev \
-        lld \
-        llvm \
-        mesa-vulkan-drivers \
-        nasm \
-        netbase \
-        ocl-icd-opencl-dev \
-        perl \
-        pulseaudio \
-        samba-dev \
-        unixodbc-dev \
-        unzip \
-        winbind \
-        x11proto-dev \
-        xfonts-base \
-        xinit \
-        xserver-xorg \
-        xserver-xorg-video-dummy && \
-    case "$ARCH" in \
-    amd64) \
-        dpkg --add-architecture i386 && \
-        apt-get update && \
-        apt-get install -y \
-            gcc \
-            gcc-mingw-w64-i686 \
-            gcc-mingw-w64-x86-64 \
-            g++-mingw-w64-i686 \
-            g++-mingw-w64-x86-64 \
-            gcc-multilib \
-            libunwind-dev \
-            gstreamer1.0-libav:i386 \
-            gstreamer1.0-plugins-bad:i386 \
-            gstreamer1.0-plugins-base:i386 \
-            gstreamer1.0-plugins-good:i386 \
-            gstreamer1.0-plugins-ugly:i386 \
-            libasound2-dev:i386 \
-            libasound2-plugins:i386 \
-            libavcodec-dev:i386 \
-            libavformat-dev:i386 \
-            libavutil-dev:i386 \
-            libcapi20-dev:i386 \
-            libcups2-dev:i386 \
-            libdbus-1-dev:i386 \
-            libfontconfig-dev:i386 \
-            libfreetype-dev:i386 \
-            libgl1-mesa-dev:i386 \
-            libgnutls28-dev:i386 \
-            libgphoto2-dev:i386 \
-            libice-dev:i386 \
-            libkrb5-dev:i386 \
-            liborc-0.4-dev:i386 \
-            libpcap-dev:i386 \
-            libpcsclite-dev:i386 \
-            libpulse-dev:i386 \
-            libsane-dev:i386 \
-            libsdl2-dev:i386 \
-            libswresample-dev:i386 \
-            libswscale-dev:i386 \
-            libudev-dev:i386 \
-            libusb-1.0-0-dev:i386 \
-            libv4l-dev:i386 \
-            libvulkan-dev:i386 \
-            libwayland-dev:i386 \
-            libx11-dev:i386 \
-            libxcomposite-dev:i386 \
-            libxcursor-dev:i386 \
-            libxext-dev:i386 \
-            libxi-dev:i386 \
-            libxinerama-dev:i386 \
-            libxkbcommon-dev:i386 \
-            libxkbregistry-dev:i386 \
-            libxrandr-dev:i386 \
-            libxrender-dev:i386 \
-            libxxf86vm-dev:i386 \
-            linux-libc-dev:i386 \
-            mesa-vulkan-drivers:i386 \
-            ocl-icd-opencl-dev:i386 \
-            samba-dev:i386 \
-            unixodbc-dev:i386 && \
-        apt-get download -y libgstreamer-plugins-base1.0-dev:i386 libgstreamer1.0-dev:i386 && \
-        (for deb in *.deb; do dpkg-deb -x $deb /dpkg; done) && \
-        cp -a /dpkg/usr/lib/i386-linux-gnu /usr/lib && \
-        rm -rf /dpkg && \
-        curl -L -o /usr/local/bin/sarif-converter https://gitlab.com/ignis-build/sarif-converter/-/releases/permalink/latest/downloads/bin/sarif-converter-linux-amd64 && \
-        chmod +x /usr/local/bin/sarif-converter ;; \
-    arm64) \
-        curl -s -L https://github.com/mstorsjo/llvm-mingw/releases/download/20260505/llvm-mingw-20260505-ucrt-ubuntu-22.04-aarch64.tar.xz | tar xJ && \
-        mv llvm-mingw-20260505-ucrt-ubuntu-22.04-aarch64 /usr/local/llvm-mingw ;; \
-    esac && \
-    mkdir -p /usr/lib/oss/include/sys && \
-    curl -s -o /usr/lib/oss/include/sys/soundcard.h https://salsa.debian.org/debian/oss4/-/raw/debian/4.2-build2020-6/include/soundcard.h && \
+    apt-get install -y gcc gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 gcc-multilib \
+                       llvm clang lld \
+                       git autoconf flex bison perl gettext \
+                       libasound2-dev:amd64 libasound2-dev:i386 \
+                       libavutil-dev:amd64 libavutil-dev:i386 \
+                       libavformat-dev:amd64 libavformat-dev:i386 \
+                       libavcodec-dev:amd64 libavcodec-dev:i386 \
+                       libcapi20-dev:amd64 libcapi20-dev:i386 \
+                       libcups2-dev:amd64 libcups2-dev:i386 \
+                       libdbus-1-dev:amd64 libdbus-1-dev:i386 \
+                       libfontconfig-dev:amd64 libfontconfig-dev:i386 \
+                       libfreetype-dev:amd64 libfreetype-dev:i386 \
+                       libgl1-mesa-dev:amd64 libgl1-mesa-dev:i386 \
+                       libgnutls28-dev:amd64 libgnutls28-dev:i386 \
+                       libgphoto2-dev:amd64 libgphoto2-dev:i386 \
+                       libice-dev:amd64 libice-dev:i386 \
+                       libkrb5-dev:amd64 libkrb5-dev:i386 \
+                       libosmesa6-dev:amd64 libosmesa6-dev:i386 \
+                       libpcap-dev:amd64 libpcap-dev:i386 \
+                       libpcsclite-dev:amd64 \
+                       libpulse-dev:amd64 libpulse-dev:i386 \
+                       libsane-dev:amd64 libsane-dev:i386 \
+                       libsdl2-dev:amd64 libsdl2-dev:i386 \
+                       libswresample-dev:amd64 libswresample-dev:i386 \
+                       libswscale-dev:amd64 libswscale-dev:i386 \
+                       libudev-dev:amd64 libudev-dev:i386 \
+                       libusb-1.0-0-dev:amd64 libusb-1.0-0-dev:i386 \
+                       libv4l-dev:amd64 libv4l-dev:i386 \
+                       libvulkan-dev:amd64 libvulkan-dev:i386 \
+                       libwayland-dev:amd64 libwayland-dev:i386 \
+                       libx11-dev:amd64 libx11-dev:i386 \
+                       libxcomposite-dev:amd64 libxcomposite-dev:i386 \
+                       libxcursor-dev:amd64 libxcursor-dev:i386 \
+                       libxext-dev:amd64 libxext-dev:i386 \
+                       libxi-dev:amd64 libxi-dev:i386 \
+                       libxinerama-dev:amd64 libxinerama-dev:i386 \
+                       libxkbcommon-dev:amd64 libxkbcommon-dev:i386 \
+                       libxkbregistry-dev:amd64 libxkbregistry-dev:i386 \
+                       libxrandr-dev:amd64 libxrandr-dev:i386 \
+                       libxrender-dev:amd64 libxrender-dev:i386 \
+                       libxxf86vm-dev:amd64 libxxf86vm-dev:i386 \
+                       linux-libc-dev:amd64 linux-libc-dev:i386 \
+                       ocl-icd-opencl-dev:amd64 ocl-icd-opencl-dev:i386 \
+                       samba-dev:amd64 \
+                       unixodbc-dev:amd64 unixodbc-dev:i386 \
+                       x11proto-dev && \
+    apt-get install -y ccache netbase curl ca-certificates xserver-xorg-video-dummy xserver-xorg xfonts-base xinit fvwm \
+                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio unzip && \
+    curl -O https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb && \
+    dpkg -i deb-multimedia-keyring_2016.8.1_all.deb && \
+    echo 'deb https://www.deb-multimedia.org bookworm main' >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y libgstreamer-plugins-base1.0-dev:amd64 libgstreamer-plugins-base1.0-dev:i386 \
+                       libasound2-plugins:amd64 libasound2-plugins:i386 \
+                       libmjpegutils-2.1-0:amd64 libmjpegutils-2.1-0:i386 \
+                       gstreamer1.0-libav:amd64 gstreamer1.0-libav:i386 \
+                       gstreamer1.0-plugins-base:amd64 gstreamer1.0-plugins-good:amd64 gstreamer1.0-plugins-bad:amd64 gstreamer1.0-plugins-ugly:amd64 \
+                       gstreamer1.0-plugins-base:i386 gstreamer1.0-plugins-good:i386 gstreamer1.0-plugins-bad:i386 gstreamer1.0-plugins-ugly:i386 && \
     apt-get clean && \
+    curl -L -o /usr/local/bin/sarif-converter https://gitlab.com/ignis-build/sarif-converter/-/releases/permalink/latest/downloads/bin/sarif-converter-linux && \
+    chmod +x /usr/local/bin/sarif-converter && \
     useradd -m gitlab
 
 USER gitlab

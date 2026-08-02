@@ -123,3 +123,10 @@ NATIVEFONT_Register (void)
 
     RegisterClassW (&wndClass);
 }
+
+
+VOID
+NATIVEFONT_Unregister (void)
+{
+    UnregisterClassW (WC_NATIVEFONTCTLW, NULL);
+}

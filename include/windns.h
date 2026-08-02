@@ -236,7 +236,7 @@ typedef struct _IP4_ARRAY
 #define DNS_RCODE_NAME_ERROR       DNS_RCODE_NXDOMAIN
 #define DNS_RCODE_NOT_IMPLEMENTED  DNS_RCODE_NOTIMPL
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 typedef struct _DNS_HEADER
 {
     WORD Xid;
@@ -255,7 +255,7 @@ typedef struct _DNS_HEADER
     WORD NameServerCount;
     WORD AdditionalCount;
 } DNS_HEADER, *PDNS_HEADER;
-#pragma pack(pop)
+#include <poppack.h>
 
 typedef struct _DNS_MESSAGE_BUFFER
 {
@@ -680,7 +680,7 @@ typedef struct _DnsRRSet
 {                                      \
     PDNS_RRSET  _prrset = &(rrset);    \
     PDNS_RECORD _prrnew = (pnewRR);    \
-    *(PDNS_RECORD *)_prrset->pLastRR = _prrnew; \
+    _prrset->pLastRR->pNext = _prrnew; \
     _prrset->pLastRR = _prrnew;        \
 }
 
@@ -692,7 +692,7 @@ typedef struct _DnsRRSet
 
 #define DNS_ADDR_MAX_SOCKADDR_LENGTH 32
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef struct _DnsAddr
 {
@@ -716,7 +716,7 @@ typedef struct _DnsAddrArray
     DNS_ADDR AddrArray[1];
 } DNS_ADDR_ARRAY, *PDNS_ADDR_ARRAY;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #define DNS_QUERY_RESULTS_VERSION1  0x1
 
@@ -781,32 +781,6 @@ typedef struct _DNS_SERVICE_CANCEL
     void *reserved;
 } DNS_SERVICE_CANCEL, *PDNS_SERVICE_CANCEL;
 
-typedef struct _MDNS_QUERY_HANDLE
-{
-    WCHAR nameBuf[DNS_MAX_NAME_BUFFER_LENGTH];
-    WORD wType;
-    PVOID pSubscription;
-    PVOID pWnfCallbackParams;
-    ULONG stateNameData[2];
-} MDNS_QUERY_HANDLE, *PMDNS_QUERY_HANDLE;
-
-typedef void WINAPI MDNS_QUERY_CALLBACK(PVOID,PMDNS_QUERY_HANDLE,PDNS_QUERY_RESULT);
-typedef MDNS_QUERY_CALLBACK *PMDNS_QUERY_CALLBACK;
-
-typedef struct _MDNS_QUERY_REQUEST
-{
-    ULONG Version;
-    ULONG ulRefCount;
-    PCWSTR Query;
-    WORD QueryType;
-    ULONG64 QueryOptions;
-    ULONG InterfaceIndex;
-    PMDNS_QUERY_CALLBACK pQueryCallback;
-    PVOID pQueryContext;
-    BOOL fAnswerReceived;
-    ULONG ulResendCount;
-} MDNS_QUERY_REQUEST, *PMDNS_QUERY_REQUEST;
-
 DNS_STATUS WINAPI DnsAcquireContextHandle_A(DWORD,PVOID,PHANDLE);
 DNS_STATUS WINAPI DnsAcquireContextHandle_W(DWORD,PVOID,PHANDLE);
 #define DnsAcquireContextHandle WINELIB_NAME_AW(DnsAcquireContextHandle_)
@@ -826,7 +800,6 @@ DNS_STATUS WINAPI DnsQuery_UTF8(PCSTR,WORD,DWORD,PVOID,PDNS_RECORDA*,PVOID*);
 #define DnsQuery WINELIB_NAME_AW(DnsQuery_)
 DNS_STATUS WINAPI DnsQueryEx(DNS_QUERY_REQUEST*,DNS_QUERY_RESULT*,DNS_QUERY_CANCEL*);
 DNS_STATUS WINAPI DnsCancelQuery(DNS_QUERY_CANCEL*);
-BOOL WINAPI DnsGetCacheDataTable(PDNS_CACHE_ENTRY*);
 DNS_STATUS WINAPI DnsQueryConfig(DNS_CONFIG_TYPE,DWORD,PCWSTR,PVOID,PVOID,PDWORD);
 BOOL WINAPI DnsRecordCompare(PDNS_RECORD,PDNS_RECORD);
 PDNS_RECORD WINAPI DnsRecordCopyEx(PDNS_RECORD,DNS_CHARSET,DNS_CHARSET);
@@ -840,14 +813,13 @@ DNS_STATUS WINAPI DnsReplaceRecordSetW(PDNS_RECORDW,DWORD,HANDLE,PVOID,PVOID);
 DNS_STATUS WINAPI DnsReplaceRecordSetUTF8(PDNS_RECORDA,DWORD,HANDLE,PVOID,PVOID);
 #define DnsReplaceRecordSet WINELIB_NAME_AW(DnsReplaceRecordSet)
 DNS_STATUS WINAPI DnsServiceBrowse(PDNS_SERVICE_BROWSE_REQUEST, PDNS_SERVICE_CANCEL);
-DNS_STATUS WINAPI DnsStartMulticastQuery(PMDNS_QUERY_REQUEST,PMDNS_QUERY_HANDLE);
-DNS_STATUS WINAPI DnsStopMulticastQuery(PMDNS_QUERY_HANDLE);
 DNS_STATUS WINAPI DnsValidateName_A(PCSTR,DNS_NAME_FORMAT);
 DNS_STATUS WINAPI DnsValidateName_W(PCWSTR, DNS_NAME_FORMAT);
 DNS_STATUS WINAPI DnsValidateName_UTF8(PCSTR,DNS_NAME_FORMAT);
 #define DnsValidateName WINELIB_NAME_AW(DnsValidateName_)
 BOOL WINAPI DnsWriteQuestionToBuffer_W(PDNS_MESSAGE_BUFFER,PDWORD,PCWSTR,WORD,WORD,BOOL);
 BOOL WINAPI DnsWriteQuestionToBuffer_UTF8(PDNS_MESSAGE_BUFFER,PDWORD,PCSTR,WORD,WORD,BOOL);
+BOOL WINAPI DnsGetCacheDataTable(PDNS_CACHE_ENTRY*);
 
 #ifdef __cplusplus
 }

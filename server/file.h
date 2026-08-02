@@ -108,20 +108,29 @@ extern void set_fd_signaled( struct fd *fd, int signaled );
 extern char *dup_fd_name( struct fd *root, const char *name ) __WINE_DEALLOC(free) __WINE_MALLOC;
 extern void get_nt_name( struct fd *fd, struct unicode_str *name );
 
-extern struct object *default_fd_get_sync( struct object *obj );
-extern WCHAR *default_fd_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len );
+extern int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
 extern void fd_cancel_async( struct fd *fd, struct async *async );
 extern void fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
+extern void no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
+extern void no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
+extern void no_fd_flush( struct fd *fd, struct async *async );
+extern void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 extern void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
+extern void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
+extern void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+extern void default_fd_cancel_async( struct fd *fd, struct async *async );
+extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
+
+static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
 
 /* timeout functions */
 
@@ -184,15 +193,15 @@ extern struct mapping *create_session_mapping( struct object *root, const struct
                                                unsigned int attr, const struct security_descriptor *sd );
 extern void set_session_mapping( struct mapping *mapping );
 
-extern session_shm_t *shared_session;
-extern volatile void *alloc_shared_object( mem_size_t shm_size );
-extern void free_shared_object( volatile void *object_shm );
-extern void invalidate_shared_object( volatile void *object_shm );
-extern struct obj_locator get_shared_object_locator( volatile void *object_shm );
+extern const volatile void *alloc_shared_object(void);
+extern void free_shared_object( const volatile void *object_shm );
+extern void invalidate_shared_object( const volatile void *object_shm );
+extern struct obj_locator get_shared_object_locator( const volatile void *object_shm );
 
 #define SHARED_WRITE_BEGIN( object_shm, type )                          \
     do {                                                                \
-        type *shared = (object_shm);                                    \
+        const type *__shared = (object_shm);                            \
+        type *shared = (type *)__shared;                                \
         shared_object_t *__obj = CONTAINING_RECORD( shared, shared_object_t, shm );  \
         LONG64 __seq = __obj->seq + 1, __end = __seq + 1;               \
         assert( (__seq & 1) != 0 );                                     \
@@ -268,7 +277,7 @@ extern void fd_copy_completion( struct fd *src, struct fd *dst );
 extern struct iosb *async_get_iosb( struct async *async );
 extern struct thread *async_get_thread( struct async *async );
 extern struct async *find_pending_async( struct async_queue *queue );
-extern void cancel_terminating_process_asyncs( struct process *process );
+extern void cancel_process_asyncs( struct process *process );
 extern void cancel_terminating_thread_asyncs( struct thread *thread );
 extern int async_close_obj_handle( struct object *obj, struct process *process, obj_handle_t handle );
 

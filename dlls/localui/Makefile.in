@@ -1,9 +1,6 @@
 MODULE    = localui.dll
 IMPORTS   = winspool user32
 
-VER_FILEDESCRIPTION_STR = "User Interface for the Local Monitor"
-VER_PRODUCTVERSION      = 5,1,2600,2180
-
 SOURCES = \
 	localui.c \
 	localui.rc

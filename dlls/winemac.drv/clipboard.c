@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "macdrv.h"
 #include "winuser.h"
 #include "shellapi.h"
@@ -279,7 +280,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
         if (!NtUserGetClipboardFormatName(format->format_id, buffer, ARRAY_SIZE(buffer)))
         {
             WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id),
-                 RtlGetLastWin32Error());
+                 (unsigned int)RtlGetLastWin32Error());
             free(format);
             return NULL;
         }
@@ -337,9 +338,9 @@ static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
 
 static ATOM register_clipboard_format(const WCHAR *name)
 {
-    UNICODE_STRING name_str;
-    RtlInitUnicodeString(&name_str, name);
-    return NtUserRegisterWindowMessage(&name_str);
+    ATOM atom;
+    if (NtAddAtom(name, lstrlenW(name) * sizeof(WCHAR), &atom)) return 0;
+    return atom;
 }
 
 
@@ -578,12 +579,107 @@ static CPTABLEINFO *get_ansi_cp(void)
     static CPTABLEINFO cp;
     if (!cp.CodePage)
     {
-        if (RtlGetCurrentPeb()->AnsiCodePageData)
-            RtlInitCodePageTable(RtlGetCurrentPeb()->AnsiCodePageData, &cp);
+        if (NtCurrentTeb()->Peb->AnsiCodePageData)
+            RtlInitCodePageTable(NtCurrentTeb()->Peb->AnsiCodePageData, &cp);
         else
             RtlInitCodePageTable(utf8_hdr, &cp);
     }
     return &cp;
+}
+
+
+/* based on wine_get_dos_file_name */
+static WCHAR *get_dos_file_name(const char *path)
+{
+    ULONG len = strlen(path) + 9; /* \??\unix prefix */
+    WCHAR *ret;
+
+    if (!(ret = malloc(len * sizeof(WCHAR)))) return NULL;
+    if (wine_unix_to_nt_file_name(path, ret, &len))
+    {
+        free(ret);
+        return NULL;
+    }
+
+    if (ret[5] == ':')
+    {
+        /* get rid of the \??\ prefix */
+        memmove(ret, ret + 4, (len - 4) * sizeof(WCHAR));
+    }
+    else ret[1] = '\\';
+    return ret;
+}
+
+
+/***********************************************************************
+ *           get_nt_pathname
+ *
+ * Simplified version of RtlDosPathNameToNtPathName_U.
+ */
+static BOOL get_nt_pathname(const WCHAR *name, UNICODE_STRING *nt_name)
+{
+    static const WCHAR ntprefixW[] = {'\\','?','?','\\'};
+    static const WCHAR uncprefixW[] = {'U','N','C','\\'};
+    size_t len = lstrlenW(name);
+    WCHAR *ptr;
+
+    nt_name->MaximumLength = (len + 8) * sizeof(WCHAR);
+    if (!(ptr = malloc(nt_name->MaximumLength))) return FALSE;
+    nt_name->Buffer = ptr;
+
+    memcpy(ptr, ntprefixW, sizeof(ntprefixW));
+    ptr += ARRAYSIZE(ntprefixW);
+    if (name[0] == '\\' && name[1] == '\\')
+    {
+        if ((name[2] == '.' || name[2] == '?') && name[3] == '\\')
+        {
+            name += 4;
+            len -= 4;
+        }
+        else
+        {
+            memcpy(ptr, uncprefixW, sizeof(uncprefixW));
+            ptr += ARRAYSIZE(uncprefixW);
+            name += 2;
+            len -= 2;
+        }
+    }
+    memcpy(ptr, name, (len + 1) * sizeof(WCHAR));
+    ptr += len;
+    nt_name->Length = (ptr - nt_name->Buffer) * sizeof(WCHAR);
+    return TRUE;
+}
+
+
+/* based on wine_get_unix_file_name */
+static char *get_unix_file_name(const WCHAR *dosW)
+{
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    ULONG size = 256;
+    char *buffer;
+
+    if (!get_nt_pathname(dosW, &nt_name)) return NULL;
+    InitializeObjectAttributes(&attr, &nt_name, 0, 0, NULL);
+    for (;;)
+    {
+        if (!(buffer = malloc(size)))
+        {
+            free(nt_name.Buffer);
+            return NULL;
+        }
+        status = wine_nt_to_unix_file_name(&attr, buffer, &size, FILE_OPEN_IF);
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        free(buffer);
+    }
+    free(nt_name.Buffer);
+    if (status)
+    {
+        free(buffer);
+        return NULL;
+    }
+    return buffer;
 }
 
 
@@ -654,7 +750,8 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
             WARN("failed to get file-system representation for %s\n", debugstr_cf(name));
             goto done;
         }
-        if (ntdll_get_dos_file_name( buffer, &paths[i], FILE_OPEN ))
+        paths[i] = get_dos_file_name(buffer);
+        if (!paths[i])
         {
             WARN("failed to get DOS path for %s\n", debugstr_a(buffer));
             goto done;
@@ -859,12 +956,11 @@ static CFDataRef export_hdrop_to_filenames(void *data, size_t size)
     {
         char *unixname;
         CFStringRef filename;
-        NTSTATUS status;
 
         TRACE("    %s\n", dropfiles->fWide ? debugstr_w(p) : debugstr_a(p));
 
         if (dropfiles->fWide)
-            status = ntdll_get_unix_file_name( p, &unixname, FILE_OPEN );
+            unixname = get_unix_file_name(p);
         else
         {
             CPTABLEINFO *cp = get_ansi_cp();
@@ -882,9 +978,9 @@ static CFDataRef export_hdrop_to_filenames(void *data, size_t size)
             else
                 RtlCustomCPToUnicodeN(cp, buffer, buffer_len * sizeof(WCHAR), &len, p, len);
 
-            status = ntdll_get_unix_file_name( buffer, &unixname, FILE_OPEN );
+            unixname = get_unix_file_name(buffer);
         }
-        if (status)
+        if (!unixname)
         {
             WARN("failed to convert DOS path to Unix: %s\n",
                  dropfiles->fWide ? debugstr_w(p) : debugstr_a(p));
@@ -1340,7 +1436,7 @@ static void update_clipboard(void)
     static BOOL updating;
 
     TRACE("is_clipboard_owner %d last_clipboard_update %u now %u\n",
-          is_clipboard_owner, last_clipboard_update, NtGetTickCount());
+          is_clipboard_owner, last_clipboard_update, (unsigned int)NtGetTickCount());
 
     if (updating) return;
     updating = TRUE;

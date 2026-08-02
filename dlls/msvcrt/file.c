@@ -1117,10 +1117,7 @@ int CDECL _commit(int fd)
     TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
 
     if (info->handle == INVALID_HANDLE_VALUE)
-    {
-        *_errno() = EBADF;
         ret = -1;
-    }
     else if (!FlushFileBuffers(info->handle))
     {
         if (GetLastError() == ERROR_INVALID_HANDLE)
@@ -1397,6 +1394,7 @@ void msvcrt_free_io(void)
     unsigned int i;
     int j;
 
+    _flushall();
     _fcloseall();
 
     for(i=0; i<ARRAY_SIZE(MSVCRT___pioinfo); i++)
@@ -2454,9 +2452,6 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
     case _SH_DENYNO:
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
-    case _SH_SECURE:
-      sharing = (access == GENERIC_READ ? FILE_SHARE_READ : 0);
-      break;
     default:
       ERR( "Unhandled shflags %#x\n", shflags );
       return EINVAL;
@@ -2485,7 +2480,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
   sa.lpSecurityDescriptor = NULL;
   sa.bInheritHandle       = !(oflags & _O_NOINHERIT);
 
-  if (!(oflags & _O_BINARY) && (oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
+  if ((oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
           && (creation==OPEN_ALWAYS || creation==OPEN_EXISTING)
           && !(access&GENERIC_READ))
   {
@@ -2505,7 +2500,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
     return *_errno();
   }
 
-  if (!(oflags & _O_BINARY) && oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
+  if (oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
   {
       LARGE_INTEGER size = {{0}};
 
@@ -2561,16 +2556,13 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
   if (*fd == -1)
       return *_errno();
 
-  if (!(oflags & _O_BINARY))
-  {
-      if (oflags & _O_WTEXT)
-          ioinfo_set_unicode(get_ioinfo_nolock(*fd), TRUE);
+  if (oflags & _O_WTEXT)
+      ioinfo_set_unicode(get_ioinfo_nolock(*fd), TRUE);
 
-      if (oflags & _O_U16TEXT)
-          ioinfo_set_textmode(get_ioinfo_nolock(*fd), TEXTMODE_UTF16LE);
-      else if (oflags & _O_U8TEXT)
-          ioinfo_set_textmode(get_ioinfo_nolock(*fd), TEXTMODE_UTF8);
-  }
+  if (oflags & _O_U16TEXT)
+      ioinfo_set_textmode(get_ioinfo_nolock(*fd), TEXTMODE_UTF16LE);
+  else if (oflags & _O_U8TEXT)
+      ioinfo_set_textmode(get_ioinfo_nolock(*fd), TEXTMODE_UTF8);
 
   TRACE(":fd (%d) handle (%p)\n", *fd, hand);
   return 0;
@@ -4153,12 +4145,9 @@ size_t CDECL fwrite(const void *ptr, size_t size, size_t nmemb, FILE* file)
 size_t CDECL _fwrite_nolock(const void *ptr, size_t size, size_t nmemb, FILE* file)
 {
     size_t wrcnt=size * nmemb;
-    int written = 0, bufsize = 1;
+    int written = 0;
     if (size == 0)
         return 0;
-
-    if ((file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF)) || msvcrt_alloc_buffer(file))
-        bufsize = file->_bufsiz;
 
     while(wrcnt) {
         if(file->_cnt < 0) {
@@ -4173,9 +4162,20 @@ size_t CDECL _fwrite_nolock(const void *ptr, size_t size, size_t nmemb, FILE* fi
             written += pcnt;
             wrcnt -= pcnt;
             ptr = (const char*)ptr + pcnt;
-        } else if(wrcnt >= bufsize) {
+        } else if((file->_flag & MSVCRT__NOBUF)
+                || ((file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= file->_bufsiz)
+                || (!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= MSVCRT_INTERNAL_BUFSIZ)) {
             size_t pcnt;
-            pcnt = (wrcnt / bufsize) * bufsize;
+            int bufsiz;
+
+            if(file->_flag & MSVCRT__NOBUF)
+                bufsiz = 1;
+            else if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)))
+                bufsiz = MSVCRT_INTERNAL_BUFSIZ;
+            else
+                bufsiz = file->_bufsiz;
+
+            pcnt = (wrcnt / bufsiz) * bufsiz;
 
             if(msvcrt_flush_buffer(file) == EOF)
                 break;
@@ -5538,14 +5538,6 @@ int CDECL vwprintf(const wchar_t *format, va_list valist)
 }
 
 /*********************************************************************
- *              _vwprintf_l (MSVCRT.@)
- */
-int CDECL _vwprintf_l(const wchar_t *format, _locale_t locale, va_list valist)
-{
-    return _vfwprintf_l(stdout, format, locale, valist);
-}
-
-/*********************************************************************
  *		vwprintf_s (MSVCRT.@)
  */
 int CDECL vwprintf_s(const wchar_t *format, va_list valist)
@@ -5849,19 +5841,6 @@ int WINAPIV wprintf(const wchar_t *format, ...)
     int res;
     va_start(valist, format);
     res = vwprintf(format, valist);
-    va_end(valist);
-    return res;
-}
-
-/*********************************************************************
- *              _wprintf_l (MSVCRT.@)
- */
-int WINAPIV _wprintf_l(const wchar_t *format, _locale_t locale, ...)
-{
-    va_list valist;
-    int res;
-    va_start(valist, locale);
-    res = _vwprintf_l(format, locale, valist);
     va_end(valist);
     return res;
 }

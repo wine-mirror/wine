@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -180,7 +181,6 @@ static LONG WINAPI debug_exception_handler( EXCEPTION_POINTERS *eptr )
  */
 void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
 {
-    DWORD last_error = GetLastError();
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
     BOOL caught_by_dbg = TRUE;
@@ -263,7 +263,6 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
             CloseHandle( mapping );
         }
     }
-    SetLastError( last_error );
 }
 
 static LONG WINAPI debug_exception_handler_wide( EXCEPTION_POINTERS *eptr )
@@ -281,7 +280,6 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
     STRING strA;
 
     WARN( "%s\n", debugstr_w(str) );
-    if (!str) return;
 
     RtlInitUnicodeString( &strW, str );
     if (!RtlUnicodeStringToAnsiString( &strA, &strW, TRUE ))
@@ -418,34 +416,8 @@ __ASM_GLOBAL_IMPORT(RaiseException)
  */
 void WINAPI DECLSPEC_HOTPATCH RaiseFailFastException( EXCEPTION_RECORD *record, CONTEXT *context, DWORD flags )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT ctx;
-
-    WARN( "(%p, %p, %lx)\n", record, context, flags );
-
-    if (flags & FAIL_FAST_NO_HARD_ERROR_DLG)
-        TerminateProcess( GetCurrentProcess(), STATUS_FAIL_FAST_EXCEPTION );
-
-    if (!context)
-    {
-        RtlCaptureContext( &ctx );
-        context = &ctx;
-    }
-    if (!record)
-    {
-        rec.ExceptionCode    = STATUS_FAIL_FAST_EXCEPTION;
-        rec.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = __builtin_return_address(0);
-        rec.NumberParameters = 0;
-        record = &rec;
-    }
-    else if (flags & FAIL_FAST_GENERATE_EXCEPTION_ADDRESS)
-    {
-        record->ExceptionAddress = __builtin_return_address(0);
-    }
-
-    for (;;) NtRaiseException( record, context, FALSE );
+    FIXME( "(%p, %p, %ld) stub\n", record, context, flags );
+    TerminateProcess( GetCurrentProcess(), STATUS_FAIL_FAST_EXCEPTION );
 }
 
 /***********************************************************************
@@ -752,7 +724,6 @@ static BOOL check_resource_write( void *addr )
 LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
 {
     const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
-    BOOL nested;
 
     if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2)
     {
@@ -773,8 +744,7 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
             TerminateProcess( GetCurrentProcess(), 1 );
         }
 
-        nested = rec->ExceptionFlags & EXCEPTION_NESTED_CALL;
-        if (top_filter && !nested)
+        if (top_filter)
         {
             LONG ret = top_filter( epointers );
             if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
@@ -782,7 +752,7 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
 
         if ((GetErrorMode() & SEM_NOGPFAULTERRORBOX) ||
             !start_debugger_atomic( epointers ) || !NtCurrentTeb()->Peb->BeingDebugged)
-            return nested ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER;
+            return EXCEPTION_EXECUTE_HANDLER;
     }
     return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -815,6 +785,15 @@ HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterFile( const WCHAR *file, WER_R
                                                         DWORD flags )
 {
     FIXME( "(%s, %d, %ld) stub\n", debugstr_w(file), type, flags );
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *         WerRegisterCustomMetadata   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterCustomMetadata( const WCHAR *key, const WCHAR *value)
+{
+    FIXME( "(%s, %s) stub\n", debugstr_w(key), debugstr_w(value));
     return E_NOTIMPL;
 }
 
@@ -1555,7 +1534,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
         NTSTATUS status;
 
         status = get_process_image_file_name( process, buffer, sizeof(buffer), &dynamic_buffer, &result );
-        if (set_ntstatus( status ))
+        if (!status)
         {
             len = result->Length / sizeof(WCHAR);
             memcpy( name, result->Buffer, min( len, size - 1 ) * sizeof(WCHAR) );
