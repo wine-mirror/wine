@@ -58,6 +58,7 @@ extern "C" {
 #define BCRYPT_HASH_BLOCK_LENGTH    L"HashBlockLength"
 #define BCRYPT_HASH_LENGTH          L"HashDigestLength"
 #define BCRYPT_HASH_OID_LIST        L"HashOIDList"
+#define BCRYPT_INITIALIZATION_VECTOR L"IV"
 #define BCRYPT_KEY_LENGTH           L"KeyLength"
 #define BCRYPT_KEY_LENGTHS          L"KeyLengths"
 #define BCRYPT_KEY_OBJECT_LENGTH    L"KeyObjectLength"
@@ -163,6 +164,7 @@ static const WCHAR BCRYPT_EFFECTIVE_KEY_LENGTH[] = {'E','f','f','e','c','t','i',
 static const WCHAR BCRYPT_HASH_BLOCK_LENGTH[] = {'H','a','s','h','B','l','o','c','k','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_HASH_LENGTH[] = {'H','a','s','h','D','i','g','e','s','t','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_HASH_OID_LIST[] = {'H','a','s','h','O','I','D','L','i','s','t',0};
+static const WCHAR BCRYPT_INITIALIZATION_VECTOR[] = {'I','V',0};
 static const WCHAR BCRYPT_KEY_LENGTH[] = {'K','e','y','L','e','n','g','t','h',0};
 static const WCHAR BCRYPT_KEY_LENGTHS[] = {'K','e','y','L','e','n','g','t','h','s',0};
 static const WCHAR BCRYPT_KEY_OBJECT_LENGTH[] = {'K','e','y','O','b','j','e','c','t','L','e','n','g','t','h',0};

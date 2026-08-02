@@ -4229,6 +4229,91 @@ static void test_aes_vector(void)
     ok(!ret, "got %#lx\n", ret);
 }
 
+static void test_aes_vector_property(void)
+{
+    static const UCHAR secret[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10};
+    static const UCHAR vector[] = {0x0f,0x0e,0x0d,0x0c,0x0b,0x0a,0x09,0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,0x00};
+    static const UCHAR expect[] = {0x3e,0xfa,0x1a,0xc8,0x92,0x54,0xe4,0x21,0x1a,0x3d,0xfd,0x42,0x1c,0xc0,0x7d,0x20};
+    static const UCHAR expect2[] = {0xb0,0xcb,0xf5,0x80,0xd4,0xe3,0x55,0x23,0x6e,0x19,0x5b,0xdb,0xfe,0xe0,0x6c,0xd3};
+    static UCHAR input[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
+    UCHAR data[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + sizeof(secret)];
+    BCRYPT_KEY_DATA_BLOB_HEADER *blob = (BCRYPT_KEY_DATA_BLOB_HEADER *)data;
+    UCHAR output[16], iv[16];
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    ULONG size;
+    NTSTATUS ret;
+
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_AES_ALGORITHM, NULL, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    size = sizeof(BCRYPT_CHAIN_MODE_CBC);
+    ret = BCryptSetProperty(alg, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC, size, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    blob->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
+    blob->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
+    blob->cbKeyData = sizeof(secret);
+    memcpy(data + sizeof(*blob), secret, sizeof(secret));
+    size = sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + sizeof(secret);
+    ret = BCryptImportKey(alg, NULL, BCRYPT_KEY_DATA_BLOB, &key, NULL, 0, data, size, 0);
+    ok(!ret, "got %#lx\n", ret);
+
+    ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector) - 1, 0);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+
+    /* the initialization vector can be set on the key instead of being passed to BCryptEncrypt() */
+    ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, output, sizeof(output), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == 16, "got %lu\n", size);
+    todo_wine ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
+
+    /* setting it again restarts the chain instead of continuing it */
+    ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, output, sizeof(output), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == 16, "got %lu\n", size);
+    todo_wine ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
+
+    /* a vector passed to BCryptEncrypt() overrides the one set on the key */
+    ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    memset(iv, 0, sizeof(iv));
+    memset(output, 0, sizeof(output));
+    ret = BCryptEncrypt(key, input, sizeof(input), NULL, iv, sizeof(iv), output, sizeof(output), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == 16, "got %lu\n", size);
+    ok(!memcmp(output, expect2, sizeof(expect2)), "wrong cipher text\n");
+
+    /* and the same vector decrypts what it encrypted */
+    ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = BCryptDecrypt(key, (UCHAR *)expect, sizeof(expect), NULL, NULL, 0, output, sizeof(output), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == 16, "got %lu\n", size);
+    todo_wine ok(!memcmp(output, input, sizeof(input)), "wrong plain text\n");
+
+    ret = BCryptDestroyKey(key);
+    ok(!ret, "got %#lx\n", ret);
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %#lx\n", ret);
+}
+
 static void test_BcryptDeriveKeyCapi(void)
 {
     static const UCHAR expect[] =
@@ -5406,6 +5491,7 @@ START_TEST(bcrypt)
     test_BCryptSignHash();
     test_BCryptEnumAlgorithms();
     test_aes_vector();
+    test_aes_vector_property();
     test_BcryptDeriveKeyCapi();
     test_DSA();
     test_SecretAgreement();
