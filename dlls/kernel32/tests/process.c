@@ -3401,6 +3401,7 @@ static void test_StdHandleInheritance(void)
     HANDLE hsavestd[3];
     static char guiexec[MAX_PATH];
     static char cuiexec[MAX_PATH];
+    static char xboxexec[MAX_PATH];
     char **argv;
     BOOL ret;
     int i, j;
@@ -3513,6 +3514,19 @@ static void test_StdHandleInheritance(void)
     GetTempPathA(ARRAY_SIZE(cuiexec), cuiexec);
     strcat(cuiexec, "process_cui.exe");
     copy_change_subsystem(argv[0], cuiexec, IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    GetTempPathA(ARRAY_SIZE(xboxexec), xboxexec);
+    strcat(xboxexec, "process_xbox.exe");
+    copy_change_subsystem(argv[0], xboxexec, IMAGE_SUBSYSTEM_XBOX);
+    {
+        DWORD binary_type = 0;
+        ret = GetBinaryTypeA(xboxexec, &binary_type);
+        ok(ret, "GetBinaryTypeA failed for Xbox executable (%lu)\n", GetLastError());
+#ifdef _WIN64
+        ok(binary_type == SCS_64BIT_BINARY, "unexpected Xbox binary type %lu\n", binary_type);
+#else
+        ok(binary_type == SCS_32BIT_BINARY, "unexpected Xbox binary type %lu\n", binary_type);
+#endif
+    }
     get_file_name(std_handle_file);
 
     for (j = 0; j < ARRAY_SIZE(tests); j++)
@@ -3585,6 +3599,7 @@ static void test_StdHandleInheritance(void)
 
     DeleteFileA(guiexec);
     DeleteFileA(cuiexec);
+    DeleteFileA(xboxexec);
     DeleteFileA(std_handle_file);
 
     SetStdHandle(STD_INPUT_HANDLE,  hsavestd[0]);
