@@ -93,7 +93,7 @@ static DWORD shgfi_get_exe_type(LPCWSTR szFullPath)
         /* DLL files are not executable and should return 0 */
         if (nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
             return 0;
-        if (nt.OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+        if (IMAGE_SUBSYSTEM_IS_GUI(nt.OptionalHeader.Subsystem))
         {
              return IMAGE_NT_SIGNATURE | 
                    (nt.OptionalHeader.MajorSubsystemVersion << 24) |

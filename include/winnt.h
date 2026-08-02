@@ -2557,6 +2557,7 @@ typedef struct _IMAGE_VXD_HEADER {
 /* Xbox executables use the normal Windows process and console paths. */
 #define IMAGE_SUBSYSTEM_IS_CONSOLE(subsystem) \
     ((subsystem) == IMAGE_SUBSYSTEM_WINDOWS_CUI || (subsystem) == IMAGE_SUBSYSTEM_XBOX)
+#define IMAGE_SUBSYSTEM_IS_GUI(subsystem) ((subsystem) == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 
 /* DLL Characteristics */
 #define IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE          0x0040

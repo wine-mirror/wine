@@ -53,7 +53,7 @@ int __cdecl wmainCRTStartup(void)
     int new_mode =  0;
     __wgetmainargs(&argc, &argv, &env, 0, &new_mode);
 #endif
-    _set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? _crt_gui_app : _crt_console_app);
+    _set_app_type(IMAGE_SUBSYSTEM_IS_GUI(get_nt_header()->OptionalHeader.Subsystem) ? _crt_gui_app : _crt_console_app);
 
     ret = wmain(argc, argv, env);
 
