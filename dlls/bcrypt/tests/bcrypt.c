@@ -5166,6 +5166,179 @@ static void test_TLS_PRF(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }
 
+static void test_HKDF(void)
+{
+    static const UCHAR expect[] =
+    {
+        0x9e,0xc7,0x96,0xeb,0x03,0xf9,0xbd,0xaa,0xfa,0x68,0x90,0x1c,0x7b,0x71,0x20,0xda,
+        0x88,0xf1,0xc2,0x15,0x07,0xaf,0xc6,0xde,0x1a,0x86,0xb5,0x6e,0x96,0xe9,0x7d,0x7a
+    };
+    static const UCHAR expect2[] =
+    {
+        0x54,0xe0,0x42,0xd2,0x92,0xc8,0x02,0x02,0x14,0xae,0x57,0xe8,0x7e,0x67,0x32,0xd7,
+        0x46,0x90,0xca,0x7b,0xef,0x5a,0x62,0x74,0x90,0x8f,0x1e,0x99,0x20,0x04,0x1e,0x27
+    };
+    static const UCHAR expect3[] =
+    {
+        0xb5,0x12,0x7d,0x38,0x03,0x6a,0x64,0xd0,0x76,0xde,0x48,0xe2,0xa0,0x7a,0x4f,0x3d,
+        0x6f,0xc8,0x55,0xab,0xf5,0x14,0x66,0x5d,0xd6,0x02,0x1c,0x28,0x75,0xe7,0xdc,0x96
+    };
+    UCHAR buf[32], salt[] = "salt";
+    static BCryptBuffer param_buffers[] =
+    {
+        {
+            sizeof("info"),
+            KDF_HKDF_INFO,
+            (void *)"info",
+        },
+    };
+    static BCryptBufferDesc params =
+    {
+        BCRYPTBUFFER_VERSION,
+        ARRAY_SIZE(param_buffers),
+        param_buffers,
+    };
+    NTSTATUS status;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
+    ULONG len, size;
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_HKDF_ALGORITHM, NULL, 0);
+    if (status == STATUS_NOT_FOUND) /* win8 */
+    {
+        win_skip("BCRYPT_HKDF_ALGORITHM not available\n");
+        return;
+    }
+    ok(!status, "got %#lx\n", status);
+
+    len = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(len, "got %lu\n", len);
+    ok(size == sizeof(len), "got %lu\n", size);
+
+    len = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(status == STATUS_NOT_SUPPORTED, "got %#lx\n", status);
+
+    memset(&key_lengths, 0xfe, sizeof(key_lengths));
+    size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(key_lengths), "got %lu\n", size);
+    ok(key_lengths.dwMinLength == 0, "got %lu\n", key_lengths.dwMinLength);
+    ok(key_lengths.dwMaxLength == 16384, "got %lu\n", key_lengths.dwMaxLength);
+    ok(key_lengths.dwIncrement == 8, "got %lu\n", key_lengths.dwIncrement);
+
+    /* salt, info */
+    status = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, (UCHAR *)"test", 4, 0);
+    ok(!status, "got %#lx\n", status);
+
+    len = size = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(len == strlen("test") * 8, "got %lu\n", len);
+
+    size = sizeof(BCRYPT_SHA256_ALGORITHM);
+    status = BCryptSetProperty(key, BCRYPT_HKDF_HASH_ALGORITHM, (UCHAR *)BCRYPT_SHA256_ALGORITHM, size, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptSetProperty(key, BCRYPT_HKDF_SALT_AND_FINALIZE, salt, sizeof(salt), 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptKeyDerivation(key, &params, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    buf[0] = buf[1] = 'x';
+    status = BCryptKeyDerivation(key, &params, buf, 1, &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == 1, "size = %lu\n", size);
+    ok(buf[0] == expect[0], "buf[0] = %x\n", buf[0]);
+    ok(buf[1] == 'x', "buf[1] = %x\n", buf[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    status = BCryptKeyDerivation(key, &params, buf, sizeof(buf), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(buf), "size = %lu\n", size);
+    ok(!memcmp(buf, expect, sizeof(expect)), "wrong data (%s)\n", wine_dbgstr_an((char *)buf, size));
+
+    status = BCryptDestroyKey(key);
+    ok(!status, "got %#lx\n", status);
+
+    /* no salt, info */
+    status = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, (UCHAR *)"test", 4, 0);
+    ok(!status, "got %#lx\n", status);
+
+    len = size = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(len == strlen("test") * 8, "got %lu\n", len);
+
+    size = sizeof(BCRYPT_SHA256_ALGORITHM);
+    status = BCryptSetProperty(key, BCRYPT_HKDF_HASH_ALGORITHM, (UCHAR *)BCRYPT_SHA256_ALGORITHM, size, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptSetProperty(key, BCRYPT_HKDF_PRK_AND_FINALIZE, NULL, 0, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptKeyDerivation(key, &params, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    buf[0] = buf[1] = 'x';
+    status = BCryptKeyDerivation(key, &params, buf, 1, &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == 1, "size = %lu\n", size);
+    ok(buf[0] == expect2[0], "buf[0] = %x\n", buf[0]);
+    ok(buf[1] == 'x', "buf[1] = %x\n", buf[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    status = BCryptKeyDerivation(key, &params, buf, sizeof(buf), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(buf), "size = %lu\n", size);
+    ok(!memcmp(buf, expect2, sizeof(expect2)), "wrong data (%s)\n", wine_dbgstr_an((char *)buf, size));
+
+    status = BCryptDestroyKey(key);
+    ok(!status, "got %#lx\n", status);
+
+    /* salt, no info */
+    status = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, (UCHAR *)"test", 4, 0);
+    ok(!status, "got %#lx\n", status);
+
+    len = size = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(len == strlen("test") * 8, "got %lu\n", len);
+
+    size = sizeof(BCRYPT_SHA256_ALGORITHM);
+    status = BCryptSetProperty(key, BCRYPT_HKDF_HASH_ALGORITHM, (UCHAR *)BCRYPT_SHA256_ALGORITHM, size, 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptSetProperty(key, BCRYPT_HKDF_SALT_AND_FINALIZE, salt, sizeof(salt), 0);
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptKeyDerivation(key, NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    buf[0] = buf[1] = 'x';
+    status = BCryptKeyDerivation(key, NULL, buf, 1, &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == 1, "size = %lu\n", size);
+    ok(buf[0] == expect3[0], "buf[0] = %x\n", buf[0]);
+    ok(buf[1] == 'x', "buf[1] = %x\n", buf[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    status = BCryptKeyDerivation(key, NULL, buf, sizeof(buf), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(buf), "size = %lu\n", size);
+    ok(!memcmp(buf, expect3, sizeof(expect3)), "wrong data (%s)\n", wine_dbgstr_an((char *)buf, size));
+
+    status = BCryptDestroyKey(key);
+    ok(!status, "got %#lx\n", status);
+    status = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+}
+
 static void test_CHACHA20_POLY1305(void)
 {
     BCRYPT_ALG_HANDLE alg;
@@ -5240,6 +5413,7 @@ START_TEST(bcrypt)
     test_RC4();
     test_PBKDF2();
     test_TLS_PRF();
+    test_HKDF();
     test_CHACHA20_POLY1305();
 
     FreeLibrary(module);
