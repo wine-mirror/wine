@@ -1,0 +1,68 @@
+# Global rules for building dll unit tests     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# TESTDLL      : the dll to test
+# C_SRCS       : list of C test programs
+# EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DLLFLAGS     = @DLLFLAGS@
+DEFS         = -DWINE_STRICT_PROTOTYPES -DWINE_NO_NAMELESS_EXTENSION -DWIDL_C_INLINE_WRAPPERS $(EXTRADEFS)
+
+MODULE       = $(TESTDLL:%.dll=%)_test.exe
+TESTRESULTS  = $(C_SRCS:.c=.ok)
+TESTPROGRAM  = $(MODULE)$(DLLEXT)
+WINETEST_EXE = $(TESTDLL:%.dll=%)_test-stripped.exe$(DLLEXT)
+WINETEST_RES = $(top_builddir)/programs/winetest/$(TESTDLL:%.dll=%)_test.res
+RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(top_builddir) -p $(TESTPROGRAM)
+
+ALL_LIBS     = $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
+EXTRA_OBJS   = testlist.o
+
+CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
+MAKEDEPFLAGS = -xo -xcross.o
+
+@MAKE_RULES@
+
+all: $(TESTPROGRAM) $(WINETEST_RES)
+
+$(MODULE) $(MODULE).so: $(OBJS) Makefile.in
+	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
+
+$(WINETEST_EXE): $(OBJS) Makefile.in
+	$(WINEGCC) -s -Wb,-F,$(MODULE) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS)
+
+$(WINETEST_RES): $(WINETEST_EXE)
+	echo "$(MODULE) TESTRES \"$(WINETEST_EXE)\"" | $(LDPATH) $(WRC) $(RCFLAGS) -o $@
+
+.PHONY: check test testclean crosstest
+
+# Rules for building test list
+
+testlist.c: Makefile.in $(MAKECTESTS)
+	$(MAKECTESTS) -o $@ $(C_SRCS)
+
+testlist.o testlist.cross.o: testlist.c $(top_srcdir)/include/wine/test.h
+
+# Rules for testing
+
+check test: $(TESTRESULTS)
+
+$(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
+
+# Rules for cross-compiling tests
+
+crosstest: @CROSSTEST_DISABLE@ $(CROSSTEST)
+
+$(CROSSTEST): $(CROSSOBJS) Makefile.in
+	$(CROSSWINEGCC) $(CROSSOBJS) -o $@ $(ALL_LIBS)
+
+# Rules for cleaning
+
+testclean::
+	$(RM) $(TESTRESULTS)
+
+clean::
+	$(RM) testlist.c $(MODULE) $(TESTRESULTS) $(CROSSTEST)
