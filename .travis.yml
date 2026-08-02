@@ -1,0 +1,6 @@
+before_script:
+  - echo hi
+language: c
+compiler:
+  - gcc
+script: ./configure --without-x && make

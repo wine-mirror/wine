@@ -419,4 +419,9 @@ static inline enum wined3d_scanline_ordering wined3d_scanline_ordering_from_d3d(
     return (enum wined3d_scanline_ordering)ordering;
 }
 
+static inline struct d3d9_device *impl_from_IDirect3DDevice9Ex(IDirect3DDevice9Ex *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d9_device, IDirect3DDevice9Ex_iface);
+}
+
 #endif /* __WINE_D3D9_PRIVATE_H */

@@ -1,29 +1,58 @@
 EXTRADEFS = -D_GDI32_
 MODULE    = gdi32.dll
 IMPORTLIB = gdi32
-IMPORTS   = user32 advapi32 win32u
-DELAYIMPORTS = winspool
+IMPORTS   = advapi32
+EXTRAINCL = @FREETYPE_CFLAGS@ @FONTCONFIGINCL@
+EXTRALIBS = @CARBONLIB@ @APPKITLIB@
+DELAYIMPORTS = usp10
 
-SOURCES = \
+C_SRCS = \
+	bidi.c \
+	bitblt.c \
+	bitmap.c \
+	brush.c \
+	clipping.c \
 	dc.c \
-	emfdc.c \
+	dib.c \
+	dibdrv/bitblt.c \
+	dibdrv/dc.c \
+	dibdrv/graphics.c \
+	dibdrv/objects.c \
+	dibdrv/opengl.c \
+	dibdrv/primitives.c \
+	driver.c \
 	enhmetafile.c \
-	gdi32.rc \
+	enhmfdrv/bitblt.c \
+	enhmfdrv/dc.c \
+	enhmfdrv/graphics.c \
+	enhmfdrv/init.c \
+	enhmfdrv/objects.c \
+	font.c \
+	freetype.c \
+	gdiobj.c \
 	icm.c \
-	metadc.c \
+	mapping.c \
 	metafile.c \
-	objects.c \
+	mfdrv/bitblt.c \
+	mfdrv/dc.c \
+	mfdrv/graphics.c \
+	mfdrv/init.c \
+	mfdrv/objects.c \
+	mfdrv/text.c \
 	opengl.c \
-	text.c \
-	uniscribe/bidi.c \
-	uniscribe/bracket.c \
-	uniscribe/breaking.c \
-	uniscribe/direction.c \
-	uniscribe/indic.c \
-	uniscribe/indicsyllable.c \
-	uniscribe/linebreak.c \
-	uniscribe/mirror.c \
-	uniscribe/opentype.c \
-	uniscribe/shape.c \
-	uniscribe/shaping.c \
-	uniscribe/usp10.c
+	painting.c \
+	palette.c \
+	path.c \
+	pen.c \
+	printdrv.c \
+	region.c
+
+RC_SRCS = gdi32.rc
+PO_SRCS = gdi32.rc
+
+EXTRASUBDIRS = \
+	dibdrv \
+	enhmfdrv \
+	mfdrv
+
+@MAKE_DLL_RULES@

@@ -1,0 +1,7 @@
+MODULE    = ws2.dll
+EXTRADLLFLAGS = -Wb,--subsystem,wince
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@

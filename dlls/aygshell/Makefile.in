@@ -1,0 +1,7 @@
+MODULE    = aygshell.dll
+EXTRADLLFLAGS = -Wb,--subsystem,wince
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@

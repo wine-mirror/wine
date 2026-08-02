@@ -21,7 +21,6 @@
 #ifndef __WMC_WMC_H
 #define __WMC_WMC_H
 
-#include "../tools.h"
 #include "wmctypes.h"
 
 /*
@@ -39,17 +38,17 @@
 
 extern int pedantic;
 extern int leave_case;
+extern int byteorder;
 extern int decimal;
 extern int custombit;
 extern int unicodein;
+extern int unicodeout;
 extern int rcinline;
 
 extern char *output_name;
-extern const char *input_name;
+extern char *input_name;
 extern char *header_name;
 extern char *cmdline;
-
-extern const char *nlsdirs[];
 
 extern int line_number;
 extern int char_number;
@@ -59,15 +58,15 @@ extern int mcy_debug;
 extern int want_nl;
 extern int want_line;
 extern int want_file;
-extern struct node *nodehead;
-extern struct lan_blk *lanblockhead;
+extern node_t *nodehead;
+extern lan_blk_t *lanblockhead;
 
 int mcy_lex(void);
 extern FILE *yyin;
 void set_codepage(int cp);
 
-void add_token(enum tok_enum type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix);
-struct token *lookup_token(const WCHAR *s);
-void get_tokentable(struct token **tab, int *len);
+void add_token(tok_e type, const WCHAR *name, int tok, int cp, const WCHAR *alias, int fix);
+token_t *lookup_token(const WCHAR *s);
+void get_tokentable(token_t **tab, int *len);
 
 #endif

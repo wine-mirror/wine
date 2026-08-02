@@ -31,6 +31,7 @@
 #include "wscript.h"
 
 #include <wine/debug.h>
+#include <wine/unicode.h>
 
 #ifdef _WIN64
 
@@ -47,17 +48,31 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
+
+static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
+static const WCHAR wshW[] = {'W','S','H',0};
 WCHAR scriptFullName[MAX_PATH];
 
 ITypeInfo *host_ti;
 ITypeInfo *arguments_ti;
 
-static HRESULT query_interface(REFIID,void**);
-
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface,
                                                       REFIID riid, void **ppv)
 {
-    return query_interface(riid, ppv);
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        WINE_TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptSite)) {
+        WINE_TRACE("(IID_IActiveScriptSite %p)\n", ppv);
+        *ppv = iface;
+    }else {
+        *ppv = NULL;
+        WINE_TRACE("(%s %p)\n", wine_dbgstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
@@ -81,9 +96,9 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface,
         LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown **ppunkItem, ITypeInfo **ppti)
 {
-    WINE_TRACE("(%s %lx %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
+    WINE_TRACE("(%s %x %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
 
-    if(lstrcmpW(pstrName, L"WSH") && lstrcmpW(pstrName, L"WScript"))
+    if(strcmpW(pstrName, wshW) && strcmpW(pstrName, wscriptW))
         return E_FAIL;
 
     if(dwReturnMask & SCRIPTINFO_ITYPEINFO) {
@@ -153,74 +168,16 @@ static IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
-static IActiveScriptSite script_site = { &ActiveScriptSiteVtbl };
-
-static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface, REFIID riid, void **ppv)
-{
-    return query_interface(riid, ppv);
-}
-
-static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *phwnd)
-{
-    TRACE("(%p)\n", phwnd);
-
-    *phwnd = NULL;
-    return S_OK;
-}
-
-static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL fEnable)
-{
-    TRACE("(%x)\n", fEnable);
-    return S_OK;
-}
-
-static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
-    ActiveScriptSiteWindow_QueryInterface,
-    ActiveScriptSiteWindow_AddRef,
-    ActiveScriptSiteWindow_Release,
-    ActiveScriptSiteWindow_GetWindow,
-    ActiveScriptSiteWindow_EnableModeless
-};
-
-static IActiveScriptSiteWindow script_site_window = { &ActiveScriptSiteWindowVtbl };
-
-static HRESULT query_interface(REFIID riid, void **ppv)
-{
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(IID_IUnknown %p)\n", ppv);
-        *ppv = &script_site;
-    }else if(IsEqualGUID(riid, &IID_IActiveScriptSite)) {
-        TRACE("(IID_IActiveScriptSite %p)\n", ppv);
-        *ppv = &script_site;
-    }else if(IsEqualGUID(riid, &IID_IActiveScriptSiteWindow)) {
-        TRACE("(IID_IActiveScriptSiteWindow %p)\n", ppv);
-        *ppv = &script_site_window;
-    }else {
-        *ppv = NULL;
-        TRACE("(%s %p)\n", wine_dbgstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
+IActiveScriptSite script_site = { &ActiveScriptSiteVtbl };
 
 static BOOL load_typelib(void)
 {
     ITypeLib *typelib;
     HRESULT hres;
 
-    hres = LoadTypeLib(L"wscript.exe", &typelib);
+    static const WCHAR wscript_exeW[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
+
+    hres = LoadTypeLib(wscript_exeW, &typelib);
     if(FAILED(hres))
         return FALSE;
 
@@ -240,11 +197,14 @@ static BOOL get_engine_clsid(const WCHAR *ext, CLSID *clsid)
     HKEY hkey;
     HRESULT hres;
 
+    static const WCHAR script_engineW[] =
+        {'\\','S','c','r','i','p','t','E','n','g','i','n','e',0};
+
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, ext, &hkey);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    size = ARRAY_SIZE(fileid);
+    size = sizeof(fileid)/sizeof(WCHAR);
     res = RegQueryValueW(hkey, NULL, fileid, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
@@ -252,12 +212,12 @@ static BOOL get_engine_clsid(const WCHAR *ext, CLSID *clsid)
 
     WINE_TRACE("fileid is %s\n", wine_dbgstr_w(fileid));
 
-    lstrcatW(fileid, L"\\ScriptEngine");
+    strcatW(fileid, script_engineW);
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, fileid, &hkey);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    size = ARRAY_SIZE(progid);
+    size = sizeof(progid)/sizeof(WCHAR);
     res = RegQueryValueW(hkey, NULL, progid, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
@@ -269,7 +229,7 @@ static BOOL get_engine_clsid(const WCHAR *ext, CLSID *clsid)
     return SUCCEEDED(hres);
 }
 
-static BOOL create_engine(CLSID *clsid, IActiveScript **script_ret,
+static HRESULT create_engine(CLSID *clsid, IActiveScript **script_ret,
         IActiveScriptParse **parser)
 {
     IActiveScript *script;
@@ -296,7 +256,7 @@ static BOOL create_engine(CLSID *clsid, IActiveScript **script_ret,
     return TRUE;
 }
 
-static BOOL init_engine(IActiveScript *script, IActiveScriptParse *parser)
+static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
 {
     HRESULT hres;
 
@@ -311,11 +271,11 @@ static BOOL init_engine(IActiveScript *script, IActiveScriptParse *parser)
     if(FAILED(hres))
         return FALSE;
 
-    hres = IActiveScript_AddNamedItem(script, L"WScript", SCRIPTITEM_ISVISIBLE);
+    hres = IActiveScript_AddNamedItem(script, wscriptW, SCRIPTITEM_ISVISIBLE);
     if(FAILED(hres))
         return FALSE;
 
-    hres = IActiveScript_AddNamedItem(script, L"WSH", SCRIPTITEM_ISVISIBLE);
+    hres = IActiveScript_AddNamedItem(script, wshW, SCRIPTITEM_ISVISIBLE);
     if(FAILED(hres))
         return FALSE;
 
@@ -368,17 +328,20 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
             SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
     SysFreeString(text);
     if(FAILED(hres)) {
-        WINE_FIXME("ParseScriptText failed: %08lx\n", hres);
+        WINE_FIXME("ParseScriptText failed: %08x\n", hres);
         return;
     }
 
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
     if(FAILED(hres))
-        WINE_FIXME("SetScriptState failed: %08lx\n", hres);
+        WINE_FIXME("SetScriptState failed: %08x\n", hres);
 }
 
 static BOOL set_host_properties(const WCHAR *prop)
 {
+    static const WCHAR iactive[] = {'i',0};
+    static const WCHAR batch[] = {'b',0};
+
     if(*prop == '/') {
         ++prop;
         if(*prop == '/')
@@ -387,17 +350,12 @@ static BOOL set_host_properties(const WCHAR *prop)
     else
         ++prop;
 
-    if(wcsicmp(prop, L"i") == 0)
+    if(strcmpiW(prop, iactive) == 0)
         wshInteractive = VARIANT_TRUE;
-    else if(wcsicmp(prop, L"b") == 0)
+    else if(strcmpiW(prop, batch) == 0)
         wshInteractive = VARIANT_FALSE;
-    else if(wcsicmp(prop, L"nologo") == 0)
-        WINE_FIXME("ignored %s switch\n", debugstr_w(L"nologo"));
     else
-    {
-        WINE_FIXME("unsupported switch %s\n", debugstr_w(prop));
         return FALSE;
-    }
     return TRUE;
 }
 
@@ -413,11 +371,11 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
 
     WINE_TRACE("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
 
-    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    argv = CommandLineToArgvW(cmdline, &argc);
     if(!argv)
         return 1;
 
-    for(i=1; i<argc; i++) {
+    for(i=0; i<argc; i++) {
         if(*argv[i] == '/' || *argv[i] == '-') {
             if(!set_host_properties(argv[i]))
                 return 1;
@@ -433,11 +391,11 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
         WINE_FIXME("No file name specified\n");
         return 1;
     }
-    res = GetFullPathNameW(filename, ARRAY_SIZE(scriptFullName), scriptFullName, &filepart);
-    if(!res || res > ARRAY_SIZE(scriptFullName))
+    res = GetFullPathNameW(filename, sizeof(scriptFullName)/sizeof(WCHAR), scriptFullName, &filepart);
+    if(!res || res > sizeof(scriptFullName)/sizeof(WCHAR))
         return 1;
 
-    ext = wcsrchr(filepart, '.');
+    ext = strrchrW(filepart, '.');
     if(!ext || !get_engine_clsid(ext, &clsid)) {
         WINE_FIXME("Could not find engine for %s\n", wine_dbgstr_w(ext));
         return 1;

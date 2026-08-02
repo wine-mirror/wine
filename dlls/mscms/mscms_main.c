@@ -18,37 +18,48 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
+#include "wine/port.h"
+#include "wine/debug.h"
+#include "wine/library.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winternl.h"
 #include "icm.h"
-#include "wine/debug.h"
 
 #include "mscms_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
+#ifdef HAVE_LCMS2
 static void lcms_error_handler(cmsContext ctx, cmsUInt32Number error, const char *text)
 {
     TRACE("%u %s\n", error, debugstr_a(text));
 }
+#endif
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE( "(%p, %lu, %p)\n", hinst, reason, reserved );
+    TRACE( "(%p, %d, %p)\n", hinst, reason, reserved );
 
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
+#ifdef HAVE_LCMS2
         cmsSetLogErrorHandler( lcms_error_handler );
+#endif
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
+#ifdef HAVE_LCMS2
+        free_handle_tables();
+#endif
         break;
     }
     return TRUE;

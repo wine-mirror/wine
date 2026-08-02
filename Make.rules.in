@@ -1,0 +1,210 @@
+# Global rules shared by all makefiles     -*-Makefile-*-
+#
+# Each individual makefile may define the following variables:
+# C_SRCS       : C sources for the module
+# OBJC_SRCS    : Objective-C sources for the module
+# RC_SRCS      : resource source files
+# EXTRA_SRCS   : extra source files for make depend
+# EXTRA_OBJS   : extra object files
+# IMPORTS      : dlls to import
+# DELAYIMPORTS : dlls to import in delayed mode
+# EXTRASUBDIRS : subdirectories that do not contain a Makefile
+# MODCFLAGS    : extra CFLAGS for this module
+
+# First some useful definitions
+
+INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
+ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
+ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
+IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
+RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
+
+IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
+                  $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
+IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
+                  $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
+
+CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake core
+CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) \
+                $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:.idl=_p.c dlldata.c) \
+                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
+                $(PO_SRCS:.rc=.res rsrc.pot) $(MC_SRCS:.mc=.res msg.pot) $(XTEMPLATE_SRCS:.x=.h)
+
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
+       $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
+
+CROSSOBJS = $(OBJS:.o=.cross.o)
+LINTS  = $(C_SRCS:.c=.ln)
+
+filter: dummy
+	@$(top_srcdir)/tools/winapi/make_filter --make $(MAKE) all
+
+.PHONY: all filter
+
+# Implicit rules
+
+.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+
+.c.o:
+	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.m.o:
+	$(CC) -c $(ALLCFLAGS) -o $@ $<
+
+.c.cross.o:
+	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+.y.tab.c:
+	$(BISON) $(BISONFLAGS) -p $*_ -o $@ $<
+
+.y.tab.h:
+	$(BISON) $(BISONFLAGS) -p $*_ -o $*.tab.c -d $<
+
+.l.yy.c:
+	$(FLEX) $(LEXFLAGS) -o$@ $<
+
+.mc.res:
+	$(LDPATH) $(WMC) -U -O res $(PORCFLAGS) -o $@ $<
+
+.rc.res:
+	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
+
+.idl.h:
+	$(WIDL) $(IDLFLAGS) -h -o $@ $<
+
+.idl_c.c:
+	$(WIDL) $(IDLFLAGS) -c -o $@ $<
+
+.idl_i.c:
+	$(WIDL) $(IDLFLAGS) -u -o $@ $<
+
+.idl_p.c:
+	$(WIDL) $(IDLFLAGS) -p -o $@ $<
+
+.idl_r.res:
+	$(WIDL) $(IDLFLAGS) -r -o $@ $<
+
+.idl_s.c:
+	$(WIDL) $(IDLFLAGS) -s -o $@ $<
+
+.idl.tlb:
+	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
+
+.idl_t.res:
+	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -o $@ $<
+
+.c.ln:
+	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
+
+.c.ok:
+	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
+
+.sfd.ttf:
+	$(FONTFORGE) -script $(top_srcdir)/fonts/genttf.ff $< $@
+
+.man.in.man:
+	LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
+
+.svg.ico:
+	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
+
+.svg.bmp:
+	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
+
+.po.mo:
+	$(MSGFMT) -o $@ $<
+
+# Rules for IDL files
+
+dlldata.c: $(WIDL) Makefile.in
+	$(WIDL) $(IDLFLAGS) --dlldata-only -o $@ $(IDL_P_SRCS)
+
+# Rule for linting
+
+$(MODULE).ln : $(LINTS)
+	if test "$(LINTS)" ; \
+	then \
+		$(LINT) $(ALLLINTFLAGS) -o$(MODULE) $(LINTS) ; \
+	        $(MV) llib-l$(MODULE).ln $(MODULE).ln ; \
+	else \
+		$(LINT) $(ALLLINTFLAGS) -C$(MODULE) /dev/null ; \
+	fi
+
+lint:: $(MODULE).ln
+
+# Rules for Windows API checking
+
+winapi_check:: dummy
+	$(WINAPI_CHECK) $(WINAPI_CHECK_FLAGS) $(WINAPI_CHECK_EXTRA_FLAGS) .
+
+.PHONY: winapi_check
+
+# Rules for dependencies
+
+DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
+              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
+              $(IDL_GEN_C_SRCS) $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
+              $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+
+depend: dummy
+	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(EXTRAINCL) $(DEPEND_SRCS)
+
+.PHONY: depend
+
+# Rules for man pages
+
+MANPAGES = $(MANPAGE) $(EXTRA_MANPAGES)
+
+all: $(MANPAGES)
+
+install-man-pages:: $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) $(MANPAGE) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
+
+uninstall-man-pages::
+	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/$(MANPAGE:.man=).$(prog_manext)
+
+install:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in install-man-pages)
+uninstall:: @WOW64_DISABLE@ $(MANPAGE:.man=.man.in uninstall-man-pages)
+
+.PHONY: install-man-pages uninstall-man-pages
+
+# Rules for cleaning
+
+$(EXTRASUBDIRS:%=%/__clean__): dummy
+	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
+
+clean:: $(EXTRASUBDIRS:%=%/__clean__)
+	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(MANPAGES)
+
+.PHONY: clean $(EXTRASUBDIRS:%=%/__clean__)
+
+# Rules for installing
+
+$(INSTALLDIRS):
+	$(MKINSTALLDIRS) $@
+
+install install-lib install-dev uninstall::
+
+.PHONY: install install-lib install-dev uninstall
+
+# Rules for resources
+
+rsrc.pot: $(WRC)
+	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
+
+msg.pot: $(WMC)
+	$(LDPATH) $(WMC) -O pot -o $@ $(MC_SRCS)
+
+$(MC_SRCS:.mc=.res): $(WMC) $(ALL_MO_FILES)
+$(RC_SRCS:.rc=.res): $(WRC)
+$(PO_SRCS:.rc=.res): $(ALL_MO_FILES)
+
+# Misc. rules
+
+$(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_TLB_RES) $(IDL_R_SRCS:.idl=_r.res): $(WIDL)
+
+dummy:
+
+.PHONY: dummy
+
+# End of global rules

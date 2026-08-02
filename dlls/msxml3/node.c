@@ -18,21 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #define COBJMACROS
 
 #include <stdarg.h>
 
-#include <libxml/parser.h>
-#include <libxml/parserInternals.h>
-#include <libxml/xmlerror.h>
-#include <libxml/HTMLtree.h>
-#include <libxslt/pattern.h>
-#include <libxslt/transform.h>
-#include <libxslt/imports.h>
-#include <libxslt/variables.h>
-#include <libxslt/xsltutils.h>
-#include <libxslt/xsltInternals.h>
-#include <libxslt/documents.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+# include <libxml/HTMLtree.h>
+# ifdef SONAME_LIBXSLT
+#  ifdef HAVE_LIBXSLT_PATTERN_H
+#   include <libxslt/pattern.h>
+#  endif
+#  ifdef HAVE_LIBXSLT_TRANSFORM_H
+#   include <libxslt/transform.h>
+#  endif
+#  include <libxslt/xsltutils.h>
+#  include <libxslt/xsltInternals.h>
+# endif
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -46,6 +52,18 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
+
+#ifdef HAVE_LIBXML2
+
+#ifdef SONAME_LIBXSLT
+extern void* libxslt_handle;
+# define MAKE_FUNCPTR(f) extern typeof(f) * p##f
+MAKE_FUNCPTR(xsltApplyStylesheet);
+MAKE_FUNCPTR(xsltCleanupGlobals);
+MAKE_FUNCPTR(xsltFreeStylesheet);
+MAKE_FUNCPTR(xsltParseStylesheetDoc);
+# undef MAKE_FUNCPTR
+#endif
 
 static const IID IID_xmlnode = {0x4f2f4ba2,0xb822,0x11df,{0x8b,0x8a,0x68,0x50,0xdf,0xd7,0x20,0x85}};
 
@@ -107,7 +125,7 @@ static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
 {
     SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("%p, refcount %ld.\n", iface, ref );
+    TRACE("(%p)->(%d)\n", This, ref );
     return ref;
 }
 
@@ -116,10 +134,10 @@ static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
     SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p, refcount %ld.\n", iface, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
 
-    if (!ref)
-        free(This);
+    if (ref == 0)
+        heap_free(This);
 
     return ref;
 }
@@ -153,7 +171,7 @@ HRESULT node_create_supporterrorinfo(enum tid_t const *iids, void **obj)
 {
     SupportErrorInfo *This;
 
-    This = malloc(sizeof(*This));
+    This = heap_alloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
@@ -186,13 +204,6 @@ HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
     hr = node_get_base_name(This, &base);
     if (hr != S_OK) return hr;
 
-    if (!base[0] && xmldoc_version(This->node->doc) != MSXML6)
-    {
-        SysFreeString(base);
-        *name = SysAllocString(L"xmlns");
-        return S_OK;
-    }
-
     hr = node_get_prefix(This, &prefix);
     if (hr == S_OK)
     {
@@ -201,17 +212,10 @@ HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
 
         /* +1 for ':' */
         ptr = *name = SysAllocStringLen(NULL, SysStringLen(base) + SysStringLen(prefix) + 1);
-        if (SysStringByteLen(prefix))
-        {
-            memcpy(ptr, prefix, SysStringByteLen(prefix));
-            ptr += SysStringLen(prefix);
-        }
-        if (SysStringByteLen(base))
-        {
-            if (SysStringByteLen(prefix))
-                memcpy(ptr++, &colW, sizeof(WCHAR));
-            memcpy(ptr, base, SysStringByteLen(base));
-        }
+        memcpy(ptr, prefix, SysStringByteLen(prefix));
+        ptr += SysStringLen(prefix);
+        memcpy(ptr++, &colW, sizeof(WCHAR));
+        memcpy(ptr, base, SysStringByteLen(base));
 
         SysFreeString(base);
         SysFreeString(prefix);
@@ -248,7 +252,7 @@ HRESULT node_set_content(xmlnode *This, LPCWSTR value)
         return E_OUTOFMEMORY;
 
     xmlNodeSetContent(This->node, str);
-    free(str);
+    heap_free(str);
     return S_OK;
 }
 
@@ -264,13 +268,13 @@ static HRESULT node_set_content_escaped(xmlnode *This, LPCWSTR value)
     escaped = xmlEncodeSpecialChars(NULL, str);
     if(!escaped)
     {
-        free(str);
+        heap_free(str);
         return E_OUTOFMEMORY;
     }
 
     xmlNodeSetContent(This->node, escaped);
 
-    free(str);
+    heap_free(str);
     xmlFree(escaped);
 
     return S_OK;
@@ -384,7 +388,7 @@ HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
 
 static int node_get_inst_cnt(xmlNodePtr node)
 {
-    int ret = *(LONG *)&node->_private & NODE_PRIV_REFCOUNT_MASK;
+    int ret = *(LONG *)&node->_private;
     xmlNodePtr child;
 
     /* add attribute counts */
@@ -413,20 +417,6 @@ static int node_get_inst_cnt(xmlNodePtr node)
 int xmlnode_get_inst_cnt(xmlnode *node)
 {
     return node_get_inst_cnt(node->node);
-}
-
-/* _private field holds a number of COM instances spawned from this libxml2 node
- * most significant bits are used to store information about ignorable whitespace nodes */
-void xmlnode_add_ref(xmlNodePtr node)
-{
-    if (node->type == XML_DOCUMENT_NODE) return;
-    InterlockedIncrement((LONG*)&node->_private);
-}
-
-void xmlnode_release(xmlNodePtr node)
-{
-    if (node->type == XML_DOCUMENT_NODE) return;
-    InterlockedDecrement((LONG*)&node->_private);
 }
 
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
@@ -477,40 +467,34 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         xmlnode *before_node_obj = get_node_obj(before);
         IXMLDOMNode_Release(before);
         if(!before_node_obj) return E_FAIL;
-    }
 
-    /* unlink from current parent first */
-    if(node_obj->parent)
-    {
-        hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
-        if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
-    }
-    doc = node_obj->node->doc;
+        /* unlink from current parent first */
+        if(node_obj->parent)
+        {
+            hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+            if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
+        }
 
-    if(before)
-    {
-        xmlNodePtr new_node;
-        xmlnode *before_node_obj = get_node_obj(before);
+        doc = node_obj->node->doc;
 
         /* refs count including subtree */
         if (doc != before_node_obj->node->doc)
             refcount = xmlnode_get_inst_cnt(node_obj);
 
         if (refcount) xmldoc_add_refs(before_node_obj->node->doc, refcount);
-        new_node = xmlAddPrevSibling(before_node_obj->node, node_obj->node);
-        if (new_node != node_obj->node)
-        {
-            if (refcount != 1)
-                FIXME("referenced xmlNode was freed, expect crashes\n");
-            xmlnode_add_ref(new_node);
-            node_obj->node = new_node;
-        }
+        xmlAddPrevSibling(before_node_obj->node, node_obj->node);
         if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->parent;
     }
     else
     {
-        xmlNodePtr new_node;
+        /* unlink from current parent first */
+        if(node_obj->parent)
+        {
+            hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+            if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
+        }
+        doc = node_obj->node->doc;
 
         if (doc != This->node->doc)
             refcount = xmlnode_get_inst_cnt(node_obj);
@@ -518,14 +502,7 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         if (refcount) xmldoc_add_refs(This->node->doc, refcount);
         /* xmlAddChild doesn't unlink node from previous parent */
         xmlUnlinkNode(node_obj->node);
-        new_node = xmlAddChild(This->node, node_obj->node);
-        if (new_node != node_obj->node)
-        {
-            if (refcount != 1)
-                FIXME("referenced xmlNode was freed, expect crashes\n");
-            xmlnode_add_ref(new_node);
-            node_obj->node = new_node;
-        }
+        xmlAddChild(This->node, node_obj->node);
         if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->iface;
     }
@@ -642,9 +619,6 @@ HRESULT node_append_child(xmlnode *This, IXMLDOMNode *child, IXMLDOMNode **outCh
     VARIANT var;
     HRESULT hr;
 
-    if (!child)
-        return E_INVALIDARG;
-
     hr = IXMLDOMNode_get_nodeType(child, &type);
     if(FAILED(hr) || type == NODE_ATTRIBUTE) {
         if (outChild) *outChild = NULL;
@@ -671,8 +645,6 @@ HRESULT node_has_childnodes(const xmlnode *This, VARIANT_BOOL *ret)
 
 HRESULT node_get_owner_doc(const xmlnode *This, IXMLDOMDocument **doc)
 {
-    if(!doc)
-        return E_INVALIDARG;
     return get_domdoc_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)doc);
 }
 
@@ -709,63 +681,48 @@ HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
     return S_OK;
 }
 
-static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *last, BOOL *trail_ig_ws)
+static inline xmlChar* trim_whitespace(xmlChar* str)
+{
+    xmlChar* ret = str;
+    int len;
+
+    if (!str)
+        return NULL;
+
+    while (*ret && isspace(*ret))
+        ++ret;
+    len = xmlStrlen(ret);
+    if (len)
+        while (isspace(ret[len-1])) --len;
+
+    ret = xmlStrndup(ret, len);
+    xmlFree(str);
+    return ret;
+}
+
+static xmlChar* do_get_text(xmlNodePtr node)
 {
     xmlNodePtr child;
     xmlChar* str;
     BOOL preserving = is_preserving_whitespace(node);
 
-    *first = -1;
-    *last = 0;
-
     if (!node->children)
     {
         str = xmlNodeGetContent(node);
-        *trail_ig_ws = *(DWORD*)&node->_private & NODE_PRIV_CHILD_IGNORABLE_WS;
     }
     else
     {
-        BOOL ig_ws = FALSE;
+        xmlElementType prev_type = XML_TEXT_NODE;
         xmlChar* tmp;
-        DWORD pos = 0;
         str = xmlStrdup(BAD_CAST "");
-
-        if (node->type != XML_DOCUMENT_NODE)
-            ig_ws = *(DWORD*)&node->_private & NODE_PRIV_CHILD_IGNORABLE_WS;
-        *trail_ig_ws = FALSE;
-
         for (child = node->children; child != NULL; child = child->next)
         {
             switch (child->type)
             {
-            case XML_ELEMENT_NODE: {
-                DWORD node_first, node_last;
-
-                tmp = do_get_text(child, FALSE, &node_first, &node_last, trail_ig_ws);
-
-                if (node_first!=-1 && pos+node_first<*first)
-                    *first = pos+node_first;
-                if (node_last && pos+node_last>*last)
-                    *last = pos+node_last;
+            case XML_ELEMENT_NODE:
+                tmp = do_get_text(child);
                 break;
-            }
             case XML_TEXT_NODE:
-                tmp = xmlNodeGetContent(child);
-                if (!preserving && tmp[0])
-                {
-                    xmlChar *beg;
-
-                    for (beg = tmp; *beg; beg++)
-                        if (!isspace(*beg)) break;
-
-                    if (!*beg)
-                    {
-                        ig_ws = TRUE;
-                        xmlFree(tmp);
-                        tmp = NULL;
-                    }
-                }
-                break;
             case XML_CDATA_SECTION_NODE:
             case XML_ENTITY_REF_NODE:
             case XML_ENTITY_NODE:
@@ -776,33 +733,18 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *las
                 break;
             }
 
-            if ((tmp && *tmp) || child->type==XML_CDATA_SECTION_NODE)
+            if (tmp)
             {
-                if (ig_ws && str[0])
+                if (*tmp)
                 {
-                    str = xmlStrcat(str, BAD_CAST " ");
-                    pos++;
+                    if (prev_type == XML_ELEMENT_NODE && child->type == XML_ELEMENT_NODE)
+                        str = xmlStrcat(str, BAD_CAST " ");
+                    str = xmlStrcat(str, tmp);
+                    prev_type = child->type;
                 }
-                if (tmp && *tmp) str = xmlStrcat(str, tmp);
-                if (child->type==XML_CDATA_SECTION_NODE && pos<*first)
-                    *first = pos;
-                if (tmp && *tmp) pos += xmlStrlen(tmp);
-                if (child->type==XML_CDATA_SECTION_NODE && pos>*last)
-                    *last = pos;
-                ig_ws = FALSE;
+                xmlFree(tmp);
             }
-            if (tmp) xmlFree(tmp);
-
-            if (!ig_ws)
-            {
-                ig_ws = *(DWORD*)&child->_private & NODE_PRIV_TRAILING_IGNORABLE_WS;
-            }
-            if (!ig_ws)
-                ig_ws = *trail_ig_ws;
-            *trail_ig_ws = FALSE;
         }
-
-        *trail_ig_ws = ig_ws;
     }
 
     switch (node->type)
@@ -813,24 +755,8 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *las
     case XML_ENTITY_NODE:
     case XML_DOCUMENT_NODE:
     case XML_DOCUMENT_FRAG_NODE:
-        if (trim && !preserving)
-        {
-            xmlChar* ret;
-            int len;
-
-            if (!str)
-                break;
-
-            for (ret = str; *ret && isspace(*ret) && (*first)--; ret++)
-                if (*last) (*last)--;
-            for (len = xmlStrlen(ret)-1; len >= 0 && len >= *last; len--)
-                if(!isspace(ret[len])) break;
-
-            ret = xmlStrndup(ret, len+1);
-            xmlFree(str);
-            str = ret;
-            break;
-        }
+        if (!preserving)
+            str = trim_whitespace(str);
         break;
     default:
         break;
@@ -843,12 +769,10 @@ HRESULT node_get_text(const xmlnode *This, BSTR *text)
 {
     BSTR str = NULL;
     xmlChar *content;
-    DWORD first, last;
-    BOOL tmp;
 
     if (!text) return E_INVALIDARG;
 
-    content = do_get_text(This->node, TRUE, &first, &last, &tmp);
+    content = do_get_text(This->node);
     if (content)
     {
         str = bstr_from_xmlChar(content);
@@ -874,7 +798,7 @@ HRESULT node_put_text(xmlnode *This, BSTR text)
 
     /* Escape the string. */
     str2 = xmlEncodeEntitiesReentrant(This->node->doc, str);
-    free(str);
+    heap_free(str);
 
     xmlNodeSetContent(This->node, str2);
     xmlFree(str2);
@@ -981,7 +905,7 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
     {
         if (xmlStrchr(string, '\''))
         {
-            xmlOutputBufferWrite(buf, 1, "\"");
+	    xmlOutputBufferWrite(buf, 1, "\"");
             base = cur = string;
 
             while (*cur)
@@ -999,13 +923,13 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
             }
             if (base != cur)
                 xmlOutputBufferWrite(buf, cur-base, (const char*)base);
-            xmlOutputBufferWrite(buf, 1, "\"");
-        }
+	    xmlOutputBufferWrite(buf, 1, "\"");
+	}
         else
         {
-            xmlOutputBufferWrite(buf, 1, "\'");
+	    xmlOutputBufferWrite(buf, 1, "\'");
             xmlOutputBufferWriteString(buf, (const char*)string);
-            xmlOutputBufferWrite(buf, 1, "\'");
+	    xmlOutputBufferWrite(buf, 1, "\'");
         }
     }
     else
@@ -1014,112 +938,6 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
         xmlOutputBufferWriteString(buf, (const char*)string);
         xmlOutputBufferWrite(buf, 1, "\"");
     }
-}
-
-static int XMLCALL transform_to_stream_write(void *context, const char *buffer, int len)
-{
-    DWORD written;
-    HRESULT hr = ISequentialStream_Write((ISequentialStream *)context, buffer, len, &written);
-    return hr == S_OK ? written : -1;
-}
-
-/* Output for method "text" */
-static void transform_write_text(xmlDocPtr result, xsltStylesheetPtr style, xmlOutputBufferPtr output)
-{
-    xmlNodePtr cur = result->children;
-    while (cur)
-    {
-        if (cur->type == XML_TEXT_NODE)
-            xmlOutputBufferWriteString(output, (const char*)cur->content);
-
-        /* skip to next node */
-        if (cur->children)
-        {
-            if ((cur->children->type != XML_ENTITY_DECL) &&
-                (cur->children->type != XML_ENTITY_REF_NODE) &&
-                (cur->children->type != XML_ENTITY_NODE))
-            {
-                cur = cur->children;
-                continue;
-            }
-        }
-
-        if (cur->next) {
-            cur = cur->next;
-            continue;
-        }
-
-        do
-        {
-            cur = cur->parent;
-            if (cur == NULL)
-                break;
-            if (cur == (xmlNodePtr) style->doc) {
-                cur = NULL;
-                break;
-            }
-            if (cur->next) {
-                cur = cur->next;
-                break;
-            }
-        } while (cur);
-    }
-}
-
-#undef XSLT_GET_IMPORT_PTR
-#define XSLT_GET_IMPORT_PTR(res, style, name) {          \
-    xsltStylesheetPtr st = style;                        \
-    res = NULL;                                          \
-    while (st != NULL) {                                 \
-        if (st->name != NULL) { res = st->name; break; } \
-        st = xsltNextImport(st);                         \
-    }}
-
-#undef XSLT_GET_IMPORT_INT
-#define XSLT_GET_IMPORT_INT(res, style, name) {         \
-    xsltStylesheetPtr st = style;                       \
-    res = -1;                                           \
-    while (st != NULL) {                                \
-        if (st->name != -1) { res = st->name; break; }  \
-        st = xsltNextImport(st);                        \
-    }}
-
-static void transform_write_xmldecl(xmlDocPtr result, xsltStylesheetPtr style, BOOL omit_encoding, xmlOutputBufferPtr output)
-{
-    int omit_xmldecl, standalone;
-
-    XSLT_GET_IMPORT_INT(omit_xmldecl, style, omitXmlDeclaration);
-    if (omit_xmldecl == 1) return;
-
-    XSLT_GET_IMPORT_INT(standalone, style, standalone);
-
-    xmlOutputBufferWriteString(output, "<?xml version=");
-    if (result->version)
-    {
-        xmlOutputBufferWriteString(output, "\"");
-        xmlOutputBufferWriteString(output, (const char *)result->version);
-        xmlOutputBufferWriteString(output, "\"");
-    }
-    else
-        xmlOutputBufferWriteString(output, "\"1.0\"");
-
-    if (!omit_encoding)
-    {
-        const xmlChar *encoding;
-
-        /* default encoding is UTF-16 */
-        XSLT_GET_IMPORT_PTR(encoding, style, encoding);
-        xmlOutputBufferWriteString(output, " encoding=");
-        xmlOutputBufferWriteString(output, "\"");
-        xmlOutputBufferWriteString(output, encoding ? (const char *)encoding : "UTF-16");
-        xmlOutputBufferWriteString(output, "\"");
-    }
-
-    /* standalone attribute */
-    if (standalone != -1)
-        xmlOutputBufferWriteString(output, standalone == 0 ? " standalone=\"no\"" : " standalone=\"yes\"");
-
-    xmlOutputBufferWriteString(output, "?>");
 }
 
 static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
@@ -1136,7 +954,7 @@ static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
         {
             xmlOutputBufferWriteString(buf, " ");
             xml_write_quotedstring(buf, cur->SystemID);
-        }
+	}
     }
     else if (cur->SystemID)
     {
@@ -1146,8 +964,7 @@ static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
     xmlOutputBufferWriteString(buf, ">\n");
 }
 
-/* Duplicates htmlDocContentDumpFormatOutput() the way we need it - doesn't add trailing newline. */
-static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc, const char *encoding, int format)
+static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
 {
     xmlElementType type;
 
@@ -1156,403 +973,91 @@ static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc, const cha
     doc->type = XML_HTML_DOCUMENT_NODE;
     if (doc->intSubset)
         htmldtd_dumpcontent(buf, doc);
-    if (doc->children) {
+    if (doc->children)
+    {
         xmlNodePtr cur = doc->children;
-        while (cur) {
-            htmlNodeDumpFormatOutput(buf, doc, cur, encoding, format);
+
+        while (cur)
+        {
+            htmlNodeDumpFormatOutput(buf, doc, cur, NULL, 1);
             cur = cur->next;
         }
+
     }
     doc->type = type;
 }
 
-static inline BOOL transform_is_empty_resultdoc(xmlDocPtr result)
+static const xmlChar *get_output_buffer_content(xmlOutputBufferPtr output)
 {
-    return !result->children || ((result->children->type == XML_DTD_NODE) && !result->children->next);
+#ifdef LIBXML2_NEW_BUFFER
+    return xmlOutputBufferGetContent(output);
+#else
+    return xmlBufferContent(output->buffer);
+#endif
 }
 
-static inline BOOL transform_is_valid_method(xsltStylesheetPtr style)
+HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p)
 {
-    return !style->methodURI || !(style->method && xmlStrEqual(style->method, (const xmlChar *)"xhtml"));
-}
-
-/* Helper to write transformation result to specified output buffer. */
-static HRESULT node_transform_write(xsltStylesheetPtr style, xmlDocPtr result, BOOL omit_encoding, const char *encoding, xmlOutputBufferPtr output)
-{
-    const xmlChar *method;
-    int indent;
-
-    if (!transform_is_valid_method(style))
-    {
-        ERR("unknown output method\n");
-        return E_FAIL;
-    }
-
-    XSLT_GET_IMPORT_PTR(method, style, method)
-    XSLT_GET_IMPORT_INT(indent, style, indent);
-
-    if (!method && (result->type == XML_HTML_DOCUMENT_NODE))
-        method = (const xmlChar *) "html";
-
-    if (method && xmlStrEqual(method, (const xmlChar *)"html"))
-    {
-        htmlSetMetaEncoding(result, (const xmlChar *)encoding);
-        if (indent == -1)
-            indent = 1;
-        htmldoc_dumpcontent(output, result, encoding, indent);
-    }
-    else if (method && xmlStrEqual(method, (const xmlChar *)"xhtml"))
-    {
-        htmlSetMetaEncoding(result, (const xmlChar *) encoding);
-        htmlDocContentDumpOutput(output, result, encoding);
-    }
-    else if (method && xmlStrEqual(method, (const xmlChar *)"text"))
-        transform_write_text(result, style, output);
-    else
-    {
-        transform_write_xmldecl(result, style, omit_encoding, output);
-
-        if (result->children)
-        {
-            xmlNodePtr child = result->children;
-
-            while (child)
-            {
-                xmlNodeDumpOutput(output, result, child, 0, indent == 1, encoding);
-                if (indent && ((child->type == XML_DTD_NODE) || ((child->type == XML_COMMENT_NODE) && child->next)))
-                    xmlOutputBufferWriteString(output, "\r\n");
-                child = child->next;
-            }
-        }
-    }
-
-    xmlOutputBufferFlush(output);
-    return S_OK;
-}
-
-/* For BSTR output is always UTF-16, without 'encoding' attribute */
-static HRESULT node_transform_write_to_bstr(xsltStylesheetPtr style, xmlDocPtr result, BSTR *str)
-{
-    HRESULT hr = S_OK;
-
-    if (transform_is_empty_resultdoc(result))
-        *str = SysAllocStringLen(NULL, 0);
-    else
-    {
-        xmlOutputBufferPtr output = xmlAllocOutputBuffer(xmlFindCharEncodingHandler("UTF-16"));
-        const xmlChar *content;
-        size_t len;
-
-        *str = NULL;
-        if (!output)
-            return E_OUTOFMEMORY;
-
-        hr = node_transform_write(style, result, TRUE, "UTF-16", output);
-        content = xmlBufContent(output->conv);
-        len = xmlBufUse(output->conv);
-        /* UTF-16 encoder places UTF-16 bom, we don't need it for BSTR */
-        content += sizeof(WCHAR);
-        *str = SysAllocStringLen((WCHAR*)content, len/sizeof(WCHAR) - 1);
-        xmlOutputBufferClose(output);
-    }
-
-    return *str ? hr : E_OUTOFMEMORY;
-}
-
-static HRESULT node_transform_write_to_stream(xsltStylesheetPtr style, xmlDocPtr result, ISequentialStream *stream)
-{
-    static const xmlChar *utf16 = (const xmlChar*)"UTF-16";
-    xmlOutputBufferPtr output;
-    const xmlChar *encoding;
-    HRESULT hr;
-
-    if (transform_is_empty_resultdoc(result))
-    {
-        WARN("empty result document\n");
-        return S_OK;
-    }
-
-    if (style->methodURI && (!style->method || !xmlStrEqual(style->method, (const xmlChar *) "xhtml")))
-    {
-        ERR("unknown output method\n");
-        return E_FAIL;
-    }
-
-    /* default encoding is UTF-16 */
-    XSLT_GET_IMPORT_PTR(encoding, style, encoding);
-    if (!encoding)
-        encoding = utf16;
-
-    output = xmlOutputBufferCreateIO(transform_to_stream_write, NULL, stream, xmlFindCharEncodingHandler((const char*)encoding));
-    if (!output)
-        return E_OUTOFMEMORY;
-
-    hr = node_transform_write(style, result, FALSE, (const char*)encoding, output);
-    xmlOutputBufferClose(output);
-    return hr;
-}
-
-struct import_buffer
-{
-    char *data;
-    int cur;
-    int len;
-};
-
-static int XMLCALL import_loader_io_read(void *context, char *out, int len)
-{
-    struct import_buffer *buffer = (struct import_buffer *)context;
-
-    TRACE("%p, %p, %d\n", context, out, len);
-
-    if (buffer->cur == buffer->len)
-        return 0;
-
-    len = min(len, buffer->len - buffer->cur);
-    memcpy(out, &buffer->data[buffer->cur], len);
-    buffer->cur += len;
-
-    TRACE("read %d\n", len);
-
-    return len;
-}
-
-static int XMLCALL import_loader_io_close(void * context)
-{
-    struct import_buffer *buffer = (struct import_buffer *)context;
-
-    TRACE("%p\n", context);
-
-    free(buffer->data);
-    free(buffer);
-    return 0;
-}
-
-static HRESULT import_loader_onDataAvailable(void *ctxt, char *ptr, DWORD len)
-{
-    xmlParserInputPtr *input = (xmlParserInputPtr *)ctxt;
-    xmlParserInputBufferPtr inputbuffer;
-    struct import_buffer *buffer;
-
-    buffer = malloc(sizeof(*buffer));
-
-    buffer->data = malloc(len);
-    memcpy(buffer->data, ptr, len);
-    buffer->cur = 0;
-    buffer->len = len;
-
-    inputbuffer = xmlParserInputBufferCreateIO(import_loader_io_read, import_loader_io_close, buffer,
-            XML_CHAR_ENCODING_NONE);
-    *input = xmlNewIOInputStream(NULL, inputbuffer, XML_CHAR_ENCODING_NONE);
-    if (!*input)
-        xmlFreeParserInputBuffer(inputbuffer);
-
-    return *input ? S_OK : E_FAIL;
-}
-
-static HRESULT xslt_doc_get_uri(const xmlChar *uri, void *_ctxt, xsltLoadType type, IUri **doc_uri)
-{
-    xsltStylesheetPtr style = (xsltStylesheetPtr)_ctxt;
-    IUri *href_uri;
-    HRESULT hr;
-    BSTR uriW;
-
-    *doc_uri = NULL;
-
-    uriW = bstr_from_xmlChar(uri);
-    hr = CreateUri(uriW, Uri_CREATE_ALLOW_RELATIVE | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &href_uri);
-    SysFreeString(uriW);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create href uri, %#lx.\n", hr);
-        return hr;
-    }
-
-    if (type == XSLT_LOAD_STYLESHEET && style->doc && style->doc->name)
-    {
-        IUri *base_uri;
-        BSTR baseuriW;
-
-        baseuriW = bstr_from_xmlChar((xmlChar *)style->doc->name);
-        hr = CreateUri(baseuriW, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &base_uri);
-        SysFreeString(baseuriW);
-        if (FAILED(hr))
-        {
-            WARN("Failed to create base uri, %#lx.\n", hr);
-            return hr;
-        }
-
-        hr = CoInternetCombineIUri(base_uri, href_uri, 0, doc_uri, 0);
-        IUri_Release(base_uri);
-        if (FAILED(hr))
-            WARN("Failed to combine uris, hr %#lx.\n", hr);
-    }
-    else
-    {
-        *doc_uri = href_uri;
-        IUri_AddRef(*doc_uri);
-    }
-
-    IUri_Release(href_uri);
-
-    return hr;
-}
-
-xmlDocPtr xslt_doc_default_loader(const xmlChar *uri, xmlDictPtr dict, int options,
-    void *_ctxt, xsltLoadType type)
-{
-    IUri *import_uri = NULL;
-    xmlParserInputPtr input;
-    xmlParserCtxtPtr pctxt;
-    xmlDocPtr doc = NULL;
-    IMoniker *moniker;
-    HRESULT hr;
-    bsc_t *bsc;
-    BSTR uriW;
-
-    TRACE("%s, %p, %#x, %p, %d\n", debugstr_a((const char *)uri), dict, options, _ctxt, type);
-
-    pctxt = xmlNewParserCtxt();
-    if (!pctxt)
-        return NULL;
-
-    if (dict && pctxt->dict)
-    {
-        xmlDictFree(pctxt->dict);
-        pctxt->dict = NULL;
-    }
-
-    if (dict)
-    {
-        pctxt->dict = dict;
-        xmlDictReference(pctxt->dict);
-    }
-
-    xmlCtxtUseOptions(pctxt, options);
-
-    hr = xslt_doc_get_uri(uri, _ctxt, type, &import_uri);
-    if (FAILED(hr))
-        goto failed;
-
-    hr = CreateURLMonikerEx2(NULL, import_uri, &moniker, 0);
-    if (FAILED(hr))
-        goto failed;
-
-    hr = bind_url(moniker, import_loader_onDataAvailable, &input, &bsc);
-    IMoniker_Release(moniker);
-    if (FAILED(hr))
-        goto failed;
-
-    if (FAILED(detach_bsc(bsc)))
-        goto failed;
-
-    if (!input)
-        goto failed;
-
-    inputPush(pctxt, input);
-    xmlParseDocument(pctxt);
-
-    if (pctxt->wellFormed)
-    {
-        doc = pctxt->myDoc;
-        /* Set imported uri, to give nested imports a chance. */
-        if (IUri_GetPropertyBSTR(import_uri, Uri_PROPERTY_ABSOLUTE_URI, &uriW, 0) == S_OK)
-        {
-            doc->name = (char *)xmlchar_from_wcharn(uriW, SysStringLen(uriW), TRUE);
-            SysFreeString(uriW);
-        }
-    }
-    else
-    {
-        doc = NULL;
-        xmlFreeDoc(pctxt->myDoc);
-        pctxt->myDoc = NULL;
-    }
-
-failed:
-    xmlFreeParserCtxt(pctxt);
-    if (import_uri)
-        IUri_Release(import_uri);
-
-    return doc;
-}
-
-HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p,
-    ISequentialStream *stream, const struct xslprocessor_params *params)
-{
+#ifdef SONAME_LIBXSLT
     xsltStylesheetPtr xsltSS;
-    xmlDocPtr sheet_doc;
-    HRESULT hr = S_OK;
     xmlnode *sheet;
 
-    if (!stylesheet || (!p && !stream)) return E_INVALIDARG;
+    if (!libxslt_handle) return E_NOTIMPL;
+    if (!stylesheet || !p) return E_INVALIDARG;
 
-    if (p) *p = NULL;
+    *p = NULL;
 
     sheet = get_node_obj(stylesheet);
     if(!sheet) return E_FAIL;
 
-    sheet_doc = xmlCopyDoc(sheet->node->doc, 1);
-    xsltSS = xsltParseStylesheetDoc(sheet_doc);
-    if (xsltSS)
+    xsltSS = pxsltParseStylesheetDoc(sheet->node->doc);
+    if(xsltSS)
     {
-        const char **xslparams = NULL;
-        xmlDocPtr result;
-        unsigned int i;
-
-        /* convert our parameter list to libxml2 format */
-        if (params && params->count)
+        xmlDocPtr result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+        if(result)
         {
-            struct xslprocessor_par *par;
+            const xmlChar *content;
 
-            i = 0;
-            xslparams = malloc((params->count * 2 + 1) * sizeof(char*));
-            LIST_FOR_EACH_ENTRY(par, &params->list, struct xslprocessor_par, entry)
+            if(result->type == XML_HTML_DOCUMENT_NODE)
             {
-                xslparams[i++] = (char*)xmlchar_from_wchar(par->name);
-                xslparams[i++] = (char*)xmlchar_from_wchar(par->value);
+                xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
+                if (output)
+                {
+                    htmldoc_dumpcontent(output, result->doc);
+                    content = get_output_buffer_content(output);
+                    *p = bstr_from_xmlChar(content);
+                    xmlOutputBufferClose(output);
+                }
             }
-            xslparams[i] = NULL;
-        }
-
-        if (xslparams)
-        {
-            xsltTransformContextPtr ctxt = xsltNewTransformContext(xsltSS, This->node->doc);
-
-            /* push parameters to user context */
-            xsltQuoteUserParams(ctxt, xslparams);
-            result = xsltApplyStylesheetUser(xsltSS, This->node->doc, NULL, NULL, NULL, ctxt);
-            xsltFreeTransformContext(ctxt);
-
-            for (i = 0; i < params->count*2; i++)
-                free((char*)xslparams[i]);
-            free(xslparams);
-        }
-        else
-            result = xsltApplyStylesheet(xsltSS, This->node->doc, NULL);
-
-        if (result)
-        {
-            if (stream)
-                hr = node_transform_write_to_stream(xsltSS, result, stream);
             else
-                hr = node_transform_write_to_bstr(xsltSS, result, p);
+            {
+                xmlBufferPtr buf = xmlBufferCreate();
+                if (buf)
+                {
+                    int size = xmlNodeDump(buf, NULL, (xmlNodePtr)result, 0, 0);
+                    if(size > 0)
+                    {
+                        content = xmlBufferContent(buf);
+                        *p = bstr_from_xmlChar(content);
+                    }
+                    xmlBufferFree(buf);
+                }
+            }
             xmlFreeDoc(result);
         }
-
-        xsltFreeStylesheet(xsltSS);
+        /* libxslt "helpfully" frees the XML document the stylesheet was
+           generated from, too */
+        xsltSS->doc = NULL;
+        pxsltFreeStylesheet(xsltSS);
     }
-    else
-        xmlFreeDoc(sheet_doc);
 
-    if (p && !*p) *p = SysAllocStringLen(NULL, 0);
+    if(!*p) *p = SysAllocStringLen(NULL, 0);
 
-    return hr;
-}
-
-HRESULT node_transform_node(const xmlnode *node, IXMLDOMNode *stylesheet, BSTR *p)
-{
-    return node_transform_node_params(node, stylesheet, p, NULL, NULL);
+    return S_OK;
+#else
+    FIXME("libxslt headers were not found at compile time\n");
+    return E_NOTIMPL;
+#endif
 }
 
 HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nodes)
@@ -1564,7 +1069,7 @@ HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nod
 
     str = xmlchar_from_wchar(query);
     hr = create_selection(This->node, str, nodes);
-    free(str);
+    heap_free(str);
 
     return hr;
 }
@@ -1573,9 +1078,6 @@ HRESULT node_select_singlenode(const xmlnode *This, BSTR query, IXMLDOMNode **no
 {
     IXMLDOMNodeList *list;
     HRESULT hr;
-
-    if (node)
-        *node = NULL;
 
     hr = node_select_nodes(This, query, &list);
     if (hr == S_OK)
@@ -1623,16 +1125,25 @@ HRESULT node_get_base_name(xmlnode *This, BSTR *name)
 {
     if (!name) return E_INVALIDARG;
 
-    if (xmldoc_version(This->node->doc) != MSXML6 &&
-        xmlStrEqual(This->node->name, BAD_CAST "xmlns"))
-        *name = SysAllocString(L"");
-    else
-        *name = bstr_from_xmlChar(This->node->name);
+    *name = bstr_from_xmlChar(This->node->name);
     if (!*name) return E_OUTOFMEMORY;
 
     TRACE("returning %s\n", debugstr_w(*name));
 
     return S_OK;
+}
+
+/* _private field holds a number of COM instances spawned from this libxml2 node */
+static void xmlnode_add_ref(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedIncrement((LONG*)&node->_private);
+}
+
+static void xmlnode_release(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedDecrement((LONG*)&node->_private);
 }
 
 void destroy_xmlnode(xmlnode *This)
@@ -1642,6 +1153,7 @@ void destroy_xmlnode(xmlnode *This)
         xmlnode_release(This->node);
         xmldoc_release(This->node->doc);
     }
+    release_dispex(&This->dispex);
 }
 
 void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispex_static_data_t *dispex_data)
@@ -1713,7 +1225,7 @@ static ULONG WINAPI unknode_Release(
     ref = InterlockedDecrement( &This->ref );
     if(!ref) {
         destroy_xmlnode(&This->node);
-        free(This);
+        heap_free(This);
     }
 
     return ref;
@@ -1738,9 +1250,14 @@ static HRESULT WINAPI unknode_GetTypeInfo(
     LCID lcid,
     ITypeInfo** ppTInfo )
 {
-    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+    unknode *This = unknode_from_IXMLDOMNode( iface );
+    HRESULT hr;
 
-    return get_typeinfo(IXMLDOMNode_tid, ppTInfo);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(IXMLDOMNode_tid, ppTInfo);
+
+    return hr;
 }
 
 static HRESULT WINAPI unknode_GetIDsOfNames(
@@ -1751,10 +1268,12 @@ static HRESULT WINAPI unknode_GetIDsOfNames(
     LCID lcid,
     DISPID* rgDispId )
 {
+    unknode *This = unknode_from_IXMLDOMNode( iface );
+
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames,
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
 
     if(!rgszNames || cNames == 0 || !rgDispId)
@@ -1781,16 +1300,17 @@ static HRESULT WINAPI unknode_Invoke(
     EXCEPINFO* pExcepInfo,
     UINT* puArgErr )
 {
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     ITypeInfo *typeinfo;
     HRESULT hr;
 
-    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IXMLDOMNode_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMNode_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -1841,29 +1361,7 @@ static HRESULT WINAPI unknode_get_nodeType(
 
     FIXME("(%p)->(%p)\n", This, domNodeType);
 
-    switch (This->node.node->type)
-    {
-    case XML_ELEMENT_NODE:
-    case XML_ATTRIBUTE_NODE:
-    case XML_TEXT_NODE:
-    case XML_CDATA_SECTION_NODE:
-    case XML_ENTITY_REF_NODE:
-    case XML_ENTITY_NODE:
-    case XML_PI_NODE:
-    case XML_COMMENT_NODE:
-    case XML_DOCUMENT_NODE:
-    case XML_DOCUMENT_TYPE_NODE:
-    case XML_DOCUMENT_FRAG_NODE:
-    case XML_NOTATION_NODE:
-        /* we only care about this set of types, libxml2 type values are
-           exactly what we need */
-        *domNodeType = (DOMNodeType)This->node.node->type;
-        break;
-    default:
-        *domNodeType = NODE_INVALID;
-        break;
-    }
-
+    *domNodeType = This->node.node->type;
     return S_OK;
 }
 
@@ -2238,7 +1736,7 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         pUnk = create_element( node );
         break;
     case XML_ATTRIBUTE_NODE:
-        pUnk = create_attribute( node, FALSE );
+        pUnk = create_attribute( node );
         break;
     case XML_TEXT_NODE:
         pUnk = create_text( node );
@@ -2262,16 +1760,14 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         pUnk = create_doc_fragment( node );
         break;
     case XML_DTD_NODE:
-    case XML_DOCUMENT_TYPE_NODE:
         pUnk = create_doc_type( node );
         break;
-    case XML_ENTITY_NODE:
-    case XML_NOTATION_NODE: {
+    default: {
         unknode *new_node;
 
         FIXME("only creating basic node for type %d\n", node->type);
 
-        new_node = malloc(sizeof(unknode));
+        new_node = heap_alloc(sizeof(unknode));
         if(!new_node)
             return NULL;
 
@@ -2279,11 +1775,7 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         new_node->ref = 1;
         init_xmlnode(&new_node->node, node, &new_node->IXMLDOMNode_iface, NULL);
         pUnk = (IUnknown*)&new_node->IXMLDOMNode_iface;
-        break;
     }
-    default:
-        ERR("Called for unsupported node type %d\n", node->type);
-        return NULL;
     }
 
     hr = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMNode, (LPVOID*)&ret);
@@ -2291,3 +1783,4 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     if(FAILED(hr)) return NULL;
     return ret;
 }
+#endif

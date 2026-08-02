@@ -18,12 +18,11 @@ winedbg \- Wine debugger
 .B winedbg
 is a debugger for Wine. It allows:
 .RS 4
-
-- debugging native Win32 applications
-.br
-- debugging Winelib applications
-.br
-- being a drop-in replacement for Dr Watson
+.nf
++ debugging native Win32 applications
++ debugging Winelib applications
++ being a drop-in replacement for Dr Watson
+.fi
 .RE
 .PP
 
@@ -62,8 +61,6 @@ When in \fBdefault\fR mode, the following options are available:
 \fBwinedbg\fR will execute the command \fIstring\fR as if it was keyed on
 winedbg command line, and then will exit. This can be handy for
 getting the pid of running processes (winedbg --command "info proc").
-.IP \fB--exec\ \fIfilename\fR
-Sets the executable name, without starting the executable.
 .IP \fB--file\ \fIfilename\fR
 \fBwinedbg\fR will execute the list of commands contained in file
 filename as if they were keyed on winedbg command line, and then
@@ -72,46 +69,23 @@ will exit.
 When in \fBgdb\fR proxy mode, the following options are available:
 .PP
 .IP \fB--no-start\fR
-Don't launch \fBgdb\fR directly; instead, print the \fBtarget remote\fR
-GDB command to execute and listen for connection from any GDB-compatible
-debugger.  Normally, \fB--gdb\fR will start both the proxy debugging server
-and an instance of \fBgdb\fR for the front end.  This option instructs
-\fBwinedbg\fR to skip launching of \fBgdb\fR, and instead prints
-the GDB command that can be used to manually connect to the server.
-This command is in the form
-.RS
-.IP
-target remote localhost:\fI<port>\fR
-.PP
-where \fI<port>\fR is the TCP port \fBwinedbg\fR's proxy debugging server is bound to.
-.RE
-.IP
-This option allows the user to replace \fBgdb\fR with some other
-debugger front end, such as \fBddd\fR, \fBkgdb\fR, \fBgdbgui\fR, or Qt Creator.
-Regardless of whether \fB--no-start\fR is specified, \fBwinedbg\fR will quit
-after the first connection is hung up (e.g. \fBgdb\fR detaches from the
-debuggee).
-.IP \fB--port\fR\ \fIport\fR
-Start the GDB proxy debugging server on the given port.  If this option is not
-specified, \fBwinedbg\fR will let the operating system choose any available port.
-This option can be used in conjunction with \fB--no-start\fR to specify the port the
-server shall be bound to.
+\fBgdb\fR will not be automatically
+started. Relevant information for starting \fBgdb\fR are printed on
+screen. This is somehow useful when not directly using \fBgdb\fR but
+some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
 .IP \fB--with-xterm\fR
-This will run the \fBgdb\fR front end in a new
-.BR xterm (1)
-window instead of using the current Unix terminal for its interface.
-This option is ignored if \fB--no-start\fR is
-specified.
+This will run \fBgdb\fR in its own xterm instead of using the current
+Unix console for textual display.
 .PP
 In all modes, the rest of the command line, when passed, is used to 
-identify which program, if any, is to be debugged:
+identify which programs, if any, has to debugged:
 .IP \fIprogram_name\fR
 This is the name of an executable to start for a debugging
 session.  \fBwinedbg\fR will actually create a process with this
-executable. If \fIprogram_arguments\fR are also given, they will be
+executable. If \fIprograms_arguments\fR are also given, they will be
 used as arguments for creating the process to be debugged.
 .IP \fIwpid\fR
-\fBwinedbg\fR will attach to the process whose Windows pid is \fIwpid\fR.
+\fBwinedbg\fR will attach to the process which Windows pid is \fIwpid\fR.
 Use the \fBinfo proc\fR command within \fBwinedbg\fR to list running processes
 and their Windows pids.
 .IP \fBdefault\fR
@@ -131,32 +105,13 @@ of variations from \fBgdb\fR commands.
 Aborts the debugger.
 .IP \fBquit\fR
 Exits the debugger.
-.PP
-\fIProcess handling\fR
 .IP \fBattach\ \fIN\fR
 Attach to a Wine process (\fIN\fR is its Windows ID, numeric or hexadecimal).
 IDs can be obtained using the \fBinfo\ process\fR command.  Note the
 \fBinfo\ process\fR command returns hexadecimal values
-.IP \fBattach\ \fIfile.mdmp\fR
-Reload the state of a debuggee from the minidump \fIfile.mdmp\fR.
-See the \fBminidump\fR command to save such a file.
+.IP 
 .IP \fBdetach\fR
-Detach the current Wine process. The process is no longer debugged by WineDbg,
-but is still running (for a live target).
-.IP \fBkill\fR
-Kills the current Wine process. The process is no longer debugged by WineDbg,
-and is also terminated (for a live target).
-.IP \fBminidump\fR\ \fIfile.mdmp\fR
-Saves the debugging context of the debuggee into a minidump file called
-\fIfile.mdmp\fR.
-.IP \fBrun\fR
-Re-run the same process with the same arguments.
-Note: all breakpoints of precedent process are no longer available.
-.IP \fBrun\ \fIarg1\ arg2...\fR
-Re-run the same process with arguments \fIarg1\ arg2...\fR.
-Note: all breakpoints of precedent process are no longer available.
-.IP \fBthread\ \fIN\fR
-Change the current thread to \fIN\fR (its Windows TID, numeric or hexadecimal).
+Detach from a Wine-process.
 .PP
 \fIHelp commands\fR
 .IP \fBhelp\fR
@@ -208,7 +163,7 @@ Adds a breakpoint at the line \fIN\fR inside symbol \fIid\fR.
 .IP \fBbreak\ \fIN\fR
 Adds a breakpoint at line \fIN\fR of current source file.
 .IP \fBbreak\fR
-Adds a breakpoint at current \fB$PC\fR address.
+Adds a breakpoint at current \f$PC\fR address.
 .IP \fBwatch\ *\ \fIN\fR
 Adds a watch command (on write) at address \fIN\fR (on 4 bytes).
 .IP \fBwatch\ \fIid\fR
@@ -325,23 +280,23 @@ Prints the C type of expression \fIexpr\fR
 is either \fIletter\fR or \fIcount letter\fR, where \fIletter\fR
 can be:
 .RS 4
-.IP \fBs\fR
+.IP s
 an ASCII string
-.IP \fBu\fR
+.IP u
 a UTF16 Unicode string
-.IP \fBi\fR
+.IP i
 instructions (disassemble)
-.IP \fBx\fR
+.IP x
 32-bit unsigned hexadecimal integer
-.IP \fBd\fR
+.IP d
 32-bit signed decimal integer
-.IP \fBw\fR
+.IP w
 16-bit unsigned hexadecimal integer
-.IP \fBc\fR
+.IP c
 character (only printable 0x20-0x7f are actually printed)
-.IP \fBb\fR
+.IP b
 8-bit unsigned hexadecimal integer
-.IP \fBg\fR
+.IP g
 Win32 GUID
 .RE
 .PP
@@ -361,6 +316,12 @@ use the struct or union keyword (even if your program uses a typedef).
 When specifying an identifier, if several symbols with
 this name exist, the debugger will prompt for the symbol you want to
 use. Pick up the one you want from its number.
+.PP
+\fIMisc.\fR
+.PP
+.BI "minidump " file.mdmp
+saves the debugging context of the debuggee into a minidump file called 
+\fIfile.mdmp\fR.
 .PP
 \fIInformation on Wine internals\fR
 .IP \fBinfo\ class\fR
@@ -439,19 +400,19 @@ The first version was written by Eric Youngdale.
 See Wine developers list for the rest of contributors.
 .SH BUGS
 Bugs can be reported on the
-.UR https://bugs.winehq.org
+.UR http://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AVAILABILITY
 .B winedbg
 is part of the Wine distribution, which is available through WineHQ,
 the
-.UR https://www.winehq.org/
+.UR http://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
 .BR wine (1),
 .br
-.UR https://www.winehq.org/help
+.UR http://www.winehq.org/help
 .B Wine documentation and support
 .UE .

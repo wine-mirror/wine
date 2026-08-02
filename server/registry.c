@@ -935,6 +935,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         if (!(fullname = key->obj.ops->get_full_name( &key->obj, &namelen ))) return;
         /* fall through */
     case KeyBasicInformation:
+    case KeyNameInformation:
         classlen = 0; /* only return the name */
         /* fall through */
     case KeyNodeInformation:

@@ -28,10 +28,9 @@
 struct process;
 struct thread_wait;
 struct thread_apc;
-struct debug_obj;
+struct debug_ctx;
 struct debug_event;
 struct msg_queue;
-struct completion_wait;
 
 enum run_state
 {
@@ -52,11 +51,12 @@ struct thread
     struct object          obj;           /* object header */
     struct list            entry;         /* entry in system-wide thread list */
     struct list            proc_entry;    /* entry in per-process thread list */
-    struct list            desktop_entry; /* entry in per-desktop thread list */
     struct process        *process;
     thread_id_t            id;            /* thread id */
     struct list            mutex_list;    /* list of currently owned mutexes */
-    unsigned int           system_regs;   /* which system regs have been set */
+    struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
+    struct debug_event    *debug_event;   /* debug event being sent to debugger */
+    int                    debug_break;   /* debug breakpoint pending? */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
     struct list            system_apc;    /* queue of system async procedure calls */
@@ -76,65 +76,61 @@ struct thread
     int                    exit_code;     /* thread exit code */
     int                    unix_pid;      /* Unix pid of client */
     int                    unix_tid;      /* Unix tid of client */
-    struct context        *context;       /* current context */
-    client_ptr_t           suspend_cookie;/* wait cookie of suspending select */
+    context_t             *context;       /* current context if in an exception handler */
+    context_t             *suspend_context; /* current context if suspended */
     client_ptr_t           teb;           /* TEB address (in client address space) */
-    client_ptr_t           entry_point;   /* entry point (in client address space) */
     affinity_t             affinity;      /* affinity mask */
-    int                    priority;      /* current thread priority */
-    int                    base_priority; /* base priority level (relative to process base priority class) */
+    int                    priority;      /* priority level */
     int                    suspend;       /* suspend count */
-    int                    dbg_hidden;    /* hidden from debugger */
     obj_handle_t           desktop;       /* desktop handle */
     int                    desktop_users; /* number of objects using the thread desktop */
     timeout_t              creation_time; /* Thread creation time */
     timeout_t              exit_time;     /* Thread exit time */
     struct token          *token;         /* security token associated with this thread */
-    struct list            kernel_object; /* list of kernel object pointers */
-    data_size_t            desc_len;      /* thread description length in bytes */
-    WCHAR                 *desc;          /* thread description string */
-    struct completion_wait *completion_wait; /* completion port wait object the thread is associated with */
+};
+
+struct thread_snapshot
+{
+    struct thread  *thread;    /* thread ptr */
+    int             count;     /* thread refcount */
+    int             priority;  /* priority class */
 };
 
 extern struct thread *current;
 
 /* thread functions */
 
-extern struct thread *create_thread( int fd, struct process *process,
-                                     const struct security_descriptor *sd );
+extern struct thread *create_thread( int fd, struct process *process );
 extern struct thread *get_thread_from_id( thread_id_t id );
 extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access );
 extern struct thread *get_thread_from_tid( int tid );
 extern struct thread *get_thread_from_pid( int pid );
 extern struct thread *get_wait_queue_thread( struct wait_queue_entry *entry );
-extern enum select_opcode get_wait_queue_select_op( struct wait_queue_entry *entry );
+extern enum select_op get_wait_queue_select_op( struct wait_queue_entry *entry );
 extern client_ptr_t get_wait_queue_key( struct wait_queue_entry *entry );
 extern void make_wait_abandoned( struct wait_queue_entry *entry );
-extern void set_wait_status( struct wait_queue_entry *entry, int status );
 extern void stop_thread( struct thread *thread );
+extern void stop_thread_if_suspended( struct thread *thread );
 extern int wake_thread( struct thread *thread );
 extern int wake_thread_queue_entry( struct wait_queue_entry *entry );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
+extern void break_thread( struct thread *thread );
 extern void wake_up( struct object *obj, int max );
-extern int thread_queue_apc( struct process *process, struct thread *thread, struct object *owner, const union apc_call *call_data );
+extern int thread_queue_apc( struct thread *thread, struct object *owner, const apc_call_t *call_data );
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_type type );
 extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
 extern int thread_get_inflight_fd( struct thread *thread, int client );
+extern struct thread_snapshot *thread_snap( int *count );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
-extern unsigned int set_thread_priority( struct thread *thread, int priority );
-extern unsigned int set_thread_base_priority( struct thread *thread, int base_priority );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
-extern int suspend_thread( struct thread *thread );
-extern int resume_thread( struct thread *thread );
 
 /* ptrace functions */
 
 extern void sigchld_callback(void);
-extern void init_thread_context( struct thread *thread );
-extern void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags );
-extern void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags );
+extern void get_thread_context( struct thread *thread, context_t *context, unsigned int flags );
+extern void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );
 extern void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
                                 unsigned int *limit, unsigned char *flags );

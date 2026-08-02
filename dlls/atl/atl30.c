@@ -29,8 +29,22 @@
 #include "atlwin.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
+
+static HINSTANCE hInst;
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
+
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hinstDLL);
+        hInst = hinstDLL;
+    }
+    return TRUE;
+}
 
 #define ATLVer1Size FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer)
 
@@ -121,8 +135,27 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
             iter->pFunc(iter->dw);
             tmp = iter;
             iter = iter->pNext;
-            free(tmp);
+            HeapFree(GetProcessHeap(), 0, tmp);
         }
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw)
+{
+    _ATL_TERMFUNC_ELEM *termfunc_elem;
+
+    TRACE("(%p %p %ld)\n", pM, pFunc, dw);
+
+    if (pM->cbSize > ATLVer1Size)
+    {
+        termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
+        termfunc_elem->pFunc = pFunc;
+        termfunc_elem->dw = dw;
+        termfunc_elem->pNext = pM->m_pTermFuncs;
+
+        pM->m_pTermFuncs = termfunc_elem;
     }
 
     return S_OK;
@@ -134,7 +167,7 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW *pM, DWORD dwClsContex
     _ATL_OBJMAP_ENTRYW_V1 *obj;
     int i=0;
 
-    TRACE("(%p %li %li)\n",pM, dwClsContext, dwFlags);
+    TRACE("(%p %i %i)\n",pM, dwClsContext, dwFlags);
 
     if (pM == NULL)
         return E_INVALIDARG;
@@ -155,7 +188,7 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW *pM, DWORD dwClsContex
                                            dwFlags, &obj->dwRegister);
 
                 if (FAILED (rc) )
-                    WARN("Failed to register object %i: 0x%08lx\n", i, rc);
+                    WARN("Failed to register object %i: 0x%08x\n", i, rc);
 
                 if (pUnknown)
                     IUnknown_Release(pUnknown);
@@ -247,7 +280,7 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
                                                   (void **)&obj->pCF);
                 if (obj->pCF)
                     hres = IUnknown_QueryInterface(obj->pCF, riid, ppv);
-                return hres;
+                break;
             }
         }
     }
@@ -258,7 +291,7 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
 }
 
 /***********************************************************************
- *           AtlModuleRegisterTypeLib             [ATL.@]
+ *           AtlModuleGetClassObject              [ATL.@]
  */
 HRESULT WINAPI AtlModuleRegisterTypeLib(_ATL_MODULEW *pm, LPCOLESTR lpszIndex)
 {
@@ -311,7 +344,7 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
 
         if (!wci->m_wc.lpszClassName)
         {
-            sprintf(wci->m_szAutoName, "ATL:%p", wci);
+            snprintf(wci->m_szAutoName, sizeof(wci->m_szAutoName), "ATL%08lx", (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", wci->m_szAutoName);
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
@@ -348,8 +381,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
  * NOTES
  *  Can be called multiple times without error, unlike RegisterClassEx().
  *
- *  If the class name is NULL, then a class with a name of "ATL:xxxxxxxx" is
- *  registered, where 'xxxxxxxx' represents a unique hexadecimal value.
+ *  If the class name is NULL, then a class with a name of "ATLxxxxxxxx" is
+ *  registered, where the 'x's represent a unique value.
  *
  */
 ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW *wci, WNDPROC *pProc)
@@ -370,7 +403,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 
         if (!wci->m_wc.lpszClassName)
         {
-            swprintf(wci->m_szAutoName, ARRAY_SIZE(wci->m_szAutoName), L"ATL:%p", wci);
+            static const WCHAR szFormat[] = {'A','T','L','%','0','8','l','x',0};
+            snprintfW(wci->m_szAutoName, sizeof(wci->m_szAutoName)/sizeof(WCHAR), szFormat, (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", debugstr_w(wci->m_szAutoName));
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
@@ -525,4 +559,84 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 
     FIXME("Not supported class %s\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *              DllRegisterServer (ATL.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( hInst );
+}
+
+/***********************************************************************
+ *              DllUnRegisterServer (ATL.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( hInst );
+}
+
+/***********************************************************************
+ *              DllCanUnloadNow (ATL.@)
+ */
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return S_FALSE;
+}
+
+/***********************************************************************
+ *           AtlGetVersion              [ATL.@]
+ */
+DWORD WINAPI AtlGetVersion(void *pReserved)
+{
+   return _ATL_VER;
+}
+
+/**********************************************************************
+ * AtlAxWin class window procedure
+ */
+static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
+{
+    if ( wMsg == WM_CREATE )
+    {
+            DWORD len = GetWindowTextLengthW( hWnd ) + 1;
+            WCHAR *ptr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+            if (!ptr)
+                return 1;
+            GetWindowTextW( hWnd, ptr, len );
+            AtlAxCreateControlEx( ptr, hWnd, NULL, NULL, NULL, NULL, NULL );
+            HeapFree( GetProcessHeap(), 0, ptr );
+            return 0;
+    }
+    return DefWindowProcW( hWnd, wMsg, wParam, lParam );
+}
+
+BOOL WINAPI AtlAxWinInit(void)
+{
+    WNDCLASSEXW wcex;
+    const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n',0};
+
+    FIXME("semi-stub\n");
+
+    if ( FAILED( OleInitialize(NULL) ) )
+        return FALSE;
+
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = CS_GLOBALCLASS;
+    wcex.cbClsExtra    = 0;
+    wcex.cbWndExtra    = 0;
+    wcex.hInstance     = GetModuleHandleW( NULL );
+    wcex.hIcon         = NULL;
+    wcex.hCursor       = NULL;
+    wcex.hbrBackground = NULL;
+    wcex.lpszMenuName  = NULL;
+    wcex.hIconSm       = 0;
+
+    wcex.lpfnWndProc   = AtlAxWin_wndproc;
+    wcex.lpszClassName = AtlAxWin;
+    if ( !RegisterClassExW( &wcex ) )
+        return FALSE;
+
+    return TRUE;
 }

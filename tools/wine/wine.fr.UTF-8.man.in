@@ -10,7 +10,8 @@ wine \- exécuter des programmes Windows sur Unix
 .B wine --version
 .PP
 Pour des instructions sur le passage d'arguments aux programmes Windows, veuillez lire la section
-.B PROGRAMME/ARGUMENTS
+.B
+PROGRAMME/ARGUMENTS
 de la page de manuel.
 .SH DESCRIPTION
 .B wine
@@ -23,11 +24,11 @@ Pour déboguer wine, utilisez plutôt
 Pour exécuter des applications en ligne de commande (programmes Windows
 console), préférez
 .BR wineconsole .
-Cela permet d'afficher la sortie dans une fenêtre séparée.
+Cela permet d'afficher la sortie dans une fenêtre séparée (nécessite X11).
 Si vous n'utilisez pas
 .B wineconsole
 pour les programmes en ligne de commande, le support console sera très limité et votre
-programme pourrait ne pas fonctionner correctement.
+programme peut ne pas fonctionner correctement.
 .PP
 Lorsque wine est invoqué avec
 .B --help
@@ -84,9 +85,19 @@ totalement indépendantes.
 .B WINESERVER
 Spécifie le chemin et le nom de l'exécutable
 .BR wineserver .
-Si cette variable n'est pas définie, Wine essaiera de charger un
-fichier nommé « wineserver » dans le chemin système ou quelques autres
-emplacements potentiels.
+Si cette variable n'est pas définie, Wine essaiera de charger
+.I @bindir@/wineserver
+ou, à défaut, un fichier nommé
+« wineserver » dans le chemin système ou quelques autres emplacements potentiels.
+.TP
+.B WINELOADER
+Spécifie le chemin et le nom de l'exécutable
+.B wine
+à utiliser pour exécuter de nouveaux processus Windows. Si pas définie, Wine
+essaiera de charger
+.I @bindir@/wine
+ou, à défaut, un fichier nommé
+« wine » dans le chemin système ou quelques autres emplacements potentiels.
 .TP
 .B WINEDEBUG
 Active ou désactive les messages de débogage. La syntaxe est :
@@ -141,7 +152,8 @@ Spécifie le(s) chemin(s) où chercher les DLL intégrées et les applications
 Winelib. C'est une liste de répertoires séparés par des « : ». En plus des
 répertoires spécifiés dans
 .BR WINEDLLPATH ,
-Wine utilisera aussi le répertoire d'installation.
+Wine utilisera aussi le répertoire
+.IR @dlldir@ .
 .TP
 .B WINEDLLOVERRIDES
 Définit le type de remplacement et l'ordre de chargement des DLL utilisées lors du
@@ -221,17 +233,20 @@ Définit le périphérique pour le séquenceur MIDI, par défaut
 .IR /dev/sequencer .
 .SH FICHIERS
 .TP
-.I wine
+.I @bindir@/wine
 Le chargeur de programme de Wine.
 .TP
-.I wineconsole
+.I @bindir@/wineconsole
 Le chargeur de programme de Wine pour les applications en mode console (CUI).
 .TP
-.I wineserver
+.I @bindir@/wineserver
 Le serveur Wine.
 .TP
-.I winedbg
+.I @bindir@/winedbg
 Le débogueur de Wine.
+.TP
+.I @dlldir@
+Répertoire contenant les bibliothèques partagées de Wine.
 .TP
 .I $WINEPREFIX/dosdevices
 Répertoire contenant le mapping des périphériques DOS. Chaque fichier dans ce
@@ -258,25 +273,25 @@ licence se trouve dans le fichier
 .SH BUGS
 .PP
 Un rapport sur la compatibilité de nombreuses applications est disponible sur la
-.UR https://appdb.winehq.org
+.UR http://appdb.winehq.org
 .B base de données d'applications de Wine
 .UE .
 N'hésitez pas à y ajouter des entrées pour les applications que vous
 exécutez actuellement, si nécessaire.
 .PP
 Les bugs peuvent être signalés (en anglais) sur le
-.UR https://bugs.winehq.org
+.UR http://bugs.winehq.org
 .B système de suivi des problèmes de Wine
 .UE .
 .SH DISPONIBILITÉ
 La version publique la plus récente de Wine est disponible sur WineHQ, le
-.UR https://www.winehq.org/
+.UR http://www.winehq.org/
 .B quartier général du développement de Wine
 .UE .
 .SH "VOIR AUSSI"
 .BR wineserver (1),
 .BR winedbg (1),
 .br
-.UR https://www.winehq.org/help
+.UR http://www.winehq.org/help
 .B Documentation et support de Wine
 .UE .

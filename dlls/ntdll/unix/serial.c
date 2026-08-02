@@ -1485,3 +1485,29 @@ NTSTATUS serial_FlushBuffersFile( int fd )
     return STATUS_NOT_IMPLEMENTED;
 #endif
 }
+
+NTSTATUS COMM_FlushBuffersFile( int fd )
+{
+#ifdef HAVE_TCDRAIN
+    while (tcdrain( fd ) == -1)
+    {
+        if (errno != EINTR) return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+#elif defined(TIOCDRAIN)
+    while (ioctl( fd, TIOCDRAIN ) == -1)
+    {
+        if (errno != EINTR) return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+#elif defined(TCSBRK)
+    while (ioctl( fd, TCSBRK, 1 ) == -1)
+    {
+        if (errno != EINTR) return FILE_GetNtStatus();
+    }
+    return STATUS_SUCCESS;
+#else
+    ERR( "not supported\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}

@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -36,27 +37,13 @@
 #include "handle.h"
 #include "request.h"
 
-static const WCHAR timer_name[] = {'T','i','m','e','r'};
-
-struct type_descr timer_type =
-{
-    { timer_name, sizeof(timer_name) },   /* name */
-    TIMER_ALL_ACCESS,                     /* valid_access */
-    {                                     /* mapping */
-        STANDARD_RIGHTS_READ | TIMER_QUERY_STATE,
-        STANDARD_RIGHTS_WRITE | TIMER_MODIFY_STATE,
-        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
-        TIMER_ALL_ACCESS
-    },
-};
-
 struct timer
 {
     struct object        obj;       /* object header */
     int                  manual;    /* manual reset */
     int                  signaled;  /* current signaled state */
     unsigned int         period;    /* timer period in ms */
-    abstime_t            when;      /* next expiration */
+    timeout_t            when;      /* next expiration */
     struct timeout_user *timeout;   /* timeout user */
     struct thread       *thread;    /* thread that set the APC function */
     client_ptr_t         callback;  /* callback APC function */
@@ -64,42 +51,40 @@ struct timer
 };
 
 static void timer_dump( struct object *obj, int verbose );
+static struct object_type *timer_get_type( struct object *obj );
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry );
+static unsigned int timer_map_access( struct object *obj, unsigned int access );
 static void timer_destroy( struct object *obj );
 
 static const struct object_ops timer_ops =
 {
     sizeof(struct timer),      /* size */
-    &timer_type,               /* type */
     timer_dump,                /* dump */
+    timer_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     timer_signaled,            /* signaled */
     timer_satisfied,           /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    default_map_access,        /* map_access */
+    timer_map_access,          /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
-    default_get_full_name,     /* get_full_name */
     no_lookup_name,            /* lookup_name */
-    directory_link_name,       /* link_name */
-    default_unlink_name,       /* unlink_name */
     no_open_file,              /* open_file */
-    no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     timer_destroy              /* destroy */
 };
 
 
 /* create a timer object */
-static struct timer *create_timer( struct object *root, const struct unicode_str *name,
-                                   unsigned int attr, int manual, const struct security_descriptor *sd )
+static struct timer *create_timer( struct directory *root, const struct unicode_str *name,
+                                   unsigned int attr, int manual )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( root, &timer_ops, name, attr, sd )))
+    if ((timer = create_named_object_dir( root, name, attr, &timer_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -123,17 +108,19 @@ static void timer_callback( void *private )
     /* queue an APC */
     if (timer->thread)
     {
-        union apc_call data;
+        apc_call_t data;
 
-        assert (timer->callback);
         memset( &data, 0, sizeof(data) );
-        data.type         = APC_USER;
-        data.user.func    = timer->callback;
-        data.user.args[0] = timer->arg;
-        data.user.args[1] = (unsigned int)timer->when;
-        data.user.args[2] = timer->when >> 32;
+        if (timer->callback)
+        {
+            data.type       = APC_TIMER;
+            data.timer.func = timer->callback;
+            data.timer.time = timer->when;
+            data.timer.arg  = timer->arg;
+        }
+        else data.type = APC_NONE;  /* wake up only */
 
-        if (!thread_queue_apc( NULL, timer->thread, &timer->obj, &data ))
+        if (!thread_queue_apc( timer->thread, &timer->obj, &data ))
         {
             release_object( timer->thread );
             timer->thread = NULL;
@@ -142,9 +129,8 @@ static void timer_callback( void *private )
 
     if (timer->period)  /* schedule the next expiration */
     {
-        if (timer->when > 0) timer->when = -monotonic_time;
-        timer->when -= (abstime_t)timer->period * 10000;
-        timer->timeout = add_timeout_user( abstime_to_timeout(timer->when), timer_callback, timer );
+        timer->when += (timeout_t)timer->period * 10000;
+        timer->timeout = add_timeout_user( timer->when, timer_callback, timer );
     }
     else timer->timeout = NULL;
 
@@ -165,7 +151,7 @@ static int cancel_timer( struct timer *timer )
     }
     if (timer->thread)
     {
-        thread_cancel_apc( timer->thread, &timer->obj, APC_USER );
+        thread_cancel_apc( timer->thread, &timer->obj, APC_TIMER );
         release_object( timer->thread );
         timer->thread = NULL;
     }
@@ -182,23 +168,30 @@ static int set_timer( struct timer *timer, timeout_t expire, unsigned int period
         period = 0;  /* period doesn't make any sense for a manual timer */
         timer->signaled = 0;
     }
-    timer->when     = (expire <= 0) ? expire - monotonic_time : max( expire, current_time );
+    timer->when     = (expire <= 0) ? current_time - expire : max( expire, current_time );
     timer->period   = period;
     timer->callback = callback;
     timer->arg      = arg;
     if (callback) timer->thread = (struct thread *)grab_object( current );
-    if (expire != TIMEOUT_INFINITE)
-        timer->timeout = add_timeout_user( expire, timer_callback, timer );
+    timer->timeout = add_timeout_user( timer->when, timer_callback, timer );
     return signaled;
 }
 
 static void timer_dump( struct object *obj, int verbose )
 {
     struct timer *timer = (struct timer *)obj;
-    timeout_t timeout = abstime_to_timeout( timer->when );
     assert( obj->ops == &timer_ops );
-    fprintf( stderr, "Timer manual=%d when=%s period=%u\n",
-             timer->manual, get_timeout_str(timeout), timer->period );
+    fprintf( stderr, "Timer manual=%d when=%s period=%u ",
+             timer->manual, get_timeout_str(timer->when), timer->period );
+    dump_object_name( &timer->obj );
+    fputc( '\n', stderr );
+}
+
+static struct object_type *timer_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'T','i','m','e','r'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry )
@@ -215,6 +208,15 @@ static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry 
     if (!timer->manual) timer->signaled = 0;
 }
 
+static unsigned int timer_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | TIMER_QUERY_STATE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | TIMER_MODIFY_STATE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= TIMER_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
 static void timer_destroy( struct object *obj )
 {
     struct timer *timer = (struct timer *)obj;
@@ -229,19 +231,16 @@ DECL_HANDLER(create_timer)
 {
     struct timer *timer;
     struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct directory *root = NULL;
 
-    if (!objattr) return;
+    reply->handle = 0;
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
 
-    if ((timer = create_timer( root, &name, objattr->attributes, req->manual, sd )))
+    if ((timer = create_timer( root, &name, req->attributes, req->manual )))
     {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, timer,
-                                                          req->access, objattr->attributes );
+        reply->handle = alloc_handle( current->process, timer, req->access, req->attributes );
         release_object( timer );
     }
 
@@ -251,10 +250,21 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    struct unicode_str name = get_req_unicode_str();
+    struct unicode_str name;
+    struct directory *root = NULL;
+    struct timer *timer;
 
-    reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &timer_ops, &name, req->attributes );
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((timer = open_object_dir( root, &name, req->attributes, &timer_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &timer->obj, req->access, req->attributes );
+        release_object( timer );
+    }
+
+    if (root) release_object( root );
 }
 
 /* set a waitable timer */

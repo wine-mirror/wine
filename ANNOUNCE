@@ -1,0 +1,259 @@
+The Wine maintenance release 1.6.2 is now available.
+
+What's new in this release (see below for details):
+  - Color management support updated to liblcms version 2.
+  - Various bug fixes.
+
+The source is available from the following locations:
+
+  http://prdownloads.sourceforge.net/wine/wine-1.6.2.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.6/wine-1.6.2.tar.bz2
+
+Binary packages for various distributions will be available from:
+
+  http://www.winehq.org/download
+
+You will find documentation on http://www.winehq.org/documentation
+
+You can also get the current source directly from the git
+repository. Check http://www.winehq.org/git for details.
+
+Wine is available thanks to the work of many people. See the file
+AUTHORS in the distribution for the complete list.
+
+----------------------------------------------------------------
+
+Bugs fixed in 1.6.2 (total 36):
+
+   8320  DirectInput joystick timestamps are wrong
+  15738  Max Payne 2: Ingame windows rendered incorrect with nvts pipe
+  18465  url.dll FileProtocolHandler does not open URLs in browser.
+  21884  Resident Evil 2: no sound and annoying dialog window
+  23529  Add support for lcms2
+  24611  Install Shield fails on 64bit multilib wine if WINEPREFIX was created by 64bit wine
+  30745  GOG.com version of Soulbringer crashes on startup (GetModuleHandleExW needs to support GET_MODULE_HANDLE_EX_FLAG_PIN)
+  32658  Certain games on Steam crash on start in xinput1_3 (in-game overlay enabled)
+  33799  Wargame: Airland Battle needs msvcr110.dll._libm_sse2_atan_precise
+  33963  WINE Wordpad crashes when selecting text from line end to line start
+  34034  Locale settings broke shader program generator.
+  34051  Low FPS with winemac driver in Unreal Tournament GOTY
+  34055  Textures missing in Age of Empires II: Steam
+  34387  TreeSize Free: help window won't open
+  34472  window titlebar names
+  34707  Miranda crashes on start up
+  34719  cabinet_open{,_stream} returns 0 on failure but doesn't compliant to _open interface
+  34738  PageFault when generating a MD5 Hash
+  34793  Battle City Remake crashes
+  34804  Installation of Windows Installer Cleanup utility fails due to wshom:WshShell3_ExpandEnvironmentStrings being a stub
+  34811  Crash when copy by ctrl+c or in-app copy, cmd+c works fine (using MacDriver) on OS X Mavericks
+  34813  winedbg crash reports are missing important information on Mac OS X 10.8+
+  34853  Multiple .NET 3.x/4.x apps need Win32_NetworkAdapterConfiguration WMI class
+  34912  GEOVIA Surpac 6.x (geology and mine planning software) needs scrrun IFileSystem3::BuildPath
+  34949  Chessmaster 10th Edition: no graphics in the menu, you can't run the game (Mac OS X only bug)
+  34983  Fellowship One Check-In Application v2.5 needs IBackgroundCopyJob::SetDescription method
+  34988  Fellowship One Check-In Application v2.5 needs IBackgroundCopyManager::GetJob method
+  35010  [Freetype]Impossible to compile Wine
+  35021  League of Legends installer page faults in custom action during stackwalk (SymFromAddr with NULL displacement ptr)
+  35024  FEAR Combat (SEC2) v1.1 community full installer doesn't display cd key/serial field (no PIDTemplate property provided)
+  35030  Steam Client update from Dec. 3, 2013 breaks Wine (Steam Client/Service crash after update, login fails)
+  35035  HF pAppLoc (AppLocale) installer crashes due to unimplemented function apphelp.dll.ShimFlushCache
+  35144  NVIDIA CUDA Toolkit v5.5 installer fails (SetupDiGetINFClassW whitelists only 'Chicago', ignoring WINEPREFIX WinVer setting)
+  35149  RSA SecurID token v411 installer hangs during processing of EULA (large RTF passed twice: window text and richedit streamin callback)
+  35166  NVIDIA CUDA Toolkit v5.5 installer fails (NtQueryKey with KeyNameInformation info class unsupported on server side)
+  35178  FL Studio 11.x 'DirectWave' plugin doesn't work (unsupported FSCTL_IS_VOLUME_MOUNTED ioctl)
+
+----------------------------------------------------------------
+
+Changes since 1.6.1:
+
+Alexander Dorofeyev (1):
+      wined3d: Fix resultarg state handling in nvrc/nvts code.
+
+Alexandre Julliard (6):
+      user32: Fix tick counter wrap-around handling.
+      user32: Fix the scope of a local variable.
+      include: Add inline wrappers for some underscore-prefixed math functions.
+      winemac: Only register the IME class when needed.
+      wmc: Don't put timestamps in generated files.
+      configure: Update FreeType configure checks for the changed headers location.
+
+Andrew Eikum (9):
+      advapi32: Attempt to open WOW64 key before the lowest level key, too.
+      advapi32: Don't cache HKCR if WOW64 redirection flags are set.
+      oleaut32: Also register typelibs in the opposite registry mode.
+      oleaut32: For 64-bit, fallback on the win32 key if win64 key is empty for typelibs.
+      msacm32: Don't clear DONE flag in Un,PrepareHeader.
+      mmdevapi: Fill buffer with silence in IAudioRenderClient::GetBuffer.
+      winmm: Also try MSACM conversions with WAVE_FORMAT_QUERY.
+      winecoreaudio.drv: Don't return 0 absolute position if AudioQueue call fails.
+      dsound: Don't change play position if IAudioClient methods fail.
+
+Andrey Zhezherun (4):
+      msvcp: Fixed char_traits<char>::to_int_type.
+      msvcp: Added missing casts to unsigned char in streambuf functions.
+      msvcp: Fixed complex division.
+      msvcrt: Implemented _chsize_s.
+
+André Hentschel (3):
+      ntdll: Improved reporting of CPU Level and Revision on ARM.
+      wineboot: Add environment registry keys on ARM.
+      wineboot: Add hardware registry keys on ARM.
+
+Austin English (3):
+      apphelp: Add a stub for ShimFlushCache.
+      ntdll: Return success for FSCTL_IS_VOLUME_MOUNTED ioctl.
+      dinput: Consistently use GetCurrentTime().
+
+Daniel Lehman (5):
+      kernel32: Don't use depth in RtlInterlockedFlushSList.
+      kernel32: Use ANSI code page if current thread locale has no code page.
+      msvcp90: Return last index in string::find_last_not_of_cstr_substr if input is empty.
+      oleaut32: Return FALSE from SystemTimeToVariantTime if day > 31 or year is negative.
+      msvcrt: Return wall-clock time from clock().
+
+Detlef Riekenberg (1):
+      tools: make_authors is no longer used.
+
+Dmitry Timoshkov (2):
+      crypt32: Add another root store path to the certificate location list.
+      include: Redefine security privilege names without using TEXT macro.
+
+Erich Hoover (1):
+      hhctrl.ocx: Do not destroy the HTML Help window when HH_HELP_CONTEXT finds no context id of 0.
+
+François Gouget (1):
+      po: Remove an extraneous full stop in an error message.
+
+Hans Leidekker (12):
+      dnsapi: Perform a wide character string comparison if the character set is unknown.
+      wbemprox: Implement Win32_BaseBoard.Model and Win32_BaseBoard.Name.
+      wbemprox: Implement Win32_BIOS.IdentificationCode and Win32_BIOS.SMBIOSBIOSVersion.
+      wbemprox: Add a partial implementation of Win32_NetworkAdapterConfiguration.
+      advapi32: Return a fake handle from LogonUserW.
+      advapi32: Forward LogonUserA to LogonUserW.
+      mlang: Improve IMLangLineBreakConsole::BreakLineA for the ASCII codepage.
+      advapi32: Perform a case-insensitive match on the credential target name.
+      msi: Fix handling of empty mask edit templates.
+      advapi32: Avoid a crash when storing credentials on MacOS.
+      msi: Don't add text to the scrollable text control twice.
+      mscms: Port to liblcms2.
+
+Henri Verbeet (4):
+      wined3d: Introduce a function for safely releasing a DC.
+      wined3d: Mark the context valid if making it current on the "backup" window worked.
+      d3d8: Clear pBits and Pitch when d3d8_surface_LockRect() fails.
+      wined3d: Reimplement wined3d_ftoa().
+
+Huw D. M. Davies (6):
+      riched20: Revert to the default paragraph style when all text is deleted.
+      ntdll: Don't reduce the size of the local buffer when we come to read another batch of entries.
+      kernel32: Give the non-wildcard case a chance of succeeding first time around.
+      wordpad: Pass the correct window to the font size list validator.
+      mshtml: Remove a double-Release.
+      riched20: Ensure the cursors are correctly ordered in the case of a zero (logical) length selection bridging two runs.
+
+Jacek Caban (3):
+      jscript: Added support for octal literals.
+      jscript: Improved error handling in numeric literal parser.
+      widl: Include resource id in typelib path if not default.
+
+Ken Thomases (24):
+      winemac: Don't coalesce events which might be in multiple queues.
+      winemac: Clean up fully-delivered events in queues which aren't being drained.
+      winemac: Treat mouse moves in a window title bar as outside the window.
+      winemac: Restore app cursor settings when cursor moves back into an app window.
+      winemac: Fix some bytes-vs-WCHARs length computation bugs in the UTF-16 clipboard support.
+      winemac: Rename some confusingly-named variables.
+      winemac: Fix a leak in macdrv_CountClipboardFormats(). (Clang).
+      winecoreaudio: Fix a potential leak. (Clang).
+      libwine: Fix a potential write through a null pointer. (Clang).
+      winemac: Disable software GL rendering unless it's enabled via a new registry setting, AllowSoftwareRendering.
+      winemac: Send WM_CANCELMODE when keyboard layout changes from Cocoa side.
+      winemac: Don't use the main dispatch queue to implement OnMainThread() for a thread with no event queue.
+      winemac: Hide cursor when first requested even if we don't know it's over a window.
+      winemac: Tell Cocoa that we don't draw a focus ring for our views.
+      winemac: Send WM_{ENTER, EXIT}SIZEMOVE around window frame changes initiated by Cocoa.
+      winemac: Convert the QUERY_RESIZE_END query to an event, WINDOW_RESIZE_ENDED.
+      winemac: Trace flags of WINDOW_FRAME_CHANGED events.
+      winemac: Fix search for clipboard format matching a pasteboard type so it can fail when it should.
+      winemac: Reduce duplicated code by consolidating exit paths from format_for_type().
+      winemac: Defer attaching OpenGL context to a view which is zero-sized or outside its window's bounds.
+      winemac: Take WS_EX_TOOLWINDOW into account when computing how much of a window is replaced by the Mac decorations.
+      winemac: Include the OpenGL headers to fix building on OS X 10.9.
+      ntdll: On Mac, store the dyld image info address in the PEB.
+      dbghelp: For Mach-O, get the address of the process's image info from its PEB.
+
+Kevin Eaves (1):
+      winemac: Restore the window title when the window style is changed.
+
+Kohei Takahashi (1):
+      msi: Return -1 on open failure in FDI callbacks.
+
+Lasse Rasinen (1):
+      d3d9: Update locked_rect only if wined3d_surface_map succeeds.
+
+Lauri Kenttä (1):
+      readme: Update Finnish translation.
+
+Nikolay Sivov (12):
+      ntdll: Support pinning module refcount with LdrAddRefDll().
+      kernel32: Added support for GET_MODULE_HANDLE_EX_FLAG_PIN.
+      wshom.ocx: Silence failure to query IDispatchEx from IWshShell3.
+      wshom.ocx: Implement IWshShell3::ExpandEnvironmentStrings().
+      rsaenh: Fail on unsupported flag values only in CryptHashData().
+      oleaut32: Always set LIBFLAG_FHASDISKIMAGE when loading from file.
+      scrrun: Implement BuildPath method.
+      ntdll: Allow NULL return length argument in NtAdjustPrivilegesToken().
+      qmgr: Implement IBackgroundCopyJob::SetDescription().
+      qmgr: Implement IBackgroundCopyJob::GetDescription().
+      qmgr: Implement IBackgroundCopyManager::GetJob().
+      server: Return key name info for KeyNameInformation class.
+
+Piotr Caban (9):
+      comctl32: Ignore tooltip position passed in TTM_TRACKPOSITION if TTF_TRACK flag is not set.
+      comctl32: Set updown control value to min or max in out of range case.
+      comctl32: Fix UDM_SETPOS behavior on out of range values.
+      comctl32: Fix UDM_GETPOS behaviour on out of range values.
+      comctl32: Fix a typo in UPDOWN_OffsetVal that breaks UDS_WRAP flag support.
+      msvcrt: Don't call invalid parameter handler on invalid mode flag.
+      msvcr110: Forward _libm_sse2_*_precise functions to __libm_sse2_*.
+      msvcrt: Don't validate parameters in _itoa function.
+      url: Add support for http protocol handling in FileProtocolHandlerA.
+
+Qian Hong (2):
+      wscript: Get extension name by strrchrW instead of strchrW.
+      msi: Get extension name by strrchrW instead of strchrW.
+
+Rico Schüller (7):
+      opengl32: Use variables for file names.
+      opengl32: Fix some style issues.
+      opengl32: Allow multiple extensions to support the same function.
+      opengl32: Use opengl xml registry files.
+      wined3d: Use GL_ARB_texture_mirror_clamp_to_edge when available.
+      wined3d: Use GL_EXT_texture_mirror_clamp when available.
+      shell32: Use lParam for BFFM_SETOKTEXT.
+
+Sebastian Lackner (1):
+      shlwapi: Fix UrlCombineW for URLs containing a quotation mark.
+
+Stefan Dösinger (2):
+      wined3d: Check for support before calling glDrawElementsInstancedBaseVertex.
+      wined3d: GL_ARB_instanced_arrays provides glDrawElementsInstanced.
+
+Stefan Leichter (2):
+      dbghelp: Add a null check for optional output parameter for function SymFromAddr.
+      setupapi: Support signature $Windows NT$ in SetupDiGetINFClassA/W too.
+
+Vijay Kiran Kamuju (1):
+      wininet: Implement setting INTERNET_PER_CONN_PROXY_BYPASS.
+
+Vincent Povirk (2):
+      xinput1_3: Make XInputGetState patchable.
+      explorer: Use StrRetToStrW to convert STRRET result.
+
+Vitaly Lipatov (1):
+      ipconfig: Distinguish between IPv4 and IPv6 addresses in normal mode.
+
+--
+Alexandre Julliard
+julliard@winehq.org
