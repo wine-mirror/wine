@@ -562,6 +562,119 @@ sync_test("member_expression_keywords", function() {
     ok(w.label === 4, "w.label = " + w.label);
 });
 
+sync_test("identifiers", function() {
+    valid_tests = ['$',
+                   '_',
+                   'a$',
+                   'a_',
+                               // Unicode categories
+                   'A',        // Lu: Letter, Uppercase
+                   '_A',
+                   'a',        // Ll: Letter, Lowercase
+                   '_a',
+                   '\\u01c5',  // Lt: Letter, Titlecase
+                   '_\\u01c5',
+                   '_\\u0300', // Mn: Mark, Non-Spacing
+                   '_\\u20dd', // Me: Mark, Enclosing
+                   '_1',       // Nd: Number, Decimal Digit
+                   '\\u2160',  // Nl: Number, Letter
+                   '_\\u2160',
+                   '_\\u200c', // Cf: Other, Format
+                   '_\\u200d',
+                   '\\u02b0',  // Lm: Letter, Modifier
+                   '_\\u02b0',
+                   '\\u04c0',  // Lo: Letter, Other
+                   '_\\u04c0',
+                   '_\\u203f', // Pc: Punctuation, Connector
+                   '_\\u301c', // Pd: Punctuation, Dash
+                   '_\\u0f3a', // Ps: Punctuation, Open
+                   '_\\u0f3b', // Pe: Punctuation, Close
+                   '_\\u00ab', // Pi: Punctuation, Initial quote
+                   '_\\u2e02',
+                   '_\\u00bb', // Pf: Punctuation, Final quote
+                   '_\\u2e0a',
+                   '_\\u00a1', // Po: Punctuation, Other
+                   '_\\u3001',
+                   '_\\u00ac', // Sm: Symbol, Math
+                   '_\\u2044',
+                   '_\\u00a2', // Sc: Symbol, Currency
+                   '_\\u20a0',
+                   '_\\u00a8', // Sk: Symbol, Modifier
+                   '_\\u02c2',
+                   '_\\u00a6', // So: Symbol, Other
+                   '_\\u0482'];
+    invalid_tests = ['v\\u0061r',
+                                // Unicode categories
+                     '\\u0300', // Mn: Mark, Non-Spacing
+                     '\\u093e', // Mc: Mark, Spacing Combining
+                     '\\u20dd', // Me: Mark, Enclosing
+                     '1',       // Nd: Number, Decimal Digit
+                     '\\u00b2', // No: Number, Other
+                     '\\u2460',
+                     '\\u009f', // Cc: Other, Control
+                     '_\\u009f',
+                     '\\u200c', // Cf: Other, Format
+                     '\\u200d',
+                     '\\u0600',
+                     '_\\u0600',
+                     '\\ud800', // Cs: Other, Surrogate
+                     '_\\ud800',
+                     '\\ue000', // Co: Other, Private Use
+                     '_\\ue000',
+                     '\\u203f', // Pc: Punctuation, Connector
+                     '\\u301c', // Pd: Punctuation, Dash
+                     '\\u0f3a', // Ps: Punctuation, Open
+                     '\\u0f3b', // Pe: Punctuation, Close
+                     '\\u00ab', // Pi: Punctuation, Initial quote
+                     '\\u2e02',
+                     '\\u00bb', // Pf: Punctuation, Final quote
+                     '\\u2e0a',
+                     '\\u00a1', // Po: Punctuation, Other
+                     '\\u3001',
+                     '\\u00ac', // Sm: Symbol, Math
+                     '\\u2044',
+                     '\\u00a2', // Sc: Symbol, Currency
+                     '\\u20a0',
+                     '\\u00a8', // Sk: Symbol, Modifier
+                     '\\u02c2',
+                     '\\u00a6', // So: Symbol, Other
+                     '\\u0482'];
+
+    var \u0061 = 1;
+    ok(\u0061 === 1, "\u0061 != 1");
+    ok(a === 1, "a != 1");
+
+    var b = 1;
+    ok(b === 1, "b != 1");
+    ok(\u0062 === 1, "\u0062 != 1");
+
+    var m\u0079 = 1;
+    ok(m\u0079  === 1, "m\u0079 != 1");
+    ok(my === 1, "my != 1");
+
+    \u0076ar c = 1;
+    ok(c === 1, "c != 1");
+
+    v\u0061r d = 1;
+    ok(d === 1, "d != 1");
+
+    for(i=0; i<valid_tests.length; i++) {
+        eval('var ' + valid_tests[i] + ' = 1;');
+        eval('ok(' + valid_tests[i] + ' === 1, "' + valid_tests[i] + ' != 1");');
+    }
+
+    for(i=0; i<invalid_tests.length; i++) {
+        tmp = false
+        try {
+            eval('var ' + invalid_tests[i] + ' = 1;');
+        }
+        catch(e) {
+            tmp = true
+        }
+        ok(tmp === true, 'Expected exception for var ' + invalid_tests[i] + ' = 1;');
+    }
+});
+
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
                                  expected_configurable) {
     var desc = Object.getOwnPropertyDescriptor(obj, prop);
