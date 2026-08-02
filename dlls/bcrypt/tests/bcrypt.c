@@ -4260,33 +4260,33 @@ static void test_aes_vector_property(void)
     ok(!ret, "got %#lx\n", ret);
 
     ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector) - 1, 0);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     /* the initialization vector can be set on the key instead of being passed to BCryptEncrypt() */
     ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
-    todo_wine ok(!ret, "got %#lx\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     size = 0;
     memset(output, 0, sizeof(output));
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, output, sizeof(output), &size, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
+    ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
 
     /* setting it again restarts the chain instead of continuing it */
     ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
-    todo_wine ok(!ret, "got %#lx\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     size = 0;
     memset(output, 0, sizeof(output));
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, output, sizeof(output), &size, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
+    ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
 
     /* a vector passed to BCryptEncrypt() overrides the one set on the key */
     ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
-    todo_wine ok(!ret, "got %#lx\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     size = 0;
     memset(iv, 0, sizeof(iv));
@@ -4298,14 +4298,14 @@ static void test_aes_vector_property(void)
 
     /* and the same vector decrypts what it encrypted */
     ret = BCryptSetProperty(key, BCRYPT_INITIALIZATION_VECTOR, (UCHAR *)vector, sizeof(vector), 0);
-    todo_wine ok(!ret, "got %#lx\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     size = 0;
     memset(output, 0, sizeof(output));
     ret = BCryptDecrypt(key, (UCHAR *)expect, sizeof(expect), NULL, NULL, 0, output, sizeof(output), &size, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(output, input, sizeof(input)), "wrong plain text\n");
+    ok(!memcmp(output, input, sizeof(input)), "wrong plain text\n");
 
     ret = BCryptDestroyKey(key);
     ok(!ret, "got %#lx\n", ret);

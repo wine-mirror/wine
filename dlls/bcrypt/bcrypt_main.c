@@ -1185,6 +1185,16 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
             return STATUS_NOT_IMPLEMENTED;
         }
     }
+    else if (!wcscmp( prop, BCRYPT_INITIALIZATION_VECTOR ))
+    {
+        if (!is_symmetric_key( key )) return STATUS_INVALID_HANDLE;
+        if (size != key->s.block_size || size > sizeof(key->s.vector)) return STATUS_INVALID_PARAMETER;
+
+        EnterCriticalSection( &key->s.cs );
+        memcpy( key->s.vector, value, size );
+        LeaveCriticalSection( &key->s.cs );
+        return STATUS_SUCCESS;
+    }
     else if (!wcscmp( prop, BCRYPT_KEY_LENGTH ))
     {
         if (size < sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
