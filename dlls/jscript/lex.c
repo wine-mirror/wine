@@ -80,17 +80,35 @@ static int lex_error(parser_ctx_t *ctx, HRESULT hres)
 }
 
 /* ECMA-262 3rd Edition    7.6 */
-BOOL is_identifier_char(WCHAR c)
-{
-    return iswalnum(c) || c == '$' || c == '_' || c == '\\';
-}
-
 static BOOL is_identifier_first_char(WCHAR c)
 {
     return iswalpha(c) || c == '$' || c == '_' || c == '\\';
 }
 
-static int compare_keyword(const WCHAR *ptr, const WCHAR *end, const WCHAR *word)
+/* More Unicode categories are allowed in IdentifierPart than those specified in ECMA-262 5th
+ * edition according to tests. Categories "Mc" and "No" are not supported currently. */
+BOOL is_identifier_char(const script_ctx_t *ctx, WCHAR c)
+{
+    WORD c1_type = 0, c3_type = 0;
+
+    if(iswalnum(c) || c == '$' || c == '_' || c == '\\')
+        return TRUE;
+
+    if(c <= 0x7f)
+        return FALSE;
+
+    if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5 && (c == 0x200c || c == 0x200d))
+        return TRUE;
+
+    GetStringTypeW(CT_CTYPE1, &c, 1, &c1_type);
+    if(c1_type & C1_PUNCT)
+        return TRUE;
+
+    GetStringTypeW(CT_CTYPE3, &c, 1, &c3_type);
+    return c3_type & C3_NONSPACING || c3_type & C3_SYMBOL;
+}
+
+static int compare_keyword(const parser_ctx_t *ctx, const WCHAR *ptr, const WCHAR *end, const WCHAR *word)
 {
     const WCHAR *p1 = ptr;
     const WCHAR *p2 = word;
@@ -104,7 +122,7 @@ static int compare_keyword(const WCHAR *ptr, const WCHAR *end, const WCHAR *word
 
     if(*p2)
         return -1;
-    else if(p1 < end && is_identifier_char(*p1))
+    else if(p1 < end && is_identifier_char(ctx->script, *p1))
         return 1;
     else
         return 0;
@@ -114,7 +132,7 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lva
 {
     int ret;
 
-    ret = compare_keyword(ctx->ptr, ctx->end, word);
+    ret = compare_keyword(ctx, ctx->ptr, ctx->end, word);
     if(!ret) {
         if(lval)
             *lval = word;
@@ -151,7 +169,7 @@ static const struct keyword * find_keyword(parser_ctx_t *ctx, const WCHAR *ptr, 
     while(min <= max) {
         i = (min+max)/2;
 
-        r = compare_keyword(ptr, end, keywords[i].word);
+        r = compare_keyword(ctx, ptr, end, keywords[i].word);
         if(!r) {
             if(ctx->script->version < keywords[i].min_version) {
                 TRACE("ignoring keyword %s in incompatible mode\n",
@@ -168,21 +186,6 @@ static const struct keyword * find_keyword(parser_ctx_t *ctx, const WCHAR *ptr, 
     }
 
     return NULL;
-}
-
-static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
-{
-    const struct keyword *keyword;
-
-    keyword = find_keyword(ctx, ctx->ptr, ctx->end);
-    if(!keyword)
-        return 0;
-
-    if(lval)
-        *lval = keyword->word;
-    ctx->ptr += lstrlenW(keyword->word);
-    ctx->implicit_nl_semicolon = keyword->no_nl;
-    return keyword->token;
 }
 
 static BOOL skip_html_comment(parser_ctx_t *ctx)
@@ -214,7 +217,7 @@ static BOOL skip_comment(parser_ctx_t *ctx)
     switch(ctx->ptr[1]) {
     case '*':
         ctx->ptr += 2;
-        if(ctx->ptr+2 < ctx->end && *ctx->ptr == '@' && is_identifier_char(ctx->ptr[1]))
+        if(ctx->ptr+2 < ctx->end && *ctx->ptr == '@' && is_identifier_char(ctx->script, ctx->ptr[1]))
             return FALSE;
         while(ctx->ptr+1 < ctx->end && (ctx->ptr[0] != '*' || ctx->ptr[1] != '/'))
             ctx->ptr++;
@@ -228,7 +231,7 @@ static BOOL skip_comment(parser_ctx_t *ctx)
         break;
     case '/':
         ctx->ptr += 2;
-        if(ctx->ptr+2 < ctx->end && *ctx->ptr == '@' && is_identifier_char(ctx->ptr[1]))
+        if(ctx->ptr+2 < ctx->end && *ctx->ptr == '@' && is_identifier_char(ctx->script, ctx->ptr[1]))
             return FALSE;
         while(ctx->ptr < ctx->end && !is_endline(*ctx->ptr))
             ctx->ptr++;
@@ -344,22 +347,90 @@ BOOL unescape(WCHAR *str, size_t *len)
     return TRUE;
 }
 
+static BOOL unescape_identifier(const parser_ctx_t *ctx, WCHAR *dst, const WCHAR *src, int *len)
+{
+    const WCHAR *p, *end = src + *len;
+    WCHAR *pd, c;
+    int i;
+
+    p = src;
+    pd = dst;
+    while(p < end) {
+        if(*p != '\\') {
+            *pd++ = *p++;
+            continue;
+        }
+
+        if(++p == end)
+            return FALSE;
+
+        if(*p != 'u' || p + 4 >= end)
+            return FALSE;
+
+        i = hex_to_int(*++p);
+        if(i == -1)
+            return FALSE;
+        c = i << 12;
+
+        i = hex_to_int(*++p);
+        if(i == -1)
+            return FALSE;
+        c += i << 8;
+
+        i = hex_to_int(*++p);
+        if(i == -1)
+            return FALSE;
+        c += i << 4;
+
+        i = hex_to_int(*++p);
+        if(i == -1)
+            return FALSE;
+        c += i;
+
+        if(pd == dst && !is_identifier_first_char(c))
+            return FALSE;
+        else if(!is_identifier_char(ctx->script, c))
+            return FALSE;
+
+        *pd++ = c;
+        p++;
+    }
+
+    *len = pd - dst;
+    return TRUE;
+}
+
 static int parse_identifier(parser_ctx_t *ctx, const WCHAR **ret)
 {
     const WCHAR *ptr = ctx->ptr++;
+    const struct keyword *keyword;
     WCHAR *wstr;
     int len;
 
-    while(ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr))
+    while(ctx->ptr < ctx->end && is_identifier_char(ctx->script, *ctx->ptr))
         ctx->ptr++;
 
     len = ctx->ptr-ptr;
 
     *ret = wstr = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
-    memcpy(wstr, ptr, len*sizeof(WCHAR));
+    if(!unescape_identifier(ctx, wstr, ptr, &len)) {
+        WARN("unescape identifier failed\n");
+        return lex_error(ctx, E_FAIL);
+    }
     wstr[len] = 0;
 
-    /* FIXME: unescape */
+    keyword = find_keyword(ctx, wstr, wstr+len);
+    if(keyword) {
+        /* Escaped keywords are not allowed in < ES5 */
+        if(ctx->script->version < SCRIPTLANGUAGEVERSION_ES5 && len != ctx->ptr-ptr) {
+            WARN("unexpected keyword %s\n", wine_dbgstr_w(wstr));
+            return lex_error(ctx, E_FAIL);
+        }
+
+        ctx->implicit_nl_semicolon = keyword->no_nl;
+        return keyword->token;
+    }
+
     return tIdentifier;
 }
 
@@ -420,7 +491,7 @@ literal_t *new_boolean_literal(parser_ctx_t *ctx, BOOL bval)
     return ret;
 }
 
-HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
+HRESULT parse_decimal(const script_ctx_t *ctx, const WCHAR **iter, const WCHAR *end, double *ret)
 {
     const WCHAR *ptr = *iter;
     LONGLONG d = 0, hlp;
@@ -486,7 +557,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
         else exp += e;
     }
 
-    if(is_identifier_char(*ptr)) {
+    if(is_identifier_char(ctx, *ptr)) {
         WARN("wrong char after zero\n");
         return JS_E_MISSING_SEMICOLON;
     }
@@ -516,7 +587,7 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
                 ctx->ptr++;
             }
 
-            if(ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr)) {
+            if(ctx->ptr < ctx->end && is_identifier_char(ctx->script, *ctx->ptr)) {
                 WARN("unexpected identifier char\n");
                 lex_error(ctx, JS_E_MISSING_SEMICOLON);
                 return FALSE;
@@ -543,7 +614,7 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
             }while(++ctx->ptr < ctx->end && is_digit(*ctx->ptr));
 
             /* FIXME: Do we need it here? */
-            if(ctx->ptr < ctx->end && (is_identifier_char(*ctx->ptr) || *ctx->ptr == '.')) {
+            if(ctx->ptr < ctx->end && (is_identifier_char(ctx->script, *ctx->ptr) || *ctx->ptr == '.')) {
                 WARN("wrong char after octal literal: '%c'\n", *ctx->ptr);
                 lex_error(ctx, JS_E_MISSING_SEMICOLON);
                 return FALSE;
@@ -553,14 +624,14 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
             return TRUE;
         }
 
-        if(is_identifier_char(*ctx->ptr)) {
+        if(is_identifier_char(ctx->script, *ctx->ptr)) {
             WARN("wrong char after zero\n");
             lex_error(ctx, JS_E_MISSING_SEMICOLON);
             return FALSE;
         }
     }
 
-    hres = parse_decimal(&ctx->ptr, ctx->end, ret);
+    hres = parse_decimal(ctx->script, &ctx->ptr, ctx->end, ret);
     if(FAILED(hres)) {
         lex_error(ctx, hres);
         return FALSE;
@@ -585,13 +656,8 @@ static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
         ctx->implicit_nl_semicolon = FALSE;
     }
 
-    if(iswalpha(*ctx->ptr)) {
-        int ret = check_keywords(ctx, lval);
-        if(ret)
-            return ret;
-
+    if(is_identifier_first_char(*ctx->ptr))
         return parse_identifier(ctx, lval);
-    }
 
     if(is_digit(*ctx->ptr)) {
         double n;
@@ -620,7 +686,7 @@ static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
         if(ctx->ptr+1 < ctx->end && is_digit(ctx->ptr[1])) {
             double n;
             HRESULT hres;
-            hres = parse_decimal(&ctx->ptr, ctx->end, &n);
+            hres = parse_decimal(ctx->script, &ctx->ptr, ctx->end, &n);
             if(FAILED(hres)) {
                 lex_error(ctx, hres);
                 return -1;
@@ -821,10 +887,6 @@ static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
     case '\'':
         return parse_string_literal(ctx, lval, *ctx->ptr);
 
-    case '_':
-    case '$':
-        return parse_identifier(ctx, lval);
-
     case '@':
         return '@';
     }
@@ -925,7 +987,7 @@ static BOOL parse_cc_identifier(parser_ctx_t *ctx, const WCHAR **ret, unsigned *
     }
 
     *ret = ctx->ptr;
-    while(++ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr));
+    while(++ctx->ptr < ctx->end && is_identifier_char(ctx->script, *ctx->ptr));
     *ret_len = ctx->ptr - *ret;
     return TRUE;
 }
@@ -1107,7 +1169,7 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     if(!ctx->script->cc)
         return lex_error(ctx, JS_E_DISABLED_CC);
 
-    while(ctx->ptr+id_len < ctx->end && is_identifier_char(ctx->ptr[id_len]))
+    while(ctx->ptr+id_len < ctx->end && is_identifier_char(ctx->script, ctx->ptr[id_len]))
         id_len++;
     if(!id_len)
         return '@';

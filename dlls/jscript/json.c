@@ -51,7 +51,7 @@ static BOOL is_keyword(json_parse_ctx_t *ctx, const WCHAR *keyword)
         if(!ctx->ptr[i] || keyword[i] != ctx->ptr[i])
             return FALSE;
     }
-    if(is_identifier_char(ctx->ptr[i]))
+    if(is_identifier_char(ctx->ctx, ctx->ptr[i]))
         return FALSE;
     ctx->ptr += i;
     return TRUE;
@@ -325,7 +325,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
         if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && is_digit(ctx->ptr[1]))
             break;
 
-        hres = parse_decimal(&ctx->ptr, ctx->end, &n);
+        hres = parse_decimal(ctx->ctx, &ctx->ptr, ctx->end, &n);
         if(FAILED(hres))
             break;
 

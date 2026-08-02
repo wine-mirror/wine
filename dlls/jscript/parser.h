@@ -66,9 +66,9 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 }
 
 int hex_to_int(WCHAR);
-BOOL is_identifier_char(WCHAR);
+BOOL is_identifier_char(const script_ctx_t*,WCHAR);
 BOOL unescape(WCHAR*,size_t*);
-HRESULT parse_decimal(const WCHAR**,const WCHAR*,double*);
+HRESULT parse_decimal(const script_ctx_t*,const WCHAR**,const WCHAR*,double*);
 
 typedef enum {
     LT_DOUBLE,
