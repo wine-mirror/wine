@@ -752,6 +752,7 @@ static BOOL check_resource_write( void *addr )
 LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
 {
     const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
+    ULONG_PTR debug_port;
     BOOL nested;
 
     if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2)
@@ -765,7 +766,8 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
         }
     }
 
-    if (!NtCurrentTeb()->Peb->BeingDebugged)
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort, &debug_port, sizeof(debug_port), NULL );
+    if (!debug_port)
     {
         if (rec->ExceptionCode == CONTROL_C_EXIT)
         {

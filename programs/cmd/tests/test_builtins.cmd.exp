@@ -979,7 +979,12 @@ N
 foo
 bar
 before!
-@todo_wine@after!
+after!
+caret!bang
+!a
+hello
+@todo_wine@^hello
+@todo_wine@ECHO is off.
 --- in digit variables
 a %1 %2
 b %1 %2
@@ -2310,6 +2315,10 @@ BB@space@
 A2@space@
 BB@space@
 ---
+------------ Testing short path modifier ------------
+short name: filename shortened
+short path: non-existent last preserved
+short path: beyond missing preserved
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball

@@ -106,7 +106,7 @@ extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
 extern void allow_fd_caching( struct fd *fd );
 extern void set_fd_signaled( struct fd *fd, int signaled );
 extern char *dup_fd_name( struct fd *root, const char *name ) __WINE_DEALLOC(free) __WINE_MALLOC;
-extern void get_nt_name( struct fd *fd, struct unicode_str *name );
+extern struct unicode_str get_nt_name( struct fd *fd );
 
 extern struct object *default_fd_get_sync( struct object *obj );
 extern WCHAR *default_fd_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len );
@@ -176,11 +176,11 @@ extern const struct pe_image_info *get_view_image_info( const struct memory_view
 extern int get_view_nt_name( const struct memory_view *view, struct unicode_str *name );
 extern void free_mapped_views( struct process *process );
 extern size_t get_page_size(void);
-extern struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name, struct fd *fd,
+extern struct mapping *create_fd_mapping( struct object *root, struct unicode_str name, struct fd *fd,
                                           unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+extern struct object *create_user_data_mapping( struct object *root, struct unicode_str name,
                                                 unsigned int attr, const struct security_descriptor *sd );
-extern struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
+extern struct mapping *create_session_mapping( struct object *root, struct unicode_str name,
                                                unsigned int attr, const struct security_descriptor *sd );
 extern void set_session_mapping( struct mapping *mapping );
 
@@ -207,15 +207,15 @@ extern struct obj_locator get_shared_object_locator( volatile void *object_shm )
 
 /* device functions */
 
-extern struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name,
+extern struct object *create_named_pipe_device( struct object *root, struct unicode_str name,
                                                 unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_mailslot_device( struct object *root, const struct unicode_str *name,
+extern struct object *create_mailslot_device( struct object *root, struct unicode_str name,
                                               unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_console_device( struct object *root, const struct unicode_str *name,
+extern struct object *create_console_device( struct object *root, struct unicode_str name,
                                               unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_socket_device( struct object *root, const struct unicode_str *name,
+extern struct object *create_socket_device( struct object *root, struct unicode_str name,
                                               unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_unix_device( struct object *root, const struct unicode_str *name,
+extern struct object *create_unix_device( struct object *root, struct unicode_str name,
                                           unsigned int attr, const struct security_descriptor *sd, const char *unix_path );
 
 /* change notification functions */

@@ -160,7 +160,13 @@ struct mutex
     struct object      *sync;            /* mutex sync object */
 };
 
+struct mutex_init_data
+{
+    int owned;
+};
+
 static void mutex_dump( struct object *obj, int verbose );
+static bool mutex_init( struct object *obj, const void *init_data );
 static struct object *mutex_get_sync( struct object *obj );
 static int mutex_signal( struct object *obj, unsigned int access, int signal );
 static void mutex_destroy( struct object *obj );
@@ -170,32 +176,11 @@ static const struct object_ops mutex_ops =
     .size     = sizeof(struct mutex),
     .type     = &mutex_type,
     .dump     = mutex_dump,
+    .init     = mutex_init,
     .signal   = mutex_signal,
     .get_sync = mutex_get_sync,
     .destroy  = mutex_destroy,
 };
-
-static struct mutex *create_mutex( struct object *root, const struct unicode_str *name,
-                                   unsigned int attr, int owned, const struct security_descriptor *sd )
-{
-    struct mutex *mutex;
-
-    if ((mutex = create_named_object( root, &mutex_ops, name, attr, sd )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            /* initialize it if it didn't already exist */
-            mutex->sync = NULL;
-
-            if (!(mutex->sync = create_mutex_sync( owned )))
-            {
-                release_object( mutex );
-                return NULL;
-            }
-        }
-    }
-    return mutex;
-}
 
 void abandon_mutexes( struct thread *thread )
 {
@@ -217,6 +202,14 @@ static void mutex_dump( struct object *obj, int verbose )
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
     mutex->sync->ops->dump( mutex->sync, verbose );
+}
+
+static bool mutex_init( struct object *obj, const void *init_data )
+{
+    struct mutex *mutex = (struct mutex *)obj;
+    const struct mutex_init_data *data = init_data;
+
+    return !!(mutex->sync = create_mutex_sync( data->owned ));
 }
 
 static struct object *mutex_get_sync( struct object *obj )
@@ -252,34 +245,19 @@ static void mutex_destroy( struct object *obj )
 /* create a mutex */
 DECL_HANDLER(create_mutex)
 {
-    struct mutex *mutex;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct mutex_init_data data = { .owned = req->owned };
+    struct object_params params = { .ops = &mutex_ops, .access = req->access, .init_data = &data };
 
-    if (!objattr) return;
-
-    if ((mutex = create_mutex( root, &name, objattr->attributes, req->owned, sd )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, mutex, req->access, objattr->attributes );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, mutex,
-                                                          req->access, objattr->attributes );
-        release_object( mutex );
-    }
-
-    if (root) release_object( root );
+    if (!get_req_object_attributes( &params )) return;
+    reply->handle = create_named_obj_handle( current->process, &params );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &mutex_ops, &name, req->attributes );
+                                 &mutex_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* release a mutex */

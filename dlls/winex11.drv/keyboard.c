@@ -2565,9 +2565,6 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
   if (!(lParam & 0x02000000)) {
     switch (vkey) {
          case VK_RSHIFT:
-                          /* R-Shift is "special" - it is an extended key with separate scan code */
-                          scanCode |= 0x100;
-                          /* fall through */
          case VK_LSHIFT:
                           vkey = VK_SHIFT;
                           break;

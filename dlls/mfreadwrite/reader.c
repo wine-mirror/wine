@@ -714,6 +714,16 @@ static void media_type_try_copy_attr(IMFMediaType *dst, IMFMediaType *src, const
     PropVariantClear(&value);
 }
 
+static HRESULT media_type_get_uint32_pair(IMFMediaType *type, const GUID *key, UINT32 *hi, UINT32 *lo)
+{
+    UINT64 data;
+    HRESULT hr = IMFMediaType_GetUINT64(type, key, &data);
+    if (FAILED(hr)) return hr;
+
+    *hi = data >> 32;
+    *lo = data & 0xffffffff;
+    return hr;
+}
 
 /* Update a media type with additional attributes reported by another media type, */
 /* also present as update_media_type_from_upstream in mf/topology_loader.c pipeline. */
@@ -2079,6 +2089,30 @@ static HRESULT set_default_video_attributes(struct source_reader *reader, IMFMed
     return hr;
 }
 
+static HRESULT apply_pixel_aspect_ratio(IMFMediaType *dst_type, IMFMediaType *src_type)
+{
+    UINT64 dst_frame_size;
+    UINT32 par_w, par_h, w, h;
+
+    if (SUCCEEDED(media_type_get_uint32_pair(src_type, &MF_MT_FRAME_SIZE, &w, &h)) &&
+            FAILED(IMFMediaType_GetUINT64(dst_type, &MF_MT_FRAME_SIZE, &dst_frame_size)) &&
+            SUCCEEDED(media_type_get_uint32_pair(src_type, &MF_MT_PIXEL_ASPECT_RATIO, &par_w, &par_h)))
+    {
+        /* Video processor should rectify the aspect ratio so the output has aspect ratio of 1:1.
+         * We are doing this here by explicitly changing the target frame size. */
+
+        UINT64 new_h = h, new_w = w;
+        if (par_w < par_h) new_h  = h * par_h / par_w;
+        else new_w = w * par_w / par_h;
+
+        new_h = (new_h + 1) & ~1;
+        new_w = (new_w + 1) & ~1;
+
+        return IMFMediaType_SetUINT64(dst_type, &MF_MT_FRAME_SIZE, ((UINT64)new_w << 32) + new_h);
+    }
+    return S_OK;
+}
+
 static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL decoder, BOOL allow_processor,
         IMFMediaType *input_type, IMFMediaType *output_type, struct transform_entry **out)
 {
@@ -2171,24 +2205,34 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
                 BOOL enable_advanced;
+                IMFMediaType *output_type_copy = NULL;
+
+                hr = MFCreateMediaType(&output_type_copy);
+                if (SUCCEEDED(hr))
+                    hr = IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)output_type_copy);
 
                 source_reader_allow_video_processor(reader, &enable_advanced);
 
-                if ((SUCCEEDED(hr = update_media_type(output_type, media_type, enable_advanced)))
-                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
-                        && FAILED(hr = set_matching_transform_output_type(transform, output_type)) && allow_processor
+                if (SUCCEEDED(hr) && (!enable_advanced || SUCCEEDED(hr = apply_pixel_aspect_ratio(output_type_copy, media_type)))
+                        && (SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced)))
+                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type_copy, 0))
+                        && FAILED(hr = set_matching_transform_output_type(transform, output_type_copy)) && allow_processor
                         && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
                 {
                     struct transform_entry *converter;
 
                     if (SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, media_type, 0))
-                            && SUCCEEDED(hr = update_media_type(output_type, media_type, enable_advanced))
-                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type)))
-                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type, &converter)))
+                            && (!enable_advanced || SUCCEEDED(hr = apply_pixel_aspect_ratio(output_type_copy, media_type)))
+                            && SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced))
+                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type_copy)))
+                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type_copy, &converter)))
                         list_add_tail(&entry->entry, &converter->entry);
 
                     IMFMediaType_Release(media_type);
                 }
+
+                if(output_type_copy)
+                    IMFMediaType_Release(output_type_copy);
 
                 if (SUCCEEDED(hr))
                 {

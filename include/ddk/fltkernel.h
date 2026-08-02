@@ -23,6 +23,7 @@ extern "C" {
 #endif
 
 #include <ddk/ntifs.h>
+#include <fltuserstructures.h>
 
 typedef struct _FLT_FILTER   *PFLT_FILTER;
 typedef struct _FLT_INSTANCE *PFLT_INSTANCE;
@@ -48,6 +49,8 @@ typedef void*  PFLT_CONTEXT;
 #define FLT_STREAM_CONTEXT       0x0008
 #define FLT_STREAMHANDLE_CONTEXT 0x0010
 #define FLT_TRANSACTION_CONTEXT  0x0020
+#define FLT_SECTION_CONTEXT      0x0040
+#define FLT_CONTEXT_END          0xffff
 
 #define FLTFL_OPERATION_REGISTRATION_SKIP_PAGING_IO     0x00000001
 #define FLTFL_OPERATION_REGISTRATION_SKIP_CACHED_IO     0x00000002
@@ -59,40 +62,44 @@ typedef void*  PFLT_CONTEXT;
 #define FLTFL_INSTANCE_TEARDOWN_VOLUME_DISMOUNT         0x00000008
 #define FLTFL_INSTANCE_TEARDOWN_INTERNAL_ERROR          0x00000010
 
-/* Belongs in fltuserstructures.h */
-typedef enum _FLT_FILESYSTEM_TYPE
-{
-    FLT_FSTYPE_UNKNOWN,
-    FLT_FSTYPE_RAW,
-    FLT_FSTYPE_NTFS,
-    FLT_FSTYPE_FAT,
-    FLT_FSTYPE_CDFS,
-    FLT_FSTYPE_UDFS,
-    FLT_FSTYPE_LANMAN,
-    FLT_FSTYPE_WEBDAV,
-    FLT_FSTYPE_RDPDR,
-    FLT_FSTYPE_NFS,
-    FLT_FSTYPE_MS_NETWARE,
-    FLT_FSTYPE_NETWARE,
-    FLT_FSTYPE_BSUDF,
-    FLT_FSTYPE_MUP,
-    FLT_FSTYPE_RSFX,
-    FLT_FSTYPE_ROXIO_UDF1,
-    FLT_FSTYPE_ROXIO_UDF2,
-    FLT_FSTYPE_ROXIO_UDF3,
-    FLT_FSTYPE_TACIT,
-    FLT_FSTYPE_FS_REC,
-    FLT_FSTYPE_INCD,
-    FLT_FSTYPE_INCD_FAT,
-    FLT_FSTYPE_EXFAT,
-    FLT_FSTYPE_PSFS,
-    FLT_FSTYPE_GPFS,
-    FLT_FSTYPE_NPFS,
-    FLT_FSTYPE_MSFS,
-    FLT_FSTYPE_CSVFS,
-    FLT_FSTYPE_REFS,
-    FLT_FSTYPE_OPENAFS
-} FLT_FILESYSTEM_TYPE, *PFLT_FILESYSTEM_TYPE;
+#define IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION     0xff
+#define IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION     0xfe
+#define IRP_MJ_ACQUIRE_FOR_MOD_WRITE                   0xfd
+#define IRP_MJ_RELEASE_FOR_MOD_WRITE                   0xfc
+#define IRP_MJ_ACQUIRE_FOR_CC_FLUSH                    0xfb
+#define IRP_MJ_RELEASE_FOR_CC_FLUSH                    0xfa
+#define IRP_MJ_QUERY_OPEN                              0xf9
+#define IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE               0xf3
+#define IRP_MJ_NETWORK_QUERY_OPEN                      0xf2
+#define IRP_MJ_MDL_READ                                0xf1
+#define IRP_MJ_MDL_READ_COMPLETE                       0xf0
+#define IRP_MJ_PREPARE_MDL_WRITE                       0xef
+#define IRP_MJ_MDL_WRITE_COMPLETE                      0xee
+#define IRP_MJ_VOLUME_MOUNT                            0xed
+#define IRP_MJ_VOLUME_DISMOUNT                         0xec
+
+#define IRP_MJ_OPERATION_END                           0x80
+
+#define FLT_PORT_CONNECT                               0x0001
+#define FLT_PORT_ALL_ACCESS                            (FLT_PORT_CONNECT | STANDARD_RIGHTS_ALL)
+
+#define FLT_REGISTRATION_VERSION                       0x0203
+
+#define FLT_VALID_FILE_NAME_FORMATS                    0x000000ff
+
+#define FLT_FILE_NAME_NORMALIZED                       0x01
+#define FLT_FILE_NAME_OPENED                           0x02
+#define FLT_FILE_NAME_SHORT                            0x03
+#define FltGetFileNameFormat( options )                ((options) & FLT_VALID_FILE_NAME_FORMATS)
+
+#define FLT_VALID_FILE_NAME_QUERY_METHODS              0x0000ff00
+
+#define FLT_FILE_NAME_QUERY_DEFAULT                    0x0100
+#define FLT_FILE_NAME_QUERY_CACHE_ONLY                 0x0200
+#define FLT_FILE_NAME_QUERY_FILESYSTEM_ONLY            0x0300
+#define FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP  0x0400
+
+#define FltGetFileNameQueryMethod( options )           ((options) & FLT_VALID_FILE_NAME_QUERY_METHODS)
 
 typedef struct _FLT_NAME_CONTROL
 {
@@ -126,6 +133,20 @@ typedef struct _FLT_RELATED_CONTEXTS
     PFLT_CONTEXT StreamHandleContext;
     PFLT_CONTEXT TransactionContext;
 } FLT_RELATED_CONTEXTS, *PFLT_RELATED_CONTEXTS;
+
+typedef struct _KTRANSACTION *PKTRANSACTION;
+
+typedef struct _FLT_RELATED_OBJECTS
+{
+
+    USHORT const Size;
+    USHORT const TransactionContext;
+    PFLT_FILTER const Filter;
+    PFLT_VOLUME const Volume;
+    PFLT_INSTANCE const Instance;
+    PFILE_OBJECT const FileObject;
+    PKTRANSACTION const Transaction;
+} FLT_RELATED_OBJECTS, *PFLT_RELATED_OBJECTS;
 
 typedef const struct _FLT_RELATED_OBJECTS *PCFLT_RELATED_OBJECTS;
 
@@ -694,6 +715,21 @@ typedef struct _FLT_FILE_NAME_INFORMATION
     UNICODE_STRING FinalComponent;
     UNICODE_STRING ParentDir;
 } FLT_FILE_NAME_INFORMATION, *PFLT_FILE_NAME_INFORMATION;
+
+#define VOL_PROP_FL_DAX_VOLUME                      0x0001
+
+typedef struct _FLT_VOLUME_PROPERTIES
+{
+    DEVICE_TYPE    DeviceType;
+    ULONG          DeviceCharacteristics;
+    ULONG          DeviceObjectFlags;
+    ULONG          AlignmentRequirement;
+    USHORT         SectorSize;
+    USHORT         Flags;
+    UNICODE_STRING FileSystemDriverName;
+    UNICODE_STRING FileSystemDeviceName;
+    UNICODE_STRING RealDeviceName;
+} FLT_VOLUME_PROPERTIES, *PFLT_VOLUME_PROPERTIES;
 
 NTSTATUS WINAPI FltAllocateContext(PFLT_FILTER, FLT_CONTEXT_TYPE, SIZE_T, POOL_TYPE, PFLT_CONTEXT*);
 NTSTATUS WINAPI FltBuildDefaultSecurityDescriptor(PSECURITY_DESCRIPTOR *, ACCESS_MASK);

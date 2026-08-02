@@ -2973,6 +2973,11 @@ static void test_rename(void)
     IStream_Release(stm);
 
     /* rename the stream */
+
+    /* New name is too long */
+    r = IStorage_RenameElement(stg2, stmname, L"abcdef_abcdef_abcdef_abcdef_abcdef_abcdef_abcdef_abcdef");
+    ok(r == STG_E_INVALIDNAME, "Unexpected hr %#lx.\n", r);
+
     r = IStorage_RenameElement(stg2, stmname, stmname2);
     ok(r==S_OK, "IStorage->RenameElement failed, hr=%08lx\n", r);
 

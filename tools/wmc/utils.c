@@ -436,7 +436,6 @@ WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstl
     return dst;
 }
 
-static const NLS_LOCALE_LCID_INDEX *lcids_index;
 static const NLS_LOCALE_HEADER *locale_table;
 static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
 static const WCHAR *locale_strings;
@@ -457,7 +456,6 @@ static void load_locale_nls(void)
 
     if (!(header = load_nls_file( "locale.nls" ))) error( "unable to load locale.nls\n" );
     locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
-    lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
     lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
     locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
 }

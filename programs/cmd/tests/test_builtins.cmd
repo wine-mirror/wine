@@ -1316,6 +1316,16 @@ setlocal EnableDelayedExpansion
 set "AFTER_DELAY=after^!"
 echo !BEFORE_DELAY!
 echo !AFTER_DELAY!
+rem caret escape inside quotes:
+set "b=caret^!bang"
+echo !b!
+setlocal DisableDelayedExpansion
+setlocal EnableDelayedExpansion
+set "a=hello"
+echo ^^!a!
+echo !a^!
+echo ^^^^!a!
+echo !a^^!
 setlocal DisableDelayedExpansion
 
 echo --- in digit variables
@@ -4482,6 +4492,23 @@ rem cleanup
 echo ---
 del run.cmd
 del ovr.cmd
+echo ------------ Testing short path modifier ------------
+mkdir TestLongDirForShort >nul 2>&1
+echo test > TestLongDirForShort\TestLongFileForShort.txt
+for %%P in ("%CD%\TestLongDirForShort\TestLongFileForShort.txt") do (
+  echo %%~snP | findstr "~" >nul
+  if errorlevel 1 (echo short name: filename NOT shortened) else (echo short name: filename shortened)
+)
+for %%P in ("%CD%\TestLongDirForShort\NonExistent") do (
+  echo %%~sP | findstr "NonExistent" >nul
+  if errorlevel 1 (echo short path: non-existent last NOT preserved) else (echo short path: non-existent last preserved)
+)
+for %%P in ("%CD%\TestLongDirForShort\NonExistentMid\AlsoNonExistent") do (
+  echo %%~sP | findstr "AlsoNonExistent" >nul
+  if errorlevel 1 (echo short path: beyond missing NOT preserved) else (echo short path: beyond missing preserved)
+)
+del TestLongDirForShort\TestLongFileForShort.txt 2>nul
+rmdir TestLongDirForShort 2>nul
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd

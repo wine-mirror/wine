@@ -2444,12 +2444,15 @@ static void test_OutputDebugString(void)
     ok(GetLastError() == 0xdeadbeef, "got %ld.\n", GetLastError());
 }
 
+static int test_unhandled_exception_filter_called;
+
 static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS *ep )
 {
     static int depth;
     EXCEPTION_RECORD *rec = ep->ExceptionRecord;
     LONG ret;
 
+    ++test_unhandled_exception_filter_called;
     ++depth;
     if (depth > 1) return EXCEPTION_CONTINUE_SEARCH;
 
@@ -2467,27 +2470,50 @@ static LONG WINAPI test_unhandled_exception_filter_topfilter( EXCEPTION_POINTERS
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static void test_unhandled_exception_filter(void)
+static void test_unhandled_exception_filter(BYTE being_debugged_flag)
 {
+    BYTE being_debugged_saved = NtCurrentTeb()->Peb->BeingDebugged;
     EXCEPTION_RECORD rec = { .ExceptionCode = 0xbeef };
     EXCEPTION_POINTERS ep = { .ExceptionRecord = &rec };
     LPTOP_LEVEL_EXCEPTION_FILTER old;
+    ULONG_PTR port;
     LONG ret;
 
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL );
+
+    winetest_push_context("debug flag %d, port %d", being_debugged_flag, !!port);
+    NtCurrentTeb()->Peb->BeingDebugged = being_debugged_flag;
     old = SetUnhandledExceptionFilter( test_unhandled_exception_filter_topfilter );
+    test_unhandled_exception_filter_called = 0;
     ret = UnhandledExceptionFilter( &ep );
-    ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %ld.\n", ret );
+    if (port)
+    {
+        ok( !test_unhandled_exception_filter_called, "called.\n" );
+        ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %ld.\n", ret );
+    }
+    else
+    {
+        ok( test_unhandled_exception_filter_called, "not called.\n" );
+        ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %ld.\n", ret );
+    }
 
     SetUnhandledExceptionFilter( NULL );
 
+    test_unhandled_exception_filter_called = 0;
     rec.ExceptionFlags = EXCEPTION_NESTED_CALL;
     ret = UnhandledExceptionFilter( &ep );
+    ok( !test_unhandled_exception_filter_called, "called.\n" );
     ok( ret == EXCEPTION_CONTINUE_SEARCH, "got %#lx.\n", ret );
     rec.ExceptionFlags &= ~EXCEPTION_NESTED_CALL;
+
+    test_unhandled_exception_filter_called = 0;
     ret = UnhandledExceptionFilter( &ep );
-    ok( ret == EXCEPTION_EXECUTE_HANDLER, "got %#lx.\n", ret );
+    ok( !test_unhandled_exception_filter_called, "called.\n" );
+    ok( ret == (port ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER), "got %#lx.\n", ret );
 
     SetUnhandledExceptionFilter( old );
+    NtCurrentTeb()->Peb->BeingDebugged = being_debugged_saved;
+    winetest_pop_context();
 }
 
 START_TEST(debugger)
@@ -2528,6 +2554,8 @@ START_TEST(debugger)
     }
     else if (myARGC >= 5 && !strcmp(myARGV[2], "child"))
     {
+        test_unhandled_exception_filter(0);
+        test_unhandled_exception_filter(1);
         doChild(myARGC, myARGV);
     }
     else if (myARGC >= 4 && !strcmp(myARGV[2], "children"))
@@ -2556,6 +2584,7 @@ START_TEST(debugger)
         test_debugger(myARGV[0]);
         test_kill_on_exit(myARGV[0]);
         test_OutputDebugString();
-        test_unhandled_exception_filter();
+        test_unhandled_exception_filter(0);
+        test_unhandled_exception_filter(1);
     }
 }

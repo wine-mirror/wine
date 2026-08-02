@@ -541,15 +541,13 @@ static struct object *file_open_file( struct object *obj, unsigned int access,
 {
     struct file *file = (struct file *)obj;
     struct object *new_file = NULL;
-    struct unicode_str nt_name;
     char *unix_name;
 
     assert( obj->ops == &file_ops );
 
     if ((unix_name = dup_fd_name( file->fd, "" )))
     {
-        get_nt_name( file->fd, &nt_name );
-        new_file = create_file( NULL, unix_name, strlen(unix_name), nt_name, access,
+        new_file = create_file( NULL, unix_name, strlen(unix_name), get_nt_name(file->fd), access,
                                 sharing, FILE_OPEN, options, 0, NULL );
         free( unix_name );
     }
@@ -625,31 +623,30 @@ DECL_HANDLER(create_file)
 {
     struct object *file;
     struct fd *root_fd = NULL;
-    struct unicode_str nt_name;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &nt_name, NULL );
+    struct object_params params;
     const char *name;
     data_size_t name_len;
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
+    if (params.root) release_object( params.root );
 
-    if (objattr->rootdir)
+    if (params.objattr->rootdir)
     {
         struct dir *root;
 
-        if (!(root = get_dir_obj( current->process, objattr->rootdir, 0 ))) return;
+        if (!(root = get_dir_obj( current->process, params.objattr->rootdir, 0 ))) return;
         root_fd = get_obj_fd( (struct object *)root );
         release_object( root );
         if (!root_fd) return;
     }
 
-    name = get_req_data_after_objattr( objattr, &name_len );
+    name = get_req_data_after_objattr( &params, &name_len );
 
     reply->handle = 0;
-    if ((file = create_file( root_fd, name, name_len, nt_name, req->access, req->sharing,
-                             req->create, req->options, req->attrs, sd )))
+    if ((file = create_file( root_fd, name, name_len, params.name, req->access, req->sharing,
+                             req->create, req->options, req->attrs, params.sd )))
     {
-        reply->handle = alloc_handle( current->process, file, req->access, objattr->attributes );
+        reply->handle = alloc_handle( current->process, file, req->access, params.attr );
         release_object( file );
     }
     if (root_fd) release_object( root_fd );

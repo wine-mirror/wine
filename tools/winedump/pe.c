@@ -4125,7 +4125,7 @@ static void print_clr_stream( const BYTE *base, const BYTE **ptr, UINT *size )
         guids.data = base + stream_offset;
         guids.size = stream_size;
     }
-    else if (!strcmp( name, "#~" ))
+    else if (!strcmp( name, "#~" ) || !strcmp (name, "#-" ))
     {
         tables.data = base + stream_offset;
         tables.size = stream_size;
@@ -4161,7 +4161,7 @@ static void print_clr_metadata( const BYTE *data, UINT data_size )
     version = (const char *)ptr;
     print_clr( "Version      " );
     printf( "%s\n", version );
-    len = ((strlen( version ) + 1) + 3) & ~3;
+    len = (len + 3) & ~3;
     if (size < len) return;
     ptr += len; size -= len;
 

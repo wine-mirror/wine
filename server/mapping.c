@@ -137,7 +137,16 @@ struct mapping
     data_size_t          ver_len;    /* length of version resource (for PE image mapping) */
 };
 
+struct mapping_init_data
+{
+    mem_size_t   size;
+    unsigned int flags;
+    unsigned int file_access;
+    struct fd   *fd;
+};
+
 static void mapping_dump( struct object *obj, int verbose );
+static bool mapping_init( struct object *obj, const void *init_data );
 static struct fd *mapping_get_fd( struct object *obj );
 static void mapping_destroy( struct object *obj );
 static enum server_fd_type mapping_get_fd_type( struct fd *fd );
@@ -147,6 +156,7 @@ static const struct object_ops mapping_ops =
     .size    = sizeof(struct mapping),
     .type    = &mapping_type,
     .dump    = mapping_dump,
+    .init    = mapping_init,
     .get_fd  = mapping_get_fd,
     .destroy = mapping_destroy,
 };
@@ -1053,24 +1063,15 @@ static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
     return 0;
 }
 
-
-static struct mapping *create_mapping( struct object *root, const struct unicode_str *name,
-                                       unsigned int attr, mem_size_t size, unsigned int flags,
-                                       obj_handle_t handle, unsigned int file_access,
-                                       const struct security_descriptor *sd )
+static bool mapping_init( struct object *obj, const void *init_data )
 {
-    struct mapping *mapping;
-    struct file *file;
-    struct fd *fd;
+    struct mapping *mapping = (struct mapping *)obj;
+    const struct mapping_init_data *data = init_data;
     int unix_fd;
     struct stat st;
 
-    if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd )))
-        return NULL;
-    if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-        return mapping;  /* Nothing else to do */
-
-    mapping->size        = size;
+    mapping->size        = data->size;
+    mapping->flags       = data->flags;
     mapping->fd          = NULL;
     mapping->shared      = NULL;
     mapping->committed   = NULL;
@@ -1079,28 +1080,21 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
     mapping->exp_len     = 0;
     mapping->ver_len     = 0;
 
-    if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
-
-    if (handle)
+    if (data->fd)
     {
         const unsigned int sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
-        if (!(file = get_file_obj( current->process, handle, file_access ))) goto error;
-        fd = get_obj_fd( (struct object *)file );
-
         /* file sharing rules for mappings are different so we use magic the access rights */
-        if (flags & SEC_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
-        else if (file_access & FILE_WRITE_DATA) mapping_access |= FILE_MAPPING_WRITE;
+        if (data->flags & SEC_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
+        else if (data->file_access & FILE_WRITE_DATA) mapping_access |= FILE_MAPPING_WRITE;
 
-        if (!(mapping->fd = get_fd_object_for_mapping( fd, mapping_access, sharing )))
+        if (!(mapping->fd = get_fd_object_for_mapping( data->fd, mapping_access, sharing )))
         {
-            mapping->fd = dup_fd_object( fd, mapping_access, sharing, FILE_SYNCHRONOUS_IO_NONALERT );
+            mapping->fd = dup_fd_object( data->fd, mapping_access, sharing, FILE_SYNCHRONOUS_IO_NONALERT );
             if (mapping->fd) set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
         }
-        release_object( file );
-        release_object( fd );
-        if (!mapping->fd) goto error;
+        if (!mapping->fd) return false;
 
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (fstat( unix_fd, &st ) == -1)
@@ -1108,10 +1102,10 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
             file_set_error();
             goto error;
         }
-        if (flags & SEC_IMAGE)
+        if (data->flags & SEC_IMAGE)
         {
             unsigned int err = get_image_params( mapping, st.st_size, unix_fd );
-            if (!err) return mapping;
+            if (!err) return true;
             set_error( err );
             goto error;
         }
@@ -1125,7 +1119,7 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
         }
         else if (st.st_size < mapping->size)
         {
-            if (!(file_access & FILE_WRITE_DATA) || mapping->size >> 54 /* ntfs limit */)
+            if (!(data->file_access & FILE_WRITE_DATA) || mapping->size >> 54 /* ntfs limit */)
             {
                 set_error( STATUS_SECTION_TOO_BIG );
                 goto error;
@@ -1138,59 +1132,33 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
         if (!mapping->size)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            goto error;
+            return false;
         }
-        if ((flags & SEC_RESERVE) && !(mapping->committed = create_ranges())) goto error;
+        if ((data->flags & SEC_RESERVE) && !(mapping->committed = create_ranges())) return false;
         mapping->size = round_size( mapping->size, page_mask );
         if ((unix_fd = create_temp_file( mapping->size )) == -1) goto error;
         if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
         allow_fd_caching( mapping->fd );
     }
-    return mapping;
+    return true;
 
  error:
-    release_object( mapping );
-    return NULL;
+    if (mapping->fd) release_object( mapping->fd );
+    if (mapping->committed) release_object( mapping->committed );
+    if (mapping->shared) release_object( mapping->shared );
+    return false;
 }
 
 /* create a read-only file mapping for the specified fd */
-struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name,
+struct mapping *create_fd_mapping( struct object *root, struct unicode_str name,
                                    struct fd *fd, unsigned int attr, const struct security_descriptor *sd )
 {
-    struct mapping *mapping;
-    int unix_fd;
-    struct stat st;
+    struct mapping_init_data data = { .fd = fd, .flags = SEC_FILE, .file_access = FILE_READ_DATA };
+    struct object_params params = { .ops = &mapping_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
-    if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd ))) return NULL;
-    if (get_error() == STATUS_OBJECT_NAME_EXISTS) return mapping;  /* Nothing else to do */
-
-    mapping->shared    = NULL;
-    mapping->committed = NULL;
-    mapping->exp_name  = NULL;
-    mapping->ver_res   = NULL;
-    mapping->exp_len   = 0;
-    mapping->ver_len   = 0;
-    mapping->flags     = SEC_FILE;
-    mapping->fd        = (struct fd *)grab_object( fd );
-    set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
-
-    if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
-    if (fstat( unix_fd, &st ) == -1)
-    {
-        file_set_error();
-        goto error;
-    }
-    if (!(mapping->size = st.st_size))
-    {
-        set_error( STATUS_MAPPED_FILE_SIZE_ZERO );
-        goto error;
-    }
-    return mapping;
-
- error:
-    release_object( mapping );
-    return NULL;
+    return create_named_object( &params );
 }
 
 static struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -1223,7 +1191,7 @@ int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
         return 1;
     }
     if (!view->fd) return 0;
-    get_nt_name( view->fd, name );
+    *name = get_nt_name( view->fd );
     return 1;
 }
 
@@ -1360,14 +1328,16 @@ size_t get_page_size(void)
     return host_page_mask + 1;
 }
 
-struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
+struct mapping *create_session_mapping( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
-    static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
     size_t size = max( sizeof(*shared_session) + sizeof(object_shm_t) * 512, 0x10000 );
+    struct mapping_init_data data = { .size = round_size( size, host_page_mask ), .flags = SEC_COMMIT,
+                                      .file_access = FILE_READ_DATA | FILE_WRITE_DATA };
+    struct object_params params = { .ops = &mapping_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
-    size = round_size( size, host_page_mask );
-    return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
+    return create_named_object( &params );
 }
 
 void set_session_mapping( struct mapping *mapping )
@@ -1513,14 +1483,17 @@ struct obj_locator get_shared_object_locator( volatile void *object_shm )
     return locator;
 }
 
-struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+struct object *create_user_data_mapping( struct object *root, struct unicode_str name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     void *ptr;
     struct mapping *mapping;
+    struct mapping_init_data data = { .size = sizeof(KUSER_SHARED_DATA), .flags = SEC_COMMIT,
+                                      .file_access = FILE_READ_DATA | FILE_WRITE_DATA };
+    struct object_params params = { .ops = &mapping_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
-    if (!(mapping = create_mapping( root, name, attr, sizeof(KUSER_SHARED_DATA),
-                                    SEC_COMMIT, 0, FILE_READ_DATA | FILE_WRITE_DATA, sd ))) return NULL;
+    if (!(mapping = create_named_object( &params ))) return NULL;
     ptr = mmap( NULL, mapping->size, PROT_WRITE, MAP_SHARED, get_unix_fd( mapping->fd ), 0 );
     if (ptr != MAP_FAILED) user_shared_data = ptr;
     return &mapping->obj;
@@ -1529,35 +1502,39 @@ struct object *create_user_data_mapping( struct object *root, const struct unico
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    struct object *root;
-    struct mapping *mapping;
-    struct unicode_str name;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct file *file = NULL;
+    struct mapping_init_data data = { .size = req->size, .file_access = req->file_access };
+    struct object_params params = { .ops = &mapping_ops, .access = req->access, .init_data = &data };
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
-    if ((mapping = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
-                                   req->file_handle, req->file_access, sd )))
+    if (!(data.flags = get_mapping_flags( req->file_handle, req->flags )))
     {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, &mapping->obj, req->access, objattr->attributes );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, &mapping->obj,
-                                                          req->access, objattr->attributes );
-        release_object( mapping );
+        if (params.root) release_object( params.root );
+        return;
+    }
+    if (req->file_handle)
+    {
+        if (!(file = get_file_obj( current->process, req->file_handle, req->file_access )))
+        {
+            if (params.root) release_object( params.root );
+            return;
+        }
+        data.fd = get_obj_fd( (struct object *)file );
     }
 
-    if (root) release_object( root );
+    reply->handle = create_named_obj_handle( current->process, &params );
+
+    if (file) release_object( file );
+    if (data.fd) release_object( data.fd );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &mapping_ops, &name, req->attributes );
+                                 &mapping_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* get a mapping information */
@@ -1572,11 +1549,10 @@ DECL_HANDLER(get_mapping_info)
 
     if (mapping->flags & SEC_IMAGE)
     {
-        struct unicode_str name = { NULL, 0 };
+        struct unicode_str name = mapping->fd ? get_nt_name( mapping->fd ) : empty_str;
         data_size_t size;
         void *data;
 
-        if (mapping->fd) get_nt_name( mapping->fd, &name );
         size = reply->total = sizeof(struct pe_image_info) + mapping->ver_len + name.len + mapping->exp_len;
         if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len + name.len;
         if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len;

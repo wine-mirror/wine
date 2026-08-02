@@ -135,3 +135,33 @@ HRESULT WINAPI BeginMethodEnumeration(int vFunc, IWbemClassObject *ptr, LONG lEn
 
     return IWbemClassObject_BeginMethodEnumeration(ptr, lEnumFlags);
 }
+
+HRESULT WINAPI NextMethod(int vFunc, IWbemClassObject *ptr, LONG lFlags, BSTR *pstrName,
+    IWbemClassObject **ppInSignature, IWbemClassObject **ppOutSignature)
+{
+    TRACE("%i %p, %lx, %p, %p, %p\n", vFunc, ptr, lFlags, pstrName, ppInSignature, ppOutSignature);
+
+    return IWbemClassObject_NextMethod(ptr, lFlags, pstrName, ppInSignature, ppOutSignature);
+}
+
+HRESULT WINAPI EndMethodEnumeration(int vFunc, IWbemClassObject *ptr)
+{
+    TRACE("%i %p\n", vFunc, ptr);
+
+    return IWbemClassObject_EndMethodEnumeration(ptr);
+}
+
+HRESULT WINAPI GetMethod(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG lFlags,
+    IWbemClassObject **ppInSignature, IWbemClassObject **ppOutSignature)
+{
+	TRACE("%i %p %s %lx %p %p\n", vFunc, ptr, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
+
+	return IWbemClassObject_GetMethod(ptr, wszName, lFlags, ppInSignature, ppOutSignature);
+}
+
+HRESULT WINAPI GetMethodQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR wszMethod, IWbemQualifierSet **ppQualSet)
+{
+    TRACE("%i %p %s %p\n", vFunc, ptr, debugstr_w(wszMethod), ppQualSet);
+
+    return IWbemClassObject_GetMethodQualifierSet(ptr, wszMethod, ppQualSet);
+}

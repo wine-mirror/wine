@@ -973,7 +973,7 @@ LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID result)
 {
     UINT len, total;
-    WCHAR *p, *buffer;
+    WCHAR *p, *buffer, *filename = NULL;
     FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
 
     TRACE("CDM_GETFILEPATH:\n");
@@ -983,14 +983,32 @@ static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID result
 
     /* get path and filenames */
     len = SendMessageW( fodInfos->DlgInfos.hwndFileName, WM_GETTEXTLENGTH, 0, 0 );
-    buffer = malloc( (len + 2 + MAX_PATH) * sizeof(WCHAR) );
-    COMDLG32_GetDisplayNameOf( fodInfos->ShellInfos.pidlAbsCurrent, buffer );
     if (len)
     {
-        p = buffer + lstrlenW(buffer);
-        *p++ = '\\';
-        SendMessageW( fodInfos->DlgInfos.hwndFileName, WM_GETTEXT, len + 1, (LPARAM)p );
+        filename = malloc( (len + 1) * sizeof(WCHAR) );
+        SendMessageW( fodInfos->DlgInfos.hwndFileName, WM_GETTEXT, len + 1, (LPARAM)filename );
     }
+    buffer = malloc( (len + 2 + MAX_PATH) * sizeof(WCHAR) );
+
+    if (len)
+    {
+        if (PathIsRelativeW( filename ))
+        {
+            COMDLG32_GetDisplayNameOf( fodInfos->ShellInfos.pidlAbsCurrent, buffer );
+            p = buffer + lstrlenW(buffer);
+            *p++ = '\\';
+            lstrcpyW( p, filename );
+        }
+        else
+        {
+            lstrcpyW( buffer, filename );
+        }
+    }
+    else
+    {
+        COMDLG32_GetDisplayNameOf( fodInfos->ShellInfos.pidlAbsCurrent, buffer );
+    }
+
     if (fodInfos->unicode)
     {
         total = lstrlenW( buffer) + 1;
@@ -1003,6 +1021,7 @@ static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID result
         if (total <= size) WideCharToMultiByte( CP_ACP, 0, buffer, -1, result, size, NULL, NULL );
         TRACE( "CDM_GETFILEPATH: returning %u %s\n", total, debugstr_a(result));
     }
+    free( filename );
     free( buffer );
     return total;
 }

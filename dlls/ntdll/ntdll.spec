@@ -1150,6 +1150,7 @@
 @ stdcall -arch=win64 RtlWow64PushCrossProcessWorkOntoWorkList(ptr ptr ptr)
 @ stdcall -arch=win64 RtlWow64RequestCrossProcessHeavyFlush(ptr)
 @ stdcall -arch=win64 RtlWow64SetThreadContext(long ptr)
+@ stdcall -arch=win64 RtlWow64SuspendThread(long ptr)
 @ stub RtlWriteMemoryStream
 @ stdcall RtlWriteRegistryValue(long ptr wstr long ptr long)
 @ stub RtlZeroHeap

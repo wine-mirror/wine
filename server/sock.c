@@ -3914,10 +3914,13 @@ static struct object *socket_device_open_file( struct object *obj, unsigned int 
     return &sock->obj;
 }
 
-struct object *create_socket_device( struct object *root, const struct unicode_str *name,
+struct object *create_socket_device( struct object *root, struct unicode_str name,
                                      unsigned int attr, const struct security_descriptor *sd )
 {
-    return create_named_object( root, &socket_device_ops, name, attr, sd );
+    struct object_params params = { .ops = &socket_device_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
+
+    return create_named_object( &params );
 }
 
 DECL_HANDLER(recv_socket)

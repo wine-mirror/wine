@@ -673,7 +673,7 @@ static NTSTATUS send_mouse_motion( UINT flags )
     INPUT input = info->mouse_motion;
     NTSTATUS status;
 
-    if (!input.mi.dwFlags && !input.mi.mouseData) return STATUS_SUCCESS; /* ignore empty inputs */
+    if (!input.mi.dwFlags && !input.mi.mouseData && !info->raw_mouse.count) return STATUS_SUCCESS; /* ignore empty inputs */
 
     TRACE( "Sending %s (%u raw frames)\n", debugstr_mouseinput( &input.mi ), info->raw_mouse.count );
     status = server_send_hardware_message( info->mouse_hwnd, flags, &input, (LPARAM)&info->raw_mouse );

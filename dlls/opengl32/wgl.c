@@ -196,8 +196,11 @@ static void free_handle( struct handle_table *table, struct handle_entry *ptr )
 
 static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE handle )
 {
-    WORD index = LOWORD( handle ) - 1;
-    struct handle_entry *ptr = table->handles + index;
+    UINT index = ((UINT_PTR)handle & 0xffff) - 1;
+    struct handle_entry *ptr;
+
+    if (index >= ARRAY_SIZE(table->handles)) return NULL;
+    ptr = table->handles + index;
 
     AcquireSRWLockShared( &table->lock );
     if (index >= table->count || ULongToHandle( ptr->handle ) != handle)
@@ -210,18 +213,18 @@ static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE h
     return ptr;
 }
 
-static struct opengl_client_pbuffer *pbuffer_from_handle( HPBUFFERARB handle )
-{
-    struct handle_entry *ptr;
-    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return NULL;
-    return ptr->pbuffer;
-}
-
 BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj )
 {
-    struct opengl_client_pbuffer *pbuffer = pbuffer_from_handle( handle );
-    *obj = pbuffer ? &pbuffer->obj : NULL;
-    return pbuffer || !handle;
+    struct handle_entry *ptr;
+
+    if (!(ptr = get_handle_ptr( &pbuffers, handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    *obj = &ptr->pbuffer->obj;
+    return TRUE;
 }
 
 static struct handle_entry *alloc_client_pbuffer(void)
@@ -268,7 +271,11 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
 
     TRACE( "handle %p\n", handle );
 
-    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return FALSE;
+    if (!(ptr = get_handle_ptr( &pbuffers, handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
     args.hPbuffer = &ptr->pbuffer->obj;
 
     if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#lx\n", status );
@@ -947,7 +954,11 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
 
     TRACE( "handle %p\n", handle );
 
-    if (!(ptr = get_handle_ptr( &contexts, handle ))) return FALSE;
+    if (!(ptr = get_handle_ptr( &contexts, handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
     args.oldContext = &ptr->context->obj;
 
     if (handle == teb->glCurrentRC) wglMakeCurrent( NULL, NULL );

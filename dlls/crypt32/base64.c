@@ -158,7 +158,8 @@ static DWORD encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
             ptr += stradd(ptr, end, chunk, 4);
             break;
     }
-    ptr += stradd(ptr, end, sep, strlen(sep));
+    if (pad_bytes || i % 64)
+        ptr += stradd(ptr, end, sep, strlen(sep));
 
     return ptr - out_buf;
 }
@@ -441,7 +442,8 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
             *ptr++ = '=';
             break;
     }
-    lstrcpyW(ptr, sep);
+    if (pad_bytes || i % 64)
+        lstrcpyW(ptr, sep);
 
     return ERROR_SUCCESS;
 }

@@ -259,7 +259,6 @@ static VkExternalMemoryHandleTypeFlagBits get_host_external_memory_type(void)
     struct vulkan_device_extensions extensions = {.has_VK_KHR_external_memory_win32 = 1};
     driver_funcs->p_map_device_extensions( &extensions );
     if (extensions.has_VK_KHR_external_memory_fd) return VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-    if (extensions.has_VK_EXT_external_memory_dma_buf) return VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
     return 0;
 }
 
@@ -690,9 +689,6 @@ static VkResult convert_device_create_info( struct vulkan_physical_device *physi
     device->extensions.has_VK_KHR_external_fence_win32 = 0;
     device->extensions.has_VK_KHR_external_semaphore_win32 = 0;
 
-    if (device->extensions.has_VK_EXT_external_memory_dma_buf)
-        device->extensions.has_VK_KHR_external_memory_fd = 1;
-
     if (physical_device->map_placed_align)
     {
         VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *map_placed_features;
@@ -992,7 +988,6 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             switch ((get_fd_info.handleType = get_host_external_memory_type()))
             {
             case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT:
-            case VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT:
                 if ((res = device->p_vkGetMemoryFdKHR( device->host.device, &get_fd_info, &fd ))) goto failed;
                 break;
             default:
@@ -1876,8 +1871,8 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
     return VK_SUCCESS;
 }
 
-void win32u_vkDestroySwapchainKHR( VkDevice client_device, VkSwapchainKHR client_swapchain,
-                                   const VkAllocationCallbacks *allocator )
+static void win32u_vkDestroySwapchainKHR( VkDevice client_device, VkSwapchainKHR client_swapchain,
+                                          const VkAllocationCallbacks *allocator )
 {
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct vulkan_instance *instance = device->physical_device->instance;

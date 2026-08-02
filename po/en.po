@@ -13032,7 +13032,7 @@ msgstr "Object variable not set"
 
 #: dlls/vbscript/vbscript.rc:46
 msgid "For loop not initialized"
-msgstr "For loop not initialized"
+msgstr "For loop not initialised"
 
 #: dlls/vbscript/vbscript.rc:47
 msgid "Invalid use of Null"
@@ -13236,7 +13236,7 @@ msgstr "Cannot have multiple default property/method in a Class"
 
 #: dlls/vbscript/vbscript.rc:110
 msgid "Class initialize or terminate do not have arguments"
-msgstr "Class initialize or terminate do not have arguments"
+msgstr "Class initialise or terminate do not have arguments"
 
 #: dlls/vbscript/vbscript.rc:111
 msgid "Property set or let must have at least one argument"

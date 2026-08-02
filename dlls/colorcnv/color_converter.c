@@ -264,7 +264,7 @@ static int video_frame_copy_to_buffer(AVFrame *frame, const MFVIDEOFORMAT *forma
     return size;
 }
 
-static const GUID *const input_types[] =
+static const GUID *const converter_input_types[] =
 {
     &MEDIASUBTYPE_YV12,
     &MEDIASUBTYPE_YUY2,
@@ -287,7 +287,7 @@ static const GUID *const input_types[] =
     &MEDIASUBTYPE_Y42T,
     &MEDIASUBTYPE_YVU9,
 };
-static const GUID *const output_types[] =
+static const GUID *const converter_output_types[] =
 {
     &MEDIASUBTYPE_YV12,
     &MEDIASUBTYPE_YUY2,
@@ -307,6 +307,50 @@ static const GUID *const output_types[] =
     &MEDIASUBTYPE_NV11,
 };
 
+static const GUID *const resizer_input_types[] =
+{
+    &MEDIASUBTYPE_IYUV,
+    &MEDIASUBTYPE_YUY2,
+    &MEDIASUBTYPE_UYVY,
+    &MEDIASUBTYPE_I420,
+    &MEDIASUBTYPE_RGB32,
+    &MEDIASUBTYPE_RGB24,
+    &MEDIASUBTYPE_RGB565,
+    &MEDIASUBTYPE_RGB8,
+    &MEDIASUBTYPE_RGB555,
+    &MEDIASUBTYPE_AYUV,
+    &MEDIASUBTYPE_V216,
+    &MEDIASUBTYPE_YV12,
+};
+static const GUID *const resizer_output_types[] =
+{
+    &MEDIASUBTYPE_IYUV,
+    &MEDIASUBTYPE_YUY2,
+    &MEDIASUBTYPE_UYVY,
+    &MEDIASUBTYPE_I420,
+    &MEDIASUBTYPE_RGB32,
+    &MEDIASUBTYPE_RGB24,
+    &MEDIASUBTYPE_RGB565,
+    &MEDIASUBTYPE_RGB8,
+    &MEDIASUBTYPE_RGB555,
+    &MEDIASUBTYPE_AYUV,
+    &MEDIASUBTYPE_V216,
+    &MEDIASUBTYPE_YV12,
+    /* duplicate the list, Windows does the same */
+    &MEDIASUBTYPE_IYUV,
+    &MEDIASUBTYPE_YUY2,
+    &MEDIASUBTYPE_UYVY,
+    &MEDIASUBTYPE_I420,
+    &MEDIASUBTYPE_RGB32,
+    &MEDIASUBTYPE_RGB24,
+    &MEDIASUBTYPE_RGB565,
+    &MEDIASUBTYPE_RGB8,
+    &MEDIASUBTYPE_RGB555,
+    &MEDIASUBTYPE_AYUV,
+    &MEDIASUBTYPE_V216,
+    &MEDIASUBTYPE_YV12,
+};
+
 struct color_convert
 {
     IUnknown IUnknown_inner;
@@ -316,6 +360,11 @@ struct color_convert
     IPropertyStore IPropertyStore_iface;
     IUnknown *outer;
     LONG refcount;
+
+    UINT input_type_count;
+    const GUID *const *input_types;
+    UINT output_type_count;
+    const GUID *const *output_types;
 
     DMO_MEDIA_TYPE input_type;
     MFVIDEOFORMAT input_format;
@@ -796,7 +845,7 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
     return hr;
 }
 
-static HRESULT init_dmo_media_type(IMFMediaType *type, DMO_MEDIA_TYPE *mt)
+static HRESULT init_dmo_media_type(IMFMediaType *type, DMO_MEDIA_TYPE *mt, BOOL resizer_input)
 {
     MFVIDEOFORMAT *format;
     HRESULT hr;
@@ -810,6 +859,8 @@ static HRESULT init_dmo_media_type(IMFMediaType *type, DMO_MEDIA_TYPE *mt)
         format->videoInfo.PixelAspectRatio.Numerator = 1;
     if (!format->videoInfo.PixelAspectRatio.Denominator)
         format->videoInfo.PixelAspectRatio.Denominator = 1;
+    if (resizer_input)
+        memset(&format->videoInfo.MinimumDisplayAperture, 0, sizeof(format->videoInfo.MinimumDisplayAperture));
 
     return hr;
 }
@@ -823,7 +874,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 
     TRACE("converter %p, id %#lx, type %p, flags %#lx.\n", impl, id, type, flags);
 
-    if (type && FAILED(hr = init_dmo_media_type(type, &tmp)))
+    if (type && FAILED(hr = init_dmo_media_type(type, &tmp, impl->input_types == resizer_input_types)))
         return hr;
     hr = MF_RESULT_FROM_DMO(IMediaObject_SetInputType(&impl->IMediaObject_iface, id, mt, dmo_flags));
     MoFreeMediaType(&tmp);
@@ -839,7 +890,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 
     TRACE("converter %p, id %#lx, type %p, flags %#lx.\n", impl, id, type, flags);
 
-    if (type && FAILED(hr = init_dmo_media_type(type, &tmp)))
+    if (type && FAILED(hr = init_dmo_media_type(type, &tmp, FALSE)))
         return hr;
     hr = MF_RESULT_FROM_DMO(IMediaObject_SetOutputType(&impl->IMediaObject_iface, id, mt, dmo_flags));
     MoFreeMediaType(&tmp);
@@ -1041,25 +1092,29 @@ static HRESULT get_available_dmo_media_type(const GUID *subtype, DMO_MEDIA_TYPE 
 static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, type_index %lu, type %p\n", iface, index, type_index, type);
 
     if (index > 0)
         return DMO_E_INVALIDSTREAMINDEX;
-    if (type_index >= ARRAY_SIZE(input_types))
+    if (type_index >= impl->input_type_count)
         return DMO_E_NO_MORE_ITEMS;
-    return get_available_dmo_media_type(input_types[type_index], type, FALSE);
+    return get_available_dmo_media_type(impl->input_types[type_index], type, FALSE);
 }
 
 static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
+    struct color_convert *impl = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, type_index %lu, type %p\n", iface, index, type_index, type);
 
     if (index > 0)
         return DMO_E_INVALIDSTREAMINDEX;
-    if (type_index >= ARRAY_SIZE(output_types))
+    if (type_index >= impl->output_type_count)
         return DMO_E_NO_MORE_ITEMS;
-    return get_available_dmo_media_type(output_types[type_index], type, TRUE);
+    return get_available_dmo_media_type(impl->output_types[type_index], type, TRUE);
 }
 
 static HRESULT check_dmo_media_type(const DMO_MEDIA_TYPE *type, UINT32 *image_size,
@@ -1130,7 +1185,7 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
         return S_OK;
     }
 
-    if (FAILED(hr = check_dmo_media_type(type, &image_size, input_types, ARRAY_SIZE(input_types))))
+    if (FAILED(hr = check_dmo_media_type(type, &image_size, impl->input_types, impl->input_type_count)))
         return hr;
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
@@ -1167,7 +1222,10 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         return S_OK;
     }
 
-    if (FAILED(hr = check_dmo_media_type(type, &image_size, output_types, ARRAY_SIZE(output_types))))
+    /* resizer DMO doesn't support color conversion */
+    if (impl->input_types == resizer_input_types && !IsEqualGUID(&impl->input_type.subtype, &type->subtype))
+        return DMO_E_INVALIDTYPE;
+    if (FAILED(hr = check_dmo_media_type(type, &image_size, impl->output_types, impl->output_type_count)))
         return hr;
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
@@ -1441,13 +1499,12 @@ static const char *debugstr_version(UINT version)
             AV_VERSION_MICRO(version));
 }
 
-static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
-        REFIID riid, void **out)
+static HRESULT color_converter_create(const GUID *const *input_types, UINT input_type_count,
+        const GUID *const *output_types, UINT output_type_count,
+        IUnknown *outer, REFIID riid, void **out)
 {
     struct color_convert *impl;
     HRESULT hr;
-
-    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
 
     if (outer && !IsEqualGUID(riid, &IID_IUnknown))
         return E_NOINTERFACE;
@@ -1465,6 +1522,11 @@ static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *ifac
     impl->refcount = 1;
     impl->outer = outer ? outer : &impl->IUnknown_inner;
 
+    impl->input_type_count = input_type_count;
+    impl->input_types = input_types;
+    impl->output_type_count = output_type_count;
+    impl->output_types = output_types;
+
     impl->input_info.cbAlignment = 1;
     impl->output_info.cbAlignment = 1;
 
@@ -1473,6 +1535,22 @@ static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *ifac
     hr = IUnknown_QueryInterface(&impl->IUnknown_inner, riid, out);
     IUnknown_Release(&impl->IUnknown_inner);
     return hr;
+}
+
+static HRESULT WINAPI color_converter_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
+{
+    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
+    return color_converter_create(converter_input_types, ARRAY_SIZE(converter_input_types),
+            converter_output_types, ARRAY_SIZE(converter_output_types), outer, riid, out);
+}
+
+static HRESULT WINAPI resizer_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
+{
+    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
+    return color_converter_create(resizer_input_types, ARRAY_SIZE(resizer_input_types),
+            resizer_output_types, ARRAY_SIZE(resizer_output_types), outer, riid, out);
 }
 
 static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
@@ -1502,4 +1580,14 @@ static const IClassFactoryVtbl color_converter_factory_vtbl =
     class_factory_LockServer,
 };
 
+static const IClassFactoryVtbl resizer_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    resizer_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
 IClassFactory color_converter_factory = {&color_converter_factory_vtbl};
+IClassFactory resizer_factory = {&resizer_factory_vtbl};

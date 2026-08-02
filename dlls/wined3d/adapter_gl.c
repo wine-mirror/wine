@@ -1668,6 +1668,8 @@ cards_amd_mesa[] =
 {
     /* Navi 4x */
     {"gfx1200",                     CARD_AMD_RADEON_RX_NAVI_44},
+    /* Navi 2x */
+    {"rembrandt",                   CARD_AMD_RADEON_680M},
     /* Navi 10/14 */
     {"NAVI10",                      CARD_AMD_RADEON_RX_NAVI_10},
     {"NAVI14",                      CARD_AMD_RADEON_RX_NAVI_14},

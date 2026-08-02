@@ -613,33 +613,28 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
 
 /* open a new handle to an existing object */
 obj_handle_t open_object( struct process *process, obj_handle_t parent, unsigned int access,
-                          const struct object_ops *ops, const struct unicode_str *name,
+                          const struct object_ops *ops, struct unicode_str name,
                           unsigned int attributes )
 {
     obj_handle_t handle = 0;
-    struct object *obj, *root = NULL;
-
-    if (name->len >= 65534)
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return 0;
-    }
+    struct object *obj;
+    struct object_params params = { .ops = ops, .name = name, .attr = attributes };
 
     if (parent)
     {
-        if (name->len)
-            root = get_directory_obj( process, parent );
+        if (name.len)
+            params.root = get_directory_obj( process, parent );
         else  /* opening the object itself can work for non-directories too */
-            root = get_handle_obj( process, parent, 0, NULL );
-        if (!root) return 0;
+            params.root = get_handle_obj( process, parent, 0, NULL );
+        if (!params.root) return 0;
     }
 
-    if ((obj = open_named_object( root, ops, name, attributes )))
+    if ((obj = open_named_object( &params )))
     {
         handle = alloc_handle( process, obj, access, attributes );
         release_object( obj );
     }
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
     return handle;
 }
 

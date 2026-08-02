@@ -1154,6 +1154,254 @@ static void test_source_reader(const char *filename, bool video)
     winetest_pop_context();
 }
 
+
+static void test_source_reader_aspect_ratio(void)
+{
+    static const struct attribute_desc output_desc[][5] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            /* Setting format to ARGB32 causes a video processor to be added, which additionally
+             * rescales the video based on aspect ratio. */
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            /* Aspect ratio in output type is ignored. */
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            /* Explicit frame size in output type takes precedence. */
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 100, 100),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 100, 100),
+            {0},
+        },
+    };
+
+    static const struct attribute_desc actual_output_desc[][5] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4, .not_present = TRUE, .todo = TRUE),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3, .not_present = TRUE, .todo = TRUE),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 100, 100),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4, .not_present = TRUE, .todo = TRUE),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 100, 100),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3, .not_present = TRUE, .todo = TRUE),
+            {0},
+        },
+    };
+
+    /* Test how the aspect ratios are used to rescale the frame, and rounding. */
+    static const struct attribute_desc input_desc[][5] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 96),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+            /* The result frame would be 128x213, which would be unaligned for typical
+             * yuv pixel formats. Although here we are requesting ARGB32, but native
+             * aligns the result up to an even number anyway. */
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 5),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 128),
+            {0},
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+            ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 192),
+            {0},
+        },
+    };
+    static const struct attribute_desc output_desc_for_input_desc[] =
+    {
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 214),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 256),
+    };
+
+    IMFStreamDescriptor *video_streams[4];
+    IMFAttributes *attributes;
+    IMFSourceReader *reader;
+    IMFMediaType *media_type, *output_media_type;
+    IMFMediaSource *source;
+    HRESULT hr;
+    DWORD i;
+    UINT64 tmp = 0;
+
+    winetest_push_context("h264 aspect ratio");
+
+    for (i = 0; i < ARRAY_SIZE(video_streams); i++)
+    {
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "MFCreateMediaType %#lx\n", hr);
+        init_media_type(media_type, input_desc[i], -1);
+
+        hr = MFCreateStreamDescriptor(0, 1, &media_type, &video_streams[i]);
+        ok(hr == S_OK, "MFCreateStreamDescriptor %#lx\n", hr);
+        IMFMediaType_Release(media_type);
+    }
+
+    MFCreateAttributes(&attributes, 1);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, TRUE);
+    ok(hr == S_OK, "Enabling video processing %#lx\n", hr);
+
+    source = create_test_source(&video_streams[0], 1);
+    ok(!!source, "create_test_source\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "MFCreateSourceReaderFromMediaSource %#lx\n", hr);
+
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 0, &media_type);
+    ok(hr == S_OK, "SourceReader GetNativeMediaType %#lx\n", hr);
+
+    tmp = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &tmp);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(tmp == 0x8000000060, "Unexpected frame size: %I64x\n", tmp);
+    tmp = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &tmp);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(tmp == 0x300000004, "Unexpected aspect ratio: %I64x\n", tmp);
+    IMFMediaType_Release(media_type);
+
+    for (i = 0; i < ARRAY_SIZE(output_desc); i++)
+    {
+        winetest_push_context("output desc %lu", i);
+
+        hr = MFCreateMediaType(&output_media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        init_media_type(output_media_type, output_desc[i], -1);
+
+        hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, output_media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+        check_media_type(media_type, actual_output_desc[i], -1);
+        IMFMediaType_Release(media_type);
+        IMFMediaType_Release(output_media_type);
+
+        winetest_pop_context();
+    }
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    hr = MFCreateMediaType(&output_media_type);
+    ok(hr == S_OK, "MFCreateMediaType output_media_type %#lx\n", hr);
+    init_media_type(output_media_type, output_desc[0], -1);
+
+    for (i = 0; i < ARRAY_SIZE(video_streams); i++)
+    {
+        winetest_push_context("input desc %lu", i);
+
+        source = create_test_source(&video_streams[i], 1);
+        ok(!!source, "create_test_source\n");
+
+        hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+        ok(hr == S_OK, "MFCreateSourceReaderFromMediaSource %#lx\n", hr);
+
+        hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, output_media_type);
+        ok(hr == S_OK, "Unexpected hr setting media type %#lx\n", hr);
+
+        hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+        check_media_type(media_type, &output_desc_for_input_desc[i], 1);
+
+        IMFMediaType_Release(media_type);
+        IMFSourceReader_Release(reader);
+        IMFMediaSource_Release(source);
+
+        winetest_pop_context();
+    }
+
+    /* Test without advanced video processing. */
+    hr = IMFAttributes_SetUINT32(attributes, &MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    source = create_test_source(&video_streams[0], 1);
+    ok(!!source, "create_test_source\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "MFCreateSourceReaderFromMediaSource %#lx\n", hr);
+
+    hr = IMFMediaType_SetGUID(output_media_type, &MF_MT_SUBTYPE, &MFVideoFormat_NV12);
+    ok(hr == S_OK, "Set media subtype to nv12 %#lx\n", hr);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, output_media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    tmp = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &tmp);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(tmp == 0x8000000060, "Unexpected frame size: %I64x\n", tmp);
+    tmp = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &tmp);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    ok(tmp == 0x300000004, "Unexpected aspect ratio: %I64x\n", tmp);
+    IMFMediaType_Release(media_type);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    for (i = 0; i < ARRAY_SIZE(video_streams); i++)
+        IMFStreamDescriptor_Release(video_streams[i]);
+
+    IMFMediaType_Release(output_media_type);
+    IMFAttributes_Release(attributes);
+
+    winetest_pop_context();
+}
+
 static void test_source_reader_from_media_source(void)
 {
     static const DWORD expected_sample_order[10] = {0, 0, 1, 1, 0, 0, 0, 0, 1, 0};
@@ -2172,6 +2420,8 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     IMFTransform *transform;
     IMFMediaSource *source;
     GUID category;
+    UINT32 count;
+    UINT64 value;
     HRESULT hr;
 
     winetest_push_context("vp %u adv %u", enable_processing, enable_advanced);
@@ -2255,6 +2505,12 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
         todo_wine_if(enable_processing) /* Wine enables advanced video processing in all cases */
         ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
     }
+    /* SetCurrentMediaType shouldn't modify media_type */
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetCount(media_type, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected attribute count: %u\n", count);
     IMFMediaType_Release(media_type);
 
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
@@ -3914,6 +4170,7 @@ START_TEST(mfplat)
     test_sink_writer_get_object();
     test_sink_writer_add_stream();
     test_sink_writer_sample_process();
+    test_source_reader_aspect_ratio();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

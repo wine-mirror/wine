@@ -207,7 +207,7 @@ extern int set_input_desktop( struct winstation *winstation, struct desktop *new
 extern struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct winstation *get_process_winstation( struct process *process, unsigned int access );
 extern struct desktop *get_thread_desktop( struct thread *thread, unsigned int access );
-extern void connect_process_winstation( struct process *process, struct unicode_str *desktop_path,
+extern void connect_process_winstation( struct process *process, struct unicode_str desktop_name,
                                         struct thread *parent_thread, struct process *parent_process );
 extern void set_process_default_desktop( struct process *process, struct desktop *desktop,
                                          obj_handle_t handle );

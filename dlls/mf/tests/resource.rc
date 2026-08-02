@@ -198,3 +198,17 @@ test.mp4 RCDATA test.mp4
  */
 /* @makedep: test-unaligned.mp4 */
 test-unaligned.mp4 RCDATA test-unaligned.mp4
+
+/* Generated with:
+ * convert dlls/mf/tests/rgb32frame.bmp -resize 50% -define bmp:format=bmp3 -define bmp3:alpha=true dlls/mf/tests/rgb32frame-small.bmp
+ */
+/* @makedep: rgb32frame-small.bmp */
+rgb32frame-small.bmp RCDATA rgb32frame-small.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-resized.bmp */
+rgb32frame-resized.bmp RCDATA rgb32frame-resized.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-flip-resized.bmp */
+rgb32frame-flip-resized.bmp RCDATA rgb32frame-flip-resized.bmp

@@ -972,6 +972,13 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     if(FAILED(hres))
         return hres;
 
+    regexp->jsregexp = regexp_new(ctx, &ctx->tmp_heap, L"", 0, 0, FALSE);
+    if(!regexp->jsregexp) {
+        WARN("regexp_new failed\n");
+        jsdisp_release(&regexp->dispex);
+        return DISP_E_EXCEPTION;
+    }
+
     hres = create_builtin_constructor(ctx, RegExpConstr_value, L"RegExp", &RegExpConstr_info,
             PROPF_CONSTR|2, &regexp->dispex, ret);
 

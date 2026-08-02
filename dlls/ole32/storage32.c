@@ -1842,12 +1842,17 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
   StorageBaseImpl *This = impl_from_IStorage(iface);
   DirEntry          currentEntry;
   DirRef            currentEntryRef;
+  size_t size;
 
   TRACE("(%p, %s, %s)\n",
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
   if (This->reverted)
     return STG_E_REVERTED;
+
+  size = (lstrlenW(pwcsNewName) + 1) * sizeof(WCHAR);
+  if (size > DIRENTRY_NAME_BUFFER_LEN)
+    return STG_E_INVALIDNAME;
 
   currentEntryRef = findElement(This,
                                    This->storageDirEntry,
@@ -1885,6 +1890,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 
     /* Change the name of the element */
     lstrcpyW(currentEntry.name, pwcsNewName);
+    currentEntry.sizeOfNameString = size;
 
     /* Delete any sibling links */
     currentEntry.leftChild = DIRENTRY_NULL;

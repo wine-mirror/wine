@@ -891,6 +891,7 @@ IdentifierName
                 set_error(ctx, @$, JS_E_SYNTAX);
                 YYABORT;
             }
+            ctx->implicit_nl_semicolon = FALSE;
             $$ = $1;
         }
 

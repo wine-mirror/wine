@@ -51,6 +51,8 @@ struct unicode_str
     data_size_t  len;
 };
 
+static const struct unicode_str empty_str;
+
 /* object type descriptor */
 struct type_descr
 {
@@ -64,6 +66,19 @@ struct type_descr
     unsigned int       handle_max;    /* max count of handles of this type */
 };
 
+/* parameters for named object creation */
+struct object_params
+{
+    const struct object_ops          *ops;        /* object operations */
+    struct object                    *root;       /* root directory */
+    struct unicode_str                name;       /* new object name */
+    unsigned int                      attr;       /* creation attributes */
+    unsigned int                      access;     /* wanted access rights */
+    const struct security_descriptor *sd;         /* pointer to sd data in the request */
+    const struct object_attributes   *objattr;    /* pointer to object attributes in the request */
+    const void                       *init_data;  /* object-specific initialization data */
+};
+
 /* operations valid on all objects */
 struct object_ops
 {
@@ -73,6 +88,8 @@ struct object_ops
     struct type_descr *type;
     /* dump the object (for debugging) */
     void (*dump)(struct object *,int);
+    /* initialize a newly-created object */
+    bool (*init)(struct object *,const void *);
     /* add a thread to the object wait queue */
     int  (*add_queue)(struct object *,struct wait_queue_entry *);
     /* remove a thread from the object wait queue */
@@ -151,14 +168,12 @@ extern void namespace_add( struct namespace *namespace, struct object_name *ptr 
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
 extern WCHAR *default_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len ) __WINE_DEALLOC(free) __WINE_MALLOC;
 extern void dump_object_name( struct object *obj );
-extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
+extern struct object *lookup_named_object( struct object *root, struct unicode_str name,
                                            unsigned int attr, struct unicode_str *name_left );
 extern data_size_t get_path_element( const WCHAR *name, data_size_t len );
-extern void *create_named_object( struct object *parent, const struct object_ops *ops,
-                                  const struct unicode_str *name, unsigned int attributes,
-                                  const struct security_descriptor *sd );
-extern void *open_named_object( struct object *parent, const struct object_ops *ops,
-                                const struct unicode_str *name, unsigned int attributes );
+extern void *create_named_object( const struct object_params *params );
+obj_handle_t create_named_obj_handle( struct process *process, const struct object_params *params );
+extern void *open_named_object( const struct object_params *params );
 extern void unlink_named_object( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
 extern void free_kernel_objects( struct object *obj );
@@ -166,7 +181,7 @@ extern void free_kernel_objects( struct object *obj );
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
-extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
+extern struct object *find_object( const struct namespace *namespace, struct unicode_str name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern struct fd *get_obj_fd( struct object *obj );
@@ -228,10 +243,10 @@ extern struct object *create_internal_sync( int manual, int signaled );
 extern void signal_sync( struct object *sync );
 extern void reset_sync( struct object *sync );
 
-extern struct event *create_event( struct object *root, const struct unicode_str *name,
+extern struct event *create_event( struct object *root, struct unicode_str name,
                                    unsigned int attr, int manual_reset, int initial_state,
                                    const struct security_descriptor *sd );
-extern struct keyed_event *create_keyed_event( struct object *root, const struct unicode_str *name,
+extern struct keyed_event *create_keyed_event( struct object *root, struct unicode_str name,
                                                unsigned int attr, const struct security_descriptor *sd );
 extern struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
@@ -309,8 +324,8 @@ extern void set_user_atom_table( struct object *obj );
 struct atom_table;
 extern struct atom_table *get_global_atom_table(void);
 extern struct atom_table *get_user_atom_table(void);
-extern atom_t add_atom( struct atom_table *table, const struct unicode_str *str );
-extern atom_t find_atom( struct atom_table *table, const struct unicode_str *str );
+extern atom_t add_atom( struct atom_table *table, struct unicode_str str );
+extern atom_t find_atom( struct atom_table *table, struct unicode_str str );
 extern atom_t grab_atom( struct atom_table *table, atom_t atom );
 extern void release_atom( struct atom_table *table, atom_t atom );
 
@@ -327,13 +342,13 @@ extern void init_threading(void);
 
 /* symbolic link functions */
 
-extern struct object *create_root_symlink( struct object *root, const struct unicode_str *name,
+extern struct object *create_root_symlink( struct object *root, struct unicode_str name,
                                            unsigned int attr, const struct security_descriptor *sd );
-extern struct object *create_obj_symlink( struct object *root, const struct unicode_str *name,
+extern struct object *create_obj_symlink( struct object *root, struct unicode_str name,
                                           unsigned int attr, struct object *target,
                                           const struct security_descriptor *sd );
-extern struct object *create_symlink( struct object *root, const struct unicode_str *name,
-                                      unsigned int attr, const struct unicode_str *target,
+extern struct object *create_symlink( struct object *root, struct unicode_str name,
+                                      unsigned int attr, struct unicode_str target,
                                       const struct security_descriptor *sd );
 
 /* global variables */

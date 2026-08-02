@@ -102,7 +102,18 @@ struct named_pipe_device_file
     struct named_pipe_device *device;      /* named pipe device */
 };
 
+struct named_pipe_init_data
+{
+    unsigned int   maxinstances;
+    unsigned int   outsize;
+    unsigned int   insize;
+    unsigned int   sharing;
+    timeout_t      timeout;
+    unsigned int   flags;
+};
+
 static void named_pipe_dump( struct object *obj, int verbose );
+static bool named_pipe_init( struct object *obj, const void *init_data );
 static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len );
 static int named_pipe_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
@@ -126,6 +137,7 @@ static const struct object_ops named_pipe_ops =
     .size          = sizeof(struct named_pipe),
     .type          = &named_pipe_type,
     .dump          = named_pipe_dump,
+    .init          = named_pipe_init,
     .get_full_name = named_pipe_get_full_name,
     .link_name     = named_pipe_link_name,
     .open_file     = named_pipe_open_file,
@@ -215,6 +227,7 @@ static const struct fd_ops pipe_client_fd_ops =
 };
 
 static void named_pipe_device_dump( struct object *obj, int verbose );
+static bool named_pipe_device_init( struct object *obj, const void *init_data );
 static WCHAR *named_pipe_device_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
     struct unicode_str *name, unsigned int attr, struct object *root );
@@ -227,6 +240,7 @@ static const struct object_ops named_pipe_device_ops =
     .size          = sizeof(struct named_pipe_device),
     .type          = &device_type,
     .dump          = named_pipe_device_dump,
+    .init          = named_pipe_device_init,
     .get_full_name = named_pipe_device_get_full_name,
     .lookup_name   = named_pipe_device_lookup_name,
     .open_file     = named_pipe_device_open_file,
@@ -292,6 +306,23 @@ static const struct fd_ops named_pipe_dir_fd_ops =
 static void named_pipe_dump( struct object *obj, int verbose )
 {
     fputs( "Named pipe\n", stderr );
+}
+
+static bool named_pipe_init( struct object *obj, const void *init_data )
+{
+    struct named_pipe *pipe = (struct named_pipe *)obj;
+    const struct named_pipe_init_data *data = init_data;
+
+    pipe->instances    = 0;
+    pipe->insize       = data->insize;
+    pipe->outsize      = data->outsize;
+    pipe->maxinstances = data->maxinstances;
+    pipe->timeout      = data->timeout;
+    pipe->message_mode = (data->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) != 0;
+    pipe->sharing      = data->sharing;
+    init_async_queue( &pipe->waiters );
+    list_init( &pipe->listeners );
+    return true;
 }
 
 static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len )
@@ -452,6 +483,13 @@ static void named_pipe_device_dump( struct object *obj, int verbose )
     fputs( "Named pipe device\n", stderr );
 }
 
+static bool named_pipe_device_init( struct object *obj, const void *init_data )
+{
+    struct named_pipe_device *device = (struct named_pipe_device *)obj;
+
+    return !!(device->pipes = create_namespace( 7 ));
+}
+
 static WCHAR *named_pipe_device_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
 {
     WCHAR *ret = default_get_full_name( obj, max, len );
@@ -482,7 +520,7 @@ static struct object *named_pipe_device_lookup_name( struct object *obj, struct 
         return &dir->obj;
     }
 
-    if ((found = find_object( device->pipes, name, attr | OBJ_CASE_INSENSITIVE )))
+    if ((found = find_object( device->pipes, *name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 
     return found;
@@ -511,22 +549,13 @@ static void named_pipe_device_destroy( struct object *obj )
     free( device->pipes );
 }
 
-struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name,
+struct object *create_named_pipe_device( struct object *root, struct unicode_str name,
                                          unsigned int attr, const struct security_descriptor *sd )
 {
-    struct named_pipe_device *dev;
+    struct object_params params = { .ops = &named_pipe_device_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
-    if ((dev = create_named_object( root, &named_pipe_device_ops, name, attr, sd )) &&
-        get_error() != STATUS_OBJECT_NAME_EXISTS)
-    {
-        dev->pipes = NULL;
-        if (!(dev->pipes = create_namespace( 7 )))
-        {
-            release_object( dev );
-            dev = NULL;
-        }
-    }
-    return &dev->obj;
+    return create_named_object( &params );
 }
 
 static void named_pipe_device_file_dump( struct object *obj, int verbose )
@@ -1459,8 +1488,8 @@ static void named_pipe_dir_ioctl( struct fd *fd, ioctl_code_t code, struct async
             const FILE_PIPE_WAIT_FOR_BUFFER *buffer = get_req_data();
             data_size_t size = get_req_data_size();
             struct named_pipe *pipe;
-            struct unicode_str name;
             timeout_t when;
+            struct object_params params = { .ops = &named_pipe_ops, .root = &device->obj };
 
             if (size < sizeof(*buffer) ||
                 size < FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[buffer->NameLength/sizeof(WCHAR)]))
@@ -1468,9 +1497,9 @@ static void named_pipe_dir_ioctl( struct fd *fd, ioctl_code_t code, struct async
                 set_error( STATUS_INVALID_PARAMETER );
                 return;
             }
-            name.str = buffer->Name;
-            name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
-            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, &name, 0 ))) return;
+            params.name.str = buffer->Name;
+            params.name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
+            if (!(pipe = open_named_object( &params ))) return;
 
             if (list_empty( &pipe->listeners ))
             {
@@ -1494,46 +1523,48 @@ DECL_HANDLER(create_named_pipe)
 {
     struct named_pipe *pipe;
     struct pipe_server *server;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct named_pipe_init_data data = { .maxinstances = req->maxinstances, .outsize = req->outsize,
+                                         .insize = req->insize, .sharing = req->sharing,
+                                         .timeout = req->timeout, .flags = req->flags };
+    struct object_params params = { .ops = &named_pipe_ops, .init_data = &data };
 
-    if (!objattr) return;
+    if (!get_req_object_attributes( &params )) return;
 
     if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)) ||
         (!(req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && (req->flags & NAMED_PIPE_MESSAGE_STREAM_READ)))
     {
-        if (root) release_object( root );
+        if (params.root) release_object( params.root );
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
 
     if (!req->access)
     {
-        if (root) release_object( root );
+        if (params.root) release_object( params.root );
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
 
-    if (!name.len)  /* pipes need a root directory even without a name */
+    if (!params.name.len)  /* pipes need a root directory even without a name */
     {
-        if (!objattr->rootdir)
+        if (!params.objattr->rootdir)
         {
             set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
             return;
         }
-        if (!(root = get_handle_obj( current->process, objattr->rootdir, 0, NULL ))) return;
+        if (!(params.root = get_handle_obj( current->process, params.objattr->rootdir, 0, NULL ))) return;
     }
 
     switch (req->disposition)
     {
     case FILE_OPEN:
-        pipe = open_named_object( root, &named_pipe_ops, &name, objattr->attributes );
+        pipe = open_named_object( &params );
         break;
     case FILE_CREATE:
     case FILE_OPEN_IF:
-        pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF, NULL );
+        params.attr |= OBJ_OPENIF;
+        pipe = create_named_object( &params );
+        reply->created = (pipe && get_error() != STATUS_OBJECT_NAME_EXISTS);
         break;
     default:
         pipe = NULL;
@@ -1541,28 +1572,10 @@ DECL_HANDLER(create_named_pipe)
         break;
     }
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
     if (!pipe) return;
 
-    if (get_error() != STATUS_OBJECT_NAME_EXISTS && req->disposition != FILE_OPEN)
-    {
-        /* initialize it if it didn't already exist */
-        pipe->instances = 0;
-        init_async_queue( &pipe->waiters );
-        list_init( &pipe->listeners );
-        pipe->insize = req->insize;
-        pipe->outsize = req->outsize;
-        pipe->maxinstances = req->maxinstances;
-        pipe->timeout = req->timeout;
-        pipe->message_mode = (req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) != 0;
-        pipe->sharing = req->sharing;
-        if (sd) default_set_sd( &pipe->obj, sd, OWNER_SECURITY_INFORMATION |
-                                                GROUP_SECURITY_INFORMATION |
-                                                DACL_SECURITY_INFORMATION |
-                                                SACL_SECURITY_INFORMATION );
-        reply->created = 1;
-    }
-    else
+    if (!reply->created)
     {
         if (pipe->maxinstances <= pipe->instances)
         {
@@ -1582,7 +1595,7 @@ DECL_HANDLER(create_named_pipe)
     server = create_pipe_server( pipe, req->options, req->flags );
     if (server)
     {
-        reply->handle = alloc_handle( current->process, server, req->access, objattr->attributes );
+        reply->handle = alloc_handle( current->process, server, req->access, params.attr );
         pipe->instances++;
         release_object( server );
     }
