@@ -1,0 +1,126 @@
+DLLFLAGS  = @DLLFLAGS@
+EXTRALIBS = $(LIBPORT) @LIBDL@ @COREFOUNDATIONLIB@ @CORESERVICESLIB@
+DEFS      = -D__WINESRC__ -DWINE_UNICODE_API=""
+
+VERSION   = 1.0
+SOVERSION = 1
+
+INSTALLDIRS = $(DESTDIR)$(libdir)
+
+C_SRCS = \
+	c_037.c \
+	c_10000.c \
+	c_10001.c \
+	c_10002.c \
+	c_10003.c \
+	c_10006.c \
+	c_10007.c \
+	c_10008.c \
+	c_10010.c \
+	c_10017.c \
+	c_10021.c \
+	c_10029.c \
+	c_1006.c \
+	c_10079.c \
+	c_10081.c \
+	c_10082.c \
+	c_1026.c \
+	c_1250.c \
+	c_1251.c \
+	c_1252.c \
+	c_1253.c \
+	c_1254.c \
+	c_1255.c \
+	c_1256.c \
+	c_1257.c \
+	c_1258.c \
+	c_1361.c \
+	c_20127.c \
+	c_20866.c \
+	c_20932.c \
+	c_21866.c \
+	c_28591.c \
+	c_28592.c \
+	c_28593.c \
+	c_28594.c \
+	c_28595.c \
+	c_28596.c \
+	c_28597.c \
+	c_28598.c \
+	c_28599.c \
+	c_28600.c \
+	c_28603.c \
+	c_28604.c \
+	c_28605.c \
+	c_28606.c \
+	c_424.c \
+	c_437.c \
+	c_500.c \
+	c_737.c \
+	c_775.c \
+	c_850.c \
+	c_852.c \
+	c_855.c \
+	c_856.c \
+	c_857.c \
+	c_860.c \
+	c_861.c \
+	c_862.c \
+	c_863.c \
+	c_864.c \
+	c_865.c \
+	c_866.c \
+	c_869.c \
+	c_874.c \
+	c_875.c \
+	c_878.c \
+	c_932.c \
+	c_936.c \
+	c_949.c \
+	c_950.c \
+	casemap.c \
+	collation.c \
+	compose.c \
+	config.c \
+	cptable.c \
+	debug.c \
+	fold.c \
+	ldt.c \
+	loader.c \
+	mbtowc.c \
+	mmap.c \
+	port.c \
+	sortkey.c \
+	string.c \
+	utf8.c \
+	wctomb.c \
+	wctype.c
+
+EXTRA_OBJS = version.o
+
+@MAKE_RULES@
+
+# Special defines needed for config.c
+
+CONFIGDIRS = \
+	-DBINDIR='"$(bindir)"' \
+	-DDLLDIR='"$(dlldir)"' \
+	-DLIB_TO_BINDIR=\"`$(RELPATH) $(libdir) $(bindir)`\" \
+	-DLIB_TO_DLLDIR=\"`$(RELPATH) $(libdir) $(dlldir)`\" \
+	-DBIN_TO_DLLDIR=\"`$(RELPATH) $(bindir) $(dlldir)`\" \
+	-DBIN_TO_DATADIR=\"`$(RELPATH) $(bindir) $(datadir)/wine`\"
+
+config.o: config.c $(RELPATH)
+	$(CC) -c $(ALLCFLAGS) -o $@ $(srcdir)/config.c $(CONFIGDIRS)
+
+version.c: dummy
+	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
+
+$(RELPATH):
+	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
+
+# Make sure that make_makefiles sees the install rules
+install install-lib::
+install install-dev::
+
+@LIBWINE_RULES@

@@ -1,0 +1,6 @@
+MODULE    = libstrmiids.a
+
+C_SRCS = \
+	strmiids.c
+
+@MAKE_IMPLIB_RULES@

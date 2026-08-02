@@ -1,0 +1,10 @@
+INSTALLDIRS = $(DESTDIR)$(mandir)/man$(api_manext)
+
+@MAKE_RULES@
+
+install-man:: $(DESTDIR)$(mandir)/man$(api_manext)
+	@cd $(top_builddir) && $(MAKE) manpages
+	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$$i; done
+
+clean::
+	$(RM) -r html api-guide api-guide-xml man$(api_manext)
