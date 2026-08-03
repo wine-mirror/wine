@@ -2828,7 +2828,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
     CMD_FOR_CONTROL *for_ctrl = NULL;
     union token_parameter pmt;
     enum builder_token tkn;
-    BOOL done, do_echo = TRUE;
+    BOOL done = FALSE, do_echo = TRUE;
 
 #define ERROR_IF(x) if (x) {bogus_line = __LINE__; goto error_handling;}
     do
