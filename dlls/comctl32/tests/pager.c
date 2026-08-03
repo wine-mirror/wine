@@ -922,7 +922,7 @@ static void send_notify(HWND pager, UINT unicode, UINT ansi, LPARAM lParam, BOOL
 
     SendMessageW(pager, WM_NOTIFY, hdr->idFrom, lParam);
     ok(notify_test_info.received, "Expect notification received\n");
-    ok(hdr->code == code_change ? ansi : unicode, "Expect 0x%08x, got 0x%08x\n", hdr->code,
+    ok(hdr->code == (code_change ? ansi : unicode), "Expect 0x%08x, got 0x%08x\n", hdr->code,
        code_change ? ansi : unicode);
 }
 

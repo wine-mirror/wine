@@ -1149,7 +1149,7 @@ static void test_CreatePropertySheetPage(void)
         else
         {
             ok(hpsp != NULL, "Failed to create a page, size %lu\n", page.u.pageA.dwSize);
-            ok(page.addref_called == (page.u.pageA.dwSize > PROPSHEETPAGEA_V1_SIZE) ? 1 : 0, "Expected ADDREF callback message\n");
+            ok(page.addref_called == ((page.u.pageA.dwSize > PROPSHEETPAGEA_V1_SIZE) ? 1 : 0), "Expected ADDREF callback message\n");
         }
 
         if (hpsp)
@@ -1192,7 +1192,7 @@ static void test_CreatePropertySheetPage(void)
         else
         {
             ok(hpsp != NULL, "Failed to create a page, size %lu\n", page.u.pageW.dwSize);
-            ok(page.addref_called == (page.u.pageW.dwSize > PROPSHEETPAGEW_V1_SIZE) ? 1 : 0, "Expected ADDREF callback message\n");
+            ok(page.addref_called == ((page.u.pageW.dwSize > PROPSHEETPAGEW_V1_SIZE) ? 1 : 0), "Expected ADDREF callback message\n");
         }
 
         if (hpsp)
