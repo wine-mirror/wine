@@ -2235,7 +2235,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         RECT window_rect;
         HWND foreground;
 
-        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) return 0;
+        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) goto unlock;
         window_rect = map_rect_raw_to_virt( window_rect, get_thread_dpi() );
 
         if (foreground) set_foreground_window( foreground, FALSE, TRUE );
@@ -2258,6 +2258,8 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         }
 
+    unlock:
+        user_driver->pGetWindowStateUpdates( hwnd, NULL, NULL, NULL, NULL ); /* unlock the host state */
         return 0;
     }
     case WM_WINE_UPDATEWINDOWSTATE:
