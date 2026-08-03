@@ -1599,7 +1599,7 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
 
     ok( rec->ExceptionCode == expected, "exception code: %#lx, should be %#lx\n",
         rec->ExceptionCode, expected);
-    ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %li\n", rec->NumberParameters);
+    ok( rec->NumberParameters == (is_wow64 ? 2 : 1), "# of params: %li\n", rec->NumberParameters);
     ok( rec->ExceptionInformation[0] == 0, "param #0: %Ix\n", rec->ExceptionInformation[0]);
     if (rec->NumberParameters == 2)
         ok( rec->ExceptionInformation[1] == ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr,
@@ -4728,7 +4728,7 @@ static void test_wow64_context(void)
     context.ContextFlags = CONTEXT_ALL;
     ret = pNtGetContextThread( pi.hThread, &context );
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    ok( context.ContextFlags == is_arm64ec ? CONTEXT_FULL : CONTEXT_ALL,
+    ok( context.ContextFlags == (is_arm64ec ? CONTEXT_FULL : CONTEXT_ALL),
         "got context flags %#lx\n", context.ContextFlags );
     ok( !context.Rsi, "rsi is not zero %Ix\n", context.Rsi );
     ok( !context.Rdi, "rdi is not zero %Ix\n", context.Rdi );
