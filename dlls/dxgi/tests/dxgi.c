@@ -8088,7 +8088,7 @@ static void test_colour_space_support(IUnknown *device, BOOL is_d3d12)
         }
 
         hr = IDXGISwapChain3_SetColorSpace1(swapchain3, colour_spaces[i]);
-        ok(hr == (support & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) ? S_OK : E_INVALIDARG,
+        ok(hr == ((support & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) ? S_OK : E_INVALIDARG),
                 "Got unexpected hr %#lx for text %u.\n", hr, i);
     }
 
