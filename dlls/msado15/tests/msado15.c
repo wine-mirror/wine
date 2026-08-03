@@ -1513,8 +1513,8 @@ static HRESULT WINAPI view_filter_SetFilter(IViewFilter *iface, HACCESSOR hacces
     ok(accessor->binding.dwPart == DBPART_VALUE, "accessor->binding.dwPart = %ld\n", accessor->binding.dwPart);
     ok(rows == 1, "rows = %Id\n", rows);
     ok(compare[0] == DBCOMPAREOPS_EQ, "compare[0] = %ld\n", compare[0]);
-    ok(V_VT(v) = VT_I4, "V_VT(criteria) = %d\n", V_VT(v));
-    ok(V_I4(v) = 1, "V_I4(criteria) = %ld\n", V_I4(v));
+    ok(V_VT(v) == VT_BSTR, "V_VT(criteria) = %d\n", V_VT(v));
+    ok(!wcscmp(V_BSTR(v), L"1"), "V_BSTR(criteria) = %s\n", wine_dbgstr_w(V_BSTR(v)));
     return S_OK;
 }
 
