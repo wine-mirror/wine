@@ -118,3 +118,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: conhost.manifest */
 1 RT_MANIFEST conhost.manifest
+
+/* ffmpeg -f lavfi -i "sine=frequency=600" -t 0.1 -ar 44100 -f wav -acodec pcm_u8 test.wav */
+/* @makedep: beep.wav */
+console_beep WAVE beep.wav
