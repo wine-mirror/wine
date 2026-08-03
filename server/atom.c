@@ -199,13 +199,13 @@ static void atom_table_destroy( struct object *obj )
 }
 
 /* find an atom entry in its hash list */
-static struct atom_entry *find_atom_entry( struct atom_table *table, const struct unicode_str *str,
+static struct atom_entry *find_atom_entry( struct atom_table *table, struct unicode_str str,
                                            unsigned short hash )
 {
     struct atom_entry *entry = table->entries[hash];
     while (entry)
     {
-        if (entry->len == str->len && !memicmp_strW( entry->str, str->str, str->len )) break;
+        if (entry->len == str.len && !memicmp_strW( entry->str, str.str, str.len )) break;
         entry = entry->next;
     }
     return entry;
@@ -218,7 +218,7 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
     unsigned short hash = hash_strW( str->str, str->len, table->entries_count );
     atom_t atom = 0;
 
-    if (!str->len)
+    if (!str.len)
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return 0;
@@ -234,7 +234,7 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
         return entry->atom;
     }
 
-    if ((entry = mem_alloc( FIELD_OFFSET( struct atom_entry, str[str->len / sizeof(WCHAR)] ) )))
+    if ((entry = mem_alloc( FIELD_OFFSET( struct atom_entry, str[str.len / sizeof(WCHAR)] ) )))
     {
         if ((atom = add_atom_entry( table, entry )))
         {
@@ -244,8 +244,8 @@ static atom_t add_atom( struct atom_table *table, const struct unicode_str *str 
             entry->count  = 1;
             entry->pinned = 0;
             entry->hash   = hash;
-            entry->len    = str->len;
-            memcpy( entry->str, str->str, str->len );
+            entry->len    = str.len;
+            memcpy( entry->str, str.str, str.len );
         }
         else free( entry );
     }
@@ -274,7 +274,7 @@ static atom_t find_atom( struct atom_table *table, const struct unicode_str *str
 {
     struct atom_entry *entry;
 
-    if (!str->len)
+    if (!str.len)
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return 0;

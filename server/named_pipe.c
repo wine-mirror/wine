@@ -491,7 +491,8 @@ static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd )
 
 void create_named_pipe_device( struct directory *root, const struct unicode_str *name )
 {
-    struct named_pipe_device *dev;
+    struct object_params params = { .ops = &named_pipe_device_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
     if ((dev = create_named_object_dir( root, name, 0, &named_pipe_device_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
@@ -964,7 +965,7 @@ DECL_HANDLER(create_named_pipe)
 
     pipe = create_named_pipe( root, &name, req->attributes | OBJ_OPENIF );
 
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
     if (!pipe) return;
 
     if (get_error() != STATUS_OBJECT_NAME_EXISTS)

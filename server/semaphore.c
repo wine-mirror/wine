@@ -202,7 +202,9 @@ DECL_HANDLER(create_semaphore)
         release_object( sem );
     }
 
-    if (root) release_object( root );
+    if (!get_req_object_attributes( &params )) return;
+    reply->handle = create_named_obj_handle( current->process, &params );
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a semaphore */

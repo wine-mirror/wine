@@ -128,7 +128,7 @@ extern struct namespace *create_namespace( unsigned int hash_size );
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
-extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
+extern struct object *find_object( const struct namespace *namespace, struct unicode_str name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
 extern struct object_type *no_get_type( struct object *obj );

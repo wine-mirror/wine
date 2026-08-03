@@ -50,6 +50,11 @@ struct timer
     client_ptr_t         arg;       /* callback argument */
 };
 
+struct timer_init_data
+{
+    int manual;
+};
+
 static void timer_dump( struct object *obj, int verbose );
 static struct object_type *timer_get_type( struct object *obj );
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );

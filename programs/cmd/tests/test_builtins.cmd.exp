@@ -868,7 +868,12 @@ N
 foo
 bar
 before!
-@todo_wine@after!
+after!
+caret!bang
+!a
+hello
+@todo_wine@^hello
+@todo_wine@ECHO is off.
 --- in digit variables
 a %1 %2
 b %1 %2

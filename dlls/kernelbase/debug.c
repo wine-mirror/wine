@@ -736,7 +736,8 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
         }
     }
 
-    if (!NtCurrentTeb()->Peb->BeingDebugged)
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort, &debug_port, sizeof(debug_port), NULL );
+    if (!debug_port)
     {
         if (rec->ExceptionCode == CONTROL_C_EXIT)
         {

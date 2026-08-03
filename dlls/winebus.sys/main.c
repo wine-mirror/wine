@@ -482,6 +482,11 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
         if ((buttons == 32) || (buttons == 50) || (buttons == 64)) prefer_hidraw = TRUE;
         if (pid == 0x2055) prefer_hidraw = TRUE; /* ATMEL/VIRPIL/200325 VPC Throttle MT-50 CM2 */
         break;
+    case 0x4098:
+        if (pid == 0xbea8) prefer_hidraw = TRUE; /* Winwing Orion Joystick Base Metal 2 */
+        if (pid == 0xbd64) prefer_hidraw = TRUE; /* Winwing Orion Throttle Base II */
+        if (pid == 0xbef0) prefer_hidraw = TRUE; /* Winwing Orion Combat Rudder Pedals */
+        break;
     }
 
     RtlInitUnicodeString(&str, L"EnableHidraw");

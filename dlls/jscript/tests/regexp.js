@@ -402,6 +402,12 @@ ok(r === "abc &11 123", "r = '" + r + "' expected 'abc &11 123'");
 r = "abc &1 123".replace(/(\&(\d))/g, "$0");
 ok(r === "abc $0 123", "r = '" + r + "' expected 'abc $0 123'");
 
+r = "abc &1 123".replace(/(\&(\d))/g, "%$2");
+ok(r === "abc %1 123", "r = '" + r + "' expected 'abc %1 123'");
+
+r = "abc &1 123".replace(/(\&(\d))/g, "%$02");
+ok(r === "abc %1 123", "r = '" + r + "' expected 'abc %1 123'");
+
 /a/.test("a");
 r = "1 2 3".replace("2", "$&");
 ok(r === "1 $& 3", "r = '" + r + "' expected '1 $& 3'");
@@ -767,5 +773,17 @@ ok(re.source === "test", "re.source = " + re.source);
 ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
 ok(re.multiline === true, "re.multiline = " + re.multiline);
 ok(re.global === true, "re.global = " + re.global);
+
+re = new RegExp("");
+ok(re.source === "", "re.source = " + re.source);
+m = re.exec("abc");
+ok(m.input === "abc", "m.input = " + m.input);
+ok(m[0] === "", "m[0] = " + m[0]);
+
+re = RegExp.prototype;
+ok(re.source === "", "re.source = " + re.source);
+m = re.exec("abc");
+ok(m.input === "abc", "m.input = " + m.input);
+ok(m[0] === "", "m[0] = " + m[0]);
 
 reportSuccess();

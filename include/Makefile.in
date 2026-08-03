@@ -330,6 +330,8 @@ SOURCES = \
 	fileapi.h \
 	filter.idl \
 	fltdefs.h \
+	fltuser.h \
+	fltuserstructures.h \
 	fontsub.h \
 	fusion.idl \
 	gameux.idl \

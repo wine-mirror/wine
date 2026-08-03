@@ -43,11 +43,16 @@ DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x2
 DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
+extern IClassFactory resizer_factory;
+
 /***********************************************************************
  *              DllGetClassObject (msvproc.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
+    if (IsEqualGUID(clsid, &CLSID_CResizerDMO))
+        return IClassFactory_QueryInterface(&resizer_factory, riid, out);
+
     *out = NULL;
     FIXME("Unknown clsid %s.\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
@@ -58,89 +63,37 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    MFT_REGISTER_TYPE_INFO color_converter_mft_inputs[] =
+    MFT_REGISTER_TYPE_INFO resizer_mft_formats[] =
     {
-        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MEDIASUBTYPE_IYUV},
         {MFMediaType_Video, MFVideoFormat_YUY2},
         {MFMediaType_Video, MFVideoFormat_UYVY},
-        {MFMediaType_Video, MFVideoFormat_AYUV},
-        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MEDIASUBTYPE_I420},
         {MFMediaType_Video, DMOVideoFormat_RGB32},
-        {MFMediaType_Video, DMOVideoFormat_RGB565},
-        {MFMediaType_Video, MFVideoFormat_I420},
-        {MFMediaType_Video, MFVideoFormat_IYUV},
-        {MFMediaType_Video, MFVideoFormat_YVYU},
         {MFMediaType_Video, DMOVideoFormat_RGB24},
-        {MFMediaType_Video, DMOVideoFormat_RGB555},
-        {MFMediaType_Video, DMOVideoFormat_RGB8},
-        {MFMediaType_Video, MEDIASUBTYPE_V216},
-        {MFMediaType_Video, MEDIASUBTYPE_V410},
-        {MFMediaType_Video, MFVideoFormat_NV11},
-        {MFMediaType_Video, MFVideoFormat_Y41P},
-        {MFMediaType_Video, MFVideoFormat_Y41T},
-        {MFMediaType_Video, MFVideoFormat_Y42T},
-        {MFMediaType_Video, MFVideoFormat_YVU9},
-    };
-    MFT_REGISTER_TYPE_INFO color_converter_mft_outputs[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_YV12},
-        {MFMediaType_Video, MFVideoFormat_YUY2},
-        {MFMediaType_Video, MFVideoFormat_UYVY},
-        {MFMediaType_Video, MFVideoFormat_AYUV},
-        {MFMediaType_Video, MFVideoFormat_NV12},
-        {MFMediaType_Video, DMOVideoFormat_RGB32},
         {MFMediaType_Video, DMOVideoFormat_RGB565},
-        {MFMediaType_Video, MFVideoFormat_I420},
-        {MFMediaType_Video, MFVideoFormat_IYUV},
-        {MFMediaType_Video, MFVideoFormat_YVYU},
-        {MFMediaType_Video, DMOVideoFormat_RGB24},
-        {MFMediaType_Video, DMOVideoFormat_RGB555},
         {MFMediaType_Video, DMOVideoFormat_RGB8},
+        {MFMediaType_Video, DMOVideoFormat_RGB555},
+        {MFMediaType_Video, MEDIASUBTYPE_AYUV},
         {MFMediaType_Video, MEDIASUBTYPE_V216},
-        {MFMediaType_Video, MEDIASUBTYPE_V410},
-        {MFMediaType_Video, MFVideoFormat_NV11},
+        {MFMediaType_Video, MEDIASUBTYPE_YV12},
+        {MFMediaType_Video, MEDIASUBTYPE_YVU9},
     };
-    DMO_PARTIAL_MEDIATYPE color_converter_dmo_inputs[] =
+    DMO_PARTIAL_MEDIATYPE resizer_dmo_formats[] =
     {
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YV12},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_IYUV},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YUY2},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_UYVY},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_AYUV},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_NV12},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB32},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB565},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_I420},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_IYUV},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YVYU},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB32},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB24},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB555},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB565},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB8},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB555},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_AYUV},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_V216},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_V410},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_NV11},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_Y41P},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_Y41T},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_Y42T},
+        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YV12},
         {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YVU9},
-    };
-    DMO_PARTIAL_MEDIATYPE color_converter_dmo_outputs[] =
-    {
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YV12},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YUY2},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_UYVY},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_AYUV},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_NV12},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB32},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB565},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_I420},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_IYUV},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_YVYU},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB24},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB555},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_RGB8},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_V216},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_V410},
-        {.type = MEDIATYPE_Video, .subtype = MEDIASUBTYPE_NV11},
     };
     HRESULT hr;
 
@@ -150,12 +103,12 @@ HRESULT WINAPI DllRegisterServer(void)
         return hr;
     if (FAILED(hr = MFTRegister(CLSID_CResizerDMO, MFT_CATEGORY_VIDEO_EFFECT,
             (WCHAR *)L"Resizer MFT", MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(color_converter_mft_inputs), color_converter_mft_inputs,
-            ARRAY_SIZE(color_converter_mft_outputs), color_converter_mft_outputs, NULL)))
+            ARRAY_SIZE(resizer_mft_formats), resizer_mft_formats,
+            ARRAY_SIZE(resizer_mft_formats), resizer_mft_formats, NULL)))
         return hr;
     if (FAILED(hr = DMORegister(L"Resizer DMO", &CLSID_CResizerDMO, &DMOCATEGORY_VIDEO_EFFECT, 0,
-            ARRAY_SIZE(color_converter_dmo_inputs), color_converter_dmo_inputs,
-            ARRAY_SIZE(color_converter_dmo_outputs), color_converter_dmo_outputs)))
+            ARRAY_SIZE(resizer_dmo_formats), resizer_dmo_formats,
+            ARRAY_SIZE(resizer_dmo_formats), resizer_dmo_formats)))
         return hr;
 
     return S_OK;

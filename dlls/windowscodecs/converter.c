@@ -1773,7 +1773,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_48bppBGR, &GUID_WICPixelFormat48bppBGR, NULL},
     {format_64bppRGB, &GUID_WICPixelFormat64bppRGB, NULL},
     {format_64bppBGRA, &GUID_WICPixelFormat64bppBGRA, NULL},
-    {format_64bppPRGBA, &GUID_WICPixelFormat64bppPRGBA, NULL},
+    {format_64bppPRGBA, &GUID_WICPixelFormat64bppPRGBA, copypixels_to_64bppPRGBA},
     {format_64bppPBGRA, &GUID_WICPixelFormat64bppPBGRA, NULL},
     {format_32bppBGR101010, &GUID_WICPixelFormat32bppBGR101010, NULL},
     {format_96bppRGBFloat, &GUID_WICPixelFormat96bppRGBFloat, NULL},

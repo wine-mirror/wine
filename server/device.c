@@ -118,6 +118,12 @@ struct device
     struct list            requests;      /* list of pending ioctl requests */
 };
 
+struct device_init_data
+{
+    struct device_manager *manager;
+    const char            *unix_path;
+};
+
 static void device_dump( struct object *obj, int verbose );
 static struct object_type *device_get_type( struct object *obj );
 static struct fd *device_get_fd( struct object *obj );
@@ -269,6 +275,23 @@ static struct fd *device_get_fd( struct object *obj )
     struct device *device = (struct device *)obj;
 
     return (struct fd *)grab_object( device->fd );
+}
+
+static bool device_init( struct object *obj, const void *init_data )
+{
+    struct device *device = (struct device *)obj;
+    const struct device_init_data *data = init_data;
+
+    list_init( &device->kernel_object );
+    list_init( &device->files );
+
+    device->unix_path = data->unix_path ? strdup( data->unix_path ) : NULL;
+    if ((device->manager = data->manager))
+    {
+        grab_object( device );
+        list_add_tail( &device->manager->devices, &device->entry );
+    }
+    return true;
 }
 
 static void device_destroy( struct object *obj )
@@ -447,14 +470,14 @@ DECL_HANDLER(create_device)
     struct device_manager *manager;
     struct directory *root = NULL;
 
-    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
-                                                             0, &device_manager_ops )))
+    if (!(data.manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                                  0, &device_manager_ops )))
         return;
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
     {
-        release_object( manager );
+        release_object( data.manager );
         return;
     }
 
@@ -465,8 +488,8 @@ DECL_HANDLER(create_device)
         release_object( device );
     }
 
-    if (root) release_object( root );
-    release_object( manager );
+    if (params.root) release_object( params.root );
+    release_object( data.manager );
 }
 
 

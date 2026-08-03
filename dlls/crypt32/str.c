@@ -243,7 +243,7 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pV
     default:
         FIXME("string type %ld unimplemented\n", dwValueType);
     }
-    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_wn(psz, ret));
     return ret;
 }
 

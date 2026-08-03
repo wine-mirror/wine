@@ -43,6 +43,12 @@ struct event
     int            signaled;        /* event has been signaled */
 };
 
+struct event_init_data
+{
+    int manual_reset;
+    int initial_state;
+};
+
 static void event_dump( struct object *obj, int verbose );
 static struct object_type *event_get_type( struct object *obj );
 static int event_signaled( struct object *obj, struct wait_queue_entry *entry );
@@ -106,7 +112,9 @@ struct event *create_event( struct directory *root, const struct unicode_str *na
                             unsigned int attr, int manual_reset, int initial_state,
                             const struct security_descriptor *sd )
 {
-    struct event *event;
+    struct event_init_data data = { .manual_reset = manual_reset, .initial_state = initial_state };
+    struct object_params params = { .ops = &event_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
     if ((event = create_named_object_dir( root, name, attr, &event_ops )))
     {
@@ -207,7 +215,8 @@ static int event_signal( struct object *obj, unsigned int access )
 struct keyed_event *create_keyed_event( struct directory *root, const struct unicode_str *name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
-    struct keyed_event *event;
+    struct object_params params = { .ops = &keyed_event_ops, .root = root,
+                                    .name = name, .attr = attr, .sd = sd };
 
     if ((event = create_named_object_dir( root, name, attr, &keyed_event_ops )))
     {

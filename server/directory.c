@@ -76,6 +76,11 @@ struct directory
     struct namespace *entries;    /* directory's name space */
 };
 
+struct directory_init_data
+{
+    unsigned int hash_size;
+};
+
 static void directory_dump( struct object *obj, int verbose );
 static struct object_type *directory_get_type( struct object *obj );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
@@ -138,6 +143,14 @@ static struct object_type *directory_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
+static bool directory_init( struct object *obj, const void *init_data )
+{
+    struct directory *dir = (struct directory *)obj;
+    const struct directory_init_data *data = init_data;
+
+    return !!(dir->entries = create_namespace( data->hash_size ));
+}
+
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
                                              unsigned int attr )
 {
@@ -191,7 +204,9 @@ static void directory_destroy( struct object *obj )
 static struct directory *create_directory( struct directory *root, const struct unicode_str *name,
                                            unsigned int attr, unsigned int hash_size )
 {
-    struct directory *dir;
+    struct directory_init_data data = { .hash_size = hash_size };
+    struct object_params params = { .ops = &directory_ops, .root = root, .name = name,
+                                    .attr = attr, .sd = sd, .init_data = &data };
 
     if ((dir = create_named_object_dir( root, name, attr, &directory_ops )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)

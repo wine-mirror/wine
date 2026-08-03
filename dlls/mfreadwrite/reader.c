@@ -2135,6 +2135,9 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                     IMFMediaType_Release(media_type);
                 }
 
+                if(output_type_copy)
+                    IMFMediaType_Release(output_type_copy);
+
                 if (SUCCEEDED(hr))
                 {
                     entry->transform = transform;

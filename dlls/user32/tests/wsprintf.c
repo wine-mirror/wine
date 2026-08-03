@@ -266,6 +266,66 @@ static void CharLowerTest(void)
     ok(!failed,"CharLower failed - 16bit input (0x%0Ix) returned 32bit result (0x%0Ix)\n",i,out);
 }
 
+static void CharPrevATest(void)
+{
+    static const char foobar[] = "foobar\0r";
+    static const char dbcs1[] = {0xa1, 'A', 0xa1, 'B', 0xa1, 0, 'C'};
+    static const char dbcs2[] = {0x83, 'A', 0x83, 'B', 0x83, 0, 'C'};
+    static const struct
+    {
+        const char *start;
+        const char *current;
+        const char *previous;
+        WORD codepage;
+    }
+    tests[] =
+    {
+        { foobar, foobar + 5, foobar + 4 }, /* current char is last char in string */
+        { foobar, foobar + 6, foobar + 5 }, /* current char is at null terminator */
+        { foobar, foobar + 7, foobar + 6 }, /* current char is after null terminator */
+        { foobar, foobar, foobar }, /* current char is start char */
+        { foobar + 1, foobar, foobar }, /* current char is before start char */
+        { foobar, NULL, NULL }, /* current char is null */
+        { NULL, foobar + 5, foobar + 4 }, /* start is null */
+        { (const char*)1, foobar + 5, foobar + 4 }, /* start is way before current char */
+        /* current byte is second byte of DBCS pair at beginning of string */
+        { dbcs1, dbcs1 + 1, dbcs1, 936 },
+        { dbcs2, dbcs2 + 1, dbcs2, 949 },
+        { dbcs2, dbcs2 + 1, dbcs2, 950 },
+        /* current byte is first byte of DBCS pair following DBCS pair */
+        { dbcs1, dbcs1 + 2, dbcs1, 936 },
+        { dbcs2, dbcs2 + 2, dbcs2, 949 },
+        { dbcs2, dbcs2 + 2, dbcs2, 950 },
+        /* current byte is second byte of DBCS pair following DBCS pair */
+        { dbcs1, dbcs1 + 3, dbcs1 + 2, 936 },
+        { dbcs2, dbcs2 + 3, dbcs2 + 2, 949 },
+        { dbcs2, dbcs2 + 3, dbcs2 + 2, 950 },
+        /* current char is after invalid DBCS pair where the second byte is 0 */
+        { dbcs1, dbcs1 + 6, dbcs1 + 4, 936 },
+        { dbcs2, dbcs2 + 6, dbcs2 + 4, 949 },
+        { dbcs2, dbcs2 + 6, dbcs2 + 4, 950 },
+    };
+    char *prev;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%d", i);
+
+        if (!tests[i].codepage)
+        {
+            prev = CharPrevA(tests[i].start, tests[i].current);
+            ok(prev == tests[i].previous, "expected %s (%p) got %s (%p)\n",
+               wine_dbgstr_a(tests[i].previous), tests[i].previous, wine_dbgstr_a(prev), prev);
+        }
+
+        prev = CharPrevExA(tests[i].codepage, tests[i].start, tests[i].current, 0);
+        ok(prev == tests[i].previous, "expected %s (%p) got %s (%p)\n",
+           wine_dbgstr_a(tests[i].previous), tests[i].previous, wine_dbgstr_a(prev), prev);
+
+        winetest_pop_context();
+    }
+}
 
 START_TEST(wsprintf)
 {
@@ -273,4 +333,5 @@ START_TEST(wsprintf)
     wsprintfWTest();
     CharUpperTest();
     CharLowerTest();
+    CharPrevATest();
 }

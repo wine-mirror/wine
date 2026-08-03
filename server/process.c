@@ -1132,9 +1132,8 @@ DECL_HANDLER(new_process)
 {
     struct startup_info *info;
     const void *info_ptr;
-    struct unicode_str name, desktop_path = {0};
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
+    struct unicode_str desktop_path = {0};
+    struct object_params params;
     struct process *process = NULL;
     struct token *token = NULL;
     struct debug_obj *debug_obj = NULL;
@@ -1151,12 +1150,14 @@ DECL_HANDLER(new_process)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!objattr)
+    if (!get_req_object_attributes( &params ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         close( socket_fd );
         return;
     }
+    if (params.root) release_object( params.root );  /* unused */
+
     if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
     {
         set_error( STATUS_INVALID_HANDLE );
@@ -1294,7 +1295,7 @@ DECL_HANDLER(new_process)
         goto done;
     }
 
-    if (!(process = create_process( socket_fd, parent, req->flags, info->data, sd,
+    if (!(process = create_process( socket_fd, parent, req->flags, info->data, params.sd,
                                     handles, req->handles_size / sizeof(*handles), token )))
         goto done;
 
@@ -1328,7 +1329,7 @@ DECL_HANDLER(new_process)
     }
 
     /* connect to the window station */
-    connect_process_winstation( process, &desktop_path, parent_thread, parent );
+    connect_process_winstation( process, desktop_path, parent_thread, parent );
 
     /* inherit the process console, but keep pseudo handles (< 0), and 0 (= not attached to a console) as is */
     if ((int)info->data->console > 0)
@@ -1368,7 +1369,7 @@ DECL_HANDLER(new_process)
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
     reply->pid = get_process_id( process );
-    reply->handle = alloc_handle_no_access_check( current->process, process, req->access, objattr->attributes );
+    reply->handle = alloc_handle_no_access_check( current->process, process, req->access, params.attr );
 
  done:
     if (process) release_object( process );
@@ -1745,7 +1746,7 @@ DECL_HANDLER(make_process_system)
 
     if (!shutdown_event)
     {
-        if (!(shutdown_event = create_event( NULL, NULL, OBJ_PERMANENT, 1, 0, NULL ))) return;
+        if (!(shutdown_event = create_event( NULL, empty_str, OBJ_PERMANENT, 1, 0, NULL ))) return;
         release_object( shutdown_event );
     }
 
@@ -1789,33 +1790,18 @@ DECL_HANDLER(grant_process_admin_token)
 /* create a new job object */
 DECL_HANDLER(create_job)
 {
-    struct job *job;
-    struct unicode_str name;
-    struct object *root;
-    const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct object_params params = { .ops = &job_ops, .access = req->access };
 
-    if (!objattr) return;
-
-    if ((job = create_job_object( root, &name, objattr->attributes, sd )))
-    {
-        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, job, req->access, objattr->attributes );
-        else
-            reply->handle = alloc_handle_no_access_check( current->process, job,
-                                                          req->access, objattr->attributes );
-        release_object( job );
-    }
-    if (root) release_object( root );
+    if (!get_req_object_attributes( &params )) return;
+    reply->handle = create_named_obj_handle( current->process, &params );
+    if (params.root) release_object( params.root );
 }
 
 /* open a job object */
 DECL_HANDLER(open_job)
 {
-    struct unicode_str name = get_req_unicode_str();
-
     reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &job_ops, &name, req->attributes );
+                                 &job_ops, get_req_unicode_str(), req->attributes );
 }
 
 /* assign a job object to a process */

@@ -777,9 +777,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
   WCHAR *t;
   int   i;
   BOOL delayed = atExecute ? delayedsubst : FALSE;
-  WCHAR *delayedp = NULL;
   WCHAR  startchar = '%';
-  WCHAR *normalp;
 
   /* Display the FOR variables in effect */
   for (i=0;i<ARRAY_SIZE(forloopcontext->variable);i++) {
@@ -791,13 +789,24 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
   for (;;)
   {
-    /* Find the next environment variable delimiter */
-    normalp = wcschr(p, '%');
-    if (delayed) delayedp = wcschr(p, '!');
-    if (!normalp) p = delayedp;
-    else if (!delayedp) p = normalp;
-    else p = min(p,delayedp);
+    /* Find the next variable delimiter or caret escape */
+    if (delayed)
+        p = wcspbrk(p, L"%!^");
+    else
+        p = wcschr(p, '%');
     if (!p) break;
+
+    /* Handle caret escape: if caret precedes ! during delayed expansion,
+     * consume the caret and treat the ! as literal. Other caret sequences
+     * (e.g. ^% in pipe payloads) are left untouched for subprocesses.   */
+    if (*p == L'^')
+    {
+        if (p[1] != L'!') { p++; continue; }
+        p = WCMD_strsubstW(p, p + 1, NULL, 0);  /* remove the caret */
+        p++;  /* skip the now-literal exclamation mark */
+        continue;
+    }
+
     startchar = *p;
 
     WINE_TRACE("Translate command:%s %d (at: %s)\n",

@@ -2460,6 +2460,8 @@ START_TEST(debugger)
     }
     else if (myARGC >= 5 && !strcmp(myARGV[2], "child"))
     {
+        test_unhandled_exception_filter(0);
+        test_unhandled_exception_filter(1);
         doChild(myARGC, myARGV);
     }
     else if (myARGC >= 4 && !strcmp(myARGV[2], "children"))

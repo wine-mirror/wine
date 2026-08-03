@@ -45,7 +45,7 @@ extern unsigned int get_handle_access( struct process *process, obj_handle_t han
 extern obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
                                       unsigned int access, unsigned int attr, unsigned int options );
 extern obj_handle_t open_object( struct process *process, obj_handle_t parent, unsigned int access,
-                                 const struct object_ops *ops, const struct unicode_str *name,
+                                 const struct object_ops *ops, struct unicode_str name,
                                  unsigned int attr );
 extern obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops );
 extern unsigned int get_obj_handle_count( struct process *process, const struct object *obj );

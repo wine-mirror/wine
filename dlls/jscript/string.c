@@ -855,7 +855,7 @@ static HRESULT String_replace(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
 
                         idx = ptr2[1] - '0';
                         if(is_digit(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
-                            idx = idx*10 + (ptr[2]-'0');
+                            idx = idx*10 + (ptr2[2]-'0');
                             ptr = ptr2+3;
                         }else if(idx && idx <= match->paren_count) {
                             ptr = ptr2+2;

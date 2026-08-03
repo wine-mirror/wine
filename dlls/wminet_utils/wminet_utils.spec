@@ -15,16 +15,16 @@
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
 @ stub EndEnumeration
-@ stub EndMethodEnumeration
+@ stdcall EndMethodEnumeration(long ptr)
 @ stub ExecNotificationQueryWmi
 @ stdcall ExecQueryWmi(wstr wstr long ptr ptr long long ptr wstr wstr wstr)
 @ stdcall Get(long ptr wstr long ptr ptr ptr)
 @ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
 @ stub GetErrorInfo
-@ stub GetMethod
+@ stdcall GetMethod(long ptr wstr long ptr ptr)
 @ stub GetMethodOrigin
-@ stub GetMethodQualifierSet
+@ stdcall GetMethodQualifierSet(long ptr wstr ptr)
 @ stdcall GetNames(long ptr wstr long ptr ptr)
 @ stub GetObjectText
 @ stub GetPropertyHandle
@@ -36,7 +36,7 @@
 @ stdcall Initialize(long)
 @ stub Lock
 @ stub Next
-@ stub NextMethod
+@ stdcall NextMethod(long ptr long ptr ptr ptr)
 @ stub Put
 @ stub PutClassWmi
 @ stub PutInstanceWmi

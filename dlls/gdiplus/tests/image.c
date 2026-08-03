@@ -5410,6 +5410,64 @@ static void test_CloneBitmapArea(void)
     }
 }
 
+static void test_CloneBitmapAreaSameFormat(void)
+{
+    static const PixelFormat formats[] = { PixelFormat1bppIndexed, PixelFormat4bppIndexed };
+    static const UINT height = 4;
+    unsigned int f;
+    UINT w;
+
+    for (f = 0; f < ARRAY_SIZE(formats); f++)
+    {
+        PixelFormat format = formats[f];
+        UINT bpp = GetPixelFormatSize(format);
+
+        for (w = 1; w <= 16; w++)
+        {
+            GpStatus status;
+            GpBitmap *bitmap, *clone;
+            BitmapData src_data, dst_data;
+            UINT row_bytes = (bpp * w + 7) / 8;
+            UINT y;
+            BOOL match = TRUE;
+
+            status = GdipCreateBitmapFromScan0(w, height, 0, format, NULL, &bitmap);
+            expect(Ok, status);
+
+            status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeWrite, format, &src_data);
+            expect(Ok, status);
+            for (y = 0; y < height; y++)
+                memset((BYTE *)src_data.Scan0 + y * src_data.Stride, 0xaa, abs(src_data.Stride));
+            status = GdipBitmapUnlockBits(bitmap, &src_data);
+            expect(Ok, status);
+
+            status = GdipCloneBitmapAreaI(0, 0, w, height, format, bitmap, &clone);
+            expect(Ok, status);
+
+            status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, format, &src_data);
+            expect(Ok, status);
+            status = GdipBitmapLockBits(clone, NULL, ImageLockModeRead, format, &dst_data);
+            expect(Ok, status);
+
+            for (y = 0; y < height; y++)
+            {
+                BYTE *src_row = (BYTE *)src_data.Scan0 + y * src_data.Stride;
+                BYTE *dst_row = (BYTE *)dst_data.Scan0 + y * dst_data.Stride;
+                if (memcmp(src_row, dst_row, row_bytes) != 0)
+                    match = FALSE;
+            }
+            ok(match, "format %#x, width %u: clone dropped bytes from a row (bpp=%u, row_bytes=%u)\n",
+               format, w, bpp, row_bytes);
+
+            GdipBitmapUnlockBits(clone, &dst_data);
+            GdipBitmapUnlockBits(bitmap, &src_data);
+
+            GdipDisposeImage((GpImage *)clone);
+            GdipDisposeImage((GpImage *)bitmap);
+        }
+    }
+}
+
 static void test_supported_encoders(void)
 {
     static const struct test_data
@@ -6669,6 +6727,7 @@ START_TEST(image)
     test_png_histogram_property();
     test_supported_encoders();
     test_CloneBitmapArea();
+    test_CloneBitmapAreaSameFormat();
     test_ARGB_conversion();
     test_PARGB_conversion();
     test_DrawImage_scale();

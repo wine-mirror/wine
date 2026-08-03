@@ -1188,6 +1188,16 @@ setlocal EnableDelayedExpansion
 set "AFTER_DELAY=after^!"
 echo !BEFORE_DELAY!
 echo !AFTER_DELAY!
+rem caret escape inside quotes:
+set "b=caret^!bang"
+echo !b!
+setlocal DisableDelayedExpansion
+setlocal EnableDelayedExpansion
+set "a=hello"
+echo ^^!a!
+echo !a^!
+echo ^^^^!a!
+echo !a^^!
 setlocal DisableDelayedExpansion
 
 echo --- in digit variables

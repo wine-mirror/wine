@@ -607,12 +607,10 @@ DECL_HANDLER(d3dkmt_object_open)
 DECL_HANDLER(d3dkmt_share_objects)
 {
     struct object *resource = NULL, *mutex = NULL, *sync = NULL;
-    const struct object_attributes *objattr;
-    const struct security_descriptor *sd;
-    struct unicode_str name;
-    struct object *root;
+    struct object_params params;
 
-    if (!(objattr = get_req_object_attributes( &sd, &name, &root ))) return;
+    if (!get_req_object_attributes( &params )) return;
+    params.attr |= OBJ_CASE_INSENSITIVE;
 
     if (req->resource)
     {
@@ -622,7 +620,8 @@ DECL_HANDLER(d3dkmt_share_objects)
         if (req->mutex && !(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) goto done;
         if (req->sync && !(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
-        if (!(shared = create_named_object( root, &dxgk_shared_resource_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        params.ops = &dxgk_shared_resource_ops;
+        if (!(shared = create_named_object( &params ))) goto done;
         shared->resource = grab_object( resource );
         if ((shared->mutex = mutex)) grab_object( mutex );
         if ((shared->sync = sync)) grab_object( sync );
@@ -635,14 +634,15 @@ DECL_HANDLER(d3dkmt_share_objects)
 
         if (!(sync = d3dkmt_object_open( req->sync, D3DKMT_SYNC ))) goto done;
 
-        if (!(shared = create_named_object( root, &dxgk_shared_sync_ops, &name, objattr->attributes | OBJ_CASE_INSENSITIVE, NULL ))) goto done;
+        params.ops = &dxgk_shared_sync_ops;
+        if (!(shared = create_named_object( &params ))) goto done;
         shared->sync = grab_object( sync );
         reply->handle = alloc_handle( current->process, shared, req->access, OBJ_INHERIT );
         release_object( shared );
     }
 
 done:
-    if (root) release_object( root );
+    if (params.root) release_object( params.root );
     if (resource) release_object( resource );
     if (mutex) release_object( mutex );
     if (sync) release_object( sync );
@@ -657,11 +657,11 @@ DECL_HANDLER(d3dkmt_object_open_name)
     {
     case D3DKMT_SYNC:
         reply->handle = open_object( current->process, req->rootdir, req->access, &dxgk_shared_sync_ops,
-                                     &name, req->attributes | OBJ_CASE_INSENSITIVE );
+                                     name, req->attributes | OBJ_CASE_INSENSITIVE );
         break;
     case D3DKMT_RESOURCE:
         reply->handle = open_object( current->process, req->rootdir, req->access, &dxgk_shared_resource_ops,
-                                     &name, req->attributes | OBJ_CASE_INSENSITIVE );
+                                     name, req->attributes | OBJ_CASE_INSENSITIVE );
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
