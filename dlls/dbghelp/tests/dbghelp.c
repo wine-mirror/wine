@@ -683,7 +683,7 @@ static void test_modules_overlap(void)
         ok(ret, "SymInitialize failed: %lu\n", GetLastError());
 
         base[0] = SymLoadModuleEx(dummy, NULL, target1_dll, NULL, tests[i].first_base, 0, NULL, 0);
-        ok(base[0] == tests[i].first_base ? tests[i].first_base : base0, "SymLoadModuleEx failed: %lu\n", GetLastError());
+        ok(base[0] == (tests[i].first_base ? tests[i].first_base : base0), "SymLoadModuleEx failed: %lu\n", GetLastError());
         ret = SymAddSymbol(dummy, base[0], "winetest_symbol_virtual", base[0] + (3 * imsize0) / 4, 13, 0);
         ok(ret, "SymAddSymbol failed: %lu\n", GetLastError());
 
