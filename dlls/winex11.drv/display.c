@@ -160,7 +160,7 @@ static void strip_driver_extra( DEVMODEW *modes, UINT count )
     {
         next = NEXT_DEVMODEW(mode);
         mode->dmDriverExtra = 0;
-        memcpy( modes + i, mode, sizeof(*mode) );
+        memmove( modes + i, mode, sizeof(*mode) );
     }
 }
 
