@@ -1563,34 +1563,43 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
                                  CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     int *stage = *(int **)(frame + 1);
+    DWORD expected;
 
     got_exception++;
 
-    if( *stage == 1) {
-        /* fault while executing sse instruction */
-        context->Eip += 3; /* skip addps */
+    switch(*stage)
+    {
+        case 1: /* fault while executing sse instruction */
+            context->Eip += 3; /* skip addps */
+            return ExceptionContinueExecution;
+        case 2: /* divide by zero */
+        case 3: /* invalid operation */
+            expected = STATUS_FLOAT_MULTIPLE_TRAPS;
+            context->Eip += 3; /* skip instruction */
+            break;
+        case 4: /* overflow */
+            expected = STATUS_FLOAT_MULTIPLE_FAULTS;
+            context->Eip += 3; /* skip instruction */
+            break;
+        default:
+            ok(FALSE, "unexpected stage %d\n", *stage);
+            return ExceptionContinueExecution;
+    }
+
+    if (rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+    {
+        skip("system doesn't support SIMD exceptions\n");
         return ExceptionContinueExecution;
     }
-    else if ( *stage == 2 || *stage == 3 ) {
-        /* stage 2 - divide by zero fault */
-        /* stage 3 - invalid operation fault */
-        if( rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
-            skip("system doesn't support SIMD exceptions\n");
-        else {
-            ok( rec->ExceptionCode ==  STATUS_FLOAT_MULTIPLE_TRAPS,
-                "exception code: %#lx, should be %#lx\n",
-                rec->ExceptionCode,  STATUS_FLOAT_MULTIPLE_TRAPS);
-            ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %li\n", rec->NumberParameters);
-            ok( rec->ExceptionInformation[0] == 0, "param #1: %Ix, should be 0\n", rec->ExceptionInformation[0]);
-            if (rec->NumberParameters == 2)
-                ok( rec->ExceptionInformation[1] == ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr,
-                    "param #1: %Ix / %lx\n", rec->ExceptionInformation[1],
-                    ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr);
-        }
-        context->Eip += 3; /* skip divps */
-    }
-    else
-        ok(FALSE, "unexpected stage %x\n", *stage);
+
+    ok( rec->ExceptionCode == expected, "exception code: %#lx, should be %#lx\n",
+        rec->ExceptionCode, expected);
+    ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %li\n", rec->NumberParameters);
+    ok( rec->ExceptionInformation[0] == 0, "param #0: %Ix\n", rec->ExceptionInformation[0]);
+    if (rec->NumberParameters == 2)
+        ok( rec->ExceptionInformation[1] == ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr,
+            "param #1: %Ix / %lx\n", rec->ExceptionInformation[1],
+            ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr);
 
     return ExceptionContinueExecution;
 }
@@ -1630,6 +1639,25 @@ static const BYTE simd_exception_test2[] = {
     0xc3,                                /* ret */
 };
 
+static const BYTE simd_exception_test3[] = {
+    0x83, 0xec, 0x04,                    /* sub    $4,%esp        */
+    0x0f, 0xae, 0x1c, 0x24,              /* stmxcsr (%esp)        */
+    0x8b, 0x04, 0x24,                    /* mov    (%esp),%eax    * store mxcsr */
+    0x66, 0x81, 0x24, 0x24, 0xff, 0xfb,  /* andw   $0xfbff,(%esp) * enable overflow */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%esp)        * operation exceptions */
+    0x68, 0xff, 0xff, 0x7f, 0x7f,        /* push   0x7f7fffff     * load large float values */
+    0x68, 0xff, 0xff, 0x7f, 0x7f,
+    0x68, 0xff, 0xff, 0x7f, 0x7f,
+    0x68, 0xff, 0xff, 0x7f, 0x7f,
+    0x0f, 0x10, 0x0c, 0x24,              /* movups (%esp),%xmm1   */
+    0x0f, 0x59, 0xc9,                    /* mulps  %xmm1,%xmm1    * generate overflow fault */
+    0x83, 0xc4, 0x10,                    /* add    $16,%esp       * pop float value */
+    0x89, 0x04, 0x24,                    /* mov    %eax,(%esp)    * restore to old mxcsr */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%esp)        */
+    0x83, 0xc4, 0x04,                    /* add    $4,%esp        */
+    0xc3                                 /* ret                   */
+};
+
 static const BYTE sse_check[] = {
     0x0f, 0x58, 0xc8,                    /* addps  %xmm0,%xmm1 */
     0xc3,                                /* ret */
@@ -1660,6 +1688,13 @@ static void test_simd_exceptions(void)
     got_exception = 0;
     run_exception_test(simd_fault_handler, &stage, simd_exception_test2,
                        sizeof(simd_exception_test2), 0);
+    ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
+
+    /* generate a SIMD overflow exception */
+    stage = 4;
+    got_exception = 0;
+    run_exception_test(simd_fault_handler, &stage, simd_exception_test3,
+                       sizeof(simd_exception_test3), 0);
     ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
 }
 
@@ -3442,35 +3477,44 @@ static DWORD WINAPI simd_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
                                         CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
     int *stage = *(int **)dispatcher->HandlerData;
+    DWORD expected;
 
     got_exception++;
 
-    if (*stage == 1)
+    switch(*stage)
     {
-        /* fault while executing sse instruction */
-        context->Rip += 3; /* skip addps */
+        case 1: /* fault while executing sse instruction */
+            context->Rip += 3; /* skip addps */
+            return ExceptionContinueExecution;
+        case 2: /* divide by zero */
+            expected = STATUS_FLOAT_DIVIDE_BY_ZERO;
+            context->Rip += 3; /* skip instruction */
+            break;
+        case 3: /* invalid operation */
+            expected = STATUS_FLOAT_INVALID_OPERATION;
+            context->Rip += 3; /* skip instruction */
+            break;
+        case 4: /* overflow */
+            expected = STATUS_FLOAT_OVERFLOW;
+            context->Rip += 3; /* skip instruction */
+            break;
+        default:
+            ok(FALSE, "unexpected stage %d\n", *stage);
+            return ExceptionContinueExecution;
+    }
+
+    if (rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+    {
+        skip("system doesn't support SIMD exceptions\n");
         return ExceptionContinueExecution;
     }
-    else if (*stage == 2 || *stage == 3 )
-    {
-        /* stage 2 - divide by zero fault */
-        /* stage 3 - invalid operation fault */
-        if( rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
-            skip("system doesn't support SIMD exceptions\n");
-        else
-        {
-            ULONG expect = *stage == 2 ? EXCEPTION_FLT_DIVIDE_BY_ZERO : EXCEPTION_FLT_INVALID_OPERATION;
-            ok( rec->ExceptionCode == expect, "exception code: %#lx, should be %#lx\n",
-                rec->ExceptionCode, expect );
-            ok( rec->NumberParameters == 2, "# of params: %li, should be 2\n", rec->NumberParameters);
-            ok( rec->ExceptionInformation[0] == 0, "param #0: %Ix\n", rec->ExceptionInformation[0]);
-            ok( rec->ExceptionInformation[1] == context->MxCsr, "param #1: %Ix / %lx\n",
-                rec->ExceptionInformation[1], context->MxCsr);
-        }
-        context->Rip += 3; /* skip divps */
-    }
-    else
-        ok(FALSE, "unexpected stage %x\n", *stage);
+
+    ok( rec->ExceptionCode == expected, "exception code: %#lx, should be %#lx\n",
+        rec->ExceptionCode, expected);
+    ok( rec->NumberParameters == 2, "# of params: %li, should be 2\n", rec->NumberParameters);
+    ok( rec->ExceptionInformation[0] == 0, "param #0: %Ix\n", rec->ExceptionInformation[0]);
+    ok( rec->ExceptionInformation[1] == context->MxCsr, "param #1: %Ix / %lx\n",
+        rec->ExceptionInformation[1], context->MxCsr);
 
     return ExceptionContinueExecution;
 }
@@ -3508,6 +3552,23 @@ static const BYTE simd_exception_test2[] =
     0xc3,                                /* ret */
 };
 
+static const BYTE simd_exception_test3[] =
+{
+    0x48, 0x83, 0xec, 0x08,              /* sub    $0x8,%rsp      */
+    0x0f, 0xae, 0x1c, 0x24,              /* stmxcsr (%rsp)        */
+    0x8b, 0x04, 0x24,                    /* mov    (%rsp),%eax    * store mxcsr */
+    0x66, 0x81, 0x24, 0x24, 0xff, 0xfb,  /* andw   $0xfbff,(%rsp) * unmask overflow exception */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)        * zero exceptions  */
+    0xb9, 0xff, 0xff, 0x7f, 0x7f,        /* mov  $0x7f7fffff,%ecx * load large number */
+    0x66, 0x0f, 0x6e, 0xc9,              /* movd   %ecx,%xmm1     * transfer to sse register */
+    0x0f, 0xc6, 0xc9, 0x00,              /* shufps $0,%xmm1,%xmm1 * replicate to all 4 lanes */
+    0x0f, 0x59, 0xc9,                    /* mulps  %xmm1,%xmm1    * generate overflow fault */
+    0x89, 0x04, 0x24,                    /* mov    %eax,(%rsp)    * restore to old mxcsr */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)        */
+    0x48, 0x83, 0xc4, 0x08,              /* add    $0x8,%rsp      */
+    0xc3,                                /* ret */
+};
+
 static const BYTE sse_check[] =
 {
     0x0f, 0x58, 0xc8,                    /* addps  %xmm0,%xmm1 */
@@ -3539,6 +3600,13 @@ static void test_simd_exceptions(void)
     got_exception = 0;
     run_exception_test(simd_fault_handler, &stage, simd_exception_test2,
                        sizeof(simd_exception_test2), 0);
+    ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
+
+    /* generate a SIMD overflow exception */
+    stage = 4;
+    got_exception = 0;
+    run_exception_test(simd_fault_handler, &stage, simd_exception_test3,
+                       sizeof(simd_exception_test3), 0);
     ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
 }
 
