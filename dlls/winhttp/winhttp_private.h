@@ -110,6 +110,7 @@ struct netconn
     struct hostdata *host;
     ULONGLONG keep_until;
     CtxtHandle ssl_ctx;
+    const CERT_CHAIN_CONTEXT *chain;
     SecPkgContext_StreamSizes ssl_sizes;
     char *ssl_read_buf, *ssl_write_buf;
     char *extra_buf;

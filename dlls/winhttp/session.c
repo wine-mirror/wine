@@ -912,28 +912,18 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
     }
     case WINHTTP_OPTION_SERVER_CERT_CHAIN_CONTEXT:
     {
-        const CERT_CHAIN_CONTEXT *cert_chain;
+        const CERT_CHAIN_CONTEXT *chain;
 
-        char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
-        char *server_auth[] = { oid_server_auth };
-
-        CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
-
-        chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
-        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
-
-        if (!validate_buffer( buffer, buflen, sizeof(cert_chain) )) return FALSE;
-        if (!request->server_cert)
+        if (!validate_buffer( buffer, buflen, sizeof(chain) )) return FALSE;
+        if (!request->netconn || !request->netconn->chain)
         {
             SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
             *(CERT_CHAIN_CONTEXT **)buffer = NULL;
             return FALSE;
         }
-        if (!CertGetCertificateChain(NULL, request->server_cert, NULL, NULL, &chainPara, 0, NULL, &cert_chain)) return FALSE;
-
-        *(CERT_CHAIN_CONTEXT **)buffer = (CERT_CHAIN_CONTEXT *)cert_chain;
-        *buflen = sizeof(cert_chain);
-
+        if (!(chain = CertDuplicateCertificateChain( request->netconn->chain ))) return FALSE;
+        *(const CERT_CHAIN_CONTEXT **)buffer = chain;
+        *buflen = sizeof(chain);
         return TRUE;
     }
     case WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT:

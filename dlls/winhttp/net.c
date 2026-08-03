@@ -81,7 +81,8 @@ static int sock_recv(int fd, void *msg, size_t len, int flags)
     return ret;
 }
 
-static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags, BOOL check_revocation )
+static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags, BOOL check_revocation,
+                                  PCCERT_CHAIN_CONTEXT *ret_chain )
 {
     HCERTSTORE store = cert->hCertStore;
     BOOL ret;
@@ -92,6 +93,7 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD secu
     DWORD err = ERROR_SUCCESS;
 
     TRACE("verifying %s\n", debugstr_w( server ));
+    *ret_chain = NULL;
     chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
     chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
     ret = CertGetCertificateChain( NULL, cert, NULL, store, &chainPara,
@@ -169,7 +171,7 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD secu
                     err = ERROR_WINHTTP_SECURE_INVALID_CERT;
             }
         }
-        CertFreeCertificateChain( chain );
+        *ret_chain = chain;
     }
     else
         err = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
@@ -296,6 +298,7 @@ void netconn_release( struct netconn *conn )
         free(conn->ssl_read_buf);
         free(conn->ssl_write_buf);
         free(conn->extra_buf);
+        CertFreeCertificateChain(conn->chain);
         DeleteSecurityContext(&conn->ssl_ctx);
     }
     if (conn->socket != -1)
@@ -400,7 +403,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
 
             status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
             if(status == SEC_E_OK) {
-                res = netconn_verify_cert(cert, hostname, security_flags, check_revocation);
+                res = netconn_verify_cert(cert, hostname, security_flags, check_revocation, &conn->chain);
                 CertFreeCertificateContext(cert);
                 if(res != ERROR_SUCCESS) {
                     WARN( "cert verify failed: %lu\n", res );
