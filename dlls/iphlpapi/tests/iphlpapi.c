@@ -3459,7 +3459,7 @@ static void test_ParseNetworkString(void)
 
         ok(ret == ipv4_address_tests[i].ret,
            "%s gave error %ld\n", ipv4_address_tests[i].str, ret);
-        ok(info.Format == ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4,
+        ok(info.Format == (ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4),
            "%s gave format %d\n", ipv4_address_tests[i].str, info.Format);
         ok(info.Ipv4Address.sin_addr.S_un.S_addr == (ret ? 0x99999999 : ipv4_address_tests[i].addr.S_un.S_addr),
            "%s gave address %d.%d.%d.%d\n", ipv4_address_tests[i].str,
@@ -3485,7 +3485,7 @@ static void test_ParseNetworkString(void)
 
         ok(ret == ipv4_service_tests[i].ret,
            "%s gave error %ld\n", ipv4_service_tests[i].str, ret);
-        ok(info.Format == ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4,
+        ok(info.Format == (ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4),
            "%s gave format %d\n", ipv4_address_tests[i].str, info.Format);
         ok(info.Ipv4Address.sin_addr.S_un.S_addr == (ret ? 0x99999999 : ipv4_service_tests[i].addr.S_un.S_addr),
            "%s gave address %d.%d.%d.%d\n", ipv4_service_tests[i].str,
