@@ -553,16 +553,41 @@ char *format_namespace( const struct namespace *namespace, const char *prefix, c
     return str.buf;
 }
 
+static const type_t *type_get_abi_type( const type_t *type )
+{
+    if (type->type_type != TYPE_RUNTIMECLASS) return type;
+    return type_runtimeclass_get_default_iface( type, TRUE );
+}
+
+static const char *type_get_logical_type_name( const type_t *type )
+{
+    if (strcmp( type->qualified_name, "boolean" )) return type->qualified_name;
+    return "bool";
+}
+
+static bool type_needs_aggregate_type( const type_t *type, const type_t **abi, const char **logical_name )
+{
+    *abi = type_get_abi_type( type );
+    if (*abi != type)
+    {
+        *logical_name = type->qualified_name;
+        return true;
+    }
+    *logical_name = type_get_logical_type_name( type );
+    return *logical_name != type->qualified_name;
+}
+
 char *format_parameterized_type_name( const type_t *type, const typeref_list_t *params )
 {
     struct strbuf str = {0};
+    const char *type_name;
     typeref_t *ref;
 
     strappend( &str, "%s<", type->name );
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
-        type = type_pointer_get_root_type(ref->type);
-        strappend( &str, "%s", type->qualified_name );
+        type_name = type_get_logical_type_name( type_pointer_get_root_type( ref->type ) );
+        strappend( &str, "%s", type_name );
         append_pointer_stars( &str, ref->type );
         if (list_next( params, &ref->entry )) strappend( &str, "," );
     }
@@ -671,18 +696,18 @@ static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *p
 {
     struct strbuf str = {0};
     typeref_t *ref;
-    type_t *iface;
+    const type_t *abi;
+    const char *logical_name;
 
     strappend( &str, "%s%s_impl<", prefix, type->name );
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         type = type_pointer_get_root_type(ref->type);
-        if (type->type_type == TYPE_RUNTIMECLASS)
+        if (type_needs_aggregate_type( type, &abi, &logical_name ))
         {
-            strappend( &str, "ABI::Windows::Foundation::Internal::AggregateType<%s", type->qualified_name );
+            strappend( &str, "ABI::Windows::Foundation::Internal::AggregateType<%s", logical_name );
             append_pointer_stars( &str, ref->type );
-            iface = type_runtimeclass_get_default_iface(type, TRUE);
-            strappend( &str, ", %s", iface->qualified_name );
+            strappend( &str, ", %s", abi->qualified_name );
             append_pointer_stars( &str, ref->type );
             strappend( &str, " >" );
         }
