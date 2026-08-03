@@ -18656,7 +18656,13 @@ static void test_document_stream(void)
 
     hr = IStream_Write(stream, "<d></d>", 7, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
+    SysFreeString(str);
     hr = IStream_Write(stream2, "<e></e>", 7, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Write(stream, "\r", 1, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IStream_Release(stream);
 
