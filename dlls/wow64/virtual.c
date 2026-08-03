@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -285,15 +286,14 @@ NTSTATUS WINAPI wow64_NtFlushVirtualMemory( UINT *args )
     HANDLE process = get_handle( &args );
     ULONG *addr32 = get_ptr( &args );
     ULONG *size32 = get_ptr( &args );
-    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
-    IO_STATUS_BLOCK io;
+    ULONG unknown = get_ulong( &args );
 
     void *addr;
     SIZE_T size;
     NTSTATUS status;
 
     status = NtFlushVirtualMemory( process, (const void **)addr_32to64( &addr, addr32 ),
-                                   size_32to64( &size, size32 ), iosb_32to64( &io, io32 ) );
+                                   size_32to64( &size, size32 ), unknown );
     if (!status)
     {
         put_addr( addr32, addr );
@@ -691,24 +691,11 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         break;
     }
 
-    case MemoryWineLoadUnixLibWow64:
-    case MemoryWineLoadUnixLibByNameWow64:
+    case MemoryWineUnixWow64Funcs:
         return STATUS_INVALID_INFO_CLASS;
 
-    case MemoryWineLoadUnixLib:
-        status = NtQueryVirtualMemory( handle, addr, MemoryWineLoadUnixLibWow64, ptr, len, &res_len );
-        break;
-    case MemoryWineLoadUnixLibByName:
-    {
-        UNICODE_STRING32 *str32 = addr;
-        UNICODE_STRING str;
-
-        status = NtQueryVirtualMemory( handle, unicode_str_32to64( &str, str32 ),
-                                       MemoryWineLoadUnixLibByNameWow64, ptr, len, &res_len );
-        break;
-    }
-    case MemoryWineUnloadUnixLib:
-        status = NtQueryVirtualMemory( handle, addr, class, ptr, len, &res_len );
+    case MemoryWineUnixFuncs:
+        status = NtQueryVirtualMemory( handle, addr, MemoryWineUnixWow64Funcs, ptr, len, &res_len );
         break;
 
     default:
@@ -796,7 +783,9 @@ NTSTATUS WINAPI wow64_NtSetLdtEntries( UINT *args )
     ULONG entry2_low = get_ulong( &args );
     ULONG entry2_high = get_ulong( &args );
 
-    return NtSetLdtEntries( sel1, entry1_low, entry1_high, sel2, entry2_low, entry2_high );
+    FIXME( "%04lx %08lx %08lx %04lx %08lx %08lx: stub\n",
+           sel1, entry1_low, entry1_high, sel2, entry2_low, entry2_high );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 

@@ -26,9 +26,6 @@ HRESULT Connection_create( void ** );
 HRESULT Recordset_create( void ** );
 HRESULT Stream_create( void ** );
 
-HRESULT create_client_cursor( int, const DBCOLUMNINFO *, IUnknown ** );
-HRESULT create_server_cursor( IUnknown *, IUnknown ** );
-
 typedef enum tid_t {
     ADORecordsetConstruction_tid,
     Command_tid,
@@ -45,7 +42,5 @@ typedef enum tid_t {
 } tid_t;
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
-
-void dbtype_free( DBTYPE, void *data );
 
 #endif /* _WINE_MSADO15_PRIVATE_H_ */

@@ -454,14 +454,6 @@ const struct vkd3d_format *vkd3d_get_format(const struct d3d12_device *device,
             return &vkd3d_formats[i];
     }
 
-    /* Combined depth/stencil formats can be used without
-     * D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL as well. In some ways it may be
-     * nicer to add entries for these to vkd3d_formats[], much like we do with
-     * e.g. DXGI_FORMAT_R32_TYPELESS, but we can't handle the override for the
-     * VK_FORMAT_D24_UNORM_S8_UINT formats there. */
-    if ((format = vkd3d_get_depth_stencil_format(device, dxgi_format)))
-        return format;
-
     /* Do not check VkPhysicalDevice4444FormatsFeaturesEXT because apps
      * should query format support, which returns more detailed info. */
     if (dxgi_format == format_b4g4r4a4.dxgi_format && device->vk_info.EXT_4444_formats)
@@ -711,7 +703,7 @@ const char *debug_vk_extent_3d(VkExtent3D extent)
 
 const char *debug_vk_queue_flags(VkQueueFlags flags)
 {
-    char buffer[222];
+    char buffer[191];
 
     buffer[0] = '\0';
 #define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
@@ -724,7 +716,6 @@ const char *debug_vk_queue_flags(VkQueueFlags flags)
 #define FLAG_TO_STR(f, n) if (flags & f) { strcat(buffer, " | "#n); flags &= ~f; }
     FLAG_TO_STR(0x20, VK_QUEUE_VIDEO_DECODE_BIT_KHR)
     FLAG_TO_STR(0x40, VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
-    FLAG_TO_STR(0x100, VK_QUEUE_OPTICAL_FLOW_BIT_NV)
 #undef FLAG_TO_STR
     if (flags)
         FIXME("Unrecognized flag(s) %#x.\n", flags);

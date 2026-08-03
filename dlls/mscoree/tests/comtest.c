@@ -94,7 +94,9 @@ static BOOL compile_cs_to_dll(char *source_path, char *dest_path)
     ret = CreateProcessA(path_csc, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
-    wait_child_process(&pi);
+    wait_child_process(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 
     ret = PathFileExistsA(path_temp);
     ok(ret, "Compilation failed\n");
@@ -174,13 +176,13 @@ static void run_registry_test(run_type run)
     }
     ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %lx\n", ret);
 
-    ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 12);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 11);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 63);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 74);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 9);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 8);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
-    ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 39);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 41);
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %lx\n", ret);
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
@@ -372,7 +374,10 @@ static void run_child_process(const char *dll_source, run_type run)
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
-    wait_child_process(&pi);
+    wait_child_process(pi.hProcess);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 
     /* Cleanup dll, because it might still have been used by the child */
     cleanup_test(run);

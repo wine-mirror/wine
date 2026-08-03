@@ -1,5 +1,5 @@
 MODULE    = psapi.dll
 IMPORTLIB = psapi
 
-VER_FILEDESCRIPTION_STR = "Wine Process Status Helper"
-VER_PRODUCTVERSION      = 5,1,2600,3264
+SOURCES = \
+	version.rc

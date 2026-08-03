@@ -52,16 +52,12 @@
 @ stdcall -fastcall IofCompleteRequest(ptr long)
 @ stdcall -arch=!i386 KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stdcall -fastcall KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
-@ stdcall -fastcall KeAcquireGuardedMutexUnsafe(ptr)
-@ stdcall -fastcall KeAcquireGuardedMutex(ptr)
 @ stdcall KeEnterGuardedRegion()
 @ stdcall KeExpandKernelStackAndCallout(ptr ptr long)
 @ stdcall KeExpandKernelStackAndCalloutEx(ptr ptr long long ptr)
 @ stdcall KeLeaveGuardedRegion()
 @ stdcall -arch=!i386 KeReleaseInStackQueuedSpinLock(ptr)
 @ stdcall -fastcall KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)
-@ stdcall -fastcall KeReleaseGuardedMutexUnsafe(ptr)
-@ stdcall -fastcall KeReleaseGuardedMutex(ptr)
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
 @ stub KefReleaseSpinLockFromDpcLevel
@@ -237,7 +233,7 @@
 @ stub FsRtlFastUnlockSingle
 @ stub FsRtlFindInTunnelCache
 @ stub FsRtlFreeFileLock
-@ stdcall FsRtlGetFileSize(ptr ptr)
+@ stub FsRtlGetFileSize
 @ stub FsRtlGetNextFileLock
 @ stub FsRtlGetNextLargeMcbEntry
 @ stub FsRtlGetNextMcbEntry
@@ -407,7 +403,6 @@
 @ stdcall IoGetCurrentProcess()
 @ stub IoGetDeviceAttachmentBaseRef
 @ stub IoGetDeviceInterfaceAlias
-@ stdcall IoGetDeviceInterfacePropertyData(ptr ptr long long long ptr ptr ptr)
 @ stdcall IoGetDeviceInterfaces(ptr ptr long ptr)
 @ stdcall IoGetDeviceObjectPointer(ptr long ptr ptr)
 @ stdcall IoGetDeviceProperty(ptr long long ptr ptr)
@@ -475,7 +470,6 @@
 @ stub IoRequestDeviceEject
 @ stdcall IoReuseIrp(ptr long)
 @ stub IoSetCompletionRoutineEx
-@ stdcall IoSetDeviceInterfacePropertyData(ptr ptr long long long long ptr)
 @ stdcall IoSetDeviceInterfaceState(ptr long)
 @ stdcall IoSetDevicePropertyData(ptr ptr long long long long ptr)
 @ stub IoSetDeviceToVerify
@@ -497,7 +491,7 @@
 @ stdcall IoStopTimer(ptr)
 @ stub IoSynchronousInvalidateDeviceRelations
 @ stub IoSynchronousPageWrite
-@ stdcall IoThreadToProcess(ptr)
+@ stub IoThreadToProcess
 @ stdcall IoUnregisterFileSystem(ptr)
 @ stub IoUnregisterFsRegistrationChange
 @ stdcall IoUnregisterPlugPlayNotification(ptr)
@@ -526,7 +520,6 @@
 @ stub IoWriteOperationCount
 @ stub IoWritePartitionTableEx
 @ stub IoWriteTransferCount
-@ stdcall KdChangeOption(long long ptr long ptr ptr)
 @ extern KdDebuggerEnabled
 @ stub KdDebuggerNotPresent
 @ stdcall KdDisableDebugger()
@@ -588,7 +581,7 @@
 @ stub KeInitializeInterrupt
 @ stub KeInitializeMutant
 @ stdcall KeInitializeMutex(ptr long)
-@ stdcall -fastcall KeInitializeGuardedMutex(ptr)
+@ stdcall KeInitializeGuardedMutex(ptr)
 @ stub KeInitializeQueue
 @ stdcall KeInitializeSemaphore(ptr long long)
 @ stdcall KeInitializeSpinLock(ptr) NTOSKRNL_KeInitializeSpinLock
@@ -834,7 +827,6 @@
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
 @ stdcall NtSetEaFile(long ptr ptr long)
 @ stdcall NtSetEvent(long ptr)
-@ stdcall NtSetEventBoostPriority(long)
 @ stdcall NtSetInformationFile(long ptr ptr long long)
 @ stdcall NtSetInformationProcess(long long ptr long)
 @ stdcall NtSetInformationThread(long long ptr long)
@@ -1445,7 +1437,7 @@
 @ stdcall -private ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
 @ stdcall -private ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
 @ stdcall -private ZwFlushKey(long) NtFlushKey
-@ stdcall -private ZwFlushVirtualMemory(long ptr ptr ptr) NtFlushVirtualMemory
+@ stdcall -private ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
 @ stdcall -private ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall -private ZwFsControlFile(long long ptr ptr ptr long ptr long ptr long) NtFsControlFile
 @ stdcall -private ZwImpersonateAnonymousToken(long) NtImpersonateAnonymousToken
@@ -1524,7 +1516,6 @@
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall ZwSetEvent(long ptr) NtSetEvent
-@ stdcall -private ZwSetEventBoostPriority(long) NtSetEventBoostPriority
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationKey(long long ptr long) NtSetInformationKey

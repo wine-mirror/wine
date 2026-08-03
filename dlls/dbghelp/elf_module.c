@@ -28,6 +28,7 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #define ELF_INFO_DEBUG_HEADER   0x0001
 #define ELF_INFO_MODULE         0x0002
@@ -435,7 +436,7 @@ static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* 
     case from_file:
         if (!(dos_path = get_dos_file_name(emfd->u.file.filename))) return FALSE;
         fmap->u.elf.handle = CreateFileW(dos_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-        HeapFree(GetProcessHeap(), 0, dos_path);
+        heap_free(dos_path);
         if (fmap->u.elf.handle == INVALID_HANDLE_VALUE) return FALSE;
         break;
     case from_handle:
@@ -698,7 +699,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
         {
         case ELF_STT_FILE:
             if (symname)
-                compiland = symt_new_compiland(module, symt_ptr_to_symref(&module->top->symt), symname);
+                compiland = symt_new_compiland(module, symname);
             else
                 compiland = NULL;
             continue;
@@ -946,7 +947,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
             ULONG64     ref_addr;
             struct location loc;
 
-            symt = (struct symt_ht*)SYMT_SYMREF_TO_PTR(symt_find_nearest(module, addr));
+            symt = symt_find_nearest(module, addr);
             if (symt && !symt_get_address(&symt->symt, &ref_addr))
                 ref_addr = addr;
             if (!symt || addr != ref_addr)
@@ -958,7 +959,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                 switch (ste->sym.st_info & 0xf)
                 {
                 case ELF_STT_FUNC:
-                    symt_new_function(module, symt_ptr_to_symref(&ste->compiland->symt), ste->ht_elt.name,
+                    symt_new_function(module, ste->compiland, ste->ht_elt.name,
                                       addr, ste->sym.st_size, 0, 0);
                     break;
                 case ELF_STT_OBJECT:
@@ -1247,7 +1248,7 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
         if (!modfmt) return FALSE;
         elf_info->module = module_new(pcs, filename, DMT_ELF,
                                       module_is_wine_host(filename, L".so"), FALSE, modbase,
-                                      fmap->u.elf.elf_size, 0, 0,
+                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle),
                                       elf_get_machine(fmap->u.elf.elfhdr.e_machine));
         if (!elf_info->module)
         {

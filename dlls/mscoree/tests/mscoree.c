@@ -582,7 +582,9 @@ static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *ty
     ret = CreateProcessW(csc, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
-    wait_child_process(&pi);
+    wait_child_process(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 
     ret = PathFileExistsW(target);
     ok(ret, "Compilation failed\n");

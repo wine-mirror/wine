@@ -39,7 +39,6 @@ extern int pedantic;
 extern int do_everything;
 extern int do_header;
 extern int do_typelib;
-extern int do_metadata;
 extern int do_proxies;
 extern int do_client;
 extern int do_server;
@@ -59,7 +58,6 @@ extern char *header_name;
 extern char *header_token;
 extern char *local_stubs_name;
 extern char *typelib_name;
-extern char *metadata_name;
 extern char *dlldata_name;
 extern char *proxy_name;
 extern char *proxy_token;
@@ -88,12 +86,9 @@ extern void write_typelib_regscript(const statement_list_t *stmts);
 extern void output_typelib_regscript( const typelib_t *typelib );
 extern void write_local_stubs(const statement_list_t *stmts);
 extern void write_dlldata(const statement_list_t *stmts);
-extern void write_metadata(const statement_list_t *stmts);
 
 extern void start_cplusplus_guard(FILE *fp);
 extern void end_cplusplus_guard(FILE *fp);
-
-extern bool is_size_param( const var_t *param, const var_list_t *args );
 
 /* attribute.c */
 
@@ -107,7 +102,6 @@ extern int is_aliaschain_attr( const type_t *type, enum attr_type attr_type );
 extern unsigned int get_attrv( const attr_list_t *list, enum attr_type attr_type );
 extern void *get_attrp( const attr_list_t *list, enum attr_type attr_type );
 extern void *get_aliaschain_attrp( const type_t *type, enum attr_type attr_type );
-extern void get_version( const attr_list_t *list, unsigned short *major, unsigned short *minor );
 
 typedef int (*map_attrs_filter_t)( attr_list_t *, const attr_t * );
 extern attr_list_t *append_attr( attr_list_t *list, attr_t *attr );

@@ -63,7 +63,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(olepicture);
 #define BITMAP_FORMAT_PNG   0x5089
 #define BITMAP_FORMAT_APM   0xcdd7
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 /* Header for Aldus Placable Metafiles - a standard metafile follows */
 typedef struct _APM_HEADER
@@ -98,7 +98,7 @@ typedef struct
     CURSORICONFILEDIRENTRY  idEntries[1];
 } CURSORICONFILEDIR;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 typedef struct
 {
@@ -2670,7 +2670,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
       file_candidate = szURLorPath;
 
   /* Handle candidate DOS paths separately. */
-  if (file_candidate[0] && file_candidate[1] == ':') {
+  if (file_candidate[1] == ':') {
       hRes = create_stream(file_candidate, &stream);
       if (FAILED(hRes))
 	  return INET_E_RESOURCE_NOT_FOUND;

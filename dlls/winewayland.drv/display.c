@@ -25,6 +25,7 @@
 #include "config.h"
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 
 #include "wine/debug.h"
@@ -192,7 +193,7 @@ static void wayland_add_device_gpu(const struct gdi_device_manager *device_manag
 
     TRACE("\n");
 
-    device_manager->add_gpu(NULL, &pci_id, NULL, param);
+    device_manager->add_gpu("Wine GPU", &pci_id, NULL, param);
 }
 
 static void wayland_add_device_source(const struct gdi_device_manager *device_manager,
@@ -205,15 +206,13 @@ static void wayland_add_device_source(const struct gdi_device_manager *device_ma
 }
 
 static void wayland_add_device_monitor(const struct gdi_device_manager *device_manager,
-                                       void *param, struct output_info *output_info,
-                                       struct output_info *primary)
+                                       void *param, struct output_info *output_info)
 {
     struct gdi_monitor monitor = {0};
 
     SetRect(&monitor.rc_monitor, output_info->x, output_info->y,
             output_info->x + output_info->output->current_mode->width,
             output_info->y + output_info->output->current_mode->height);
-    OffsetRect(&monitor.rc_monitor, -primary->x, -primary->y);
 
     /* We don't have a direct way to get the work area in Wayland. */
     monitor.rc_work = monitor.rc_monitor;
@@ -238,8 +237,7 @@ static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *
 }
 
 static void wayland_add_device_modes(const struct gdi_device_manager *device_manager,
-                                     void *param, struct output_info *output_info,
-                                     struct output_info *primary)
+                                     void *param, struct output_info *output_info)
 {
     DEVMODEW *modes, current = {.dmSize = sizeof(current)};
     struct wayland_output_mode *output_mode;
@@ -250,8 +248,8 @@ static void wayland_add_device_modes(const struct gdi_device_manager *device_man
 
     populate_devmode(output_info->output->current_mode, &current);
     current.dmFields |= DM_POSITION;
-    current.dmPosition.x = output_info->x - primary->x;
-    current.dmPosition.y = output_info->y - primary->y;
+    current.dmPosition.x = output_info->x;
+    current.dmPosition.y = output_info->y;
 
     RB_FOR_EACH_ENTRY(output_mode, &output_info->output->modes,
                       struct wayland_output_mode, entry)
@@ -272,8 +270,8 @@ UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 {
     struct wayland_output *output;
     DWORD state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
-    struct output_info *primary = NULL, *output_info;
     struct wl_array output_info_array;
+    struct output_info *output_info;
 
     TRACE("\n");
 
@@ -296,10 +294,9 @@ UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     wl_array_for_each(output_info, &output_info_array)
     {
-        if (!primary) primary = output_info;
         wayland_add_device_source(device_manager, param, state_flags, output_info);
-        wayland_add_device_monitor(device_manager, param, output_info, primary);
-        wayland_add_device_modes(device_manager, param, output_info, primary);
+        wayland_add_device_monitor(device_manager, param, output_info);
+        wayland_add_device_modes(device_manager, param, output_info);
         state_flags &= ~DISPLAY_DEVICE_PRIMARY_DEVICE;
     }
 

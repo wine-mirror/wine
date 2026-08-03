@@ -37,12 +37,24 @@
 #define WIDL_using_Windows_Security_Credentials
 #include "windows.security.credentials.h"
 
-#include "async_private.h"
+#include "provider.h"
+
+struct buffer_impl
+{
+    IBuffer IBuffer_iface;
+    IBufferByteAccess IBufferByteAccess_iface;
+    LONG ref;
+    UCHAR *dataptr;
+    UINT32 length;
+};
 
 extern IActivationFactory *credentials_activation_factory;
 
+typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
 extern HRESULT async_operation_boolean_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                                IAsyncOperation_boolean **out );
+
+extern struct buffer_impl* alloc_buffer(UINT32 length);
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

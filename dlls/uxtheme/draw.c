@@ -104,11 +104,11 @@ HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
     HWND hParent;
     HRGN clip = NULL;
     int hasClip = -1;
-
+    
     TRACE("(%p,%p,%p)\n", hwnd, hdc, prc);
     hParent = GetParent(hwnd);
     if(!hParent)
-        return S_OK;
+        hParent = hwnd;
     if(prc) {
         rt = *prc;
         MapWindowPoints(hwnd, hParent, (LPPOINT)&rt, 2);
@@ -1782,7 +1782,7 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     COLORREF textColor;
     COLORREF oldTextColor;
     int oldBkMode;
-    int fontProp = TMT_FONT;
+    int fontProp;
 
     TRACE("%p %p %d %d %s:%d 0x%08lx %p %p\n", hTheme, hdc, iPartId, iStateId,
         debugstr_wn(pszText, iCharCount), iCharCount, flags, rect, options);
@@ -1790,19 +1790,13 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     if(!hTheme)
         return E_HANDLE;
 
-    if(options) {
-        if(options->dwFlags & ~(DTT_TEXTCOLOR | DTT_FONTPROP))
-            FIXME("unsupported flags 0x%08lx\n", options->dwFlags);
-        if(options->dwFlags & DTT_FONTPROP)
-            fontProp = options->iFontPropId;
-        if(options->dwFlags & DTT_TEXTCOLOR)
-            textColor = options->crText;
-    }
+    if (options->dwFlags & ~(DTT_TEXTCOLOR | DTT_FONTPROP))
+        FIXME("unsupported flags 0x%08lx\n", options->dwFlags);
 
-    if(!options || !(options->dwFlags & DTT_TEXTCOLOR)) {
-        if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_TEXTCOLOR, &textColor)))
-            textColor = GetTextColor(hdc);
-    }
+    if (options->dwFlags & DTT_FONTPROP)
+        fontProp = options->iFontPropId;
+    else
+        fontProp = TMT_FONT;
 
     hr = GetThemeFont(hTheme, hdc, iPartId, iStateId, fontProp, &logfont);
     if(SUCCEEDED(hr)) {
@@ -1814,6 +1808,12 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     if(hFont)
         oldFont = SelectObject(hdc, hFont);
 
+    if (options->dwFlags & DTT_TEXTCOLOR)
+        textColor = options->crText;
+    else {
+        if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_TEXTCOLOR, &textColor)))
+            textColor = GetTextColor(hdc);
+    }
     oldTextColor = SetTextColor(hdc, textColor);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
     DrawTextW(hdc, pszText, iCharCount, rect, flags);
@@ -2076,28 +2076,6 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
         hr = E_FAIL;
     }
     return hr;
-}
-
-/***********************************************************************
- *      GetThemeBitmap                                      (UXTHEME.@)
- */
-HRESULT WINAPI GetThemeBitmap(HTHEME hTheme, int iPartId, int iStateId,
-                              int iPropId, ULONG dwFlags, HBITMAP *phBitmap)
-{
-    FIXME("(%p,%d,%d,%d,0x%08lx,%p) stub\n", hTheme, iPartId, iStateId, iPropId, dwFlags, phBitmap);
-
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
- *      GetThemeStream                                      (UXTHEME.@)
- */
-HRESULT WINAPI GetThemeStream(HTHEME hTheme, int iPartId, int iStateId, int iPropId,
-                              void **ppvStream, DWORD *pcbStream, HINSTANCE hInst)
-{
-    FIXME("(%p,%d,%d,%d,%p,%p,%p) stub\n", hTheme, iPartId, iStateId, iPropId, ppvStream, pcbStream, hInst);
-
-    return E_NOTIMPL;
 }
 
 /* compute part size for "borderfill" backgrounds */

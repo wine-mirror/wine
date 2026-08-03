@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 /* ASCII char classification table - binary compatible */
 #define _UPPER        0x0001  /* C1_UPPER */
@@ -77,6 +77,6 @@ wctype_t __cdecl wctype(const char *);
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_WCTYPE_H */

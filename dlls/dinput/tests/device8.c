@@ -1171,11 +1171,11 @@ static void test_sys_mouse( DWORD version )
             .dwHow = DIPH_DEVICE,
         },
     };
-    IDirectInputDevice8W *device, *tmp_device;
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEOBJECTDATA objdata = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
+    IDirectInputDevice8W *device;
     HWND hwnd, tmp_hwnd, child;
     DIDEVCAPS caps = {0};
     DIMOUSESTATE state;
@@ -1200,13 +1200,6 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_SysMouseEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysMouseEm ) );
-
-    hr = create_dinput_device( version, &GUID_SysMouseEm, &tmp_device );
-    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
-    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
-    hr = create_dinput_device( version, &GUID_SysMouseEm2, &tmp_device );
-    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
-    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
 
     hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysMouse );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
@@ -1711,8 +1704,9 @@ static void test_hid_mouse(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc, 1 )) goto done;
+    if (!hid_device_start_( &desc, 1, 5000 /* needs a long timeout on Win7 */ )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
               desc.attributes.ProductID );
@@ -1937,7 +1931,6 @@ static void test_hid_touch_screen(void)
     RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_DIGITIZER, .usUsage = HID_USAGE_DIGITIZER_TOUCH_SCREEN};
     UINT rawbuffer_count, rawbuffer_size, expect_flags, id, width, height;
     WCHAR device_path[MAX_PATH];
-    POINTER_INPUT_TYPE type;
     char rawbuffer[1024];
     RAWINPUT *rawinput;
     HANDLE file;
@@ -1957,6 +1950,7 @@ static void test_hid_touch_screen(void)
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.expect_size = sizeof(expect_max_count);
     memcpy( desc.expect, &expect_max_count, sizeof(expect_max_count) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 
@@ -2023,9 +2017,6 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
@@ -2133,6 +2124,7 @@ static void test_hid_touch_screen(void)
     desc.is_polled = TRUE;
     desc.input_size = sizeof(touch_release);
     memcpy( desc.input, &touch_release, sizeof(touch_release) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 
@@ -2169,9 +2161,6 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
@@ -2196,9 +2185,6 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
-    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
@@ -2225,9 +2211,6 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
@@ -2239,9 +2222,6 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
-    ret = GetPointerType( LOWORD( pointer_wparam[1] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 
@@ -2265,9 +2245,6 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
-    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
 
@@ -2276,9 +2253,6 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
-    ret = GetPointerType( LOWORD( pointer_wparam[1] ), &type );
-    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
-    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 
@@ -2508,7 +2482,7 @@ static void test_scan_codes( IDirectInputDevice8W *device, HANDLE event, HWND hw
             hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
 
             if (!map[j].found)
-                ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+                todo_wine ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else if (version < 0x0800)
                 ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else
@@ -2700,10 +2674,10 @@ static void test_sys_keyboard( DWORD version )
         sizeof(key_state), ARRAY_SIZE(obj_data_format), obj_data_format,
     };
 
-    IDirectInputDevice8W *device, *tmp_device;
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
+    IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     BYTE full_state[256];
     HKL hkl, old_hkl;
@@ -2727,13 +2701,6 @@ static void test_sys_keyboard( DWORD version )
     ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
     ok( IsEqualGUID( &guid, &GUID_SysKeyboardEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysKeyboardEm ) );
-
-    hr = create_dinput_device( version, &GUID_SysKeyboardEm, &tmp_device );
-    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
-    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
-    hr = create_dinput_device( version, &GUID_SysKeyboardEm2, &tmp_device );
-    ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
-    if (hr == DI_OK) IDirectInputDevice8_Release( tmp_device );
 
     hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysKeyboard );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
@@ -3234,8 +3201,9 @@ static void test_hid_keyboard(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc, 1 )) goto done;
+    if (!hid_device_start_( &desc, 1, 5000 /* needs a long timeout on Win7 */ )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
               desc.attributes.ProductID );

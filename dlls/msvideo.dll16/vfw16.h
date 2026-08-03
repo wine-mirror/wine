@@ -34,7 +34,7 @@ extern "C" {
 
 typedef HANDLE16 HDRAWDIB16;
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct {
 	DWORD dwSize;
@@ -87,7 +87,7 @@ typedef struct {
 	DWORD		dwScale;
 } ICDRAWBEGIN16;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 typedef struct {
 	DWORD dwFlags;

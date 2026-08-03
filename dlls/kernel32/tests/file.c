@@ -31,14 +31,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winioctl.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "fileapi.h"
-#include "ddk/ntifs.h"
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
-static BOOL (WINAPI *pGetOverlappedResultEx)(HANDLE, OVERLAPPED *, DWORD *, DWORD, BOOL);
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
 static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
@@ -94,7 +91,6 @@ static void InitFunctionPointers(void)
     pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
 
     pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
-    pGetOverlappedResultEx =(void*)GetProcAddress(hkernel32, "GetOverlappedResultEx");
     pReplaceFileW=(void*)GetProcAddress(hkernel32, "ReplaceFileW");
     pGetSystemWindowsDirectoryA=(void*)GetProcAddress(hkernel32, "GetSystemWindowsDirectoryA");
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hkernel32, "GetVolumeNameForVolumeMountPointA");
@@ -1281,19 +1277,19 @@ static void test_CreateFileA(void)
     DWORD i, ret, len;
     static const struct test_list p[] =
     {
-        {"", ERROR_PATH_NOT_FOUND, -1, FILE_ATTRIBUTE_NORMAL, FALSE }, /* dir as file w \ */
+        {"", ERROR_PATH_NOT_FOUND, -1, FILE_ATTRIBUTE_NORMAL, TRUE }, /* dir as file w \ */
         {"", ERROR_SUCCESS, ERROR_PATH_NOT_FOUND, FILE_FLAG_BACKUP_SEMANTICS, FALSE }, /* dir as dir w \ */
         {"a", ERROR_FILE_NOT_FOUND, -1, FILE_ATTRIBUTE_NORMAL, FALSE }, /* non-exist file */
         {"a\\", ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND, FILE_ATTRIBUTE_NORMAL, FALSE }, /* non-exist dir */
         {"removeme", ERROR_ACCESS_DENIED, -1, FILE_ATTRIBUTE_NORMAL, FALSE }, /* exist dir w/o \ */
-        {"removeme\\", ERROR_PATH_NOT_FOUND, -1, FILE_ATTRIBUTE_NORMAL, FALSE }, /* exist dir w \ */
+        {"removeme\\", ERROR_PATH_NOT_FOUND, -1, FILE_ATTRIBUTE_NORMAL, TRUE }, /* exst dir w \ */
         {"c:", ERROR_ACCESS_DENIED, ERROR_PATH_NOT_FOUND, FILE_ATTRIBUTE_NORMAL, FALSE }, /* device in file namespace */
         {"c:", ERROR_SUCCESS, ERROR_PATH_NOT_FOUND, FILE_FLAG_BACKUP_SEMANTICS, FALSE }, /* device in file namespace as dir */
-        {"c:\\", ERROR_PATH_NOT_FOUND, ERROR_ACCESS_DENIED, FILE_ATTRIBUTE_NORMAL, FALSE }, /* root dir w \ */
+        {"c:\\", ERROR_PATH_NOT_FOUND, ERROR_ACCESS_DENIED, FILE_ATTRIBUTE_NORMAL, TRUE }, /* root dir w \ */
         {"c:\\", ERROR_SUCCESS, ERROR_ACCESS_DENIED, FILE_FLAG_BACKUP_SEMANTICS, FALSE }, /* root dir w \ as dir */
         {"c:c:\\windows", ERROR_INVALID_NAME, -1, FILE_ATTRIBUTE_NORMAL, TRUE }, /* invalid path */
         {"\\\\?\\c:", ERROR_SUCCESS, ERROR_BAD_NETPATH, FILE_ATTRIBUTE_NORMAL,FALSE }, /* dev namespace drive */
-        {"\\\\?\\c:\\", ERROR_PATH_NOT_FOUND, ERROR_BAD_NETPATH, FILE_ATTRIBUTE_NORMAL, FALSE }, /* dev namespace drive w \ */
+        {"\\\\?\\c:\\", ERROR_PATH_NOT_FOUND, ERROR_BAD_NETPATH, FILE_ATTRIBUTE_NORMAL, TRUE }, /* dev namespace drive w \ */
         {NULL, 0, -1, 0, FALSE}
     };
     BY_HANDLE_FILE_INFORMATION  Finfo;
@@ -1367,15 +1363,14 @@ static void test_CreateFileA(void)
     i = 0;
     while (p[i].file)
     {
-        BOOL need_device_access = TRUE;
         filename[0] = 0;
         /* update the drive id in the table entry with the current one */
-        if (strlen(p[i].file) > 1 && p[i].file[1] == ':')
+        if (p[i].file[1] == ':')
         {
             strcpy(filename, p[i].file);
             filename[0] = windowsdir[0];
         }
-        else if (strlen(p[i].file) > 5 && p[i].file[0] == '\\' && p[i].file[5] == ':')
+        else if (p[i].file[0] == '\\' && p[i].file[5] == ':')
         {
             strcpy(filename, p[i].file);
             filename[4] = windowsdir[0];
@@ -1385,7 +1380,6 @@ static void test_CreateFileA(void)
             /* prefix the table entry with the current temp directory */
             strcpy(filename, temp_path);
             strcat(filename, p[i].file);
-            need_device_access = FALSE;
         }
         hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1394,13 +1388,14 @@ static void test_CreateFileA(void)
         /* if we get ACCESS_DENIED when we do not expect it, assume
          * no access to the volume
          */
-        if (need_device_access && hFile == INVALID_HANDLE_VALUE &&
+        if (hFile == INVALID_HANDLE_VALUE &&
             GetLastError() == ERROR_ACCESS_DENIED &&
-            p[i].err != ERROR_ACCESS_DENIED &&
-            p[i].err2 != ERROR_ACCESS_DENIED)
+            p[i].err != ERROR_ACCESS_DENIED)
         {
-            todo_wine_if (p[i].todo_flag)
-            win_skip("Do not have authority to access volumes. Test for %s skipped\n", filename);
+            if (p[i].todo_flag)
+                skip("Either no authority to volume, or is todo_wine for %s err=%ld should be %ld\n", filename, GetLastError(), p[i].err);
+            else
+                skip("Do not have authority to access volumes. Test for %s skipped\n", filename);
         }
         /* otherwise validate results with expectations */
         else
@@ -1490,6 +1485,7 @@ static void test_CreateFileA(void)
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, OPEN_EXISTING,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, NULL );
+        todo_wine
         ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
             "CreateFileA should have returned ERROR_PATH_NOT_FOUND on %s, but got %lu\n",
             filename, GetLastError());
@@ -2288,9 +2284,6 @@ static void test_LockFile(void)
     OVERLAPPED overlapped;
     int limited_LockFile;
     int limited_UnLockFile;
-    LARGE_INTEGER count, offset;
-    IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
     BOOL ret;
 
     handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
@@ -2309,17 +2302,6 @@ static void test_LockFile(void)
         ok( 0, "couldn't open file \"%s\" (err=%ld)\n", filename, GetLastError() );
         goto cleanup;
     }
-
-    count.QuadPart = 0;
-    offset.QuadPart = 0;
-    status = NtUnlockFile( handle, NULL, &count, &offset, NULL );
-    ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
-    memset( &iosb, 0xcc, sizeof(iosb) );
-    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
-    ok( status == STATUS_RANGE_NOT_LOCKED, "got %#lx.\n", status );
-    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
-    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
-
     ok( WriteFile( handle, sillytext, strlen(sillytext), &written, NULL ), "write failed\n" );
 
     ok( LockFile( handle, 0, 0, 0, 0 ), "LockFile failed\n" );
@@ -2342,24 +2324,6 @@ static void test_LockFile(void)
     ok( UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 failed\n" );
     ok( !UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 again succeeded\n" );
     ok( UnlockFile( handle, 5, 0, 5, 0 ), "UnlockFile 5,5 failed\n" );
-
-    ret = LockFile( handle, 5, 0, 5, 0 );
-    ok( ret, "got error %lu.\n", GetLastError() );
-    count.QuadPart = 5;
-    offset.QuadPart = 4;
-    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
-    ok( status == STATUS_RANGE_NOT_LOCKED, "got %#lx.\n", status );
-    count.QuadPart = 4;
-    offset.QuadPart = 5;
-    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
-    ok( status == STATUS_RANGE_NOT_LOCKED, "got %#lx.\n", status );
-    count.QuadPart = 5;
-    offset.QuadPart = 5;
-    memset( &iosb, 0xcc, sizeof(iosb) );
-    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
-    ok( !status, "got %#lx.\n", status );
-    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
-    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
 
     overlapped.Offset = 100;
     overlapped.OffsetHigh = 0;
@@ -3771,93 +3735,8 @@ static void test_OpenFile(void)
 
 static void test_overlapped(void)
 {
-    static const struct
-    {
-        BOOL ex, alertable, wait, queue_apc;
-        BOOL pass_file_handle, pass_event_handle, set_event;
-    }
-    tests[] =
-    {
-        { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
-        { TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE },
-        { TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE },
-        { FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE },
-        { TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE },
-        { TRUE,  TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE },
-        { TRUE,  TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  FALSE, FALSE, FALSE },
-        { FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE },
-        { TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE },
-        { TRUE,  TRUE,  FALSE, FALSE, TRUE,  FALSE, FALSE },
-        { FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE },
-        { TRUE,  FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE },
-        { TRUE,  TRUE,  TRUE,  FALSE, TRUE,  FALSE, FALSE },
-        { TRUE,  TRUE,  FALSE, TRUE,  TRUE,  FALSE, FALSE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  FALSE, FALSE },
-        { FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE },
-        { TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE },
-        { TRUE,  TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE },
-        { FALSE, FALSE, TRUE,  FALSE, FALSE, TRUE,  FALSE },
-        { TRUE,  FALSE, TRUE,  FALSE, FALSE, TRUE,  FALSE },
-        { TRUE,  TRUE,  TRUE,  FALSE, FALSE, TRUE,  FALSE },
-        { TRUE,  TRUE,  FALSE, TRUE,  FALSE, TRUE,  FALSE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  FALSE, TRUE,  FALSE },
-        { FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  FALSE },
-        { TRUE,  FALSE, FALSE, FALSE, TRUE,  TRUE,  FALSE },
-        { TRUE,  TRUE,  FALSE, FALSE, TRUE,  TRUE,  FALSE },
-        { FALSE, FALSE, TRUE,  FALSE, TRUE,  TRUE,  FALSE },
-        { TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE,  FALSE },
-        { TRUE,  TRUE,  TRUE,  FALSE, TRUE,  TRUE,  FALSE },
-        { TRUE,  TRUE,  FALSE, TRUE,  TRUE,  TRUE,  FALSE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  FALSE },
-        { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE },
-        { TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE },
-        { TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE },
-        { FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE },
-        { TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE },
-        { TRUE,  TRUE,  TRUE,  FALSE, FALSE, FALSE, TRUE },
-        { TRUE,  TRUE,  FALSE, TRUE,  FALSE, FALSE, TRUE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  FALSE, FALSE, TRUE },
-        { FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE },
-        { TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE },
-        { TRUE,  TRUE,  FALSE, FALSE, TRUE,  FALSE, TRUE },
-        { FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE },
-        { TRUE,  FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE },
-        { TRUE,  TRUE,  TRUE,  FALSE, TRUE,  FALSE, TRUE },
-        { TRUE,  TRUE,  FALSE, TRUE,  TRUE,  FALSE, TRUE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  FALSE, TRUE },
-        { FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE },
-        { TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE },
-        { TRUE,  TRUE,  FALSE, FALSE, FALSE, TRUE,  TRUE },
-        { FALSE, FALSE, TRUE,  FALSE, FALSE, TRUE,  TRUE },
-        { TRUE,  FALSE, TRUE,  FALSE, FALSE, TRUE,  TRUE },
-        { TRUE,  TRUE,  TRUE,  FALSE, FALSE, TRUE,  TRUE },
-        { TRUE,  TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  FALSE, TRUE,  TRUE },
-        { FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  TRUE },
-        { TRUE,  FALSE, FALSE, FALSE, TRUE,  TRUE,  TRUE },
-        { TRUE,  TRUE,  FALSE, FALSE, TRUE,  TRUE,  TRUE },
-        { FALSE, FALSE, TRUE,  FALSE, TRUE,  TRUE,  TRUE },
-        { TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE,  TRUE },
-        { TRUE,  TRUE,  TRUE,  FALSE, TRUE,  TRUE,  TRUE },
-        { TRUE,  TRUE,  FALSE, TRUE,  TRUE,  TRUE,  TRUE },
-        { TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
-    };
-    static const NTSTATUS test_status[] =
-    {
-        STATUS_SUCCESS, STATUS_PENDING, STATUS_UNEXPECTED_IO_ERROR,
-    };
-    static const ULONG_PTR test_file_bits[] =
-    {
-        0, 1, 2, 3, 0xdeadbeef,
-    };
-
     OVERLAPPED ov;
-    DWORD r, result, err;
-    HANDLE event;
-    unsigned int i, status_idx, file_bits_idx;
-    NTSTATUS iosb_status;
-    ULONG_PTR file_bits, event_bits;
+    DWORD r, result;
 
     /* GetOverlappedResult crashes if the 2nd or 3rd param are NULL */
     if (0) /* tested: WinXP */
@@ -3912,13 +3791,10 @@ static void test_overlapped(void)
         "wrong error %lu\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
-    SetLastError( 0xdeadbeef );
     r = GetOverlappedResult( 0, &ov, &result, TRUE );
     ok( r == TRUE, "should return TRUE\n" );
     ok( result == 0xabcd, "wrong result %lu\n", result );
     ok( ov.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %08Ix\n", ov.Internal );
-    err = GetLastError();
-    ok( err == ERROR_IO_PENDING || broken( err == 0xdeadbeef ) /* Before Win10 1809 */, "got %lu.\n", GetLastError() );
 
     ResetEvent( ov.hEvent );
 
@@ -3932,154 +3808,6 @@ static void test_overlapped(void)
 
     r = CloseHandle( ov.hEvent );
     ok( r == TRUE, "close handle failed\n");
-
-    if (!pGetOverlappedResultEx)
-    {
-        win_skip( "GetOverlappedResultEx is not available, skipping tests.\n" );
-        return;
-    }
-
-    event = CreateEventW( NULL, FALSE, FALSE, NULL );
-
-    user_apc_ran = FALSE;
-    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
-    SetEvent( event );
-    r = WaitForSingleObjectEx( event, INFINITE, TRUE );
-    todo_wine ok( r == WAIT_IO_COMPLETION, "got %lu.\n", r );
-    if (!r) SleepEx( 0, TRUE );
-    ok( user_apc_ran, "APC was not run.\n" );
-
-    user_apc_ran = FALSE;
-    SetEvent( event );
-    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
-    r = WaitForSingleObjectEx( event, 2, TRUE );
-    todo_wine ok( r == WAIT_IO_COMPLETION, "got %lu.\n", r );
-    if (!r) SleepEx( 0, TRUE );
-    ok( user_apc_ran, "APC was not run.\n" );
-
-    user_apc_ran = FALSE;
-    SetEvent( event );
-    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
-    r = WaitForSingleObjectEx( event, 0, TRUE );
-    todo_wine ok( r == WAIT_IO_COMPLETION, "got %lu.\n", r );
-    if (!r) SleepEx( 0, TRUE );
-    ok( user_apc_ran, "APC was not run.\n" );
-
-    for (event_bits = 0; event_bits < 2; ++event_bits)
-    for (file_bits_idx = 0; file_bits_idx < ARRAY_SIZE(test_file_bits); ++file_bits_idx)
-    {
-        file_bits = test_file_bits[file_bits_idx];
-        for (status_idx = 0; status_idx < ARRAY_SIZE(test_status); ++status_idx)
-        {
-            iosb_status = test_status[status_idx];
-            for (i = 0; i < ARRAY_SIZE(tests); ++i)
-            {
-                BOOL will_wait, wait_fails, wait_alerts, wait_timeouts;
-                DWORD err;
-                HANDLE file;
-
-                ov.Internal = iosb_status;
-                ov.InternalHigh = 0xabcd;
-                ov.hEvent = (tests[i].pass_event_handle ? event : NULL);
-                file = (tests[i].pass_file_handle ? event : NULL);
-                ov.hEvent = (HANDLE)((ULONG_PTR)ov.hEvent | event_bits);
-                file = (HANDLE)((ULONG_PTR)file | file_bits);
-                will_wait = tests[i].wait
-                        && (iosb_status == STATUS_PENDING || (tests[i].ex && !(file_bits & 1)));
-                wait_fails = will_wait && WaitForSingleObject( ov.hEvent ? ov.hEvent : file, 0 ) == WAIT_FAILED;
-                wait_alerts = will_wait && tests[i].ex && tests[i].alertable && tests[i].queue_apc;
-                wait_timeouts = will_wait && !wait_fails && !wait_alerts && !tests[i].set_event && !(tests[i].ex && file_bits & 1);
-                if (will_wait && !tests[i].ex && wait_timeouts)
-                {
-                    /* This would wait forever. */
-                    continue;
-                }
-
-                winetest_push_context( "status %#lx, file_bits %Iu, event_bits %Iu, test %u",
-                                       iosb_status, file_bits, event_bits, i );
-
-                if (tests[i].set_event)
-                    SetEvent( event );
-                else
-                    ResetEvent( event );
-
-                if (tests[i].queue_apc)
-                    QueueUserAPC( user_apc, GetCurrentThread(), 0 );
-
-                result = 0xdeadbeef;
-                SetLastError( 0xdeadbeef );
-                if (tests[i].ex)
-                    r = pGetOverlappedResultEx( file, &ov, &result, tests[i].wait ? 2 : 0, tests[i].alertable );
-                else
-                    r = GetOverlappedResult( file, &ov, &result, tests[i].wait );
-                err = GetLastError();
-                if (will_wait)
-                {
-                    if (wait_fails)
-                    {
-                        ok( !r, "got %lu.\n", r );
-                        ok( err == ERROR_INVALID_HANDLE, "got %lu.\n", err );
-                        ok( result == 0xdeadbeef, "wrong result %lu\n", result );
-                    }
-                    else if (wait_alerts)
-                    {
-                        /* todo comes from WaitForSingleObjectEx() with signaled event and queued APC not preferring
-                         * user APC (which is tested above for clarity) */
-                        todo_wine_if(tests[i].set_event) ok( err == WAIT_IO_COMPLETION, "got %lu.\n", err );
-                        if (err == WAIT_IO_COMPLETION)
-                        {
-                            ok( !r, "got %lu.\n", r );
-                            ok( result == 0xdeadbeef, "wrong result %lu\n", result );
-                        }
-                    }
-                    else if (wait_timeouts)
-                    {
-                        ok( !r, "got %lu.\n", r );
-                        ok( err == WAIT_TIMEOUT, "got %lu.\n", err );
-                        ok( result == 0xdeadbeef, "wrong result %lu\n", result );
-                    }
-                    else
-                    {
-                        ok( r == (iosb_status == STATUS_SUCCESS || iosb_status == STATUS_PENDING),
-                            "got %lu.\n", r );
-                        ok( err == RtlNtStatusToDosError( iosb_status ) || broken( r && err == 0xdeadbeef ) /* Before Win10 1809 */,
-                            "got %lu.\n", err );
-                        ok( result == 0xabcd, "wrong result %lu\n", result );
-                    }
-                }
-                else if (iosb_status == STATUS_PENDING)
-                {
-                    ok( !r, "got %lu.\n", r );
-                    ok( err == ERROR_IO_INCOMPLETE, "got %lu.\n", err );
-                    ok( result == 0xdeadbeef, "wrong result %lu\n", result );
-                }
-                else
-                {
-                    ok( r == (iosb_status == STATUS_SUCCESS || iosb_status == STATUS_PENDING),
-                        "got %lu.\n", r );
-                    ok( err == RtlNtStatusToDosError( iosb_status ) || broken( r && err == 0xdeadbeef ) /* Before Win10 1809 */,
-                        "got %lu.\n", err );
-                    ok( result == 0xabcd, "wrong result %lu\n", result );
-                }
-
-                r = WaitForSingleObject( event, 0 );
-                if (!tests[i].set_event || (will_wait && !wait_fails && !wait_alerts))
-                {
-                    ok( r == WAIT_TIMEOUT, "got %#lx.\n", r );
-                }
-                else
-                {
-                    todo_wine_if(will_wait && !wait_fails && wait_alerts && tests[i].set_event)
-                    ok( r == WAIT_OBJECT_0, "got %#lx.\n", r );
-                }
-
-                winetest_pop_context();
-                if (tests[i].queue_apc)
-                    SleepEx( 0, TRUE );
-            }
-        }
-    }
-    CloseHandle( event );
 }
 
 static void test_RemoveDirectory(void)
@@ -4473,18 +4201,6 @@ static void test_ReplaceFileW(void)
        GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileW: unexpected error %ld\n", GetLastError());
     DeleteFileW( replacement );
-
-    ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
-    ok(ret, "GetTempFileNameW error (replacement) %ld\n", GetLastError());
-    ret = CreateDirectoryW(replaced, NULL);
-    ok(ret, "CreateDirectoryW error %ld\n", GetLastError());
-    SetLastError(0xdeadbeef);
-    ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
-    ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
-    ret = RemoveDirectoryW(replaced);
-    ok(ret, "RemoveDirectoryW error %ld\n", GetLastError());
-    DeleteFileW(replacement);
 
     if (removeBackup)
     {
@@ -5133,21 +4849,6 @@ static void test_ReOpenFile(void)
     ret = DeleteFileA(filename);
     ok(ret, "failed to delete file, error %lu\n", GetLastError());
 
-    /* FILE_FLAG_BACKUP_SEMANTICS is allowed, but unlike with CreateFile(),
-     * it cannot be used to open a directory. */
-
-    ret = CreateDirectoryA(filename, NULL);
-    ok(ret == TRUE, "got error %lu\n", GetLastError());
-    file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
-    new = pReOpenFile(file, GENERIC_READ, FILE_SHARE_READ, FILE_FLAG_BACKUP_SEMANTICS);
-    ok(new == INVALID_HANDLE_VALUE, "expected failure\n");
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError());
-    CloseHandle(file);
-
-    ret = RemoveDirectoryA(filename);
-    ok(ret == TRUE, "got error %lu\n", GetLastError());
-
     file = CreateNamedPipeA("\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, 0, 1, 1000, 1000, 1000, NULL);
     ok(file != INVALID_HANDLE_VALUE, "failed to create pipe, error %lu\n", GetLastError());
 
@@ -5602,8 +5303,8 @@ static void test_GetFinalPathNameByHandleW(void)
     static WCHAR prefix[] = {'G','e','t','F','i','n','a','l','P','a','t','h',
                              'N','a','m','e','B','y','H','a','n','d','l','e','W','\0'};
     static WCHAR dos_prefix[] = {'\\','\\','?','\\','\0'};
-    WCHAR temp_path[MAX_PATH], test_path[MAX_PATH * 2];
-    WCHAR long_path[MAX_PATH], result_path[MAX_PATH * 2];
+    WCHAR temp_path[MAX_PATH], test_path[MAX_PATH];
+    WCHAR long_path[MAX_PATH], result_path[MAX_PATH];
     WCHAR dos_path[MAX_PATH + sizeof(dos_prefix)];
     WCHAR drive_part[MAX_PATH];
     WCHAR *file_part;
@@ -5612,7 +5313,7 @@ static void test_GetFinalPathNameByHandleW(void)
     BOOL success;
     HANDLE file;
     DWORD count;
-    UINT i, ret;
+    UINT ret;
 
     if (!pGetFinalPathNameByHandleW)
     {
@@ -5718,134 +5419,6 @@ static void test_GetFinalPathNameByHandleW(void)
        wine_dbgstr_w(nt_path), wine_dbgstr_w(result_path));
 
     CloseHandle(file);
-
-    /* Roots of drives should come back with a trailing slash. */
-    file = CreateFileW(L"C:\\", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-                       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    memset(result_path, 0x11, sizeof(result_path));
-    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
-    lstrcpyW(dos_path, L"\\\\?\\C:\\");
-    ok(count == lstrlenW(dos_path), "Expected length %u, got %lu\n", lstrlenW(dos_path), count);
-    ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    /* Other directories should not have a trailing slash. */
-    file = CreateFileW(L"C:\\windows\\", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-                       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    memset(result_path, 0x11, sizeof(result_path));
-    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
-    lstrcpyW(dos_path, L"\\\\?\\C:\\windows");
-    ok(count == lstrlenW(dos_path), "Expected length %u, got %lu\n", lstrlenW(dos_path), count);
-    ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    lstrcpyW(test_path, L"\\\\?\\");
-    lstrcatW(test_path, temp_path);
-    for (i = 0; i < ARRAY_SIZE(long_path) - 5; i++) long_path[i] = 'a';
-    long_path[i] = 0;
-    lstrcatW(test_path, long_path);
-
-    file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                       CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-
-    memset(result_path, 0xcb, sizeof(result_path));
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), FILE_NAME_NORMALIZED);
-    ok(count == lstrlenW(test_path), "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    ok(lstrcmpiW(test_path, result_path) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"Test.Dat");
-    DeleteFileW(test_path);
-    file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    wcscpy(result_path, temp_path);
-    wcscat(result_path, L"test.dat");
-    file = CreateFileW(result_path, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    todo_wine ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    wcscpy(result_path, temp_path);
-    wcscat(result_path, L"test.dat");
-    file = CreateFileW(result_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    todo_wine ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"test_renamed.dat");
-    success = MoveFileW(result_path + 4, test_path);
-    ok(success, "got error %ld.\n", GetLastError());
-
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    todo_wine ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    todo_wine ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    success = DeleteFileW(test_path);
-    ok(success, "got error %ld.\n", GetLastError());
-
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"link");
-    success = CreateSymbolicLinkW(test_path, temp_path, SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
-    if (!success && GetLastError() == ERROR_PRIVILEGE_NOT_HELD)
-    {
-        win_skip("Insufficient permissions to perform symlink tests.\n");
-        return;
-    }
-    if (!success && GetLastError() == ERROR_INVALID_PARAMETER /* <= Win10v1607 */)
-    {
-        win_skip("Flag SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE not supported, skipping test.\n");
-        return;
-    }
-    ok(success, "got error %ld.\n", GetLastError());
-
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"LINK");
-    file = CreateFileW(test_path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                       NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"link");
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    todo_wine ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    wcscat(test_path, L"\\Test.Dat");
-    file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-    count = pGetFinalPathNameByHandleW(file, result_path, ARRAY_SIZE(result_path), 0);
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"Test.Dat");
-    ok(count == lstrlenW(test_path) + 4, "Expected length %u, got %lu\n", lstrlenW(test_path), count);
-    ok(wcscmp(test_path, result_path + 4) == 0, "Expected %s, got %s\n",
-       wine_dbgstr_w(test_path), wine_dbgstr_w(result_path));
-    CloseHandle(file);
-
-    wcscpy(test_path, temp_path);
-    wcscat(test_path, L"LINK");
-    success = RemoveDirectoryW(test_path);
-    ok(success, "got error %ld.\n", GetLastError());
 }
 
 static void test_SetFileInformationByHandle(void)
@@ -6026,48 +5599,6 @@ static void test_SetFileRenameInfo(void)
     ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "FileRenameInfo unexpected result %ld\n", GetLastError());
     CloseHandle(file);
 
-    DeleteFileW(tempFileFrom);
-    DeleteFileW(tempFileTo1);
-    DeleteFileW(tempFileTo2);
-
-    /* repeat test again with FileRenameInfoEx */
-
-    ret = GetTempFileNameW(tempPath, L"abc", 0, tempFileTo1);
-    ok(ret, "GetTempFileNameW failed, got error %lu.\n", GetLastError());
-
-    ret = GetTempFileNameW(tempPath, L"abc", 1, tempFileTo2);
-    ok(ret, "GetTempFileNameW failed, got error %lu.\n", GetLastError());
-
-    file = CreateFileW(tempFileFrom, GENERIC_READ | GENERIC_WRITE | DELETE, 0, 0, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "failed to create temp file, error %lu.\n", GetLastError());
-
-    fri->Flags = 0;
-    fri->RootDirectory = NULL;
-    fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
-    memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
-    ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-    ok(!ret && (GetLastError() == ERROR_ALREADY_EXISTS || GetLastError() == ERROR_INVALID_PARAMETER),
-        "FileRenameInfoEx unexpected result %ld\n", GetLastError());
-    if (GetLastError() != ERROR_INVALID_PARAMETER)
-    {
-        fri->Flags = FILE_RENAME_REPLACE_IF_EXISTS;
-        ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-        ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
-
-        fri->Flags = 0;
-        fri->FileNameLength = wcslen(tempFileTo2) * sizeof(WCHAR);
-        memcpy(fri->FileName, tempFileTo2, fri->FileNameLength + sizeof(WCHAR));
-        ret = pSetFileInformationByHandle(file, FileRenameInfoEx, fri, size);
-        ok(ret, "FileRenameInfoEx failed, error %ld\n", GetLastError());
-
-        CloseHandle(file);
-
-        file = CreateFileW(tempFileTo2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-        ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %ld\n", GetLastError());
-    }
-    else win_skip( "FileRenameInfoEx not supported\n" );
-
-    CloseHandle(file);
     HeapFree(GetProcessHeap(), 0, fri);
     DeleteFileW(tempFileFrom);
     DeleteFileW(tempFileTo1);
@@ -6786,222 +6317,6 @@ static void test_eof(void)
     ok(ret, "failed to delete %s, error %lu\n", debugstr_a(filename), GetLastError());
 }
 
-static void test_symbolic_link(void)
-{
-    WCHAR temp_path[MAX_PATH], path[MAX_PATH], path2[MAX_PATH], expect_path[MAX_PATH];
-    char buffer[1024];
-    const REPARSE_DATA_BUFFER *data = (void *)buffer;
-    TOKEN_PRIVILEGES privs;
-    const WCHAR *ret_path;
-    IO_STATUS_BLOCK io;
-    HANDLE file, token;
-    LUID luid;
-    BOOL ret;
-
-    ret = OpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &token );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    ret = LookupPrivilegeValueA( NULL, "SeCreateSymbolicLinkPrivilege", &luid );
-    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    if (ret)
-    {
-        privs.PrivilegeCount = 1;
-        privs.Privileges[0].Luid = luid;
-        privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-        ret = AdjustTokenPrivileges( token, FALSE, &privs, 0, NULL, NULL );
-        ok( ret == TRUE, "got error %lu\n", GetLastError() );
-        if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
-        {
-            win_skip( "Insufficient permissions to perform symlink tests.\n" );
-            CloseHandle( token );
-            return;
-        }
-        CloseHandle( token );
-    }
-
-    GetTempPathW( ARRAY_SIZE( temp_path ), temp_path );
-
-    swprintf( path, ARRAY_SIZE(path), L"%s/testsymlink\\", temp_path );
-    swprintf( path2, ARRAY_SIZE(path2), L"%s/target\\", temp_path );
-
-    SetLastError( 0xdeadbeef );
-    ret = CreateSymbolicLinkW( path, path2, TRUE );
-    ok( ret == TRUE, "got %d\n", ret );
-    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
-
-    ret = GetFileAttributesW( path );
-    ok( (ret & 0xfff) == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
-
-    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
-                        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-
-    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
-    ok( !ret, "got %#x\n", ret );
-    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
-    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
-    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
-        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
-    ok( !data->SymbolicLinkReparseBuffer.Flags, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    swprintf( expect_path, ARRAY_SIZE(expect_path), L"\\??\\%starget\\", temp_path );
-    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( expect_path ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
-    ok( !memcmp( ret_path, expect_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
-        "expected %s, got %s\n", debugstr_w( expect_path ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
-    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( path2 ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
-    ok( !memcmp( ret_path, path2, data->SymbolicLinkReparseBuffer.PrintNameLength ),
-        "expected %s, got %s\n", debugstr_w( path2 ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
-    CloseHandle( file );
-
-    SetLastError( 0xdeadbeef );
-    ret = CreateSymbolicLinkW( path, L"target", TRUE );
-    ok( ret == FALSE, "got %d\n", ret );
-    ok( GetLastError() == ERROR_ALREADY_EXISTS, "got error %lu\n", GetLastError() );
-
-    ret = RemoveDirectoryW( path );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    ret = CreateSymbolicLinkW( path, L".\\target", TRUE );
-    ok( ret == TRUE, "got %d\n", ret );
-    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
-
-    ret = GetFileAttributesW( path );
-    ok( (ret & 0xfff) == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
-
-    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
-                        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-
-    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
-    ok( !ret, "got %#x\n", ret );
-    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
-    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
-    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
-        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
-    ok( data->SymbolicLinkReparseBuffer.Flags == SYMLINK_FLAG_RELATIVE, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( L".\\target" ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
-    ok( !memcmp( ret_path, L".\\target", data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
-        "expected %s, got %s\n", debugstr_w( L".\\target" ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
-    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( L".\\target" ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
-    ok( !memcmp( ret_path, L".\\target", data->SymbolicLinkReparseBuffer.PrintNameLength ),
-        "expected %s, got %s\n", debugstr_w( L".\\target" ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
-    CloseHandle( file );
-
-    ret = RemoveDirectoryW( path );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    ret = CreateSymbolicLinkW( path, L".\\target\\", FALSE );
-    ok( !ret, "got %d\n", ret );
-    ok( GetLastError() == ERROR_INVALID_NAME, "got error %lu\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    swprintf( path, ARRAY_SIZE(path), L"%s/testsymlink", temp_path );
-    ret = CreateSymbolicLinkW( path, L".\\target\\", FALSE );
-    ok( ret == TRUE, "got %d\n", ret );
-    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
-
-    ret = GetFileAttributesW( path );
-    ok( (ret & 0xfff) == (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
-
-    file = CreateFileW( path, FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
-                        FILE_FLAG_OPEN_REPARSE_POINT, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-
-    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
-    ok( !ret, "got %#x\n", ret );
-    ok( data->ReparseTag == IO_REPARSE_TAG_SYMLINK, "got tag %#lx\n", data->ReparseTag );
-    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
-    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer ),
-        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
-    ok( data->SymbolicLinkReparseBuffer.Flags == SYMLINK_FLAG_RELATIVE, "got flags %#lx\n", data->SymbolicLinkReparseBuffer.Flags );
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    ok( data->SymbolicLinkReparseBuffer.SubstituteNameLength == wcslen( L".\\target\\" ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.SubstituteNameLength );
-    ok( !memcmp( ret_path, L".\\target\\", data->SymbolicLinkReparseBuffer.SubstituteNameLength ),
-        "expected %s, got %s\n", debugstr_w( L".\\target\\" ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.SubstituteNameLength ));
-    ret_path = data->SymbolicLinkReparseBuffer.PathBuffer + (data->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR));
-    ok( data->SymbolicLinkReparseBuffer.PrintNameLength == wcslen( L".\\target\\" ) * 2,
-        "got length %u\n", data->SymbolicLinkReparseBuffer.PrintNameLength );
-    ok( !memcmp( ret_path, L".\\target\\", data->SymbolicLinkReparseBuffer.PrintNameLength ),
-        "expected %s, got %s\n", debugstr_w( L".\\target\\" ),
-        debugstr_wn( ret_path, data->SymbolicLinkReparseBuffer.PrintNameLength ));
-    CloseHandle( file );
-
-    ret = DeleteFileW( path );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-}
-
-static void test_posix_semantics(void)
-{
-    static const DWORD flags[] = { FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY,
-                                   FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY,
-                                   FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY };
-    static const struct
-    {
-        DWORD disposition, cleanup;
-    } td[] =
-    {
-        { CREATE_NEW, 1 },
-        { OPEN_ALWAYS, 0 },
-        { TRUNCATE_EXISTING, 0 },
-        { CREATE_ALWAYS, 1 }
-    };
-    HANDLE hFile, hFile2;
-    WCHAR temp_path[MAX_PATH];
-    WCHAR filename[MAX_PATH];
-    DWORD ret, i, j;
-    BY_HANDLE_FILE_INFORMATION info;
-
-    GetTempPathW(MAX_PATH, temp_path);
-    GetTempFileNameW(temp_path, L"psx", 0, filename);
-    DeleteFileW(filename);
-
-    for (i = 0; i < ARRAY_SIZE(td); i++)
-    {
-        for (j = 0; j < ARRAY_SIZE(flags); j++)
-        {
-            winetest_push_context("%lu/%lu", i, j);
-
-            hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, td[i].disposition, flags[j], NULL);
-            ok(hFile != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-            ret = GetFileInformationByHandle(hFile, &info);
-            ok(ret, "GetFileInformationByHandle error %lu\n", GetLastError());
-            if (td[i].disposition == CREATE_NEW && flags[j] == (FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS | FILE_ATTRIBUTE_DIRECTORY))
-                ok(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY, "created file is not a directory\n");
-            else
-                ok(!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY), "created file is a directory\n");
-
-            hFile2 = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, flags[j], NULL);
-            ok(hFile2 != INVALID_HANDLE_VALUE, "CreateFileW error %lu\n", GetLastError());
-            CloseHandle(hFile2);
-            CloseHandle(hFile);
-
-            if (td[i].cleanup)
-            {
-                if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                    RemoveDirectoryW(filename);
-                else
-                    DeleteFileW(filename);
-            }
-
-            winetest_pop_context();
-        }
-    }
-}
-
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -7080,6 +6395,4 @@ START_TEST(file)
     test_hard_link();
     test_move_file();
     test_eof();
-    test_symbolic_link();
-    test_posix_semantics();
 }

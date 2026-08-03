@@ -22,7 +22,7 @@
 
 #include "pathcch.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(model);
+WINE_DEFAULT_DEBUG_CHANNEL(package);
 
 struct package_statics
 {

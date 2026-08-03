@@ -76,6 +76,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "request.h"
 #include "user.h"
@@ -741,7 +742,7 @@ void mirror_region( const struct rectangle *client_rect, struct region *region )
 
 
 /* scale a region for a given dpi factor */
-void scale_region( struct region *region, struct ratio dpi_from, struct ratio dpi_to )
+void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to )
 {
     struct rectangle *rect, *end;
 

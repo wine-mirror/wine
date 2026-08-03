@@ -72,6 +72,15 @@ By setting
 .B WINEPREFIX
 to different values for different Wine processes, it is possible to
 run a number of truly independent Wine sessions.
+.TP
+.B WINESERVER
+Specifies the path and name of the
+.B wineserver
+binary that will be launched automatically by \fBwine\fR. If not set,
+\fBwine\fR will try to load
+.IR @bindir@/wineserver ,
+and if this doesn't exist it will then look for a file named
+\fIwineserver\fR in the path and in a few other likely locations.
 .SH FILES
 .TP
 .B ~/.wine
@@ -89,19 +98,19 @@ is Alexandre Julliard. Many other people have contributed new features
 and bug fixes. For a complete list, see the git commit logs.
 .SH BUGS
 Bugs can be reported on the
-.UR https://bugs.winehq.org
+.UR http://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AVAILABILITY
 .B wineserver
 is part of the Wine distribution, which is available through WineHQ,
 the
-.UR https://www.winehq.org/
+.UR http://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
 .BR wine (1),
 .br
-.UR https://www.winehq.org/help
+.UR http://www.winehq.org/help
 .B Wine documentation and support
 .UE .

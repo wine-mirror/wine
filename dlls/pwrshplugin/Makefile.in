@@ -1,4 +1,4 @@
 MODULE    = pwrshplugin.dll
 
-VER_FILEDESCRIPTION_STR = "Wine powershell plugin"
-VER_PRODUCTVERSION      = 6,3,9600,16384
+SOURCES = \
+	version.rc

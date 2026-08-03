@@ -641,6 +641,11 @@ xsltFreeStackElemList(xsltStackElemPtr elem) {
  *
  * Locate an element in the stack based on its name.
  */
+#if 0 /* TODO: Those seem to have been used for debugging. */
+static int stack_addr = 0;
+static int stack_cmp = 0;
+#endif
+
 static xsltStackElemPtr
 xsltStackLookup(xsltTransformContextPtr ctxt, const xmlChar *name,
 	        const xmlChar *nameURI) {
@@ -660,6 +665,9 @@ xsltStackLookup(xsltTransformContextPtr ctxt, const xmlChar *name,
 	cur = ctxt->varsTab[i-1];
 	while (cur != NULL) {
 	    if ((cur->name == name) && (cur->nameURI == nameURI)) {
+#if 0
+		stack_addr++;
+#endif
 		return(cur);
 	    }
 	    cur = cur->next;
@@ -678,6 +686,9 @@ xsltStackLookup(xsltTransformContextPtr ctxt, const xmlChar *name,
 	cur = ctxt->varsTab[i-1];
 	while (cur != NULL) {
 	    if ((cur->name == name) && (cur->nameURI == nameURI)) {
+#if 0
+		stack_cmp++;
+#endif
 		return(cur);
 	    }
 	    cur = cur->next;
@@ -1038,7 +1049,6 @@ xsltEvalGlobalVariable(xsltStackElemPtr elem, xsltTransformContextPtr ctxt)
     xmlXPathObjectPtr result = NULL;
     xmlNodePtr oldInst;
     const xmlChar* oldVarName;
-    xsltStackElemPtr oldCtxtVar = ctxt->contextVariable;
 
 #ifdef XSLT_REFACTORED
     xsltStyleBasicItemVariablePtr comp;
@@ -1071,14 +1081,6 @@ xsltEvalGlobalVariable(xsltStackElemPtr elem, xsltTransformContextPtr ctxt)
 #endif
     oldVarName = elem->name;
     elem->name = xsltComputingGlobalVarMarker;
-
-    /*
-     * The "context variable" isn't used for globals, so we must
-     * make sure to set it to NULL.
-     */
-    oldCtxtVar = ctxt->contextVariable;
-    ctxt->contextVariable = NULL;
-
     /*
     * OPTIMIZE TODO: We should consider instantiating global vars/params
     *  on-demand. The vars/params don't need to be evaluated if never
@@ -1248,8 +1250,6 @@ xsltEvalGlobalVariable(xsltStackElemPtr elem, xsltTransformContextPtr ctxt)
     }
 
 error:
-    ctxt->contextVariable = oldCtxtVar;
-
     elem->name = oldVarName;
     ctxt->inst = oldInst;
     if (result != NULL) {
@@ -1257,6 +1257,13 @@ error:
 	elem->computed = 1;
     }
     return(result);
+}
+
+static void
+xsltEvalGlobalVariableWrapper(void *payload, void *data,
+                              const xmlChar *name ATTRIBUTE_UNUSED) {
+    xsltEvalGlobalVariable((xsltStackElemPtr) payload,
+                           (xsltTransformContextPtr) data);
 }
 
 /**
@@ -1271,7 +1278,6 @@ error:
 int
 xsltEvalGlobalVariables(xsltTransformContextPtr ctxt) {
     xsltStackElemPtr elem;
-    xsltStackElemPtr head = NULL;
     xsltStylesheetPtr style;
 
     if ((ctxt == NULL) || (ctxt->document == NULL))
@@ -1315,8 +1321,6 @@ xsltEvalGlobalVariables(xsltTransformContextPtr ctxt) {
                     xsltFreeStackElem(def);
                     return(-1);
                 }
-                def->next = head;
-                head = def;
 	    } else if ((elem->comp != NULL) &&
 		       (elem->comp->type == XSLT_FUNC_VARIABLE)) {
 		/*
@@ -1339,19 +1343,9 @@ xsltEvalGlobalVariables(xsltTransformContextPtr ctxt) {
     }
 
     /*
-     * This part does the actual evaluation. Note that scanning the hash
-     * table would result in a non-deterministic order, leading to
-     * non-deterministic generated IDs.
+     * This part does the actual evaluation
      */
-    elem = head;
-    while (elem != NULL) {
-        xsltStackElemPtr next;
-
-        xsltEvalGlobalVariable(elem, ctxt);
-        next = elem->next;
-        elem->next = NULL;
-        elem = next;
-    }
+    xmlHashScan(ctxt->globalVars, xsltEvalGlobalVariableWrapper, ctxt);
 
     return(0);
 }
@@ -1403,21 +1397,28 @@ xsltRegisterGlobalVariable(xsltStylesheetPtr style, const xmlChar *name,
 	elem->nameURI = xmlDictLookup(style->dict, ns_uri, -1);
     elem->tree = tree;
     tmp = style->variables;
-    while (tmp != NULL) {
-        if ((elem->comp->type == XSLT_FUNC_VARIABLE) &&
-            (tmp->comp->type == XSLT_FUNC_VARIABLE) &&
-            (xmlStrEqual(elem->name, tmp->name)) &&
-            ((elem->nameURI == tmp->nameURI) ||
-             (xmlStrEqual(elem->nameURI, tmp->nameURI))))
-        {
-            xsltTransformError(NULL, style, comp->inst,
-            "redefinition of global variable %s\n", elem->name);
-            style->errors++;
-        }
-        tmp = tmp->next;
+    if (tmp == NULL) {
+	elem->next = NULL;
+	style->variables = elem;
+    } else {
+	while (tmp != NULL) {
+	    if ((elem->comp->type == XSLT_FUNC_VARIABLE) &&
+		(tmp->comp->type == XSLT_FUNC_VARIABLE) &&
+		(xmlStrEqual(elem->name, tmp->name)) &&
+		((elem->nameURI == tmp->nameURI) ||
+		 (xmlStrEqual(elem->nameURI, tmp->nameURI))))
+	    {
+		xsltTransformError(NULL, style, comp->inst,
+		"redefinition of global variable %s\n", elem->name);
+		style->errors++;
+	    }
+	    if (tmp->next == NULL)
+	        break;
+	    tmp = tmp->next;
+	}
+	elem->next = NULL;
+	tmp->next = elem;
     }
-    elem->next = style->variables;
-    style->variables = elem;
     if (value != NULL) {
 	elem->computed = 1;
 	elem->value = xmlXPathNewString(value);
@@ -2295,6 +2296,9 @@ xsltXPathVariableLookup(void *ctxt, const xmlChar *name,
 	for (i = tctxt->varsNr; i > tctxt->varsBase; i--) {
 	    cur = tctxt->varsTab[i-1];
 	    if ((cur->name == name) && (cur->nameURI == ns_uri)) {
+#if 0
+		stack_addr++;
+#endif
 		variable = cur;
 		goto local_variable_found;
 	    }
@@ -2316,6 +2320,9 @@ xsltXPathVariableLookup(void *ctxt, const xmlChar *name,
 		for (i = tctxt->varsNr; i > tctxt->varsBase; i--) {
 		    cur = tctxt->varsTab[i-1];
 		    if ((cur->name == name) && (cur->nameURI == ns_uri)) {
+#if 0
+			stack_cmp++;
+#endif
 			variable = cur;
 			goto local_variable_found;
 		    }

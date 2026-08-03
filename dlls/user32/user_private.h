@@ -29,6 +29,7 @@
 #include "shlobj.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
@@ -80,18 +81,15 @@ extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 extern void winproc_init(void);
 extern LRESULT dispatch_win_proc_params( struct win_proc_params *params );
 
-extern DWORD get_app_version(void);
-
-extern void init_class_name( UNICODE_STRING *str, const WCHAR *name );
-extern void init_class_name_ansi( UNICODE_STRING *str, const char *name );
-extern void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load );
+extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *info,
+                            UNICODE_STRING *name_str, BOOL ansi );
 
 /* kernel callbacks */
 
 NTSTATUS WINAPI User32CallEnumDisplayMonitor( void *args, ULONG size );
 NTSTATUS WINAPI User32CallSendAsyncCallback( void *args, ULONG size );
 NTSTATUS WINAPI User32CallWinEventHook( void *args, ULONG size );
-NTSTATUS WINAPI User32CallWinProc( void *args, ULONG size );
+NTSTATUS WINAPI User32CallWindowProc( void *args, ULONG size );
 NTSTATUS WINAPI User32CallWindowsHook( void *args, ULONG size );
 NTSTATUS WINAPI User32InitBuiltinClasses( void *args, ULONG size );
 
@@ -102,7 +100,7 @@ extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPA
 extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
                              LRESULT lReturn, WPARAM wParam, LPARAM lParam );
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -156,7 +154,7 @@ typedef struct
     CURSORICONFILEDIRENTRY  idEntries[1];
 } CURSORICONFILEDIR;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse );
 extern BOOL get_icon_size( HICON handle, SIZE *size );
@@ -171,9 +169,11 @@ void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
 struct scroll_info *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc );
 
 /* Window functions */
+BOOL is_desktop_window( HWND hwnd );
 HWND WIN_GetFullHandle( HWND hwnd );
 HWND WIN_IsCurrentProcess( HWND hwnd );
 HWND WIN_IsCurrentThread( HWND hwnd );
+ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits );
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode );
 HWND *WIN_ListChildren( HWND hwnd );
 void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id );

@@ -40,14 +40,12 @@ static NTSTATUS (WINAPI *pRtlInt64ToUnicodeString)(ULONGLONG, ULONG, UNICODE_STR
 static NTSTATUS (WINAPI *pRtlLargeIntegerToChar)(ULONGLONG *, ULONG, ULONG, PCHAR);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
 
-#ifdef __i386__
 static LONGLONG (WINAPI *p_alldiv)( LONGLONG a, LONGLONG b );
 static LONGLONG (WINAPI *p_allrem)( LONGLONG a, LONGLONG b );
 static LONGLONG (WINAPI *p_allmul)( LONGLONG a, LONGLONG b );
 static ULONGLONG (WINAPI *p_aulldiv)( ULONGLONG a, ULONGLONG b );
 static ULONGLONG (WINAPI *p_aullrem)( ULONGLONG a, ULONGLONG b );
 static void *p_allshl, *p_allshr, *p_aullshr;
-#endif
 
 static void InitFunctionPtrs(void)
 {
@@ -60,7 +58,6 @@ static void InitFunctionPtrs(void)
 	pRtlLargeIntegerToChar = (void *)GetProcAddress(hntdll, "RtlLargeIntegerToChar");
 	pRtlUnicodeStringToAnsiString = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
 
-#ifdef __i386__
         p_alldiv = (void *)GetProcAddress(hntdll, "_alldiv");
         p_allrem = (void *)GetProcAddress(hntdll, "_allrem");
         p_allmul = (void *)GetProcAddress(hntdll, "_allmul");
@@ -69,8 +66,7 @@ static void InitFunctionPtrs(void)
         p_aulldiv = (void *)GetProcAddress(hntdll, "_aulldiv");
         p_aullrem = (void *)GetProcAddress(hntdll, "_aullrem");
         p_aullshr = (void *)GetProcAddress(hntdll, "_aullshr");
-#endif
-    }
+    } /* if */
 }
 
 #define ULL(a,b) (((ULONGLONG)(a) << 32) | (b))

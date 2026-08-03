@@ -38,9 +38,6 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     *factory = NULL;
 
-    if (!wcscmp( buffer, RuntimeClass_Windows_UI_ViewManagement_AccessibilitySettings ))
-        IActivationFactory_QueryInterface( accessibilitysettings_factory, &IID_IActivationFactory, (void **)factory );
-
     if (!wcscmp( buffer, RuntimeClass_Windows_UI_ViewManagement_UISettings ))
         IActivationFactory_QueryInterface( uisettings_factory, &IID_IActivationFactory, (void **)factory );
 
@@ -50,8 +47,8 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
     if (!wcscmp( buffer, RuntimeClass_Windows_UI_ViewManagement_InputPane ))
         IActivationFactory_QueryInterface( inputpane_factory, &IID_IActivationFactory, (void **)factory );
 
-    if (!wcscmp( buffer, RuntimeClass_Windows_UI_Core_CoreWindow ))
-        IActivationFactory_QueryInterface( corewindow_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_StartScreen_JumpList ))
+        IActivationFactory_QueryInterface( jumplist_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;

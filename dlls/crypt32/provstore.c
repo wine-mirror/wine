@@ -54,13 +54,13 @@ static DWORD ProvStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     WINE_PROVIDERSTORE *store = (WINE_PROVIDERSTORE*)cert_store;
     LONG ref;
 
-    if(flags & ~CERT_CLOSE_STORE_FORCE_FLAG)
+    if(flags)
         FIXME("Unimplemented flags %lx\n", flags);
 
     ref = InterlockedDecrement(&store->hdr.ref);
     TRACE("(%p) ref=%ld\n", store, ref);
 
-    if(ref && !(flags & CERT_CLOSE_STORE_FORCE_FLAG))
+    if(ref)
         return ERROR_SUCCESS;
 
     if (store->provCloseStore)

@@ -2,7 +2,6 @@ MODULE    = ngen.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-VER_PRODUCTVERSION = 2,0,50727,1433
-
 SOURCES = \
-	ngen_main.c
+	ngen_main.c \
+	version.rc

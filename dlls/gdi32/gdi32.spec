@@ -99,9 +99,6 @@
 # @ stub CreateScaledCompatibleBitmap
 # @ stub CreateSessionMappedDIBSection
 @ stdcall CreateSolidBrush(long)
-@ stdcall D3DKMTAcquireKeyedMutex(ptr) win32u.NtGdiDdDDIAcquireKeyedMutex
-@ stdcall D3DKMTAcquireKeyedMutex2(ptr) win32u.NtGdiDdDDIAcquireKeyedMutex2
-@ stdcall D3DKMTCheckOcclusion(ptr) win32u.NtGdiDdDDICheckOcclusion
 @ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) win32u.NtGdiDdDDICheckVidPnExclusiveOwnership
 @ stdcall D3DKMTCloseAdapter(ptr) win32u.NtGdiDdDDICloseAdapter
 @ stdcall D3DKMTCreateAllocation(ptr) win32u.NtGdiDdDDICreateAllocation
@@ -128,7 +125,6 @@
 @ stdcall D3DKMTOpenKeyedMutex(ptr) win32u.NtGdiDdDDIOpenKeyedMutex
 @ stdcall D3DKMTOpenKeyedMutex2(ptr) win32u.NtGdiDdDDIOpenKeyedMutex2
 @ stdcall D3DKMTOpenKeyedMutexFromNtHandle(ptr) win32u.NtGdiDdDDIOpenKeyedMutexFromNtHandle
-@ stdcall D3DKMTOpenNtHandleFromName(ptr) win32u.NtGdiDdDDIOpenNtHandleFromName
 @ stdcall D3DKMTOpenResource(ptr) win32u.NtGdiDdDDIOpenResource
 @ stdcall D3DKMTOpenResource2(ptr) win32u.NtGdiDdDDIOpenResource2
 @ stdcall D3DKMTOpenResourceFromNtHandle(ptr) win32u.NtGdiDdDDIOpenResourceFromNtHandle
@@ -141,13 +137,9 @@
 @ stdcall D3DKMTQueryResourceInfoFromNtHandle(ptr) win32u.NtGdiDdDDIQueryResourceInfoFromNtHandle
 @ stdcall D3DKMTQueryStatistics(ptr) win32u.NtGdiDdDDIQueryStatistics
 @ stdcall D3DKMTQueryVideoMemoryInfo(ptr) win32u.NtGdiDdDDIQueryVideoMemoryInfo
-@ stdcall D3DKMTReleaseKeyedMutex(ptr) win32u.NtGdiDdDDIReleaseKeyedMutex
-@ stdcall D3DKMTReleaseKeyedMutex2(ptr) win32u.NtGdiDdDDIReleaseKeyedMutex2
 @ stdcall D3DKMTSetQueuedLimit(ptr) win32u.NtGdiDdDDISetQueuedLimit
 @ stdcall D3DKMTSetVidPnSourceOwner(ptr) win32u.NtGdiDdDDISetVidPnSourceOwner
 @ stdcall D3DKMTShareObjects(long ptr ptr long ptr) win32u.NtGdiDdDDIShareObjects
-@ stdcall D3DKMTSignalSynchronizationObjectFromCpu(ptr) win32u.NtGdiDdDDISignalSynchronizationObjectFromCpu
-@ stdcall D3DKMTWaitForSynchronizationObjectFromCpu(ptr) win32u.NtGdiDdDDIWaitForSynchronizationObjectFromCpu
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
 @ stdcall DeleteDC(long)
@@ -381,7 +373,7 @@
 @ stdcall GetEnhMetaFileDescriptionW(long long ptr)
 @ stdcall GetEnhMetaFileHeader(long long ptr)
 @ stdcall GetEnhMetaFilePaletteEntries(long long ptr)
-@ stdcall GetEnhMetaFilePixelFormat(long long ptr)
+# @ stub GetEnhMetaFilePixelFormat
 @ stdcall GetEnhMetaFileW(wstr)
 # @ stub GetFontAssocStatus
 @ stdcall GetFontData(long long long ptr long) NtGdiGetFontData
@@ -413,7 +405,7 @@
 @ stdcall GetMetaFileBitsEx(long long ptr)
 @ stdcall GetMetaFileW(wstr)
 @ stdcall GetMetaRgn(long long)
-@ stdcall GetMiterLimit(long ptr) NtGdiGetMiterLimit
+@ stdcall GetMiterLimit(long ptr)
 @ stdcall GetNearestColor(long long) NtGdiGetNearestColor
 @ stdcall GetNearestPaletteIndex(long long) NtGdiGetNearestPaletteIndex
 # @ stub GetNumberOfPhysicalMonitors

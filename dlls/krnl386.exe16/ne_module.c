@@ -27,6 +27,7 @@
 #include <ctype.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
@@ -41,7 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct _GPHANDLERDEF
 {
     WORD selector;
@@ -49,7 +50,7 @@ typedef struct _GPHANDLERDEF
     WORD rangeEnd;
     WORD handler;
 } GPHANDLERDEF;
-#pragma pack(pop)
+#include "poppack.h"
 
 /*
  * Segment table entry
@@ -914,7 +915,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     }
 
     patch_code_segment( pModule );
-    *(ULONG *)mz_header->e_res2 = NtCurrentTeb()->Peb->SpareUlongs[0];
+    *(const void **)mz_header->e_res2 = ldt_copy->base;
 
     return hInstance;
 }

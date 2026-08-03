@@ -1405,7 +1405,6 @@ static p_copy_image_func get_2d_buffer_copy_func(DWORD fourcc)
             return copy_image_imc2;
 
         case MAKEFOURCC('N','V','1','2'):
-        case MAKEFOURCC('P','0','1','0'):
             return copy_image_nv12;
 
         default:
@@ -1455,9 +1454,6 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
         case MAKEFOURCC('N','V','1','2'):
             plane_size = stride * height * 3 / 2;
             break;
-        case MAKEFOURCC('P','0','1','0'):
-            plane_size = width * height * 3;
-            break;
         default:
             plane_size = stride * height;
     }
@@ -1496,7 +1492,6 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
         case MAKEFOURCC('N','V','1','1'):
         case MAKEFOURCC('I','4','2','0'):
         case MAKEFOURCC('I','Y','U','V'):
-        case MAKEFOURCC('P','0','1','0'):
             max_length = pitch * height * 3 / 2;
             break;
         default:

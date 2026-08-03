@@ -29,7 +29,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -37,11 +36,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_PERSONALITY_H
-#include <sys/personality.h>
-#endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "object.h"
 #include "file.h"
 #include "handle.h"
@@ -176,7 +173,7 @@ static void key_dump( struct object *obj, int verbose );
 static bool key_init( struct object *obj, const void *init_data );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
-static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
+static WCHAR *key_get_full_name( struct object *obj, data_size_t *len );
 static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
                                        unsigned int attr, struct object *root );
 static int key_link_name( struct object *obj, struct object_name *name, struct object *parent );
@@ -186,18 +183,26 @@ static void key_destroy( struct object *obj );
 
 static const struct object_ops key_ops =
 {
-    .size          = sizeof(struct key),
-    .type          = &key_type,
-    .dump          = key_dump,
-    .init          = key_init,
-    .map_access    = key_map_access,
-    .get_sd        = key_get_sd,
-    .get_full_name = key_get_full_name,
-    .lookup_name   = key_lookup_name,
-    .link_name     = key_link_name,
-    .unlink_name   = key_unlink_name,
-    .close_handle  = key_close_handle,
-    .destroy       = key_destroy,
+    sizeof(struct key),      /* size */
+    &key_type,               /* type */
+    key_dump,                /* dump */
+    no_add_queue,            /* add_queue */
+    NULL,                    /* remove_queue */
+    NULL,                    /* signaled */
+    NULL,                    /* satisfied */
+    no_signal,               /* signal */
+    no_get_fd,               /* get_fd */
+    key_map_access,          /* map_access */
+    key_get_sd,              /* get_sd */
+    default_set_sd,          /* set_sd */
+    key_get_full_name,       /* get_full_name */
+    key_lookup_name,         /* lookup_name */
+    key_link_name,           /* link_name */
+    key_unlink_name,         /* unlink_name */
+    no_open_file,            /* open_file */
+    no_kernel_obj_list,      /* get_kernel_obj_list */
+    key_close_handle,        /* close_handle */
+    key_destroy              /* destroy */
 };
 
 
@@ -498,7 +503,7 @@ static struct security_descriptor *key_get_sd( struct object *obj )
     return key_default_sd;
 }
 
-static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_t *ret_len )
+static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
 {
     struct key *key = (struct key *) obj;
 
@@ -507,7 +512,7 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t max, data_size_
         set_error( STATUS_KEY_DELETED );
         return NULL;
     }
-    return default_get_full_name( obj, max, ret_len );
+    return default_get_full_name( obj, ret_len );
 }
 
 static struct object *key_lookup_name( struct object *obj, struct unicode_str *name,
@@ -658,7 +663,7 @@ static void key_unlink_name( struct object *obj, struct object_name *name )
 
     if (parent->obj.ops != &key_ops)
     {
-        unlink_name( name );
+        default_unlink_name( obj, name );
         return;
     }
 
@@ -875,9 +880,10 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
     switch(info_class)
     {
     case KeyNameInformation:
-        if (!(fullname = key_get_full_name( &key->obj, ~0u, &namelen ))) return;
+        if (!(fullname = key->obj.ops->get_full_name( &key->obj, &namelen ))) return;
         /* fall through */
     case KeyBasicInformation:
+    case KeyNameInformation:
         classlen = 0; /* only return the name */
         /* fall through */
     case KeyNodeInformation:
@@ -980,7 +986,7 @@ static void rename_key( struct key *key, struct unicode_str new_name )
     for (cur_index = 0; cur_index <= parent->last_subkey; cur_index++)
         if (parent->subkeys[cur_index] == key) break;
 
-    if (cur_index < index)
+    if (cur_index < index && (index - cur_index) > 1)
     {
         --index;
         for (i = cur_index; i < index; ++i) parent->subkeys[i] = parent->subkeys[i+1];
@@ -1787,19 +1793,6 @@ static WCHAR *format_user_registry_path( const struct sid *sid, struct unicode_s
     return ascii_to_unicode_str( buffer, path );
 }
 
-#ifdef __aarch64__
-static bool supports_aarch32(void)
-{
-#if defined(HAVE_SYS_PERSONALITY_H)
-    int old = personality( PER_LINUX32 );
-    if (old == -1) return false;
-    personality( old );
-    return true;
-#endif
-    return false;
-}
-#endif
-
 static void init_supported_machines(void)
 {
     unsigned int count = 0;
@@ -1815,8 +1808,7 @@ static void init_supported_machines(void)
     {
         supported_machines[count++] = IMAGE_FILE_MACHINE_ARM64;
         supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
-        if (supports_aarch32()) supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
-        supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
+        supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
     }
 #else
 #error Unsupported machine
@@ -2120,6 +2112,12 @@ void flush_registry(void)
     if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
 }
 
+/* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
+static int is_wow64_thread( struct thread *thread )
+{
+    return (is_machine_64bit( native_machine ) && !is_machine_64bit( thread->process->machine ));
+}
+
 
 /* create a registry key */
 DECL_HANDLER(create_key)
@@ -2133,9 +2131,7 @@ DECL_HANDLER(create_key)
     if (params.root) release_object( params.root );
     data.class = get_req_data_after_objattr( &params, &data.classlen );
 
-    if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
-    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
-    if (req->options & REG_OPTION_CREATE_LINK) params.attr = (params.attr & ~OBJ_OPENIF) | OBJ_OPENLINK;
+    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
 
     if (params.objattr->rootdir)
     {
@@ -2172,8 +2168,7 @@ DECL_HANDLER(open_key)
     struct object_params params = { .ops = &key_ops, .name = get_req_unicode_str(),
                                     .attr = req->attributes };
 
-    if (!is_wow64_process( current->process )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
-    if (!(access & KEY_WOW64_64KEY)) params.attr |= OBJ_KEY_WOW64;
+    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
 
     if (req->parent)
     {

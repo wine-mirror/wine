@@ -40,7 +40,6 @@ typedef enum {
     EVENTID_FOCUSOUT,
     EVENTID_HELP,
     EVENTID_INPUT,
-    EVENTID_INVALID,
     EVENTID_KEYDOWN,
     EVENTID_KEYPRESS,
     EVENTID_KEYUP,
@@ -98,7 +97,6 @@ typedef struct DOMEvent {
 
 const WCHAR *get_event_name(eventid_t);
 void check_event_attr(HTMLDocumentNode*,nsIDOMElement*);
-void event_attr_changed(HTMLDocumentNode*,nsIDOMElement*,const WCHAR*);
 void traverse_event_target(EventTarget*,nsCycleCollectionTraversalCallback*);
 void release_event_target(EventTarget*);
 HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*);

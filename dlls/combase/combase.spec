@@ -59,7 +59,7 @@
 @ stub NdrProxyForwardingFunction31
 @ stub NdrProxyForwardingFunction32
 @ stub NdrOleInitializeExtension
-@ stdcall RoFailFastWithErrorContextInternal2(long long ptr)
+@ stub RoFailFastWithErrorContextInternal2
 @ stub RoFailFastWithErrorContextInternal
 @ stub UpdateProcessTracing
 @ stdcall CLIPFORMAT_UserFree(ptr ptr)
@@ -128,7 +128,6 @@
 @ stdcall CoInitializeWOW(long long)
 @ stub CoInvalidateRemoteMachineBindings
 @ stdcall CoIsHandlerConnected(ptr)
-@ stdcall CoIsOle1Class(ptr)
 @ stdcall CoLockObjectExternal(ptr long long)
 @ stdcall CoMarshalHresult(ptr long)
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
@@ -139,7 +138,7 @@
 @ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoReactivateObject
-@ stdcall CoRegisterActivationFilter(ptr)
+@ stub CoRegisterActivationFilter
 @ stdcall CoRegisterChannelHook(ptr ptr)
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
@@ -165,7 +164,6 @@
 @ stdcall CoTaskMemFree(ptr)
 @ stdcall CoTaskMemRealloc(ptr long)
 @ stub CoTestCancel
-@ stdcall CoTreatAsClass(ptr ptr)
 @ stdcall CoUninitialize()
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr)
@@ -222,13 +220,13 @@
 @ stdcall HPALETTE_UserMarshal(ptr ptr ptr)
 @ stdcall HPALETTE_UserSize(ptr long ptr)
 @ stdcall HPALETTE_UserUnmarshal(ptr ptr ptr)
-@ stdcall HSTRING_UserFree(ptr ptr)
+@ stub HSTRING_UserFree
 @ stub -arch=win64 HSTRING_UserFree64
-@ stdcall HSTRING_UserMarshal(ptr ptr ptr)
+@ stub HSTRING_UserMarshal
 @ stub -arch=win64 HSTRING_UserMarshal64
-@ stdcall HSTRING_UserSize(ptr long ptr)
+@ stub HSTRING_UserSize
 @ stub -arch=win64 HSTRING_UserSize64
-@ stdcall HSTRING_UserUnmarshal(ptr ptr ptr)
+@ stub HSTRING_UserUnmarshal
 @ stub -arch=win64 HSTRING_UserUnmarshal64
 @ stdcall HWND_UserFree(ptr ptr)
 @ stdcall HWND_UserMarshal(ptr ptr ptr)
@@ -290,13 +288,13 @@
 @ stdcall RoActivateInstance(ptr ptr)
 @ stub RoCaptureErrorContext
 @ stub RoClearError
-@ stdcall RoFailFastWithErrorContext(long)
+@ stub RoFailFastWithErrorContext
 @ stub RoFreeParameterizedTypeExtra
 @ stub RoGetActivatableClassRegistration
 @ stdcall RoGetActivationFactory(ptr ptr ptr)
 @ stdcall RoGetAgileReference(long ptr ptr ptr)
 @ stdcall RoGetApartmentIdentifier(ptr)
-@ stdcall RoGetErrorReportingFlags(ptr)
+@ stub RoGetErrorReportingFlags
 @ stub RoGetMatchingRestrictedErrorInfo
 @ stdcall RoGetParameterizedTypeInstanceIID(long ptr ptr ptr ptr)
 @ stdcall RoGetServerActivatableClasses(ptr ptr ptr)
@@ -311,7 +309,7 @@
 @ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr)
 @ stub RoReportCapabilityCheckFailure
 @ stub RoReportFailedDelegate
-@ stdcall RoReportUnhandledError(ptr)
+@ stub RoReportUnhandledError
 @ stub RoResolveRestrictedErrorInfoReference
 @ stub RoRevokeActivationFactories
 @ stdcall RoSetErrorReportingFlags(long)

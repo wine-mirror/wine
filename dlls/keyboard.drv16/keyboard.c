@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct _KBINFO
 {
     BYTE Begin_First_Range;
@@ -46,7 +46,10 @@ typedef struct _KBINFO
     BYTE End_Second_Range;
     WORD StateSize;
 } KBINFO, *LPKBINFO;
-#pragma pack(pop)
+#include "poppack.h"
+
+static FARPROC16 DefKeybEventProc;
+static LPBYTE pKeyStateTable;
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -67,6 +70,9 @@ WORD WINAPI Inquire16(LPKBINFO kbInfo)
  */
 VOID WINAPI Enable16( FARPROC16 proc, LPBYTE lpKeyState )
 {
+    DefKeybEventProc = proc;
+    pKeyStateTable = lpKeyState;
+
     memset( lpKeyState, 0, 256 ); /* all states to false */
 }
 
@@ -75,6 +81,8 @@ VOID WINAPI Enable16( FARPROC16 proc, LPBYTE lpKeyState )
  */
 VOID WINAPI Disable16(VOID)
 {
+    DefKeybEventProc = NULL;
+    pKeyStateTable = NULL;
 }
 
 /****************************************************************************

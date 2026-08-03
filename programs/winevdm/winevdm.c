@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -35,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
 #define DOSBOX "dosbox"
 
 /*** PIF file structures ***/
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 /* header of a PIF file */
 typedef struct {
@@ -100,7 +101,7 @@ typedef struct {
     CHAR optparams[64];  /* optional params, replaces those in the pif header */
 } pif386rec_t;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 /***********************************************************************
  *           start_dosbox

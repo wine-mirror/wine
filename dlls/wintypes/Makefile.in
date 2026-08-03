@@ -6,7 +6,5 @@ SOURCES = \
 	buffer.c \
 	classes.idl \
 	main.c \
-	map.c \
-	propertyset.c \
 	storage.c \
 	wintypes_private.idl

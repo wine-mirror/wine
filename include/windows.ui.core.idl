@@ -20,6 +20,7 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -32,6 +33,7 @@ import "windows.ui.input.idl";
 /* import "windows.ui.input.inking.idl"; */
 /* import "windows.ui.input.inking.core.idl"; */
 /* import "windows.ui.popups.idl"; */
+#endif
 
 namespace Windows.UI.Input {
     runtimeclass PointerPoint;
@@ -43,7 +45,6 @@ namespace Windows.UI.Input {
 }
 
 namespace Windows.UI.Core {
-    typedef enum CoreAcceleratorKeyEventType CoreAcceleratorKeyEventType;
     typedef enum CoreCursorType CoreCursorType;
     typedef enum CoreDispatcherPriority CoreDispatcherPriority;
     typedef enum CoreProcessEventsOption CoreProcessEventsOption;
@@ -51,10 +52,10 @@ namespace Windows.UI.Core {
     typedef enum CoreWindowActivationMode CoreWindowActivationMode;
     typedef enum CoreWindowActivationState CoreWindowActivationState;
     typedef enum CoreWindowFlowDirection CoreWindowFlowDirection;
+    typedef enum AppViewBackButtonVisibility AppViewBackButtonVisibility;
     typedef struct CorePhysicalKeyStatus CorePhysicalKeyStatus;
     typedef struct CoreProximityEvaluation CoreProximityEvaluation;
 
-    interface IAcceleratorKeyEventArgs;
     interface IAutomationProviderRequestedEventArgs;
     interface ICharacterReceivedEventArgs;
     interface IClosestInteractiveBoundsRequestedEventArgs;
@@ -64,6 +65,7 @@ namespace Windows.UI.Core {
     interface ICoreDispatcher;
     interface ICoreDispatcher2;
     interface ICoreDispatcherWithTaskPriority;
+    interface ICoreWindowInterop;
     interface ICoreWindow;
     interface ICoreWindow2;
     interface ICoreWindow3;
@@ -71,6 +73,7 @@ namespace Windows.UI.Core {
     interface ICoreWindow5;
     interface ICoreWindowEventArgs;
     interface ICoreWindowStatic;
+    interface ICoreWindowWithContext;
     interface IIdleDispatchedHandlerArgs;
     interface IInputEnabledEventArgs;
     interface IKeyEventArgs;
@@ -80,6 +83,10 @@ namespace Windows.UI.Core {
     interface IVisibilityChangedEventArgs;
     interface IWindowActivatedEventArgs;
     interface IWindowSizeChangedEventArgs;
+    interface ISystemNavigationManager;
+    interface ISystemNavigationManager2;
+    interface ISystemNavigationManagerStatics;
+    interface IBackRequestedEventArgs;
 
     runtimeclass AutomationProviderRequestedEventArgs;
     runtimeclass AcceleratorKeyEventArgs;
@@ -97,9 +104,10 @@ namespace Windows.UI.Core {
     runtimeclass VisibilityChangedEventArgs;
     runtimeclass WindowActivatedEventArgs;
     runtimeclass WindowSizeChangedEventArgs;
+    runtimeclass SystemNavigationManager;
+    runtimeclass BackRequestedEventArgs;
 
     declare {
-        interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreDispatcher *, Windows.UI.Core.AcceleratorKeyEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.AutomationProviderRequestedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.CharacterReceivedEventArgs *>;
@@ -112,22 +120,14 @@ namespace Windows.UI.Core {
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.VisibilityChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.WindowActivatedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreWindow *, Windows.UI.Core.WindowSizeChangedEventArgs *>;
+        interface Windows.Foundation.EventHandler<Windows.UI.Core.BackRequestedEventArgs *>;
     }
 
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0)
-    ]
-    enum CoreAcceleratorKeyEventType
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum AppViewBackButtonVisibility
     {
-        Character           = 2,
-        DeadCharacter       = 3,
-        KeyDown             = 0,
-        KeyUp               = 1,
-        SystemCharacter     = 6,
-        SystemDeadCharacter = 7,
-        SystemKeyDown       = 4,
-        SystemKeyUp         = 5,
-        UnicodeCharacter    = 8,
+        Visible   = 0,
+        Collapsed = 1
     };
 
     [
@@ -255,19 +255,6 @@ namespace Windows.UI.Core {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.UI.Core.AcceleratorKeyEventArgs),
-        uuid(ff1c4c4a-9287-470b-836e-9086e3126ade)
-    ]
-    interface IAcceleratorKeyEventArgs : IInspectable
-        requires Windows.UI.Core.ICoreWindowEventArgs
-    {
-        [propget] HRESULT EventType([out, retval] Windows.UI.Core.CoreAcceleratorKeyEventType *value);
-        [propget] HRESULT VirtualKey([out, retval] Windows.System.VirtualKey *value);
-        [propget] HRESULT KeyStatus([out, retval] Windows.UI.Core.CorePhysicalKeyStatus *value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.Core.AutomationProviderRequestedEventArgs),
         uuid(961ff258-21bf-4b42-a298-fa479d4c52e2)
     ]
@@ -276,6 +263,17 @@ namespace Windows.UI.Core {
     {
         [propget] HRESULT AutomationProvider([out, retval] IInspectable **value);
         [propput] HRESULT AutomationProvider([in] IInspectable *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.BackRequestedEventArgs),
+        uuid(D603D28A-E411-4A4E-BA41-6A327A8675BC)
+    ]
+    interface IBackRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Handled([out] [retval] boolean* value);
+        [propput] HRESULT Handled([in] boolean value);
     }
 
     [
@@ -301,16 +299,6 @@ namespace Windows.UI.Core {
         [propget] HRESULT SearchBounds([out, retval] Windows.Foundation.Rect *value);
         [propget] HRESULT ClosestInteractiveBounds([out, retval] Windows.Foundation.Rect *value);
         [propput] HRESULT ClosestInteractiveBounds([in] Windows.Foundation.Rect value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        uuid(9ffdf7f5-b8c9-4ef0-b7d2-1de626561fc8)
-    ]
-    interface ICoreAcceleratorKeys : IInspectable
-    {
-        [eventadd] HRESULT AcceleratorKeyActivated([in] Windows.Foundation.TypedEventHandler<Windows.UI.Core.CoreDispatcher *, Windows.UI.Core.AcceleratorKeyEventArgs *> *handler, [out, retval] EventRegistrationToken *cookie);
-        [eventremove] HRESULT AcceleratorKeyActivated([in] EventRegistrationToken cookie);
     }
 
     [
@@ -347,6 +335,16 @@ namespace Windows.UI.Core {
         HRESULT RunAsync([in] Windows.UI.Core.CoreDispatcherPriority priority, [in] Windows.UI.Core.DispatchedHandler *callback,
                          [out, retval] Windows.Foundation.IAsyncAction **action);
         HRESULT RunIdleAsync([in] Windows.UI.Core.IdleDispatchedHandler *callback, [out, retval] Windows.Foundation.IAsyncAction **action);
+    }
+
+    [
+        object, 
+        uuid(45d64a29-a63e-4cb6-b498-5781d298cb4f)
+    ]
+    interface ICoreWindowInterop : IUnknown
+    {
+        [propget] HRESULT WindowHandle([out, retval] HWND *hwnd);
+        [propput] HRESULT MessageHandled([in] boolean value);
     }
 
     [
@@ -583,12 +581,54 @@ namespace Windows.UI.Core {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.SystemNavigationManager),
+        uuid(93023118-CF50-42A6-9706-69107FA122E1)
+    ]
+    interface ISystemNavigationManager : IInspectable
+    {
+        [eventadd] HRESULT BackRequested([in] Windows.Foundation.EventHandler<Windows.UI.Core.BackRequestedEventArgs*>* handler, [out] [retval] EventRegistrationToken* token);
+        [eventremove] HRESULT BackRequested([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.SystemNavigationManager),
+        uuid(8C510401-67BE-49AE-9509-671C1E54A389)
+    ]
+    interface ISystemNavigationManager2 : IInspectable
+    {
+        [propget] HRESULT AppViewBackButtonVisibility([out] [retval] Windows.UI.Core.AppViewBackButtonVisibility* value);
+        [propput] HRESULT AppViewBackButtonVisibility([in] Windows.UI.Core.AppViewBackButtonVisibility value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Core.SystemNavigationManager),
+        uuid(DC52B5CE-BEE0-4305-8C54-68228ED683B5)
+    ]
+    interface ISystemNavigationManagerStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out] [retval] Windows.UI.Core.SystemNavigationManager** loader);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.Core.ISystemNavigationManagerStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass SystemNavigationManager
+    {
+        [default] interface Windows.UI.Core.ISystemNavigationManager;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ISystemNavigationManager2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
-    runtimeclass AcceleratorKeyEventArgs
+    runtimeclass BackRequestedEventArgs
     {
-        [default] interface Windows.UI.Core.IAcceleratorKeyEventArgs;
-        interface Windows.UI.Core.ICoreWindowEventArgs;
+        [default] interface Windows.UI.Core.IBackRequestedEventArgs;
     }
 
     [
@@ -638,24 +678,35 @@ namespace Windows.UI.Core {
     {
         [default] interface Windows.UI.Core.ICoreDispatcher;
         interface Windows.UI.Core.ICoreAcceleratorKeys;
-        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcherWithTaskPriority; */
-        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcher2; */
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcherWithTaskPriority;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreDispatcher2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.Core.CoreWindow),
+        uuid(9ac40241-3575-4c3b-af66-e8c529d4d06c)
+    ]
+    interface ICoreWindowWithContext : IInspectable
+    {
+        [propget] HRESULT UIContext([out] [retval] Windows.UI.UIContext** value);
     }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(standard),
+        threading(both),
         static(Windows.UI.Core.ICoreWindowStatic, Windows.Foundation.UniversalApiContract, 1.0)
     ]
     runtimeclass CoreWindow
     {
         [default] interface Windows.UI.Core.ICoreWindow;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.Core.ICoreWindow2;
-        /* [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.UI.Core.ICorePointerRedirector; */
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.UI.Core.ICorePointerRedirector;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.UI.Core.ICoreWindow3;
         [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.Core.ICoreWindow4;
         [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.UI.Core.ICoreWindow5;
-        /* [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Core.ICoreWindowWithContext; */
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.UI.Core.ICoreWindowWithContext;
     }
 
     [

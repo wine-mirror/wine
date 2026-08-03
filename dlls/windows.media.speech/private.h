@@ -33,7 +33,6 @@
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
-#define WIDL_using_Windows_Storage_Streams
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Globalization
 #include "windows.globalization.h"
@@ -43,8 +42,6 @@
 #include "windows.media.speechrecognition.h"
 
 #include "wine/list.h"
-
-#include "async_private.h"
 
 /*
  *
@@ -73,8 +70,11 @@ struct vector_iids
     const GUID *view;
 };
 
-HRESULT async_action_create( IUnknown *invoker, async_operation_callback callback, IAsyncAction **out );
-HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+typedef HRESULT (*async_action_callback)( IInspectable *invoker );
+typedef HRESULT (*async_operation_inspectable_callback)( IInspectable *invoker, IInspectable **result );
+
+HRESULT async_action_create( IInspectable *invoker, async_action_callback callback, IAsyncAction **out );
+HRESULT async_operation_inspectable_create( const GUID *iid, IInspectable *invoker, async_operation_inspectable_callback callback,
                                             IAsyncOperation_IInspectable **out );
 
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );

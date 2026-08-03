@@ -1056,7 +1056,7 @@ AllocSLCallback(
 
 	*(DWORD*)(thunk+18) = GetCurrentProcessId();
 
-	sel = SELECTOR_AllocBlock( thunk, 32, code16_segment );
+	sel = SELECTOR_AllocBlock( thunk, 32, LDT_FLAGS_CODE );
 	return (sel<<16)|0;
 }
 
@@ -1545,7 +1545,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
  * 16<->32 Thunklet/Callback API:
  */
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct _THUNKLET
 {
     BYTE        prefix_target;
@@ -1563,7 +1563,7 @@ typedef struct _THUNKLET
     HINSTANCE16 owner;
     struct _THUNKLET *next;
 } THUNKLET;
-#pragma pack(pop)
+#include "poppack.h"
 
 #define THUNKLET_TYPE_LS  1
 #define THUNKLET_TYPE_SL  2
@@ -1596,7 +1596,7 @@ static BOOL THUNK_Init(void)
     ThunkletHeap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0x10000, 0x10000 );
     if (!ThunkletHeap) return FALSE;
 
-    ThunkletCodeSel = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, code16_segment );
+    ThunkletCodeSel = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, LDT_FLAGS_CODE );
 
     thunk = HeapAlloc( ThunkletHeap, 0, 5 );
     if (!thunk) return FALSE;
@@ -2187,7 +2187,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
     if (!code_sel32)
     {
         if (!ThunkletHeap) THUNK_Init();
-        code_sel32 = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, code32_segment );
+        code_sel32 = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
         if (!code_sel32) return 0;
     }
     if (!(thunk = HeapAlloc( ThunkletHeap, 0, 32 ))) return 0;

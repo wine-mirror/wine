@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <windows.h>
+#include "wine/heap.h"
 #include "wine/test.h"
 
 /* undocumented SWP flags - from SDK 3.1 */
@@ -115,8 +116,8 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
     trace_(file, line)("Failed sequence %s:\n", context );
     while (expected->message && actual->message)
     {
-        trace_(file, line)( "  %u: expected: %04x id %u - actual: %04x wp %08Ix lp %08Ix id %u\n",
-                            count, expected->message, expected->id, actual->message, actual->wParam, actual->lParam, actual->id );
+        trace_(file, line)( "  %u: expected: %04x - actual: %04x wp %08Ix lp %08Ix\n",
+                            count, expected->message, actual->message, actual->wParam, actual->lParam );
 
 	if (expected->message == actual->message)
 	{
@@ -157,8 +158,8 @@ static void dump_sequence( struct msg_sequence **seq, int sequence_index,
 
     while (actual->message)
     {
-        trace_(file, line)( "  %u: expected: nothing - actual: %04x wp %08Ix lp %08Ix id %u\n",
-                            count, actual->message, actual->wParam, actual->lParam, actual->id );
+        trace_(file, line)( "  %u: expected: nothing - actual: %04x wp %08Ix lp %08Ix\n",
+                            count, actual->message, actual->wParam, actual->lParam );
         actual++;
         count++;
     }

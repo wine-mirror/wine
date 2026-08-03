@@ -1,0 +1,128 @@
+/*
+ * Copyright 2024 Onni Kukkonen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.storage.streams.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Devices.Enumeration.Pnp {
+    typedef enum PnpObjectType PnpObjectType;
+    interface IPnpObject;
+    interface IPnpObjectStatics;
+    interface IPnpObjectUpdate;
+    interface IPnpObjectWatcher;
+
+    runtimeclass PnpObject;
+    runtimeclass PnpObjectCollection;
+    runtimeclass PnpObjectUpdate;
+    runtimeclass PnpObjectWatcher;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.Collections.IVector<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Enumeration.Pnp.PnpObjectCollection*>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.Pnp.PnpObjectCollection*>;
+    }
+
+    [
+        exclusiveto(Windows.Devices.Enumeration.Pnp.PnpObject),
+        uuid(95c66258-733b-4a8f-93a3-db078ac870c1)
+    ]
+    interface IPnpObject : IInspectable
+    {
+        [propget] HRESULT Type([out, retval] Windows.Devices.Enumeration.Pnp.PnpObjectType* value);
+        [propget] HRESULT Id([out, retval] HSTRING* value);
+        [propget] HRESULT Properties([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, IInspectable*>** value);
+        HRESULT Update([in] Windows.Devices.Enumeration.Pnp.PnpObjectUpdate* updateInfo);
+    }
+
+    enum PnpObjectType
+    {
+        Unknown                      = 0,
+        DeviceInterface              = 1,
+        DeviceContainer              = 2,
+        Device                       = 3,
+        DeviceInterfaceClass         = 4,
+        AssociationEndpoint          = 5,
+        AssociationEndpointContainer = 6,
+        AssociationEndpointService   = 7
+    };
+
+    [
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PnpObjectUpdate
+    {
+        [default] interface Windows.Devices.Enumeration.Pnp.IPnpObjectUpdate;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PnpObjectWatcher
+    {
+        [default] interface Windows.Devices.Enumeration.Pnp.IPnpObjectWatcher;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Enumeration.Pnp.IPnpObjectStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass PnpObject
+    {
+        [default] interface Windows.Devices.Enumeration.Pnp.IPnpObject;
+    }
+    
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PnpObjectCollection
+    {
+        [default] interface Windows.Foundation.Collections.IVectorView<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Devices.Enumeration.Pnp.PnpObject*>;
+    }
+
+    [
+        exclusiveto(Windows.Devices.Enumeration.Pnp.PnpObject),
+        uuid(b3c32a3d-d168-4660-bbf3-a733b14b6e01)
+    ]
+    interface IPnpObjectStatics : IInspectable
+    {
+        HRESULT CreateFromIdAsync([in] Windows.Devices.Enumeration.Pnp.PnpObjectType type, [in] HSTRING id, [in] Windows.Foundation.Collections.IIterable<HSTRING>* requestedProperties, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.Pnp.PnpObject*>** asyncOp);
+        [overload("FindAllAsync")] HRESULT FindAllAsync([in] Windows.Devices.Enumeration.Pnp.PnpObjectType type, [in] Windows.Foundation.Collections.IIterable<HSTRING>* requestedProperties, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.Pnp.PnpObjectCollection*>** asyncOp);
+        [overload("FindAllAsync")] HRESULT FindAllAsyncAqsFilter([in] Windows.Devices.Enumeration.Pnp.PnpObjectType type, [in] Windows.Foundation.Collections.IIterable<HSTRING>* requestedProperties, [in] HSTRING aqsFilter, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Devices.Enumeration.Pnp.PnpObjectCollection*>** asyncOp);
+        [overload("CreateWatcher")] HRESULT CreateWatcher([in] Windows.Devices.Enumeration.Pnp.PnpObjectType type, [in] Windows.Foundation.Collections.IIterable<HSTRING>* requestedProperties, [out, retval] Windows.Devices.Enumeration.Pnp.PnpObjectWatcher** watcher);
+        [overload("CreateWatcher")] HRESULT CreateWatcherAqsFilter([in] Windows.Devices.Enumeration.Pnp.PnpObjectType type, [in] Windows.Foundation.Collections.IIterable<HSTRING>* requestedProperties, [in] HSTRING aqsFilter, [out, retval] Windows.Devices.Enumeration.Pnp.PnpObjectWatcher** watcher);
+    }
+}

@@ -1681,11 +1681,11 @@ static void child_process(HANDLE pipe)
                 crc.nLength = sizeof(crc);
                 crc.dwCtrlWakeupMask = req->u.control.mask;
                 crc.nInitialChars = wcslen(req->u.control.initial);
-                crc.dwControlKeyState = 0xa5;
+                crc.dwConsoleKeyState = 0xa5;
                 memcpy(ptr, req->u.control.initial, crc.nInitialChars * sizeof(WCHAR));
                 ret = ReadConsoleW(input, ptr, count, &count, &crc);
                 ok(ret, "ReadConsoleW failed: %lu\n", GetLastError());
-                *(DWORD *)result = crc.dwControlKeyState;
+                *(DWORD *)result = crc.dwConsoleKeyState;
                 ret = WriteFile(pipe, result, sizeof(DWORD) + count * sizeof(WCHAR), NULL, NULL);
                 ok(ret, "WriteFile failed: %lu\n", GetLastError());
             }
@@ -1764,10 +1764,11 @@ static void child_process(HANDLE pipe)
     CloseHandle(input);
 }
 
-static void run_child(HANDLE console, HANDLE pipe, PROCESS_INFORMATION *info)
+static HANDLE run_child(HANDLE console, HANDLE pipe)
 {
     STARTUPINFOEXA startup = {{ sizeof(startup) }};
     char **argv, cmdline[MAX_PATH];
+    PROCESS_INFORMATION info;
     SIZE_T size;
     BOOL ret;
 
@@ -1780,13 +1781,15 @@ static void run_child(HANDLE console, HANDLE pipe, PROCESS_INFORMATION *info)
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" %s child %p", argv[0], argv[1], pipe);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
-                         &startup.StartupInfo, info);
+                         &startup.StartupInfo, &info);
     ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
 
+    CloseHandle(info.hThread);
     HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
+    return info.hProcess;
 }
 
-static HPCON create_pseudo_console(HANDLE *console_pipe_end, PROCESS_INFORMATION *process_info)
+static HPCON create_pseudo_console(HANDLE *console_pipe_end, HANDLE *child_process)
 {
     SECURITY_ATTRIBUTES sec_attr = { sizeof(sec_attr), NULL, TRUE };
     HANDLE child_pipe_end;
@@ -1820,19 +1823,18 @@ static HPCON create_pseudo_console(HANDLE *console_pipe_end, PROCESS_INFORMATION
     hres = pCreatePseudoConsole(size, *console_pipe_end, *console_pipe_end, 0, &console);
     ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
 
-    run_child(console, child_pipe_end, process_info);
+    *child_process = run_child(console, child_pipe_end);
     CloseHandle(child_pipe_end);
     return console;
 }
 
 static void test_pseudoconsole(void)
 {
-    PROCESS_INFORMATION process_info;
-    HANDLE console_pipe_end;
+    HANDLE console_pipe_end, child_process;
     BOOL broken_version;
     HPCON console;
 
-    console = create_pseudo_console(&console_pipe_end, &process_info);
+    console = create_pseudo_console(&console_pipe_end, &child_process);
 
     child_string_request(REQ_SET_TITLE, L"test title");
     expect_output_sequence("\x1b[2J");   /* erase display */
@@ -1860,7 +1862,8 @@ static void test_pseudoconsole(void)
     else win_skip("Skipping tty tests on broken Windows version\n");
 
     CloseHandle(child_pipe);
-    wait_child_process(&process_info);
+    wait_child_process(child_process);
+    CloseHandle(child_process);
 
     /* native sometimes clears the screen here */
     if (skip_sequence("\x1b[25l"))

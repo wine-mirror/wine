@@ -1,15 +1,17 @@
 MODULE    = mscms.dll
 IMPORTLIB = mscms
-IMPORTS   = $(LCMS2_PE_LIBS) shlwapi advapi32
-EXTRAINCL = $(LCMS2_PE_CFLAGS)
+IMPORTS   = shlwapi advapi32
+EXTRAINCL = @LCMS2_CFLAGS@
+EXTRALIBS = @LCMS2_LIBS@
 
-VER_FILEDESCRIPTION_STR = "Wine Color Management System"
-
-SOURCES = \
+C_SRCS = \
 	handle.c \
 	icc.c \
 	mscms_main.c \
 	profile.c \
-	rsrc.rc \
 	stub.c \
 	transform.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@

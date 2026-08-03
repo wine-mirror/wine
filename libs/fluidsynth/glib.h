@@ -59,7 +59,6 @@ typedef struct
     HANDLE handle;
     GThreadFunc func;
     gpointer data;
-    gpointer result;
 } GThread;
 
 extern int g_vsnprintf( char *buffer, size_t size, const char *format, va_list args ) __WINE_CRT_PRINTF_ATTR(3, 0);
@@ -70,7 +69,7 @@ extern void g_usleep( unsigned int micros );
 
 extern GThread *g_thread_try_new( const char *name, GThreadFunc func, gpointer data, GError **err );
 extern void g_thread_unref( GThread *thread );
-extern gpointer g_thread_join( GThread *thread );
+extern void g_thread_join( GThread *thread );
 extern void g_clear_error( GError **error );
 
 #define G_FILE_TEST_EXISTS 1
@@ -78,11 +77,11 @@ extern void g_clear_error( GError **error );
 
 extern int g_file_test( const char *path, int test );
 
-#define g_new( type, count ) ((type *)calloc( (count), sizeof(type) ))
+#define g_new( type, count ) calloc( (count), sizeof(type) )
 static inline void g_free( void *ptr ) { free( ptr ); }
 
 typedef SRWLOCK GMutex;
-static inline void g_mutex_init( GMutex *mutex ) { InitializeSRWLock( mutex ); }
+static inline void g_mutex_init( GMutex *mutex ) {}
 static inline void g_mutex_clear( GMutex *mutex ) {}
 static inline void g_mutex_lock( GMutex *mutex ) { AcquireSRWLockExclusive( mutex ); }
 static inline void g_mutex_unlock( GMutex *mutex ) { ReleaseSRWLockExclusive( mutex ); }
@@ -94,15 +93,15 @@ static inline void g_rec_mutex_lock( GRecMutex *mutex ) { EnterCriticalSection( 
 static inline void g_rec_mutex_unlock( GRecMutex *mutex ) { LeaveCriticalSection( mutex ); }
 
 typedef CONDITION_VARIABLE GCond;
-static inline void g_cond_init( GCond *cond ) { InitializeConditionVariable( cond ); }
+static inline void g_cond_init( GCond *cond ) {}
 static inline void g_cond_clear( GCond *cond ) {}
 static inline void g_cond_signal( GCond *cond ) { WakeConditionVariable( cond ); }
 static inline void g_cond_broadcast( GCond *cond ) { WakeAllConditionVariable( cond ); }
 static inline void g_cond_wait( GCond *cond, GMutex *mutex ) { SleepConditionVariableSRW( cond, mutex, INFINITE, 0 ); }
 
 static inline void g_atomic_int_inc( int *ptr ) { InterlockedIncrement( (LONG *)ptr ); }
-static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedExchangeAdd( (LONG *)ptr, val ); }
-static inline int g_atomic_int_get( int *ptr ) { int value = ReadNoFence( (LONG *)ptr ); MemoryBarrier(); return value; }
+static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedAdd( (LONG *)ptr, val ) - 1; }
+static inline int g_atomic_int_get( int *ptr ) { return ReadAcquire( (LONG *)ptr ); }
 static inline void g_atomic_int_set( int *ptr, int val ) { InterlockedExchange( (LONG *)ptr, val ); }
-static inline int g_atomic_int_dec_and_test( int *ptr ) { return !InterlockedAdd( (LONG *)ptr, -1 ); }
+static inline int g_atomic_int_dec_and_test( int *ptr, int val ) { return !InterlockedAdd( (LONG *)ptr, -val ); }
 static inline int g_atomic_int_compare_and_exchange( int *ptr, int cmp, int val ) { return InterlockedCompareExchange( (LONG *)ptr, val, cmp ) == cmp; }

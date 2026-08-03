@@ -26,11 +26,6 @@
 #include "winbase.h"
 #include "objbase.h"
 
-#include "mfapi.h"
-#include "mferror.h"
-#include "mftransform.h"
-#include "wmcodecdsp.h"
-
 #include "sapiddk.h"
 #include "sperror.h"
 
@@ -48,19 +43,13 @@ struct speech_voice
     LONG ref;
 
     ISpStreamFormat *output;
-    IMFTransform *resampler;
-    BOOL allow_format_changes;
     ISpObjectToken *engine_token;
     ISpTTSEngine *engine;
     LONG cur_stream_num;
     DWORD actions;
     USHORT volume;
     LONG rate;
-    SPVSTATE state;
     struct async_queue queue;
-    ULONG last_stream_num;
-    HRESULT last_hr;
-    SPVPRIORITY priority;
     CRITICAL_SECTION cs;
 };
 
@@ -86,31 +75,11 @@ struct tts_engine_site
 
     struct speech_voice *voice;
     ULONG stream_num;
-    BOOL use_resampler;
-    IMFSample *out_sample;
-    IMFMediaBuffer *out_buf;
 };
 
 static inline struct tts_engine_site *impl_from_ISpTTSEngineSite(ISpTTSEngineSite *iface)
 {
     return CONTAINING_RECORD(iface, struct tts_engine_site, ISpTTSEngineSite_iface);
-}
-
-static const char *debugstr_wfx(const WAVEFORMATEX *wfx)
-{
-    if (!wfx) return "(null)";
-    if (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-    {
-        const WAVEFORMATEXTENSIBLE *wfxe = (const WAVEFORMATEXTENSIBLE *)wfx;
-
-        return wine_dbg_sprintf(
-                "tag: %#x (%s), ch: %u (mask: %#lx), rate: %lu, avgbps: %lu, align: %u, depth: %u",
-                wfx->wFormatTag, debugstr_guid(&wfxe->SubFormat), wfx->nChannels, wfxe->dwChannelMask,
-                wfx->nSamplesPerSec, wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
-    }
-    return wine_dbg_sprintf("tag: %#x, ch: %u, rate: %lu, avgbps: %lu, align: %u, depth: %u",
-                            wfx->wFormatTag, wfx->nChannels, wfx->nSamplesPerSec,
-                            wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
 }
 
 static HRESULT create_token_category(const WCHAR *cat_id, ISpObjectTokenCategory **cat)
@@ -200,7 +169,6 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
     {
         async_cancel_queue(&This->queue);
         if (This->output) ISpStreamFormat_Release(This->output);
-        if (This->resampler) IMFTransform_Release(This->resampler);
         if (This->engine_token) ISpObjectToken_Release(This->engine_token);
         if (This->engine) ISpTTSEngine_Release(This->engine);
         DeleteCriticalSection(&This->cs);
@@ -687,6 +655,9 @@ static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL all
 
     TRACE("(%p, %p, %d).\n", iface, unk, allow_format_changes);
 
+    if (!allow_format_changes)
+        FIXME("ignoring allow_format_changes = FALSE.\n");
+
     if (FAILED(hr = async_start_queue(&This->queue)))
         return hr;
 
@@ -719,8 +690,6 @@ static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL all
     if (This->output)
         ISpStreamFormat_Release(This->output);
     This->output = stream;
-
-    This->allow_format_changes = allow_format_changes;
 
     LeaveCriticalSection(&This->cs);
 
@@ -842,80 +811,16 @@ struct speak_task
     DWORD flags;
 };
 
-static void free_frag_list(SPVTEXTFRAG *frag)
-{
-    SPVTEXTFRAG *next;
-
-    while (frag)
-    {
-        next = frag->pNext;
-        free(frag);
-        frag = next;
-    }
-}
-
-static HRESULT setup_resampler(struct speech_voice *voice, const WAVEFORMATEX *in_wfx,
-        const WAVEFORMATEX *out_wfx)
-{
-    IMFMediaType *cur_in_type = NULL, *cur_out_type = NULL;
-    IMFMediaType *in_type = NULL, *out_type = NULL;
-    DWORD flags;
-    HRESULT hr;
-
-    TRACE("Resampling TTS engine output\n");
-    TRACE("  in_wfx:  %s\n", debugstr_wfx(in_wfx));
-    TRACE("to\n");
-    TRACE("  out_wfx: %s\n", debugstr_wfx(out_wfx));
-
-    if (!voice->resampler &&
-        FAILED(hr = CoCreateInstance(&CLSID_CResamplerMediaObject, NULL, CLSCTX_INPROC_SERVER,
-                                     &IID_IMFTransform, (void **)&voice->resampler)))
-    {
-        ERR("Failed to create CResamplerMediaObject: %#lx.\n", hr);
-        return hr;
-    }
-
-    if (FAILED(hr = MFCreateMediaType(&in_type)) ||
-        FAILED(hr = MFInitMediaTypeFromWaveFormatEx(in_type, in_wfx, sizeof(WAVEFORMATEX) + in_wfx->cbSize)))
-        goto done;
-
-    if (FAILED(hr = MFCreateMediaType(&out_type)) ||
-        FAILED(hr = MFInitMediaTypeFromWaveFormatEx(out_type, out_wfx, sizeof(WAVEFORMATEX) + out_wfx->cbSize)))
-        goto done;
-
-    if (FAILED(IMFTransform_GetInputCurrentType(voice->resampler, 0, &cur_in_type)) ||
-        IMFMediaType_IsEqual(cur_in_type, in_type, &flags) != S_OK)
-    {
-        if (FAILED(hr = IMFTransform_SetInputType(voice->resampler, 0, in_type, 0)))
-            goto done;
-    }
-
-    if (FAILED(IMFTransform_GetOutputCurrentType(voice->resampler, 0, &cur_out_type)) ||
-        IMFMediaType_IsEqual(cur_out_type, out_type, &flags) != S_OK)
-    {
-        if (FAILED(hr = IMFTransform_SetOutputType(voice->resampler, 0, out_type, 0)))
-            goto done;
-    }
-
-done:
-    if (in_type) IMFMediaType_Release(in_type);
-    if (out_type) IMFMediaType_Release(out_type);
-    if (cur_in_type) IMFMediaType_Release(cur_in_type);
-    if (cur_out_type) IMFMediaType_Release(cur_out_type);
-    return hr;
-}
-
-static HRESULT set_output_format(struct speech_voice *voice, GUID *fmtid, WAVEFORMATEX **engine_wfx,
-                                 BOOL *use_resampler)
+static HRESULT set_output_format(ISpStreamFormat *output, ISpTTSEngine *engine, GUID *fmtid, WAVEFORMATEX **wfx)
 {
     GUID output_fmtid;
     WAVEFORMATEX *output_wfx = NULL;
     ISpAudio *audio = NULL;
     HRESULT hr;
 
-    if (FAILED(hr = ISpStreamFormat_GetFormat(voice->output, &output_fmtid, &output_wfx)))
+    if (FAILED(hr = ISpStreamFormat_GetFormat(output, &output_fmtid, &output_wfx)))
         return hr;
-    if (FAILED(hr = ISpTTSEngine_GetOutputFormat(voice->engine, &output_fmtid, output_wfx, fmtid, engine_wfx)))
+    if (FAILED(hr = ISpTTSEngine_GetOutputFormat(engine, &output_fmtid, output_wfx, fmtid, wfx)))
         goto done;
     if (!IsEqualGUID(fmtid, &SPDFID_WaveFormatEx))
     {
@@ -923,23 +828,12 @@ static HRESULT set_output_format(struct speech_voice *voice, GUID *fmtid, WAVEFO
         goto done;
     }
 
-    *use_resampler = FALSE;
-
-    if (memcmp(output_wfx, *engine_wfx, sizeof(WAVEFORMATEX)) ||
-        memcmp(output_wfx + 1, *engine_wfx + 1, output_wfx->cbSize))
+    if (memcmp(output_wfx, *wfx, sizeof(WAVEFORMATEX)) ||
+        memcmp(output_wfx + 1, *wfx + 1, output_wfx->cbSize))
     {
-        if (voice->allow_format_changes &&
-            SUCCEEDED(ISpStreamFormat_QueryInterface(voice->output, &IID_ISpAudio, (void **)&audio)))
-        {
-            hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *engine_wfx);
-            if (hr == SPERR_UNSUPPORTED_FORMAT)
-                *use_resampler = TRUE;
-        }
-        else
-            *use_resampler = TRUE;
-
-        if (*use_resampler)
-            hr = setup_resampler(voice, *engine_wfx, output_wfx);
+        if (FAILED(hr = ISpStreamFormat_QueryInterface(output, &IID_ISpAudio, (void **)&audio)) ||
+            FAILED(hr = ISpAudio_SetFormat(audio, &SPDFID_WaveFormatEx, *wfx)))
+            goto done;
     }
 
 done:
@@ -952,7 +846,6 @@ static void speak_proc(struct async_task *task)
 {
     struct speak_task *speak_task = (struct speak_task *)task;
     struct speech_voice *This = speak_task->voice;
-    struct tts_engine_site *site = impl_from_ISpTTSEngineSite(speak_task->site);
     GUID fmtid;
     WAVEFORMATEX *wfx = NULL;
     ISpAudio *audio = NULL;
@@ -962,11 +855,6 @@ static void speak_proc(struct async_task *task)
 
     EnterCriticalSection(&This->cs);
 
-    /* Update ulCurrentStream tracking now, before doing any work — per MSDN
-     * SPVOICESTATUS.ulCurrentStream reports the stream currently being
-     * processed, and sticks at the last processed value once idle. */
-    This->last_stream_num = site->stream_num;
-
     if (This->actions & SPVES_ABORT)
     {
         LeaveCriticalSection(&This->cs);
@@ -974,7 +862,7 @@ static void speak_proc(struct async_task *task)
         goto done;
     }
 
-    if (FAILED(hr = set_output_format(This, &fmtid, &wfx, &site->use_resampler)))
+    if (FAILED(hr = set_output_format(This->output, This->engine, &fmtid, &wfx)))
     {
         LeaveCriticalSection(&This->cs);
         ERR("failed setting output format: %#lx.\n", hr);
@@ -1005,11 +893,8 @@ done:
         ISpAudio_Release(audio);
     }
     CoTaskMemFree(wfx);
-    EnterCriticalSection(&This->cs);
-    This->last_hr = hr;
-    LeaveCriticalSection(&This->cs);
     ISpTTSEngine_Release(speak_task->engine);
-    free_frag_list(speak_task->frag_list);
+    free(speak_task->frag_list);
     ISpTTSEngineSite_Release(speak_task->site);
 
     if (speak_task->result)
@@ -1026,52 +911,23 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     struct speech_voice *This = impl_from_ISpVoice(iface);
     ISpTTSEngineSite *site = NULL;
     ISpTTSEngine *engine = NULL;
-    SPVTEXTFRAG *frag_list;
-    BOOL async, purge, persist_xml;
-    DWORD parse_flag, nlp_flags;
-    BOOL xml;
+    SPVTEXTFRAG *frag;
     struct speak_task *speak_task = NULL;
     struct async_result *result = NULL;
-    size_t contents_len;
+    size_t contents_len, contents_size;
     ULONG stream_num;
     HRESULT hr;
 
     TRACE("(%p, %p, %#lx, %p).\n", iface, contents, flags, stream_num_out);
 
-    async = flags & SPF_ASYNC;
-    purge = flags & SPF_PURGEBEFORESPEAK;
-    persist_xml = flags & SPF_PERSIST_XML;
-    parse_flag = flags & SPF_PARSE_MASK;
-    nlp_flags = flags & SPF_NLP_MASK;
-
-    xml = FALSE;
-    if ((flags & SPF_IS_XML) && (flags & SPF_IS_NOT_XML))
-        return E_INVALIDARG;
-    else if (flags & SPF_IS_XML)
-        xml = TRUE;
-    else if (!(flags & SPF_IS_NOT_XML))
+    flags &= ~SPF_IS_NOT_XML;
+    if (flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC))
     {
-        if (contents)
-        {
-            const WCHAR *c = contents;
-
-            while (*c && isxmlspace(*c)) c++;
-            xml = *c == '<';
-        }
-    }
-
-    if (parse_flag == SPF_PARSE_MASK)
-        return E_INVALIDARG;
-
-    flags &= ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_IS_XML | SPF_IS_NOT_XML | SPF_PERSIST_XML |
-               SPF_PARSE_MASK | SPF_NLP_MASK);
-    if (flags)
-    {
-        FIXME("flags %#lx not implemented.\n", flags);
+        FIXME("flags %#lx not implemented.\n", flags & ~(SPF_ASYNC | SPF_PURGEBEFORESPEAK | SPF_NLP_SPEAK_PUNC));
         return E_NOTIMPL;
     }
 
-    if (purge)
+    if (flags & SPF_PURGEBEFORESPEAK)
     {
         ISpAudio *audio;
 
@@ -1098,33 +954,14 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     else if (!contents)
         return E_POINTER;
 
+    contents_len = wcslen(contents);
+    contents_size = sizeof(WCHAR) * (contents_len + 1);
+
     if (!This->output)
     {
         /* Create a new output stream with the default output. */
         if (FAILED(hr = ISpVoice_SetOutput(iface, NULL, TRUE)))
             return hr;
-    }
-
-    if (xml)
-    {
-        if (FAILED(hr = parse_sapi_xml(contents, parse_flag, persist_xml, &This->state, &frag_list)))
-            return hr;
-    }
-    else
-    {
-        contents_len = wcslen(contents);
-
-        if (!(frag_list = malloc(sizeof(*frag_list) + (contents_len + 1) * sizeof(WCHAR))))
-            return E_OUTOFMEMORY;
-
-        memcpy(frag_list + 1, contents, (contents_len + 1) * sizeof(WCHAR));
-        memcpy(&frag_list->State, &This->state, sizeof(This->state));
-
-        frag_list->pNext           = NULL;
-        frag_list->State.eAction   = SPVA_Speak;
-        frag_list->pTextStart      = (WCHAR *)(frag_list + 1);
-        frag_list->ulTextLen       = contents_len;
-        frag_list->ulTextSrcOffset = 0;
     }
 
     EnterCriticalSection(&This->cs);
@@ -1135,21 +972,30 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         if (FAILED(hr = ISpVoice_SetVoice(iface, NULL)))
         {
             LeaveCriticalSection(&This->cs);
-            goto fail;
+            return hr;
         }
     }
-
     if (!This->engine &&
         FAILED(hr = ISpObjectToken_CreateInstance(This->engine_token, NULL, CLSCTX_ALL, &IID_ISpTTSEngine, (void **)&This->engine)))
     {
         LeaveCriticalSection(&This->cs);
         ERR("Failed to create engine: %#lx.\n", hr);
-        goto fail;
+        return hr;
     }
     engine = This->engine;
     ISpTTSEngine_AddRef(engine);
 
     LeaveCriticalSection(&This->cs);
+
+    if (!(frag = malloc(sizeof(*frag) + contents_size)))
+        return E_OUTOFMEMORY;
+    memset(frag, 0, sizeof(*frag));
+    memcpy(frag + 1, contents, contents_size);
+    frag->State.eAction = SPVA_Speak;
+    frag->State.Volume  = 100;
+    frag->pTextStart    = (WCHAR *)(frag + 1);
+    frag->ulTextLen     = contents_len;
+    frag->ulTextSrcOffset = 0;
 
     stream_num = InterlockedIncrement(&This->cur_stream_num);
     if (FAILED(hr = ttsenginesite_create(This, stream_num, &site)))
@@ -1164,11 +1010,11 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     speak_task->result    = NULL;
     speak_task->voice     = This;
     speak_task->engine    = engine;
-    speak_task->frag_list = frag_list;
+    speak_task->frag_list = frag;
     speak_task->site      = site;
-    speak_task->flags     = nlp_flags;
+    speak_task->flags     = flags & SPF_NLP_SPEAK_PUNC;
 
-    if (!async)
+    if (!(flags & SPF_ASYNC))
     {
         if (!(result = malloc(sizeof(*result))))
         {
@@ -1189,7 +1035,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
     if (stream_num_out)
         *stream_num_out = stream_num;
 
-    if (async)
+    if (flags & SPF_ASYNC)
         return S_OK;
     else
     {
@@ -1203,7 +1049,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
 fail:
     if (site) ISpTTSEngineSite_Release(site);
     if (engine) ISpTTSEngine_Release(engine);
-    free_frag_list(frag_list);
+    free(frag);
     free(speak_task);
     if (result)
     {
@@ -1222,26 +1068,14 @@ static HRESULT WINAPI spvoice_SpeakStream(ISpVoice *iface, IStream *stream, DWOR
 
 static HRESULT WINAPI spvoice_GetStatus(ISpVoice *iface, SPVOICESTATUS *status, WCHAR **bookmark)
 {
-    struct speech_voice *This = impl_from_ISpVoice(iface);
+    static unsigned int once;
 
-    TRACE("(%p, %p, %p).\n", iface, status, bookmark);
+    if (!once++)
+        FIXME("(%p, %p, %p): stub.\n", iface, status, bookmark);
+    else
+        WARN("(%p, %p, %p): stub.\n", iface, status, bookmark);
 
-    if (bookmark) *bookmark = NULL;
-
-    /* Windows accepts a NULL status pointer as a no-op returning S_OK. */
-    if (!status) return S_OK;
-
-    memset(status, 0, sizeof(*status));
-
-    EnterCriticalSection(&This->cs);
-    status->ulCurrentStream    = This->last_stream_num;
-    status->ulLastStreamQueued = This->cur_stream_num;
-    status->hrLastResult       = This->last_hr;
-    status->dwRunningState     = (async_wait_queue_empty(&This->queue, 0) == WAIT_OBJECT_0) ?
-                                 SPRS_DONE : SPRS_IS_SPEAKING;
-    LeaveCriticalSection(&This->cs);
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spvoice_Skip(ISpVoice *iface, const WCHAR *type, LONG items, ULONG *skipped)
@@ -1253,33 +1087,16 @@ static HRESULT WINAPI spvoice_Skip(ISpVoice *iface, const WCHAR *type, LONG item
 
 static HRESULT WINAPI spvoice_SetPriority(ISpVoice *iface, SPVPRIORITY priority)
 {
-    struct speech_voice *This = impl_from_ISpVoice(iface);
+    FIXME("(%p, %d): stub.\n", iface, priority);
 
-    TRACE("(%p, %d).\n", iface, priority);
-
-    if (priority != SPVPRI_NORMAL && priority != SPVPRI_ALERT && priority != SPVPRI_OVER)
-        return E_INVALIDARG;
-
-    EnterCriticalSection(&This->cs);
-    This->priority = priority;
-    LeaveCriticalSection(&This->cs);
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spvoice_GetPriority(ISpVoice *iface, SPVPRIORITY *priority)
 {
-    struct speech_voice *This = impl_from_ISpVoice(iface);
+    FIXME("(%p, %p): stub.\n", iface, priority);
 
-    TRACE("(%p, %p).\n", iface, priority);
-
-    if (!priority) return E_POINTER;
-
-    EnterCriticalSection(&This->cs);
-    *priority = This->priority;
-    LeaveCriticalSection(&This->cs);
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI spvoice_SetAlertBoundary(ISpVoice *iface, SPEVENTENUM boundary)
@@ -1487,9 +1304,8 @@ static ULONG WINAPI ttsenginesite_Release(ISpTTSEngineSite *iface)
 
     if (!ref)
     {
-        if (This->voice) ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
-        if (This->out_sample) IMFSample_Release(This->out_sample);
-        if (This->out_buf) IMFMediaBuffer_Release(This->out_buf);
+        if (This->voice)
+            ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
         free(This);
     }
 
@@ -1524,69 +1340,6 @@ static DWORD WINAPI ttsenginesite_GetActions(ISpTTSEngineSite *iface)
     return actions;
 }
 
-static HRESULT resample_engine_output(struct tts_engine_site *This, const void *buf, ULONG cb, ULONG *cb_written)
-{
-    MFT_OUTPUT_DATA_BUFFER mft_buf;
-    IMFMediaBuffer *in_buf = NULL;
-    IMFSample *in_sample = NULL;
-    BYTE *in_data, *out_data;
-    DWORD out_len;
-    DWORD status;
-    HRESULT hr;
-
-    if (FAILED(hr = MFCreateSample(&in_sample)) ||
-        FAILED(hr = MFCreateMemoryBuffer(cb, &in_buf)) ||
-        FAILED(hr = IMFSample_AddBuffer(in_sample, in_buf)))
-        goto done;
-
-    if (!This->out_sample)
-    {
-        if (FAILED(hr = MFCreateSample(&This->out_sample)) ||
-            FAILED(hr = MFCreateMemoryBuffer(16384, &This->out_buf)) ||
-            FAILED(hr = IMFSample_AddBuffer(This->out_sample, This->out_buf)))
-            goto done;
-    }
-
-    if (FAILED(hr = IMFMediaBuffer_Lock(in_buf, &in_data, NULL, NULL)))
-        goto done;
-    memcpy(in_data, buf, cb);
-    IMFMediaBuffer_Unlock(in_buf);
-
-    IMFMediaBuffer_SetCurrentLength(in_buf, cb);
-
-    if (FAILED(hr = IMFTransform_ProcessInput(This->voice->resampler, 0, in_sample, 0)))
-        goto done;
-
-    while (SUCCEEDED(hr))
-    {
-        memset(&mft_buf, 0, sizeof(mft_buf));
-        mft_buf.pSample = This->out_sample;
-
-        if (FAILED(hr = IMFTransform_ProcessOutput(This->voice->resampler, 0, 1, &mft_buf, &status)))
-        {
-            if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
-                hr = S_OK;
-            break;
-        }
-
-        if (FAILED(hr = IMFMediaBuffer_GetCurrentLength(This->out_buf, &out_len)) ||
-            FAILED(hr = IMFMediaBuffer_Lock(This->out_buf, &out_data, NULL, NULL)))
-            break;
-
-        hr = ISpStreamFormat_Write(This->voice->output, out_data, out_len, NULL);
-        IMFMediaBuffer_Unlock(This->out_buf);
-    }
-
-done:
-    if (in_sample) IMFSample_Release(in_sample);
-    if (in_buf) IMFMediaBuffer_Release(in_buf);
-
-    if (cb_written)
-        *cb_written = SUCCEEDED(hr) ? cb : 0;
-
-    return hr;
-}
-
 static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *buf, ULONG cb, ULONG *cb_written)
 {
     struct tts_engine_site *This = impl_from_ISpTTSEngineSite(iface);
@@ -1595,9 +1348,6 @@ static HRESULT WINAPI ttsenginesite_Write(ISpTTSEngineSite *iface, const void *b
 
     if (!This->voice->output)
         return SPERR_UNINITIALIZED;
-
-    if (This->use_resampler)
-        return resample_engine_output(This, buf, cb, cb_written);
 
     return ISpStreamFormat_Write(This->voice->output, buf, cb, cb_written);
 }
@@ -1670,9 +1420,6 @@ static HRESULT ttsenginesite_create(struct speech_voice *voice, ULONG stream_num
     This->ref = 1;
     This->voice = voice;
     This->stream_num = stream_num;
-    This->use_resampler = FALSE;
-    This->out_sample = NULL;
-    This->out_buf = NULL;
 
     ISpeechVoice_AddRef(&This->voice->ISpeechVoice_iface);
 
@@ -1746,21 +1493,12 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     This->ref = 1;
 
     This->output = NULL;
-    This->resampler = NULL;
-    This->allow_format_changes = TRUE;
     This->engine_token = NULL;
     This->engine = NULL;
     This->cur_stream_num = 0;
     This->actions = SPVES_CONTINUE;
     This->volume = 100;
     This->rate = 0;
-    This->last_stream_num = 0;
-    This->last_hr = S_OK;
-    This->priority = SPVPRI_NORMAL;
-
-    memset(&This->state, 0, sizeof(This->state));
-    This->state.Volume = 100;
-
     memset(&This->queue, 0, sizeof(This->queue));
 
     InitializeCriticalSection(&This->cs);

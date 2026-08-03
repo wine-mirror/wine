@@ -1,0 +1,7 @@
+MODULE  = windows.graphics.display.dll
+IMPORTS = combase
+
+SOURCES = \
+	displayinformation.c \
+	classes.idl \
+	main.c

@@ -2,8 +2,7 @@
 @ stub DbgHelpCreateUserDumpW
 @ stdcall EnumDirTree(long str str ptr ptr ptr)
 @ stdcall EnumDirTreeW(long wstr wstr ptr ptr ptr)
-@ stdcall -arch=win32 EnumerateLoadedModules(long ptr ptr)
-@ stdcall -arch=win64 EnumerateLoadedModules(long ptr ptr) EnumerateLoadedModules64
+@ stdcall EnumerateLoadedModules(long ptr ptr)
 @ stdcall EnumerateLoadedModules64(long ptr ptr)
 @ stdcall EnumerateLoadedModulesEx(long ptr ptr) EnumerateLoadedModules64
 @ stdcall EnumerateLoadedModulesExW(long ptr ptr) EnumerateLoadedModulesW64
@@ -31,8 +30,7 @@
 @ stdcall MiniDumpWriteDump(ptr long ptr long ptr ptr ptr)
 @ stdcall SearchTreeForFile(str str ptr)
 @ stdcall SearchTreeForFileW(wstr wstr ptr)
-@ stdcall -arch=win32 StackWalk(long long long ptr ptr ptr ptr ptr ptr)
-@ stdcall -arch=win64 StackWalk(long long long ptr ptr ptr ptr ptr ptr) StackWalk64
+@ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalkEx(long long long ptr ptr ptr ptr ptr ptr long)
 @ stub SymAddSourceStream
@@ -62,12 +60,10 @@
 @ stdcall SymEnumTypesByName(ptr int64 str ptr ptr)
 @ stdcall SymEnumTypesByNameW(ptr int64 wstr ptr ptr)
 @ stdcall SymEnumTypesW(ptr int64 ptr ptr)
-@ stdcall -arch=win32 SymEnumerateModules(long ptr ptr)
-@ stdcall -arch=win64 SymEnumerateModules(long ptr ptr) SymEnumerateModules64
+@ stdcall SymEnumerateModules(long ptr ptr)
 @ stdcall SymEnumerateModules64(long ptr ptr)
 @ stdcall SymEnumerateModulesW64(long ptr ptr)
-@ stdcall -arch=win32 SymEnumerateSymbols(long long ptr ptr)
-@ stdcall -arch=win64 SymEnumerateSymbols(long int64 ptr ptr) SymEnumerateSymbols64
+@ stdcall SymEnumerateSymbols(long long ptr ptr)
 @ stdcall SymEnumerateSymbols64(long int64 ptr ptr)
 @ stub SymEnumerateSymbolsW
 @ stub SymEnumerateSymbolsW64
@@ -87,40 +83,31 @@
 @ stdcall SymFromNameW(long wstr ptr)
 @ stub SymFromToken
 @ stub SymFromTokenW
-@ stdcall -arch=win32 SymFunctionTableAccess(long long)
-@ stdcall -arch=win64 SymFunctionTableAccess(long int64) SymFunctionTableAccess64
+@ stdcall SymFunctionTableAccess(long long)
 @ stdcall SymFunctionTableAccess64(long int64)
 @ stub SymGetFileLineOffsets64
 @ stub SymGetHomeDirectory
 @ stub SymGetHomeDirectoryW
 @ stdcall SymGetExtendedOption(long)
-@ stdcall -arch=win32 SymGetLineFromAddr(long long ptr ptr)
-@ stdcall -arch=win64 SymGetLineFromAddr(long int64 ptr ptr) SymGetLineFromAddr64
+@ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long int64 ptr ptr)
-@ stub SymGetLineFromAddrW
 @ stdcall SymGetLineFromAddrW64(long int64 ptr ptr)
 @ stdcall SymGetLineFromInlineContext(long int64 long int64 ptr ptr)
 @ stdcall SymGetLineFromInlineContextW(long int64 long int64 ptr ptr)
-@ stdcall -arch=win32 SymGetLineFromName(long str str long ptr ptr)
-@ stdcall -arch=win64 SymGetLineFromName(long str str long ptr ptr) SymGetLineFromName64
+@ stdcall SymGetLineFromName(long str str long ptr ptr)
 @ stdcall SymGetLineFromName64(long str str long ptr ptr)
 @ stdcall SymGetLineFromNameW64(long wstr wstr long ptr ptr)
-@ stdcall -arch=win32 SymGetLineNext(long ptr)
-@ stdcall -arch=win64 SymGetLineNext(long ptr) SymGetLineNext64
+@ stdcall SymGetLineNext(long ptr)
 @ stdcall SymGetLineNext64(long ptr)
 @ stdcall SymGetLineNextW64(long ptr)
-@ stdcall -arch=win32 SymGetLinePrev(long ptr)
-@ stdcall -arch=win64 SymGetLinePrev(long ptr) SymGetLinePrev64
+@ stdcall SymGetLinePrev(long ptr)
 @ stdcall SymGetLinePrev64(long ptr)
 @ stdcall SymGetLinePrevW64(long ptr)
-@ stdcall -arch=win32 SymGetModuleBase(long long)
-@ stdcall -arch=win64 SymGetModuleBase(long int64) SymGetModuleBase64
+@ stdcall SymGetModuleBase(long long)
 @ stdcall SymGetModuleBase64(long int64)
-@ stdcall -arch=win32 SymGetModuleInfo(long ptr ptr)
-@ stdcall -arch=win64 SymGetModuleInfo(long int64 ptr) SymGetModuleInfo64
+@ stdcall SymGetModuleInfo(long long ptr)
 @ stdcall SymGetModuleInfo64(long int64 ptr)
-@ stdcall -arch=win32 SymGetModuleInfoW(long long ptr)
-@ stdcall -arch=win64 SymGetModuleInfoW(long int64 ptr) SymGetModuleInfoW64
+@ stdcall SymGetModuleInfoW(long long ptr)
 @ stdcall SymGetModuleInfoW64(long int64 ptr)
 @ stub SymGetOmapBlockBase
 @ stdcall SymGetOptions()
@@ -136,17 +123,13 @@
 @ stub SymGetSourceFileW
 @ stub SymGetSourceVarFromToken
 @ stub SymGetSourceVarFromTokenW
-@ stdcall -arch=win32 SymGetSymFromAddr(long long ptr ptr)
-@ stdcall -arch=win64 SymGetSymFromAddr(long int64 ptr ptr) SymGetSymFromAddr64
+@ stdcall SymGetSymFromAddr(long long ptr ptr)
 @ stdcall SymGetSymFromAddr64(long int64 ptr ptr)
-@ stdcall -arch=win32 SymGetSymFromName(long str ptr)
-@ stdcall -arch=win64 SymGetSymFromName(long str ptr) SymGetSymFromName64
+@ stdcall SymGetSymFromName(long str ptr)
 @ stdcall SymGetSymFromName64(long str ptr)
-@ stdcall -arch=win32 SymGetSymNext(long ptr)
-@ stdcall -arch=win64 SymGetSymNext(long ptr) SymGetSymNext64
+@ stdcall SymGetSymNext(long ptr)
 @ stdcall SymGetSymNext64(long ptr)
-@ stdcall -arch=win32 SymGetSymPrev(long ptr)
-@ stdcall -arch=win64 SymGetSymPrev(long ptr) SymGetSymPrev64
+@ stdcall SymGetSymPrev(long ptr)
 @ stdcall SymGetSymPrev64(long ptr)
 @ stub SymGetSymbolFile
 @ stub SymGetSymbolFileW
@@ -157,8 +140,7 @@
 @ stub SymGetUnwindInfo
 @ stdcall SymInitialize(long str long)
 @ stdcall SymInitializeW(long wstr long)
-@ stdcall -arch=win32 SymLoadModule(long long str str long long)
-@ stdcall -arch=win64 SymLoadModule(long long str str int64 long) SymLoadModule64
+@ stdcall SymLoadModule(long long str str long long)
 @ stdcall SymLoadModule64(long long str str int64 long)
 @ stdcall SymLoadModuleEx(long long str str int64 long ptr long)
 @ stdcall SymLoadModuleExW(long long wstr wstr int64 long ptr long)
@@ -173,12 +155,10 @@
 @ stub SymPrevW
 @ stdcall SymQueryInlineTrace(long int64 long int64 int64 ptr ptr)
 @ stdcall SymRefreshModuleList(long)
-@ stdcall -arch=win32 SymRegisterCallback(long ptr ptr)
-@ stdcall -arch=win64 SymRegisterCallback(long ptr ptr) SymRegisterCallback64
+@ stdcall SymRegisterCallback(long ptr ptr)
 @ stdcall SymRegisterCallback64(long ptr int64)
 @ stdcall SymRegisterCallbackW64(long ptr int64)
-@ stdcall -arch=win32 SymRegisterFunctionEntryCallback(long ptr ptr)
-@ stdcall -arch=win64 SymRegisterFunctionEntryCallback(long ptr ptr) SymRegisterFunctionEntryCallback64
+@ stdcall SymRegisterFunctionEntryCallback(ptr ptr ptr)
 @ stdcall SymRegisterFunctionEntryCallback64(ptr ptr int64)
 @ stdcall SymSearch(long int64 long long str int64 ptr ptr long)
 @ stdcall SymSearchW(long int64 long long wstr int64 ptr ptr long)
@@ -211,11 +191,9 @@
 @ stub SymSrvStoreSupplementW
 # @ stub SymSetSymWithAddr64 no longer present ??
 @ stub SymSetSymWithAddr64
-@ stdcall -arch=win32 SymUnDName(ptr str long)
-@ stdcall -arch=win64 SymUnDName(ptr str long) SymUnDName64
+@ stdcall SymUnDName(ptr str long)
 @ stdcall SymUnDName64(ptr str long)
-@ stdcall -arch=win32 SymUnloadModule(long long)
-@ stdcall -arch=win64 SymUnloadModule(long int64) SymUnloadModule64
+@ stdcall SymUnloadModule(long long)
 @ stdcall SymUnloadModule64(long int64)
 @ stdcall UnDecorateSymbolName(str ptr long long)
 @ stdcall UnDecorateSymbolNameW(wstr ptr long long)

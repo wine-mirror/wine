@@ -1,0 +1,9 @@
+MODULE    = libdxguid.a
+
+C_SRCS = \
+	dx10guid.c \
+	dx8guid.c \
+	dx9guid.c \
+	dxguid.c
+
+@MAKE_IMPLIB_RULES@

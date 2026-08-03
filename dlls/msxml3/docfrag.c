@@ -21,6 +21,8 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -34,55 +36,51 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-typedef struct _docfrag
+typedef struct _domfrag
 {
-    DispatchEx dispex;
+    xmlnode node;
     IXMLDOMDocumentFragment IXMLDOMDocumentFragment_iface;
-    LONG refcount;
-    struct domnode *node;
-} docfrag;
+    LONG ref;
+} domfrag;
 
-static const tid_t docfrag_se_tids[] =
-{
+static const tid_t domfrag_se_tids[] = {
     IXMLDOMNode_tid,
     IXMLDOMDocumentFragment_tid,
     NULL_tid
 };
 
-static inline docfrag *impl_from_IXMLDOMDocumentFragment( IXMLDOMDocumentFragment *iface )
+static inline domfrag *impl_from_IXMLDOMDocumentFragment( IXMLDOMDocumentFragment *iface )
 {
-    return CONTAINING_RECORD(iface, docfrag, IXMLDOMDocumentFragment_iface);
+    return CONTAINING_RECORD(iface, domfrag, IXMLDOMDocumentFragment_iface);
 }
 
-static HRESULT WINAPI docfrag_QueryInterface(IXMLDOMDocumentFragment *iface, REFIID riid, void **obj)
+static HRESULT WINAPI domfrag_QueryInterface(
+    IXMLDOMDocumentFragment *iface,
+    REFIID riid,
+    void** ppvObject )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
-
-    if (IsEqualGUID( riid, &IID_IXMLDOMDocumentFragment) ||
-        IsEqualGUID( riid, &IID_IXMLDOMNode) ||
-        IsEqualGUID( riid, &IID_IDispatch) ||
-        IsEqualGUID( riid, &IID_IUnknown))
+    if ( IsEqualGUID( riid, &IID_IXMLDOMDocumentFragment ) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
     {
-        *obj = iface;
+        *ppvObject = iface;
     }
-    else if (dispex_query_interface(&docfrag->dispex, riid, obj))
+    else if(node_query_interface(&This->node, riid, ppvObject))
     {
-        return *obj ? S_OK : E_NOINTERFACE;
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
-    else if (node_query_interface(docfrag->node, riid, obj))
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
-        return *obj ? S_OK : E_NOINTERFACE;
-    }
-    else if (IsEqualGUID(riid, &IID_ISupportErrorInfo))
-    {
-        return node_create_supporterrorinfo(docfrag_se_tids, obj);
+        return node_create_supporterrorinfo(domfrag_se_tids, ppvObject);
     }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
-        *obj = NULL;
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
@@ -90,433 +88,503 @@ static HRESULT WINAPI docfrag_QueryInterface(IXMLDOMDocumentFragment *iface, REF
     return S_OK;
 }
 
-static ULONG WINAPI docfrag_AddRef(IXMLDOMDocumentFragment *iface)
+static ULONG WINAPI domfrag_AddRef(IXMLDOMDocumentFragment *iface)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    ULONG refcount = InterlockedIncrement(&docfrag->refcount);
-
-    TRACE("%p, refcount %lu.\n", iface, refcount);
-
-    return refcount;
+    domfrag *domfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    ULONG ref = InterlockedIncrement(&domfrag->ref);
+    TRACE("%p, refcount %lu.\n", iface, ref);
+    return ref;
 }
 
-static ULONG WINAPI docfrag_Release(IXMLDOMDocumentFragment *iface)
+static ULONG WINAPI domfrag_Release(IXMLDOMDocumentFragment *iface)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    ULONG refcount = InterlockedDecrement(&docfrag->refcount);
+    domfrag *domfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    ULONG ref = InterlockedDecrement(&domfrag->ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %lu.\n", iface, ref);
 
-    if (!refcount)
+    if (!ref)
     {
-        domnode_release(docfrag->node);
-        free(docfrag);
+        destroy_xmlnode(&domfrag->node);
+        free(domfrag);
     }
 
-    return refcount;
+    return ref;
 }
 
-static HRESULT WINAPI docfrag_GetTypeInfoCount(IXMLDOMDocumentFragment *iface, UINT *count)
+static HRESULT WINAPI domfrag_GetTypeInfoCount(
+    IXMLDOMDocumentFragment *iface,
+    UINT* pctinfo )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    return IDispatchEx_GetTypeInfoCount(&docfrag->dispex.IDispatchEx_iface, count);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
 }
 
-static HRESULT WINAPI docfrag_GetTypeInfo(IXMLDOMDocumentFragment *iface, UINT index, LCID lcid, ITypeInfo **ti)
+static HRESULT WINAPI domfrag_GetTypeInfo(
+    IXMLDOMDocumentFragment *iface,
+    UINT iTInfo, LCID lcid,
+    ITypeInfo** ppTInfo )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    return IDispatchEx_GetTypeInfo(&docfrag->dispex.IDispatchEx_iface, index, lcid, ti);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
-static HRESULT WINAPI docfrag_GetIDsOfNames(IXMLDOMDocumentFragment *iface, REFIID riid,
-    LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+static HRESULT WINAPI domfrag_GetIDsOfNames(
+    IXMLDOMDocumentFragment *iface,
+    REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    return IDispatchEx_GetIDsOfNames(&docfrag->dispex.IDispatchEx_iface,
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface,
         riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI docfrag_Invoke(IXMLDOMDocumentFragment *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *puArgErr)
+static HRESULT WINAPI domfrag_Invoke(
+    IXMLDOMDocumentFragment *iface,
+    DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
+    EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-    return IDispatchEx_Invoke(&docfrag->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, flags,
-            params, result, ei, puArgErr);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static HRESULT WINAPI docfrag_get_nodeName(IXMLDOMDocumentFragment *iface, BSTR *p)
+static HRESULT WINAPI domfrag_get_nodeName(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* p )
 {
-    TRACE("%p, %p.\n", iface, p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     return return_bstr(L"#document-fragment", p);
 }
 
-static HRESULT WINAPI docfrag_get_nodeValue(IXMLDOMDocumentFragment *iface, VARIANT *value)
+static HRESULT WINAPI domfrag_get_nodeValue(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT* value)
 {
-    TRACE("%p, %p.\n", iface, value);
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, value);
     return return_null_var(value);
 }
 
-static HRESULT WINAPI docfrag_put_nodeValue(IXMLDOMDocumentFragment *iface, VARIANT value)
+static HRESULT WINAPI domfrag_put_nodeValue(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT value)
 {
-    TRACE("%p, %s.\n", iface, debugstr_variant(&value));
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
     return E_FAIL;
 }
 
-static HRESULT WINAPI docfrag_get_nodeType(IXMLDOMDocumentFragment *iface, DOMNodeType *type)
+static HRESULT WINAPI domfrag_get_nodeType(
+    IXMLDOMDocumentFragment *iface,
+    DOMNodeType* domNodeType )
 {
-    TRACE("%p, %p.\n", iface, type);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    *type = NODE_DOCUMENT_FRAGMENT;
+    TRACE("(%p)->(%p)\n", This, domNodeType);
+
+    *domNodeType = NODE_DOCUMENT_FRAGMENT;
     return S_OK;
 }
 
-static HRESULT WINAPI docfrag_get_parentNode(IXMLDOMDocumentFragment *iface, IXMLDOMNode **parent)
+static HRESULT WINAPI domfrag_get_parentNode(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** parent )
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p.\n", iface, parent);
+    TRACE("(%p)->(%p)\n", This, parent);
 
-    return node_get_parent(docfrag->node, parent);
+    return node_get_parent(&This->node, parent);
 }
 
-static HRESULT WINAPI docfrag_get_childNodes(IXMLDOMDocumentFragment *iface, IXMLDOMNodeList **list)
+static HRESULT WINAPI domfrag_get_childNodes(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNodeList** outList)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p.\n", iface, list);
+    TRACE("(%p)->(%p)\n", This, outList);
 
-    return node_get_child_nodes(docfrag->node, list);
+    return node_get_child_nodes(&This->node, outList);
 }
 
-static HRESULT WINAPI docfrag_get_firstChild(IXMLDOMDocumentFragment *iface, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_get_firstChild(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** domNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p.\n", iface, node);
+    TRACE("(%p)->(%p)\n", This, domNode);
 
-    return node_get_first_child(docfrag->node, node);
+    return node_get_first_child(&This->node, domNode);
 }
 
-static HRESULT WINAPI docfrag_get_lastChild(IXMLDOMDocumentFragment *iface, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_get_lastChild(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** domNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p.\n", iface, node);
+    TRACE("(%p)->(%p)\n", This, domNode);
 
-    return node_get_last_child(docfrag->node, node);
+    return node_get_last_child(&This->node, domNode);
 }
 
-static HRESULT WINAPI docfrag_get_previousSibling(IXMLDOMDocumentFragment *iface, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_get_previousSibling(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** domNode)
 {
-    TRACE("%p, %p.\n", iface, node);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    return return_null_node(node);
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return return_null_node(domNode);
 }
 
-static HRESULT WINAPI docfrag_get_nextSibling(IXMLDOMDocumentFragment *iface, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_get_nextSibling(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** domNode)
 {
-    TRACE("%p, %p.\n", iface, node);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    return return_null_node(node);
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return return_null_node(domNode);
 }
 
-static HRESULT WINAPI docfrag_get_attributes(IXMLDOMDocumentFragment *iface, IXMLDOMNamedNodeMap **map)
+static HRESULT WINAPI domfrag_get_attributes(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNamedNodeMap** attributeMap)
 {
-    TRACE("%p, %p.\n", iface, map);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    return return_null_ptr((void **)map);
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
-static HRESULT WINAPI docfrag_insertBefore(IXMLDOMDocumentFragment *iface, IXMLDOMNode* newNode,
-        VARIANT refChild, IXMLDOMNode **outOldNode)
+static HRESULT WINAPI domfrag_insertBefore(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode* newNode, VARIANT refChild,
+    IXMLDOMNode** outOldNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p, %s, %p.\n", iface, newNode, debugstr_variant(&refChild), outOldNode);
+    TRACE("(%p)->(%p %s %p)\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     /* TODO: test */
-    return node_insert_before(docfrag->node, newNode, &refChild, outOldNode);
+    return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }
 
-static HRESULT WINAPI docfrag_replaceChild(IXMLDOMDocumentFragment *iface, IXMLDOMNode *newNode,
-        IXMLDOMNode *oldNode, IXMLDOMNode **outOldNode)
+static HRESULT WINAPI domfrag_replaceChild(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode* newNode,
+    IXMLDOMNode* oldNode,
+    IXMLDOMNode** outOldNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p, %p, %p.\n", iface, newNode, oldNode, outOldNode);
+    TRACE("(%p)->(%p %p %p)\n", This, newNode, oldNode, outOldNode);
 
     /* TODO: test */
-    return node_replace_child(docfrag->node, newNode, oldNode, outOldNode);
+    return node_replace_child(&This->node, newNode, oldNode, outOldNode);
 }
 
-static HRESULT WINAPI docfrag_removeChild(IXMLDOMDocumentFragment *iface, IXMLDOMNode *child, IXMLDOMNode **oldChild)
+static HRESULT WINAPI domfrag_removeChild(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p, %p.\n", iface, child, oldChild);
-
-    return node_remove_child(docfrag->node, child, oldChild);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
-static HRESULT WINAPI docfrag_appendChild(IXMLDOMDocumentFragment *iface, IXMLDOMNode *child, IXMLDOMNode **outChild)
+static HRESULT WINAPI domfrag_appendChild(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode *child, IXMLDOMNode **outChild)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p, %p.\n", iface, child, outChild);
-
-    return node_append_child(docfrag->node, child, outChild);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p %p)\n", This, child, outChild);
+    return node_append_child(&This->node, child, outChild);
 }
 
-static HRESULT WINAPI docfrag_hasChildNodes(IXMLDOMDocumentFragment *iface, VARIANT_BOOL *ret)
+static HRESULT WINAPI domfrag_hasChildNodes(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT_BOOL *ret)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p.\n", iface, ret);
-
-    return node_has_childnodes(docfrag->node, ret);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
-static HRESULT WINAPI docfrag_get_ownerDocument(IXMLDOMDocumentFragment *iface, IXMLDOMDocument **doc)
+static HRESULT WINAPI domfrag_get_ownerDocument(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMDocument **doc)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p.\n", iface, doc);
-
-    return node_get_owner_document(docfrag->node, doc);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
-static HRESULT WINAPI docfrag_cloneNode(IXMLDOMDocumentFragment *iface, VARIANT_BOOL deep, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_cloneNode(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT_BOOL deep, IXMLDOMNode** outNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %d, %p.\n", iface, deep, node);
-
-    return node_clone(docfrag->node, deep, node);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
+    return node_clone( &This->node, deep, outNode );
 }
 
-static HRESULT WINAPI docfrag_get_nodeTypeString(IXMLDOMDocumentFragment *iface, BSTR *p)
+static HRESULT WINAPI domfrag_get_nodeTypeString(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* p)
 {
-    TRACE("%p, %p.\n", iface, p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     return return_bstr(L"documentfragment", p);
 }
 
-static HRESULT WINAPI docfrag_get_text(IXMLDOMDocumentFragment *iface, BSTR *p)
+static HRESULT WINAPI domfrag_get_text(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* p)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p.\n", iface, p);
-
-    return node_get_text(docfrag->node, p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
-static HRESULT WINAPI docfrag_put_text(IXMLDOMDocumentFragment *iface, BSTR p)
+static HRESULT WINAPI domfrag_put_text(
+    IXMLDOMDocumentFragment *iface,
+    BSTR p)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %s.\n", iface, debugstr_w(p));
-
-    return node_put_data(docfrag->node, p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
+    return node_put_text( &This->node, p );
 }
 
-static HRESULT WINAPI docfrag_get_specified(IXMLDOMDocumentFragment *iface, VARIANT_BOOL *v)
+static HRESULT WINAPI domfrag_get_specified(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT_BOOL* isSpecified)
 {
-    FIXME("%p, %p stub!\n", iface, v);
-
-    *v = VARIANT_TRUE;
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%p) stub!\n", This, isSpecified);
+    *isSpecified = VARIANT_TRUE;
     return S_OK;
 }
 
-static HRESULT WINAPI docfrag_get_definition(IXMLDOMDocumentFragment *iface, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_get_definition(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode** definitionNode)
 {
-    FIXME("%p, %p.\n", iface, node);
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%p)\n", This, definitionNode);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI docfrag_get_nodeTypedValue(IXMLDOMDocumentFragment *iface, VARIANT *v)
+static HRESULT WINAPI domfrag_get_nodeTypedValue(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT *v)
 {
-    TRACE("%p, %p.\n", iface, v);
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, v);
     return return_null_var(v);
 }
 
-static HRESULT WINAPI docfrag_put_nodeTypedValue(IXMLDOMDocumentFragment *iface, VARIANT v)
+static HRESULT WINAPI domfrag_put_nodeTypedValue(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT typedValue)
 {
-    FIXME("%p, %s.\n", iface, debugstr_variant(&v));
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI docfrag_get_dataType(IXMLDOMDocumentFragment *iface, VARIANT *v)
+static HRESULT WINAPI domfrag_get_dataType(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT* typename)
 {
-    TRACE("%p, %p.\n", iface, v);
-
-    return return_null_var(v);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, typename);
+    return return_null_var( typename );
 }
 
-static HRESULT WINAPI docfrag_put_dataType(IXMLDOMDocumentFragment *iface, BSTR p)
+static HRESULT WINAPI domfrag_put_dataType(
+    IXMLDOMDocumentFragment *iface,
+    BSTR p)
 {
-    TRACE("%p, %s.\n", iface, debugstr_w(p));
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    if (!p)
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
+
+    if(!p)
         return E_INVALIDARG;
 
     return E_FAIL;
 }
 
-static HRESULT WINAPI docfrag_get_xml(IXMLDOMDocumentFragment *iface, BSTR *p)
+static HRESULT WINAPI domfrag_get_xml(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* p)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("%p, %p.\n", iface, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return node_get_xml(docfrag->node, p);
+    return node_get_xml(&This->node, FALSE, p);
 }
 
-static HRESULT WINAPI docfrag_transformNode(IXMLDOMDocumentFragment *iface, IXMLDOMNode *node, BSTR *p)
+static HRESULT WINAPI domfrag_transformNode(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode *node, BSTR *p)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %p, %p.\n", iface, node, p);
-
-    return node_transform_node(docfrag->node, node, p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
-static HRESULT WINAPI docfrag_selectNodes(IXMLDOMDocumentFragment *iface, BSTR p, IXMLDOMNodeList **list)
+static HRESULT WINAPI domfrag_selectNodes(
+    IXMLDOMDocumentFragment *iface,
+    BSTR p, IXMLDOMNodeList** outList)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_w(p), list);
-
-    return node_select_nodes(docfrag->node, p, list);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outList);
+    return node_select_nodes(&This->node, p, outList);
 }
 
-static HRESULT WINAPI docfrag_selectSingleNode(IXMLDOMDocumentFragment *iface, BSTR p, IXMLDOMNode **node)
+static HRESULT WINAPI domfrag_selectSingleNode(
+    IXMLDOMDocumentFragment *iface,
+    BSTR p, IXMLDOMNode** outNode)
 {
-    docfrag *docfrag = impl_from_IXMLDOMDocumentFragment(iface);
-
-    TRACE("%p, %s, %p.\n", iface, debugstr_w(p), node);
-
-    return node_select_singlenode(docfrag->node, p, node);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outNode);
+    return node_select_singlenode(&This->node, p, outNode);
 }
 
-static HRESULT WINAPI docfrag_get_parsed(IXMLDOMDocumentFragment *iface, VARIANT_BOOL *v)
+static HRESULT WINAPI domfrag_get_parsed(
+    IXMLDOMDocumentFragment *iface,
+    VARIANT_BOOL* isParsed)
 {
-    FIXME("%p, %p stub!\n", iface, v);
-
-    *v = VARIANT_TRUE;
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%p) stub!\n", This, isParsed);
+    *isParsed = VARIANT_TRUE;
     return S_OK;
 }
 
-static HRESULT WINAPI docfrag_get_namespaceURI(IXMLDOMDocumentFragment *iface, BSTR *p)
+static HRESULT WINAPI domfrag_get_namespaceURI(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* p)
 {
-    TRACE("%p, %p.\n", iface, p);
-
-    return return_null_bstr(p);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_namespaceURI(&This->node, p);
 }
 
-static HRESULT WINAPI docfrag_get_prefix(IXMLDOMDocumentFragment *iface, BSTR *prefix)
+static HRESULT WINAPI domfrag_get_prefix(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* prefix)
 {
-    TRACE("%p, %p.\n", iface, prefix);
-
-    return return_null_bstr(prefix);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    TRACE("(%p)->(%p)\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
-static HRESULT WINAPI docfrag_get_baseName(IXMLDOMDocumentFragment *iface, BSTR *name)
+static HRESULT WINAPI domfrag_get_baseName(
+    IXMLDOMDocumentFragment *iface,
+    BSTR* name)
 {
-    TRACE("%p, %p.\n", iface, name);
-
-    return return_null_bstr(name);
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%p): needs test\n", This, name);
+    return return_null_bstr( name );
 }
 
-static HRESULT WINAPI docfrag_transformNodeToObject(IXMLDOMDocumentFragment *iface, IXMLDOMNode *node, VARIANT var)
+static HRESULT WINAPI domfrag_transformNodeToObject(
+    IXMLDOMDocumentFragment *iface,
+    IXMLDOMNode* domNode, VARIANT var1)
 {
-    FIXME("%p, %p, %s.\n", iface, node, debugstr_variant(&var));
-
+    domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
+    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
     return E_NOTIMPL;
 }
 
-static const struct IXMLDOMDocumentFragmentVtbl docfrag_vtbl =
+static const struct IXMLDOMDocumentFragmentVtbl domfrag_vtbl =
 {
-    docfrag_QueryInterface,
-    docfrag_AddRef,
-    docfrag_Release,
-    docfrag_GetTypeInfoCount,
-    docfrag_GetTypeInfo,
-    docfrag_GetIDsOfNames,
-    docfrag_Invoke,
-    docfrag_get_nodeName,
-    docfrag_get_nodeValue,
-    docfrag_put_nodeValue,
-    docfrag_get_nodeType,
-    docfrag_get_parentNode,
-    docfrag_get_childNodes,
-    docfrag_get_firstChild,
-    docfrag_get_lastChild,
-    docfrag_get_previousSibling,
-    docfrag_get_nextSibling,
-    docfrag_get_attributes,
-    docfrag_insertBefore,
-    docfrag_replaceChild,
-    docfrag_removeChild,
-    docfrag_appendChild,
-    docfrag_hasChildNodes,
-    docfrag_get_ownerDocument,
-    docfrag_cloneNode,
-    docfrag_get_nodeTypeString,
-    docfrag_get_text,
-    docfrag_put_text,
-    docfrag_get_specified,
-    docfrag_get_definition,
-    docfrag_get_nodeTypedValue,
-    docfrag_put_nodeTypedValue,
-    docfrag_get_dataType,
-    docfrag_put_dataType,
-    docfrag_get_xml,
-    docfrag_transformNode,
-    docfrag_selectNodes,
-    docfrag_selectSingleNode,
-    docfrag_get_parsed,
-    docfrag_get_namespaceURI,
-    docfrag_get_prefix,
-    docfrag_get_baseName,
-    docfrag_transformNodeToObject
+    domfrag_QueryInterface,
+    domfrag_AddRef,
+    domfrag_Release,
+    domfrag_GetTypeInfoCount,
+    domfrag_GetTypeInfo,
+    domfrag_GetIDsOfNames,
+    domfrag_Invoke,
+    domfrag_get_nodeName,
+    domfrag_get_nodeValue,
+    domfrag_put_nodeValue,
+    domfrag_get_nodeType,
+    domfrag_get_parentNode,
+    domfrag_get_childNodes,
+    domfrag_get_firstChild,
+    domfrag_get_lastChild,
+    domfrag_get_previousSibling,
+    domfrag_get_nextSibling,
+    domfrag_get_attributes,
+    domfrag_insertBefore,
+    domfrag_replaceChild,
+    domfrag_removeChild,
+    domfrag_appendChild,
+    domfrag_hasChildNodes,
+    domfrag_get_ownerDocument,
+    domfrag_cloneNode,
+    domfrag_get_nodeTypeString,
+    domfrag_get_text,
+    domfrag_put_text,
+    domfrag_get_specified,
+    domfrag_get_definition,
+    domfrag_get_nodeTypedValue,
+    domfrag_put_nodeTypedValue,
+    domfrag_get_dataType,
+    domfrag_put_dataType,
+    domfrag_get_xml,
+    domfrag_transformNode,
+    domfrag_selectNodes,
+    domfrag_selectSingleNode,
+    domfrag_get_parsed,
+    domfrag_get_namespaceURI,
+    domfrag_get_prefix,
+    domfrag_get_baseName,
+    domfrag_transformNodeToObject
 };
 
-static const tid_t docfrag_iface_tids[] =
-{
+static const tid_t domfrag_iface_tids[] = {
     IXMLDOMDocumentFragment_tid,
     0
 };
 
-static dispex_static_data_t docfrag_dispex =
-{
+static dispex_static_data_t domfrag_dispex = {
     NULL,
     IXMLDOMDocumentFragment_tid,
     NULL,
-    docfrag_iface_tids
+    domfrag_iface_tids
 };
 
-HRESULT create_doc_fragment(struct domnode *node, IUnknown **obj)
+IUnknown* create_doc_fragment( xmlNodePtr fragment )
 {
-    docfrag *object;
+    domfrag *This;
 
-    *obj = NULL;
+    This = malloc(sizeof(*This));
+    if ( !This )
+        return NULL;
 
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
+    This->IXMLDOMDocumentFragment_iface.lpVtbl = &domfrag_vtbl;
+    This->ref = 1;
 
-    object->IXMLDOMDocumentFragment_iface.lpVtbl = &docfrag_vtbl;
-    object->refcount = 1;
-    object->node = domnode_addref(node);
+    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->IXMLDOMDocumentFragment_iface, &domfrag_dispex);
 
-    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMDocumentFragment_iface, &docfrag_dispex);
-
-    *obj = (IUnknown *)&object->IXMLDOMDocumentFragment_iface;
-
-    return S_OK;
+    return (IUnknown*)&This->IXMLDOMDocumentFragment_iface;
 }

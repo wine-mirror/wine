@@ -73,12 +73,12 @@ BOOL WOWTHUNK_Init(void)
     /* allocate the code selector for CallTo16 routines */
     WORD codesel = SELECTOR_AllocBlock( __wine_call16_start,
                                         (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start,
-                                        code32_segment );
+                                        LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
 
     cbclient_selector = SELECTOR_AllocBlock( cbclient_ret, cbclient_ret_end - cbclient_ret,
-                                             code32_segment );
+                                             LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
     cbclientex_selector = SELECTOR_AllocBlock( cbclientex_ret, cbclientex_ret_end - cbclientex_ret,
-                                               code32_segment );
+                                               LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
     if (!codesel || !cbclient_selector || !cbclientex_selector)
         return FALSE;
 
@@ -170,7 +170,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
                 *--stack = context->SegCs;
                 *--stack = context->Eip;
 
-                if (!ldt_is_32bit(context->SegSs))
+                if (!IS_SELECTOR_32BIT(context->SegSs))
                     context->Esp = MAKELONG( LOWORD(context->Esp - 2*sizeof(WORD)),
                                              HIWORD(context->Esp) );
                 else

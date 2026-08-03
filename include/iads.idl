@@ -101,14 +101,6 @@ typedef enum
 
 typedef enum
 {
-    ADS_CHASE_REFERRALS_NEVER,
-    ADS_CHASE_REFERRALS_SUBORDINATE = 0x20,
-    ADS_CHASE_REFERRALS_EXTERNAL    = 0x40,
-    ADS_CHASE_REFERRALS_ALWAYS      = ADS_CHASE_REFERRALS_SUBORDINATE | ADS_CHASE_REFERRALS_EXTERNAL
-} ADS_CHASE_REFERRALS_ENUM;
-
-typedef enum
-{
     ADS_STATUS_S_OK,
     ADS_STATUS_INVALID_SEARCHPREF,
     ADS_STATUS_INVALID_SEARCHPREFVALUE
@@ -159,20 +151,6 @@ typedef enum
     ADS_PASSWORD_ENCODE_REQUIRE_SSL,
     ADS_PASSWORD_ENCODE_CLEAR
 } ADS_PASSWORD_ENCODING_ENUM;
-
-typedef enum
-{
-    ADS_OPTION_SERVERNAME,
-    ADS_OPTION_REFERRALS,
-    ADS_OPTION_PAGE_SIZE,
-    ADS_OPTION_SECURITY_MASK,
-    ADS_OPTION_MUTUAL_AUTH_STATUS,
-    ADS_OPTION_QUOTA,
-    ADS_OPTION_PASSWORD_PORTNUMBER,
-    ADS_OPTION_PASSWORD_METHOD,
-    ADS_OPTION_ACCUMULATIVE_MODIFICATION,
-    ADS_OPTION_SKIP_SID_LOOKUP
-} ADS_OPTION_ENUM;
 
 typedef struct _ADS_CASEIGNORE_LIST
 {
@@ -506,23 +484,6 @@ interface IADs : IDispatch
 
     [id(0x0000000e)]
     HRESULT GetInfoEx( [in] VARIANT vProperties, [in] long lnReserved);
-}
-
-/*****************************************************************************
- *    IADsObjectOptions interface
- */
-[
-    odl,
-    uuid(46F14FDA-232B-11D1-A808-00C04FD8D5A8),
-    dual,
-    oleautomation
-]
-interface IADsObjectOptions : IDispatch
-{
-    [id(0x00000002)]
-    HRESULT GetOption([in] long option, [out, retval] VARIANT *var);
-    [id(0x00000003)]
-    HRESULT SetOption([in] long option, [in] VARIANT var);
 }
 
 /*****************************************************************************
@@ -942,17 +903,6 @@ interface IADsPathname : IDispatch
     HRESULT put_EscapedMode(long mode);
 }
 
-[
-    helpstring("ADs LDAP Pathname Descriptor Object"),
-    uuid(080d0d78-f421-11d0-a36e-00c04fb950dc),
-    progid("Pathname"),
-    version(1.0)
-]
-coclass Pathname
-{
-    interface IADsPathname;
-}
-
 /*****************************************************************************
  *    IADsADSystemInfo interface
  */
@@ -1001,70 +951,6 @@ interface IADsADSystemInfo : IDispatch
 coclass ADSystemInfo
 {
     interface IADsADSystemInfo;
-}
-
-/*****************************************************************************
- *    IADsDNWithBinary interface
- */
-[
-    odl,
-    uuid(7e99c0a2-f935-11d2-ba96-00c04fb6d0d1),
-    dual,
-    oleautomation
-]
-interface IADsDNWithBinary : IDispatch
-{
-    [id(0x00000002), propget]
-    HRESULT BinaryValue([out, retval] VARIANT *value);
-    [id(0x00000002), propput]
-    HRESULT BinaryValue([in] VARIANT value);
-    [id(0x00000003), propget]
-    HRESULT DNString([out, retval] BSTR *value);
-    [id(0x00000003), propput]
-    HRESULT DNString([in] BSTR value);
-}
-
-[
-    helpstring("ADs DN With Binary Object"),
-    uuid(7e99c0a3-f935-11d2-ba96-00c04fb6d0d1),
-    progid("DNWithBinary"),
-    version(1.0)
-]
-coclass DNWithBinary
-{
-    interface IADsDNWithBinary;
-}
-
-/*****************************************************************************
- *    IADsDNWithString interface
- */
-[
-    odl,
-    uuid(370df02e-f934-11d2-ba96-00c04fb6d0d1),
-    dual,
-    oleautomation
-]
-interface IADsDNWithString : IDispatch
-{
-    [id(0x00000002), propget]
-    HRESULT StringValue([out, retval] BSTR *value);
-    [id(0x00000002), propput]
-    HRESULT StringValue([in] BSTR value);
-    [id(0x00000003), propget]
-    HRESULT DNString([out, retval] BSTR *value);
-    [id(0x00000003), propput]
-    HRESULT DNString([in] BSTR value);
-}
-
-[
-    helpstring("ADs DN With String Object"),
-    uuid(334857cc-f934-11d2-ba96-00c04fb6d0d1),
-    progid("DNWithString"),
-    version(1.0)
-]
-coclass DNWithString
-{
-    interface IADsDNWithString;
 }
 
 } /* library */

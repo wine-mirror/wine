@@ -441,8 +441,8 @@ static const struct
  */
 static void testRegStoreSavedCerts(void)
 {
-    PCCERT_CONTEXT cert1, cert2, cert3;
-    HCERTSTORE store, store2;
+    PCCERT_CONTEXT cert1, cert2;
+    HCERTSTORE store;
     HANDLE cert_file;
     HRESULT pathres;
     WCHAR key_name[MAX_PATH], appdata_path[MAX_PATH];
@@ -523,18 +523,6 @@ static void testRegStoreSavedCerts(void)
         ret = CertDeleteCertificateFromStore(cert2);
         ok (ret, "Failed to delete certificate from store at %ld, %lx\n", i, GetLastError());
 
-        /* check that cert is removed from backing store before closing store */
-        store2 = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,0,0,
-            reg_store_saved_certs[i].cert_store, reg_store_saved_certs[i].store_name);
-        ok (store2 != NULL, "Failed to open the store at %ld, %lx\n", i, GetLastError());
-
-        cert3 = CertFindCertificateInStore(store2, X509_ASN_ENCODING, 0,
-            CERT_FIND_EXISTING, cert1, NULL);
-        ok (cert3 == NULL, "Failed to find cert in the store at %ld, %lx\n", i, GetLastError());
-
-        ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
-        ok(ret, "got error %#lx.\n", GetLastError());
-
         CertFreeCertificateContext(cert1);
         ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
         ok(ret, "got error %#lx.\n", GetLastError());
@@ -588,7 +576,7 @@ static void testStoresInCollection(void)
     ret = CertAddStoreToCollection(collection, rw_store, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok (ret, "Failed to add rw store to collection %lx\n", GetLastError());
     /** Adding certificate to collection should fall into rw store,
-     *  even though priority of the ro_store is higher */
+     *  even though prioirty of the ro_store is higher */
     ret = CertAddCertificateContextToStore(collection, cert1, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
     ok (ret, "Failed to add cert to the collection %lx\n", GetLastError());
 
@@ -646,7 +634,8 @@ static void testStoresInCollection(void)
         CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, L"WineTest_RW");
     ok (tstore!=NULL, "Failed to open existing rw store\n");
     tcert1 = CertEnumCertificatesInStore(tstore, NULL);
-    ok(tcert1 && tcert1->cbCertEncoded == cert1->cbCertEncoded, "cert1 wasn't saved\n");
+    todo_wine
+        ok(tcert1 && tcert1->cbCertEncoded == cert1->cbCertEncoded, "cert1 wasn't saved\n");
     CertFreeCertificateContext(tcert1);
     CertCloseStore(tstore,0);
 
@@ -654,7 +643,8 @@ static void testStoresInCollection(void)
         CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, L"WineTest_RW2");
     ok (tstore!=NULL, "Failed to open existing rw2 store\n");
     tcert1 = CertEnumCertificatesInStore(tstore, NULL);
-    ok (tcert1 && tcert1->cbCertEncoded == cert2->cbCertEncoded, "cert2 wasn't saved\n");
+    todo_wine
+        ok (tcert1 && tcert1->cbCertEncoded == cert2->cbCertEncoded, "cert2 wasn't saved\n");
     CertFreeCertificateContext(tcert1);
     CertCloseStore(tstore,0);
 
@@ -1404,7 +1394,7 @@ static void testSystemRegStore(void)
      "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* The name is expected to be UNICODE, check with an ASCII name */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, "My\0");
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, "My");
     ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
 }
@@ -1429,7 +1419,7 @@ static void testSystemStore(void)
      "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     /* The name is expected to be UNICODE, first check with an ASCII name */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, "My\0");
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, "My");
     ok(!store && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     /* Create the expected key */
@@ -2064,9 +2054,6 @@ static void testSerializedStore(void)
 static void testCertOpenSystemStore(void)
 {
     HCERTSTORE store;
-    HCRYPTPROV prov;
-    BOOL ret;
-    DWORD size, pp_type;
 
     store = CertOpenSystemStoreW(0, NULL);
     ok(!store && GetLastError() == E_INVALIDARG,
@@ -2082,22 +2069,6 @@ static void testCertOpenSystemStore(void)
     CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, L"Bogus");
     RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\SystemCertificates\\Bogus");
-
-    ret = CryptAcquireContextA(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
-    ok(ret, "CryptAcquireContext failed: %08lx\n", GetLastError());
-
-    store = CertOpenSystemStoreW(prov, L"My");
-    ok(store != 0, "CertOpenSystemStore failed: %08lx\n", GetLastError());
-
-    size = sizeof(pp_type);
-    pp_type = 0xdeadbeef;
-    ret = CryptGetProvParam(prov, PP_PROVTYPE, (BYTE *)&pp_type, &size, 0);
-    ok(ret, "CryptGetProvParam failed: %08lx\n", GetLastError());
-    ok(pp_type == PROV_RSA_FULL, "got %lu\n", pp_type);
-
-    CertCloseStore(store, 0);
-    ret = CryptReleaseContext(prov, 0);
-    ok(ret, "CryptReleaseContext: %08lx\n", GetLastError());
 }
 
 static const struct
@@ -3322,98 +3293,6 @@ static const BYTE pfxdata[] =
   0x69, 0x02, 0x02, 0x08, 0x00
 };
 
-/* Cert-only PKCS#12 (no private key), empty password, legacy encryption.
- * Generated with:
- *   openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
- *   openssl pkcs12 -export -nokeys -in cert.pem -out cert_only.pfx -passout pass: -legacy
- */
-static const BYTE pfx_cert_only[] =
-{
-  0x30, 0x82, 0x03, 0xdc, 0x02, 0x01, 0x03, 0x30, 0x82, 0x03, 0x9a, 0x06,
-  0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01, 0xa0, 0x82,
-  0x03, 0x8b, 0x04, 0x82, 0x03, 0x87, 0x30, 0x82, 0x03, 0x83, 0x30, 0x82,
-  0x03, 0x7f, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07,
-  0x06, 0xa0, 0x82, 0x03, 0x70, 0x30, 0x82, 0x03, 0x6c, 0x02, 0x01, 0x00,
-  0x30, 0x82, 0x03, 0x65, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
-  0x01, 0x07, 0x01, 0x30, 0x1c, 0x06, 0x0a, 0x2a, 0x86, 0x48, 0x86, 0xf7,
-  0x0d, 0x01, 0x0c, 0x01, 0x06, 0x30, 0x0e, 0x04, 0x08, 0xbc, 0xb4, 0x1e,
-  0xbc, 0x95, 0xfd, 0x2a, 0x73, 0x02, 0x02, 0x08, 0x00, 0x80, 0x82, 0x03,
-  0x38, 0x82, 0x05, 0xb7, 0x9d, 0x81, 0xd4, 0x12, 0xc8, 0x3f, 0x9f, 0xc7,
-  0x75, 0x76, 0x42, 0x93, 0xae, 0x1f, 0xe8, 0x7d, 0x60, 0x61, 0x56, 0x14,
-  0x8d, 0x22, 0x92, 0xa0, 0x08, 0x9f, 0x35, 0xf4, 0x60, 0xe2, 0x0c, 0xf6,
-  0x24, 0x67, 0x66, 0x89, 0x43, 0x37, 0xfc, 0xc2, 0x69, 0x32, 0x20, 0x06,
-  0x15, 0xb6, 0x01, 0xa6, 0xd5, 0xc0, 0xb0, 0xe8, 0x14, 0x80, 0xe9, 0xda,
-  0x7e, 0x2e, 0x7b, 0xeb, 0xf0, 0x5d, 0x76, 0x8c, 0x26, 0xb3, 0xe7, 0xcb,
-  0x02, 0x82, 0xf9, 0x50, 0x1a, 0x00, 0xcb, 0x76, 0x08, 0xbd, 0xe0, 0x4a,
-  0x0a, 0x50, 0x6a, 0x93, 0x86, 0x0f, 0x0c, 0x29, 0x59, 0x26, 0xa7, 0xa0,
-  0xbb, 0x09, 0x13, 0x42, 0xac, 0x15, 0x6b, 0x3e, 0xdd, 0x33, 0x4e, 0xf2,
-  0xdb, 0x69, 0xed, 0xd3, 0x54, 0x6a, 0x83, 0x73, 0xba, 0xf7, 0x98, 0x88,
-  0xc4, 0x61, 0xed, 0xb8, 0x1a, 0xbd, 0x82, 0x00, 0x1e, 0x53, 0x37, 0xe3,
-  0xaf, 0xce, 0x6a, 0x32, 0x2f, 0x8b, 0x24, 0x47, 0x85, 0x1f, 0x0a, 0x92,
-  0x22, 0x7a, 0x47, 0xd0, 0x4e, 0xb0, 0x11, 0xdd, 0x2e, 0x4d, 0xdb, 0x7c,
-  0xac, 0xda, 0xa7, 0x14, 0x29, 0xce, 0x26, 0x73, 0x0d, 0xf1, 0x29, 0x80,
-  0xf9, 0xe7, 0x7f, 0x0f, 0x8f, 0xde, 0x26, 0xdb, 0x75, 0x88, 0x52, 0x0e,
-  0x28, 0x79, 0x29, 0x25, 0x60, 0x7e, 0x22, 0x76, 0xb0, 0x40, 0x49, 0xa1,
-  0x05, 0xcc, 0xd1, 0x73, 0xdb, 0x41, 0x87, 0x34, 0xa4, 0x07, 0xce, 0x75,
-  0xbf, 0x72, 0x6e, 0x43, 0x28, 0x07, 0xc7, 0x8f, 0xe3, 0xc1, 0xd3, 0x2b,
-  0xb6, 0x14, 0xc0, 0xbb, 0x08, 0x31, 0x57, 0x5f, 0x41, 0x1d, 0xef, 0xe4,
-  0x94, 0xe3, 0x21, 0x74, 0x2e, 0x44, 0x90, 0xa7, 0x3c, 0x54, 0x9b, 0x6f,
-  0x13, 0xbe, 0x2e, 0xba, 0x7d, 0xc8, 0xf6, 0xc1, 0xf3, 0xdd, 0x0d, 0xde,
-  0x46, 0xd6, 0xfc, 0xca, 0xac, 0x8b, 0xee, 0x5b, 0xa9, 0xcb, 0x02, 0xea,
-  0x6e, 0xfc, 0xd0, 0x17, 0x88, 0x3f, 0xc5, 0x37, 0x8f, 0x69, 0xa0, 0xe6,
-  0xf9, 0x9e, 0xf2, 0x23, 0x8f, 0x06, 0x12, 0x95, 0x6b, 0x93, 0xf7, 0x88,
-  0x3e, 0xe2, 0xbb, 0x8c, 0x2d, 0x3b, 0xf7, 0xeb, 0x79, 0x66, 0x0c, 0xd2,
-  0xf7, 0x00, 0x35, 0xe5, 0xa0, 0xe3, 0x33, 0xfa, 0x23, 0x3c, 0x9f, 0xc5,
-  0x1d, 0x63, 0x8d, 0xc0, 0x40, 0x00, 0x17, 0x46, 0xf3, 0x43, 0x58, 0x22,
-  0xd8, 0x3b, 0x90, 0xe0, 0x21, 0xd5, 0xf5, 0xec, 0xd7, 0x3e, 0x9b, 0x4d,
-  0xd3, 0xf9, 0x9a, 0x31, 0x07, 0x8b, 0x5f, 0x7b, 0x63, 0xb6, 0xbb, 0xae,
-  0xde, 0x2f, 0x5e, 0xad, 0x25, 0x4e, 0x46, 0x26, 0x3a, 0x36, 0x4a, 0x44,
-  0x33, 0x11, 0x0a, 0xe8, 0xfb, 0x9c, 0x4c, 0x3d, 0x98, 0x9a, 0x20, 0xee,
-  0x20, 0xf7, 0x0d, 0x1c, 0xd2, 0xaf, 0xb4, 0x2b, 0x05, 0x81, 0x0b, 0x61,
-  0x7c, 0x4d, 0xdf, 0x5f, 0xc7, 0x2d, 0xc3, 0x96, 0xcc, 0xb4, 0xac, 0x88,
-  0x7a, 0x4e, 0xcd, 0x49, 0x75, 0xe8, 0xb3, 0xea, 0x55, 0x85, 0x99, 0x2c,
-  0x72, 0x60, 0xa1, 0x68, 0xc7, 0x91, 0xdf, 0x24, 0x6a, 0x5d, 0xeb, 0x0d,
-  0xab, 0xb4, 0x14, 0x2f, 0x59, 0xb6, 0x68, 0x9f, 0xd8, 0xba, 0x7c, 0x8c,
-  0x92, 0xb7, 0x60, 0xb0, 0x7e, 0x23, 0x84, 0x9f, 0x3a, 0xb1, 0x0b, 0xe4,
-  0x12, 0x53, 0xe3, 0x4f, 0x23, 0x37, 0x90, 0x91, 0xae, 0xc1, 0x0e, 0xa4,
-  0x36, 0x52, 0x9a, 0x9e, 0xea, 0x18, 0x3a, 0xf6, 0xdc, 0x48, 0x99, 0x2a,
-  0x67, 0x1c, 0x70, 0x1b, 0x21, 0xa1, 0x3a, 0x85, 0x0a, 0x45, 0xe8, 0x80,
-  0x12, 0x2f, 0x4b, 0x5e, 0x3b, 0x60, 0x0a, 0x5c, 0x2e, 0x7d, 0xcc, 0xb2,
-  0xd0, 0xf7, 0xdb, 0xe0, 0x94, 0x14, 0x05, 0x0c, 0xa8, 0xc2, 0xd7, 0x03,
-  0x2c, 0x43, 0x5a, 0xca, 0x33, 0xe2, 0x1c, 0xad, 0x70, 0x50, 0x0b, 0x96,
-  0x53, 0x24, 0x27, 0x2b, 0x15, 0x8d, 0xa5, 0xc7, 0x8d, 0xd7, 0x0c, 0x1f,
-  0xc7, 0x9f, 0x6c, 0x00, 0x67, 0x10, 0x08, 0x02, 0xc3, 0xd9, 0x5b, 0x95,
-  0x99, 0x97, 0x8e, 0x25, 0xe8, 0xc8, 0x12, 0x9b, 0x1c, 0xb5, 0x89, 0xb1,
-  0x22, 0x3b, 0xef, 0xc9, 0x42, 0x26, 0x5a, 0xe9, 0x82, 0x2e, 0xb1, 0xf2,
-  0xbe, 0x41, 0xc8, 0xf5, 0x36, 0xe9, 0x4b, 0x48, 0x08, 0xfd, 0x2c, 0xf3,
-  0x96, 0x85, 0xb7, 0xa3, 0xd3, 0xe0, 0xcb, 0x59, 0x93, 0x15, 0x72, 0xe7,
-  0xaf, 0x93, 0x35, 0x21, 0x19, 0x68, 0xc2, 0xaf, 0x86, 0x9a, 0x93, 0xc8,
-  0x06, 0xec, 0x27, 0xd2, 0x25, 0x87, 0x4f, 0x3f, 0x4f, 0x40, 0xf4, 0xa6,
-  0x58, 0x5d, 0xe0, 0x17, 0xec, 0x3f, 0x14, 0xf2, 0xa8, 0xba, 0xfa, 0x38,
-  0x9d, 0x15, 0x64, 0x61, 0x08, 0xda, 0xb8, 0xff, 0xd3, 0x9d, 0x64, 0x94,
-  0x86, 0xa2, 0xd8, 0x03, 0xca, 0xa6, 0x01, 0xdd, 0xb9, 0xd3, 0x93, 0xef,
-  0xe6, 0x58, 0x49, 0x87, 0xb4, 0xc2, 0x89, 0x34, 0xd4, 0x2a, 0x43, 0x3d,
-  0x6d, 0xf6, 0x97, 0x4c, 0x3b, 0xb6, 0xcb, 0x41, 0x8b, 0x36, 0x1c, 0x0d,
-  0x8a, 0xd5, 0x2b, 0x28, 0xd7, 0x02, 0x3e, 0x0e, 0xc3, 0xc6, 0x2b, 0xb5,
-  0x71, 0xc7, 0x3b, 0xa9, 0x3f, 0xbe, 0x43, 0xb7, 0x0a, 0x3e, 0xfe, 0x7e,
-  0xc6, 0xe2, 0xf3, 0xd3, 0xec, 0xf3, 0x96, 0x91, 0xbc, 0x08, 0x85, 0x51,
-  0xea, 0x7f, 0xa8, 0x67, 0x40, 0x2d, 0x3f, 0x9b, 0x5b, 0x8d, 0xf9, 0xcb,
-  0xd5, 0x07, 0x9d, 0x4b, 0xf0, 0x89, 0x4e, 0x6c, 0xf8, 0xf3, 0xc9, 0x47,
-  0x70, 0x9a, 0xff, 0xbe, 0x63, 0xd4, 0xdf, 0x0b, 0xdd, 0xbe, 0xc6, 0x33,
-  0x9d, 0xd3, 0xfa, 0x03, 0x91, 0x3a, 0x45, 0x1d, 0x05, 0xa0, 0xd0, 0x6e,
-  0x45, 0x21, 0x60, 0x48, 0xda, 0x4f, 0x41, 0x7e, 0x0f, 0xe5, 0xec, 0xec,
-  0x75, 0x8d, 0x73, 0x26, 0x36, 0xa9, 0x6a, 0xc1, 0x4b, 0x99, 0x5f, 0x04,
-  0x8a, 0xac, 0xe1, 0x32, 0x2e, 0xa1, 0xfb, 0x86, 0xcd, 0x9f, 0xdd, 0x61,
-  0x15, 0xef, 0xf8, 0x3f, 0xeb, 0x41, 0x54, 0x1e, 0xb0, 0xa5, 0x7f, 0x41,
-  0x7f, 0xbf, 0xd8, 0x58, 0x3a, 0x80, 0x11, 0x4d, 0x7a, 0xd6, 0x37, 0x13,
-  0x1f, 0xd4, 0xb4, 0x25, 0x9b, 0x82, 0x26, 0x60, 0x99, 0x30, 0x39, 0x30,
-  0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00,
-  0x04, 0x14, 0x34, 0xa9, 0x11, 0xce, 0xfe, 0xe2, 0x68, 0xff, 0x42, 0x47,
-  0xea, 0x7a, 0xfc, 0xe9, 0x5a, 0xed, 0x69, 0x5a, 0x63, 0x9a, 0x04, 0x10,
-  0xe5, 0xeb, 0x13, 0x32, 0xa7, 0x47, 0x9b, 0xf8, 0x2f, 0x66, 0x41, 0x01,
-  0x1e, 0xc6, 0x23, 0x55, 0x02, 0x02, 0x08, 0x00
-};
-
 static void test_PFXImportCertStore(void)
 {
     HCERTSTORE store;
@@ -3430,44 +3309,6 @@ static void test_PFXImportCertStore(void)
     store = PFXImportCertStore( NULL, NULL, 0 );
     ok( store == NULL, "got %p\n", store );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lu\n", GetLastError() );
-
-    /* cert-only PKCS#12 (no private key), empty password */
-    pfx.pbData = (BYTE *)pfx_cert_only;
-    pfx.cbData = sizeof(pfx_cert_only);
-
-    ret = PFXIsPFXBlob( &pfx );
-    ok( ret, "got %lu\n", GetLastError() );
-
-    store = PFXImportCertStore( &pfx, L"", 0 );
-    ok( store != NULL, "got %lu\n", GetLastError() );
-    if (store)
-    {
-        count = countCertsInStore( store );
-        ok( count == 1, "got %lu\n", count );
-
-        cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-        ok( cert != NULL, "got %lu\n", GetLastError() );
-        if (cert)
-        {
-            ok( cert->dwCertEncodingType == X509_ASN_ENCODING, "got %lu\n", cert->dwCertEncodingType );
-            ok( cert->pbCertEncoded != NULL, "pbCertEncoded not set\n" );
-            ok( cert->pCertInfo != NULL, "pCertInfo not set\n" );
-
-            /* no private key should be associated */
-            size = sizeof(key);
-            SetLastError( 0xdeadbeef );
-            ret = CertGetCertificateContextProperty( cert, CERT_KEY_CONTEXT_PROP_ID, &key, &size );
-            ok( !ret && GetLastError() == CRYPT_E_NOT_FOUND, "got %08lx\n", GetLastError() );
-
-            size = sizeof(buf);
-            SetLastError( 0xdeadbeef );
-            ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, keyprov, &size );
-            ok( !ret && GetLastError() == CRYPT_E_NOT_FOUND, "got %08lx\n", GetLastError() );
-
-            CertFreeCertificateContext( cert );
-        }
-        CertCloseStore( store, 0 );
-    }
 
     pfx.pbData = (BYTE *)pfxdata;
     pfx.cbData = sizeof(pfxdata);
@@ -3528,286 +3369,6 @@ static void test_PFXImportCertStore(void)
     ok( cert != NULL, "got %08lx\n", GetLastError() );
 
     CertFreeCertificateContext( cert );
-    CertCloseStore( store, 0 );
-
-    /* PKCS12_NO_PERSIST_KEY|PKCS12_ALWAYS_CNG_KSP */
-    store = PFXImportCertStore( &pfx, NULL, PKCS12_NO_PERSIST_KEY|PKCS12_ALWAYS_CNG_KSP );
-    ok( store != NULL, "got %lu\n", GetLastError() );
-
-    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-    ok( cert != NULL, "got %08lx\n", GetLastError() );
-
-    CertFreeCertificateContext( cert );
-    CertCloseStore( store, 0 );
-}
-
-static void test_PFXImportCertStore_unique_containers(void)
-{
-    /* Two persistent (CRYPT_USER_KEYSET) PFX imports of the *same* PKCS#12
-     * blob must land in two *distinct* CSP key containers; otherwise the
-     * second import overwrites the first import's private key inside the
-     * shared container, and any cert still held from the first import
-     * then dereferences (via CRYPT_KEY_PROV_INFO) to the second import's
-     * key. The container-name format is internal to the importer; only
-     * its uniqueness across calls is observable to applications, and that
-     * uniqueness is what this test checks. */
-
-    CRYPT_DATA_BLOB pfx = { sizeof(pfxdata), (BYTE *)pfxdata };
-    BYTE buf1[512], buf2[512];
-    CRYPT_KEY_PROV_INFO *info1 = (CRYPT_KEY_PROV_INFO *)buf1;
-    CRYPT_KEY_PROV_INFO *info2 = (CRYPT_KEY_PROV_INFO *)buf2;
-    HCERTSTORE store1, store2;
-    const CERT_CONTEXT *cert1, *cert2;
-    DWORD size;
-    BOOL ret;
-
-    store1 = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
-    ok( store1 != NULL, "first PFXImportCertStore failed: %lu\n", GetLastError() );
-    store2 = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
-    ok( store2 != NULL, "second PFXImportCertStore failed: %lu\n", GetLastError() );
-    if (!store1 || !store2) goto done;
-
-    cert1 = CertFindCertificateInStore( store1, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-    cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-    ok( cert1 != NULL, "cert1 lookup failed: %08lx\n", GetLastError() );
-    ok( cert2 != NULL, "cert2 lookup failed: %08lx\n", GetLastError() );
-    if (!cert1 || !cert2) goto done_close;
-
-    size = sizeof(buf1);
-    ret = CertGetCertificateContextProperty( cert1, CERT_KEY_PROV_INFO_PROP_ID, info1, &size );
-    ok( ret, "cert1 has no KEY_PROV_INFO: %08lx\n", GetLastError() );
-    size = sizeof(buf2);
-    ret = CertGetCertificateContextProperty( cert2, CERT_KEY_PROV_INFO_PROP_ID, info2, &size );
-    ok( ret, "cert2 has no KEY_PROV_INFO: %08lx\n", GetLastError() );
-    if (!info1->pwszContainerName || !info2->pwszContainerName) goto done_certs;
-
-    ok( wcscmp( info1->pwszContainerName, info2->pwszContainerName ) != 0,
-        "two PFX imports collided into the same container %s — the second "
-        "import would have overwritten the first cert's private key\n",
-        wine_dbgstr_w( info1->pwszContainerName ) );
-
-done_certs:
-    CertFreeCertificateContext( cert1 );
-    CertFreeCertificateContext( cert2 );
-done_close:
-    CertCloseStore( store1, 0 );
-    CertCloseStore( store2, 0 );
-done:
-    ;
-}
-
-static void test_PFXImportCertStore_sha256_signing(void)
-{
-    CRYPT_DATA_BLOB pfx = { sizeof(pfxdata), (BYTE *)pfxdata };
-    BYTE buf[512];
-    CRYPT_KEY_PROV_INFO *info = (CRYPT_KEY_PROV_INFO *)buf;
-    HCERTSTORE store;
-    const CERT_CONTEXT *cert;
-    HCRYPTPROV prov;
-    HCRYPTHASH hash;
-    DWORD size;
-    BOOL ret;
-
-    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET );
-    ok( store != NULL, "PFXImportCertStore failed: %lu\n", GetLastError() );
-    if (!store) return;
-
-    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-    ok( cert != NULL, "no cert in store: %08lx\n", GetLastError() );
-    if (!cert) goto done_close;
-
-    size = sizeof(buf);
-    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size );
-    ok( ret, "cert has no KEY_PROV_INFO: %08lx\n", GetLastError() );
-    if (!ret) goto done_cert;
-
-    ok( info->dwProvType == PROV_RSA_AES,
-        "PFX-imported key sits in provider type %lu, expected PROV_RSA_AES (%u) so that "
-        "SHA-256 signing works; PROV_RSA_FULL (1) can only hash MD5 and SHA-1\n",
-        info->dwProvType, PROV_RSA_AES );
-
-    if (info->dwProvType == PROV_RSA_AES)
-    {
-        ret = CryptAcquireContextW( &prov, info->pwszContainerName, info->pwszProvName,
-                                    info->dwProvType, 0 );
-        ok( ret, "CryptAcquireContextW(PROV_RSA_AES) failed: %08lx\n", GetLastError() );
-        if (ret)
-        {
-            ret = CryptCreateHash( prov, CALG_SHA_256, 0, 0, &hash );
-            ok( ret, "CryptCreateHash(CALG_SHA_256) failed on PFX-imported key's CSP: %08lx "
-                "— this is what NTE_BAD_ALGID looks like from userspace\n", GetLastError() );
-            if (ret) CryptDestroyHash( hash );
-            CryptReleaseContext( prov, 0 );
-        }
-    }
-
-done_cert:
-    CertFreeCertificateContext( cert );
-done_close:
-    CertCloseStore( store, 0 );
-}
-
-static void test_PFXExportCertStoreEx(void)
-{
-    HCERTSTORE store, store2;
-    CRYPT_DATA_BLOB pfx, exported;
-    const CERT_CONTEXT *cert, *cert2;
-    DWORD count, size;
-    BOOL ret;
-
-    /* Test NULL parameters. */
-    SetLastError( 0xdeadbeef );
-    ret = PFXExportCertStoreEx( NULL, NULL, NULL, NULL, 0 );
-    ok( !ret, "expected failure\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lx\n", GetLastError() );
-
-    exported.pbData = NULL;
-    exported.cbData = 0;
-
-    SetLastError( 0xdeadbeef );
-    ret = PFXExportCertStoreEx( NULL, &exported, NULL, NULL, 0 );
-    ok( !ret, "expected failure\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lx\n", GetLastError() );
-
-    /* Empty store succeeds (produces a valid but empty PFX). */
-    store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL );
-    ok( store != NULL, "CertOpenStore failed %lx\n", GetLastError() );
-
-    exported.pbData = NULL;
-    exported.cbData = 0;
-    ret = PFXExportCertStoreEx( store, &exported, NULL, NULL, 0 );
-    ok( ret, "PFXExportCertStoreEx empty store size query failed %lx\n", GetLastError() );
-    ok( exported.cbData > 0, "expected nonzero size\n" );
-    CertCloseStore( store, 0 );
-
-    /* Import pfxdata (cert + private key), then export without private key. */
-    pfx.pbData = (BYTE *)pfxdata;
-    pfx.cbData = sizeof(pfxdata);
-    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET | PKCS12_NO_PERSIST_KEY );
-    ok( store != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
-
-    /* Size query. */
-    exported.pbData = NULL;
-    exported.cbData = 0;
-    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
-    ok( ret, "PFXExportCertStoreEx size query failed %lx\n", GetLastError() );
-    ok( exported.cbData > 0, "expected nonzero size\n" );
-
-    /* Buffer too small. */
-    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
-    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
-    size = exported.cbData;
-    exported.cbData = 1;
-    SetLastError( 0xdeadbeef );
-    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
-    ok( !ret, "PFXExportCertStoreEx failed %lx\n", GetLastError() );
-    ok( GetLastError() == ERROR_SUCCESS, "got %lx\n", GetLastError() );
-    exported.cbData = size;
-
-    /* Actual export. */
-    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
-    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
-    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
-    ok( ret, "PFXExportCertStoreEx failed %lx\n", GetLastError() );
-
-    /* Verify exported blob is valid PFX. */
-    ret = PFXIsPFXBlob( &exported );
-    ok( ret, "exported blob is not valid PFX\n" );
-
-    /* Re-import and verify certificate round-trip. */
-    store2 = PFXImportCertStore( &exported, L"test", PKCS12_NO_PERSIST_KEY );
-    ok( store2 != NULL, "PFXImportCertStore of exported data failed %lx\n", GetLastError() );
-    if (store2)
-    {
-        count = countCertsInStore( store2 );
-        ok( count == 1, "expected 1 cert, got %lu\n", count );
-
-        cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-        cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-        ok( cert != NULL && cert2 != NULL, "failed to find certs\n" );
-        if (cert && cert2)
-        {
-            ok( cert->cbCertEncoded == cert2->cbCertEncoded,
-                "cert size mismatch: %lu vs %lu\n", cert->cbCertEncoded, cert2->cbCertEncoded );
-            ok( !memcmp( cert->pbCertEncoded, cert2->pbCertEncoded, cert->cbCertEncoded ),
-                "cert data mismatch\n" );
-        }
-        if (cert) CertFreeCertificateContext( cert );
-        if (cert2) CertFreeCertificateContext( cert2 );
-        CertCloseStore( store2, 0 );
-    }
-    HeapFree( GetProcessHeap(), 0, exported.pbData );
-
-    /* Export with EXPORT_PRIVATE_KEYS. */
-    exported.pbData = NULL;
-    exported.cbData = 0;
-    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, EXPORT_PRIVATE_KEYS );
-    ok( ret, "PFXExportCertStoreEx size query failed %lx\n", GetLastError() );
-    ok( exported.cbData > 0, "expected nonzero size\n" );
-
-    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
-    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
-    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, EXPORT_PRIVATE_KEYS );
-    ok( ret, "PFXExportCertStoreEx with EXPORT_PRIVATE_KEYS failed %lx\n", GetLastError() );
-
-    ret = PFXIsPFXBlob( &exported );
-    ok( ret, "exported blob with private key is not valid PFX\n" );
-
-    /* Re-import with private key and verify it's present. */
-    store2 = PFXImportCertStore( &exported, L"test", PKCS12_NO_PERSIST_KEY );
-    ok( store2 != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
-    if (store2)
-    {
-        CERT_KEY_CONTEXT key;
-        DWORD size;
-
-        cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
-        ok( cert2 != NULL, "no cert in re-imported store %lx\n", GetLastError() );
-        if (cert2)
-        {
-            size = sizeof(key);
-            ret = CertGetCertificateContextProperty( cert2, CERT_KEY_CONTEXT_PROP_ID, &key, &size );
-            ok( ret, "no key context on re-imported cert %lx\n", GetLastError() );
-            if (ret)
-            {
-                ok( key.hCryptProv != 0, "expected non-zero hCryptProv\n" );
-            }
-            CertFreeCertificateContext( cert2 );
-        }
-        CertCloseStore( store2, 0 );
-    }
-    HeapFree( GetProcessHeap(), 0, exported.pbData );
-
-    /* Test cert-only export (import pfx_cert_only which has no private key). */
-    CertCloseStore( store, 0 );
-    pfx.pbData = (BYTE *)pfx_cert_only;
-    pfx.cbData = sizeof(pfx_cert_only);
-    store = PFXImportCertStore( &pfx, L"", 0 );
-    ok( store != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
-
-    exported.pbData = NULL;
-    exported.cbData = 0;
-    ret = PFXExportCertStoreEx( store, &exported, L"", NULL, 0 );
-    ok( ret, "PFXExportCertStoreEx cert-only size query failed %lx\n", GetLastError() );
-    ok( exported.cbData > 0, "expected nonzero size\n" );
-
-    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
-    ret = PFXExportCertStoreEx( store, &exported, L"", NULL, 0 );
-    ok( ret, "PFXExportCertStoreEx cert-only failed %lx\n", GetLastError() );
-
-    ret = PFXIsPFXBlob( &exported );
-    ok( ret, "cert-only exported blob is not valid PFX\n" );
-
-    store2 = PFXImportCertStore( &exported, L"", 0 );
-    ok( store2 != NULL, "PFXImportCertStore of cert-only export failed %lx\n", GetLastError() );
-    if (store2)
-    {
-        count = countCertsInStore( store2 );
-        ok( count == 1, "expected 1 cert, got %lu\n", count );
-        CertCloseStore( store2, 0 );
-    }
-    HeapFree( GetProcessHeap(), 0, exported.pbData );
-
     CertCloseStore( store, 0 );
 }
 
@@ -3875,8 +3436,5 @@ START_TEST(store)
 
     test_I_UpdateStore();
     test_PFXImportCertStore();
-    test_PFXImportCertStore_unique_containers();
-    test_PFXImportCertStore_sha256_signing();
-    test_PFXExportCertStoreEx();
     test_CryptQueryObject();
 }

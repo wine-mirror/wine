@@ -32,7 +32,7 @@ extern "C" {
 DECLARE_HANDLE(HTHUMBNAIL);
 typedef HTHUMBNAIL *PHTHUMBNAIL;
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 static const UINT c_DwmMaxQueuedBuffers = 8;
 static const UINT c_DwmMaxMonitors = 16;
@@ -88,17 +88,6 @@ typedef enum _DWM_SOURCE_FRAME_SAMPLING {
     DWM_SOURCE_FRAME_SAMPLING_COVERAGE,
     DWM_SOURCE_FRAME_SAMPLING_LAST
 } DWM_SOURCE_FRAME_SAMPLING;
-
-enum DWM_SHOWCONTACT
-{
-    DWMSC_NONE      = 0x00000000,
-    DWMSC_DOWN      = 0x00000001,
-    DWMSC_UP        = 0x00000002,
-    DWMSC_DRAG      = 0x00000004,
-    DWMSC_HOLD      = 0x00000008,
-    DWMSC_PENBARREL = 0x00000010,
-    DWMSC_ALL       = 0xFFFFFFFF
-};
 
 typedef struct _UNSIGNED_RATIO {
     UINT32 uiNumerator;
@@ -208,7 +197,7 @@ typedef struct _DWM_PRESENT_PARAMETERS {
     DWM_SOURCE_FRAME_SAMPLING eSampling;
 } DWM_PRESENT_PARAMETERS;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 DWMAPI DwmAttachMilContent(HWND);
 DWMAPI_(BOOL) DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
@@ -231,7 +220,6 @@ DWMAPI DwmSetIconicLivePreviewBitmap(HWND, HBITMAP, POINT*, DWORD);
 DWMAPI DwmSetIconicThumbnail(HWND, HBITMAP, DWORD);
 DWMAPI DwmSetPresentParameters(HWND, DWM_PRESENT_PARAMETERS *);
 DWMAPI DwmSetWindowAttribute(HWND, DWORD, LPCVOID, DWORD);
-DWMAPI DwmShowContact(DWORD, enum DWM_SHOWCONTACT);
 DWMAPI DwmUnregisterThumbnail(HTHUMBNAIL);
 DWMAPI DwmUpdateThumbnailProperties(HTHUMBNAIL, const DWM_THUMBNAIL_PROPERTIES *);
 

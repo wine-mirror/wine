@@ -310,9 +310,6 @@ static ULONG STDMETHODCALLTYPE d3d12_heap_AddRef(ID3D12Heap *iface)
     struct d3d12_heap *heap = impl_from_ID3D12Heap(iface);
     unsigned int refcount = vkd3d_atomic_increment_u32(&heap->refcount);
 
-    if (refcount == 1)
-        vkd3d_atomic_increment_u32(&heap->internal_refcount);
-
     TRACE("%p increasing refcount to %u.\n", heap, refcount);
 
     VKD3D_ASSERT(!heap->is_private);
@@ -345,12 +342,6 @@ static void d3d12_heap_destroy(struct d3d12_heap *heap)
         d3d12_device_release(device);
 }
 
-static void d3d12_heap_decref(struct d3d12_heap *heap)
-{
-    if (!vkd3d_atomic_decrement_u32(&heap->internal_refcount))
-        d3d12_heap_destroy(heap);
-}
-
 static ULONG STDMETHODCALLTYPE d3d12_heap_Release(ID3D12Heap *iface)
 {
     struct d3d12_heap *heap = impl_from_ID3D12Heap(iface);
@@ -359,10 +350,16 @@ static ULONG STDMETHODCALLTYPE d3d12_heap_Release(ID3D12Heap *iface)
     TRACE("%p decreasing refcount to %u.\n", heap, refcount);
 
     /* A heap must not be destroyed until all contained resources are destroyed. */
-    if (!refcount)
-        d3d12_heap_decref(heap);
+    if (!refcount && !heap->resource_count)
+        d3d12_heap_destroy(heap);
 
     return refcount;
+}
+
+static void d3d12_heap_resource_destroyed(struct d3d12_heap *heap)
+{
+    if (!vkd3d_atomic_decrement_u32(&heap->resource_count) && (!heap->refcount || heap->is_private))
+        d3d12_heap_destroy(heap);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_heap_GetPrivateData(ID3D12Heap *iface,
@@ -490,7 +487,7 @@ static HRESULT d3d12_heap_init(struct d3d12_heap *heap,
 
     heap->ID3D12Heap_iface.lpVtbl = &d3d12_heap_vtbl;
     heap->refcount = 1;
-    heap->internal_refcount = 1;
+    heap->resource_count = 0;
 
     heap->is_private = !!resource;
 
@@ -558,6 +555,8 @@ static HRESULT d3d12_heap_init(struct d3d12_heap *heap,
     heap->device = device;
     if (!heap->is_private)
         d3d12_device_add_ref(heap->device);
+    else
+        heap->resource_count = 1;
 
     if (d3d12_heap_get_memory_property_flags(heap) & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     {
@@ -999,7 +998,7 @@ static void d3d12_resource_destroy(struct d3d12_resource *resource, struct d3d12
     d3d12_resource_tile_info_cleanup(resource);
 
     if (resource->heap)
-        d3d12_heap_decref(resource->heap);
+        d3d12_heap_resource_destroyed(resource->heap);
 }
 
 static ULONG d3d12_resource_incref(struct d3d12_resource *resource)
@@ -2201,7 +2200,7 @@ static HRESULT vkd3d_bind_heap_memory(struct d3d12_device *device,
     {
         resource->heap = heap;
         resource->heap_offset = heap_offset;
-        vkd3d_atomic_increment_u32(&heap->internal_refcount);
+        vkd3d_atomic_increment_u32(&heap->resource_count);
     }
     else
     {
@@ -2492,41 +2491,20 @@ static void descriptor_writes_free_object_refs(struct descriptor_writes *writes,
     writes->held_ref_count = 0;
 }
 
-static enum vkd3d_vk_descriptor_set_index vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(
-        VkDescriptorType type)
-{
-    static const enum vkd3d_vk_descriptor_set_index table[] =
-    {
-        [VK_DESCRIPTOR_TYPE_SAMPLER]                = VKD3D_SET_INDEX_SAMPLER,
-        [VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = VKD3D_SET_INDEX_COUNT,
-        [VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE]          = VKD3D_SET_INDEX_SAMPLED_IMAGE,
-        [VK_DESCRIPTOR_TYPE_STORAGE_IMAGE]          = VKD3D_SET_INDEX_STORAGE_IMAGE,
-        [VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER]   = VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER,
-        [VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER]   = VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER,
-        [VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER]         = VKD3D_SET_INDEX_UNIFORM_BUFFER,
-    };
-
-    VKD3D_ASSERT(type < ARRAY_SIZE(table));
-    VKD3D_ASSERT(table[type] < VKD3D_SET_INDEX_COUNT);
-
-    return table[type];
-}
-
 static void d3d12_desc_write_vk_heap_null_descriptor(struct d3d12_descriptor_heap *descriptor_heap,
-        uint32_t dst_array_element, struct descriptor_writes *writes, struct d3d12_device *device,
-        VkDescriptorType type)
+        uint32_t dst_array_element, struct descriptor_writes *writes, struct d3d12_device *device)
 {
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     struct d3d12_descriptor_heap_vk_set *descriptor_set;
-    enum vkd3d_vk_descriptor_set_index set;
+    enum vkd3d_vk_descriptor_set_index set, end;
     unsigned int i = writes->count;
 
+    end = device->vk_info.EXT_mutable_descriptor_type ? VKD3D_SET_INDEX_MUTABLE
+            : VKD3D_SET_INDEX_STORAGE_IMAGE;
     /* Binding a shader with the wrong null descriptor type works in Windows.
      * To support that here we must write one to all applicable Vulkan sets. */
-    for (set = VKD3D_SET_INDEX_UNIFORM_BUFFER; set <= VKD3D_SET_INDEX_STORAGE_IMAGE; ++set)
+    for (set = VKD3D_SET_INDEX_UNIFORM_BUFFER; set <= end; ++set)
     {
-        if (device->vk_info.EXT_mutable_descriptor_type)
-            set = vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(type);
         descriptor_set = &descriptor_heap->vk_descriptor_sets[set];
         writes->vk_descriptor_writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writes->vk_descriptor_writes[i].pNext = NULL;
@@ -2567,8 +2545,6 @@ static void d3d12_desc_write_vk_heap_null_descriptor(struct d3d12_descriptor_hea
         VK_CALL(vkUpdateDescriptorSets(device->vk_device, i, writes->vk_descriptor_writes, 0, NULL));
         descriptor_writes_free_object_refs(writes, device);
         i = 0;
-        if (device->vk_info.EXT_mutable_descriptor_type)
-            break;
     }
 
     writes->count = i;
@@ -2633,7 +2609,7 @@ static void d3d12_desc_write_vk_heap(struct d3d12_descriptor_heap *descriptor_he
             break;
     }
     if (is_null && device->vk_info.EXT_robustness2)
-        return d3d12_desc_write_vk_heap_null_descriptor(descriptor_heap, dst_array_element, writes, device, type);
+        return d3d12_desc_write_vk_heap_null_descriptor(descriptor_heap, dst_array_element, writes, device);
 
     ++i;
     if (u.header->magic == VKD3D_DESCRIPTOR_MAGIC_UAV && u.view->v.vk_counter_view)
@@ -3118,7 +3094,7 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
     if (vk_image)
     {
         view_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view_desc.pNext = &usage_desc;
+        view_desc.pNext = NULL;
         view_desc.flags = 0;
         view_desc.image = vk_image;
         view_desc.viewType = desc->view_type;
@@ -3131,11 +3107,13 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
         view_desc.subresourceRange.levelCount = desc->miplevel_count;
         view_desc.subresourceRange.baseArrayLayer = desc->layer_idx;
         view_desc.subresourceRange.layerCount = desc->layer_count;
-
-        usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
-        usage_desc.pNext = NULL;
-        usage_desc.usage = desc->usage;
-
+        if (device->vk_info.KHR_maintenance2)
+        {
+            usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+            usage_desc.pNext = NULL;
+            usage_desc.usage = desc->usage;
+            view_desc.pNext = &usage_desc;
+        }
         if ((vr = VK_CALL(vkCreateImageView(device->vk_device, &view_desc, NULL, &vk_view))) < 0)
         {
             WARN("Failed to create Vulkan image view, vr %d.\n", vr);
@@ -3661,24 +3639,6 @@ bool vkd3d_create_raw_buffer_view(struct d3d12_device *device,
 }
 
 /* samplers */
-
-static VkSamplerReductionModeEXT vk_reduction_mode_from_d3d12(D3D12_FILTER_REDUCTION_TYPE mode)
-{
-    switch (mode)
-    {
-        case D3D12_FILTER_REDUCTION_TYPE_STANDARD:
-        case D3D12_FILTER_REDUCTION_TYPE_COMPARISON:
-            return VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE;
-        case D3D12_FILTER_REDUCTION_TYPE_MINIMUM:
-            return VK_SAMPLER_REDUCTION_MODE_MIN;
-        case D3D12_FILTER_REDUCTION_TYPE_MAXIMUM:
-            return VK_SAMPLER_REDUCTION_MODE_MAX;
-        default:
-            FIXME("Unhandled reduction mode %#x.\n", mode);
-            return VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE;
-    }
-}
-
 static VkFilter vk_filter_from_d3d12(D3D12_FILTER_TYPE type)
 {
     switch (type)
@@ -3752,12 +3712,15 @@ static VkResult d3d12_create_sampler(struct d3d12_device *device, D3D12_FILTER f
         D3D12_COMPARISON_FUNC comparison_func, D3D12_STATIC_BORDER_COLOR border_colour,
         float min_lod, float max_lod, VkSampler *vk_sampler)
 {
-    VkSamplerReductionModeCreateInfoEXT reduction_desc;
     const struct vkd3d_vk_device_procs *vk_procs;
     struct VkSamplerCreateInfo sampler_desc;
     VkResult vr;
 
     vk_procs = &device->vk_procs;
+
+    if (D3D12_DECODE_FILTER_REDUCTION(filter) == D3D12_FILTER_REDUCTION_TYPE_MINIMUM
+            || D3D12_DECODE_FILTER_REDUCTION(filter) == D3D12_FILTER_REDUCTION_TYPE_MAXIMUM)
+        FIXME("Min/max reduction mode not supported.\n");
 
     sampler_desc.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     sampler_desc.pNext = NULL;
@@ -3781,21 +3744,6 @@ static VkResult d3d12_create_sampler(struct d3d12_device *device, D3D12_FILTER f
     if (address_u == D3D12_TEXTURE_ADDRESS_MODE_BORDER || address_v == D3D12_TEXTURE_ADDRESS_MODE_BORDER
             || address_w == D3D12_TEXTURE_ADDRESS_MODE_BORDER)
         sampler_desc.borderColor = vk_border_colour_from_d3d12(border_colour);
-
-    reduction_desc.reductionMode = vk_reduction_mode_from_d3d12(D3D12_DECODE_FILTER_REDUCTION(filter));
-    if (reduction_desc.reductionMode != VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE)
-    {
-        if (device->vk_info.EXT_sampler_filter_minmax)
-        {
-            reduction_desc.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT;
-            reduction_desc.pNext = NULL;
-            vk_prepend_struct(&sampler_desc, &reduction_desc);
-        }
-        else
-        {
-            FIXME("Sampler min/max reduction filtering is not supported by the device.\n");
-        }
-    }
 
     if ((vr = VK_CALL(vkCreateSampler(device->vk_device, &sampler_desc, NULL, vk_sampler))) < 0)
         WARN("Failed to create Vulkan sampler, vr %d.\n", vr);
@@ -4275,6 +4223,17 @@ static const struct ID3D12DescriptorHeapVtbl d3d12_descriptor_heap_vtbl =
     d3d12_descriptor_heap_GetDesc,
     d3d12_descriptor_heap_GetCPUDescriptorHandleForHeapStart,
     d3d12_descriptor_heap_GetGPUDescriptorHandleForHeapStart,
+};
+
+const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[] =
+{
+    VKD3D_SET_INDEX_SAMPLER,
+    VKD3D_SET_INDEX_COUNT,
+    VKD3D_SET_INDEX_SAMPLED_IMAGE,
+    VKD3D_SET_INDEX_STORAGE_IMAGE,
+    VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER,
+    VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER,
+    VKD3D_SET_INDEX_UNIFORM_BUFFER,
 };
 
 static HRESULT d3d12_descriptor_heap_create_descriptor_pool(struct d3d12_descriptor_heap *descriptor_heap,

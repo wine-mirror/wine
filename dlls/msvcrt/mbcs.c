@@ -1957,7 +1957,6 @@ int CDECL _ismbcalnum(unsigned int ch)
  */
 int CDECL _ismbcspace_l(unsigned int ch, _locale_t locale)
 {
-    if (ch <= 0x7f) return MSVCRT__ctype[ch + 1] & _SPACE;
     return _iswspace_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
 

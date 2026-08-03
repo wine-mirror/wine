@@ -41,7 +41,7 @@ WINE_DECLARE_DEBUG_CHANNEL(io);
 
 static inline void add_stack( CONTEXT *context, int offset )
 {
-    if (!ldt_is_32bit(context->SegSs))
+    if (!IS_SELECTOR_32BIT(context->SegSs))
         ADD_LOWORD( context->Esp, offset );
     else
         context->Esp += offset;
@@ -59,20 +59,25 @@ static inline void *get_stack( CONTEXT *context )
     return ldt_get_ptr( context->SegSs, context->Esp );
 }
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct idtr
 {
     WORD  limit;
     BYTE *base;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static LDT_ENTRY idt[256];
 
 static inline struct idtr get_idtr(void)
 {
     struct idtr ret;
+#if defined(__i386__) && defined(__GNUC__)
     __asm__( "sidtl %0" : "=m" (ret) );
+#else
+    ret.base = (BYTE *)idt;
+    ret.limit = sizeof(idt) - 1;
+#endif
     return ret;
 }
 
@@ -430,7 +435,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
 
-    long_op = long_addr = ldt_is_32bit(context->SegCs);
+    long_op = long_addr = IS_SELECTOR_32BIT(context->SegCs);
     instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
     if (!instr) return ExceptionContinueSearch;
 

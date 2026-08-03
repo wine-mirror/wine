@@ -28,7 +28,7 @@
 #include <mmsystem.h>
 #include <dmusicc.h>
 #include <dmplugin.h>
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifdef WINE_NO_UNICODE_MACROS
 #undef AddPort
@@ -1713,6 +1713,6 @@ DECLARE_INTERFACE_(IDirectMusicContainer,IUnknown)
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_PERFORMANCE_H */

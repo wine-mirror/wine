@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.networking.connectivity.idl";
-
-namespace Windows.Networking.Connectivity {
-    runtimeclass NetworkInformation;
-}
+#include "windows.networking.connectivity.idl"

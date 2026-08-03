@@ -37,6 +37,7 @@
 #include <dlfcn.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "lm.h"
@@ -61,7 +62,6 @@ static NET_API_STATUS (*pNetApiBufferFree)( void * );
 static NET_API_STATUS (*pNetServerGetInfo)( const char *, unsigned int, unsigned char ** );
 static NET_API_STATUS (*pNetShareAdd)( const char *, unsigned int, unsigned char *, unsigned int * );
 static NET_API_STATUS (*pNetShareDel)( const char *, const char *, unsigned int );
-static NET_API_STATUS (*pNetShareGetInfo)( const char *, const char *, unsigned int, unsigned char ** );
 static NET_API_STATUS (*pNetWkstaGetInfo)( const char *, unsigned int, unsigned char ** );
 
 static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
@@ -747,97 +747,6 @@ static NTSTATUS share_del( void *args )
     return status;
 }
 
-static NET_API_STATUS share_info_2_from_samba( const unsigned char *buf, void *buffer, ULONG *size )
-{
-    SHARE_INFO_2 *ret = (SHARE_INFO_2 *)buffer;
-    const struct share_info_2 *info = (const struct share_info_2 *)buf;
-    DWORD len = 0;
-    WCHAR *ptr;
-
-    if (info->shi2_netname)
-        len += netapi_umbstowcs( info->shi2_netname, NULL, 0 );
-    if (info->shi2_remark)
-        len += netapi_umbstowcs( info->shi2_remark, NULL, 0 );
-    if (info->shi2_path)
-        len += netapi_umbstowcs( info->shi2_path, NULL, 0 );
-    if (info->shi2_passwd)
-        len += netapi_umbstowcs( info->shi2_passwd, NULL, 0 );
-    if (*size < sizeof(*ret) + (len * sizeof(WCHAR) ))
-    {
-        *size = sizeof(*ret) + (len * sizeof(WCHAR) );
-        return ERROR_INSUFFICIENT_BUFFER;
-    }
-
-    ptr = (WCHAR *)(ret + 1);
-    if (!info->shi2_netname) ret->shi2_netname = NULL;
-    else
-    {
-        ret->shi2_netname = ptr;
-        ptr += netapi_umbstowcs( info->shi2_netname, ptr, len );
-    }
-    ret->shi2_type = info->shi2_type;
-    if (!info->shi2_remark) ret->shi2_remark = NULL;
-    else
-    {
-        ret->shi2_remark = ptr;
-        ptr += netapi_umbstowcs( info->shi2_remark, ptr, len );
-    }
-    ret->shi2_permissions = info->shi2_permissions;
-    ret->shi2_max_uses = info->shi2_max_uses;
-    ret->shi2_current_uses = info->shi2_current_uses;
-    if (!info->shi2_path) ret->shi2_path = NULL;
-    else
-    {
-        ret->shi2_path = ptr;
-        ptr += netapi_umbstowcs( info->shi2_path, ptr, len );
-    }
-    if (!info->shi2_passwd) ret->shi2_passwd = NULL;
-    else
-    {
-        ret->shi2_passwd = ptr;
-        ptr += netapi_umbstowcs( info->shi2_passwd, ptr, len );
-    }
-    *size = (char *)ptr - (char *)buffer;
-    return NERR_Success;
-}
-
-static NET_API_STATUS share_info_from_samba( unsigned int level, const unsigned char *buf, void *buffer, ULONG *size )
-{
-    switch (level)
-    {
-    case 2: return share_info_2_from_samba( buf, buffer, size );
-    default:
-        FIXME( "level %u not supported\n", level );
-        return ERROR_NOT_SUPPORTED;
-    }
-}
-
-static NTSTATUS share_getinfo( void *args )
-{
-    const struct share_getinfo_params *params = args;
-    char *samba_server = NULL, *samba_share;
-    unsigned char *samba_buffer = NULL;
-    NET_API_STATUS status;
-
-    if (!libnetapi_ctx) return ERROR_NOT_SUPPORTED;
-
-    if (params->server && !(samba_server = strdup_unixcp( params->server ))) return ERROR_OUTOFMEMORY;
-    if (!(samba_share = strdup_unixcp( params->share )))
-    {
-        free( samba_server );
-        return ERROR_OUTOFMEMORY;
-    }
-    status = pNetShareGetInfo( samba_server, samba_share, params->level, &samba_buffer );
-    free( samba_server );
-    free( samba_share );
-    if (!status)
-    {
-        status = share_info_from_samba( params->level, samba_buffer, params->buffer, params->size );
-        pNetApiBufferFree( samba_buffer );
-    }
-    return status;
-}
-
 struct wksta_info_100
 {
     unsigned int wki100_platform_id;
@@ -944,7 +853,6 @@ static NTSTATUS netapi_init( void *args )
     LOAD_FUNCPTR(NetServerGetInfo)
     LOAD_FUNCPTR(NetShareAdd)
     LOAD_FUNCPTR(NetShareDel)
-    LOAD_FUNCPTR(NetShareGetInfo)
     LOAD_FUNCPTR(NetWkstaGetInfo)
 #undef LOAD_FUNCPTR
 
@@ -1073,7 +981,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     server_getinfo,
     share_add,
     share_del,
-    share_getinfo,
     wksta_getinfo,
     change_password,
 };
@@ -1083,39 +990,6 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 #ifdef _WIN64
 
 typedef ULONG PTR32;
-
-struct server_info_101_32
-{
-    unsigned int sv101_platform_id;
-    PTR32        sv101_name;
-    unsigned int sv101_version_major;
-    unsigned int sv101_version_minor;
-    unsigned int sv101_type;
-    PTR32        sv101_comment;
-};
-
-static NTSTATUS create_server_info32( unsigned int level, void *buffer )
-{
-    switch (level)
-    {
-    case 101:
-    {
-        struct server_info_101_32 *si32 = (struct server_info_101_32 *)buffer;
-        struct server_info_101 *si = (struct server_info_101 *)buffer;
-
-        si32->sv101_platform_id = si->sv101_platform_id;
-        si32->sv101_name = PtrToUlong( si->sv101_name );
-        si32->sv101_version_major = si->sv101_version_major;
-        si32->sv101_version_minor = si->sv101_version_minor;
-        si32->sv101_type = si->sv101_type;
-        si32->sv101_comment = PtrToUlong( si->sv101_comment );
-        return STATUS_SUCCESS;
-    }
-    default:
-        FIXME( "level %u not supported\n", level );
-        return ERROR_NOT_SUPPORTED;
-    }
-}
 
 static NTSTATUS wow64_server_getinfo( void *args )
 {
@@ -1134,131 +1008,8 @@ static NTSTATUS wow64_server_getinfo( void *args )
         ULongToPtr(params32->buffer),
         ULongToPtr(params32->size)
     };
-    NTSTATUS status;
 
-    status = server_getinfo( &params );
-    if (!status) status = create_server_info32( params.level, params.buffer );
-    return status;
-}
-
-struct share_info_2_32
-{
-    PTR32        shi2_netname;
-    unsigned int shi2_type;
-    PTR32        shi2_remark;
-    unsigned int shi2_permissions;
-    unsigned int shi2_max_uses;
-    unsigned int shi2_current_uses;
-    PTR32        shi2_path;
-    PTR32        shi2_passwd;
-};
-
-struct share_info
-{
-    union
-    {
-        struct share_info_2 si2;
-        struct share_info_502 si502;
-    };
-    struct security_descriptor sd;
-    struct acl sacl;
-    struct acl dacl;
-};
-
-struct acl_32
-{
-    enum acl_revision revision;
-    unsigned short size;
-    unsigned int   num_aces;
-    PTR32          aces;
-};
-
-static void create_acl64( const struct acl_32 *acl32, struct acl *acl )
-{
-    acl->revision = acl32->revision;
-    acl->size = acl32->size;
-    acl->num_aces = acl32->num_aces;
-    acl->aces = ULongToPtr( acl32->aces );
-}
-
-struct security_descriptor_32
-{
-    enum security_descriptor_revision revision;
-    unsigned short type;
-    PTR32          owner_sid;
-    PTR32          group_sid;
-    PTR32          sacl;
-    PTR32          dacl;
-};
-
-static void create_security_descriptor64( const struct security_descriptor_32 *sd32,
-        struct share_info *si )
-{
-    struct security_descriptor *sd = &si->sd;
-
-    sd->revision = sd32->revision;
-    sd->type = sd32->type;
-    sd->owner_sid = ULongToPtr( sd32->owner_sid );
-    sd->group_sid = ULongToPtr( sd32->group_sid );
-    create_acl64( ULongToPtr(sd32->sacl), &si->sacl );
-    sd->sacl = &si->sacl;
-    create_acl64( ULongToPtr(sd32->dacl), &si->dacl );
-    sd->dacl = &si->dacl;
-}
-
-struct share_info_502_32
-{
-    PTR32        shi502_netname;
-    unsigned int shi502_type;
-    PTR32        shi502_remark;
-    unsigned int shi502_permissions;
-    unsigned int shi502_max_uses;
-    unsigned int shi502_current_uses;
-    PTR32        shi502_path;
-    PTR32        shi502_passwd;
-    unsigned int shi502_reserved;
-    PTR32        shi502_security_descriptor;
-};
-
-static NTSTATUS create_share_info64( unsigned int level, void *buffer, struct share_info *si )
-{
-    switch (level)
-    {
-    case 2:
-    {
-        struct share_info_2_32 *si32 = buffer;
-
-        si->si2.shi2_netname = ULongToPtr( si32->shi2_netname );
-        si->si2.shi2_type = si32->shi2_type;
-        si->si2.shi2_remark = ULongToPtr( si32->shi2_remark );
-        si->si2.shi2_permissions = si32->shi2_permissions;
-        si->si2.shi2_max_uses = si32->shi2_max_uses;
-        si->si2.shi2_current_uses = si32->shi2_current_uses;
-        si->si2.shi2_path = ULongToPtr( si32->shi2_path );
-        si->si2.shi2_passwd = ULongToPtr( si32->shi2_passwd );
-        return STATUS_SUCCESS;
-    }
-    case 502:
-    {
-        struct share_info_502_32 *si32 = buffer;
-
-        si->si502.shi502_netname = ULongToPtr( si32->shi502_netname );
-        si->si502.shi502_type = si32->shi502_type;
-        si->si502.shi502_remark = ULongToPtr( si32->shi502_remark );
-        si->si502.shi502_permissions = si32->shi502_permissions;
-        si->si502.shi502_max_uses = si32->shi502_max_uses;
-        si->si502.shi502_current_uses = si32->shi502_current_uses;
-        si->si502.shi502_path = ULongToPtr( si32->shi502_path );
-        si->si502.shi502_passwd = ULongToPtr( si32->shi502_passwd );
-        si->si502.shi502_reserved = si32->shi502_reserved;
-        create_security_descriptor64( ULongToPtr(si32->shi502_security_descriptor), si );
-        si->si502.shi502_security_descriptor = &si->sd;
-        return STATUS_SUCCESS;
-    }
-    default:
-        FIXME( "level %u not supported\n", level );
-        return ERROR_NOT_SUPPORTED;
-    }
+    return server_getinfo( &params );
 }
 
 static NTSTATUS wow64_share_add( void *args )
@@ -1271,19 +1022,15 @@ static NTSTATUS wow64_share_add( void *args )
         PTR32 err;
     } const *params32 = args;
 
-    struct share_info si;
     struct share_add_params params =
     {
         ULongToPtr(params32->server),
         params32->level,
-        (BYTE *)&si,
+        ULongToPtr(params32->info),
         ULongToPtr(params32->err)
     };
-    NTSTATUS status;
 
-    status = create_share_info64( params.level, ULongToPtr(params32->info), &si );
-    if (!status) status = share_add( &params );
-    return status;
+    return share_add( &params );
 }
 
 static NTSTATUS wow64_share_del( void *args )
@@ -1305,88 +1052,6 @@ static NTSTATUS wow64_share_del( void *args )
     return share_del( &params );
 }
 
-static NTSTATUS create_share_info32( unsigned int level, void *buffer )
-{
-    switch (level)
-    {
-    case 2:
-    {
-        struct share_info_2_32 *si32 = buffer;
-        struct share_info_2 *si = buffer;
-
-        si32->shi2_netname = PtrToUlong( si->shi2_netname );
-        si32->shi2_type = si->shi2_type;
-        si32->shi2_remark = PtrToUlong( si->shi2_remark );
-        si32->shi2_permissions = si->shi2_permissions;
-        si32->shi2_max_uses = si->shi2_max_uses;
-        si32->shi2_current_uses = si->shi2_current_uses;
-        si32->shi2_path = PtrToUlong( si->shi2_path );
-        si32->shi2_passwd = PtrToUlong( si->shi2_passwd );
-        return STATUS_SUCCESS;
-    }
-    default:
-        FIXME( "level %u not supported\n", level );
-        return ERROR_NOT_SUPPORTED;
-    }
-}
-
-static NTSTATUS wow64_share_getinfo( void *args )
-{
-    struct
-    {
-        PTR32 server;
-        PTR32 share;
-        DWORD level;
-        PTR32 buffer;
-        PTR32 size;
-    } const *params32 = args;
-
-    struct share_getinfo_params params =
-    {
-        ULongToPtr(params32->server),
-        ULongToPtr(params32->share),
-        params32->level,
-        ULongToPtr(params32->buffer),
-        ULongToPtr(params32->size)
-    };
-    NTSTATUS status;
-
-    status = share_getinfo( &params );
-    if (!status) status = create_share_info32( params.level, params.buffer );
-    return status;
-}
-
-struct wksta_info_100_32
-{
-    unsigned int wki100_platform_id;
-    PTR32        wki100_computername;
-    PTR32        wki100_langroup;
-    unsigned int wki100_ver_major;
-    unsigned int wki100_ver_minor;
-};
-
-static NTSTATUS create_wksta_info32( DWORD level, void *buffer )
-{
-    switch (level)
-    {
-    case 100:
-    {
-        struct wksta_info_100_32 *wi32 = buffer;
-        struct wksta_info_100 *wi = buffer;
-
-        wi32->wki100_platform_id = wi->wki100_platform_id;
-        wi32->wki100_computername = PtrToUlong( wi->wki100_computername );
-        wi32->wki100_langroup = PtrToUlong( wi->wki100_langroup );
-        wi32->wki100_ver_major = wi->wki100_ver_major;
-        wi32->wki100_ver_minor = wi->wki100_ver_minor;
-        return ERROR_SUCCESS;
-    }
-    default:
-        FIXME( "level %u not supported\n", level );
-        return ERROR_NOT_SUPPORTED;
-    }
-}
-
 static NTSTATUS wow64_wksta_getinfo( void *args )
 {
     struct
@@ -1404,11 +1069,8 @@ static NTSTATUS wow64_wksta_getinfo( void *args )
         ULongToPtr(params32->buffer),
         ULongToPtr(params32->size)
     };
-    NTSTATUS status;
 
-    status = wksta_getinfo( &params );
-    if (!status) status = create_wksta_info32( params.level, params.buffer );
-    return status;
+    return wksta_getinfo( &params );
 }
 
 static NTSTATUS wow64_change_password( void *args )
@@ -1438,7 +1100,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_server_getinfo,
     wow64_share_add,
     wow64_share_del,
-    wow64_share_getinfo,
     wow64_wksta_getinfo,
     wow64_change_password,
 };

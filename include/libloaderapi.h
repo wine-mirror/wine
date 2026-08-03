@@ -19,10 +19,6 @@
 #ifndef _APISETLIBLOADER_
 #define _APISETLIBLOADER_
 
-#include <apisetcconv.h>
-#include <minwindef.h>
-#include <minwinbase.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

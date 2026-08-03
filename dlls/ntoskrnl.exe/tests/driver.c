@@ -58,9 +58,6 @@ static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *lower_device, *upper_device;
 
-static IRP *queued_async_irps[2];
-static unsigned int queued_async_count;
-
 static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType, *pIoDriverObjectType;
 static PEPROCESS *pPsInitialSystemProcess;
 static void *create_caller_thread;
@@ -1081,14 +1078,12 @@ static void test_call_driver(DEVICE_OBJECT *device)
 }
 
 static int cancel_cnt;
-static HANDLE thread_id;
 
 static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
 {
     IoReleaseCancelSpinLock(irp->CancelIrql);
     ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
     ok(!irp->CancelRoutine, "CancelRoutine = %p\n", irp->CancelRoutine);
-    ok(PsGetCurrentThreadId() == thread_id, "Unexpected thread_id %p\n", PsGetCurrentThreadId());
     irp->IoStatus.Status = STATUS_CANCELLED;
     irp->IoStatus.Information = 0;
     cancel_cnt++;
@@ -1097,7 +1092,6 @@ static void WINAPI cancel_irp(DEVICE_OBJECT *device, IRP *irp)
 static void WINAPI cancel_ioctl_irp(DEVICE_OBJECT *device, IRP *irp)
 {
     IoReleaseCancelSpinLock(irp->CancelIrql);
-    todo_wine ok(PsGetCurrentThreadId() == thread_id, "Unexpected thread_id %p\n", PsGetCurrentThreadId());
     irp->IoStatus.Status = STATUS_CANCELLED;
     irp->IoStatus.Information = 0;
     cancel_cnt++;
@@ -1119,8 +1113,6 @@ static void test_cancel_irp(DEVICE_OBJECT *device)
     BOOL completion_called;
     BOOLEAN r;
     NTSTATUS status;
-
-    thread_id = PsGetCurrentThreadId();
 
     /* cancel IRP with no cancel routine */
     irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
@@ -1855,27 +1847,17 @@ static void test_completion(void)
 static void test_IoAttachDeviceToDeviceStack(void)
 {
     DEVICE_OBJECT *dev1, *dev2, *dev3, *ret;
-    DEVOBJ_EXTENSION *ext1, *ext2, *ext3;
     NTSTATUS status;
 
     status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
             FILE_DEVICE_SECURE_OPEN, FALSE, &dev1);
     ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
-    ok(!!dev1->DeviceObjectExtension, "Got NULL DeviceObjectExtension.\n");
-    ext1 = dev1->DeviceObjectExtension;
     status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
             FILE_DEVICE_SECURE_OPEN, FALSE, &dev2);
     ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
-    ok(!!dev2->DeviceObjectExtension, "Got NULL DeviceObjectExtension.\n");
-    ext2 = dev2->DeviceObjectExtension;
     status = IoCreateDevice(driver_obj, 0, NULL, FILE_DEVICE_UNKNOWN,
             FILE_DEVICE_SECURE_OPEN, FALSE, &dev3);
     ok(status == STATUS_SUCCESS, "IoCreateDevice failed\n");
-    ok(!!dev3->DeviceObjectExtension, "Got NULL DeviceObjectExtension.\n");
-    ext3 = dev3->DeviceObjectExtension;
-    ok(!ext1->AttachedTo, "Unexpected AttachedTo %p.\n", ext1->AttachedTo);
-    ok(!ext2->AttachedTo, "Unexpected AttachedTo %p.\n", ext2->AttachedTo);
-    ok(!ext3->AttachedTo, "Unexpected AttachedTo %p.\n", ext3->AttachedTo);
 
     /* TODO: initialize devices properly */
     dev1->Flags &= ~DO_DEVICE_INITIALIZING;
@@ -1885,9 +1867,7 @@ static void test_IoAttachDeviceToDeviceStack(void)
     ok(ret == dev1, "IoAttachDeviceToDeviceStack returned %p, expected %p\n", ret, dev1);
     ok(dev1->AttachedDevice == dev2, "dev1->AttachedDevice = %p, expected %p\n",
             dev1->AttachedDevice, dev2);
-    ok(!ext1->AttachedTo, "Unexpected AttachedTo %p.\n", ext1->AttachedTo);
     ok(!dev2->AttachedDevice, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
-    ok(ext2->AttachedTo == dev1, "Unexpected AttachedTo %p.\n", ext2->AttachedTo);
     ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
     ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
 
@@ -1895,12 +1875,9 @@ static void test_IoAttachDeviceToDeviceStack(void)
     ok(ret == dev2, "IoAttachDeviceToDeviceStack returned %p, expected %p\n", ret, dev2);
     ok(dev1->AttachedDevice == dev2, "dev1->AttachedDevice = %p, expected %p\n",
             dev1->AttachedDevice, dev2);
-    ok(!ext1->AttachedTo, "Unexpected AttachedTo %p.\n", ext1->AttachedTo);
     ok(dev2->AttachedDevice == dev3, "dev2->AttachedDevice = %p, expected %p\n",
             dev2->AttachedDevice, dev3);
-    ok(ext2->AttachedTo == dev1, "Unexpected AttachedTo %p.\n", ext2->AttachedTo);
     ok(!dev3->AttachedDevice, "dev3->AttachedDevice = %p\n", dev3->AttachedDevice);
-    ok(ext3->AttachedTo == dev2, "Unexpected AttachedTo %p.\n", ext3->AttachedTo);
     ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
     ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
     ok(dev3->StackSize == 3, "dev3->StackSize = %d\n", dev3->StackSize);
@@ -1908,11 +1885,9 @@ static void test_IoAttachDeviceToDeviceStack(void)
     IoDetachDevice(dev1);
     ok(!dev1->AttachedDevice, "dev1->AttachedDevice = %p\n", dev1->AttachedDevice);
     ok(dev2->AttachedDevice == dev3, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
-    ok(!ext2->AttachedTo, "Unexpected AttachedTo %p.\n", ext2->AttachedTo);
 
     IoDetachDevice(dev2);
     ok(!dev2->AttachedDevice, "dev2->AttachedDevice = %p\n", dev2->AttachedDevice);
-    ok(!ext3->AttachedTo, "Unexpected AttachedTo %p.\n", ext3->AttachedTo);
     ok(dev1->StackSize == 1, "dev1->StackSize = %d\n", dev1->StackSize);
     ok(dev2->StackSize == 2, "dev2->StackSize = %d\n", dev2->StackSize);
     ok(dev3->StackSize == 3, "dev3->StackSize = %d\n", dev3->StackSize);
@@ -1996,105 +1971,6 @@ static void test_object_name(void)
     ok(ret_size == sizeof(*name), "got size %lu\n", ret_size);
     ok(!name->Name.Length, "got length %u\n", name->Name.Length);
     ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
-}
-
-static void test_dir_kernel_object(void)
-{
-    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
-    UNICODE_STRING pathU;
-    IO_STATUS_BLOCK io;
-    FILE_OBJECT *file_obj;
-    HANDLE dir_handle, handle;
-    NTSTATUS status;
-
-    RtlInitUnicodeString(&pathU, L"\\??\\C:\\windows");
-    InitializeObjectAttributes(&attr, &pathU, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
-    status = ZwOpenFile(&dir_handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &io,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
-    ok(!status, "ZwOpenFile failed: %#lx\n", status);
-    if (status)
-        return;
-
-    status = ObReferenceObjectByHandle(dir_handle, 0, *pIoFileObjectType, KernelMode,
-                                       (void **)&file_obj, NULL);
-    ok(!status, "ObReferenceObjectByHandle failed: %#lx\n", status);
-    if (!status)
-    {
-        status = ObOpenObjectByPointer(file_obj, OBJ_KERNEL_HANDLE, NULL, 0,
-                                       *pIoFileObjectType, KernelMode, &handle);
-        ok(!status, "ObOpenObjectByPointer failed: %#lx\n", status);
-        if (!status)
-            ZwClose(handle);
-        ObDereferenceObject(file_obj);
-    }
-
-    ZwClose(dir_handle);
-}
-
-static void test_fsrtl_get_file_size(void)
-{
-    static const char data[] = "hello, world!";
-    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
-    UNICODE_STRING pathU;
-    IO_STATUS_BLOCK io;
-    LARGE_INTEGER file_size, offset;
-    HANDLE file_handle, dir_handle;
-    FILE_OBJECT *file_obj, *dir_obj;
-    NTSTATUS status;
-
-    /* test regular file */
-    RtlInitUnicodeString(&pathU, L"\\??\\C:\\windows\\winetest_ntoskrnl_fsrtl.tmp");
-    InitializeObjectAttributes(&attr, &pathU, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
-    status = ZwCreateFile(&file_handle, DELETE | FILE_WRITE_DATA | SYNCHRONIZE, &attr, &io, NULL,
-                          FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                          FILE_CREATE, FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
-    ok(!status, "ZwCreateFile failed: %#lx\n", status);
-    if (status)
-        return;
-
-    offset.QuadPart = 0;
-    status = ZwWriteFile(file_handle, NULL, NULL, NULL, &io, (void *)data, sizeof(data), &offset, NULL);
-    ok(!status, "ZwWriteFile failed: %#lx\n", status);
-
-    status = ObReferenceObjectByHandle(file_handle, 0, *pIoFileObjectType, KernelMode,
-                                       (void **)&file_obj, NULL);
-    ok(!status, "ObReferenceObjectByHandle failed: %#lx\n", status);
-    if (!status)
-    {
-        file_size.QuadPart = 0;
-        status = FsRtlGetFileSize(file_obj, &file_size);
-        ok(!status, "FsRtlGetFileSize failed: %#lx\n", status);
-        ok(file_size.QuadPart == sizeof(data), "expected %Iu, got %I64d\n",
-           sizeof(data), file_size.QuadPart);
-        ObDereferenceObject(file_obj);
-    }
-
-    ZwClose(file_handle);
-
-    /* test directory returns STATUS_FILE_IS_A_DIRECTORY */
-    RtlInitUnicodeString(&pathU, L"\\??\\C:\\windows");
-    InitializeObjectAttributes(&attr, &pathU, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
-    status = ZwOpenFile(&dir_handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &io,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
-    ok(!status, "ZwOpenFile failed: %#lx\n", status);
-    if (status)
-        return;
-
-    status = ObReferenceObjectByHandle(dir_handle, 0, *pIoFileObjectType, KernelMode,
-                                       (void **)&dir_obj, NULL);
-    ok(!status, "ObReferenceObjectByHandle failed: %#lx\n", status);
-    if (!status)
-    {
-        file_size.QuadPart = 0;
-        status = FsRtlGetFileSize(dir_obj, &file_size);
-        ok(status == STATUS_FILE_IS_A_DIRECTORY,
-           "expected STATUS_FILE_IS_A_DIRECTORY, got %#lx\n", status);
-        ObDereferenceObject(dir_obj);
-    }
-
-    ZwClose(dir_handle);
 }
 
 static PIO_WORKITEM work_item;
@@ -2560,49 +2436,6 @@ static void test_default_security(void)
     FltFreeSecurityDescriptor(sd);
 }
 
-static void test_device_object(void)
-{
-    todo_wine ok(lower_device->Type == 3, "Got type %d.\n", lower_device->Type);
-    todo_wine ok(lower_device->ReferenceCount == 1, "Got refcount %ld.\n", lower_device->ReferenceCount);
-    ok(lower_device->DriverObject == driver_obj, "Got driver %p.\n", lower_device->DriverObject);
-    ok(!lower_device->NextDevice, "Got next device %p.\n", lower_device->NextDevice);
-    ok(lower_device->AttachedDevice == upper_device, "Got attached device %p.\n", lower_device->AttachedDevice);
-    ok(!lower_device->CurrentIrp, "Got current IRP %p.\n", lower_device->CurrentIrp);
-    ok(!lower_device->Timer, "Got timer %p.\n", lower_device->Timer);
-    todo_wine ok(lower_device->Flags == 0x40, "Got flags %#lx.\n", lower_device->Flags);
-    ok(lower_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
-            "Got characteristics %#lx.\n", lower_device->Characteristics);
-    ok(!lower_device->Vpb, "Got VPB %p.\n", lower_device->Vpb);
-    todo_wine ok(!lower_device->DeviceExtension, "Got extension %p.\n", lower_device->DeviceExtension);
-    ok(lower_device->DeviceType == FILE_DEVICE_UNKNOWN, "Got device type %#lx.\n", lower_device->DeviceType);
-    ok(lower_device->StackSize == 1, "Got stack size %u.\n", lower_device->StackSize);
-    ok(!lower_device->AlignmentRequirement, "Got alignment %lu.\n", lower_device->AlignmentRequirement);
-    ok(!lower_device->ActiveThreadCount, "Got thread count %lu.\n", lower_device->ActiveThreadCount);
-    ok(!lower_device->SectorSize, "Got sector size %u.\n", lower_device->SectorSize);
-    todo_wine ok(lower_device->Spare1 == 0x1, "Got Spare1 %#x.\n", lower_device->Spare1);
-    ok(!lower_device->Reserved, "Got Reserved %p.\n", lower_device->Reserved);
-
-    todo_wine ok(upper_device->Type == 3, "Got type %d.\n", upper_device->Type);
-    ok(!upper_device->ReferenceCount, "Got refcount %ld.\n", upper_device->ReferenceCount);
-    ok(upper_device->DriverObject == driver_obj, "Got driver %p.\n", upper_device->DriverObject);
-    ok(upper_device->NextDevice == lower_device, "Got next device %p.\n", upper_device->NextDevice);
-    ok(!upper_device->AttachedDevice, "Got attached device %p.\n", upper_device->AttachedDevice);
-    todo_wine ok(!upper_device->CurrentIrp, "Got current IRP %p.\n", upper_device->CurrentIrp);
-    ok(!upper_device->Timer, "Got timer %p.\n", upper_device->Timer);
-    todo_wine ok(upper_device->Flags == 0x40, "Got flags %#lx.\n", upper_device->Flags);
-    ok(upper_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE),
-            "Got characteristics %#lx.\n", upper_device->Characteristics);
-    ok(!upper_device->Vpb, "Got VPB %p.\n", upper_device->Vpb);
-    ok(!!upper_device->DeviceExtension, "Expected extension.\n");
-    ok(upper_device->DeviceType == FILE_DEVICE_UNKNOWN, "Got device type %#lx.\n", upper_device->DeviceType);
-    ok(upper_device->StackSize == 2, "Got stack size %u.\n", upper_device->StackSize);
-    ok(!upper_device->AlignmentRequirement, "Got alignment %lu.\n", upper_device->AlignmentRequirement);
-    ok(!upper_device->ActiveThreadCount, "Got thread count %lu.\n", upper_device->ActiveThreadCount);
-    ok(!upper_device->SectorSize, "Got sector size %u.\n", upper_device->SectorSize);
-    ok(!upper_device->Spare1, "Got Spare1 %#x.\n", upper_device->Spare1);
-    ok(!upper_device->Reserved, "Got Reserved %p.\n", upper_device->Reserved);
-}
-
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     void *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -2639,8 +2472,6 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_lookup_thread();
     test_IoAttachDeviceToDeviceStack();
     test_object_name();
-    test_dir_kernel_object();
-    test_fsrtl_get_file_size();
 #if defined(__i386__) || defined(__x86_64__)
     test_executable_pool();
 #endif
@@ -2650,7 +2481,6 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_permanence();
     test_driver_object_extension();
     test_default_security();
-    test_device_object();
 
     IoMarkIrpPending(irp);
     IoQueueWorkItem(work_item, main_test_task, DelayedWorkQueue, irp);
@@ -2852,17 +2682,10 @@ static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
     return STATUS_SUCCESS;
 }
 
-static void cancel_complete(IRP *irp)
-{
-    irp->IoStatus.Status = STATUS_SUCCESS;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
-}
-
 static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     NTSTATUS status = STATUS_NOT_SUPPORTED;
-    unsigned int i;
 
     switch (stack->Parameters.DeviceIoControl.IoControlCode)
     {
@@ -2876,36 +2699,13 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             status = test_load_driver_ioctl(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_RESET_CANCEL:
-            ok(!queued_async_count, "expected no queued asyncs left\n");
             cancel_cnt = 0;
             status = STATUS_SUCCESS;
             break;
         case IOCTL_WINETEST_TEST_CANCEL:
-            thread_id = PsGetCurrentThreadId();
             IoSetCancelRoutine(irp, cancel_ioctl_irp);
             IoMarkIrpPending(irp);
             return STATUS_PENDING;
-        case IOCTL_WINETEST_QUEUE_ASYNC:
-            if (queued_async_count >= ARRAY_SIZE(queued_async_irps))
-            {
-                ok(FALSE, "unexpected queued_async_count %u\n", queued_async_count);
-                status = ERROR_TOO_MANY_CMDS;
-                break;
-            }
-            queued_async_irps[queued_async_count++] = irp;
-            IoMarkIrpPending(irp);
-            return STATUS_PENDING;
-        case IOCTL_WINETEST_COMPLETE_ASYNC:
-            /* complete the pending IRPs gathered from
-             * IOCTL_WINETEST_QUEUE_ASYNC */
-            for (i = 0; i < queued_async_count; i++)
-            {
-                cancel_complete(queued_async_irps[i]);
-                queued_async_irps[i] = NULL;
-            }
-            queued_async_count = 0;
-            status = STATUS_SUCCESS;
-            break;
         case IOCTL_WINETEST_GET_CANCEL_COUNT:
             status = get_dword(irp, stack, &irp->IoStatus.Information, cancel_cnt);
             break;
@@ -3098,11 +2898,6 @@ static NTSTATUS WINAPI driver_QueryVolumeInformation(DEVICE_OBJECT *device, IRP 
         return STATUS_PENDING;
     }
 
-    case FileFsDeviceInformation:
-        /* This one is actually handled by the I/O manager;
-         * it's never passed down to a driver. */
-        ok(0, "Unexpected call.\n");
-        /* fall through */
     default:
         ret = STATUS_NOT_IMPLEMENTED;
         break;
@@ -3178,17 +2973,14 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestDriver");
     RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
 
-    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-            FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE,
-            FALSE, &lower_device);
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device);
     ok(!status, "failed to create device, status %#lx\n", status);
     status = IoCreateSymbolicLink(&linkW, &nameW);
     ok(!status, "failed to create link, status %#lx\n", status);
     lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
-    status = IoCreateDevice(driver, 16, &nameW, FILE_DEVICE_UNKNOWN,
-            FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE, FALSE, &upper_device);
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
     ok(!status, "failed to create device, status %#lx\n", status);
 
     IoAttachDeviceToDeviceStack(upper_device, lower_device);

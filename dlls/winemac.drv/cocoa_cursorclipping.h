@@ -32,7 +32,7 @@
 
     - (void) clipCursorLocation:(CGPoint*)location;
 
-    - (void) setRetinaMode:(BOOL)mode;
+    - (void) setRetinaMode:(int)mode;
 
     @optional
     /* If provided, should reposition the cursor as needed given the current

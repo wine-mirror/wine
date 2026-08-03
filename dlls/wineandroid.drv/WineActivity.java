@@ -30,10 +30,7 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.system.ErrnoException;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -54,14 +51,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
-import static android.system.Os.setenv;
-import static android.system.Os.getenv;
 
 public class WineActivity extends Activity
 {
-    private native void wine_init();
+    private native String wine_init( String[] cmdline, String[] env );
     public native void wine_desktop_changed( int width, int height );
     public native void wine_config_changed( int dpi );
     public native void wine_surface_changed( int hwnd, Surface surface, boolean opengl );
@@ -71,12 +64,9 @@ public class WineActivity extends Activity
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
 
-    protected TopView top_view;
     protected WineWindow desktop_window;
     protected WineWindow message_window;
     private PointerIcon current_cursor;
-
-    private static final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -116,35 +106,27 @@ public class WineActivity extends Activity
         return "";
     }
 
-    private void putenv( String name, String val )
-    {
-        try
-        {
-            setenv( name, val, true );
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-        }
-    }
-
     private void loadWine( String cmdline )
     {
         copyAssetFiles();
 
         String wine_abi = get_wine_abi();
+        File bindir = new File( getFilesDir(), wine_abi + "/bin" );
         File libdir = new File( getFilesDir(), wine_abi + "/lib" );
         File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
-        File loader = new File( dlldir, get_so_dir(wine_abi) + "/wine" );
-        File log = null;
+        File loader = new File( bindir, "wine" );
         String locale = Locale.getDefault().getLanguage() + "_" +
             Locale.getDefault().getCountry() + ".UTF-8";
 
-        putenv( "WINEPREFIX", prefix.toString() );
-        putenv( "LD_LIBRARY_PATH", libdir.toString() + ":" + getPackageResourcePath() + "!/lib/" + wine_abi + ":" + getApplicationInfo().nativeLibraryDir );
-        putenv( "LC_ALL", locale );
-        putenv( "LANG", locale );
+        HashMap<String,String> env = new HashMap<String,String>();
+        env.put( "WINELOADER", loader.toString() );
+        env.put( "WINEPREFIX", prefix.toString() );
+        env.put( "WINEDLLPATH", dlldir.toString() );
+        env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getApplicationInfo().nativeLibraryDir );
+        env.put( "LC_ALL", locale );
+        env.put( "LANG", locale );
+        env.put( "PATH", bindir.toString() + ":" + System.getenv( "PATH" ));
 
         if (cmdline == null)
         {
@@ -156,45 +138,38 @@ public class WineActivity extends Activity
         if (winedebug == null) winedebug = readFileString( new File( getFilesDir(), "winedebug" ));
         if (winedebug != null)
         {
-            log = new File( getFilesDir(), "log" );
-            putenv( "WINEDEBUG", winedebug );
-            putenv( "WINEDEBUGLOG", log.toString() );
+            File log = new File( getFilesDir(), "log" );
+            env.put( "WINEDEBUG", winedebug );
+            env.put( "WINEDEBUGLOG", log.toString() );
             Log.i( LOGTAG, "logging to " + log.toString() );
             log.delete();
         }
 
         createProgressDialog( 0, "Setting up the Windows environment..." );
 
-        for ( String lib : new String[] { "ntdll.so", "win32u.so", "wineandroid.so" } )
-            System.load( dlldir.toString() + get_so_dir(wine_abi) + "/" + lib );
+        System.load( dlldir.toString() + get_so_dir(wine_abi) + "/ntdll.so" );
         prefix.mkdirs();
 
-        runWine( loader.toString(), cmdline, log );
+        runWine( cmdline, env );
     }
 
-    private final void runWine( String loader, String cmdline, File log )
+    private final void runWine( String cmdline, HashMap<String,String> environ )
     {
-        CountDownLatch latch = new CountDownLatch(1);
-        String[] cmd = { loader,
+        String[] env = new String[environ.size() * 2];
+        int j = 0;
+        for (Map.Entry<String,String> entry : environ.entrySet())
+        {
+            env[j++] = entry.getKey();
+            env[j++] = entry.getValue();
+        }
+
+        String[] cmd = { environ.get( "WINELOADER" ),
                          "c:\\windows\\system32\\explorer.exe",
                          "/desktop=shell,,android",
                          cmdline };
 
-        runOnUiThread( new Runnable() { public void run() {
-            try { wine_init(); } finally { latch.countDown(); }
-        }});
-        try { latch.await(); } catch ( Exception e ) {}
-
-        try {
-            new ProcessBuilder(cmd)
-                .redirectErrorStream(true)
-                .redirectOutput(ProcessBuilder.Redirect.appendTo(
-                    log != null ? log : new File("/dev/null")
-                ))
-                .start();
-        } catch (IOException e) {
-            Log.e("WineError", "Failed to exec " + String.join(" ", cmd) + ": " + e);
-        }
+        String err = wine_init( cmd, env );
+        Log.e( LOGTAG, err );
     }
 
     private void createProgressDialog( final int max, final String message )
@@ -362,6 +337,7 @@ public class WineActivity extends Activity
         protected int hwnd;
         protected int owner;
         protected int style;
+        protected float scale;
         protected boolean visible;
         protected Rect visible_rect;
         protected Rect client_rect;
@@ -374,7 +350,7 @@ public class WineActivity extends Activity
         protected WineWindowGroup window_group;
         protected WineWindowGroup client_group;
 
-        public WineWindow( int w, WineWindow parent )
+        public WineWindow( int w, WineWindow parent, float scale )
         {
             Log.i( LOGTAG, String.format( "create hwnd %08x", w ));
             hwnd = w;
@@ -383,6 +359,7 @@ public class WineActivity extends Activity
             visible = false;
             visible_rect = client_rect = new Rect( 0, 0, 0, 0 );
             this.parent = parent;
+            this.scale = scale;
             children = new ArrayList<WineWindow>();
             win_map.put( w, this );
             if (parent != null) parent.children.add( this );
@@ -432,7 +409,10 @@ public class WineActivity extends Activity
         public View create_whole_view()
         {
             if (window_group == null) create_window_groups();
-            window_group.create_view( false ).layout( 0, 0, visible_rect.right - visible_rect.left, visible_rect.bottom - visible_rect.top );
+            window_group.create_view( false ).layout( 0, 0,
+                                                      Math.round( (visible_rect.right - visible_rect.left) * scale ),
+                                                      Math.round( (visible_rect.bottom - visible_rect.top) * scale ));
+            window_group.set_scale( scale );
             return window_group;
         }
 
@@ -529,10 +509,11 @@ public class WineActivity extends Activity
                                          client_rect.bottom  - visible_rect.top );
         }
 
-        public void set_parent( WineWindow new_parent )
+        public void set_parent( WineWindow new_parent, float scale )
         {
             Log.i( LOGTAG, String.format( "set parent hwnd %08x parent %08x -> %08x",
                                           hwnd, parent.hwnd, new_parent.hwnd ));
+            this.scale = scale;
             if (window_group != null)
             {
                 if (visible) remove_view_from_parent();
@@ -590,8 +571,8 @@ public class WineActivity extends Activity
 
         public void get_event_pos( MotionEvent event, int[] pos )
         {
-            pos[0] = Math.round( event.getX() + window_group.getLeft() );
-            pos[1] = Math.round( event.getY() + window_group.getTop() );
+            pos[0] = Math.round( event.getX() * scale + window_group.getLeft() );
+            pos[1] = Math.round( event.getY() * scale + window_group.getTop() );
         }
     }
 
@@ -614,6 +595,10 @@ public class WineActivity extends Activity
         /* wrapper for layout() making sure that the view is not empty */
         public void set_layout( int left, int top, int right, int bottom )
         {
+            left   *= win.scale;
+            top    *= win.scale;
+            right  *= win.scale;
+            bottom *= win.scale;
             if (right <= left + 1) right = left + 2;
             if (bottom <= top + 1) bottom = top + 2;
             layout( left, top, right, bottom );
@@ -625,11 +610,25 @@ public class WineActivity extends Activity
             if (content_view != null) content_view.layout( 0, 0, right - left, bottom - top );
         }
 
+        public void set_scale( float scale )
+        {
+            if (content_view == null) return;
+            content_view.setPivotX( 0 );
+            content_view.setPivotY( 0 );
+            content_view.setScaleX( scale );
+            content_view.setScaleY( scale );
+        }
+
         public WineView create_view( boolean is_client )
         {
             if (content_view != null) return content_view;
             content_view = new WineView( WineActivity.this, win, is_client );
             addView( content_view );
+            if (!is_client)
+            {
+                content_view.setFocusable( true );
+                content_view.setFocusableInTouchMode( true );
+            }
             return content_view;
         }
 
@@ -666,8 +665,8 @@ public class WineActivity extends Activity
             setSurfaceTextureListener( this );
             setVisibility( VISIBLE );
             setOpaque( false );
-            setFocusable( !client );
-            setFocusableInTouchMode( !client );
+            setFocusable( true );
+            setFocusableInTouchMode( true );
         }
 
         public WineWindow get_window()
@@ -719,16 +718,6 @@ public class WineActivity extends Activity
 
             if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0)
             {
-                /* Primary button press/release is also reported through touch down/up
-                 * on some Android devices. Sending both paths to Wine leaves it with
-                 * duplicate mouse button events, which can desynchronize button state
-                 * and break capture/activation after window moves.
-                 */
-                if ((event.getActionMasked() == MotionEvent.ACTION_BUTTON_PRESS ||
-                     event.getActionMasked() == MotionEvent.ACTION_BUTTON_RELEASE) &&
-                    event.getActionButton() == MotionEvent.BUTTON_PRIMARY)
-                    return true;
-
                 int[] pos = new int[2];
                 window.get_event_pos( event, pos );
                 Log.i( LOGTAG, String.format( "view motion event win %08x action %d pos %d,%d buttons %04x view %d,%d",
@@ -772,10 +761,14 @@ public class WineActivity extends Activity
 
     protected class TopView extends ViewGroup
     {
-        public TopView( Context context )
+        public TopView( Context context, int hwnd )
         {
             super( context );
-            message_window = new WineWindow( WineWindow.HWND_MESSAGE, null );
+            desktop_window = new WineWindow( hwnd, null, 1.0f );
+            addView( desktop_window.create_whole_view() );
+            desktop_window.client_group.bringToFront();
+
+            message_window = new WineWindow( WineWindow.HWND_MESSAGE, null, 1.0f );
             message_window.create_window_groups();
         }
 
@@ -800,29 +793,22 @@ public class WineActivity extends Activity
 
     // Entry points for the device driver
 
-    public void create_desktop_view()
+    public void create_desktop_window( int hwnd )
     {
-        Log.i( LOGTAG, "create desktop view ");
-        setContentView( top_view = new TopView( this ));
+        Log.i( LOGTAG, String.format( "create desktop view %08x", hwnd ));
+        setContentView( new TopView( this, hwnd ));
         progress_dialog.dismiss();
         wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
-    public void create_window( int hwnd, boolean is_desktop, boolean opengl, int parent )
+    public void create_window( int hwnd, boolean opengl, int parent, float scale, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null)
         {
-            win = new WineWindow( hwnd, is_desktop ? null : get_window( parent ) );
+            win = new WineWindow( hwnd, get_window( parent ), scale );
             win.create_window_groups();
             if (win.parent == desktop_window) win.create_whole_view();
-            if (is_desktop)
-            {
-                desktop_window = win;
-                top_view.addView( desktop_window.create_whole_view() );
-                desktop_window.client_group.bringToFront();
-                desktop_window.window_group.get_content_view().requestFocus();
-            }
         }
         if (opengl) win.create_client_view();
     }
@@ -833,11 +819,11 @@ public class WineActivity extends Activity
         if (win != null) win.destroy();
     }
 
-    public void set_window_parent( int hwnd, int parent )
+    public void set_window_parent( int hwnd, int parent, float scale, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null) return;
-        win.set_parent( get_window( parent ) );
+        win.set_parent( get_window( parent ), scale );
         if (win.parent == desktop_window) win.create_whole_view();
     }
 
@@ -861,40 +847,31 @@ public class WineActivity extends Activity
             win.pos_changed( flags, insert_after, owner, style, window_rect, client_rect, visible_rect );
     }
 
-    /* Always post to the UI thread handler instead of using runOnUiThread().
-     * runOnUiThread() may execute the runnable immediately if already on the
-     * UI thread, which can break assumptions about ordering and lead to crashes.
-     * We need deferred execution to preserve the original asynchronous behavior.
-     */
-    private void postToUiThread(Runnable r) {
-        uiHandler.post(r);
+    public void createDesktopWindow( final int hwnd )
+    {
+        runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
     }
 
-    public void createDesktopView()
+    public void createWindow( final int hwnd, final boolean opengl, final int parent, final float scale, final int pid )
     {
-        postToUiThread( new Runnable() { public void run() { create_desktop_view(); }} );
-    }
-
-    public void createWindow( final int hwnd, final boolean is_desktop, final boolean opengl, final int parent )
-    {
-        postToUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, opengl, parent, scale, pid ); }} );
     }
 
     public void destroyWindow( final int hwnd )
     {
-        postToUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
+        runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
     }
 
-    public void setParent( final int hwnd, final int parent )
+    public void setParent( final int hwnd, final int parent, final float scale, final int pid )
     {
-        postToUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent ); }} );
+        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, scale, pid ); }} );
     }
 
     public void setCursor( final int id, final int width, final int height,
                            final int hotspotx, final int hotspoty, final int bits[] )
     {
         if (Build.VERSION.SDK_INT < 24) return;
-        postToUiThread( new Runnable() { public void run() { set_cursor( id, width, height, hotspotx, hotspoty, bits ); }} );
+        runOnUiThread( new Runnable() { public void run() { set_cursor( id, width, height, hotspotx, hotspoty, bits ); }} );
     }
 
     public void windowPosChanged( final int hwnd, final int flags, final int insert_after,
@@ -909,7 +886,7 @@ public class WineActivity extends Activity
         final Rect window_rect = new Rect( window_left, window_top, window_right, window_bottom );
         final Rect client_rect = new Rect( client_left, client_top, client_right, client_bottom );
         final Rect visible_rect = new Rect( visible_left, visible_top, visible_right, visible_bottom );
-        postToUiThread( new Runnable() {
+        runOnUiThread( new Runnable() {
             public void run() { window_pos_changed( hwnd, flags, insert_after, owner, style,
                                                     window_rect, client_rect, visible_rect ); }} );
     }

@@ -100,7 +100,7 @@ static void test_stack_walk(void)
     }
     while (!count);
 
-    ctx.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    ctx.ContextFlags = CONTEXT_CONTROL;
     ret = GetThreadContext(thread, &ctx);
     ok(ret, "got error %u\n", ret);
 

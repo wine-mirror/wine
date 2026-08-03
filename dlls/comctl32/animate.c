@@ -182,7 +182,6 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
     {
         ANIMATE_DoStop(infoPtr);
         mmioClose(infoPtr->hMMio, 0);
-        infoPtr->hMMio = NULL;
         if (infoPtr->hRes)
         {
             FreeResource(infoPtr->hRes);
@@ -694,7 +693,7 @@ static BOOL ANIMATE_OpenW(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPWSTR lps
     {
 	TRACE("Closing avi.\n");
         /* installer of thebat! v1.62 requires FALSE here */
-	return FALSE;
+	return (infoPtr->hMMio != 0);
     }
 
     if (!hInstance)
@@ -900,11 +899,6 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     case WM_ERASEBKGND:
 	return ANIMATE_EraseBackground(infoPtr, (HDC)wParam);
 
-    case WM_GETOBJECT:
-        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
-            return 0x1000e;
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-
     case WM_STYLECHANGED:
         return ANIMATE_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
@@ -971,4 +965,10 @@ void ANIMATE_Register(void)
     wndClass.lpszClassName = ANIMATE_CLASSW;
 
     RegisterClassW(&wndClass);
+}
+
+
+void ANIMATE_Unregister(void)
+{
+    UnregisterClassW(ANIMATE_CLASSW, NULL);
 }

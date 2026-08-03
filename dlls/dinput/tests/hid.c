@@ -55,7 +55,6 @@
 #include "dinput.h"
 #include "dinputd.h"
 #include "hidusage.h"
-#include "gameinput.h"
 
 #include "wine/mssign.h"
 
@@ -711,80 +710,54 @@ BOOL bus_device_start(void)
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
-static void fill_context( const char *file, int line, char *buffer, SIZE_T size )
-{
-    const char *source_file;
-    source_file = strrchr( file, '/' );
-    if (!source_file) source_file = strrchr( file, '\\' );
-    if (!source_file) source_file = file;
-    else source_file++;
-    snprintf( buffer, size, "%s:%d", source_file, line );
-}
-
-static void hid_device_remove( HANDLE control, struct hid_device_desc *desc, UINT count )
-{
-    DWORD ret;
-
-    for (UINT i = 0; i < count; i++)
-    {
-        ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc + i, sizeof(*desc), NULL, 0, 5000 );
-        ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
-        if (!ret) continue;
-
-        ret = WaitForSingleObject( device_removed, 5000 );
-        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-
-        for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
-        {
-            ret = WaitForSingleObject( device_removed, j > 0 ? 500 : 5000 );
-            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-        }
-    }
-}
-
 void hid_device_stop( struct hid_device_desc *desc, UINT count )
 {
-    HANDLE control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
-                                  NULL, OPEN_EXISTING, 0, NULL );
-    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    hid_device_remove( control, desc, count );
-    CloseHandle( control );
-}
-
-BOOL hid_device_start_( const char *file, int line, struct hid_device_desc *desc, UINT count, DWORD timeout )
-{
     HANDLE control;
-    DWORD ret = 0;
+    DWORD ret, i;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
+    CloseHandle( control );
 
-    for (UINT i = 0; i < count; i++)
+    if (!ret) return;
+
+    ret = WaitForSingleObject( device_removed, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+    for (i = 0; i < count; ++i)
     {
-        fill_context( file, line, desc[i].context, ARRAY_SIZE(desc[i].context) );
-
-        ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc + i, sizeof(*desc), NULL, 0, 5000 );
-        ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
-
-        ret = WaitForSingleObject( device_added, 5000 );
+        ret = WaitForSingleObject( device_removed, i > 0 ? 500 : 5000 );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
+}
 
-        if (ret)
-        {
-            hid_device_remove( control, desc, i );
-            break;
-        }
+BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout )
+{
+    HANDLE control;
+    DWORD ret, i;
 
-        for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
-        {
-            ret = WaitForSingleObject( device_added, timeout );
-            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-        }
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
+    ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
+    CloseHandle( control );
+
+    ret = WaitForSingleObject( device_added, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+    if (ret) return FALSE;
+
+    for (i = 0; i < count; ++i)
+    {
+        ret = WaitForSingleObject( device_added, timeout );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 
-    CloseHandle( control );
-    return !ret;
+    return TRUE;
 }
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
@@ -949,6 +922,16 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     return ret;
 }
 
+void fill_context_( const char *file, int line, char *buffer, SIZE_T size )
+{
+    const char *source_file;
+    source_file = strrchr( file, '/' );
+    if (!source_file) source_file = strrchr( file, '\\' );
+    if (!source_file) source_file = file;
+    else source_file++;
+    snprintf( buffer, size, "%s:%d", source_file, line );
+}
+
 void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
                       struct hid_expect *expect, DWORD expect_size )
 {
@@ -959,7 +942,7 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_devi
     if (desc) memcpy( buffer, desc, sizeof(*desc) );
     else memset( buffer, 0, sizeof(*desc) );
 
-    fill_context( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
@@ -1003,7 +986,7 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_devi
     if (desc) memcpy( buffer, desc, sizeof(*desc) );
     else memset( buffer, 0, sizeof(*desc) );
 
-    fill_context( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
@@ -1427,7 +1410,7 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
         .report_id = report_id,
         .report_len = report_len - (report_id ? 0 : 1),
         .report_buf = {report_id ? report_id : 0xcd,0xcd,0xcd,0xcd,0xcd},
-        .ret_length = 5,
+        .ret_length = 3,
         .ret_status = STATUS_SUCCESS,
     };
 
@@ -1463,8 +1446,16 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
         ret = WriteFile( file, report, report_len, &length, NULL );
     }
 
-    ok( ret, "WriteFile failed, last error %lu\n", GetLastError() );
-    ok( length == report_len, "WriteFile wrote %lu\n", length );
+    if (report_id)
+    {
+        ok( ret, "WriteFile failed, last error %lu\n", GetLastError() );
+        ok( length == 2, "WriteFile wrote %lu\n", length );
+    }
+    else
+    {
+        ok( ret, "WriteFile failed, last error %lu\n", GetLastError() );
+        ok( length == 3, "WriteFile wrote %lu\n", length );
+    }
 
     set_hid_expect( file, NULL, 0 );
 }
@@ -1626,24 +1617,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         { .DataIndex = 32, .RawValue = 0xfeedcafe, },
         { .DataIndex = 37, .RawValue = 1, },
         { .DataIndex = 39, .RawValue = 1, },
-    };
-    const BYTE expect_report_0[] =
-    {
-        report_id, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
-    };
-    const BYTE expect_report_1[] =
-    {
-        report_id, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
-    };
-    const BYTE expect_report_2[] =
-    {
-        report_id, 0x02, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
     };
 
     DWORD waveform_list, collection_count, generic_output_list;
@@ -2131,67 +2104,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#lx\n", status );
     ok( value == 11, "got data count %ld, expected %d\n", value, 11 );
-    memset( data, 0, sizeof(data) );
-    status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#lx\n", status );
-    for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
-    {
-        winetest_push_context( "data[%d]", i );
-        check_member( data[i], expect_data[i], "%d", DataIndex );
-        check_member( data[i], expect_data[i], "%ld", RawValue );
-        winetest_pop_context();
-    }
-
-    memset( report, 0, caps.InputReportByteLength );
-    report[0] = report_id;
-
-    value = 0;
-    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_SetData returned %#lx\n", status );
-    ok( value == 0, "got data count %ld, expected %d\n", value, 0 );
-
-    value = 0;
-    data[value].DataIndex = 0;  data[value++].RawValue = 1;
-    data[value].DataIndex = 1;  data[value++].RawValue = 2;
-    data[value].DataIndex = 0;  data[value++].RawValue = 3;
-    data[value].DataIndex = 43; data[value++].RawValue = 0;
-    data[value].DataIndex = 2;  data[value++].RawValue = 5;
-    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_IS_VALUE_ARRAY, "HidP_SetData returned %#lx\n", status );
-    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
-    ok( !memcmp( report, expect_report_0, caps.InputReportByteLength ), "report mismatch\n" );
-
-    value = 0;
-    data[value].DataIndex = 18; data[value++].RawValue = 1;
-    data[value].DataIndex = 19; data[value++].RawValue = 1;
-    data[value].DataIndex = 18; data[value++].RawValue = 0;
-    data[value].DataIndex = 18; data[value++].RawValue = 0;
-    data[value].DataIndex = 20; data[value++].RawValue = 1;
-    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUTTON_NOT_PRESSED, "HidP_SetData returned %#lx\n", status );
-    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
-    ok( !memcmp( report, expect_report_1, caps.InputReportByteLength ), "report mismatch\n" );
-
-    value = 0;
-    data[value].DataIndex = 2;  data[value++].RawValue = 1;
-    data[value].DataIndex = 2;  data[value++].RawValue = 1;
-    data[value].DataIndex = 18; data[value++].RawValue = 1;
-    data[value].DataIndex = 18; data[value++].RawValue = 1;
-    data[value].DataIndex = 20; data[value++].RawValue = 1;
-    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetData returned %#lx\n", status );
-    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
-    ok( !memcmp( report, expect_report_2, caps.InputReportByteLength ), "report mismatch\n" );
-
-    memset( report, 0, caps.InputReportByteLength );
-    report[0] = report_id;
-    value = ARRAY_SIZE(expect_data);
-    memcpy( data, expect_data, sizeof(expect_data) );
-    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetData returned %#lx\n", status );
-    ok( value == ARRAY_SIZE(expect_data), "got data count %ld, expected %d\n", value, 5 );
-
-    value = ARRAY_SIZE(expect_data);
     memset( data, 0, sizeof(data) );
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#lx\n", status );
@@ -2721,10 +2633,10 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     HidD_FreePreparsedData( preparsed_data );
 }
 
-static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps, struct hid_device_desc *desc )
+static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps, WORD vid, WORD pid )
 {
-    WCHAR device_path[MAX_PATH], buffer[1024];
     ULONG count, poll_freq, out_len;
+    WCHAR device_path[MAX_PATH];
     HANDLE file, async_file;
     DWORD ret;
 
@@ -2738,23 +2650,13 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 
-    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc->attributes.VendorID, desc->attributes.ProductID );
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", vid, pid );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
     file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-
-    ret = HidD_GetManufacturerString( file, buffer, ARRAY_SIZE(buffer) );
-    ok( ret, "HidD_GetManufacturerString failed last error %lu\n", GetLastError() );
-    ok( !wcscmp( desc->vendor_str, buffer ), "HidD_GetManufacturerString returned %s\n", debugstr_w(buffer) );
-    ret = HidD_GetProductString( file, buffer, ARRAY_SIZE(buffer) );
-    ok( ret, "HidD_GetProductString failed last error %lu\n", GetLastError() );
-    ok( !wcscmp( desc->product_str, buffer ), "HidD_GetProductString returned %s\n", debugstr_w(buffer) );
-    ret = HidD_GetSerialNumberString( file, buffer, ARRAY_SIZE(buffer) );
-    ok( ret, "HidD_GetSerialNumberString failed last error %lu\n", GetLastError() );
-    ok( !wcscmp( desc->serial_str, buffer ), "HidD_GetSerialNumberString returned %s\n", debugstr_w(buffer) );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
@@ -3168,17 +3070,15 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .use_report_id = report_id,
         .caps = caps,
         .attributes = default_attributes,
-        .vendor_str = L"Wine",
-        .product_str = L"Test Device",
-        .serial_str = L"0&1234&5",
     };
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.input_size = polled ? sizeof(expect_in) : 0;
     memcpy( desc.input, &expect_in, sizeof(expect_in) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, &desc );
+    if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
     hid_device_stop( &desc, 1 );
 }
 
@@ -3585,6 +3485,7 @@ static void test_hidp_kdr(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 
@@ -3606,27 +3507,13 @@ done:
     hid_device_stop( &desc, 1 );
 }
 
-static void cleanup_registry_tree( HKEY root, const WCHAR *path )
-{
-    WCHAR buf[MAX_PATH];
-    HKEY hkey;
-
-    RegCreateKeyExW( root, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    for (ULONG i = 0, size = ARRAY_SIZE(buf); !RegEnumKeyExW( hkey, i, buf, &size, NULL, NULL, NULL, NULL ); i++, size = ARRAY_SIZE(buf))
-    {
-        if (wcsnicmp( buf, L"VID_1209", 8 )) continue;
-        RegDeleteTreeW( hkey, buf );
-        i = -1;
-    }
-    RegCloseKey( hkey );
-}
-
 void cleanup_registry_keys(void)
 {
     static const WCHAR joystick_oem_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
                                               "PrivateProperties\\Joystick\\OEM";
     static const WCHAR dinput_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
                                        "PrivateProperties\\DirectInput";
+    HKEY root_key;
 
     /* These keys are automatically created by DInput and they store the
        list of supported force-feedback effects. OEM drivers are supposed
@@ -3636,10 +3523,21 @@ void cleanup_registry_keys(void)
        We need to clean them up, or DInput will not refresh the list of
        effects from the PID report changes.
     */
-    cleanup_registry_tree( HKEY_CURRENT_USER, joystick_oem_path );
-    cleanup_registry_tree( HKEY_CURRENT_USER, dinput_path );
-    cleanup_registry_tree( HKEY_LOCAL_MACHINE, joystick_oem_path );
-    cleanup_registry_tree( HKEY_LOCAL_MACHINE, dinput_path );
+    RegCreateKeyExW( HKEY_CURRENT_USER, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_CURRENT_USER, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
 }
 
 static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -3897,6 +3795,7 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
     desc.report_descriptor_len = sizeof(gamepad_desc);
     memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     hid_device_start( &desc, 1 );
     ret = WaitForSingleObject( stop_event, 5000 );
@@ -4046,7 +3945,6 @@ static void test_hid_multiple_tlc(void)
 
     struct hid_device_desc desc =
     {
-        .tlc_count = 2,
         .caps = { .InputReportByteLength = 7 },
         .attributes = default_attributes,
     };
@@ -4161,8 +4059,9 @@ static void test_hid_multiple_tlc(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc, 1 )) goto done;
+    if (!hid_device_start( &desc, 2 )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col01", desc.attributes.VendorID,
               desc.attributes.ProductID );
@@ -4216,7 +4115,7 @@ static void test_hid_multiple_tlc(void)
     ok( !ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
 done:
-    hid_device_stop( &desc, 1 );
+    hid_device_stop( &desc, 2 );
 }
 
 START_TEST( hid )

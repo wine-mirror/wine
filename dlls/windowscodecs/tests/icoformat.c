@@ -26,7 +26,7 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct ICONHEADER
 {
@@ -129,7 +129,7 @@ static const struct test_ico ico_1 =
     }
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #define test_ico_data(a, b, c) test_ico_data_(a, b, c,  0, __LINE__)
 #define test_ico_data_todo(a, b, c) test_ico_data_(a, b, c, 1, __LINE__)
@@ -140,7 +140,6 @@ static void test_ico_data_(void *data, DWORD data_size, HRESULT init_hr, int tod
     HRESULT hr;
     IWICStream *icostream;
     IWICBitmapFrameDecode *framedecode = NULL;
-    UINT count;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
@@ -170,11 +169,6 @@ static void test_ico_data_(void *data, DWORD data_size, HRESULT init_hr, int tod
 
             if (SUCCEEDED(hr))
             {
-                hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
-                ok(hr == S_OK, "GetFrameCount failed, hr=%lx\n", hr);
-                ok(count == 1, "Expected 1 frame, got %u\n", count);
-                hr = IWICBitmapDecoder_GetFrame(decoder, count, &framedecode);
-                ok(hr == WINCODEC_ERR_FRAMEMISSING, "Expected WINCODEC_ERR_FRAMEMISSING from GetFrame, got %lx\n", hr);
                 hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
                 ok(hr == S_OK, "GetFrame failed, hr=%lx\n", hr);
             }

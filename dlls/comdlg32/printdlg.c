@@ -56,6 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 typedef struct
 {
+  LPDEVMODEA        lpDevMode;
   LPPRINTDLGA       lpPrintDlg;
   LPPRINTER_INFO_2A lpPrinterInfo;
   LPDRIVER_INFO_3A  lpDriverInfo;
@@ -69,6 +70,7 @@ typedef struct
 
 typedef struct
 {
+  LPDEVMODEW        lpDevMode;
   LPPRINTDLGW       lpPrintDlg;
   LPPRINTER_INFO_2W lpPrinterInfo;
   LPDRIVER_INFO_3W  lpDriverInfo;
@@ -555,7 +557,7 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 				    PRINT_PTRA* PrintStructures)
 {
     LPPRINTDLGA       lppd = PrintStructures->lpPrintDlg;
-    PDEVMODEA         lpdm = GlobalLock(lppd->hDevMode);
+    PDEVMODEA         lpdm = PrintStructures->lpDevMode;
     LPPRINTER_INFO_2A pi = PrintStructures->lpPrinterInfo;
 
 
@@ -587,7 +589,6 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 		wsprintfW(resultstr,resourcestr, lppd->nMinPage, lppd->nMaxPage);
 		LoadStringW(COMDLG32_hInstance, PD32_PRINT_TITLE, resourcestr, 255);
 		MessageBoxW(hDlg, resultstr, resourcestr, MB_OK | MB_ICONWARNING);
-                GlobalUnlock(lppd->hDevMode);
 		return FALSE;
 	    }
 	    lppd->nFromPage = nFromPage;
@@ -652,7 +653,6 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	    }
 	}
     }
-    GlobalUnlock(lppd->hDevMode);
     return TRUE;
 }
 
@@ -660,7 +660,7 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 				    PRINT_PTRW* PrintStructures)
 {
     LPPRINTDLGW       lppd = PrintStructures->lpPrintDlg;
-    PDEVMODEW         lpdm = GlobalLock(lppd->hDevMode);
+    PDEVMODEW         lpdm = PrintStructures->lpDevMode;
     LPPRINTER_INFO_2W pi = PrintStructures->lpPrinterInfo;
 
 
@@ -699,7 +699,6 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 			    resourcestr, 255);
 		MessageBoxW(hDlg, resultstr, resourcestr,
 			    MB_OK | MB_ICONWARNING);
-                GlobalUnlock(lppd->hDevMode);
 		return FALSE;
 	    }
 	    lppd->nFromPage = nFromPage;
@@ -739,17 +738,13 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 	    if (lpdm->dmFields & DM_COPIES)
 	        lpdm->dmCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
 	} else {
-            /* Application is responsible for multiple copies */
 	    if (IsDlgButtonChecked(hDlg, chx2) == BST_CHECKED)
 	        lppd->Flags |= PD_COLLATE;
             else
                lppd->Flags &= ~PD_COLLATE;
             lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
-            /* multiple copies already included in the document. Driver must print only one copy */
-            lpdm->dmCopies = 1;
 	}
     }
-    GlobalUnlock(lppd->hDevMode);
     return TRUE;
 }
 
@@ -1086,7 +1081,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, DWORD flags, const PRINT
 static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStructures)
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
-    LPDEVMODEA lpdm, dm_tmp;
+    LPDEVMODEA lpdm = NULL;
     LONG dmSize;
     DWORD needed;
     HANDLE hprn;
@@ -1112,27 +1107,28 @@ static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStru
 
     PRINTDLG_UpdatePrinterInfoTextsA(hDlg, lppd->Flags, PrintStructures->lpPrinterInfo);
 
+    free(PrintStructures->lpDevMode);
+    PrintStructures->lpDevMode = NULL;
+
     dmSize = DocumentPropertiesA(0, 0, name, NULL, NULL, 0);
     if(dmSize == -1) {
         ERR("DocumentProperties fails on %s\n", debugstr_a(name));
 	return FALSE;
     }
-    dm_tmp = malloc(dmSize);
-    dmSize = DocumentPropertiesA(0, 0, name, dm_tmp, NULL,
+    PrintStructures->lpDevMode = malloc(dmSize);
+    dmSize = DocumentPropertiesA(0, 0, name, PrintStructures->lpDevMode, NULL,
 				 DM_OUT_BUFFER);
-    if(lppd->hDevMode)
-    {
-        lpdm = GlobalLock(lppd->hDevMode);
-        if(!lstrcmpA((LPSTR)lpdm->dmDeviceName, (LPSTR)dm_tmp->dmDeviceName))
-            /* Supplied devicemode matches current printer so try to use it */
-            DocumentPropertiesA(0, 0, name, dm_tmp, lpdm, DM_OUT_BUFFER | DM_IN_BUFFER);
+    if(lppd->hDevMode && (lpdm = GlobalLock(lppd->hDevMode)) &&
+			  !lstrcmpA( (LPSTR) lpdm->dmDeviceName,
+				     (LPSTR) PrintStructures->lpDevMode->dmDeviceName)) {
+      /* Supplied devicemode matches current printer so try to use it */
+        DocumentPropertiesA(0, 0, name, PrintStructures->lpDevMode, lpdm,
+			    DM_OUT_BUFFER | DM_IN_BUFFER);
+    }
+    if(lpdm)
         GlobalUnlock(lppd->hDevMode);
-        lppd->hDevMode = GlobalReAlloc(lppd->hDevMode, dm_tmp->dmSize + dm_tmp->dmDriverExtra, GMEM_MOVEABLE);
-    }else
-        lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE, dm_tmp->dmSize + dm_tmp->dmDriverExtra);
-    lpdm = GlobalLock(lppd->hDevMode);
-    memcpy(lpdm, dm_tmp, dm_tmp->dmSize + dm_tmp->dmDriverExtra);
-    free(dm_tmp);
+
+    lpdm = PrintStructures->lpDevMode;  /* use this as a shortcut */
 
     if(!(lppd->Flags & PD_PRINTSETUP)) {
 	/* Print range (All/Range/Selection) */
@@ -1285,7 +1281,6 @@ static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStru
         /* hide if PD_SHOWHELP not specified */
         ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
     }
-    GlobalUnlock(lppd->hDevMode);
     return TRUE;
 }
 
@@ -1293,7 +1288,7 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 				   PRINT_PTRW *PrintStructures)
 {
     LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
-    LPDEVMODEW lpdm, dm_tmp;
+    LPDEVMODEW lpdm = NULL;
     LONG dmSize;
     DWORD needed;
     HANDLE hprn;
@@ -1319,27 +1314,28 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 
     PRINTDLG_UpdatePrinterInfoTextsW(hDlg, lppd->Flags, PrintStructures->lpPrinterInfo);
 
+    free(PrintStructures->lpDevMode);
+    PrintStructures->lpDevMode = NULL;
+
     dmSize = DocumentPropertiesW(0, 0, name, NULL, NULL, 0);
     if(dmSize == -1) {
         ERR("DocumentProperties fails on %s\n", debugstr_w(name));
 	return FALSE;
     }
-    dm_tmp = malloc(dmSize);
-    dmSize = DocumentPropertiesW(0, 0, name, dm_tmp, NULL,
+    PrintStructures->lpDevMode = malloc(dmSize);
+    dmSize = DocumentPropertiesW(0, 0, name, PrintStructures->lpDevMode, NULL,
 				 DM_OUT_BUFFER);
-    if(lppd->hDevMode)
-    {
-        lpdm = GlobalLock(lppd->hDevMode);
-        if(!lstrcmpW(lpdm->dmDeviceName, dm_tmp->dmDeviceName))
-            /* Supplied devicemode matches current printer so try to use it */
-            DocumentPropertiesW(0, 0, name, dm_tmp, lpdm, DM_OUT_BUFFER | DM_IN_BUFFER);
+    if(lppd->hDevMode && (lpdm = GlobalLock(lppd->hDevMode)) &&
+			  !lstrcmpW(lpdm->dmDeviceName,
+				  PrintStructures->lpDevMode->dmDeviceName)) {
+      /* Supplied devicemode matches current printer so try to use it */
+        DocumentPropertiesW(0, 0, name, PrintStructures->lpDevMode, lpdm,
+			    DM_OUT_BUFFER | DM_IN_BUFFER);
+    }
+    if(lpdm)
         GlobalUnlock(lppd->hDevMode);
-        lppd->hDevMode = GlobalReAlloc(lppd->hDevMode, dm_tmp->dmSize + dm_tmp->dmDriverExtra, GMEM_MOVEABLE);
-    }else
-        lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE, dm_tmp->dmSize + dm_tmp->dmDriverExtra);
-    lpdm = GlobalLock(lppd->hDevMode);
-    memcpy(lpdm, dm_tmp, dm_tmp->dmSize + dm_tmp->dmDriverExtra);
-    free(dm_tmp);
+
+    lpdm = PrintStructures->lpDevMode;  /* use this as a shortcut */
 
     if(!(lppd->Flags & PD_PRINTSETUP)) {
 	/* Print range (All/Range/Selection) */
@@ -1492,7 +1488,6 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
         /* hide if PD_SHOWHELP not specified */
         ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
     }
-    GlobalUnlock(lppd->hDevMode);
     return TRUE;
 }
 
@@ -1748,24 +1743,21 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 {
     LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
-    LPDEVMODEA lpdm = GlobalLock(lppd->hDevMode);
+    LPDEVMODEA lpdm = PrintStructures->lpDevMode;
 
     switch (LOWORD(wParam))  {
     case IDOK:
         TRACE(" OK button was hit\n");
         if (!PRINTDLG_UpdatePrintDlgA(hDlg, PrintStructures)) {
 	    FIXME("Update printdlg was not successful!\n");
-            GlobalUnlock(lppd->hDevMode);
 	    return(FALSE);
 	}
 	EndDialog(hDlg, TRUE);
-        GlobalUnlock(lppd->hDevMode);
 	return(TRUE);
 
     case IDCANCEL:
         TRACE(" CANCEL button was hit\n");
         EndDialog(hDlg, FALSE);
-        GlobalUnlock(lppd->hDevMode);
 	return(FALSE);
 
      case pshHelp:
@@ -1816,8 +1808,8 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 	     break;
 	 }
 	 DocumentPropertiesA(hDlg, hPrinter, PrinterName,
-			     lpdm,
-			     lpdm,
+			     PrintStructures->lpDevMode,
+			     PrintStructures->lpDevMode,
 			     DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
 	 ClosePrinter(hPrinter);
          break;
@@ -1900,7 +1892,6 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 	    break;
 	}
     }
-    GlobalUnlock(lppd->hDevMode);
     return FALSE;
 }
 
@@ -1909,24 +1900,21 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 {
     LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
-    LPDEVMODEW lpdm = GlobalLock(lppd->hDevMode);
+    LPDEVMODEW lpdm = PrintStructures->lpDevMode;
 
     switch (LOWORD(wParam))  {
     case IDOK:
         TRACE(" OK button was hit\n");
         if (!PRINTDLG_UpdatePrintDlgW(hDlg, PrintStructures)) {
 	    FIXME("Update printdlg was not successful!\n");
-	    GlobalUnlock(lppd->hDevMode);
-            return(FALSE);
+	    return(FALSE);
 	}
 	EndDialog(hDlg, TRUE);
-        GlobalUnlock(lppd->hDevMode);
 	return(TRUE);
 
     case IDCANCEL:
         TRACE(" CANCEL button was hit\n");
         EndDialog(hDlg, FALSE);
-        GlobalUnlock(lppd->hDevMode);
 	return(FALSE);
 
      case pshHelp:
@@ -1977,8 +1965,8 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 	     break;
 	 }
 	 DocumentPropertiesW(hDlg, hPrinter, PrinterName,
-			     lpdm,
-			     lpdm,
+			     PrintStructures->lpDevMode,
+			     PrintStructures->lpDevMode,
 			     DM_IN_BUFFER | DM_OUT_BUFFER | DM_IN_PROMPT);
 	 ClosePrinter(hPrinter);
          break;
@@ -2062,7 +2050,6 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 	    break;
 	}
     }
-    GlobalUnlock(lppd->hDevMode);
     return FALSE;
 }
 
@@ -2411,8 +2398,21 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 					   (LPARAM)PrintStructures));
 
 	if(bRet) {
+	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
 	    PRINTER_INFO_2A *pi = PrintStructures->lpPrinterInfo;
 	    DRIVER_INFO_3A *di = PrintStructures->lpDriverInfo;
+
+	    if (lppd->hDevMode == 0) {
+	        TRACE(" No hDevMode yet... Need to create my own\n");
+		lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE,
+					lpdm->dmSize + lpdm->dmDriverExtra);
+	    } else {
+		lppd->hDevMode = GlobalReAlloc(lppd->hDevMode,
+					       lpdm->dmSize + lpdm->dmDriverExtra,
+					       GMEM_MOVEABLE);
+	    }
+	    lpdmReturn = GlobalLock(lppd->hDevMode);
+	    memcpy(lpdmReturn, lpdm, lpdm->dmSize + lpdm->dmDriverExtra);
 
 	    PRINTDLG_CreateDevNames(&(lppd->hDevNames),
 		    di->pDriverPath,
@@ -2421,6 +2421,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 	    );
 	    GlobalUnlock(lppd->hDevMode);
 	}
+	free(PrintStructures->lpDevMode);
 	free(PrintStructures->lpPrinterInfo);
 	free(PrintStructures->lpDriverInfo);
 	free(PrintStructures);
@@ -2547,8 +2548,29 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 					   (LPARAM)PrintStructures));
 
 	if(bRet) {
+	    DEVMODEW *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
 	    PRINTER_INFO_2W *pi = PrintStructures->lpPrinterInfo;
 	    DRIVER_INFO_3W *di = PrintStructures->lpDriverInfo;
+
+	    if (lppd->hDevMode == 0) {
+	        TRACE(" No hDevMode yet... Need to create my own\n");
+		lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE,
+					lpdm->dmSize + lpdm->dmDriverExtra);
+	    } else {
+	        WORD locks;
+		if((locks = (GlobalFlags(lppd->hDevMode) & GMEM_LOCKCOUNT))) {
+		    WARN("hDevMode has %d locks on it. Unlocking it now\n", locks);
+		    while(locks--) {
+		        GlobalUnlock(lppd->hDevMode);
+			TRACE("Now got %d locks\n", locks);
+		    }
+		}
+		lppd->hDevMode = GlobalReAlloc(lppd->hDevMode,
+					       lpdm->dmSize + lpdm->dmDriverExtra,
+					       GMEM_MOVEABLE);
+	    }
+	    lpdmReturn = GlobalLock(lppd->hDevMode);
+	    memcpy(lpdmReturn, lpdm, lpdm->dmSize + lpdm->dmDriverExtra);
 
 	    if (lppd->hDevNames != 0) {
 	        WORD locks;
@@ -2565,6 +2587,7 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	    );
 	    GlobalUnlock(lppd->hDevMode);
 	}
+	free(PrintStructures->lpDevMode);
 	free(PrintStructures->lpPrinterInfo);
 	free(PrintStructures->lpDriverInfo);
 	free(PrintStructures);
@@ -3992,13 +4015,13 @@ static void pdlg_to_pdlgex(const PRINTDLGW *pdlg, PRINTDLGEXW *pdlgex)
     pdlgex->hDevMode = pdlg->hDevMode;
     pdlgex->hDevNames = pdlg->hDevNames;
     pdlgex->hDC = pdlg->hDC;
-    pdlgex->Flags = pdlg->Flags;
-    if ((pdlgex->Flags & PD_PAGENUMS) && pdlgex->nMaxPageRanges && pdlgex->lpPageRanges)
+    if (!(pdlgex->Flags & PD_NOPAGENUMS) && pdlgex->nPageRanges && pdlgex->lpPageRanges)
     {
-        pdlgex->nPageRanges = 1;
         pdlgex->lpPageRanges[0].nFromPage = pdlg->nFromPage;
         pdlgex->lpPageRanges[0].nToPage = pdlg->nToPage;
     }
+    pdlgex->nMinPage = pdlg->nMinPage;
+    pdlgex->nMaxPage = pdlg->nMaxPage;
     pdlgex->nCopies = pdlg->nCopies;
 }
 

@@ -103,10 +103,6 @@ it is actually called.
 .BI \-D\  symbol
 Ignored for compatibility with the C compiler.
 .TP
-.B \--disable-dynamicbase
-Disable 'ASLR' address space layout randomization in executable image.
-The default is 'ASLR' enabled.
-.TP
 .BI \-e,\ --entry= function
 Specify the module entry point function; if not specified, the default
 is
@@ -229,10 +225,6 @@ Mark object files as SEH compatible.
 .B --save-temps
 Do not delete the various temporary files that \fBwinebuild\fR generates.
 .TP
-.BI \--strip-cmd= strip-command
-Specify the command to use to strip PE modules. Only meaningful in
-\fB--builtin\fR mode.
-.TP
 .BI --subsystem= subsystem\fR[\fB:\fImajor\fR[\fB.\fIminor\fR]]
 Set the subsystem of the executable, which can be one of the following:
 .br
@@ -255,6 +247,11 @@ argument array to use Unicode strings. A graphical executable has a
 .br
 Optionally a major and minor subsystem version can also be specified;
 the default subsystem version is 4.0.
+.TP
+.BI --syscall-table= id
+Set the system call table id, between 0 and 3. The default is 0, the
+ntdll syscall table. Only useful in modules that define syscall entry
+points.
 .TP
 .BI \-u,\ --undefined= symbol
 Add \fIsymbol\fR to the list of undefined symbols when invoking the
@@ -346,12 +343,11 @@ The function uses the
 calling convention (first two parameters in %ecx/%edx registers on
 i386).
 .TP
-.B -syscall\fR[=\fInumber\fR]
+.B -syscall
 The function is an NT system call. A system call thunk will be
 generated, and the actual function will be called by the
-\fI__wine_syscall_dispatcher\fR function in ntdll. The system call
-number can be specified explicitly; by default it will be assigned
-sequentially starting from 0.
+\fI__wine_syscall_dispatcher\fR function that will be generated on the
+Unix library side.
 .TP
 .B -import
 The function is imported from another module. This can be used instead

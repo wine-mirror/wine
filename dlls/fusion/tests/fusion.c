@@ -21,7 +21,6 @@
 
 #include "wine/test.h"
 
-static BOOL v4;
 static HMODULE hmscoree;
 
 static HRESULT (WINAPI *pGetCachePath)(ASM_CACHE_FLAGS dwCacheFlags,
@@ -53,21 +52,12 @@ static BOOL init_functionpointers(void)
 
     pGetCORVersion = (void *)GetProcAddress(hmscoree, "GetCORVersion");
 
-    hr = pLoadLibraryShim(L"fusion.dll", L"v4.0.30319", NULL, &hfusion);
+    hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
     if (FAILED(hr))
     {
-        hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
-        if (FAILED(hr))
-        {
-            win_skip("fusion.dll not available\n");
-            FreeLibrary(hmscoree);
-            return FALSE;
-        }
-    }
-    else
-    {
-        v4 = TRUE;
-        trace("using .NET version 4\n");
+        win_skip("fusion.dll not available\n");
+        FreeLibrary(hmscoree);
+        return FALSE;
     }
 
     pGetCachePath = (void *)GetProcAddress(hfusion, "GetCachePath");
@@ -170,8 +160,7 @@ static void test_GetCachePath(void)
             lstrcpyA(zapfmtA, "%s\\%s\\%s%s");
         }
 
-        if (v4) wcscpy(version, L"v4.0.30319");
-        else pGetCORVersion(version, MAX_PATH, &size);
+        pGetCORVersion(version, MAX_PATH, &size);
         WideCharToMultiByte(CP_ACP, 0, version, -1, versionA, MAX_PATH, 0, 0);
 
         wsprintfA(cachepathA, zapfmtA, windirA, "assembly", nativeimgA, versionA);
@@ -182,7 +171,7 @@ static void test_GetCachePath(void)
         size = MAX_PATH;
         hr = pGetCachePath(ASM_CACHE_ZAP, path, &size);
         ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-        todo_wine ok( !lstrcmpW( cachepath, path ), "Expected %s,  got %s\n", wine_dbgstr_w(cachepath), wine_dbgstr_w(path));
+        ok( !lstrcmpW( cachepath, path ), "Expected %s,  got %s\n", wine_dbgstr_w(cachepath), wine_dbgstr_w(path));
     }
 
     /* two flags at once */

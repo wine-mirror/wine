@@ -29,9 +29,6 @@
 
 #include "build.h"
 
-/* offset of the ldt pointer */
-#define LDT_OFFSET 0x220  /* FIELD_OFFSET(PEB,SpareUlongs[0]) */
-
 #define NE_FFLAGS_SINGLEDATA 0x0001
 #define NE_FFLAGS_LIBMODULE  0x8000
 
@@ -120,7 +117,8 @@ static void output_entries( DLLSPEC *spec, int first, int count )
             output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n", spec->c_name, first + i );
             break;
         case TYPE_ABS:
-            output( "\t.short 0x%04x  /* %s */\n", odp->u.abs, odp->name );
+            output( "\t.short 0x%04x  /* %s */\n",
+                     odp->u.abs.value, odp->name );
             break;
         default:
             assert(0);
@@ -221,12 +219,16 @@ static void output_resident_name( const char *string, int ordinal )
  */
 static const char *get_callfrom16_name( const ORDDEF *odp )
 {
-    return strmake( "%s_%s_%s",
-                    (odp->type == TYPE_PASCAL) ? "p" :
-                    (odp->type == TYPE_VARARGS) ? "v" : "c",
-                    (odp->flags & FLAG_REGISTER) ? "regs" :
-                    (odp->flags & FLAG_RET16) ? "word" : "long",
-                    get_args_str(odp) );
+    static char *buffer;
+
+    free( buffer );
+    buffer = strmake( "%s_%s_%s",
+                      (odp->type == TYPE_PASCAL) ? "p" :
+                      (odp->type == TYPE_VARARGS) ? "v" : "c",
+                      (odp->flags & FLAG_REGISTER) ? "regs" :
+                      (odp->flags & FLAG_RET16) ? "word" : "long",
+                      get_args_str(odp) );
+    return buffer;
 }
 
 
@@ -349,8 +351,14 @@ static void output_call16_function( ORDDEF *odp )
         output( "\tpushl %%esi\n" );
         output_cfi( ".cfi_rel_offset %%esi,-4" );
         stack_words++;
-        output( "\tmovl %%fs:(0x30), %%esi\n" ); /* peb */
-        output( "\tmovl %u(%%esi), %%esi\n", LDT_OFFSET );   /* ldt_copy */
+        if (UsePIC)
+        {
+            output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+            output( "1:\tmovl .Lwine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
+            needs_get_pc_thunk = 1;
+        }
+        else
+            output( "\tmovl .Lwine_ldt_copy_ptr,%%esi\n" );
     }
 
     /* preserve 16-byte stack alignment */
@@ -435,6 +443,7 @@ static void output_call16_function( ORDDEF *odp )
     output( "\tret\n" );
     output_cfi( ".cfi_endproc" );
     output_function_size( name );
+    free( name );
 }
 
 
@@ -554,7 +563,8 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.short 0,0,0,0\n" );                                        /* e_res */
     output( "\t.short 0\n" );                                              /* e_oemid */
     output( "\t.short 0\n" );                                              /* e_oeminfo */
-    output( "\t.long .L__wine_spec_ne_header_end-.L__wine_spec_dos_header,0,0,0,0\n" );  /* e_res2, used for private data */
+    output( ".Lwine_ldt_copy_ptr:\n" );                        /* e_res2, used for private data */
+    output( "\t.long .L__wine_spec_ne_header_end-.L__wine_spec_dos_header,0,0,0,0\n" );
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), fakedll_signature );
@@ -726,7 +736,8 @@ static void output_module16( DLLSPEC *spec )
         if (!odp || !is_function( odp )) continue;
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\tpushw %%bp\n" );
-        output( "\tpushl $%s\n", asm_name( get_link_name( odp )));
+        output( "\tpushl $%s\n",
+                asm_name( odp->type == TYPE_STUB ? get_stub_name( odp, spec ) : get_link_name( odp )));
         output( "\tcallw .L__wine_spec_callfrom16_%s\n", get_callfrom16_name( odp ) );
     }
     output( ".L__wine_spec_code_segment_end:\n" );
@@ -741,14 +752,15 @@ static void output_module16( DLLSPEC *spec )
         if (!odp || odp->type != TYPE_VARIABLE) continue;
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\t.long " );
-        ARRAY_FOR_EACH( val, &odp->u.var, unsigned int ) output( "0x%08x,", *val );
-        output( "0\n" );
+        for (j = 0; j < odp->u.var.n_values-1; j++)
+            output( "0x%08x,", odp->u.var.values[j] );
+        output( "0x%08x\n", odp->u.var.values[j] );
     }
     output( ".L__wine_spec_data_segment_end:\n" );
 
     /* resource data */
 
-    if (spec->resources.count)
+    if (spec->nb_resources)
     {
         output( "\n.L__wine_spec_resource_data:\n" );
         output_res16_data( spec );
@@ -790,7 +802,6 @@ void output_spec16_file( DLLSPEC *spec16 )
     output_stubs( spec16 );
     output_exports( spec32 );
     output_imports( spec16 );
-    output_crt_sections();
     if (!strcmp( spec16->dll_name, "kernel" )) output_asm_relays16();
     if (needs_get_pc_thunk) output_get_pc_thunk();
     if (spec16->main_module)
@@ -801,6 +812,7 @@ void output_spec16_file( DLLSPEC *spec16 )
     }
     output_gnu_stack_note();
     close_output_file();
+    free_dll_spec( spec32 );
 }
 
 /*******************************************************************
@@ -823,7 +835,7 @@ void output_fake_module16( DLLSPEC *spec )
 
     rsrctab = lfanew;
     restab = segtab + 8 * cseg;
-    if (spec->resources.count)
+    if (spec->nb_resources)
     {
         output_bin_res16_directory( spec, 0 );
         align_output( 2 );
@@ -919,7 +931,7 @@ void output_fake_module16( DLLSPEC *spec )
     put_word( sizeof(data_segment) );
 
     /* resource directory */
-    if (spec->resources.count)
+    if (spec->nb_resources)
     {
         output_bin_res16_directory( spec, rsrcdata );
         align_output( 2 );

@@ -1,5 +1,8 @@
+MODULE    = winecoreaudio.drv
 UNIXLIB   = winecoreaudio.so
-UNIX_LIBS = $(COREAUDIO_LIBS)
+IMPORTS   = uuid ole32 user32 advapi32
+DELAYIMPORTS = winmm
+UNIX_LIBS    = $(COREAUDIO_LIBS)
 
 SOURCES = \
 	coreaudio.c \

@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.applicationmodel.datatransfer.dragdrop.core.idl";
-
-namespace Windows.ApplicationModel.DataTransfer.DragDrop.Core {
-    runtimeclass CoreDragDropManager;
-}
+#include "windows.applicationmodel.datatransfer.dragdrop.core.idl"

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -32,6 +33,7 @@
 
 #include "kernelbase.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(security);
 
@@ -586,7 +588,7 @@ BOOL WINAPI CheckTokenMembership( HANDLE token, PSID sid_to_check, PBOOL is_memb
     if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         goto exit;
 
-    token_groups = HeapAlloc(GetProcessHeap(), 0, size);
+    token_groups = heap_alloc(size);
     if (!token_groups)
     {
         ret = FALSE;
@@ -612,7 +614,7 @@ BOOL WINAPI CheckTokenMembership( HANDLE token, PSID sid_to_check, PBOOL is_memb
     }
 
 exit:
-    HeapFree(GetProcessHeap(), 0, token_groups);
+    heap_free(token_groups);
     if (thread_token != NULL) CloseHandle(thread_token);
     return ret;
 }
@@ -635,27 +637,21 @@ BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
 
     if (disable_sid_count)
     {
-        if (!(nt_disable_sids = HeapAlloc( GetProcessHeap(), 0,
-                                           offsetof( TOKEN_GROUPS, Groups[disable_sid_count] ) )))
-            goto out;
+        if (!(nt_disable_sids = heap_alloc( offsetof( TOKEN_GROUPS, Groups[disable_sid_count] ) ))) goto out;
         nt_disable_sids->GroupCount = disable_sid_count;
         memcpy( nt_disable_sids->Groups, disable_sids, disable_sid_count * sizeof(*disable_sids) );
     }
 
     if (delete_priv_count)
     {
-        if (!(nt_privs = HeapAlloc( GetProcessHeap(), 0,
-                                    offsetof( TOKEN_PRIVILEGES, Privileges[delete_priv_count] ) )))
-            goto out;
+        if (!(nt_privs = heap_alloc( offsetof( TOKEN_PRIVILEGES, Privileges[delete_priv_count] ) ))) goto out;
         nt_privs->PrivilegeCount = delete_priv_count;
         memcpy( nt_privs->Privileges, delete_privs, delete_priv_count * sizeof(*delete_privs) );
     }
 
     if (restrict_sid_count)
     {
-        if (!(nt_restrict_sids = HeapAlloc( GetProcessHeap(), 0,
-                                            offsetof( TOKEN_GROUPS, Groups[restrict_sid_count] ) )))
-            goto out;
+        if (!(nt_restrict_sids = heap_alloc( offsetof( TOKEN_GROUPS, Groups[restrict_sid_count] ) ))) goto out;
         nt_restrict_sids->GroupCount = restrict_sid_count;
         memcpy( nt_restrict_sids->Groups, restrict_sids, restrict_sid_count * sizeof(*restrict_sids) );
     }
@@ -663,9 +659,9 @@ BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
     status = NtFilterToken(token, flags, nt_disable_sids, nt_privs, nt_restrict_sids, ret);
 
 out:
-    HeapFree(GetProcessHeap(), 0, nt_disable_sids);
-    HeapFree(GetProcessHeap(), 0, nt_privs);
-    HeapFree(GetProcessHeap(), 0, nt_restrict_sids);
+    heap_free(nt_disable_sids);
+    heap_free(nt_privs);
+    heap_free(nt_restrict_sids);
     return set_ntstatus( status );
 }
 
@@ -802,7 +798,7 @@ BOOL WINAPI IsTokenRestricted( HANDLE token )
     status = NtQueryInformationToken(token, TokenRestrictedSids, NULL, 0, &size);
     if (status != STATUS_BUFFER_TOO_SMALL) return set_ntstatus(status);
 
-    groups = HeapAlloc(GetProcessHeap(), 0, size);
+    groups = heap_alloc(size);
     if (!groups)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -812,12 +808,12 @@ BOOL WINAPI IsTokenRestricted( HANDLE token )
     status = NtQueryInformationToken(token, TokenRestrictedSids, groups, size, &size);
     if (status != STATUS_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, groups);
+        heap_free(groups);
         return set_ntstatus(status);
     }
 
     restricted = groups->GroupCount > 0;
-    HeapFree(GetProcessHeap(), 0, groups);
+    heap_free(groups);
 
     return restricted;
 }

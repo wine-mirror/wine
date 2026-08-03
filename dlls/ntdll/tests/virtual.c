@@ -37,6 +37,8 @@ static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static void * (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char*);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
 static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
                                                      MEM_EXTENDED_PARAMETER *, ULONG);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE, HANDLE, PVOID *, const LARGE_INTEGER *, SIZE_T *,
@@ -45,23 +47,10 @@ static NTSTATUS (WINAPI *pNtSetInformationVirtualMemory)(HANDLE, VIRTUAL_MEMORY_
                                                          ULONG_PTR, PMEMORY_RANGE_ENTRY,
                                                          PVOID, ULONG);
 
-#ifndef __aarch64__
-static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
-#endif
-
-#ifdef __x86_64__
-static BOOLEAN (WINAPI *pRtlIsEcCode)(const void *);
-#endif
-
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 static BOOL is_wow64;
 
 static SYSTEM_BASIC_INFORMATION sbi;
-
-static inline void *get_rva( HMODULE module, DWORD va )
-{
-    return (void *)((char *)module + va);
-}
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -304,7 +293,6 @@ static void check_region_size_(void *p, SIZE_T s, unsigned int line)
 
 static void test_NtAllocateVirtualMemoryEx(void)
 {
-    MEMORY_REGION_INFORMATION mri;
     MEMORY_BASIC_INFORMATION mbi;
     MEM_EXTENDED_PARAMETER ext[2];
     char *p, *p1, *p2, *p3;
@@ -622,35 +610,6 @@ static void test_NtAllocateVirtualMemoryEx(void)
     ok(p2 == p1 + size / 2, "Unexpected addr %p, expected %p.\n", p2, p1 + size / 2);
     check_region_size(p1, size / 2);
     check_region_size(p2, size / 2);
-
-    status = NtQueryVirtualMemory( NtCurrentProcess(), p1, MemoryBasicInformation, &mbi, sizeof(mbi), NULL );
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status );
-    ok( mbi.AllocationBase == p1, "got %p.\n", mbi.AllocationBase );
-    ok( mbi.Type == MEM_PRIVATE, "got %#lx.\n", mbi.Type );
-    ok( mbi.State == MEM_RESERVE, "got %#lx.\n", mbi.State );
-    ok( mbi.RegionSize == size / 2, "Unexpected size %Iu, expected %Iu.\n", mbi.RegionSize, size / 2 );
-    ok( mbi.AllocationProtect == PAGE_NOACCESS, "got %#lx.\n", mbi.AllocationProtect );
-    status = NtQueryVirtualMemory( NtCurrentProcess(), p1, MemoryRegionInformation, &mri, sizeof(mri), NULL );
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status );
-    ok( mri.AllocationBase == p1, "got %p.\n", mri.AllocationBase );
-    ok( mri.RegionSize == size / 2, "Unexpected size %Iu, expected %Iu.\n", mri.RegionSize, size / 2 );
-    ok( !mri.CommitSize, "Unexpected size %Iu.\n", mri.CommitSize );
-    ok( mri.AllocationProtect == PAGE_NOACCESS, "got %#lx.\n", mri.AllocationProtect );
-
-    status = NtQueryVirtualMemory( NtCurrentProcess(), p2, MemoryBasicInformation, &mbi, sizeof(mbi), NULL );
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status );
-    ok( mbi.AllocationBase == p2, "got %p.\n", mbi.AllocationBase );
-    ok( mbi.Type == MEM_PRIVATE, "got %#lx.\n", mbi.Type );
-    ok( mbi.State == MEM_RESERVE, "got %#lx.\n", mbi.State );
-    ok( mbi.RegionSize == size / 2, "Unexpected size %Iu, expected %Iu.\n", mbi.RegionSize, size / 2 );
-    ok( mbi.AllocationProtect == PAGE_NOACCESS, "got %#lx.\n", mbi.AllocationProtect );
-    status = NtQueryVirtualMemory( NtCurrentProcess(), p2, MemoryRegionInformation, &mri, sizeof(mri), NULL );
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status );
-    ok( mri.AllocationBase == p2, "got %p.\n", mri.AllocationBase );
-    ok( mri.RegionSize == size / 2, "Unexpected size %Iu, expected %Iu.\n", mri.RegionSize, size / 2 );
-    ok( !mri.CommitSize, "Unexpected size %Iu.\n", mri.CommitSize );
-    ok( mri.AllocationProtect == PAGE_NOACCESS, "got %#lx.\n", mri.AllocationProtect );
-
     status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     ok(size2 == 0x8000, "Unexpected size %#Ix.\n", size2);
@@ -1445,13 +1404,12 @@ static void test_NtMapViewOfSection(void)
     static const char data[] = "test data for NtMapViewOfSection";
     char buffer[sizeof(data)];
     HANDLE file, mapping, process;
-    void *ptr, *ptr2, *mem, *mem2;
+    void *ptr, *ptr2;
     BOOL ret;
     DWORD status, written;
-    SIZE_T size, size2, result;
+    SIZE_T size, result;
     LARGE_INTEGER offset;
     ULONG_PTR zero_bits;
-    SYSTEM_INFO si;
 
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
 
@@ -1704,55 +1662,6 @@ static void test_NtMapViewOfSection(void)
         NtClose(mapping);
         CloseHandle(file);
     }
-
-    /* image offset */
-
-    GetSystemInfo(&si);
-
-    file = CreateFileA("c:\\windows\\system32\\ntdll.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to open ntdll.dll\n");
-
-    mapping = CreateFileMappingA(file, NULL, PAGE_READONLY|SEC_IMAGE, 0, 0, NULL);
-    ok(mapping != 0, "CreateFileMapping failed\n");
-
-    ptr = NULL;
-    size = 0;
-    offset.QuadPart = 0;
-    status = NtMapViewOfSection(mapping, process, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY);
-    ok(status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
-
-    ptr2 = NULL;
-    size2 = 0;
-    offset.QuadPart = si.dwAllocationGranularity;
-    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size2, 1, 0, PAGE_READONLY);
-    ok(status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
-
-    ok(size2 == size - si.dwAllocationGranularity, "got unexpected sizes %Ix, %Ix\n", size, size2);
-    size2 = size - si.dwAllocationGranularity;
-
-    mem = malloc(size2);
-    ret = ReadProcessMemory(process, (char*)ptr + si.dwAllocationGranularity, mem, size2, &result);
-    ok(ret, "ReadProcessMemory failed\n");
-    ok(size2 == result, "ReadProcessMemory didn't read all data (%Ix)\n", result);
-
-    mem2 = malloc(size2);
-    ret = ReadProcessMemory(process, ptr2, mem2, size2, &result);
-    ok(ret, "ReadProcessMemory failed\n");
-    ok(size2 == result, "ReadProcessMemory didn't read all data (%Ix)\n", result);
-
-    ok(memcmp(mem, mem2, size2) == 0, "memory does not match\n");
-
-    free(mem);
-    free(mem2);
-
-    status = NtUnmapViewOfSection(process, ptr);
-    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
-
-    status = NtUnmapViewOfSection(process, ptr2);
-    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
-
-    NtClose(mapping);
-    CloseHandle(file);
 
     TerminateProcess(process, 0);
     CloseHandle(process);
@@ -2047,6 +1956,8 @@ static void test_NtMapViewOfSectionEx(void)
     CloseHandle(process);
 }
 
+#define SUPPORTED_XSTATE_FEATURES ((1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX))
+
 static void test_user_shared_data(void)
 {
     struct old_xstate_configuration
@@ -2058,23 +1969,21 @@ static void test_user_shared_data(void)
         XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
     };
 
-    ULONG feature_offsets[] =
+    static const ULONG feature_offsets[] =
     {
             0,
             160, /*offsetof(XMM_SAVE_AREA32, XmmRegisters)*/
             512  /* sizeof(XMM_SAVE_AREA32) */ + offsetof(XSTATE, YmmContext),
     };
-    ULONG feature_sizes[] =
+    static const ULONG feature_sizes[] =
     {
             160,
             256, /*sizeof(M128A) * 16 */
             sizeof(YMMCONTEXT),
     };
-    const KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
+    const KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
     XSTATE_CONFIGURATION xstate = user_shared_data->XState;
     ULONG64 feature_mask;
-    ULONG64 supported_xstate_features = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX);
-    ULONG xstate_part_size = sizeof(XSTATE);
     unsigned int i;
 
     ok(user_shared_data->NumberOfPhysicalPages == sbi.MmNumberOfPhysicalPages,
@@ -2116,15 +2025,6 @@ static void test_user_shared_data(void)
         return;
     }
 
-    if (!(xstate.EnabledFeatures & (1 << XSTATE_AVX)))
-    {
-        trace("AVX not present\n");
-        feature_offsets[2] = 0;
-        feature_sizes[2] = 0;
-        xstate_part_size = offsetof( XSTATE, YmmContext );
-        supported_xstate_features = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE);
-    }
-
     trace("XState EnabledFeatures %#I64x, EnabledSupervisorFeatures %#I64x, EnabledVolatileFeatures %I64x.\n",
             xstate.EnabledFeatures, xstate.EnabledSupervisorFeatures, xstate.EnabledVolatileFeatures);
     feature_mask = pRtlGetEnabledExtendedFeatures(0);
@@ -2135,17 +2035,16 @@ static void test_user_shared_data(void)
     feature_mask = pGetEnabledXStateFeatures();
     ok(feature_mask == (xstate.EnabledFeatures | xstate.EnabledSupervisorFeatures), "Got unexpected feature_mask %s.\n",
             wine_dbgstr_longlong(feature_mask));
-    ok((xstate.EnabledFeatures & supported_xstate_features) == supported_xstate_features,
+    ok((xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES) == SUPPORTED_XSTATE_FEATURES,
             "Got unexpected EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
-    ok((xstate.EnabledVolatileFeatures & supported_xstate_features) == (xstate.EnabledFeatures & supported_xstate_features),
+    ok((xstate.EnabledVolatileFeatures & SUPPORTED_XSTATE_FEATURES) == (xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES),
             "Got unexpected EnabledVolatileFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledVolatileFeatures));
-    ok(xstate.Size >= 512 + xstate_part_size,
-            "Got unexpected Size %lu, expected %lu.\n", xstate.Size, (ULONG)(512 + xstate_part_size));
+    ok(xstate.Size >= 512 + sizeof(XSTATE), "Got unexpected Size %lu.\n", xstate.Size);
     if (xstate.CompactionEnabled)
         ok(xstate.OptimizedSave, "Got zero OptimizedSave with compaction enabled.\n");
     ok(!xstate.AlignedFeatures, "Got unexpected AlignedFeatures %s.\n",
             wine_dbgstr_longlong(xstate.AlignedFeatures));
-    ok(xstate.AllFeatureSize >= 512 + xstate_part_size
+    ok(xstate.AllFeatureSize >= 512 + sizeof(XSTATE)
             || !xstate.AllFeatureSize /* win8 on CPUs without XSAVEC */,
             "Got unexpected AllFeatureSize %lu.\n", xstate.AllFeatureSize);
 
@@ -2315,234 +2214,6 @@ static void test_syscalls(void)
     UnmapViewOfFile( ptr );
 }
 
-static void test_invalid_syscalls(void)
-{
-    HMODULE module = GetModuleHandleW( L"ntdll.dll" );
-    NTSTATUS (WINAPI *pNtImpersonateAnonymousToken)( HANDLE thread );
-    NTSTATUS status;
-    DWORD prot, i;
-    LONG old_id, new_id, *id;
-
-    /* grab a syscall that's unlikely to be used while we are testing */
-    pNtImpersonateAnonymousToken = (void *)GetProcAddress( module, "NtImpersonateAnonymousToken" );
-    if (!pNtImpersonateAnonymousToken)
-    {
-        win_skip( "NtImpersonateAnonymousToken not supported\n" );
-        return;
-    }
-    status = pNtImpersonateAnonymousToken( 0 );
-    ok( status == STATUS_INVALID_HANDLE || status == STATUS_NOT_IMPLEMENTED, "wrong status %lx\n", status );
-    VirtualProtect( pNtImpersonateAnonymousToken, 32, PAGE_EXECUTE_READWRITE, &prot );
-    for (i = 0; i < 4; i++)
-    {
-        new_id = 0x666 | (i << 12);
-        winetest_push_context( "%04lx", new_id );
-#ifdef __i386__
-        id = (LONG *)((BYTE *)pNtImpersonateAnonymousToken + 1);
-        new_id = (*id & ~0xffff) | new_id;
-#elif defined __x86_64__
-        id = (LONG *)pNtImpersonateAnonymousToken + 1;
-        new_id = (*id & ~0xffff) | new_id;
-#elif defined __aarch64__
-        id = (LONG *)pNtImpersonateAnonymousToken;
-        new_id = (*id & ~(0xffff << 5)) | (new_id << 5);
-#elif defined __arm__
-        id = (LONG *)(((ULONG_PTR)pNtImpersonateAnonymousToken & ~1) + 2);
-        new_id = 0x0c00f240 | ((new_id & 0xff) << 16) | ((new_id & 0xf00) << 20) | (new_id >> 12); /* movw ip, #0xnnn */
-#endif
-        old_id = *id;
-        *id = new_id;
-        NtFlushInstructionCache( GetCurrentProcess(), pNtImpersonateAnonymousToken, 32 );
-        status = pNtImpersonateAnonymousToken( 0 );
-        ok( status == STATUS_INVALID_SYSTEM_SERVICE, "wrong status %lx\n", status );
-        *id = old_id;
-        NtFlushInstructionCache( GetCurrentProcess(), pNtImpersonateAnonymousToken, 32 );
-        winetest_pop_context();
-    }
-    VirtualProtect( pNtImpersonateAnonymousToken, 32, prot, &prot );
-}
-
-struct syscall_export
-{
-    UINT        rva;
-    int         id;
-    const char *name;
-};
-
-static int CDECL sort_syscalls( const void *a, const void *b )
-{
-    const struct syscall_export *exp_a = a;
-    const struct syscall_export *exp_b = b;
-    int ret = exp_a->rva - exp_b->rva;
-    if (!ret) ret = strcmp( exp_a->name, exp_b->name );
-    return ret;
-}
-
-static int get_syscall_id( void *code )
-{
-#ifdef __i386__
-    static const BYTE patterns[][18] =
-    {
-        { 0xb8, 0, 0, 0, 0, 0xba, 0, 0, 0, 0, 0xff, 0xd2 }, /* >= win10 */
-        { 0xb8, 0, 0, 0, 0, 0xba, 0, 0, 0, 0, 0xff, 0x12 }, /* winxp */
-        { 0xb8, 0, 0, 0, 0, 0x64, 0xff, 0x15, 0xc0, 0, 0, 0 },  /* nt */
-        { 0xb8, 0, 0, 0, 0, 0x8d, 0x54, 0x24, 0x04, 0xcd, 0x2e }, /* nt */
-        { 0xb8, 0, 0, 0, 0, 0xb9, 0, 0, 0, 0, 0x8d, 0x54, 0x24, 0x04, 0x64, 0xff, 0x15, 0xc0 }, /* vista */
-        { 0xb8, 0, 0, 0, 0, 0x33, 0xc9, 0x8d, 0x54, 0x24, 0x04, 0x64, 0xff, 0x15, 0xc0 }, /* vista */
-        { 0xb8, 0, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0x8d, 0x54, 0x24, 0x04, 0x64, 0xff, 0x15, 0xc0 }, /* win8 */
-        { 0xb8, 0, 0, 0, 0, 0xe8, 0x01, 0, 0, 0, 0xc3, 0x8b, 0xd4, 0x0f, 0x34, 0xc3 },  /* win8 */
-        { 0xb8, 0, 0, 0, 0, 0xe8, 0x03, 0, 0, 0, 0xc2, 0, 0, 0x8b, 0xd4, 0x0f, 0x34, 0xc3 }, /* win8 */
-    };
-    const BYTE *instr = code;
-    UINT i, j;
-
-    for (i = 0; i < ARRAY_SIZE(patterns); i++)
-    {
-        for (j = 0; j < ARRAY_SIZE(patterns[0]); j++)
-            if (patterns[i][j] && patterns[i][j] != instr[j]) break;
-        if (j == ARRAY_SIZE(patterns[0]))
-            return *(UINT *)(instr + 1);
-    }
-#elif defined __x86_64__
-    static const BYTE patterns[][20] =
-    {
-        { 0x4c, 0x8b, 0xd1, 0xb8, 0, 0, 0, 0, 0xf6, 0x04, 0x25, 0x08, 0x03, 0xfe,
-          0x7f, 0x01, 0x75, 0x03, 0x0f, 0x05 },  /* >= win10 */
-        { 0x4c, 0x8b, 0xd1, 0xb8, 0, 0, 0, 0, 0x0f, 0x05, 0xc3 }, /* < win10 */
-    };
-    const BYTE *instr = code;
-    UINT i, j;
-
-    for (i = 0; i < ARRAY_SIZE(patterns); i++)
-    {
-        for (j = 0; j < ARRAY_SIZE(patterns[0]); j++)
-            if (patterns[i][j] && patterns[i][j] != instr[j]) break;
-        if (j == ARRAY_SIZE(patterns[0]))
-            return ((UINT *)instr)[1];
-    }
-#elif defined __aarch64__
-    const UINT *instr = code;
-
-    if ((instr[0] & 0xffe0001f) == 0xd4000001 && instr[1] == 0xd65f03c0)  /* windows */
-        return (instr[0] >> 5) & 0xffff;
-    if ((instr[0] & 0xffe0001f) == 0xd2800008 && instr[1] == 0xaa1e03e9 &&
-        instr[3] == 0xf9400210 && instr[4] == 0xd63f0200 && instr[5] == 0xd65f03c0) /* wine */
-        return (instr[0] >> 5) & 0xffff;
-#elif defined __arm__
-    const USHORT *instr = code;
-
-    if (instr[0] == 0xb40f && (instr[2] & 0x0f00) == 0x0c00 &&
-        ((instr[3] == 0xdef8 && instr[4] == 0xb004 && instr[5] == 0x4770) ||  /* windows */
-         (instr[3] == 0x4673 && instr[6] == 0xb004 && instr[7] == 0x4770)))  /* wine */
-    {
-        USHORT imm = ((instr[1] & 0x400) << 1) | (instr[2] & 0xff) | ((instr[2] >> 4) & 0x0700);
-        if ((instr[1] & 0xfbf0) == 0xf240)  /* T3 */
-        {
-            return imm | (instr[1] & 0x0f) << 12;
-        }
-        else if ((instr[1] & 0xfbf0) == 0xf040)  /* T2 */
-        {
-            switch (imm >> 8)
-            {
-            case 0: return imm;
-            case 1: return (imm & 0xff);
-            case 2: return (imm & 0xff) << 8;
-            case 3: return (imm & 0xff) | ((imm & 0xff) << 8);
-            default: return (0x80 | (imm & 0x7f)) << (32 - (imm >> 7));
-            }
-        }
-    }
-#endif
-    return -1;
-}
-
-static void test_syscall_numbers(void)
-{
-    struct syscall_export syscalls[4096];
-    HMODULE module = GetModuleHandleA( "ntdll.dll" );
-    IMAGE_EXPORT_DIRECTORY *exports;
-    ULONG size;
-    int pos;
-    const WORD *ordinals;
-    const DWORD *names, *functions;
-    static const char *prefix[] = { "Nt", "Zw" };
-
-    exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
-    names = get_rva( module, exports->AddressOfNames );
-    ordinals = get_rva( module, exports->AddressOfNameOrdinals );
-    functions = get_rva( module, exports->AddressOfFunctions );
-
-    for (unsigned int test = 0; test < ARRAY_SIZE(prefix); test++)
-    {
-        for (int i = pos = 0; i < exports->NumberOfNames; i++)
-        {
-            char *name = get_rva( module, names[i] );
-            if (strncmp( name, prefix[test], strlen(prefix[test]) )) continue;
-            if (!strcmp( name, "NtGetTickCount" ) ||
-                !strcmp( name, "NtCurrentTeb" ) ||
-                !strncmp( name, "NtdllDialogWndProc", 18 ) ||
-                !strncmp( name, "NtdllDefWindowProc", 18 ))
-                continue;  /* these are special */
-            syscalls[pos].rva  = functions[ordinals[i]];
-#ifdef __arm__
-            syscalls[pos].rva &= ~1; /* thumb */
-#endif
-            syscalls[pos].id   = get_syscall_id( get_rva( module, syscalls[pos].rva ));
-            syscalls[pos].name = name;
-            pos++;
-        }
-        ok( pos, "no syscalls found\n" );
-        qsort( syscalls, pos, sizeof(*syscalls), sort_syscalls );
-        for (int i = 0, expect = 0; i < pos; i++, expect++)
-        {
-            if (syscalls[i].id == -1)
-            {
-                /* these may not be real syscalls */
-                ok( !strcmp( syscalls[i].name + strlen(prefix[test]), "QuerySystemTime" ) ||
-                    !strcmp( syscalls[i].name + strlen(prefix[test]), "QueryInformationProcess" ),
-                    "not a syscall %04x %s\n", i, syscalls[i].name );
-            }
-            else if (LOWORD(syscalls[i].id) > expect)
-            {
-                ok( 0, "missing syscall %04x\n", expect );
-                i--;
-            }
-            else
-            {
-                ok( LOWORD(syscalls[i].id) == expect, "wrong id %04x / %04x for %s\n",
-                    syscalls[i].id, expect, syscalls[i].name );
-            }
-        }
-    }
-}
-
-static void test_syscall_abi(void)
-{
-    LCID user_lcid, system_lcid, prev_user_lcid = 0, lcid;
-    NTSTATUS (WINAPI *pNtQueryDefaultLocale)( ULONG user, LCID *lcid );
-
-    /* test that BOOLEAN values are correctly extended */
-
-    pNtQueryDefaultLocale = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtQueryDefaultLocale" );
-    pNtQueryDefaultLocale( 0, &system_lcid );
-    pNtQueryDefaultLocale( 1, &user_lcid );
-    if (system_lcid == user_lcid)
-    {
-        prev_user_lcid = user_lcid;
-        user_lcid += 0x400;
-        NtSetDefaultLocale( TRUE, user_lcid );
-    }
-    pNtQueryDefaultLocale( 0, &lcid );
-    ok( lcid == system_lcid, "got %04lx / %04lx\n", lcid, system_lcid );
-    for (ULONG i = 1; i < 0x10000; i <<= 1)
-    {
-        LCID expect = LOBYTE(i) ? user_lcid : system_lcid;
-        pNtQueryDefaultLocale( i, &lcid );
-        ok( lcid == expect, "%lx: got %04lx / %04lx\n", i, lcid, expect );
-    }
-    if (prev_user_lcid) NtSetDefaultLocale( TRUE, prev_user_lcid );
-}
-
 static void test_NtFreeVirtualMemory(void)
 {
     void *addr1, *addr;
@@ -2623,80 +2294,6 @@ static void test_NtFreeVirtualMemory(void)
 
     size = 0x1000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-}
-
-static void test_NtProtectVirtualMemory(void)
-{
-    void *addr, *addr2;
-    NTSTATUS status;
-    SIZE_T size;
-    DWORD old_prot;
-
-    size = page_size * 16;
-    addr = NULL;
-    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    old_prot = 0;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
-
-    status = NtProtectVirtualMemory(NULL, &addr, &size, PAGE_READONLY, &old_prot);
-    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
-
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, NULL);
-    ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %08lx.\n", status);
-
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, 0, &old_prot);
-    ok(status == STATUS_INVALID_PAGE_PROTECTION, "Unexpected status %08lx.\n", status);
-
-    size = page_size * 8;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_READONLY, "Unexpected old_prot %lx.\n", old_prot);
-    addr = (char *)addr + page_size * 8;
-    old_prot = 0;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_EXECUTE_READWRITE, &old_prot);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_READONLY, "Unexpected old_prot %lx.\n", old_prot);
-    addr = (char *)addr - page_size * 8;
-    size = page_size * 16;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_EXECUTE_READ, &old_prot);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
-
-    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    addr = NULL;
-    size = page_size;
-    old_prot = 0;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
-    /* todo: STATUS_INVALID_PARAMETER in wine, STATUS_CONFLICTING_ADDRESSES in win64 */
-    ok(status, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_NOACCESS || broken(old_prot) /* win7 */, "Unexpected old_prot %lx.\n", old_prot);
-
-    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE, PAGE_READWRITE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    old_prot = 0;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
-    ok(status == STATUS_NOT_COMMITTED, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_NOACCESS || broken(old_prot) /* win7 */, "Unexpected old_prot %lx.\n", old_prot);
-    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    addr2 = addr;
-    addr = (char *)addr + 1;
-    size = 1;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(old_prot == PAGE_READWRITE, "Unexpected old_prot %lx.\n", old_prot);
-    ok(size == page_size, "Unexpected size %p.\n",  (void *)size);
-    ok(addr == addr2, "Got addr %p, addr2 %p.\n", addr, addr2);
-
-    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 }
 
@@ -2830,8 +2427,7 @@ static void test_query_region_information(void)
     SIZE_T len, size;
     NTSTATUS status;
     HANDLE mapping;
-    void *ptr, *addr;
-    ULONG old;
+    void *ptr;
 
     size = 0x10000;
     ptr = NULL;
@@ -2854,10 +2450,6 @@ static void test_query_region_information(void)
     memset(&info, 0x11, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
     ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
     ok(!info.Private, "Unexpected flag %d.\n", info.Private);
@@ -2867,8 +2459,6 @@ static void test_query_region_information(void)
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
     ok(info.RegionSize == size, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     size = 0;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
@@ -2880,14 +2470,9 @@ static void test_query_region_information(void)
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &ptr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
-    len = 0;
     memset(&info, 0x11, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
     ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
     ok(!info.Private, "Unexpected flag %d.\n", info.Private);
@@ -2897,64 +2482,13 @@ static void test_query_region_information(void)
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
     ok(info.RegionSize == size, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(info.CommitSize == size, "Unexpected commit size %#Ix.\n", info.CommitSize);
-
-    len = 0;
-    addr = (char *)ptr + 0x1000;
-    size = 0x1000;
-    status = NtProtectVirtualMemory(NtCurrentProcess(), &addr, &size, PAGE_NOACCESS, &old );
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
-    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
-    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
-    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
-    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
-    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
-    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
-
-    len = 0;
-    status = NtQueryVirtualMemory(NtCurrentProcess(), (char *)ptr + 0x1000, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
-    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
-    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
-    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
-    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
-    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
-    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    ok(info.RegionSize == 0x10000, "Unexpected region size %#Ix.\n", info.RegionSize);
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(info.CommitSize == 0x10000, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     size = 0;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
-    memset(&info, 0xcc, sizeof(info));
-    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_INVALID_ADDRESS, "Unexpected status %08lx.\n", status);
-    ok(info.AllocationBase == (void *)(ULONG_PTR)0xcccccccccccccccc, "got %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == 0xcccccccc, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(info.RegionType == 0xcccccccc, "got %#lx.\n", info.RegionType);
-
     /* Pagefile mapping */
-    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT, 0, 4096, NULL);
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
     ok(mapping != 0, "CreateFileMapping failed\n");
 
     ptr = NULL;
@@ -2963,14 +2497,9 @@ static void test_query_region_information(void)
     status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
-    len = 0;
     memset(&info, 0x11, sizeof(info));
     status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
     ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READONLY, "Unexpected protection %lu.\n", info.AllocationProtect);
     ok(!info.Private, "Unexpected flag %d.\n", info.Private);
@@ -2980,88 +2509,6 @@ static void test_query_region_information(void)
     ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
     ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
     ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
-
-    status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    ptr = NULL;
-    size = 0;
-    offset.QuadPart = 0;
-    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_WRITECOPY);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    len = 0;
-    memset(&info, 0x11, sizeof(info));
-    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
-    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_WRITECOPY, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
-    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
-    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
-    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
-    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
-    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(info.CommitSize == 4096, "Unexpected commit size %#Ix.\n", info.CommitSize);
-
-    len = 0;
-    *(volatile int *)ptr = 1;
-    memset(&info, 0x11, sizeof(info));
-    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
-    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_WRITECOPY, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
-    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
-    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
-    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
-    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
-    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(info.CommitSize == 4096, "Unexpected commit size %#Ix.\n", info.CommitSize);
-
-    status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-
-    ptr = NULL;
-    size = 0;
-    offset.QuadPart = 0;
-    status = NtMapViewOfSection(mapping, NtCurrentProcess(), &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    *(volatile int *)ptr = 1;
-
-    len = 0;
-    memset(&info, 0x11, sizeof(info));
-    status = NtQueryVirtualMemory(NtCurrentProcess(), ptr, MemoryRegionInformation, &info, sizeof(info), &len);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
-    ok(len == sizeof(info) ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId)) /* <= Win10-1909 */ ||
-       broken(len >= offsetof(MEMORY_REGION_INFORMATION, CommitSize)) /* Win7 */,
-       "Unexpected len %Ix\n", len);
-    ok(info.AllocationBase == ptr, "Unexpected base %p.\n", info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %lu.\n", info.AllocationProtect);
-    ok(!info.Private, "Unexpected flag %d.\n", info.Private);
-    ok(!info.MappedDataFile, "Unexpected flag %d.\n", info.MappedDataFile);
-    ok(!info.MappedImage, "Unexpected flag %d.\n", info.MappedImage);
-    ok(!info.MappedPageFile, "Unexpected flag %d.\n", info.MappedPageFile);
-    ok(!info.MappedPhysical, "Unexpected flag %d.\n", info.MappedPhysical);
-    ok(!info.DirectMapped, "Unexpected flag %d.\n", info.DirectMapped);
-    ok(info.RegionSize == 4096, "Unexpected region size.\n");
-    if (len >= offsetof(MEMORY_REGION_INFORMATION, PartitionId))
-        ok(!info.CommitSize, "Unexpected commit size %#Ix.\n", info.CommitSize);
 
     status = NtUnmapViewOfSection(NtCurrentProcess(), ptr);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
@@ -3335,7 +2782,7 @@ static void test_exec_memory_writes(void)
         SYSTEM_CPU_INFORMATION info;
         ULONG len;
 
-        pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len );
+        RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len );
         ok (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64, "succeeded on non-ARM64\n" );
         mem.ProcessEnableWriteExceptions = 1;
         NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
@@ -3583,16 +3030,11 @@ START_TEST(virtual)
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
     pRtlFindExportedRoutineByName = (void *)GetProcAddress(mod, "RtlFindExportedRoutineByName");
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
+    pRtlGetNativeSystemInformation = (void *)GetProcAddress(mod, "RtlGetNativeSystemInformation");
+    pRtlIsEcCode = (void *)GetProcAddress(mod, "RtlIsEcCode");
     pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
     pNtMapViewOfSectionEx = (void *)GetProcAddress(mod, "NtMapViewOfSectionEx");
     pNtSetInformationVirtualMemory = (void *)GetProcAddress(mod, "NtSetInformationVirtualMemory");
-
-#ifndef __aarch64__
-    pRtlGetNativeSystemInformation = (void *)GetProcAddress(mod, "RtlGetNativeSystemInformation");
-#endif
-#ifdef __x86_64__
-    pRtlIsEcCode = (void *)GetProcAddress(mod, "RtlIsEcCode");
-#endif
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#lx\n", sbi.PageSize);
@@ -3603,16 +3045,12 @@ START_TEST(virtual)
     test_NtAllocateVirtualMemoryEx();
     test_NtAllocateVirtualMemoryEx_address_requirements();
     test_NtFreeVirtualMemory();
-    test_NtProtectVirtualMemory();
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
     test_NtMapViewOfSectionEx();
     test_prefetch();
     test_user_shared_data();
     test_syscalls();
-    test_invalid_syscalls();
-    test_syscall_numbers();
-    test_syscall_abi();
     test_query_region_information();
     test_query_image_information();
     test_exec_memory_writes();

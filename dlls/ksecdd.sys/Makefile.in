@@ -2,8 +2,7 @@ MODULE    = ksecdd.sys
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-VER_PRODUCTVERSION = 10,0,14393,187
-
 SOURCES = \
 	ksecdd.sys.spec \
-	main.c
+	main.c \
+	version.rc

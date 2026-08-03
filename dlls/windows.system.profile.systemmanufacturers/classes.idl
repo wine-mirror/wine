@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.system.profile.systemmanufacturers.idl";
-
-namespace Windows.System.Profile.SystemManufacturers {
-    runtimeclass SmbiosInformation;
-}
+#include "windows.system.profile.systemmanufacturers.idl"

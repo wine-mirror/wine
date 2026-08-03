@@ -1,7 +1,8 @@
 /*
  * Wine bluetooth APIs
  *
- * Copyright 2024-2026 Vibhav Pant
+ * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,11 +23,13 @@
 #include <stdarg.h>
 
 #include <ntstatus.h>
+#define WIN32_NO_STATUS
 
 #include <windef.h>
 #include <winbase.h>
 
 #include <wine/debug.h>
+#include <wine/heap.h>
 #include <wine/unixlib.h>
 
 #include "winebth_priv.h"
@@ -108,15 +111,6 @@ void winebluetooth_radio_free( winebluetooth_radio_t radio )
     UNIX_BLUETOOTH_CALL( bluetooth_adapter_free, &args );
 }
 
-void winebluetooth_radio_dup( winebluetooth_radio_t radio )
-{
-    struct bluetooth_adapter_dup_params args = {0};
-    TRACE( "(%p)\n", (void *)radio.handle );
-
-    args.adapter = radio.handle;
-    UNIX_BLUETOOTH_CALL( bluetooth_adapter_dup, &args );
-}
-
 void winebluetooth_device_free( winebluetooth_device_t device )
 {
     struct bluetooth_device_free_params args = {0};
@@ -124,15 +118,6 @@ void winebluetooth_device_free( winebluetooth_device_t device )
 
     args.device = device.handle;
     UNIX_BLUETOOTH_CALL( bluetooth_device_free, &args );
-}
-
-void winebluetooth_device_dup( winebluetooth_device_t device )
-{
-    struct bluetooth_device_dup_params args = {0};
-    TRACE( "(%p)\n", (void *)device.handle );
-
-    args.device = device.handle;
-    UNIX_BLUETOOTH_CALL( bluetooth_device_dup, &args );
 }
 
 NTSTATUS winebluetooth_device_disconnect( winebluetooth_device_t device )
@@ -190,74 +175,6 @@ NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETO
     args.negative = negative;
     args.authenticated = authenticated;
     return UNIX_BLUETOOTH_CALL( bluetooth_auth_send_response, &args );
-}
-
-NTSTATUS winebluetooth_device_start_pairing( winebluetooth_device_t device, IRP *irp )
-{
-    struct bluetooth_device_start_pairing_params args = {0};
-
-    TRACE( "(%p)\n", (void *)device.handle );
-
-    args.device = device.handle;
-    args.irp = irp;
-    return UNIX_BLUETOOTH_CALL( bluetooth_device_start_pairing, &args );
-}
-
-void winebluetooth_gatt_service_free( winebluetooth_gatt_service_t service )
-{
-    struct bluetooth_gatt_service_free_params args = {0};
-
-    TRACE( "(%p)\n", (void *)service.handle );
-
-    args.service = service.handle;
-    UNIX_BLUETOOTH_CALL( bluetooth_gatt_service_free, &args );
-}
-
-void winebluetooth_gatt_characteristic_free( winebluetooth_gatt_characteristic_t characteristic )
-{
-    struct bluetooth_gatt_characteristic_free_params args = {0};
-
-    TRACE( "(%p)\n", (void *)characteristic.handle );
-
-    args.characteristic = characteristic.handle;
-    UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_free, &args );
-}
-
-NTSTATUS winebluetooth_gatt_characteristic_read_async( winebluetooth_gatt_characteristic_t chrc, IRP *irp )
-{
-    struct bluetooth_gatt_characteristic_read_params params = {0};
-
-    TRACE( "(%p, %p)\n", (void *)chrc.handle, irp );
-    params.chrc = chrc.handle;
-    params.irp = irp;
-    return UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_read, &params );
-}
-
-static const char *
-debugstr_winebluetooth_gatt_characteristic_value( const struct winebluetooth_gatt_characteristic_value *val )
-{
-    return val ? wine_dbg_sprintf( "{ %I32u { %#Ix } }", val->size, val->handle ) : "(null)";
-}
-
-void winebluetooth_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *val, BYTE *dest )
-{
-    struct bluetooth_gatt_characteristic_value_move_params args = {0};
-
-    TRACE( "(%s, %p)\n", debugstr_winebluetooth_gatt_characteristic_value( val ), dest );
-
-    args.val = val;
-    args.buf = dest;
-    UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_value_move, &args );
-}
-
-void winebluetooth_gatt_characteristic_value_free( struct winebluetooth_gatt_characteristic_value *val )
-{
-    struct bluetooth_gatt_characteristic_value_free_params args = {0};
-
-    TRACE( "(%#Ix)\n", val->handle );
-
-    args.handle = val->handle;
-    UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_value_free, &args );
 }
 
 NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )

@@ -49,6 +49,7 @@
 #include "winnls.h"
 #include "usp10.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "usp10_internal.h"
@@ -652,8 +653,8 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     SIZE_T out_size = 0;
     int i;
 
-    open_stack = malloc(iso_run->length * sizeof(*open_stack));
-    stack_index = malloc(iso_run->length * sizeof(*stack_index));
+    open_stack = heap_alloc(iso_run->length * sizeof(*open_stack));
+    stack_index = heap_alloc(iso_run->length * sizeof(*stack_index));
 
     for (i = 0; i < iso_run->length; i++)
     {
@@ -699,8 +700,8 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
         }
     }
 
-    free(open_stack);
-    free(stack_index);
+    heap_free(open_stack);
+    heap_free(stack_index);
 
     if (!pair_count)
         return NULL;
@@ -805,7 +806,7 @@ static void resolveNeutrals(IsolatedRun *iso_run)
             i++;
             p = &pairs[i];
         }
-        free(pairs);
+        heap_free(pairs);
     }
 
     /* N1 */
@@ -953,7 +954,7 @@ static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, const WORD *
     Run *runs;
     IsolatedRun *current_isolated;
 
-    if (!(runs = calloc(uCount, sizeof(*runs))))
+    if (!(runs = heap_calloc(uCount, sizeof(*runs))))
         return;
 
     list_init(set);
@@ -982,7 +983,7 @@ static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, const WORD *
             int type_fence, real_end;
             int j;
 
-            if (!(current_isolated = malloc(offsetof(IsolatedRun, item[uCount]))))
+            if (!(current_isolated = heap_alloc(FIELD_OFFSET(IsolatedRun, item[uCount]))))
                 break;
 
             run_start = runs[k].start;
@@ -1078,7 +1079,7 @@ search:
         i++;
     }
 
-    free(runs);
+    heap_free(runs);
 }
 
 /*************************************************************
@@ -1100,7 +1101,7 @@ BOOL BIDI_DetermineLevels(
 
     TRACE("%s, %d\n", debugstr_wn(lpString, uCount), uCount);
 
-    if (!(chartype = malloc(uCount * sizeof(*chartype))))
+    if (!(chartype = heap_alloc(uCount * sizeof(*chartype))))
     {
         WARN("Out of memory\n");
         return FALSE;
@@ -1133,7 +1134,7 @@ BOOL BIDI_DetermineLevels(
         if (TRACE_ON(bidi)) iso_dump_types("After Neutrals", iso_run);
 
         list_remove(&iso_run->entry);
-        free(iso_run);
+        heap_free(iso_run);
     }
 
     if (TRACE_ON(bidi)) dump_types("Before Implicit", chartype, 0, uCount);
@@ -1144,7 +1145,7 @@ BOOL BIDI_DetermineLevels(
     classify(lpString, chartype, uCount, c);
     resolveResolved(baselevel, chartype, lpOutLevels, 0, uCount-1);
 
-    free(chartype);
+    heap_free(chartype);
     return TRUE;
 }
 

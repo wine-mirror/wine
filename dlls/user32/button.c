@@ -48,8 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(button);
 /* GetWindowLong offsets for window extra information */
 #define STATE_GWL_OFFSET  0
 #define HFONT_GWL_OFFSET  (sizeof(LONG))
-#define HICON_GWL_OFFSET  (HFONT_GWL_OFFSET+sizeof(HFONT))
-#define NB_EXTRA_BYTES    (HICON_GWL_OFFSET+sizeof(HICON))
+#define HIMAGE_GWL_OFFSET (HFONT_GWL_OFFSET+sizeof(HFONT))
+#define NB_EXTRA_BYTES    (HIMAGE_GWL_OFFSET+sizeof(HANDLE))
 
 /* undocumented flags */
 #define BUTTON_NSTATES         0x0F
@@ -110,37 +110,27 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
 };
 
 
-static LONG get_button_state( HWND hwnd )
+static inline LONG get_button_state( HWND hwnd )
 {
-    return NtUserGetPrivateData( hwnd, STATE_GWL_OFFSET, sizeof(LONG) );
+    return GetWindowLongW( hwnd, STATE_GWL_OFFSET );
 }
 
-static LONG set_button_state( HWND hwnd, LONG state )
+static inline void set_button_state( HWND hwnd, LONG state )
 {
-    return NtUserSetPrivateData( hwnd, STATE_GWL_OFFSET, sizeof(LONG), state );
+    SetWindowLongW( hwnd, STATE_GWL_OFFSET, state );
 }
 
-static HFONT get_button_font( HWND hwnd )
+static inline HFONT get_button_font( HWND hwnd )
 {
-    return (HFONT)NtUserGetPrivateData( hwnd, HFONT_GWL_OFFSET, sizeof(HFONT) );
+    return (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET );
 }
 
-static HFONT set_button_font( HWND hwnd, HFONT font )
+static inline void set_button_font( HWND hwnd, HFONT font )
 {
-    return (HFONT)NtUserSetPrivateData( hwnd, HFONT_GWL_OFFSET, sizeof(HFONT), (LONG_PTR)font );
+    SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, (LONG_PTR)font );
 }
 
-static HANDLE get_button_icon( HWND hwnd )
-{
-    return (HANDLE)NtUserGetPrivateData( hwnd, HICON_GWL_OFFSET, sizeof(HICON) );
-}
-
-static HANDLE set_button_icon( HWND hwnd, HANDLE icon )
-{
-    return (HANDLE)NtUserSetPrivateData( hwnd, HICON_GWL_OFFSET, sizeof(HICON), (LONG_PTR)icon );
-}
-
-static UINT get_button_type( LONG window_style )
+static inline UINT get_button_type( LONG window_style )
 {
     return (window_style & BS_TYPEMASK);
 }
@@ -178,7 +168,6 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     HANDLE oldHbitmap;
 
     if (!IsWindow( hWnd )) return 0;
-    if (uMsg == WM_NCCREATE) NtUserSetWindowFNID( hWnd, MAKE_FNID(NTUSER_WNDPROC_BUTTON) );
 
     pt.x = (short)LOWORD(lParam);
     pt.y = (short)HIWORD(lParam);
@@ -206,7 +195,11 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
             return -1; /* abort */
 
         /* XP turns a BS_USERBUTTON into BS_PUSHBUTTON */
-        if (btn_type == BS_USERBUTTON ) NtUserAlterWindowStyle( hWnd, BS_TYPEMASK, BS_PUSHBUTTON );
+        if (btn_type == BS_USERBUTTON )
+        {
+            style = (style & ~BS_TYPEMASK) | BS_PUSHBUTTON;
+            WIN_SetStyle( hWnd, style, BS_TYPEMASK & ~style );
+        }
         set_button_state( hWnd, BST_UNCHECKED );
         return 0;
 
@@ -415,7 +408,8 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
     case BM_SETSTYLE:
         btn_type = wParam & BS_TYPEMASK;
-        NtUserAlterWindowStyle( hWnd, BS_TYPEMASK, btn_type );
+        style = (style & ~BS_TYPEMASK) | btn_type;
+        WIN_SetStyle( hWnd, style, BS_TYPEMASK & ~style );
 
         NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hWnd, OBJID_CLIENT, 0 );
 
@@ -443,12 +437,12 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         default:
             return 0;
         }
-        oldHbitmap = set_button_icon( hWnd, (HANDLE)lParam );
+        oldHbitmap = (HBITMAP)SetWindowLongPtrW( hWnd, HIMAGE_GWL_OFFSET, lParam );
 	NtUserInvalidateRect( hWnd, NULL, FALSE );
 	return (LRESULT)oldHbitmap;
 
     case BM_GETIMAGE:
-        return (LRESULT)get_button_icon( hWnd );
+        return GetWindowLongPtrW( hWnd, HIMAGE_GWL_OFFSET );
 
     case BM_GETCHECK:
         return get_button_state( hWnd ) & 3;
@@ -458,8 +452,8 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         state = get_button_state( hWnd );
         if ((btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON))
         {
-            if (wParam) NtUserAlterWindowStyle( hWnd, WS_TABSTOP, WS_TABSTOP );
-            else NtUserAlterWindowStyle( hWnd, WS_TABSTOP, 0 );
+            if (wParam) WIN_SetStyle( hWnd, WS_TABSTOP, 0 );
+            else WIN_SetStyle( hWnd, 0, WS_TABSTOP );
         }
         if ((state & 3) != wParam)
         {
@@ -587,7 +581,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
       }
 
       case BS_ICON:
-         if (!GetIconInfo( get_button_icon( hwnd ), &iconInfo ))
+         if (!GetIconInfo((HICON)GetWindowLongPtrW( hwnd, HIMAGE_GWL_OFFSET ), &iconInfo))
             goto empty_rect;
 
          GetObjectW (iconInfo.hbmColor, sizeof(BITMAP), &bm);
@@ -600,7 +594,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
          break;
 
       case BS_BITMAP:
-         if (!GetObjectW( get_button_icon( hwnd ), sizeof(BITMAP), &bm))
+         if (!GetObjectW( (HANDLE)GetWindowLongPtrW( hwnd, HIMAGE_GWL_OFFSET ), sizeof(BITMAP), &bm))
             goto empty_rect;
 
          r.right  = r.left + bm.bmWidth;
@@ -702,12 +696,12 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, const RECT *rc)
 
       case BS_ICON:
          flags |= DST_ICON;
-         lp = (LPARAM)get_button_icon( hwnd );
+         lp = GetWindowLongPtrW( hwnd, HIMAGE_GWL_OFFSET );
          break;
 
       case BS_BITMAP:
          flags |= DST_BITMAP;
-         lp = (LPARAM)get_button_icon( hwnd );
+         lp = GetWindowLongPtrW( hwnd, HIMAGE_GWL_OFFSET );
          break;
 
       default:

@@ -1,0 +1,82 @@
+/*
+ * Copyright 2024 Onni Kukkonen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.storage.streams.idl";
+import "windows.system.idl";
+#endif
+
+namespace Windows.System.Profile {
+    interface IHardwareIdentificationStatics;
+    interface IHardwareToken;
+
+    runtimeclass HardwareIdentification;
+    runtimeclass HardwareToken;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.Profile.HardwareIdentification),
+        uuid(971260e0-f170-4a42-bd55-a900b212dae2)
+    ]
+    interface IHardwareIdentificationStatics : IInspectable
+    {
+        HRESULT GetPackageSpecificToken([in] Windows.Storage.Streams.IBuffer* nonce, [out, retval] Windows.System.Profile.HardwareToken** packageSpecificHardwareToken);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.System.Profile.HardwareToken),
+        uuid(28f6d4c0-fb12-40a4-8167-7f4e03d2724c)
+    ]
+    interface IHardwareToken : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] Windows.Storage.Streams.IBuffer** value);
+        [propget] HRESULT Signature([out, retval] Windows.Storage.Streams.IBuffer** value);
+        [propget] HRESULT Certificate([out, retval] Windows.Storage.Streams.IBuffer** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard),  
+        static(Windows.System.Profile.IHardwareIdentificationStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass HardwareIdentification
+    {
+        [default] interface Windows.System.Profile.IHardwareIdentificationStatics;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass HardwareToken
+    {
+        [default] interface Windows.System.Profile.IHardwareToken;
+    }
+}

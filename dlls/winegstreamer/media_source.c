@@ -174,11 +174,14 @@ struct media_source
     IMFGetService IMFGetService_iface;
     IMFRateSupport IMFRateSupport_iface;
     IMFRateControl IMFRateControl_iface;
+    IMFMediaShutdownNotify IMFMediaShutdownNotify_iface;
     IMFAsyncCallback async_commands_callback;
     LONG ref;
     DWORD async_commands_queue;
     IMFMediaEventQueue *event_queue;
     IMFByteStream *byte_stream;
+
+    IMFAsyncResult *shutdown_result;
 
     CRITICAL_SECTION cs;
 
@@ -227,6 +230,11 @@ static inline struct media_source *impl_from_IMFRateSupport(IMFRateSupport *ifac
 static inline struct media_source *impl_from_IMFRateControl(IMFRateControl *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFRateControl_iface);
+}
+
+static inline struct media_source *impl_from_IMFMediaShutdownNotify(IMFMediaShutdownNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFMediaShutdownNotify_iface);
 }
 
 static inline struct media_source *impl_from_async_commands_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -783,20 +791,6 @@ static HRESULT media_stream_send_eos(struct media_source *source, struct media_s
     return S_OK;
 }
 
-static bool stream_get_buffer(struct media_stream *stream, struct wg_parser_buffer *buffer)
-{
-    struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
-    wg_parser_stream_t wg_stream = stream->wg_stream;
-    wg_parser_t wg_parser = source->wg_parser;
-    bool ret;
-
-    LeaveCriticalSection(&source->cs);
-    ret = wg_parser_stream_get_buffer(wg_parser, wg_stream, buffer);
-    EnterCriticalSection(&source->cs);
-
-    return ret;
-}
-
 static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 {
     struct media_source *source = impl_from_IMFMediaSource(stream->media_source);
@@ -804,15 +798,12 @@ static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     TRACE("%p, %p\n", stream, token);
 
-    while (stream_get_buffer(stream, &buffer))
+    while (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
     {
         HRESULT hr = media_stream_send_sample(stream, &buffer, token);
         if (hr != S_FALSE)
             return hr;
     }
-
-    if (source->state == SOURCE_SHUTDOWN)
-        return S_OK;
 
     return media_stream_send_eos(source, stream);
 }
@@ -1332,6 +1323,76 @@ static const IMFRateControlVtbl media_source_rate_control_vtbl =
     media_source_rate_control_GetRate,
 };
 
+static void media_source_release_shutdown_callback(struct media_source *source)
+{
+    if (source->shutdown_result)
+        IMFAsyncResult_Release(source->shutdown_result);
+    source->shutdown_result = NULL;
+}
+
+static HRESULT WINAPI media_source_shutdown_notify_QueryInterface(IMFMediaShutdownNotify *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaShutdownNotify) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_source_shutdown_notify_AddRef(IMFMediaShutdownNotify *iface)
+{
+    struct media_source *source = impl_from_IMFMediaShutdownNotify(iface);
+    return IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+}
+
+static ULONG WINAPI media_source_shutdown_notify_Release(IMFMediaShutdownNotify *iface)
+{
+    struct media_source *source = impl_from_IMFMediaShutdownNotify(iface);
+    return IMFMediaSource_Release(&source->IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_shutdown_notify_set_notification_callback(IMFMediaShutdownNotify *iface,
+        IMFAsyncCallback *callback, IUnknown *state)
+{
+    struct media_source *source = impl_from_IMFMediaShutdownNotify(iface);
+    IMFAsyncResult *result = NULL;
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        if (callback && FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+        {
+            LeaveCriticalSection(&source->cs);
+            return hr;
+        }
+
+        media_source_release_shutdown_callback(source);
+        source->shutdown_result = result;
+    }
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+static const IMFMediaShutdownNotifyVtbl media_source_shutdown_notify_vtbl =
+{
+    media_source_shutdown_notify_QueryInterface,
+    media_source_shutdown_notify_AddRef,
+    media_source_shutdown_notify_Release,
+    media_source_shutdown_notify_set_notification_callback,
+};
+
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
@@ -1347,6 +1408,10 @@ static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID 
     else if (IsEqualIID(riid, &IID_IMFGetService))
     {
         *out = &source->IMFGetService_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaShutdownNotify))
+    {
+        *out = &source->IMFMediaShutdownNotify_iface;
     }
     else
     {
@@ -1378,8 +1443,10 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
     if (!ref)
     {
+        media_source_release_shutdown_callback(source);
         IMFMediaSource_Shutdown(iface);
         IMFMediaEventQueue_Release(source->event_queue);
+        IMFByteStream_Release(source->byte_stream);
         wg_parser_destroy(source->wg_parser);
         source->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&source->cs);
@@ -1562,6 +1629,7 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
+    HRESULT hr;
 
     TRACE("%p.\n", iface);
 
@@ -1581,21 +1649,25 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     WaitForSingleObject(source->read_thread, INFINITE);
     CloseHandle(source->read_thread);
 
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
     IMFMediaEventQueue_Shutdown(source->event_queue);
     IMFByteStream_Close(source->byte_stream);
-    IMFByteStream_Release(source->byte_stream);
 
     while (source->stream_count--)
     {
         struct media_stream *stream = source->streams[source->stream_count];
         IMFStreamDescriptor_Release(source->descriptors[source->stream_count]);
-        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
         IMFMediaEventQueue_Shutdown(stream->event_queue);
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
     free(source->descriptors);
     free(source->streams);
+
+    if (source->shutdown_result)
+    {
+        if (FAILED(hr = MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, source->shutdown_result)))
+            WARN("Failed to put shutdown notification, hr %#lx.\n", hr);
+        media_source_release_shutdown_callback(source);
+    }
 
     LeaveCriticalSection(&source->cs);
 
@@ -1655,6 +1727,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
     object->IMFGetService_iface.lpVtbl = &media_source_get_service_vtbl;
     object->IMFRateSupport_iface.lpVtbl = &media_source_rate_support_vtbl;
     object->IMFRateControl_iface.lpVtbl = &media_source_rate_control_vtbl;
+    object->IMFMediaShutdownNotify_iface.lpVtbl = &media_source_shutdown_notify_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
     object->ref = 1;
     object->byte_stream = context->stream;

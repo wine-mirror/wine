@@ -87,7 +87,7 @@ typedef struct
 
 #define MOVEABLE_PREFIX sizeof(HLOCAL16)
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -137,7 +137,7 @@ typedef struct
     DWORD dwNextAlt;             /* 1A */
 } LOCAL32ENTRY;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 
@@ -160,7 +160,7 @@ typedef struct
 #define HTABLE_PAGESIZE  0x1000
 #define HTABLE_NPAGES    (HTABLE_SIZE / HTABLE_PAGESIZE)
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct _LOCAL32HEADER
 {
     WORD     freeListFirst[HTABLE_NPAGES];
@@ -181,7 +181,7 @@ typedef struct _LOCAL32HEADER
     HANDLE heap;
 
 } LOCAL32HEADER;
-#pragma pack(pop)
+#include "poppack.h"
 
 #define LOCAL32_MAGIC    ((DWORD)('L' | ('H'<<8) | ('3'<<16) | ('2'<<24)))
 
@@ -1774,8 +1774,8 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
 
     nrBlocks      = (totSize + 0x7fff) >> 15;
     selectorTable = HeapAlloc( header->heap,  0, nrBlocks * 2 );
-    selectorEven  = SELECTOR_AllocBlock( base, totSize, data_segment );
-    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, data_segment );
+    selectorEven  = SELECTOR_AllocBlock( base, totSize, LDT_FLAGS_DATA );
+    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, LDT_FLAGS_DATA );
     if ( !selectorTable || !selectorEven || !selectorOdd )
     {
         HeapFree( header->heap, 0, selectorTable );

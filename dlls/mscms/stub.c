@@ -199,13 +199,3 @@ BOOL WINAPI UnregisterCMMW( PCWSTR machine, DWORD id )
 
     return TRUE;
 }
-
-BOOL WINAPI WcsGetCalibrationManagementState( BOOL *is_enabled )
-{
-    FIXME( "( %p ) stub\n", is_enabled );
-
-    if (is_enabled)
-        *is_enabled = TRUE;
-
-    return TRUE;
-}

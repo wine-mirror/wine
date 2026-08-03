@@ -23,4 +23,3 @@
 #define STRING_INVALID_QUERY            103
 #define STRING_INVALID_PATH             104
 #define STRING_USAGE                    105
-#define STRING_HELP                     106

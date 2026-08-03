@@ -153,8 +153,6 @@ static enum wg_video_format wg_video_format_from_gst(GstVideoFormat format)
             return WG_VIDEO_FORMAT_I420;
         case GST_VIDEO_FORMAT_NV12:
             return WG_VIDEO_FORMAT_NV12;
-        case GST_VIDEO_FORMAT_P010_10LE:
-            return WG_VIDEO_FORMAT_P010_10LE;
         case GST_VIDEO_FORMAT_UYVY:
             return WG_VIDEO_FORMAT_UYVY;
         case GST_VIDEO_FORMAT_YUY2:
@@ -358,45 +356,6 @@ static void wg_format_from_caps_video_cinepak(struct wg_format *format, const Gs
     format->u.video.fps_d = fps_d;
 }
 
-static void wg_format_from_caps_video_indeo(struct wg_format *format, const GstCaps *caps)
-{
-    const GstStructure *structure = gst_caps_get_structure(caps, 0);
-    gint version, width, height, fps_n, fps_d;
-
-    if (!gst_structure_get_int(structure, "indeoversion", &version))
-    {
-        GST_WARNING("Missing \"indeoversion\" value.");
-        return;
-    }
-    if (version != 5)
-    {
-        GST_FIXME("Unknown version %d.", version);
-        return;
-    }
-    if (!gst_structure_get_int(structure, "width", &width))
-    {
-        GST_WARNING("Missing \"width\" value.");
-        return;
-    }
-    if (!gst_structure_get_int(structure, "height", &height))
-    {
-        GST_WARNING("Missing \"height\" value.");
-        return;
-    }
-    if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
-    {
-        fps_n = 0;
-        fps_d = 1;
-    }
-
-    format->major_type = WG_MAJOR_TYPE_VIDEO_INDEO;
-    format->u.video.version = version;
-    format->u.video.width = width;
-    format->u.video.height = height;
-    format->u.video.fps_n = fps_n;
-    format->u.video.fps_d = fps_d;
-}
-
 static void wg_format_from_caps_video_wmv(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -470,10 +429,6 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
     gint width, height, fps_n, fps_d;
-    const GValue *codec_data_value;
-    GstBuffer *codec_data;
-    GstMapInfo map;
-    guint size;
 
     if (!gst_structure_get_int(structure, "width", &width))
     {
@@ -483,12 +438,6 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     if (!gst_structure_get_int(structure, "height", &height))
     {
         GST_WARNING("Missing \"height\" value in %" GST_PTR_FORMAT ".", caps);
-        return;
-    }
-    if (!(codec_data_value = gst_structure_get_value(structure, "codec_data"))
-            || !(codec_data = gst_value_get_buffer(codec_data_value)))
-    {
-        GST_WARNING("Missing \"codec_data\" value in %" GST_PTR_FORMAT ".", caps);
         return;
     }
     if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
@@ -502,15 +451,6 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     format->u.video.height = height;
     format->u.video.fps_n = fps_n;
     format->u.video.fps_d = fps_d;
-
-    gst_buffer_map(codec_data, &map, GST_MAP_READ);
-
-    assert(sizeof(format->u.video.codec_data) >= MAX_SIZE_MPEG1_SEQUENCE_INFO);
-    size = min(map.size, MAX_SIZE_MPEG1_SEQUENCE_INFO);
-    format->u.video.codec_data_len = size;
-    memcpy(format->u.video.codec_data, map.data, size);
-
-    gst_buffer_unmap(codec_data, &map);
 }
 
 static const struct
@@ -670,10 +610,6 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     else if (!strcmp(name, "video/x-cinepak"))
     {
         wg_format_from_caps_video_cinepak(format, caps);
-    }
-    else if (!strcmp(name, "video/x-indeo"))
-    {
-        wg_format_from_caps_video_indeo(format, caps);
     }
     else if (!strcmp(name, "video/x-wmv"))
     {
@@ -835,7 +771,6 @@ static GstVideoFormat wg_video_format_to_gst(enum wg_video_format format)
         case WG_VIDEO_FORMAT_YUY2:  return GST_VIDEO_FORMAT_YUY2;
         case WG_VIDEO_FORMAT_YV12:  return GST_VIDEO_FORMAT_YV12;
         case WG_VIDEO_FORMAT_YVYU:  return GST_VIDEO_FORMAT_YVYU;
-        case WG_VIDEO_FORMAT_P010_10LE: return GST_VIDEO_FORMAT_P010_10LE;
         default: return GST_VIDEO_FORMAT_UNKNOWN;
     }
 }
@@ -939,6 +874,7 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     if (!(caps = gst_caps_new_empty_simple("video/x-h264")))
         return NULL;
     gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
+    gst_caps_set_simple(caps, "alignment", G_TYPE_STRING, "au", NULL);
 
     if (format->u.video.width)
         gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video.width, NULL);
@@ -1096,7 +1032,6 @@ static GstCaps *wg_format_to_caps_video_indeo(const struct wg_format *format)
 
 static GstCaps *wg_format_to_caps_video_mpeg1(const struct wg_format *format)
 {
-    GstBuffer *buffer;
     GstCaps *caps;
 
     if (!(caps = gst_caps_new_empty_simple("video/mpeg")))
@@ -1111,20 +1046,6 @@ static GstCaps *wg_format_to_caps_video_mpeg1(const struct wg_format *format)
         gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video.height, NULL);
     if (format->u.video.fps_d || format->u.video.fps_n)
         gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video.fps_n, format->u.video.fps_d, NULL);
-
-    if (format->u.video.codec_data_len)
-    {
-        if (!(buffer = gst_buffer_new_and_alloc(format->u.video.codec_data_len)))
-        {
-            gst_caps_unref(caps);
-            return NULL;
-        }
-
-        gst_buffer_fill(buffer, 0, format->u.video.codec_data, format->u.video.codec_data_len);
-        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
-        gst_buffer_unref(buffer);
-    }
-
     return caps;
 }
 
@@ -1170,6 +1091,7 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
             GST_FIXME("Format %u not implemented!", a->major_type);
             /* fallthrough */
@@ -1191,12 +1113,6 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
             /* Do not compare FPS. */
             return a->u.video.width == b->u.video.width
-                    && a->u.video.height == b->u.video.height;
-
-        case WG_MAJOR_TYPE_VIDEO_INDEO:
-            /* Do not compare FPS. */
-            return a->u.video.version == b->u.video.version
-                    && a->u.video.width == b->u.video.width
                     && a->u.video.height == b->u.video.height;
 
         case WG_MAJOR_TYPE_VIDEO_WMV:

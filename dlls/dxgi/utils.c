@@ -540,19 +540,13 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
         flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
     }
 
-    if (wined3d_flags & WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT)
-    {
-        wined3d_flags &= ~WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT;
-        flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-    }
-
     if (wined3d_flags)
         FIXME("Unhandled flags %#x.\n", flags);
 
     return flags;
 }
 
-unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
+static unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
 {
     unsigned int wined3d_flags = DXGI_WINED3D_SWAPCHAIN_FLAGS; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
 
@@ -568,12 +562,6 @@ unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
         wined3d_flags |= WINED3D_SWAPCHAIN_GDI_COMPATIBLE;
     }
 
-    if (flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
-    {
-        flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-        wined3d_flags |= WINED3D_SWAPCHAIN_FRAME_LATENCY_WAITABLE_OBJECT;
-    }
-
     if (flags)
         FIXME("Unhandled flags %#x.\n", flags);
 
@@ -585,7 +573,6 @@ HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc)
 {
     struct dxgi_output *dxgi_output = unsafe_impl_from_IDXGIOutput(dxgi_containing_output);
-    bool allow_latency_waitable = false;
 
     if (dxgi_desc->Scaling != DXGI_SCALING_STRETCH)
         FIXME("Ignoring scaling %#x.\n", dxgi_desc->Scaling);
@@ -606,21 +593,13 @@ HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_
             break;
         case DXGI_SWAP_EFFECT_FLIP_DISCARD:
             wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_FLIP_DISCARD;
-            allow_latency_waitable = true;
             break;
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
             wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_FLIP_SEQUENTIAL;
-            allow_latency_waitable = true;
             break;
         default:
             WARN("Invalid swap effect %#x.\n", dxgi_desc->SwapEffect);
             return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (!allow_latency_waitable && dxgi_desc->Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
-    {
-        WARN("Invalid swap effect for frame latency waitable.\n");
-        return DXGI_ERROR_INVALID_CALL;
     }
 
     wined3d_desc->output = dxgi_output->wined3d_output;

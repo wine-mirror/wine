@@ -496,7 +496,7 @@ static UINT_PTR CALLBACK call_hook_proc( WNDPROC16 hook, HWND hwnd, UINT msg, WP
 }
 
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct hook_proc
 {
     BYTE popl_eax;    /* popl %eax */
@@ -506,7 +506,7 @@ struct hook_proc
     BYTE jmp;         /* jmp call_hook */
     DWORD call_hook;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static LPOFNHOOKPROC alloc_hook( LPOFNHOOKPROC16 hook16 )
 {

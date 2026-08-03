@@ -56,17 +56,39 @@ static void handler_destroy( struct object *obj );
 
 static const struct object_ops handler_ops =
 {
-    .size    = sizeof(struct handler),
-    .type    = &no_type,
-    .dump    = handler_dump,
-    .destroy = handler_destroy,
+    sizeof(struct handler),   /* size */
+    &no_type,                 /* type */
+    handler_dump,             /* dump */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    no_signal,                /* signal */
+    no_get_fd,                /* get_fd */
+    default_map_access,       /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
+    no_get_full_name,         /* get_full_name */
+    no_lookup_name,           /* lookup_name */
+    no_link_name,             /* link_name */
+    NULL,                     /* unlink_name */
+    no_open_file,             /* open_file */
+    no_kernel_obj_list,       /* get_kernel_obj_list */
+    no_close_handle,          /* close_handle */
+    handler_destroy           /* destroy */
 };
 
 static void handler_poll_event( struct fd *fd, int event );
 
 static const struct fd_ops handler_fd_ops =
 {
-    .poll_event = handler_poll_event,
+    NULL,                     /* get_poll_events */
+    handler_poll_event,       /* poll_event */
+    NULL,                     /* flush */
+    NULL,                     /* get_fd_type */
+    NULL,                     /* ioctl */
+    NULL,                     /* queue_async */
+    NULL                      /* reselect_async */
 };
 
 static struct handler *handler_sighup;

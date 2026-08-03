@@ -18,20 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
 #include "ntstatus.h"
-#include "windef.h"
-#include "winbase.h"
-#include "ntgdi.h"
+#define WIN32_NO_STATUS
+#include "macdrv_dll.h"
 #include "macdrv_res.h"
 #include "shellapi.h"
-#include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
-static HMODULE macdrv_module = 0;
+HMODULE macdrv_module = 0;
 
 struct quit_info {
     HWND               *wins;
@@ -67,7 +64,7 @@ static BOOL CALLBACK get_process_windows(HWND hwnd, LPARAM lp)
     return TRUE;
 }
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -89,7 +86,7 @@ typedef struct
     GRPICONDIRENTRY idEntries[1];
 } GRPICONDIR;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 static void quit_reply(int reply)
 {
@@ -141,15 +138,9 @@ static void CALLBACK quit_callback(HWND hwnd, UINT msg, ULONG_PTR data, LRESULT 
                 if (!SendMessageCallbackW(qi->wins[i], WM_ENDSESSION, qi->result, qi->flags,
                                           quit_callback, (ULONG_PTR)qi))
                 {
-                    DWORD error = RtlGetLastWin32Error();
-                    BOOL invalid = (error == ERROR_INVALID_WINDOW_HANDLE);
-                    if (invalid)
-                        TRACE("failed to send WM_ENDSESSION to win %p because it's invalid; assuming success\n",
-                            qi->wins[i]);
-                    else
-                        WARN("failed to send WM_ENDSESSION to win %p; error 0x%08lx; assuming refusal\n",
-                            qi->wins[i], error);
-                    quit_callback(qi->wins[i], WM_ENDSESSION, (ULONG_PTR)qi, invalid);
+                    WARN("failed to send WM_ENDSESSION to win %p; error 0x%08lx\n",
+                         qi->wins[i], RtlGetLastWin32Error());
+                    quit_callback(qi->wins[i], WM_ENDSESSION, (ULONG_PTR)qi, 0);
                 }
             }
         }
@@ -339,22 +330,31 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
         icon_bits = LockResource(icon_res_data);
         if (icon_bits)
         {
-            HICON icon;
+            static const BYTE png_magic[] = { 0x89, 0x50, 0x4e, 0x47 };
 
             entry->width = width;
             entry->height = height;
+            entry->size = icon_dir->idEntries[i].dwBytesInRes;
 
-            /* dwBytesInRes from the icon_dir entry is wrong in some apps; use
-               SizeofResource instead. */
-            icon = CreateIconFromResourceEx(icon_bits, SizeofResource(NULL, res_info),
-                                            TRUE, 0x00030000, width, height, 0);
-            if (icon)
+            if (!memcmp(icon_bits, png_magic, sizeof(png_magic)))
             {
-                entry->icon = HandleToUlong(icon);
+                entry->png = (UINT_PTR)icon_bits;
+                entry->icon = 0;
                 count++;
             }
             else
-                WARN("failed to create icon %d from resource with ID %hd\n", i, icon_dir->idEntries[i].nID);
+            {
+                HICON icon = CreateIconFromResourceEx(icon_bits, icon_dir->idEntries[i].dwBytesInRes,
+                                                      TRUE, 0x00030000, width, height, 0);
+                if (icon)
+                {
+                    entry->icon = HandleToUlong(icon);
+                    entry->png = 0;
+                    count++;
+                }
+                else
+                    WARN("failed to create icon %d from resource with ID %hd\n", i, icon_dir->idEntries[i].nID);
+            }
         }
         else
             WARN("failed to lock RT_ICON resource %d with ID %hd\n", i, icon_dir->idEntries[i].nID);

@@ -76,21 +76,19 @@ static memcmpfunc pSystemFunction031;
 static void test_SystemFunction006(void)
 {
     char lmhash[16 + 1];
+
     char passwd[] = { 's','e','c','r','e','t', 0, 0, 0, 0, 0, 0, 0, 0 };
     unsigned char expect[] = 
         { 0x85, 0xf5, 0x28, 0x9f, 0x09, 0xdc, 0xa7, 0xeb,
           0xaa, 0xd3, 0xb4, 0x35, 0xb5, 0x14, 0x04, 0xee };
 
-    if (0) /* crashes on win11 */
-    {
-        pSystemFunction006( passwd, lmhash );
+    pSystemFunction006( passwd, lmhash );
 
-        ok( !memcmp( lmhash, expect, sizeof(expect) ),
-            "lmhash: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-            lmhash[0], lmhash[1], lmhash[2], lmhash[3], lmhash[4], lmhash[5],
-            lmhash[6], lmhash[7], lmhash[8], lmhash[9], lmhash[10], lmhash[11],
-            lmhash[12], lmhash[13], lmhash[14], lmhash[15] );
-    }
+    ok( !memcmp( lmhash, expect, sizeof(expect) ),
+        "lmhash: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+        lmhash[0], lmhash[1], lmhash[2], lmhash[3], lmhash[4], lmhash[5],
+        lmhash[6], lmhash[7], lmhash[8], lmhash[9], lmhash[10], lmhash[11],
+        lmhash[12], lmhash[13], lmhash[14], lmhash[15] );
 }
 
 static void test_SystemFunction008(void)
@@ -108,23 +106,24 @@ static void test_SystemFunction008(void)
     unsigned char output[0x18];
     NTSTATUS r;
 
-    if (0) /* crashes */
+    r = pSystemFunction008(0,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    r = pSystemFunction008(challenge,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    r = pSystemFunction008(challenge, hash, 0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
+    /* crashes */
+    if (0)
     {
-        r = pSystemFunction008(NULL, NULL, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-
-        r = pSystemFunction008(challenge, NULL, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-
-        r = pSystemFunction008(challenge, hash, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-
-        r = pSystemFunction008(challenge, NULL, output);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-
-        r = pSystemFunction008(NULL, NULL, output);
+        r = pSystemFunction008(challenge, 0, output);
         ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
     }
+
+    r = pSystemFunction008(0, 0, output);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
 
     memset(output, 0, sizeof output);
     r = pSystemFunction008(challenge, hash, output);
@@ -141,11 +140,9 @@ static void test_SystemFunction001(void)
     unsigned char output[16];
     NTSTATUS r;
 
-    if (0) /* crashes on win11 */
-    {
-        r = pSystemFunction001(NULL, NULL, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-    }
+    r = pSystemFunction001(0,0,0);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
     memset(output, 0, sizeof output);
 
     r = pSystemFunction001(data,key,output);
@@ -177,10 +174,8 @@ static void test_SystemFunction032(void)
     unsigned char expected[] = {0x28, 0xb9, 0xf8, 0xe1};
     int r;
 
-    if (0) /* crashes */
-    {
-        pSystemFunction032(NULL, NULL);
-    }
+    /* crashes:    pSystemFunction032(NULL,NULL); */
+
     key.Buffer = szKey;
     key.Length = sizeof szKey;
     key.MaximumLength = key.Length;
@@ -203,14 +198,11 @@ static void test_SystemFunction003(void)
     char exp2[] = "KGS!@#$%";
     int r;
 
-    if (0) /* crashes on win11 */
-    {
-        r = pSystemFunction003(NULL, NULL);
-        ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
+    r = pSystemFunction003(NULL, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
 
-        r = pSystemFunction003(key, NULL);
-        ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
-    }
+    r = pSystemFunction003(key, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
 
     memset(data, 0, sizeof data);
     r = pSystemFunction003(key, data);
@@ -231,11 +223,10 @@ static void test_SystemFunction004(void)
     int r;
     struct ustring in, key, out;
 
-    if (0)
-    {
-        r = pSystemFunction004(NULL, NULL, NULL);
-        ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
-    }
+    /* crash 
+    r = pSystemFunction004(NULL, NULL, NULL);
+    ok(r == STATUS_UNSUCCESSFUL, "function failed\n");
+    */
 
     memset(inbuf, 0, sizeof inbuf);
     memset(keybuf, 0, sizeof keybuf);
@@ -418,11 +409,9 @@ static void test_SystemFunction_encrypt(descrypt func, int num)
         return;
     }
 
-    if (0) /* crash */
-    {
-        r = func(NULL, NULL, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-    }
+    r = func(NULL, NULL, NULL);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
     memset(output, 0, sizeof output);
     r = func(des_plaintext, des_key, output);
     ok( r == STATUS_SUCCESS, "wrong error code\n");
@@ -441,11 +430,9 @@ static void test_SystemFunction_decrypt(descrypt func, int num)
         return;
     }
 
-    if (0) /* crash */
-    {
-        r = func(NULL, NULL, NULL);
-        ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-    }
+    r = func(NULL, NULL, NULL);
+    ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
+
     memset(output, 0, sizeof output);
 
     r = func(des_ciphertext, des_key, output);

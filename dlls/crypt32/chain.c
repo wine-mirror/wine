@@ -117,19 +117,16 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, DWORD system_store, co
     CertificateChainEngine *engine;
     HCERTSTORE worldStores[4];
 
-    if (root) {
-        root = CertDuplicateStore(root);
-    } else {
+    if(!root) {
         if(config->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) && config->hExclusiveRoot)
             root = CertDuplicateStore(config->hExclusiveRoot);
         else if (config->hRestrictedRoot)
             root = CertDuplicateStore(config->hRestrictedRoot);
         else
             root = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"Root");
+        if(!root)
+            return NULL;
     }
-
-    if(!root)
-        return NULL;
 
     engine = CryptMemAlloc(sizeof(CertificateChainEngine));
     if(!engine) {
@@ -221,54 +218,19 @@ typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT
     DWORD       CycleDetectionModulus;
 } CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT;
 
-typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_FLAGS
-{
-    DWORD       cbSize;
-    HCERTSTORE  hRestrictedRoot;
-    HCERTSTORE  hRestrictedTrust;
-    HCERTSTORE  hRestrictedOther;
-    DWORD       cAdditionalStore;
-    HCERTSTORE *rghAdditionalStore;
-    DWORD       dwFlags;
-    DWORD       dwUrlRetrievalTimeout;
-    DWORD       MaximumCachedCertificates;
-    DWORD       CycleDetectionModulus;
-    HCERTSTORE  hExclusiveRoot;
-    HCERTSTORE  hExclusiveTrustedPeople;
-} CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_FLAGS;
-
 BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
  HCERTCHAINENGINE *phChainEngine)
 {
     BOOL ret;
 
     TRACE("(%p, %p)\n", pConfig, phChainEngine);
-    TRACE("cbSize %lu\n", pConfig->cbSize);
-    TRACE("hRestrictedRoot %p\n", pConfig->hRestrictedRoot);
-    TRACE("hRestrictedTrust %p\n", pConfig->hRestrictedTrust);
-    TRACE("hRestrictedOther %p\n", pConfig->hRestrictedOther);
-    TRACE("cAdditionalStore %lu\n", pConfig->cAdditionalStore);
-    TRACE("dwFlags %lx\n", pConfig->dwFlags);
-    TRACE("dwUrlRetrievalTimeout %lu\n", pConfig->dwUrlRetrievalTimeout);
-    TRACE("MaximumCachedCertificates %lu\n", pConfig->MaximumCachedCertificates);
-    TRACE("CycleDetectionModulus %lu\n", pConfig->CycleDetectionModulus);
-    if (pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT) &&
-        pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_FLAGS) &&
-        pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG))
+
+    if (pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT)
+     && pConfig->cbSize != sizeof(CERT_CHAIN_ENGINE_CONFIG))
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-
-    if (pConfig->cbSize == sizeof(CERT_CHAIN_ENGINE_CONFIG))
-    {
-        TRACE("hExclusiveRoot %p\n", pConfig->hExclusiveRoot);
-        TRACE("hExclusiveTrustedPeople %p\n", pConfig->hExclusiveTrustedPeople);
-        TRACE("dwExclusiveFlags %lx\n", pConfig->dwExclusiveFlags);
-        if (pConfig->dwExclusiveFlags)
-            FIXME("dwExclusiveFlags %lx not supported\n", pConfig->dwExclusiveFlags);
-    }
-
     ret = CRYPT_CheckRestrictedRoot(pConfig->hRestrictedRoot);
     if (!ret)
     {

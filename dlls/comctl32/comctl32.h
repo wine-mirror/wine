@@ -34,11 +34,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"
-#if __WINE_COMCTL32_VERSION == 6
-#include "uxtheme.h"
-#include "vsstyle.h"
-#include "vssym32.h"
-#endif
 
 extern HMODULE COMCTL32_hModule;
 extern HBRUSH  COMCTL32_hPattern55AABrush;
@@ -189,24 +184,20 @@ typedef struct
 extern COMCTL32_SysColor  comctl32_color;
 
 /* Internal function */
-void COMCTL32_CloseThemeForWindow(HWND hwnd);
 HWND COMCTL32_CreateToolTip(HWND);
 void COMCTL32_DrawStatusText(HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style, BOOL draw_background);
-void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class);
 VOID COMCTL32_RefreshSysColors(void);
 void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark, BOOL bHorizontal);
 void COMCTL32_EnsureBitmapSize(HBITMAP *pBitmap, int cxMinWidth, int cyMinHeight, COLORREF crBackground);
 void COMCTL32_GetFontMetrics(HFONT hFont, TEXTMETRICW *ptm);
 BOOL COMCTL32_IsReflectedMessage(UINT uMsg);
-BOOL COMCTL32_IsThemed(HWND hwnd);
-LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_class);
-LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version);
-LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalidate, BOOL erase);
 INT  Str_GetPtrWtoA(LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 INT  Str_GetPtrAtoW(LPCSTR lpSrc, LPWSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW(LPWSTR *lppDest, LPCSTR lpSrc);
 BOOL Str_SetPtrWtoA(LPSTR *lppDest, LPCWSTR lpSrc);
 BOOL imagelist_has_alpha(HIMAGELIST, UINT);
+
+#define COMCTL32_VERSION_MINOR 81
 
 /* Our internal stack structure of the window procedures to subclass */
 typedef struct _SUBCLASSPROCS {
@@ -225,10 +216,6 @@ typedef struct
    int running;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
-/* WM_NOTIFY unicode to ansi conversion and forwarding stuff */
-
-LRESULT COMCTL32_forward_notify_to_ansi_window(HWND hwnd_notify, NMHDR *hdr, WCHAR **unicode_buffer, DWORD *unicode_buffer_size);
-
 /* undocumented functions */
 
 BOOL   WINAPI Free (LPVOID);
@@ -244,34 +231,54 @@ BOOL WINAPI MirrorIcon(HICON *phicon1, HICON *phicon2);
 
 HRGN set_control_clipping(HDC hdc, const RECT *rect);
 
-#if __WINE_COMCTL32_VERSION == 6
+extern void ANIMATE_Register(void);
+extern void ANIMATE_Unregister(void);
 extern void BUTTON_Register(void);
 extern void COMBO_Register(void);
-extern void COMBOLBOX_Register(void);
-extern void EDIT_Register(void);
-extern void LISTBOX_Register(void);
-extern void SYSLINK_Register(void);
-extern void STATIC_Register(void);
-#endif
-extern void ANIMATE_Register(void);
 extern void COMBOEX_Register(void);
+extern void COMBOEX_Unregister(void);
+extern void COMBOLBOX_Register(void);
 extern void DATETIME_Register(void);
+extern void DATETIME_Unregister(void);
+extern void EDIT_Register(void);
+extern void FLATSB_Register(void);
+extern void FLATSB_Unregister(void);
 extern void HEADER_Register(void);
+extern void HEADER_Unregister(void);
 extern void HOTKEY_Register(void);
+extern void HOTKEY_Unregister(void);
 extern void IPADDRESS_Register(void);
+extern void IPADDRESS_Unregister(void);
+extern void LISTBOX_Register(void);
 extern void LISTVIEW_Register(void);
+extern void LISTVIEW_Unregister(void);
 extern void MONTHCAL_Register(void);
+extern void MONTHCAL_Unregister(void);
 extern void NATIVEFONT_Register(void);
+extern void NATIVEFONT_Unregister(void);
 extern void PAGER_Register(void);
+extern void PAGER_Unregister(void);
 extern void PROGRESS_Register(void);
+extern void PROGRESS_Unregister(void);
 extern void REBAR_Register(void);
+extern void REBAR_Unregister(void);
+extern void STATIC_Register(void);
 extern void STATUS_Register(void);
+extern void STATUS_Unregister(void);
+extern void SYSLINK_Register(void);
+extern void SYSLINK_Unregister(void);
 extern void TAB_Register(void);
+extern void TAB_Unregister(void);
 extern void TOOLBAR_Register(void);
+extern void TOOLBAR_Unregister(void);
 extern void TOOLTIPS_Register(void);
+extern void TOOLTIPS_Unregister(void);
 extern void TRACKBAR_Register(void);
+extern void TRACKBAR_Unregister(void);
 extern void TREEVIEW_Register(void);
+extern void TREEVIEW_Unregister(void);
 extern void UPDOWN_Register(void);
+extern void UPDOWN_Unregister(void);
 
 
 int MONTHCAL_MonthLength(int month, int year);

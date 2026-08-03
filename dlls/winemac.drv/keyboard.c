@@ -24,47 +24,157 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include "config.h"
 
 #include "macdrv.h"
 #include "winuser.h"
-#include "wine/server.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
-static BOOL is_ime_hkl( HKL hkl )
-{
-    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
-    switch (HIWORD(hkl))
-    {
-    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
-    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
-    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
-    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
-    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
-    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
-    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
-    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
-    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
-    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
-    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
-    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
-    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
-    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
-    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
-    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
-    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
-    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
-    }
-}
+
+/* Carbon-style modifier mask definitions from <Carbon/HIToolbox/Events.h>. */
+enum {
+    cmdKeyBit       = 8,
+    shiftKeyBit     = 9,
+    alphaLockBit    = 10,
+    optionKeyBit    = 11,
+    controlKeyBit   = 12,
+};
+
+enum {
+    cmdKey      = 1 << cmdKeyBit,
+    shiftKey    = 1 << shiftKeyBit,
+    alphaLock   = 1 << alphaLockBit,
+    optionKey   = 1 << optionKeyBit,
+    controlKey  = 1 << controlKeyBit,
+};
+
+
+/* Mac virtual key code definitions from <Carbon/HIToolbox/Events.h>. */
+enum {
+    kVK_ANSI_A              = 0x00,
+    kVK_ANSI_S              = 0x01,
+    kVK_ANSI_D              = 0x02,
+    kVK_ANSI_F              = 0x03,
+    kVK_ANSI_H              = 0x04,
+    kVK_ANSI_G              = 0x05,
+    kVK_ANSI_Z              = 0x06,
+    kVK_ANSI_X              = 0x07,
+    kVK_ANSI_C              = 0x08,
+    kVK_ANSI_V              = 0x09,
+    kVK_ISO_Section         = 0x0A,
+    kVK_ANSI_B              = 0x0B,
+    kVK_ANSI_Q              = 0x0C,
+    kVK_ANSI_W              = 0x0D,
+    kVK_ANSI_E              = 0x0E,
+    kVK_ANSI_R              = 0x0F,
+    kVK_ANSI_Y              = 0x10,
+    kVK_ANSI_T              = 0x11,
+    kVK_ANSI_1              = 0x12,
+    kVK_ANSI_2              = 0x13,
+    kVK_ANSI_3              = 0x14,
+    kVK_ANSI_4              = 0x15,
+    kVK_ANSI_6              = 0x16,
+    kVK_ANSI_5              = 0x17,
+    kVK_ANSI_Equal          = 0x18,
+    kVK_ANSI_9              = 0x19,
+    kVK_ANSI_7              = 0x1A,
+    kVK_ANSI_Minus          = 0x1B,
+    kVK_ANSI_8              = 0x1C,
+    kVK_ANSI_0              = 0x1D,
+    kVK_ANSI_RightBracket   = 0x1E,
+    kVK_ANSI_O              = 0x1F,
+    kVK_ANSI_U              = 0x20,
+    kVK_ANSI_LeftBracket    = 0x21,
+    kVK_ANSI_I              = 0x22,
+    kVK_ANSI_P              = 0x23,
+    kVK_Return              = 0x24,
+    kVK_ANSI_L              = 0x25,
+    kVK_ANSI_J              = 0x26,
+    kVK_ANSI_Quote          = 0x27,
+    kVK_ANSI_K              = 0x28,
+    kVK_ANSI_Semicolon      = 0x29,
+    kVK_ANSI_Backslash      = 0x2A,
+    kVK_ANSI_Comma          = 0x2B,
+    kVK_ANSI_Slash          = 0x2C,
+    kVK_ANSI_N              = 0x2D,
+    kVK_ANSI_M              = 0x2E,
+    kVK_ANSI_Period         = 0x2F,
+    kVK_Tab                 = 0x30,
+    kVK_Space               = 0x31,
+    kVK_ANSI_Grave          = 0x32,
+    kVK_Delete              = 0x33,
+    kVK_Escape              = 0x35,
+    kVK_RightCommand        = 0x36, /* invented for Wine; co-opt unused key code */
+    kVK_Command             = 0x37,
+    kVK_Shift               = 0x38,
+    kVK_CapsLock            = 0x39,
+    kVK_Option              = 0x3A,
+    kVK_Control             = 0x3B,
+    kVK_RightShift          = 0x3C,
+    kVK_RightOption         = 0x3D,
+    kVK_RightControl        = 0x3E,
+    kVK_Function            = 0x3F,
+    kVK_F17                 = 0x40,
+    kVK_ANSI_KeypadDecimal  = 0x41,
+    kVK_ANSI_KeypadMultiply = 0x43,
+    kVK_ANSI_KeypadPlus     = 0x45,
+    kVK_ANSI_KeypadClear    = 0x47,
+    kVK_VolumeUp            = 0x48,
+    kVK_VolumeDown          = 0x49,
+    kVK_Mute                = 0x4A,
+    kVK_ANSI_KeypadDivide   = 0x4B,
+    kVK_ANSI_KeypadEnter    = 0x4C,
+    kVK_ANSI_KeypadMinus    = 0x4E,
+    kVK_F18                 = 0x4F,
+    kVK_F19                 = 0x50,
+    kVK_ANSI_KeypadEquals   = 0x51,
+    kVK_ANSI_Keypad0        = 0x52,
+    kVK_ANSI_Keypad1        = 0x53,
+    kVK_ANSI_Keypad2        = 0x54,
+    kVK_ANSI_Keypad3        = 0x55,
+    kVK_ANSI_Keypad4        = 0x56,
+    kVK_ANSI_Keypad5        = 0x57,
+    kVK_ANSI_Keypad6        = 0x58,
+    kVK_ANSI_Keypad7        = 0x59,
+    kVK_F20                 = 0x5A,
+    kVK_ANSI_Keypad8        = 0x5B,
+    kVK_ANSI_Keypad9        = 0x5C,
+    kVK_JIS_Yen             = 0x5D,
+    kVK_JIS_Underscore      = 0x5E,
+    kVK_JIS_KeypadComma     = 0x5F,
+    kVK_F5                  = 0x60,
+    kVK_F6                  = 0x61,
+    kVK_F7                  = 0x62,
+    kVK_F3                  = 0x63,
+    kVK_F8                  = 0x64,
+    kVK_F9                  = 0x65,
+    kVK_JIS_Eisu            = 0x66,
+    kVK_F11                 = 0x67,
+    kVK_JIS_Kana            = 0x68,
+    kVK_F13                 = 0x69,
+    kVK_F16                 = 0x6A,
+    kVK_F14                 = 0x6B,
+    kVK_F10                 = 0x6D,
+    kVK_F12                 = 0x6F,
+    kVK_F15                 = 0x71,
+    kVK_Help                = 0x72,
+    kVK_Home                = 0x73,
+    kVK_PageUp              = 0x74,
+    kVK_ForwardDelete       = 0x75,
+    kVK_F4                  = 0x76,
+    kVK_End                 = 0x77,
+    kVK_F2                  = 0x78,
+    kVK_PageDown            = 0x79,
+    kVK_F1                  = 0x7A,
+    kVK_LeftArrow           = 0x7B,
+    kVK_RightArrow          = 0x7C,
+    kVK_DownArrow           = 0x7D,
+    kVK_UpArrow             = 0x7E,
+};
+
 
 /* Indexed by Mac virtual keycode values defined above. */
 static const struct {
@@ -284,38 +394,18 @@ static const struct {
 };
 
 
-static const struct {
-    WCHAR       wchar;
-    const char *name;
-} dead_key_names[] = {
-    { '^',                      "CIRCUMFLEX ACCENT" },
-    { '`',                      "GRAVE ACCENT" },
-    { 0x00B4,                   "ACUTE ACCENT" },
-    { '~',                      "TILDE" },
-    { 0x00A8,                   "DIAERESIS" },
-    { 0x00B8,                   "CEDILLA" },
-    { 0x02D8,                   "BREVE" },
-    { 0x02D9,                   "DOT ABOVE" },
-    { 0x00AF,                   "MACRON" },
-    { 0x02DA,                   "RING ABOVE" },
-    { 0x02DB,                   "OGONEK" },
-    { 0x02DC,                   "SMALL TILDE" },
-    { 0x02DD,                   "DOUBLE ACUTE ACCENT" },
-};
-
-
-static Boolean char_matches_string(WCHAR wchar, UniChar *string, CollatorRef collatorRef)
+static BOOL char_matches_string(WCHAR wchar, UniChar *string, BOOL ignore_diacritics)
 {
-    Boolean equivalent;
-    OSStatus status;
-
-    status = UCCompareText(collatorRef, (UniChar*)&wchar, 1, string, wcslen(string), &equivalent, NULL);
-    if (status != noErr)
-    {
-        WARN("Failed to compare %s to %s\n", debugstr_wn(&wchar, 1), debugstr_w(string));
-        return FALSE;
-    }
-    return equivalent;
+    BOOL ret;
+    CFStringRef s1 = CFStringCreateWithCharactersNoCopy(NULL, (UniChar*)&wchar, 1, kCFAllocatorNull);
+    CFStringRef s2 = CFStringCreateWithCharactersNoCopy(NULL, string, strlenW(string), kCFAllocatorNull);
+    CFStringCompareFlags flags = kCFCompareCaseInsensitive | kCFCompareNonliteral | kCFCompareWidthInsensitive;
+    if (ignore_diacritics)
+        flags |= kCFCompareDiacriticInsensitive;
+    ret = (CFStringCompare(s1, s2, flags) == kCFCompareEqualTo);
+    CFRelease(s1);
+    CFRelease(s2);
+    return ret;
 }
 
 
@@ -337,220 +427,6 @@ static int strip_apple_private_chars(LPWSTR bufW, int len)
     return len;
 }
 
-static struct list layout_list = LIST_INIT( layout_list );
-struct layout
-{
-    struct list entry;
-    LANGID lang;
-    /* "Layout Id", used by NtUserGetKeyboardLayoutName / LoadKeyboardLayoutW */
-    WORD layout_id;
-    TISInputSourceRef input_source;
-    BOOL enabled; /* is the input source enabled - ie displayed in the input source selector UI */
-};
-
-static pthread_mutex_t layout_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-int macdrv_layout_list_needs_update = TRUE;
-
-static const NLS_LOCALE_HEADER *locale_table;
-
-static int compare_locale_names(const WCHAR *n1, const WCHAR *n2)
-{
-    for (;;)
-    {
-        WCHAR ch1 = *n1++;
-        WCHAR ch2 = *n2++;
-        if (ch1 >= 'a' && ch1 <= 'z') ch1 -= 'a' - 'A';
-        else if (ch1 == '_') ch1 = '-';
-        if (ch2 >= 'a' && ch2 <= 'z') ch2 -= 'a' - 'A';
-        else if (ch2 == '_') ch2 = '-';
-        if (!ch1 || ch1 != ch2) return ch1 - ch2;
-    }
-}
-
-
-static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry(const WCHAR *name)
-{
-    const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
-    const WCHAR *locale_strings;
-    int min = 0, max = locale_table->nb_lcnames - 1;
-
-    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
-    lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
-
-    while (min <= max)
-    {
-        int res, pos = (min + max) / 2;
-        const WCHAR *str = locale_strings + lcnames_index[pos].name;
-        res = compare_locale_names(name, str + 1);
-        if (res < 0) max = pos - 1;
-        else if (res > 0) min = pos + 1;
-        else return &lcnames_index[pos];
-    }
-    return NULL;
-}
-
-
-static DWORD get_lcid(CFStringRef lang)
-{
-    const NLS_LOCALE_LCNAME_INDEX *entry;
-    const NLS_LOCALE_DATA *locale;
-    CFRange range;
-    WCHAR str[10];
-    ULONG offset;
-
-    if (!locale_table)
-    {
-        struct
-        {
-            UINT ctypes;
-            UINT unknown1;
-            UINT unknown2;
-            UINT unknown3;
-            UINT locales;
-            UINT charmaps;
-            UINT geoids;
-            UINT scripts;
-        } *header;
-        LCID system_lcid;
-        LARGE_INTEGER size;
-
-        if (NtInitializeNlsFiles((void **)&header, &system_lcid, &size))
-        {
-            ERR("NtInitializeNlsFiles failed\n");
-            return 0;
-        }
-
-        if (InterlockedCompareExchangePointer((void **)&locale_table,
-                                              (char *)header + header->locales, NULL))
-            NtUnmapViewOfSection(GetCurrentProcess(), header);
-    }
-
-    range.location = 0;
-    range.length = min(CFStringGetLength(lang), ARRAY_SIZE(str) - 1);
-    CFStringGetCharacters(lang, range, str);
-    str[range.length] = 0;
-
-    if (!(entry = find_lcname_entry(str)))
-    {
-        ERR("%s not found\n", debugstr_w(str));
-        return 0;
-    }
-
-    offset = locale_table->locales_offset + entry->idx * locale_table->locale_size;
-    locale = (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
-    return locale->inotneutral ? entry->id : locale->idefaultlanguage;
-}
-
-static HKL get_layout_hkl(struct layout *layout, LCID locale)
-{
-    if (!layout->layout_id) return UlongToHandle(MAKELONG(locale, layout->lang));
-    return UlongToHandle(MAKELONG(locale, layout->layout_id));
-}
-
-/******************************************************************
- *                get_layout_from_source
- *
- * Must be called while holding the layout_list_mutex.
- * Note, returned layout may not currently be enabled.
- */
-static struct layout *get_layout_from_source(TISInputSourceRef input)
-{
-    struct layout *ret = NULL, *layout;
-
-    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
-    {
-        if (CFEqual(input, layout->input_source))
-        {
-            ret = layout;
-            break;
-        }
-    }
-    return ret;
-}
-
-/***********************************************************************
- *            update_layout_list
- *
- * Must be called while holding the layout_list_mutex
- *
- * If an input source has been disabled (ie. removed from the UI) its
- * entry remains in the layout list but is marked as such and is not
- * enumerated by GetKeyboardLayoutList.  This is to ensure the
- * HKL <-> input source mapping is unique.
- */
-static void update_layout_list(void)
-{
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
-    CFArrayRef sources;
-    struct layout *layout;
-    int i;
-
-    if (!InterlockedExchange((LONG *)&macdrv_layout_list_needs_update, FALSE)) return;
-
-    sources = macdrv_create_input_source_list();
-
-    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
-        layout->enabled = FALSE;
-
-    for (i = 0; i < CFArrayGetCount(sources); i++)
-    {
-        CFDictionaryRef dict = CFArrayGetValueAtIndex(sources, i);
-        TISInputSourceRef input = (TISInputSourceRef)CFDictionaryGetValue(dict, macdrv_input_source_input_key);
-        layout = get_layout_from_source(input);
-        if (!layout)
-        {
-            static WORD next_layout_id = 1;
-
-            CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
-            LANGID lang = get_lcid(CFDictionaryGetValue(dict, macdrv_input_source_lang_key));
-            HKL lang_hkl = UlongToPtr(MAKELONG(lang, lang));
-            UINT index = 0;
-
-            LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
-                if (layout->lang == lang) index++;
-
-            layout = calloc(1, sizeof(*layout));
-            layout->input_source = (TISInputSourceRef)CFRetain(input);
-            layout->lang = lang;
-            if (is_ime_hkl(lang_hkl) && !index) layout->layout_id = 0; /* HKL has a builtin IME */
-            else if (!CFEqual(type, kTISTypeKeyboardLayout)) layout->layout_id = 0xe000 | next_layout_id++;
-            else if (index) layout->layout_id = 0xf000 | next_layout_id++;
-
-            list_add_tail(&layout_list, &layout->entry);
-            TRACE("adding new layout %p\n", get_layout_hkl(layout, locale));
-        }
-        else
-            TRACE("enabling already existing layout %p\n", get_layout_hkl(layout, locale));
-
-        layout->enabled = TRUE;
-    }
-
-    CFRelease(sources);
-}
-
-/***********************************************************************
- *            macdrv_get_hkl_from_source
- *
- * Find the HKL associated with a given input source.
- */
-HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
-{
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
-    struct layout *layout;
-    HKL ret = 0;
-
-    pthread_mutex_lock(&layout_list_mutex);
-
-    update_layout_list();
-    layout = get_layout_from_source(input);
-    if (layout) ret = get_layout_hkl(layout, locale);
-
-    pthread_mutex_unlock(&layout_list_mutex);
-
-    return ret;
-}
-
 
 /***********************************************************************
  *              macdrv_compute_keyboard_layout
@@ -560,9 +436,6 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     int keyc;
     WCHAR vkey;
     const UCKeyboardLayout *uchr;
-    LocaleRef localeRef;
-    CollatorRef collatorRef, caseInsensitiveCollatorRef, diacriticInsensitiveCollatorRef;
-    UCCollateOptions collateOptions = 0;
     const UInt32 modifier_combos[] = {
         0,
         shiftKey >> 8,
@@ -571,79 +444,58 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         optionKey >> 8,
         (shiftKey | optionKey) >> 8,
     };
-    UniChar map[128][ARRAY_SIZE(modifier_combos)][4 + 1];
+    UniChar map[128][sizeof(modifier_combos) / sizeof(modifier_combos[0])][4 + 1];
     int combo;
     BYTE vkey_used[256];
     int ignore_diacritics;
     static const struct {
         WCHAR wchar;
         DWORD vkey;
-        /* Mac virtual key code that must match wchar under the current layout.
-         * A value of -1 means match-any.
-         * TODO: replace -1 with the actual mac virtual key codes for all mappings
-         * and their respective layouts to avoid false matches, when possible. */
-        int mac_keyc;
     } symbol_vkeys[] = {
-        { '-', VK_OEM_PLUS, kVK_ANSI_Equal },
-        { '-', VK_OEM_MINUS, -1 },
-        { '+', VK_OEM_PLUS, -1 },
-        { '_', VK_OEM_MINUS, -1 },
-        { ',', VK_OEM_COMMA, -1 },
-        { '.', VK_OEM_PERIOD, -1 },
-        { '=', VK_OEM_8, kVK_ANSI_Slash },
-        { '=', VK_OEM_PLUS, -1 },
-        { '!', VK_OEM_8, kVK_ANSI_Slash },
-        { 0x00F9, VK_OEM_3, kVK_ANSI_Quote }, /* 0x00F9 is French U accent grave */
-        { '$', VK_OEM_1, kVK_ANSI_RightBracket },
-        { ':', VK_OEM_2, kVK_ANSI_Period },
-        { '*', VK_OEM_5, kVK_ANSI_Backslash },
-        { '`', VK_OEM_5, kVK_ANSI_Backslash },
-        { ';', VK_OEM_PERIOD, kVK_ANSI_Comma },
-        { ')', VK_OEM_4, kVK_ANSI_Minus },
-        { '>', VK_OEM_PERIOD, -1 },
-        { '<', VK_OEM_COMMA, -1 },
-        { '|', VK_OEM_5, -1 },
-        { '\\', VK_OEM_5, -1 },
-        { '`', VK_OEM_3, -1 },
-        { '[', VK_OEM_4, -1 },
-        { '~', VK_OEM_3, -1 },
-        { 0x00DF, VK_OEM_4, kVK_ANSI_Minus }, /* 0x00DF is ESZETT */
-        { 0x00FC, VK_OEM_1, kVK_ANSI_LeftBracket }, /* 0x00FC is German U Umlaut */
-        { 0x00F6, VK_OEM_3, kVK_ANSI_Semicolon }, /* 0x00F6 is German O Umlaut */
-        { 0x00E4, VK_OEM_7, kVK_ANSI_Quote }, /* 0x00B4 is German A Umlaut */
-        { '?', VK_OEM_2, -1 },
-        { ']', VK_OEM_6, -1 },
-        { '/', VK_OEM_2, -1 },
-        { ':', VK_OEM_1, -1 },
-        { '}', VK_OEM_6, -1 },
-        { '{', VK_OEM_4,  },
-        { ';', VK_OEM_1, -1 },
-        { '\'', VK_OEM_7, -1 },
-        { ':', VK_OEM_PERIOD, -1 },
-        { ';', VK_OEM_COMMA, -1 },
-        { '"', VK_OEM_7,  -1 },
-        { 0x00B4, VK_OEM_4, kVK_ANSI_Equal }, /* 0x00B4 is ACUTE ACCENT */
-        { '\'', VK_OEM_2, -1 },
-        { 0x00A7, VK_OEM_5, -1 }, /* 0x00A7 is SECTION SIGN */
-        { '*', VK_OEM_PLUS, -1 },
-        { 0x00B4, VK_OEM_7, -1 },
-        { '`', VK_OEM_4, -1 },
-        { '[', VK_OEM_6, -1 },
-        { '/', VK_OEM_5, -1 },
-        { '^', VK_OEM_6, -1 },
-        { '*', VK_OEM_2, -1 },
-        { '{', VK_OEM_6, -1 },
-        { 0x00B4, VK_OEM_6, -1 },
-        { '~', VK_OEM_1, -1 },
-        { '?', VK_OEM_PLUS, -1 },
-        { '?', VK_OEM_4, -1 },
-        { 0x00B4, VK_OEM_3, -1 },
-        { '?', VK_OEM_COMMA, -1 },
-        { '~', VK_OEM_PLUS, -1 },
-        { ']', VK_OEM_4, -1 },
-        { '\'', VK_OEM_3, -1 },
-        { 0x00A7, VK_OEM_7, -1 },
-        { '<', VK_OEM_102, -1 },
+        { '-', VK_OEM_MINUS },
+        { '+', VK_OEM_PLUS },
+        { '_', VK_OEM_MINUS },
+        { ',', VK_OEM_COMMA },
+        { '.', VK_OEM_PERIOD },
+        { '=', VK_OEM_PLUS },
+        { '>', VK_OEM_PERIOD },
+        { '<', VK_OEM_COMMA },
+        { '|', VK_OEM_5 },
+        { '\\', VK_OEM_5 },
+        { '`', VK_OEM_3 },
+        { '[', VK_OEM_4 },
+        { '~', VK_OEM_3 },
+        { '?', VK_OEM_2 },
+        { ']', VK_OEM_6 },
+        { '/', VK_OEM_2 },
+        { ':', VK_OEM_1 },
+        { '}', VK_OEM_6 },
+        { '{', VK_OEM_4 },
+        { ';', VK_OEM_1 },
+        { '\'', VK_OEM_7 },
+        { ':', VK_OEM_PERIOD },
+        { ';', VK_OEM_COMMA },
+        { '"', VK_OEM_7 },
+        { 0x00B4, VK_OEM_4 }, /* 0x00B4 is ACUTE ACCENT */
+        { '\'', VK_OEM_2 },
+        { 0x00A7, VK_OEM_5 }, /* 0x00A7 is SECTION SIGN */
+        { '*', VK_OEM_PLUS },
+        { 0x00B4, VK_OEM_7 },
+        { '`', VK_OEM_4 },
+        { '[', VK_OEM_6 },
+        { '/', VK_OEM_5 },
+        { '^', VK_OEM_6 },
+        { '*', VK_OEM_2 },
+        { '{', VK_OEM_6 },
+        { '~', VK_OEM_1 },
+        { '?', VK_OEM_PLUS },
+        { '?', VK_OEM_4 },
+        { 0x00B4, VK_OEM_3 },
+        { '?', VK_OEM_COMMA },
+        { '~', VK_OEM_PLUS },
+        { ']', VK_OEM_4 },
+        { '\'', VK_OEM_3 },
+        { 0x00A7, VK_OEM_7 },
     };
     int i;
 
@@ -672,7 +524,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     memset(thread_data->keyc2vkey, 0, sizeof(thread_data->keyc2vkey));
     memset(vkey_used, 0, sizeof(vkey_used));
 
-    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
+    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
     {
         thread_data->keyc2scan[keyc] = default_map[keyc].scan;
         if (default_map[keyc].fixed)
@@ -705,23 +557,16 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
 
-    LocaleRefFromLocaleString("POSIX", &localeRef);
-    UCCreateCollator(localeRef, 0, collateOptions, &collatorRef);
-    collateOptions |= kUCCollateComposeInsensitiveMask | kUCCollateWidthInsensitiveMask | kUCCollateCaseInsensitiveMask;
-    UCCreateCollator(localeRef, 0, collateOptions, &caseInsensitiveCollatorRef);
-    collateOptions |= kUCCollateDiacritInsensitiveMask;
-    UCCreateCollator(localeRef, 0, collateOptions, &diacriticInsensitiveCollatorRef);
-
     /* Using the keyboard layout, build a map of key code + modifiers -> characters. */
     memset(map, 0, sizeof(map));
-    for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
+    for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
     {
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* assigned a fixed vkey */
 
         TRACE("keyc 0x%04x: ", keyc);
 
-        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
+        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
         {
             UInt32 deadKeyState;
             UniCharCount len;
@@ -730,7 +575,8 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
             deadKeyState = 0;
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, modifier_combos[combo],
                 thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
-                &deadKeyState, ARRAY_SIZE(map[keyc][combo]) - 1, &len, map[keyc][combo]);
+                &deadKeyState, sizeof(map[keyc][combo])/sizeof(map[keyc][combo][0]) - 1,
+                &len, map[keyc][combo]);
             if (status != noErr)
                 map[keyc][combo][0] = 0;
 
@@ -746,19 +592,19 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
        second pass, accept matches with diacritical marks. */
     for (ignore_diacritics = 0; ignore_diacritics <= 1; ignore_diacritics++)
     {
-        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
+        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
         {
             for (vkey = 'A'; vkey <= 'Z'; vkey++)
             {
                 if (vkey_used[vkey])
                     continue;
 
-                for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
+                for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
                 {
                     if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
                         continue;
 
-                    if (char_matches_string(vkey, map[keyc][combo], ignore_diacritics ? diacriticInsensitiveCollatorRef : caseInsensitiveCollatorRef))
+                    if (char_matches_string(vkey, map[keyc][combo], ignore_diacritics))
                     {
                         thread_data->keyc2vkey[keyc] = vkey;
                         vkey_used[vkey] = 1;
@@ -772,19 +618,19 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     }
 
     /* Next try to match key codes to the vkeys for the digits 0 through 9. */
-    for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
+    for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
     {
         for (vkey = '0'; vkey <= '9'; vkey++)
         {
             if (vkey_used[vkey])
                 continue;
 
-            for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
+            for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
             {
                 if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
                     continue;
 
-                if (char_matches_string(vkey, map[keyc][combo], collatorRef))
+                if (char_matches_string(vkey, map[keyc][combo], FALSE))
                 {
                     thread_data->keyc2vkey[keyc] = vkey;
                     vkey_used[vkey] = 1;
@@ -798,24 +644,22 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Now try to match key codes for certain common punctuation characters to
        the most common OEM vkeys (e.g. '.' to VK_OEM_PERIOD). */
-    for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
+    for (i = 0; i < sizeof(symbol_vkeys) / sizeof(symbol_vkeys[0]); i++)
     {
-        for (i = 0; i < ARRAY_SIZE(symbol_vkeys); i++)
+        vkey = symbol_vkeys[i].vkey;
+
+        if (vkey_used[vkey])
+            continue;
+
+        for (combo = 0; combo < sizeof(modifier_combos) / sizeof(modifier_combos[0]); combo++)
         {
-            vkey = symbol_vkeys[i].vkey;
-
-            if (vkey_used[vkey])
-                continue;
-
-            for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
+            for (keyc = 0; keyc < sizeof(map) / sizeof(map[0]); keyc++)
             {
                 if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
                 if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
                     continue;
-                if (symbol_vkeys[i].mac_keyc != -1 && symbol_vkeys[i].mac_keyc != keyc)
-                    continue;
 
-                if (char_matches_string(symbol_vkeys[i].wchar, map[keyc][combo], collatorRef))
+                if (char_matches_string(symbol_vkeys[i].wchar, map[keyc][combo], FALSE))
                 {
                     thread_data->keyc2vkey[keyc] = vkey;
                     vkey_used[vkey] = 1;
@@ -824,14 +668,17 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
                     break;
                 }
             }
+
+            if (vkey_used[vkey])
+                break;
         }
     }
 
     /* For those key codes still without a vkey, try to use the default vkey
        from the default map, if it's still available. */
-    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
+    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
     {
-        unsigned int vkey = default_map[keyc].vkey;
+        DWORD vkey = default_map[keyc].vkey;
 
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* already assigned */
@@ -848,7 +695,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
        map, but whose normal letter vkey wasn't available, try to find a
        different letter. */
     vkey = 'A';
-    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
+    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
     {
         if (default_map[keyc].vkey < 'A' || 'Z' < default_map[keyc].vkey)
             continue; /* not a letter in ANSI layout */
@@ -868,7 +715,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Same thing but with the digits. */
     vkey = '0';
-    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
+    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
     {
         if (default_map[keyc].vkey < '0' || '9' < default_map[keyc].vkey)
             continue; /* not a digit in ANSI layout */
@@ -889,7 +736,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     /* Last chance.  Assign any available vkey. */
     vkey_range = 0;
     vkey = vkey_ranges[vkey_range].first;
-    for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
+    for (keyc = 0; keyc < sizeof(default_map) / sizeof(default_map[0]); keyc++)
     {
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* already assigned */
@@ -915,17 +762,13 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         vkey_used[vkey] = 1;
         TRACE("keyc 0x%04x -> vkey 0x%04x (spare vkey)\n", keyc, vkey);
     }
-
-    UCDisposeCollator(&collatorRef);
-    UCDisposeCollator(&caseInsensitiveCollatorRef);
-    UCDisposeCollator(&diacriticInsensitiveCollatorRef);
 }
 
 
 /***********************************************************************
  *              macdrv_send_keyboard_input
  */
-static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, unsigned int flags, unsigned int time)
+static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time)
 {
     INPUT input;
 
@@ -938,49 +781,7 @@ static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, unsigned
     input.ki.time           = time;
     input.ki.dwExtraInfo    = 0;
 
-    NtUserSendHardwareInput(hwnd, 0, &input, 0);
-}
-
-
-/***********************************************************************
- *           update_modifier_state
- */
-static void update_modifier_state(unsigned int modifier, unsigned int modifiers, const BYTE *keystate,
-                                  WORD vkey, WORD alt_vkey, WORD scan, WORD alt_scan,
-                                  DWORD event_time, BOOL restore)
-{
-    int key_pressed = (modifiers & modifier) != 0;
-    int vkey_pressed = (keystate[vkey] & 0x80) || (keystate[alt_vkey] & 0x80);
-    DWORD flags;
-
-    if (key_pressed != vkey_pressed)
-    {
-        if (key_pressed)
-        {
-            flags = (scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
-            if (restore)
-                flags |= KEYEVENTF_KEYUP;
-
-            macdrv_send_keyboard_input(NULL, vkey, scan & 0xff, flags, event_time);
-        }
-        else
-        {
-            flags = restore ? 0 : KEYEVENTF_KEYUP;
-
-            if (keystate[vkey] & 0x80)
-            {
-                macdrv_send_keyboard_input(NULL, vkey, scan & 0xff,
-                                           flags | ((scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0),
-                                           event_time);
-            }
-            if (keystate[alt_vkey] & 0x80)
-            {
-                macdrv_send_keyboard_input(NULL, alt_vkey, alt_scan & 0xff,
-                                           flags | ((alt_scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0),
-                                           event_time);
-            }
-        }
-    }
+    __wine_send_input(hwnd, &input);
 }
 
 
@@ -1001,7 +802,7 @@ void macdrv_key_event(HWND hwnd, const macdrv_event *event)
 
     thread_data->last_modifiers = event->key.modifiers;
 
-    if (event->key.keycode < ARRAY_SIZE(thread_data->keyc2vkey))
+    if (event->key.keycode < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
     {
         vkey = thread_data->keyc2vkey[event->key.keycode];
         scan = thread_data->keyc2scan[event->key.keycode];
@@ -1039,184 +840,152 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->keyboard_layout_uchr = CFDataCreateCopy(NULL, event->keyboard_changed.uchr);
     thread_data->keyboard_type = event->keyboard_changed.keyboard_type;
     thread_data->iso_keyboard = event->keyboard_changed.iso_keyboard;
-    thread_data->active_keyboard_layout = macdrv_get_hkl_from_source(event->keyboard_changed.input_source);
     thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
 
-    NtUserActivateKeyboardLayout(thread_data->active_keyboard_layout, 0);
-
-    send_message(get_active_window(), WM_CANCELMODE, 0, 0);
+    SendMessageW(GetActiveWindow(), WM_CANCELMODE, 0, 0);
 }
 
 
 /***********************************************************************
- *              macdrv_hotkey_press
- *
- * Handler for HOTKEY_PRESS events.
+ *              get_locale_keyboard_layout
  */
-void macdrv_hotkey_press(const macdrv_event *event)
+static HKL get_locale_keyboard_layout(void)
 {
-    struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    ULONG_PTR layout;
+    LANGID langid;
 
-    TRACE_(key)("vkey 0x%04x mod_flags 0x%04x keycode 0x%04x time %lu\n",
-                event->hotkey_press.vkey, event->hotkey_press.mod_flags, event->hotkey_press.keycode,
-                event->hotkey_press.time_ms);
+    layout = GetUserDefaultLCID();
 
-    if (event->hotkey_press.keycode < ARRAY_SIZE(thread_data->keyc2vkey))
-    {
-        WORD scan = thread_data->keyc2scan[event->hotkey_press.keycode];
-        BYTE keystate[256];
-        BOOL got_keystate;
-        DWORD flags;
+    /*
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probably check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* IME */
+    else
+        layout |= layout << 16;
 
-        if ((got_keystate = NtUserGetAsyncKeyboardState(keystate)))
-        {
-            update_modifier_state(MOD_ALT, event->hotkey_press.mod_flags, keystate, VK_LMENU, VK_RMENU,
-                                  0x38, 0x138, event->hotkey_press.time_ms, FALSE);
-            update_modifier_state(MOD_CONTROL, event->hotkey_press.mod_flags, keystate, VK_LCONTROL, VK_RCONTROL,
-                                  0x1D, 0x11D, event->hotkey_press.time_ms, FALSE);
-            update_modifier_state(MOD_SHIFT, event->hotkey_press.mod_flags, keystate, VK_LSHIFT, VK_RSHIFT,
-                                  0x2A, 0x36, event->hotkey_press.time_ms, FALSE);
-            update_modifier_state(MOD_WIN, event->hotkey_press.mod_flags, keystate, VK_LWIN, VK_RWIN,
-                                  0x15B, 0x15C, event->hotkey_press.time_ms, FALSE);
-        }
-
-        activate_on_following_focus();
-
-        flags = (scan & 0x100) ? KEYEVENTF_EXTENDEDKEY : 0;
-        macdrv_send_keyboard_input(NULL, event->hotkey_press.vkey, scan & 0xff,
-                                   flags, event->key.time_ms);
-        macdrv_send_keyboard_input(NULL, event->hotkey_press.vkey, scan & 0xff,
-                                   flags | KEYEVENTF_KEYUP, event->key.time_ms);
-
-        if (got_keystate)
-        {
-            update_modifier_state(MOD_ALT, event->hotkey_press.mod_flags, keystate, VK_LMENU, VK_RMENU,
-                                  0x38, 0x138, event->hotkey_press.time_ms, TRUE);
-            update_modifier_state(MOD_CONTROL, event->hotkey_press.mod_flags, keystate, VK_LCONTROL, VK_RCONTROL,
-                                  0x1D, 0x11D, event->hotkey_press.time_ms, TRUE);
-            update_modifier_state(MOD_SHIFT, event->hotkey_press.mod_flags, keystate, VK_LSHIFT, VK_RSHIFT,
-                                  0x2A, 0x36, event->hotkey_press.time_ms, TRUE);
-            update_modifier_state(MOD_WIN, event->hotkey_press.mod_flags, keystate, VK_LWIN, VK_RWIN,
-                                  0x15B, 0x15C, event->hotkey_press.time_ms, TRUE);
-        }
-    }
+    return (HKL)layout;
 }
 
 
 /***********************************************************************
- *              ImeToAsciiEx (MACDRV.@)
+ *              match_keyboard_layout
  */
-UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc)
+static BOOL match_keyboard_layout(HKL hkl)
+{
+    const DWORD isIME = 0xE0000000;
+    HKL current_hkl = get_locale_keyboard_layout();
+
+    /* if the layout is an IME, only match the low word (LCID) */
+    if (((ULONG_PTR)hkl & isIME) == isIME)
+        return (LOWORD(hkl) == LOWORD(current_hkl));
+    else
+        return (hkl == current_hkl);
+}
+
+
+/***********************************************************************
+ *              macdrv_process_text_input
+ */
+BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
     unsigned int flags;
     int keyc;
-    bool ret;
-    BOOL repeat = !!(vsc & KF_REPEAT);
+    BOOL ret = FALSE;
 
-    TRACE("himc %p, vkey %#x state %p repeat %u\n",
-          himc, vkey, state, repeat);
-
-    if (!state) return STATUS_SUCCESS;
-
-    if (vsc & KF_UP)
-    {
-        /* Only key down events should be sent to the Cocoa input context. We do
-           not handle key ups, and instead let those go through as a normal
-           WM_KEYUP. */
-        return STATUS_NOT_IMPLEMENTED;
-    }
-
-    switch (vkey)
-    {
-        case VK_KANA:
-        case VK_KANJI:
-            TRACE("Skipping metakey\n");
-            return STATUS_NOT_IMPLEMENTED;
-    }
+    TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", vkey, scan, repeat, himc);
 
     flags = thread_data->last_modifiers;
-    if (state[VK_SHIFT] & 0x80)
+    if (key_state[VK_SHIFT] & 0x80)
         flags |= NX_SHIFTMASK;
     else
         flags &= ~(NX_SHIFTMASK | NX_DEVICELSHIFTKEYMASK | NX_DEVICERSHIFTKEYMASK);
-    if (state[VK_CAPITAL] & 0x01)
+    if (key_state[VK_CAPITAL] & 0x01)
         flags |= NX_ALPHASHIFTMASK;
     else
         flags &= ~NX_ALPHASHIFTMASK;
-    if (state[VK_CONTROL] & 0x80)
+    if (key_state[VK_CONTROL] & 0x80)
         flags |= NX_CONTROLMASK;
     else
         flags &= ~(NX_CONTROLMASK | NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK);
-    if (state[VK_MENU] & 0x80)
+    if (key_state[VK_MENU] & 0x80)
         flags |= NX_COMMANDMASK;
     else
         flags &= ~(NX_COMMANDMASK | NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK);
 
     /* Find the Mac keycode corresponding to the scan code */
-    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
         if (thread_data->keyc2vkey[keyc] == vkey) break;
 
-    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey)) return 0;
+    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
+        goto done;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
-    ret = macdrv_send_keydown_to_input_source(keyc, flags, repeat, himc);
-    NtUserMsgWaitForMultipleObjectsEx(0, NULL, 0, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
-    return ret ? STATUS_SUCCESS : STATUS_NOT_IMPLEMENTED;
+
+    ret = macdrv_send_text_input_event(((scan & 0x8000) == 0), flags, repeat, keyc, himc);
+
+done:
+    TRACE(" -> %s\n", ret ? "TRUE" : "FALSE");
+    return ret;
 }
 
 
 /***********************************************************************
  *              ActivateKeyboardLayout (MACDRV.@)
  */
-BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
+HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
-    BOOL ret = FALSE;
+    HKL oldHkl = 0;
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
-    struct layout *layout;
 
-    TRACE("hkl %p flags %04x\n", hkl, flags);
+    /* FIXME: Use Text Input Services or NSTextInputContext to actually
+              change the Mac keyboard input source. */
 
-    NtUserPostMessage( NULL, WM_WINE_IME_NOTIFY, IMN_WINE_SET_OPEN_STATUS, is_ime_hkl(hkl) );
-
-    if (hkl == thread_data->active_keyboard_layout)
-        return TRUE;
-
-    pthread_mutex_lock(&layout_list_mutex);
-    update_layout_list();
-
-    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
+    FIXME("hkl %p flags %04x: semi-stub!\n", hkl, flags);
+    if (flags & KLF_SETFORPROCESS)
     {
-        if (HIWORD(hkl) == layout->layout_id ? layout->layout_id : layout->lang)
-        {
-            if (macdrv_select_input_source(layout->input_source))
-            {
-                ret = TRUE;
-                if (thread_data->keyboard_layout_uchr)
-                    CFRelease(thread_data->keyboard_layout_uchr);
-
-                macdrv_get_input_source_info(&thread_data->keyboard_layout_uchr, &thread_data->keyboard_type,
-                                             &thread_data->iso_keyboard, NULL);
-                thread_data->active_keyboard_layout = hkl;
-                thread_data->dead_key_state = 0;
-
-                macdrv_compute_keyboard_layout(thread_data);
-            }
-            break;
-        }
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("KLF_SETFORPROCESS not supported\n");
+        return 0;
     }
-    pthread_mutex_unlock(&layout_list_mutex);
 
-    return ret;
+    if (flags)
+        FIXME("flags %x not supported\n",flags);
+
+    if (hkl == (HKL)HKL_NEXT || hkl == (HKL)HKL_PREV)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("HKL_NEXT and HKL_PREV not supported\n");
+        return 0;
+    }
+
+    if (!match_keyboard_layout(hkl))
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        FIXME("setting keyboard of different locales not supported\n");
+        return 0;
+    }
+
+    oldHkl = thread_data->active_keyboard_layout;
+    if (!oldHkl) oldHkl = get_locale_keyboard_layout();
+
+    thread_data->active_keyboard_layout = hkl;
+
+    return oldHkl;
 }
 
 
 /***********************************************************************
  *              Beep (MACDRV.@)
  */
-void macdrv_Beep(void)
+void CDECL macdrv_Beep(void)
 {
     macdrv_beep();
 }
@@ -1225,70 +994,71 @@ void macdrv_Beep(void)
 /***********************************************************************
  *              GetKeyNameText (MACDRV.@)
  */
-INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
+INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     int scan, keyc;
 
     scan = (lparam >> 16) & 0x1FF;
-    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2scan); keyc++)
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2scan)/sizeof(thread_data->keyc2scan[0]); keyc++)
     {
-        if (thread_data->keyc2scan[keyc] == scan && scan)
+        if (thread_data->keyc2scan[keyc] == scan)
         {
+            static const WCHAR dead[] = {' ','d','e','a','d',0};
             const UCKeyboardLayout *uchr;
             UInt32 deadKeyState = 0;
             UniCharCount len;
             OSStatus status;
-            unsigned int vkey;
-            int i;
 
             uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDisplay, 0, thread_data->keyboard_type,
                                     0, &deadKeyState, size - 1, &len, (UniChar*)buffer);
             if (status != noErr)
                 len = 0;
-            if (len && buffer[0] > 32)
+            if (len && isgraphW(buffer[0]))
                 buffer[len] = 0;
-
-            vkey = thread_data->keyc2vkey[keyc];
-            if (lparam & (1 << 25))
+            else
             {
-                /* Caller doesn't care about distinctions between left and
-                   right keys. */
-                switch (vkey)
+                DWORD vkey = thread_data->keyc2vkey[keyc];
+                int i;
+
+                if (scan & 0x100) vkey |= 0x100;
+
+                if (lparam & (1 << 25))
                 {
-                    case VK_LSHIFT:
-                    case VK_RSHIFT:
-                        vkey = VK_SHIFT; break;
-                    case VK_LCONTROL:
-                    case VK_RCONTROL:
-                        vkey = VK_CONTROL; break;
-                    case VK_LMENU:
-                    case VK_RMENU:
-                        vkey = VK_MENU; break;
+                    /* Caller doesn't care about distinctions between left and
+                       right keys. */
+                    switch (vkey)
+                    {
+                        case VK_LSHIFT:
+                        case VK_RSHIFT:
+                            vkey = VK_SHIFT; break;
+                        case VK_LCONTROL:
+                        case VK_RCONTROL:
+                            vkey = VK_CONTROL; break;
+                        case VK_LMENU:
+                        case VK_RMENU:
+                            vkey = VK_MENU; break;
+                    }
                 }
-            }
 
-            if (scan & 0x100) vkey |= 0x100;
-
-            for (i = 0; i < ARRAY_SIZE(vkey_names); i++)
-            {
-                if (vkey_names[i].vkey == vkey)
+                len = 0;
+                for (i = 0; i < sizeof(vkey_names) / sizeof(vkey_names[0]); i++)
                 {
-                    len = min(strlen(vkey_names[i].name) + 1, size);
-                    ascii_to_unicode(buffer, vkey_names[i].name, len);
-                    if (len) buffer[--len] = 0;
-                    break;
+                    if (vkey_names[i].vkey == vkey)
+                    {
+                        len = MultiByteToWideChar(CP_UTF8, 0, vkey_names[i].name, -1, buffer, size);
+                        if (len) len--;
+                        break;
+                    }
                 }
-            }
 
-            if (!len)
-            {
-                char name[16];
-                len = snprintf(name, sizeof(name), "Key 0x%02x", vkey);
-                len = min(len + 1, size);
-                ascii_to_unicode(buffer, name, len);
-                if (len) buffer[--len] = 0;
+                if (!len)
+                {
+                    static const WCHAR format[] = {'K','e','y',' ','0','x','%','0','2','x',0};
+                    snprintfW(buffer, size, format, vkey);
+                    len = strlenW(buffer);
+                }
             }
 
             if (!len)
@@ -1296,68 +1066,64 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
             if (status == noErr && deadKeyState)
             {
-                for (i = 0; i < ARRAY_SIZE(dead_key_names); i++)
-                {
-                    if (dead_key_names[i].wchar == buffer[0])
-                    {
-                        len = min(strlen(dead_key_names[i].name) + 1, size);
-                        ascii_to_unicode(buffer, dead_key_names[i].name, len);
-                        if (len) buffer[--len] = 0;
-                        break;
-                    }
-                }
+                lstrcpynW(buffer + len, dead, size - len);
+                len = strlenW(buffer);
             }
 
-            if (status == noErr && len == 1 && buffer[0] >= 'a' && buffer[0] <= 'z')
-                buffer[0] += 'A' - 'a';
-
-            TRACE("lparam 0x%08x -> %s\n", (unsigned int)lparam, debugstr_w(buffer));
+            TRACE("lparam 0x%08x -> %s\n", lparam, debugstr_w(buffer));
             return len;
         }
     }
 
-    WARN("found no name for lparam 0x%08x\n", (unsigned int)lparam);
+    WARN("found no name for lparam 0x%08x\n", lparam);
     return 0;
 }
 
 
 /***********************************************************************
- *     GetKeyboardLayoutList (MACDRV.@)
+ *              GetKeyboardLayout (MACDRV.@)
  */
-UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
+HKL CDECL macdrv_GetKeyboardLayout(DWORD thread_id)
 {
-    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
-    int count = 0;
-    struct layout *layout;
-
-    TRACE("%d, %p\n", size, list);
-
-    pthread_mutex_lock(&layout_list_mutex);
-
-    update_layout_list();
-
-    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
+    if (!thread_id || thread_id == GetCurrentThreadId())
     {
-        if (!layout->enabled) continue;
-        if (list)
-        {
-            if (count >= size) break;
-            list[count] = get_layout_hkl(layout, locale);
-            TRACE("\t%d: %p\n", count, list[count]);
-        }
-        count++;
+        struct macdrv_thread_data *thread_data = macdrv_thread_data();
+        if (thread_data && thread_data->active_keyboard_layout)
+            return thread_data->active_keyboard_layout;
     }
-    pthread_mutex_unlock(&layout_list_mutex);
+    else
+        FIXME("couldn't return keyboard layout for thread %04x\n", thread_id);
 
-    TRACE("returning %d\n", count);
-    return count;
+    /* FIXME: Use TISGetInputSourceProperty() and kTISPropertyInputSourceLanguages
+     *        to get input source language ID string.  Use
+     *        CFLocaleGetWindowsLocaleCodeFromLocaleIdentifier() to convert that
+     *        to a Windows locale ID and from there to a layout handle.
+     */
+
+    return get_locale_keyboard_layout();
+}
+
+
+/***********************************************************************
+ *              GetKeyboardLayoutName (MACDRV.@)
+ */
+BOOL CDECL macdrv_GetKeyboardLayoutName(LPWSTR name)
+{
+    static const WCHAR formatW[] = {'%','0','8','x',0};
+    DWORD layout;
+
+    layout = HandleToUlong(get_locale_keyboard_layout());
+    if (HIWORD(layout) == LOWORD(layout)) layout = LOWORD(layout);
+    sprintfW(name, formatW, layout);
+    TRACE("returning %s\n", debugstr_w(name));
+    return TRUE;
 }
 
 
 /***********************************************************************
  *              MapVirtualKeyEx (MACDRV.@)
  */
-UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
+UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     UINT ret = 0;
@@ -1377,7 +1143,7 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
             }
 
             /* vkey -> keycode -> scan */
-            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
             {
                 if (thread_data->keyc2vkey[keyc] == wCode)
                 {
@@ -1385,17 +1151,12 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
                     break;
                 }
             }
-
-            /* set scan code prefix */
-            if (wMapType == MAPVK_VK_TO_VSC_EX &&
-                (wCode == VK_RCONTROL || wCode == VK_RMENU))
-                ret |= 0xe000;
             break;
 
         case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */
         case MAPVK_VSC_TO_VK_EX:
             /* scan -> keycode -> vkey */
-            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
                 if ((thread_data->keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
                 {
                     ret = thread_data->keyc2vkey[keyc];
@@ -1445,10 +1206,10 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
             uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
 
             /* Find the Mac keycode corresponding to the vkey */
-            for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+            for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
                 if (thread_data->keyc2vkey[keyc] == wCode) break;
 
-            if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
+            if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
             {
                 WARN("Unknown virtual key %X\n", wCode);
                 break;
@@ -1458,18 +1219,19 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
             deadKeyState = 0;
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
-                thread_data->keyboard_type, 0, &deadKeyState, ARRAY_SIZE(s), &len, s);
+                thread_data->keyboard_type, 0, &deadKeyState,
+                sizeof(s)/sizeof(s[0]), &len, s);
             if (status == noErr && !len && deadKeyState)
             {
                 deadKey = TRUE;
                 deadKeyState = 0;
                 status = UCKeyTranslate(uchr, keyc, kUCKeyActionDown, 0,
                     thread_data->keyboard_type, kUCKeyTranslateNoDeadKeysMask,
-                    &deadKeyState, ARRAY_SIZE(s), &len, s);
+                    &deadKeyState, sizeof(s)/sizeof(s[0]), &len, s);
             }
 
             if (status == noErr && len)
-                ret = RtlUpcaseUnicodeChar(s[0]) | (deadKey ? 0x80000000 : 0);
+                ret = toupperW(s[0]) | (deadKey ? 0x80000000 : 0);
 
             break;
         }
@@ -1480,48 +1242,6 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 
     TRACE("returning 0x%04x\n", ret);
     return ret;
-}
-
-
-/***********************************************************************
- *              RegisterHotKey (MACDRV.@)
- */
-BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
-{
-    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
-    unsigned int keyc, modifiers = 0;
-    int ret;
-
-    TRACE_(key)("hwnd %p mod_flags 0x%04x vkey 0x%04x\n", hwnd, mod_flags, vkey);
-
-    /* Find the Mac keycode corresponding to the vkey */
-    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
-        if (thread_data->keyc2vkey[keyc] == vkey) break;
-
-    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
-    {
-        WARN_(key)("ignoring unknown virtual key 0x%04x\n", vkey);
-        return TRUE;
-    }
-
-    if (mod_flags & MOD_ALT)        modifiers |= cmdKey;
-    if (mod_flags & MOD_CONTROL)    modifiers |= controlKey;
-    if (mod_flags & MOD_SHIFT)      modifiers |= shiftKey;
-    if (mod_flags & MOD_WIN)
-    {
-        WARN_(key)("MOD_WIN not supported; ignoring\n");
-        return TRUE;
-    }
-
-    ret = macdrv_register_hot_key(thread_data->queue, vkey, mod_flags, keyc, modifiers);
-    TRACE_(key)("keyc 0x%04x modifiers 0x%08x -> %d\n", keyc, modifiers, ret);
-
-    if (ret == MACDRV_HOTKEY_ALREADY_REGISTERED)
-        RtlSetLastWin32Error(ERROR_HOTKEY_ALREADY_REGISTERED);
-    else if (ret != MACDRV_HOTKEY_SUCCESS)
-        RtlSetLastWin32Error(ERROR_GEN_FAILURE);
-
-    return ret == MACDRV_HOTKEY_SUCCESS;
 }
 
 
@@ -1545,20 +1265,20 @@ BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
  *              virtual key to form a single character.
  *
  */
-INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
-                       LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
+INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                             LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     INT ret = 0;
     int keyc;
     BOOL is_menu = (flags & 0x1);
-    int status;
+    OSStatus status;
     const UCKeyboardLayout *uchr;
     UInt16 keyAction;
     UInt32 modifierKeyState;
     OptionBits options;
     UInt32 deadKeyState, savedDeadKeyState;
-    UniCharCount len = 0;
+    UniCharCount len;
     BOOL dead = FALSE;
 
     TRACE_(key)("virtKey 0x%04x scanCode 0x%04x lpKeyState %p bufW %p bufW_size %d flags 0x%08x hkl %p\n",
@@ -1640,10 +1360,10 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
         modifierKeyState |= (optionKey >> 8);
 
     /* Find the Mac keycode corresponding to the vkey */
-    for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
         if (thread_data->keyc2vkey[keyc] == virtKey) break;
 
-    if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
+    if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
     {
         WARN_(key)("Unknown virtual key 0x%04x\n", virtKey);
         goto done;
@@ -1671,7 +1391,7 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
         &len, bufW);
     if (status != noErr)
     {
-        ERR_(key)("Couldn't translate keycode 0x%04x, status %d\n", keyc, status);
+        ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
         goto done;
     }
     if (!is_menu)
@@ -1694,7 +1414,7 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
             &savedDeadKeyState, bufW_size, &len, bufW);
         if (status != noErr)
         {
-            ERR_(key)("Couldn't translate dead keycode 0x%04x, status %d\n", keyc, status);
+            ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
             goto done;
         }
 
@@ -1704,7 +1424,8 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
     if (len > 0)
         len = strip_apple_private_chars(bufW, len);
 
-    ret = dead ? -len : len;
+    if (dead && len > 0) ret = -1;
+    else ret = len;
 
     /* Control-Return produces line feed instead of carriage return. */
     if (ret > 0 && (lpKeyState[VK_CONTROL] & 0x80) && virtKey == VK_RETURN)
@@ -1718,25 +1439,11 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 done:
     /* Null-terminate the buffer, if there's room.  MSDN clearly states that the
        caller must not assume this is done, but some programs (e.g. Audiosurf) do. */
-    if (len < bufW_size)
-        bufW[len] = 0;
+    if (1 <= ret && ret < bufW_size)
+        bufW[ret] = 0;
 
-    TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, len));
+    TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, abs(ret)));
     return ret;
-}
-
-
-/***********************************************************************
- *              UnregisterHotKey (MACDRV.@)
- */
-void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
-{
-    struct macdrv_thread_data *thread_data = macdrv_thread_data();
-
-    TRACE_(key)("hwnd %p modifiers 0x%04x vkey 0x%04x\n", hwnd, modifiers, vkey);
-
-    if (thread_data)
-        macdrv_unregister_hot_key(thread_data->queue, vkey, modifiers);
 }
 
 
@@ -1745,7 +1452,7 @@ void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
  *
  * Note: Windows ignores HKL parameter and uses current active layout instead
  */
-SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
+SHORT CDECL macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     SHORT ret = -1;
@@ -1778,7 +1485,7 @@ SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
                 modifierKeyState |= (cmdKey >> 8);
         }
 
-        for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
+        for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey) / sizeof(thread_data->keyc2vkey[0]); keyc++)
         {
             UInt32 deadKeyState = 0;
             UniChar uchar;

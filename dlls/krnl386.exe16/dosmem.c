@@ -71,7 +71,7 @@ WORD int16_sel = 0;
 #define MCB_PSP_DOS        0x0060
 #define MCB_PSP_FREE       0
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct {
     BYTE type;
     WORD psp;     /* segment of owner psp */
@@ -79,7 +79,7 @@ typedef struct {
     BYTE pad[3];
     BYTE name[8];
 } MCB;
-#pragma pack(pop)
+#include "poppack.h"
 
 /*
 #define __DOSMEM_DEBUG__
@@ -304,7 +304,7 @@ static void DOSMEM_InitSegments(void)
     /*
      * PM / offset N*5: Interrupt N in 16-bit protected mode.
      */
-    int16_sel = GLOBAL_Alloc( GMEM_FIXED, 5 * 256, 0, code16_segment );
+    int16_sel = GLOBAL_Alloc( GMEM_FIXED, 5 * 256, 0, LDT_FLAGS_CODE );
     ptr = GlobalLock16( int16_sel );
     for(i=0; i<256; i++) {
         /*
@@ -441,9 +441,12 @@ BOOL DOSMEM_Init(void)
     }
 
     vectored_handler = AddVectoredExceptionHandler(FALSE, dosmem_handler);
-    DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem, DOSMEM_64KB, 0, data_segment );
-    DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem + 0x400, 0x100, 0, data_segment );
-    DOSMEM_BiosSysSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem + 0xf0000, DOSMEM_64KB, 0, data_segment );
+    DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
+                                       DOSMEM_64KB, 0, LDT_FLAGS_DATA );
+    DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem + 0x400,
+                                             0x100, 0, LDT_FLAGS_DATA );
+    DOSMEM_BiosSysSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem + 0xf0000,
+                                            DOSMEM_64KB, 0, LDT_FLAGS_DATA );
 
     return TRUE;
 }

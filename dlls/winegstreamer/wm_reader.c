@@ -61,7 +61,6 @@ struct wm_reader
     IStream *source_stream;
     HANDLE file;
     HANDLE read_thread;
-    HANDLE read_sem;
     bool read_thread_shutdown;
     wg_parser_t wg_parser;
 
@@ -642,10 +641,8 @@ static DWORD CALLBACK read_thread(void *arg)
         }
 
         ret_size = 0;
-        hr = S_OK;
-        large_offset.QuadPart = offset;
 
-        WaitForSingleObject(reader->read_sem, INFINITE);
+        large_offset.QuadPart = offset;
         if (file)
         {
             if (!SetFilePointerEx(file, large_offset, NULL, FILE_BEGIN)
@@ -653,7 +650,7 @@ static DWORD CALLBACK read_thread(void *arg)
             {
                 ERR("Failed to read %u bytes at offset %I64u, error %lu.\n", size, offset, GetLastError());
                 wg_parser_push_data(reader->wg_parser, NULL, 0);
-                hr = E_FAIL;
+                continue;
             }
         }
         else
@@ -664,10 +661,9 @@ static DWORD CALLBACK read_thread(void *arg)
             {
                 ERR("Failed to read %u bytes at offset %I64u, hr %#lx.\n", size, offset, hr);
                 wg_parser_push_data(reader->wg_parser, NULL, 0);
+                continue;
             }
         }
-        ReleaseSemaphore(reader->read_sem, 1, NULL);
-        if (FAILED(hr)) continue;
 
         if (ret_size != size)
             ERR("Unexpected short read: requested %u bytes, got %lu.\n", size, ret_size);
@@ -1454,7 +1450,7 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
     timecode_GetTimecodeRangeBounds,
 };
 
-static void free_stream_buffers(struct wm_reader *reader)
+static void destroy_stream(struct wm_reader *reader)
 {
     unsigned int i;
 
@@ -1471,23 +1467,6 @@ static void free_stream_buffers(struct wm_reader *reader)
     }
 }
 
-static void release_stream_allocators(struct wm_reader *reader)
-{
-    unsigned int i;
-
-    for (i = 0; i < reader->stream_count; ++i)
-    {
-        struct wm_stream *stream = &reader->streams[i];
-
-        if (stream->output_allocator)
-            IWMReaderAllocatorEx_Release(stream->output_allocator);
-        stream->output_allocator = NULL;
-        if (stream->stream_allocator)
-            IWMReaderAllocatorEx_Release(stream->stream_allocator);
-        stream->stream_allocator = NULL;
-    }
-}
-
 static HRESULT init_stream(struct wm_reader *reader)
 {
     wg_parser_t wg_parser;
@@ -1499,12 +1478,6 @@ static HRESULT init_stream(struct wm_reader *reader)
 
     reader->wg_parser = wg_parser;
     reader->read_thread_shutdown = false;
-
-    if (!(reader->read_sem = CreateSemaphoreA(NULL, 1, LONG_MAX, NULL)))
-    {
-        hr = E_OUTOFMEMORY;
-        goto out_destroy_parser;
-    }
 
     if (!(reader->read_thread = CreateThread(NULL, 0, read_thread, reader, 0, NULL)))
     {
@@ -1566,12 +1539,7 @@ static HRESULT init_stream(struct wm_reader *reader)
      * Now that they're all enabled seek back to the start again. */
     wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, 0, 0,
             AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
-    /* Pause the read thread */
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-    {
-        ERR("Failed to wait for read semaphore.\n");
-        goto out_disconnect_parser;
-    }
+
     return S_OK;
 
 out_disconnect_parser:
@@ -1586,11 +1554,6 @@ out_shutdown_thread:
     reader->read_thread = NULL;
 
 out_destroy_parser:
-    if (reader->read_sem)
-    {
-        CloseHandle(reader->read_sem);
-        reader->read_sem = NULL;
-    }
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1603,10 +1566,6 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
     HRESULT hr;
     WORD i;
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
-
-    free_stream_buffers(reader);
-
     wg_parser_disconnect(reader->wg_parser);
 
     EnterCriticalSection(&reader->shutdown_cs);
@@ -1614,10 +1573,9 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
     LeaveCriticalSection(&reader->shutdown_cs);
     WaitForSingleObject(reader->read_thread, INFINITE);
     CloseHandle(reader->read_thread);
-    CloseHandle(reader->read_sem);
     reader->read_thread = NULL;
-    reader->read_sem = NULL;
 
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1626,11 +1584,6 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
 
     reader->wg_parser = wg_parser;
     reader->read_thread_shutdown = false;
-    if (!(reader->read_sem = CreateSemaphoreA(NULL, 1, LONG_MAX, NULL)))
-    {
-        hr = E_OUTOFMEMORY;
-        goto out_destroy_parser;
-    }
 
     if (!(reader->read_thread = CreateThread(NULL, 0, read_thread, reader, 0, NULL)))
     {
@@ -1662,11 +1615,6 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
      * Now that they're all enabled seek back to the start again. */
     wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, 0, 0,
             AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-    {
-        ERR("Failed to wait for read semaphore.\n");
-        goto out_shutdown_thread;
-    }
 
     return S_OK;
 
@@ -1679,13 +1627,7 @@ out_shutdown_thread:
     reader->read_thread = NULL;
 
 out_destroy_parser:
-    if (reader->read_sem)
-    {
-        CloseHandle(reader->read_sem);
-        reader->read_sem = NULL;
-    }
-    free_stream_buffers(reader);
-    release_stream_allocators(reader);
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1792,7 +1734,7 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
     {
         ERR("Failed to allocate sample of %lu bytes, hr %#lx.\n", capacity, hr);
         wg_parser_stream_release_buffer(stream->wg_stream);
-        return NS_E_NO_MORE_SAMPLES;
+        return hr;
     }
 
     if (FAILED(hr = INSSBuffer_GetBufferAndLength(*sample, &data, &size)))
@@ -1914,7 +1856,6 @@ static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
         reader->shutdown_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&reader->shutdown_cs);
 
-        free(reader->streams);
         free(reader);
     }
 
@@ -1965,11 +1906,6 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
         return NS_E_INVALID_REQUEST;
     }
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
-
-    free_stream_buffers(reader);
-    release_stream_allocators(reader);
-
     wg_parser_disconnect(reader->wg_parser);
 
     EnterCriticalSection(&reader->shutdown_cs);
@@ -1977,10 +1913,9 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
     LeaveCriticalSection(&reader->shutdown_cs);
     WaitForSingleObject(reader->read_thread, INFINITE);
     CloseHandle(reader->read_thread);
-    CloseHandle(reader->read_sem);
     reader->read_thread = NULL;
-    reader->read_sem = NULL;
 
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -2054,7 +1989,6 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
     if (!stream_number && !output_number && !ret_stream_number)
         return E_INVALIDARG;
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
     EnterCriticalSection(&reader->cs);
 
     if (!stream_number)
@@ -2094,8 +2028,6 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
         *ret_stream_number = stream_number;
 
     LeaveCriticalSection(&reader->cs);
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-        ERR("Failed to wait for read thread to pause.\n");
     return hr;
 }
 
@@ -2432,13 +2364,12 @@ static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output,
         return E_FAIL;
     }
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
     EnterCriticalSection(&reader->cs);
 
     if (!(stream = get_stream_by_output_number(reader, output)))
     {
-        hr = E_INVALIDARG;
-        goto out;
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
     }
 
     wg_parser_stream_get_current_format(stream->wg_stream, &pref_format);
@@ -2476,7 +2407,8 @@ static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output,
     if (FAILED(hr))
     {
         WARN("Unsupported media type, returning %#lx.\n", hr);
-        goto out;
+        LeaveCriticalSection(&reader->cs);
+        return hr;
     }
 
     stream->format = format;
@@ -2498,11 +2430,8 @@ static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output,
     wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, reader->start_time, 0,
             AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
 
-out:
     LeaveCriticalSection(&reader->cs);
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-        ERR("Failed to wait for read thread to pause.\n");
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_SetOutputSetting(IWMSyncReader2 *iface, DWORD output,
@@ -2542,7 +2471,6 @@ static HRESULT WINAPI reader_SetRange(IWMSyncReader2 *iface, QWORD start, LONGLO
 
     TRACE("reader %p, start %I64u, duration %I64d.\n", reader, start, duration);
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
     EnterCriticalSection(&reader->cs);
 
     reader->start_time = start;
@@ -2554,8 +2482,6 @@ static HRESULT WINAPI reader_SetRange(IWMSyncReader2 *iface, QWORD start, LONGLO
         reader->streams[i].eos = false;
 
     LeaveCriticalSection(&reader->cs);
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-        ERR("Failed to wait for read thread to pause.\n");
     return S_OK;
 }
 
@@ -2602,7 +2528,6 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
     if (!count)
         return E_INVALIDARG;
 
-    ReleaseSemaphore(reader->read_sem, 1, NULL);
     EnterCriticalSection(&reader->cs);
 
     for (i = 0; i < count; ++i)
@@ -2611,8 +2536,6 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
         {
             LeaveCriticalSection(&reader->cs);
             WARN("Invalid stream number %u; returning NS_E_INVALID_REQUEST.\n", stream_numbers[i]);
-            if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-                ERR("Failed to wait for read thread to pause.\n");
             return NS_E_INVALID_REQUEST;
         }
     }
@@ -2646,8 +2569,6 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
     }
 
     LeaveCriticalSection(&reader->cs);
-    if (WaitForSingleObject(reader->read_sem, INFINITE) != WAIT_OBJECT_0)
-        ERR("Failed to wait for read thread to pause.\n");
     return S_OK;
 }
 

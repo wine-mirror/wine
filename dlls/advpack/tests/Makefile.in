@@ -1,9 +1,7 @@
 TESTDLL   = advpack.dll
-IMPORTS   = cabinet advapi32 advpack user32
+IMPORTS   = cabinet advapi32 advpack
 
 SOURCES = \
 	advpack.c \
 	files.c \
-	install.c \
-	selfreg.c \
-	selfreg.spec
+	install.c

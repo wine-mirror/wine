@@ -23,7 +23,7 @@
  * Wine Digital Video extensions
  */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -865,6 +865,6 @@ DECL_WINELIB_TYPE_AW(MCI_DGV_WINDOW_PARMS)
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DIGITALV_H */

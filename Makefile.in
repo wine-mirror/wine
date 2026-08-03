@@ -1,0 +1,95 @@
+# This Makefile understands the following targets:
+#
+# all (default):   build wine
+# clean:           remove all intermediate files
+# distclean:       also remove all files created by configure
+# test:            run tests
+# testclean:       clean test results to force running all tests again
+# crosstest:       build tests as native windows applications (requires MinGW)
+# install-lib:     install libraries needed to run applications
+# install-dev:     install development environment
+# install:         install everything
+# uninstall:       uninstall everything
+# depend:          create the dependencies
+# ctags:           create a tags file for vim and others.
+# etags:           create a TAGS file for Emacs.
+# manpages:        compile manpages for Wine API
+# htmlpages:       compile html pages for Wine API
+# sgmlpages:       compile sgml source for the Wine API Guide
+# xmlpages:        compile xml source for the Wine API Guide
+
+# Sub-directories that don't have a makefile
+EXTRASUBDIRS = \
+	dlls \
+	libs \
+	po \
+	programs
+
+# Destination directories for make install
+INSTALLDIRS = \
+	$(DESTDIR)$(bindir) \
+	$(DESTDIR)$(dlldir) \
+	$(DESTDIR)$(fakedlldir) \
+	$(DESTDIR)$(mandir)/man$(prog_manext)
+
+all: wine
+	@echo "Wine build complete."
+
+WINAPI_CHECK_EXTRA_FLAGS = --global
+
+@MAKE_RULES@
+
+# Rules for re-running configure
+
+config.status: configure
+	@./config.status --recheck
+
+include/config.h: include/stamp-h
+include/stamp-h: include/config.h.in config.status
+	@./config.status include/config.h include/stamp-h
+
+# Rules for cleaning
+
+.PHONY: __clean__
+clean:: __clean__
+distclean:: clean
+	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp
+	$(RM) -r autom4te.cache
+
+# Rules for uninstalling
+
+.PHONY: __uninstall__
+uninstall:: __uninstall__
+	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
+
+# Dependencies between directories
+
+# dependencies needed to build any dll or program
+__tooldeps__: libs/port libs/wine libs/wpp
+__builddeps__: __tooldeps__ include
+.PHONY: test crosstest __tooldeps__ __builddeps__
+
+loader server: libs/port libs/wine tools
+fonts: tools
+include: tools tools/widl
+libs/wine: libs/port
+tools/wmc tools/wrc: tools
+tools tools/wmc tools/wrc: libs/wine
+tools/widl tools/wmc tools/wrc: libs/wpp
+
+dlls/shell32/Makefile dlls/shell32/__depend__: dlls/shell32/AUTHORS
+
+$(MAKEDEP): include/config.h
+	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
+
+# Misc rules
+
+TAGSFLAGS = --langmap='c:+.idl.l.rh,make:(Make*.in)'
+
+TAGS etags:
+	$(RM) TAGS
+	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs etags -a $(TAGSFLAGS)
+
+tags ctags:
+	$(RM) tags
+	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs ctags -a $(TAGSFLAGS)

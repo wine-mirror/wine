@@ -23,7 +23,7 @@
 #ifndef __WINE_MMREG_H
 #define __WINE_MMREG_H
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 /***********************************************************************
  * Defines/Enums
@@ -819,7 +819,7 @@ typedef struct tagEXBMINFOHEADER {
 
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_MMREG_H */
 

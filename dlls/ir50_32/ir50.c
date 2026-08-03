@@ -63,27 +63,20 @@ IV50_Open( const ICINFO *icinfo )
     return (LRESULT)decoder;
 }
 
-static LRESULT decompress_query( ICDECOMPRESSEX *params )
+static LRESULT
+IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
 {
-    const BITMAPINFO *in = (BITMAPINFO *)params->lpbiSrc, *out = (BITMAPINFO *)params->lpbiDst;
+    TRACE("ICM_DECOMPRESS_QUERY %p %p\n", in, out);
 
     TRACE("in->planes  = %d\n", in->bmiHeader.biPlanes);
     TRACE("in->bpp     = %d\n", in->bmiHeader.biBitCount);
     TRACE("in->height  = %ld\n", in->bmiHeader.biHeight);
     TRACE("in->width   = %ld\n", in->bmiHeader.biWidth);
     TRACE("in->compr   = %#lx\n", in->bmiHeader.biCompression);
-    TRACE("in offset (%d,%d), size %dx%d\n", params->xSrc, params->ySrc, params->dxSrc, params->dySrc);
 
-    if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
+    if ( in->bmiHeader.biCompression != IV50_MAGIC )
     {
         TRACE("can't do %#lx compression\n", in->bmiHeader.biCompression);
-        return ICERR_BADFORMAT;
-    }
-
-    if (params->xSrc || params->ySrc || params->dxSrc != in->bmiHeader.biWidth
-            || params->dySrc != in->bmiHeader.biHeight)
-    {
-        TRACE("nontrivial source rect\n");
         return ICERR_BADFORMAT;
     }
 
@@ -95,30 +88,25 @@ static LRESULT decompress_query( ICDECOMPRESSEX *params )
         TRACE("out->height = %ld\n", out->bmiHeader.biHeight);
         TRACE("out->width  = %ld\n", out->bmiHeader.biWidth);
         TRACE("out->compr  = %#lx\n", out->bmiHeader.biCompression);
-        TRACE("out offset (%d,%d), size %dx%d\n", params->xDst, params->yDst, params->dxDst, params->dyDst);
 
-        if (out->bmiHeader.biCompression == BI_RGB)
+        if ( out->bmiHeader.biCompression != BI_RGB )
         {
-            if (out->bmiHeader.biBitCount != 32 && out->bmiHeader.biBitCount != 24 && out->bmiHeader.biBitCount != 16)
-                return ICERR_BADFORMAT;
-        }
-        else if (out->bmiHeader.biCompression == BI_BITFIELDS)
-        {
-            const DWORD *masks = (const DWORD *)(&out->bmiColors[0]);
-
-            if (out->bmiHeader.biBitCount != 16
-                    || masks[0] != 0xf800 || masks[1] != 0x07e0 || masks[2] != 0x001f)
-                return ICERR_BADFORMAT;
-        }
-        else
-        {
+            TRACE("incompatible compression requested\n");
             return ICERR_BADFORMAT;
         }
 
-        if (in->bmiHeader.biWidth != params->dxDst || in->bmiHeader.biHeight != params->dyDst)
+        if ( out->bmiHeader.biBitCount != 32 && out->bmiHeader.biBitCount != 24 && out->bmiHeader.biBitCount != 16 )
+        {
+            TRACE("incompatible depth requested\n");
+            return ICERR_BADFORMAT;
+        }
+
+        if ( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes ||
+             in->bmiHeader.biHeight != abs(out->bmiHeader.biHeight) ||
+             in->bmiHeader.biWidth  != out->bmiHeader.biWidth )
         {
             TRACE("incompatible output dimensions requested\n");
-            return ICERR_BADPARAM;
+            return ICERR_BADFORMAT;
         }
     }
 
@@ -128,43 +116,43 @@ static LRESULT decompress_query( ICDECOMPRESSEX *params )
 static LRESULT
 IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
 {
+    DWORD size;
+
     TRACE("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
 
-    if (compare_fourcc(in->bmiHeader.biCompression, IV50_MAGIC))
+    if ( !in )
+        return ICERR_BADPARAM;
+
+    if ( in->bmiHeader.biCompression != IV50_MAGIC )
         return ICERR_BADFORMAT;
 
+    size = in->bmiHeader.biSize;
     if ( out )
     {
-        memset(&out->bmiHeader, 0, sizeof(out->bmiHeader));
-        out->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        out->bmiHeader.biWidth = in->bmiHeader.biWidth;
+        memcpy( out, in, size );
         out->bmiHeader.biHeight = abs(in->bmiHeader.biHeight);
         out->bmiHeader.biCompression = BI_RGB;
-        out->bmiHeader.biPlanes = 1;
-        out->bmiHeader.biBitCount = 24;
-        out->bmiHeader.biSizeImage = out->bmiHeader.biWidth * out->bmiHeader.biHeight * 3;
+        out->bmiHeader.biBitCount = 32;
+        out->bmiHeader.biSizeImage = out->bmiHeader.biWidth * out->bmiHeader.biHeight * 4;
         return ICERR_OK;
     }
 
-    return offsetof(BITMAPINFO, bmiColors[256]);
+    return size;
 }
 
-static LRESULT decompress_begin( IMFTransform *decoder, ICDECOMPRESSEX *params )
+static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPBITMAPINFO out )
 {
-    const BITMAPINFO *in = (BITMAPINFO *)params->lpbiSrc, *out = (BITMAPINFO *)params->lpbiDst;
     IMFMediaType *input_type, *output_type;
     const GUID *output_subtype;
     LRESULT r = ICERR_INTERNAL;
     unsigned int stride;
 
-    TRACE( "decoder %p, in %p, out %p.\n", decoder, in, out );
+    TRACE("ICM_DECOMPRESS_BEGIN %p %p %p\n", decoder, in, out);
 
     if ( !decoder )
         return ICERR_BADPARAM;
 
-    if (out->bmiHeader.biCompression == BI_BITFIELDS)
-        output_subtype = &MFVideoFormat_RGB565;
-    else if (out->bmiHeader.biBitCount == 32)
+    if ( out->bmiHeader.biBitCount == 32 )
         output_subtype = &MFVideoFormat_RGB32;
     else if ( out->bmiHeader.biBitCount == 24 )
         output_subtype = &MFVideoFormat_RGB24;
@@ -197,8 +185,9 @@ static LRESULT decompress_begin( IMFTransform *decoder, ICDECOMPRESSEX *params )
     if ( FAILED(IMFMediaType_SetGUID( output_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video )) ||
          FAILED(IMFMediaType_SetGUID( output_type, &MF_MT_SUBTYPE, output_subtype )) )
         goto done;
-    if (FAILED(IMFMediaType_SetUINT64( output_type, &MF_MT_FRAME_SIZE,
-            make_uint64( params->dxDst, params->dyDst ) )))
+    if ( FAILED(IMFMediaType_SetUINT64(
+                    output_type, &MF_MT_FRAME_SIZE,
+                    make_uint64( out->bmiHeader.biWidth, abs(out->bmiHeader.biHeight) ) )) )
         goto done;
     if ( FAILED(IMFMediaType_SetUINT32( output_type, &MF_MT_DEFAULT_STRIDE, stride)) )
         goto done;
@@ -215,7 +204,7 @@ done:
     return r;
 }
 
-static LRESULT decompress( IMFTransform *decoder, ICDECOMPRESSEX *params )
+static LRESULT IV50_Decompress( IMFTransform *decoder, ICDECOMPRESS *icd, DWORD size )
 {
     IMFSample *in_sample = NULL, *out_sample = NULL;
     IMFMediaBuffer *in_buf = NULL, *out_buf = NULL;
@@ -225,12 +214,12 @@ static LRESULT decompress( IMFTransform *decoder, ICDECOMPRESSEX *params )
     HRESULT hr;
     LRESULT r = ICERR_INTERNAL;
 
-    TRACE( "decoder %p, params %p.\n", decoder, params );
+    TRACE("ICM_DECOMPRESS %p %p %lu\n", decoder, icd, size);
 
     if ( FAILED(MFCreateSample( &in_sample )) )
         return ICERR_INTERNAL;
 
-    if ( FAILED(MFCreateMemoryBuffer( params->lpbiSrc->biSizeImage, &in_buf )) )
+    if ( FAILED(MFCreateMemoryBuffer( icd->lpbiInput->biSizeImage, &in_buf )) )
         goto done;
 
     if ( FAILED(IMFSample_AddBuffer( in_sample, in_buf )) )
@@ -239,7 +228,7 @@ static LRESULT decompress( IMFTransform *decoder, ICDECOMPRESSEX *params )
     if ( FAILED(MFCreateSample( &out_sample )) )
         goto done;
 
-    if ( FAILED(MFCreateMemoryBuffer( params->lpbiDst->biSizeImage, &out_buf )) )
+    if ( FAILED(MFCreateMemoryBuffer( icd->lpbiOutput->biSizeImage, &out_buf )) )
         goto done;
 
     if ( FAILED(IMFSample_AddBuffer( out_sample, out_buf )) )
@@ -248,12 +237,12 @@ static LRESULT decompress( IMFTransform *decoder, ICDECOMPRESSEX *params )
     if ( FAILED(IMFMediaBuffer_Lock( in_buf, &data, NULL, NULL )))
         goto done;
 
-    memcpy( data, params->lpSrc, params->lpbiSrc->biSizeImage );
+    memcpy( data, icd->lpInput, icd->lpbiInput->biSizeImage );
 
     if ( FAILED(IMFMediaBuffer_Unlock( in_buf )) )
         goto done;
 
-    if ( FAILED(IMFMediaBuffer_SetCurrentLength( in_buf, params->lpbiSrc->biSizeImage )) )
+    if ( FAILED(IMFMediaBuffer_SetCurrentLength( in_buf, icd->lpbiInput->biSizeImage )) )
         goto done;
 
     if ( FAILED(IMFTransform_ProcessInput( decoder, 0, in_sample, 0 )) )
@@ -268,17 +257,15 @@ static LRESULT decompress( IMFTransform *decoder, ICDECOMPRESSEX *params )
 
     if ( SUCCEEDED(hr) )
     {
-        LONG depth = params->lpbiDst->biBitCount / 8;
-        LONG width = params->lpbiDst->biWidth * depth;
+        LONG width = icd->lpbiOutput->biWidth * (icd->lpbiOutput->biBitCount / 8);
+        LONG height = abs( icd->lpbiOutput->biHeight );
         LONG stride = (width + 3) & ~3;
-        BYTE *output = params->lpDst;
+        BYTE *output = (BYTE *)icd->lpOutput;
 
         if ( FAILED(IMFMediaBuffer_Lock( out_buf, &data, NULL, NULL )))
             goto done;
 
-        output += params->yDst * stride;
-        output += params->xDst * depth;
-        MFCopyImage( output, stride, data, stride, params->dxDst * depth, params->dyDst );
+        MFCopyImage( output, stride, data, stride, width, height );
 
         IMFMediaBuffer_Unlock( out_buf );
         r = ICERR_OK;
@@ -323,21 +310,6 @@ static LRESULT IV50_GetInfo( ICINFO *icinfo, DWORD dwSize )
     return sizeof(ICINFO);
 }
 
-static void fill_decompressex_params( ICDECOMPRESSEX *params,
-        BITMAPINFOHEADER *src, BITMAPINFOHEADER *dst )
-{
-    memset( params, 0, sizeof(*params) );
-    params->lpbiSrc = src;
-    params->lpbiDst = dst;
-    params->dxSrc = src->biWidth;
-    params->dySrc = src->biHeight;
-    if (dst)
-    {
-        params->dxDst = dst->biWidth;
-        params->dyDst = abs(dst->biHeight);
-    }
-}
-
 /***********************************************************************
  *              DriverProc (IR50_32.@)
  */
@@ -377,15 +349,8 @@ LRESULT WINAPI IV50_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
 
     case ICM_DECOMPRESS_QUERY:
-    {
-        ICDECOMPRESSEX params;
-
-        fill_decompressex_params( &params, (BITMAPINFOHEADER *)lParam1, (BITMAPINFOHEADER *)lParam2 );
-        return decompress_query( &params );
-    }
-
-    case ICM_DECOMPRESSEX_QUERY:
-        return decompress_query( (ICDECOMPRESSEX *)lParam1 );
+        r = IV50_DecompressQuery( (LPBITMAPINFO) lParam1, (LPBITMAPINFO) lParam2 );
+        break;
 
     case ICM_DECOMPRESS_GET_FORMAT:
         r = IV50_DecompressGetFormat( (LPBITMAPINFO) lParam1, (LPBITMAPINFO) lParam2 );
@@ -396,34 +361,23 @@ LRESULT WINAPI IV50_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
 
     case ICM_DECOMPRESS:
-    {
-        const ICDECOMPRESS *params = (ICDECOMPRESS *)lParam1;
-        ICDECOMPRESSEX ex_params;
-
-        fill_decompressex_params( &ex_params, params->lpbiInput, params->lpbiOutput );
-        ex_params.dwFlags = params->dwFlags;
-        ex_params.lpSrc = params->lpInput;
-        ex_params.lpDst = params->lpOutput;
-        return decompress( decoder, &ex_params );
-    }
-
-    case ICM_DECOMPRESSEX:
-        return decompress( decoder, (ICDECOMPRESSEX *)lParam1 );
+        r = IV50_Decompress( decoder, (ICDECOMPRESS *) lParam1, (DWORD) lParam2 );
+        break;
 
     case ICM_DECOMPRESS_BEGIN:
-    {
-        ICDECOMPRESSEX params;
-
-        fill_decompressex_params( &params, (BITMAPINFOHEADER *)lParam1, (BITMAPINFOHEADER *)lParam2 );
-        return decompress_begin( decoder, &params );
-    }
-
-    case ICM_DECOMPRESSEX_BEGIN:
-        return decompress_begin( decoder, (ICDECOMPRESSEX *)lParam1 );
+        r = IV50_DecompressBegin( decoder, (LPBITMAPINFO) lParam1, (LPBITMAPINFO) lParam2 );
+        break;
 
     case ICM_DECOMPRESS_END:
-    case ICM_DECOMPRESSEX_END:
-        r = ICERR_OK;
+        r = ICERR_UNSUPPORTED;
+        break;
+
+    case ICM_DECOMPRESSEX_QUERY:
+        FIXME("ICM_DECOMPRESSEX_QUERY\n");
+        break;
+
+    case ICM_DECOMPRESSEX:
+        FIXME("ICM_DECOMPRESSEX\n");
         break;
 
     case ICM_COMPRESS_QUERY:

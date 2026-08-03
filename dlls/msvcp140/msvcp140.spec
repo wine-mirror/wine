@@ -1687,7 +1687,7 @@
 @ cdecl -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z(str) _Xout_of_range
 @ stub -arch=win32 ?_Xoverflow_error@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xoverflow_error@std@@YAXPEBD@Z
-@ cdecl ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z(long) _Xregex_error
+@ stub ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
 @ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) _Xruntime_error
 @ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) _Xruntime_error
 @ cdecl -arch=win32 ?__ExceptionPtrAssign@@YAXPAXPBX@Z(ptr ptr) __ExceptionPtrAssign
@@ -1706,8 +1706,8 @@
 @ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) __ExceptionPtrDestroy
 @ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) __ExceptionPtrRethrow
 @ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) __ExceptionPtrRethrow
-@ cdecl -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z(ptr ptr) __ExceptionPtrSwap
-@ cdecl -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z(ptr ptr) __ExceptionPtrSwap
+@ stub -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z
+@ stub -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z
 @ cdecl -arch=win32 ?__ExceptionPtrToBool@@YA_NPBX@Z(ptr) __ExceptionPtrToBool
 @ cdecl -arch=win64 ?__ExceptionPtrToBool@@YA_NPEBX@Z(ptr) __ExceptionPtrToBool
 @ cdecl -arch=arm ?always_noconv@codecvt_base@std@@QBA_NXZ(ptr) codecvt_base_always_noconv
@@ -3634,20 +3634,20 @@
 @ cdecl _Cnd_unregister_at_thread_exit(ptr)
 @ cdecl _Cnd_wait(ptr ptr)
 @ cdecl _Copy_file(wstr wstr)
-@ cdecl _Cosh(double double)
+@ stub _Cosh
 @ cdecl _Current_get(ptr)
 @ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar
 @ extern _Denorm
 @ cdecl _Dtest(ptr)
 @ cdecl _Equivalent(wstr wstr) _Equivalent
 @ cdecl _Exp(ptr double long)
-@ cdecl _FCosh(float float)
+@ stub _FCosh
 @ extern _FDenorm
 @ cdecl _FDtest(ptr)
 @ cdecl _FExp(ptr float long)
 @ extern _FInf
 @ extern _FNan
-@ cdecl _FSinh(float float)
+@ stub _FSinh
 @ extern _FSnan
 @ cdecl _File_size(wstr)
 @ cdecl -norelay _Getcoll()
@@ -3659,13 +3659,13 @@
 @ stub _Hard_links
 @ extern _Hugeval
 @ extern _Inf
-@ cdecl _LCosh(double double) _Cosh
+@ stub _LCosh
 @ extern _LDenorm
 @ cdecl _LDtest(ptr) _Dtest
 @ stub _LExp
 @ extern _LInf
 @ extern _LNan
-@ cdecl _LSinh(double double) _Sinh
+@ stub _LSinh
 @ extern _LSnan
 @ cdecl _Last_write_time(int64)
 @ cdecl _Link(wstr wstr) tr2_sys__Link_wchar
@@ -3698,7 +3698,7 @@
 @ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
 @ cdecl _Resize(wstr int64)
 @ cdecl _Set_last_write_time(wstr int64)
-@ cdecl _Sinh(double double)
+@ stub _Sinh
 @ extern _Snan
 @ cdecl _Stat(wstr ptr)
 @ stub _Statvfs

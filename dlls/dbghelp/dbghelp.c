@@ -417,7 +417,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
     if (!base) return FALSE;
 
     TRACE("got debug info address %#I64x from PEB %p\n", base, pbi.PebBaseAddress);
-    if (base != (ULONG_PTR)base || (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base)))
+    if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
     {
         WARN("couldn't load process debug info at %#I64x\n", base);
         pcs->loader = &empty_loader_ops;
@@ -764,7 +764,6 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
     }
 }
 
-#ifndef _WIN64
 /******************************************************************
  *		reg_cb64to32 (internal)
  *
@@ -810,7 +809,6 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     }
     return pcs->reg_cb32(hProcess, action, data32, (PVOID)(DWORD_PTR)user);
 }
-#endif
 
 /******************************************************************
  *		pcs_callback (internal)
@@ -879,19 +877,17 @@ static BOOL sym_register_cb(HANDLE hProcess,
     return TRUE;
 }
 
-#ifndef _WIN64
 /***********************************************************************
  *		SymRegisterCallback (DBGHELP.@)
  */
-BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
+BOOL WINAPI SymRegisterCallback(HANDLE hProcess, 
                                 PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
                                 PVOID UserContext)
 {
-    TRACE("(%p, %p, %p)\n",
+    TRACE("(%p, %p, %p)\n", 
           hProcess, CallbackFunction, UserContext);
     return sym_register_cb(hProcess, reg_cb64to32, CallbackFunction, (DWORD_PTR)UserContext, FALSE);
 }
-#endif
 
 /***********************************************************************
  *		SymRegisterCallback64 (DBGHELP.@)

@@ -1,0 +1,7 @@
+MODULE    = openal32.dll
+EXTRALIBS = @LIBOPENAL@ @FRAMEWORK_OPENAL@
+
+C_SRCS = \
+	openal.c
+
+@MAKE_DLL_RULES@

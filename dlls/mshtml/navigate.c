@@ -814,8 +814,7 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
 {
     const WCHAR *ptr;
     DWORD len = 0;
-    WCHAR *wbuf;
-    char *buf;
+    WCHAR *buf;
 
     IWinInetHttpInfo_QueryInfo(wininet_info, HTTP_QUERY_RAW_HEADERS_CRLF, NULL, &len, NULL, NULL);
     if(!len)
@@ -831,18 +830,13 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
         return;
     }
 
-    wbuf = strdupAtoW(buf);
-    free(buf);
-    if (!wbuf)
-        return;
-
-    ptr = wcschr(wbuf, '\r');
+    ptr = wcschr(buf, '\r');
     if(ptr && ptr[1] == '\n') {
         ptr += 2;
         process_response_headers(This, ptr);
     }
 
-    free(wbuf);
+    free(buf);
 }
 
 HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
@@ -1150,9 +1144,8 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 break;
             case BOM_UTF16:
                 This->nschannel->charset = strdup("utf-16");
-                break;
             case BOM_NONE:
-                break;
+                /* FIXME: Get charset from HTTP headers */;
             }
 
             if(!This->nschannel->content_type) {

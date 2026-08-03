@@ -44,7 +44,7 @@ static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UI
 }
 
 
-static TW_UINT16 set_onevaluep(pTW_CAPABILITY pCapability, TW_UINT16 type, void *value)
+static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UINT32 value)
 {
     pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
@@ -55,18 +55,12 @@ static TW_UINT16 set_onevaluep(pTW_CAPABILITY pCapability, TW_UINT16 type, void 
         {
             pCapability->ConType = TWON_ONEVALUE;
             pVal->ItemType = type;
-            memcpy(&pVal->Item, value, sizeof(pVal->Item));
+            pVal->Item = value;
             GlobalUnlock (pCapability->hContainer);
             return TWCC_SUCCESS;
         }
     }
    return TWCC_LOWMEMORY;
-}
-
-
-static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UINT32 value)
-{
-    return set_onevaluep(pCapability, type, &value);
 }
 
 static TW_UINT16 msg_set(pTW_CAPABILITY pCapability, TW_UINT32 *val)
@@ -91,10 +85,10 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
     pCapability->hContainer = 0;
 
     if (type == TWTY_INT16 || type == TWTY_UINT16)
-        pCapability->hContainer = GlobalAlloc (GMEM_ZEROINIT, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT16)]));
+        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT16)]));
 
     if (type == TWTY_INT32 || type == TWTY_UINT32)
-        pCapability->hContainer = GlobalAlloc (GMEM_ZEROINIT, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT32)]));
+        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT32)]));
 
     if (pCapability->hContainer)
         enumv = GlobalLock(pCapability->hContainer);
@@ -187,7 +181,7 @@ static TW_UINT16 msg_get_array(pTW_CAPABILITY pCapability, TW_UINT16 type, const
 
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
-    static const int supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE, CAP_INDICATORS,
+    static const int supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
                     CAP_AUTOFEED, CAP_FEEDERENABLED,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH, ICAP_SUPPORTEDSIZES };
@@ -221,13 +215,8 @@ static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action
             twCC = msg_set(pCapability, &val);
             if (twCC == TWCC_SUCCESS)
             {
-                if (val == TWSX_NATIVE || val == TWSX_MEMORY)
-                {
-                    activeDS.capXferMech = (TW_UINT16) val;
-                    FIXME("Partial Stub:  XFERMECH set to %ld, but ignored\n", val);
-                }
-                else
-                    twCC = TWCC_BADVALUE;
+               activeDS.capXferMech = (TW_UINT16) val;
+               FIXME("Partial Stub:  XFERMECH set to %ld, but ignored\n", val);
             }
             break;
 
@@ -252,7 +241,6 @@ static TW_UINT16 SANE_ICAPXferMech (pTW_CAPABILITY pCapability, TW_UINT16 action
 static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT32 val;
-    TW_INT16  val16;
     TW_UINT16 twCC = TWCC_BADCAP;
 
     TRACE("CAP_XFERCOUNT\n");
@@ -271,22 +259,8 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
 
         case MSG_SET:
             twCC = msg_set(pCapability, &val);
-            val16 = (TW_INT16) val;
-            if (val16==0)
-            {
-                /* This case is explicitly mentioned in the TWAIN specification */
-                activeDS.capXferCount = -1;
-                twCC = TWCC_CHECKSTATUS;
-            }
-            else if (val16>0 || val16==-1)
-            {
-                activeDS.capXferCount = val16;
-                TRACE("Set XFERCOUNT %d", activeDS.capXferCount);
-            }
-            else
-            {
-                twCC = TWCC_BADVALUE;
-            }
+            if (twCC == TWCC_SUCCESS)
+               FIXME("Partial Stub:  XFERCOUNT set to %ld, but ignored\n", val);
             break;
 
         case MSG_GETDEFAULT:
@@ -294,11 +268,10 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
             break;
 
         case MSG_RESET:
-            activeDS.capXferCount = -1;
             /* .. fall through intentional .. */
 
         case MSG_GETCURRENT:
-            twCC = set_onevalue(pCapability, TWTY_INT16, activeDS.capXferCount);
+            twCC = set_onevalue(pCapability, TWTY_INT16, -1);
             break;
     }
     return twCC;
@@ -482,87 +455,30 @@ static TW_UINT16 SANE_ICAPUnits (pTW_CAPABILITY pCapability, TW_UINT16 action)
 static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-    TW_UINT32 val;
-    TW_UINT32 sane_depth, twain_depth;
-    BOOL have_option_depth;
-    int samples_per_pixel;
-    struct option_descriptor opt;
+    TW_UINT32 possible_values[1];
 
     TRACE("ICAP_BITDEPTH\n");
 
-    get_sane_params(&activeDS.frame_params); // Updates activeDS.frame_params.format
-    samples_per_pixel=(activeDS.frame_params.format == FMT_RGB) ? 3 : 1;
-
-    sane_depth=activeDS.frame_params.depth;
-    have_option_depth =
-      sane_find_option( "depth", TYPE_INT, &opt ) == TWCC_SUCCESS
-      && (opt.size==sizeof(TW_UINT32))
-      && sane_option_get_value(opt.optno, &sane_depth) == TWCC_SUCCESS;
-    twain_depth = sane_depth*samples_per_pixel;
+    possible_values[0] = activeDS.frame_params.depth;
 
     switch (action)
     {
         case MSG_QUERYSUPPORT:
             twCC = set_onevalue(pCapability, TWTY_INT32,
-                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT | (have_option_depth ? TWQC_SET : 0)  );
+                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT  );
             break;
 
         case MSG_GET:
-            if (have_option_depth &&
-                opt.constraint_type == CONSTRAINT_WORD_LIST &&
-                opt.constraint.word_list[0]<=32)
-            {
-                /* The constraint word ist is in bits per color channel, for TWAIN we need bits per pixel */
-                TW_UINT32 enum_bitdepths[32];
-                int i;
-                for (i=0; i<opt.constraint.word_list[0]; i++)
-                    enum_bitdepths[i] = opt.constraint.word_list[i+1] * samples_per_pixel;
-                twCC = msg_get_enum(pCapability, enum_bitdepths, opt.constraint.word_list[0],
-                                    TWTY_UINT16, twain_depth, twain_depth);
-            }
-            else
-            {
-                twCC = msg_get_enum(pCapability, &twain_depth, 1,
-                                    TWTY_UINT16, twain_depth, twain_depth);
-            }
-            break;
-
-        case MSG_SET:
-            if (have_option_depth)
-            {
-                twCC = msg_set(pCapability, &val);
-                if (twCC == TWCC_SUCCESS)
-                {
-                    BOOL reload = FALSE;
-                    TW_UINT16 val16 = (TW_UINT16) val;
-
-                    /* TWAIN Spec 2.4 says unambiguous that the depth is defined per pixel,
-                     * not per color channel. However it also warns that there have been
-                     * misunderstandings. So interpret it... */
-                    if (val16==8 && samples_per_pixel==3)
-                    {
-                        val16=24;
-                    } else if (val16==16 && samples_per_pixel==3)
-                    {
-                        val16=48;
-                    }
-                    sane_depth = val16/samples_per_pixel;
-                    twCC = sane_option_set_value(opt.optno, &sane_depth, &reload);
-                    if (reload) twCC = TWCC_CHECKSTATUS;
-                }
-            }
-            else
-            {
-                twCC = TWCC_BADCAP;
-            }
+            twCC = msg_get_enum(pCapability, possible_values, ARRAY_SIZE(possible_values),
+                    TWTY_UINT16, activeDS.frame_params.depth, activeDS.frame_params.depth);
             break;
 
         case MSG_GETDEFAULT:
             /* .. Fall through intentional .. */
 
         case MSG_GETCURRENT:
-            TRACE("Returning current bitdepth of %ld\n", twain_depth);
-            twCC = set_onevalue(pCapability, TWTY_UINT16, twain_depth);
+            TRACE("Returning current bitdepth of %d\n", activeDS.frame_params.depth);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.frame_params.depth);
             break;
     }
     return twCC;
@@ -636,7 +552,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
 {
     TW_UINT16 twCC = TWCC_BADCAP;
     TW_UINT32 val;
-    TW_FIX32 current_resolution;
+    int current_resolution;
     TW_FIX32 *default_res;
     const char *best_option_name;
     struct option_descriptor opt;
@@ -654,9 +570,28 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
         best_option_name = "y-resolution";
         default_res = &activeDS.defaultYResolution;
     }
-    if (sane_option_get_resolution(best_option_name, &current_resolution) != TWCC_SUCCESS)
+    if (sane_option_get_int(best_option_name, &current_resolution) != TWCC_SUCCESS)
     {
-        return TWCC_BADCAP;
+        best_option_name = "resolution";
+        if (sane_option_get_int(best_option_name, &current_resolution) != TWCC_SUCCESS)
+            return TWCC_BADCAP;
+    }
+
+    /* Sane does not support a concept of 'default' resolution, so we have to
+     *   cache the resolution the very first time we load the scanner, and use that
+     *   as the default */
+    if (cap == ICAP_XRESOLUTION && ! activeDS.XResolutionSet)
+    {
+        default_res->Whole = current_resolution;
+        default_res->Frac = 0;
+        activeDS.XResolutionSet = TRUE;
+    }
+
+    if (cap == ICAP_YRESOLUTION && ! activeDS.YResolutionSet)
+    {
+        default_res->Whole = current_resolution;
+        default_res->Frac = 0;
+        activeDS.YResolutionSet = TRUE;
     }
 
     switch (action)
@@ -667,23 +602,19 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             break;
 
         case MSG_GET:
-            if (sane_option_probe_resolution(best_option_name, &opt)==TWCC_SUCCESS ||
-                sane_option_probe_resolution("resolution", &opt)==TWCC_SUCCESS)
+            twCC = sane_option_probe_resolution(best_option_name, &opt);
+            if (twCC == TWCC_SUCCESS)
             {
                 if (opt.constraint_type == CONSTRAINT_RANGE)
                     twCC = msg_get_range(pCapability, TWTY_FIX32,
                             opt.constraint.range.min, opt.constraint.range.max,
                             opt.constraint.range.quant == 0 ? 1 : opt.constraint.range.quant,
-                            default_res->Whole, current_resolution.Whole);
+                            default_res->Whole, current_resolution);
                 else if (opt.constraint_type == CONSTRAINT_WORD_LIST)
                     twCC = msg_get_array(pCapability, TWTY_UINT32, &(opt.constraint.word_list[1]),
                             opt.constraint.word_list[0]);
                 else
                     twCC = TWCC_CAPUNSUPPORTED;
-            }
-            else
-            {
-                twCC = TWCC_BADCAP;
             }
             break;
 
@@ -694,23 +625,23 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
                 TW_FIX32 f32;
                 BOOL reload = FALSE;
                 memcpy(&f32, &val, sizeof(f32));
-                twCC = sane_option_set_resolution(best_option_name, &f32, &reload);
+                twCC = sane_option_set_int(best_option_name, f32.Whole, &reload);
                 if (reload) twCC = TWCC_CHECKSTATUS;
             }
             break;
 
         case MSG_GETDEFAULT:
-            twCC = set_onevaluep(pCapability, TWTY_FIX32, default_res);
+            twCC = set_onevalue(pCapability, TWTY_FIX32, default_res->Whole);
             break;
 
         case MSG_RESET:
-          twCC = sane_option_set_resolution(best_option_name, default_res, NULL);
+            twCC = sane_option_set_int(best_option_name, default_res->Whole, NULL);
             if (twCC != TWCC_SUCCESS) return twCC;
 
             /* .. fall through intentional .. */
 
         case MSG_GETCURRENT:
-            twCC = set_onevaluep(pCapability, TWTY_FIX32, &current_resolution);
+            twCC = set_onevalue(pCapability, TWTY_FIX32, current_resolution);
             break;
     }
     return twCC;
@@ -1105,46 +1036,6 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
 }
 
 
-/* CAP_INDICATORS */
-static TW_UINT16 SANE_CAPIndicators (pTW_CAPABILITY pCapability, TW_UINT16 action)
-{
-    TW_UINT16 twCC = TWCC_BADCAP;
-    TW_UINT32 val;
-
-    TRACE("CAP_INDICATORS\n");
-
-    switch (action)
-    {
-        case MSG_QUERYSUPPORT:
-            twCC = set_onevalue(pCapability, TWTY_INT32,
-                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
-            break;
-
-        case MSG_GET:
-            twCC = set_onevalue(pCapability, TWTY_BOOL, activeDS.capIndicators);
-            break;
-
-        case MSG_SET:
-            twCC = msg_set(pCapability, &val);
-            if (twCC == TWCC_SUCCESS)
-                activeDS.capIndicators = (TW_BOOL) val;
-            break;
-
-        case MSG_GETDEFAULT:
-            twCC = set_onevalue(pCapability, TWTY_BOOL, TRUE);
-            break;
-
-        case MSG_RESET:
-            activeDS.capIndicators = TRUE;
-            /* .. fall through intentional .. */
-
-        case MSG_GETCURRENT:
-            twCC = set_onevalue(pCapability, TWTY_BOOL, activeDS.capIndicators);
-            break;
-    }
-    return twCC;
-}
-
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -1175,10 +1066,6 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case CAP_FEEDERENABLED:
             twCC = SANE_CAPFeederEnabled (pCapability, action);
-            break;
-
-        case CAP_INDICATORS:
-            twCC = SANE_CAPIndicators (pCapability, action);
             break;
 
         case ICAP_PIXELTYPE:

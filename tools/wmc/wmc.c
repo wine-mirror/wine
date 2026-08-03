@@ -19,12 +19,15 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <sys/types.h>
+#include <signal.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "wmc.h"
 #include "utils.h"
@@ -33,13 +36,20 @@
 
 static const char usage[] =
 	"Usage: wmc [options...] [inputfile.mc]\n"
+	"   -B x                       Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
+	"                              (default is n[ative] which equals "
+#ifdef WORDS_BIGENDIAN
+	"big"
+#else
+	"little"
+#endif
+	"-endian)\n"
 	"   -c                         Set 'custom-bit' in values\n"
 	"   -d                         Use decimal values in output\n"
 	"   -D                         Set debug flag\n"
 	"   -h, --help                 Print this message\n"
 	"   -H FILE                    Write header file to FILE (default is inputfile.h)\n"
 	"   -i                         Inline messagetable(s)\n"
-	"   --nls-dir=DIR              Directory containing the NLS codepage mappings\n"
 	"   -o, --output=FILE          Output to FILE (default is infile.rc)\n"
 	"   -O, --output-format=FORMAT The output format (`rc', `res', or `pot')\n"
 	"   -P, --po-dir=DIR           Directory containing po files for translations\n"
@@ -57,6 +67,11 @@ static const char version_string[] =
 	"Wine Message Compiler version " PACKAGE_VERSION "\n"
 	"Copyright 2000 Bertho A. Stultiens\n"
 	;
+
+/*
+ * The output byte-order of resources (set with -B)
+ */
+int byteorder = WMC_BO_NATIVE;
 
 /*
  * Custom bit (bit 29) in output values must be set (-c option)
@@ -79,6 +94,11 @@ int pedantic = 0;
 int unicodein = 0;
 
 /*
+ * Unicode output (-U option)
+ */
+int unicodeout = 0;
+
+/*
  * Inline the messagetables (don't write *.bin files; -i option)
  */
 int rcinline = 0;
@@ -91,11 +111,8 @@ static int dodebug = 0;
 static char *po_dir;
 
 char *output_name = NULL;	/* The name given by the -o option */
-const char *input_name = NULL;	/* The name given on the command-line */
+char *input_name = NULL;	/* The name given on the command-line */
 char *header_name = NULL;	/* The name given by the -H option */
-
-static const char *bindir;
-const char *nlsdirs[3] = { NULL, DATADIR "/wine/nls", NULL };
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
@@ -109,29 +126,23 @@ FILE *yyin;
 
 static enum
 {
-    FORMAT_UNKNOWN,
     FORMAT_RC,
     FORMAT_RES,
     FORMAT_POT
 } output_format;
 
-enum long_options_values
+static const char short_options[] = "B:cdDhH:io:O:P:uUvVW";
+static const struct option long_options[] =
 {
-    LONG_OPT_NLS_DIR = 1,
+	{ "help", 0, NULL, 'h' },
+	{ "output", 1, NULL, 'o' },
+	{ "output-format", 1, NULL, 'O' },
+	{ "pedantic", 0, NULL, 'W' },
+	{ "po-dir", 1, NULL, 'P' },
+	{ "version", 0, NULL, 'v' }
 };
 
-static const char short_options[] = "cdDhH:io:O:P:uUvVW";
-static const struct long_option long_options[] =
-{
-	{ "help", 0, 'h' },
-	{ "nls-dir", 1, LONG_OPT_NLS_DIR },
-	{ "output", 1, 'o' },
-	{ "output-format", 1, 'O' },
-	{ "pedantic", 0, 'W' },
-	{ "po-dir", 1, 'P' },
-	{ "version", 0, 'v' },
-        { NULL }
-};
+static void segvhandler(int sig);
 
 static void cleanup_files(void)
 {
@@ -144,77 +155,24 @@ static void exit_on_signal( int sig )
     exit(1);  /* this will call the atexit functions */
 }
 
-static void option_callback( int optc, char *optarg )
-{
-    switch(optc)
-    {
-    case 'c':
-        custombit = 1;
-        break;
-    case 'd':
-        decimal = 1;
-        break;
-    case 'D':
-        dodebug = 1;
-        break;
-    case 'h':
-        printf("%s", usage);
-        exit(0);
-        /* No return */
-    case 'H':
-        header_name = xstrdup(optarg);
-        break;
-    case 'i':
-        rcinline = 1;
-        break;
-    case 'o':
-        output_name = xstrdup(optarg);
-        break;
-    case 'O':
-        if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
-        else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
-        else if (!strcmp( optarg, "pot" )) output_format = FORMAT_POT;
-        else error("Output format must be rc or res\n" );
-        break;
-    case 'P':
-        po_dir = xstrdup( optarg );
-        break;
-    case 'u':
-        unicodein = 1;
-        break;
-    case 'U':  /* ignored for backwards compatibility */
-        break;
-    case 'v':
-        show_languages();
-        exit(0);
-        /* No return */
-    case 'V':
-        printf(version_string);
-        exit(0);
-        /* No return */
-    case 'W':
-        pedantic = 1;
-        break;
-    case LONG_OPT_NLS_DIR:
-        nlsdirs[0] = xstrdup( optarg );
-        break;
-    case '?':
-        fprintf(stderr, "wmc: %s\n\n%s", optarg, usage);
-        exit(1);
-    }
-}
-
 int main(int argc,char *argv[])
 {
+	extern char* optarg;
+	extern int   optind;
+	int optc;
+	int opti = 0;
+	int lose = 0;
 	int ret;
 	int i;
 	int cmdlen;
-        struct strarray files;
 
 	atexit( cleanup_files );
-        init_signals( exit_on_signal );
-        bindir = get_bindir( argv[0] );
-        nlsdirs[0] = get_nlsdir( bindir, "/tools/wmc" );
+	signal(SIGSEGV, segvhandler);
+	signal( SIGTERM, exit_on_signal );
+	signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+	signal( SIGHUP, exit_on_signal );
+#endif
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
@@ -230,7 +188,94 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-        files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
+	while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF)
+	{
+		switch(optc)
+		{
+		case 'B':
+			switch(optarg[0])
+			{
+			case 'n':
+			case 'N':
+				byteorder = WMC_BO_NATIVE;
+				break;
+			case 'l':
+			case 'L':
+				byteorder = WMC_BO_LITTLE;
+				break;
+			case 'b':
+			case 'B':
+				byteorder = WMC_BO_BIG;
+				break;
+			default:
+				fprintf(stderr, "Byteordering must be n[ative], l[ittle] or b[ig]\n");
+				lose++;
+			}
+			break;
+		case 'c':
+			custombit = 1;
+			break;
+		case 'd':
+			decimal = 1;
+			break;
+		case 'D':
+			dodebug = 1;
+			break;
+		case 'h':
+			printf("%s", usage);
+			exit(0);
+			/* No return */
+		case 'H':
+			header_name = xstrdup(optarg);
+			break;
+		case 'i':
+			rcinline = 1;
+			break;
+		case 'o':
+			output_name = xstrdup(optarg);
+			break;
+		case 'O':
+			if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
+			else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
+			else if (!strcmp( optarg, "pot" )) output_format = FORMAT_POT;
+			else
+                        {
+                            fprintf(stderr, "Output format must be rc or res\n" );
+                            lose++;
+                        }
+                        break;
+		case 'P':
+			po_dir = xstrdup( optarg );
+                        break;
+		case 'u':
+			unicodein = 1;
+			break;
+		case 'U':
+			unicodeout = 1;
+			break;
+		case 'v':
+			show_languages();
+			show_codepages();
+			exit(0);
+			/* No return */
+		case 'V':
+			printf(version_string);
+			exit(0);
+			/* No return */
+		case 'W':
+			pedantic = 1;
+			break;
+		default:
+			lose++;
+			break;
+		}
+	}
+
+	if(lose)
+	{
+		fprintf(stderr, "%s", usage);
+		return 1;
+	}
 
 	mcy_debug = dodebug;
 	if(dodebug)
@@ -240,27 +285,22 @@ int main(int argc,char *argv[])
 	}
 
 	/* Check for input file on command-line */
-        if (files.count) input_name = files.str[0];
-
-        /* Guess output format */
-        if (output_format == FORMAT_UNKNOWN)
-        {
-            if (output_name && strendswith( output_name, ".res" )) output_format = FORMAT_RES;
-            else if (output_name && strendswith( output_name, ".pot" )) output_format = FORMAT_POT;
-            else output_format = FORMAT_RC;
-        }
+	if(optind < argc)
+	{
+		input_name = argv[optind];
+	}
 
 	/* Generate appropriate outfile names */
 	if(!output_name)
 	{
-            const char *name = input_name ? get_basename(input_name) : "wmc.tab";
-            output_name = replace_extension( name, ".mc", ".rc" );
+		output_name = dup_basename(input_name, ".mc");
+		strcat(output_name, ".rc");
 	}
 
 	if(!header_name)
 	{
-            const char *name = input_name ? get_basename(input_name) : "wmc.tab";
-            header_name = replace_extension( name, ".mc", ".h" );
+		header_name = dup_basename(input_name, ".mc");
+		strcat(header_name, ".h");
 	}
 
 	if(input_name)
@@ -282,6 +322,12 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
+#ifdef WORDS_BIGENDIAN
+	byte_swapped = (byteorder == WMC_BO_LITTLE);
+#else
+	byte_swapped = (byteorder == WMC_BO_BIG);
+#endif
+
         switch (output_format)
         {
         case FORMAT_RC:
@@ -297,10 +343,16 @@ int main(int argc,char *argv[])
         case FORMAT_POT:
             write_pot_file( output_name );
             break;
-        default:
-            break;
         }
 	output_name = NULL;
 	header_name = NULL;
 	return 0;
+}
+
+static void segvhandler(int sig)
+{
+	fprintf(stderr, "\n%s:%d: Oops, segment violation\n", input_name, line_number);
+	fflush(stdout);
+	fflush(stderr);
+	abort();
 }

@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "wine/exception.h"
@@ -72,15 +73,12 @@ struct relay_private_data
 
 static const WCHAR **debug_relay_excludelist;
 static const WCHAR **debug_relay_includelist;
-static const WCHAR **debug_from_relay_excludelist;
-static const WCHAR **debug_from_relay_includelist;
-
-#ifdef __i386__
 static const WCHAR **debug_snoop_excludelist;
 static const WCHAR **debug_snoop_includelist;
+static const WCHAR **debug_from_relay_excludelist;
+static const WCHAR **debug_from_relay_includelist;
 static const WCHAR **debug_from_snoop_excludelist;
 static const WCHAR **debug_from_snoop_includelist;
-#endif
 
 static RTL_RUN_ONCE init_once = RTL_RUN_ONCE_INIT;
 
@@ -180,14 +178,12 @@ static DWORD WINAPI init_debug_lists( RTL_RUN_ONCE *once, void *param, void **co
 
     debug_relay_includelist = load_list( hkey, L"RelayInclude" );
     debug_relay_excludelist = load_list( hkey, L"RelayExclude" );
-    debug_from_relay_includelist = load_list( hkey, L"RelayFromInclude" );
-    debug_from_relay_excludelist = load_list( hkey, L"RelayFromExclude" );
-#ifdef __i386__
     debug_snoop_includelist = load_list( hkey, L"SnoopInclude" );
     debug_snoop_excludelist = load_list( hkey, L"SnoopExclude" );
+    debug_from_relay_includelist = load_list( hkey, L"RelayFromInclude" );
+    debug_from_relay_excludelist = load_list( hkey, L"RelayFromExclude" );
     debug_from_snoop_includelist = load_list( hkey, L"SnoopFromInclude" );
     debug_from_snoop_excludelist = load_list( hkey, L"SnoopFromExclude" );
-#endif
 
     NtClose( hkey );
     return TRUE;
@@ -938,7 +934,7 @@ void RELAY_SetupDLL( HMODULE module )
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef	struct
 {
@@ -978,7 +974,7 @@ typedef struct tagSNOOP_RETURNENTRIES {
 	struct tagSNOOP_RETURNENTRIES	*next;
 } SNOOP_RETURNENTRIES;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 extern void WINAPI SNOOP_Entry(void);
 extern void WINAPI SNOOP_Return(void);

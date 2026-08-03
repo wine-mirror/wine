@@ -19,7 +19,7 @@
 #ifndef __WINE_MINIDUMP_H
 #define __WINE_MINIDUMP_H
 
-#pragma pack(push,4)
+#include <pshpack4.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -942,6 +942,6 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID base, ULONG index, PMINIDUMP_DIRECTORY 
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif  /* __WINE_MINIDUMP_H */

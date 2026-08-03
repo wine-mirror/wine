@@ -544,6 +544,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct aac_decoder *decoder = impl_from_IMFTransform(iface);
+    MFT_OUTPUT_STREAM_INFO info;
     HRESULT hr;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
@@ -558,7 +559,11 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     if (!samples->pSample)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, samples->pSample, 0, &samples->dwStatus, NULL)))
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
+        return hr;
+
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, samples->pSample,
+            info.cbSize, &samples->dwStatus)))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
     else
         samples->dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;

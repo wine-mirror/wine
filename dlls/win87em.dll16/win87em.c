@@ -46,17 +46,27 @@ struct Win87EmInfoStruct
 /* FIXME: Still rather skeletal implementation only */
 
 static BOOL Installed = TRUE; /* 8087 is installed */
+static WORD RefCount = 0;
 static WORD CtrlWord_1 = 0;
+static WORD CtrlWord_2 = 0;
 static WORD CtrlWord_Internal = 0;
 static WORD StatusWord_1 = 0x000b;
 static WORD StatusWord_2 = 0;
+static WORD StatusWord_3 = 0;
+static WORD StackTop = 175;
+static WORD StackBottom = 0;
+static WORD Inthandler02hVar = 1;
 
 static void WIN87_ClearCtrlWord( CONTEXT *context )
 {
     context->Eax &= ~0xffff;  /* set AX to 0 */
     if (Installed)
+#ifdef __i386__
         __asm__("fclex");
-    StatusWord_2 = 0;
+#else
+        ;
+#endif
+    StatusWord_3 = StatusWord_2 = 0;
 }
 
 static void WIN87_SetCtrlWord( CONTEXT *context )
@@ -65,16 +75,22 @@ static void WIN87_SetCtrlWord( CONTEXT *context )
     context->Eax &= ~0x00c3;
     if (Installed) {
         CtrlWord_Internal = LOWORD(context->Eax);
+#ifdef __i386__
         __asm__("wait;fldcw %0" : : "m" (CtrlWord_Internal));
+#endif
     }
+    CtrlWord_2 = LOWORD(context->Eax);
 }
 
 static void WIN87_Init( CONTEXT *context )
 {
     if (Installed) {
+#ifdef __i386__
         __asm__("fninit");
         __asm__("fninit");
+#endif
     }
+    StackBottom = StackTop;
     context->Eax = (context->Eax & ~0xffff) | 0x1332;
     WIN87_SetCtrlWord(context);
     WIN87_ClearCtrlWord(context);
@@ -92,8 +108,8 @@ void WINAPI __fpMath( CONTEXT *context )
     switch(LOWORD(context->Ebx))
     {
     case 0: /* install (increase instanceref) emulator, install NMI vector */
-#if 0
         RefCount++;
+#if 0
         if (Installed)
             InstallIntVecs02hAnd75h();
 #endif
@@ -109,8 +125,8 @@ void WINAPI __fpMath( CONTEXT *context )
              * if zero. Every '0' call should have a matching '2' call.
              */
         WIN87_Init(context);
-#if 0
 	RefCount--;
+#if 0
         if (!RefCount && Installed)
             RestoreInt02h();
 #endif
@@ -137,12 +153,14 @@ void WINAPI __fpMath( CONTEXT *context )
             /* I don't know much about asm() programming. This could be
              * wrong.
              */
+#ifdef __i386__
            __asm__ __volatile__("fstcw %0;wait" : "=m" (save) : : "memory");
            __asm__ __volatile__("fstcw %0;wait" : "=m" (mask) : : "memory");
            __asm__ __volatile__("orw $0xC00,%0" : "=m" (mask) : : "memory");
            __asm__ __volatile__("fldcw %0;wait" : : "m" (mask));
            __asm__ __volatile__("frndint");
            __asm__ __volatile__("fldcw %0" : : "m" (save));
+#endif
         }
         break;
 
@@ -165,7 +183,9 @@ void WINAPI __fpMath( CONTEXT *context )
     case 8: /* restore internal status words from emulator status word */
         context->Eax &= ~0xffff;  /* set AX to 0 */
         if (Installed) {
+#ifdef __i386__
             __asm__("fstsw %0;wait" : "=m" (StatusWord_1));
+#endif
             context->Eax |= StatusWord_1 & 0x3f;
         }
         context->Eax = (context->Eax | StatusWord_2) & ~0xe000;
@@ -186,6 +206,7 @@ void WINAPI __fpMath( CONTEXT *context )
         break;
 
     case 12: /* save AX in some internal state var */
+        Inthandler02hVar = LOWORD(context->Eax);
         break;
 
     default: /* error. Say that loud and clear */

@@ -34,7 +34,6 @@ my %formats =
     "atom_t"        => [  4,   4,  "%04x" ],
     "process_id_t"  => [  4,   4,  "%04x" ],
     "thread_id_t"   => [  4,   4,  "%04x" ],
-    "d3dkmt_handle_t"=>[  4,   4,  "%08x" ],
     "unsigned __int64" => [ 8, 8,  "&uint64" ],
     "timeout_t"     => [  8,   8 ],
     "abstime_t"     => [  8,   8 ],
@@ -43,7 +42,7 @@ my %formats =
     "union apc_call"           => [ 64, 8 ],
     "union apc_result"         => [ 40, 8 ],
     "struct async_data"        => [ 40, 8 ],
-    "struct context_data"      => [ 1720, 8 ],
+    "struct context_data"      => [ 1728, 8 ],
     "struct cursor_pos"        => [ 24, 8 ],
     "union debug_event_data"   => [ 160, 8 ],
     "struct filesystem_event"  => [ 12, 4 ],
@@ -68,8 +67,6 @@ my %formats =
     "struct thread_info"       => [ 40, 8 ],
     "union udp_endpoint"       => [ 32, 4 ],
     "struct user_apc"          => [ 40, 8 ],
-    "struct class_info"        => [ 56, 8 ],
-    "struct ratio"             => [  4, 4 ],
 );
 
 my $file_header =

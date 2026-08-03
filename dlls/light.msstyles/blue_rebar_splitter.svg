@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:3-32" width="3" height="9" version="1.1" viewBox="0 0 .79374 2.3812" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <path d="m0.52916 0.79374h0.26458v0.79374h-0.26458z" fill-opacity=".33" stroke-width=".99999"/>
+  <g stroke-width=".99999">
+   <path d="m0 1.5875h0.26458v0.52916h-0.26458z" fill-opacity=".50196"/>
+   <path d="m0.26458 1.5875h0.26458v0.26458h-0.26458z" fill-opacity=".5"/>
+   <path d="m0 1.3229h0.52916v0.26458h-0.52916z" fill-opacity=".33"/>
+  </g>
+ </g>
+ <path d="m0 0.79374h0.52916v0.26458h-0.52916z" fill="#787878" fill-opacity=".5" stroke-width=".99999"/>
+ <path d="m0 1.0583h0.26458v0.26458h-0.26458z" fill="#787878" fill-opacity=".5" stroke-width="1.0001"/>
+ <path d="m0.52916 1.5875h0.26458v0.52916h-0.26458z" fill="#5a5a5a" fill-opacity=".33" stroke-width=".99999"/>
+ <path d="m0 2.1166h0.79374v0.26458h-0.79374z" fill="#5a5a5a" fill-opacity=".33" stroke-width=".99999"/>
+</svg>

@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 
 #include "file.h"
@@ -149,8 +150,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, size_t size,
 }
 
 /* write data to a process memory space */
-int write_process_memory( struct process *process, client_ptr_t ptr, size_t size, const char *src,
-                          data_size_t *written )
+int write_process_memory( struct process *process, client_ptr_t ptr, size_t size, const char *src )
 {
     ssize_t ret;
     int fd;
@@ -165,12 +165,41 @@ int write_process_memory( struct process *process, client_ptr_t ptr, size_t size
 
     ret = pwrite( fd, src, size, (off_t)ptr );
     close( fd );
-    if (ret == size && written) *written = size;
     if (ret == size) return 1;
 
     if (ret == -1) file_set_error();
     else set_error( STATUS_ACCESS_VIOLATION );
     return 0;
+}
+
+/* retrieve an LDT selector entry */
+void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
+                         unsigned int *limit, unsigned char *flags )
+{
+    ssize_t ret;
+    off_t pos = thread->process->ldt_copy;
+    int fd;
+
+    if (!pos)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if ((fd = open_proc_as( thread->process, O_RDONLY )) == -1) return;
+
+    ret = pread( fd, base, sizeof(*base), pos + entry*sizeof(int) );
+    if (ret != sizeof(*base)) goto error;
+    ret = pread( fd, limit, sizeof(*limit), pos + (8192 + entry)*sizeof(int) );
+    if (ret != sizeof(*limit)) goto error;
+    ret = pread( fd, flags, sizeof(*flags), pos + 2*8192*sizeof(int) + entry );
+    if (ret != sizeof(*flags)) goto error;
+    close( fd );
+    return;
+
+error:
+    if (ret == -1) file_set_error();
+    else set_error( STATUS_ACCESS_VIOLATION );
+    close( fd );
 }
 
 /* initialize registers in new thread if necessary */

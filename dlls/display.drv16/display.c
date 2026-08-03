@@ -27,13 +27,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 typedef struct tagCURSORINFO16
 {
     WORD wXMickeys;
     WORD wYMickeys;
 } CURSORINFO16, *PCURSORINFO16, *LPCURSORINFO16;
-#pragma pack(pop)
+#include "poppack.h"
 
 /***********************************************************************
  *           Inquire			(DISPLAY.101)

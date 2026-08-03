@@ -26,29 +26,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(selector);
 
-#define LDT_SIZE 8192
-
-struct ldt_copy
-{
-    void           *base[LDT_SIZE];
-    struct ldt_bits bits[LDT_SIZE];
-};
-C_ASSERT( sizeof(struct ldt_copy) == 8 * LDT_SIZE );
+const struct ldt_copy *ldt_copy = NULL;
 
 static ULONG bitmap_data[LDT_SIZE / 32];
 static RTL_BITMAP ldt_bitmap = { LDT_SIZE, bitmap_data };
 static const LDT_ENTRY null_entry;
 static WORD first_ldt_entry = 32;
-
-static inline struct ldt_copy *ldt_copy(void)
-{
-    return ULongToPtr( NtCurrentTeb()->Peb->SpareUlongs[0] );
-}
-
-static inline struct ldt_bits ldt_get_bits( WORD sel )
-{
-    return ldt_copy()->bits[sel >> 3];
-}
 
 /* get the number of selectors needed to cover up to the selector limit */
 static inline WORD get_sel_count( WORD sel )
@@ -61,29 +44,22 @@ static inline int is_gdt_sel( WORD sel )
     return !(sel & 4);
 }
 
-static inline struct ldt_bits ldt_set_limit( struct ldt_bits bits, unsigned int limit )
-{
-    if ((bits.granularity = (limit >= 0x100000))) limit >>= 12;
-    bits.limit = limit;
-    return bits;
-}
-
-static LDT_ENTRY ldt_make_entry( const void *base, struct ldt_bits bits )
+static LDT_ENTRY ldt_make_entry( const void *base, unsigned int limit, unsigned char flags )
 {
     LDT_ENTRY entry;
 
     entry.BaseLow                   = (WORD)(ULONG_PTR)base;
     entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
     entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
-    entry.LimitLow                  = (WORD)bits.limit;
-    entry.HighWord.Bits.LimitHi     = bits.limit >> 16;
+    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+    entry.LimitLow                  = (WORD)limit;
+    entry.HighWord.Bits.LimitHi     = limit >> 16;
     entry.HighWord.Bits.Dpl         = 3;
     entry.HighWord.Bits.Pres        = 1;
-    entry.HighWord.Bits.Type        = bits.type;
-    entry.HighWord.Bits.Granularity = bits.granularity;
+    entry.HighWord.Bits.Type        = flags;
     entry.HighWord.Bits.Sys         = 0;
     entry.HighWord.Bits.Reserved_0  = 0;
-    entry.HighWord.Bits.Default_Big = bits.default_big;
+    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
     return entry;
 }
 
@@ -95,6 +71,7 @@ void init_selectors(void)
     if (!is_gdt_sel( get_gs() )) first_ldt_entry += 512;
     if (!is_gdt_sel( get_fs() )) first_ldt_entry += 512;
     RtlSetBits( &ldt_bitmap, 0, first_ldt_entry );
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessWineLdtCopy, &ldt_copy, sizeof(ldt_copy), NULL );
 }
 
 /***********************************************************************
@@ -114,20 +91,12 @@ BOOL ldt_is_valid( WORD sel )
 }
 
 /***********************************************************************
- *           ldt_is_32bit
- */
-BOOL ldt_is_32bit( WORD sel )
-{
-    return ldt_is_system( sel ) || ldt_get_bits( sel ).default_big;
-}
-
-/***********************************************************************
  *           ldt_get_ptr
  */
 void *ldt_get_ptr( WORD sel, DWORD offset )
 {
     if (ldt_is_system( sel )) return (void *)offset;
-    if (!ldt_get_bits( sel ).default_big) offset &= 0xffff;
+    if (!(ldt_get_flags( sel ) & LDT_FLAGS_32BIT)) offset &= 0xffff;
     return (char *)ldt_get_base( sel ) + offset;
 }
 
@@ -141,7 +110,7 @@ BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry )
         *entry = null_entry;
         return FALSE;
     }
-    *entry = ldt_make_entry( ldt_get_base( sel ), ldt_get_bits( sel ));
+    *entry = ldt_make_entry( ldt_get_base( sel ), ldt_get_limit( sel ), ldt_get_flags( sel ));
     return TRUE;
 }
 
@@ -150,26 +119,9 @@ BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry )
  */
 void ldt_set_entry( WORD sel, LDT_ENTRY entry )
 {
-    union { LDT_ENTRY entry; ULONG ul[2]; } e = { .entry = entry };
-    NtSetLdtEntries( sel, e.ul[0], e.ul[1], 0, 0, 0 );
+    NtSetLdtEntries( sel, entry, 0, null_entry );
 }
 
-/***********************************************************************
- *           ldt_get_base
- */
-void *ldt_get_base( WORD sel )
-{
-    return ldt_copy()->base[sel >> 3];
-}
-
-/***********************************************************************
- *           ldt_get_limit
- */
-unsigned int ldt_get_limit( WORD sel )
-{
-    struct ldt_bits bits = ldt_get_bits( sel );
-    return bits.granularity ? bits.limit << 12 | 0xfff : bits.limit;
-}
 
 static ULONG alloc_entries( ULONG count )
 {
@@ -199,7 +151,7 @@ WORD WINAPI AllocSelectorArray16( WORD count )
 
     if (sel)
     {
-        LDT_ENTRY entry = ldt_make_entry( 0, ldt_set_limit( data_segment, 1 )); /* avoid 0 base and limit */
+        LDT_ENTRY entry = ldt_make_entry( 0, 1, LDT_FLAGS_DATA ); /* avoid 0 base and limit */
         for (i = 0; i < count; i++) ldt_set_entry( sel + (i << 3), entry );
     }
     return sel;
@@ -247,13 +199,13 @@ WORD WINAPI FreeSelector16( WORD sel )
  *
  * Set the LDT entries for an array of selectors.
  */
-static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, struct ldt_bits bits )
+static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigned char flags )
 {
     WORD i, count = (size + 0xffff) / 0x10000;
 
     for (i = 0; i < count; i++)
     {
-        ldt_set_entry( sel + (i << 3), ldt_make_entry( base, ldt_set_limit( bits, size - 1 )));
+        ldt_set_entry( sel + (i << 3), ldt_make_entry( base, size - 1, flags ));
         base = (const char *)base + 0x10000;
         size -= 0x10000; /* yep, Windows sets limit like that, not 64K sel units */
     }
@@ -265,13 +217,13 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, struct 
  *
  * Allocate selectors for a block of linear memory.
  */
-WORD SELECTOR_AllocBlock( const void *base, DWORD size, struct ldt_bits bits )
+WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags )
 {
     WORD sel, count;
 
     if (!size) return 0;
     count = (size + 0xffff) / 0x10000;
-    if ((sel = alloc_entries( count ))) SELECTOR_SetEntries( sel, base, size, bits );
+    if ((sel = alloc_entries( count ))) SELECTOR_SetEntries( sel, base, size, flags );
     return sel;
 }
 
@@ -301,11 +253,11 @@ void SELECTOR_FreeBlock( WORD sel )
 WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size )
 {
     int oldcount, newcount;
-    struct ldt_bits bits;
+    BYTE flags;
 
     if (!size) size = 1;
     if (!ldt_is_valid( sel )) return sel;
-    bits     = ldt_get_bits( sel );
+    flags    = ldt_get_flags( sel );
     oldcount = (ldt_get_limit( sel ) >> 16) + 1;
     newcount = (size + 0xffff) >> 16;
 
@@ -327,7 +279,7 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size )
     {
         free_entries( sel + (newcount << 3), oldcount - newcount );
     }
-    if (sel) SELECTOR_SetEntries( sel, base, size, bits );
+    if (sel) SELECTOR_SetEntries( sel, base, size, flags );
     return sel;
 }
 
@@ -337,11 +289,10 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size )
  */
 WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
 {
-    struct ldt_bits bits = ldt_get_bits( selSrc );
-
     if (!ldt_is_valid( selSrc )) return selDst;
-    bits.type ^= 0x08; /* toggle the executable bit */
-    ldt_set_entry( selDst, ldt_make_entry( ldt_get_base( selSrc ), bits ));
+    /* toggle the executable bit */
+    ldt_set_entry( selDst, ldt_make_entry( ldt_get_base( selSrc ), ldt_get_limit( selSrc ),
+                                           ldt_get_flags( selSrc ) ^ (LDT_FLAGS_CODE ^ LDT_FLAGS_DATA) ));
     return selDst;
 }
 
@@ -352,15 +303,13 @@ WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
  */
 WORD WINAPI AllocCStoDSAlias16( WORD sel )
 {
-    struct ldt_bits bits = ldt_get_bits( sel );
     WORD newsel;
 
     if (!ldt_is_valid( sel )) return 0;
     newsel = AllocSelector16( 0 );
     TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
-    bits.type = data_segment.type;
-    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), bits ));
+    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), ldt_get_limit(sel), LDT_FLAGS_DATA ));
     return newsel;
 }
 
@@ -370,15 +319,13 @@ WORD WINAPI AllocCStoDSAlias16( WORD sel )
  */
 WORD WINAPI AllocDStoCSAlias16( WORD sel )
 {
-    struct ldt_bits bits = ldt_get_bits( sel );
     WORD newsel;
 
     if (!ldt_is_valid( sel )) return 0;
     newsel = AllocSelector16( 0 );
     TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
-    bits.type = code16_segment.type;
-    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), bits ));
+    ldt_set_entry( newsel, ldt_make_entry( ldt_get_base(sel), ldt_get_limit(sel), LDT_FLAGS_CODE ));
     return newsel;
 }
 
@@ -391,7 +338,8 @@ void WINAPI LongPtrAdd16( SEGPTR ptr, DWORD add )
     WORD sel = SELECTOROF( ptr );
 
     if (!ldt_is_valid( sel )) return;
-    ldt_set_entry( sel, ldt_make_entry( (char *)ldt_get_base( sel ) + add, ldt_get_bits( sel )));
+    ldt_set_entry( sel, ldt_make_entry( (char *)ldt_get_base( sel ) + add,
+                                        ldt_get_limit( sel ), ldt_get_flags( sel )));
 }
 
 
@@ -412,7 +360,8 @@ DWORD WINAPI GetSelectorBase( WORD sel )
 WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {
     if (!ldt_is_valid( sel )) return 0;
-    ldt_set_entry( sel, ldt_make_entry( DOSMEM_MapDosToLinear(base), ldt_get_bits( sel )));
+    ldt_set_entry( sel, ldt_make_entry( DOSMEM_MapDosToLinear(base),
+                                        ldt_get_limit( sel ), ldt_get_flags( sel )));
     return sel;
 }
 
@@ -432,7 +381,7 @@ DWORD WINAPI GetSelectorLimit16( WORD sel )
 WORD WINAPI SetSelectorLimit16( WORD sel, DWORD limit )
 {
     if (!ldt_is_valid( sel )) return 0;
-    ldt_set_entry( sel, ldt_make_entry( ldt_get_base( sel ), ldt_set_limit( ldt_get_bits( sel ), limit )));
+    ldt_set_entry( sel, ldt_make_entry( ldt_get_base( sel ), limit, ldt_get_flags( sel )));
     return sel;
 }
 
@@ -467,7 +416,7 @@ BOOL16 WINAPI IsBadCodePtr16( SEGPTR ptr )
     WORD sel = SELECTOROF( ptr );
 
     /* check for code segment, ignoring conforming, read-only and accessed bits */
-    if ((ldt_get_bits( sel ).type & 0x18) != 0x18) return TRUE;
+    if ((ldt_get_flags( sel ) ^ LDT_FLAGS_CODE) & 0x18) return TRUE;
     if (OFFSETOF(ptr) > ldt_get_limit( sel )) return TRUE;
     return FALSE;
 }
@@ -481,8 +430,8 @@ BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
     WORD sel = SELECTOROF( ptr );
 
     /* check for data or readable code segment */
-    if (!(ldt_get_bits( sel ).type & 0x10)) return TRUE;  /* system descriptor */
-    if ((ldt_get_bits( sel ).type & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
+    if (!(ldt_get_flags( sel ) & 0x10)) return TRUE;  /* system descriptor */
+    if ((ldt_get_flags( sel ) & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
     if (strlen(MapSL(ptr)) < size) size = strlen(MapSL(ptr)) + 1;
     if (size && (OFFSETOF(ptr) + size - 1 > ldt_get_limit( sel ))) return TRUE;
     return FALSE;
@@ -497,8 +446,8 @@ BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
     WORD sel = SELECTOROF( ptr );
 
     /* check for data or readable code segment */
-    if (!(ldt_get_bits( sel ).type & 0x10)) return TRUE;  /* system descriptor */
-    if ((ldt_get_bits( sel ).type & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
+    if (!(ldt_get_flags( sel ) & 0x10)) return TRUE;  /* system descriptor */
+    if ((ldt_get_flags( sel ) & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
     if (size && (OFFSETOF(ptr) + size - 1 > ldt_get_limit( sel ))) return TRUE;
     return FALSE;
 }
@@ -512,7 +461,7 @@ BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
     WORD sel = SELECTOROF( ptr );
 
     /* check for writable data segment, ignoring expand-down and accessed flags */
-    if ((ldt_get_bits( sel ).type & 0x1a) != 0x12) return TRUE;
+    if ((ldt_get_flags( sel ) ^ LDT_FLAGS_DATA) & 0x1a) return TRUE;
     if (size && (OFFSETOF(ptr) + size - 1 > ldt_get_limit( sel ))) return TRUE;
     return FALSE;
 }
@@ -587,7 +536,7 @@ SEGPTR WINAPI MapLS( void *ptr )
         if (!free)  /* no free entry found, create a new one */
         {
             if (!(free = HeapAlloc( GetProcessHeap(), 0, sizeof(*free) ))) goto done;
-            if (!(free->sel = SELECTOR_AllocBlock( base, 0x10000, data_segment )))
+            if (!(free->sel = SELECTOR_AllocBlock( base, 0x10000, LDT_FLAGS_DATA )))
             {
                 HeapFree( GetProcessHeap(), 0, free );
                 goto done;

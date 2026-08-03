@@ -28,15 +28,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 static struct stream_context *stream_context_create( struct winedmo_stream *stream, UINT64 stream_size )
 {
-    static const UINT BUFFER_SIZE = 0x40000;
     struct stream_context *context;
 
-    if (!(context = malloc( sizeof(*context) + BUFFER_SIZE ))) return NULL;
+    if (!(context = malloc( 0x10000 ))) return NULL;
     context->stream = (UINT_PTR)stream;
     context->length = stream_size;
     context->position = 0;
-    context->capacity = BUFFER_SIZE;
-    context->size = 0;
+    context->buffer_size = 0x10000 - offsetof(struct stream_context, buffer);
 
     return context;
 }
@@ -146,7 +144,6 @@ static void buffer_unlock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample
     {
         if (sample->dts != INT64_MIN) IMFSample_SetUINT64( object, &MFSampleExtension_DecodeTimestamp, sample->dts );
         if (sample->pts != INT64_MIN) IMFSample_SetSampleTime( object, sample->pts );
-        else if (sample->dts != INT64_MIN) IMFSample_SetSampleTime( object, sample->dts );
         if (sample->duration != INT64_MIN) IMFSample_SetSampleDuration( object, sample->duration );
         if (sample->flags & SAMPLE_FLAG_SYNC_POINT) IMFSample_SetUINT32( object, &MFSampleExtension_CleanPoint, 1 );
         IMFSample_Release( object );

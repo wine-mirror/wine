@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.security.credentials.ui.idl";
-
-namespace Windows.Security.Credentials.UI {
-    runtimeclass UserConsentVerifier;
-}
+#include "windows.security.credentials.ui.idl"

@@ -67,7 +67,6 @@ SOURCES = \
 	c_936.nls \
 	c_949.nls \
 	c_950.nls \
-	icudtl.dat \
 	l_intl.nls \
 	locale.nls \
 	normidna.nls \

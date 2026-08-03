@@ -21,6 +21,8 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <libxml/parser.h>
+#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -802,28 +804,31 @@ static dispex_static_data_t xslprocessor_dispex = {
     xslprocessor_iface_tids
 };
 
-HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ret)
+HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
 {
-    xslprocessor *object;
+    xslprocessor *This;
 
-    TRACE("%p.\n", ret);
+    TRACE("(%p)\n", ppObj);
 
-    *ret = NULL;
-
-    if (!(object = calloc(1, sizeof(*object))))
+    This = malloc(sizeof(*This));
+    if(!This)
         return E_OUTOFMEMORY;
 
-    object->IXSLProcessor_iface.lpVtbl = &XSLProcessorVtbl;
-    object->ref = 1;
-    object->output_type = PROCESSOR_OUTPUT_NOT_SET;
-    list_init(&object->params.list);
-    object->stylesheet = template;
+    This->IXSLProcessor_iface.lpVtbl = &XSLProcessorVtbl;
+    This->ref = 1;
+    This->input = NULL;
+    This->output.unk = NULL;
+    This->output_type = PROCESSOR_OUTPUT_NOT_SET;
+    This->outstr = NULL;
+    list_init(&This->params.list);
+    This->params.count = 0;
+    This->stylesheet = template;
     IXSLTemplate_AddRef(&template->IXSLTemplate_iface);
-    init_dispex(&object->dispex, (IUnknown *)&object->IXSLProcessor_iface, &xslprocessor_dispex);
+    init_dispex(&This->dispex, (IUnknown*)&This->IXSLProcessor_iface, &xslprocessor_dispex);
 
-    *ret = &object->IXSLProcessor_iface;
+    *ppObj = &This->IXSLProcessor_iface;
 
-    TRACE("returning iface %p\n", *ret);
+    TRACE("returning iface %p\n", *ppObj);
 
     return S_OK;
 }

@@ -46,63 +46,39 @@ typedef enum MONITOR_DPI_TYPE
 typedef NTSTATUS (WINAPI *ntuser_callback)( void *args, ULONG len );
 NTSYSAPI NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len );
 
-struct user_entry
-{
-    ULONG64 offset;   /* shared user object offset */
-    ULONG   tid;      /* owner thread id */
-    ULONG   pid;      /* owner process id */
-    ULONG64 id;       /* shared user object id */
-    union
-    {
-        struct
-        {
-            USHORT type;       /* object type (0 if free) */
-            USHORT generation; /* generation counter */
-        };
-        LONG64 uniq;
-    };
-};
-
-#define MAX_USER_HANDLES ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
-
 /* KernelCallbackTable codes, not compatible with Windows.
    All of these functions must live inside user32.dll. Overwatch 2's
    KiUserCallbackDispatcher hook verifies this and prevents the callback from
    running if that check fails. */
-
-#define ALL_USER32_CALLBACKS \
-    USER32_CALLBACK_ENTRY(CallDispatchCallback) \
-    USER32_CALLBACK_ENTRY(CallEnumDisplayMonitor) \
-    USER32_CALLBACK_ENTRY(CallSendAsyncCallback) \
-    USER32_CALLBACK_ENTRY(CallWinEventHook) \
-    USER32_CALLBACK_ENTRY(CallWinProc) \
-    USER32_CALLBACK_ENTRY(CallWindowsHook) \
-    USER32_CALLBACK_ENTRY(CopyImage) \
-    USER32_CALLBACK_ENTRY(DrawNonClientButton) \
-    USER32_CALLBACK_ENTRY(DrawScrollBar) \
-    USER32_CALLBACK_ENTRY(DrawText) \
-    USER32_CALLBACK_ENTRY(FreeCachedClipboardData) \
-    USER32_CALLBACK_ENTRY(ImmProcessKey) \
-    USER32_CALLBACK_ENTRY(ImmTranslateMessage) \
-    USER32_CALLBACK_ENTRY(InitBuiltinClasses) \
-    USER32_CALLBACK_ENTRY(LoadDriver) \
-    USER32_CALLBACK_ENTRY(LoadImage) \
-    USER32_CALLBACK_ENTRY(LoadSysMenu) \
-    USER32_CALLBACK_ENTRY(PostDDEMessage) \
-    USER32_CALLBACK_ENTRY(RenderSynthesizedFormat) \
-    USER32_CALLBACK_ENTRY(UnpackDDEMessage) \
-    USER32_CALLBACK_ENTRY(DragDropEnter) \
-    USER32_CALLBACK_ENTRY(DragDropLeave) \
-    USER32_CALLBACK_ENTRY(DragDropDrag) \
-    USER32_CALLBACK_ENTRY(DragDropDrop) \
-    USER32_CALLBACK_ENTRY(DragDropPost)
-
 enum
 {
-#define USER32_CALLBACK_ENTRY(name) NtUser##name,
-    ALL_USER32_CALLBACKS
-#undef USER32_CALLBACK_ENTRY
-    NtUserCallCount = 256
+    /* user32 callbacks */
+    NtUserCallDispatchCallback,
+    NtUserCallEnumDisplayMonitor,
+    NtUserCallSendAsyncCallback,
+    NtUserCallWinEventHook,
+    NtUserCallWinProc,
+    NtUserCallWindowsHook,
+    NtUserCopyImage,
+    NtUserDrawNonClientButton,
+    NtUserDrawScrollBar,
+    NtUserDrawText,
+    NtUserFreeCachedClipboardData,
+    NtUserImmProcessKey,
+    NtUserImmTranslateMessage,
+    NtUserInitBuiltinClasses,
+    NtUserLoadDriver,
+    NtUserLoadImage,
+    NtUserLoadSysMenu,
+    NtUserPostDDEMessage,
+    NtUserRenderSynthesizedFormat,
+    NtUserUnpackDDEMessage,
+    NtUserDragDropEnter,
+    NtUserDragDropLeave,
+    NtUserDragDropDrag,
+    NtUserDragDropDrop,
+    NtUserDragDropPost,
+    NtUserCallCount
 };
 
 /* NtUserCallDispatchCallback params */
@@ -121,14 +97,21 @@ static inline NTSTATUS KeUserDispatchCallback( const struct dispatch_callback_pa
 /* TEB thread info, not compatible with Windows */
 struct ntuser_thread_info
 {
+    UINT64         driver_data;       /* driver-specific data */
+    DWORD          message_time;      /* value for GetMessageTime */
+    DWORD          message_pos;       /* value for GetMessagePos */
+    UINT64         message_extra;     /* value for GetMessageExtraInfo */
     INPUT_MESSAGE_SOURCE msg_source;  /* Message source for current message */
     WORD           recursion_count;   /* SendMessage recursion counter */
+    UINT           receive_flags;     /* currently received message flags */
+    UINT           top_window;        /* desktop window */
+    UINT           msg_window;        /* HWND_MESSAGE parent window */
     UINT           dpi_context;       /* DPI awareness context */
+    UINT           default_imc;       /* default input context */
     UINT64         client_imm;        /* client IMM thread info */
     UINT64         wmchar_data;       /* client data for WM_CHAR mappings */
 };
 
-#ifndef WINE_UNIX_LIB
 static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
 {
 #ifndef _WIN64
@@ -140,7 +123,6 @@ static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
 #endif
     return (struct ntuser_thread_info *)NtCurrentTeb()->Win32ClientInfo;
 }
-#endif
 
 /* NtUserCallEnumDisplayMonitor params */
 struct enum_display_monitor_params
@@ -416,16 +398,6 @@ enum
     NtUserSystemTrayCall      = 0x0306,
     NtUserDragDropCall        = 0x0307,
     NtUserPostDdeCall         = 0x0308,
-    NtUserWintabDriverCall    = 0x0309,
-};
-
-/* NtUserWintabDriverCall codes */
-enum
-{
-    NtUserWintabAttach,
-    NtUserWintabInfo,
-    NtUserWintabInit,
-    NtUserWintabPacket,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -557,8 +529,12 @@ struct cursoricon_desc
     HRSRC rsrc;
 };
 
-/* WCHAR[] unicode name, followed by char[] ansi name */
-struct client_menu_name;
+struct client_menu_name
+{
+    char  *nameA;
+    WCHAR *nameW;
+    UNICODE_STRING *nameUS;
+};
 
 /* NtUserGetClipboardData params, not compatible with Windows */
 struct get_clipboard_params
@@ -638,8 +614,6 @@ enum wine_internal_message
     WM_WINE_IME_NOTIFY,
     WM_WINE_WINDOW_STATE_CHANGED,
     WM_WINE_UPDATEWINDOWSTATE,
-    WM_WINE_TRACKMOUSEEVENT,
-    WM_WINE_SETPIXELFORMAT,
     WM_WINE_FIRST_DRIVER_MSG = 0x80001000,  /* range of messages reserved for the USER driver */
     WM_WINE_CLIPCURSOR = 0x80001ff0, /* internal driver notification messages */
     WM_WINE_SETCURSOR,
@@ -657,12 +631,10 @@ enum wine_internal_message
 #define IMN_WINE_SET_OPEN_STATUS  0x000f
 #define IMN_WINE_SET_COMP_STRING  0x0010
 
-/* not compatible with Windows */
-#define MAKE_FNID(index) ((WORD)(0x8000 | (index)))
-
 /* builtin IME driver calls */
 enum wine_ime_call
 {
+    WINE_IME_PROCESS_KEY,
     WINE_IME_TO_ASCII_EX,
     WINE_IME_POST_UPDATE,  /* for the user drivers */
 };
@@ -746,7 +718,6 @@ typedef enum _USERTHREADSTATECLASS
 
 W32KAPI HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 W32KAPI BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
-W32KAPI ULONG   WINAPI NtUserAlterWindowStyle( HWND hwnd, UINT mask, UINT style );
 W32KAPI UINT    WINAPI NtUserArrangeIconicWindows( HWND parent );
 W32KAPI UINT    WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags );
 W32KAPI BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
@@ -787,7 +758,7 @@ W32KAPI HWND    WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *cla
                                              UNICODE_STRING *version, UNICODE_STRING *window_name,
                                              DWORD style, INT x, INT y, INT cx, INT cy,
                                              HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                             DWORD flags, HINSTANCE client_instance, const WCHAR *class, BOOL ansi );
+                                             DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi );
 W32KAPI HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK mask, ULONG arg3,
                                                   ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 W32KAPI HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, INT x, INT y,
@@ -837,7 +808,7 @@ W32KAPI ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
 W32KAPI UINT    WINAPI NtUserGetCaretBlinkTime(void);
 W32KAPI BOOL    WINAPI NtUserGetCaretPos( POINT *point );
 W32KAPI ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
-                                             struct client_menu_name **menu_name, BOOL ansi );
+                                             struct client_menu_name *menu_name, BOOL ansi );
 W32KAPI INT     WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name );
 W32KAPI BOOL    WINAPI NtUserGetClipCursor( RECT *rect );
 W32KAPI HANDLE  WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params );
@@ -850,7 +821,6 @@ W32KAPI HCURSOR WINAPI NtUserGetCursor(void);
 W32KAPI HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR hCursor, DWORD istep, DWORD *rate_jiffies,
                                                  DWORD *num_steps );
 W32KAPI BOOL    WINAPI NtUserGetCursorInfo( CURSORINFO *info );
-W32KAPI BOOL    WINAPI NtUserGetCursorPos( POINT *pt );
 W32KAPI HDC     WINAPI NtUserGetDC( HWND hwnd );
 W32KAPI HDC     WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags );
 W32KAPI LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
@@ -873,7 +843,6 @@ W32KAPI BOOL    WINAPI NtUserGetLayeredWindowAttributes( HWND hwnd, COLORREF *ke
 W32KAPI BOOL    WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *info );
 W32KAPI BOOL    WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU menu, UINT item, RECT *rect );
 W32KAPI BOOL    WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last );
-W32KAPI DWORD   WINAPI NtUserGetMessagePos(void);
 W32KAPI int     WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOVEPOINT *ptout,
                                                    int count, DWORD resolution );
 W32KAPI BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
@@ -881,8 +850,6 @@ W32KAPI BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, voi
 W32KAPI HWND    WINAPI NtUserGetOpenClipboardWindow(void);
 W32KAPI BOOL    WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR, UINT_PTR, SIZE_T size,
                                                  UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info );
-W32KAPI BOOL    WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type );
-W32KAPI BOOL    WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT *display_rect );
 W32KAPI INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
 W32KAPI BOOL    WINAPI NtUserGetProcessDefaultLayout( ULONG *layout );
 W32KAPI ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );
@@ -905,7 +872,6 @@ W32KAPI BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT siz
 W32KAPI BOOL    WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase );
 W32KAPI DWORD   WINAPI NtUserGetWindowContextHelpId( HWND hwnd );
 W32KAPI HDC     WINAPI NtUserGetWindowDC( HWND hwnd );
-W32KAPI BOOL    WINAPI NtUserGetWindowDisplayAffinity( HWND hwnd, DWORD *affinity );
 W32KAPI BOOL    WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement );
 W32KAPI int     WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk );
 W32KAPI BOOL    WINAPI NtUserHideCaret( HWND hwnd );
@@ -913,7 +879,6 @@ W32KAPI BOOL    WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item,
 W32KAPI NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const ntuser_client_func_ptr *client_procsA,
                                                          const ntuser_client_func_ptr *client_procsW,
                                                          const ntuser_client_func_ptr *client_workers, HINSTANCE user_module );
-W32KAPI BOOL    WINAPI NtUserInitializeTouchInjection( UINT max_count, UINT mode );
 W32KAPI HICON   WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type );
 W32KAPI INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 W32KAPI BOOL    WINAPI NtUserIsChildWindowDpiMessageEnabled( HWND hwnd );
@@ -930,7 +895,6 @@ W32KAPI INT     WINAPI NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, 
 W32KAPI BOOL    WINAPI NtUserMessageBeep( UINT type );
 W32KAPI LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                           void *result_info, DWORD type, BOOL ansi );
-W32KAPI BOOL    WINAPI NtUserModifyUserStartupInfoFlags( DWORD mask, DWORD flags );
 W32KAPI BOOL    WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
 W32KAPI DWORD   WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                                           DWORD timeout, DWORD mask, DWORD flags );
@@ -955,18 +919,17 @@ W32KAPI HWND    WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG
 W32KAPI UINT    WINAPI NtUserRealizePalette( HDC hdc );
 W32KAPI BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
 W32KAPI ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
-                                                 struct client_menu_name *menu_name, DWORD fnid, DWORD flags, DWORD *wow );
+                                                 struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
+                                                 DWORD *wow );
 W32KAPI BOOL    WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk );
 W32KAPI BOOL    WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT size );
 W32KAPI BOOL    WINAPI NtUserRegisterTouchPadCapable( BOOL capable );
-W32KAPI ATOM    WINAPI NtUserRegisterWindowMessage( UNICODE_STRING *name );
 W32KAPI BOOL    WINAPI NtUserReleaseCapture(void);
 W32KAPI INT     WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc );
 W32KAPI BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserRemoveMenu( HMENU menu, UINT id, UINT flags );
 W32KAPI HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 W32KAPI BOOL    WINAPI NtUserReplyMessage( LRESULT result );
-W32KAPI INT     WINAPI NtUserScheduleDispatchNotification( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                        HRGN ret_update_rgn, RECT *update_rect );
 W32KAPI INT     WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
@@ -996,7 +959,6 @@ W32KAPI BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key
 W32KAPI BOOL    WINAPI NtUserSetMenu( HWND hwnd, HMENU menu );
 W32KAPI BOOL    WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id );
 W32KAPI BOOL    WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos );
-W32KAPI LPARAM  WINAPI NtUserSetMessageExtraInfo( LPARAM lparam );
 W32KAPI BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 W32KAPI HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 W32KAPI BOOL    WINAPI NtUserSetProcessDefaultLayout( ULONG layout );
@@ -1013,7 +975,6 @@ W32KAPI HWND    WINAPI NtUserSetTaskmanWindow( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );
 W32KAPI UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, ULONG tolerance );
 W32KAPI BOOL    WINAPI NtUserSetWindowContextHelpId( HWND hwnd, DWORD id );
-W32KAPI BOOL    WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid );
 W32KAPI LONG    WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
 W32KAPI LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
 W32KAPI BOOL    WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl );
@@ -1046,7 +1007,8 @@ W32KAPI BOOL    WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags );
 W32KAPI BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );
 W32KAPI BOOL    WINAPI NtUserUnhookWindowsHook( INT id, HOOKPROC proc );
 W32KAPI BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
-W32KAPI BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance, struct client_menu_name **menu_name );
+W32KAPI BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
+                                              struct client_menu_name *client_menu_name );
 W32KAPI BOOL    WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id );
 W32KAPI BOOL    WINAPI NtUserUpdateInputContext( HIMC handle, UINT attr, UINT_PTR value );
 W32KAPI BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
@@ -1111,6 +1073,7 @@ enum
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
+    NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
     NtUserCallOneParam_GetMenuItemCount,
     NtUserCallOneParam_GetPrimaryMonitorRect,
@@ -1147,6 +1110,11 @@ struct thunk_lock_params
 static inline void NtUserEnableThunkLock( ntuser_callback thunk_lock_callback )
 {
     NtUserCallOneParam( (UINT_PTR)thunk_lock_callback, NtUserCallOneParam_EnableThunkLock );
+}
+
+static inline BOOL NtUserGetCursorPos( POINT *pt )
+{
+    return NtUserCallOneParam( (UINT_PTR)pt, NtUserCallOneParam_GetCursorPos );
 }
 
 static inline UINT_PTR NtUserGetIconParam( HICON icon )
@@ -1303,7 +1271,6 @@ enum
     NtUserCallHwnd_IsWindowEnabled,
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
-    NtUserCallHwnd_SetForegroundWindowInternal,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrentProcessWindow,
@@ -1313,11 +1280,6 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
-}
-
-static inline BOOL NtUserSetForegroundWindowInternal( HWND hwnd )
-{
-    return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindowInternal );
 }
 
 static inline void *NtUserGetDialogInfo( HWND hwnd )
@@ -1401,9 +1363,7 @@ enum
     NtUserCallHwndParam_GetWindowLongW,
     NtUserCallHwndParam_GetWindowLongPtrA,
     NtUserCallHwndParam_GetWindowLongPtrW,
-    NtUserCallHwndParam_GetWindowRect,
-    NtUserCallHwndParam_GetClientRect,
-    NtUserCallHwndParam_GetPresentRect,
+    NtUserCallHwndParam_GetWindowRects,
     NtUserCallHwndParam_GetWindowRelative,
     NtUserCallHwndParam_GetWindowThread,
     NtUserCallHwndParam_GetWindowWord,
@@ -1418,13 +1378,14 @@ enum
     NtUserCallHwndParam_ExposeWindowSurface,
     NtUserCallHwndParam_GetWinMonitorDpi,
     NtUserCallHwndParam_SetRawWindowPos,
-    NtUserCallHwndParam_GetPrivateData,
-    NtUserCallHwndParam_SetPrivateData,
+    /* temporary exports */
+    NtUserSetWindowStyle,
 };
 
 struct get_window_rects_params
 {
     RECT *rect;
+    BOOL client;
     UINT dpi;
 };
 
@@ -1465,14 +1426,8 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
 
 static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetClientRect );
-}
-
-static inline BOOL NtUserGetPresentRect( HWND hwnd, RECT *rect, UINT dpi )
-{
-    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetPresentRect );
+    struct get_window_rects_params params = {.rect = rect, .client = TRUE, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
 }
 
 struct get_scroll_info_params
@@ -1514,8 +1469,8 @@ static inline LONG NtUserGetWindowLongW( HWND hwnd, INT offset )
 
 static inline BOOL NtUserGetWindowRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRect );
+    struct get_window_rects_params params = {.rect = rect, .client = FALSE, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
 }
 
 static inline HWND NtUserGetWindowRelative( HWND hwnd, UINT rel )
@@ -1600,22 +1555,11 @@ struct hid_packet
 
 C_ASSERT(sizeof(struct hid_packet) == offsetof(struct hid_packet, data[0]));
 
-struct raw_mouse
-{
-    UINT  count;
-    POINT data[64]; /* arbitrary buffer size */
-};
-
 struct send_hardware_input_params
 {
     UINT flags;
     const INPUT *input;
-    union
-    {
-        LPARAM             lparam;
-        struct hid_packet *hid_packet; /* WM_INPUT* */
-        struct raw_mouse  *raw_mouse;  /* WM_MOUSEMOVE* */
-    };
+    LPARAM lparam;  /* struct hid_packet pointer for WM_INPUT* messages */
 };
 
 static inline BOOL NtUserSendHardwareInput( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
@@ -1629,11 +1573,12 @@ struct expose_window_surface_params
     UINT flags;
     BOOL whole;
     RECT rect;
+    UINT dpi;
 };
 
-static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT *rect )
+static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT *rect, UINT dpi )
 {
-    struct expose_window_surface_params params = {.flags = flags, .whole = !rect};
+    struct expose_window_surface_params params = {.flags = flags, .whole = !rect, .dpi = dpi};
     if (rect) params.rect = *rect;
     return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_ExposeWindowSurface );
 }
@@ -1654,31 +1599,6 @@ static inline BOOL NtUserSetRawWindowPos( HWND hwnd, RECT rect, UINT flags, BOOL
 {
     struct set_raw_window_pos_params params = {.rect = rect, .flags = flags, .internal = internal};
     return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SetRawWindowPos );
-}
-
-struct get_private_data_params
-{
-    UINT offset;
-    UINT size;
-};
-
-static inline LONG_PTR NtUserGetPrivateData( HWND hwnd, UINT offset, UINT size )
-{
-    struct get_private_data_params params = { .offset = offset, .size = size };
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetPrivateData );
-}
-
-struct set_private_data_params
-{
-    UINT offset;
-    UINT size;
-    LONG64 value;
-};
-
-static inline LONG_PTR NtUserSetPrivateData( HWND hwnd, UINT offset, UINT size, LONG_PTR value )
-{
-    struct set_private_data_params params = { .offset = offset, .size = size, .value = value };
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SetPrivateData );
 }
 
 #endif /* _NTUSER_ */

@@ -26,7 +26,7 @@
 #include "winternl.h"
 #include "wine/asm.h"
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -149,20 +149,12 @@ typedef struct _THHOOK
     HTASK16    LockTDB;             /* 14 hLockedTask */
 } THHOOK;
 
-struct ldt_bits
-{
-    unsigned int limit : 24;
-    unsigned int type : 5;
-    unsigned int granularity : 1;
-    unsigned int default_big : 1;
-};
-
 extern LONG __wine_call_from_16(void);
 extern void __wine_call_from_16_regs(void);
 
 extern THHOOK *pThhook;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->ne_segtab))
@@ -209,10 +201,10 @@ extern UINT   DOSMEM_Available(void);
 
 /* global16.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, void *ptr, DWORD size,
-                                     HGLOBAL16 hOwner, struct ldt_bits bits );
+                                     HGLOBAL16 hOwner, unsigned char selflags );
 extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
 extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
-extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, struct ldt_bits bits );
+extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
 
 /* instr.c */
 extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context );
@@ -237,23 +229,34 @@ extern void NE_DllProcessAttach( HMODULE16 hModule );
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
 
 /* selector.c */
+#define LDT_SIZE 8192
+struct ldt_copy
+{
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+};
+extern const struct ldt_copy *ldt_copy;
 
-static const struct ldt_bits data_segment   = { .type = 0x13 };
-static const struct ldt_bits code16_segment = { .type = 0x1b, .default_big = 0 };
-static const struct ldt_bits code32_segment = { .type = 0x1b, .default_big = 1 };
+#define LDT_FLAGS_DATA      0x13  /* Data segment */
+#define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+
+static inline void *ldt_get_base( WORD sel ) { return ldt_copy->base[sel >> 3]; }
+static inline unsigned int ldt_get_limit( WORD sel ) { return ldt_copy->limit[sel >> 3]; }
+static inline unsigned char ldt_get_flags( WORD sel ) { return ldt_copy->flags[sel >> 3]; }
 
 extern void init_selectors(void);
 extern BOOL ldt_is_system( WORD sel );
 extern BOOL ldt_is_valid( WORD sel );
-extern BOOL ldt_is_32bit( WORD sel );
 extern void *ldt_get_ptr( WORD sel, DWORD offset );
 extern BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry );
 extern void ldt_set_entry( WORD sel, LDT_ENTRY entry );
-extern void *ldt_get_base( WORD sel );
-extern unsigned int ldt_get_limit( WORD sel );
-extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, struct ldt_bits bits );
+extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
+#define IS_SELECTOR_32BIT(sel) \
+   (ldt_is_system(sel) || (ldt_copy->flags[LOWORD(sel) >> 3] & LDT_FLAGS_32BIT))
 
 static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
 static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }

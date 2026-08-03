@@ -28,12 +28,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#ifdef _WIN64
-#ifndef _IMAGEHLP64
-#define _IMAGEHLP64
-#endif
-#endif
-
 #ifdef _IMAGEHLP_SOURCE_
 #define IMAGEAPI WINAPI
 #else
@@ -273,25 +267,18 @@ typedef struct _KDHELP64 {
     DWORD64 Reserved[8];
 } KDHELP64, *PKDHELP64;
 
-#if !defined(_IMAGEHLP_SOURCE_) && defined(_IMAGEHLP64)
-#define STACKFRAME STACKFRAME64
-#define LPSTACKFRAME LPSTACKFRAME64
-#else
-  typedef struct _STACKFRAME
-  {
-    ADDRESS     AddrPC;
-    ADDRESS     AddrReturn;
-    ADDRESS     AddrFrame;
-    ADDRESS     AddrStack;
-    PVOID       FuncTableEntry;
-    DWORD       Params[4];
-    BOOL        Far;
-    BOOL        Virtual;
-    DWORD       Reserved[3];
-    KDHELP      KdHelp;
-    ADDRESS     AddrBStore;
-  } STACKFRAME, *LPSTACKFRAME;
-#endif
+typedef struct _STACKFRAME {
+  ADDRESS AddrPC;
+  ADDRESS AddrReturn;
+  ADDRESS AddrFrame;
+  ADDRESS AddrStack;
+  PVOID     FuncTableEntry;
+  DWORD     Params[4];
+  BOOL    Far;
+  BOOL    Virtual;
+  DWORD     Reserved[3];
+  KDHELP  KdHelp;
+} STACKFRAME, *LPSTACKFRAME;
 
 typedef struct _STACKFRAME64 {
     ADDRESS64 AddrPC;

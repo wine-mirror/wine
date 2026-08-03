@@ -5,6 +5,5 @@ application_EXTRADLLFLAGS = -mconsole
 
 SOURCES = \
 	application.c \
-	application.spec \
 	model.c \
 	resource.rc

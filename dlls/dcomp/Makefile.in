@@ -1,6 +1,7 @@
 MODULE    = dcomp.dll
 
-VER_PRODUCTVERSION = 10,0,14393,0
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
-	device.c
+	device.c \
+	version.rc

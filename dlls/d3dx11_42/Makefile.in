@@ -1,10 +1,13 @@
 EXTRADEFS = -DD3DX11_SDK_VERSION=42
 MODULE    = d3dx11_42.dll
 IMPORTLIB = d3dx11_42
-IMPORTS = d3dcompiler d3dx11
+IMPORTS = d3dcompiler
+PARENTSRC = ../d3dx11_43
 
-VER_FILEDESCRIPTION_STR = "Wine D3DX11"
-VER_PRODUCTVERSION      = 9,29,952,3111
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
-	d3dx11_42_main.c
+	async.c \
+	main.c \
+	texture.c \
+	version.rc

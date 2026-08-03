@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 #include "gdiplus_private.h"
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
-#pragma pack(push,2)
+#include "pshpack2.h"
 typedef struct
 {
     USHORT version;
@@ -99,7 +99,7 @@ typedef struct
     SHORT metricDataFormat;
     USHORT numberOfHMetrics;
 } TT_HHEA;
-#pragma pack(pop)
+#include "poppack.h"
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)

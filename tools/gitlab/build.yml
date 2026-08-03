@@ -2,7 +2,7 @@
 
 .wine-build:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-trixie
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   interruptible: true
   variables:
     GIT_DEPTH: 0
@@ -13,7 +13,6 @@
     - key:
         files:
           - configure.ac
-          - tools/gitlab/image.docker
         prefix: $CI_JOB_NAME-config
       paths:
         - build32/config.cache
@@ -42,20 +41,20 @@ build-linux:
   script:
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
     - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
-      (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@\.dll$@@; s@.*= *@@' >usr/local/share/wine/winetest.args
+      (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
 
-build-linux-arm64:
+build-clang:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   tags:
-    - arm64-build
+    - build
   script:
-    - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux-arm64
+    - ./tools/gitlab/build-clang
 
 build-mac:
   extends: .wine-build
-  image: winehq-sequoia-pristine
+  image: winehq-sonoma-pristine
   variables:
     TART_EXECUTOR_SSH_USERNAME: "gitlab"
     TART_EXECUTOR_SSH_PASSWORD: "gitlab"
@@ -102,7 +101,7 @@ build-sast:
 
 build-winetest:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-trixie
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
@@ -152,7 +151,7 @@ build-daily-mac:
 
 build-daily-winetest:
   stage: build
-  image: $CI_REGISTRY/wine/wine:debian-trixie
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
@@ -167,14 +166,3 @@ build-daily-winetest:
   script:
     - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
     - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe
-
-winehq-bot:
-  stage: build
-  image: $CI_REGISTRY/wine/wine:debian-trixie
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_PROJECT_PATH == "wine/wine" && $WINEHQ_BOT_TRIGGER
-  script:
-    - curl -s -X POST -F "token=$WINEHQ_BOT_TRIGGER" -F "ref=master"
-      -F "variables[MERGE_REQUEST_IID]=$CI_MERGE_REQUEST_IID"
-      -F "variables[MERGE_REQUEST_PROJECT_PATH]=$CI_MERGE_REQUEST_PROJECT_PATH"
-      "$CI_API_V4_URL/projects/6/trigger/pipeline" | jq -er .web_url

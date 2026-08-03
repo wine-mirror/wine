@@ -24,32 +24,30 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winioctl.h"
-#include "ntddscsi.h"
 #include "ntddstor.h"
 #include "winternl.h"
 #include "ddk/ntddcdvd.h"
 #include "ddk/mountmgr.h"
-#include "ddk/ntifs.h"
 #include "wine/test.h"
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 struct COMPLETE_DVD_LAYER_DESCRIPTOR
 {
     DVD_DESCRIPTOR_HEADER Header;
     DVD_LAYER_DESCRIPTOR Descriptor;
     UCHAR Padding;
 };
-#pragma pack(pop)
+#include <poppack.h>
 C_ASSERT(sizeof(struct COMPLETE_DVD_LAYER_DESCRIPTOR) == 22);
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR
 {
     DVD_DESCRIPTOR_HEADER Header;
     DVD_MANUFACTURER_DESCRIPTOR Descriptor;
     UCHAR Padding;
 };
-#pragma pack(pop)
+#include <poppack.h>
 C_ASSERT(sizeof(struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR) == 2053);
 
 static HINSTANCE hdll;
@@ -63,27 +61,6 @@ static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, 
 static BOOL (WINAPI *pCreateSymbolicLinkA)(const char *, const char *, DWORD);
 static BOOL (WINAPI *pGetVolumeInformationByHandleW)(HANDLE, WCHAR *, DWORD, DWORD *, DWORD *, DWORD *, WCHAR *, DWORD);
 static HRESULT (WINAPI *pGetDiskSpaceInformationA)(LPCSTR, DISK_SPACE_INFORMATION *);
-
-#define READ_ONLY_DIRECT_ACCESS_DEVICE 0x05
-#define SCSISTAT_GOOD 0x00
-#define SCSISTAT_CHECK_CONDITION 0x02
-#define SCSI_SENSE_NOT_READY 0x02
-#define SCSI_SENSE_ILLEGAL_REQUEST 0x05
-
-static const unsigned char inquiry_cmd[6] = {
-    /* INQUIRY Command */
-    [0] = 0x12,
-    /* Allocation Length */
-    [3] = 0, 36,
-};
-static const unsigned char read_cmd[10] = {
-    /* READ (10) Command */
-    [0] = 0x28,
-    /* Starting Logical Block Address */
-    [2] = 0xde, 0xad, 0xbe, 0xef,
-    /* Transfer Length */
-    [7] = 0, 1,
-};
 
 /* ############################### */
 
@@ -211,12 +188,6 @@ static void test_dos_devices(void)
     ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
-
-    ret = DefineDosDeviceW ( DDD_RAW_TARGET_PATH, L"C:/windows/", L"\\Device\\C:/windows/" );
-    ok(ret, "got error %lu\n", GetLastError());
-
-    ret = DefineDosDeviceW(DDD_REMOVE_DEFINITION, L"C:/windows/", NULL);
-    ok(ret, "failed to remove C:/windows/, error %lu\n", GetLastError());
 }
 
 static void test_FindFirstVolume(void)
@@ -624,7 +595,6 @@ static void test_disk_extents(void)
     DWORD size;
     HANDLE handle;
     static DWORD data[16];
-    VOLUME_DISK_EXTENTS *d;
 
     handle = CreateFileA( "\\\\.\\c:", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
     if (handle == INVALID_HANDLE_VALUE)
@@ -641,18 +611,8 @@ static void test_disk_extents(void)
         CloseHandle( handle );
         return;
     }
-    size = 0xdeadbeef;
-    ret = DeviceIoControl( handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, data,
-                           sizeof(data), &data, sizeof(*d) - 4, &size, NULL );
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got ret %d, error %lu.\n", ret, GetLastError());
-    ok(size == 0xdeadbeef, "expected 32, got %lu\n", size);
-    ret = DeviceIoControl( handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, data,
-                           sizeof(data), &data, sizeof(*d), &size, NULL );
     ok(ret, "DeviceIoControl failed %lu\n", GetLastError());
     ok(size == 32, "expected 32, got %lu\n", size);
-    d = (VOLUME_DISK_EXTENTS *)data;
-    ok(d->NumberOfDiskExtents == 1, "got %lu.\n", d->NumberOfDiskExtents);
-    ok(d->Extents[0].ExtentLength.QuadPart > 0, "got %lu.\n", d->NumberOfDiskExtents);
     CloseHandle( handle );
 }
 
@@ -661,7 +621,6 @@ static void test_disk_query_property(void)
     STORAGE_PROPERTY_QUERY query = {0};
     STORAGE_DESCRIPTOR_HEADER header = {0};
     STORAGE_DEVICE_DESCRIPTOR descriptor = {0};
-    DEVICE_TRIM_DESCRIPTOR trim_descriptor = {0};
     DEVICE_SEEK_PENALTY_DESCRIPTOR seek_pen = {0};
     HANDLE handle;
     DWORD error;
@@ -731,34 +690,6 @@ static void test_disk_query_property(void)
             ok(seek_pen.Size == sizeof(seek_pen), "got %ld\n", seek_pen.Size);
             ok(seek_pen.IncursSeekPenalty == TRUE || seek_pen.IncursSeekPenalty == FALSE, "got %d.\n", seek_pen.IncursSeekPenalty);
         }
-    }
-
-    /* Tests of StorageDeviceTrimProperty. */
-    query.PropertyId = StorageDeviceTrimProperty;
-    query.QueryType = PropertyStandardQuery;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &header,
-                          sizeof(header), &size, NULL);
-    error = GetLastError();
-    ok(!!ret, "expect ret %#x, got %#x\n", TRUE, ret);
-    ok(error == 0xdeadbeef, "expect err %#x, got err %#lx\n", 0xdeadbeef, error);
-    ok(size == sizeof(header), "got size %ld\n", size);
-    ok(header.Version == sizeof(trim_descriptor), "got header.Version %ld\n", header.Version);
-    ok(header.Size == sizeof(trim_descriptor), "got header.Size %ld\n", header.Size);
-
-    SetLastError(0xdeadbeef);
-    memset(&trim_descriptor, 0xcc, sizeof(trim_descriptor));
-    ret = DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &trim_descriptor,
-                          sizeof(trim_descriptor), &size, NULL);
-    error = GetLastError();
-    ok(!!ret || broken(!ret && error == ERROR_INVALID_FUNCTION) /* Win8 */,
-       "expect ret %#x, got err %#lx\n", ret, error);
-    if (ret)
-    {
-        ok(error == 0xdeadbeef, "expect err %#x, got err %#lx\n", 0xdeadbeef, error);
-        ok(size == sizeof(trim_descriptor), "got size %ld\n", size);
-        ok(trim_descriptor.Version == sizeof(trim_descriptor), "got descriptor.Version %ld\n", trim_descriptor.Version);
-        ok(trim_descriptor.Size == sizeof(trim_descriptor), "got descriptor.Size %ld\n", trim_descriptor.Size);
     }
 
     CloseHandle(handle);
@@ -1324,279 +1255,6 @@ static void test_dvd_read_structure(HANDLE handle)
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "IOCTL_DVD_READ_STRUCTURE should have failed %d %lu\n", ret, GetLastError());
 }
 
-static void test_scsi_pass_through(HANDLE device)
-{
-    struct scsi_pass_through_buffer {
-        SCSI_PASS_THROUGH packet;
-        UCHAR sense[32];
-        UCHAR data[2048];
-    } buf;
-    SCSI_PASS_THROUGH packet;
-    UCHAR sense_key;
-    DWORD size;
-    BOOL ret;
-
-    /* Test INQUIRY with different I/O buffer */
-    memset(&packet, 0, sizeof(packet));
-    packet.Length = sizeof(SCSI_PASS_THROUGH);
-    packet.CdbLength = sizeof(inquiry_cmd);
-    packet.DataIn = SCSI_IOCTL_DATA_IN;
-    packet.DataTransferLength = inquiry_cmd[4];
-    packet.SenseInfoLength = 0;
-    packet.TimeOutValue = 2;
-    packet.DataBufferOffset = offsetof(struct scsi_pass_through_buffer, data);
-    packet.SenseInfoOffset = 0;
-    memcpy(packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
-
-    memset(&buf, 0xcc, sizeof(buf));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH,
-            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    trace("size %lu, sense %lu+%u, data %lu+%lu\n",
-            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength,
-            (DWORD)buf.packet.DataBufferOffset, buf.packet.DataTransferLength);
-    todo_wine ok(size == (DWORD)buf.packet.DataBufferOffset + buf.packet.DataTransferLength, "unexpected size %lu\n", size);
-
-    ok((buf.data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", buf.data[0] & 0x1f);
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
-    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
-    ok(buf.packet.DataBufferOffset == packet.DataBufferOffset, "got DataBufferOffset %lu\n", (DWORD)buf.packet.DataBufferOffset);
-    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
-
-    /* Expect error due to insufficient output buffer size */
-    memset(&buf, 0xcc, sizeof(buf));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH,
-            &packet, sizeof(packet), &buf, sizeof(buf.packet), &size, NULL);
-    todo_wine ok(!ret, "DeviceIoControl succeeded\n");
-
-    /* Expect error due to insufficient input length */
-    packet.Length = sizeof(SCSI_PASS_THROUGH) - 10;
-
-    memset(&buf, 0xcc, sizeof(buf));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH,
-            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
-    ok(!ret, "DeviceIoControl succeeded\n");
-
-    /* Test INQUIRY with same I/O buffer */
-    memset(&buf, 0xcc, sizeof(buf));
-    buf.packet.Length = sizeof(SCSI_PASS_THROUGH);
-    buf.packet.CdbLength = sizeof(inquiry_cmd);
-    buf.packet.DataIn = SCSI_IOCTL_DATA_IN;
-    buf.packet.DataTransferLength = inquiry_cmd[4];
-    buf.packet.SenseInfoLength = 18;
-    buf.packet.TimeOutValue = 2;
-    buf.packet.DataBufferOffset = offsetof(struct scsi_pass_through_buffer, data);
-    buf.packet.SenseInfoOffset = offsetof(struct scsi_pass_through_buffer, sense);
-    memcpy(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
-
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH,
-            &buf, sizeof(buf), &buf, sizeof(buf), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    trace("size %lu, sense %lu+%u, data %lu+%lu\n",
-            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength,
-            (DWORD)buf.packet.DataBufferOffset, buf.packet.DataTransferLength);
-    todo_wine ok(size == (DWORD)buf.packet.DataBufferOffset + buf.packet.DataTransferLength, "unexpected size %lu\n", size);
-
-    ok((buf.data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", buf.data[0] & 0x1f);
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
-    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok(buf.packet.DataBufferOffset == offsetof(struct scsi_pass_through_buffer, data), "got DataBufferOffset %lu\n", (DWORD)buf.packet.DataBufferOffset);
-    ok(buf.packet.SenseInfoOffset == offsetof(struct scsi_pass_through_buffer, sense), "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd)), "got unexpected Cdb\n");
-
-    /* Test sense buffer */
-    memset(&packet, 0, sizeof(packet));
-    packet.Length = sizeof(SCSI_PASS_THROUGH);
-    packet.CdbLength = sizeof(read_cmd);
-    packet.DataIn = SCSI_IOCTL_DATA_IN;
-    packet.DataTransferLength = sizeof(buf.data);
-    packet.SenseInfoLength = 18;
-    packet.TimeOutValue = 2;
-    packet.DataBufferOffset = offsetof(struct scsi_pass_through_buffer, data);
-    packet.SenseInfoOffset = offsetof(struct scsi_pass_through_buffer, sense);
-    memcpy(packet.Cdb, read_cmd, sizeof(read_cmd));
-
-    memset(&buf, 0xcc, sizeof(buf));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH,
-            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    trace("size %lu, sense %lu+%u, data %lu+%lu\n",
-            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength,
-            (DWORD)buf.packet.DataBufferOffset, buf.packet.DataTransferLength);
-    if (buf.packet.DataTransferLength)
-        todo_wine ok(size == (DWORD)buf.packet.DataBufferOffset + buf.packet.DataTransferLength, "unexpected size %lu\n", size);
-    else
-        todo_wine ok(size == (DWORD)buf.packet.DataBufferOffset || size == buf.packet.SenseInfoOffset + buf.packet.SenseInfoLength, "unexpected size %lu\n", size);
-
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_CHECK_CONDITION, "got ScsiStatus %d\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == packet.CdbLength, "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.SenseInfoLength == 18, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok((buf.sense[0] & 0x7f) == 0x70, "got Response Code %#x\n", buf.sense[0]);
-    sense_key = buf.sense[2] & 0xf;
-    ok(sense_key == SCSI_SENSE_NOT_READY || sense_key == SCSI_SENSE_ILLEGAL_REQUEST, "got Additional Sense Code %#x\n", sense_key);
-    ok(buf.packet.DataIn == packet.DataIn, "got DataIn %u\n", buf.packet.DataIn);
-    ok(!buf.packet.DataTransferLength || buf.packet.DataTransferLength == sizeof(buf.data), "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
-    ok(buf.packet.DataBufferOffset == packet.DataBufferOffset, "got DataBufferOffset %lu\n", (DWORD)buf.packet.DataBufferOffset);
-    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
-}
-
-static void test_scsi_pass_through_direct(HANDLE device)
-{
-    struct scsi_pass_through_direct_buffer {
-        SCSI_PASS_THROUGH_DIRECT packet;
-        UCHAR sense[32];
-    } buf;
-    SCSI_PASS_THROUGH_DIRECT packet;
-    UCHAR data[2048];
-    UCHAR sense_key;
-    DWORD size;
-    BOOL ret;
-
-    /* Test INQUIRY with different I/O buffer */
-    memset(&packet, 0, sizeof(packet));
-    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    packet.CdbLength = sizeof(inquiry_cmd);
-    packet.DataIn = SCSI_IOCTL_DATA_IN;
-    packet.DataTransferLength = inquiry_cmd[4];
-    packet.SenseInfoLength = 0;
-    packet.TimeOutValue = 2;
-    packet.DataBuffer = data;
-    packet.SenseInfoOffset = 0;
-    memcpy(packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
-
-    memset(&buf, 0xcc, sizeof(buf));
-    memset(data, 0xcc, sizeof(data));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
-            &packet, sizeof(packet), &buf.packet, sizeof(buf.packet), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    ok(size == sizeof(SCSI_PASS_THROUGH_DIRECT), "unexpected size %lu\n", size);
-
-    ok((data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", data[0] & 0x1f);
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
-    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
-    ok(buf.packet.DataBuffer == packet.DataBuffer, "got DataBuffer %p\n", buf.packet.DataBuffer);
-    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
-
-    /* Expect error due to insufficient output buffer size */
-    memset(&buf, 0xcc, sizeof(buf));
-    memset(data, 0xcc, sizeof(data));
-    packet.SenseInfoLength = 18;
-    packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
-            &packet, sizeof(packet), &buf.packet, sizeof(buf.packet), &size, NULL);
-    todo_wine ok(!ret, "DeviceIoControl succeeded\n");
-
-    /* Expect error due to insufficient input length */
-    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT) - 10;
-
-    memset(&buf, 0xcc, sizeof(buf));
-    memset(data, 0xcc, sizeof(data));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
-            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
-    ok(!ret, "DeviceIoControl succeeded\n");
-
-    /* Test INQUIRY with same I/O buffer */
-    memset(&buf, 0xcc, sizeof(buf));
-    memset(data, 0xcc, sizeof(data));
-    buf.packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    buf.packet.CdbLength = sizeof(inquiry_cmd);
-    buf.packet.DataIn = SCSI_IOCTL_DATA_IN;
-    buf.packet.DataTransferLength = inquiry_cmd[4];
-    buf.packet.SenseInfoLength = 18;
-    buf.packet.TimeOutValue = 2;
-    buf.packet.DataBuffer = data;
-    buf.packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
-    memcpy(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
-
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
-            &buf, sizeof(buf), &buf, sizeof(buf), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    trace("size %lu, sense %lu+%u, data %lu\n",
-            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength, buf.packet.DataTransferLength);
-    ok(size == sizeof(SCSI_PASS_THROUGH_DIRECT), "unexpected size %lu\n", size);
-
-    ok((data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", data[0] & 0x1f);
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
-    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok(buf.packet.DataBuffer == data, "got DataBuffer %p\n", buf.packet.DataBuffer);
-    ok(buf.packet.SenseInfoOffset == offsetof(struct scsi_pass_through_direct_buffer, sense), "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd)), "got unexpected Cdb\n");
-
-    /* Test sense buffer */
-    memset(&packet, 0, sizeof(packet));
-    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    packet.CdbLength = sizeof(read_cmd);
-    packet.DataIn = SCSI_IOCTL_DATA_IN;
-    packet.DataTransferLength = sizeof(data);
-    packet.SenseInfoLength = 18;
-    packet.TimeOutValue = 2;
-    packet.DataBuffer = data;
-    packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
-    memcpy(packet.Cdb, read_cmd, sizeof(read_cmd));
-
-    memset(&buf, 0xcc, sizeof(buf));
-    memset(data, 0xcc, sizeof(data));
-    size = 0xdeadbeef;
-    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
-            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
-    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
-
-    trace("size %lu, sense %lu+%u, data %lu\n",
-            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength, buf.packet.DataTransferLength);
-    todo_wine ok(size == buf.packet.SenseInfoOffset + buf.packet.SenseInfoLength, "unexpected size %lu\n", size);
-
-    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
-    ok(buf.packet.ScsiStatus == SCSISTAT_CHECK_CONDITION, "got ScsiStatus %d\n", buf.packet.ScsiStatus);
-    ok(buf.packet.CdbLength == packet.CdbLength, "got CdbLength %u\n", buf.packet.CdbLength);
-    ok(buf.packet.SenseInfoLength == 18, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
-    ok((buf.sense[0] & 0x7f) == 0x70, "got Response Code %#x\n", buf.sense[0]);
-    sense_key = buf.sense[2] & 0xf;
-    ok(sense_key == SCSI_SENSE_NOT_READY || sense_key == SCSI_SENSE_ILLEGAL_REQUEST, "got Additional Sense Code %#x\n", sense_key);
-    ok(buf.packet.DataIn == packet.DataIn, "got DataIn %u\n", buf.packet.DataIn);
-    ok(!buf.packet.DataTransferLength || buf.packet.DataTransferLength == sizeof(data), "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
-    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
-    ok(buf.packet.DataBuffer == packet.DataBuffer, "got DataBuffer %p\n", buf.packet.DataBuffer);
-    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
-    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
-}
-
 static void test_cdrom_ioctl(void)
 {
     char drive_letter, drive_path[] = "A:\\", drive_full_path[] = "\\\\.\\A:";
@@ -1636,19 +1294,6 @@ static void test_cdrom_ioctl(void)
         test_dvd_read_structure(handle);
 
         CloseHandle(handle);
-
-        handle = CreateFileA(drive_full_path, GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
-        if(handle == INVALID_HANDLE_VALUE)
-        {
-            trace("Failed to open the device (RW) : %lu\n", GetLastError());
-            continue;
-        }
-
-        test_scsi_pass_through(handle);
-        test_scsi_pass_through_direct(handle);
-
-        CloseHandle(handle);
     }
 
 }
@@ -1657,11 +1302,7 @@ static void test_mounted_folder(void)
 {
     char name_buffer[200], path[MAX_PATH], volume_name[100], *p;
     FILE_NAME_INFORMATION *name = (FILE_NAME_INFORMATION *)name_buffer;
-    char buffer[1024];
-    const REPARSE_DATA_BUFFER *data = (void *)buffer;
     FILE_ATTRIBUTE_TAG_INFO info;
-    WCHAR volume_nameW[100];
-    const WCHAR *ret_path;
     IO_STATUS_BLOCK io;
     BOOL ret, got_path;
     NTSTATUS status;
@@ -1705,8 +1346,6 @@ static void test_mounted_folder(void)
 
     ret = GetVolumeNameForVolumeMountPointA( "C:\\", volume_name, sizeof(volume_name) );
     ok(ret, "got error %lu\n", GetLastError());
-    ret = GetVolumeNameForVolumeMountPointW( L"C:\\", volume_nameW, ARRAY_SIZE(volume_nameW) );
-    ok(ret, "got error %lu\n", GetLastError());
 
     ret = SetVolumeMountPointA( "C:\\winetest_mnt\\", volume_name );
     if (!ret)
@@ -1715,33 +1354,7 @@ static void test_mounted_folder(void)
         RemoveDirectoryA( "C:\\winetest_mnt" );
         return;
     }
-    ok(ret, "got error %lu\n", GetLastError());
-
-    file = CreateFileA( "C:\\winetest_mnt\\", FILE_READ_DATA, 0, NULL, OPEN_EXISTING,
-                        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
-    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
-
-    volume_nameW[1] = '?';
-    ret = NtFsControlFile( file, NULL, NULL, NULL, &io, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer, sizeof(buffer) );
-    ok( !ret, "got %#x\n", ret );
-    ok( data->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT, "got tag %#lx\n", data->ReparseTag );
-    ok( !data->Reserved, "got reserved %#x\n", data->Reserved );
-    ok( data->ReparseDataLength == io.Information - offsetof( REPARSE_DATA_BUFFER, MountPointReparseBuffer ),
-        "got information %Iu, length %u\n", io.Information, data->ReparseDataLength );
-    ret_path = data->MountPointReparseBuffer.PathBuffer + (data->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    ok( data->MountPointReparseBuffer.SubstituteNameLength == wcslen( volume_nameW ) * sizeof(WCHAR),
-        "got length %u\n", data->MountPointReparseBuffer.SubstituteNameLength );
-    ok( !memcmp( ret_path, volume_nameW, data->MountPointReparseBuffer.SubstituteNameLength ),
-        "expected %s, got %s\n", debugstr_w( volume_nameW ),
-        debugstr_wn( ret_path, data->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR) ));
-    ret_path = data->MountPointReparseBuffer.PathBuffer + (data->MountPointReparseBuffer.PrintNameOffset / sizeof(WCHAR));
-    ok( data->MountPointReparseBuffer.PrintNameLength == wcslen( volume_nameW ) * sizeof(WCHAR),
-        "got length %u\n", data->MountPointReparseBuffer.PrintNameLength );
-    ok( !memcmp( ret_path, volume_nameW, data->MountPointReparseBuffer.PrintNameLength ),
-        "expected %s, got %s\n", debugstr_w( volume_nameW ),
-        debugstr_wn( ret_path, data->MountPointReparseBuffer.PrintNameLength / sizeof(WCHAR) ));
-
-    CloseHandle( file );
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
 
     file = CreateFileA( "C:\\winetest_mnt", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
@@ -1766,14 +1379,14 @@ static void test_mounted_folder(void)
     ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileAttributeTagInformation );
-    todo_wine ok(!status, "got status %#lx\n", status);
-    todo_wine ok(!(info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+    ok(!status, "got status %#lx\n", status);
+    ok(!(info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
             && (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY), "got attributes %#lx\n", info.FileAttributes);
-    todo_wine ok(!info.ReparseTag, "got reparse tag %#lx\n", info.ReparseTag);
+    ok(!info.ReparseTag, "got reparse tag %#lx\n", info.ReparseTag);
 
     status = NtQueryInformationFile( file, &io, name, sizeof(name_buffer), FileNameInformation );
-    todo_wine ok(!status, "got status %#lx\n", status);
-    todo_wine ok(name->FileNameLength == wcslen(L"\\") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
+    ok(!status, "got status %#lx\n", status);
+    ok(name->FileNameLength == wcslen(L"\\") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
     ok(!wcsnicmp(name->FileName, L"\\", wcslen(L"\\")), "got name %s\n",
             debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
 
@@ -1785,19 +1398,19 @@ static void test_mounted_folder(void)
 
     file = CreateFileA( "C:\\winetest_mnt\\windows", 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     status = NtQueryInformationFile( file, &io, name, sizeof(name_buffer), FileNameInformation );
-    todo_wine ok(!status, "got status %#lx\n", status);
-    todo_wine ok(name->FileNameLength == wcslen(L"\\windows") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
-    todo_wine ok(!wcsnicmp(name->FileName, L"\\windows", wcslen(L"\\windows")), "got name %s\n",
+    ok(!status, "got status %#lx\n", status);
+    ok(name->FileNameLength == wcslen(L"\\windows") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
+    ok(!wcsnicmp(name->FileName, L"\\windows", wcslen(L"\\windows")), "got name %s\n",
             debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
 
     CloseHandle( file );
 
     ret = GetVolumePathNameA( "C:\\winetest_mnt", path, sizeof(path) );
     ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, "C:\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
+    ok(!strcmp(path, "C:\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
     SetLastError(0xdeadbeef);
     ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_mnt", path, sizeof(path) );
     ok(!ret, "expected failure\n");
@@ -1808,10 +1421,10 @@ static void test_mounted_folder(void)
     ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %lu\n", GetLastError());
 
     ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_mnt\\", path, sizeof(path) );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
     ret = GetVolumeInformationA( "C:\\winetest_mnt\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     ret = GetVolumePathNameA( "C:\\winetest_mnt\\windows", path, sizeof(path) );
     ok(ret, "got error %lu\n", GetLastError());
@@ -1831,29 +1444,29 @@ static void test_mounted_folder(void)
     SetLastError(0xdeadbeef);
     ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_mnt\\nonexistent\\", path, sizeof(path) );
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = GetVolumeInformationA( "C:\\winetest_mnt\\nonexistent\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %lu\n", GetLastError());
 
     ret = GetVolumePathNameA( "C:\\winetest_mnt\\winetest_mnt", path, sizeof(path) );
     ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, "C:\\winetest_mnt\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
+    ok(!strcmp(path, "C:\\winetest_mnt\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
     ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_mnt\\winetest_mnt\\", path, sizeof(path) );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
     ret = GetVolumeInformationA( "C:\\winetest_mnt\\winetest_mnt\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     ret = GetVolumePathNameA( "C:/winetest_mnt/../winetest_mnt/.", path, sizeof(path) );
     ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, "C:\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
+    ok(!strcmp(path, "C:\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
     ret = GetVolumeNameForVolumeMountPointA( "C:/winetest_mnt/../winetest_mnt/.\\", path, sizeof(path) );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
-    todo_wine ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
     ret = GetVolumeInformationA( "C:/winetest_mnt/../winetest_mnt/.\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
 
     ret = GetVolumePathNamesForVolumeNameA( volume_name, path, sizeof(path), &size );
     ok(ret, "got error %lu\n", GetLastError());
@@ -1864,7 +1477,7 @@ static void test_mounted_folder(void)
             got_path = TRUE;
         ok(strcmp( p, "C:\\winetest_mnt\\winetest_mnt\\" ), "GetVolumePathNamesForVolumeName() should not recurse\n");
     }
-    todo_wine ok(got_path, "mount point was not enumerated\n");
+    ok(got_path, "mount point was not enumerated\n");
 
     /* test interaction with symbolic links */
 
@@ -1874,18 +1487,18 @@ static void test_mounted_folder(void)
         ok(ret, "got error %lu\n", GetLastError());
 
         ret = GetVolumePathNameA( "C:\\winetest_link\\", path, sizeof(path) );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
         ok(!strcmp(path, "C:\\"), "got %s\n", path);
         SetLastError(0xdeadbeef);
         ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_link\\", path, sizeof(path) );
         ok(!ret, "expected failure\n");
-        todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER
+        ok(GetLastError() == ERROR_INVALID_PARAMETER
                 || broken(GetLastError() == ERROR_SUCCESS) /* 2008 */, "wrong error %lu\n", GetLastError());
         ret = GetVolumeInformationA( "C:\\winetest_link\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
 
         ret = GetVolumePathNameA( "C:\\winetest_link\\windows\\", path, sizeof(path) );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
         ok(!strcmp(path, "C:\\"), "got %s\n", path);
         SetLastError(0xdeadbeef);
         ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_link\\windows\\", path, sizeof(path) );
@@ -1897,30 +1510,30 @@ static void test_mounted_folder(void)
         ok(GetLastError() == ERROR_DIR_NOT_ROOT, "wrong error %lu\n", GetLastError());
 
         ret = GetVolumePathNameA( "C:\\winetest_link\\winetest_mnt", path, sizeof(path) );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
-        todo_wine ok(!strcmp(path, "C:\\winetest_link\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
+        ok(ret, "got error %lu\n", GetLastError());
+        ok(!strcmp(path, "C:\\winetest_link\\winetest_mnt\\"), "got %s\n", debugstr_a(path));
         ret = GetVolumeNameForVolumeMountPointA( "C:\\winetest_link\\winetest_mnt\\", path, sizeof(path) );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
-        todo_wine ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
+        ok(ret, "got error %lu\n", GetLastError());
+        ok(!strcmp(path, volume_name), "expected %s, got %s\n", debugstr_a(volume_name), debugstr_a(path));
         ret = GetVolumeInformationA( "C:\\winetest_link\\winetest_mnt\\", NULL, 0, NULL, NULL, NULL, NULL, 0 );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
 
         /* The following test makes it clear that when we encounter a symlink
          * while resolving, we resolve *every* junction in the path, i.e. both
          * mount points and symlinks. */
         ret = GetVolumePathNameA( "C:\\winetest_link\\winetest_mnt\\winetest_link\\windows\\", path, sizeof(path) );
-        todo_wine ok(ret, "got error %lu\n", GetLastError());
+        ok(ret, "got error %lu\n", GetLastError());
         ok(!strcmp(path, "C:\\") || !strcmp(path, "C:\\winetest_link\\winetest_mnt\\") /* 2008 */,
                 "got %s\n", debugstr_a(path));
 
         file = CreateFileA( "C:\\winetest_link\\winetest_mnt\\winetest_link\\windows\\", 0,
                 FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
-        todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+        ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
         status = NtQueryInformationFile( file, &io, name, sizeof(name_buffer), FileNameInformation );
-        todo_wine ok(!status, "got status %#lx\n", status);
-        todo_wine ok(name->FileNameLength == wcslen(L"\\windows") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
-        todo_wine ok(!wcsnicmp(name->FileName, L"\\windows", wcslen(L"\\windows")), "got name %s\n",
+        ok(!status, "got status %#lx\n", status);
+        ok(name->FileNameLength == wcslen(L"\\windows") * sizeof(WCHAR), "got length %lu\n", name->FileNameLength);
+        ok(!wcsnicmp(name->FileName, L"\\windows", wcslen(L"\\windows")), "got name %s\n",
                 debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
 
         CloseHandle( file );
@@ -1938,7 +1551,7 @@ static void test_mounted_folder(void)
     }
 
     ret = DeleteVolumeMountPointA( "C:\\winetest_mnt\\" );
-    todo_wine ok(ret, "got error %lu\n", GetLastError());
+    ok(ret, "got error %lu\n", GetLastError());
     ret = RemoveDirectoryA( "C:\\winetest_mnt" );
     ok(ret, "got error %lu\n", GetLastError());
 }
@@ -2019,8 +1632,6 @@ static void test_GetVolumeInformationByHandle(void)
     ret = pGetVolumeInformationByHandleW( file, label, ARRAY_SIZE(label), &serial,
             &filename_len, &flags, fsname, ARRAY_SIZE(fsname) );
     ok(ret, "got error %lu\n", GetLastError());
-    ok(flags & FILE_SUPPORTS_OPEN_BY_FILE_ID,
-            "expected FILE_SUPPORTS_OPEN_BY_FILE_ID to be set, got %#lx\n", flags);
 
     memset(buffer, 0, sizeof(buffer));
     status = NtQueryVolumeInformationFile( file, &io, buffer, sizeof(buffer), FileFsVolumeInformation );
@@ -2180,7 +1791,6 @@ static void check_disk_space_information_(unsigned int line, const DISK_SPACE_IN
 static void test_GetDiskSpaceInformationA(void)
 {
     DISK_SPACE_INFORMATION info;
-    char volume[MAX_PATH];
     HRESULT hr;
 
     /* GetDiskSpaceInformation() is supported on Windows 10 build 1809 and later */
@@ -2208,18 +1818,12 @@ static void test_GetDiskSpaceInformationA(void)
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
     check_disk_space_information(&info);
 
-    hr = pGetDiskSpaceInformationA("C:\\windows\\", &info);
+    hr = pGetDiskSpaceInformationA("C:\\", &info);
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
     check_disk_space_information(&info);
 
     hr = pGetDiskSpaceInformationA("\\\\?\\C:\\", &info);
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
-    check_disk_space_information(&info);
-
-    GetVolumeNameForVolumeMountPointA("C:\\", volume, ARRAY_SIZE(volume));
-
-    hr = pGetDiskSpaceInformationA(volume, &info);
-    ok(hr == S_OK, "got %#lx for %s\n", hr, debugstr_a(volume));
     check_disk_space_information(&info);
 }
 

@@ -208,7 +208,7 @@ static int fill_drives_list(HWND dialog)
     {
         LVITEMW item;
         WCHAR *path;
-        WCHAR letter[4];
+        char letter[4];
 
         /* skip over any unused drives */
         if (!drives[i].in_use)
@@ -224,11 +224,12 @@ static int fill_drives_list(HWND dialog)
         item.mask = LVIF_TEXT | LVIF_PARAM;
         item.iItem = count;
         item.iSubItem = 0;
-        item.pszText = letter;
+        item.pszText = strdupU2W(letter);
         item.cchTextMax = lstrlenW(item.pszText);
         item.lParam = (LPARAM) &drives[i];
 
         lv_insert_item(dialog, &item);
+        free(item.pszText);
 
         path = strdupU2W(drives[i].unixpath);
         lv_set_item_text(dialog, count, 1, path);
@@ -512,7 +513,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             else
             {
                 path = NULL;
-                wpath = wcsdup(L"drive_c");
+                wpath = strdupU2W("drive_c");
             }
 
             free(current_drive->unixpath);

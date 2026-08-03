@@ -36,16 +36,14 @@
 #include "initguid.h"
 #include "commoncontrols.h"
 #include "shellapi.h"
-#include "shlwapi.h"
 
 #include "wine/test.h"
 #include "v6util.h"
 #include "resources.h"
 
 #define IMAGELIST_MAGIC (('L' << 8) | 'I')
-#define get_alpha(argb) (((argb) & 0xff000000) >> 24)
 
-#pragma pack(push,2)
+#include "pshpack2.h"
 /* Header used by ImageList_Read() and ImageList_Write() */
 typedef struct _ILHEAD
 {
@@ -60,7 +58,7 @@ typedef struct _ILHEAD
     WORD	flags;
     SHORT	ovls[4];
 } ILHEAD;
-#pragma pack(pop)
+#include "poppack.h"
 
 static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
 static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
@@ -278,123 +276,6 @@ static void check_bits(HWND hwnd, HIMAGELIST himl, int idx, int size,
         "%s: bits different\n", loc);
     if (memcmp(bits, checkbits, (size * size)/8))
         dump_bits(bits, checkbits, size);
-}
-
-static UINT32 get_premultiplied_argb(UINT32 pixel)
-{
-    UINT32 alpha = (pixel & 0xff000000) >> 24;
-    return ((pixel & 0xff000000)
-            | (((pixel & 0x00ff0000) * alpha / 0xff) & 0x00ff0000)
-            | (((pixel & 0x0000ff00) * alpha / 0xff) & 0x0000ff00)
-            | (((pixel & 0x000000ff) * alpha / 0xff)));
-}
-
-static UINT32 get_alpha_blended(UINT32 dst, UINT32 src)
-{
-    UINT32 src_a, src_r, src_g, src_b;
-    UINT32 dst_a, dst_r, dst_g, dst_b;
-    UINT32 ret_a, ret_r, ret_g, ret_b;
-
-    src = get_premultiplied_argb(src);
-
-    src_a = (src & 0xff000000) >> 24;
-    src_r = (src & 0x00ff0000) >> 16;
-    src_g = (src & 0x0000ff00) >> 8;
-    src_b = (src & 0x000000ff);
-
-    dst_a = (dst & 0xff000000) >> 24;
-    dst_r = (dst & 0x00ff0000) >> 16;
-    dst_g = (dst & 0x0000ff00) >> 8;
-    dst_b = (dst & 0x000000ff);
-
-    ret_a = dst_a ? (src_a + (0xff - src_a) * dst_a / 0xff) : 0;
-    ret_r = src_r + (0xff - src_a) * dst_r / 0xff;
-    ret_g = src_g + (0xff - src_a) * dst_g / 0xff;
-    ret_b = src_b + (0xff - src_a) * dst_b / 0xff;
-
-    return (ret_a << 24) | (ret_r << 16) | (ret_g << 8) | ret_b;
-}
-
-/* Remember to free the bits after usage. */
-static void bitmap_get_bits(HBITMAP bitmap, UINT32 **bits)
-{
-    BITMAPINFO bitmap_info;
-    UINT32 image_size;
-    BITMAP bm;
-    HDC hdc;
-    int ret;
-
-    ret = GetObjectW(bitmap, sizeof(bm), &bm);
-    ok(ret, "GetObjectW failed.\n");
-
-    image_size = bm.bmWidth * bm.bmHeight * 4;
-    *bits = calloc(1, image_size);
-    ok(!!*bits, "Failed to allocate buffer of %u bytes.\n", image_size);
-
-    bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bitmap_info.bmiHeader.biWidth = bm.bmWidth;
-    bitmap_info.bmiHeader.biHeight = -bm.bmHeight;
-    bitmap_info.bmiHeader.biPlanes = 1;
-    bitmap_info.bmiHeader.biBitCount = 32;
-    bitmap_info.bmiHeader.biCompression = BI_RGB;
-    bitmap_info.bmiHeader.biSizeImage = image_size;
-    bitmap_info.bmiHeader.biXPelsPerMeter = 0;
-    bitmap_info.bmiHeader.biYPelsPerMeter = 0;
-    bitmap_info.bmiHeader.biClrUsed = 0;
-    bitmap_info.bmiHeader.biClrImportant = 0;
-
-    hdc = CreateCompatibleDC(NULL);
-    ok(!!hdc, "CreateCompatibleDC failed.\n");
-    ret = GetDIBits(hdc, bitmap, 0, bm.bmHeight, *bits, &bitmap_info, DIB_RGB_COLORS);
-    ok(ret, "GetDIBits failed.\n");
-
-    DeleteDC(hdc);
-}
-
-static void image_list_get_image_bits_by_bitmap(HIMAGELIST image_list, int index, UINT32 *bits)
-{
-    int ret, width, height;
-    IMAGEINFO image_info;
-    UINT32 *image_bits;
-
-    ret = pImageList_GetImageInfo(image_list, index, &image_info);
-    ok(ret, "ImageList_GetImageInfo failed.\n");
-    ret = pImageList_GetIconSize(image_list, &width, &height);
-    ok(ret, "ImageList_GetIconSize failed.\n");
-
-    bitmap_get_bits(image_info.hbmImage, &image_bits);
-    memcpy(bits, image_bits + width * height * index, width * height * 4);
-
-    free(image_bits);
-}
-
-static void image_list_get_image_bits_by_draw(HIMAGELIST image_list, int index, UINT32 *bits)
-{
-    BITMAPINFO bitmap_info = {};
-    int ret, width, height;
-    void *bitmap_bits;
-    HBITMAP hbm_dst;
-    HDC hdc_dst;
-
-    ret = pImageList_GetIconSize(image_list, &width, &height);
-    ok(ret, "ImageList_GetIconSize failed.\n");
-
-    bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bitmap_info.bmiHeader.biWidth = width;
-    bitmap_info.bmiHeader.biHeight = -height;
-    bitmap_info.bmiHeader.biPlanes = 1;
-    bitmap_info.bmiHeader.biBitCount = 32;
-    bitmap_info.bmiHeader.biCompression = BI_RGB;
-
-    hdc_dst = CreateCompatibleDC(0);
-    hbm_dst = CreateDIBSection(hdc_dst, &bitmap_info, DIB_RGB_COLORS, &bitmap_bits, NULL, 0);
-    SelectObject(hdc_dst, hbm_dst);
-
-    pImageList_Draw(image_list, index, hdc_dst, 0, 0, ILD_TRANSPARENT);
-    memcpy(bits, bitmap_bits, (size_t)(width * height * 32 / 8));
-
-    DeleteObject(hbm_dst);
-    DeleteDC(hdc_dst);
 }
 
 static void test_begindrag(void)
@@ -2204,8 +2085,6 @@ static void test_iconsize(void)
 static void test_create_destroy(void)
 {
     HIMAGELIST himl;
-    IMAGEINFO info;
-    HBITMAP hbm;
     INT cx, cy;
     BOOL rc;
     INT ret;
@@ -2265,18 +2144,6 @@ static void test_create_destroy(void)
     ok(himl == NULL, "got %p\n", himl);
     himl = pImageList_Create(1, -1, ILC_COLORDDB, 4, 4);
     ok(himl == NULL, "got %p\n", himl);
-
-    /* Test creating an imagelist with an excessively large initial image count */
-    himl = pImageList_Create(32, 32, ILC_COLOR32, 0xc0c0c0, 10);
-    ok(himl != NULL, "got %p\n", himl);
-    hbm = create_bitmap(32, 32, 0, "");
-    ret = pImageList_Add(himl, hbm, NULL);
-    ok(ret != -1, "Failed to add an image.\n");
-    ret = pImageList_GetImageInfo(himl, 0, &info);
-    ok(ret, "got %d\n", ret);
-    ok(info.hbmImage != NULL, "got %p\n", info.hbmImage);
-    DeleteObject(hbm);
-    pImageList_Destroy(himl);
 }
 
 static void check_color_table(const char *name, HDC hdc, HIMAGELIST himl, UINT ilc,
@@ -2480,18 +2347,9 @@ static void test_color_table(UINT ilc)
 
 static void test_copy(void)
 {
-    /* each line is a 1x1 bitmap */
-    static const UINT32 test_bitmaps[] =
-    {
-        0x00654321,
-        0x00ABCDEF,
-    };
     HIMAGELIST dst, src;
-    HBITMAP hbm;
-    UINT32 bits;
     BOOL ret;
     int count;
-    HDC hdc;
 
     dst = pImageList_Create(5, 11, ILC_COLOR, 1, 1);
     count = pImageList_GetImageCount(dst);
@@ -2507,30 +2365,6 @@ static void test_copy(void)
     ok(count == 0, "Expected no image in dst ImageList, got %d\n", count);
 
     pImageList_Destroy(dst);
-    pImageList_Destroy(src);
-
-    /* Test swapping images */
-    src = pImageList_Create(1, 1, ILC_COLOR32 | ILC_MASK, 2, 1);
-
-    hdc = CreateCompatibleDC(0);
-    hbm = create_test_bitmap(hdc, 1, 1, 32, &test_bitmaps[0]);
-    ret = pImageList_AddMasked(src, hbm, RGB(0xff, 0x00, 0x00));
-    ok(ret == 0, "ImageList_AddMasked() returned %d, expected %d.\n", ret, 0);
-    DeleteObject(hbm);
-    hbm = create_test_bitmap(hdc, 1, 1, 32, &test_bitmaps[1]);
-    ret = pImageList_AddMasked(src, hbm, RGB(0xff, 0x00, 0x00));
-    ok(ret == 1, "ImageList_AddMasked() returned %d, expected %d.\n", ret, 1);
-    DeleteObject(hbm);
-    DeleteDC(hdc);
-
-    ret = pImageList_Copy(src, 0, src, 1, ILCF_SWAP);
-    ok(ret, "ImageList_Copy() failed.\n");
-
-    image_list_get_image_bits_by_bitmap(src, 0, &bits);
-    ok(colour_match(bits, test_bitmaps[1]), "Got unexpected color %08x.\n", bits);
-    image_list_get_image_bits_by_bitmap(src, 1, &bits);
-    ok(colour_match(bits, test_bitmaps[0]), "Got unexpected color %08x.\n", bits);
-
     pImageList_Destroy(src);
 }
 
@@ -2554,7 +2388,26 @@ static void test_loadimage(void)
     pImageList_Destroy( list );
 }
 
-static void test_alpha(BOOL v6)
+#define GetAValue(argb) ((BYTE) ((argb) >> 24))
+
+static void get_image_bits(HIMAGELIST himl, int index, int width, int height, UINT32 *bits)
+{
+    HBITMAP hbm_dst;
+    void *bitmap_bits;
+    BITMAPINFO bitmap_info = {{sizeof(BITMAPINFOHEADER), width, height, 1, 32, BI_RGB, 0, 0, 0, 0, 0}};
+
+    HDC hdc_dst = CreateCompatibleDC(0);
+    hbm_dst = CreateDIBSection(hdc_dst, &bitmap_info, DIB_RGB_COLORS, &bitmap_bits, NULL, 0);
+    SelectObject(hdc_dst, hbm_dst);
+
+    pImageList_Draw(himl, index, hdc_dst, 0, 0, ILD_TRANSPARENT);
+    memcpy(bits, bitmap_bits, (size_t)(width * height * 32 / 8));
+
+    DeleteObject(hbm_dst);
+    DeleteDC(hdc_dst);
+}
+
+static void test_alpha(void)
 {
     /* each line is a 2*1 bitmap */
     const static UINT32 test_bitmaps[] =
@@ -2576,189 +2429,70 @@ static void test_alpha(BOOL v6)
     };
     const static BYTE mask_bits = 0xAA;
 
-    IImageList2 *image_list_iface;
-    DWORD flag, expected_flag = 0;
-    UINT32 bits[2], expected[2];
-    HBITMAP hbm_test, hbm_mask;
-    const UINT32 *bitmap_bits;
-    HIMAGELIST himl;
-    BOOL has_alpha;
-    HRESULT hr;
     int i, ret;
     HDC hdc;
+    HBITMAP hbm_test, hbm_mask;
+    HIMAGELIST himl;
+    UINT32 bits[2];
 
     hdc = CreateCompatibleDC(0);
-
-    winetest_push_context(v6 ? "v6" : "v5");
-
-    /* Test ImageList_AddMasked with alpha. */
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
+
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
-        bitmap_bits = test_bitmaps + i;
-
-        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
-
-        hbm_test = create_test_bitmap(hdc, 2, 1, 32, bitmap_bits);
-        ret = pImageList_AddMasked(himl, hbm_test, RGB(0x65, 0x43, 0x21));
+        hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
+        ret = pImageList_AddMasked(himl, hbm_test, RGB(0x65,0x43,0x21));
         ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
 
-        has_alpha = get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]);
-        expected[0] = get_premultiplied_argb(bitmap_bits[0]);
-        expected[1] = get_premultiplied_argb(bitmap_bits[1]);
-        expected_flag = ILIF_ALPHA;
-        /* v5: The image always gets masked.
-         * v6: If all alpha values are zero, the image is considered to have no alpha and gets masked. */
-        if (!v6 || (v6 && !has_alpha))
-        {
-            expected[0] = (bitmap_bits[0] == 0x654321 ? 0 : bitmap_bits[0]);
-            expected[1] = (bitmap_bits[1] == 0x654321 ? 0 : bitmap_bits[1]);
-            expected_flag = 0;
-        }
+        get_image_bits(himl, i / 2, 2, 1, bits);
+        ok(GetAValue(bits[0]) == GetAValue(test_bitmaps[i]) && GetAValue(bits[1]) == GetAValue(test_bitmaps[i + 1]),
+           "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
+           test_bitmaps[i], test_bitmaps[i + 1], GetAValue(bits[0]), GetAValue(bits[1]),
+           GetAValue(test_bitmaps[i]), GetAValue(test_bitmaps[i + 1]));
 
-        if (v6)
-        {
-            hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
-            ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
-            hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
-            ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
-            ok(flag == expected_flag, "Unexpected flag %#lx, expected %#lx.\n", flag, expected_flag);
-            IImageList2_Release(image_list_iface);
-        }
-
-        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
-        todo_wine_if(v6 && i != 0 && i != 2 && i != 4 && i != 6 && i != 12 && i != 18)
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        image_list_get_image_bits_by_draw(himl, i / 2, bits);
-        todo_wine_if(!v6 && i != 0 && i != 2 && i != 4 && i != 6 && i != 12 && i != 18)
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        winetest_pop_context();
+        /* If all alpha values are zero, the image is considered to have no alpha and gets masked */
+        if (!GetAValue(bits[0]) && !GetAValue(bits[1]))
+            ok(bits[0] == (test_bitmaps[i] == 0x654321 ? 0 : test_bitmaps[i]) &&
+               bits[1] == (test_bitmaps[i + 1] == 0x654321 ? 0 : test_bitmaps[i + 1]),
+               "Bitmap [%08X, %08X] returned [%08X, %08X], expected [%08X, %08X]\n",
+               test_bitmaps[i], test_bitmaps[i + 1], bits[0], bits[1],
+               test_bitmaps[i] == 0x654321 ? 0 : test_bitmaps[i],
+               test_bitmaps[i + 1] == 0x654321 ? 0 : test_bitmaps[i + 1]);
     }
-    pImageList_Destroy(himl);
 
-    /* Test ImageList_Add with alpha. */
+    pImageList_Destroy(himl);
     hbm_mask = CreateBitmap(2, 1, 1, 1, &mask_bits);
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
+
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
-        bitmap_bits = test_bitmaps + i;
-
-        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
-
         hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
         ret = pImageList_Add(himl, hbm_test, hbm_mask);
         ok(ret == i / 2, "ImageList_Add returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
 
-        has_alpha = get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]);
-        expected[0] = get_premultiplied_argb(bitmap_bits[0]);
-        expected[1] = get_premultiplied_argb(bitmap_bits[1]);
-        expected_flag = ILIF_ALPHA;
+        get_image_bits(himl, i / 2, 2, 1, bits);
+        ok(GetAValue(bits[0]) == GetAValue(test_bitmaps[i]) && GetAValue(bits[1]) == GetAValue(test_bitmaps[i + 1]),
+           "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
+           test_bitmaps[i], test_bitmaps[i + 1], GetAValue(bits[0]), GetAValue(bits[1]),
+           GetAValue(test_bitmaps[i]), GetAValue(test_bitmaps[i + 1]));
 
-        if (!v6)
+        /* If all alpha values are zero, the image is considered to have no alpha and gets masked */
+        if (!GetAValue(bits[0]) && !GetAValue(bits[1]))
+            ok(!bits[0] && bits[1] == test_bitmaps[i + 1],
+               "Bitmap [%08X, %08X] returned [%08X, %08X], expected [%08X, %08X]\n",
+               test_bitmaps[i], test_bitmaps[i + 1], bits[0], bits[1], 0, test_bitmaps[i + 1]);
+        else
         {
-            /* v5: The image always gets masked, though the alpha value of the masked bit is kept. */
-            expected[0] = bitmap_bits[0] & 0xff000000;
-            expected[1] = bitmap_bits[1];
+            if (GetAValue(bits[0]) >= 0x80)
+                ok(bits[0] & 0x00FFFFFF, "Bitmap [%08X, %08X] has alpha and masked first pixel [%08X]\n",
+                   test_bitmaps[i], test_bitmaps[i + 1], bits[0]);
         }
-        else if (!has_alpha)
-        {
-            /* v6: If all alpha values are zero, the image is considered to have no alpha and gets masked. */
-            expected[0] = 0;
-            expected[1] = bitmap_bits[1];
-            expected_flag = 0;
-        }
-
-        if (v6)
-        {
-            hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
-            ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
-            hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
-            ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
-            ok(flag == expected_flag, "Unexpected flag %#lx, expected %#lx.\n", flag, expected_flag);
-            IImageList2_Release(image_list_iface);
-        }
-
-        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
-        todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && (!v6 || i != 18))
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        image_list_get_image_bits_by_draw(himl, i / 2, bits);
-        todo_wine_if(!v6 && i != 0 && i != 2 && i != 4 && i != 6 && i != 12)
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        winetest_pop_context();
     }
+
     pImageList_Destroy(himl);
     DeleteObject(hbm_mask);
-
-    /* Test adding 32bpp images with alpha to 24bpp image list. */
-    himl = pImageList_Create(2, 1, ILC_COLOR24 | ILC_MASK, 0, 15);
-    for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
-    {
-        bitmap_bits = test_bitmaps + i;
-
-        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
-
-        hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
-        ret = pImageList_Add(himl, hbm_test, NULL);
-        ok(ret == i / 2, "ImageList_Add returned %d, expected %d\n", ret, i / 2);
-        DeleteObject(hbm_test);
-
-        expected[0] = bitmap_bits[0];
-        expected[1] = bitmap_bits[1];
-        if (!v6)
-        {
-            /* v5: Copy the bits to the image list. */
-            expected[0] = bitmap_bits[0] & 0x00ffffff;
-            expected[1] = bitmap_bits[1] & 0x00ffffff;
-        }
-        else if (get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]))
-        {
-            /* v6: Alpha blend the bits to the image list. */
-            expected[0] = get_alpha_blended(0x00ffffff, bitmap_bits[0]);
-            expected[1] = get_alpha_blended(0x00ffffff, bitmap_bits[1]);
-        }
-
-        if (v6)
-        {
-            hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
-            ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
-            hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
-            ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
-            ok(flag == 0, "Unexpected flag %#lx.\n", flag);
-            IImageList2_Release(image_list_iface);
-        }
-
-        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
-        todo_wine_if(v6 && i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        image_list_get_image_bits_by_draw(himl, i / 2, bits);
-        todo_wine_if(v6 && i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
-        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
-                bits[0], bits[1], expected[0], expected[1]);
-
-        winetest_pop_context();
-    }
-    pImageList_Destroy(himl);
-
-    winetest_pop_context();
-
     DeleteDC(hdc);
 }
 
@@ -2944,69 +2678,6 @@ static void init_functions(void)
 #undef X2
 }
 
-static void test_imagelist_interop(void)
-{
-    HRESULT (WINAPI *pDllGetVersion_v5)(DLLVERSIONINFO *);
-    HRESULT (WINAPI *pDllGetVersion_v6)(DLLVERSIONINFO *);
-    HIMAGELIST (WINAPI *pImageList_Create_v5)(int, int, UINT, int, int);
-    BOOL (WINAPI *pImageList_Destroy_v5)(HIMAGELIST);
-    BOOL (WINAPI *pImageList_GetIconSize_v5)(HIMAGELIST, int *, int *);
-    DLLVERSIONINFO info;
-    HMODULE comctl32_v5;
-    HIMAGELIST himl;
-    HRESULT hr;
-    INT cx, cy;
-    BOOL ret;
-
-    comctl32_v5 = LoadLibraryW(L"C:\\windows\\system32\\comctl32.dll");
-    ok(!!comctl32_v5, "Failed to load comctl32 v5.\n");
-
-    pDllGetVersion_v5 = (void *)GetProcAddress(comctl32_v5, "DllGetVersion");
-    pDllGetVersion_v6 = (void *)GetProcAddress(GetModuleHandleA("comctl32.dll"), "DllGetVersion");
-    pImageList_Create_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_Create");
-    pImageList_Destroy_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_Destroy");
-    pImageList_GetIconSize_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_GetIconSize");
-
-    /* Make sure we are testing the correct versions of comctl32 */
-    info.cbSize = sizeof(info);
-    hr = pDllGetVersion_v5(&info);
-    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
-    ok(info.dwMajorVersion == 5, "Got unexpected major version %lu.\n", info.dwMajorVersion);
-
-    info.cbSize = sizeof(info);
-    hr = pDllGetVersion_v6(&info);
-    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
-    ok(info.dwMajorVersion == 6, "Got unexpected major version %lu.\n", info.dwMajorVersion);
-
-    /* Create a v5 imagelist and use it with v6 imagelist functions */
-    himl = pImageList_Create_v5(1, 1, ILC_COLOR, 0, 1);
-    ok(!!himl, "ImageList_Create failed.\n");
-
-    cx = 0;
-    cy = 0;
-    ret = pImageList_GetIconSize(himl, &cx, &cy);
-    ok(ret, "ImageList_GetIconSize failed.\n");
-    ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
-
-    ret = pImageList_Destroy(himl);
-    ok(ret, "ImageList_Destroy failed.\n");
-
-    /* Create a v6 imagelist and use it with v5 imagelist functions */
-    himl = pImageList_Create(1, 1, ILC_COLOR, 0, 1);
-    ok(!!himl, "ImageList_Create failed.\n");
-
-    cx = 0;
-    cy = 0;
-    ret = pImageList_GetIconSize_v5(himl, &cx, &cy);
-    ok(ret, "ImageList_GetIconSize failed.\n");
-    ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
-
-    ret = pImageList_Destroy_v5(himl);
-    ok(ret, "ImageList_Destroy failed.\n");
-
-    FreeLibrary(comctl32_v5);
-}
-
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -3030,7 +2701,6 @@ START_TEST(imagelist)
     test_color_table(ILC_COLOR8);
     test_copy();
     test_loadimage();
-    test_alpha(FALSE);
 
     /* Now perform v6 tests */
     if (!load_v6_module(&ctx_cookie, &hCtx))
@@ -3051,12 +2721,11 @@ START_TEST(imagelist)
     test_color_table(ILC_COLOR8);
     test_copy();
     test_loadimage();
-    test_alpha(TRUE);
+    test_alpha();
 
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
     test_iimagelist();
-    test_imagelist_interop();
 
     test_IImageList_Add_Remove();
     test_IImageList_Get_SetImageCount();

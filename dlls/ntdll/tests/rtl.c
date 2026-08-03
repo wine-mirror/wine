@@ -34,7 +34,6 @@
 #include "in6addr.h"
 #include "inaddr.h"
 #include "ip2string.h"
-#include "sddl.h"
 #include "ddk/ntifs.h"
 #include "wine/test.h"
 #include "wine/asm.h"
@@ -99,11 +98,9 @@ static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
 static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
 static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
 static VOID      (WINAPI  *pRtlZeroMemory)(LPVOID,SIZE_T);
-#ifdef __i386__
 static USHORT    (FASTCALL *pRtlUshortByteSwap)(USHORT source);
 static ULONG     (FASTCALL *pRtlUlongByteSwap)(ULONG source);
 static ULONGLONG (FASTCALL *pRtlUlonglongByteSwap)(ULONGLONG source);
-#endif
 static void *    (WINAPI *pRtlGetElementGenericTable)(PRTL_GENERIC_TABLE, ULONG);
 static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
@@ -130,7 +127,6 @@ static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD
 static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
 static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
 static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
-static NTSTATUS  (WINAPI *pRtlCreateServiceSid)(PUNICODE_STRING, PSID, PULONG);
 static NTSTATUS  (WINAPI *pRtlDeriveCapabilitySidsFromName)(UNICODE_STRING *, PSID, PSID);
 static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
                                                     const UINT64 *client_procsW, ULONG procsW_size,
@@ -175,11 +171,9 @@ static void InitFunctionPtrs(void)
 	pRtlFillMemory = (void *)GetProcAddress(hntdll, "RtlFillMemory");
 	pRtlFillMemoryUlong = (void *)GetProcAddress(hntdll, "RtlFillMemoryUlong");
 	pRtlZeroMemory = (void *)GetProcAddress(hntdll, "RtlZeroMemory");
-#ifdef __i386__
         pRtlUshortByteSwap = (void *)GetProcAddress(hntdll, "RtlUshortByteSwap");
         pRtlUlongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlongByteSwap");
         pRtlUlonglongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlonglongByteSwap");
-#endif
         pRtlGetElementGenericTable = (void *)GetProcAddress(hntdll, "RtlGetElementGenericTable");
         pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
@@ -200,7 +194,6 @@ static void InitFunctionPtrs(void)
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
-        pRtlCreateServiceSid = (void *)GetProcAddress(hntdll, "RtlCreateServiceSid");
         pRtlDeriveCapabilitySidsFromName = (void *)GetProcAddress(hntdll, "RtlDeriveCapabilitySidsFromName");
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
         pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
@@ -430,7 +423,7 @@ static void test_RtlByteSwap(void)
     ULONG     lresult;
     USHORT    sresult;
 
-#ifndef __i386__
+#ifdef _WIN64
     /* the Rtl*ByteSwap() are always inlined and not exported from ntdll on 64bit */
     sresult = RtlUshortByteSwap( 0x1234 );
     ok( 0x3412 == sresult,
@@ -5395,31 +5388,6 @@ static void test_RtlGetElementGenericTable(void)
     }
 }
 
-static void test_RtlCreateServiceSid(void)
-{
-    UNICODE_STRING service_name;
-    SID* service_sid;
-    ULONG service_sid_length = 0;
-    LPWSTR string_sid;
-
-    if (!pRtlCreateServiceSid)
-    {
-        win_skip( "RtlCreateServiceSid is not available.\n" );
-        return;
-    }
-
-    RtlInitUnicodeString( &service_name, L"TestService" );
-    ok( pRtlCreateServiceSid(NULL, NULL, &service_sid_length) == STATUS_INVALID_PARAMETER, "NULL pServiceName is invalid.\n" );
-    ok( pRtlCreateServiceSid(&service_name, NULL, NULL) == STATUS_INVALID_PARAMETER, "NULL pServiceSidLength is invalid.\n" );
-    ok( pRtlCreateServiceSid(&service_name, NULL, &service_sid_length) == STATUS_BUFFER_TOO_SMALL, "SID buffer must be big enough.\n" );
-    ok( service_sid_length != 0, "The length should be written if the buffer is too small" );
-    service_sid = malloc( service_sid_length );
-    ok( pRtlCreateServiceSid(&service_name, service_sid, &service_sid_length) == STATUS_SUCCESS, "The length from the a previous call should be enough.\n" );
-    ConvertSidToStringSidW(service_sid, &string_sid);
-    ok( wcscmp(string_sid, L"S-1-5-80-3892056402-659729507-4115993473-1921682939-1565901394") == 0, "TestService SID is wrong");
-    free(service_sid);
-}
-
 static void test_RtlDeriveCapabilitySidsFromName(void)
 {
     static const SID_IDENTIFIER_AUTHORITY app_authority = { SECURITY_APP_PACKAGE_AUTHORITY };
@@ -5478,69 +5446,6 @@ static void test_RtlDeriveCapabilitySidsFromName(void)
 
     free( sid );
     free( group_sid );
-}
-
-static ULONG_PTR rotate_bits_right( ULONG_PTR v, ULONG count )
-{
-    static const unsigned int bits = sizeof(v) * 8;
-
-    count %= bits;
-    return (v >> count) | (v << ((bits - count) % bits));
-}
-
-static ULONG_PTR rotate_bits_left( ULONG_PTR v, ULONG count )
-{
-    static const unsigned int bits = sizeof(v) * 8;
-
-    count %= bits;
-    return (v << count) | (v >> ((bits - count) % bits));
-}
-
-static ULONG process_cookie;
-
-static void *encode_pointer( void *ptr )
-{
-    DWORD_PTR ptrval = (DWORD_PTR)ptr;
-    return (void *)rotate_bits_right( ptrval ^ process_cookie, process_cookie );
-}
-
-static void *decode_pointer( void *ptr )
-{
-    DWORD_PTR ptrval = (DWORD_PTR)ptr;
-    return (void *)(rotate_bits_left( ptrval, process_cookie ) ^ process_cookie );
-}
-
-static void test_pointer_encoding(void)
-{
-    void *v, *expected;
-
-    if (NtQueryInformationProcess( GetCurrentProcess(), ProcessCookie, &process_cookie, sizeof(process_cookie), NULL ))
-    {
-        win_skip( "Could not get process cookie, skipping tests.\n" );
-        return;
-    }
-    ok( process_cookie, "got 0.\n" );
-
-    v = RtlEncodePointer( NULL );
-    expected = encode_pointer( NULL );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
-    v = RtlDecodePointer( v );
-    expected = decode_pointer( expected );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
-
-    v = RtlEncodePointer( (void *)(ULONG_PTR)1 );
-    expected = encode_pointer( (void *)(ULONG_PTR)1 );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
-    v = RtlDecodePointer( v );
-    expected = decode_pointer( expected );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
-
-    v = RtlEncodePointer( (void *)(ULONG_PTR)0xdeadbeeffeedcafe );
-    expected = encode_pointer( (void *)(ULONG_PTR)0xdeadbeeffeedcafe );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
-    v = RtlDecodePointer( v );
-    expected = decode_pointer( expected );
-    ok( v == expected, "got %p, expected %p.\n", v, expected );
 }
 
 START_TEST(rtl)
@@ -5611,7 +5516,5 @@ START_TEST(rtl)
     test_RtlEnumerateGenericTableWithoutSplaying();
     test_RtlEnumerateGenericTable();
     test_RtlGetElementGenericTable();
-    test_RtlCreateServiceSid();
     test_RtlDeriveCapabilitySidsFromName();
-    test_pointer_encoding();
 }

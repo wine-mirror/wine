@@ -9,12 +9,10 @@ UNIX_LIBS    = \
 	-framework CoreVideo \
 	-framework Foundation \
 	-framework IOKit \
-	-framework Metal \
 	-framework OpenGL \
 	-framework QuartzCore \
 	-framework Security \
-
-VER_FILEDESCRIPTION_STR = "Wine Mac driver"
+	$(METAL_LIBS)
 
 SOURCES = \
 	clipboard.c \

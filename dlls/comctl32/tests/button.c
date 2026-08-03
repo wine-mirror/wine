@@ -30,6 +30,8 @@
 
 #define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~0u >> 16))
 
+static BOOL is_theme_active;
+
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -2443,6 +2445,23 @@ static void test_visual(void)
     DestroyWindow(parent);
 }
 
+static void test_getobject(void)
+{
+    HWND hwnd;
+    LONG idx;
+
+    hwnd = create_button(BS_PUSHBUTTON, NULL);
+
+    idx = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
+    ok(idx == 0x10002, "Expect idx 0x%08x, got 0x%08lx\n", 0x10002, idx);
+
+    /* Check with upper 32 bits truncated */
+    idx = SendMessageA(hwnd, WM_GETOBJECT, 0, (DWORD)OBJID_QUERYCLASSNAMEIDX);
+    ok(idx == 0x10002, "Expect idx 0x%08x, got 0x%08lx\n", 0x10002, idx);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_radiobutton_focus(void)
 {
     HWND hwnd, button;
@@ -2564,11 +2583,22 @@ static void test_radiobutton_focus(void)
 
 START_TEST(button)
 {
+    BOOL (WINAPI * pIsThemeActive)(VOID);
     ULONG_PTR ctx_cookie;
+    HMODULE uxtheme;
     HANDLE hCtx;
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (uxtheme)
+    {
+        pIsThemeActive = (void*)GetProcAddress(uxtheme, "IsThemeActive");
+        if (pIsThemeActive)
+            is_theme_active = pIsThemeActive();
+        FreeLibrary(uxtheme);
+    }
 
     register_parent_class();
 
@@ -2588,6 +2618,7 @@ START_TEST(button)
     test_bcm_get_ideal_size();
     test_style();
     test_visual();
+    test_getobject();
     test_radiobutton_focus();
 
     uninit_winevent_hook();

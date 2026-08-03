@@ -1,0 +1,228 @@
+/*
+ * Copyright (C) 2024 Onni Kukkonen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.display.idl";
+
+namespace Windows.Devices.Sensors {
+    typedef enum AccelerometerReadingType AccelerometerReadingType;
+
+    interface IAccelerometerReading;
+    
+    interface IAccelerometerReadingChangedEventArgs;
+    interface IAccelerometerShakenEventArgs;
+
+    interface IAccelerometer;
+    interface IAccelerometer2;
+    interface IAccelerometer3;
+    interface IAccelerometer4;
+    interface IAccelerometerDeviceId;
+
+    interface IAccelerometerStatics;
+    interface IAccelerometerStatics2;
+
+    runtimeclass Accelerometer;
+
+    runtimeclass AccelerometerReading;
+
+    runtimeclass AccelerometerReadingChangedEventArgs;
+    runtimeclass AccelerometerShakenEventArgs;
+
+    declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Sensors.Accelerometer *, AccelerometerReadingChangedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Devices.Sensors.Accelerometer *, AccelerometerShakenEventArgs *>;
+
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0)
+    ]
+    enum AccelerometerReadingType
+    {
+        Standard = 0,
+        Linear   = 1,
+        Gravity  = 2
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(df184548-2711-4da7-8098-4b82205d3c7d),
+    ]
+    interface IAccelerometer : IInspectable
+    {
+        HRESULT GetCurrentReading([out] [retval] Windows.Devices.Sensors.AccelerometerReading** value);
+        [propget] HRESULT MinimumReportInterval([out] [retval] UINT32* value);
+        [propput] HRESULT ReportInterval([in] UINT32 value);
+        [propget] HRESULT ReportInterval([out] [retval] UINT32* value);
+        [eventadd] HRESULT ReadingChanged([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Sensors.Accelerometer*, Windows.Devices.Sensors.AccelerometerReadingChangedEventArgs*>* handler, [out] [retval] EventRegistrationToken* token);
+        [eventremove] HRESULT ReadingChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT Shaken([in] Windows.Foundation.TypedEventHandler<Windows.Devices.Sensors.Accelerometer*, Windows.Devices.Sensors.AccelerometerShakenEventArgs*>* handler, [out] [retval] EventRegistrationToken* token);
+        [eventremove] HRESULT Shaken([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(7eac64a9-97d5-446d-ab5a-917df9b96a2c)
+    ]
+    interface IAccelerometerDeviceId : IInspectable
+    {
+        [propget] HRESULT DeviceId([out] [retval] HSTRING* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(e8f092ee-4964-401a-b602-220d7153c60a)
+    ]
+    interface IAccelerometer2 : IInspectable
+    {
+        [propput] HRESULT ReadingTransform([in] Windows.Graphics.Display.DisplayOrientations value);
+        [propget] HRESULT ReadingTransform([out] [retval] Windows.Graphics.Display.DisplayOrientations* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(87e0022a-ed80-49eb-bf8a-a4ea31e5cd84)
+    ]
+    interface IAccelerometer3 : IInspectable
+    {
+        [propput] HRESULT ReportLatency([in] UINT32 value);
+        [propget] HRESULT ReportLatency([out] [retval] UINT32* value);
+        [propget] HRESULT MaxBatchSize([out] [retval] UINT32* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(1d373c4f-42d3-45b2-8144-ab7fb665eb59)
+    ]
+    interface IAccelerometer4 : IInspectable
+    {
+        [propget] HRESULT ReadingType([out] [retval] Windows.Devices.Sensors.AccelerometerReadingType* type);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(a5e28b74-5a87-4a2d-becc-0f906ea061dd)
+    ]
+    interface IAccelerometerStatics : IInspectable
+    {
+        [overload("GetDefault")] HRESULT GetDefault([out] [retval] Windows.Devices.Sensors.Accelerometer** result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Devices.Sensors.Accelerometer),
+        uuid(c4c4842f-d86b-4685-b2d7-3396f798d57b)
+    ]
+    interface IAccelerometerStatics2 : IInspectable
+    {
+        [overload("GetDefault")] HRESULT GetDefaultWithAccelerometerReadingType([in] Windows.Devices.Sensors.AccelerometerReadingType readingType, [out] [retval] Windows.Devices.Sensors.Accelerometer** result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.AccelerometerReading),
+        uuid(B9FE7ACB-D351-40AF-8BB6-7AA9AE641FB7)
+    ]
+    interface IAccelerometerReading : IInspectable
+    {
+        [propget] HRESULT Timestamp([out] [retval] Windows.Foundation.DateTime* value);
+        [propget] HRESULT AccelerationX([out] [retval] DOUBLE* value);
+        [propget] HRESULT AccelerationY([out] [retval] DOUBLE* value);
+        [propget] HRESULT AccelerationZ([out] [retval] DOUBLE* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.AccelerometerReadingChangedEventArgs),
+        uuid(0095C65B-B6AC-475A-9F44-8B32D35A3F25)
+    ]
+    interface IAccelerometerReadingChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT Reading([out] [retval] Windows.Devices.Sensors.AccelerometerReading** value);
+    }
+    
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Devices.Sensors.AccelerometerShakenEventArgs),
+        uuid(95FF01D1-4A28-4F35-98E8-8178AAE4084A)
+    ]
+    interface IAccelerometerShakenEventArgs : IInspectable
+    {
+        [propget] HRESULT Timestamp([out] [retval] Windows.Foundation.DateTime* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Devices.Sensors.IAccelerometerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Devices.Sensors.IAccelerometerStatics2, Windows.Foundation.UniversalApiContract, 3.0),
+        threading(both)
+    ]
+    runtimeclass Accelerometer
+    {
+        [default] interface Windows.Devices.Sensors.IAccelerometer;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Sensors.IAccelerometerDeviceId;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Sensors.IAccelerometer2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Devices.Sensors.IAccelerometer3;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Devices.Sensors.IAccelerometer4;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AccelerometerReading
+    {
+        [default] interface Windows.Devices.Sensors.IAccelerometerReading;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AccelerometerReadingChangedEventArgs
+    {
+        [default] interface Windows.Devices.Sensors.IAccelerometerReadingChangedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AccelerometerShakenEventArgs
+    {
+        [default] interface Windows.Devices.Sensors.IAccelerometerShakenEventArgs;
+    }
+}

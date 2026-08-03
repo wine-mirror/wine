@@ -110,7 +110,7 @@ typedef struct _ACMDRVSTREAMINSTANCE
 } ACMDRVSTREAMINSTANCE, *PACMDRVSTREAMINSTANCE;
 
 typedef struct _ACMDRVSTREAMHEADER *PACMDRVSTREAMHEADER;
-#pragma pack(push,1)
+#include <pshpack1.h>
 typedef struct _ACMDRVSTREAMHEADER {
   DWORD                cbStruct;
   DWORD                fdwStatus;
@@ -137,7 +137,7 @@ typedef struct _ACMDRVSTREAMHEADER {
   LPBYTE               pbPreparedDst;
   DWORD                cbPreparedDstLength;
 } ACMDRVSTREAMHEADER;
-#pragma pack(pop)
+#include <poppack.h>
 
 typedef struct _ACMDRVSTREAMSIZE
 {

@@ -29,9 +29,9 @@
 #include <assert.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "verrsrc.h"
 #include "unix_private.h"
 
 #include "wine/debug.h"
@@ -53,22 +53,6 @@ static struct
     struct module_loadorder *order;
 } env_list;
 
-struct version_info
-{
-    WORD  len;
-    WORD  val_len;
-    WORD  type;
-    WCHAR key[1];
-};
-
-struct version_entry
-{
-    const struct version_info *info;
-    const void                *value;
-    const void                *next;
-    const void                *child;
-};
-
 static const WCHAR separatorsW[] = {',',' ','\t',0};
 
 static HANDLE std_key;
@@ -76,51 +60,6 @@ static HANDLE app_key;
 static BOOL init_done;
 static BOOL main_exe_loaded;
 
-/***************************************************************************
- *	get_version_entry
- *
- * Validate a version resource entry and fill a descriptor to it.
- */
-static BOOL get_version_entry( struct version_entry *entry, const void *ptr, const void *end )
-{
-    unsigned int len;
-    const struct version_info *info = ptr;
-
-    if ((const char *)(info + 1) > (const char *)end) return FALSE;
-    if ((const char *)info + info->len > (const char *)end) return FALSE;
-
-    for (len = 0; info->key[len]; len++)
-        if (offsetof(struct version_info, key[len + 1]) > info->len) return FALSE;
-
-    len = (offsetof(struct version_info, key[len + 1]) + 3) & ~3;
-    if (len + info->val_len * (info->type ? 2 : 1) > info->len) return FALSE;
-
-    entry->info  = info;
-    entry->value = (const char *)info + len;
-    entry->child = (const char *)info + len + ((info->val_len * (info->type ? 2 : 1) + 3) & ~3);
-    entry->next  = (const char *)info + ((info->len + 3) & ~3);
-    return TRUE;
-}
-
-/***************************************************************************
- *	version_find_key
- *
- * Find a specific key in a version resource block.
- */
-static BOOL version_find_key( const struct version_entry *parent, const WCHAR *name,
-                              struct version_entry *child )
-{
-    struct version_entry ret;
-
-    if (!get_version_entry( &ret, parent->child, parent->next )) return FALSE;
-    for (;;)
-    {
-        if (!wcsicmp( ret.info->key, name )) break;
-        if (!get_version_entry( &ret, ret.next, parent->next )) return FALSE;
-    }
-    *child = ret;
-    return TRUE;
-}
 
 /***************************************************************************
  *	cmp_sort_func	(internal, static)
@@ -418,63 +357,6 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
 }
 
 
-/***********************************************************************
- *           version_heuristics
- *
- * Determine loadorder using heuristics based on the version resource.
- */
-static enum loadorder version_heuristics( const UNICODE_STRING *nt_name,
-                                          const struct pe_mapping_info *pe_mapping )
-{
-    static const struct { WCHAR name[32]; enum loadorder lo; } vendors[] =
-    {
-        { {'M','i','c','r','o','s','o','f','t',0}, LO_DEFAULT },
-        { {'T','w','a','i','n',' ','W','o','r','k','i','n','g',' ','G','r','o','u','p',0}, LO_BUILTIN },
-        { {0}, LO_NATIVE_BUILTIN }
-    };
-    static const WCHAR fileinfoW[] = {'S','t','r','i','n','g','F','i','l','e','I','n','f','o',0};
-    static const WCHAR companyW[] = {'C','o','m','p','a','n','y','N','a','m','e',0};
-
-    struct version_entry entry;
-    const VS_FIXEDFILEINFO *fileinfo;
-    const WCHAR *name;
-    ULONG i, len;
-
-    if (!pe_mapping) return LO_INVALID;
-    if (pe_mapping->image.wine_builtin || pe_mapping->image.wine_fakedll) return LO_INVALID;
-    if (!pe_mapping->version_len)
-    {
-        TRACE( "preferring native with no version for %s\n", debugstr_us( nt_name ));
-        return LO_NATIVE_BUILTIN;
-    }
-    if (!get_version_entry( &entry, pe_mapping->version_res,
-                            (char *)pe_mapping->version_res + pe_mapping->version_len )) return LO_INVALID;
-    fileinfo = entry.value;
-    if (entry.info->val_len < sizeof(*fileinfo)) return LO_INVALID;
-    if (fileinfo->dwSignature != VS_FFI_SIGNATURE) return LO_INVALID;
-
-    if (!version_find_key( &entry, fileinfoW, &entry )) return LO_INVALID;
-    /* get the first child (usually "040904B0") */
-    if (!get_version_entry( &entry, entry.child, entry.next )) return LO_INVALID;
-    if (!version_find_key( &entry, companyW, &entry )) return LO_INVALID;
-    if (!entry.info->type || !entry.info->val_len) return LO_INVALID;
-
-    name = entry.value;
-    len = entry.info->val_len;
-    if (!name[len - 1]) len--;
-
-    for (i = 0; i < vendors[i].name[0]; i++)
-    {
-        if (len < wcslen(vendors[i].name)) continue;
-        if (wcsnicmp( name, vendors[i].name, wcslen(vendors[i].name) )) continue;
-        break;
-    }
-    TRACE( "got %s vendor %s for %s\n", debugstr_loadorder( vendors[i].lo ),
-           debugstr_wn( name, len ), debugstr_us( nt_name ));
-    return vendors[i].lo;
-}
-
-
 /***************************************************************************
  *	set_load_order_app_name
  */
@@ -494,31 +376,38 @@ void set_load_order_app_name( const WCHAR *app_name )
  * Return the loadorder of a module.
  * The system directory and '.dll' extension is stripped from the path.
  */
-enum loadorder get_load_order( const UNICODE_STRING *nt_name, BOOL is_system_dir,
-                               const struct pe_mapping_info *pe_mapping )
+enum loadorder get_load_order( const UNICODE_STRING *nt_name )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
     const WCHAR *path = nt_name->Buffer;
-    unsigned int len = nt_name->Length / sizeof(WCHAR);
+    const WCHAR *p;
     WCHAR *module, *basename;
+    int len;
 
     if (!init_done) init_load_order();
 
-    if (len > 4 && !wcsncmp( path, prefixW, 4 ))
+    if (!wcsncmp( path, prefixW, 4 )) path += 4;
+
+    TRACE("looking for %s\n", debugstr_w(path));
+
+    /* Strip path information if the module resides in the system directory
+     */
+    if (!wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
     {
-        path += 4;
-        len -= 4;
+        p = path + wcslen( system_dir ) - 4;
+        while (*p == '\\' || *p == '/') p++;
+        if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }
 
+    if (!(len = wcslen(path))) return ret;
     if (!(module = malloc( (len + 2) * sizeof(WCHAR) ))) return ret;
-    memcpy( module + 1, path, len * sizeof(WCHAR) );  /* reserve module[0] for the wildcard char */
-    module[len + 1] = 0;
+    wcscpy( module + 1, path );  /* reserve module[0] for the wildcard char */
     remove_dll_ext( module + 1 );
     basename = get_basename( module + 1 );
 
     /* first explicit module name */
-    if ((ret = get_load_order_value( std_key, app_key, is_system_dir ? basename : module+1 )) != LO_INVALID)
+    if ((ret = get_load_order_value( std_key, app_key, module+1 )) != LO_INVALID)
         goto done;
 
     /* then module basename preceded by '*' */
@@ -526,26 +415,21 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name, BOOL is_system_dir
     if ((ret = get_load_order_value( std_key, app_key, basename-1 )) != LO_INVALID)
         goto done;
 
-    /* now some heuristics for explicit paths */
-    if (!is_system_dir)
-    {
-        /* module basename without '*' */
-        if (((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
-            goto done;
+    /* then module basename without '*' (only if explicit path) */
+    if (basename != module+1 && ((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
+        goto done;
 
-        if (!main_exe_loaded)  /* if loading the main exe, try native first */
-        {
-            ret = LO_NATIVE_BUILTIN;
-            TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_us(nt_name) );
-            goto done;
-        }
-        ret = version_heuristics( nt_name, pe_mapping );
-        if (ret != LO_INVALID) goto done;
+    /* if loading the main exe with an explicit path, try native first */
+    if (!main_exe_loaded && basename != module+1)
+    {
+        ret = LO_NATIVE_BUILTIN;
+        TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
+        goto done;
     }
 
     /* and last the hard-coded default */
     ret = LO_DEFAULT;
-    TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_us(nt_name) );
+    TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
 
  done:
     free( module );

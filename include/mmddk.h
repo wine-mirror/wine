@@ -34,7 +34,7 @@ extern "C" {
  *   Multimedia DDK compatible part
  * ================================== */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 #define DRVM_INIT		100
 #define DRVM_EXIT		101
@@ -454,7 +454,7 @@ BOOL     WINAPI mmTaskSignal(DWORD);
 VOID     WINAPI mmTaskYield(VOID);
 DWORD    WINAPI mmGetCurrentTask(VOID);
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #ifdef __cplusplus
 }

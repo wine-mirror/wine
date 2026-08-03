@@ -1,0 +1,150 @@
+/*
+ * Copyright (C) 2024 Onni Kukkonen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.devices.enumeration.idl";
+/* import "windows.phone.idl"; */
+import "windows.ui.idl";
+import "windows.ui.core.idl";
+/* import "windows.ui.popups.idl"; */
+/* import "windows.ui.windowmanagement.idl"; */
+#endif
+
+namespace Windows.UI.StartScreen
+{
+    typedef enum JumpListItemKind JumpListItemKind;
+    typedef enum JumpListSystemGroupKind JumpListSystemGroupKind;
+
+    interface IJumpList;
+    interface IJumpListStatics;
+    interface IJumpListItem;
+    interface IJumpListItemStatics;
+
+    runtimeclass JumpListItem;
+    runtimeclass JumpList;
+
+    declare {
+        interface Windows.Foundation.IAsyncOperation<Windows.UI.StartScreen.JumpList*>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.UI.StartScreen.JumpList*>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.UI.StartScreen.JumpListItem*>;
+        interface Windows.Foundation.Collections.IVector<Windows.UI.StartScreen.JumpListItem*>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum JumpListItemKind
+    {
+        Arguments = 0,
+        Separator = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    enum JumpListSystemGroupKind
+    {
+        None     = 0,
+        Frequent = 1,
+        Recent   = 2
+    };
+    
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.StartScreen.JumpList),
+        uuid(B0234C3E-CD6F-4CB6-A611-61FD505F3ED1)
+    ]
+    interface IJumpList : IInspectable
+    {
+        [propget] HRESULT Items([out] [retval] Windows.Foundation.Collections.IVector<Windows.UI.StartScreen.JumpListItem*>** value);
+        [propget] HRESULT SystemGroupKind([out] [retval] Windows.UI.StartScreen.JumpListSystemGroupKind* value);
+        [propput] HRESULT SystemGroupKind([in] Windows.UI.StartScreen.JumpListSystemGroupKind value);
+        HRESULT SaveAsync([out] [retval] Windows.Foundation.IAsyncAction** result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.StartScreen.JumpList),
+        uuid(A7E0C681-E67E-4B74-8250-3F322C4D92C3)
+    ]
+    interface IJumpListStatics : IInspectable
+    {
+        HRESULT LoadCurrentAsync([out] [retval] Windows.Foundation.IAsyncOperation<Windows.UI.StartScreen.JumpList*>** result);
+        HRESULT IsSupported([out] [retval] boolean* result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.StartScreen.JumpListItem),
+        uuid(7ADB6717-8B5D-4820-995B-9B418DBE48B0)
+    ]
+    interface IJumpListItem : IInspectable
+    {
+        [propget] HRESULT Kind([out] [retval] Windows.UI.StartScreen.JumpListItemKind* value);
+        [propget] HRESULT Arguments([out] [retval] HSTRING* value);
+        [propget] HRESULT RemovedByUser([out] [retval] boolean* value);
+        [propget] HRESULT Description([out] [retval] HSTRING* value);
+        [propput] HRESULT Description([in] HSTRING value);
+        [propget] HRESULT DisplayName([out] [retval] HSTRING* value);
+        [propput] HRESULT DisplayName([in] HSTRING value);
+        [propget] HRESULT GroupName([out] [retval] HSTRING* value);
+        [propput] HRESULT GroupName([in] HSTRING value);
+        [propget] HRESULT Logo([out] [retval] Windows.Foundation.Uri** value);
+        [propput] HRESULT Logo([in] Windows.Foundation.Uri* value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.UI.StartScreen.JumpListItem),
+        uuid(F1BFC4E8-C7AA-49CB-8DDE-ECFCCD7AD7E4)
+    ]
+    interface IJumpListItemStatics : IInspectable
+    {
+        HRESULT CreateWithArguments([in] HSTRING arguments, [in] HSTRING displayName, [out] [retval] Windows.UI.StartScreen.JumpListItem** result);
+        HRESULT CreateSeparator([out] [retval] Windows.UI.StartScreen.JumpListItem** result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.StartScreen.IJumpListItemStatics, Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    runtimeclass JumpListItem
+    {
+        [default] interface Windows.UI.StartScreen.IJumpListItem;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.StartScreen.IJumpListStatics, Windows.Foundation.UniversalApiContract, 2.0)
+    ]
+    runtimeclass JumpList
+    {
+        [default] interface Windows.UI.StartScreen.IJumpList;
+    }
+}

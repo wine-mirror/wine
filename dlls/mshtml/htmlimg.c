@@ -670,25 +670,12 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
 {
     static const dispex_hook_t img_ie11_hooks[] = {
         {DISPID_IHTMLIMGELEMENT_FILESIZE, NULL},
-
-        /* Common for all modes */
-        {DISPID_IHTMLIMGELEMENT_READYSTATE},
-        {DISPID_IHTMLIMGELEMENT_COMPLETE,         .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_MIMETYPE,         .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_FILESIZE,         .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_FILECREATEDDATE,  .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_FILEMODIFIEDDATE, .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_FILEUPDATEDDATE,  .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_PROTOCOL,         .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_HREF,             .noattr = TRUE},
-        {DISPID_IHTMLIMGELEMENT_NAMEPROP,         .noattr = TRUE},
         {DISPID_UNKNOWN}
     };
-    const dispex_hook_t *const img_hooks = img_ie11_hooks + 1;
-
-    dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : img_hooks);
 
     HTMLElement_init_dispex_info(info, mode);
+
+    dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : NULL);
 }
 
 dispex_static_data_t HTMLImageElement_dispex = {
@@ -720,9 +707,9 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTML
     return S_OK;
 }
 
-static inline struct constructor *impl_from_IHTMLImageElementFactory(IHTMLImageElementFactory *iface)
+static inline HTMLImageElementFactory *impl_from_IHTMLImageElementFactory(IHTMLImageElementFactory *iface)
 {
-    return CONTAINING_RECORD(iface, struct constructor, iface);
+    return CONTAINING_RECORD(iface, HTMLImageElementFactory, IHTMLImageElementFactory_iface);
 }
 
 DISPEX_IDISPATCH_IMPL(HTMLImageElementFactory, IHTMLImageElementFactory,
@@ -755,7 +742,7 @@ static LONG var_to_size(const VARIANT *v)
 static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *iface,
         VARIANT width, VARIANT height, IHTMLImgElement **img_elem)
 {
-    struct constructor *This = impl_from_IHTMLImageElementFactory(iface);
+    HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
     HTMLDocumentNode *doc = This->window->doc;
     IHTMLImgElement *img;
     HTMLElement *elem;
@@ -809,21 +796,51 @@ static const IHTMLImageElementFactoryVtbl HTMLImageElementFactoryVtbl = {
     HTMLImageElementFactory_create
 };
 
+static inline HTMLImageElementFactory *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLImageElementFactory, dispex);
+}
+
 static void *HTMLImageElementFactory_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    struct constructor *This = constructor_from_DispatchEx(dispex);
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid))
-        return &This->iface;
+        return &This->IHTMLImageElementFactory_iface;
 
     return NULL;
+}
+
+static void HTMLImageElementFactory_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void HTMLImageElementFactory_unlink(DispatchEx *dispex)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
+static void HTMLImageElementFactory_destructor(DispatchEx *dispex)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+    free(This);
 }
 
 static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
         IServiceProvider *caller)
 {
-    struct constructor *This = constructor_from_DispatchEx(dispex);
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
     IHTMLImgElement *img;
     VARIANT empty, *width, *height;
     HRESULT hres;
@@ -836,7 +853,7 @@ static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
     width = argc >= 1 ? params->rgvarg + (params->cArgs - 1) : &empty;
     height = argc >= 2 ? params->rgvarg + (params->cArgs - 2) : &empty;
 
-    hres = IHTMLImageElementFactory_create((IHTMLImageElementFactory*)&This->iface, *width, *height,
+    hres = IHTMLImageElementFactory_create(&This->IHTMLImageElementFactory_iface, *width, *height,
             &img);
     if(FAILED(hres))
         return hres;
@@ -855,24 +872,35 @@ static void HTMLImageElementFactory_init_dispex_info(dispex_data_t *info, compat
 
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
     .query_interface  = HTMLImageElementFactory_query_interface,
-    .destructor       = constructor_destructor,
-    .traverse         = constructor_traverse,
-    .unlink           = constructor_unlink,
+    .destructor       = HTMLImageElementFactory_destructor,
+    .traverse         = HTMLImageElementFactory_traverse,
+    .unlink           = HTMLImageElementFactory_unlink,
     .value            = HTMLImageElementFactory_value,
 };
 
-static HRESULT HTMLImageElementFactory_init(struct constructor *constr)
+static HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, DispatchEx **ret_val)
 {
-    constr->iface.lpVtbl = (const IUnknownVtbl*)&HTMLImageElementFactoryVtbl;
-    init_dispatch(&constr->dispex, &Image_dispex, constr->window,
-                  dispex_compat_mode(&constr->window->event_target.dispex));
+    HTMLImageElementFactory *ret;
+
+    ret = malloc(sizeof(HTMLImageElementFactory));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IHTMLImageElementFactory_iface.lpVtbl = &HTMLImageElementFactoryVtbl;
+    ret->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+
+    init_dispatch(&ret->dispex, &Image_dispex, window,
+                  dispex_compat_mode(&window->event_target.dispex));
+
+    *ret_val = &ret->dispex;
     return S_OK;
 }
 
 dispex_static_data_t Image_dispex = {
-    .name             = "Image",
+    .name             = "Function",
     .constructor_id   = OBJID_HTMLImageElement,
-    .init_constructor = HTMLImageElementFactory_init,
+    .init_constructor = HTMLImageElementFactory_Create,
     .vtbl             = &HTMLImageElementFactory_dispex_vtbl,
     .disp_tid         = IHTMLImageElementFactory_tid,
     .init_info        = HTMLImageElementFactory_init_dispex_info,

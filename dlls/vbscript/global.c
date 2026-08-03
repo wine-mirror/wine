@@ -126,7 +126,7 @@ HRESULT get_builtin_id(BuiltinDisp *disp, const WCHAR *name, DISPID *id)
 
     while(min <= max) {
         i = (min + max) / 2;
-        r = vbs_wcsicmp(disp->members[i].name, name);
+        r = wcsicmp(disp->members[i].name, name);
         if(!r) {
             *id = i;
             return S_OK;
@@ -402,7 +402,7 @@ static inline HRESULT return_null(VARIANT *res)
     return S_OK;
 }
 
-static inline HRESULT return_date(VARIANT *res, DATE date)
+static inline HRESULT return_date(VARIANT *res, double date)
 {
     if(res) {
         V_VT(res) = VT_DATE;
@@ -425,7 +425,7 @@ HRESULT to_int(VARIANT *v, int *ret)
     return S_OK;
 }
 
-HRESULT to_double(VARIANT *v, double *ret)
+static HRESULT to_double(VARIANT *v, double *ret)
 {
     VARIANT dst;
     HRESULT hres;
@@ -453,13 +453,13 @@ static HRESULT to_float(VARIANT *v, float *ret)
     return S_OK;
 }
 
-static HRESULT to_string(LCID lcid, VARIANT *v, BSTR *ret)
+static HRESULT to_string(VARIANT *v, BSTR *ret)
 {
     VARIANT dst;
     HRESULT hres;
 
     V_VT(&dst) = VT_EMPTY;
-    hres = VariantChangeTypeEx(&dst, v, lcid, VARIANT_LOCALBOOL, VT_BSTR);
+    hres = VariantChangeType(&dst, v, VARIANT_LOCALBOOL, VT_BSTR);
     if(FAILED(hres))
         return hres;
 
@@ -467,17 +467,17 @@ static HRESULT to_string(LCID lcid, VARIANT *v, BSTR *ret)
     return S_OK;
 }
 
-static HRESULT to_system_time(LCID lcid, VARIANT *v, SYSTEMTIME *st)
+static HRESULT to_system_time(VARIANT *v, SYSTEMTIME *st)
 {
     VARIANT date;
     HRESULT hres;
 
     V_VT(&date) = VT_EMPTY;
-    hres = VariantChangeTypeEx(&date, v, lcid, 0, VT_DATE);
+    hres = VariantChangeType(&date, v, 0, VT_DATE);
     if(FAILED(hres))
         return hres;
 
-    return VariantTimeToSystemTime(V_DATE(&date), st) ? S_OK : E_INVALIDARG;
+    return VariantTimeToSystemTime(V_DATE(&date), st);
 }
 
 static HRESULT set_object_site(script_ctx_t *ctx, IUnknown *obj)
@@ -647,17 +647,6 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
     return return_short(res, ret);
 }
 
-/* Cxxx() coercion functions raise err 94 (Illegal Null use) on Null and
- * err 91 (Object variable not set) on Nothing, matching native VBScript. */
-static HRESULT check_coerce_arg(const VARIANT *arg)
-{
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-    if(V_VT(arg) == VT_DISPATCH && !V_DISPATCH(arg))
-        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-    return S_OK;
-}
-
 static HRESULT Global_CCur(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
@@ -666,10 +655,6 @@ static HRESULT Global_CCur(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
-
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_CY);
@@ -694,10 +679,6 @@ static HRESULT Global_CInt(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
-
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_I2);
     if(FAILED(hres))
@@ -720,10 +701,6 @@ static HRESULT Global_CLng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
-
     hres = to_int(arg, &i);
     if(FAILED(hres))
         return hres;
@@ -741,10 +718,6 @@ static HRESULT Global_CBool(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
-
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, VARIANT_LOCALBOOL, VT_BOOL);
@@ -766,10 +739,6 @@ static HRESULT Global_CByte(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
-
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, VARIANT_LOCALBOOL, VT_UI1);
@@ -794,9 +763,8 @@ static HRESULT Global_CDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
     assert(args_cnt == 1);
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_DATE);
@@ -824,10 +792,6 @@ static HRESULT Global_CDbl(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
-
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_R8);
     if(FAILED(hres))
@@ -850,10 +814,6 @@ static HRESULT Global_CSng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
-
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_R4);
     if(FAILED(hres))
@@ -873,11 +833,10 @@ static HRESULT Global_CStr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    hres = check_coerce_arg(arg);
-    if(FAILED(hres))
-        return hres;
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
 
-    hres = to_string(This->ctx->lcid, arg, &str);
+    hres = to_string(arg, &str);
     if(FAILED(hres))
         return hres;
 
@@ -1209,8 +1168,6 @@ static HRESULT Global_Timer(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT default_value;
-    VARIANT *array_arg = arg;
     SAFEARRAY *sa;
     HRESULT hres;
     LONG lbound;
@@ -1220,56 +1177,38 @@ static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
 
-    V_VT(&default_value) = VT_EMPTY;
-
-    if(V_VT(arg) == VT_DISPATCH) {
-        DISPPARAMS dp = {0};
-        if(!V_DISPATCH(arg))
-            return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-        hres = disp_call(This->ctx, V_DISPATCH(arg), DISPID_VALUE, TRUE, &dp, &default_value);
-        if(FAILED(hres))
-            return hres;
-        array_arg = &default_value;
-    }
-
-    switch(V_VT(array_arg)) {
+    switch(V_VT(arg)) {
     case VT_VARIANT|VT_ARRAY:
-        sa = V_ARRAY(array_arg);
+        sa = V_ARRAY(arg);
         break;
     case VT_VARIANT|VT_ARRAY|VT_BYREF:
-        sa = *V_ARRAYREF(array_arg);
+        sa = *V_ARRAYREF(arg);
         break;
-    default:
-        VariantClear(&default_value);
+    case VT_EMPTY:
+    case VT_NULL:
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    if(!sa) {
-        hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
-        goto done;
+    default:
+        FIXME("arg %s not supported\n", debugstr_variant(arg));
+        return E_NOTIMPL;
     }
 
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);
         if(FAILED(hres))
-            goto done;
+            return hres;
     }else {
         dim = 1;
     }
 
     hres = SafeArrayGetLBound(sa, dim, &lbound);
-    if(SUCCEEDED(hres))
-        hres = return_int(res, lbound);
+    if(FAILED(hres))
+        return hres;
 
-done:
-    VariantClear(&default_value);
-    return hres;
+    return return_int(res, lbound);
 }
 
 static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT default_value;
-    VARIANT *array_arg = arg;
     SAFEARRAY *sa;
     HRESULT hres;
     LONG ubound;
@@ -1279,50 +1218,34 @@ static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
 
-    V_VT(&default_value) = VT_EMPTY;
-
-    if(V_VT(arg) == VT_DISPATCH) {
-        DISPPARAMS dp = {0};
-        if(!V_DISPATCH(arg))
-            return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-        hres = disp_call(This->ctx, V_DISPATCH(arg), DISPID_VALUE, TRUE, &dp, &default_value);
-        if(FAILED(hres))
-            return hres;
-        array_arg = &default_value;
-    }
-
-    switch(V_VT(array_arg)) {
+    switch(V_VT(arg)) {
     case VT_VARIANT|VT_ARRAY:
-        sa = V_ARRAY(array_arg);
+        sa = V_ARRAY(arg);
         break;
     case VT_VARIANT|VT_ARRAY|VT_BYREF:
-        sa = *V_ARRAYREF(array_arg);
+        sa = *V_ARRAYREF(arg);
         break;
-    default:
-        VariantClear(&default_value);
+    case VT_EMPTY:
+    case VT_NULL:
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    if(!sa) {
-        hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
-        goto done;
+    default:
+        FIXME("arg %s not supported\n", debugstr_variant(arg));
+        return E_NOTIMPL;
     }
 
     if(args_cnt == 2) {
         hres = to_int(arg + 1, &dim);
         if(FAILED(hres))
-            goto done;
+            return hres;
     }else {
         dim = 1;
     }
 
     hres = SafeArrayGetUBound(sa, dim, &ubound);
-    if(SUCCEEDED(hres))
-        hres = return_int(res, ubound);
+    if(FAILED(hres))
+        return hres;
 
-done:
-    VariantClear(&default_value);
-    return hres;
+    return return_int(res, ubound);
 }
 
 static HRESULT Global_RGB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1360,7 +1283,7 @@ static HRESULT Global_Len(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
     if(V_VT(arg) != VT_BSTR) {
         BSTR str;
 
-        hres = to_string(This->ctx->lcid, arg, &str);
+        hres = to_string(arg, &str);
         if(FAILED(hres))
             return hres;
 
@@ -1375,28 +1298,8 @@ static HRESULT Global_Len(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_LenB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    DWORD len;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    if(V_VT(arg) != VT_BSTR) {
-        BSTR str;
-
-        hres = to_string(This->ctx->lcid, arg, &str);
-        if(FAILED(hres))
-            return hres;
-
-        len = SysStringByteLen(str);
-        SysFreeString(str);
-    }else {
-        len = SysStringByteLen(V_BSTR(arg));
-    }
-
-    return return_int(res, len);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1407,26 +1310,22 @@ static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, 
 
     TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
 
-    if(V_VT(args+1) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
+    }else {
+        hres = to_string(args, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
 
     hres = to_int(args+1, &len);
     if(FAILED(hres))
         return hres;
 
-    if(len < 0)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-    if(V_VT(args) == VT_NULL)
-        return return_null(res);
-
-    if(V_VT(args) == VT_BSTR) {
-        str = V_BSTR(args);
-    }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
+    if(len < 0) {
+        FIXME("len = %d\n", len);
+        return E_FAIL;
     }
 
     str_len = SysStringLen(str);
@@ -1441,49 +1340,10 @@ static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, 
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_LeftB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LeftB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR str, conv_str = NULL;
-    int len, byte_len;
-    HRESULT hres;
-
-    TRACE("(%s %s)\n", debugstr_variant(args+1), debugstr_variant(args));
-
-    if(V_VT(args) == VT_BSTR) {
-        str = V_BSTR(args);
-    }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    hres = to_int(args+1, &len);
-    if(FAILED(hres)) {
-        SysFreeString(conv_str);
-        return hres;
-    }
-
-    if(len < 0) {
-        SysFreeString(conv_str);
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    byte_len = SysStringByteLen(str);
-    if(len > byte_len)
-        len = byte_len;
-
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocStringByteLen((const char*)str, len);
-        if(!V_BSTR(res)) {
-            SysFreeString(conv_str);
-            return E_OUTOFMEMORY;
-        }
-    }
-
-    SysFreeString(conv_str);
-    return S_OK;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1510,7 +1370,7 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     if(V_VT(args) == VT_BSTR) {
         str = V_BSTR(args);
     }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
+        hres = to_string(args, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -1528,51 +1388,10 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR str, conv_str = NULL;
-    int len, byte_len;
-    HRESULT hres;
-
-    TRACE("(%s %s)\n", debugstr_variant(args), debugstr_variant(args+1));
-
-    if(V_VT(args+1) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    hres = to_int(args+1, &len);
-    if(FAILED(hres))
-        return hres;
-
-    if(len < 0)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-    if(V_VT(args) == VT_NULL)
-        return return_null(res);
-
-    if(V_VT(args) == VT_BSTR) {
-        str = V_BSTR(args);
-    }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    byte_len = SysStringByteLen(str);
-    if(len > byte_len)
-        len = byte_len;
-
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocStringByteLen((const char*)str + byte_len - len, len);
-        if(!V_BSTR(res)) {
-            SysFreeString(conv_str);
-            return E_OUTOFMEMORY;
-        }
-    }
-
-    SysFreeString(conv_str);
-    return S_OK;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1619,7 +1438,7 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
     if(V_VT(args) == VT_BSTR) {
         str = V_BSTR(args);
     }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
+        hres = to_string(args, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -1647,75 +1466,10 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
     return hres;
 }
 
-static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    int len = -1, start, byte_len;
-    BSTR str, conv_str = NULL;
-    HRESULT hres;
-
-    TRACE("(%s %s ...)\n", debugstr_variant(args), debugstr_variant(args+1));
-
-    assert(args_cnt == 2 || args_cnt == 3);
-
-    if(V_VT(args+1) == VT_NULL || (args_cnt == 3 && V_VT(args+2) == VT_NULL))
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(args+1) == VT_EMPTY)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-    hres = to_int(args+1, &start);
-    if(FAILED(hres))
-        return hres;
-
-    if(start <= 0)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-    if(args_cnt == 3) {
-        if(V_VT(args+2) == VT_EMPTY)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-        hres = to_int(args+2, &len);
-        if(FAILED(hres))
-            return hres;
-
-        if(len < 0)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    if(V_VT(args) == VT_EMPTY)
-        return return_string(res, L"");
-
-    if(V_VT(args) == VT_NULL)
-        return return_null(res);
-
-    if(V_VT(args) == VT_BSTR) {
-        str = V_BSTR(args);
-    }else {
-        hres = to_string(This->ctx->lcid, args, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    byte_len = SysStringByteLen(str);
-    start--;
-    if(start > byte_len)
-        start = byte_len;
-
-    if(len == -1)
-        len = byte_len - start;
-    else if(len > byte_len - start)
-        len = byte_len - start;
-
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocStringByteLen((const char*)str + start, len);
-        if(!V_BSTR(res))
-            hres = E_OUTOFMEMORY;
-    }
-
-    SysFreeString(conv_str);
-    return hres;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_StrComp(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -1742,11 +1496,11 @@ static HRESULT Global_StrComp(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     else
         mode = 0;
 
-    hres = to_string(This->ctx->lcid, args, &left);
+    hres = to_string(args, &left);
     if(FAILED(hres))
         return hres;
 
-    hres = to_string(This->ctx->lcid, args+1, &right);
+    hres = to_string(args+1, &right);
     if(FAILED(hres))
     {
         SysFreeString(left);
@@ -1772,7 +1526,7 @@ static HRESULT Global_LCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
         return return_null(res);
     }
 
-    hres = to_string(This->ctx->lcid, arg, &str);
+    hres = to_string(arg, &str);
     if(FAILED(hres))
         return hres;
 
@@ -1801,7 +1555,7 @@ static HRESULT Global_UCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
         return return_null(res);
     }
 
-    hres = to_string(This->ctx->lcid, arg, &str);
+    hres = to_string(arg, &str);
     if(FAILED(hres))
         return hres;
 
@@ -1830,7 +1584,7 @@ static HRESULT Global_LTrim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     if(V_VT(arg) == VT_BSTR) {
         str = V_BSTR(arg);
     }else {
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
+        hres = to_string(arg, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -1857,7 +1611,7 @@ static HRESULT Global_RTrim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     if(V_VT(arg) == VT_BSTR) {
         str = V_BSTR(arg);
     }else {
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
+        hres = to_string(arg, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -1884,7 +1638,7 @@ static HRESULT Global_Trim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
     if(V_VT(arg) == VT_BSTR) {
         str = V_BSTR(arg);
     }else {
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
+        hres = to_string(arg, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -2025,7 +1779,7 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         return return_null(res);
 
     if(V_VT(str1v) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, str1v, &str1);
+        hres = to_string(str1v, &str1);
         if(FAILED(hres))
             return hres;
     }
@@ -2033,7 +1787,7 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         str1 = V_BSTR(str1v);
 
     if(V_VT(str2v) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, str2v, &str2);
+        hres = to_string(str2v, &str2);
         if(FAILED(hres)){
             if(V_VT(str1v) != VT_BSTR)
                 SysFreeString(str1);
@@ -2055,140 +1809,22 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     return return_int(res, ++ret ? ret+start : 0);
 }
 
-static HRESULT Global_InStrB(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InStrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR str1, str2, conv_str1 = NULL, conv_str2 = NULL;
-    int start = 0, byte_len1, byte_len2;
-    const char *p, *end;
-    HRESULT hres;
-    int ret = -1;
-
-    TRACE("(%u args)\n", args_cnt);
-
-    assert(2 <= args_cnt && args_cnt <= 4);
-
-    if(args_cnt == 2) {
-        if(V_VT(args) == VT_BSTR) {
-            str1 = V_BSTR(args);
-        }else {
-            hres = to_string(This->ctx->lcid, args, &conv_str1);
-            if(FAILED(hres))
-                return hres;
-            str1 = conv_str1;
-        }
-        if(V_VT(args+1) == VT_BSTR) {
-            str2 = V_BSTR(args+1);
-        }else {
-            hres = to_string(This->ctx->lcid, args+1, &conv_str2);
-            if(FAILED(hres)) {
-                SysFreeString(conv_str1);
-                return hres;
-            }
-            str2 = conv_str2;
-        }
-    }else {
-        hres = to_int(args, &start);
-        if(FAILED(hres))
-            return hres;
-        if(start <= 0) {
-            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-        }
-        start--;
-        if(V_VT(args+1) == VT_BSTR) {
-            str1 = V_BSTR(args+1);
-        }else {
-            hres = to_string(This->ctx->lcid, args+1, &conv_str1);
-            if(FAILED(hres))
-                return hres;
-            str1 = conv_str1;
-        }
-        if(V_VT(args+2) == VT_BSTR) {
-            str2 = V_BSTR(args+2);
-        }else {
-            hres = to_string(This->ctx->lcid, args+2, &conv_str2);
-            if(FAILED(hres)) {
-                SysFreeString(conv_str1);
-                return hres;
-            }
-            str2 = conv_str2;
-        }
-    }
-
-    byte_len1 = SysStringByteLen(str1);
-    byte_len2 = SysStringByteLen(str2);
-
-    if(byte_len2 == 0) {
-        ret = start;
-    }else if(start < byte_len1) {
-        end = (const char*)str1 + byte_len1 - byte_len2 + 1;
-        for(p = (const char*)str1 + start; p < end; p++) {
-            if(!memcmp(p, str2, byte_len2)) {
-                ret = p - (const char*)str1;
-                break;
-            }
-        }
-    }
-
-    SysFreeString(conv_str1);
-    SysFreeString(conv_str2);
-    return return_int(res, ret >= 0 ? ret + 1 : 0);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_AscB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL, str;
-    HRESULT hres = S_OK;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    switch(V_VT(arg)) {
-    case VT_NULL:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-    case VT_EMPTY:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    case VT_BSTR:
-        str = V_BSTR(arg);
-        break;
-    default:
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    if(!SysStringByteLen(str))
-        hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    else if(res) {
-        V_VT(res) = VT_UI1;
-        V_UI1(res) = *(const BYTE*)str;
-    }
-
-    SysFreeString(conv_str);
-    return hres;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_ChrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    int c;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    hres = to_int(arg, &c);
-    if(FAILED(hres))
-        return hres;
-
-    if(c < 0 || c > 255)
-        return MAKE_VBSERROR(VBSE_OVERFLOW);
-
-    if(res) {
-        BYTE b = c;
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocStringByteLen((const char*)&b, 1);
-        if(!V_BSTR(res))
-            return E_OUTOFMEMORY;
-    }
-    return S_OK;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2207,7 +1843,7 @@ static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
         str = V_BSTR(arg);
         break;
     default:
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
+        hres = to_string(arg, &conv_str);
         if(FAILED(hres))
             return hres;
         str = conv_str;
@@ -2291,60 +1927,14 @@ static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_AscW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL, str;
-    HRESULT hres = S_OK;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    switch(V_VT(arg)) {
-    case VT_NULL:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-    case VT_EMPTY:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    case VT_BSTR:
-        str = V_BSTR(arg);
-        break;
-    default:
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    if(!SysStringLen(str))
-        hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    else
-        hres = return_short(res, *str);
-
-    SysFreeString(conv_str);
-    return hres;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_ChrW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    int c;
-    WCHAR ch;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    hres = to_int(arg, &c);
-    if(FAILED(hres))
-        return hres;
-
-    if(c != (short)c && c != (unsigned short)c) {
-        WARN("invalid arg %d\n", c);
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    ch = c;
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocStringLen(&ch, 1);
-        if(!V_BSTR(res))
-            return E_OUTOFMEMORY;
-    }
-    return S_OK;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Abs(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2434,7 +2024,7 @@ static HRESULT Global_Sgn(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 static HRESULT Global_Now(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
-    DATE date;
+    double date;
 
     TRACE("\n");
 
@@ -2486,10 +2076,7 @@ static HRESULT Global_Day(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wDay);
 }
 
@@ -2500,10 +2087,7 @@ static HRESULT Global_Month(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMonth);
 }
 
@@ -2548,7 +2132,7 @@ static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     if (V_VT(args) == VT_NULL)
         return return_null(res);
 
-    if (FAILED(hres = to_system_time(This->ctx->lcid, args, &st))) return hres;
+    if (FAILED(hres = to_system_time(args, &st))) return hres;
 
     return return_short(res, 1 + (7 - first_day + st.wDayOfWeek) % 7);
 }
@@ -2560,10 +2144,7 @@ static HRESULT Global_Year(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wYear);
 }
 
@@ -2574,10 +2155,7 @@ static HRESULT Global_Hour(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wHour);
 }
 
@@ -2588,10 +2166,7 @@ static HRESULT Global_Minute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wMinute);
 }
 
@@ -2602,104 +2177,26 @@ static HRESULT Global_Second(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if (V_VT(arg) == VT_NULL)
-        return return_null(res);
-
-    hres = to_system_time(This->ctx->lcid, arg, &st);
+    hres = to_system_time(arg, &st);
     return FAILED(hres) ? hres : return_short(res, st.wSecond);
 }
 
 static HRESULT Global_SetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    LCID old_lcid = This->ctx->lcid;
-    LCID new_lcid;
-    HRESULT hres;
-
-    TRACE("%s\n", args_cnt ? debugstr_variant(args) : "()");
-
-    if(!args_cnt || V_VT(args) == VT_EMPTY) {
-        new_lcid = This->ctx->host_lcid;
-    }else {
-        switch(V_VT(args)) {
-        case VT_NULL:
-            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        case VT_BSTR: {
-            int i;
-            /* Try numeric conversion first (e.g. "1033"), then locale name (e.g. "en-us"). */
-            if(SUCCEEDED(to_int(args, &i)))
-                new_lcid = i;
-            else
-                new_lcid = LocaleNameToLCID(V_BSTR(args), 0);
-            break;
-        }
-        default: {
-            int i;
-            hres = to_int(args, &i);
-            if(FAILED(hres))
-                return hres;
-            new_lcid = i;
-            break;
-        }
-        }
-
-        if(!IsValidLocale(new_lcid, LCID_INSTALLED))
-            return MAKE_VBSERROR(VBSE_LOCALE_SETTING_NOT_SUPPORTED);
-    }
-
-    This->ctx->lcid = new_lcid;
-    return return_int(res, old_lcid);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_DateValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT v;
-    HRESULT hres;
-    DATE date;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(arg) == VT_DATE) {
-        date = V_DATE(arg);
-    }else if(V_VT(arg) == VT_BSTR) {
-        V_VT(&v) = VT_EMPTY;
-        hres = VariantChangeTypeEx(&v, arg, This->ctx->lcid, 0, VT_DATE);
-        if(FAILED(hres))
-            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-        date = V_DATE(&v);
-    }else {
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    return return_date(res, trunc(date));
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_TimeValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT v;
-    HRESULT hres;
-    DATE date;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(arg) == VT_DATE) {
-        date = V_DATE(arg);
-    }else if(V_VT(arg) == VT_BSTR) {
-        V_VT(&v) = VT_EMPTY;
-        hres = VariantChangeTypeEx(&v, arg, This->ctx->lcid, 0, VT_DATE);
-        if(FAILED(hres))
-            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-        date = V_DATE(&v);
-    }else {
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    return return_date(res, date - trunc(date));
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -2707,7 +2204,7 @@ static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args
     int year, month, day;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    DATE date;
+    double date;
 
     TRACE("\n");
 
@@ -2741,7 +2238,7 @@ static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *args, unsigned args
     int hour, minute, second;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    DATE date;
+    double date;
 
     TRACE("\n");
 
@@ -2789,7 +2286,7 @@ static HRESULT Global_MsgBox(BuiltinDisp *This, VARIANT *args, unsigned args_cnt
 
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    hres = to_string(This->ctx->lcid, args, &prompt);
+    hres = to_string(args, &prompt);
     if(FAILED(hres))
         return hres;
 
@@ -2797,7 +2294,7 @@ static HRESULT Global_MsgBox(BuiltinDisp *This, VARIANT *args, unsigned args_cnt
         hres = to_int(args+1, &type);
 
     if(SUCCEEDED(hres) && args_cnt > 2)
-        hres = to_string(This->ctx->lcid, args+2, &title);
+        hres = to_string(args+2, &title);
 
     if(SUCCEEDED(hres) && args_cnt > 3) {
         FIXME("unsupported arg_cnt %d\n", args_cnt);
@@ -2902,7 +2399,7 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     BSTR interval = NULL;
     UDATE ud = {{ 0 }};
     HRESULT hres;
-    DATE date;
+    double date;
     int count;
 
     TRACE("\n");
@@ -2915,32 +2412,32 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     if (V_VT(args + 2) == VT_NULL)
         return return_null(res);
 
-    hres = to_string(This->ctx->lcid, args, &interval);
+    hres = to_string(args, &interval);
     if (SUCCEEDED(hres))
         hres = to_int(args + 1, &count);
     if (SUCCEEDED(hres))
-        hres = to_system_time(This->ctx->lcid, args + 2, &ud.st);
+        hres = to_system_time(args + 2, &ud.st);
     if (SUCCEEDED(hres))
     {
-        if (!vbs_wcsicmp(interval, L"yyyy"))
+        if (!wcsicmp(interval, L"yyyy"))
             ud.st.wYear += count;
-        else if (!vbs_wcsicmp(interval, L"q"))
+        else if (!wcsicmp(interval, L"q"))
             ud.st.wMonth += 3 * count;
-        else if (!vbs_wcsicmp(interval, L"m"))
+        else if (!wcsicmp(interval, L"m"))
             ud.st.wMonth += count;
-        else if (!vbs_wcsicmp(interval, L"y")
-                || !vbs_wcsicmp(interval, L"d")
-                || !vbs_wcsicmp(interval, L"w"))
+        else if (!wcsicmp(interval, L"y")
+                || !wcsicmp(interval, L"d")
+                || !wcsicmp(interval, L"w"))
         {
             ud.st.wDay += count;
         }
-        else if (!vbs_wcsicmp(interval, L"ww"))
+        else if (!wcsicmp(interval, L"ww"))
             ud.st.wDay += 7 * count;
-        else if (!vbs_wcsicmp(interval, L"h"))
+        else if (!wcsicmp(interval, L"h"))
             ud.st.wHour += count;
-        else if (!vbs_wcsicmp(interval, L"n"))
+        else if (!wcsicmp(interval, L"n"))
             ud.st.wMinute += count;
-        else if (!vbs_wcsicmp(interval, L"s"))
+        else if (!wcsicmp(interval, L"s"))
             ud.st.wSecond += count;
         else
         {
@@ -2960,315 +2457,16 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     return hres;
 }
 
-static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR interval = NULL;
-    int firstday = 0;
-    UDATE ud1, ud2;
-    DATE date1, date2;
-    VARIANT date_var;
-    HRESULT hres;
-    LONG result;
-
-    TRACE("\n");
-
-    assert(args_cnt >= 3 && args_cnt <= 5);
-
-    if(V_VT(args) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(args_cnt >= 4 && V_VT(args + 3) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(args_cnt >= 5 && V_VT(args + 4) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(args + 1) == VT_NULL || V_VT(args + 2) == VT_NULL)
-        return return_null(res);
-
-    hres = to_string(This->ctx->lcid, args, &interval);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(&date_var) = VT_EMPTY;
-    hres = VariantChangeType(&date_var, args + 1, 0, VT_DATE);
-    if(FAILED(hres))
-    {
-        SysFreeString(interval);
-        return hres;
-    }
-    date1 = V_DATE(&date_var);
-
-    V_VT(&date_var) = VT_EMPTY;
-    hres = VariantChangeType(&date_var, args + 2, 0, VT_DATE);
-    if(FAILED(hres))
-    {
-        SysFreeString(interval);
-        return hres;
-    }
-    date2 = V_DATE(&date_var);
-
-    if(!wcsicmp(interval, L"yyyy"))
-    {
-        hres = VarUdateFromDate(date1, 0, &ud1);
-        if(SUCCEEDED(hres))
-            hres = VarUdateFromDate(date2, 0, &ud2);
-        if(SUCCEEDED(hres))
-            result = (LONG)ud2.st.wYear - (LONG)ud1.st.wYear;
-    }
-    else if(!wcsicmp(interval, L"q"))
-    {
-        hres = VarUdateFromDate(date1, 0, &ud1);
-        if(SUCCEEDED(hres))
-            hres = VarUdateFromDate(date2, 0, &ud2);
-        if(SUCCEEDED(hres))
-            result = ((LONG)ud2.st.wYear * 4 + (ud2.st.wMonth - 1) / 3)
-                   - ((LONG)ud1.st.wYear * 4 + (ud1.st.wMonth - 1) / 3);
-    }
-    else if(!wcsicmp(interval, L"m"))
-    {
-        hres = VarUdateFromDate(date1, 0, &ud1);
-        if(SUCCEEDED(hres))
-            hres = VarUdateFromDate(date2, 0, &ud2);
-        if(SUCCEEDED(hres))
-            result = ((LONG)ud2.st.wYear - (LONG)ud1.st.wYear) * 12
-                   + (LONG)ud2.st.wMonth - (LONG)ud1.st.wMonth;
-    }
-    else if(!wcsicmp(interval, L"y") || !wcsicmp(interval, L"d"))
-    {
-        result = (LONG)date2 - (LONG)date1;
-    }
-    else if(!wcsicmp(interval, L"w"))
-    {
-        result = ((LONG)date2 - (LONG)date1) / 7;
-    }
-    else if(!wcsicmp(interval, L"ww"))
-    {
-        LONG day1, day2, anchor;
-        int firstday_wday;
-
-        if(args_cnt >= 4)
-        {
-            hres = to_int(args + 3, &firstday);
-            if(FAILED(hres))
-            {
-                SysFreeString(interval);
-                return hres;
-            }
-        }
-
-        /* firstday: 0=system default, 1=vbSunday(wday 0), ..., 7=vbSaturday(wday 6) */
-        if(firstday >= 1 && firstday <= 7)
-        {
-            firstday_wday = firstday - 1;
-        }
-        else
-        {
-            int locale_firstday = 0;
-            GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK,
-                    (LPWSTR)&locale_firstday, sizeof(locale_firstday) / sizeof(WCHAR));
-            firstday_wday = (locale_firstday + 1) % 7;
-        }
-
-        day1 = date1;
-        day2 = date2;
-        /* anchor is any day number whose day-of-week equals firstday_wday.
-         * Day 0 (12/30/1899) is Saturday (wday 6), so dow(d) = (d + 6) % 7.
-         * We need (anchor + 6) % 7 == firstday_wday, i.e. anchor = (firstday_wday + 1) % 7. */
-        anchor = (firstday_wday + 1) % 7;
-
-        /* Floor-divide (day - anchor) by 7. C integer division truncates
-         * toward zero; pre-shift negative operands by -6 so truncation
-         * matches floor. */
-        if(day1 < anchor) day1 -= 6;
-        if(day2 < anchor) day2 -= 6;
-        result = (day2 - anchor) / 7 - (day1 - anchor) / 7;
-    }
-    else if(!wcsicmp(interval, L"h") || !wcsicmp(interval, L"n") || !wcsicmp(interval, L"s"))
-    {
-        /* OLE DATE convention: integer part is the day (truncated toward zero),
-         * fractional part is the time-of-day as a positive offset within that
-         * day. For negative DATEs, plain D*units gives the wrong wall-clock
-         * count, so reconstruct as trunc(D)*units + |D - trunc(D)|*units. */
-        double units = !wcsicmp(interval, L"h") ? 24.0 : !wcsicmp(interval, L"n") ? 1440.0 : 86400.0;
-        double t1 = trunc(date1) * units + fabs(date1 - trunc(date1)) * units;
-        double t2 = trunc(date2) * units + fabs(date2 - trunc(date2)) * units;
-        result = units == 86400.0 ? lround(t2 - t1) : floor(t2) - floor(t1);
-    }
-    else
-    {
-        WARN("Unrecognized interval %s.\n", debugstr_w(interval));
-        hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    SysFreeString(interval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_int(res, result);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
-static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR interval = NULL;
-    int firstday = 0, firstweek = 0;
-    UDATE ud;
-    DATE date;
-    VARIANT date_var;
-    HRESULT hres;
-    int result;
-
-    TRACE("\n");
-
-    assert(args_cnt >= 2 && args_cnt <= 4);
-
-    if(V_VT(args) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(args_cnt >= 3)
-    {
-        if(V_VT(args + 2) == VT_NULL)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        hres = to_int(args + 2, &firstday);
-        if(FAILED(hres))
-            return hres;
-        if(firstday < 0 || firstday > 7)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    if(args_cnt >= 4)
-    {
-        if(V_VT(args + 3) == VT_NULL)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        hres = to_int(args + 3, &firstweek);
-        if(FAILED(hres))
-            return hres;
-        if(firstweek < 0 || firstweek > 3)
-            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    if(V_VT(args + 1) == VT_NULL)
-        return return_null(res);
-
-    hres = to_string(This->ctx->lcid, args, &interval);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(&date_var) = VT_EMPTY;
-    hres = VariantChangeType(&date_var, args + 1, 0, VT_DATE);
-    if(FAILED(hres))
-    {
-        SysFreeString(interval);
-        return hres;
-    }
-    date = V_DATE(&date_var);
-
-    hres = VarUdateFromDate(date, 0, &ud);
-    if(FAILED(hres))
-    {
-        SysFreeString(interval);
-        return hres;
-    }
-
-    /* Resolve firstdayofweek: 0 = system default, 1-7 = vbSunday-vbSaturday */
-    if(!firstday)
-    {
-        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK,
-                (LPWSTR)&firstday, sizeof(firstday) / sizeof(WCHAR));
-        firstday = (firstday + 1) % 7;
-    }
-    else
-    {
-        firstday--;
-    }
-
-    /* Resolve firstweekofyear: 0 = system default */
-    if(!firstweek)
-    {
-        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTWEEKOFYEAR,
-                (LPWSTR)&firstweek, sizeof(firstweek) / sizeof(WCHAR));
-        firstweek++;
-    }
-
-    if(!wcsicmp(interval, L"yyyy"))
-        result = ud.st.wYear;
-    else if(!wcsicmp(interval, L"q"))
-        result = (ud.st.wMonth - 1) / 3 + 1;
-    else if(!wcsicmp(interval, L"m"))
-        result = ud.st.wMonth;
-    else if(!wcsicmp(interval, L"y"))
-        result = ud.wDayOfYear;
-    else if(!wcsicmp(interval, L"d"))
-        result = ud.st.wDay;
-    else if(!wcsicmp(interval, L"w"))
-        result = 1 + (ud.st.wDayOfWeek - firstday + 7) % 7;
-    else if(!wcsicmp(interval, L"ww"))
-    {
-        int jan1_wday, jan1_pos, week1_start;
-
-        /* Day of week for Jan 1 of this year */
-        jan1_wday = (ud.st.wDayOfWeek - (ud.wDayOfYear - 1) % 7 + 7) % 7;
-        /* Position of Jan 1 within its week (0 = starts week, 6 = ends week) */
-        jan1_pos = (jan1_wday - firstday + 7) % 7;
-
-        switch(firstweek)
-        {
-        case 1: /* vbFirstJan1: week containing Jan 1 is week 1 */
-        default:
-            week1_start = 1 - jan1_pos;
-            break;
-        case 2: /* vbFirstFourDays: first week has >= 4 days in year */
-            week1_start = (jan1_pos <= 3) ? 1 - jan1_pos : 8 - jan1_pos;
-            break;
-        case 3: /* vbFirstFullWeek: first week is entirely in year */
-            week1_start = (jan1_pos == 0) ? 1 : 8 - jan1_pos;
-            break;
-        }
-
-        if(ud.wDayOfYear >= week1_start)
-        {
-            result = (ud.wDayOfYear - week1_start) / 7 + 1;
-        }
-        else
-        {
-            /* Date falls before week 1 — belongs to last week of previous year */
-            int prev_year = ud.st.wYear - 1;
-            int prev_days = (prev_year % 4 == 0 && (prev_year % 100 != 0 || prev_year % 400 == 0)) ? 366 : 365;
-            int jan1_prev_wday = (jan1_wday - prev_days % 7 + 7) % 7;
-            int jan1_prev_pos = (jan1_prev_wday - firstday + 7) % 7;
-            int prev_week1_start;
-
-            switch(firstweek)
-            {
-            case 1:
-            default:
-                prev_week1_start = 1 - jan1_prev_pos;
-                break;
-            case 2:
-                prev_week1_start = (jan1_prev_pos <= 3) ? 1 - jan1_prev_pos : 8 - jan1_prev_pos;
-                break;
-            case 3:
-                prev_week1_start = (jan1_prev_pos == 0) ? 1 : 8 - jan1_prev_pos;
-                break;
-            }
-            result = (prev_days - prev_week1_start) / 7 + 1;
-        }
-    }
-    else if(!wcsicmp(interval, L"h"))
-        result = ud.st.wHour;
-    else if(!wcsicmp(interval, L"n"))
-        result = ud.st.wMinute;
-    else if(!wcsicmp(interval, L"s"))
-        result = ud.st.wSecond;
-    else
-    {
-        WARN("Unrecognized interval %s.\n", debugstr_w(interval));
-        SysFreeString(interval);
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    }
-
-    SysFreeString(interval);
-    return return_short(res, result);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -3309,13 +2507,9 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
             return return_string(res, L"Empty");
         case VT_NULL:
             return return_string(res, L"Null");
-        case VT_DISPATCH: {
-            const WCHAR *class_name;
-
+        case VT_DISPATCH:
             if (!V_DISPATCH(arg))
                 return return_string(res, L"Nothing");
-            if ((class_name = vbdisp_class_name(V_DISPATCH(arg))))
-                return return_string(res, class_name);
             if (SUCCEEDED(IDispatch_GetTypeInfo(V_DISPATCH(arg), 0, GetUserDefaultLCID(), &typeinfo)))
             {
                 hres = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &name, NULL, NULL, NULL);
@@ -3327,7 +2521,6 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
                 SysFreeString(name);
             }
             return return_string(res, L"Object");
-        }
         default:
             FIXME("arg %s not supported\n", debugstr_variant(arg));
             return E_NOTIMPL;
@@ -3382,169 +2575,10 @@ static HRESULT Global_Erase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT *data;
-    SAFEARRAY *sa, *out_sa;
-    SAFEARRAYBOUND bounds;
-    LONG lbound, ubound, i, count, match_count;
-    BSTR search, conv_search = NULL, str, conv_str;
-    BSTR *matches = NULL;
-    int include = 1, mode = 0, found;
-    HRESULT hres;
-
-    TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
-
-    assert(2 <= args_cnt && args_cnt <= 4);
-
-    if(V_VT(args) == VT_NULL || V_VT(args+1) == VT_NULL
-            || (args_cnt > 2 && V_VT(args+2) == VT_NULL)
-            || (args_cnt > 3 && V_VT(args+3) == VT_NULL))
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    switch(V_VT(args)) {
-    case VT_VARIANT|VT_ARRAY:
-        sa = V_ARRAY(args);
-        break;
-    case VT_VARIANT|VT_ARRAY|VT_BYREF:
-        sa = *V_ARRAYREF(args);
-        break;
-    default:
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    if(V_VT(args+1) == VT_BSTR) {
-        search = V_BSTR(args+1);
-    }else {
-        hres = to_string(This->ctx->lcid, args+1, &conv_search);
-        if(FAILED(hres))
-            return hres;
-        search = conv_search;
-    }
-
-    if(args_cnt > 2) {
-        hres = to_int(args+2, &include);
-        if(FAILED(hres))
-            goto done;
-    }
-
-    if(args_cnt > 3) {
-        hres = to_int(args+3, &mode);
-        if(FAILED(hres))
-            goto done;
-        if(mode != 0 && mode != 1) {
-            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-            goto done;
-        }
-    }
-
-    if(SafeArrayGetDim(sa) != 1) {
-        hres = MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-        goto done;
-    }
-
-    hres = SafeArrayGetLBound(sa, 1, &lbound);
-    if(FAILED(hres))
-        goto done;
-    hres = SafeArrayGetUBound(sa, 1, &ubound);
-    if(FAILED(hres))
-        goto done;
-
-    hres = SafeArrayAccessData(sa, (void**)&data);
-    if(FAILED(hres))
-        goto done;
-
-    /* Single pass: convert, match, and collect results into a temporary array */
-    count = ubound - lbound + 1;
-    if(count > 0) {
-        matches = calloc(count, sizeof(BSTR));
-        if(!matches) {
-            SafeArrayUnaccessData(sa);
-            hres = E_OUTOFMEMORY;
-            goto done;
-        }
-    }
-
-    match_count = 0;
-    for(i = 0; i < count; i++) {
-        conv_str = NULL;
-        if(V_VT(&data[i]) == VT_BSTR) {
-            str = V_BSTR(&data[i]);
-        }else {
-            hres = to_string(This->ctx->lcid, &data[i], &conv_str);
-            if(FAILED(hres)) {
-                SafeArrayUnaccessData(sa);
-                goto done;
-            }
-            str = conv_str;
-        }
-
-        if(!SysStringLen(search))
-            found = 1;
-        else
-            found = FindStringOrdinal(FIND_FROMSTART, str, SysStringLen(str),
-                                      search, SysStringLen(search), mode) >= 0;
-
-        if(include ? found : !found) {
-            matches[match_count] = SysAllocString(str);
-            if(!matches[match_count]) {
-                SysFreeString(conv_str);
-                SafeArrayUnaccessData(sa);
-                hres = E_OUTOFMEMORY;
-                goto done;
-            }
-            match_count++;
-        }
-
-        SysFreeString(conv_str);
-    }
-
-    SafeArrayUnaccessData(sa);
-
-    /* Create result array from collected matches */
-    bounds.lLbound = 0;
-    bounds.cElements = match_count;
-    out_sa = SafeArrayCreate(VT_VARIANT, 1, &bounds);
-    if(!out_sa) {
-        hres = E_OUTOFMEMORY;
-        goto done;
-    }
-
-    if(match_count) {
-        VARIANT *out_data;
-
-        hres = SafeArrayAccessData(out_sa, (void**)&out_data);
-        if(FAILED(hres)) {
-            SafeArrayDestroy(out_sa);
-            goto done;
-        }
-
-        for(i = 0; i < match_count; i++) {
-            V_VT(&out_data[i]) = VT_BSTR;
-            V_BSTR(&out_data[i]) = matches[i];
-            matches[i] = NULL;
-        }
-
-        SafeArrayUnaccessData(out_sa);
-    }
-
-    if(res) {
-        V_VT(res) = VT_ARRAY|VT_VARIANT;
-        V_ARRAY(res) = out_sa;
-    }else {
-        SafeArrayDestroy(out_sa);
-    }
-
-    hres = S_OK;
-
-done:
-    if(matches) {
-        for(i = 0; i < match_count; i++)
-            SysFreeString(matches[i]);
-        free(matches);
-    }
-    SysFreeString(conv_search);
-    return hres;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Join(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -3580,7 +2614,7 @@ static HRESULT Global_Join(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, 
         if (V_VT(args + 1) == VT_NULL)
             return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
         if (V_VT(args + 1) != VT_BSTR) {
-            hres = to_string(This->ctx->lcid, args + 1, &free_delimiter);
+            hres = to_string(args + 1, &free_delimiter);
             if (FAILED(hres))
                 return hres;
             delimiter = free_delimiter;
@@ -3616,7 +2650,7 @@ static HRESULT Global_Join(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, 
     }
     for (i = 0; i < count; i++) {
         if (V_VT(&data[i]) != VT_BSTR) {
-            hres = to_string(This->ctx->lcid, &data[i], &str);
+            hres = to_string(&data[i], &str);
             if (FAILED(hres))
                 goto cleanup_data;
         } else {
@@ -3682,7 +2716,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
 
     if(V_VT(args) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args, &string);
+        hres = to_string(args, &string);
         if(FAILED(hres))
             return hres;
     }else {
@@ -3691,9 +2725,9 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     if(args_cnt > 1) {
         if(V_VT(args+1) != VT_BSTR) {
-            hres = to_string(This->ctx->lcid, args+1, &delimiter);
+            hres = to_string(args+1, &delimiter);
             if(FAILED(hres))
-                goto done;
+                goto error;
         }else {
             delimiter = V_BSTR(args+1);
         }
@@ -3703,10 +2737,10 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     if(args_cnt > 2) {
         hres = to_int(args+2, &max);
         if(FAILED(hres))
-            goto done;
+            goto error;
         if (max < -1) {
             hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-            goto done;
+            goto error;
        }
     }else {
         max = -1;
@@ -3715,10 +2749,10 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     if(args_cnt == 4) {
         hres = to_int(args+3, &mode);
         if(FAILED(hres))
-            goto done;
+            goto error;
         if (mode != 0 && mode != 1) {
             hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-            goto done;
+            goto error;
         }
     }else {
         mode = 0;
@@ -3727,22 +2761,12 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     start = 0;
 
     len = SysStringLen(string);
-
-    if(!len) {
-        bounds.lLbound = 0;
-        bounds.cElements = 0;
-        sa = SafeArrayCreate(VT_VARIANT, 1, &bounds);
-        if(!sa)
-            hres = E_OUTOFMEMORY;
-        goto done;
-    }
-
     count = 0;
 
     indices = malloc( indices_max * sizeof(int));
     if(!indices) {
         hres = E_OUTOFMEMORY;
-        goto done;
+        goto error;
     }
 
     while(1) {
@@ -3762,7 +2786,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
             new_indices = realloc(indices, indices_max * 2 * sizeof(int));
             if(!new_indices) {
                 hres = E_OUTOFMEMORY;
-                goto done;
+                goto error;
             }
             indices = new_indices;
             indices_max *= 2;
@@ -3779,11 +2803,11 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     sa = SafeArrayCreate( VT_VARIANT, 1, &bounds);
     if (!sa) {
         hres = E_OUTOFMEMORY;
-        goto done;
+        goto error;
     }
     hres = SafeArrayAccessData(sa, (void**)&data);
     if(FAILED(hres)) {
-        goto done;
+        goto error;
     }
 
     start = 0;
@@ -3799,7 +2823,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     }
     SafeArrayUnaccessData(sa);
 
-done:
+error:
     if(SUCCEEDED(hres) && res) {
         V_VT(res) = VT_ARRAY|VT_VARIANT;
         V_ARRAY(res) = sa;
@@ -3832,7 +2856,7 @@ static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cn
 
 
     if(V_VT(args) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args, &string);
+        hres = to_string(args, &string);
         if(FAILED(hres))
             return hres;
     }else {
@@ -3840,7 +2864,7 @@ static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     }
 
     if(V_VT(args+1) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args+1, &find);
+        hres = to_string(args+1, &find);
         if(FAILED(hres))
             goto error;
     }else {
@@ -3848,7 +2872,7 @@ static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cn
     }
 
     if(V_VT(args+2) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args+2, &replace);
+        hres = to_string(args+2, &replace);
         if(FAILED(hres))
             goto error;
     }else {
@@ -3913,7 +2937,7 @@ static HRESULT Global_StrReverse(BuiltinDisp *This, VARIANT *arg, unsigned args_
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    hres = to_string(This->ctx->lcid, arg, &ret);
+    hres = to_string(arg, &ret);
     if(FAILED(hres))
         return hres;
 
@@ -3960,7 +2984,7 @@ static HRESULT Global_InStrRev(BuiltinDisp *This, VARIANT *args, unsigned args_c
     }
 
     if(V_VT(args) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args, &str1);
+        hres = to_string(args, &str1);
         if(FAILED(hres))
             return hres;
     }
@@ -3968,7 +2992,7 @@ static HRESULT Global_InStrRev(BuiltinDisp *This, VARIANT *args, unsigned args_c
         str1 = V_BSTR(args);
 
     if(V_VT(args+1) != VT_BSTR) {
-        hres = to_string(This->ctx->lcid, args+1, &str2);
+        hres = to_string(args+1, &str2);
         if(FAILED(hres)) {
             if(V_VT(args) != VT_BSTR)
                 SysFreeString(str1);
@@ -4049,224 +3073,111 @@ static HRESULT Global_ScriptEngineBuildVersion(BuiltinDisp *This, VARIANT *arg, 
     return return_int(res, VBSCRIPT_BUILD_VERSION);
 }
 
-#define LOCNUM_INTO(lcid, type, field) GetLocaleInfoW((lcid), (type)|LOCALE_RETURN_NUMBER, \
-        (LPWSTR)&(field), sizeof(field)/sizeof(WCHAR))
-
-/* LCID_US gives the intermediate double-to-BSTR conversion a stable canonical
- * form (period decimal, no grouping) that GetNumberFormatW / GetCurrencyFormatW
- * will then reformat using the target locale. */
-#define LCID_EN_US MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT)
-
-static HRESULT format_number_lcid(LCID lcid, VARIANT *var, int ndigits, int nleading,
-        int nparens, int ngrouping, BSTR *out)
-{
-    WCHAR buff[256], decimal[8], thousands[8];
-    NUMBERFMTW fmt;
-    BSTR str;
-    HRESULT hres;
-
-    *out = NULL;
-    hres = to_string(LCID_EN_US, var, &str);
-    if(FAILED(hres))
-        return hres;
-
-    if(ndigits < 0)
-        LOCNUM_INTO(lcid, LOCALE_IDIGITS, fmt.NumDigits);
-    else
-        fmt.NumDigits = ndigits;
-
-    if(nleading == -2)
-        LOCNUM_INTO(lcid, LOCALE_ILZERO, fmt.LeadingZero);
-    else
-        fmt.LeadingZero = nleading == -1 ? 1 : 0;
-
-    if(ngrouping == -2) {
-        WCHAR grouping[10] = {0};
-        GetLocaleInfoW(lcid, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
-        fmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
-    }else {
-        fmt.Grouping = ngrouping == -1 ? 3 : 0;
-    }
-
-    if(nparens == -2)
-        LOCNUM_INTO(lcid, LOCALE_INEGNUMBER, fmt.NegativeOrder);
-    else
-        fmt.NegativeOrder = nparens == -1 ? 0 : 1;
-
-    fmt.lpDecimalSep = decimal;
-    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, decimal, ARRAY_SIZE(decimal));
-    fmt.lpThousandSep = thousands;
-    GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousands, ARRAY_SIZE(thousands));
-
-    if(!GetNumberFormatW(lcid, 0, str, &fmt, buff, ARRAY_SIZE(buff))) {
-        SysFreeString(str);
-        return DISP_E_TYPEMISMATCH;
-    }
-    SysFreeString(str);
-
-    *out = SysAllocString(buff);
-    return *out ? S_OK : E_OUTOFMEMORY;
-}
-
-static HRESULT format_currency_lcid(LCID lcid, VARIANT *var, int ndigits, int nleading,
-        int nparens, int ngrouping, BSTR *out)
-{
-    WCHAR buff[256], decimal[8], thousands[4], currency[13];
-    CURRENCYFMTW fmt;
-    BSTR str;
-    HRESULT hres;
-
-    *out = NULL;
-    if(V_VT(var) == VT_BSTR || V_VT(var) == (VT_BSTR|VT_BYREF)) {
-        VARIANT v;
-        CY cy;
-        hres = VarCyFromStr(V_ISBYREF(var) ? *V_BSTRREF(var) : V_BSTR(var), lcid, 0, &cy);
-        if(FAILED(hres)) return hres;
-        V_VT(&v) = VT_CY;
-        V_CY(&v) = cy;
-        hres = to_string(lcid, &v, &str);
-    }else {
-        hres = to_string(lcid, var, &str);
-    }
-    if(FAILED(hres))
-        return hres;
-
-    if(ndigits < 0)
-        LOCNUM_INTO(lcid, LOCALE_IDIGITS, fmt.NumDigits);
-    else
-        fmt.NumDigits = ndigits;
-
-    if(nleading == -2)
-        LOCNUM_INTO(lcid, LOCALE_ILZERO, fmt.LeadingZero);
-    else
-        fmt.LeadingZero = nleading == -1 ? 1 : 0;
-
-    if(ngrouping == -2) {
-        WCHAR grouping[10] = {0};
-        GetLocaleInfoW(lcid, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
-        fmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
-    }else {
-        fmt.Grouping = ngrouping == -1 ? 3 : 0;
-    }
-
-    if(nparens == -2)
-        LOCNUM_INTO(lcid, LOCALE_INEGCURR, fmt.NegativeOrder);
-    else
-        fmt.NegativeOrder = nparens == -1 ? 0 : 1;
-
-    LOCNUM_INTO(lcid, LOCALE_ICURRENCY, fmt.PositiveOrder);
-    fmt.lpDecimalSep = decimal;
-    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, decimal, ARRAY_SIZE(decimal));
-    fmt.lpThousandSep = thousands;
-    GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousands, ARRAY_SIZE(thousands));
-    fmt.lpCurrencySymbol = currency;
-    GetLocaleInfoW(lcid, LOCALE_SCURRENCY, currency, ARRAY_SIZE(currency));
-
-    if(!GetCurrencyFormatW(lcid, 0, str, &fmt, buff, ARRAY_SIZE(buff))) {
-        SysFreeString(str);
-        return DISP_E_TYPEMISMATCH;
-    }
-    SysFreeString(str);
-
-    *out = SysAllocString(buff);
-    return *out ? S_OK : E_OUTOFMEMORY;
-}
-
-static HRESULT parse_format_args(VARIANT *args, unsigned args_cnt, int *vals)
-{
-    HRESULT hres;
-    unsigned i;
-    for(i = 1; i < args_cnt; ++i) {
-        if(V_VT(args+i) == VT_ERROR) continue;
-        if(V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        hres = to_int(args+i, &vals[i-1]);
-        if(FAILED(hres)) return hres;
-    }
-    return S_OK;
-}
-
 static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    int a[4] = {-1, -2, -2, -2};
+    union
+    {
+        struct
+        {
+            int num_dig, inc_lead, use_parens, group;
+        } s;
+        int val[4];
+    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
     HRESULT hres;
     BSTR str;
+    int i;
 
     TRACE("\n");
+
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    hres = parse_format_args(args, args_cnt, a);
-    if(FAILED(hres)) return hres;
-    hres = format_number_lcid(This->ctx->lcid, args, a[0], a[1], a[2], a[3], &str);
-    if(FAILED(hres)) return hres;
+    for (i = 1; i < args_cnt; ++i)
+    {
+        if (V_VT(args+i) == VT_ERROR) continue;
+        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
+    }
+
+    hres = VarFormatNumber(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
+        int_args.s.group, 0, &str);
+    if (FAILED(hres)) return hres;
+
     return return_bstr(res, str);
 }
 
 static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    int a[4] = {-1, -2, -2, -2};
+    union
+    {
+        struct
+        {
+            int num_dig, inc_lead, use_parens, group;
+        } s;
+        int val[4];
+    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
     HRESULT hres;
     BSTR str;
+    int i;
 
     TRACE("\n");
+
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    hres = parse_format_args(args, args_cnt, a);
-    if(FAILED(hres)) return hres;
-    hres = format_currency_lcid(This->ctx->lcid, args, a[0], a[1], a[2], a[3], &str);
-    if(FAILED(hres)) return hres;
+    for (i = 1; i < args_cnt; ++i)
+    {
+        if (V_VT(args+i) == VT_ERROR) continue;
+        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
+    }
+
+    hres = VarFormatCurrency(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
+        int_args.s.group, 0, &str);
+    if (FAILED(hres)) return hres;
+
     return return_bstr(res, str);
 }
 
 static HRESULT Global_FormatPercent(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    int a[4] = {-1, -2, -2, -2};
-    WCHAR buff[258];
-    DWORD len;
-    VARIANT v;
+    union
+    {
+        struct
+        {
+            int num_dig, inc_lead, use_parens, group;
+        } s;
+        int val[4];
+    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
     HRESULT hres;
     BSTR str;
+    int i;
 
     TRACE("\n");
+
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    hres = parse_format_args(args, args_cnt, a);
-    if(FAILED(hres)) return hres;
-
-    V_VT(&v) = VT_R8;
-    hres = to_double(args, &V_R8(&v));
-    if(FAILED(hres)) return hres;
-    if(V_R8(&v) > (1e300 / 100.0)) return DISP_E_OVERFLOW;
-    V_R8(&v) *= 100.0;
-
-    hres = format_number_lcid(This->ctx->lcid, &v, a[0], a[1], a[2], a[3], &str);
-    if(FAILED(hres)) return hres;
-
-    len = lstrlenW(str);
-    if(len && str[len-1] == ')') {
-        memcpy(buff, str, (len-1) * sizeof(WCHAR));
-        lstrcpyW(buff + len - 1, L"%)");
-    }else {
-        memcpy(buff, str, len * sizeof(WCHAR));
-        lstrcpyW(buff + len, L"%");
+    for (i = 1; i < args_cnt; ++i)
+    {
+        if (V_VT(args+i) == VT_ERROR) continue;
+        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
     }
-    SysFreeString(str);
-    str = SysAllocString(buff);
-    if(!str) return E_OUTOFMEMORY;
+
+    hres = VarFormatPercent(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
+        int_args.s.group, 0, &str);
+    if (FAILED(hres)) return hres;
+
     return return_bstr(res, str);
 }
 
 static HRESULT Global_GetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    TRACE("() = %#lx\n", This->ctx->lcid);
-    return return_int(res, This->ctx->lcid);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int format = 0;
-    LCID lcid = This->ctx->lcid;
-    WCHAR buff[256];
-    SYSTEMTIME st;
     HRESULT hres;
     BSTR str;
 
@@ -4274,50 +3185,21 @@ static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned 
 
     assert(1 <= args_cnt && args_cnt <= 2);
 
-    if(V_VT(args) == VT_NULL)
+    if (V_VT(args) == VT_NULL)
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
 
-    if(args_cnt == 2 && V_VT(args+1) != VT_ERROR) {
-        if(V_VT(args+1) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        hres = to_int(args+1, &format);
-        if(FAILED(hres)) return hres;
+    if (args_cnt == 2)
+    {
+        if (V_VT(args+1) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (V_VT(args+1) != VT_ERROR)
+        {
+            if (FAILED(hres = to_int(args+1, &format))) return hres;
+        }
     }
 
-    /* vbGeneralDate (0) falls back to oleaut32 — the "show date if date, time if
-     * time, both otherwise" logic depends on the tokenizer; ctx->lcid does not
-     * yet propagate. */
-    if(format == 0) {
-        hres = VarFormatDateTime(args, format, 0, &str);
-        if(FAILED(hres)) return hres;
-        return return_bstr(res, str);
-    }
+    hres = VarFormatDateTime(args, format, 0, &str);
+    if (FAILED(hres)) return hres;
 
-    hres = to_system_time(lcid, args, &st);
-    if(FAILED(hres)) return hres;
-
-    switch(format) {
-    case 1: /* vbLongDate */
-        if(!GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, buff, ARRAY_SIZE(buff)))
-            return E_FAIL;
-        break;
-    case 2: /* vbShortDate */
-        if(!GetDateFormatW(lcid, DATE_SHORTDATE, &st, NULL, buff, ARRAY_SIZE(buff)))
-            return E_FAIL;
-        break;
-    case 3: /* vbLongTime */
-        if(!GetTimeFormatW(lcid, 0, &st, NULL, buff, ARRAY_SIZE(buff)))
-            return E_FAIL;
-        break;
-    case 4: /* vbShortTime */
-        if(!GetTimeFormatW(lcid, TIME_NOSECONDS|TIME_FORCE24HOURFORMAT, &st, NULL, buff, ARRAY_SIZE(buff)))
-            return E_FAIL;
-        break;
-    default:
-        return E_INVALIDARG;
-    }
-
-    str = SysAllocString(buff);
-    if(!str) return E_OUTOFMEMORY;
     return return_bstr(res, str);
 }
 
@@ -4427,345 +3309,40 @@ static HRESULT Global_Round(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     return return_double(res, d);
 }
 
-/* Check that the character is one of the 69 non-blank characters as defined by ECMA-262 B.2.1 */
-static inline BOOL is_ecma_nonblank(WCHAR c)
-{
-    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
-        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.' || c == '/';
-}
-
-static WCHAR int_to_hex(int i)
-{
-    if(i < 10) return '0' + i;
-    return 'A' + i - 10;
-}
-
-static int hex_to_int(WCHAR c)
-{
-    if(c >= '0' && c <= '9') return c - '0';
-    if(c >= 'A' && c <= 'F') return c - 'A' + 10;
-    if(c >= 'a' && c <= 'f') return c - 'a' + 10;
-    return -1;
-}
-
 static HRESULT Global_Escape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL, str, ret;
-    const WCHAR *ptr;
-    DWORD len = 0;
-    HRESULT hres;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(arg) == VT_BSTR) {
-        str = V_BSTR(arg);
-    }else {
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    for(ptr = str; *ptr; ptr++) {
-        if(*ptr > 0xff)
-            len += 6;
-        else if(is_ecma_nonblank(*ptr))
-            len++;
-        else
-            len += 3;
-    }
-
-    ret = SysAllocStringLen(NULL, len);
-    if(!ret) {
-        SysFreeString(conv_str);
-        return E_OUTOFMEMORY;
-    }
-
-    len = 0;
-    for(ptr = str; *ptr; ptr++) {
-        if(*ptr > 0xff) {
-            ret[len++] = '%';
-            ret[len++] = 'u';
-            ret[len++] = int_to_hex(*ptr >> 12);
-            ret[len++] = int_to_hex((*ptr >> 8) & 0xf);
-            ret[len++] = int_to_hex((*ptr >> 4) & 0xf);
-            ret[len++] = int_to_hex(*ptr & 0xf);
-        }else if(is_ecma_nonblank(*ptr)) {
-            ret[len++] = *ptr;
-        }else {
-            ret[len++] = '%';
-            ret[len++] = int_to_hex(*ptr >> 4);
-            ret[len++] = int_to_hex(*ptr & 0xf);
-        }
-    }
-
-    SysFreeString(conv_str);
-
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = ret;
-    }else {
-        SysFreeString(ret);
-    }
-    return S_OK;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL, str, ret;
-    const WCHAR *ptr;
-    DWORD len = 0;
-    HRESULT hres;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-
-    if(V_VT(arg) == VT_BSTR) {
-        str = V_BSTR(arg);
-    }else {
-        hres = to_string(This->ctx->lcid, arg, &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }
-
-    /* First pass: compute output length */
-    for(ptr = str; *ptr; ptr++) {
-        if(*ptr == '%') {
-            if(hex_to_int(ptr[1]) != -1 && hex_to_int(ptr[2]) != -1)
-                ptr += 2;
-            else if(ptr[1] == 'u' && hex_to_int(ptr[2]) != -1 && hex_to_int(ptr[3]) != -1
-                    && hex_to_int(ptr[4]) != -1 && hex_to_int(ptr[5]) != -1)
-                ptr += 5;
-        }
-        len++;
-    }
-
-    ret = SysAllocStringLen(NULL, len);
-    if(!ret) {
-        SysFreeString(conv_str);
-        return E_OUTOFMEMORY;
-    }
-
-    /* Second pass: decode */
-    len = 0;
-    for(ptr = str; *ptr; ptr++) {
-        if(*ptr == '%') {
-            if(hex_to_int(ptr[1]) != -1 && hex_to_int(ptr[2]) != -1) {
-                ret[len] = (hex_to_int(ptr[1]) << 4) + hex_to_int(ptr[2]);
-                ptr += 2;
-            }else if(ptr[1] == 'u' && hex_to_int(ptr[2]) != -1 && hex_to_int(ptr[3]) != -1
-                    && hex_to_int(ptr[4]) != -1 && hex_to_int(ptr[5]) != -1) {
-                ret[len] = (hex_to_int(ptr[2]) << 12) + (hex_to_int(ptr[3]) << 8)
-                    + (hex_to_int(ptr[4]) << 4) + hex_to_int(ptr[5]);
-                ptr += 5;
-            }else {
-                ret[len] = *ptr;
-            }
-        }else {
-            ret[len] = *ptr;
-        }
-        len++;
-    }
-
-    SysFreeString(conv_str);
-
-    if(res) {
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = ret;
-    }else {
-        SysFreeString(ret);
-    }
-    return S_OK;
-}
-
-static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
-{
-    DISPPARAMS dp = {0};
-    VARIANT v;
-    HRESULT hres;
-
-    if(!disp)
-        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-    hres = disp_call(ctx, disp, DISPID_VALUE, TRUE, &dp, &v);
-    if(FAILED(hres))
-        return hres;
-    if(V_VT(&v) == VT_BSTR) {
-        *ret = V_BSTR(&v);
-        return S_OK;
-    }
-    hres = to_string(ctx->lcid, &v, ret);
-    VariantClear(&v);
-    return hres;
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL;
-    vbscode_t *code;
-    BSTR str;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_BSTR) {
-        str = V_BSTR(arg);
-    }else if(V_VT(arg) == VT_DISPATCH) {
-        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }else {
-        if(res)
-            return VariantCopy(res, arg);
-        return S_OK;
-    }
-
-    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-                          SCRIPTTEXT_ISEXPRESSION, FALSE, &code);
-    SysFreeString(conv_str);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    if(is_exec_local_scope(This->ctx->current_exec)) {
-        This->ctx->caller_exec = This->ctx->current_exec;
-        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL;
-    vbscode_t *code;
-    BSTR str;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_BSTR) {
-        str = V_BSTR(arg);
-    }else if(V_VT(arg) == VT_DISPATCH) {
-        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }else {
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-                          0, TRUE, &code);
-    SysFreeString(conv_str);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    if(is_exec_local_scope(This->ctx->current_exec)) {
-        unsigned i;
-
-        /* Pre-register Dim variables in the caller's scope */
-        for(i = 0; i < code->main_code.var_cnt; i++) {
-            hres = exec_add_caller_dynamic_var(This->ctx, This->ctx->current_exec,
-                                               code->main_code.vars[i].name);
-            if(FAILED(hres))
-                return hres;
-        }
-
-        This->ctx->caller_exec = This->ctx->current_exec;
-        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    BSTR conv_str = NULL;
-    vbscode_t *code;
-    BSTR str;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) == VT_BSTR) {
-        str = V_BSTR(arg);
-    }else if(V_VT(arg) == VT_DISPATCH) {
-        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-        if(FAILED(hres))
-            return hres;
-        str = conv_str;
-    }else {
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-    }
-
-    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-                          0, TRUE, &code);
-    SysFreeString(conv_str);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    named_item_t *item;
-    function_t *func;
-    IDispatch *disp;
-    const WCHAR *name;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) != VT_BSTR)
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-
-    name = V_BSTR(arg);
-    if(!name || !name[0])
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
-    /* Search the current named item's script object first */
-    item = This->ctx->current_named_item;
-    if(item && item->script_obj) {
-        func = script_disp_find_func(item->script_obj, name);
-        if(func) {
-            if(!res)
-                return S_OK;
-            hres = create_func_ref(This->ctx, func, &disp);
-            if(FAILED(hres))
-                return hres;
-            V_VT(res) = VT_DISPATCH;
-            V_DISPATCH(res) = disp;
-            return S_OK;
-        }
-    }
-
-    /* Search global script object */
-    func = script_disp_find_func(This->ctx->script_obj, name);
-    if(func) {
-        if(!res)
-            return S_OK;
-        hres = create_func_ref(This->ctx, func, &disp);
-        if(FAILED(hres))
-            return hres;
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = disp;
-        return S_OK;
-    }
-
-    return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Global_Err(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -4842,7 +3419,7 @@ static const builtin_prop_t global_props[] = {
     {L"Hour",                      Global_Hour, 0, 1},
     {L"InputBox",                  Global_InputBox, 0, 1, 7},
     {L"InStr",                     Global_InStr, 0, 2, 4},
-    {L"InStrB",                    Global_InStrB, 0, 2, 4},
+    {L"InStrB",                    Global_InStrB, 0, 3, 4},
     {L"InStrRev",                  Global_InStrRev, 0, 2, 4},
     {L"Int",                       Global_Int, 0, 1},
     {L"IsArray",                   Global_IsArray, 0, 1},
@@ -4992,7 +3569,7 @@ static const builtin_prop_t global_props[] = {
     {L"Year",                      Global_Year, 0, 1}
 };
 
-static HRESULT err_string_prop(BuiltinDisp *This, BSTR *prop, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT err_string_prop(BSTR *prop, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR str;
     HRESULT hres;
@@ -5000,7 +3577,7 @@ static HRESULT err_string_prop(BuiltinDisp *This, BSTR *prop, VARIANT *args, uns
     if(!args_cnt)
         return return_string(res, *prop ? *prop : L"");
 
-    hres = to_string(This->ctx->lcid, args, &str);
+    hres = to_string(args, &str);
     if(FAILED(hres))
         return hres;
 
@@ -5012,7 +3589,7 @@ static HRESULT err_string_prop(BuiltinDisp *This, BSTR *prop, VARIANT *args, uns
 static HRESULT Err_Description(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return err_string_prop(This, &This->ctx->ei.bstrDescription, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrDescription, args, args_cnt, res);
 }
 
 static HRESULT Err_HelpContext(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -5030,7 +3607,7 @@ static HRESULT Err_HelpContext(BuiltinDisp *This, VARIANT *args, unsigned args_c
 static HRESULT Err_HelpFile(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return err_string_prop(This, &This->ctx->ei.bstrHelpFile, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrHelpFile, args, args_cnt, res);
 }
 
 static HRESULT Err_Number(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -5051,14 +3628,14 @@ static HRESULT Err_Number(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
 static HRESULT Err_Source(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return err_string_prop(This, &This->ctx->ei.bstrSource, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrSource, args, args_cnt, res);
 }
 
 static HRESULT Err_Clear(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
 
-    clear_error(This->ctx);
+    clear_ei(&This->ctx->ei);
     return S_OK;
 }
 
@@ -5077,19 +3654,16 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
         return E_INVALIDARG;
 
     if(args_cnt >= 2)
-        hres = to_string(This->ctx->lcid, args + 1, &source);
+        hres = to_string(args + 1, &source);
     if(args_cnt >= 3 && SUCCEEDED(hres))
-        hres = to_string(This->ctx->lcid, args + 2, &description);
+        hres = to_string(args + 2, &description);
     if(args_cnt >= 4 && SUCCEEDED(hres))
-        hres = to_string(This->ctx->lcid, args + 3, &helpfile);
+        hres = to_string(args + 3, &helpfile);
     if(args_cnt >= 5 && SUCCEEDED(hres))
         hres = to_int(args + 4, &helpcontext);
 
     if(SUCCEEDED(hres)) {
         script_ctx_t *ctx = This->ctx;
-
-        SysFreeString(ctx->ei_identifier);
-        ctx->ei_identifier = NULL;
 
         if(source) {
             SysFreeString(ctx->ei.bstrSource);

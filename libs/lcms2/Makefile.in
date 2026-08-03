@@ -1,4 +1,4 @@
-STATICLIB = liblcms2.a
+EXTLIB    = liblcms2.a
 EXTRAINCL = $(LCMS2_PE_CFLAGS)
 
 SOURCES = \

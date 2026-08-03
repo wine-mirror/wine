@@ -1,4 +1,4 @@
-STATICLIB = libjpeg.a
+EXTLIB    = libjpeg.a
 
 SOURCES = \
 	jaricom.c \

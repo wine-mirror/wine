@@ -17,7 +17,10 @@
  */
 
 #pragma makedep register
+
+#ifdef __WIDL__
 #pragma winrt ns_prefix
+#endif
 
 import "inspectable.idl";
 import "asyncinfo.idl";
@@ -26,29 +29,9 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.globalization.idl";
 import "windows.storage.streams.idl";
-import "windows.ui.windowmanagement.idl";
-import "windows.security.exchangeactivesyncprovisioning.idl";
-import "windows.system.profile.idl";
-import "windows.system.userprofile.idl";
-import "windows.ui.viewmanagement.idl";
-import "windows.applicationmodel.core.idl";
-import "windows.applicationmodel.datatransfer.idl";
 
-namespace Windows.Security.ExchangeActiveSyncProvisioning {
-    runtimeclass EasClientDeviceInformation;
-}
-namespace Windows.System.Profile {
-    runtimeclass AnalyticsInfo;
-}
-namespace Windows.System.UserProfile {
-    runtimeclass AdvertisingManager;
-}
-namespace Windows.UI.ViewManagement {
-    runtimeclass ApplicationView;
-}
-namespace Windows.ApplicationModel.Core {
-    runtimeclass CoreApplication;
-}
-namespace Windows.ApplicationModel.DataTransfer {
-    runtimeclass DataTransferManager;
-}
+#define DO_NO_IMPORTS
+#define _TWINAPI_APPCORE
+#include "windows.security.exchangeactivesyncprovisioning.idl"
+#include "windows.system.profile.idl"
+#include "windows.system.userprofile.idl"

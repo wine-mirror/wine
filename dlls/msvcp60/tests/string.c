@@ -127,7 +127,7 @@ size_t (__cdecl *p_wcsrtombs)(char*, const wchar_t**, size_t, mbstate_t*);
 /* Emulate a __thiscall */
 #ifdef __i386__
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -136,7 +136,7 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );

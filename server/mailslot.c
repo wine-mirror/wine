@@ -38,6 +38,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 
@@ -75,7 +76,6 @@ static void mailslot_dump( struct object*, int );
 static bool mailslot_init( struct object *obj, const void *init_data );
 static struct fd *mailslot_get_fd( struct object * );
 static unsigned int mailslot_map_access( struct object *obj, unsigned int access );
-static WCHAR *mailslot_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
 static int mailslot_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *mailslot_open_file( struct object *obj, unsigned int access,
                                           unsigned int sharing, unsigned int options );
@@ -83,17 +83,26 @@ static void mailslot_destroy( struct object * );
 
 static const struct object_ops mailslot_ops =
 {
-    .size          = sizeof(struct mailslot),
-    .type          = &file_type,
-    .dump          = mailslot_dump,
-    .init          = mailslot_init,
-    .get_fd        = mailslot_get_fd,
-    .get_sync      = default_fd_get_sync,
-    .map_access    = mailslot_map_access,
-    .get_full_name = mailslot_get_full_name,
-    .link_name     = mailslot_link_name,
-    .open_file     = mailslot_open_file,
-    .destroy       = mailslot_destroy,
+    sizeof(struct mailslot),   /* size */
+    &file_type,                /* type */
+    mailslot_dump,             /* dump */
+    add_queue,                 /* add_queue */
+    remove_queue,              /* remove_queue */
+    default_fd_signaled,       /* signaled */
+    no_satisfied,              /* satisfied */
+    no_signal,                 /* signal */
+    mailslot_get_fd,           /* get_fd */
+    mailslot_map_access,       /* map_access */
+    default_get_sd,            /* get_sd */
+    default_set_sd,            /* set_sd */
+    default_get_full_name,     /* get_full_name */
+    no_lookup_name,            /* lookup_name */
+    mailslot_link_name,        /* link_name */
+    default_unlink_name,       /* unlink_name */
+    mailslot_open_file,        /* open_file */
+    no_kernel_obj_list,        /* get_kernel_obj_list */
+    no_close_handle,           /* close_handle */
+    mailslot_destroy           /* destroy */
 };
 
 static enum server_fd_type mailslot_get_fd_type( struct fd *fd );
@@ -103,11 +112,18 @@ static void mailslot_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
 
 static const struct fd_ops mailslot_fd_ops =
 {
-    .get_fd_type   = mailslot_get_fd_type,
-    .read          = mailslot_read,
-    .write         = mailslot_write,
-    .get_file_info = mailslot_get_file_info,
-    .ioctl         = default_fd_ioctl,
+    default_fd_get_poll_events, /* get_poll_events */
+    default_poll_event,         /* poll_event */
+    mailslot_get_fd_type,       /* get_fd_type */
+    mailslot_read,              /* read */
+    mailslot_write,             /* write */
+    no_fd_flush,                /* flush */
+    mailslot_get_file_info,     /* get_file_info */
+    no_fd_get_volume_info,      /* get_volume_info */
+    default_fd_ioctl,           /* ioctl */
+    default_fd_cancel_async,    /* cancel_async */
+    no_fd_queue_async,          /* queue_async */
+    default_fd_reselect_async   /* reselect_async */
 };
 
 
@@ -128,12 +144,26 @@ static void mail_writer_destroy( struct object *obj);
 
 static const struct object_ops mail_writer_ops =
 {
-    .size       = sizeof(struct mail_writer),
-    .type       = &file_type,
-    .dump       = mail_writer_dump,
-    .get_fd     = mail_writer_get_fd,
-    .map_access = mail_writer_map_access,
-    .destroy    = mail_writer_destroy,
+    sizeof(struct mail_writer), /* size */
+    &file_type,                 /* type */
+    mail_writer_dump,           /* dump */
+    no_add_queue,               /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    NULL,                       /* satisfied */
+    no_signal,                  /* signal */
+    mail_writer_get_fd,         /* get_fd */
+    mail_writer_map_access,     /* map_access */
+    default_get_sd,             /* get_sd */
+    default_set_sd,             /* set_sd */
+    no_get_full_name,           /* get_full_name */
+    no_lookup_name,             /* lookup_name */
+    no_link_name,               /* link_name */
+    NULL,                       /* unlink_name */
+    no_open_file,               /* open_file */
+    no_kernel_obj_list,         /* get_kernel_obj_list */
+    no_close_handle,            /* close_handle */
+    mail_writer_destroy         /* destroy */
 };
 
 static enum server_fd_type mail_writer_get_fd_type( struct fd *fd );
@@ -142,12 +172,18 @@ static void mail_writer_write( struct fd *fd, struct async *async, file_pos_t po
 
 static const struct fd_ops mail_writer_fd_ops =
 {
-    .get_fd_type   = mail_writer_get_fd_type,
-    .read          = mail_writer_read,
-    .write         = mail_writer_write,
-    .get_file_info = default_fd_get_file_info,
-    .ioctl         = default_fd_ioctl,
-    .queue_async   = default_fd_queue_async,
+    default_fd_get_poll_events,  /* get_poll_events */
+    default_poll_event,          /* poll_event */
+    mail_writer_get_fd_type,     /* get_fd_type */
+    mail_writer_read,            /* read */
+    mail_writer_write,           /* write */
+    no_fd_flush,                 /* flush */
+    default_fd_get_file_info,    /* get_file_info */
+    no_fd_get_volume_info,       /* get_volume_info */
+    default_fd_ioctl,            /* ioctl */
+    default_fd_cancel_async,     /* cancel_async */
+    default_fd_queue_async,      /* queue_async */
+    default_fd_reselect_async    /* reselect_async */
 };
 
 
@@ -174,38 +210,72 @@ static void mailslot_device_destroy( struct object *obj );
 
 static const struct object_ops mailslot_device_ops =
 {
-    .size        = sizeof(struct mailslot_device),
-    .type        = &device_type,
-    .dump        = mailslot_device_dump,
-    .init        = mailslot_device_init,
-    .lookup_name = mailslot_device_lookup_name,
-    .open_file   = mailslot_device_open_file,
-    .destroy     = mailslot_device_destroy,
+    sizeof(struct mailslot_device), /* size */
+    &device_type,                   /* type */
+    mailslot_device_dump,           /* dump */
+    no_add_queue,                   /* add_queue */
+    NULL,                           /* remove_queue */
+    NULL,                           /* signaled */
+    no_satisfied,                   /* satisfied */
+    no_signal,                      /* signal */
+    no_get_fd,                      /* get_fd */
+    default_map_access,             /* map_access */
+    default_get_sd,                 /* get_sd */
+    default_set_sd,                 /* set_sd */
+    default_get_full_name,          /* get_full_name */
+    mailslot_device_lookup_name,    /* lookup_name */
+    directory_link_name,            /* link_name */
+    default_unlink_name,            /* unlink_name */
+    mailslot_device_open_file,      /* open_file */
+    no_kernel_obj_list,             /* get_kernel_obj_list */
+    no_close_handle,                /* close_handle */
+    mailslot_device_destroy         /* destroy */
 };
 
 static void mailslot_device_file_dump( struct object *obj, int verbose );
 static struct fd *mailslot_device_file_get_fd( struct object *obj );
-static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len );
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len );
 static void mailslot_device_file_destroy( struct object *obj );
 static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd );
 
 static const struct object_ops mailslot_device_file_ops =
 {
-    .size          = sizeof(struct mailslot_device_file),
-    .type          = &file_type,
-    .dump          = mailslot_device_file_dump,
-    .get_fd        = mailslot_device_file_get_fd,
-    .get_sync      = default_fd_get_sync,
-    .get_full_name = mailslot_device_file_get_full_name,
-    .destroy       = mailslot_device_file_destroy,
+    sizeof(struct mailslot_device_file),    /* size */
+    &file_type,                             /* type */
+    mailslot_device_file_dump,              /* dump */
+    add_queue,                              /* add_queue */
+    remove_queue,                           /* remove_queue */
+    default_fd_signaled,                    /* signaled */
+    no_satisfied,                           /* satisfied */
+    no_signal,                              /* signal */
+    mailslot_device_file_get_fd,            /* get_fd */
+    default_map_access,                     /* map_access */
+    default_get_sd,                         /* get_sd */
+    default_set_sd,                         /* set_sd */
+    mailslot_device_file_get_full_name,     /* get_full_name */
+    no_lookup_name,                         /* lookup_name */
+    no_link_name,                           /* link_name */
+    NULL,                                   /* unlink_name */
+    no_open_file,                           /* open_file */
+    no_kernel_obj_list,                     /* get_kernel_obj_list */
+    no_close_handle,                        /* close_handle */
+    mailslot_device_file_destroy            /* destroy */
 };
 
 static const struct fd_ops mailslot_device_fd_ops =
 {
-    .get_fd_type   = mailslot_device_file_get_fd_type,
-    .get_file_info = default_fd_get_file_info,
-    .ioctl         = default_fd_ioctl,
-    .queue_async   = default_fd_queue_async,
+    default_fd_get_poll_events,         /* get_poll_events */
+    default_poll_event,                 /* poll_event */
+    mailslot_device_file_get_fd_type,   /* get_fd_type */
+    no_fd_read,                         /* read */
+    no_fd_write,                        /* write */
+    no_fd_flush,                        /* flush */
+    default_fd_get_file_info,           /* get_file_info */
+    no_fd_get_volume_info,              /* get_volume_info */
+    default_fd_ioctl,                   /* ioctl */
+    default_fd_cancel_async,            /* cancel_async */
+    default_fd_queue_async,             /* queue_async */
+    default_fd_reselect_async           /* reselect_async */
 };
 
 static struct mailslot_message *get_first_message( struct mailslot *mailslot )
@@ -353,13 +423,6 @@ static unsigned int mailslot_map_access( struct object *obj, unsigned int access
     return default_map_access( obj, access ) & FILE_GENERIC_READ;
 }
 
-static WCHAR *mailslot_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
-{
-    WCHAR *ret = default_get_full_name( obj, max, len );
-    if (*len > max) set_error( STATUS_BUFFER_OVERFLOW );
-    return ret;
-}
-
 static int mailslot_link_name( struct object *obj, struct object_name *name, struct object *parent )
 {
     struct mailslot_device *dev = (struct mailslot_device *)parent;
@@ -491,12 +554,10 @@ static struct fd *mailslot_device_file_get_fd( struct object *obj )
     return (struct fd *)grab_object( file->fd );
 }
 
-static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t max, data_size_t *len )
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len )
 {
     struct mailslot_device_file *file = (struct mailslot_device_file *)obj;
-    WCHAR *ret = default_get_full_name( &file->device->obj, max, len );
-    if (*len > max) set_error( STATUS_BUFFER_OVERFLOW );
-    return ret;
+    return file->device->obj.ops->get_full_name( &file->device->obj, len );
 }
 
 static void mailslot_device_file_destroy( struct object *obj )

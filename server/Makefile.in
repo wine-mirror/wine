@@ -1,7 +1,6 @@
 PROGRAMS = wineserver
 
 SOURCES = \
-	alpc.c \
 	async.c \
 	atom.c \
 	change.c \
@@ -9,7 +8,6 @@ SOURCES = \
 	clipboard.c \
 	completion.c \
 	console.c \
-	d3dkmt.c \
 	debugger.c \
 	device.c \
 	directory.c \
@@ -18,7 +16,6 @@ SOURCES = \
 	file.c \
 	handle.c \
 	hook.c \
-	inproc_sync.c \
 	mach.c \
 	mailslot.c \
 	main.c \
@@ -33,7 +30,6 @@ SOURCES = \
 	region.c \
 	registry.c \
 	request.c \
-	security.h \
 	semaphore.c \
 	serial.c \
 	signal.c \

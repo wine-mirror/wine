@@ -308,8 +308,7 @@ static BOOL wined3d_swapchain_desc_from_d3d8(struct wined3d_swapchain_desc *swap
     swapchain_desc->auto_depth_stencil_format
             = wined3dformat_from_d3dformat(present_parameters->AutoDepthStencilFormat);
     swapchain_desc->flags
-            = (present_parameters->Flags & D3DPRESENTFLAGS_MASK) | WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH
-            | WINED3D_SWAPCHAIN_ALLOW_MS_LOCKABLE_BACKBUFFER;
+            = (present_parameters->Flags & D3DPRESENTFLAGS_MASK) | WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
     swapchain_desc->refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
     swapchain_desc->auto_restore_display_mode = TRUE;
 
@@ -1986,7 +1985,7 @@ static void resolve_depth_buffer(struct d3d8_device *device)
     d3d8_dsv = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_dsv);
 
     wined3d_device_context_resolve_sub_resource(device->immediate_context, dst_resource, 0,
-            wined3d_rendertarget_view_get_resource(wined3d_dsv), d3d8_dsv->sub_resource_idx, 0, desc.format);
+            wined3d_rendertarget_view_get_resource(wined3d_dsv), d3d8_dsv->sub_resource_idx, desc.format);
 }
 
 static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,

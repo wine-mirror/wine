@@ -1686,7 +1686,7 @@
 @ cdecl -arch=win64 ?_Xout_of_range@std@@YAXPEBD@Z(str) msvcp140.?_Xout_of_range@std@@YAXPEBD@Z
 @ stub -arch=win32 ?_Xoverflow_error@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xoverflow_error@std@@YAXPEBD@Z
-@ cdecl ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z(long) msvcp140.?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
+@ stub ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
 @ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) msvcp140.?_Xruntime_error@std@@YAXPBD@Z
 @ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) msvcp140.?_Xruntime_error@std@@YAXPEBD@Z
 @ cdecl -arch=win32 ?__ExceptionPtrAssign@@YAXPAXPBX@Z(ptr ptr) msvcp140.?__ExceptionPtrAssign@@YAXPAXPBX@Z
@@ -1705,8 +1705,8 @@
 @ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) msvcp140.?__ExceptionPtrDestroy@@YAXPEAX@Z
 @ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) msvcp140.?__ExceptionPtrRethrow@@YAXPBX@Z
 @ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) msvcp140.?__ExceptionPtrRethrow@@YAXPEBX@Z
-@ cdecl -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z(ptr ptr) msvcp140.?__ExceptionPtrSwap@@YAXPAX0@Z
-@ cdecl -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z(ptr ptr) msvcp140.?__ExceptionPtrSwap@@YAXPEAX0@Z
+@ stub -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z
+@ stub -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z
 @ cdecl -arch=win32 ?__ExceptionPtrToBool@@YA_NPBX@Z(ptr) msvcp140.?__ExceptionPtrToBool@@YA_NPBX@Z
 @ cdecl -arch=win64 ?__ExceptionPtrToBool@@YA_NPEBX@Z(ptr) msvcp140.?__ExceptionPtrToBool@@YA_NPEBX@Z
 @ cdecl -arch=arm ?always_noconv@codecvt_base@std@@QBA_NXZ(ptr) msvcp140.?always_noconv@codecvt_base@std@@QBA_NXZ
@@ -3633,20 +3633,20 @@
 @ cdecl _Cnd_unregister_at_thread_exit(ptr) msvcp140._Cnd_unregister_at_thread_exit
 @ cdecl _Cnd_wait(ptr ptr) msvcp140._Cnd_wait
 @ cdecl _Copy_file(wstr wstr) msvcp140._Copy_file
-@ cdecl _Cosh(double double) msvcp140._Cosh
+@ stub _Cosh
 @ cdecl _Current_get(ptr) msvcp140._Current_get
 @ cdecl _Current_set(wstr) msvcp140._Current_set
 @ extern _Denorm msvcp140._Denorm
 @ cdecl _Dtest(ptr) msvcp140._Dtest
 @ cdecl _Equivalent(wstr wstr) msvcp140._Equivalent
 @ cdecl _Exp(ptr double long) msvcp140._Exp
-@ cdecl _FCosh(float float) msvcp140._FCosh
+@ stub _FCosh
 @ extern _FDenorm msvcp140._FDenorm
 @ cdecl _FDtest(ptr) msvcp140._FDtest
 @ cdecl _FExp(ptr float long) msvcp140._FExp
 @ extern _FInf msvcp140._FInf
 @ extern _FNan msvcp140._FNan
-@ cdecl _FSinh(float float) msvcp140._FSinh
+@ stub _FSinh
 @ extern _FSnan msvcp140._FSnan
 @ cdecl _File_size(wstr) msvcp140._File_size
 @ cdecl -norelay _Getcoll() msvcp140._Getcoll
@@ -3658,13 +3658,13 @@
 @ stub _Hard_links
 @ extern _Hugeval msvcp140._Hugeval
 @ extern _Inf msvcp140._Inf
-@ cdecl _LCosh(double double) msvcp140._LCosh
+@ stub _LCosh
 @ extern _LDenorm msvcp140._LDenorm
 @ cdecl _LDtest(ptr) msvcp140._LDtest
 @ stub _LExp
 @ extern _LInf msvcp140._LInf
 @ extern _LNan msvcp140._LNan
-@ cdecl _LSinh(double double) msvcp140._LSinh
+@ stub _LSinh
 @ extern _LSnan msvcp140._LSnan
 @ cdecl _Last_write_time(int64) msvcp140._Last_write_time
 @ cdecl _Link(wstr wstr) msvcp140._Link
@@ -3697,7 +3697,7 @@
 @ cdecl _Rename(wstr wstr) msvcp140._Rename
 @ cdecl _Resize(wstr int64) msvcp140._Resize
 @ cdecl _Set_last_write_time(wstr int64) msvcp140._Set_last_write_time
-@ cdecl _Sinh(double double) msvcp140._Sinh
+@ stub _Sinh
 @ extern _Snan msvcp140._Snan
 @ cdecl _Stat(wstr ptr) msvcp140._Stat
 @ stub _Statvfs

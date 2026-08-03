@@ -2496,7 +2496,7 @@ static void test_VarR4ChangeTypeEx(void)
  */
 
 #undef CONV_TYPE
-#define CONV_TYPE DOUBLE
+#define CONV_TYPE double
 
 static void test_VarR8FromI1(void)
 {

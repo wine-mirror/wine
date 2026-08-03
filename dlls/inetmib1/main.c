@@ -413,7 +413,7 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
 {
     AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
 
-    if (!table || !table->numEntries)
+    if (!table)
         return SNMP_ERRORSTATUS_NOSUCHNAME;
 
     switch (bPduType)

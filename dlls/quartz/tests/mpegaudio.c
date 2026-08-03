@@ -905,6 +905,7 @@ struct testfilter
     unsigned int got_sample, got_new_segment, got_eos, got_begin_flush, got_end_flush;
     REFERENCE_TIME expected_start_time;
     REFERENCE_TIME expected_stop_time;
+    BOOL todo_time;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1012,8 +1013,10 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (filter->got_sample == 1)
     {
-        ok(start == filter->expected_start_time, "Got start time %I64d.\n", start);
-        ok(stop == filter->expected_stop_time, "Got stop time %I64d.\n", stop);
+        todo_wine_if(filter->todo_time)
+        ok(start == filter->expected_start_time, "Got start time %s.\n", wine_dbgstr_longlong(start));
+        todo_wine_if(filter->todo_time)
+        ok(stop == filter->expected_stop_time, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
     }
 
     return S_OK;
@@ -1024,8 +1027,8 @@ static HRESULT testsink_new_segment(struct strmbase_sink *iface,
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
     ++filter->got_new_segment;
-    ok(start == 10000, "Got start %I64d.\n", start);
-    ok(stop == 20000, "Got stop %I64d.\n", stop);
+    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
+    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
     return S_OK;
 }
@@ -1510,6 +1513,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
 
     testsink->expected_start_time = 0;
     testsink->expected_stop_time = 120000;
+    testsink->todo_time = TRUE;
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMemInputPin_Receive(input, sample);

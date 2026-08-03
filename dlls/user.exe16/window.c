@@ -19,6 +19,7 @@
  */
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "user_private.h"

@@ -132,13 +132,13 @@
 # endif
 #endif
 
-#ifndef _CRT_ALIGN
+#ifndef DECLSPEC_ALIGN
 # ifdef __GNUC__
-#  define _CRT_ALIGN(x) __attribute__((aligned(x)))
+#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
 # elif __has_declspec_attribute(align) &&  !defined(MIDL_PASS)
-#  define _CRT_ALIGN(x) __declspec(align(x))
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
 # else
-#  define _CRT_ALIGN(x)
+#  define DECLSPEC_ALIGN(x)
 # endif
 #endif
 
@@ -213,11 +213,7 @@ typedef __msvcrt_long __time32_t;
 #endif
 
 #ifndef _TIME64_T_DEFINED
-#if defined(_MSC_VER) || defined(__MINGW32__)
-typedef __int64 __time64_t;
-#else
-typedef __int64 _CRT_ALIGN(8) __time64_t;
-#endif
+typedef __int64 DECLSPEC_ALIGN(8) __time64_t;
 #define _TIME64_T_DEFINED
 #endif
 

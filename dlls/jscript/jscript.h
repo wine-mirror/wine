@@ -35,6 +35,19 @@
 #include "wine/list.h"
 #include "wine/rbtree.h"
 
+/*
+ * This is Wine jscript extension for ES5 compatible mode. Native IE9+ implements
+ * a separated JavaScript enging in side MSHTML. We implement its features here
+ * and enable it when HTML flag is specified in SCRIPTPROP_INVOKEVERSIONING property.
+ */
+#define SCRIPTLANGUAGEVERSION_HTML 0x400
+
+/*
+ * This is Wine jscript extension for ES5 and ES6 compatible mode. Allowed only in HTML mode.
+ */
+#define SCRIPTLANGUAGEVERSION_ES5  0x102
+#define SCRIPTLANGUAGEVERSION_ES6  0x103
+
 typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
 typedef struct _jsexcept_t jsexcept_t;
@@ -100,25 +113,11 @@ typedef enum {
     JSCLASS_JSON,
     JSCLASS_ARRAYBUFFER,
     JSCLASS_DATAVIEW,
-    JSCLASS_INT8ARRAY,
-    JSCLASS_INT16ARRAY,
-    JSCLASS_INT32ARRAY,
-    JSCLASS_UINT8ARRAY,
-    JSCLASS_UINT8CLAMPEDARRAY,
-    JSCLASS_UINT16ARRAY,
-    JSCLASS_UINT32ARRAY,
-    JSCLASS_FLOAT32ARRAY,
-    JSCLASS_FLOAT64ARRAY,
     JSCLASS_MAP,
     JSCLASS_SET,
     JSCLASS_WEAKMAP,
     JSCLASS_HOST,
-
-    FIRST_TYPEDARRAY_JSCLASS = JSCLASS_INT8ARRAY,
-    LAST_TYPEDARRAY_JSCLASS  = JSCLASS_FLOAT64ARRAY,
 } jsclass_t;
-
-enum { NUM_TYPEDARRAY_TYPES = LAST_TYPEDARRAY_JSCLASS - FIRST_TYPEDARRAY_JSCLASS + 1 };
 
 jsdisp_t *iface_to_jsdisp(IDispatch*);
 
@@ -185,11 +184,11 @@ typedef struct {
     ULONG (*release)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
     HRESULT (*lookup_prop)(jsdisp_t*,const WCHAR*,unsigned,struct property_info*);
+    HRESULT (*next_prop)(jsdisp_t*,unsigned,struct property_info*);
     HRESULT (*prop_get)(jsdisp_t*,unsigned,jsval_t*);
     HRESULT (*prop_put)(jsdisp_t*,unsigned,jsval_t);
     HRESULT (*prop_delete)(jsdisp_t*,unsigned);
     HRESULT (*prop_config)(jsdisp_t*,unsigned,unsigned);
-    HRESULT (*fill_props)(jsdisp_t*);
     HRESULT (*to_string)(jsdisp_t*,jsstr_t**);
     HRESULT (*gc_traverse)(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*);
 } builtin_info_t;
@@ -199,12 +198,10 @@ struct jsdisp_t {
 
     LONG ref;
 
-    BOOLEAN has_volatile_props : 1;
-    BOOLEAN is_constructor : 1;
-    BOOLEAN has_weak_refs : 1;
-    BOOLEAN props_filled : 1;
-    BOOLEAN extensible : 1;
-    BOOLEAN gc_marked : 1;
+    BOOLEAN has_weak_refs;
+    BOOLEAN extensible;
+    BOOLEAN gc_marked;
+    BOOLEAN is_constructor;
 
     DWORD buf_size;
     DWORD prop_cnt;
@@ -244,8 +241,7 @@ HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,jsdisp_t*,jsdisp_t**);
 HRESULT init_dispex(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*);
 HRESULT init_dispex_from_constr(jsdisp_t*,script_ctx_t*,const builtin_info_t*,jsdisp_t*);
 HRESULT init_host_object(script_ctx_t*,IWineJSDispatchHost*,IWineJSDispatch*,UINT32,IWineJSDispatch**);
-HRESULT init_host_constructor(script_ctx_t*,IWineJSDispatchHost*,const WCHAR*,IWineJSDispatch**);
-HRESULT fill_globals(script_ctx_t*,IWineJSDispatchHost*);
+HRESULT init_host_constructor(script_ctx_t*,IWineJSDispatchHost*,IWineJSDispatch*,IWineJSDispatch**);
 
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT disp_call_name(script_ctx_t*,IDispatch*,const WCHAR*,WORD,unsigned,jsval_t*,jsval_t*);
@@ -255,9 +251,7 @@ HRESULT jsdisp_call(jsdisp_t*,DISPID,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT jsdisp_call_name(jsdisp_t*,const WCHAR*,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,jsval_t*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,jsval_t);
-HRESULT disp_propget_name(script_ctx_t*,IDispatch*,const WCHAR*,jsval_t*);
 HRESULT disp_propput_name(script_ctx_t*,IDispatch*,const WCHAR*,jsval_t);
-HRESULT disp_propget_idx(script_ctx_t*,IDispatch*,DWORD,jsval_t*);
 HRESULT jsdisp_propget(jsdisp_t*,DISPID,jsval_t*);
 HRESULT jsdisp_propput(jsdisp_t*,const WCHAR*,DWORD,BOOL,jsval_t);
 HRESULT jsdisp_propput_name(jsdisp_t*,const WCHAR*,jsval_t);
@@ -269,7 +263,7 @@ HRESULT jsdisp_get_idx_id(jsdisp_t*,DWORD,DISPID*);
 HRESULT disp_delete(IDispatch*,DISPID,BOOL*);
 HRESULT disp_delete_name(script_ctx_t*,IDispatch*,jsstr_t*,BOOL*);
 HRESULT jsdisp_index_lookup(jsdisp_t*,const WCHAR*,unsigned,struct property_info*);
-HRESULT jsdisp_fill_indices(jsdisp_t*,unsigned);
+HRESULT jsdisp_next_index(jsdisp_t*,unsigned,unsigned,struct property_info*);
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD);
 HRESULT jsdisp_get_own_property(jsdisp_t*,const WCHAR*,BOOL,property_desc_t*);
 HRESULT jsdisp_define_property(jsdisp_t*,const WCHAR*,property_desc_t*);
@@ -298,7 +292,6 @@ void handle_dispatch_exception(script_ctx_t *ctx, EXCEPINFO *ei);
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_math(script_ctx_t*,jsdisp_t**);
 HRESULT create_array(script_ctx_t*,DWORD,jsdisp_t**);
-HRESULT create_arraybuffer(script_ctx_t*,DWORD,IWineJSDispatch**,void**);
 HRESULT create_regexp(script_ctx_t*,jsstr_t*,DWORD,jsdisp_t**);
 HRESULT create_regexp_var(script_ctx_t*,jsval_t,jsval_t*,jsdisp_t**);
 HRESULT create_string(script_ctx_t*,jsstr_t*,jsdisp_t**);
@@ -323,7 +316,6 @@ HRESULT to_uint32(script_ctx_t*,jsval_t,UINT32*);
 HRESULT to_string(script_ctx_t*,jsval_t,jsstr_t**);
 HRESULT to_flat_string(script_ctx_t*,jsval_t,jsstr_t**,const WCHAR**);
 HRESULT to_object(script_ctx_t*,jsval_t,IDispatch**);
-INT32 double_to_int32(double);
 
 HRESULT jsval_strict_equal(jsval_t,jsval_t,BOOL*);
 
@@ -437,12 +429,11 @@ struct _script_ctx_t {
             jsdisp_t *vbarray_constr;
             jsdisp_t *arraybuf_constr;
             jsdisp_t *dataview_constr;
-            jsdisp_t *typedarr_constr[NUM_TYPEDARRAY_TYPES];
             jsdisp_t *map_prototype;
             jsdisp_t *set_prototype;
             jsdisp_t *weakmap_prototype;
         };
-        jsdisp_t *global_objects[25 + NUM_TYPEDARRAY_TYPES];
+        jsdisp_t *global_objects[25];
     };
 };
 C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, weakmap_prototype) == RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, global_objects));
@@ -496,13 +487,11 @@ HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*);
 
 BOOL bool_obj_value(jsdisp_t*);
 unsigned array_get_length(jsdisp_t*);
-HRESULT typed_array_get_random_values(jsdisp_t*);
 HRESULT localize_number(script_ctx_t*,DOUBLE,BOOL,jsstr_t**);
 
 BOOL is_builtin_eval_func(jsdisp_t*);
 HRESULT builtin_eval(script_ctx_t*,struct _call_frame_t*,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT JSGlobal_eval(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
-HRESULT Object_toString(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT Object_get_proto_(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
 HRESULT Object_set_proto_(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
 
@@ -556,7 +545,6 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 #define JS_E_DISABLED_CC             MAKE_JSERROR(IDS_DISABLED_CC)
 #define JS_E_EXPECTED_AT             MAKE_JSERROR(IDS_EXPECTED_AT)
 #define JS_E_FUNCTION_EXPECTED       MAKE_JSERROR(IDS_NOT_FUNC)
-#define JS_E_STRING_EXPECTED         MAKE_JSERROR(IDS_NOT_STRING)
 #define JS_E_DATE_EXPECTED           MAKE_JSERROR(IDS_NOT_DATE)
 #define JS_E_NUMBER_EXPECTED         MAKE_JSERROR(IDS_NOT_NUM)
 #define JS_E_OBJECT_EXPECTED         MAKE_JSERROR(IDS_OBJECT_EXPECTED)
@@ -575,7 +563,6 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 #define JS_E_INVALID_URI_CHAR        MAKE_JSERROR(IDS_URI_INVALID_CHAR)
 #define JS_E_FRACTION_DIGITS_OUT_OF_RANGE MAKE_JSERROR(IDS_FRACTION_DIGITS_OUT_OF_RANGE)
 #define JS_E_PRECISION_OUT_OF_RANGE  MAKE_JSERROR(IDS_PRECISION_OUT_OF_RANGE)
-#define JS_E_ARRAY_OR_ARGS_EXPECTED  MAKE_JSERROR(IDS_ARRAY_OR_ARGS_EXPECTED)
 #define JS_E_INVALID_LENGTH          MAKE_JSERROR(IDS_INVALID_LENGTH)
 #define JS_E_ARRAY_EXPECTED          MAKE_JSERROR(IDS_ARRAY_EXPECTED)
 #define JS_E_CYCLIC_PROTO_VALUE      MAKE_JSERROR(IDS_CYCLIC_PROTO_VALUE)
@@ -583,11 +570,6 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 #define JS_E_OBJECT_NONEXTENSIBLE    MAKE_JSERROR(IDS_OBJECT_NONEXTENSIBLE)
 #define JS_E_NONCONFIGURABLE_REDEFINED MAKE_JSERROR(IDS_NONCONFIGURABLE_REDEFINED)
 #define JS_E_NONWRITABLE_MODIFIED    MAKE_JSERROR(IDS_NONWRITABLE_MODIFIED)
-#define JS_E_TYPEDARRAY_BAD_CTOR_ARG MAKE_JSERROR(IDS_TYPEDARRAY_BAD_CTOR_ARG)
-#define JS_E_NOT_TYPEDARRAY          MAKE_JSERROR(IDS_NOT_TYPEDARRAY)
-#define JS_E_TYPEDARRAY_INVALID_OFFSLEN MAKE_JSERROR(IDS_TYPEDARRAY_INVALID_OFFSLEN)
-#define JS_E_TYPEDARRAY_INVALID_SUBARRAY MAKE_JSERROR(IDS_TYPEDARRAY_INVALID_SUBARRAY)
-#define JS_E_TYPEDARRAY_INVALID_SOURCE MAKE_JSERROR(IDS_TYPEDARRAY_INVALID_SOURCE)
 #define JS_E_NOT_DATAVIEW            MAKE_JSERROR(IDS_NOT_DATAVIEW)
 #define JS_E_DATAVIEW_NO_ARGUMENT    MAKE_JSERROR(IDS_DATAVIEW_NO_ARGUMENT)
 #define JS_E_DATAVIEW_INVALID_ACCESS MAKE_JSERROR(IDS_DATAVIEW_INVALID_ACCESS)

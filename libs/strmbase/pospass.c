@@ -20,9 +20,7 @@
  */
 /* FIXME: critical sections */
 
-#define COBJMACROS
-#include "wine/strmbase.h"
-#include "wine/debug.h"
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 

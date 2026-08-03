@@ -58,7 +58,7 @@ static HPALETTE16 hPrimaryPalette;
  * ############################################################################
  */
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 #define GDI_MAX_THUNKS      32
 
 static struct gdi_thunk
@@ -72,7 +72,7 @@ static struct gdi_thunk
     HDC16                       hdc;
 } *GDI_Thunks;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 /**********************************************************************
  *           GDI_Callback3216
@@ -1190,12 +1190,11 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
         {
             .Width = info->bmiHeader.biWidth,
             .Height = abs( info->bmiHeader.biHeight ),
+            .Pitch = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight ),
         };
         struct saved_bitmap *bitmap;
         UINT status;
         int color;
-
-        desc.Pitch = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) >> 3) & ~3;
 
         if (info->bmiHeader.biBitCount <= 8)
         {

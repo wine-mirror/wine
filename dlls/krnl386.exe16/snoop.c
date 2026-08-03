@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 typedef	struct tagSNOOP16_FUN {
 	/* code part */
@@ -70,7 +70,7 @@ typedef struct tagSNOOP16_RETURNENTRIES {
 	struct tagSNOOP16_RETURNENTRIES	*next;
 } SNOOP16_RETURNENTRIES;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 static	SNOOP16_DLL		*firstdll = NULL;
 static	SNOOP16_RETURNENTRIES 	*firstrets = NULL;
@@ -108,7 +108,7 @@ SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 	strcpy( (*dll)->name, name );
 	if ((q=strrchr((*dll)->name,'.')))
 		*q='\0';
-	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT, 65535, 0, code16_segment));
+	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,LDT_FLAGS_CODE));
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
 		HeapFree(GetProcessHeap(),0,*dll);
@@ -227,7 +227,7 @@ void WINAPI __wine_snoop_entry( CONTEXT *context )
 		rets = &((*rets)->next);
 	}
 	if (!*rets) {
-		HANDLE16 hand = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT, 65535, 0, code16_segment));
+		HANDLE16 hand = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,LDT_FLAGS_CODE));
 		*rets = GlobalLock16(hand);
 		(*rets)->rethandle = hand;
 		i = 0;	/* entry 0 is free */

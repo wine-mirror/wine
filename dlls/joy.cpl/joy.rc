@@ -63,7 +63,7 @@ FONT 8, "Ms Shell Dlg"
     GROUPBOX        "Buttons", IDC_DI_BUTTONS, 15, 100, 291, 86
     LTEXT           "Force Feedback Effect", IDC_STATIC, 15, 196, 291, 10
     LISTBOX         IDC_DI_EFFECTS, 15, 206, 291, 54, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Hold any button in the controller to play the chosen effect. The effect direction can be changed with the controller axis.",
+    LTEXT           "Press any button in the controller to activate the chosen effect. The effect direction can be changed with the controller axis.",
                     IDC_STATIC, 15, 260, 291, 25
 }
 
@@ -100,20 +100,6 @@ FONT 8, "Ms Shell Dlg"
     AUTOCHECKBOX    "Rumble", IDC_XI_RUMBLE_3, 260, 220, 40, 10
 }
 
-IDD_TEST_WGI DIALOG 0, 0, 320, 300
-STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
-CAPTION "Windows.Gaming.Input"
-FONT 8, "Ms Shell Dlg"
-{
-    COMBOBOX        IDC_WGI_DEVICES, 15, 10, 150, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
-    COMBOBOX        IDC_WGI_INTERFACE, 175, 10, 131, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
-    GROUPBOX        "Axes", IDC_WGI_AXES, 15, 30, 214, 60
-    GROUPBOX        "POVs", IDC_WGI_POVS, 246, 30, 60, 60
-    GROUPBOX        "Buttons", IDC_WGI_BUTTONS, 15, 100, 291, 86
-    GROUPBOX        "", IDC_WGI_GAMEPAD, 15, 30, 291, 60
-    AUTOCHECKBOX    "Rumble", IDC_WGI_RUMBLE, 260, 30, 40, 10
-}
-
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: joy.manifest */
@@ -121,3 +107,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: joy.ico */
 ICO_MAIN ICON "joy.ico"
+
+#define WINE_FILENAME_STR "joy.cpl"
+#define WINE_FILEDESCRIPTION_STR "Game Controllers Configuration Panel"
+
+#include "wine/wine_common_ver.rc"

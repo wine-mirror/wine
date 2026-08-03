@@ -2,7 +2,6 @@ MODULE    = dpnhupnp.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-VER_PRODUCTVERSION = 5,3,2600,5512
-
 SOURCES = \
-	main.c
+	main.c \
+	version.rc

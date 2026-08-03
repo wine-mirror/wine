@@ -56,6 +56,7 @@
 #undef _CDECL
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -87,7 +88,6 @@ struct coreaudio_stream
     DWORD flags;
     AUDCLNT_SHAREMODE share;
     HANDLE event;
-    HANDLE timer_thread;
 
     BOOL playing, please_quit;
     REFERENCE_TIME period;
@@ -198,6 +198,27 @@ static BOOL device_has_channels(AudioDeviceID device, EDataFlow flow)
     }
     free(buffers);
     return ret;
+}
+
+static NTSTATUS unix_process_attach(void *args)
+{
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        SYSTEM_BASIC_INFORMATION info;
+
+        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
+        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
+    }
+#endif
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_main_loop(void *args)
+{
+    struct main_loop_params *params = args;
+    NtSetEvent(params->event, NULL);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS unix_get_endpoint_ids(void *args)
@@ -641,8 +662,6 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             return osstatus_to_hresult(sc);
         }
     }else{
-        AudioChannelLayout layout;
-
         hr = ca_get_audiodesc(dev_desc, fmt);
         if(FAILED(hr))
             return hr;
@@ -654,16 +673,6 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             WARN("Couldn't set format: %x\n", (int)sc);
             return osstatus_to_hresult(sc);
         }
-
-        /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
-        layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
-        layout.mChannelBitmap    = (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? ((WAVEFORMATEXTENSIBLE *)fmt)->dwChannelMask : 0x3;
-        layout.mNumberChannelDescriptions = 0;
-
-        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
-                                  kAudioUnitScope_Input, 0, &layout, sizeof(layout));
-        if (sc != noErr)
-            WARN("Couldn't set channel layout: %d\n", (int)sc);
     }
 
     return S_OK;
@@ -721,13 +730,6 @@ static NTSTATUS unix_create_stream(void *args)
 
     stream->period = params->period;
     stream->period_frames = muldiv(params->period, stream->fmt->nSamplesPerSec, 10000000);
-
-    if (stream->period_frames == 0)
-    {
-        params->result = E_INVALIDARG;
-        goto end;
-    }
-
     stream->dev_id = dev_id_from_device(params->device);
     stream->flow = params->flow;
     stream->flags = params->flags;
@@ -811,10 +813,10 @@ static NTSTATUS unix_release_stream( void *args )
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
-    if(stream->timer_thread){
+    if(params->timer_thread){
         stream->please_quit = TRUE;
-        NtWaitForSingleObject(stream->timer_thread, FALSE, NULL);
-        NtClose(stream->timer_thread);
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
     }
 
     if(stream->unit){
@@ -851,7 +853,6 @@ static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
         switch (layout->mChannelDescriptions[i].mChannelLabel) {
             default: FIXME("Unhandled channel 0x%x\n",
                            (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
-            case kAudioChannelLabel_Unknown: break;
             case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
             case kAudioChannelLabel_Mono:
             case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
@@ -1092,18 +1093,65 @@ static NTSTATUS unix_get_mix_format(void *args)
 static NTSTATUS unix_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
     AudioStreamBasicDescription dev_desc;
     AudioConverterRef converter;
     AudioComponentInstance unit;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
+    params->result = S_OK;
+
+    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
+        params->result = E_POINTER;
+    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        params->result = E_INVALIDARG;
+    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+            params->result = E_INVALIDARG;
+        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
+                fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample)
+            params->result = E_INVALIDARG;
+        else if(fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample)
+            goto unsupported;
+        else if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE &&
+                (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
+            goto unsupported;
+    }
+    if(FAILED(params->result)) return STATUS_SUCCESS;
+
+    if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
+       params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec)
+        goto unsupported;
+
+    if(params->fmt_in->nChannels == 0){
+        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        return STATUS_SUCCESS;
+    }
     unit = get_audiounit(params->flow, dev_id);
 
     converter = NULL;
     params->result = ca_setup_audiounit(params->flow, unit, params->fmt_in, &dev_desc, &converter);
     AudioComponentInstanceDispose(unit);
+    if(FAILED(params->result)) goto unsupported;
     if(converter) AudioConverterDispose(converter);
 
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+
+unsupported:
+    if(params->fmt_out){
+        struct get_mix_format_params get_mix_params =
+        {
+            .device = params->device,
+            .flow = params->flow,
+            .fmt = params->fmt_out,
+        };
+
+        unix_get_mix_format(&get_mix_params);
+        params->result = get_mix_params.result;
+        if(SUCCEEDED(params->result)) params->result = S_FALSE;
+    }
+    else params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
     return STATUS_SUCCESS;
 }
 
@@ -1342,37 +1390,10 @@ static NTSTATUS unix_get_current_padding(void *args)
     return STATUS_SUCCESS;
 }
 
-static void unix_timer_loop(void *args)
-{
-    struct coreaudio_stream *stream = args;
-    LARGE_INTEGER delay, next, last;
-    int adjust;
-
-    delay.QuadPart = -stream->period;
-    NtQueryPerformanceCounter(&last, NULL);
-    next.QuadPart = last.QuadPart + stream->period;
-
-    while(!stream->please_quit){
-        NtSetEvent(stream->event, NULL);
-        NtDelayExecution(FALSE, &delay);
-        NtQueryPerformanceCounter(&last, NULL);
-
-        adjust = next.QuadPart - last.QuadPart;
-        if(adjust > stream->period / 2)
-            adjust = stream->period / 2;
-        else if(adjust < -stream->period / 2)
-            adjust = -stream->period / 2;
-
-        delay.QuadPart = -(stream->period + adjust);
-        next.QuadPart += stream->period;
-    }
-}
-
 static NTSTATUS unix_start(void *args)
 {
     struct start_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
-    static const WCHAR name[] = {'a','u','d','i','o','_','c','l','i','e','n','t','_','t','i','m','e','r',0};
 
     os_unfair_lock_lock(&stream->lock);
 
@@ -1386,7 +1407,6 @@ static NTSTATUS unix_start(void *args)
     }
 
     os_unfair_lock_unlock(&stream->lock);
-    if (!stream->timer_thread) create_unix_thread( &stream->timer_thread, name, unix_timer_loop, stream );
 
     return STATUS_SUCCESS;
 }
@@ -1435,6 +1455,35 @@ static NTSTATUS unix_reset(void *args)
     }
 
     os_unfair_lock_unlock(&stream->lock);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_timer_loop(void *args)
+{
+    struct timer_loop_params *params = args;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
+    LARGE_INTEGER delay, next, last;
+    int adjust;
+
+    delay.QuadPart = -stream->period;
+    NtQueryPerformanceCounter(&last, NULL);
+    next.QuadPart = last.QuadPart + stream->period;
+
+    while(!stream->please_quit){
+        NtSetEvent(stream->event, NULL);
+        NtDelayExecution(FALSE, &delay);
+        NtQueryPerformanceCounter(&last, NULL);
+
+        adjust = next.QuadPart - last.QuadPart;
+        if(adjust > stream->period / 2)
+            adjust = stream->period / 2;
+        else if(adjust < -stream->period / 2)
+            adjust = -stream->period / 2;
+
+        delay.QuadPart = -(stream->period + adjust);
+        next.QuadPart += stream->period;
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -1765,16 +1814,16 @@ static NTSTATUS unix_set_event_handle(void *args)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    unix_process_attach,
     unix_not_implemented,
-    unix_not_implemented,
-    unix_not_implemented,
-    unix_not_implemented,
+    unix_main_loop,
     unix_get_endpoint_ids,
     unix_create_stream,
     unix_release_stream,
     unix_start,
     unix_stop,
     unix_reset,
+    unix_timer_loop,
     unix_get_render_buffer,
     unix_release_render_buffer,
     unix_get_capture_buffer,
@@ -1810,13 +1859,17 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 typedef UINT PTR32;
 
-static NTSTATUS unix_wow64_process_attach(void *args)
+static NTSTATUS unix_wow64_main_loop(void *args)
 {
-    SYSTEM_BASIC_INFORMATION info;
-
-    NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-    zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    return STATUS_SUCCESS;
+    struct
+    {
+        PTR32 event;
+    } *params32 = args;
+    struct main_loop_params params =
+    {
+        .event = ULongToHandle(params32->event)
+    };
+    return unix_main_loop(&params);
 }
 
 static NTSTATUS unix_wow64_get_endpoint_ids(void *args)
@@ -1883,11 +1936,13 @@ static NTSTATUS unix_wow64_release_stream(void *args)
     struct
     {
         stream_handle stream;
+        PTR32 timer_thread;
         HRESULT result;
     } *params32 = args;
     struct release_stream_params params =
     {
         .stream = params32->stream,
+        .timer_thread = ULongToHandle(params32->timer_thread)
     };
     unix_release_stream(&params);
     params32->result = params.result;
@@ -1952,6 +2007,7 @@ static NTSTATUS unix_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
+        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
@@ -1960,6 +2016,7 @@ static NTSTATUS unix_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
+        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     unix_is_format_supported(&params);
     params32->result = params.result;
@@ -2215,16 +2272,16 @@ static NTSTATUS unix_wow64_get_prop_value(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    unix_wow64_process_attach,
+    unix_process_attach,
     unix_not_implemented,
-    unix_not_implemented,
-    unix_not_implemented,
+    unix_wow64_main_loop,
     unix_wow64_get_endpoint_ids,
     unix_wow64_create_stream,
     unix_wow64_release_stream,
     unix_start,
     unix_stop,
     unix_reset,
+    unix_timer_loop,
     unix_wow64_get_render_buffer,
     unix_release_render_buffer,
     unix_wow64_get_capture_buffer,

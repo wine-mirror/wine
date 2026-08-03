@@ -369,12 +369,12 @@ static DWORD MemStore_release(WINECRYPT_CERTSTORE *cert_store, DWORD flags)
     WINE_MEMSTORE *store = (WINE_MEMSTORE*)cert_store;
     LONG ref;
 
-    if(flags & ~(CERT_CLOSE_STORE_CHECK_FLAG | CERT_CLOSE_STORE_FORCE_FLAG))
+    if(flags & ~CERT_CLOSE_STORE_CHECK_FLAG)
         FIXME("Unimplemented flags %lx\n", flags);
 
     ref = InterlockedDecrement(&store->hdr.ref);
     TRACE("(%p) ref=%ld\n", store, ref);
-    if(ref && !(flags & CERT_CLOSE_STORE_FORCE_FLAG))
+    if(ref)
         return (flags & CERT_CLOSE_STORE_CHECK_FLAG) ? CRYPT_E_PENDING_CLOSE : ERROR_SUCCESS;
 
     free_contexts(&store->certs);
@@ -948,7 +948,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv,
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, hProv,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_NO_CRYPT_RELEASE_FLAG, szSubSystemProtocol);
+     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
 HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
@@ -960,7 +960,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, hProv,
-     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_NO_CRYPT_RELEASE_FLAG, szSubSystemProtocol);
+     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
 }
 
 PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
@@ -981,8 +981,6 @@ PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_
 BOOL CRYPT_DeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
 {
     WINECRYPT_CERTSTORE *hcs;
-    BOOL ret;
-
     TRACE("(%p)\n", pCertContext);
 
     if (!pCertContext)
@@ -993,9 +991,7 @@ BOOL CRYPT_DeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
     if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
         return FALSE;
 
-    ret = hcs->vtbl->certs.delete(hcs, &cert_from_ptr(pCertContext)->base);
-    if (ret) CertControlStore(hcs, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
-    return ret;
+    return hcs->vtbl->certs.delete(hcs, &cert_from_ptr(pCertContext)->base);
 }
 
 BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
@@ -1115,12 +1111,8 @@ BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
             context_t *ret_context;
             ret = store->vtbl->crls.addContext(store, context_from_ptr(toAdd),
              existing ? context_from_ptr(existing) : NULL, ppStoreContext ? &ret_context : NULL, FALSE);
-            if (ret)
-            {
-                CertControlStore(store, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
-                if (ppStoreContext)
-                    *ppStoreContext = context_ptr(ret_context);
-            }
+            if (ret && ppStoreContext)
+                *ppStoreContext = context_ptr(ret_context);
         }else if (ppStoreContext) {
             *ppStoreContext = CertDuplicateCRLContext(toAdd);
         }
@@ -1150,10 +1142,7 @@ BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext)
 
     ret = hcs->vtbl->crls.delete(hcs, &crl_from_ptr(pCrlContext)->base);
     if (ret)
-    {
-        CertControlStore(hcs, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
         ret = CertFreeCRLContext(pCrlContext);
-    }
     return ret;
 }
 

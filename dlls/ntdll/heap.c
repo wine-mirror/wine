@@ -28,6 +28,7 @@
 #define RUNNING_ON_VALGRIND 0  /* FIXME */
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -79,7 +80,6 @@ struct rtl_heap_entry
 
 /* header for heap blocks */
 
-#define INITIAL_COMMIT_ALIGN  (0x400 * sizeof(void *))
 #define REGION_ALIGN  0x10000
 #define BLOCK_ALIGN   (2 * sizeof(void *))
 
@@ -503,16 +503,14 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
 static inline void initialize_block( struct block *block, SIZE_T old_size, SIZE_T size, DWORD flags )
 {
     char *data = (char *)(block + 1);
-    SIZE_T i, aligned_size;
+    SIZE_T i;
 
     if (size <= old_size) return;
 
     if (flags & HEAP_ZERO_MEMORY)
     {
-        aligned_size = ROUND_SIZE( size, sizeof(void *) - 1 );
-        valgrind_make_writable( data + old_size, aligned_size - old_size );
-        memset( data + old_size, 0, aligned_size - old_size );
-        valgrind_make_noaccess( data + size, aligned_size - size );
+        valgrind_make_writable( data + old_size, size - old_size );
+        memset( data + old_size, 0, size - old_size );
     }
     else if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
@@ -974,7 +972,7 @@ static void *allocate_region( struct heap *heap, ULONG flags, SIZE_T *region_siz
     void *addr = NULL;
     NTSTATUS status;
 
-    if (heap && !(flags & HEAP_GROWABLE) && (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_WINDOWS))
+    if (heap && !(flags & HEAP_GROWABLE))
     {
         WARN( "Heap %p isn't growable, cannot allocate %#Ix bytes\n", heap, *region_size );
         return NULL;
@@ -1511,8 +1509,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     flags &= ~(HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED);
     if (process_heap) flags |= HEAP_PRIVATE;
     if (!process_heap || !total_size || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
-    commit_size = ROUND_SIZE( commit_size, INITIAL_COMMIT_ALIGN - 1 );
-    if (!total_size) total_size = ROUND_SIZE( commit_size + 1 /* + 1 is intentional */, REGION_ALIGN - 1 );
+    if (!total_size) total_size = commit_size + HEAP_INITIAL_SIZE;
 
     if (!(heap = addr))
     {
@@ -2180,7 +2177,6 @@ static NTSTATUS heap_resize_block_lfh( struct block *block, ULONG flags, SIZE_T 
     if (ROUND_SIZE( *old_size, BLOCK_ALIGN - 1) != ROUND_SIZE( size, BLOCK_ALIGN - 1)) return STATUS_NO_MEMORY;
     if (size >= *old_size) return STATUS_NO_MEMORY;
 
-    block_size = BLOCK_BIN_SIZE( BLOCK_SIZE_BIN( block_size ) );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
     block->tail_size = block_size - sizeof(*block) - size;
     initialize_block( block, *old_size, size, flags );
@@ -2577,15 +2573,6 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
         FIXME( "HEAP_INFORMATION_CLASS %u not implemented!\n", info_class );
         return STATUS_INVALID_INFO_CLASS;
     }
-}
-
-/***********************************************************************
- *           RtlQueryProcessHeapInformation    (NTDLL.@)
- */
-NTSTATUS WINAPI RtlQueryProcessHeapInformation( PDEBUG_BUFFER debug_buffer )
-{
-    FIXME("(%p): stub\n", debug_buffer);
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 /***********************************************************************

@@ -172,7 +172,7 @@ static inline void free_event_data( XEvent *event )
 #endif
 }
 
-static void host_window_send_gravity_events( struct host_window *win, Display *display, unsigned long serial )
+static void host_window_send_gravity_events( struct host_window *win, Display *display, unsigned long serial, XEvent *previous )
 {
     XGravityEvent event = {.type = GravityNotify, .serial = serial, .display = display};
     unsigned int i;
@@ -187,12 +187,13 @@ static void host_window_send_gravity_events( struct host_window *win, Display *d
         event.y = rect.top;
         event.send_event = 0;
 
+        if (previous->type == ConfigureNotify && previous->xconfigure.window == event.window) continue;
         TRACE( "generating GravityNotify for window %lx, rect %s\n", event.window, wine_dbgstr_rect(&rect) );
         XPutBackEvent( event.display, (XEvent *)&event );
     }
 }
 
-static BOOL host_window_filter_event( XEvent *event )
+static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
 {
     struct host_window *win;
 
@@ -209,7 +210,7 @@ static BOOL host_window_filter_event( XEvent *event )
         XReparentEvent *reparent = (XReparentEvent *)event;
         TRACE( "host window %p/%lx ReparentNotify, parent %lx\n", win, win->window, reparent->parent );
         host_window_set_parent( win, reparent->parent );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     case GravityNotify:
@@ -218,7 +219,7 @@ static BOOL host_window_filter_event( XEvent *event )
         OffsetRect( &win->rect, gravity->x - win->rect.left, gravity->y - win->rect.top );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, FALSE );
         TRACE( "host window %p/%lx GravityNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     case ConfigureNotify:
@@ -227,7 +228,7 @@ static BOOL host_window_filter_event( XEvent *event )
         SetRect( &win->rect, configure->x, configure->y, configure->x + configure->width, configure->y + configure->height );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, configure->send_event );
         TRACE( "host window %p/%lx ConfigureNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
-        host_window_send_gravity_events( win, event->xany.display, event->xany.serial );
+        host_window_send_gravity_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     }
@@ -257,6 +258,7 @@ static void xembed_request_focus( Display *display, Window window, DWORD timesta
     xev.xclient.data.l[4] = 0;
 
     XSendEvent(display, window, False, NoEventMask, &xev);
+    XFlush( display );
 }
 
 /***********************************************************************
@@ -321,6 +323,114 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
 }
 
 
+enum event_merge_action
+{
+    MERGE_DISCARD,  /* discard the old event */
+    MERGE_HANDLE,   /* handle the old event */
+    MERGE_KEEP,     /* keep the old event for future merging */
+    MERGE_IGNORE    /* ignore the new event, keep the old one */
+};
+
+/***********************************************************************
+ *           merge_raw_motion_events
+ */
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+static enum event_merge_action merge_raw_motion_events( XIRawEvent *prev, XIRawEvent *next )
+{
+    int i, j, k;
+    unsigned char mask;
+
+    if (!prev->valuators.mask_len) return MERGE_HANDLE;
+    if (!next->valuators.mask_len) return MERGE_HANDLE;
+
+    mask = prev->valuators.mask[0] | next->valuators.mask[0];
+    if (mask == next->valuators.mask[0])  /* keep next */
+    {
+        for (i = j = k = 0; i < 8; i++)
+        {
+            if (XIMaskIsSet( prev->valuators.mask, i ))
+                next->valuators.values[j] += prev->valuators.values[k++];
+            if (XIMaskIsSet( next->valuators.mask, i )) j++;
+        }
+        TRACE( "merging duplicate GenericEvent\n" );
+        return MERGE_DISCARD;
+    }
+    if (mask == prev->valuators.mask[0])  /* keep prev */
+    {
+        for (i = j = k = 0; i < 8; i++)
+        {
+            if (XIMaskIsSet( next->valuators.mask, i ))
+                prev->valuators.values[j] += next->valuators.values[k++];
+            if (XIMaskIsSet( prev->valuators.mask, i )) j++;
+        }
+        TRACE( "merging duplicate GenericEvent\n" );
+        return MERGE_IGNORE;
+    }
+    /* can't merge events with disjoint masks */
+    return MERGE_HANDLE;
+}
+#endif
+
+/***********************************************************************
+ *           merge_events
+ *
+ * Try to merge 2 consecutive events.
+ */
+static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
+{
+    switch (prev->type)
+    {
+    case ConfigureNotify:
+        switch (next->type)
+        {
+        case ConfigureNotify:
+            if (prev->xany.window == next->xany.window)
+            {
+                TRACE( "discarding duplicate ConfigureNotify for window %lx\n", prev->xany.window );
+                return MERGE_DISCARD;
+            }
+            break;
+        case Expose:
+        case PropertyNotify:
+            return MERGE_KEEP;
+        }
+        break;
+    case MotionNotify:
+        switch (next->type)
+        {
+        case MotionNotify:
+            if (prev->xany.window == next->xany.window)
+            {
+                TRACE( "discarding duplicate MotionNotify for window %lx\n", prev->xany.window );
+                return MERGE_DISCARD;
+            }
+            break;
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+        case GenericEvent:
+            if (next->xcookie.extension != xinput2_opcode) break;
+            if (next->xcookie.evtype != XI_RawMotion) break;
+            if (x11drv_thread_data()->warp_serial) break;
+            return MERGE_KEEP;
+        }
+        break;
+    case GenericEvent:
+        if (prev->xcookie.extension != xinput2_opcode) break;
+        if (prev->xcookie.evtype != XI_RawMotion) break;
+        switch (next->type)
+        {
+        case GenericEvent:
+            if (next->xcookie.extension != xinput2_opcode) break;
+            if (next->xcookie.evtype != XI_RawMotion) break;
+            if (x11drv_thread_data()->warp_serial) break;
+            return merge_raw_motion_events( prev->xcookie.data, next->xcookie.data );
+#endif
+        }
+        break;
+    }
+    return MERGE_HANDLE;
+}
+
+
 /***********************************************************************
  *           call_event_handler
  */
@@ -354,43 +464,93 @@ static inline BOOL call_event_handler( Display *display, XEvent *event )
     return ret;
 }
 
-static int check_fd_events( int fd, int events )
+
+/***********************************************************************
+ *           process_events
+ */
+static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,XPointer), ULONG_PTR arg )
 {
-    struct pollfd pfd = {.fd = fd, .events = events};
-    if (poll( &pfd, 1, 0 ) <= 0) return 0;
-    return pfd.revents;
+    XEvent event, prev_event;
+    int count = 0;
+    BOOL queued = FALSE;
+    enum event_merge_action action = MERGE_DISCARD;
+
+    prev_event.type = 0;
+    while (XCheckIfEvent( display, &event, filter, (char *)arg ))
+    {
+        count++;
+        if (XFilterEvent( &event, None ))
+        {
+            /*
+             * SCIM on linux filters key events strangely. It does not filter the
+             * KeyPress events for these keys however it does filter the
+             * KeyRelease events. This causes wine to become very confused as
+             * to the keyboard state.
+             *
+             * We need to let those KeyRelease events be processed so that the
+             * keyboard state is correct.
+             */
+            if (event.type == KeyRelease)
+            {
+                KeySym keysym = 0;
+                XKeyEvent *keyevent = &event.xkey;
+
+                XLookupString(keyevent, NULL, 0, &keysym, NULL);
+                if (!(keysym == XK_Shift_L ||
+                    keysym == XK_Shift_R ||
+                    keysym == XK_Control_L ||
+                    keysym == XK_Control_R ||
+                    keysym == XK_Alt_R ||
+                    keysym == XK_Alt_L ||
+                    keysym == XK_Meta_R ||
+                    keysym == XK_Meta_L))
+                        continue; /* not a key we care about, ignore it */
+            }
+            else
+                continue;  /* filtered, ignore it */
+        }
+
+        if (host_window_filter_event( &event, &prev_event )) continue;
+
+        get_event_data( &event );
+        if (prev_event.type) action = merge_events( &prev_event, &event );
+        switch( action )
+        {
+        case MERGE_HANDLE:  /* handle prev, keep new */
+            queued |= call_event_handler( display, &prev_event );
+            /* fall through */
+        case MERGE_DISCARD:  /* discard prev, keep new */
+            free_event_data( &prev_event );
+            prev_event = event;
+            break;
+        case MERGE_KEEP:  /* handle new, keep prev for future merging */
+            queued |= call_event_handler( display, &event );
+            /* fall through */
+        case MERGE_IGNORE: /* ignore new, keep prev for future merging */
+            free_event_data( &event );
+            break;
+        }
+    }
+    if (prev_event.type) queued |= call_event_handler( display, &prev_event );
+    free_event_data( &prev_event );
+    XFlush( gdi_display );
+    if (count) TRACE( "processed %d events, returning %d\n", count, queued );
+    return queued;
 }
+
 
 /***********************************************************************
  *           ProcessEvents   (X11DRV.@)
  */
 BOOL X11DRV_ProcessEvents( DWORD mask )
 {
-    static const INPUT input = { .type = INPUT_MOUSE, .mi.dwFlags = MOUSEEVENTF_MOVE_NOCOALESCE };
     struct x11drv_thread_data *data = x11drv_thread_data();
-    XEvent event;
-    int count;
 
     if (!data) return FALSE;
     if (data->current_event) mask = 0;  /* don't process nested events */
 
-    for (count = 0; XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ); count++)
-    {
-        if (XFilterEvent( &event, None ) || host_window_filter_event( &event )) continue;
-        get_event_data( &event );
-        call_event_handler( data->display, &event );
-        free_event_data( &event );
-    }
-
-    XFlush( gdi_display );
-    if (count) TRACE( "processed %d events\n", count );
-    NtUserSendHardwareInput( NULL, SEND_HWMSG_RAWINPUT, &input, 0 ); /* flush win32u accumulated motion */
-
-    if (mask != QS_ALLINPUT || check_fd_events( ConnectionNumber( data->display ), POLLIN )) return FALSE;
-    XFlush( data->display ); /* all events have been processed, flush any pending request */
-    return TRUE;
+    return process_events( data->display, filter_event, mask );
 }
-
 
 /***********************************************************************
  *           EVENT_x11_time_to_win32_time
@@ -452,7 +612,6 @@ static inline BOOL can_activate_window( HWND hwnd )
     if (style & WS_MINIMIZE) return FALSE;
     if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOACTIVATE) return FALSE;
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
-    if (NtUserGetPresentRect( hwnd, &rect, 0 )) return TRUE;
     if (NtUserGetWindowRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) ) && IsRectEmpty( &rect )) return FALSE;
     return !(style & WS_DISABLED);
 }
@@ -473,7 +632,7 @@ static void set_input_focus( struct x11drv_win_data *data )
     if (EVENT_x11_time_to_win32_time(0))
         /* ICCCM says don't use CurrentTime, so try to use last message time if possible */
         /* FIXME: this is not entirely correct */
-        timestamp = NtUserGetThreadState(UserThreadStateMessageTime) - EVENT_x11_time_to_win32_time(0);
+        timestamp = NtUserGetThreadInfo()->message_time - EVENT_x11_time_to_win32_time(0);
     else
         timestamp = CurrentTime;
 
@@ -500,7 +659,7 @@ static void set_focus( Display *display, HWND focus, Time time )
 
     if (!is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) ))
     {
-        NtUserSetForegroundWindowInternal( focus );
+        NtUserSetForegroundWindow( focus );
 
         threadinfo.cbSize = sizeof(threadinfo);
         NtUserGetGUIThreadInfo( 0, &threadinfo );
@@ -586,7 +745,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                         NtUserSetActiveWindow( hwnd );
                         break;
                     default:
-                        WARN( "unknown WM_MOUSEACTIVATE code %ld\n", ma );
+                        WARN( "unknown WM_MOUSEACTIVATE code %d\n", (int) ma );
                         break;
                 }
             }
@@ -608,15 +767,8 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         TRACE( "window %p/%lx WM_TAKE_FOCUS serial %lu, event_time %ld, foreground %p\n", hwnd, event->window,
                event->serial, event_time, foreground );
         TRACE( "  enabled %u, visible %u, style %#x, focus %p, active %p, last %p\n",
-                NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), NtUserGetWindowLongW( hwnd, GWL_STYLE ),
+                NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ),
                 get_focus(), get_active_window(), last_focus );
-
-        if (event_time) SERVER_START_REQ( set_user_input_time )
-        {
-            req->set = 1;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
 
         if (can_activate_window(hwnd))
         {
@@ -717,7 +869,6 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
-    x11drv_xinput2_enable( event->display, DefaultRootWindow( event->display ) );
     xim_set_focus( hwnd, TRUE );
 
     if (use_take_focus) return TRUE;
@@ -730,7 +881,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
         if (hwnd && can_activate_window(hwnd)) set_focus( event->display, hwnd, CurrentTime );
     }
-    else NtUserSetForegroundWindowInternal( hwnd );
+    else NtUserSetForegroundWindow( hwnd );
     return TRUE;
 }
 
@@ -761,7 +912,7 @@ static void focus_out( Display *display , HWND hwnd )
         if (hwnd == NtUserGetForegroundWindow())
         {
             TRACE( "lost focus, setting fg to desktop\n" );
-            NtUserSetForegroundWindowInternal( NtUserGetDesktopWindow() );
+            NtUserSetForegroundWindow( NtUserGetDesktopWindow() );
         }
     }
  }
@@ -795,12 +946,6 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
               hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
         return FALSE;
     }
-    if (!is_virtual_desktop() && window_is_reparenting( hwnd )) /* ignore FocusOut only if the window is being reparented */
-    {
-        WARN( "Ignoring window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p during reparenting\n",
-              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
-        return FALSE;
-    }
 
     TRACE( "window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
            event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
@@ -811,7 +956,6 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 
-    x11drv_xinput2_disable( event->display, DefaultRootWindow( event->display ) );
     focus_out( event->display, hwnd );
     return TRUE;
 }
@@ -866,7 +1010,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    NtUserExposeWindowSurface( hwnd, flags, &rect );
+    NtUserExposeWindowSurface( hwnd, flags, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
     return TRUE;
 }
 
@@ -881,11 +1025,6 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
     if (event->xany.window == x11drv_thread_data()->clip_window) return TRUE;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
-    if (data->reparenting)
-    {
-        TRACE( "window %p/%lx has been reparented\n", data->hwnd, data->whole_window );
-        data->reparenting = 0;
-    }
 
     if (!data->managed && !data->embedded && data->desired_state.wm_state != WithdrawnState)
     {
@@ -903,15 +1042,6 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
  */
 static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
-    struct x11drv_win_data *data;
-
-    if (!(data = get_win_data( hwnd ))) return FALSE;
-    if (data->managed && !data->wm_state_serial && data->current_state.wm_state == NormalState)
-    {
-        WARN( "window %p/%lx unexpectedly unmapped, assuming reparenting\n", data->hwnd, data->whole_window );
-        data->reparenting = 1;
-    }
-    release_win_data( data );
     return TRUE;
 }
 
@@ -1037,7 +1167,7 @@ static int get_window_wm_state( Display *display, Window window )
         XID     icon;
     } *state;
     Atom type;
-    int format, ret = WithdrawnState;
+    int format, ret = -1;
     unsigned long count, remaining;
 
     if (!XGetWindowProperty( display, window, x11drv_atom(WM_STATE), 0,
@@ -1076,21 +1206,6 @@ static int get_window_xembed_info( Display *display, Window window )
     return ret;
 }
 
-static void get_window_mwm_hints( Display *display, Window window, MwmHints *hints )
-{
-    unsigned long count, remaining;
-    MwmHints *value;
-    int format;
-    Atom type;
-
-    if (!XGetWindowProperty( display, window, x11drv_atom(_MOTIF_WM_HINTS), 0, 65535, False, x11drv_atom(_MOTIF_WM_HINTS),
-                             &type, &format, &count, &remaining, (unsigned char **)&value ))
-    {
-        if (type == x11drv_atom(_MOTIF_WM_HINTS) && get_property_size( format, count ) >= sizeof(*value))
-            *hints = *value;
-        XFree( value );
-    }
-}
 
 /***********************************************************************
  *           handle_wm_state_notify
@@ -1137,46 +1252,6 @@ static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
     NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
-static void handle_wm_hints_notify( HWND hwnd, XPropertyEvent *event )
-{
-    struct x11drv_win_data *data;
-    XWMHints empty = {0}, *hints;
-
-    if (!(data = get_win_data( hwnd ))) return;
-    hints = event->state == PropertyNewValue ? XGetWMHints( event->display, event->window ) : &empty;
-    window_wm_hints_notify( data, event->serial, hints );
-    if (hints != &empty) XFree( hints );
-    release_win_data( data );
-}
-
-static void handle_mwm_hints_notify( HWND hwnd, XPropertyEvent *event )
-{
-    struct x11drv_win_data *data;
-    MwmHints hints = {0};
-
-    if (!(data = get_win_data( hwnd ))) return;
-    if (event->state == PropertyNewValue) get_window_mwm_hints( event->display, event->window, &hints );
-    window_mwm_hints_notify( data, event->serial, &hints );
-    release_win_data( data );
-}
-
-static void handle_wm_normal_hints_notify( HWND hwnd, XPropertyEvent *event )
-{
-    struct x11drv_win_data *data;
-    XSizeHints *hints;
-    long len = 0;
-
-    if (!(data = get_win_data( hwnd ))) return;
-    if ((hints = XAllocSizeHints()))
-    {
-        if (event->state == PropertyNewValue) XGetWMNormalHints( event->display, event->window, hints, &len );
-        if (len < sizeof(*hints)) memset( (char *)hints + len, 0, sizeof(*hints) - len );
-        window_wm_normal_hints_notify( data, event->serial, hints );
-        XFree( hints );
-    }
-    release_win_data( data );
-}
-
 static void handle_net_supported_notify( XPropertyEvent *event )
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
@@ -1211,9 +1286,6 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
     if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( hwnd, event );
     if (event->atom == x11drv_atom(_XEMBED_INFO)) handle_xembed_info_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_WM_STATE)) handle_net_wm_state_notify( hwnd, event );
-    if (event->atom == x11drv_atom(WM_HINTS)) handle_wm_hints_notify( hwnd, event );
-    if (event->atom == x11drv_atom(_MOTIF_WM_HINTS)) handle_mwm_hints_notify( hwnd, event );
-    if (event->atom == x11drv_atom(WM_NORMAL_HINTS)) handle_wm_normal_hints_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_SUPPORTED)) handle_net_supported_notify( event );
     if (event->atom == x11drv_atom(_NET_ACTIVE_WINDOW)) handle_net_active_window( event );
 
@@ -1229,25 +1301,12 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 void X11DRV_ActivateWindow( HWND hwnd, HWND previous )
 {
     struct x11drv_win_data *data;
-    BOOL flush = FALSE;
 
-    if (!is_virtual_desktop())
-    {
-        set_net_active_window( hwnd, previous );
-        flush = TRUE;
-    }
+    set_net_active_window( hwnd, previous );
 
-    if ((data = get_win_data( hwnd )))
-    {
-        if (!data->managed || data->embedder)
-        {
-            set_input_focus( data );
-            flush = TRUE;
-        }
-        release_win_data( data );
-    }
-
-    if (flush) XFlush( x11drv_thread_data()->display );
+    if (!(data = get_win_data( hwnd ))) return;
+    if (!data->managed || data->embedder) set_input_focus( data );
+    release_win_data( data );
 }
 
 static void drag_drop_enter( UINT entries_size, struct format_entry *entries )
@@ -1518,7 +1577,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     effect = drag_drop_drag( hwnd, point, effect );
 
     TRACE( "actionRequested(%ld) chosen(0x%x) at x(%d),y(%d)\n",
-           event->data.l[4], effect, point.x, point.y );
+           event->data.l[4], effect, (int)point.x, (int)point.y );
 
     /*
      * Let source know if we're accepting the drop by

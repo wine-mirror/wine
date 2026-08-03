@@ -5,6 +5,7 @@ IMPORTS   = advapi32 ole32 user32 gdi32 uuid rpcrt4
 DELAYIMPORTS = oleaut32
 
 SOURCES = \
+	agilereference.c \
 	apartment.c \
 	combase.c \
 	dcom.idl \

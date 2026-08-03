@@ -25,13 +25,11 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winternl.h"
 #include "initguid.h"
 #include "ocidl.h"
 #include "featurestagingapi.h"
 #include "shellscalingapi.h"
 #include "shcore.h"
-#include "appmodel.h"
 #define WINSHLWAPI
 #include "shlwapi.h"
 
@@ -253,53 +251,15 @@ HRESULT WINAPI IUnknown_SetSite(IUnknown *obj, IUnknown *site)
 
 HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(const WCHAR *appid)
 {
-    RTL_USER_PROCESS_PARAMETERS *params;
-    HRESULT ret = S_OK;
-
-    TRACE("%s\n", debugstr_w(appid));
-
-    if (!appid)
-        return E_INVALIDARG;
-
-    if (lstrlenW(appid) > APPLICATION_USER_MODEL_ID_MAX_LENGTH - 3)
-        return E_INVALIDARG;
-
-    RtlAcquirePebLock();
-    params = RtlGetCurrentPeb()->ProcessParameters;
-    if (params->dwFlags & 0x4000) RtlFreeUnicodeString( &params->WindowTitle );
-    if (RtlCreateUnicodeString( &params->WindowTitle, appid ))
-    {
-        params->dwFlags |= STARTF_TITLEISAPPID;
-        params->dwFlags |= 0x4000; /* needs free (?) */
-        params->dwFlags &= ~STARTF_TITLEISLINKNAME; /* mutually exclusive */
-    }
-    else ret = E_OUTOFMEMORY;
-    RtlReleasePebLock();
-    return ret;
+    FIXME("%s: stub\n", debugstr_w(appid));
+    return S_OK;
 }
 
-HRESULT WINAPI GetCurrentProcessExplicitAppUserModelID(WCHAR **appid)
+HRESULT WINAPI GetCurrentProcessExplicitAppUserModelID(const WCHAR **appid)
 {
-    RTL_USER_PROCESS_PARAMETERS *params;
-    HRESULT ret = S_OK;
-
-    TRACE("%p\n", appid);
-
-    if (!appid) return E_INVALIDARG;
-
+    FIXME("%p: stub\n", appid);
     *appid = NULL;
-
-    RtlAcquirePebLock();
-    params = RtlGetCurrentPeb()->ProcessParameters;
-    if (params->dwFlags & STARTF_TITLEISAPPID)
-    {
-        *appid = CoTaskMemAlloc( params->WindowTitle.MaximumLength );
-        if (*appid) wcscpy( *appid, params->WindowTitle.Buffer );
-        else ret = E_OUTOFMEMORY;
-    }
-    else ret = E_FAIL;
-    RtlReleasePebLock();
-    return ret;
+    return E_NOTIMPL;
 }
 
 /*************************************************************************
@@ -982,15 +942,19 @@ static HRESULT WINAPI filestream_Write(IStream *iface, const void *buff, ULONG s
 static HRESULT WINAPI filestream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *new_pos)
 {
     struct shstream *stream = impl_from_IStream(iface);
-    LARGE_INTEGER position;
+    DWORD position;
 
     TRACE("%p, %s, %ld, %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, new_pos);
 
-    if (!SetFilePointerEx(stream->u.file.handle, move, &position, origin))
+    position = SetFilePointer(stream->u.file.handle, move.u.LowPart, NULL, origin);
+    if (position == INVALID_SET_FILE_POINTER)
         return HRESULT_FROM_WIN32(GetLastError());
 
     if (new_pos)
-        new_pos->QuadPart = position.QuadPart;
+    {
+        new_pos->u.HighPart = 0;
+        new_pos->u.LowPart = position;
+    }
 
     return S_OK;
 }
@@ -2584,12 +2548,4 @@ HRESULT WINAPI CreateRandomAccessStreamOverStream(IStream *stream, BSOS_OPTIONS 
 {
     FIXME("(%p, %d, %s, %p) stub\n", stream, options, debugstr_guid(riid), ppv);
     return E_NOTIMPL;
-}
-
-/*************************************************************************
- * RecordFeatureUsage        [SHCORE.@]
- */
-void WINAPI RecordFeatureUsage(UINT32 feature_id, UINT32 kind, UINT32 addend, const CHAR *origin_name)
-{
-    FIXME("(%u, %u, %u, %s) stub!\n", feature_id, kind, addend, wine_dbgstr_a(origin_name));
 }

@@ -18,11 +18,11 @@
 extern "C" {
 #endif
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifndef _FILE_DEFINED
 #define _FILE_DEFINED
-#pragma pack(push,8)
+#include <pshpack8.h>
 typedef struct _iobuf
 {
 #ifdef _UCRT
@@ -38,7 +38,7 @@ typedef struct _iobuf
   char* _tmpfname;
 #endif
 } FILE;
-#pragma pack(pop)
+#include <poppack.h>
 #endif  /* _FILE_DEFINED */
 
 #ifndef WEOF
@@ -106,12 +106,6 @@ static inline int __cdecl _vsnwprintf(wchar_t *buffer, size_t size, const wchar_
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl _vsnwprintf_l(wchar_t *buffer, size_t size, const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
-    return ret < 0 ? -1 : ret;
-}
-
 static inline int __cdecl _snwprintf(wchar_t *buffer, size_t size, const wchar_t* format, ...)
 {
     int ret;
@@ -123,26 +117,9 @@ static inline int __cdecl _snwprintf(wchar_t *buffer, size_t size, const wchar_t
     return ret;
 }
 
-static inline int __cdecl _snwprintf_l(wchar_t *buffer, size_t size, const wchar_t* format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl _vsnwprintf_s(wchar_t *buffer, size_t size, size_t count, const wchar_t *format, va_list args)
 {
     int ret = __stdio_common_vsnwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, count, format, NULL, args);
-    return ret < 0 ? -1 : ret;
-}
-
-static inline int __cdecl _vsnwprintf_s_l(wchar_t *buffer, size_t size, size_t count, const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vsnwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, count, format, locale, args);
     return ret < 0 ? -1 : ret;
 }
 
@@ -157,26 +134,9 @@ static inline int __cdecl _snwprintf_s(wchar_t *buffer, size_t size, size_t coun
     return ret;
 }
 
-static inline int __cdecl _snwprintf_s_l(wchar_t *buffer, size_t size, size_t count, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vsnwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, count, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl vswprintf(wchar_t *buffer, size_t size, const wchar_t *format, va_list args)
 {
     int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
-    return ret < 0 ? -1 : ret;
-}
-
-static inline int __cdecl _vswprintf_l(wchar_t *buffer, size_t size, const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
     return ret < 0 ? -1 : ret;
 }
 
@@ -197,12 +157,6 @@ static inline int __cdecl _vswprintf(wchar_t *buffer, const wchar_t *format, va_
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl __vswprintf_l(wchar_t *buffer, const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, locale, args);
-    return ret < 0 ? -1 : ret;
-}
-
 static inline int __cdecl _swprintf(wchar_t *buffer, const wchar_t *format, ...)
 {
     int ret;
@@ -214,26 +168,9 @@ static inline int __cdecl _swprintf(wchar_t *buffer, const wchar_t *format, ...)
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl __swprintf_l(wchar_t *buffer, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, locale, args);
-    va_end(args);
-    return ret < 0 ? -1 : ret;
-}
-
 static inline int __cdecl vswprintf_s(wchar_t *buffer, size_t size, const wchar_t *format, va_list args)
 {
     int ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
-    return ret < 0 ? -1 : ret;
-}
-
-static inline int __cdecl _vswprintf_s_l(wchar_t *buffer, size_t size, const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
     return ret < 0 ? -1 : ret;
 }
 
@@ -244,17 +181,6 @@ static inline int __cdecl swprintf_s(wchar_t *buffer, size_t size, const wchar_t
 
     va_start(args, format);
     ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl _swprintf_s_l(wchar_t *buffer, size_t size, const wchar_t* format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
     va_end(args);
     return ret;
 }
@@ -274,13 +200,6 @@ static inline int __cdecl _vscwprintf(const wchar_t *format, va_list args)
 {
     int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
                                        NULL, 0, format, NULL, args);
-    return ret < 0 ? -1 : ret;
-}
-
-static inline int __cdecl _vscwprintf_l(const wchar_t *format, _locale_t locale, va_list args)
-{
-    int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
-                                       NULL, 0, format, locale, args);
     return ret < 0 ? -1 : ret;
 }
 
@@ -309,26 +228,9 @@ static inline int __cdecl _scwprintf(const wchar_t *format, ...)
     return ret;
 }
 
-static inline int __cdecl _scwprintf_l(const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
-                                   NULL, 0, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl vfwprintf(FILE *file, const wchar_t *format, va_list args)
 {
     return __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
-}
-
-static inline int __cdecl _vfwprintf_l(FILE *file, const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, locale, args);
 }
 
 static inline int __cdecl fwprintf(FILE *file, const wchar_t *format, ...)
@@ -342,25 +244,9 @@ static inline int __cdecl fwprintf(FILE *file, const wchar_t *format, ...)
     return ret;
 }
 
-static inline int __cdecl _fwprintf_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl vfwprintf_s(FILE *file, const wchar_t *format, va_list args)
 {
     return __stdio_common_vfwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
-}
-
-static inline int __cdecl _vfwprintf_s_l(FILE *file, const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, locale, args);
 }
 
 static inline int __cdecl fwprintf_s(FILE *file, const wchar_t *format, ...)
@@ -374,25 +260,9 @@ static inline int __cdecl fwprintf_s(FILE *file, const wchar_t *format, ...)
     return ret;
 }
 
-static inline int __cdecl _fwprintf_s_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = _vfwprintf_s_l(file, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl vwprintf(const wchar_t *format, va_list args)
 {
     return __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, stdout, format, NULL, args);
-}
-
-static inline int __cdecl _vwprintf_l(const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, stdout, format, locale, args);
 }
 
 static inline int __cdecl wprintf(const wchar_t *format, ...)
@@ -406,25 +276,9 @@ static inline int __cdecl wprintf(const wchar_t *format, ...)
     return ret;
 }
 
-static inline int __cdecl _wprintf_l(const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vfwprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, stdout, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
 static inline int __cdecl vwprintf_s(const wchar_t *format, va_list args)
 {
     return __stdio_common_vfwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, stdout, format, NULL, args);
-}
-
-static inline int __cdecl _vwprintf_s_l(const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, stdout, format, locale, args);
 }
 
 static inline int __cdecl wprintf_s(const wchar_t *format, ...)
@@ -436,38 +290,6 @@ static inline int __cdecl wprintf_s(const wchar_t *format, ...)
     ret = vfwprintf_s(stdout, format, args);
     va_end(args);
     return ret;
-}
-
-static inline int __cdecl _wprintf_s_l(const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = _vfwprintf_s_l(stdout, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl _vswscanf_l(const wchar_t *buffer, const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vswscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, buffer, -1, format, locale, args);
-}
-
-static inline int __cdecl _swscanf_l(const wchar_t *buffer, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = _vswscanf_l(buffer, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl vswscanf(const wchar_t *buffer, const wchar_t *format, va_list args)
-{
-    return _vswscanf_l(buffer, format, NULL, args);
 }
 
 static inline int __cdecl swscanf(const wchar_t *buffer, const wchar_t *format, ...)
@@ -492,38 +314,6 @@ static inline int __cdecl swscanf_s(const wchar_t *buffer, const wchar_t *format
     return ret;
 }
 
-static inline int __cdecl _swscanf_s_l(const wchar_t *buffer, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vswscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, buffer, -1, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl _vfwscanf_l(FILE *file, const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, locale, args);
-}
-
-static inline int __cdecl _fwscanf_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = _vfwscanf_l(file, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl vfwscanf(FILE *file, const wchar_t *format, va_list args)
-{
-    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, NULL, args);
-}
-
 static inline int __cdecl fwscanf(FILE *file, const wchar_t *format, ...)
 {
     int ret;
@@ -546,45 +336,13 @@ static inline int __cdecl fwscanf_s(FILE *file, const wchar_t *format, ...)
     return ret;
 }
 
-static inline int __cdecl _fwscanf_s_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl _vwscanf_l(const wchar_t *format, _locale_t locale, va_list args)
-{
-    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, locale, args);
-}
-
-static inline int __cdecl _wscanf_l(const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = _vwscanf_l(format, locale, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl vwscanf(const wchar_t *format, va_list args)
-{
-    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, NULL, args);
-}
-
 static inline int __cdecl wscanf(FILE *file, const wchar_t *format, ...)
 {
     int ret;
     va_list args;
 
     va_start(args, format);
-    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, NULL, args);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, NULL, args);
     va_end(args);
     return ret;
 }
@@ -595,18 +353,7 @@ static inline int __cdecl wscanf_s(FILE *file, const wchar_t *format, ...)
     va_list args;
 
     va_start(args, format);
-    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, NULL, args);
-    va_end(args);
-    return ret;
-}
-
-static inline int __cdecl _wscanf_s_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, locale);
-    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, locale, args);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, stdin, format, NULL, args);
     va_end(args);
     return ret;
 }
@@ -614,39 +361,23 @@ static inline int __cdecl _wscanf_s_l(FILE *file, const wchar_t *format, _locale
 #else /* _UCRT && !_NO_CRT_STDIO_INLINE */
 
 _ACRTIMP int __cdecl _scwprintf(const wchar_t*,...);
-_ACRTIMP int __cdecl _scwprintf_l(const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl _snwprintf(wchar_t*,size_t,const wchar_t*,...);
-_ACRTIMP int __cdecl _snwprintf_l(wchar_t*,size_t,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl _snwprintf_s(wchar_t*,size_t,size_t,const wchar_t*,...);
-_ACRTIMP int __cdecl _snwprintf_s_l(wchar_t*,size_t,size_t,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl _vscwprintf(const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vscwprintf_l(const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl _vscwprintf_p_l(const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl _vsnwprintf(wchar_t*,size_t,const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vsnwprintf_l(wchar_t*,size_t,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl _vsnwprintf_s(wchar_t*,size_t,size_t,const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vsnwprintf_s_l(wchar_t*,size_t,size_t,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl _vswprintf_p_l(wchar_t*,size_t,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl fwprintf(FILE*,const wchar_t*,...);
-_ACRTIMP int __cdecl _fwprintf_l(FILE*,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl fwprintf_s(FILE*,const wchar_t*,...);
-_ACRTIMP int __cdecl _fwprintf_s_l(FILE*,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl swprintf_s(wchar_t*,size_t,const wchar_t*,...);
-_ACRTIMP int __cdecl _swprintf_s_l(wchar_t*,size_t,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl vfwprintf(FILE*,const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vfwprintf_l(FILE*,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl vfwprintf_s(FILE*,const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vfwprintf_s_l(FILE*,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vswprintf_s_l(wchar_t*,size_t,const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl vwprintf(const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vwprintf_l(const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl vwprintf_s(const wchar_t*,va_list);
-_ACRTIMP int __cdecl _vwprintf_s_l(const wchar_t*,_locale_t,va_list);
 _ACRTIMP int __cdecl wprintf(const wchar_t*,...);
-_ACRTIMP int __cdecl _wprintf_l(const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl wprintf_s(const wchar_t*,...);
-_ACRTIMP int __cdecl _wprintf_s_l(const wchar_t*,_locale_t,...);
 
 #ifdef _CRT_NON_CONFORMING_SWPRINTFS
 _ACRTIMP int __cdecl swprintf(wchar_t*,const wchar_t*,...);
@@ -669,20 +400,11 @@ _ACRTIMP int __cdecl swprintf(wchar_t*,size_t,const wchar_t*,...);
 #endif  /*  _CRT_NON_CONFORMING_SWPRINTFS */
 
 _ACRTIMP int __cdecl fwscanf(FILE*,const wchar_t*,...);
-_ACRTIMP int __cdecl _fwscanf_l(FILE*,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl fwscanf_s(FILE*,const wchar_t*,...);
-_ACRTIMP int __cdecl _fwscanf_s_l(FILE*,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl swscanf(const wchar_t*,const wchar_t*,...);
-_ACRTIMP int __cdecl _swscanf_l(const wchar_t*,const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl swscanf_s(const wchar_t*,const wchar_t*,...);
-_ACRTIMP int __cdecl _swscanf_s_l(const wchar_t*,const wchar_t*,_locale_t,...);
-_ACRTIMP int __cdecl vfwscanf(FILE*,const wchar_t*,va_list);
-_ACRTIMP int __cdecl vswscanf(const wchar_t*,const wchar_t*,va_list);
-_ACRTIMP int __cdecl vwscanf(const wchar_t*,va_list);
 _ACRTIMP int __cdecl wscanf(const wchar_t*,...);
-_ACRTIMP int __cdecl _wscanf_l(const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl wscanf_s(const wchar_t*,...);
-_ACRTIMP int __cdecl _wscanf_s_l(const wchar_t*,_locale_t,...);
 
 #endif /* _UCRT && !_NO_CRT_STDIO_INLINE */
 
@@ -690,6 +412,6 @@ _ACRTIMP int __cdecl _wscanf_s_l(const wchar_t*,_locale_t,...);
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* _WSTDIO_DEFINED */

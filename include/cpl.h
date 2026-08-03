@@ -21,7 +21,7 @@
 #ifndef _INC_CPL
 #define _INC_CPL
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +84,6 @@ DECL_WINELIB_TYPE_AW(LPNEWCPLINFO)
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* _INC_CPL */

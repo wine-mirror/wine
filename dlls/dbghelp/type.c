@@ -141,14 +141,9 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         case DataIsGlobal:
         case DataIsFileStatic:
         case DataIsStaticLocal:
-            if (((const struct symt_data*)type)->u.var.kind == loc_absolute)
-            {
-                *addr = ((const struct symt_data*)type)->u.var.offset;
-                break;
-            }
-            /* fall through */
-        default:
-            return FALSE;
+            *addr = ((const struct symt_data*)type)->u.var.offset;
+            break;
+        default: return FALSE;
         }
         break;
     case SymTagBlock:
@@ -713,7 +708,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             for (i = 0; i < tifp->Count; i++)
             {
                 if (!(symref = (symref_t *)vector_at(v, tifp->Start + i))) return FALSE;
-                tifp->ChildId[tifp->Start + i] = symt_symref_to_index(module, *symref);
+                tifp->ChildId[i] = symt_symref_to_index(module, *symref);
             }
         }
         break;
@@ -1126,30 +1121,6 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
          * of the same UDT definition... maybe forward declaration?
          */
         X(DWORD) = symt_ptr_to_index(module, type);
-        break;
-
-    case TI_GET_ADDRESSOFFSET:
-        switch (type->tag)
-        {
-        case SymTagData:
-            switch (((const struct symt_data*)type)->kind)
-            {
-            case DataIsGlobal:
-            case DataIsFileStatic:
-            case DataIsStaticLocal:
-                if (((const struct symt_data*)type)->u.var.kind == loc_tlsrel)
-                {
-                    X(DWORD) = ((const struct symt_data*)type)->u.var.offset;
-                    break;
-                }
-                /* fall through */
-            default:
-                return FALSE;
-            }
-            break;
-        default:
-            return FALSE;
-        }
         break;
 
         /* FIXME: we don't support properly C++ for now */

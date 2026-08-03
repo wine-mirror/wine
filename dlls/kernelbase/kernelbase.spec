@@ -172,7 +172,13 @@
 @ stdcall CopyContext(ptr long ptr)
 @ stdcall CopyFile2(wstr wstr ptr)
 @ stdcall CopyFileExW(wstr wstr ptr ptr ptr long)
+@ stub CopyFileFromAppW
 @ stdcall CopyFileW(wstr wstr long)
+@ stub GetFileAttributesExFromAppW
+@ stub MoveFileFromAppW
+@ stub RemoveDirectoryFromAppW
+@ stub ReplaceFileFromAppW
+@ stub SetFileAttributesFromAppW
 @ stdcall -arch=x86_64 CopyMemoryNonTemporal(ptr ptr long) ntdll.RtlCopyMemoryNonTemporal
 @ stdcall CopySid(long ptr ptr)
 # @ stub CouldMultiUserAppsBehaviorBePossibleForPackage
@@ -182,6 +188,7 @@
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
 @ stdcall CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExW(wstr wstr ptr)
+@ stub CreateDirectoryFromAppW
 @ stdcall CreateDirectoryW(wstr ptr)
 # @ stub CreateEnclave
 @ stdcall CreateEventA(ptr long long str)
@@ -192,6 +199,8 @@
 @ stdcall CreateFiberEx(long long long ptr ptr)
 @ stdcall CreateFile2(wstr long long long ptr)
 @ stdcall CreateFileA(str long long ptr long long long)
+@ stub CreateFile2FromAppW
+@ stub CreateFileFromAppW
 @ stdcall CreateFileMapping2(long ptr long long long int64 wstr ptr long)
 @ stdcall CreateFileMappingFromApp(long ptr long int64 wstr)
 @ stdcall CreateFileMappingNumaW(long ptr long long long wstr long)
@@ -259,12 +268,13 @@
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFiber(ptr)
 @ stdcall DeleteFileA(str)
+@ stub DeleteFileFromAppW
 @ stdcall DeleteFileW(wstr)
 @ stdcall DeleteProcThreadAttributeList(ptr)
 # @ stub DeleteStateAtomValue
 # @ stub DeleteStateContainer
 # @ stub DeleteStateContainerValue
-@ stdcall DeleteSynchronizationBarrier(ptr)
+# @ stub DeleteSynchronizationBarrier
 @ stdcall DeleteTimerQueueEx(long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
 @ stdcall DeleteVolumeMountPointW(wstr)
@@ -297,7 +307,7 @@
 @ stdcall EncodeSystemPointer(ptr) ntdll.RtlEncodeSystemPointer
 # @ stub EnterCriticalPolicySectionInternal
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
-@ stdcall EnterSynchronizationBarrier(ptr long)
+# @ stub EnterSynchronizationBarrier
 @ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long)
 @ stdcall EnumCalendarInfoExW(ptr long long long)
 @ stdcall EnumCalendarInfoW(ptr long long long)
@@ -342,7 +352,7 @@
 @ stdcall EventSetInformation(int64 long ptr long) ntdll.EtwEventSetInformation
 @ stdcall EventUnregister(int64) ntdll.EtwEventUnregister
 @ stdcall EventWrite(int64 ptr long ptr) ntdll.EtwEventWrite
-@ stdcall EventWriteEx(int64 ptr int64 long ptr ptr long ptr) ntdll.EtwEventWriteEx
+# @ stub EventWriteEx
 @ stdcall EventWriteString(int64 long int64 ptr) ntdll.EtwEventWriteString
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
 @ stdcall ExitProcess(long) ntdll.RtlExitUserProcess
@@ -366,6 +376,7 @@
 @ stdcall FindFirstChangeNotificationW(wstr long long)
 @ stdcall FindFirstFileA(str ptr)
 @ stdcall FindFirstFileExA(str long ptr long ptr long)
+@ stub FindFirstFileExFromAppW
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long)
 @ stdcall FindFirstFileNameW(wstr long ptr ptr)
 @ stdcall FindFirstFileW(wstr ptr)
@@ -376,7 +387,7 @@
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr)
-@ stdcall FindNextFileNameW(ptr ptr ptr)
+# @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr)
 @ stdcall FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeW(long ptr long)
@@ -569,7 +580,7 @@
 @ stdcall GetGeoInfoEx(ptr long ptr long)
 @ stdcall GetHandleInformation(long ptr)
 # @ stub GetHivePath
-@ stdcall GetIntegratedDisplaySize(ptr)
+# @ stub GetIntegratedDisplaySize
 # @ stub GetIsEdpEnabled
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLargePageMinimum()
@@ -587,7 +598,6 @@
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
 @ stdcall GetLongPathNameA(str ptr long)
 @ stdcall GetLongPathNameW(wstr ptr long)
-@ stdcall GetMachineTypeAttributes(long ptr)
 @ stdcall GetMappedFileNameA(long ptr ptr long)
 @ stdcall GetMappedFileNameW(long ptr ptr long)
 # @ stub GetMemoryErrorHandlingCapabilities
@@ -822,7 +832,7 @@
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stdcall HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
-@ stdcall HeapSummary(long long ptr)
+@ stub HeapSummary
 @ stdcall HeapUnlock(long)
 @ stdcall HeapValidate(long long ptr)
 @ stdcall HeapWalk(long ptr)
@@ -852,7 +862,7 @@
 @ stdcall InitializeSRWLock(ptr) ntdll.RtlInitializeSRWLock
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
-@ stdcall InitializeSynchronizationBarrier(ptr long long)
+# @ stub InitializeSynchronizationBarrier
 # @ stub InstallELAMCertificateInfo
 @ stdcall -arch=i386 InterlockedCompareExchange(ptr long long)
 @ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr int64 int64) ntdll.RtlInterlockedCompareExchange64
@@ -1221,10 +1231,10 @@
 # @ stub PsmIsChildKey
 # @ stub PsmIsDynamicKey
 # @ stub PsmIsValidKey
-@ stdcall PssCaptureSnapshot(ptr long long ptr)
+# @ stub PssCaptureSnapshot
 # @ stub PssDuplicateSnapshot
-@ stdcall PssFreeSnapshot(ptr ptr)
-@ stdcall PssQuerySnapshot(ptr long ptr long)
+# @ stub PssFreeSnapshot
+# @ stub PssQuerySnapshot
 # @ stub PssWalkMarkerCreate
 # @ stub PssWalkMarkerFree
 # @ stub PssWalkMarkerGetPosition
@@ -1265,7 +1275,6 @@
 @ stdcall QueryWorkingSet(long ptr long)
 @ stdcall QueryWorkingSetEx(long ptr long)
 @ stdcall QueueUserAPC(ptr long long)
-@ stdcall QueueUserAPC2(ptr long long long)
 @ stdcall QueueUserWorkItem(ptr ptr long)
 # @ stub QuirkGetData
 # @ stub QuirkGetData2
@@ -1391,7 +1400,7 @@
 @ stdcall ResetWriteWatch(ptr long)
 @ stdcall ResizePseudoConsole(ptr long)
 @ stdcall -import ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) LdrResolveDelayLoadedAPI
-# @ stub ResolveDelayLoadsFromDll
+@ stdcall ResolveDelayLoadsFromDll(ptr str long)
 @ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)

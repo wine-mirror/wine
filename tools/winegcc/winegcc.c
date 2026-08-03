@@ -140,7 +140,7 @@ static const char* app_loader_template =
 ;
 
 static const char *output_file_name;
-static struct strarray output_debug_files;
+static const char *output_debug_file;
 static const char *output_implib;
 static const char *output;
 static int keep_generated = 0;
@@ -151,7 +151,6 @@ struct strarray temp_files = { 0 };
 static const char *bindir;
 static const char *libdir;
 static const char *includedir;
-static const char *cc_cmd;
 static const char *wine_objdir;
 static const char *winebuild;
 static const char *lib_suffix;
@@ -171,6 +170,7 @@ enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, fil
 static bool is_pe;
 static bool is_static;
 static bool is_shared;
+static bool is_gui_app;
 static bool is_unicode_app;
 static bool is_win16_app;
 static bool is_arm64x;
@@ -208,8 +208,8 @@ static struct strarray delayimports;
 static void cleanup_output_files(void)
 {
     if (output_file_name) unlink( output_file_name );
+    if (output_debug_file) unlink( output_debug_file );
     if (output_implib) unlink( output_implib );
-    STRARRAY_FOR_EACH( file, &output_debug_files) unlink( file );
 }
 
 static void clean_temp_files(void)
@@ -341,9 +341,11 @@ static enum file_type guess_lib_type(const char* dir, const char* library, char*
 
 static enum file_type get_lib_type(struct strarray path, const char *library, char** file)
 {
-    STRARRAY_FOR_EACH( str, &path )
+    unsigned int i;
+
+    for (i = 0; i < path.count; i++)
     {
-        enum file_type type = guess_lib_type(str, library, file);
+        enum file_type type = guess_lib_type(path.str[i], library, file);
 	if (type != file_na) return type;
     }
     return file_na;
@@ -353,6 +355,7 @@ static const char *find_binary( const char *name )
 {
     char *file_name, *args;
     struct strarray dirs = empty_strarray;
+    unsigned int i;
 
     if (strchr( name, '/' )) return name;
 
@@ -361,10 +364,10 @@ static const char *find_binary( const char *name )
 
     strarray_addall( &dirs, prefix_dirs );
     strarray_addall( &dirs, path_dirs );
-    STRARRAY_FOR_EACH( dir, &dirs )
+    for (i = 0; i < dirs.count; i++)
     {
         struct stat st;
-        char *prog = strmake( "%s/%s%s", dir, file_name, EXEEXT );
+        char *prog = strmake( "%s/%s%s", dirs.str[i], file_name, EXEEXT );
         if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111))
             return args ? strmake( "%s %s", prog, args ) : prog;
         free( prog );
@@ -404,29 +407,10 @@ static const struct tool_names tool_cpp     = { "cpp",     "clang --driver-mode=
 static const struct tool_names tool_ld      = { "ld",      "ld.lld",                  LD };
 static const struct tool_names tool_objcopy = { "objcopy", "llvm-objcopy" };
 
-static void add_clang_options( const char *target_name, struct strarray *ret )
-{
-    if (target_name)
-    {
-        strarray_add( ret, "-target" );
-        strarray_add( ret, target_name );
-    }
-    strarray_add( ret, "-Wno-unused-command-line-argument" );
-    strarray_add( ret, "-fuse-ld=lld" );
-    if (no_default_config) strarray_add( ret, "--no-default-config" );
-}
-
 static struct strarray build_tool_name( const char *target_name, struct tool_names tool )
 {
     const char *path, *str;
     struct strarray ret;
-
-    if (cc_cmd && !strncmp( tool.llvm_base, "clang", 5 ))
-    {
-        ret = strarray_fromstring( cc_cmd, " " );
-        if (is_llvm_pe_target( target ) || is_arm64x) add_clang_options( target_name, &ret );
-        return ret;
-    }
 
     if (target_name && target_version)
         str = strmake( "%s-%s-%s", target_name, tool.base, target_version );
@@ -447,7 +431,17 @@ static struct strarray build_tool_name( const char *target_name, struct tool_nam
     if (!(path = find_binary( str ))) error( "Could not find %s\n", tool.base );
 
     ret = strarray_fromstring( path, " " );
-    if (!strncmp( tool.llvm_base, "clang", 5 )) add_clang_options( target_name, &ret );
+    if (!strncmp( tool.llvm_base, "clang", 5 ))
+    {
+        if (target_name)
+        {
+            strarray_add( &ret, "-target" );
+            strarray_add( &ret, target_name );
+        }
+        strarray_add( &ret, "-Wno-unused-command-line-argument" );
+        strarray_add( &ret, "-fuse-ld=lld" );
+        if (no_default_config) strarray_add( &ret, "--no-default-config" );
+    }
     return ret;
 }
 
@@ -505,7 +499,6 @@ static struct strarray get_link_args( const char *output_name )
 {
     struct strarray link_args = get_translator();
     struct strarray flags = empty_strarray;
-    const char *version;
 
     strarray_addall( &link_args, linker_args );
 
@@ -542,7 +535,7 @@ static struct strarray get_link_args( const char *output_name )
         break;
 
     case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS_GNU:
+    case PLATFORM_CYGWIN:
         strarray_add( &link_args, "-nodefaultlibs" );
         strarray_add( &link_args, "-nostartfiles" );
 
@@ -551,9 +544,10 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add( &flags, "-shared" );
             strarray_add( &flags, "-Wl,--kill-at" );
         }
+        else strarray_add( &flags, is_gui_app ? "-mwindows" : "-mconsole" );
 
         if (is_unicode_app) strarray_add( &flags, "-municode" );
-        strarray_add( &flags, strmake( "-Wl,--subsystem,%s", subsystem ) );
+        if (subsystem) strarray_add( &flags, strmake("-Wl,--subsystem,%s", subsystem ));
 
         strarray_add( &flags, "-Wl,--exclude-all-symbols" );
         strarray_add( &flags, "-Wl,--nxcompat" );
@@ -568,8 +562,8 @@ static struct strarray get_link_args( const char *output_name )
         if (entry_point)
             strarray_add( &flags, strmake( "-Wl,--entry,%s%s", target.cpu == CPU_i386 ? "_" : "", entry_point ));
 
-        STRARRAY_FOR_EACH( file, &output_debug_files )
-            if (strendswith(file, ".pdb")) strarray_add(&link_args, strmake("-Wl,--pdb=%s", file));
+        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
+            strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_file));
 
         if (use_build_id)
             strarray_add( &link_args, "-Wl,--build-id");
@@ -588,8 +582,6 @@ static struct strarray get_link_args( const char *output_name )
         else if (!try_link( link_args, "-Wl,--file-alignment,0x1000,--section-alignment,0x1000" ))
             strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s,--section-alignment,%s",
                                                file_align, section_align ));
-        strarray_add( &link_args, target.cpu == CPU_i386 ?
-                      "-Wl,--undefined,___wine_call_gcc_ctors" : "-Wl,--undefined,__wine_call_gcc_ctors" );
         strarray_addall( &link_args, flags );
         return link_args;
 
@@ -605,30 +597,22 @@ static struct strarray get_link_args( const char *output_name )
         if (is_unicode_app) strarray_add( &flags, "-municode" );
         if (nostartfiles) strarray_add( &flags, "-nostartfiles" );
         if (image_base) strarray_add( &flags, strmake("-Wl,-base:%s", image_base ));
-
-        if (large_address_aware && target.cpu == CPU_i386)
-            strarray_add( &flags, "-Wl,-largeaddressaware" );
-
         if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
 
-        if ((version = strchr( subsystem, ':' ))) subsystem = strmake( "%.*s,%s", (int)(version - subsystem), subsystem, version + 1 );
-        strarray_add( &flags, "-Xlinker" );
-        strarray_add( &flags, strmake( "-subsystem:%s", subsystem ) );
+        if (subsystem)
+            strarray_add( &flags, strmake("-Wl,-subsystem:%s", subsystem ));
+        else
+            strarray_add( &flags, strmake("-Wl,-subsystem:%s", is_gui_app ? "windows" : "console" ));
 
-        STRARRAY_FOR_EACH( file, &output_debug_files )
+        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
         {
-            if (strendswith(file, ".pdb"))
-            {
-                strarray_add(&link_args, "-Wl,-debug");
-                strarray_add(&link_args, strmake("-Wl,-pdb:%s", file));
-            }
-            else strarray_add( &link_args, "-Wl,-debug:dwarf" );
+            strarray_add(&link_args, "-Wl,-debug");
+            strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_file));
         }
-
-        if (strip)
+        else if (strip)
             strarray_add( &link_args, "-s" );
-        else if (!output_debug_files.count)
-            strarray_add( &link_args, "-Wl,-debug:dwarf" );
+        else
+            strarray_add(&link_args, "-Wl,-debug:dwarf");
 
         if (use_build_id)
             strarray_add( &link_args, "-Wl,-build-id");
@@ -639,7 +623,6 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add(&link_args, strmake("-Wl,-implib:%s", make_temp_file( output_name, ".lib" )));
 
         strarray_add( &link_args, strmake( "-Wl,-filealign:%s,-align:%s,-driver", file_align, section_align ));
-        strarray_add( &link_args, "-Wl,-merge:.CRT=.rdata" );
 
         strarray_addall( &link_args, flags );
         return link_args;
@@ -872,7 +855,7 @@ static struct strarray get_compat_defines( int gcc_defs )
 static void compile( struct strarray files, const char *output_name, int compile_only )
 {
     struct strarray comp_args = get_translator();
-    unsigned int j;
+    unsigned int i, j;
     int gcc_defs = 0;
     struct strarray gcc;
     struct strarray gpp;
@@ -888,14 +871,14 @@ static void compile( struct strarray files, const char *output_name, int compile
 	case proc_cxx:
             gcc = build_tool_name( target_alias, tool_cc );
             gpp = build_tool_name( target_alias, tool_cxx );
-            STRARRAY_FOR_EACH( cc, &comp_args )
+            for ( j = 0; !gcc_defs && j < comp_args.count; j++ )
             {
-                STRARRAY_FOR_EACH( str, &gcc )
-                    if ((gcc_defs = str[0] != '-' && strendswith(cc, str))) break;
-                if (gcc_defs) break;
-                STRARRAY_FOR_EACH( str, &gpp )
-                    if ((gcc_defs = str[0] != '-' && strendswith(cc, str))) break;
-                if (gcc_defs) break;
+                const char *cc = comp_args.str[j];
+
+                for (i = 0; !gcc_defs && i < gcc.count; i++)
+                    gcc_defs = gcc.str[i][0] != '-' && strendswith(cc, gcc.str[i]);
+                for (i = 0; !gcc_defs && i < gpp.count; i++)
+                    gcc_defs = gpp.str[i][0] != '-' && strendswith(cc, gpp.str[i]);
             }
             break;
     }
@@ -919,14 +902,14 @@ static void compile( struct strarray files, const char *output_name, int compile
     strarray_addall(&comp_args, compiler_args);
 
     /* last, but not least, the files */
-    STRARRAY_FOR_EACH( file, &files )
+    for ( j = 0; j < files.count; j++ )
     {
-        if (file[0] == '-')
+        if (files.str[j][0] == '-')
         {
             /* keep -x and bare '-' (i.e. stdin) options */
-            if (file[1] && file[1] != 'x') continue;
+            if (files.str[j][1] && files.str[j][1] != 'x') continue;
         }
-	strarray_add(&comp_args, file);
+	strarray_add(&comp_args, files.str[j]);
     }
 
     /* standard includes come last in the include search path */
@@ -981,6 +964,7 @@ static struct strarray get_winebuild_args( const char *target )
 {
     const char *binary;
     struct strarray spec_args = empty_strarray;
+    unsigned int i;
 
     if (!(binary = find_binary( winebuild ))) error( "Could not find winebuild\n" );
     strarray_add( &spec_args, binary );
@@ -993,8 +977,8 @@ static struct strarray get_winebuild_args( const char *target )
     }
     if (force_pointer_size)
         strarray_add(&spec_args, strmake("-m%u", 8 * force_pointer_size ));
-    STRARRAY_FOR_EACH( dir, &prefix_dirs )
-        strarray_add( &spec_args, strmake( "-B%s", dir ));
+    for (i = 0; i < prefix_dirs.count; i++)
+        strarray_add( &spec_args, strmake( "-B%s", prefix_dirs.str[i] ));
     strarray_addall( &spec_args, winebuild_args );
     return spec_args;
 }
@@ -1025,6 +1009,52 @@ static char *find_static_lib( const char *dll )
     free( lib );
     return NULL;
 }
+
+static const char *find_libgcc(void)
+{
+    const char *out = make_temp_file( "find_libgcc", ".out" );
+    const char *err = make_temp_file( "find_libgcc", ".err" );
+    struct strarray link = get_translator();
+    int sout = -1, serr = -1, i;
+    char *libgcc, *p;
+    struct stat st;
+    size_t cnt;
+    int ret;
+
+    for (i = 0; i < linker_args.count; i++)
+	if (strcmp(linker_args.str[i], "--no-default-config" ))
+            strarray_add( &link, linker_args.str[i] );
+
+    strarray_add( &link, "-print-libgcc-file-name" );
+
+    sout = dup( fileno(stdout) );
+    freopen( out, "w", stdout );
+    serr = dup( fileno(stderr) );
+    freopen( err, "w", stderr );
+    ret = spawn( link, 1 );
+    if (sout >= 0)
+    {
+        dup2( sout, fileno(stdout) );
+        close( sout );
+    }
+    if (serr >= 0)
+    {
+        dup2( serr, fileno(stderr) );
+        close( serr );
+    }
+
+    if (ret || stat(out, &st) || !st.st_size) return NULL;
+
+    libgcc = xmalloc(st.st_size + 1);
+    sout = open(out, O_RDONLY);
+    if (sout == -1) return NULL;
+    cnt = read(sout, libgcc, st.st_size);
+    close(sout);
+    libgcc[cnt] = 0;
+    if ((p = strchr(libgcc, '\n'))) *p = 0;
+    return libgcc;
+}
+
 
 /* add specified library to the list of files */
 static void add_library( struct strarray lib_dirs, struct strarray *files, const char *library )
@@ -1058,6 +1088,7 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
                             const char *target_name, struct strarray files,
                             struct strarray resources, struct strarray *spec_objs )
 {
+    unsigned int i;
     struct strarray spec_args = get_winebuild_args( target_name );
     struct strarray tool;
     const char *spec_o_name, *output_name;
@@ -1103,10 +1134,12 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
         strarray_add(&spec_args, output_name);
     }
 
-    strarray_add( &spec_args, "--subsystem" );
-    strarray_add( &spec_args, subsystem );
-
-    if (!is_shared && large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
+    if (!is_shared)
+    {
+        strarray_add(&spec_args, "--subsystem");
+        strarray_add(&spec_args, is_gui_app ? "windows" : "console");
+        if (large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
+    }
 
     if (target.platform == PLATFORM_WINDOWS && target.cpu == CPU_i386)
         strarray_add(&spec_args, "--safeseh");
@@ -1117,20 +1150,30 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
         strarray_add(&spec_args, entry_point);
     }
 
-    if (!is_pe) STRARRAY_FOR_EACH( imp, &delayimports ) strarray_add(&spec_args, strmake("-d%s", imp));
+    if (subsystem)
+    {
+        strarray_add(&spec_args, "--subsystem");
+        strarray_add(&spec_args, subsystem);
+    }
+
+    if (!is_pe)
+    {
+        for (i = 0; i < delayimports.count; i++)
+            strarray_add(&spec_args, strmake("-d%s", delayimports.str[i]));
+    }
 
     strarray_addall( &spec_args, resources );
 
     /* add other files */
     strarray_add(&spec_args, "--");
-    STRARRAY_FOR_EACH( file, &files )
+    for (i = 0; i < files.count; i++)
     {
-	switch(file[1])
+	switch(files.str[i][1])
 	{
 	    case 'd':
 	    case 'a':
 	    case 'o':
-		strarray_add(&spec_args, file + 2);
+		strarray_add(&spec_args, files.str[i] + 2);
 		break;
 	}
     }
@@ -1142,6 +1185,7 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
 /* run winebuild to generate a data-only library */
 static void build_data_lib( const char *spec_file, const char *output_file, struct strarray files )
 {
+    unsigned int i;
     struct strarray spec_args = get_winebuild_args( target_alias );
 
     strarray_add(&spec_args, is_shared ? "--dll" : "--exe");
@@ -1154,7 +1198,8 @@ static void build_data_lib( const char *spec_file, const char *output_file, stru
     }
 
     /* add resource files */
-    STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add(&spec_args, file);
+    for (i = 0; i < files.count; i++)
+	if (files.str[i][1] == 'r') strarray_add(&spec_args, files.str[i]);
 
     spawn(spec_args, 0);
 }
@@ -1168,8 +1213,10 @@ static void build(struct strarray input_files, const char *output)
     struct strarray link_args;
     char *output_file;
     const char *output_name, *spec_file, *lang;
+    const char *libgcc = NULL;
     int generate_app_loader = 1;
     const char *crt_lib = NULL;
+    unsigned int i, j;
 
     /* NOTE: for the files array we'll use the following convention:
      *    -axxx:  xxx is an archive (.a)
@@ -1217,14 +1264,14 @@ static void build(struct strarray input_files, const char *output)
     else
     {
         strarray_add(&lib_dirs, strmake("%s/dlls", wine_objdir));
-        strarray_add(&lib_dirs, strmake("%s/libs", wine_objdir));
         strarray_addall(&lib_dirs, lib_path_dirs);
     }
 
     /* mark the files with their appropriate type */
     spec_file = lang = 0;
-    STRARRAY_FOR_EACH( file, &input_files )
+    for ( j = 0; j < input_files.count; j++ )
     {
+	const char* file = input_files.str[j];
 	if (file[0] != '-')
 	{
 	    switch(get_file_type(file))
@@ -1276,7 +1323,7 @@ static void build(struct strarray input_files, const char *output)
 
     if (!wine_objdir && !nodefaultlibs)
     {
-        if (!strncmp( subsystem, "windows", 7 ))
+        if (is_gui_app)
 	{
 	    add_library(lib_dirs, &files, "shell32");
 	    add_library(lib_dirs, &files, "comdlg32");
@@ -1285,15 +1332,10 @@ static void build(struct strarray input_files, const char *output)
         add_library(lib_dirs, &files, "advapi32");
         add_library(lib_dirs, &files, "user32");
         add_library(lib_dirs, &files, "winecrt0");
-        if (is_pe) add_library(lib_dirs, &files, "compiler-rt");
+        if (target.platform == PLATFORM_WINDOWS)
+            add_library(lib_dirs, &files, "compiler-rt");
         if (use_msvcrt)
         {
-            if (processor == proc_cxx)
-            {
-                add_library(lib_dirs, &files, "c++");
-                add_library(lib_dirs, &files, "msvcp140");
-                add_library(lib_dirs, &files, "vcruntime140");
-            }
             if (!crt_lib)
             {
                 if (strncmp( output_name, "msvcr", 5 ) &&
@@ -1311,7 +1353,7 @@ static void build(struct strarray input_files, const char *output)
     /* set default entry point, if needed */
     if (!entry_point)
     {
-        if (!strcmp( subsystem, "native" ))
+        if (subsystem && !strcmp( subsystem, "native" ))
             entry_point = (is_pe && target.cpu == CPU_i386) ? "DriverEntry@8" : "DriverEntry";
         else if (use_msvcrt && !is_shared && !is_win16_app)
             entry_point = is_unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
@@ -1324,7 +1366,8 @@ static void build(struct strarray input_files, const char *output)
         return;
     }
 
-    STRARRAY_FOR_EACH( file, &files ) if (file[1] == 'r') strarray_add( &resources, file );
+    for (i = 0; i < files.count; i++)
+	if (files.str[i][1] == 'r') strarray_add( &resources, files.str[i] );
 
     build_spec_obj( spec_file, output_file, target_alias, files, resources, &spec_objs );
     if (is_arm64x)
@@ -1342,28 +1385,41 @@ static void build(struct strarray input_files, const char *output)
 
     /* link everything together now */
     link_args = get_link_args( output_name );
+
+    switch (target.platform)
+    {
+    case PLATFORM_MINGW:
+    case PLATFORM_CYGWIN:
+        libgcc = find_libgcc();
+        if (!libgcc) libgcc = "-lgcc";
+        break;
+    default:
+        break;
+    }
+
     strarray_add(&link_args, "-o");
     strarray_add(&link_args, output_file_name);
 
-    STRARRAY_FOR_EACH( dir, &lib_dirs ) strarray_add(&link_args, strmake("-L%s", dir));
+    for ( j = 0; j < lib_dirs.count; j++ )
+	strarray_add(&link_args, strmake("-L%s", lib_dirs.str[j]));
 
     strarray_addall( &link_args, spec_objs );
 
     if (is_pe)
     {
-        STRARRAY_FOR_EACH( imp, &delayimports )
+        for (j = 0; j < delayimports.count; j++)
         {
             if (target.platform == PLATFORM_WINDOWS)
-                strarray_add(&link_args, strmake("-Wl,-delayload:%s", imp));
+                strarray_add(&link_args, strmake("-Wl,-delayload:%s", delayimports.str[j]));
             else
-                strarray_add(&link_args, strmake("-Wl,-delayload,%s",imp));
+                strarray_add(&link_args, strmake("-Wl,-delayload,%s",delayimports.str[j]));
         }
     }
 
-    STRARRAY_FOR_EACH( file, &files )
+    for ( j = 0; j < files.count; j++ )
     {
-	const char* name = file + 2;
-	switch(file[1])
+	const char* name = files.str[j] + 2;
+	switch(files.str[j][1])
 	{
 	    case 'l':
 		strarray_add(&link_args, strmake("-l%s", name));
@@ -1385,7 +1441,7 @@ static void build(struct strarray input_files, const char *output)
 		strarray_add(&link_args, name);
 		break;
 	    case 'W':
-		strarray_add(&link_args, file);
+		strarray_add(&link_args, files.str[j]);
 		break;
 	}
     }
@@ -1397,22 +1453,21 @@ static void build(struct strarray input_files, const char *output)
 	strarray_add(&link_args, "-lc");
     }
 
+    if (libgcc) strarray_add(&link_args, libgcc);
+
     atexit( cleanup_output_files );
 
     spawn(link_args, 0);
 
-    STRARRAY_FOR_EACH( file, &output_debug_files )
+    if (output_debug_file && !strendswith(output_debug_file, ".pdb"))
     {
-        struct strarray tool, objcopy;
-
-        if (strendswith(file, ".pdb")) continue;
-        objcopy = build_tool_name(target_alias, tool_objcopy);
+        struct strarray tool, objcopy = build_tool_name(target_alias, tool_objcopy);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--only-keep-debug");
         strarray_add(&tool, output_file_name);
-        strarray_add(&tool, file);
+        strarray_add(&tool, output_debug_file);
         spawn(tool, 1);
 
         tool = empty_strarray;
@@ -1424,7 +1479,7 @@ static void build(struct strarray input_files, const char *output)
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--add-gnu-debuglink");
-        strarray_add(&tool, file);
+        strarray_add(&tool, output_debug_file);
         strarray_add(&tool, output_file_name);
         spawn(tool, 0);
     }
@@ -1571,7 +1626,6 @@ int main(int argc, char **argv)
     int i, c, next_is_arg = 0;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
     struct strarray args = empty_strarray;
-    bool is_gui_app = false;
     const char* option_arg;
     char* str;
 
@@ -1641,8 +1695,7 @@ int main(int argc, char **argv)
                     next_is_arg = strcmp("-target", args.str[i]) == 0;
                     break;
 		case '-':
-		    next_is_arg = (strcmp("--cc-cmd", args.str[i]) == 0 ||
-                                   strcmp("--param", args.str[i]) == 0 ||
+		    next_is_arg = (strcmp("--param", args.str[i]) == 0 ||
                                    strcmp("--sysroot", args.str[i]) == 0 ||
                                    strcmp("--target", args.str[i]) == 0 ||
                                    strcmp("--wine-objdir", args.str[i]) == 0 ||
@@ -1877,7 +1930,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--debug-file") && j < Wl.count - 1)
                             {
-                                strarray_add( &output_debug_files, xstrdup( Wl.str[++j] ));
+                                output_debug_file = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--whole-archive") ||
@@ -1905,12 +1958,13 @@ int main(int argc, char **argv)
                     }
 		    else if (strncmp("-Wb,", args.str[i], 4) == 0)
 		    {
+                        unsigned int j;
                         struct strarray Wb = strarray_fromstring(args.str[i] + 4, ",");
-                        STRARRAY_FOR_EACH( arg, &Wb )
+                        for (j = 0; j < Wb.count; j++)
                         {
-                            if (!strcmp(arg, "--data-only")) data_only = true;
-                            if (!strcmp(arg, "--fake-module")) fake_module = true;
-                            else strarray_add( &winebuild_args, arg );
+                            if (!strcmp(Wb.str[j], "--data-only")) data_only = true;
+                            if (!strcmp(Wb.str[j], "--fake-module")) fake_module = true;
+                            else strarray_add( &winebuild_args, Wb.str[j] );
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
@@ -1927,11 +1981,6 @@ int main(int argc, char **argv)
                     {
                         no_default_config = true;
                         raw_compiler_arg = raw_linker_arg = 1;
-                    }
-                    else if (is_option( args, i, "--cc-cmd", &option_arg ))
-                    {
-                        cc_cmd = option_arg;
-                        raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (is_option( args, i, "--sysroot", &option_arg ))
                     {
@@ -2005,14 +2054,6 @@ int main(int argc, char **argv)
 
     if (!file_align) file_align = section_align;
 
-    if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64)
-        error( "Non-PE builds are not supported on this platform. You need to use something like '--target=%s-windows'.\n",
-               target.cpu == CPU_ARM ? "arm" : "aarch64" );
-
-    if (!subsystem) subsystem = is_gui_app ? "windows" : "console";
-    if (!strcmp( subsystem, "windows" ) || !strcmp( subsystem, "console" ))
-        subsystem = strmake( "%s:6.0", subsystem );
-
     if (!winebuild)
     {
         if (wine_objdir) winebuild = strmake( "%s/tools/winebuild/winebuild%s", wine_objdir, EXEEXT );
@@ -2027,7 +2068,7 @@ int main(int argc, char **argv)
     else compile(file_args, output, compile_only);
 
     output_file_name = NULL;
-    output_debug_files.count = 0;
+    output_debug_file = NULL;
     output_implib = NULL;
     return 0;
 }

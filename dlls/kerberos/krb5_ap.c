@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -69,6 +70,7 @@ static const SecPkgInfoW infoW =
     kerberos_comment_W
 };
 
+static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
 struct cred_handle
@@ -134,6 +136,7 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
             ERR( "no Kerberos support, expect problems\n" );
     }
 
+    kerberos_package_id = package_id;
     lsa_dispatch = *dispatch;
 
     kerberos_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
@@ -474,8 +477,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
                                    ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
-                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE | ISC_REQ_ALLOCATE_MEMORY |
-                                   ISC_REQ_EXTENDED_ERROR;
+                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE | ISC_REQ_ALLOCATE_MEMORY;
     char *target = NULL;
     NTSTATUS status;
     ULONG exptime;
@@ -865,30 +867,16 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     {
         struct context_handle *context_handle = (void *)context;
         struct unseal_message_params params;
-        int stream_idx, data_idx, token_idx = -1;
+        int data_idx, token_idx;
 
-        if ((stream_idx = get_buffer_index( message, SECBUFFER_STREAM )) == -1 &&
-            (token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
         if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+        if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
 
         params.context = context_handle->handle;
-
-        if (token_idx != -1)
-        {
-            params.stream_length = 0;
-            params.stream = NULL;
-            params.token_length = message->pBuffers[token_idx].cbBuffer;
-            params.token = message->pBuffers[token_idx].pvBuffer;
-        }
-        else
-        {
-            params.stream_length = message->pBuffers[stream_idx].cbBuffer;
-            params.stream = message->pBuffers[stream_idx].pvBuffer;
-            params.token_length = 0;
-            params.token = NULL;
-        }
-        params.data_length = &message->pBuffers[data_idx].cbBuffer;
-        params.data = (BYTE **)&message->pBuffers[data_idx].pvBuffer;
+        params.data_length = message->pBuffers[data_idx].cbBuffer;
+        params.data = message->pBuffers[data_idx].pvBuffer;
+        params.token_length = message->pBuffers[token_idx].cbBuffer;
+        params.token = message->pBuffers[token_idx].pvBuffer;
         params.qop = quality_of_protection;
 
         return KRB5_CALL( unseal_message, &params );

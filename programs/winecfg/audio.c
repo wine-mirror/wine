@@ -61,8 +61,6 @@ static WCHAR g_drv_keyW[256] = L"Software\\Wine\\Drivers\\";
 
 static UINT num_render_devs, num_capture_devs;
 static struct DeviceInfo *render_devs, *capture_devs;
-static UINT num_midi_devs;
-static WCHAR **midi_devs;
 
 static const struct
 {
@@ -70,7 +68,6 @@ static const struct
     DWORD speaker_mask;
 } speaker_configs[] =
 {
-    { IDS_AUDIO_SPEAKER_7POINT1, KSAUDIO_SPEAKER_7POINT1_SURROUND },
     { IDS_AUDIO_SPEAKER_5POINT1, KSAUDIO_SPEAKER_5POINT1 },
     { IDS_AUDIO_SPEAKER_QUAD, KSAUDIO_SPEAKER_QUAD },
     { IDS_AUDIO_SPEAKER_STEREO, KSAUDIO_SPEAKER_STEREO },
@@ -181,46 +178,18 @@ static BOOL load_devices(IMMDeviceEnumerator *devenum, EDataFlow dataflow,
     return TRUE;
 }
 
-static BOOL load_midi_devices(UINT *ndevs, WCHAR ***out)
-{
-    UINT i;
-
-    *ndevs = midiOutGetNumDevs();
-
-    if(*ndevs > 0){
-        *out = malloc(sizeof(WCHAR *) * (*ndevs));
-        if(!*out)
-            return FALSE;
-
-        for(i = 0; i < *ndevs; ++i){
-            MIDIOUTCAPSW caps;
-            if (MMSYSERR_NOERROR != midiOutGetDevCapsW(i, &caps, sizeof(caps))){
-                (*out)[i] = NULL;
-                continue;
-            }
-            (*out)[i] = StrDupW(caps.szPname);
-        }
-    }else
-        *out = NULL;
-
-    return TRUE;
-}
-
 static BOOL get_driver_name(IMMDeviceEnumerator *devenum, PROPVARIANT *pv)
 {
     IMMDevice *device;
     IPropertyStore *ps;
     HRESULT hr;
 
-    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, eConsole, &device);
-    if(FAILED(hr)) {
-        ERR("Could not get default audio endpoint.\n");
+    hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
+    if(FAILED(hr))
         return FALSE;
-    }
 
     hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
     if(FAILED(hr)){
-        ERR("Could not get property store for default audio endpoint (0x%p).\n", device);
         IMMDevice_Release(device);
         return FALSE;
     }
@@ -229,10 +198,8 @@ static BOOL get_driver_name(IMMDeviceEnumerator *devenum, PROPVARIANT *pv)
             (const PROPERTYKEY *)&DEVPKEY_Device_Driver, pv);
     IPropertyStore_Release(ps);
     IMMDevice_Release(device);
-    if(FAILED(hr) || pv == NULL || pv->pwszVal == NULL) {
-        ERR("Could not get device driver property value.\n");
+    if(FAILED(hr))
         return FALSE;
-    }
 
     return TRUE;
 }
@@ -242,7 +209,6 @@ static void initAudioDlg (HWND hDlg)
     WCHAR display_str[256], format_str[256], sysdefault_str[256], disabled_str[64];
     IMMDeviceEnumerator *devenum;
     BOOL have_driver = FALSE;
-    WCHAR *reg_midi_dev;
     HRESULT hr;
     UINT i;
     LVCOLUMNW lvcol;
@@ -277,8 +243,6 @@ static void initAudioDlg (HWND hDlg)
         IMMDeviceEnumerator_Release(devenum);
     }
 
-    load_midi_devices(&num_midi_devs, &midi_devs);
-
     SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_ADDSTRING,
             0, (LPARAM)sysdefault_str);
     SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETCURSEL, 0, 0);
@@ -292,9 +256,6 @@ static void initAudioDlg (HWND hDlg)
     SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_ADDSTRING,
             0, (LPARAM)sysdefault_str);
     SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETCURSEL, 0, 0);
-    SendDlgItemMessageW(hDlg, IDC_MIDI_DEVICE, CB_ADDSTRING,
-            0, (LPARAM)sysdefault_str);
-    SendDlgItemMessageW(hDlg, IDC_MIDI_DEVICE, CB_SETCURSEL, 0, 0);
 
     i = 0;
     while (speaker_configs[i].text_id != 0) {
@@ -403,21 +364,6 @@ static void initAudioDlg (HWND hDlg)
     }else
         swprintf(display_str, ARRAY_SIZE(display_str), format_str, disabled_str);
 
-    reg_midi_dev = get_reg_key(HKEY_CURRENT_USER,
-            L"Software\\Microsoft\\Windows\\CurrentVersion\\Multimedia\\MIDIMap", L"szPname", NULL);
-    for(i = 0; i < num_midi_devs; ++i){
-        if(!midi_devs[i])
-            continue;
-
-        SendDlgItemMessageW(hDlg, IDC_MIDI_DEVICE, CB_ADDSTRING,
-                0, (LPARAM)midi_devs[i]);
-        SendDlgItemMessageW(hDlg, IDC_MIDI_DEVICE, CB_SETITEMDATA,
-                i + 1, (LPARAM)midi_devs[i]);
-        if(reg_midi_dev && !wcscmp(midi_devs[i], reg_midi_dev))
-            SendDlgItemMessageW(hDlg, IDC_MIDI_DEVICE, CB_SETCURSEL, i + 1, 0);
-    }
-    free(reg_midi_dev);
-
     SetDlgItemTextW(hDlg, IDC_AUDIO_DRIVER, display_str);
 }
 
@@ -435,23 +381,6 @@ static void set_reg_device(HWND hDlg, int dlgitem, const WCHAR *key_name)
         set_reg_key(HKEY_CURRENT_USER, g_drv_keyW, key_name, NULL);
     else
         set_reg_key(HKEY_CURRENT_USER, g_drv_keyW, key_name, info->id);
-}
-
-static void set_reg_midi_device(HWND hDlg, int dlgitem)
-{
-    UINT idx;
-    WCHAR *id;
-
-    idx = SendDlgItemMessageW(hDlg, dlgitem, CB_GETCURSEL, 0, 0);
-
-    id = (WCHAR *)SendDlgItemMessageW(hDlg, dlgitem, CB_GETITEMDATA, idx, 0);
-
-    if(!id || id == (void*)CB_ERR)
-        set_reg_key(HKEY_CURRENT_USER,
-                L"Software\\Microsoft\\Windows\\CurrentVersion\\Multimedia\\MIDIMap", L"szPname", NULL);
-    else
-        set_reg_key(HKEY_CURRENT_USER,
-                L"Software\\Microsoft\\Windows\\CurrentVersion\\Multimedia\\MIDIMap", L"szPname", id);
 }
 
 static void test_sound(void)
@@ -564,12 +493,6 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           case IDC_VOICEIN_DEVICE:
               if(HIWORD(wParam) == CBN_SELCHANGE){
                   set_reg_device(hDlg, IDC_VOICEIN_DEVICE, L"DefaultVoiceInput");
-                  SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
-              }
-              break;
-          case IDC_MIDI_DEVICE:
-              if(HIWORD(wParam) == CBN_SELCHANGE){
-                  set_reg_midi_device(hDlg, IDC_MIDI_DEVICE);
                   SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
               }
               break;

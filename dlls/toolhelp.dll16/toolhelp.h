@@ -27,7 +27,7 @@
 #define MAX_PATH16	255
 #define MAX_CLASSNAME	255
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 /* Global heap */
 
@@ -415,6 +415,6 @@ typedef struct {
     WORD wFlags;
 } STACKTRACEENTRY;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_TOOLHELP_H */

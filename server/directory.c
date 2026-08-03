@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -28,6 +29,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "ddk/wdm.h"
 
@@ -39,48 +41,34 @@
 
 #define HASH_SIZE 7  /* default hash size */
 
-static const WCHAR objtype_name[] = {'T','y','p','e'};
-
-struct type_descr objtype_type =
-{
-    { objtype_name, sizeof(objtype_name) },        /* name */
-    STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1,  /* valid_access */
-    {                                              /* mapping */
-        STANDARD_RIGHTS_READ,
-        STANDARD_RIGHTS_WRITE,
-        STANDARD_RIGHTS_EXECUTE,
-        STANDARD_RIGHTS_REQUIRED | 0x1
-    },
-};
-
 struct object_type
 {
     struct object     obj;        /* object header */
 };
 
 static void object_type_dump( struct object *obj, int verbose );
+static struct object_type *object_type_get_type( struct object *obj );
 
 static const struct object_ops object_type_ops =
 {
-    .size = sizeof(struct object_type),
-    .type = &objtype_type,
-    .dump = object_type_dump,
+    sizeof(struct object_type),   /* size */
+    object_type_dump,             /* dump */
+    object_type_get_type,         /* get_type */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    no_map_access,                /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    no_lookup_name,               /* lookup_name */
+    no_open_file,                 /* open_file */
+    no_close_handle,              /* close_handle */
+    no_destroy                    /* destroy */
 };
 
-
-static const WCHAR directory_name[] = {'D','i','r','e','c','t','o','r','y'};
-
-struct type_descr directory_type =
-{
-    { directory_name, sizeof(directory_name) },   /* name */
-    DIRECTORY_ALL_ACCESS,                         /* valid_access */
-    {                                             /* mapping */
-        STANDARD_RIGHTS_READ | DIRECTORY_TRAVERSE | DIRECTORY_QUERY,
-        STANDARD_RIGHTS_WRITE | DIRECTORY_CREATE_SUBDIRECTORY | DIRECTORY_CREATE_OBJECT,
-        STANDARD_RIGHTS_EXECUTE | DIRECTORY_TRAVERSE | DIRECTORY_QUERY,
-        DIRECTORY_ALL_ACCESS
-    },
-};
 
 struct directory
 {
@@ -94,74 +82,65 @@ struct directory_init_data
 };
 
 static void directory_dump( struct object *obj, int verbose );
-static bool directory_init( struct object *obj, const void *init_data );
+static struct object_type *directory_get_type( struct object *obj );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
-                                             unsigned int attr, struct object *root );
+                                             unsigned int attr );
 static void directory_destroy( struct object *obj );
 
 static const struct object_ops directory_ops =
 {
-    .size        = sizeof(struct directory),
-    .type        = &directory_type,
-    .dump        = directory_dump,
-    .init        = directory_init,
-    .lookup_name = directory_lookup_name,
-    .destroy     = directory_destroy,
+    sizeof(struct directory),     /* size */
+    directory_dump,               /* dump */
+    directory_get_type,           /* get_type */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
+    no_get_fd,                    /* get_fd */
+    default_fd_map_access,        /* map_access */
+    default_get_sd,               /* get_sd */
+    default_set_sd,               /* set_sd */
+    directory_lookup_name,        /* lookup_name */
+    no_open_file,                 /* open_file */
+    no_close_handle,              /* close_handle */
+    directory_destroy             /* destroy */
 };
 
 static struct directory *root_directory;
 static struct directory *dir_objtype;
 
 
-static struct type_descr *types[] =
-{
-    &objtype_type,
-    &directory_type,
-    &symlink_type,
-    &token_type,
-    &job_type,
-    &process_type,
-    &thread_type,
-    &debug_obj_type,
-    &event_type,
-    &mutex_type,
-    &semaphore_type,
-    &timer_type,
-    &keyed_event_type,
-    &winstation_type,
-    &desktop_type,
-    &device_type,
-    &completion_type,
-    &file_type,
-    &mapping_type,
-    &key_type,
-    &apc_reserve_type,
-    &completion_reserve_type,
-    &alpc_port_type,
-};
-
 static void object_type_dump( struct object *obj, int verbose )
 {
-    fputs( "Object type\n", stderr );
+    assert( obj->ops == &object_type_ops );
+
+    fputs( "Object type ", stderr );
+    dump_object_name( obj );
+    fputc( '\n', stderr );
 }
 
-static struct object_type *create_object_type( struct object *root, unsigned int index, unsigned int attr )
+static struct object_type *object_type_get_type( struct object *obj )
 {
-    struct type_descr *descr = types[index];
-    struct object_type *type;
-    struct object_params params = { .ops = &object_type_ops, .root = root,
-                                    .name = descr->name, .attr = attr };
-
-    if ((type = create_named_object( &params )))
-    {
-        descr->index = index;
-    }
-    return type;
+    static const WCHAR name[] = {'O','b','j','e','c','t','T','y','p','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static void directory_dump( struct object *obj, int verbose )
 {
-    fputs( "Directory\n", stderr );
+    assert( obj->ops == &directory_ops );
+
+    fputs( "Directory ", stderr );
+    dump_object_name( obj );
+    fputc( '\n', stderr );
+}
+
+static struct object_type *directory_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','i','r','e','c','t','o','r','y'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static bool directory_init( struct object *obj, const void *init_data )
@@ -173,58 +152,46 @@ static bool directory_init( struct object *obj, const void *init_data )
 }
 
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
-                                             unsigned int attr, struct object *root )
+                                             unsigned int attr )
 {
     struct directory *dir = (struct directory *)obj;
     struct object *found;
     struct unicode_str tmp;
+    const WCHAR *p;
 
     assert( obj->ops == &directory_ops );
 
-    if (!name) return NULL;  /* open the directory itself */
+    if (!(p = memchrW( name->str, '\\', name->len / sizeof(WCHAR) )))
+        /* Last element in the path name */
+        tmp.len = name->len;
+    else
+        tmp.len = (p - name->str) * sizeof(WCHAR);
 
     tmp.str = name->str;
-    tmp.len = get_path_element( name->str, name->len );
-
-    if ((found = find_object( dir->entries, tmp, attr )))
+    if ((found = find_object( dir->entries, &tmp, attr )))
     {
-        /* Skip trailing \\ and move to the next element */
-        if (tmp.len < name->len)
+        /* Skip trailing \\ */
+        if (p)
         {
+            p++;
             tmp.len += sizeof(WCHAR);
-            name->str += tmp.len / sizeof(WCHAR);
-            name->len -= tmp.len;
         }
-        else
-        {
-            name->str = NULL;
-            name->len = 0;
-        }
+        /* Move to the next element*/
+        name->str = p;
+        name->len -= tmp.len;
         return found;
     }
 
-    if (name->str)  /* not the last element */
+    if (name->str)
     {
         if (tmp.len == 0) /* Double backslash */
             set_error( STATUS_OBJECT_NAME_INVALID );
-        else if (tmp.len < name->len)  /* Path still has backslashes */
+        else if (p)  /* Path still has backslashes */
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
+        else
+            clear_error();
     }
     return NULL;
-}
-
-int directory_link_name( struct object *obj, struct object_name *name, struct object *parent )
-{
-    struct directory *dir = (struct directory *)parent;
-
-    if (parent->ops != &directory_ops)
-    {
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        return 0;
-    }
-    namespace_add( dir->entries, name );
-    name->parent = grab_object( parent );
-    return 1;
 }
 
 static void directory_destroy( struct object *obj )
@@ -234,167 +201,225 @@ static void directory_destroy( struct object *obj )
     free( dir->entries );
 }
 
-static struct directory *create_directory( struct object *root, struct unicode_str name,
-                                           unsigned int attr, unsigned int hash_size,
-                                           const struct security_descriptor *sd )
+static struct directory *create_directory( struct directory *root, const struct unicode_str *name,
+                                           unsigned int attr, unsigned int hash_size )
 {
     struct directory_init_data data = { .hash_size = hash_size };
     struct object_params params = { .ops = &directory_ops, .root = root, .name = name,
                                     .attr = attr, .sd = sd, .init_data = &data };
 
-    return create_named_object( &params );
+    if ((dir = create_named_object_dir( root, name, attr, &directory_ops )) &&
+        get_error() != STATUS_OBJECT_NAME_EXISTS)
+    {
+        if (!(dir->entries = create_namespace( hash_size )))
+        {
+            release_object( dir );
+            dir = NULL;
+        }
+    }
+    return dir;
 }
 
-struct object *get_root_directory(void)
+struct directory *get_directory_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
-    return grab_object( root_directory );
+    return (struct directory *)get_handle_obj( process, handle, access, &directory_ops );
 }
 
-/* return a directory object for creating/opening some object; no access rights are required */
-struct object *get_directory_obj( struct process *process, obj_handle_t handle )
+/******************************************************************************
+ * Find an object by its name in a given root object
+ *
+ * PARAMS
+ *  root      [I] directory to start search from or NULL to start from \\
+ *  name      [I] object name to search for
+ *  attr      [I] OBJECT_ATTRIBUTES.Attributes
+ *  name_left [O] [optional] leftover name if object is not found
+ *
+ * RETURNS
+ *  NULL:      If params are invalid
+ *  Found:     If object with exact name is found returns that object
+ *             (name_left->len == 0). Object's refcount is incremented
+ *  Not found: The last matched parent. (name_left->len > 0)
+ *             Parent's refcount is incremented.
+ */
+struct object *find_object_dir( struct directory *root, const struct unicode_str *name,
+                                unsigned int attr, struct unicode_str *name_left )
 {
-    return get_handle_obj( process, handle, 0, &directory_ops );
+    struct object *obj, *parent;
+    struct unicode_str name_tmp;
+
+    if (name) name_tmp = *name;
+    else name_tmp.len = 0;
+
+    /* Arguments check:
+     * - Either rootdir or name have to be specified
+     * - If root is specified path shouldn't start with backslash */
+    if (root)
+    {
+        if (name_tmp.len && name_tmp.str[0] == '\\')
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return NULL;
+        }
+        parent = grab_object( root );
+    }
+    else
+    {
+        if (!name_tmp.len || name_tmp.str[0] != '\\')
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return NULL;
+        }
+        parent = grab_object( &root_directory->obj );
+        /* skip leading backslash */
+        name_tmp.str++;
+        name_tmp.len -= sizeof(WCHAR);
+    }
+
+    /* Special case for opening RootDirectory */
+    if (!name_tmp.len) goto done;
+
+    while ((obj = parent->ops->lookup_name( parent, &name_tmp, attr )))
+    {
+        /* move to the next element */
+        release_object ( parent );
+        parent = obj;
+    }
+    if (get_error())
+    {
+        release_object( parent );
+        return NULL;
+    }
+
+    done:
+    if (name_left) *name_left = name_tmp;
+    return parent;
+}
+
+/* create a named (if name is present) or unnamed object. */
+void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
+                               unsigned int attributes, const struct object_ops *ops )
+{
+    struct object *obj, *new_obj = NULL;
+    struct unicode_str new_name;
+
+    if (!name || !name->len) return alloc_object( ops );
+
+    if (!(obj = find_object_dir( root, name, attributes, &new_name ))) return NULL;
+    if (!new_name.len)
+    {
+        if (attributes & OBJ_OPENIF && obj->ops == ops)
+            set_error( STATUS_OBJECT_NAME_EXISTS );
+        else
+        {
+            release_object( obj );
+            obj = NULL;
+            if (attributes & OBJ_OPENIF)
+                set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            else
+                set_error( STATUS_OBJECT_NAME_COLLISION );
+        }
+        return obj;
+    }
+
+    /* ATM we can't insert objects into anything else but directories */
+    if (obj->ops != &directory_ops)
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    else
+    {
+        struct directory *dir = (struct directory *)obj;
+        if ((new_obj = create_object( dir->entries, ops, &new_name, &dir->obj )))
+            clear_error();
+    }
+
+    release_object( obj );
+    return new_obj;
+}
+
+/* open a new handle to an existing object */
+void *open_object_dir( struct directory *root, const struct unicode_str *name,
+                       unsigned int attr, const struct object_ops *ops )
+{
+    struct unicode_str name_left;
+    struct object *obj;
+
+    if ((obj = find_object_dir( root, name, attr, &name_left )))
+    {
+        if (name_left.len) /* not fully parsed */
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        else if (ops && obj->ops != ops)
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        else
+            return obj;
+
+        release_object( obj );
+    }
+    return NULL;
+}
+
+/* retrieve an object type, creating it if needed */
+struct object_type *get_object_type( const struct unicode_str *name )
+{
+    struct object_type *type;
+
+    if ((type = open_object_dir( dir_objtype, name, 0, &object_type_ops )))
+        return type;
+
+    if ((type = create_named_object_dir( dir_objtype, name, 0, &object_type_ops )))
+    {
+        grab_object( type );
+        make_object_static( &type->obj );
+        clear_error();
+    }
+    return type;
 }
 
 /* Global initialization */
 
-static void create_session( unsigned int id )
-{
-    /* directories */
-    static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
-    static const WCHAR dir_bnolinksW[] = {'B','N','O','L','I','N','K','S'};
-    static const WCHAR dir_bnoW[] = {'B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
-    static const WCHAR dir_dosdevicesW[] = {'D','o','s','D','e','v','i','c','e','s'};
-    static const WCHAR dir_windowsW[] = {'W','i','n','d','o','w','s'};
-    static const WCHAR dir_winstationsW[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n','s'};
-    static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
-    static const struct unicode_str dir_bnolinks_str = {dir_bnolinksW, sizeof(dir_bnolinksW)};
-    static const struct unicode_str dir_bno_str = {dir_bnoW, sizeof(dir_bnoW)};
-    static const struct unicode_str dir_dosdevices_str = {dir_dosdevicesW, sizeof(dir_dosdevicesW)};
-    static const struct unicode_str dir_windows_str = {dir_windowsW, sizeof(dir_windowsW)};
-    static const struct unicode_str dir_winstations_str = {dir_winstationsW, sizeof(dir_winstationsW)};
-
-    /* symlinks */
-    static const WCHAR link_globalW[] = {'G','l','o','b','a','l'};
-    static const WCHAR link_localW[]  = {'L','o','c','a','l'};
-    static const WCHAR link_sessionW[] = {'S','e','s','s','i','o','n'};
-    static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
-    static const struct unicode_str link_local_str = {link_localW, sizeof(link_localW)};
-    static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
-
-    static struct directory *dir_bno_global, *dir_sessions, *dir_bnolinks;
-    struct directory *dir_id, *dir_bno, *dir_dosdevices, *dir_windows, *dir_winstation;
-    struct object *link_global, *link_local, *link_session, *link_bno, *link_windows;
-    struct unicode_str id_str;
-    char id_strA[10];
-    WCHAR *id_strW;
-
-    if (!id)
-    {
-        dir_bno_global = create_directory( &root_directory->obj, dir_bno_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-        dir_sessions   = create_directory( &root_directory->obj, dir_sessions_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-        dir_bnolinks   = create_directory( &dir_sessions->obj, dir_bnolinks_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-        release_object( dir_bno_global );
-        release_object( dir_bnolinks );
-        release_object( dir_sessions );
-    }
-
-    snprintf( id_strA, sizeof(id_strA), "%u", id );
-    id_strW = ascii_to_unicode_str( id_strA, &id_str );
-    dir_id = create_directory( &dir_sessions->obj, id_str, 0, HASH_SIZE, NULL );
-    dir_dosdevices = create_directory( &dir_id->obj, dir_dosdevices_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-
-    /* for session 0, directories are created under the root */
-    if (!id)
-    {
-        dir_bno      = (struct directory *)grab_object( dir_bno_global );
-        dir_windows  = create_directory( &root_directory->obj, dir_windows_str, 0, HASH_SIZE, NULL );
-        link_bno     = create_obj_symlink( &dir_id->obj, dir_bno_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
-        link_windows = create_obj_symlink( &dir_id->obj, dir_windows_str, OBJ_PERMANENT, &dir_windows->obj, NULL );
-        release_object( link_bno );
-        release_object( link_windows );
-    }
-    else
-    {
-        /* use a larger hash table for this one since it can contain a lot of objects */
-        dir_bno     = create_directory( &dir_id->obj, dir_bno_str, 0, 37, NULL );
-        dir_windows = create_directory( &dir_id->obj, dir_windows_str, 0, HASH_SIZE, NULL );
-    }
-    dir_winstation = create_directory( &dir_windows->obj, dir_winstations_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-
-    link_global  = create_obj_symlink( &dir_bno->obj, link_global_str, OBJ_PERMANENT, &dir_bno_global->obj, NULL );
-    link_local   = create_obj_symlink( &dir_bno->obj, link_local_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
-    link_session = create_obj_symlink( &dir_bno->obj, link_session_str, OBJ_PERMANENT, &dir_bnolinks->obj, NULL );
-    link_bno     = create_obj_symlink( &dir_bnolinks->obj, id_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
-    release_object( link_global );
-    release_object( link_local );
-    release_object( link_session );
-    release_object( link_bno );
-
-    release_object( dir_dosdevices );
-    release_object( dir_winstation );
-    release_object( dir_windows );
-    release_object( dir_bno );
-    release_object( dir_id );
-    free( id_strW );
-}
-
-void init_directories( struct fd *intl_fd )
+void init_directories(void)
 {
     /* Directories */
-    static const WCHAR dir_globalW[] = {'?','?'};
+    static const WCHAR dir_globalW[] = {'\\','?','?'};
     static const WCHAR dir_driverW[] = {'D','r','i','v','e','r'};
     static const WCHAR dir_deviceW[] = {'D','e','v','i','c','e'};
-    static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s'};
+    static const WCHAR dir_basenamedW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
+    static const WCHAR dir_named_pipeW[] = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e'};
+    static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
+    static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s',};
+    static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
     static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
-    static const WCHAR dir_nlsW[] = {'N','L','S'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
+    static const struct unicode_str dir_basenamed_str = {dir_basenamedW, sizeof(dir_basenamedW)};
+    static const struct unicode_str dir_named_pipe_str = {dir_named_pipeW, sizeof(dir_named_pipeW)};
+    static const struct unicode_str dir_mailslot_str = {dir_mailslotW, sizeof(dir_mailslotW)};
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
+    static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
     static const struct unicode_str dir_kernel_str = {dir_kernelW, sizeof(dir_kernelW)};
-    static const struct unicode_str dir_nls_str = {dir_nlsW, sizeof(dir_nlsW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
-    static const WCHAR link_globalrootW[] = {'G','L','O','B','A','L','R','O','O','T'};
     static const WCHAR link_globalW[] = {'G','l','o','b','a','l'};
-    static const WCHAR link_nulW[]    = {'N','U','L'};
+    static const WCHAR link_localW[]  = {'L','o','c','a','l'};
     static const WCHAR link_pipeW[]   = {'P','I','P','E'};
     static const WCHAR link_mailslotW[] = {'M','A','I','L','S','L','O','T'};
-    static const WCHAR link_coninW[]  = {'C','O','N','I','N','$'};
-    static const WCHAR link_conoutW[] = {'C','O','N','O','U','T','$'};
-    static const WCHAR link_conW[]    = {'C','O','N'};
-    static const WCHAR link_currentinW[]  = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
-        '\\','C','u','r','r','e','n','t','I','n'};
-    static const WCHAR link_currentoutW[] = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
-        '\\','C','u','r','r','e','n','t','O','u','t'};
-    static const WCHAR link_consoleW[]    = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
-        '\\','C','o','n','s','o','l','e'};
+    static const WCHAR link_0W[]      = {'0'};
+    static const WCHAR link_sessionW[] = {'S','e','s','s','i','o','n'};
+    static const WCHAR link_sessionsW[] = {'\\','S','e','s','s','i','o','n','s'};
     static const struct unicode_str link_dosdev_str = {link_dosdevW, sizeof(link_dosdevW)};
-    static const struct unicode_str link_globalroot_str = {link_globalrootW, sizeof(link_globalrootW)};
     static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
-    static const struct unicode_str link_nul_str    = {link_nulW, sizeof(link_nulW)};
+    static const struct unicode_str link_local_str  = {link_localW, sizeof(link_localW)};
     static const struct unicode_str link_pipe_str   = {link_pipeW, sizeof(link_pipeW)};
     static const struct unicode_str link_mailslot_str = {link_mailslotW, sizeof(link_mailslotW)};
-    static const struct unicode_str link_con_str      = {link_conW, sizeof(link_conW)};
-    static const struct unicode_str link_conin_str    = {link_coninW, sizeof(link_coninW)};
-    static const struct unicode_str link_conout_str   = {link_conoutW, sizeof(link_conoutW)};
-    static const struct unicode_str link_currentin_str = {link_currentinW, sizeof(link_currentinW)};
-    static const struct unicode_str link_currentout_str = {link_currentoutW, sizeof(link_currentoutW)};
-    static const struct unicode_str link_console_str  = {link_consoleW, sizeof(link_consoleW)};
+    static const struct unicode_str link_0_str      = {link_0W, sizeof(link_0W)};
+    static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
+    static const struct unicode_str link_sessions_str = {link_sessionsW, sizeof(link_sessionsW)};
 
     /* devices */
     static const WCHAR named_pipeW[] = {'N','a','m','e','d','P','i','p','e'};
     static const WCHAR mailslotW[] = {'M','a','i','l','S','l','o','t'};
-    static const WCHAR condrvW[] = {'C','o','n','D','r','v'};
-    static const WCHAR nullW[] = {'N','u','l','l'};
-    static const WCHAR afdW[] = {'A','f','d'};
     static const struct unicode_str named_pipe_str = {named_pipeW, sizeof(named_pipeW)};
     static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
-    static const struct unicode_str condrv_str = {condrvW, sizeof(condrvW)};
-    static const struct unicode_str null_str = {nullW, sizeof(nullW)};
-    static const struct unicode_str afd_str = {afdW, sizeof(afdW)};
 
     /* events */
     static const WCHAR event_low_memW[] = {'L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n'};
@@ -404,267 +429,157 @@ void init_directories( struct fd *intl_fd )
     static const WCHAR event_high_pagedW[] = {'H','i','g','h','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR event_high_nonpgW[] = {'H','i','g','h','N','o','n','P','a','g','e','d','P','o','o','l','C','o','n','d','i','t','i','o','n'};
     static const WCHAR keyed_event_crit_sectW[] = {'C','r','i','t','S','e','c','O','u','t','O','f','M','e','m','o','r','y','E','v','e','n','t'};
-    static const struct
+    static const struct unicode_str kernel_events[] =
     {
-        struct unicode_str name;
-        int initial_state;
-    } kernel_events[] =
-    {
-        { { event_low_memW, sizeof(event_low_memW) }, 0 },
-        { { event_low_pagedW, sizeof(event_low_pagedW) }, 0 },
-        { { event_low_nonpgW, sizeof(event_low_nonpgW) }, 0 },
-        { { event_high_memW, sizeof(event_high_memW) }, 1 },
-        { { event_high_pagedW, sizeof(event_high_pagedW) }, 1 },
-        { { event_high_nonpgW, sizeof(event_high_nonpgW) }, 1 }
+        { event_low_memW, sizeof(event_low_memW) },
+        { event_low_pagedW, sizeof(event_low_pagedW) },
+        { event_low_nonpgW, sizeof(event_low_nonpgW) },
+        { event_high_memW, sizeof(event_high_memW) },
+        { event_high_pagedW, sizeof(event_high_pagedW) },
+        { event_high_nonpgW, sizeof(event_high_nonpgW) }
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
-    /* mappings */
-    static const WCHAR intlW[] = {'N','l','s','S','e','c','t','i','o','n','L','A','N','G','_','I','N','T','L'};
-    static const WCHAR user_dataW[] = {'_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a'};
-    static const WCHAR sessionW[] = {'_','_','w','i','n','e','_','s','e','s','s','i','o','n'};
-    static const struct unicode_str intl_str = {intlW, sizeof(intlW)};
-    static const struct unicode_str user_data_str = {user_dataW, sizeof(user_dataW)};
-    static const struct unicode_str session_str = {sessionW, sizeof(sessionW)};
-
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel, *dir_nls;
-    struct object *named_pipe_device, *mailslot_device, *null_device, *atom_table;
-    struct mapping *session_mapping;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel;
+    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_pipe, *link_mailslot, *link_0, *link_session;
+    struct keyed_event *keyed_event;
     unsigned int i;
 
-    root_directory = create_directory( NULL, empty_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_driver     = create_directory( &root_directory->obj, dir_driver_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_device     = create_directory( &root_directory->obj, dir_device_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_objtype    = create_directory( &root_directory->obj, dir_objtype_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_kernel     = create_directory( &root_directory->obj, dir_kernel_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_global     = create_directory( &root_directory->obj, dir_global_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-    dir_nls        = create_directory( &root_directory->obj, dir_nls_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
+    dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
+    dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
+    dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE );
+    dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE );
+    dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE );
+    make_object_static( &root_directory->obj );
+    make_object_static( &dir_driver->obj );
+    make_object_static( &dir_objtype->obj );
+
+    dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
+    /* use a larger hash table for this one since it can contain a lot of objects */
+    dir_basenamed  = create_directory( NULL, &dir_basenamed_str, 0, 37 );
 
     /* devices */
-    named_pipe_device = create_named_pipe_device( &dir_device->obj, named_pipe_str, OBJ_PERMANENT, NULL );
-    mailslot_device   = create_mailslot_device( &dir_device->obj, mailslot_str, OBJ_PERMANENT, NULL );
-    null_device       = create_unix_device( &dir_device->obj, null_str, OBJ_PERMANENT, NULL, "/dev/null" );
-    release_object( create_console_device( &dir_device->obj, condrv_str, OBJ_PERMANENT, NULL ));
-    release_object( create_socket_device( &dir_device->obj, afd_str, OBJ_PERMANENT, NULL ));
-
-    /* sessions */
-    create_session( 0 );
-    create_session( default_session_id );
-
-    /* object types */
-
-    for (i = 0; i < ARRAY_SIZE(types); i++)
-        release_object( create_object_type( &dir_objtype->obj, i, OBJ_PERMANENT ));
+    create_named_pipe_device( dir_device, &named_pipe_str );
+    create_mailslot_device( dir_device, &mailslot_str );
 
     /* symlinks */
-    release_object( create_obj_symlink( &root_directory->obj, link_dosdev_str, OBJ_PERMANENT, &dir_global->obj, NULL ));
-    release_object( create_root_symlink( &dir_global->obj, link_globalroot_str, OBJ_PERMANENT, NULL ));
-    release_object( create_obj_symlink( &dir_global->obj, link_global_str, OBJ_PERMANENT, &dir_global->obj, NULL ));
-    release_object( create_obj_symlink( &dir_global->obj, link_nul_str, OBJ_PERMANENT, null_device, NULL ));
-    release_object( create_obj_symlink( &dir_global->obj, link_pipe_str, OBJ_PERMANENT, named_pipe_device, NULL ));
-    release_object( create_obj_symlink( &dir_global->obj, link_mailslot_str, OBJ_PERMANENT, mailslot_device, NULL ));
-    release_object( create_symlink( &dir_global->obj, link_conin_str, OBJ_PERMANENT, link_currentin_str, NULL ));
-    release_object( create_symlink( &dir_global->obj, link_conout_str, OBJ_PERMANENT, link_currentout_str, NULL ));
-    release_object( create_symlink( &dir_global->obj, link_con_str, OBJ_PERMANENT, link_console_str, NULL ));
+    link_dosdev    = create_symlink( root_directory, &link_dosdev_str, 0, &dir_global_str );
+    link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str );
+    link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str );
+    link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
+    link_pipe      = create_symlink( dir_global, &link_pipe_str, 0, &dir_named_pipe_str );
+    link_mailslot  = create_symlink( dir_global, &link_mailslot_str, 0, &dir_mailslot_str );
+    link_0         = create_symlink( dir_sessions, &link_0_str, 0, &dir_basenamed_str );
+    link_session   = create_symlink( dir_basenamed, &link_session_str, 0, &link_sessions_str );
+    make_object_static( (struct object *)link_dosdev );
+    make_object_static( (struct object *)link_global1 );
+    make_object_static( (struct object *)link_global2 );
+    make_object_static( (struct object *)link_local );
+    make_object_static( (struct object *)link_pipe );
+    make_object_static( (struct object *)link_mailslot );
+    make_object_static( (struct object *)link_0 );
+    make_object_static( (struct object *)link_session );
 
     /* events */
-    for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
+    for (i = 0; i < sizeof(kernel_events)/sizeof(kernel_events[0]); i++)
     {
-        release_object( create_event( &dir_kernel->obj, kernel_events[i].name, OBJ_PERMANENT,
-                                      1, kernel_events[i].initial_state, NULL ));
+        struct event *event = create_event( dir_kernel, &kernel_events[i], 0, 1, 0, NULL );
+        make_object_static( (struct object *)event );
     }
-    release_object( create_keyed_event( &dir_kernel->obj, keyed_event_crit_sect_str, OBJ_PERMANENT, NULL ));
+    keyed_event = create_keyed_event( dir_kernel, &keyed_event_crit_sect_str, 0, NULL );
+    make_object_static( (struct object *)keyed_event );
 
-    /* mappings */
-    release_object( create_fd_mapping( &dir_nls->obj, intl_str, intl_fd, OBJ_PERMANENT, NULL ));
-    release_object( create_user_data_mapping( &dir_kernel->obj, user_data_str, OBJ_PERMANENT, NULL ));
-    release_object( intl_fd );
-
-    session_mapping = create_session_mapping( &dir_kernel->obj, session_str, OBJ_PERMANENT, NULL );
-    set_session_mapping( session_mapping );
-    release_object( session_mapping );
-
-    atom_table = create_atom_table();
-    set_global_atom_table( atom_table );
-    release_object( atom_table );
-
-    atom_table = create_atom_table();
-    set_user_atom_table( atom_table );
-    release_object( atom_table );
-
-    release_object( named_pipe_device );
-    release_object( mailslot_device );
-    release_object( null_device );
-    release_object( root_directory );
-    release_object( dir_driver );
-    release_object( dir_device );
-    release_object( dir_objtype );
-    release_object( dir_kernel );
-    release_object( dir_nls );
+    /* the objects hold references so we can release these directories */
     release_object( dir_global );
+    release_object( dir_device );
+    release_object( dir_basenamed );
+    release_object( dir_sessions );
+    release_object( dir_kernel );
 }
 
 /* create a directory object */
 DECL_HANDLER(create_directory)
 {
-    struct directory_init_data data = { .hash_size = HASH_SIZE };
-    struct object_params params = { .ops = &directory_ops, .access = req->access, .init_data = &data };
+    struct unicode_str name;
+    struct directory *dir, *root = NULL;
 
-    if (!get_req_object_attributes( &params )) return;
-    reply->handle = create_named_obj_handle( current->process, &params );
-    if (params.root) release_object( params.root );
+    reply->handle = 0;
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((dir = create_directory( root, &name, req->attributes, HASH_SIZE )))
+    {
+        reply->handle = alloc_handle( current->process, dir, req->access, req->attributes );
+        release_object( dir );
+    }
+
+    if (root) release_object( root );
 }
 
 /* open a directory object */
 DECL_HANDLER(open_directory)
 {
-    reply->handle = open_object( current->process, req->rootdir, req->access,
-                                 &directory_ops, get_req_unicode_str(), req->attributes );
+    struct unicode_str name;
+    struct directory *dir, *root = NULL;
+
+    get_req_unicode_str( &name );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+        return;
+
+    if ((dir = open_object_dir( root, &name, req->attributes, &directory_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &dir->obj, req->access, req->attributes );
+        release_object( dir );
+    }
+
+    if (root) release_object( root );
 }
 
-/* get directory entries */
-DECL_HANDLER(get_directory_entries)
+/* get a directory entry by index */
+DECL_HANDLER(get_directory_entry)
 {
-    struct directory *dir = (struct directory *)get_handle_obj( current->process, req->handle,
-                                                                DIRECTORY_QUERY, &directory_ops );
+    struct directory *dir = get_directory_obj( current->process, req->handle, DIRECTORY_QUERY );
     if (dir)
     {
-        struct directory_entry *entry;
-        struct object *obj;
-        data_size_t size;
-        unsigned int i;
-        char *buffer;
-
-        reply->total_len = 0;
-
-        size = 0;
-        for (i = 0; i < req->max_count; i++)
+        struct object *obj = find_object_index( dir->entries, req->index );
+        if (obj)
         {
-            const struct unicode_str *type_name;
-            data_size_t name_len;
-            size_t entry_size;
+            data_size_t name_len, type_len = 0;
+            const WCHAR *type_name = NULL;
+            const WCHAR *name = get_object_name( obj, &name_len );
+            struct object_type *type = obj->ops->get_type( obj );
 
-            if (!(obj = find_object_index( dir->entries, req->index + i )))
-                break;
-            type_name = &obj->ops->type->name;
-            get_object_name( obj, &name_len );
-            entry_size = (sizeof(*entry) + name_len + type_name->len + 3) & ~3;
-            reply->total_len += name_len + type_name->len;
-            release_object( obj );
+            if (type) type_name = get_object_name( &type->obj, &type_len );
 
-            if (size + entry_size > get_reply_max_size())
+            if (name_len + type_len <= get_reply_max_size())
             {
-                set_error( STATUS_MORE_ENTRIES );
-                break;
+                void *ptr = set_reply_data_size( name_len + type_len );
+                if (ptr)
+                {
+                    reply->name_len = name_len;
+                    memcpy( ptr, name, name_len );
+                    memcpy( (char *)ptr + name_len, type_name, type_len );
+                }
             }
-            size += entry_size;
-        }
-        reply->count = i;
+            else set_error( STATUS_BUFFER_OVERFLOW );
 
-        if (!(buffer = set_reply_data_size( size )))
-        {
-            release_object( dir );
-            return;
-        }
-
-        size = 0;
-        for (i = 0; i < reply->count; i++)
-        {
-            const struct unicode_str *type_name;
-            data_size_t name_len;
-            const WCHAR *name;
-
-            obj = find_object_index( dir->entries, req->index + i );
-            assert( obj );
-            type_name = &obj->ops->type->name;
-            name = get_object_name( obj, &name_len );
-
-            entry = (struct directory_entry *)(buffer + size);
-            entry->name_len = name_len;
-            entry->type_len = type_name->len;
-
-            size += sizeof(*entry);
-            memcpy( buffer + size, name, name_len );
-            size += name_len;
-            memcpy( buffer + size, type_name->str, type_name->len );
-            size += type_name->len;
-            if (size & 3)
-            {
-                memset( buffer + size, 0, 4 - (size & 3) );
-                size += 4 - (size & 3);
-            }
-
+            if (type) release_object( type );
             release_object( obj );
         }
         release_object( dir );
     }
 }
 
-/* query object type name information */
-DECL_HANDLER(get_object_type)
+/* unlink a named object */
+DECL_HANDLER(unlink_object)
 {
-    struct object *obj;
-    struct type_descr *type;
-    struct object_type_info *info;
+    struct object *obj = get_handle_obj( current->process, req->handle, 0, NULL );
 
-    if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
-
-    type = obj->ops->type;
-    if (sizeof(*info) + type->name.len <= get_reply_max_size())
+    if (obj)
     {
-        if ((info = set_reply_data_size( sizeof(*info) + type->name.len )))
-        {
-            info->name_len     = type->name.len;
-            info->index        = type->index;
-            info->obj_count    = type->obj_count;
-            info->handle_count = type->handle_count;
-            info->obj_max      = type->obj_max;
-            info->handle_max   = type->handle_max;
-            info->valid_access = type->valid_access;
-            info->mapping      = type->mapping;
-            memcpy( info + 1, type->name.str, type->name.len );
-        }
+        unlink_named_object( obj );
+        release_object( obj );
     }
-    else set_error( STATUS_BUFFER_OVERFLOW );
-
-    release_object( obj );
-}
-
-/* query type information for all types */
-DECL_HANDLER(get_object_types)
-{
-    struct object_type_info *info;
-    data_size_t size = ARRAY_SIZE(types) * sizeof(*info);
-    unsigned int i;
-    char *next;
-
-    for (i = 0; i < ARRAY_SIZE(types); i++) size += (types[i]->name.len + 3) & ~3;
-
-    if (size <= get_reply_max_size())
-    {
-        if ((info = set_reply_data_size( size )))
-        {
-            for (i = 0; i < ARRAY_SIZE(types); i++)
-            {
-                info->name_len     = types[i]->name.len;
-                info->index        = types[i]->index;
-                info->obj_count    = types[i]->obj_count;
-                info->handle_count = types[i]->handle_count;
-                info->obj_max      = types[i]->obj_max;
-                info->handle_max   = types[i]->handle_max;
-                info->valid_access = types[i]->valid_access;
-                info->mapping      = types[i]->mapping;
-                memcpy( info + 1, types[i]->name.str, types[i]->name.len );
-                next = (char *)(info + 1) + types[i]->name.len;
-                if (types[i]->name.len & 3)
-                {
-                    memset( next, 0, 4 - (types[i]->name.len & 3) );
-                    next += 4 - (types[i]->name.len & 3);
-                }
-                info = (struct object_type_info *)next;
-            }
-            reply->count = i;
-        }
-    }
-    else set_error( STATUS_BUFFER_OVERFLOW );
 }

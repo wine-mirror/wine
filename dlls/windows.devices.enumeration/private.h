@@ -28,10 +28,6 @@
 #include "winbase.h"
 #include "winstring.h"
 #include "objbase.h"
-#include "devpropdef.h"
-#include "devfiltertypes.h"
-#include "devquerydef.h"
-#include "propsys.h"
 
 #include "activation.h"
 
@@ -43,30 +39,12 @@
 
 #include "wine/list.h"
 
-#include "async_private.h"
-#include "weakref.h"
-
-struct vector_iids
-{
-    const GUID *vector;
-    const GUID *view;
-    const GUID *iterable;
-    const GUID *iterator;
-};
-
 extern IActivationFactory *device_access_factory;
 
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
 HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *token );
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
 HRESULT typed_event_handlers_clear( struct list *list );
-
-extern HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
-                                                   IAsyncOperation_IInspectable **out );
-extern HRESULT async_action_create( IUnknown *invoker, async_operation_callback callback, IAsyncAction **out );
-
-extern HRESULT vector_create( const struct vector_iids *iids, void **out );
-extern HRESULT device_information_create( const DEV_OBJECT *obj, IDeviceInformation **info );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

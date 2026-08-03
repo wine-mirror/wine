@@ -1,3 +1,6 @@
 MODULE    = ksuser.dll
 
-VER_PRODUCTVERSION = 5,3,0,900
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	version.rc

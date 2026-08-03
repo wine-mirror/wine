@@ -1,0 +1,29 @@
+# Global rules for building a static import library     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# MODULE       : name of the main module being built
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DLLFLAGS = @DLLFLAGS@
+DEFS     = -D__WINESRC__ $(EXTRADEFS)
+MAKEDEPFLAGS = -xo -xcross.o
+
+@MAKE_RULES@
+
+all: $(MODULE) @CROSSTEST_DISABLE@ $(MODULE:.a=.cross.a)
+
+# Rules for .a library
+
+$(MODULE): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(RANLIB) $@
+
+$(MODULE:.a=.cross.a): $(CROSSOBJS) Makefile.in
+	$(RM) $@
+	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
+	$(CROSSRANLIB) $@
+
+# End of global library rules

@@ -29,6 +29,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ddrawi.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(display);
@@ -211,8 +212,8 @@ static void init_original_display_mode(void)
     BOOL success = FALSE;
     HKEY mac_driver_hkey, parent_hkey;
     DWORD disposition;
-    struct macdrv_monitor *monitors = NULL;
-    int num_monitors = 0, i;
+    struct macdrv_display *displays = NULL;
+    int num_displays, i;
 
     if (inited_original_display_mode)
         return;
@@ -236,14 +237,12 @@ static void init_original_display_mode(void)
     if (disposition != REG_CREATED_NEW_KEY)
         goto done;
 
-    if (macdrv_get_monitors(kCGNullDirectDisplay, &monitors, &num_monitors))
+    if (macdrv_get_displays(&displays, &num_displays))
         goto fail;
 
-    for (i = 0; i < num_monitors; i++)
+    for (i = 0; i < num_displays; i++)
     {
-        if (CGDisplayMirrorsDisplay(monitors[i].id) != kCGNullDirectDisplay)
-            continue;
-        if (!write_display_settings(parent_hkey, monitors[i].id))
+        if (!write_display_settings(parent_hkey, displays[i].displayID))
             goto fail;
     }
 
@@ -251,7 +250,7 @@ done:
     success = TRUE;
 
 fail:
-    macdrv_free_monitors(monitors, num_monitors);
+    macdrv_free_displays(displays);
     NtClose(parent_hkey);
     if (!success && parent_hkey)
         reg_delete_tree(mac_driver_hkey, initial_mode_keyW, sizeof(initial_mode_keyW));
@@ -748,22 +747,29 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     DEVMODEW *mode;
     int bpp;
+    struct macdrv_display *macdrv_displays;
+    int num_displays;
     CFArrayRef display_modes;
     struct display_mode_descriptor *desc;
     CGDisplayModeRef best_display_mode;
 
-    TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid);
+    TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, (unsigned int)flags, lpvoid);
 
     init_original_display_mode();
 
-    /* TODO: support displays other than the main one */
-    display_modes = copy_display_modes(CGMainDisplayID(), FALSE);
-    if (!display_modes)
+    if (macdrv_get_displays(&macdrv_displays, &num_displays))
         return DISP_CHANGE_FAILED;
+
+    display_modes = copy_display_modes(macdrv_displays[0].displayID, FALSE);
+    if (!display_modes)
+    {
+        macdrv_free_displays(macdrv_displays);
+        return DISP_CHANGE_FAILED;
+    }
 
     bpp = get_default_bpp();
 
-    desc = create_original_display_mode_descriptor(CGMainDisplayID());
+    desc = create_original_display_mode_descriptor(macdrv_displays[0].displayID);
 
     for (mode = displays; mode->dmSize && !ret; mode = NEXT_DEVMODEW(mode))
     {
@@ -779,21 +785,21 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
         }
 
         if (mode->dmBitsPerPel != bpp)
-            TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, mode->dmBitsPerPel);
+            TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, (int)mode->dmBitsPerPel);
 
-        TRACE("looking for %dx%dx%dbpp @%d Hz", mode->dmPelsWidth, mode->dmPelsHeight,
-              bpp, mode->dmDisplayFrequency);
+        TRACE("looking for %dx%dx%dbpp @%d Hz", (int)mode->dmPelsWidth, (int)mode->dmPelsHeight,
+              bpp, (int)mode->dmDisplayFrequency);
         TRACE(" %sstretched", mode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
         TRACE(" %sinterlaced", mode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
         TRACE("\n");
 
         if (!(best_display_mode = find_best_display_mode(mode, display_modes, bpp, desc)))
         {
-            ERR("No matching mode found %ux%ux%d @%u!\n", mode->dmPelsWidth, mode->dmPelsHeight,
-                bpp, mode->dmDisplayFrequency);
+            ERR("No matching mode found %ux%ux%d @%u!\n", (unsigned int)mode->dmPelsWidth, (unsigned int)mode->dmPelsHeight,
+                bpp, (unsigned int)mode->dmDisplayFrequency);
             ret = DISP_CHANGE_BADMODE;
         }
-        else if (!macdrv_set_display_mode(CGMainDisplayID(), best_display_mode))
+        else if (!macdrv_set_display_mode(&macdrv_displays[0], best_display_mode))
         {
             WARN("Failed to set display mode\n");
             ret = DISP_CHANGE_FAILED;
@@ -802,6 +808,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
 
     free_display_mode_descriptor(desc);
     CFRelease(display_modes);
+    macdrv_free_displays(macdrv_displays);
     macdrv_reset_device_metrics();
 
     return ret;
@@ -878,16 +885,16 @@ static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_coun
     return devmodes;
 }
 
-static void display_get_current_mode(struct macdrv_monitor *monitor, DEVMODEW *devmode)
+static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *devmode)
 {
     CGDisplayModeRef display_mode;
     CGDirectDisplayID display_id;
 
-    display_id = monitor->id;
+    display_id = display->displayID;
     display_mode = CGDisplayCopyDisplayMode(display_id);
 
-    devmode->dmPosition.x = CGRectGetMinX(monitor->rc_monitor);
-    devmode->dmPosition.y = CGRectGetMinY(monitor->rc_monitor);
+    devmode->dmPosition.x = CGRectGetMinX(display->frame);
+    devmode->dmPosition.y = CGRectGetMinY(display->frame);
     devmode->dmFields |= DM_POSITION;
 
     display_mode_to_devmode_fields(display_id, display_mode, devmode);
@@ -912,6 +919,8 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     BOOL ret = FALSE;
     DDGAMMARAMP *r = ramp;
+    struct macdrv_display *displays;
+    int num_displays;
     uint32_t mac_entries;
     int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
@@ -920,15 +929,20 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 
     TRACE("dev %p ramp %p\n", dev, ramp);
 
-    /* TODO: support displays other than the main one */
-    mac_entries = CGDisplayGammaTableCapacity(CGMainDisplayID());
+    if (macdrv_get_displays(&displays, &num_displays))
+    {
+        WARN("failed to get Mac displays\n");
+        return FALSE;
+    }
+
+    mac_entries = CGDisplayGammaTableCapacity(displays[0].displayID);
     red = malloc(mac_entries * sizeof(red[0]) * 3);
     if (!red)
         goto done;
     green = red + mac_entries;
     blue = green + mac_entries;
 
-    err = CGGetDisplayTransferByTable(CGMainDisplayID(), mac_entries, red, green,
+    err = CGGetDisplayTransferByTable(displays[0].displayID, mac_entries, red, green,
                                       blue, &mac_entries);
     if (err != kCGErrorSuccess)
     {
@@ -978,6 +992,7 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 
 done:
     free(red);
+    macdrv_free_displays(displays);
     return ret;
 }
 
@@ -987,6 +1002,8 @@ done:
 BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     DDGAMMARAMP *r = ramp;
+    struct macdrv_display *displays;
+    int num_displays;
     int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
     int i;
@@ -997,6 +1014,12 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     if (!allow_set_gamma)
     {
         TRACE("disallowed by registry setting\n");
+        return FALSE;
+    }
+
+    if (macdrv_get_displays(&displays, &num_displays))
+    {
+        WARN("failed to get Mac displays\n");
         return FALSE;
     }
 
@@ -1013,13 +1036,13 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
         blue[i]     = r->blue[i] / 65535.0;
     }
 
-    /* TODO: support displays other than the main one */
-    err = CGSetDisplayTransferByTable(CGMainDisplayID(), win_entries, red, green, blue);
+    err = CGSetDisplayTransferByTable(displays[0].displayID, win_entries, red, green, blue);
     if (err != kCGErrorSuccess)
         WARN("failed to set display gamma table: %d\n", err);
 
 done:
     free(red);
+    macdrv_free_displays(displays);
     return (err == kCGErrorSuccess);
 }
 
@@ -1047,8 +1070,15 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
     struct macdrv_gpu *gpus, *gpu;
-    INT gpu_count, adapter_count, monitor_count, mode_count;
+    struct macdrv_display *displays, *display;
+    INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
     DEVMODEW *modes;
+
+    if (macdrv_get_displays(&displays, &display_count))
+    {
+        displays = NULL;
+        display_count = 0;
+    }
 
     /* Initialize GPUs */
     if (macdrv_get_gpus(&gpus, &gpu_count))
@@ -1079,7 +1109,7 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
             UINT dpi = NtUserGetSystemDpiForProcess( NULL );
             char buffer[32];
 
-            snprintf( buffer, sizeof(buffer), "%04x", adapter->id );
+            sprintf( buffer, "%04x", adapter->id );
             device_manager->add_source( buffer, adapter->state_flags, dpi, param );
 
             if (macdrv_get_monitors(adapter->id, &monitors, &monitor_count)) break;
@@ -1092,26 +1122,33 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
                 {
                     .rc_monitor = rect_from_cgrect(monitor->rc_monitor),
                     .rc_work = rect_from_cgrect(monitor->rc_work),
-                    .edid_len = monitor->edid_len,
-                    .edid = monitor->edid,
-                    .hdr_enabled = monitor->hdr_enabled,
                 };
                 device_manager->add_monitor( &gdi_monitor, param );
+            }
 
-                /* Get the current mode */
-                if (monitor->id == adapter->id)
-                    display_get_current_mode(monitor, &current_mode);
+            /* Get the current mode */
+            if (displays)
+            {
+                for (display = displays; display < displays + display_count; display++)
+                {
+                    if (display->displayID == adapter->id)
+                    {
+                        display_get_current_mode(display, &current_mode);
+                        break;
+                    }
+                }
             }
 
             if (!(modes = display_get_modes(adapter->id, &mode_count))) break;
             device_manager->add_modes( &current_mode, mode_count, modes, param );
             free(modes);
-            macdrv_free_monitors(monitors, monitor_count);
+            macdrv_free_monitors(monitors);
         }
 
         macdrv_free_adapters(adapters);
     }
 
     macdrv_free_gpus(gpus);
+    macdrv_free_displays(displays);
     return STATUS_SUCCESS;
 }

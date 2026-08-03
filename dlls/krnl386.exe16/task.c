@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(task);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct thunk
 {
@@ -58,7 +58,7 @@ typedef struct
     struct thunk thunks[1];
 } THUNKS;
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 
@@ -195,7 +195,7 @@ static SEGPTR TASK_AllocThunk(void)
         if (!sel)  /* Allocate a new segment */
         {
             sel = GLOBAL_Alloc( GMEM_FIXED, FIELD_OFFSET( THUNKS, thunks[MIN_THUNKS] ),
-                                pTask->hPDB, code16_segment );
+                                pTask->hPDB, LDT_FLAGS_CODE );
             if (!sel) return 0;
             TASK_CreateThunks( sel, 0, MIN_THUNKS );
             pThunk->next = sel;
@@ -293,7 +293,8 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
       /* Allocate a selector for the PDB */
 
-    pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB16), hModule, data_segment );
+    pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB16),
+                                      hModule, LDT_FLAGS_DATA );
 
       /* Fill the PDB */
 
@@ -333,7 +334,8 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
       /* Allocate a code segment alias for the TDB */
 
-    pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, pTask, sizeof(TDB), pTask->hPDB, code16_segment );
+    pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, pTask, sizeof(TDB),
+                                          pTask->hPDB, LDT_FLAGS_CODE );
 
       /* Default DTA overwrites command line */
 

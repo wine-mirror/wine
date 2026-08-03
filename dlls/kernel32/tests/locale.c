@@ -79,6 +79,7 @@ static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, IN
 static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT,
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
 static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
+static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoEx)(const WCHAR *, GEOTYPE, PWSTR, INT);
 static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
 static BOOL (WINAPI *pSetUserGeoName)(PWSTR);
@@ -135,6 +136,7 @@ static void InitFunctionPointers(void)
   X(CompareStringOrdinal);
   X(CompareStringEx);
   X(GetGeoInfoA);
+  X(GetGeoInfoW);
   X(GetGeoInfoEx);
   X(GetUserDefaultGeoName);
   X(SetUserGeoName);
@@ -2839,24 +2841,6 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(!ret, "%s func_ptr should fail with srclen = 0\n", func_name);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "%s unexpected error code %ld\n", func_name, GetLastError());
-
-    /* test for characters which don't get mapped to their
-       halfwidth counterparts on LCMAP_HALFWIDTH */
-    for (i = 0x2190; i <= 0x21ff; ++i)
-        buf[i - 0x2190] = buf2[i - 0x2190] = i;
-
-    buf[0x70] = buf2[0x70] = 0x25cb;
-    ret = func_ptr(LCMAP_HALFWIDTH, buf, 0x71, buf2, 0x71);
-    ok(ret == 0x71, "%s ret %#x, expected value 0x71\n", func_name, ret);
-    ok(!memcmp(buf, buf2, sizeof(WCHAR) * 0x71), "in- and output must be equal\n");
-
-    /* test the other way around */
-    for (i = 0xffe9; i <= 0xffee; ++i)
-        buf[i - 0xffe9] = buf2[i - 0xffe9] = i;
-
-    ret = func_ptr(LCMAP_FULLWIDTH, buf, 0x6, buf2, 0x6);
-    ok(ret == 0x6, "%s ret %#x, expected value 0x6\n", func_name, ret);
-    ok(!memcmp(buf, buf2, sizeof(WCHAR) * 0x6), "in- and output must be equal\n");
 }
 
 static INT LCMapStringW_wrapper(DWORD flags, LPCWSTR src, INT srclen, LPWSTR dst, INT dstlen)
@@ -3362,20 +3346,66 @@ static void test_LocaleNameToLCID(void)
 
 static const char * const strings_sorted[] =
 {
-    "'", "-", "!", "\"", ".", ":", "\\", "_", "`", "{", "}", "+",
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "A", "b", "B", "c", "C"
-};
-
-static const char * const strings_sorted_ja[] =
-{
-    "'", "-", "!", "\"", ".", ":", "_", "`", "{", "}", "\\", "+",
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "A", "b", "B", "c", "C"
+"'",
+"-",
+"!",
+"\"",
+".",
+":",
+"\\",
+"_",
+"`",
+"{",
+"}",
+"+",
+"0",
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"a",
+"A",
+"b",
+"B",
+"c",
+"C"
 };
 
 static const char * const strings[] =
 {
-    "C", "\"", "9", "'", "}", "-", "7", "+", "`", "1", "a", "5", "\\", "8",
-    "B", "3", "_", "6", "{", "2", "c", "4", "!", "0", "A", ":", "b", "."
+"C",
+"\"",
+"9",
+"'",
+"}",
+"-",
+"7",
+"+",
+"`",
+"1",
+"a",
+"5",
+"\\",
+"8",
+"B",
+"3",
+"_",
+"6",
+"{",
+"2",
+"c",
+"4",
+"!",
+"0",
+"A",
+":",
+"b",
+"."
 };
 
 static int compare_string1(const void *e1, const void *e2)
@@ -3411,38 +3441,33 @@ static void test_sorting(void)
 {
     char buf[256];
     char **str_buf = (char **)buf;
-    const char * const *expect = strings_sorted;
     int i;
 
     assert(sizeof(buf) >= sizeof(strings));
-
-    if (GetUserDefaultLangID() == MAKELANGID( LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN ) ||
-        GetUserDefaultLangID() == MAKELANGID( LANG_KOREAN, SUBLANG_KOREAN ))
-        expect = strings_sorted_ja;
 
     /* 1. sort using lstrcmpA */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string1);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(expect[i], str_buf[i]),
-           "qsort using lstrcmpA failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using lstrcmpA failed for element %d\n", i);
     }
     /* 2. sort using CompareStringA */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string2);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(expect[i], str_buf[i]),
-           "qsort using CompareStringA failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using CompareStringA failed for element %d\n", i);
     }
     /* 3. sort using sort keys */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string3);
     for (i = 0; i < ARRAY_SIZE(strings); i++)
     {
-        ok(!strcmp(expect[i], str_buf[i]),
-           "qsort using sort keys failed for element %d: %s\n", i, debugstr_a(str_buf[i]));
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using sort keys failed for element %d\n", i);
     }
 }
 
@@ -3746,7 +3771,7 @@ static const struct sorting_test_entry unicode_sorting_tests[] =
     { L"en-US", -1, CSTR_LESS_THAN,    0, L"\x013a", L"\x013f" },
     { L"vi-VN", -1, CSTR_LESS_THAN,    0, L"\x1d8f", L"\x1ea8" },
     { L"vi-VN", -1, CSTR_LESS_THAN,    0, L"\x0323", L"\xfe26" },
- /* { L"vi-VN",  1, CSTR_GREATER_THAN, 0, L"R",      L"\xff32" }, changed in Windows 11 */
+    { L"vi-VN",  1, CSTR_GREATER_THAN, 0, L"R",      L"\xff32" },
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\x1d8f", L"\x1ea8" },
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\x0323", L"\xfe26" },
     { L"en-US", -1, CSTR_LESS_THAN,    0, L"R",      L"\xff32" },
@@ -4131,7 +4156,6 @@ static void test_FoldStringW(void)
       { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
       { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
       { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
-      { 0x11de0, 0, 9, TRUE /*win10*/ },  /* Tolong Siki */
       { 0x11f50, 0, 9, TRUE /*win10*/ },  /* Kawi */
       { 0x16130, 0, 9, TRUE /*win10*/ },  /* Gurung Khema */
       { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */
@@ -6143,7 +6167,7 @@ static void test_CompareStringOrdinal(void)
 
 static void test_GetGeoInfo(void)
 {
-    char buffA[20], expect[20];
+    char buffA[20];
     WCHAR buffW[20];
     INT ret;
 
@@ -6194,12 +6218,10 @@ static void test_GetGeoInfo(void)
     ok(ret == 4, "GEO_NATION of nation: expected 4, got %d\n", ret);
     ok(!strcmp(buffA, "203"), "GEO_NATION of nation: expected 203, got %s\n", buffA);
 
-    SetLastError(0xdeadbeef);
     buffA[0] = 0;
     ret = pGetGeoInfoA(39070, GEO_NATION, buffA, 20, 0); /* GEOCLASS_REGION */
     ok(ret == 0, "GEO_NATION of region: expected 0, got %d\n", ret);
     ok(*buffA == 0, "GEO_NATION of region: expected empty string, got %s\n", buffA);
-    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError());
 
     buffA[0] = 0;
     ret = pGetGeoInfoA(333, GEO_NATION, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
@@ -6248,78 +6270,6 @@ static void test_GetGeoInfo(void)
     {
         ok(ret == 4, "got %d\n", ret);
         ok(!strcmp(buffA, "643"), "got %s\n", buffA);
-    }
-
-    GetLocaleInfoA( GetUserDefaultLangID(), LOCALE_SISO639LANGNAME, expect, sizeof(expect) );
-    strcat( expect, "-ru" );
-    buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0);
-    ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
-
-    buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0x143b);
-    ok(ret == 7, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(!strcmp(buffA, "smj-ru"), "got %s\n", buffA);
-
-    SetLastError(0xdeadbeef);
-    ret = pGetGeoInfoA(203, GEO_RFC1766, buffA, 20, 0x2c3b);
-    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
-
-    sprintf( expect, "%08X", GetUserDefaultLangID() );
-    buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0);
-    ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
-
-    buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0x143b);
-    ok(ret == 9, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(!strcmp(buffA, "0000143B"), "got %s\n", buffA);
-
-    SetLastError(0xdeadbeef);
-    ret = pGetGeoInfoA(203, GEO_LCID, buffA, 20, 0x2c3b);
-    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %ld\n", GetLastError() );
-
-    if (GetUserDefaultLangID() == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ))
-    {
-        GetLocaleInfoA( 0x419, LOCALE_SENGCOUNTRY, expect, sizeof(expect) );
-        buffA[0] = 0;
-        ret = pGetGeoInfoA(203, GEO_FRIENDLYNAME, buffA, 20, 0);
-        ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
-        ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
-        GetLocaleInfoA( 0x411, LOCALE_SENGCOUNTRY, expect, sizeof(expect) );
-        buffA[0] = 0;
-        ret = pGetGeoInfoA(122, GEO_FRIENDLYNAME, buffA, 20, 0);
-        ok(ret == strlen(expect) + 1, "GetGeoInfoA succeeded %d.\n", ret);
-        ok(!strcmp(buffA, expect), "got %s / %s\n", buffA, expect);
-    }
-    else skip( "localized geo names not tested\n" );
-
-    SetLastError(0xdeadbeef);
-    ret = pGetGeoInfoA(203, GEO_TIMEZONES, buffA, 20, 0);
-    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError() );
-
-    SetLastError(0xdeadbeef);
-    ret = pGetGeoInfoA(203, GEO_OFFICIALLANGUAGES, buffA, 20, 0);
-    ok(!ret, "GetGeoInfoA succeeded %d.\n", ret);
-    ok(GetLastError() == 0xdeadbeef, "wrong error %ld\n", GetLastError() );
-
-    buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_NAME, buffA, 20, 0);
-    if (ret == 0) win_skip("GEO_NAME not supported.\n");
-    else
-    {
-        ok(ret == 3, "got %d\n", ret);
-        ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
-
-        buffA[0] = 0;
-        ret = pGetGeoInfoA(47610, GEO_NAME, buffA, 20, 0);
-        ok(ret == 4, "got %d\n", ret);
-        ok(!strcmp(buffA, "039"), "got %s\n", buffA);
     }
 
     /* try invalid type value */
@@ -8300,7 +8250,7 @@ static void test_geo_name(void)
     if (!RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)reg_name, &size))
         have_name = TRUE;
 
-    lstrcpyW(buf, L"BE");
+    lstrcpyW(buf, L"QQ");
     RegSetValueExW(key, L"Name", 0, REG_SZ, (BYTE *)buf, (lstrlenW(buf) + 1) * sizeof(WCHAR));
 
     size = sizeof(reg_name);
@@ -8350,7 +8300,7 @@ static void test_geo_name(void)
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, name_size);
     ok(ret == name_size && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"BE"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"QQ"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     SetLastError(0xdeadbeef);
     bret = pSetUserGeoName(NULL);
@@ -8369,33 +8319,15 @@ static void test_geo_name(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"BE") || broken(!lstrcmpW(buf, L"001")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(ret == 4 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
+    ok(!lstrcmpW(buf, L"001"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
     geoid = GetUserGeoID(GEOCLASS_REGION);
     ok(geoid == 39070, "Got unexpected geoid %lu.\n", geoid);
     size = sizeof(buf);
     status = RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)buf, &size);
     ok(status == ERROR_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok(type == REG_SZ, "Got unexpected type %#lx.\n", type);
-    ok(!lstrcmpW(buf, L"BE") || broken(!lstrcmpW(buf, L"001")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
-
-    lstrcpyW(set_name, L"CA");
-    SetLastError(0xdeadbeef);
-    bret = pSetUserGeoName(set_name);
-    ok((bret && GetLastError() == 0xdeadbeef) || broken(bret && GetLastError() == 0),
-            "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"CA"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
-    geoid = GetUserGeoID(GEOCLASS_REGION);
-    ok(geoid == 39070, "Got unexpected geoid %lu.\n", geoid);
-    size = sizeof(buf);
-    status = RegQueryValueExW(key, L"Name", NULL, &type, (BYTE *)buf, &size);
-    ok(status == ERROR_SUCCESS, "Got unexpected status %#lx.\n", status);
-    ok(type == REG_SZ, "Got unexpected type %#lx.\n", type);
-    ok(!lstrcmpW(buf, L"CA"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"001"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     lstrcpyW(set_name, L"ar");
     SetLastError(0xdeadbeef);
@@ -8415,10 +8347,9 @@ static void test_geo_name(void)
     ok((bret && GetLastError() == 0xdeadbeef) || broken(bret && GetLastError() == 0),
             "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok((ret && GetLastError() == 0xdeadbeef) || broken(GetLastError() == 0),
+    ok((ret == 4 && GetLastError() == 0xdeadbeef) || broken(ret == 4 && GetLastError() == 0),
             "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"AR") || broken(!lstrcmpW(buf, L"150")),
-        "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"150"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
     geoid = GetUserGeoID(GEOCLASS_NATION);
     ok(geoid == 11, "Got unexpected geoid %lu.\n", geoid);
 
@@ -8427,26 +8358,26 @@ static void test_geo_name(void)
     bret = pSetUserGeoName(set_name);
     ok(!bret && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
 
-    bret = SetUserGeoID(349);
+    bret = SetUserGeoID(21242);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
     ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"TC"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"XX"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     bret = SetUserGeoID(42483);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
-    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"TC") || broken(!lstrcmpW(buf, L"011")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(ret == 4 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
+    ok(!lstrcmpW(buf, L"011"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     bret = SetUserGeoID(333);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = pGetUserDefaultGeoName(buf, ARRAY_SIZE(buf));
     ok(ret == 3 && GetLastError() == 0xdeadbeef, "Got unexpected ret %u, GetLastError() %lu.\n", ret, GetLastError());
-    ok(!lstrcmpW(buf, L"TC") || broken(!lstrcmpW(buf, L"AN")), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"AN"), "Got unexpected name %s.\n", wine_dbgstr_w(buf));
 
     RegDeleteValueW(key, L"Name");
     RegDeleteValueW(key, L"Region");

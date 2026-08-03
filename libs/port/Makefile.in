@@ -1,0 +1,36 @@
+DEFS      = -D__WINESRC__
+DLLFLAGS  = @DLLFLAGS@
+MODULE    = libwine_port.a
+
+C_SRCS = \
+	ffs.c \
+	fstatvfs.c \
+	getopt.c \
+	getopt1.c \
+	interlocked.c \
+	isinf.c \
+	isnan.c \
+	lstat.c \
+	memcpy_unaligned.c \
+	memmove.c \
+	mkstemps.c \
+	poll.c \
+	pread.c \
+	pwrite.c \
+	readlink.c \
+	spawn.c \
+	statvfs.c \
+	strcasecmp.c \
+	strerror.c \
+	strncasecmp.c \
+	symlink.c \
+	usleep.c
+
+all: $(MODULE)
+
+@MAKE_RULES@
+
+$(MODULE): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(RANLIB) $@

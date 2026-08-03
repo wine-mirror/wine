@@ -37,7 +37,7 @@
 @ stub EvtOpenPublisherMetadata
 @ stdcall EvtOpenSession(long ptr long long)
 @ stdcall EvtQuery(ptr wstr wstr long)
-@ stdcall EvtRender(ptr ptr long long ptr ptr ptr)
+@ stub EvtRender
 @ stdcall EvtSaveChannelConfig(ptr long)
 @ stub EvtSeek
 @ stdcall EvtSetChannelConfigProperty(ptr long long ptr)

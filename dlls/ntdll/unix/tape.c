@@ -54,6 +54,7 @@
 #endif
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"
@@ -107,7 +108,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, const TAPE_CREATE_PARTITION *data 
     struct mtop cmd;
 
     TRACE( "fd: %d method: 0x%08x count: 0x%08x size: 0x%08x\n",
-           fd, data->Method, data->Count, data->Size );
+           fd, (int)data->Method, (int)data->Count, (int)data->Size );
 
     if (data->Count > 1)
     {
@@ -129,7 +130,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, const TAPE_CREATE_PARTITION *data 
         break;
 #endif
     default:
-        ERR( "Unhandled method: 0x%08x\n", data->Method );
+        ERR( "Unhandled method: 0x%08x\n", (int)data->Method );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -149,7 +150,7 @@ static NTSTATUS TAPE_Erase( int fd, const TAPE_ERASE *data )
     struct mtop cmd;
 
     TRACE( "fd: %d type: 0x%08x immediate: 0x%02x\n",
-           fd, data->Type, data->Immediate );
+           fd, (int)data->Type, (int)data->Immediate );
 
     switch (data->Type)
     {
@@ -162,7 +163,7 @@ static NTSTATUS TAPE_Erase( int fd, const TAPE_ERASE *data )
         cmd.mt_count = 0;
         break;
     default:
-        ERR( "Unhandled type: 0x%08x\n", data->Type );
+        ERR( "Unhandled type: 0x%08x\n", (int)data->Type );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -310,7 +311,7 @@ static NTSTATUS TAPE_Prepare( int fd, const TAPE_PREPARE *data )
     struct mtop cmd;
 
     TRACE( "fd: %d type: 0x%08x immediate: 0x%02x\n",
-           fd, data->Operation, data->Immediate );
+           fd, (int)data->Operation, (int)data->Immediate );
 
     switch (data->Operation)
     {
@@ -343,7 +344,7 @@ static NTSTATUS TAPE_Prepare( int fd, const TAPE_PREPARE *data )
         /* Native ignores this if the drive doesn't support it */
         return STATUS_SUCCESS;
     default:
-        ERR( "Unhandled operation: 0x%08x\n", data->Operation );
+        ERR( "Unhandled operation: 0x%08x\n", (int)data->Operation );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -365,7 +366,7 @@ static NTSTATUS TAPE_SetDriveParams( int fd, const TAPE_SET_DRIVE_PARAMETERS *da
     TRACE( "fd: %d ECC: 0x%02x, compression: 0x%02x padding: 0x%02x\n",
             fd, data->ECC, data->Compression, data->DataPadding );
     TRACE( "setmarks: 0x%02x zonesize: 0x%08x\n",
-           data->ReportSetmarks, data->EOTWarningZoneSize );
+           (int)data->ReportSetmarks, (int)data->EOTWarningZoneSize );
 
     if (data->ECC || data->DataPadding || data->ReportSetmarks ||
         data->EOTWarningZoneSize ) WARN( "Setting not supported\n" );
@@ -388,7 +389,7 @@ static NTSTATUS TAPE_SetMediaParams( int fd, const TAPE_SET_MEDIA_PARAMETERS *da
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d blocksize: 0x%08x\n", fd, data->BlockSize );
+    TRACE( "fd: %d blocksize: 0x%08x\n", fd, (int)data->BlockSize );
 
     cmd.mt_op = MTSETBLK;
     cmd.mt_count = data->BlockSize;
@@ -409,7 +410,7 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
     struct mtop cmd;
 
     TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%s immediate: 0x%02x\n",
-           fd, data->Method, data->Partition, wine_dbgstr_longlong(data->Offset.QuadPart),
+           fd, (int)data->Method, (int)data->Partition, wine_dbgstr_longlong(data->Offset.QuadPart),
            data->Immediate );
 
     if (sizeof(cmd.mt_count) < sizeof(data->Offset.QuadPart) &&
@@ -465,7 +466,7 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
         WARN( "Positioning method not supported\n" );
         return STATUS_INVALID_PARAMETER;
     default:
-        ERR( "Unhandled method: 0x%08x\n", data->Method );
+        ERR( "Unhandled method: 0x%08x\n", (int)data->Method );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -485,7 +486,7 @@ static NTSTATUS TAPE_WriteMarks( int fd, const TAPE_WRITE_MARKS *data )
     struct mtop cmd;
 
     TRACE( "fd: %d type: 0x%08x count: 0x%08x immediate: 0x%02x\n",
-           fd, data->Type, data->Count, data->Immediate );
+           fd, (int)data->Type, (int)data->Count, data->Immediate );
 
     switch (data->Type)
     {
@@ -502,7 +503,7 @@ static NTSTATUS TAPE_WriteMarks( int fd, const TAPE_WRITE_MARKS *data )
         cmd.mt_count = data->Count;
         break;
     default:
-        ERR( "Unhandled type: 0x%08x\n", data->Type );
+        ERR( "Unhandled type: 0x%08x\n", (int)data->Type );
         return STATUS_INVALID_PARAMETER;
     }
 

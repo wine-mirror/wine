@@ -10,7 +10,7 @@
 
 #include <corecrt.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 /* The following are also defined in io.h */
 #define _A_NORMAL 0x00000000
@@ -45,6 +45,6 @@ _ACRTIMP unsigned int __cdecl _getdiskfree(unsigned int, struct _diskfree_t *);
 
 #define diskfree_t _diskfree_t
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DOS_H */

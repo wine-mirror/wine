@@ -2943,7 +2943,7 @@ static HRESULT WINAPI d3d_device3_SetLightState(IDirect3DDevice3 *iface,
                 return DDERR_INVALIDPARAMS;
             }
 
-            material_activate(device, m);
+            material_activate(m);
         }
 
         device->material = value;

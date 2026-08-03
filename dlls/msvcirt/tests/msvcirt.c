@@ -493,7 +493,7 @@ static ostream *p_cout, *p_cerr, *p_clog;
 /* Emulate a __thiscall */
 #ifdef __i386__
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -502,7 +502,7 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
@@ -2265,15 +2265,6 @@ static void test_filebuf(void)
     CloseHandle(thread);
 }
 
-static void *custom_alloc(LONG size)
-{
-    /* this allocates size + 16 bytes. a test later validates that strstreambuf_overflow
-     * always allocates in `strstreambuf.increase` increments, even when the resultant buffer
-     * won't be large enough to contain `pptr`. to avoid actually writing out-of-bound, we
-     * allocate a few bytes more here. */
-    return p_operator_new(size + 16);
-}
-
 static void test_strstreambuf(void)
 {
     strstreambuf ssb1, ssb2;
@@ -2541,12 +2532,8 @@ static void test_strstreambuf(void)
     ok(ssb2.base.pptr == ssb2.base.base + 1, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 1, ssb2.base.pptr);
     ok(ssb2.base.epptr == ssb2.base.base + 16, "wrong put end, expected %p got %p\n", ssb2.base.base + 16, ssb2.base.epptr);
     ok(*(ssb2.base.pptr - 1) == 'D', "expected 'D' got %d\n", *(ssb2.base.pptr - 1));
-    /* test strstreambuf_overflow always allocate in `increase` increments, even when the new size
-     * won't be large enough to contain `pptr`. `custom_alloc` allocate more space than asked for
-     * to avoid out-of-bound access. */
     ssb2.base.pbase = ssb2.base.base + 3;
     ssb2.base.pptr = ssb2.base.epptr + 5;
-    ssb2.f_alloc = custom_alloc;
     ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'E');
     ok(ret == 1, "expected 1 got %d\n", ret);
     ok(ssb2.base.ebuf == ssb2.base.base + 20, "expected %p got %p\n", ssb2.base.base + 20, ssb2.base.ebuf);
@@ -2555,7 +2542,6 @@ static void test_strstreambuf(void)
     ok(ssb2.base.pptr == ssb2.base.base + 22, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 22, ssb2.base.pptr);
     ok(ssb2.base.epptr == ssb2.base.base + 20, "wrong put end, expected %p got %p\n", ssb2.base.base + 20, ssb2.base.epptr);
     ok(*(ssb2.base.pptr - 1) == 'E', "expected 'E' got %d\n", *(ssb2.base.pptr - 1));
-    ssb2.f_alloc = NULL;
     ssb2.base.egptr = ssb2.base.base + 2;
     ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'F');
     ok(ret == 1, "expected 1 got %d\n", ret);
@@ -7394,7 +7380,7 @@ static void test_ifstream(void)
     call_func5(p_ifstream_buffer_ctor, &ifs, -1, NULL, 0, TRUE);
     ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
     ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
-    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pfb->base.unbuffered);
     ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
 
     psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));

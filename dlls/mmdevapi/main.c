@@ -22,6 +22,7 @@
 
 #include "ntstatus.h"
 #define COBJMACROS
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -73,21 +74,25 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 {
     NTSTATUS status;
     WCHAR driver_module[264], path[MAX_PATH];
-    UNICODE_STRING str;
     struct test_connect_params params;
 
     lstrcpyW(driver_module, L"wine");
     lstrcatW(driver_module, name);
     lstrcatW(driver_module, L".drv");
-    RtlInitUnicodeString( &str, driver_module );
 
     TRACE("Attempting to load %s\n", wine_dbgstr_w(driver_module));
 
-    status = __wine_load_unix_lib( &str, &driver->module, &driver->module_unixlib );
-    if (status)
-    {
-        TRACE("Unable to load %s: %lx\n", wine_dbgstr_w(driver_module), status );
+    driver->module = LoadLibraryW(driver_module);
+    if(!driver->module){
+        TRACE("Unable to load %s: %lu\n", wine_dbgstr_w(driver_module),
+                GetLastError());
         return FALSE;
+    }
+
+    if ((status = NtQueryVirtualMemory(GetCurrentProcess(), driver->module, MemoryWineUnixFuncs,
+        &driver->module_unixlib, sizeof(driver->module_unixlib), NULL))) {
+        ERR("Unable to load UNIX functions: %lx\n", status);
+        goto fail;
     }
 
     if ((status = __wine_unix_call(driver->module_unixlib, process_attach, NULL))) {
@@ -114,7 +119,7 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
     return TRUE;
 fail:
-    __wine_unload_unix_lib( driver->module );
+    FreeLibrary(driver->module);
     return FALSE;
 }
 
@@ -150,15 +155,15 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
         driver.priority = Priority_Unavailable;
         if(load_driver(p, &driver)){
             if(driver.priority == Priority_Unavailable)
-                __wine_unload_unix_lib(driver.module);
+                FreeLibrary(driver.module);
             else if(!drvs.module || driver.priority > drvs.priority){
                 TRACE("Selecting driver %s with priority %s\n",
                         wine_dbgstr_w(p), get_priority_string(driver.priority));
                 if(drvs.module)
-                    __wine_unload_unix_lib(drvs.module);
+                    FreeLibrary(drvs.module);
                 drvs = driver;
             }else
-                __wine_unload_unix_lib(driver.module);
+                FreeLibrary(driver.module);
         }else
             TRACE("Failed to load driver %s\n", wine_dbgstr_w(p));
 
@@ -172,14 +177,10 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
 
         midi_drvname[0] = 0;
         wine_unix_call( midi_get_driver, midi_drvname );
-        if (midi_drvname[0])
-        {
-            if (load_driver( midi_drvname, &midi_driver ))
-                TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
-            else
-               TRACE( "failed to load MIDI driver %s\n", wine_dbgstr_w(midi_drvname) );
-        }
-        else midi_driver = drvs;
+        if (midi_drvname[0] && load_driver( midi_drvname, &midi_driver ))
+            TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
+        else
+            midi_driver = drvs;
 
         load_devices_from_reg();
         load_driver_devices(eRender);
@@ -191,7 +192,7 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
             "Maybe check dependencies with WINEDEBUG=warn+module.\n",
             wine_dbgstr_w(driver_list));
 
-    return TRUE;
+    return drvs.module != 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -207,17 +208,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             if (drvs.module_unixlib)
             {
                 wine_unix_call( process_detach, NULL );
-                if (midi_driver.module != drvs.module) MIDI_CALL( process_detach, NULL );
+                FreeLibrary( drvs.module );
+                if (midi_driver.module != drvs.module)
+                {
+                    MIDI_CALL( process_detach, NULL );
+                    FreeLibrary( midi_driver.module );
+                }
             }
-            if (lpvReserved) break;
+            main_loop_stop();
 
-            wine_unix_call( main_loop_stop, NULL );
-            if (drvs.module_unixlib)
-            {
-                __wine_unload_unix_lib( drvs.module );
-                if (midi_driver.module != drvs.module) __wine_unload_unix_lib( midi_driver.module );
-            }
-            MMDevEnum_Free();
+            if (!lpvReserved)
+                MMDevEnum_Free();
             break;
     }
 
@@ -306,7 +307,6 @@ static IClassFactoryImpl MMDEVAPI_CF[] = {
 };
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-static HANDLE notify_thread_handle;
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
@@ -384,14 +384,11 @@ LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1,
 
         params.err = &err;
         MIDI_CALL( midi_init, &params );
-        if (err == DRV_SUCCESS) notify_thread_handle = CreateThread( NULL, 0, notify_thread, NULL, 0, NULL );
+        if (err == DRV_SUCCESS) CloseHandle( CreateThread( NULL, 0, notify_thread, NULL, 0, NULL ));
         return err;
     }
     case DRV_FREE:
         MIDI_CALL( midi_release, NULL );
-        WaitForSingleObject( notify_thread_handle, INFINITE );
-        CloseHandle( notify_thread_handle );
-        notify_thread_handle = NULL;
         return 1;
     case DRV_OPEN:
     case DRV_CLOSE:

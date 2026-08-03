@@ -40,9 +40,24 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     if (!wcscmp( buffer, RuntimeClass_Windows_ApplicationModel_Package ))
         IActivationFactory_QueryInterface( package_factory, &IID_IActivationFactory, (void **)factory );
-    else if (!wcscmp( buffer, RuntimeClass_Windows_ApplicationModel_DesignMode ))
-        IActivationFactory_QueryInterface( design_mode_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_ApplicationModel_Core_CoreApplication ))
+        IActivationFactory_QueryInterface( coreapplication_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_Core_CoreWindow ))
+        IActivationFactory_QueryInterface( corewindow_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_Core_SystemNavigationManager ))
+        IActivationFactory_QueryInterface( sysnav_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_Core_CoreCursor ))
+        IActivationFactory_QueryInterface( cursor_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_UI_Input_PointerVisualizationSettings ))
+        IActivationFactory_QueryInterface( ptrvissettings_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
+
+    FIXME("class %s not implemented!\n", debugstr_hstring(classid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }

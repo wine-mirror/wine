@@ -43,6 +43,8 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "uxtheme.h"
+#include "vssym32.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
@@ -138,6 +140,8 @@ typedef struct
     CALENDAR_INFO *calendars;
     SIZE dim;           /* [cx,cy] - dimensions of calendars matrix, row/column count */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
+
+static const WCHAR themeClass[] = L"Scrollbar";
 
 /* empty SYSTEMTIME const */
 static const SYSTEMTIME st_null;
@@ -818,14 +822,10 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
 
 static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, enum nav_direction button)
 {
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     RECT *r = button == DIRECTION_FORWARD ? &infoPtr->titlebtnnext : &infoPtr->titlebtnprev;
     BOOL pressed = button == DIRECTION_FORWARD ? infoPtr->status & MC_NEXTPRESSED :
                                                  infoPtr->status & MC_PREVPRESSED;
-    int style;
-
-#if __WINE_COMCTL32_VERSION == 6
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-
     if (theme)
     {
         static const int states[] = {
@@ -842,20 +842,19 @@ static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, enum nav_direc
             if (infoPtr->dwStyle & WS_DISABLED) stateNum += 2;
         }
         DrawThemeBackground (theme, hdc, SBP_ARROWBTN, states[stateNum], r, NULL);
-        return;
     }
-#endif
-
-    style = button == DIRECTION_FORWARD ? DFCS_SCROLLRIGHT : DFCS_SCROLLLEFT;
-    if (pressed)
-        style |= DFCS_PUSHED;
     else
     {
-        if (infoPtr->dwStyle & WS_DISABLED)
-            style |= DFCS_INACTIVE;
+        int style = button == DIRECTION_FORWARD ? DFCS_SCROLLRIGHT : DFCS_SCROLLLEFT;
+        if (pressed)
+            style |= DFCS_PUSHED;
+        else
+        {
+            if (infoPtr->dwStyle & WS_DISABLED) style |= DFCS_INACTIVE;
+        }
+        
+        DrawFrameControl(hdc, r, DFC_SCROLL, style);
     }
-
-    DrawFrameControl(hdc, r, DFC_SCROLL, style);
 }
 
 /* paint a title with buttons and month/year string */
@@ -2691,6 +2690,16 @@ static LRESULT MONTHCAL_SetFont(MONTHCAL_INFO *infoPtr, HFONT hFont, BOOL redraw
     return (LRESULT)hOldFont;
 }
 
+/* update theme after a WM_THEMECHANGED message */
+static LRESULT theme_changed (const MONTHCAL_INFO* infoPtr)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+    CloseThemeData (theme);
+    OpenThemeData (infoPtr->hwndSelf, themeClass);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
+    return 0;
+}
+
 static INT MONTHCAL_StyleChanged(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
                                  const STYLESTRUCT *lpss)
 {
@@ -2790,7 +2799,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   /* today auto update timer, to be freed only on control destruction */
   SetTimer(infoPtr->hwndSelf, MC_TODAYUPDATETIMER, MC_TODAYUPDATEDELAY, 0);
 
-  COMCTL32_OpenThemeForWindow(infoPtr->hwndSelf, L"Scrollbar");
+  OpenThemeData (infoPtr->hwndSelf, themeClass);
 
   return 0;
 
@@ -2810,7 +2819,7 @@ MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
   Free(infoPtr->calendars);
   SetWindowLongPtrW(infoPtr->hwndSelf, 0, 0);
 
-  COMCTL32_CloseThemeForWindow(infoPtr->hwndSelf);
+  CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
 
   for (i = 0; i < BrushLast; i++) DeleteObject(infoPtr->brushes[i]);
   for (i = 0; i < PenLast; i++) DeleteObject(infoPtr->pens[i]);
@@ -2984,7 +2993,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_Timer(infoPtr, wParam);
     
   case WM_THEMECHANGED:
-    return COMCTL32_ThemeChanged(infoPtr->hwndSelf, L"Scrollbar", TRUE, TRUE);
+    return theme_changed (infoPtr);
 
   case WM_DESTROY:
     return MONTHCAL_Destroy(infoPtr);
@@ -3022,4 +3031,11 @@ MONTHCAL_Register(void)
   wndClass.lpszClassName = MONTHCAL_CLASSW;
 
   RegisterClassW(&wndClass);
+}
+
+
+void
+MONTHCAL_Unregister(void)
+{
+    UnregisterClassW(MONTHCAL_CLASSW, NULL);
 }

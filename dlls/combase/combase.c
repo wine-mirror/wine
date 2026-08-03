@@ -19,19 +19,17 @@
 
 #define COBJMACROS
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define USE_COM_CONTEXT_DEF
 #include "objbase.h"
-#include "comsvcs.h"
 #include "ctxtcall.h"
 #include "oleauto.h"
 #include "dde.h"
 #include "winternl.h"
 
-#include "dcom.h"
 #include "combase_private.h"
 
 #include "wine/debug.h"
-#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -396,6 +394,39 @@ HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data)
     NtCurrentTeb()->ReservedForOle = *data;
 
     return S_OK;
+}
+
+static void com_cleanup_tlsdata(void)
+{
+    struct tlsdata *tlsdata = NtCurrentTeb()->ReservedForOle;
+    struct init_spy *cursor, *cursor2;
+
+    if (!tlsdata)
+        return;
+
+    if (tlsdata->apt)
+        apartment_release(tlsdata->apt);
+    if (tlsdata->implicit_mta_cookie)
+        apartment_decrement_mta_usage(tlsdata->implicit_mta_cookie);
+
+    if (tlsdata->errorinfo)
+        IErrorInfo_Release(tlsdata->errorinfo);
+    if (tlsdata->state)
+        IUnknown_Release(tlsdata->state);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &tlsdata->spies, struct init_spy, entry)
+    {
+        list_remove(&cursor->entry);
+        if (cursor->spy)
+            IInitializeSpy_Release(cursor->spy);
+        free(cursor);
+    }
+
+    if (tlsdata->context_token)
+        IObjContext_Release(tlsdata->context_token);
+
+    free(tlsdata);
+    NtCurrentTeb()->ReservedForOle = NULL;
 }
 
 struct global_options
@@ -1203,64 +1234,6 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, CLSID *clsidNew)
     hr = CLSIDFromString(buffW, clsidNew);
     if (FAILED(hr))
         ERR("Failed to get CLSID from string %s, hr %#lx.\n", debugstr_w(buffW), hr);
-done:
-    if (hkey) RegCloseKey(hkey);
-    return hr;
-}
-
-/******************************************************************************
- *              CoTreatAsClass        (combase.@)
- */
-HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
-{
-    WCHAR clsidW[CHARS_IN_GUID];
-    HKEY hkey = NULL;
-    HRESULT hr;
-    LONG size;
-    CLSID id;
-
-    if (!clsidOld || !clsidNew)
-        return E_INVALIDARG;
-
-    if (FAILED(hr = open_key_for_clsid(clsidOld, NULL, KEY_READ | KEY_WRITE, &hkey)))
-        return hr;
-
-    if (IsEqualGUID( clsidOld, clsidNew ))
-    {
-       size = sizeof(clsidW);
-       if (!RegQueryValueW(hkey, L"AutoTreatAs", clsidW, &size) && CLSIDFromString(clsidW, &id) == S_OK)
-       {
-           if (RegSetValueW(hkey, L"TreatAs", REG_SZ, clsidW, sizeof(clsidW)))
-           {
-               hr = REGDB_E_WRITEREGDB;
-               goto done;
-           }
-       }
-       else
-       {
-           if (RegDeleteKeyW(hkey, L"TreatAs"))
-               hr = REGDB_E_WRITEREGDB;
-           goto done;
-       }
-    }
-    else
-    {
-        if (IsEqualGUID(clsidNew, &CLSID_NULL))
-        {
-           RegDeleteKeyW(hkey, L"TreatAs");
-        }
-        else
-        {
-            StringFromGUID2(clsidNew, clsidW, ARRAY_SIZE(clsidW));
-            if (RegSetValueW(hkey, L"TreatAs", REG_SZ, clsidW, sizeof(clsidW)) != ERROR_SUCCESS)
-            {
-                WARN("RegSetValue failed\n");
-                hr = REGDB_E_WRITEREGDB;
-                goto done;
-            }
-        }
-    }
-
 done:
     if (hkey) RegCloseKey(hkey);
     return hr;
@@ -2103,9 +2076,6 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
     apt = com_get_current_apt();
     message_loop = apt && !apt->multi_threaded;
 
-    if (message_loop)
-        rpc_start_remoting(apt);
-
     if (flags & COWAIT_WAITALL)
         wait_flags |= MWMO_WAITALL;
     if (flags & COWAIT_ALERTABLE)
@@ -2409,25 +2379,13 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
     return S_OK;
 }
 
-static CRITICAL_SECTION context_cs;
-static CRITICAL_SECTION_DEBUG context_cs_debug =
-{
-    0, 0, &context_cs,
-    { &context_cs_debug.ProcessLocksList, &context_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": context_cs") }
-};
-static CRITICAL_SECTION context_cs = { &context_cs_debug, -1, 0, 0, 0, 0 };
-
-
-static struct thread_context
+struct thread_context
 {
     IComThreadingInfo IComThreadingInfo_iface;
     IContextCallback IContextCallback_iface;
     IObjContext IObjContext_iface;
-    LONG ref;
-    LONG reported_ref;
-    OXID oxid;
-} *mta_context;
+    LONG refcount;
+};
 
 static inline struct thread_context *impl_from_IComThreadingInfo(IComThreadingInfo *iface)
 {
@@ -2477,36 +2435,22 @@ static HRESULT WINAPI thread_context_info_QueryInterface(IComThreadingInfo *ifac
 static ULONG WINAPI thread_context_info_AddRef(IComThreadingInfo *iface)
 {
     struct thread_context *context = impl_from_IComThreadingInfo(iface);
-    InterlockedIncrement(&context->ref);
-    return InterlockedIncrement(&context->reported_ref);
-}
-
-static void context_token_release(IObjContext *iface)
-{
-    struct thread_context *context = impl_from_IObjContext(iface);
-
-    if (!InterlockedDecrement(&context->ref))
-    {
-        EnterCriticalSection(&context_cs);
-        if (context->ref)
-        {
-            LeaveCriticalSection(&context_cs);
-            return;
-        }
-        if (context == mta_context) mta_context = NULL;
-        LeaveCriticalSection(&context_cs);
-
-        free(context);
-    }
+    return InterlockedIncrement(&context->refcount);
 }
 
 static ULONG WINAPI thread_context_info_Release(IComThreadingInfo *iface)
 {
     struct thread_context *context = impl_from_IComThreadingInfo(iface);
-    ULONG ret = InterlockedDecrement(&context->reported_ref);
 
-    context_token_release(&context->IObjContext_iface);
-    return ret;
+    /* Context instance is initially created with CoGetContextToken() with refcount set to 0,
+       releasing context while refcount is at 0 destroys it. */
+    if (!context->refcount)
+    {
+        free(context);
+        return 0;
+    }
+
+    return InterlockedDecrement(&context->refcount);
 }
 
 static HRESULT WINAPI thread_context_info_GetCurrentApartmentType(IComThreadingInfo *iface, APTTYPE *apttype)
@@ -2552,17 +2496,9 @@ static HRESULT WINAPI thread_context_info_GetCurrentLogicalThreadId(IComThreadin
 
 static HRESULT WINAPI thread_context_info_SetCurrentLogicalThreadId(IComThreadingInfo *iface, REFGUID logical_thread_id)
 {
-    struct tlsdata *tlsdata;
-    HRESULT hr;
+    FIXME("%s stub\n", debugstr_guid(logical_thread_id));
 
-    TRACE("%s\n", debugstr_guid(logical_thread_id));
-
-    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
-        return hr;
-
-    tlsdata->causality_id = *logical_thread_id;
-    tlsdata->flags |= OLETLS_UUIDINITIALIZED;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static const IComThreadingInfoVtbl thread_context_info_vtbl =
@@ -2597,93 +2533,9 @@ static ULONG WINAPI thread_context_callback_Release(IContextCallback *iface)
 static HRESULT WINAPI thread_context_callback_ContextCallback(IContextCallback *iface,
         PFNCONTEXTCALL callback, ComCallData *param, REFIID riid, int method, IUnknown *punk)
 {
-    struct thread_context *context = impl_from_IContextCallback(iface);
-    IObjContext *current_context;
-    XAptCallback apt_callback;
-    struct apartment *apt;
-    STDOBJREF stdobjref;
-    OXID_INFO oxid_info;
-    IRundown *rundown;
-    HRESULT hr;
+    FIXME("%p, %p, %p, %s, %d, %p\n", iface, callback, param, debugstr_guid(riid), method, punk);
 
-    TRACE("%p, %p, %p, %s, %d, %p\n", iface, callback, param, debugstr_guid(riid), method, punk);
-
-    if (!callback)
-        return E_INVALIDARG;
-
-    hr = CoGetContextToken((ULONG_PTR *)&current_context);
-    if (FAILED(hr))
-        return hr;
-
-    if (!(apt = apartment_get_current_or_mta()))
-    {
-        ERR("apartment not initialised\n");
-        return CO_E_NOTINITIALIZED;
-    }
-    rpc_start_remoting(apt);
-
-    if (&context->IObjContext_iface == current_context)
-    {
-        IComThreadingInfo *cti = NULL;
-        GUID thread_id;
-
-        apartment_release(apt);
-
-        if (IsEqualIID(riid, &IID_IEnterActivityWithNoLock))
-        {
-            cti = &context->IComThreadingInfo_iface;
-            if (FAILED((hr = IComThreadingInfo_GetCurrentLogicalThreadId(cti, &thread_id))))
-                return hr;
-            if (FAILED((hr = IComThreadingInfo_SetCurrentLogicalThreadId(cti, riid))))
-                return hr;
-        }
-
-        __TRY
-        {
-            hr = callback(param);
-        }
-        __EXCEPT_ALL
-        {
-            hr = RPC_E_SERVERFAULT;
-        }
-        __ENDTRY
-
-        if (cti)
-            IComThreadingInfo_SetCurrentLogicalThreadId(cti, &thread_id);
-
-        TRACE("callback returned %lx\n", hr);
-        return hr;
-    }
-
-    hr = rpc_resolve_oxid(context->oxid, &oxid_info);
-    if (SUCCEEDED(hr))
-    {
-        stdobjref.flags = SORFP_NOLIFETIMEMGMT | SORF_NOPING;
-        stdobjref.cPublicRefs = 1;
-        stdobjref.oxid = context->oxid;
-        stdobjref.oid = -1;
-        stdobjref.ipid = oxid_info.ipidRemUnknown;
-        hr = unmarshal_object(&stdobjref, apt, MSHCTX_INPROC, NULL, &IID_IRundown, &oxid_info, (void**)&rundown);
-        apartment_release(apt);
-    }
-    if (FAILED(hr))
-        return hr;
-
-    apt_callback.pfnCallback = (ULONG_PTR)callback;
-    apt_callback.pParam = (ULONG_PTR)param;
-    apt_callback.pServerCtx = (ULONG_PTR)&context->IObjContext_iface;
-    apt_callback.pUnk = (ULONG_PTR)punk;
-    apt_callback.iid = *riid;
-    apt_callback.iMethod = method;
-    get_process_secret(&apt_callback.guidProcessSecret);
-    if (IsEqualIID(riid, &IID_ICallbackWithNoReentrancyToApplicationSTA))
-        hr = IRundown_DoNonreentrantCallback(rundown, &apt_callback);
-    else
-        hr = IRundown_DoCallback(rundown, &apt_callback);
-    IRundown_Release(rundown);
-
-    TRACE("callback returned %lx\n", hr);
-    return hr;
+    return E_NOTIMPL;
 }
 
 static const IContextCallbackVtbl thread_context_callback_vtbl =
@@ -2799,10 +2651,15 @@ static const IObjContextVtbl thread_object_context_vtbl =
 HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
 {
     struct tlsdata *tlsdata;
-    struct apartment *apt;
     HRESULT hr;
 
     TRACE("%p\n", token);
+
+    if (!InternalIsProcessInitialized())
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
 
     if (FAILED(hr = com_get_tlsdata(&tlsdata)))
         return hr;
@@ -2810,65 +2667,20 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
     if (!token)
         return E_POINTER;
 
-    if (!(apt = apartment_get_current_or_mta()))
-    {
-        ERR("apartment not initialised\n");
-        return CO_E_NOTINITIALIZED;
-    }
-
-    if (tlsdata->context_token)
-    {
-        struct thread_context *context = impl_from_IObjContext(tlsdata->context_token);
-        if ((apt->multi_threaded && context != mta_context) ||
-            (!apt->multi_threaded && context == mta_context))
-        {
-            context_token_release(tlsdata->context_token);
-            tlsdata->context_token = NULL;
-        }
-    }
-
-    if (!tlsdata->context_token && apt->multi_threaded && mta_context)
-    {
-        EnterCriticalSection(&context_cs);
-        if (mta_context)
-        {
-            tlsdata->context_token = &mta_context->IObjContext_iface;
-            InterlockedIncrement(&mta_context->ref);
-        }
-        LeaveCriticalSection(&context_cs);
-    }
-
     if (!tlsdata->context_token)
     {
         struct thread_context *context;
 
         context = calloc(1, sizeof(*context));
         if (!context)
-        {
-            apartment_release(apt);
             return E_OUTOFMEMORY;
-        }
 
         context->IComThreadingInfo_iface.lpVtbl = &thread_context_info_vtbl;
         context->IContextCallback_iface.lpVtbl = &thread_context_callback_vtbl;
         context->IObjContext_iface.lpVtbl = &thread_object_context_vtbl;
-        context->ref = 1;
-        context->reported_ref = 0;
-        context->oxid = apt->oxid;
-
-        if (apt->multi_threaded)
-        {
-            EnterCriticalSection(&context_cs);
-            if (!mta_context)
-                mta_context = context;
-            else
-            {
-                context_token_release(&context->IObjContext_iface);
-                context = mta_context;
-                InterlockedIncrement(&context->ref);
-            }
-            LeaveCriticalSection(&context_cs);
-        }
+        /* Context token does not take a reference, it's always zero until the
+           interface is explicitly requested with CoGetObjectContext(). */
+        context->refcount = 0;
 
         tlsdata->context_token = &context->IObjContext_iface;
     }
@@ -2876,7 +2688,6 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
     *token = (ULONG_PTR)tlsdata->context_token;
     TRACE("context_token %p\n", tlsdata->context_token);
 
-    apartment_release(apt);
     return S_OK;
 }
 
@@ -2894,7 +2705,7 @@ HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id)
     if (FAILED(hr = com_get_tlsdata(&tlsdata)))
         return hr;
 
-    if (!(tlsdata->flags & OLETLS_UUIDINITIALIZED))
+    if (IsEqualGUID(&tlsdata->causality_id, &GUID_NULL))
     {
         CoCreateGuid(&tlsdata->causality_id);
         tlsdata->flags |= OLETLS_UUIDINITIALIZED;
@@ -3546,58 +3357,6 @@ HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
     FIXME("%s, %p stub\n", debugstr_guid(guid), reserved);
 
     return E_NOTIMPL;
-}
-
-/***********************************************************************
- *           CoIsOle1Class  (combase.@)
- */
-BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
-{
-    FIXME("%s\n", debugstr_guid(clsid));
-    return FALSE;
-}
-
-/***********************************************************************
- *           CoRegisterActivationFilter  (combase.@)
- */
-HRESULT WINAPI CoRegisterActivationFilter(IActivationFilter *filter)
-{
-    FIXME("%p stub\n", filter);
-
-    return E_NOTIMPL;
-}
-
-static void com_cleanup_tlsdata(void)
-{
-    struct tlsdata *tlsdata = NtCurrentTeb()->ReservedForOle;
-    struct init_spy *cursor, *cursor2;
-
-    if (!tlsdata)
-        return;
-
-    if (tlsdata->apt)
-        apartment_release(tlsdata->apt);
-    if (tlsdata->implicit_mta_cookie)
-        apartment_decrement_mta_usage(tlsdata->implicit_mta_cookie);
-
-    if (tlsdata->errorinfo)
-        IErrorInfo_Release(tlsdata->errorinfo);
-    if (tlsdata->state)
-        IUnknown_Release(tlsdata->state);
-
-    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &tlsdata->spies, struct init_spy, entry)
-    {
-        list_remove(&cursor->entry);
-        if (cursor->spy)
-            IInitializeSpy_Release(cursor->spy);
-        free(cursor);
-    }
-
-    if (tlsdata->context_token)
-        context_token_release(tlsdata->context_token);
-
-    free(tlsdata);
-    NtCurrentTeb()->ReservedForOle = NULL;
 }
 
 /***********************************************************************

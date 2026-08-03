@@ -714,52 +714,39 @@ static void media_type_try_copy_attr(IMFMediaType *dst, IMFMediaType *src, const
     PropVariantClear(&value);
 }
 
-static HRESULT media_type_get_uint32_pair(IMFMediaType *type, const GUID *key, UINT32 *hi, UINT32 *lo)
-{
-    UINT64 data;
-    HRESULT hr = IMFMediaType_GetUINT64(type, key, &data);
-    if (FAILED(hr)) return hr;
-
-    *hi = data >> 32;
-    *lo = data & 0xffffffff;
-    return hr;
-}
-
-/* Update a media type with additional attributes reported by another media type, */
-/* also present as update_media_type_from_upstream in mf/topology_loader.c pipeline. */
-HRESULT update_media_type(IMFMediaType *dst_type, IMFMediaType *src_type, BOOL advanced)
+/* update a media type with additional attributes reported by upstream element */
+/* also present in mf/topology_loader.c pipeline */
+static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMediaType *upstream_type)
 {
     HRESULT hr = S_OK;
 
     /* propagate common video attributes */
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_FRAME_SIZE, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_FRAME_RATE, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_VIDEO_ROTATION, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_FIXED_SIZE_SAMPLES, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_PIXEL_ASPECT_RATIO, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_SIZE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_RATE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_DEFAULT_STRIDE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_ROTATION, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FIXED_SIZE_SAMPLES, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_PIXEL_ASPECT_RATIO, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, &hr);
 
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_VIDEO_CHROMA_SITING, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_INTERLACE_MODE, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_TRANSFER_FUNCTION, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_VIDEO_PRIMARIES, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_YUV_MATRIX, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_VIDEO_LIGHTING, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_VIDEO_NOMINAL_RANGE, &hr);
-
-    if (!advanced)
-        media_type_try_copy_attr(dst_type, src_type, &MF_MT_DEFAULT_STRIDE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_CHROMA_SITING, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_INTERLACE_MODE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_TRANSFER_FUNCTION, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_PRIMARIES, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_YUV_MATRIX, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_LIGHTING, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_NOMINAL_RANGE, &hr);
 
     /* propagate common audio attributes */
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_NUM_CHANNELS, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_CHANNEL_MASK, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &hr);
-    media_type_try_copy_attr(dst_type, src_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_NUM_CHANNELS, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_CHANNEL_MASK, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &hr);
 
     return hr;
 }
@@ -1584,8 +1571,7 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
         case SOURCE_READER_ASYNC_SAMPLE_READY:
 
             EnterCriticalSection(&reader->cs);
-            stream = &reader->streams[command->u.sample.stream_index];
-            response = media_stream_pop_response(reader, stream);
+            response = media_stream_pop_response(reader, NULL);
             LeaveCriticalSection(&reader->cs);
 
             if (response)
@@ -2043,76 +2029,6 @@ static BOOL source_reader_allow_video_processor(struct source_reader *reader, BO
     return *advanced;
 }
 
-static void mediatype_set_uint32(IMFMediaType *mediatype, const GUID *attr, unsigned int value, HRESULT *hr)
-{
-    if (SUCCEEDED(*hr))
-        *hr = IMFMediaType_SetUINT32(mediatype, attr, value);
-}
-
-static void mediatype_get_stride_and_sample_size(IMFMediaType *mediatype, LONG *stride, DWORD *sample_size, HRESULT *hr)
-{
-    UINT64 frame_size;
-    GUID subtype;
-
-    if (SUCCEEDED(*hr))
-        *hr = IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &subtype);
-
-    if (SUCCEEDED(*hr))
-        *hr = IMFMediaType_GetUINT64(mediatype, &MF_MT_FRAME_SIZE, &frame_size);
-
-    if (SUCCEEDED(*hr))
-        *hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, frame_size >> 32, stride);
-
-    if (SUCCEEDED(*hr))
-        *hr = MFGetPlaneSize(subtype.Data1, frame_size >> 32, frame_size & 0xffffffff, sample_size);
-}
-
-static HRESULT set_default_video_attributes(struct source_reader *reader, IMFMediaType *output_type)
-{
-    DWORD sample_size;
-    BOOL compressed;
-    LONG stride;
-    HRESULT hr;
-
-    if (FAILED(hr = IMFMediaType_IsCompressedFormat(output_type, &compressed)))
-        return hr;
-
-    if (!compressed)
-    {
-        mediatype_get_stride_and_sample_size(output_type, &stride, &sample_size, &hr);
-
-        mediatype_set_uint32(output_type, &MF_MT_COMPRESSED, compressed, &hr);
-        mediatype_set_uint32(output_type, &MF_MT_DEFAULT_STRIDE, abs(stride), &hr);
-        mediatype_set_uint32(output_type, &MF_MT_SAMPLE_SIZE, sample_size, &hr);
-    }
-
-    return hr;
-}
-
-static HRESULT apply_pixel_aspect_ratio(IMFMediaType *dst_type, IMFMediaType *src_type)
-{
-    UINT64 dst_frame_size;
-    UINT32 par_w, par_h, w, h;
-
-    if (SUCCEEDED(media_type_get_uint32_pair(src_type, &MF_MT_FRAME_SIZE, &w, &h)) &&
-            FAILED(IMFMediaType_GetUINT64(dst_type, &MF_MT_FRAME_SIZE, &dst_frame_size)) &&
-            SUCCEEDED(media_type_get_uint32_pair(src_type, &MF_MT_PIXEL_ASPECT_RATIO, &par_w, &par_h)))
-    {
-        /* Video processor should rectify the aspect ratio so the output has aspect ratio of 1:1.
-         * We are doing this here by explicitly changing the target frame size. */
-
-        UINT64 new_h = h, new_w = w;
-        if (par_w < par_h) new_h  = h * par_h / par_w;
-        else new_w = w * par_w / par_h;
-
-        new_h = (new_h + 1) & ~1;
-        new_w = (new_w + 1) & ~1;
-
-        return IMFMediaType_SetUINT64(dst_type, &MF_MT_FRAME_SIZE, ((UINT64)new_w << 32) + new_h);
-    }
-    return S_OK;
-}
-
 static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL decoder, BOOL allow_processor,
         IMFMediaType *input_type, IMFMediaType *output_type, struct transform_entry **out)
 {
@@ -2204,28 +2120,16 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
             if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
-                BOOL enable_advanced;
-                IMFMediaType *output_type_copy = NULL;
-
-                hr = MFCreateMediaType(&output_type_copy);
-                if (SUCCEEDED(hr))
-                    hr = IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)output_type_copy);
-
-                source_reader_allow_video_processor(reader, &enable_advanced);
-
-                if (SUCCEEDED(hr) && (!enable_advanced || SUCCEEDED(hr = apply_pixel_aspect_ratio(output_type_copy, media_type)))
-                        && (SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced)))
-                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type_copy, 0))
-                        && FAILED(hr = set_matching_transform_output_type(transform, output_type_copy)) && allow_processor
+                if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
+                        && FAILED(hr = set_matching_transform_output_type(transform, output_type)) && allow_processor
                         && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
                 {
                     struct transform_entry *converter;
 
                     if (SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, media_type, 0))
-                            && (!enable_advanced || SUCCEEDED(hr = apply_pixel_aspect_ratio(output_type_copy, media_type)))
-                            && SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced))
-                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type_copy)))
-                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type_copy, &converter)))
+                            && SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type, &converter)))
                         list_add_tail(&entry->entry, &converter->entry);
 
                     IMFMediaType_Release(media_type);

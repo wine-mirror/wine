@@ -29,6 +29,7 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/debug.h"
 #include "windef.h"
 #include "winternl.h"
@@ -264,9 +265,6 @@ NTSTATUS WINAPI RtlWow64GetThreadSelectorEntry( HANDLE handle, THREAD_DESCRIPTOR
 
     sel = info->Selector | 3;
     if (sel == 0x03) goto done; /* null selector */
-
-    if (sel & 0x04) /* LDT selector */
-        return NtQueryInformationThread( handle, ThreadDescriptorTableEntry, info, size, NULL );
 
     /* set common data */
     entry.HighWord.Bits.Dpl = 3;

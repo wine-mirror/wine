@@ -1,4 +1,5 @@
 MODULE    = comcat.dll
 IMPORTS   = ole32
 
-VER_OLESELFREGISTER = 1
+SOURCES = \
+	version.rc

@@ -1477,8 +1477,6 @@ static void test_seeking(void)
 {
     LONGLONG time, current, stop, prev_stop, earliest, latest, duration;
     const WCHAR *filename = load_resource(L"test.avi");
-    const LONGLONG one_second = 10000000;
-    const LONGLONG one_msec = 10000;
     IBaseFilter *filter = create_avi_splitter();
     IFilterGraph2 *graph = connect_input(filter, filename);
     IMediaSeeking *seeking;
@@ -1495,66 +1493,20 @@ static void test_seeking(void)
     {
         const GUID *guid;
         HRESULT hr;
-        HRESULT hr_set_time;
     }
     format_tests[] =
     {
-        {&TIME_FORMAT_MEDIA_TIME, S_OK, S_OK},
-        {&TIME_FORMAT_FRAME, S_OK, S_OK},
-        {&TIME_FORMAT_BYTE, S_FALSE, E_INVALIDARG},
-        {&TIME_FORMAT_NONE, S_FALSE, E_INVALIDARG},
-        {&TIME_FORMAT_SAMPLE, S_FALSE, E_INVALIDARG},
-        {&TIME_FORMAT_FIELD, S_FALSE, E_INVALIDARG},
-        {&testguid, S_FALSE, E_INVALIDARG},
+        {&TIME_FORMAT_MEDIA_TIME, S_OK},
+        {&TIME_FORMAT_FRAME, S_OK},
+
+        {&TIME_FORMAT_BYTE, S_FALSE},
+        {&TIME_FORMAT_NONE, S_FALSE},
+        {&TIME_FORMAT_SAMPLE, S_FALSE},
+        {&TIME_FORMAT_FIELD, S_FALSE},
+        {&testguid, S_FALSE},
     };
 
-    const struct
-    {
-        const GUID *source_guid;
-        LONGLONG source_time;
-        const GUID *target_guid;
-        LONGLONG target_time;
-        HRESULT hr;
-        BOOL wine_todo;
-    } time_format_tests[] =
-    {
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_MEDIA_TIME, one_second, S_OK},
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_FRAME, 1, S_OK, TRUE},
-        {&TIME_FORMAT_MEDIA_TIME, one_second / 2 - 1, &TIME_FORMAT_FRAME, 0, S_OK, TRUE},
-        {&TIME_FORMAT_MEDIA_TIME, one_second / 2, &TIME_FORMAT_FRAME, 0, S_OK, TRUE},
-        {&TIME_FORMAT_MEDIA_TIME, 3 * one_second / 2, &TIME_FORMAT_FRAME, 1, S_OK, TRUE},
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_FIELD, 0, E_INVALIDARG},
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_SAMPLE, 1, S_OK, TRUE},
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_BYTE, 0, E_INVALIDARG},
-
-        {&TIME_FORMAT_FRAME, 30, &TIME_FORMAT_MEDIA_TIME, 30 * one_second, S_OK, TRUE},
-        {&TIME_FORMAT_FRAME, 30, &TIME_FORMAT_FRAME, 30, S_OK, TRUE},
-        {&TIME_FORMAT_FRAME, 30, &TIME_FORMAT_FIELD, 0, E_INVALIDARG},
-        {&TIME_FORMAT_FRAME, 30, &TIME_FORMAT_SAMPLE, 0, E_INVALIDARG},
-        {&TIME_FORMAT_FRAME, 30, &TIME_FORMAT_BYTE, 0, E_INVALIDARG},
-
-        {&TIME_FORMAT_FIELD, 60, &TIME_FORMAT_MEDIA_TIME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_FIELD, 60, &TIME_FORMAT_FRAME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_FIELD, 60, &TIME_FORMAT_FIELD, 60, S_OK, TRUE},
-        {&TIME_FORMAT_FIELD, 60, &TIME_FORMAT_SAMPLE, 0, E_INVALIDARG},
-        {&TIME_FORMAT_FIELD, 60, &TIME_FORMAT_BYTE, 0, E_INVALIDARG},
-
-        {&TIME_FORMAT_SAMPLE, 48000, &TIME_FORMAT_MEDIA_TIME, 48000 * one_second, S_OK, TRUE},
-        {&TIME_FORMAT_SAMPLE, 48000, &TIME_FORMAT_FRAME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_SAMPLE, 48000, &TIME_FORMAT_FIELD, 0, E_INVALIDARG},
-        {&TIME_FORMAT_SAMPLE, 48000, &TIME_FORMAT_SAMPLE, 48000, S_OK, TRUE},
-        {&TIME_FORMAT_SAMPLE, 48000, &TIME_FORMAT_BYTE, 0, E_INVALIDARG},
-
-        {&TIME_FORMAT_BYTE, 192000, &TIME_FORMAT_MEDIA_TIME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_BYTE, 192000, &TIME_FORMAT_FRAME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_BYTE, 192000, &TIME_FORMAT_FIELD, 0, E_INVALIDARG},
-        {&TIME_FORMAT_BYTE, 192000, &TIME_FORMAT_SAMPLE, 0, E_INVALIDARG},
-        {&TIME_FORMAT_BYTE, 192000, &TIME_FORMAT_BYTE, 192000, S_OK, TRUE},
-
-        {&TIME_FORMAT_NONE, 1, &TIME_FORMAT_MEDIA_TIME, 0, E_INVALIDARG},
-        {&TIME_FORMAT_MEDIA_TIME, one_second, &TIME_FORMAT_NONE, 0, E_INVALIDARG},
-    };
-                                                                                           IBaseFilter_FindPin(filter, L"Stream 00", &pin);
+    IBaseFilter_FindPin(filter, L"Stream 00", &pin);
     IPin_QueryInterface(pin, &IID_IMediaSeeking, (void **)&seeking);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
@@ -1586,13 +1538,9 @@ static void test_seeking(void)
     for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
     {
         hr = IMediaSeeking_IsFormatSupported(seeking, format_tests[i].guid);
-        todo_wine_if(i == 1)
-            ok(hr == format_tests[i].hr, "Got hr %#lx for format %s.\n",
+        todo_wine_if(i == 1) ok(hr == format_tests[i].hr, "Got hr %#lx for format %s.\n",
                 hr, wine_dbgstr_guid(format_tests[i].guid));
     }
-
-    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1606,37 +1554,6 @@ static void test_seeking(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_FRAME);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-
-    for (i = 0; i < ARRAY_SIZE(format_tests); ++i)
-    {
-        hr = IMediaSeeking_SetTimeFormat(seeking, format_tests[i].guid);
-        todo_wine_if(i == 1)
-            ok(hr == format_tests[i].hr_set_time, "Got hr %#lx for format %s.\n",
-               hr, wine_dbgstr_guid(format_tests[i].guid));
-    }
-
-    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    for (i = 0; i < ARRAY_SIZE(time_format_tests); ++i)
-    {
-        LONGLONG result = 0xdeadbeef;
-
-        hr = IMediaSeeking_ConvertTimeFormat(seeking, &result, time_format_tests[i].target_guid,
-                time_format_tests[i].source_time, time_format_tests[i].source_guid);
-
-        todo_wine_if(time_format_tests[i].wine_todo)
-            ok(hr == time_format_tests[i].hr, "test %u hr %#lx.\n", i, hr);
-        if (hr == S_OK)
-        {
-            todo_wine_if(time_format_tests[i].wine_todo)
-                ok(result == time_format_tests[i].target_time, "Got time %I64d for test %u.\n", result, i);
-        }
-        else
-        {
-            ok(result == 0xdeadbeef, "Got time %I64d for test %u.\n", result, i);
-        }
-    }
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_SAMPLE);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
@@ -1658,39 +1575,42 @@ static void test_seeking(void)
     duration = 0;
     hr = IMediaSeeking_GetDuration(seeking, &duration);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(duration == 5 * one_second, "Got duration %I64d.\n", duration);
+    ok(duration == 50000000, "Got duration %I64d.\n", duration);
 
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(stop == duration, "Expected time %I64d, got %I64d.\n", duration, stop);
+    ok(stop == duration, "Expected time %s, got %s.\n",
+            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!current, "Got time %I64d.\n", current);
+    ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!current, "Got time %I64d.\n", current);
-    ok(stop == duration, "Expected time %I64d, got %I64d.\n", duration, stop);
+    ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop == duration, "Expected time %s, got %s.\n",
+            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0x123456789a, "Got time %I64d.\n", time);
+    ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(time == 0x123456789a, "Got time %I64d.\n", time);
+    ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 123, &TIME_FORMAT_FRAME);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(time == 123 * one_second, "Got time %I64d.\n", time);
+    todo_wine ok(time == 123 * 10000000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     earliest = latest = 0xdeadbeef;
     hr = IMediaSeeking_GetAvailable(seeking, &earliest, &latest);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!earliest, "Got time %I64d.\n", earliest);
-    ok(latest == duration, "Expected time %I64d, got %I64d.\n", duration, latest);
+    ok(!earliest, "Got time %s.\n", wine_dbgstr_longlong(earliest));
+    ok(latest == duration, "Expected time %s, got %s.\n",
+            wine_dbgstr_longlong(duration), wine_dbgstr_longlong(latest));
 
     rate = 0;
     hr = IMediaSeeking_GetRate(seeking, &rate);
@@ -1710,28 +1630,28 @@ static void test_seeking(void)
     hr = IMediaSeeking_GetPreroll(seeking, &time);
     todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
 
-    current = 1500 * one_msec;
-    stop = 3500 * one_msec;
+    current = 1500 * 10000;
+    stop = 3500 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current == 1500 * one_msec, "Got time %I64d.\n", current);
-    ok(stop == 3500 * one_msec, "Got time %I64d.\n", stop);
+    ok(current == 1500 * 10000, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop == 3500 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     /* Native snaps to the nearest frame. */
-    ok(current > 0 && current < duration, "Got time %I64d.\n", current);
-    ok(stop > 0 && stop < duration && stop > current, "Got time %I64d.\n", stop);
+    ok(current > 0 && current < duration, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop > 0 && stop < duration && stop > current, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
-    current = 1500 * one_msec;
-    stop = 3500 * one_msec;
+    current = 1500 * 10000;
+    stop = 3500 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(current > 0 && current < duration, "Got time %I64d.\n", current);
-    ok(stop > 0 && stop < duration && stop > current, "Got time %I64d.\n", stop);
+    ok(current > 0 && current < duration, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop > 0 && stop < duration && stop > current, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaSeeking_GetStopPosition(seeking, &prev_stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1744,8 +1664,9 @@ static void test_seeking(void)
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!current, "Got time %I64d.\n", current);
-    ok(stop == prev_stop, "Expected time %I64d, got %I64d.\n", prev_stop, stop);
+    ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(stop == prev_stop, "Expected time %s, got %s.\n",
+            wine_dbgstr_longlong(prev_stop), wine_dbgstr_longlong(stop));
 
     IMediaSeeking_Release(seeking);
     IPin_Release(pin);
@@ -1846,104 +1767,6 @@ static void test_streaming(const WCHAR *resname)
     winetest_pop_context();
 }
 
-static void test_32bpp_media_types(void)
-{
-    static const VIDEOINFOHEADER expect_vih =
-    {
-        .AvgTimePerFrame = 1000 * 10000,
-        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-        .bmiHeader.biWidth = 32,
-        .bmiHeader.biHeight = 24,
-        .bmiHeader.biPlanes = 1,
-        .bmiHeader.biBitCount = 32,
-        .bmiHeader.biCompression = BI_RGB,
-        .bmiHeader.biSizeImage = 32 * 24 * 32 / 8,
-    };
-
-    const WCHAR *filename = load_resource(L"test_32bpp.avi");
-    IBaseFilter *filter = create_avi_splitter();
-    IFilterGraph2 *graph = connect_input(filter, filename);
-    IEnumMediaTypes *enummt;
-    VIDEOINFOHEADER *vih;
-    AM_MEDIA_TYPE *pmt;
-    HRESULT hr;
-    ULONG ref;
-    IPin *pin;
-    BOOL ret;
-
-    IBaseFilter_FindPin(filter, L"Stream 00", &pin);
-
-    hr = IPin_EnumMediaTypes(pin, &enummt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    /* 1: ARGB32 */
-    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
-            wine_dbgstr_guid(&pmt->majortype));
-    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_ARGB32), "Got subtype %s\n",
-            wine_dbgstr_guid(&pmt->subtype));
-    ok(!pmt->bFixedSizeSamples, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
-    ok(pmt->lSampleSize == 1, "Got sample size %lu.\n", pmt->lSampleSize);
-    ok(IsEqualGUID(&pmt->formattype, &FORMAT_VideoInfo), "Got format type %s.\n",
-            wine_dbgstr_guid(&pmt->formattype));
-    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
-    ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
-    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
-
-    hr = IPin_QueryAccept(pin, pmt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
-    vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
-    hr = IPin_QueryAccept(pin, pmt);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-
-    FreeMediaType(pmt);
-
-    /* 2: RGB32 */
-    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_FALSE) goto done;
-
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
-            wine_dbgstr_guid(&pmt->majortype));
-    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32), "Got subtype %s\n",
-            wine_dbgstr_guid(&pmt->subtype));
-    ok(!pmt->bFixedSizeSamples, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
-    todo_wine ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
-    ok(pmt->lSampleSize == 1, "Got sample size %lu.\n", pmt->lSampleSize);
-    ok(IsEqualGUID(&pmt->formattype, &FORMAT_VideoInfo), "Got format type %s.\n",
-            wine_dbgstr_guid(&pmt->formattype));
-    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
-    ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
-    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
-
-    hr = IPin_QueryAccept(pin, pmt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
-    vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
-    hr = IPin_QueryAccept(pin, pmt);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-
-    FreeMediaType(pmt);
-
-done:
-    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-
-    IEnumMediaTypes_Release(enummt);
-    IPin_Release(pin);
-
-    IFilterGraph2_Release(graph);
-    ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
-}
-
 START_TEST(avisplit)
 {
     IBaseFilter *filter;
@@ -1970,7 +1793,6 @@ START_TEST(avisplit)
     test_seeking();
     test_streaming(L"test.avi");
     test_streaming(L"test_cinepak.avi");
-    test_32bpp_media_types();
 
     CoUninitialize();
 }

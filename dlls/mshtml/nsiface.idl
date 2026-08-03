@@ -143,6 +143,7 @@ typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIPrintSession;
 typedef nsISupports nsIControllerCommandTable;
 typedef nsISupports nsIPrincipal;
+typedef nsISupports nsIAtom;
 typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
 typedef nsISupports nsIDOMMediaList;
@@ -270,20 +271,6 @@ interface nsIInterfaceRequestor : nsISupports
 interface nsIRunnable : nsISupports
 {
     nsresult Run();
-}
-
-[
-    object,
-    uuid(8b8c11d4-3ed5-4079-8974-73c7576cdb34),
-    local
-]
-interface nsIAtom : nsISupports
-{
-  nsresult ScriptableToString(nsAString *_retval);
-  nsresult ToUTF8String(nsACString *_retval);
-  nsresult ScriptableEquals(const nsAString *aString, bool *_retval);
-  bool EqualsUTF8(const nsACString *aString);
-  bool IsStaticAtom();
 }
 
 [
@@ -4380,19 +4367,6 @@ interface nsIGlobalObject : nsISupports
 interface nsIScriptObjectPrincipal : nsISupports
 {
     nsIPrincipal* /* thiscall */ GetPrincipal();
-}
-
-[
-    object,
-    uuid(70b9600e-8622-4c93-9ad8-22c28058dc44),
-    local
-]
-interface nsIDOMParser : nsISupports
-{
-    nsresult ParseFromString(const char16_t *str, const char *contentType, nsIDOMDocument **_retval);
-    nsresult ParseFromBuffer(const uint8_t *buf, uint32_t bufLen, const char *aContentType, nsIDOMDocument **_retval);
-    nsresult ParseFromStream(nsIInputStream *stream, const char *charset, int32_t contentLength, const char *contentType, nsIDOMDocument **_retval);
-    nsresult Init(nsIPrincipal *principal, nsIURI *documentURI, nsIURI *baseURI, nsIGlobalObject *scriptObject);
 }
 
 [

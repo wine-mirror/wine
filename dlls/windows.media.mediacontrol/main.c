@@ -24,8 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mediacontrol);
 
-static EventRegistrationToken dummy_token = {.value = 0xdeadbeef};
-
 struct media_control_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -180,7 +178,6 @@ static ULONG WINAPI music_properties_Release( IMusicDisplayProperties *iface )
 
     if (!ref)
     {
-        WindowsDeleteString( impl->album_title );
         WindowsDeleteString( impl->artist );
         WindowsDeleteString( impl->title );
         free( impl );
@@ -422,18 +419,16 @@ static HRESULT WINAPI display_updater_put_AppMediaId( ISystemMediaTransportContr
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI display_updater_get_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, IRandomAccessStreamReference **value )
+static HRESULT WINAPI display_updater_get_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference **value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-
-    *value = NULL;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, IRandomAccessStreamReference *value )
+static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, IMusicDisplayProperties **value )
@@ -475,7 +470,7 @@ static HRESULT WINAPI display_updater_CopyFromFileAsync( ISystemMediaTransportCo
 static HRESULT WINAPI display_updater_ClearAll( ISystemMediaTransportControlsDisplayUpdater *iface )
 {
     FIXME( "iface %p stub!\n", iface );
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI display_updater_Update( ISystemMediaTransportControlsDisplayUpdater *iface )
@@ -516,7 +511,6 @@ struct media_control
     HWND window;
     MediaPlaybackStatus media_playback_status;
     boolean is_play_enabled;
-    boolean is_stop_enabled;
     boolean is_pause_enabled;
     boolean is_previous_enabled;
     boolean is_next_enabled;
@@ -671,22 +665,14 @@ static HRESULT WINAPI media_control_put_IsPlayEnabled( ISystemMediaTransportCont
 
 static HRESULT WINAPI media_control_get_IsStopEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
-
-    TRACE( "iface %p, value %p\n", iface, value );
-
-    *value = impl->is_stop_enabled;
-    return S_OK;
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_control_put_IsStopEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
-
-    TRACE( "iface %p, value %d\n", iface, value );
-
-    impl->is_stop_enabled = value;
-    return S_OK;
+    FIXME( "iface %p, value %d stub!\n", iface, value );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_control_get_IsPauseEnabled( ISystemMediaTransportControls *iface, boolean *value )
@@ -813,14 +799,13 @@ static HRESULT WINAPI media_control_add_ButtonPressed( ISystemMediaTransportCont
     ITypedEventHandler_SystemMediaTransportControls_SystemMediaTransportControlsButtonPressedEventArgs *handler, EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    *token = dummy_token;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_control_remove_ButtonPressed( ISystemMediaTransportControls *iface, EventRegistrationToken token )
 {
     FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI media_control_add_PropertyChanged( ISystemMediaTransportControls *iface,

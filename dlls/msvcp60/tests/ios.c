@@ -483,7 +483,7 @@ static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
 /* Emulate a __thiscall */
 #ifdef __i386__
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -492,12 +492,15 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
-static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
-static void * (WINAPI *call_thiscall_func3)( void *func, void *this, void *a, void *b );
-static void * (WINAPI *call_thiscall_func4)( void *func, void *this, void *a, void *b, void *c );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
+static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void *a, const void *b,
+        const void *c );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
+        const void *c, const void *d );
 
 /* to silence compiler errors */
 static void * (WINAPI *call_thiscall_func2_ptr_dbl)( void *func, void *this, double a );
@@ -518,15 +521,19 @@ static void init_thiscall_thunk(void)
     call_thiscall_func2 = (void *)thunk;
     call_thiscall_func3 = (void *)thunk;
     call_thiscall_func4 = (void *)thunk;
+    call_thiscall_func5 = (void *)thunk;
 
     call_thiscall_func2_ptr_dbl  = (void *)thunk;
     call_thiscall_func2_ptr_fpos = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(void*)(a))
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(void*)(a),(void*)(b))
-#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(void*)(a),(void*)(b),(void*)(c))
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
+#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c), (const void *)(d))
 
 #define call_func2_ptr_dbl(func,_this,a)  call_thiscall_func2_ptr_dbl(func,_this,a)
 #define call_func2_ptr_fpos(func,_this,a) call_thiscall_func2_ptr_fpos(func,_this,a)

@@ -5,9 +5,6 @@ IMPORTS   = combase advapi32
 SOURCES = \
 	advertising_manager.c \
 	analytics_info.c \
-	application_view.c \
 	classes.idl \
 	client_device_information.c \
-	core_application.c \
-	data_transfer.c \
 	main.c

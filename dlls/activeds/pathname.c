@@ -1,6 +1,9 @@
 /*
  * Copyright 2020 Dmitry Timoshkov
  *
+ * This file contains only stubs to get the printui.dll up and running
+ * activeds.dll is much much more than this
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -29,16 +32,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(activeds);
 
+#include "initguid.h"
+DEFINE_GUID(CLSID_Pathname,0x080d0d78,0xf421,0x11d0,0xa3,0x6e,0x00,0xc0,0x4f,0xb9,0x50,0xdc);
+
 typedef struct
 {
     IADsPathname IADsPathname_iface;
     LONG ref;
     BSTR provider, server, dn;
-} ADsPathname;
+} Pathname;
 
-static inline ADsPathname *impl_from_IADsPathname(IADsPathname *iface)
+static inline Pathname *impl_from_IADsPathname(IADsPathname *iface)
 {
-    return CONTAINING_RECORD(iface, ADsPathname, IADsPathname_iface);
+    return CONTAINING_RECORD(iface, Pathname, IADsPathname_iface);
 }
 
 static HRESULT WINAPI path_QueryInterface(IADsPathname *iface, REFIID riid, void **obj)
@@ -62,13 +68,13 @@ static HRESULT WINAPI path_QueryInterface(IADsPathname *iface, REFIID riid, void
 
 static ULONG WINAPI path_AddRef(IADsPathname *iface)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     return InterlockedIncrement(&path->ref);
 }
 
 static ULONG WINAPI path_Release(IADsPathname *iface)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     LONG ref = InterlockedDecrement(&path->ref);
 
     if (!ref)
@@ -176,7 +182,7 @@ static HRESULT parse_path(BSTR path, BSTR *provider, BSTR *server, BSTR *dn)
 
 static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     HRESULT hr;
     BSTR provider, server, dn;
 
@@ -233,7 +239,7 @@ static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
 
 static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspath)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     int len;
 
     TRACE("%p,%ld,%p\n", iface, type, adspath);
@@ -293,7 +299,7 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
 
 static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     WCHAR *p;
 
     TRACE("%p,%p\n", iface, count);
@@ -315,7 +321,7 @@ static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
 
 static HRESULT WINAPI path_GetElement(IADsPathname *iface, LONG index, BSTR *element)
 {
-    ADsPathname *path = impl_from_IADsPathname(iface);
+    Pathname *path = impl_from_IADsPathname(iface);
     HRESULT hr;
     WCHAR *p, *end;
     LONG count;
@@ -406,7 +412,7 @@ static const IADsPathnameVtbl IADsPathname_vtbl =
 
 static HRESULT Pathname_create(REFIID riid, void **obj)
 {
-    ADsPathname *path;
+    Pathname *path;
     HRESULT hr;
 
     path = malloc(sizeof(*path));
@@ -424,16 +430,13 @@ static HRESULT Pathname_create(REFIID riid, void **obj)
     return hr;
 }
 
-HRESULT ADsDNWithBinary_create(REFIID riid, void **obj);
-
 static const struct class_info
 {
     const CLSID *clsid;
     HRESULT (*constructor)(REFIID, void **);
 } class_info[] =
 {
-    { &CLSID_Pathname, Pathname_create },
-    { &CLSID_DNWithBinary, ADsDNWithBinary_create }
+    { &CLSID_Pathname, Pathname_create }
 };
 
 typedef struct

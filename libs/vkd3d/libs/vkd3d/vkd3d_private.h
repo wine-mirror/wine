@@ -108,10 +108,11 @@ HRESULT hresult_from_vkd3d_result(int vkd3d_result);
 
 struct vkd3d_device_descriptor_limits
 {
-    unsigned int max_cbv_descriptor_count;
-    unsigned int max_srv_descriptor_count;
-    unsigned int max_uav_descriptor_count;
-    unsigned int max_sampler_descriptor_count;
+    unsigned int uniform_buffer_max_descriptors;
+    unsigned int sampled_image_max_descriptors;
+    unsigned int storage_buffer_max_descriptors;
+    unsigned int storage_image_max_descriptors;
+    unsigned int sampler_max_descriptors;
 };
 
 struct vkd3d_vulkan_info
@@ -126,12 +127,12 @@ struct vkd3d_vulkan_info
     bool KHR_draw_indirect_count;
     bool KHR_get_memory_requirements2;
     bool KHR_image_format_list;
+    bool KHR_maintenance2;
     bool KHR_maintenance3;
     bool KHR_portability_subset;
     bool KHR_push_descriptor;
     bool KHR_sampler_mirror_clamp_to_edge;
     bool KHR_timeline_semaphore;
-    bool KHR_zero_initialize_workgroup_memory;
     /* EXT device extensions */
     bool EXT_4444_formats;
     bool EXT_calibrated_timestamps;
@@ -143,7 +144,6 @@ struct vkd3d_vulkan_info
     bool EXT_fragment_shader_interlock;
     bool EXT_mutable_descriptor_type;
     bool EXT_robustness2;
-    bool EXT_sampler_filter_minmax;
     bool EXT_shader_demote_to_helper_invocation;
     bool EXT_shader_stencil_export;
     bool EXT_shader_viewport_index_layer;
@@ -357,18 +357,6 @@ HRESULT vkd3d_set_private_data(struct vkd3d_private_store *store,
         const GUID *tag, unsigned int data_size, const void *data);
 HRESULT vkd3d_set_private_data_interface(struct vkd3d_private_store *store, const GUID *tag, const IUnknown *object);
 
-struct vkd3d_null_event
-{
-    struct vkd3d_mutex mutex;
-    struct vkd3d_cond cond;
-    bool signalled;
-};
-
-void vkd3d_null_event_cleanup(struct vkd3d_null_event *e);
-void vkd3d_null_event_init(struct vkd3d_null_event *e);
-void vkd3d_null_event_wait(struct vkd3d_null_event *e);
-HRESULT vkd3d_signal_null_event(HANDLE h);
-
 struct vkd3d_signaled_semaphore
 {
     uint64_t value;
@@ -396,14 +384,14 @@ struct d3d12_fence
 
     uint64_t value;
     uint64_t max_pending_value;
-    uint64_t last_waited_value;
     struct vkd3d_mutex mutex;
+    struct vkd3d_cond null_event_cond;
 
     struct vkd3d_waiting_event
     {
-        HANDLE event;
-        PFN_vkd3d_signal_event signal;
         uint64_t value;
+        HANDLE event;
+        bool *latch;
     } *events;
     size_t events_size;
     size_t event_count;
@@ -423,11 +411,8 @@ struct d3d12_fence
     struct vkd3d_private_store private_store;
 };
 
-bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence,
-        HANDLE event, PFN_vkd3d_signal_event signal, uint64_t value);
 HRESULT d3d12_fence_create(struct d3d12_device *device, uint64_t initial_value,
         D3D12_FENCE_FLAGS flags, struct d3d12_fence **fence);
-struct d3d12_fence *unsafe_impl_from_ID3D12Fence(ID3D12Fence *iface);
 
 VkResult vkd3d_create_timeline_semaphore(const struct d3d12_device *device, uint64_t initial_value,
         VkSemaphore *timeline_semaphore);
@@ -437,7 +422,7 @@ struct d3d12_heap
 {
     ID3D12Heap ID3D12Heap_iface;
     unsigned int refcount;
-    unsigned int internal_refcount;
+    unsigned int resource_count;
 
     bool is_private;
     D3D12_HEAP_DESC desc;
@@ -827,6 +812,17 @@ enum vkd3d_vk_descriptor_set_index
 
     VKD3D_SET_INDEX_COUNT
 };
+
+extern const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[];
+
+static inline enum vkd3d_vk_descriptor_set_index vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(
+        VkDescriptorType type)
+{
+    VKD3D_ASSERT(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    VKD3D_ASSERT(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
+
+    return vk_descriptor_set_index_table[type];
+}
 
 struct vkd3d_vk_descriptor_heap_layout
 {
@@ -1278,13 +1274,6 @@ enum vkd3d_pipeline_bind_point
     VKD3D_PIPELINE_BIND_POINT_COUNT = 0x2,
 };
 
-struct vkd3d_resource_list
-{
-    struct d3d12_resource **resources;
-    size_t count;
-    size_t capacity;
-};
-
 /* ID3D12CommandList */
 struct d3d12_command_list
 {
@@ -1309,13 +1298,6 @@ struct d3d12_command_list
     unsigned int fb_height;
     unsigned int fb_layer_count;
     VkFormat dsv_format;
-
-    /* Resources for views bound to d3d12 state */
-    struct d3d12_resource *rtv_resources[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
-    struct d3d12_resource *dsv_resource;
-    /* Resources bound since the last pipeline barrier */
-    struct vkd3d_resource_list rtv_resources_since_last_barrier;
-    struct vkd3d_resource_list dsv_resources_since_last_barrier;
 
     bool xfb_enabled;
     bool has_depth_bounds;
@@ -1342,9 +1324,8 @@ struct d3d12_command_list
 };
 
 HRESULT d3d12_command_list_create(struct d3d12_device *device,
-        UINT node_mask, D3D12_COMMAND_LIST_TYPE type, struct d3d12_command_list **list);
-HRESULT d3d12_command_list_reset(struct d3d12_command_list *list,
-        ID3D12CommandAllocator *allocator_iface, ID3D12PipelineState *initial_pipeline_state);
+        UINT node_mask, D3D12_COMMAND_LIST_TYPE type, ID3D12CommandAllocator *allocator_iface,
+        ID3D12PipelineState *initial_pipeline_state, struct d3d12_command_list **list);
 
 struct vkd3d_queue
 {

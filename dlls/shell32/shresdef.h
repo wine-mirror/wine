@@ -374,12 +374,6 @@
 #define IDI_SHELL_RESTRICTED2      338
 /* 339 - 511 not used on Windows */
 #define IDI_SHELL_WEB_BROWSER      512
-/* 512 - 1000 not used on Windows */
-#define IDI_SHELL_INFO             1001
-/* 1012 - 8239 not used on Windows */
-#define IDI_SHELL_COMPUTER_OFF     8240
-/* 8241 - 16709 not used on Windows */
-#define IDI_SHELL_SHIELD           16747
 
 /* 
 AVI resources, windows shell32 has 14 of them: 150-152 and 160-170

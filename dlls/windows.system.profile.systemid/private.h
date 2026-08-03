@@ -26,7 +26,6 @@
 #include "winstring.h"
 
 #include "activation.h"
-#include "roapi.h"
 
 #include "wine/debug.h"
 

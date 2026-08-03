@@ -1,10 +1,8 @@
 MODULE    = winevulkan.dll
 UNIXLIB   = winevulkan.so
 IMPORTLIB = winevulkan
-IMPORTS   = advapi32
+IMPORTS   = user32 gdi32 advapi32 setupapi win32u
 UNIX_LIBS = -lwin32u $(PTHREAD_LIBS)
-
-VER_FILEDESCRIPTION_STR = "Wine Vulkan ICD"
 
 SOURCES = \
 	loader.c \

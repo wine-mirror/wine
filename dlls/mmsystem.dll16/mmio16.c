@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
  * #                     MMIO                        #
  * ###################################################
  */
-#pragma pack(push,1)
+#include <pshpack1.h>
 #define MMIO_MAX_THUNKS      32
 
 static struct mmio_thunk
@@ -55,7 +55,7 @@ static struct mmio_thunk
     SEGPTR      segbuffer;      /* actual segmented ptr to buffer */
 } *MMIO_Thunks;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 static CRITICAL_SECTION mmio_cs;
 static CRITICAL_SECTION_DEBUG mmio_critsect_debug =

@@ -26,7 +26,7 @@
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
 #include <mmsystem.h>
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -429,7 +429,7 @@ struct _DMUS_IO_SEQ_ITEM {
 	MUSIC_TIME mtTime;
 	MUSIC_TIME mtDuration;
 	DWORD      dwPChannel;
-	short      nOffset;
+	short      nOffset; 
 	BYTE       bStatus;
 	BYTE       bByte1;
 	BYTE       bByte2;
@@ -489,7 +489,7 @@ struct _DMUS_IO_TIMESIG {
 
 struct _DMUS_IO_STYLE {
 	DMUS_IO_TIMESIG timeSig;
-	double          dblTempo;
+	double          dblTempo;   
 };
 
 struct _DMUS_IO_VERSION {
@@ -503,7 +503,6 @@ struct _DMUS_IO_PATTERN {
 	BYTE            bGrooveTop;
 	WORD            wEmbellishment;
 	WORD            wNbrMeasures;
-        /* DX8 */
 	BYTE            bDestGrooveBottom;
 	BYTE            bDestGrooveTop;
 	DWORD           dwFlags;
@@ -517,7 +516,6 @@ struct _DMUS_IO_STYLEPART {
 	BYTE            bPlayModeFlags;
 	BYTE            bInvertUpper;
 	BYTE            bInvertLower;
-	/* DX8 */
 	BYTE            bPad[3];
 	DWORD           dwFlags;
 };
@@ -529,9 +527,8 @@ struct _DMUS_IO_PARTREF {
 	BYTE  bSubChordLevel;
 	BYTE  bPriority;
 	BYTE  bRandomVariation;
-	/* DX8 */
 	WORD  wPad;
-	DWORD dwPChannel;       /* Replaces wLogicalPartID */
+	DWORD dwPChannel;
 };
 
 
@@ -603,7 +600,6 @@ struct _DMUS_IO_CHORD {
 	MUSIC_TIME mtTime;
 	WORD       wMeasure;
 	BYTE       bBeat;
-        /* DX8 */
 	BYTE       bFlags;
 };
 
@@ -623,7 +619,6 @@ struct _DMUS_IO_COMMAND {
 	BYTE       bCommand;
 	BYTE       bGrooveLevel;
 	BYTE       bGrooveRange;
-        /* DX8 */
 	BYTE       bRepeatMode;
 };
 
@@ -678,7 +673,6 @@ struct _DMUS_IO_INSTRUMENT {
 	BYTE  bVolume;
 	short nTranspose;
 	DWORD dwChannelPriority;
-        /* DX8 */
 	short nPitchBendRange;
 };
 
@@ -713,7 +707,6 @@ struct _DMUS_IO_WAVE_ITEM_HEADER  {
 	DWORD          dwLoopStart;
 	DWORD          dwLoopEnd;
 	DWORD          dwFlags;
-        /* DX9 */
 	WORD           wVolumeRange;
 	WORD           wPitchRange;
 };
@@ -910,6 +903,6 @@ struct _DSOUND_IO_DXDMO_DATA {
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_FILEFORMATS_H */

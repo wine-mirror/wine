@@ -1,4 +1,4 @@
-STATICLIB = libfaudio.a
+EXTLIB    = libfaudio.a
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 EXTRADEFS = -DFAUDIO_WIN32_PLATFORM -DHAVE_WMADEC -DNDEBUG
 
@@ -20,5 +20,4 @@ SOURCES = \
 	src/FAudio_internal_simd.c \
 	src/FAudio_operationset.c \
 	src/FAudio_platform_win32.c \
-	src/FAudio_platform_win32_wmadec.c \
 	src/matrix_defaults.inl

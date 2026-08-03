@@ -62,6 +62,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #endif
 
+/* See jscript.h in jscript.dll. */
+#define SCRIPTLANGUAGEVERSION_HTML 0x400
+#define SCRIPTLANGUAGEVERSION_ES5  0x102
+#define SCRIPTLANGUAGEVERSION_ES6  0x103
+
 struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
@@ -151,19 +156,10 @@ static BOOL init_script_engine(ScriptHost *script_host, IActiveScript *script)
     compat_mode = lock_document_mode(script_host->window->doc);
     script_mode = compat_mode < COMPAT_MODE_IE8 ? SCRIPTLANGUAGEVERSION_5_7 : SCRIPTLANGUAGEVERSION_5_8;
     if(IsEqualGUID(&script_host->guid, &CLSID_JScript)) {
-        switch(compat_mode) {
-        case COMPAT_MODE_IE9:
-            script_mode = SCRIPTLANGUAGEVERSION_ES5;
-            break;
-        case COMPAT_MODE_IE10:
-            script_mode = SCRIPTLANGUAGEVERSION_ES5_1;
-            break;
-        case COMPAT_MODE_IE11:
+        if(compat_mode >= COMPAT_MODE_IE11)
             script_mode = SCRIPTLANGUAGEVERSION_ES6;
-            break;
-        default:
-            break;
-        }
+        else if(compat_mode >= COMPAT_MODE_IE9)
+            script_mode = SCRIPTLANGUAGEVERSION_ES5;
         script_mode |= SCRIPTLANGUAGEVERSION_HTML;
     }
     V_VT(&var) = VT_I4;
@@ -967,7 +963,6 @@ typedef struct {
 
 static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
 {
-    binding_bom_t bom;
     UINT cp = CP_UTF8;
     WCHAR *text;
 
@@ -980,17 +975,7 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
         return S_OK;
     }
 
-    bom = bsc->bsc.bom;
-    if(bom == BOM_NONE) {
-        /* FIXME: Try to use charset from HTTP headers first */
-
-        /* IE guesses the encoding here using heuristics. Since valid script must start with an
-         * ASCII char (keyword, comment slash, string literal char, etc) that should be enough. */
-        if(bsc->bsc.read > sizeof(WCHAR) && *(WCHAR*)bsc->buf < 128)
-            bom = BOM_UTF16;
-    }
-
-    switch(bom) {
+    switch(bsc->bsc.bom) {
     case BOM_UTF16:
         if(bsc->bsc.read % sizeof(WCHAR)) {
             FIXME("The buffer is not a valid utf16 string\n");
@@ -1823,7 +1808,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
     nsIDOMNodeList_Release(node_list);
 }
 
-BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id, BSTR *ret_name)
+BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
@@ -1841,10 +1826,7 @@ BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, S
 
         hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            *ret_name = NULL;
             hres = IDispatchEx_GetDispID(dispex, str, flags & (~fdexNameEnsure), ret_id);
-            if(SUCCEEDED(hres) && (flags & fdexNameCaseInsensitive))
-                hres = IDispatchEx_GetMemberName(dispex, *ret_id, ret_name);
             IDispatchEx_Release(dispex);
         }else {
             FIXME("No IDispatchEx\n");

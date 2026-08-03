@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#pragma pack(push,8)
+#include <pshpack8.h>
 
 #ifndef _NLSCMP_DEFINED
 #define _NLSCMPERROR               ((unsigned int)0x7fffffff)
@@ -127,6 +127,6 @@ _ACRTIMP int __cdecl _ismbstrail(const unsigned char*,const unsigned char*);
 }
 #endif
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __WINE_MBSTRING_H */

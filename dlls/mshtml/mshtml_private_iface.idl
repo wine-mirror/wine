@@ -118,62 +118,6 @@ interface IWineMSHTMLMediaQueryList : IDispatch
     oleautomation,
     dual,
     hidden,
-    uuid(fd55b4b6-2813-4fb4-829d-380099474ab2)
-]
-interface IWineMSHTMLCrypto : IDispatch
-{
-    [propget, id(1)]
-    HRESULT subtle([retval, out] IDispatch **subtle);
-    [id(2)]
-    HRESULT getRandomValues([in] IDispatch *typedArray, [retval, out] IDispatch **ret);
-}
-
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(fd55b4b6-2813-4fb4-829d-380099474ab3)
-]
-interface IWineMSHTMLSubtleCrypto : IDispatch
-{
-    [id(1)]
-    HRESULT encrypt([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **result);
-    [id(2)]
-    HRESULT decrypt([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **result);
-    [id(3)]
-    HRESULT sign([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **signature);
-    [id(4)]
-    HRESULT verify([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *signature, [in] VARIANT *data,
-                   [retval, out] IDispatch **result);
-    [id(5)]
-    HRESULT digest([in] VARIANT *algorithm, [in] VARIANT *data, [retval, out] IDispatch **digest);
-    [id(6)]
-    HRESULT generateKey([in] VARIANT *algorithm, VARIANT_BOOL extractable, [in] VARIANT *keyUsages,
-                        [retval, out] IDispatch **result);
-    [id(7)]
-    HRESULT deriveKey([in] VARIANT *algorithm, [in] VARIANT *baseKey, [in] VARIANT *derivedKeyAlgorithm,
-                      VARIANT_BOOL extractable, [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
-    [id(8)]
-    HRESULT importKey([in] BSTR format, [in] VARIANT *keyData, [in] VARIANT *algorithm, VARIANT_BOOL extractable,
-                      [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
-    [id(9)]
-    HRESULT exportKey([in] BSTR format, [in] VARIANT *key, [retval, out] IDispatch **result);
-    [id(10)]
-    HRESULT wrapKey([in] BSTR format, [in] VARIANT *key, [in] VARIANT *wrappingKey, [in] VARIANT *wrapAlgo,
-                    [retval, out] IDispatch **result);
-    [id(11)]
-    HRESULT unwrapKey([in] BSTR format, [in] VARIANT *wrappedKey, [in] VARIANT *unwrappingKey,
-                      [in] VARIANT *unwrapAlgo, [in] VARIANT *unwrappedKeyAlgo, VARIANT_BOOL extractable,
-                      [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
-}
-
-const long DISPID_IWINEHTMLWINDOWPRIVATE_MSCRYPTO = 54;
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
     uuid(1b5939fc-8f84-43f3-8d89-f9a92069fad7)
 ]
 interface IWineHTMLWindowPrivate : IDispatch
@@ -186,8 +130,6 @@ interface IWineHTMLWindowPrivate : IDispatch
     HRESULT console([retval, out] IDispatch **console);
     [id(53)]
     HRESULT matchMedia([in] BSTR media_query, [retval, out] IDispatch **media_query_list);
-    [propget, id(DISPID_IWINEHTMLWINDOWPRIVATE_MSCRYPTO)]
-    HRESULT msCrypto([retval, out] IDispatch **crypto);
 }
 
 [
@@ -261,145 +203,6 @@ interface IWineHTMLElementPrivate : IDispatch
     HRESULT classList([retval, out] IDispatch **class_list);
 }
 
-const long DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE = 51;
-const long DISPID_IWINEHTMLFORMPRIVATE_CHECKVALIDITY = 52;
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(8a11c39f-12e3-dcc3-14ec-479ba0bddac1)
-]
-interface IWineHTMLFormPrivate : IDispatch
-{
-    [propput, id(50)]
-    HRESULT enctype([in] BSTR v);
-    [propget, id(50)]
-    HRESULT enctype([retval, out] BSTR *ret);
-    [propput, id(DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE)]
-    HRESULT noValidate([in] VARIANT_BOOL v);
-    [propget, id(DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE)]
-    HRESULT noValidate([retval, out] VARIANT_BOOL *ret);
-    [id(DISPID_IWINEHTMLFORMPRIVATE_CHECKVALIDITY)]
-    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
-}
-
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(f356f6d2-f210-4f54-24c7-3f88fa3c20fc)
-]
-interface IWineHTMLInputPrivate : IDispatch
-{
-    [propput, id(50)]
-    HRESULT autofocus([in] VARIANT_BOOL v);
-    [propget, id(50)]
-    HRESULT autofocus([retval, out] VARIANT_BOOL *ret);
-    [propget, id(51)]
-    HRESULT validationMessage([retval, out] BSTR *ret);
-    [propget, id(52)]
-    HRESULT validity([retval, out] IDispatch **ret);
-    [propget, id(53)]
-    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
-    [id(54)]
-    HRESULT setCustomValidity([in] VARIANT *message);
-    [id(55)]
-    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
-    [propput, id(56)]
-    HRESULT formAction([in] BSTR v);
-    [propget, id(56)]
-    HRESULT formAction([retval, out] BSTR *ret);
-    [propput, id(57)]
-    HRESULT formEnctype([in] BSTR v);
-    [propget, id(57)]
-    HRESULT formEnctype([retval, out] BSTR *ret);
-    [propput, id(58)]
-    HRESULT formMethod([in] BSTR v);
-    [propget, id(58)]
-    HRESULT formMethod([retval, out] BSTR *ret);
-    [propput, id(59)]
-    HRESULT formNoValidate([in] VARIANT_BOOL v);
-    [propget, id(59)]
-    HRESULT formNoValidate([retval, out] VARIANT_BOOL *ret);
-    [propput, id(60)]
-    HRESULT formTarget([in] BSTR v);
-    [propget, id(60)]
-    HRESULT formTarget([retval, out] BSTR *ret);
-}
-
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(d26d41ef-79ef-f921-a8a2-65739537ff07)
-]
-interface IWineHTMLSelectPrivate : IDispatch
-{
-    [propput, id(50)]
-    HRESULT autofocus([in] VARIANT_BOOL v);
-    [propget, id(50)]
-    HRESULT autofocus([retval, out] VARIANT_BOOL *ret);
-    [propget, id(51)]
-    HRESULT validationMessage([retval, out] BSTR *ret);
-    [propget, id(52)]
-    HRESULT validity([retval, out] IDispatch **ret);
-    [propget, id(53)]
-    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
-    [id(54)]
-    HRESULT setCustomValidity([in] VARIANT *message);
-    [id(55)]
-    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
-}
-
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(27454a8f-bf7a-e47e-9ea8-2d7d1faad588)
-]
-interface IWineHTMLTextAreaPrivate : IDispatch
-{
-    [propput, id(50)]
-    HRESULT autofocus([in] VARIANT_BOOL v);
-    [propget, id(50)]
-    HRESULT autofocus([retval, out] VARIANT_BOOL *ret);
-    [propget, id(51)]
-    HRESULT validationMessage([retval, out] BSTR *ret);
-    [propget, id(52)]
-    HRESULT validity([retval, out] IDispatch **ret);
-    [propget, id(53)]
-    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
-    [id(54)]
-    HRESULT setCustomValidity([in] VARIANT *message);
-    [id(55)]
-    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
-}
-
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(307eb8f7-362b-6398-8c22-54c1c714efd8)
-]
-interface IWineHTMLObjectPrivate : IDispatch
-{
-    [propget, id(50)]
-    HRESULT validationMessage([retval, out] BSTR *ret);
-    [propget, id(51)]
-    HRESULT validity([retval, out] IDispatch **ret);
-    [propget, id(52)]
-    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
-    [id(53)]
-    HRESULT setCustomValidity([in] VARIANT *message);
-    [id(54)]
-    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
-}
-
 [
     odl,
     oleautomation,
@@ -455,18 +258,6 @@ interface IWinePageTransitionEvent : IDispatch
     HRESULT persisted([retval, out] VARIANT_BOOL *ret);
 }
 
-[
-    odl,
-    oleautomation,
-    dual,
-    hidden,
-    uuid(c985818a-0a28-3da3-4023-9cf70955d79d)
-]
-interface IWinePerformancePrivate : IDispatch
-{
-    [id(1)]
-    HRESULT now([retval, out] double *p);
-}
 
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE = 1;
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE = 2;

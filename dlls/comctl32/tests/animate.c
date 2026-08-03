@@ -32,6 +32,7 @@
 
 static HWND hAnimateParentWnd, hAnimateWnd;
 static const char animateTestClass[] = "AnimateTestClass";
+static WNDPROC animate_wndproc;
 static HANDLE shell32;
 
 /* try to make sure pending X events have been processed before continuing */
@@ -99,7 +100,7 @@ static void create_animate(DWORD parent_style, DWORD animate_style)
     hAnimateWnd = CreateWindowExA(0, ANIMATE_CLASSA, NULL, WS_CHILD | WS_VISIBLE | animate_style,
       0, 0, rect.right, rect.bottom, hAnimateParentWnd, NULL, shell32, 0);
     ok(hAnimateWnd != NULL, "failed to create parent wnd\n");
-    SetWindowLongPtrA(hAnimateWnd, GWLP_WNDPROC, 0);
+    animate_wndproc = (WNDPROC)SetWindowLongPtrA(hAnimateWnd, GWLP_WNDPROC, 0);
 
     ShowWindow(hAnimateParentWnd, SW_SHOWNORMAL);
     ok(GetUpdateRect(hAnimateParentWnd, NULL, FALSE), "GetUpdateRect: There should be a region that needs to be updated\n");
@@ -149,23 +150,6 @@ static void test_play(void)
     ok(res != 0, "Load AVI resource failed\n");
     res = SendMessageA(hAnimateWnd, ACM_PLAY, (WPARAM) -1, MAKELONG(0, -1));
     ok(res != 0, "Play should have worked\n");
-    /* Test ACM_OPEN after playing an animation */
-    res = SendMessageA(hAnimateWnd, ACM_OPENA, 0, 0);
-    ok(res == 0, "ACM_OPENA with a NULL lparam while playing should return 0\n");
-    destroy_animate();
-
-    /* Test ACM_OPEN after opening an animation */
-    create_animate(0, 0);
-    res = SendMessageA(hAnimateWnd, ACM_OPENA, (WPARAM)shell32, MAKEINTRESOURCE(SEARCHING_AVI_INDEX));
-    ok(res != 0, "Load AVI resource failed\n");
-    res = SendMessageA(hAnimateWnd, ACM_OPENA, 0, 0);
-    ok(res == 0, "ACM_OPENA with a NULL lparam should return 0\n");
-    destroy_animate();
-
-    /* Test ACM_OPEN without opening an animation */
-    create_animate(0, 0);
-    res = SendMessageA(hAnimateWnd, ACM_OPENA, 0, 0);
-    ok(res == 0, "ACM_OPENA with a NULL lparam should return 0\n");
     destroy_animate();
 }
 

@@ -43,8 +43,6 @@
 
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 extern BOOL is_wow64;
-extern WCHAR sysdir[MAX_PATH];
-extern SIZE_T sysdir_len;
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100
@@ -428,6 +426,16 @@ typedef struct tagMSIPACKAGE
     UINT   LastActionResult;
     UINT   action_progress_increment;
     HANDLE log_file;
+    HMODULE hfusion10;
+    HMODULE hfusion11;
+    HMODULE hfusion20;
+    HMODULE hfusion40;
+    HMODULE hmscoree;
+    HRESULT (WINAPI *pGetFileVersion)( const WCHAR *, WCHAR *, DWORD, DWORD * );
+    HRESULT (WINAPI *pCreateAssemblyNameObject)( IAssemblyName **, const WCHAR *, DWORD, void * );
+    HRESULT (WINAPI *pCreateAssemblyEnum)( IAssemblyEnum **, IUnknown *, IAssemblyName *, DWORD, void * );
+    IAssemblyCache *cache_net[CLR_VERSION_MAX];
+    IAssemblyCache *cache_sxs;
 
     struct list classes;
     struct list extensions;
@@ -1076,10 +1084,10 @@ extern UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace);
 extern MSIASSEMBLY *msi_load_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern UINT msi_install_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern UINT msi_uninstall_assembly(MSIPACKAGE *, MSICOMPONENT *);
-extern void msi_destroy_assembly_caches(void);
+extern void msi_destroy_assembly_caches(MSIPACKAGE *);
 extern BOOL msi_is_global_assembly(MSICOMPONENT *);
-extern IAssemblyEnum *msi_create_assembly_enum(const WCHAR *);
-extern WCHAR *msi_get_assembly_path(const WCHAR *) __WINE_DEALLOC(free) __WINE_MALLOC;
+extern IAssemblyEnum *msi_create_assembly_enum(MSIPACKAGE *, const WCHAR *);
+extern WCHAR *msi_get_assembly_path(MSIPACKAGE *, const WCHAR *) __WINE_DEALLOC(free) __WINE_MALLOC;
 extern WCHAR **msi_split_string(const WCHAR *, WCHAR);
 extern UINT msi_set_original_database_property(MSIDATABASE *, const WCHAR *);
 extern WCHAR *msi_get_error_message(MSIDATABASE *, int) __WINE_DEALLOC(free) __WINE_MALLOC;
@@ -1106,7 +1114,7 @@ extern BOOL msi_set_file_attributes( MSIPACKAGE *, const WCHAR *, DWORD );
 extern HANDLE msi_find_first_file( MSIPACKAGE *, const WCHAR *, WIN32_FIND_DATAW * );
 extern BOOL msi_find_next_file( MSIPACKAGE *, HANDLE, WIN32_FIND_DATAW * );
 extern BOOL msi_move_file( MSIPACKAGE *, const WCHAR *, const WCHAR *, DWORD );
-extern BYTE *msi_get_file_version_info( MSIPACKAGE *, const WCHAR * );
+extern DWORD msi_get_file_version_info( MSIPACKAGE *, const WCHAR *, DWORD, BYTE * );
 extern BOOL msi_create_full_path( MSIPACKAGE *, const WCHAR * );
 extern DWORD msi_get_disk_file_size( MSIPACKAGE *, const WCHAR * );
 extern VS_FIXEDFILEINFO *msi_get_disk_file_version( MSIPACKAGE *, const WCHAR * );

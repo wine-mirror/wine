@@ -19,50 +19,41 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
-#if 0
-#pragma makedep unix
-#endif
-
 #include "config.h"
 
 #include <Security/AuthSession.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 
-#include "ntstatus.h"
 #include "macdrv.h"
-#include "shellapi.h"
+#include "winuser.h"
+#include "winreg.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
+
+#ifndef kIOPMAssertionTypePreventUserIdleDisplaySleep
+#define kIOPMAssertionTypePreventUserIdleDisplaySleep CFSTR("PreventUserIdleDisplaySleep")
+#endif
+#ifndef kCFCoreFoundationVersionNumber10_7
+#define kCFCoreFoundationVersionNumber10_7      635.00
+#endif
 
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
 C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
+DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
+
 int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
-bool capture_displays_for_fullscreen = false;
+int capture_displays_for_fullscreen = 0;
+BOOL skip_single_buffer_flushes = FALSE;
 BOOL allow_vsync = TRUE;
 BOOL allow_set_gamma = TRUE;
-bool left_option_is_alt = false;
-bool right_option_is_alt = false;
-bool left_command_is_ctrl = false;
-bool right_command_is_ctrl = false;
+int left_option_is_alt = 0;
+int right_option_is_alt = 0;
 BOOL allow_software_rendering = FALSE;
-bool allow_immovable_windows = true;
-bool use_confinement_cursor_clipping = true;
-bool cursor_clipping_locks_windows = true;
-bool use_precise_scrolling = true;
-int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
-bool retina_enabled = false;
-bool enable_app_nap = false;
-
-pthread_key_t macdrv_thread_data_key = 0;
-UINT64 app_icon_callback = 0;
-UINT64 app_quit_request_callback = 0;
-
-CFDictionaryRef localized_strings;
+HMODULE macdrv_module = 0;
 
 
 /**************************************************************************
@@ -90,7 +81,7 @@ const char* debugstr_cf(CFTypeRef t)
     if (!ret)
     {
         UniChar buf[200];
-        int len = min(CFStringGetLength(s), ARRAY_SIZE(buf));
+        int len = min(CFStringGetLength(s), sizeof(buf)/sizeof(buf[0]));
         CFStringGetCharacters(s, CFRangeMake(0, len), buf);
         ret = debugstr_wn(buf, len);
     }
@@ -99,141 +90,17 @@ const char* debugstr_cf(CFTypeRef t)
 }
 
 
-HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len)
+/***********************************************************************
+ *              set_app_icon
+ */
+static void set_app_icon(void)
 {
-    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
-    OBJECT_ATTRIBUTES attr;
-    HANDLE ret;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    return NtOpenKeyEx(&ret, MAXIMUM_ALLOWED, &attr, 0) ? 0 : ret;
-}
-
-
-HKEY open_hkcu_key(const char *name)
-{
-    WCHAR bufferW[256];
-    static HKEY hkcu;
-
-    if (!hkcu)
+    CFArrayRef images = create_app_icon_images();
+    if (images)
     {
-        char buffer[256];
-        DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
-        DWORD i, len = sizeof(sid_data);
-        SID *sid;
-
-        if (NtQueryInformationToken(GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len))
-            return 0;
-
-        sid = ((TOKEN_USER *)sid_data)->User.Sid;
-        len = snprintf(buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
-                        MAKELONG(MAKEWORD(sid->IdentifierAuthority.Value[5],
-                                           sid->IdentifierAuthority.Value[4]),
-                                  MAKEWORD(sid->IdentifierAuthority.Value[3],
-                                            sid->IdentifierAuthority.Value[2])));
-        for (i = 0; i < sid->SubAuthorityCount; i++)
-            len += snprintf(buffer + len, sizeof(buffer) - len, "-%u", sid->SubAuthority[i]);
-
-        ascii_to_unicode(bufferW, buffer, len);
-        hkcu = reg_open_key(NULL, bufferW, len * sizeof(WCHAR));
+        macdrv_set_application_icon(images);
+        CFRelease(images);
     }
-
-    return reg_open_key(hkcu, bufferW, asciiz_to_unicode(bufferW, name) - sizeof(WCHAR));
-}
-
-
-/* wrapper for NtCreateKey that creates the key recursively if necessary */
-HKEY reg_create_key(HKEY root, const WCHAR *name, ULONG name_len,
-                    DWORD options, DWORD *disposition)
-{
-    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-    HANDLE ret;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateKey(&ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition);
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        static const WCHAR registry_rootW[] = { '\\','R','e','g','i','s','t','r','y','\\' };
-        DWORD pos = 0, i = 0, len = name_len / sizeof(WCHAR);
-
-        /* don't try to create registry root */
-        if (!root && len > ARRAY_SIZE(registry_rootW) &&
-            !memcmp(name, registry_rootW, sizeof(registry_rootW)))
-            i += ARRAY_SIZE(registry_rootW);
-
-        while (i < len && name[i] != '\\') i++;
-        if (i == len) return 0;
-        for (;;)
-        {
-            unsigned int subkey_options = options;
-            if (i < len) subkey_options &= ~(REG_OPTION_CREATE_LINK | REG_OPTION_OPEN_LINK);
-            nameW.Buffer = (WCHAR *)name + pos;
-            nameW.Length = (i - pos) * sizeof(WCHAR);
-            status = NtCreateKey(&ret, MAXIMUM_ALLOWED, &attr, 0, NULL, subkey_options, disposition);
-
-            if (attr.RootDirectory != root) NtClose(attr.RootDirectory);
-            if (!NT_SUCCESS(status)) return 0;
-            if (i == len) break;
-            attr.RootDirectory = ret;
-            while (i < len && name[i] == '\\') i++;
-            pos = i;
-            while (i < len && name[i] != '\\') i++;
-        }
-    }
-    return ret;
-}
-
-
-HKEY reg_create_ascii_key(HKEY root, const char *name, DWORD options, DWORD *disposition)
-{
-    WCHAR buf[256];
-    return reg_create_key(root, buf, asciiz_to_unicode(buf, name) - sizeof(WCHAR),
-                          options, disposition);
-}
-
-
-BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len)
-{
-    char buffer[4096];
-    KEY_NODE_INFORMATION *key_info = (KEY_NODE_INFORMATION *)buffer;
-    DWORD size;
-    HKEY key;
-    BOOL ret = TRUE;
-
-    if (!(key = reg_open_key(parent, name, name_len))) return FALSE;
-
-    while (ret && !NtEnumerateKey(key, 0, KeyNodeInformation, key_info, sizeof(buffer), &size))
-        ret = reg_delete_tree(key, key_info->Name, key_info->NameLength);
-
-    if (ret) ret = !NtDeleteKey(key);
-    NtClose(key);
-    return ret;
-}
-
-
-ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size)
-{
-    UNICODE_STRING str;
-
-    RtlInitUnicodeString(&str, name);
-    if (NtQueryValueKey(hkey, &str, KeyValuePartialInformation, info, size, &size))
-        return 0;
-
-    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
 }
 
 
@@ -243,30 +110,10 @@ ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATIO
  * Get a config key from either the app-specific or the default config
  */
 static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name,
-                                   WCHAR *buffer, DWORD size)
+                                   char *buffer, DWORD size)
 {
-    WCHAR nameW[128];
-    char buf[2048];
-    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buf;
-
-    asciiz_to_unicode(nameW, name);
-
-    if (appkey && query_reg_value(appkey, nameW, info, sizeof(buf)))
-    {
-        size = min(info->DataLength, size - sizeof(WCHAR));
-        memcpy(buffer, info->Data, size);
-        buffer[size / sizeof(WCHAR)] = 0;
-        return 0;
-    }
-
-    if (defkey && query_reg_value(defkey, nameW, info, sizeof(buf)))
-    {
-        size = min(info->DataLength, size - sizeof(WCHAR));
-        memcpy(buffer, info->Data, size);
-        buffer[size / sizeof(WCHAR)] = 0;
-        return 0;
-    }
-
+    if (appkey && !RegQueryValueExA(appkey, name, 0, NULL, (LPBYTE)buffer, &size)) return 0;
+    if (defkey && !RegQueryValueExA(defkey, name, 0, NULL, (LPBYTE)buffer, &size)) return 0;
     return ERROR_FILE_NOT_FOUND;
 }
 
@@ -278,41 +125,36 @@ static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name,
  */
 static void setup_options(void)
 {
-    static const WCHAR macdriverW[] = {'\\','M','a','c',' ','D','r','i','v','e','r',0};
-    WCHAR buffer[MAX_PATH + 16], *p, *appname;
+    char buffer[MAX_PATH + 16];
     HKEY hkey, appkey = 0;
     DWORD len;
 
     /* @@ Wine registry key: HKCU\Software\Wine\Mac Driver */
-    hkey = open_hkcu_key("Software\\Wine\\Mac Driver");
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Mac Driver", &hkey)) hkey = 0;
 
     /* open the app-specific key */
 
-    appname = RtlGetCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
-    if ((p = wcsrchr(appname, '/'))) appname = p + 1;
-    if ((p = wcsrchr(appname, '\\'))) appname = p + 1;
-    len = lstrlenW(appname);
-
+    len = GetModuleFileNameA(0, buffer, MAX_PATH);
     if (len && len < MAX_PATH)
     {
         HKEY tmpkey;
-        memcpy(buffer, appname, len * sizeof(WCHAR));
-        memcpy(buffer + len, macdriverW, sizeof(macdriverW));
+        char *p, *appname = buffer;
+        if ((p = strrchr(appname, '/'))) appname = p + 1;
+        if ((p = strrchr(appname, '\\'))) appname = p + 1;
+        strcat(appname, "\\Mac Driver");
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Mac Driver */
-        if ((tmpkey = open_hkcu_key("Software\\Wine\\AppDefaults")))
+        if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey))
         {
-            appkey = reg_open_key(tmpkey, buffer, lstrlenW(buffer) * sizeof(WCHAR));
-            NtClose(tmpkey);
+            if (RegOpenKeyA(tmpkey, appname, &appkey)) appkey = 0;
+            RegCloseKey(tmpkey);
         }
     }
 
     if (!get_config_key(hkey, appkey, "WindowsFloatWhenInactive", buffer, sizeof(buffer)))
     {
-        static const WCHAR noneW[] = {'n','o','n','e',0};
-        static const WCHAR allW[] = {'a','l','l',0};
-        if (!wcscmp(buffer, noneW))
+        if (!strcmp(buffer, "none"))
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONE;
-        else if (!wcscmp(buffer, allW))
+        else if (!strcmp(buffer, "all"))
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_ALL;
         else
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
@@ -320,6 +162,9 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "CaptureDisplaysForFullscreen", buffer, sizeof(buffer)))
         capture_displays_for_fullscreen = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "SkipSingleBufferFlushes", buffer, sizeof(buffer)))
+        skip_single_buffer_flushes = IS_OPTION_TRUE(buffer[0]);
 
     if (!get_config_key(hkey, appkey, "AllowVerticalSync", buffer, sizeof(buffer)))
         allow_vsync = IS_OPTION_TRUE(buffer[0]);
@@ -332,132 +177,48 @@ static void setup_options(void)
     if (!get_config_key(hkey, appkey, "RightOptionIsAlt", buffer, sizeof(buffer)))
         right_option_is_alt = IS_OPTION_TRUE(buffer[0]);
 
-    if (!get_config_key(hkey, appkey, "LeftCommandIsCtrl", buffer, sizeof(buffer)))
-        left_command_is_ctrl = IS_OPTION_TRUE(buffer[0]);
-    if (!get_config_key(hkey, appkey, "RightCommandIsCtrl", buffer, sizeof(buffer)))
-        right_command_is_ctrl = IS_OPTION_TRUE(buffer[0]);
-
-    if (left_command_is_ctrl && right_command_is_ctrl && !left_option_is_alt && !right_option_is_alt)
-        WARN("Both Command keys have been mapped to Control. There is no way to "
-             "send an Alt key to Windows applications. Consider enabling "
-             "LeftOptionIsAlt or RightOptionIsAlt.\n");
-
     if (!get_config_key(hkey, appkey, "AllowSoftwareRendering", buffer, sizeof(buffer)))
         allow_software_rendering = IS_OPTION_TRUE(buffer[0]);
 
-    if (!get_config_key(hkey, appkey, "AllowImmovableWindows", buffer, sizeof(buffer)))
-        allow_immovable_windows = IS_OPTION_TRUE(buffer[0]);
-
-    if (!get_config_key(hkey, appkey, "UseConfinementCursorClipping", buffer, sizeof(buffer)))
-        use_confinement_cursor_clipping = IS_OPTION_TRUE(buffer[0]);
-
-    if (!get_config_key(hkey, appkey, "CursorClippingLocksWindows", buffer, sizeof(buffer)))
-        cursor_clipping_locks_windows = IS_OPTION_TRUE(buffer[0]);
-
-    if (!get_config_key(hkey, appkey, "UsePreciseScrolling", buffer, sizeof(buffer)))
-        use_precise_scrolling = IS_OPTION_TRUE(buffer[0]);
-
-    if (!get_config_key(hkey, appkey, "OpenGLSurfaceMode", buffer, sizeof(buffer)))
-    {
-        static const WCHAR transparentW[] = {'t','r','a','n','s','p','a','r','e','n','t',0};
-        static const WCHAR behindW[] = {'b','e','h','i','n','d',0};
-        if (!wcscmp(buffer, transparentW))
-            gl_surface_mode = GL_SURFACE_IN_FRONT_TRANSPARENT;
-        else if (!wcscmp(buffer, behindW))
-            gl_surface_mode = GL_SURFACE_BEHIND;
-        else
-            gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
-    }
-
-    if (!get_config_key(hkey, appkey, "EnableAppNap", buffer, sizeof(buffer)))
-        enable_app_nap = IS_OPTION_TRUE(buffer[0]);
-
-    /* Don't use appkey.  The DPI and monitor sizes should be consistent for all
-       processes in the prefix. */
-    if (!get_config_key(hkey, NULL, "RetinaMode", buffer, sizeof(buffer)))
-        retina_enabled = IS_OPTION_TRUE(buffer[0]);
-
-    retina_on = retina_enabled;
-
-    if (appkey) NtClose(appkey);
-    if (hkey) NtClose(hkey);
+    if (appkey) RegCloseKey(appkey);
+    if (hkey) RegCloseKey(hkey);
 }
 
 
 /***********************************************************************
- *              load_strings
+ *              process_attach
  */
-static void load_strings(struct localized_string *str)
+static BOOL process_attach(void)
 {
-    CFMutableDictionaryRef dict;
-
-    dict = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks,
-                                     &kCFTypeDictionaryValueCallBacks);
-    if (!dict)
-    {
-        ERR("Failed to create localized strings dictionary\n");
-        return;
-    }
-
-    while (str->id)
-    {
-        if (str->str && str->len)
-        {
-            const UniChar *ptr = param_ptr(str->str);
-            CFNumberRef key = CFNumberCreate(NULL, kCFNumberIntType, &str->id);
-            CFStringRef value = CFStringCreateWithCharacters(NULL, ptr, str->len);
-            if (key && value)
-                CFDictionarySetValue(dict, key, value);
-            else
-                ERR("Failed to add string ID 0x%04x %s\n", str->id, debugstr_wn(ptr, str->len));
-        }
-        else
-            ERR("Failed to load string ID 0x%04x\n", str->id);
-        str++;
-    }
-
-    localized_strings = dict;
-}
-
-
-/***********************************************************************
- *              macdrv_init
- */
-static NTSTATUS macdrv_init(void *arg)
-{
-    struct init_params *params = arg;
     SessionAttributeBits attributes;
     OSStatus status;
 
-    app_icon_callback = params->app_icon_callback;
-    app_quit_request_callback = params->app_quit_request_callback;
-
     status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
-        return STATUS_UNSUCCESSFUL;
+        return FALSE;
 
-    pthread_key_create( &macdrv_thread_data_key, NULL );
-
-    init_win_context();
     setup_options();
-    load_strings(params->strings);
+
+    if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 
     macdrv_err_on = ERR_ON(macdrv);
-    if (macdrv_start_cocoa_app(NtGetTickCount()))
+    if (macdrv_start_cocoa_app(GetTickCount64()))
     {
         ERR("Failed to start Cocoa app main loop\n");
-        return STATUS_UNSUCCESSFUL;
+        return FALSE;
     }
 
-    init_user_driver();
-    return STATUS_SUCCESS;
+    set_app_icon();
+    macdrv_clipboard_process_attach();
+
+    return TRUE;
 }
 
 
 /***********************************************************************
- *              ThreadDetach   (MACDRV.@)
+ *              thread_detach
  */
-void macdrv_ThreadDetach(void)
+static void thread_detach(void)
 {
     struct macdrv_thread_data *data = macdrv_thread_data();
 
@@ -466,9 +227,7 @@ void macdrv_ThreadDetach(void)
         macdrv_destroy_event_queue(data->queue);
         if (data->keyboard_layout_uchr)
             CFRelease(data->keyboard_layout_uchr);
-        free(data);
-        /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        pthread_setspecific( macdrv_thread_data_key, NULL );
+        HeapFree(GetProcessHeap(), 0, data);
     }
 }
 
@@ -486,7 +245,7 @@ static void set_queue_display_fd(int fd)
     if (wine_server_fd_to_handle(fd, GENERIC_READ | SYNCHRONIZE, 0, &handle))
     {
         MESSAGE("macdrv: Can't allocate handle for event queue fd\n");
-        NtTerminateProcess(0, 1);
+        ExitProcess(1);
     }
     SERVER_START_REQ(set_queue_fd)
     {
@@ -497,9 +256,9 @@ static void set_queue_display_fd(int fd)
     if (ret)
     {
         MESSAGE("macdrv: Can't store handle for event queue fd\n");
-        NtTerminateProcess(0, 1);
+        ExitProcess(1);
     }
-    NtClose(handle);
+    CloseHandle(handle);
 }
 
 
@@ -509,39 +268,55 @@ static void set_queue_display_fd(int fd)
 struct macdrv_thread_data *macdrv_init_thread_data(void)
 {
     struct macdrv_thread_data *data = macdrv_thread_data();
-    TISInputSourceRef input_source;
 
     if (data) return data;
 
-    if (!(data = calloc(1, sizeof(*data))))
+    if (!(data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         ERR("could not create data\n");
-        NtTerminateProcess(0, 1);
+        ExitProcess(1);
     }
 
     if (!(data->queue = macdrv_create_event_queue(macdrv_handle_event)))
     {
         ERR("macdrv: Can't create event queue.\n");
-        NtTerminateProcess(0, 1);
+        ExitProcess(1);
     }
 
-    macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);
-    data->active_keyboard_layout = macdrv_get_hkl_from_source(input_source);
-    CFRelease(input_source);
+    data->keyboard_layout_uchr = macdrv_copy_keyboard_layout(&data->keyboard_type, &data->iso_keyboard);
     macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
-    pthread_setspecific( macdrv_thread_data_key, data );
+    TlsSetValue(thread_data_tls_index, data);
 
-    NtUserActivateKeyboardLayout(data->active_keyboard_layout, 0);
     return data;
 }
 
 
 /***********************************************************************
+ *              DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
+{
+    BOOL ret = TRUE;
+
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        macdrv_module = hinst;
+        ret = process_attach();
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
+        break;
+    }
+    return ret;
+}
+
+/***********************************************************************
  *              SystemParametersInfo (MACDRV.@)
  */
-BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+BOOL CDECL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
 {
     switch (action)
     {
@@ -586,7 +361,13 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
             }
             else if (powerAssertion == kIOPMNullAssertionID)
             {
-                IOPMAssertionCreateWithName( kIOPMAssertionTypePreventUserIdleDisplaySleep, kIOPMAssertionLevelOn,
+                CFStringRef assertName;
+                /*Are we running Lion or later?*/
+                if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_7)
+                    assertName = kIOPMAssertionTypePreventUserIdleDisplaySleep;
+                else
+                    assertName = kIOPMAssertionTypeNoDisplaySleep;
+                IOPMAssertionCreateWithName( assertName, kIOPMAssertionLevelOn,
                                              CFSTR("Wine Process requesting no screen saver"),
                                              &powerAssertion);
             }
@@ -595,48 +376,3 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
     }
     return FALSE;
 }
-
-
-static NTSTATUS macdrv_quit_result(void *arg)
-{
-    struct quit_result_params *params = arg;
-    macdrv_quit_reply(params->result);
-    return 0;
-}
-
-
-const unixlib_entry_t __wine_unix_call_funcs[] =
-{
-    macdrv_init,
-    macdrv_quit_result,
-};
-
-C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
-
-#ifdef _WIN64
-
-static NTSTATUS wow64_init(void *arg)
-{
-    struct
-    {
-        ULONG strings;
-        UINT64 app_icon_callback;
-        UINT64 app_quit_request_callback;
-    } *params32 = arg;
-    struct init_params params;
-
-    params.strings = UlongToPtr(params32->strings);
-    params.app_icon_callback = params32->app_icon_callback;
-    params.app_quit_request_callback = params32->app_quit_request_callback;
-    return macdrv_init(&params);
-}
-
-const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
-{
-    wow64_init,
-    macdrv_quit_result,
-};
-
-C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
-
-#endif /* _WIN64 */

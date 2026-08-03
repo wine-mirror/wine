@@ -19,12 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.data.json.idl";
-
-namespace Windows.Data.Json {
-    runtimeclass JsonArray;
-    runtimeclass JsonObject;
-    runtimeclass JsonValue;
-}
+#include "windows.data.json.idl"

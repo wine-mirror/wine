@@ -20,23 +20,31 @@
 
 typedef UINT icmp_handle;
 
-struct icmp_get_reply_params
+struct icmp_cancel_listen_params
+{
+    icmp_handle handle;
+};
+
+struct icmp_close_params
+{
+    icmp_handle handle;
+};
+
+struct icmp_listen_params
 {
     icmp_handle handle;
     void *reply;
     ULONGLONG user_reply_ptr;
     unsigned int bits, reply_len;
+    int timeout;
 };
 
 struct icmp_send_echo_params
 {
-    SOCKADDR_INET *src;
     SOCKADDR_INET *dst;
     void *request, *reply;
     UINT request_size, reply_len;
     BYTE bits, ttl, tos;
-    int hop_limit;
-    HANDLE completion_event;
     icmp_handle *handle;
 };
 

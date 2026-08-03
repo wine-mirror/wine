@@ -603,7 +603,7 @@ IDI_SHELL_FILE_SEARCH ICON resources/search.ico
 IDI_SHELL_SYSTEM_SEARCH ICON resources/search.ico
 
 /* @makedep: resources/control.ico */
-IDI_SHELL_CONTROL_PANEL_XP ICON resources/control.ico
+IDI_SHELL_OPTIONS ICON resources/control.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/folder.ico */
@@ -640,7 +640,7 @@ IDI_SHELL_FOLDER_OVERWRITE ICON resources/delete.ico
 
 /* FIXME: Following resource is not yet added */
 /* @makedep: resources/rename.ico */
-IDI_SHELL_FOLDER_RENAME ICON resources/rename.ico
+IDI_SHELL_RENAME_FOLDER ICON resources/rename.ico
 
 /* @makedep: resources/update.ico */
 IDI_SHELL_INSTALL ICON resources/update.ico
@@ -1066,16 +1066,6 @@ IDI_SHELL_RESTRICTED2 ICON resources/restricted.ico
 /* @makedep: resources/internet.ico */
 IDI_SHELL_WEB_BROWSER ICON resources/internet.ico
 
-/* @makedep: resources/info.ico */
-IDI_SHELL_INFO ICON resources/info.ico
-
-/* FIXME: Following resource is not yet added */
-/* @makedep: resources/mycomputer.ico */
-IDI_SHELL_COMPUTER_OFF ICON resources/mycomputer.ico
-
-/* @makedep: resources/shield.ico */
-IDI_SHELL_SHIELD ICON resources/shield.ico
-
 /* @makedep: resources/idb_sort_incr.bmp */
 IDB_SORT_INCR BITMAP resources/idb_sort_incr.bmp
 
@@ -1120,3 +1110,15 @@ AUTHORS RCDATA ../../AUTHORS
 
 /* @makedep: shell32.manifest */
 124 RT_MANIFEST shell32.manifest
+
+/* please keep in sync with version.h values */
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#define WINE_FILENAME_STR "shell32.dll"
+#define WINE_FILEVERSION 6,0,2900,6242
+#define WINE_FILEVERSION_STR "6.0.2900.6242"
+#define WINE_PRODUCTVERSION 6,0,2900,6242
+#define WINE_PRODUCTVERSION_STR "6.0.2900.6242"
+#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
+
+#include "wine/wine_common_ver.rc"

@@ -1,0 +1,6 @@
+MODULE    = libadsiid.a
+
+C_SRCS = \
+	adsiid.c
+
+@MAKE_IMPLIB_RULES@

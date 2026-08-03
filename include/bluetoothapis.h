@@ -18,8 +18,6 @@
 #ifndef __BLUETOOTHAPIS_H
 #define __BLUETOOTHAPIS_H
 
-#include <bthdef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -245,7 +243,6 @@ typedef BOOL (CALLBACK *PFN_BLUETOOTH_ENUM_ATTRIBUTES_CALLBACK)(
     void  *pvParam);
 
 DWORD WINAPI BluetoothAuthenticateDevice(HWND, HANDLE, BLUETOOTH_DEVICE_INFO *, WCHAR *, ULONG);
-DWORD WINAPI BluetoothAuthenticateDeviceEx(HWND, HANDLE, BLUETOOTH_DEVICE_INFO *, BLUETOOTH_OOB_DATA_INFO *, AUTHENTICATION_REQUIREMENTS);
 DWORD WINAPI BluetoothAuthenticateMultipleDevices(HWND, HANDLE, DWORD, BLUETOOTH_DEVICE_INFO *);
 BOOL  WINAPI BluetoothDisplayDeviceProperties(HWND, BLUETOOTH_DEVICE_INFO *);
 BOOL  WINAPI BluetoothEnableDiscovery(HANDLE, BOOL);

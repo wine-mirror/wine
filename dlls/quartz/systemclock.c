@@ -115,12 +115,12 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
         LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &clock->sinks, struct advise_sink, entry)
         {
             list_remove(&sink->entry);
-            free(sink);
+            heap_free(sink);
         }
 
         clock->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&clock->cs);
-        free(clock);
+        heap_free(clock);
     }
     return refcount;
 }
@@ -168,7 +168,7 @@ static DWORD WINAPI SystemClockAdviseThread(void *param)
                 {
                     SetEvent(sink->handle);
                     list_remove(&sink->entry);
-                    free(sink);
+                    heap_free(sink);
                     continue;
                 }
             }
@@ -197,7 +197,7 @@ static HRESULT add_sink(struct system_clock *clock, DWORD_PTR handle,
     if (!cookie)
         return E_POINTER;
 
-    if (!(sink = calloc(1, sizeof(*sink))))
+    if (!(sink = heap_alloc_zero(sizeof(*sink))))
         return E_OUTOFMEMORY;
 
     sink->handle = (HANDLE)handle;
@@ -302,7 +302,7 @@ static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR
         if (sink->cookie == cookie)
         {
             list_remove(&sink->entry);
-            free(sink);
+            heap_free(sink);
             LeaveCriticalSection(&clock->cs);
             return S_OK;
         }
@@ -327,10 +327,10 @@ static const IReferenceClockVtbl SystemClock_vtbl =
 HRESULT system_clock_create(IUnknown *outer, IUnknown **out)
 {
     struct system_clock *object;
-
+  
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(object = calloc(1, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         *out = NULL;
         return E_OUTOFMEMORY;

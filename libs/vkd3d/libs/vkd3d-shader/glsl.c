@@ -38,7 +38,7 @@ struct glsl_src
 
 struct glsl_dst
 {
-    const struct vsir_dst_operand *vsir;
+    const struct vkd3d_shader_dst_param *vsir;
     struct vkd3d_string_buffer *register_name;
     struct vkd3d_string_buffer *mask;
 };
@@ -64,23 +64,23 @@ struct vkd3d_glsl_generator
 
     const struct vkd3d_shader_interface_info *interface_info;
     const struct vkd3d_shader_descriptor_offset_info *offset_info;
+    const struct vkd3d_shader_scan_descriptor_info1 *descriptor_info;
     const struct vkd3d_shader_scan_combined_resource_sampler_info *combined_sampler_info;
 };
 
-static void shader_glsl_print_subscript(struct vkd3d_string_buffer *buffer,
-        struct vkd3d_glsl_generator *gen, const struct vsir_src_operand *rel_addr, unsigned int offset);
+static void shader_glsl_print_subscript(struct vkd3d_string_buffer *buffer, struct vkd3d_glsl_generator *gen,
+        const struct vkd3d_shader_src_param *rel_addr, unsigned int offset);
 
-#define vkd3d_glsl_compiler_error(gen, error, ...) \
-        vkd3d_glsl_compiler_error_(gen, error, __FUNCTION__, __VA_ARGS__)
-static void VKD3D_PRINTF_FUNC(4, 5) vkd3d_glsl_compiler_error_(struct vkd3d_glsl_generator *gen,
-        enum vkd3d_shader_error error, const char *function, const char *fmt, ...)
+static void VKD3D_PRINTF_FUNC(3, 4) vkd3d_glsl_compiler_error(
+        struct vkd3d_glsl_generator *generator,
+        enum vkd3d_shader_error error, const char *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
-    vkd3d_shader_verror(gen->message_context, &gen->location, error, function, fmt, args);
+    vkd3d_shader_verror(generator->message_context, &generator->location, error, fmt, args);
     va_end(args);
-    gen->failed = true;
+    generator->failed = true;
 }
 
 static const char *shader_glsl_get_prefix(enum vkd3d_shader_type type)
@@ -130,7 +130,7 @@ static const struct glsl_resource_type_info *shader_glsl_get_resource_type_info(
 static const struct vkd3d_shader_descriptor_info1 *shader_glsl_get_descriptor(struct vkd3d_glsl_generator *gen,
         enum vkd3d_shader_descriptor_type type, unsigned int idx, unsigned int space)
 {
-    const struct vkd3d_shader_scan_descriptor_info1 *info = &gen->program->descriptors;
+    const struct vkd3d_shader_scan_descriptor_info1 *info = gen->descriptor_info;
 
     for (unsigned int i = 0; i < info->descriptor_count; ++i)
     {
@@ -146,7 +146,7 @@ static const struct vkd3d_shader_descriptor_info1 *shader_glsl_get_descriptor(st
 static const struct vkd3d_shader_descriptor_info1 *shader_glsl_get_descriptor_by_id(
         struct vkd3d_glsl_generator *gen, enum vkd3d_shader_descriptor_type type, unsigned int id)
 {
-    const struct vkd3d_shader_scan_descriptor_info1 *info = &gen->program->descriptors;
+    const struct vkd3d_shader_scan_descriptor_info1 *info = gen->descriptor_info;
 
     for (unsigned int i = 0; i < info->descriptor_count; ++i)
     {
@@ -188,7 +188,7 @@ static void shader_glsl_print_image_name(struct vkd3d_string_buffer *buffer,
 }
 
 static void shader_glsl_print_register_name(struct vkd3d_string_buffer *buffer,
-        struct vkd3d_glsl_generator *gen, const struct vsir_operand *reg)
+        struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_register *reg)
 {
     switch (reg->type)
     {
@@ -269,32 +269,24 @@ static void shader_glsl_print_register_name(struct vkd3d_string_buffer *buffer,
                 vkd3d_string_buffer_printf(buffer, "<unhandled register %#x>", reg->type);
                 break;
             }
-            if (reg->idx[0].rel_addr)
+            if (reg->idx[0].rel_addr || reg->idx[2].rel_addr)
             {
                 vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                         "Internal compiler error: Unhandled constant buffer register indirect addressing.");
                 vkd3d_string_buffer_printf(buffer, "<unhandled register %#x>", reg->type);
                 break;
             }
-            vkd3d_string_buffer_printf(buffer, "%s_cb_%u", gen->prefix, reg->idx[0].offset);
-            shader_glsl_print_subscript(buffer, gen, reg->idx[2].rel_addr, reg->idx[2].offset);
+            vkd3d_string_buffer_printf(buffer, "%s_cb_%u[%u]",
+                    gen->prefix, reg->idx[0].offset, reg->idx[2].offset);
             break;
 
         case VKD3DSPR_THREADID:
-            vkd3d_string_buffer_printf(buffer, "uvec4(gl_GlobalInvocationID, 0)");
+            vkd3d_string_buffer_printf(buffer, "gl_GlobalInvocationID");
             break;
 
         case VKD3DSPR_IDXTEMP:
             vkd3d_string_buffer_printf(buffer, "x%u", reg->idx[0].offset);
             shader_glsl_print_subscript(buffer, gen, reg->idx[1].rel_addr, reg->idx[1].offset);
-            break;
-
-        case VKD3DSPR_SAMPLEMASK:
-            if (gen->program->shader_version.type != VKD3D_SHADER_TYPE_PIXEL)
-                vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                        "Internal compiler error: Unhandled sample coverage mask in shader type #%x.",
-                        gen->program->shader_version.type);
-            vkd3d_string_buffer_printf(buffer, "o_mask");
             break;
 
         default:
@@ -337,12 +329,12 @@ static void glsl_src_cleanup(struct glsl_src *src, struct vkd3d_string_buffer_ca
 }
 
 static void shader_glsl_print_bitcast(struct vkd3d_string_buffer *dst, struct vkd3d_glsl_generator *gen,
-        const char *src, enum vsir_data_type dst_data_type, enum vsir_data_type src_data_type, unsigned int size)
+        const char *src, enum vkd3d_data_type dst_data_type, enum vkd3d_data_type src_data_type, unsigned int size)
 {
-    if (dst_data_type == VSIR_DATA_UNORM || dst_data_type == VSIR_DATA_SNORM)
-        dst_data_type = VSIR_DATA_F32;
-    if (src_data_type == VSIR_DATA_UNORM || src_data_type == VSIR_DATA_SNORM)
-        src_data_type = VSIR_DATA_F32;
+    if (dst_data_type == VKD3D_DATA_UNORM || dst_data_type == VKD3D_DATA_SNORM)
+        dst_data_type = VKD3D_DATA_FLOAT;
+    if (src_data_type == VKD3D_DATA_UNORM || src_data_type == VKD3D_DATA_SNORM)
+        src_data_type = VKD3D_DATA_FLOAT;
 
     if (dst_data_type == src_data_type)
     {
@@ -350,14 +342,14 @@ static void shader_glsl_print_bitcast(struct vkd3d_string_buffer *dst, struct vk
         return;
     }
 
-    if (src_data_type == VSIR_DATA_F32)
+    if (src_data_type == VKD3D_DATA_FLOAT)
     {
         switch (dst_data_type)
         {
-            case VSIR_DATA_I32:
+            case VKD3D_DATA_INT:
                 vkd3d_string_buffer_printf(dst, "floatBitsToInt(%s)", src);
                 return;
-            case VSIR_DATA_U32:
+            case VKD3D_DATA_UINT:
                 vkd3d_string_buffer_printf(dst, "floatBitsToUint(%s)", src);
                 return;
             default:
@@ -365,14 +357,14 @@ static void shader_glsl_print_bitcast(struct vkd3d_string_buffer *dst, struct vk
         }
     }
 
-    if (src_data_type == VSIR_DATA_U32)
+    if (src_data_type == VKD3D_DATA_UINT)
     {
         switch (dst_data_type)
         {
-            case VSIR_DATA_F32:
+            case VKD3D_DATA_FLOAT:
                 vkd3d_string_buffer_printf(dst, "uintBitsToFloat(%s)", src);
                 return;
-            case VSIR_DATA_I32:
+            case VKD3D_DATA_INT:
                 if (size == 1)
                     vkd3d_string_buffer_printf(dst, "int(%s)", src);
                 else
@@ -390,11 +382,11 @@ static void shader_glsl_print_bitcast(struct vkd3d_string_buffer *dst, struct vk
 }
 
 static void shader_glsl_print_src(struct vkd3d_string_buffer *buffer, struct vkd3d_glsl_generator *gen,
-        const struct vsir_src_operand *vsir_src, uint32_t mask, enum vsir_data_type data_type)
+        const struct vkd3d_shader_src_param *vsir_src, uint32_t mask, enum vkd3d_data_type data_type)
 {
-    const struct vsir_operand *reg = &vsir_src->reg;
-    struct vkd3d_string_buffer *register_name;
-    enum vsir_data_type src_data_type;
+    const struct vkd3d_shader_register *reg = &vsir_src->reg;
+    struct vkd3d_string_buffer *register_name, *str;
+    enum vkd3d_data_type src_data_type;
     unsigned int size;
 
     register_name = vkd3d_string_buffer_get(&gen->string_buffers);
@@ -404,22 +396,47 @@ static void shader_glsl_print_src(struct vkd3d_string_buffer *buffer, struct vkd
                 "Internal compiler error: Unhandled 'non-uniform' modifier.");
 
     if (reg->type == VKD3DSPR_IMMCONST || reg->type == VKD3DSPR_THREADID)
-        src_data_type = VSIR_DATA_U32;
+        src_data_type = VKD3D_DATA_UINT;
     else
-        src_data_type = VSIR_DATA_F32;
+        src_data_type = VKD3D_DATA_FLOAT;
 
     shader_glsl_print_register_name(register_name, gen, reg);
 
-    size = reg->dimension == VSIR_DIMENSION_VEC4 ? 4 : 1;
-    shader_glsl_print_bitcast(buffer, gen, register_name->buffer, data_type, src_data_type, size);
-    if (reg->dimension == VSIR_DIMENSION_VEC4)
-        shader_glsl_print_swizzle(buffer, vsir_src->swizzle, mask);
+    if (!vsir_src->modifiers)
+        str = buffer;
+    else
+        str = vkd3d_string_buffer_get(&gen->string_buffers);
 
+    size = reg->dimension == VSIR_DIMENSION_VEC4 ? 4 : 1;
+    shader_glsl_print_bitcast(str, gen, register_name->buffer, data_type, src_data_type, size);
+    if (reg->dimension == VSIR_DIMENSION_VEC4)
+        shader_glsl_print_swizzle(str, vsir_src->swizzle, mask);
+
+    switch (vsir_src->modifiers)
+    {
+        case VKD3DSPSM_NONE:
+            break;
+        case VKD3DSPSM_NEG:
+            vkd3d_string_buffer_printf(buffer, "-%s", str->buffer);
+            break;
+        case VKD3DSPSM_ABS:
+            vkd3d_string_buffer_printf(buffer, "abs(%s)", str->buffer);
+            break;
+        default:
+            vkd3d_string_buffer_printf(buffer, "<unhandled modifier %#x>(%s)",
+                    vsir_src->modifiers, str->buffer);
+            vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
+                    "Internal compiler error: Unhandled source modifier(s) %#x.", vsir_src->modifiers);
+            break;
+    }
+
+    if (str != buffer)
+        vkd3d_string_buffer_release(&gen->string_buffers, str);
     vkd3d_string_buffer_release(&gen->string_buffers, register_name);
 }
 
 static void glsl_src_init(struct glsl_src *glsl_src, struct vkd3d_glsl_generator *gen,
-        const struct vsir_src_operand *vsir_src, uint32_t mask)
+        const struct vkd3d_shader_src_param *vsir_src, uint32_t mask)
 {
     glsl_src->str = vkd3d_string_buffer_get(&gen->string_buffers);
     shader_glsl_print_src(glsl_src->str, gen, vsir_src, mask, vsir_src->reg.data_type);
@@ -432,7 +449,7 @@ static void glsl_dst_cleanup(struct glsl_dst *dst, struct vkd3d_string_buffer_ca
 }
 
 static uint32_t glsl_dst_init(struct glsl_dst *glsl_dst, struct vkd3d_glsl_generator *gen,
-        const struct vkd3d_shader_instruction *ins, const struct vsir_dst_operand *vsir_dst)
+        const struct vkd3d_shader_instruction *ins, const struct vkd3d_shader_dst_param *vsir_dst)
 {
     uint32_t write_mask = vsir_dst->write_mask;
 
@@ -453,8 +470,8 @@ static uint32_t glsl_dst_init(struct glsl_dst *glsl_dst, struct vkd3d_glsl_gener
     return write_mask;
 }
 
-static void shader_glsl_print_subscript(struct vkd3d_string_buffer *buffer,
-        struct vkd3d_glsl_generator *gen, const struct vsir_src_operand *rel_addr, unsigned int offset)
+static void shader_glsl_print_subscript(struct vkd3d_string_buffer *buffer, struct vkd3d_glsl_generator *gen,
+        const struct vkd3d_shader_src_param *rel_addr, unsigned int offset)
 {
     struct glsl_src r;
 
@@ -468,22 +485,29 @@ static void shader_glsl_print_subscript(struct vkd3d_string_buffer *buffer,
     vkd3d_string_buffer_printf(buffer, "[%s", r.str->buffer);
     if (offset)
         vkd3d_string_buffer_printf(buffer, " + %u", offset);
-    vkd3d_string_buffer_printf(buffer, "]");
+    else
+        vkd3d_string_buffer_printf(buffer, "]");
     glsl_src_cleanup(&r, &gen->string_buffers);
 }
 
 static void VKD3D_PRINTF_FUNC(4, 0) shader_glsl_vprint_assignment(struct vkd3d_glsl_generator *gen,
-        struct glsl_dst *dst, enum vsir_data_type data_type, const char *format, va_list args)
+        struct glsl_dst *dst, enum vkd3d_data_type data_type, const char *format, va_list args)
 {
     struct vkd3d_string_buffer *buffer = gen->buffer;
+    uint32_t modifiers = dst->vsir->modifiers;
     bool close = true;
 
     if (dst->vsir->shift)
         vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                 "Internal compiler error: Unhandled destination shift %#x.", dst->vsir->shift);
+    if (modifiers & ~VKD3DSPDM_SATURATE)
+        vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
+                "Internal compiler error: Unhandled destination modifier(s) %#x.", modifiers);
 
     shader_glsl_print_indent(buffer, gen->indent);
     vkd3d_string_buffer_printf(buffer, "%s%s = ", dst->register_name->buffer, dst->mask->buffer);
+    if (modifiers & VKD3DSPDM_SATURATE)
+        vkd3d_string_buffer_printf(buffer, "clamp(");
 
     switch (data_type)
     {
@@ -491,15 +515,13 @@ static void VKD3D_PRINTF_FUNC(4, 0) shader_glsl_vprint_assignment(struct vkd3d_g
             vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                     "Internal compiler error: Unhandled destination register data type %#x.", data_type);
             /* fall through */
-        case VSIR_DATA_F32:
-        case VSIR_DATA_SNORM:
-        case VSIR_DATA_UNORM:
+        case VKD3D_DATA_FLOAT:
             close = false;
             break;
-        case VSIR_DATA_I32:
+        case VKD3D_DATA_INT:
             vkd3d_string_buffer_printf(buffer, "intBitsToFloat(");
             break;
-        case VSIR_DATA_U32:
+        case VKD3D_DATA_UINT:
             vkd3d_string_buffer_printf(buffer, "uintBitsToFloat(");
             break;
     }
@@ -508,6 +530,8 @@ static void VKD3D_PRINTF_FUNC(4, 0) shader_glsl_vprint_assignment(struct vkd3d_g
 
     if (close)
         vkd3d_string_buffer_printf(buffer, ")");
+    if (modifiers & VKD3DSPDM_SATURATE)
+        vkd3d_string_buffer_printf(buffer, ", 0.0, 1.0)");
     vkd3d_string_buffer_printf(buffer, ";\n");
 }
 
@@ -522,7 +546,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) shader_glsl_print_assignment(
 }
 
 static void VKD3D_PRINTF_FUNC(4, 5) shader_glsl_print_assignment_ext(struct vkd3d_glsl_generator *gen,
-        struct glsl_dst *dst, enum vsir_data_type data_type, const char *format, ...)
+        struct glsl_dst *dst, enum vkd3d_data_type data_type, const char *format, ...)
 {
     va_list args;
 
@@ -533,12 +557,10 @@ static void VKD3D_PRINTF_FUNC(4, 5) shader_glsl_print_assignment_ext(struct vkd3
 
 static void shader_glsl_unhandled(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
 {
-    const char *name = vsir_opcode_get_name(ins->opcode, "<unknown>");
-
     shader_glsl_print_indent(gen->buffer, gen->indent);
-    vkd3d_string_buffer_printf(gen->buffer, "/* <unhandled instruction \"%s\" (%#x)> */\n", name, ins->opcode);
+    vkd3d_string_buffer_printf(gen->buffer, "/* <unhandled instruction %#x> */\n", ins->opcode);
     vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-            "Internal compiler error: Unhandled instruction \"%s\" (%#x).", name, ins->opcode);
+            "Internal compiler error: Unhandled instruction %#x.", ins->opcode);
 }
 
 static void shader_glsl_binop(struct vkd3d_glsl_generator *gen,
@@ -580,21 +602,6 @@ static void shader_glsl_dot(struct vkd3d_glsl_generator *gen,
 
     glsl_src_cleanup(&src[1], &gen->string_buffers);
     glsl_src_cleanup(&src[0], &gen->string_buffers);
-    glsl_dst_cleanup(&dst, &gen->string_buffers);
-}
-
-static void shader_glsl_saturate(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
-{
-    struct glsl_src src;
-    struct glsl_dst dst;
-    uint32_t mask;
-
-    mask = glsl_dst_init(&dst, gen, ins, &ins->dst[0]);
-    glsl_src_init(&src, gen, &ins->src[0], mask);
-
-    shader_glsl_print_assignment(gen, &dst, "clamp(%s, 0.0, 1.0)", src.str->buffer);
-
-    glsl_src_cleanup(&src, &gen->string_buffers);
     glsl_dst_cleanup(&dst, &gen->string_buffers);
 }
 
@@ -779,17 +786,20 @@ static void shader_glsl_print_texel_offset(struct vkd3d_string_buffer *buffer, s
 
 static void shader_glsl_ld(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
 {
-    unsigned int coord_size, resource_id, resource_idx, resource_space, sample_count;
+    unsigned int resource_id, resource_idx, resource_space, sample_count;
     const struct glsl_resource_type_info *resource_type_info;
     const struct vkd3d_shader_descriptor_info1 *d;
+    enum vkd3d_shader_component_type sampled_type;
     enum vkd3d_shader_resource_type resource_type;
     struct vkd3d_string_buffer *fetch;
-    enum vsir_data_type data_type;
+    enum vkd3d_data_type data_type;
     struct glsl_src coord;
     struct glsl_dst dst;
-    bool array, offset;
+    uint32_t coord_mask;
 
-    offset = vkd3d_shader_instruction_has_texel_offset(ins);
+    if (vkd3d_shader_instruction_has_texel_offset(ins))
+        vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
+                "Internal compiler error: Unhandled texel fetch offset.");
 
     if (ins->src[1].reg.idx[0].rel_addr || ins->src[1].reg.idx[1].rel_addr)
         vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_UNSUPPORTED,
@@ -802,7 +812,8 @@ static void shader_glsl_ld(struct vkd3d_glsl_generator *gen, const struct vkd3d_
         resource_type = d->resource_type;
         resource_space = d->register_space;
         sample_count = d->sample_count;
-        data_type = d->resource_data_type;
+        sampled_type = vkd3d_component_type_from_resource_data_type(d->resource_data_type);
+        data_type = vkd3d_data_type_from_component_type(sampled_type);
     }
     else
     {
@@ -811,34 +822,32 @@ static void shader_glsl_ld(struct vkd3d_glsl_generator *gen, const struct vkd3d_
         resource_space = 0;
         resource_type = VKD3D_SHADER_RESOURCE_TEXTURE_2D;
         sample_count = 1;
-        data_type = VSIR_DATA_F32;
+        data_type = VKD3D_DATA_FLOAT;
     }
 
     if ((resource_type_info = shader_glsl_get_resource_type_info(resource_type)))
     {
-        coord_size = resource_type_info->coord_size;
-        array = resource_type_info->array;
+        coord_mask = vkd3d_write_mask_from_component_count(resource_type_info->coord_size);
     }
     else
     {
         vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                 "Internal compiler error: Unhandled resource type %#x.", resource_type);
-        coord_size = 2;
-        array = false;
+        coord_mask = vkd3d_write_mask_from_component_count(2);
     }
 
     glsl_dst_init(&dst, gen, ins, &ins->dst[0]);
-    glsl_src_init(&coord, gen, &ins->src[0], vkd3d_write_mask_from_component_count(coord_size));
+    glsl_src_init(&coord, gen, &ins->src[0], coord_mask);
     fetch = vkd3d_string_buffer_get(&gen->string_buffers);
 
-    vkd3d_string_buffer_printf(fetch, "texelFetch%s(", offset ? "Offset" : "");
+    vkd3d_string_buffer_printf(fetch, "texelFetch(");
     shader_glsl_print_combined_sampler_name(fetch, gen, resource_idx,
             resource_space, VKD3D_SHADER_DUMMY_SAMPLER_INDEX, 0);
     vkd3d_string_buffer_printf(fetch, ", %s", coord.str->buffer);
     if (resource_type != VKD3D_SHADER_RESOURCE_BUFFER)
     {
         vkd3d_string_buffer_printf(fetch, ", ");
-        if (ins->opcode != VSIR_OP_LD2DMS)
+        if (ins->opcode != VKD3DSIH_LD2DMS)
             shader_glsl_print_src(fetch, gen, &ins->src[0], VKD3DSP_WRITEMASK_3, ins->src[0].reg.data_type);
         else if (sample_count == 1)
             /* If the resource isn't a true multisample resource, this is the
@@ -846,11 +855,6 @@ static void shader_glsl_ld(struct vkd3d_glsl_generator *gen, const struct vkd3d_
             vkd3d_string_buffer_printf(fetch, "0");
         else
             shader_glsl_print_src(fetch, gen, &ins->src[2], VKD3DSP_WRITEMASK_0, ins->src[2].reg.data_type);
-    }
-    if (offset)
-    {
-        vkd3d_string_buffer_printf(fetch, ", ");
-        shader_glsl_print_texel_offset(fetch, gen, coord_size - array, &ins->texel_offset);
     }
     vkd3d_string_buffer_printf(fetch, ")");
     shader_glsl_print_swizzle(fetch, ins->src[1].swizzle, ins->dst[0].write_mask);
@@ -863,7 +867,7 @@ static void shader_glsl_ld(struct vkd3d_glsl_generator *gen, const struct vkd3d_
 }
 
 static void shader_glsl_print_shadow_coord(struct vkd3d_string_buffer *buffer, struct vkd3d_glsl_generator *gen,
-        const struct vsir_src_operand *coord, const struct vsir_src_operand *ref, unsigned int coord_size)
+        const struct vkd3d_shader_src_param *coord, const struct vkd3d_shader_src_param *ref, unsigned int coord_size)
 {
     uint32_t coord_mask = vkd3d_write_mask_from_component_count(coord_size);
 
@@ -897,24 +901,25 @@ static void shader_glsl_sample(struct vkd3d_glsl_generator *gen, const struct vk
 {
     bool shadow_sampler, array, bias, dynamic_offset, gather, grad, lod, lod_zero, offset, shadow;
     const struct glsl_resource_type_info *resource_type_info;
+    const struct vkd3d_shader_src_param *resource, *sampler;
     unsigned int resource_id, resource_idx, resource_space;
     unsigned int sampler_id, sampler_idx, sampler_space;
-    const struct vsir_src_operand *resource, *sampler;
     const struct vkd3d_shader_descriptor_info1 *d;
+    enum vkd3d_shader_component_type sampled_type;
     enum vkd3d_shader_resource_type resource_type;
     unsigned int component_idx, coord_size;
     struct vkd3d_string_buffer *sample;
-    enum vsir_data_type data_type;
+    enum vkd3d_data_type data_type;
     struct glsl_dst dst;
 
-    bias = ins->opcode == VSIR_OP_SAMPLE_B;
-    dynamic_offset = ins->opcode == VSIR_OP_GATHER4_PO;
-    gather = ins->opcode == VSIR_OP_GATHER4 || ins->opcode == VSIR_OP_GATHER4_PO;
-    grad = ins->opcode == VSIR_OP_SAMPLE_GRAD;
-    lod = ins->opcode == VSIR_OP_SAMPLE_LOD || ins->opcode == VSIR_OP_SAMPLE_C_LZ;
-    lod_zero = ins->opcode == VSIR_OP_SAMPLE_C_LZ;
+    bias = ins->opcode == VKD3DSIH_SAMPLE_B;
+    dynamic_offset = ins->opcode == VKD3DSIH_GATHER4_PO;
+    gather = ins->opcode == VKD3DSIH_GATHER4 || ins->opcode == VKD3DSIH_GATHER4_PO;
+    grad = ins->opcode == VKD3DSIH_SAMPLE_GRAD;
+    lod = ins->opcode == VKD3DSIH_SAMPLE_LOD || ins->opcode == VKD3DSIH_SAMPLE_C_LZ;
+    lod_zero = ins->opcode == VKD3DSIH_SAMPLE_C_LZ;
     offset = dynamic_offset || vkd3d_shader_instruction_has_texel_offset(ins);
-    shadow = ins->opcode == VSIR_OP_SAMPLE_C || ins->opcode == VSIR_OP_SAMPLE_C_LZ;
+    shadow = ins->opcode == VKD3DSIH_SAMPLE_C || ins->opcode == VKD3DSIH_SAMPLE_C_LZ;
 
     resource = &ins->src[1 + dynamic_offset];
     sampler = &ins->src[2 + dynamic_offset];
@@ -930,7 +935,8 @@ static void shader_glsl_sample(struct vkd3d_glsl_generator *gen, const struct vk
     {
         resource_type = d->resource_type;
         resource_space = d->register_space;
-        data_type = d->resource_data_type;
+        sampled_type = vkd3d_component_type_from_resource_data_type(d->resource_data_type);
+        data_type = vkd3d_data_type_from_component_type(sampled_type);
     }
     else
     {
@@ -938,7 +944,7 @@ static void shader_glsl_sample(struct vkd3d_glsl_generator *gen, const struct vk
                 "Internal compiler error: Undeclared resource descriptor %u.", resource_id);
         resource_space = 0;
         resource_type = VKD3D_SHADER_RESOURCE_TEXTURE_2D;
-        data_type = VSIR_DATA_F32;
+        data_type = VKD3D_DATA_FLOAT;
     }
 
     if ((resource_type_info = shader_glsl_get_resource_type_info(resource_type)))
@@ -1049,11 +1055,11 @@ static void shader_glsl_sample(struct vkd3d_glsl_generator *gen, const struct vk
 static void shader_glsl_load_uav_typed(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
 {
     const struct glsl_resource_type_info *resource_type_info;
+    enum vkd3d_shader_component_type component_type;
     const struct vkd3d_shader_descriptor_info1 *d;
     enum vkd3d_shader_resource_type resource_type;
     unsigned int uav_id, uav_idx, uav_space;
     struct vkd3d_string_buffer *load;
-    enum vsir_data_type data_type;
     struct glsl_src coord;
     struct glsl_dst dst;
     uint32_t coord_mask;
@@ -1068,7 +1074,7 @@ static void shader_glsl_load_uav_typed(struct vkd3d_glsl_generator *gen, const s
     {
         resource_type = d->resource_type;
         uav_space = d->register_space;
-        data_type = d->resource_data_type;
+        component_type = vkd3d_component_type_from_resource_data_type(d->resource_data_type);
     }
     else
     {
@@ -1076,7 +1082,7 @@ static void shader_glsl_load_uav_typed(struct vkd3d_glsl_generator *gen, const s
                 "Internal compiler error: Undeclared UAV descriptor %u.", uav_id);
         uav_space = 0;
         resource_type = VKD3D_SHADER_RESOURCE_TEXTURE_2D;
-        data_type = VSIR_DATA_F32;
+        component_type = VKD3D_SHADER_COMPONENT_FLOAT;
     }
 
     if ((resource_type_info = shader_glsl_get_resource_type_info(resource_type)))
@@ -1099,7 +1105,8 @@ static void shader_glsl_load_uav_typed(struct vkd3d_glsl_generator *gen, const s
     vkd3d_string_buffer_printf(load, ", %s)", coord.str->buffer);
     shader_glsl_print_swizzle(load, ins->src[1].swizzle, ins->dst[0].write_mask);
 
-    shader_glsl_print_assignment_ext(gen, &dst, data_type, "%s", load->buffer);
+    shader_glsl_print_assignment_ext(gen, &dst,
+            vkd3d_data_type_from_component_type(component_type), "%s", load->buffer);
 
     vkd3d_string_buffer_release(&gen->string_buffers, load);
     glsl_src_cleanup(&coord, &gen->string_buffers);
@@ -1109,11 +1116,11 @@ static void shader_glsl_load_uav_typed(struct vkd3d_glsl_generator *gen, const s
 static void shader_glsl_store_uav_typed(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
 {
     const struct glsl_resource_type_info *resource_type_info;
+    enum vkd3d_shader_component_type component_type;
     const struct vkd3d_shader_descriptor_info1 *d;
     enum vkd3d_shader_resource_type resource_type;
     unsigned int uav_id, uav_idx, uav_space;
     struct vkd3d_string_buffer *image_data;
-    enum vsir_data_type data_type;
     struct glsl_src image_coord;
     uint32_t coord_mask;
 
@@ -1127,7 +1134,7 @@ static void shader_glsl_store_uav_typed(struct vkd3d_glsl_generator *gen, const 
     {
         resource_type = d->resource_type;
         uav_space = d->register_space;
-        data_type = d->resource_data_type;
+        component_type = vkd3d_component_type_from_resource_data_type(d->resource_data_type);
     }
     else
     {
@@ -1135,7 +1142,7 @@ static void shader_glsl_store_uav_typed(struct vkd3d_glsl_generator *gen, const 
                 "Internal compiler error: Undeclared UAV descriptor %u.", uav_id);
         uav_space = 0;
         resource_type = VKD3D_SHADER_RESOURCE_TEXTURE_2D;
-        data_type = VSIR_DATA_F32;
+        component_type = VKD3D_SHADER_COMPONENT_FLOAT;
     }
 
     if ((resource_type_info = shader_glsl_get_resource_type_info(resource_type)))
@@ -1154,26 +1161,25 @@ static void shader_glsl_store_uav_typed(struct vkd3d_glsl_generator *gen, const 
 
     if (ins->src[1].reg.dimension == VSIR_DIMENSION_SCALAR)
     {
-        switch (data_type)
+        switch (component_type)
         {
-            case VSIR_DATA_I32:
-                vkd3d_string_buffer_printf(image_data, "ivec4(");
-                break;
-            case VSIR_DATA_U32:
+            case VKD3D_SHADER_COMPONENT_UINT:
                 vkd3d_string_buffer_printf(image_data, "uvec4(");
+                break;
+            case VKD3D_SHADER_COMPONENT_INT:
+                vkd3d_string_buffer_printf(image_data, "ivec4(");
                 break;
             default:
                 vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                        "Internal compiler error: Unhandled data type %#x.", data_type);
+                        "Internal compiler error: Unhandled component type %#x.", component_type);
                 /* fall through */
-            case VSIR_DATA_F32:
-            case VSIR_DATA_SNORM:
-            case VSIR_DATA_UNORM:
+            case VKD3D_SHADER_COMPONENT_FLOAT:
                 vkd3d_string_buffer_printf(image_data, "vec4(");
                 break;
         }
     }
-    shader_glsl_print_src(image_data, gen, &ins->src[1], VKD3DSP_WRITEMASK_ALL, data_type);
+    shader_glsl_print_src(image_data, gen, &ins->src[1], VKD3DSP_WRITEMASK_ALL,
+            vkd3d_data_type_from_component_type(component_type));
     if (ins->src[1].reg.dimension == VSIR_DIMENSION_SCALAR)
         vkd3d_string_buffer_printf(image_data, ", 0, 0, 0)");
 
@@ -1219,35 +1225,58 @@ static void shader_glsl_mov(struct vkd3d_glsl_generator *gen, const struct vkd3d
 
 static void shader_glsl_movc(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
 {
-    struct vkd3d_string_buffer *src1, *src2;
     unsigned int component_count;
-    struct glsl_src src[1];
+    struct glsl_src src[3];
     struct glsl_dst dst;
     uint32_t mask;
 
-    /* Sadly, mix() in unextended GLSL 4.40 can only select between
-     * floating-point sources. The earliest version able to select between
-     * integer sources is version 4.50; the same functionality is also
-     * provided by the EXT_shader_integer_mix extension. */
-
     mask = glsl_dst_init(&dst, gen, ins, &ins->dst[0]);
     glsl_src_init(&src[0], gen, &ins->src[0], mask);
-    src1 = vkd3d_string_buffer_get(&gen->string_buffers);
-    src2 = vkd3d_string_buffer_get(&gen->string_buffers);
-    shader_glsl_print_src(src1, gen, &ins->src[1], mask, VSIR_DATA_F32);
-    shader_glsl_print_src(src2, gen, &ins->src[2], mask, VSIR_DATA_F32);
+    glsl_src_init(&src[1], gen, &ins->src[1], mask);
+    glsl_src_init(&src[2], gen, &ins->src[2], mask);
 
     if ((component_count = vsir_write_mask_component_count(mask)) > 1)
-        shader_glsl_print_assignment_ext(gen, &dst, VSIR_DATA_F32, "mix(%s, %s, bvec%u(%s))",
-                src2->buffer, src1->buffer, component_count, src[0].str->buffer);
+        shader_glsl_print_assignment(gen, &dst, "mix(%s, %s, bvec%u(%s))",
+                src[2].str->buffer, src[1].str->buffer, component_count, src[0].str->buffer);
     else
-        shader_glsl_print_assignment_ext(gen, &dst, VSIR_DATA_F32, "mix(%s, %s, bool(%s))",
-                src2->buffer, src1->buffer, src[0].str->buffer);
+        shader_glsl_print_assignment(gen, &dst, "mix(%s, %s, bool(%s))",
+                src[2].str->buffer, src[1].str->buffer, src[0].str->buffer);
 
-    vkd3d_string_buffer_release(&gen->string_buffers, src2);
-    vkd3d_string_buffer_release(&gen->string_buffers, src1);
+    glsl_src_cleanup(&src[2], &gen->string_buffers);
+    glsl_src_cleanup(&src[1], &gen->string_buffers);
     glsl_src_cleanup(&src[0], &gen->string_buffers);
     glsl_dst_cleanup(&dst, &gen->string_buffers);
+}
+
+static void shader_glsl_mul_extended(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
+{
+    struct glsl_src src[2];
+    struct glsl_dst dst;
+    uint32_t mask;
+
+    if (ins->dst[0].reg.type != VKD3DSPR_NULL)
+    {
+        /* FIXME: imulExtended()/umulExtended() from ARB_gpu_shader5/GLSL 4.00+. */
+        mask = glsl_dst_init(&dst, gen, ins, &ins->dst[0]);
+        shader_glsl_print_assignment(gen, &dst, "<unhandled 64-bit multiplication>");
+        glsl_dst_cleanup(&dst, &gen->string_buffers);
+
+        vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
+                "Internal compiler error: Unhandled 64-bit integer multiplication.");
+    }
+
+    if (ins->dst[1].reg.type != VKD3DSPR_NULL)
+    {
+        mask = glsl_dst_init(&dst, gen, ins, &ins->dst[1]);
+        glsl_src_init(&src[0], gen, &ins->src[0], mask);
+        glsl_src_init(&src[1], gen, &ins->src[1], mask);
+
+        shader_glsl_print_assignment(gen, &dst, "%s * %s", src[0].str->buffer, src[1].str->buffer);
+
+        glsl_src_cleanup(&src[1], &gen->string_buffers);
+        glsl_src_cleanup(&src[0], &gen->string_buffers);
+        glsl_dst_cleanup(&dst, &gen->string_buffers);
+    }
 }
 
 static void shader_glsl_print_sysval_name(struct vkd3d_string_buffer *buffer, struct vkd3d_glsl_generator *gen,
@@ -1269,7 +1298,7 @@ static void shader_glsl_print_sysval_name(struct vkd3d_string_buffer *buffer, st
                 vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                         "Internal compiler error: Unhandled SV_POSITION index %u.", idx);
             if (version->type == VKD3D_SHADER_TYPE_PIXEL)
-                vkd3d_string_buffer_printf(buffer, "vec4(gl_FragCoord.xyz, 1.0 / gl_FragCoord.w)");
+                vkd3d_string_buffer_printf(buffer, "gl_FragCoord");
             else
                 vkd3d_string_buffer_printf(buffer, "gl_Position");
             break;
@@ -1279,13 +1308,6 @@ static void shader_glsl_print_sysval_name(struct vkd3d_string_buffer *buffer, st
                 vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                         "Internal compiler error: Unhandled SV_VERTEX_ID in shader type #%x.", version->type);
             vkd3d_string_buffer_printf(buffer, "intBitsToFloat(ivec4(gl_VertexID, 0, 0, 0))");
-            break;
-
-        case VKD3D_SHADER_SV_INSTANCE_ID:
-            if (version->type != VKD3D_SHADER_TYPE_VERTEX)
-                vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                        "Internal compiler error: Unhandled SV_INSTANCE_ID in shader type #%x.", version->type);
-            vkd3d_string_buffer_printf(buffer, "intBitsToFloat(ivec4(gl_InstanceID, 0, 0, 0))");
             break;
 
         case VKD3D_SHADER_SV_IS_FRONT_FACE:
@@ -1436,12 +1458,6 @@ static void shader_glsl_shader_epilogue(struct vkd3d_glsl_generator *gen)
         shader_glsl_print_write_mask(buffer, e->mask);
         vkd3d_string_buffer_printf(buffer, ";\n");
     }
-
-    if (bitmap_is_set(gen->program->io_dcls, VKD3DSPR_SAMPLEMASK))
-    {
-        shader_glsl_print_indent(buffer, gen->indent);
-        vkd3d_string_buffer_printf(gen->buffer, "gl_SampleMask[0] = floatBitsToInt(o_mask);\n");
-    }
 }
 
 static void shader_glsl_ret(struct vkd3d_glsl_generator *gen, const struct vkd3d_shader_instruction *ins)
@@ -1472,204 +1488,175 @@ static void vkd3d_glsl_handle_instruction(struct vkd3d_glsl_generator *gen,
 
     switch (ins->opcode)
     {
-        case VSIR_OP_ABS:
-            shader_glsl_intrinsic(gen, ins, "abs");
-            break;
-        case VSIR_OP_ADD:
-        case VSIR_OP_IADD:
+        case VKD3DSIH_ADD:
+        case VKD3DSIH_IADD:
             shader_glsl_binop(gen, ins, "+");
             break;
-        case VSIR_OP_AND:
+        case VKD3DSIH_AND:
             shader_glsl_binop(gen, ins, "&");
             break;
-        case VSIR_OP_BREAK:
+        case VKD3DSIH_BREAK:
             shader_glsl_break(gen);
             break;
-        case VSIR_OP_CASE:
+        case VKD3DSIH_CASE:
             shader_glsl_case(gen, ins);
             break;
-        case VSIR_OP_CONTINUE:
+        case VKD3DSIH_CONTINUE:
             shader_glsl_continue(gen);
             break;
-        case VSIR_OP_COS:
-            shader_glsl_intrinsic(gen, ins, "cos");
-            break;
-        case VSIR_OP_DCL_INDEXABLE_TEMP:
+        case VKD3DSIH_DCL_INDEXABLE_TEMP:
             shader_glsl_dcl_indexable_temp(gen, ins);
             break;
-        case VSIR_OP_NOP:
+        case VKD3DSIH_NOP:
             break;
-        case VSIR_OP_DEFAULT:
+        case VKD3DSIH_DEFAULT:
             shader_glsl_default(gen);
             break;
-        case VSIR_OP_DIV:
+        case VKD3DSIH_DIV:
             shader_glsl_binop(gen, ins, "/");
             break;
-        case VSIR_OP_DP2:
+        case VKD3DSIH_DP2:
             shader_glsl_dot(gen, ins, vkd3d_write_mask_from_component_count(2));
             break;
-        case VSIR_OP_DP3:
+        case VKD3DSIH_DP3:
             shader_glsl_dot(gen, ins, vkd3d_write_mask_from_component_count(3));
             break;
-        case VSIR_OP_DP4:
+        case VKD3DSIH_DP4:
             shader_glsl_dot(gen, ins, VKD3DSP_WRITEMASK_ALL);
             break;
-        case VSIR_OP_DSX:
-            shader_glsl_intrinsic(gen, ins, "dFdx");
-            break;
-        case VSIR_OP_DSY:
-            shader_glsl_intrinsic(gen, ins, "dFdy");
-            break;
-        case VSIR_OP_ELSE:
+        case VKD3DSIH_ELSE:
             shader_glsl_else(gen, ins);
             break;
-        case VSIR_OP_ENDIF:
-        case VSIR_OP_ENDLOOP:
-        case VSIR_OP_ENDSWITCH:
+        case VKD3DSIH_ENDIF:
+        case VKD3DSIH_ENDLOOP:
+        case VKD3DSIH_ENDSWITCH:
             shader_glsl_end_block(gen);
             break;
-        case VSIR_OP_EQO:
-        case VSIR_OP_IEQ:
+        case VKD3DSIH_EQO:
+        case VKD3DSIH_IEQ:
             shader_glsl_relop(gen, ins, "==", "equal");
             break;
-        case VSIR_OP_EXP:
+        case VKD3DSIH_EXP:
             shader_glsl_intrinsic(gen, ins, "exp2");
             break;
-        case VSIR_OP_FRC:
+        case VKD3DSIH_FRC:
             shader_glsl_intrinsic(gen, ins, "fract");
             break;
-        case VSIR_OP_FTOI:
+        case VKD3DSIH_FTOI:
             shader_glsl_cast(gen, ins, "int", "ivec");
             break;
-        case VSIR_OP_FTOU:
+        case VKD3DSIH_FTOU:
             shader_glsl_cast(gen, ins, "uint", "uvec");
             break;
-        case VSIR_OP_GATHER4:
-        case VSIR_OP_GATHER4_PO:
-        case VSIR_OP_SAMPLE:
-        case VSIR_OP_SAMPLE_B:
-        case VSIR_OP_SAMPLE_C:
-        case VSIR_OP_SAMPLE_C_LZ:
-        case VSIR_OP_SAMPLE_GRAD:
-        case VSIR_OP_SAMPLE_LOD:
+        case VKD3DSIH_GATHER4:
+        case VKD3DSIH_GATHER4_PO:
+        case VKD3DSIH_SAMPLE:
+        case VKD3DSIH_SAMPLE_B:
+        case VKD3DSIH_SAMPLE_C:
+        case VKD3DSIH_SAMPLE_C_LZ:
+        case VKD3DSIH_SAMPLE_GRAD:
+        case VKD3DSIH_SAMPLE_LOD:
             shader_glsl_sample(gen, ins);
             break;
-        case VSIR_OP_GEO:
-        case VSIR_OP_IGE:
-        case VSIR_OP_UGE:
+        case VKD3DSIH_GEO:
+        case VKD3DSIH_IGE:
             shader_glsl_relop(gen, ins, ">=", "greaterThanEqual");
             break;
-        case VSIR_OP_IF:
+        case VKD3DSIH_IF:
             shader_glsl_if(gen, ins);
             break;
-        case VSIR_OP_MAD:
+        case VKD3DSIH_MAD:
             shader_glsl_intrinsic(gen, ins, "fma");
             break;
-        case VSIR_OP_ILT:
-        case VSIR_OP_LTO:
-        case VSIR_OP_ULT:
+        case VKD3DSIH_ILT:
+        case VKD3DSIH_LTO:
+        case VKD3DSIH_ULT:
             shader_glsl_relop(gen, ins, "<", "lessThan");
             break;
-        case VSIR_OP_IMAX:
-        case VSIR_OP_MAX:
-        case VSIR_OP_UMAX:
+        case VKD3DSIH_IMAX:
+        case VKD3DSIH_MAX:
+        case VKD3DSIH_UMAX:
             shader_glsl_intrinsic(gen, ins, "max");
             break;
-        case VSIR_OP_MIN:
-        case VSIR_OP_UMIN:
+        case VKD3DSIH_MIN:
+        case VKD3DSIH_UMIN:
             shader_glsl_intrinsic(gen, ins, "min");
             break;
-        case VSIR_OP_IMUL_LOW:
-            shader_glsl_binop(gen, ins, "*");
+        case VKD3DSIH_IMUL:
+            shader_glsl_mul_extended(gen, ins);
             break;
-        case VSIR_OP_INE:
-        case VSIR_OP_NEU:
+        case VKD3DSIH_INE:
+        case VKD3DSIH_NEU:
             shader_glsl_relop(gen, ins, "!=", "notEqual");
             break;
-        case VSIR_OP_INEG:
-        case VSIR_OP_NEG:
+        case VKD3DSIH_INEG:
             shader_glsl_unary_op(gen, ins, "-");
             break;
-        case VSIR_OP_ISHL:
+        case VKD3DSIH_ISHL:
             shader_glsl_binop(gen, ins, "<<");
             break;
-        case VSIR_OP_ISHR:
-        case VSIR_OP_USHR:
+        case VKD3DSIH_ISHR:
+        case VKD3DSIH_USHR:
             shader_glsl_binop(gen, ins, ">>");
             break;
-        case VSIR_OP_ITOF:
-        case VSIR_OP_UTOF:
+        case VKD3DSIH_ITOF:
+        case VKD3DSIH_UTOF:
             shader_glsl_cast(gen, ins, "float", "vec");
             break;
-        case VSIR_OP_LD:
-        case VSIR_OP_LD2DMS:
+        case VKD3DSIH_LD:
+        case VKD3DSIH_LD2DMS:
             shader_glsl_ld(gen, ins);
             break;
-        case VSIR_OP_LD_UAV_TYPED:
+        case VKD3DSIH_LD_UAV_TYPED:
             shader_glsl_load_uav_typed(gen, ins);
             break;
-        case VSIR_OP_LOG:
+        case VKD3DSIH_LOG:
             shader_glsl_intrinsic(gen, ins, "log2");
             break;
-        case VSIR_OP_LOOP:
+        case VKD3DSIH_LOOP:
             shader_glsl_loop(gen);
             break;
-        case VSIR_OP_MOV:
+        case VKD3DSIH_MOV:
             shader_glsl_mov(gen, ins);
             break;
-        case VSIR_OP_MOVC:
+        case VKD3DSIH_MOVC:
             shader_glsl_movc(gen, ins);
             break;
-        case VSIR_OP_MUL:
+        case VKD3DSIH_MUL:
             shader_glsl_binop(gen, ins, "*");
             break;
-        case VSIR_OP_NOT:
+        case VKD3DSIH_NOT:
             shader_glsl_unary_op(gen, ins, "~");
             break;
-        case VSIR_OP_OR:
+        case VKD3DSIH_OR:
             shader_glsl_binop(gen, ins, "|");
             break;
-        case VSIR_OP_RET:
+        case VKD3DSIH_RET:
             shader_glsl_ret(gen, ins);
             break;
-        case VSIR_OP_ROUND_NE:
+        case VKD3DSIH_ROUND_NE:
             shader_glsl_intrinsic(gen, ins, "roundEven");
             break;
-        case VSIR_OP_ROUND_NI:
+        case VKD3DSIH_ROUND_NI:
             shader_glsl_intrinsic(gen, ins, "floor");
             break;
-        case VSIR_OP_ROUND_PI:
+        case VKD3DSIH_ROUND_PI:
             shader_glsl_intrinsic(gen, ins, "ceil");
             break;
-        case VSIR_OP_ROUND_Z:
+        case VKD3DSIH_ROUND_Z:
             shader_glsl_intrinsic(gen, ins, "trunc");
             break;
-        case VSIR_OP_RSQ:
+        case VKD3DSIH_RSQ:
             shader_glsl_intrinsic(gen, ins, "inversesqrt");
             break;
-        case VSIR_OP_SATURATE:
-            shader_glsl_saturate(gen, ins);
-            break;
-        case VSIR_OP_SIN:
-            shader_glsl_intrinsic(gen, ins, "sin");
-            break;
-        case VSIR_OP_SQRT:
+        case VKD3DSIH_SQRT:
             shader_glsl_intrinsic(gen, ins, "sqrt");
             break;
-        case VSIR_OP_STORE_UAV_TYPED:
+        case VKD3DSIH_STORE_UAV_TYPED:
             shader_glsl_store_uav_typed(gen, ins);
             break;
-        case VSIR_OP_SWITCH:
+        case VKD3DSIH_SWITCH:
             shader_glsl_switch(gen, ins);
-            break;
-        case VSIR_OP_UDIV_SIMPLE:
-            shader_glsl_binop(gen, ins, "/");
-            break;
-        case VSIR_OP_UREM:
-            shader_glsl_binop(gen, ins, "%");
-            break;
-        case VSIR_OP_XOR:
-            shader_glsl_binop(gen, ins, "^");
             break;
         default:
             shader_glsl_unhandled(gen, ins);
@@ -1747,6 +1734,7 @@ static void shader_glsl_generate_uav_declaration(struct vkd3d_glsl_generator *ge
     const struct vkd3d_shader_descriptor_binding *binding;
     const struct vkd3d_shader_descriptor_offset *offset;
     struct vkd3d_string_buffer *buffer = gen->buffer;
+    enum vkd3d_shader_component_type component_type;
     unsigned int binding_idx;
 
     if (uav->count != 1)
@@ -1803,24 +1791,22 @@ static void shader_glsl_generate_uav_declaration(struct vkd3d_glsl_generator *ge
         image_type = "<unhandled image type>";
     }
 
-    switch (uav->resource_data_type)
+    switch ((component_type = vkd3d_component_type_from_resource_data_type(uav->resource_data_type)))
     {
-        case VSIR_DATA_I32:
-            image_type_prefix = "i";
-            read_format = "r32i";
-            break;
-        case VSIR_DATA_U32:
+        case VKD3D_SHADER_COMPONENT_UINT:
             image_type_prefix = "u";
             read_format = "r32ui";
             break;
+        case VKD3D_SHADER_COMPONENT_INT:
+            image_type_prefix = "i";
+            read_format = "r32i";
+            break;
         default:
             vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                    "Internal compiler error: Unhandled data type %#x for UAV %u.",
-                    uav->resource_data_type, uav->register_id);
+                    "Internal compiler error: Unhandled component type %#x for UAV %u.",
+                    component_type, uav->register_id);
             /* fall through */
-        case VSIR_DATA_F32:
-        case VSIR_DATA_SNORM:
-        case VSIR_DATA_UNORM:
+        case VKD3D_SHADER_COMPONENT_FLOAT:
             image_type_prefix = "";
             read_format = "r32f";
             break;
@@ -1975,6 +1961,7 @@ static void shader_glsl_generate_sampler_declaration(struct vkd3d_glsl_generator
     const struct glsl_resource_type_info *resource_type_info;
     const struct vkd3d_shader_descriptor_binding *binding;
     struct vkd3d_string_buffer *buffer = gen->buffer;
+    enum vkd3d_shader_component_type component_type;
     const char *sampler_type, *sampler_type_prefix;
     enum vkd3d_shader_resource_type resource_type;
     unsigned int binding_idx;
@@ -2032,23 +2019,21 @@ static void shader_glsl_generate_sampler_declaration(struct vkd3d_glsl_generator
         sampler_type = "<unhandled sampler type>";
     }
 
-    switch (srv->resource_data_type)
+    switch ((component_type = vkd3d_component_type_from_resource_data_type(srv->resource_data_type)))
     {
-        case VSIR_DATA_F32:
-        case VSIR_DATA_SNORM:
-        case VSIR_DATA_UNORM:
-            sampler_type_prefix = "";
+        case VKD3D_SHADER_COMPONENT_UINT:
+            sampler_type_prefix = "u";
             break;
-        case VSIR_DATA_I32:
+        case VKD3D_SHADER_COMPONENT_INT:
             sampler_type_prefix = "i";
             break;
-        case VSIR_DATA_U32:
-            sampler_type_prefix = "u";
+        case VKD3D_SHADER_COMPONENT_FLOAT:
+            sampler_type_prefix = "";
             break;
         default:
             vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
-                    "Internal compiler error: Unhandled data type %#x for combined resource/sampler "
-                    "for resource %u, space %u and sampler %u, space %u.", srv->resource_data_type,
+                    "Internal compiler error: Unhandled component type %#x for combined resource/sampler "
+                    "for resource %u, space %u and sampler %u, space %u.", component_type,
                     crs->resource_index, crs->resource_space, crs->sampler_index, crs->sampler_space);
             sampler_type_prefix = "";
             break;
@@ -2093,7 +2078,7 @@ static void shader_glsl_generate_sampler_declaration(struct vkd3d_glsl_generator
 static void shader_glsl_generate_descriptor_declarations(struct vkd3d_glsl_generator *gen)
 {
     const struct vkd3d_shader_scan_combined_resource_sampler_info *sampler_info = gen->combined_sampler_info;
-    const struct vkd3d_shader_scan_descriptor_info1 *info = &gen->program->descriptors;
+    const struct vkd3d_shader_scan_descriptor_info1 *info = gen->descriptor_info;
     const struct vkd3d_shader_descriptor_info1 *descriptor;
     unsigned int i;
 
@@ -2323,32 +2308,15 @@ static void shader_glsl_generate_output_declarations(struct vkd3d_glsl_generator
 static void shader_glsl_handle_global_flags(struct vkd3d_string_buffer *buffer,
         struct vkd3d_glsl_generator *gen, enum vsir_global_flags flags)
 {
-    static const uint64_t ignored_flags = VKD3DSGF_REFACTORING_ALLOWED | VKD3DSGF_BIND_FOR_DURATION;
-
     if (flags & VKD3DSGF_FORCE_EARLY_DEPTH_STENCIL)
     {
         vkd3d_string_buffer_printf(buffer, "layout(early_fragment_tests) in;\n");
         flags &= ~VKD3DSGF_FORCE_EARLY_DEPTH_STENCIL;
     }
 
-    if (flags & ignored_flags)
-    {
-        TRACE("Ignoring global flags %#"PRIx64".\n", flags & ignored_flags);
-        flags &= ~ignored_flags;
-    }
-
     if (flags)
         vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_INTERNAL,
                 "Internal compiler error: Unhandled global flags %#"PRIx64".", (uint64_t)flags);
-
-    if (gen->program->f16_denormal_mode != VKD3D_SHADER_DENORMAL_MODE_ANY
-            || gen->program->f32_denormal_mode != VKD3D_SHADER_DENORMAL_MODE_ANY
-            || gen->program->f64_denormal_mode != VKD3D_SHADER_DENORMAL_MODE_ANY)
-    {
-        vkd3d_glsl_compiler_error(gen, VKD3D_SHADER_ERROR_GLSL_UNSUPPORTED,
-                "Cannot emit denormal modes. The target environment does not support float controls.");
-        return;
-    }
 }
 
 static void shader_glsl_generate_declarations(struct vkd3d_glsl_generator *gen)
@@ -2374,8 +2342,6 @@ static void shader_glsl_generate_declarations(struct vkd3d_glsl_generator *gen)
         vkd3d_string_buffer_printf(buffer, "vec4 %s_in[%u];\n", gen->prefix, gen->limits.input_count);
     if (gen->limits.output_count)
         vkd3d_string_buffer_printf(buffer, "vec4 %s_out[%u];\n", gen->prefix, gen->limits.output_count);
-    if (bitmap_is_set(gen->program->io_dcls, VKD3DSPR_SAMPLEMASK))
-        vkd3d_string_buffer_printf(gen->buffer, "float o_mask;\n");
     if (program->temp_count)
         vkd3d_string_buffer_printf(buffer, "vec4 r[%u];\n", program->temp_count);
     vkd3d_string_buffer_printf(buffer, "\n");
@@ -2383,9 +2349,10 @@ static void shader_glsl_generate_declarations(struct vkd3d_glsl_generator *gen)
 
 static int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *gen, struct vkd3d_shader_code *out)
 {
+    const struct vkd3d_shader_instruction_array *instructions = &gen->program->instructions;
     struct vkd3d_string_buffer *buffer = gen->buffer;
-    struct vkd3d_shader_instruction *ins;
-    struct vsir_program_iterator it;
+    unsigned int i;
+    void *code;
 
     MESSAGE("Generating a GLSL shader. This is unsupported; you get to keep all the pieces if it breaks.\n");
 
@@ -2399,11 +2366,9 @@ static int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *gen, struc
 
     ++gen->indent;
     shader_glsl_shader_prologue(gen);
-
-    it = vsir_program_iterator(&gen->program->instructions);
-    for (ins = vsir_program_iterator_head(&it); ins; ins = vsir_program_iterator_next(&it))
+    for (i = 0; i < instructions->count; ++i)
     {
-        vkd3d_glsl_handle_instruction(gen, ins);
+        vkd3d_glsl_handle_instruction(gen, &instructions->elements[i]);
     }
 
     vkd3d_string_buffer_printf(buffer, "}\n");
@@ -2414,7 +2379,13 @@ static int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *gen, struc
     if (gen->failed)
         return VKD3D_ERROR_INVALID_SHADER;
 
-    vkd3d_shader_code_from_string_buffer(out, buffer);
+    if ((code = vkd3d_malloc(buffer->buffer_size)))
+    {
+        memcpy(code, buffer->buffer, buffer->content_size);
+        out->size = buffer->content_size;
+        out->code = code;
+    }
+    else return VKD3D_ERROR_OUT_OF_MEMORY;
 
     return VKD3D_OK;
 }
@@ -2458,6 +2429,7 @@ static void shader_glsl_init_limits(struct vkd3d_glsl_generator *gen, const stru
 
 static void vkd3d_glsl_generator_init(struct vkd3d_glsl_generator *gen,
         struct vsir_program *program, const struct vkd3d_shader_compile_info *compile_info,
+        const struct vkd3d_shader_scan_descriptor_info1 *descriptor_info,
         const struct vkd3d_shader_scan_combined_resource_sampler_info *combined_sampler_info,
         struct vkd3d_shader_message_context *message_context)
 {
@@ -2481,10 +2453,12 @@ static void vkd3d_glsl_generator_init(struct vkd3d_glsl_generator *gen,
 
     gen->interface_info = vkd3d_find_struct(compile_info->next, INTERFACE_INFO);
     gen->offset_info = vkd3d_find_struct(compile_info->next, DESCRIPTOR_OFFSET_INFO);
+    gen->descriptor_info = descriptor_info;
     gen->combined_sampler_info = combined_sampler_info;
 }
 
 int glsl_compile(struct vsir_program *program, uint64_t config_flags,
+        const struct vkd3d_shader_scan_descriptor_info1 *descriptor_info,
         const struct vkd3d_shader_scan_combined_resource_sampler_info *combined_sampler_info,
         const struct vkd3d_shader_compile_info *compile_info,
         struct vkd3d_shader_code *out, struct vkd3d_shader_message_context *message_context)
@@ -2495,15 +2469,10 @@ int glsl_compile(struct vsir_program *program, uint64_t config_flags,
     if ((ret = vsir_program_transform(program, config_flags, compile_info, message_context)) < 0)
         return ret;
 
-    if ((ret = vsir_allocate_temp_registers(program, message_context)) < 0)
-        return ret;
-
     VKD3D_ASSERT(program->normalisation_level == VSIR_NORMALISED_SM6);
-    VKD3D_ASSERT(program->normalisation_flags.has_descriptor_info);
-    VKD3D_ASSERT(program->normalisation_flags.has_no_modifiers);
 
     vkd3d_glsl_generator_init(&generator, program, compile_info,
-            combined_sampler_info, message_context);
+            descriptor_info, combined_sampler_info, message_context);
     ret = vkd3d_glsl_generator_generate(&generator, out);
     vkd3d_glsl_generator_cleanup(&generator);
 

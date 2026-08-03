@@ -17,16 +17,17 @@
  */
 
 #ifdef __WIDL__
-#pragma makedep header install winmd
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.system.idl";
+#endif
 
 namespace Windows {
     namespace Globalization {

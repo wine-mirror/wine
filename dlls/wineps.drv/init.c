@@ -305,12 +305,15 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 	    if (PSDRV_Heap == NULL)
 		return FALSE;
 
-	    if (PSDRV_GetFontMetrics() == FALSE)
+	    if (PSDRV_GetFontMetrics() == FALSE) {
+		HeapDestroy(PSDRV_Heap);
 		return FALSE;
+	    }
 
             if (!convert_afm_to_ntf() || !import_ntf_from_reg())
             {
                 WINE_UNIX_CALL(unix_free_printer_info, NULL);
+                HeapDestroy(PSDRV_Heap);
                 return FALSE;
             }
             break;

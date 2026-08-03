@@ -17,26 +17,11 @@
  */
 
 #include <stdarg.h>
-#include <limits.h>
-
 #include "windef.h"
 #include "winbase.h"
 #include "ntsecapi.h"
 
 BOOL WINAPI ProcessPrng(BYTE *data, SIZE_T size)
 {
-    while (size)
-    {
-        SIZE_T len = min( size, (SIZE_T)ULONG_MAX );
-
-        if (!RtlGenRandom( data, len ))
-        {
-            /* This should be unreachable */
-            return FALSE;
-        }
-
-        data += len;
-        size -= len;
-    }
-    return TRUE;
+    return RtlGenRandom(data, size);
 }

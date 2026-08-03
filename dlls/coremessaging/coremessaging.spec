@@ -18,7 +18,7 @@
 @ stdcall CreateDispatcherQueueController(long long long ptr)
 @ stub CreateDispatcherQueueForCurrentThread
 @ stdcall -private DllCanUnloadNow()
-@ stdcall -private DllGetActivationFactory(ptr ptr)
+@ stub DllGetActivationFactory
 @ stub DllGetClassObject
 @ stub GetDispatcherQueueForCurrentThread
 @ stub MsgBlobCreateShared

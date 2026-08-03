@@ -103,17 +103,6 @@ void *get_aliaschain_attrp( const type_t *type, enum attr_type attr_type )
     }
 }
 
-void get_version( const attr_list_t *list, unsigned short *major, unsigned short *minor )
-{
-    version_t *version = get_attrp( list, ATTR_VERSION );
-    if (version)
-    {
-        *major = version->major;
-        *minor = version->minor;
-    }
-    else *major = *minor = 0;
-}
-
 struct allowed_attr
 {
     unsigned int dce_compatible : 1;
@@ -145,7 +134,6 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_AGGREGATABLE */        { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "aggregatable" },
     /* ATTR_ALLOCATE */            { 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "allocate" },
     /* ATTR_ANNOTATION */          { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "annotation" },
-    /* ATTR_APICONTRACT */         { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, "apicontract" },
     /* ATTR_APPOBJECT */           { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "appobject" },
     /* ATTR_ASYNC */               { 0, 1, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "async" },
     /* ATTR_ASYNCUUID */           { 1, 0, 0,  1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, "async_uuid" },
@@ -170,7 +158,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_DEFAULTCOLLELEM */     { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultcollelem" },
     /* ATTR_DEFAULTVALUE */        { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultvalue" },
     /* ATTR_DEFAULTVTABLE */       { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "defaultvtable" },
-    /* ATTR_DEPRECATED */          { 0, 0, 0,  1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, "deprecated" },
+    /* ATTR_DEPRECATED */          { 0, 0, 0,  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "deprecated" },
  /* ATTR_DISABLECONSISTENCYCHECK */{ 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "disable_consistency_check" },
     /* ATTR_DISPINTERFACE */       { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, NULL },
     /* ATTR_DISPLAYBIND */         { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "displaybind" },
@@ -489,18 +477,13 @@ attr_list_t *check_module_attrs( const char *name, attr_list_t *attrs )
 attr_list_t *check_runtimeclass_attrs( const char *name, attr_list_t *attrs )
 {
     const attr_t *attr;
-    bool found_version = false;
     if (!attrs) return NULL;
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_runtimeclass)
             error_at( &attr->where, "inapplicable attribute %s for runtimeclass %s\n",
                       allowed_attr[attr->type].display_name, name );
-        if (attr->type == ATTR_CONTRACT || attr->type == ATTR_VERSION)
-            found_version = true;
     }
-    if (!found_version)
-        error_at( NULL, "runtimeclass %s requires contract or version attribute\n", name );
     return attrs;
 }
 

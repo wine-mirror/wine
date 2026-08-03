@@ -78,25 +78,6 @@ static const pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
 };
 
-static HFONT get_control_font( HWND hwnd )
-{
-    return (HFONT)NtUserGetPrivateData( hwnd, HFONT_GWL_OFFSET, sizeof(HFONT) );
-}
-
-static HFONT set_control_font( HWND hwnd, HFONT font )
-{
-    return (HFONT)NtUserSetPrivateData( hwnd, HFONT_GWL_OFFSET, sizeof(font), (LONG_PTR)font );
-}
-
-static HANDLE get_control_icon( HWND hwnd )
-{
-    return (HFONT)NtUserGetPrivateData( hwnd, HICON_GWL_OFFSET, sizeof(HICON) );
-}
-
-static HANDLE set_control_icon( HWND hwnd, HANDLE icon )
-{
-    return (HANDLE)NtUserSetPrivateData( hwnd, HICON_GWL_OFFSET, sizeof(icon), (LONG_PTR)icon );
-}
 
 /***********************************************************************
  *           STATIC_SetIcon
@@ -113,7 +94,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
         WARN("hicon != 0, but invalid\n");
         return 0;
     }
-    prevIcon = set_control_icon( hwnd, hicon );
+    prevIcon = (HICON)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hicon );
     if (hicon && !(style & SS_CENTERIMAGE) && !(style & SS_REALSIZECONTROL))
     {
         /* Windows currently doesn't implement SS_RIGHTJUST */
@@ -146,7 +127,7 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
         WARN("hBitmap != 0, but it's not a bitmap\n");
         return 0;
     }
-    hOldBitmap = set_control_icon( hwnd, hBitmap );
+    hOldBitmap = (HBITMAP)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
     if (hBitmap && !(style & SS_CENTERIMAGE) && !(style & SS_REALSIZECONTROL))
     {
         BITMAP bm;
@@ -181,7 +162,7 @@ static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile,
         WARN("hEnhMetaFile != 0, but it's not an enhanced metafile\n");
         return 0;
     }
-    return set_control_icon( hwnd, hEnhMetaFile );
+    return (HENHMETAFILE)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hEnhMetaFile );
 }
 
 /***********************************************************************
@@ -207,7 +188,7 @@ static HANDLE STATIC_GetImage( HWND hwnd, WPARAM wParam, DWORD style )
         default:
             return NULL;
     }
-    return get_control_icon( hwnd );
+    return (HANDLE)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
 }
 
 /***********************************************************************
@@ -343,7 +324,6 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     LONG style = full_style & SS_TYPEMASK;
 
     if (!IsWindow( hwnd )) return 0;
-    NtUserSetWindowFNID( hwnd, MAKE_FNID(NTUSER_WNDPROC_STATIC) );
 
     switch (uMsg)
     {
@@ -504,7 +484,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_SETFONT:
         if (hasTextStyle( full_style ))
         {
-            set_control_font( hwnd, (HFONT)wParam );
+            SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, wParam );
             if (LOWORD(lParam))
                 NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE |
                                     RDW_UPDATENOW | RDW_ALLCHILDREN );
@@ -512,7 +492,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_GETFONT:
-        return (LRESULT)get_control_font( hwnd );
+        return GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET );
 
     case WM_NCHITTEST:
         if (full_style & SS_NOTIFY)
@@ -594,7 +574,7 @@ static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD st
   dis.itemData   = 0;
   GetClientRect( hwnd, &dis.rcItem );
 
-  font = get_control_font( hwnd );
+  font = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET );
   if (font) oldFont = SelectObject( hdc, font );
   SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
   if (font) SelectObject( hdc, oldFont );
@@ -656,7 +636,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
             format |= DT_SINGLELINE | DT_WORD_ELLIPSIS;
     }
 
-    if ((hFont = get_control_font( hwnd )))
+    if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET )))
         hOldFont = SelectObject( hdc, hFont );
 
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
@@ -745,7 +725,7 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     SIZE size;
 
     GetClientRect( hwnd, &rc );
-    hIcon = get_control_icon( hwnd );
+    hIcon = (HICON)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET );
     if (!hIcon || !get_icon_size( hIcon, &size ))
     {
         FillRect(hdc, &rc, hbrush);
@@ -772,7 +752,7 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style 
     HDC hMemDC;
     HBITMAP hBitmap, oldbitmap;
 
-    if ((hBitmap = get_control_icon( hwnd ))
+    if ((hBitmap = (HBITMAP)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET ))
          && (GetObjectType(hBitmap) == OBJ_BITMAP)
          && (hMemDC = CreateCompatibleDC( hdc )))
     {
@@ -812,7 +792,7 @@ static void STATIC_PaintEnhMetafn(HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style
     
     GetClientRect(hwnd, &rc);
     FillRect(hdc, &rc, hbrush);
-    if ((hEnhMetaFile = get_control_icon( hwnd )))
+    if ((hEnhMetaFile = (HENHMETAFILE)GetWindowLongPtrW( hwnd, HICON_GWL_OFFSET )))
     {
         /* The control's current font is not selected into the
            device context! */

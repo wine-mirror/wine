@@ -761,7 +761,6 @@ struct StrToNameA
 
 static const struct StrToNameA namesA[] = {
  { "CN=1", sizeof(encodedSimpleCN), encodedSimpleCN },
- { "cn=1", sizeof(encodedSimpleCN), encodedSimpleCN },
  { "CN=\"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
  { "CN = \"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
  { "CN='1'", sizeof(encodedSingleQuotedCN), encodedSingleQuotedCN },
@@ -864,7 +863,6 @@ static const BYTE encodedJapaneseCN[] = { 0x30,0x0f,0x31,0x0d,0x30,0x0b,0x06,
 
 static const struct StrToNameW namesW[] = {
  { L"CN=1", sizeof(encodedSimpleCN), encodedSimpleCN },
- { L"cn=1", sizeof(encodedSimpleCN), encodedSimpleCN },
  { L"CN=\"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
  { L"CN = \"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
  { L"CN='1'", sizeof(encodedSingleQuotedCN), encodedSingleQuotedCN },

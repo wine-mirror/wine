@@ -113,21 +113,17 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
     }
 }
 
-extern const char *debugstr_media_type(IMFMediaType *media_type);
-
 extern HRESULT file_scheme_handler_construct(REFIID riid, void **obj);
 extern HRESULT urlmon_scheme_handler_construct(REFIID riid, void **obj);
 
 extern BOOL mf_is_sample_copier_transform(IMFTransform *transform);
 extern BOOL mf_is_sar_sink(IMFMediaSink *sink);
 extern HRESULT create_topology(TOPOID id, IMFTopology **topology);
-extern MF_TOPOLOGY_TYPE topology_node_get_type(IMFTopologyNode *node);
 extern HRESULT topology_node_get_object(IMFTopologyNode *node, REFIID riid, void **obj);
 extern HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaTypeHandler **handler);
 extern HRESULT topology_node_init_media_type(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
 extern BOOL topology_node_is_d3d_aware(IMFTopologyNode *node);
 extern HRESULT topology_node_set_device_manager(IMFTopologyNode *node, IUnknown *device_manager);
-extern IMFAttributes *topology_node_transform_async_get_attributes(IMFTopologyNode *node);
 extern HRESULT stream_sink_get_device_manager(IMFStreamSink *stream_sink, IUnknown **device_manager);
 
 extern HRESULT enum_audio_capture_sources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *ret_count);

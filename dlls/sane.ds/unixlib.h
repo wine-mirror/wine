@@ -45,7 +45,6 @@ struct option_descriptor
     enum { CONSTRAINT_NONE, CONSTRAINT_RANGE, CONSTRAINT_WORD_LIST, CONSTRAINT_STRING_LIST } constraint_type;
 
     WCHAR title[256];
-    CHAR name[256];
 
     union
     {

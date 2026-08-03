@@ -1027,7 +1027,7 @@ static const char *mpg123_decoder_list[] =
 	NULL
 };
 
-static void check_decoders(void)
+void check_decoders(void)
 {
 #ifndef OPT_MULTI
 	/* In non-multi mode, only the full list (one entry) is used. */

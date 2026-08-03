@@ -38,13 +38,10 @@ static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, S
 static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static LPVOID (WINAPI *pVirtualAlloc2FromApp)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
-static BOOL (WINAPI *pVirtualProtectFromApp)(LPVOID,SIZE_T,ULONG,PULONG);
 static HANDLE (WINAPI *pOpenFileMappingFromApp)( ULONG, BOOL, LPCWSTR);
 static HANDLE (WINAPI *pCreateFileMappingFromApp)(HANDLE, PSECURITY_ATTRIBUTES, ULONG, ULONG64, PCWSTR);
 static LPVOID (WINAPI *pMapViewOfFileFromApp)(HANDLE, ULONG, ULONG64, SIZE_T);
 static BOOL (WINAPI *pUnmapViewOfFile2)(HANDLE, void *, ULONG);
-static HRESULT (WINAPI *pGetMachineTypeAttributes)(USHORT, MACHINE_ATTRIBUTES *);
-static BOOL (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
 
 static void test_CompareObjectHandles(void)
 {
@@ -484,44 +481,6 @@ static void test_VirtualAlloc2FromApp(void)
     }
 }
 
-static void test_VirtualProtectFromApp(void)
-{
-    ULONG old_prot;
-    void *p;
-    BOOL ret;
-
-    if (!pVirtualProtectFromApp)
-    {
-        win_skip("VirtualProtectFromApp is not available.\n");
-        return;
-    }
-
-    SetLastError(0xdeadbeef);
-    p = VirtualAlloc(NULL, 0x1000, MEM_COMMIT, PAGE_READWRITE);
-    ok(p != NULL, "VirtualAlloc failed err %lu.\n", GetLastError());
-    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_READONLY, &old_prot);
-    ok(ret, "Failed to change protection err %lu\n", GetLastError());
-    ok(old_prot == PAGE_READWRITE, "wrong old_prot %lu\n", old_prot);
-
-    ret = pVirtualProtectFromApp(p, 0x100000, PAGE_READWRITE, &old_prot);
-    ok(!ret, "Call worked with overflowing size\n");
-    ok(old_prot == PAGE_NOACCESS, "wrong old_prot %lu\n", old_prot);
-
-    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_EXECUTE_READ, NULL);
-    ok(!ret, "Call worked without old_prot\n");
-
-    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_GUARD, &old_prot);
-    ok(!ret, "Call worked with an invalid new_prot parameter old_prot %lu\n", old_prot);
-
-    /* Works on desktop, but not on UWP */
-    ret = pVirtualProtectFromApp(p, 0x1000, PAGE_EXECUTE_READWRITE, &old_prot);
-    ok(ret || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* Win10-1507 */, "Failed err %lu\n", GetLastError());
-    if (ret) ok(old_prot == PAGE_READONLY, "wrong old_prot %lu\n", old_prot);
-
-    ret = VirtualFree(p, 0, MEM_RELEASE);
-    ok(ret, "Failed to free mem error %lu.\n", GetLastError());
-}
-
 static void test_OpenFileMappingFromApp(void)
 {
     OBJECT_BASIC_INFORMATION info;
@@ -629,46 +588,6 @@ static void test_QueryProcessCycleTime(void)
     ok( cycles2 > cycles1, "CPU cycles used by process should be increasing.\n" );
 }
 
-static void test_GetMachineTypeAttributes(void)
-{
-    HRESULT hr;
-    MACHINE_ATTRIBUTES attributes, expected;
-    USHORT process_machine, native_machine;
-    static const WORD machines[] = { 0, IMAGE_FILE_MACHINE_I386,
-                                     IMAGE_FILE_MACHINE_AMD64,
-                                     IMAGE_FILE_MACHINE_ARM64 };
-
-    if (!pGetMachineTypeAttributes)
-    {
-        win_skip("GetMachineTypeAttributes() is not supported.\n");
-        return;
-    }
-
-    pIsWow64Process2(GetCurrentProcess(), &process_machine, &native_machine);
-
-    if (0)  /* crashes on Windows */
-        hr = pGetMachineTypeAttributes(0, NULL);
-
-    for (unsigned int i = 0; i < ARRAY_SIZE(machines); i++)
-    {
-        winetest_push_context("%04x", machines[i]);
-        hr = pGetMachineTypeAttributes(machines[i], &attributes);
-        ok(hr == S_OK, "GetMachineTypeAttributes error 0x%08lx\n", hr);
-
-        expected = 0;
-        if (machines[i] == native_machine)
-            expected |= UserEnabled | KernelEnabled;
-        else if (machines[i] == IMAGE_FILE_MACHINE_I386)
-            expected |= UserEnabled | Wow64Container;
-        else if (machines[i] == IMAGE_FILE_MACHINE_AMD64 &&
-                 native_machine == IMAGE_FILE_MACHINE_ARM64)
-            expected |= UserEnabled;
-
-        ok(attributes == expected, "Got attributes 0x%08x, expected 0x%08x\n", attributes, expected);
-        winetest_pop_context();
-    }
-}
-
 static void init_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("kernelbase.dll");
@@ -676,15 +595,12 @@ static void init_funcs(void)
 #define X(f) { p##f = (void*)GetProcAddress(hmod, #f); }
     X(CompareObjectHandles);
     X(CreateFileMappingFromApp);
-    X(GetMachineTypeAttributes);
-    X(IsWow64Process2);
     X(MapViewOfFile3);
     X(MapViewOfFileFromApp);
     X(OpenFileMappingFromApp);
     X(VirtualAlloc2);
     X(VirtualAlloc2FromApp);
     X(VirtualAllocFromApp);
-    X(VirtualProtectFromApp);
     X(UnmapViewOfFile2);
 
     hmod = GetModuleHandleA("ntdll.dll");
@@ -702,10 +618,8 @@ START_TEST(process)
     test_VirtualAlloc2();
     test_VirtualAllocFromApp();
     test_VirtualAlloc2FromApp();
-    test_VirtualProtectFromApp();
     test_OpenFileMappingFromApp();
     test_CreateFileMappingFromApp();
     test_MapViewOfFileFromApp();
     test_QueryProcessCycleTime();
-    test_GetMachineTypeAttributes();
 }

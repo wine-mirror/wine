@@ -293,7 +293,8 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
  *
  *
  */
-HLPFILE_WINDOWINFO* WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, WINHELP_WINDOW* parent, LPARAM mouse)
+static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile,
+                                                          WINHELP_WINDOW* parent, LPARAM mouse)
 {
     static      HLPFILE_WINDOWINFO      wi;
 
@@ -315,9 +316,7 @@ HLPFILE_WINDOWINFO* WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, WINHELP_WINDOW*
 
     wi.style = SW_SHOW;
     wi.win_style = WS_POPUP | WS_BORDER;
-    if (hlpfile->has_popup_color)
-        wi.sr_color = hlpfile->popup_color;
-    else if (parent->page && parent->page->file->has_popup_color)
+    if (parent->page->file->has_popup_color)
         wi.sr_color = parent->page->file->popup_color;
     else
         wi.sr_color = parent->info->sr_color;

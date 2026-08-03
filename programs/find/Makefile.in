@@ -1,5 +1,5 @@
 MODULE    = find.exe
-IMPORTS   = user32 kernelbase
+IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 

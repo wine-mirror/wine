@@ -50,6 +50,7 @@
 #include "winuser.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "dictionary.h"
 #include "storage32.h"
 #include "oleauto.h"
@@ -281,8 +282,8 @@ static ULONG WINAPI enum_stat_prop_stg_Release(IEnumSTATPROPSTG *iface)
     if (!refcount)
     {
         IPropertyStorage_Release(&penum->storage->IPropertyStorage_iface);
-        free(penum->stats);
-        free(penum);
+        heap_free(penum->stats);
+        heap_free(penum);
     }
 
     return refcount;
@@ -387,7 +388,7 @@ static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTA
     struct enum_stat_prop_stg *enum_obj;
     DWORD count;
 
-    enum_obj = calloc(1, sizeof(*enum_obj));
+    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
     if (!enum_obj)
         return E_OUTOFMEMORY;
 
@@ -401,7 +402,7 @@ static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTA
 
     if (count)
     {
-        if (!(enum_obj->stats = malloc(sizeof(*enum_obj->stats) * count)))
+        if (!(enum_obj->stats = heap_alloc(sizeof(*enum_obj->stats) * count)))
         {
             IEnumSTATPROPSTG_Release(&enum_obj->IEnumSTATPROPSTG_iface);
             return E_OUTOFMEMORY;
@@ -1062,10 +1063,7 @@ static HRESULT WINAPI IPropertyStorage_fnCommit(
         return STG_E_ACCESSDENIED;
     EnterCriticalSection(&This->cs);
     if (This->dirty)
-    {
         hr = PropertyStorage_WriteToStream(This);
-        if (hr == S_OK) This->dirty = FALSE;
-    }
     else
         hr = S_OK;
     LeaveCriticalSection(&This->cs);
@@ -1817,7 +1815,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const 
         }
 
         TRACE("Reading entry with ID %#lx, %ld chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
-                debugstr_wn((WCHAR *)(buffer->data + offset), cbEntry) : debugstr_an((char *)buffer->data + offset, cbEntry));
+                debugstr_wn((WCHAR *)buffer->data, cbEntry) : debugstr_an((char *)buffer->data, cbEntry));
 
         hr = PropertyStorage_StoreNameWithId(This, (char *)buffer->data + offset, This->codePage, propid);
         /* Unicode entries are padded to DWORD boundaries */
@@ -2116,9 +2114,9 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
         c->bytesWritten += keyLen;
 
         /* Align to 4 bytes. */
-        if (keyLen & 3)
+        pad_len = sizeof(DWORD) - keyLen % sizeof(DWORD);
+        if (pad_len)
         {
-            pad_len = sizeof(DWORD) - (keyLen & 3);
             c->hr = IStream_Write(This->stm, &pad, pad_len, &count);
             if (FAILED(c->hr))
                 goto end;
@@ -2273,12 +2271,6 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, &ularge, sizeof(ularge), &bytesWritten);
         break;
     }
-    case VT_R8:
-    {
-        hr = IStream_Write(This->stm, &var->dblVal, sizeof(var->dblVal), &count);
-        bytesWritten = count;
-        break;
-    }
     case VT_LPSTR:
     {
         if (This->codePage == CP_UNICODE)
@@ -2310,7 +2302,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
             len = WideCharToMultiByte(This->codePage, 0, var->bstrVal, SysStringLen(var->bstrVal) + 1,
                     NULL, 0, NULL, NULL);
 
-            str = malloc(len);
+            str = heap_alloc(len);
             if (!str)
             {
                 hr = E_OUTOFMEMORY;
@@ -2323,7 +2315,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
             hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
             if (SUCCEEDED(hr))
                 hr = IStream_Write(This->stm, str, len, &count);
-            free(str);
+            heap_free(str);
         }
 
         bytesWritten = count + sizeof(DWORD);
@@ -2340,13 +2332,6 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, var->pwszVal, len * sizeof(WCHAR),
          &count);
         bytesWritten = count + sizeof(DWORD);
-        break;
-    }
-    case VT_BOOL:
-    {
-        hr = IStream_Write(This->stm, &var->boolVal, sizeof(var->boolVal),
-         &count);
-        bytesWritten = count;
         break;
     }
     case VT_FILETIME:
@@ -2765,8 +2750,8 @@ static ULONG WINAPI enum_stat_propset_stg_Release(IEnumSTATPROPSETSTG *iface)
 
     if (!refcount)
     {
-        free(psenum->stats);
-        free(psenum);
+        heap_free(psenum->stats);
+        heap_free(psenum);
     }
 
     return refcount;
@@ -2838,7 +2823,7 @@ static HRESULT create_enum_stat_propset_stg(StorageImpl *storage, IEnumSTATPROPS
 
     struct enum_stat_propset_stg *enum_obj;
 
-    enum_obj = calloc(1, sizeof(*enum_obj));
+    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
     if (!enum_obj)
         return E_OUTOFMEMORY;
 
@@ -2860,7 +2845,7 @@ static HRESULT create_enum_stat_propset_stg(StorageImpl *storage, IEnumSTATPROPS
     if (FAILED(hr))
         goto done;
 
-    enum_obj->stats = malloc(enum_obj->count * sizeof(*enum_obj->stats));
+    enum_obj->stats = heap_alloc(enum_obj->count * sizeof(*enum_obj->stats));
     if (!enum_obj->stats)
     {
         hr = E_OUTOFMEMORY;
@@ -3023,8 +3008,6 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
     HRESULT r;
 
     TRACE("%p, %s, %#lx, %p.\n", This, debugstr_guid(rfmtid), grfMode, ppprstg);
-
-    grfMode &= ~STGM_TRANSACTED;
 
     /* be picky */
     if (grfMode != (STGM_READWRITE|STGM_SHARE_EXCLUSIVE) &&

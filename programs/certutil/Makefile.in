@@ -1,7 +1,6 @@
 MODULE    = certutil.exe
 
 EXTRADLLFLAGS = -mconsole -municode
-IMPORTS = crypt32
 
 SOURCES = \
 	main.c

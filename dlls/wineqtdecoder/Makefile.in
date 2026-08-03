@@ -1,0 +1,15 @@
+MODULE    = wineqtdecoder.dll
+IMPORTS   = strmiids strmbase uuid ole32 advapi32
+EXTRALIBS = @QUICKTIMELIB@
+
+C_SRCS = \
+	main.c \
+	qtdatahandler.c \
+	qtsplitter.c \
+	qtutils.c \
+	qtvdecoder.c
+
+RC_SRCS = \
+	rsrc.rc
+
+@MAKE_DLL_RULES@

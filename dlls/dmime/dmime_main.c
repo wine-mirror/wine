@@ -32,7 +32,6 @@
 #include "rpcproxy.h"
 #include "initguid.h"
 #include "dmusici.h"
-#include "dmksctrl.h"
 
 #include "dmime_private.h"
 

@@ -25,8 +25,5 @@ error.vbs 40 "error.vbs"
 /* @makedep: lang.vbs */
 lang.vbs 40 "lang.vbs"
 
-/* @makedep: noexplicit.vbs */
-noexplicit.vbs 40 "noexplicit.vbs"
-
 /* @makedep: regexp.vbs */
 regexp.vbs 40 "regexp.vbs"

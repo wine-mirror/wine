@@ -23,8 +23,6 @@
 #import "cocoa_app.h"
 #import "cocoa_event.h"
 
-#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
-
 
 @interface WineStatusItem : NSView
 {
@@ -98,12 +96,6 @@
             NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
             [statusBar removeStatusItem:item];
             [item setView:nil];
-
-            [queue discardEventsPassingTest:^BOOL (macdrv_event* event){
-                return ((event->type == STATUS_ITEM_MOUSE_BUTTON && event->status_item_mouse_button.item == (macdrv_status_item)self) ||
-                        (event->type == STATUS_ITEM_MOUSE_MOVE && event->status_item_mouse_move.item == (macdrv_status_item)self));
-            }];
-
             self.item = nil;
         }
     }
@@ -112,19 +104,12 @@
     {
         macdrv_event* event;
         NSUInteger typeMask = NSEventMaskFromType([nsevent type]);
-        CGPoint point = CGEventGetLocation([nsevent CGEvent]);
-
-        point = cgpoint_win_from_mac(point);
 
         event = macdrv_create_event(STATUS_ITEM_MOUSE_BUTTON, nil);
         event->status_item_mouse_button.item = (macdrv_status_item)self;
         event->status_item_mouse_button.button = [nsevent buttonNumber];
-        event->status_item_mouse_button.down = (typeMask & (NSEventMaskLeftMouseDown |
-                                                            NSEventMaskRightMouseDown |
-                                                            NSEventMaskOtherMouseDown)) != 0;
+        event->status_item_mouse_button.down = (typeMask & (NSLeftMouseDownMask | NSRightMouseDownMask | NSOtherMouseDownMask)) != 0;
         event->status_item_mouse_button.count = [nsevent clickCount];
-        event->status_item_mouse_button.x = floor(point.x);
-        event->status_item_mouse_button.y = floor(point.y);
         [queue postEvent:event];
         macdrv_release_event(event);
     }
@@ -151,7 +136,7 @@
 
             [image drawAtPoint:imageOrigin
                       fromRect:NSZeroRect
-                     operation:NSCompositingOperationSourceOver
+                     operation:NSCompositeSourceOver
                       fraction:1];
         }
     }
@@ -173,14 +158,8 @@
     - (void) mouseMoved:(NSEvent*)nsevent
     {
         macdrv_event* event;
-        CGPoint point = CGEventGetLocation([nsevent CGEvent]);
-
-        point = cgpoint_win_from_mac(point);
-
         event = macdrv_create_event(STATUS_ITEM_MOUSE_MOVE, nil);
         event->status_item_mouse_move.item = (macdrv_status_item)self;
-        event->status_item_mouse_move.x = floor(point.x);
-        event->status_item_mouse_move.y = floor(point.y);
         [queue postEvent:event];
         macdrv_release_event(event);
     }

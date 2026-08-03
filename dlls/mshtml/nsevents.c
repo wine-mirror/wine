@@ -573,13 +573,6 @@ void init_nsevents(HTMLDocumentNode *doc)
     nsIDOMEventTarget *target;
     unsigned i;
 
-    if(doc->nsevent_listener) {
-        listener = doc->nsevent_listener;
-        listener->doc = NULL;
-        doc->nsevent_listener = NULL;
-        release_listener(listener);
-    }
-
     listener = malloc(sizeof(nsDocumentEventListener));
     if(!listener)
         return;

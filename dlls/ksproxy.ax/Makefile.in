@@ -1,3 +1,4 @@
 MODULE    = ksproxy.ax
 
-VER_PRODUCTVERSION = 5,3,0,900
+SOURCES = \
+	version.rc

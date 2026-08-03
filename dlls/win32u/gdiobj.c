@@ -48,6 +48,7 @@ static GDI_SHARED_MEMORY *gdi_shared;
 static GDI_HANDLE_ENTRY *next_free;
 static GDI_HANDLE_ENTRY *next_unused;
 static LONG debug_count;
+SYSTEM_BASIC_INFORMATION system_info;
 
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
@@ -580,7 +581,7 @@ static void init_gdi_shared(void)
     }
 #endif
     /* NOTE: Windows uses 32-bit for 32-bit kernel */
-    RtlGetCurrentPeb()->GdiSharedHandleTable = gdi_shared;
+    NtCurrentTeb()->Peb->GdiSharedHandleTable = gdi_shared;
 }
 
 /***********************************************************************
@@ -746,7 +747,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
     ret = entry_to_handle( entry );
     pthread_mutex_unlock( &gdi_lock );
     TRACE( "allocated %s %p %u/%u\n", gdi_obj_type(type), ret,
-           InterlockedIncrement( &debug_count ), GDI_MAX_HANDLE_COUNT );
+           (int)InterlockedIncrement( &debug_count ), GDI_MAX_HANDLE_COUNT );
     return ret;
 }
 
@@ -765,7 +766,7 @@ void *free_gdi_handle( HGDIOBJ handle )
     if ((entry = handle_entry( handle )))
     {
         TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
-               handle, InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
+               handle, (int)InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
         object = entry_obj( entry );
         entry->Type = 0;
         entry->Object = (UINT_PTR)next_free;
@@ -1039,6 +1040,7 @@ void gdi_init(void)
     pthread_mutex_init( &gdi_lock, &attr );
     pthread_mutexattr_destroy( &attr );
 
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
     init_gdi_shared();
     if (!gdi_shared) return;
 

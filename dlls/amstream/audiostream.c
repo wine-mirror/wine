@@ -960,7 +960,6 @@ static HRESULT WINAPI audio_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
     PIN_DIRECTION dir;
 
     TRACE("stream %p, peer %p, mt %p.\n", stream, peer, mt);
-    strmbase_dump_media_type(mt);
 
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
             || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
@@ -1210,7 +1209,8 @@ static HRESULT WINAPI audio_sink_NewSegment(IPin *iface, REFERENCE_TIME start, R
 {
     struct audio_stream *stream = impl_from_IPin(iface);
 
-    TRACE("stream %p, start %I64d, stop %I64d, rate %0.16e.\n", stream, start, stop, rate);
+    TRACE("stream %p, start %s, stop %s, rate %0.16e\n",
+            stream, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
 
     EnterCriticalSection(&stream->cs);
 

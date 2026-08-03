@@ -35,9 +35,7 @@
 
 #include "wine/test.h"
 #include "winnls.h"
-#include "winioctl.h"
 #include "winternl.h"
-#include "ddk/ntifs.h"
 
 static NTSTATUS (WINAPI *pNtClose)( PHANDLE );
 static NTSTATUS (WINAPI *pNtOpenFile)    ( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, ULONG, ULONG );
@@ -45,6 +43,7 @@ static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PV
                                                 PVOID,ULONG,FILE_INFORMATION_CLASS,BOOLEAN,PUNICODE_STRING,BOOLEAN);
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE,PIO_STATUS_BLOCK,PVOID,LONG,FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FILE_INFORMATION_CLASS);
+static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCSTR);
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static VOID     (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
@@ -371,10 +370,6 @@ static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *ma
         case FileIdGlobalTxDirectoryInformation:
         case FileIdExtdDirectoryInformation:
         case FileIdExtdBothDirectoryInformation:
-        case FileId64ExtdDirectoryInformation:
-        case FileId64ExtdBothDirectoryInformation:
-        case FileIdAllExtdDirectoryInformation:
-        case FileIdAllExtdBothDirectoryInformation:
             if (status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED) continue;
             /* fall through */
         case FileDirectoryInformation:
@@ -1361,355 +1356,6 @@ static void test_redirection(void)
     pRtlWow64EnableFsRedirectionEx( old, &cur );
 }
 
-/* Custom reparse data points must use REPARSE_DATA_GUID_BUFFER.
- * In practice the two structs are nearly identical, and the GUID and tag can
- * contain anything, but this does mean that the ReparseDataLength has to match
- * the input size minus the header size, which is different. */
-static size_t init_reparse_custom( REPARSE_GUID_DATA_BUFFER **ret_buffer )
-{
-    size_t size = offsetof( REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer.DataBuffer[5] );
-    REPARSE_GUID_DATA_BUFFER *buffer;
-
-    buffer = malloc( size );
-    buffer->ReparseTag = 0xbeef;
-    buffer->ReparseDataLength = size - offsetof( REPARSE_GUID_DATA_BUFFER, GenericReparseBuffer );
-    buffer->Reserved = 0;
-    memset( &buffer->ReparseGuid, 0xcc, sizeof(GUID) );
-    memcpy( buffer->GenericReparseBuffer.DataBuffer, "bogus", 5 );
-    *ret_buffer = buffer;
-    return size;
-}
-
-static size_t align( size_t n, size_t alignment )
-{
-    return (n + alignment - 1) & ~(alignment - 1);
-}
-
-static void check_string( const WCHAR *str, ULONG size, const WCHAR *expect )
-{
-    ok( size == wcslen( expect ) * sizeof(WCHAR), "got size %lu\n", size );
-    ok( !memcmp( str, expect, size ), "got %s\n", debugstr_wn( str, size / sizeof(WCHAR) ));
-}
-
-static void test_info_classes(void)
-{
-    char buffer[1024];
-    FILE_FULL_EA_INFORMATION *ea_info = (void *)buffer;
-    FILE_NETWORK_OPEN_INFORMATION open_info;
-    REPARSE_GUID_DATA_BUFFER *reparse_data;
-    WCHAR path[MAX_PATH], temp[MAX_PATH];
-    FILE_ID_INFORMATION id_info;
-    LARGE_INTEGER zero = {0};
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING string;
-    size_t reparse_size;
-    IO_STATUS_BLOCK io;
-    HANDLE file, child;
-    NTSTATUS ret;
-
-    static const struct
-    {
-        FILE_INFORMATION_CLASS class;
-        ULONG size;
-    }
-    tests[] =
-    {
-        {FileDirectoryInformation, offsetof(FILE_DIRECTORY_INFORMATION, FileName)},
-        {FileFullDirectoryInformation, offsetof(FILE_FULL_DIRECTORY_INFORMATION, FileName)},
-        {FileBothDirectoryInformation, offsetof(FILE_BOTH_DIRECTORY_INFORMATION, FileName)},
-        {FileIdBothDirectoryInformation, offsetof(FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName)},
-        {FileIdFullDirectoryInformation, offsetof(FILE_ID_FULL_DIRECTORY_INFORMATION, FileName)},
-        {FileIdGlobalTxDirectoryInformation, offsetof(FILE_ID_GLOBAL_TX_DIR_INFORMATION, FileName)},
-        {FileIdExtdDirectoryInformation, offsetof(FILE_ID_EXTD_DIRECTORY_INFORMATION, FileName)},
-        {FileIdExtdBothDirectoryInformation, offsetof(FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION, FileName)},
-    };
-
-    GetTempPathW( ARRAY_SIZE(temp), temp );
-    swprintf( path, ARRAY_SIZE(path), L"%swinetest_dir", temp );
-    RtlDosPathNameToNtPathName_U( path, &string, NULL, NULL );
-    InitializeObjectAttributes( &attr, &string, 0, 0, NULL );
-    ret = NtCreateFile( &file, GENERIC_ALL, &attr, &io,
-            NULL, 0, 0, FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
-    ok( !ret, "failed to create %s, status %#lx\n", debugstr_w(path), ret );
-    RtlFreeUnicodeString( &string );
-
-    RtlInitUnicodeString( &string, L"file" );
-    InitializeObjectAttributes( &attr, &string, 0, file, NULL );
-    ret = NtCreateFile( &child, GENERIC_ALL, &attr, &io,
-            NULL, 0, 0, FILE_OPEN_IF, FILE_NON_DIRECTORY_FILE, NULL, 0 );
-    ok( !ret, "failed to create %s, status %#lx\n", debugstr_w(path), ret );
-    reparse_size = init_reparse_custom( &reparse_data );
-
-    /* Make it a reparse point so we can test the reparse tag field. */
-    ret = NtFsControlFile( child, NULL, NULL, NULL, &io,
-            FSCTL_SET_REPARSE_POINT, reparse_data, reparse_size, NULL, 0 );
-    ok( !ret, "failed to set reparse point, status %#lx\n", ret );
-
-    ret = NtWriteFile( child, NULL, NULL, NULL, &io, "data", 4, &zero, NULL );
-    ok( ret == STATUS_PENDING, "got %#lx\n", ret );
-    ret = WaitForSingleObject( child, 100 );
-    ok( !ret, "got %#lx\n", ret );
-    ok( !io.Status, "got %#lx\n", io.Status );
-
-    /* Some information is stale unless we do this... */
-    NtClose( child );
-    ret = NtCreateFile( &child, GENERIC_ALL, &attr, &io,
-            NULL, 0, 0, FILE_OPEN_IF, FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
-    ok( !ret, "failed to create %s, status %#lx\n", debugstr_w(path), ret );
-    ret = NtQueryInformationFile( child, &io, &open_info, sizeof(open_info), FileNetworkOpenInformation );
-    ok( !ret, "got %#lx\n", ret );
-    ret = NtQueryInformationFile( child, &io, &id_info, sizeof(id_info), FileIdInformation );
-    if (ret == STATUS_INVALID_INFO_CLASS)
-    {
-        memset( &id_info, 0, sizeof(id_info) );
-        ret = NtQueryInformationFile( child, &io, &id_info.FileId,
-                sizeof(FILE_INTERNAL_INFORMATION), FileInternalInformation );
-    }
-    ok( !ret, "got %#lx\n", ret );
-    NtClose( child );
-
-    /* Make another child with EA so we can test the EA field. */
-
-    RtlInitUnicodeString( &string, L"file2" );
-    InitializeObjectAttributes( &attr, &string, 0, file, NULL );
-    ret = NtCreateFile( &child, GENERIC_ALL, &attr, &io,
-            NULL, 0, 0, FILE_OPEN_IF, FILE_NON_DIRECTORY_FILE, NULL, 0 );
-    ok( !ret, "failed to create %s, status %#lx\n", debugstr_w(path), ret );
-
-    ea_info->NextEntryOffset = 0;
-    ea_info->Flags = 0;
-    ea_info->EaNameLength = 3;
-    ea_info->EaValueLength = 3;
-    strcpy( ea_info->EaName, "foo" );
-    strcpy( ea_info->EaName + 4, "bar" );
-    ret = NtSetEaFile( child, &io, buffer, offsetof( FILE_FULL_EA_INFORMATION, EaName[8] ) );
-    todo_wine ok( !ret, "got %#lx\n", ret );
-    NtClose( child );
-
-    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
-    {
-        unsigned int struct_size = align( tests[i].size + sizeof(WCHAR), 8 );
-        const FILE_DIRECTORY_INFORMATION *info = (void *)buffer;
-
-        ret = NtQueryDirectoryFile( file, NULL, NULL, NULL, &io,
-                buffer, struct_size - 1, tests[i].class, FALSE, NULL, TRUE );
-        if (ret == STATUS_INVALID_INFO_CLASS)
-            continue;
-
-        winetest_push_context("class %u", tests[i].class);
-
-        ok( ret == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", ret );
-
-        memset( &io, 0xcc, sizeof(io) );
-        ret = NtQueryDirectoryFile( file, NULL, NULL, NULL, &io,
-                buffer, struct_size, tests[i].class, FALSE, NULL, TRUE );
-        if (ret == STATUS_PENDING)
-            ret = WaitForSingleObject( file, 100 );
-        ok( !ret, "got %#lx\n", ret );
-        ok( !io.Status, "got %#lx\n", io.Status );
-        ok( io.Information == tests[i].size + sizeof(WCHAR),
-                "got %Iu\n", io.Information );
-
-        memset( &io, 0xcc, sizeof(io) );
-        ret = NtQueryDirectoryFile( file, NULL, NULL, NULL, &io,
-                buffer, tests[i].size * 2 + (6 * sizeof(WCHAR)), tests[i].class, FALSE, NULL, TRUE );
-        if (ret == STATUS_PENDING)
-            ret = WaitForSingleObject( file, 100 );
-        ok( !ret, "got %#lx\n", ret );
-        ok( !io.Status, "got %#lx\n", io.Status );
-        /* all classes start with the same few fields; test them here */
-        ok( info->NextEntryOffset == align( tests[i].size + sizeof(WCHAR), 8 ), "expected %Iu, got %lu\n",
-                align( tests[i].size + sizeof(WCHAR), 8 ), info->NextEntryOffset );
-        ok( !info->FileIndex, "got index %lu\n", info->FileIndex );
-
-        ok( io.Information == info->NextEntryOffset + tests[i].size + 2 * sizeof(WCHAR), "got %Iu\n",
-                io.Information );
-
-        info = (void *)(buffer + info->NextEntryOffset);
-        ok( !info->NextEntryOffset, "got %lu\n", info->NextEntryOffset );
-        ok( !info->FileIndex, "got index %lu\n", info->FileIndex );
-
-        ret = NtQueryDirectoryFile( file, NULL, NULL, NULL, &io,
-                buffer, tests[i].size * 2 + (6 * sizeof(WCHAR)), tests[i].class, FALSE, NULL, FALSE );
-        if (ret == STATUS_PENDING)
-            ret = WaitForSingleObject( file, 100 );
-        ok( !ret, "got %#lx\n", ret );
-        ok( !io.Status, "got %#lx\n", io.Status );
-
-        info = (void *)buffer;
-        ok( !info->NextEntryOffset, "got %lu\n", info->NextEntryOffset );
-        ok( !info->FileIndex, "got index %lu\n", info->FileIndex );
-        ok( info->CreationTime.QuadPart == open_info.CreationTime.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.CreationTime.QuadPart, info->CreationTime.QuadPart );
-        ok( info->LastAccessTime.QuadPart == open_info.LastAccessTime.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.LastAccessTime.QuadPart, info->LastAccessTime.QuadPart );
-        ok( info->LastWriteTime.QuadPart == open_info.LastWriteTime.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.LastWriteTime.QuadPart, info->LastWriteTime.QuadPart );
-        ok( info->ChangeTime.QuadPart == open_info.ChangeTime.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.ChangeTime.QuadPart, info->ChangeTime.QuadPart );
-        ok( info->EndOfFile.QuadPart == open_info.EndOfFile.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.EndOfFile.QuadPart, info->EndOfFile.QuadPart );
-        ok( info->AllocationSize.QuadPart == open_info.AllocationSize.QuadPart,
-                "expected %I64u, got %I64u\n", open_info.AllocationSize.QuadPart, info->AllocationSize.QuadPart );
-        ok( info->FileAttributes == open_info.FileAttributes,
-                "expected %#lx, got %#lx\n", open_info.FileAttributes, info->FileAttributes );
-
-        switch (tests[i].class)
-        {
-        case FileDirectoryInformation:
-        {
-            const FILE_DIRECTORY_INFORMATION *info = (void *)buffer;
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileFullDirectoryInformation:
-        {
-            const FILE_FULL_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( info->EaSize == 0xbeef, "got %#lx\n", info->EaSize );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileBothDirectoryInformation:
-        {
-            const FILE_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( info->EaSize == 0xbeef, "got %#lx\n", info->EaSize );
-            check_string( info->ShortName, info->ShortNameLength, L"" );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileIdBothDirectoryInformation:
-        {
-            const FILE_ID_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( info->EaSize == 0xbeef, "got %#lx\n", info->EaSize );
-            ok( !memcmp( &info->FileId, &id_info.FileId, sizeof( info->FileId )),
-                    "expected ID %#I64x, got %#I64x\n", *(ULONGLONG *)&id_info.FileId, info->FileId.QuadPart);
-            check_string( info->ShortName, info->ShortNameLength, L"" );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileIdFullDirectoryInformation:
-        {
-            const FILE_ID_FULL_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( info->EaSize == 0xbeef, "got %#lx\n", info->EaSize );
-            ok( !memcmp( &info->FileId, &id_info.FileId, sizeof( info->FileId )),
-                    "expected ID %#I64x, got %#I64x\n", *(ULONGLONG *)&id_info.FileId, info->FileId.QuadPart);
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileIdGlobalTxDirectoryInformation:
-        {
-            const FILE_ID_GLOBAL_TX_DIR_INFORMATION *info = (void *)buffer;
-            static const GUID zero_guid;
-            ok( !memcmp( &info->FileId, &id_info.FileId, sizeof( info->FileId )),
-                    "expected ID %#I64x, got %#I64x\n", *(ULONGLONG *)&id_info.FileId, info->FileId.QuadPart);
-            ok( !memcmp( &info->LockingTransactionId, &zero_guid, sizeof( info->LockingTransactionId )),
-                    "GUID didn't match\n" );
-            ok( !info->TxInfoFlags, "got %lu\n", info->TxInfoFlags );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileIdExtdDirectoryInformation:
-        {
-            const FILE_ID_EXTD_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( !info->EaSize, "got %#lx\n", info->EaSize );
-            ok( info->ReparsePointTag == 0xbeef, "got tag %#lx\n", info->ReparsePointTag );
-            ok( !memcmp( &info->FileId, &id_info.FileId, sizeof( info->FileId )), "ID didn't match\n" );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        case FileIdExtdBothDirectoryInformation:
-        {
-            const FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( !info->EaSize, "got %#lx\n", info->EaSize );
-            ok( info->ReparsePointTag == 0xbeef, "got tag %#lx\n", info->ReparsePointTag );
-            ok( !memcmp( &info->FileId, &id_info.FileId, sizeof( info->FileId )), "ID didn't match\n" );
-            check_string( info->ShortName, info->ShortNameLength, L"" );
-            check_string( info->FileName, info->FileNameLength, L"file" );
-            break;
-        }
-        default:
-            break;
-        }
-
-        ret = NtQueryDirectoryFile( file, NULL, NULL, NULL, &io,
-                buffer, tests[i].size * 2 + (6 * sizeof(WCHAR)), tests[i].class, FALSE, NULL, FALSE );
-        if (ret == STATUS_PENDING)
-            ret = WaitForSingleObject( file, 100 );
-        ok( !ret, "got %#lx\n", ret );
-        ok( !io.Status, "got %#lx\n", io.Status );
-
-        info = (void *)buffer;
-        ok( !info->NextEntryOffset, "got %lu\n", info->NextEntryOffset );
-        ok( !info->FileIndex, "got index %lu\n", info->FileIndex );
-        ok( (info->FileAttributes & ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) == FILE_ATTRIBUTE_ARCHIVE,
-                "got %#lx\n", info->FileAttributes );
-
-        switch (tests[i].class)
-        {
-        case FileFullDirectoryInformation:
-        {
-            const FILE_FULL_DIRECTORY_INFORMATION *info = (void *)buffer;
-            todo_wine ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        case FileBothDirectoryInformation:
-        {
-            const FILE_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            todo_wine ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        case FileIdBothDirectoryInformation:
-        {
-            const FILE_ID_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            todo_wine ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        case FileIdFullDirectoryInformation:
-        {
-            const FILE_ID_FULL_DIRECTORY_INFORMATION *info = (void *)buffer;
-            todo_wine ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        case FileIdExtdDirectoryInformation:
-        {
-            const FILE_ID_EXTD_DIRECTORY_INFORMATION *info = (void *)buffer;
-            ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            ok( !info->ReparsePointTag, "got tag %#lx\n", info->ReparsePointTag );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        case FileIdExtdBothDirectoryInformation:
-        {
-            const FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION *info = (void *)buffer;
-            todo_wine ok( info->EaSize >= 8 && info->EaSize <= 16, "got %#lx\n", info->EaSize );
-            ok( !info->ReparsePointTag, "got tag %#lx\n", info->ReparsePointTag );
-            check_string( info->FileName, info->FileNameLength, L"file2" );
-            break;
-        }
-        default:
-            break;
-        }
-
-        winetest_pop_context();
-    }
-
-    NtClose( file );
-
-    swprintf( path, ARRAY_SIZE(path), L"%swinetest_dir\\file", temp );
-    ret = DeleteFileW( path );
-    ok( ret == TRUE, "failed to delete %s, error %lu\n", debugstr_w(path), GetLastError() );
-    swprintf( path, ARRAY_SIZE(path), L"%swinetest_dir\\file2", temp );
-    ret = DeleteFileW( path );
-    ok( ret == TRUE, "failed to delete %s, error %lu\n", debugstr_w(path), GetLastError() );
-    swprintf( path, ARRAY_SIZE(path), L"%swinetest_dir", temp );
-    ret = RemoveDirectoryW( path );
-    ok( ret == TRUE, "failed to delete %s, error %lu\n", debugstr_w(path), GetLastError() );
-}
-
 START_TEST(directory)
 {
     WCHAR sysdir[MAX_PATH];
@@ -1720,6 +1366,7 @@ START_TEST(directory)
     pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
     pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
+    pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
@@ -1734,5 +1381,4 @@ START_TEST(directory)
     test_NtQueryDirectoryFile_case();
     test_NtQueryDirectoryFile_change_mask();
     test_redirection();
-    test_info_classes();
 }

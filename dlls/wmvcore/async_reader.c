@@ -358,8 +358,6 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
     struct list *entry;
     HRESULT hr = S_OK;
 
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
     IWMReaderCallback_OnStatus(reader->callback, WMT_OPENED, S_OK,
             WMT_TYPE_DWORD, (BYTE *)&zero, reader->context);
 
@@ -420,7 +418,6 @@ static DWORD WINAPI async_reader_callback_thread(void *arg)
 
     LeaveCriticalSection(&reader->callback_cs);
 
-    CoUninitialize();
     TRACE("Reader is stopping; exiting.\n");
     return 0;
 }

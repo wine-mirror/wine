@@ -19,10 +19,6 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.system.profile.idl";
-
-namespace Windows.System.Profile {
-    runtimeclass SystemIdentification;
-}
+#define _WINDOWS_SYSTEM_PROFILE_SYSTEM_ID
+#include "windows.system.profile.idl"

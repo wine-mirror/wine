@@ -115,7 +115,24 @@ struct clrclass_data
     DWORD res2[2];
 };
 
-static HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj, IUnknown **ppUnk);
+static MonoDomain* domain_attach(MonoDomain *domain)
+{
+    MonoDomain *prev_domain = mono_domain_get();
+
+    if (prev_domain == domain)
+        /* Do not set or restore domain. */
+        return NULL;
+
+    mono_thread_attach(domain);
+
+    return prev_domain;
+}
+
+static void domain_restore(MonoDomain *prev_domain)
+{
+    if (prev_domain != NULL)
+        mono_domain_set(prev_domain, FALSE);
+}
 
 static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *config_path, MonoDomain **result)
 {
@@ -174,7 +191,7 @@ end:
     return res;
 }
 
-static BOOL RuntimeHost_GetMethod(const char *assemblyname,
+static BOOL RuntimeHost_GetMethod(MonoDomain *domain, const char *assemblyname,
     const char *namespace, const char *typename, const char *methodname, int arg_count,
     MonoMethod **method)
 {
@@ -221,11 +238,11 @@ static BOOL RuntimeHost_GetMethod(const char *assemblyname,
     return TRUE;
 }
 
-static HRESULT RuntimeHost_Invoke(RuntimeHost *This,
+static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
     const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
     MonoObject *obj, void **args, int arg_count, MonoObject **result);
 
-static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This,
+static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This, MonoDomain *domain,
     const char *methodname, MonoMethod *method, MonoObject *obj, void **args, MonoObject **result)
 {
     MonoObject *exc;
@@ -240,7 +257,7 @@ static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This,
         if (methodname != get_hresult)
         {
             /* Map the exception to an HRESULT. */
-            hr = RuntimeHost_Invoke(This, NULL, "System", "Exception", get_hresult,
+            hr = RuntimeHost_Invoke(This, domain, NULL, "System", "Exception", get_hresult,
                 exc, NULL, 0, &hr_object);
             if (SUCCEEDED(hr))
                 hr = *(HRESULT*)mono_object_unbox(hr_object);
@@ -256,35 +273,42 @@ static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This,
     return S_OK;
 }
 
-static HRESULT RuntimeHost_Invoke(RuntimeHost *This,
+static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
     const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
     MonoObject *obj, void **args, int arg_count, MonoObject **result)
 {
     MonoMethod *method;
+    MonoDomain *prev_domain;
     HRESULT hr;
 
     *result = NULL;
 
-    if (!RuntimeHost_GetMethod(assemblyname, namespace, typename, methodname,
+    prev_domain = domain_attach(domain);
+
+    if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
             arg_count, &method))
     {
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
-    hr = RuntimeHost_DoInvoke(This, methodname, method, obj, args, result);
+    hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
     if (FAILED(hr))
     {
         ERR("Method %s.%s:%s raised an exception, hr=%lx\n", namespace, typename, methodname, hr);
     }
 
+    domain_restore(prev_domain);
+
     return hr;
 }
 
-static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This,
+static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
     const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
     MonoObject *obj, void **args, int arg_count, MonoObject **result)
 {
     MonoMethod *method;
+    MonoDomain *prev_domain;
     HRESULT hr;
 
     *result = NULL;
@@ -295,9 +319,12 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This,
         return E_POINTER;
     }
 
-    if (!RuntimeHost_GetMethod(assemblyname, namespace, typename, methodname,
+    prev_domain = domain_attach(domain);
+
+    if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
             arg_count, &method))
     {
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
@@ -305,19 +332,22 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This,
     if (!method)
     {
         ERR("Object %p does not support method %s.%s:%s\n", obj, namespace, typename, methodname);
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
-    hr = RuntimeHost_DoInvoke(This, methodname, method, obj, args, result);
+    hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
     if (FAILED(hr))
     {
         ERR("Method %s.%s:%s raised an exception, hr=%lx\n", namespace, typename, methodname, hr);
     }
 
+    domain_restore(prev_domain);
+
     return hr;
 }
 
-static HRESULT RuntimeHost_GetObjectForIUnknown(RuntimeHost *This,
+static HRESULT RuntimeHost_GetObjectForIUnknown(RuntimeHost *This, MonoDomain *domain,
     IUnknown *unk, MonoObject **obj)
 {
     HRESULT hr;
@@ -325,7 +355,7 @@ static HRESULT RuntimeHost_GetObjectForIUnknown(RuntimeHost *This,
     MonoObject *result;
 
     args[0] = &unk;
-    hr = RuntimeHost_Invoke(This, NULL, "System.Runtime.InteropServices", "Marshal", "GetObjectForIUnknown",
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System.Runtime.InteropServices", "Marshal", "GetObjectForIUnknown",
         NULL, args, 1, &result);
 
     if (SUCCEEDED(hr))
@@ -340,10 +370,9 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
 {
     HRESULT res;
     char *nameA;
-    MonoDomain *domain, *prev_domain;
+    MonoDomain *domain;
     void *args[3];
     MonoObject *new_domain, *id;
-    void *attach_cookie;
 
     res = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
     if (FAILED(res))
@@ -357,23 +386,19 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
         return E_OUTOFMEMORY;
     }
 
-    prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
-
     args[0] = mono_string_new(domain, nameA);
     free(nameA);
 
     if (!args[0])
     {
-        mono_threads_detach_coop(prev_domain, &attach_cookie);
         return E_OUTOFMEMORY;
     }
 
     if (evidence)
     {
-        res = RuntimeHost_GetObjectForIUnknown(This, evidence, (MonoObject **)&args[1]);
+        res = RuntimeHost_GetObjectForIUnknown(This, domain, evidence, (MonoObject **)&args[1]);
         if (FAILED(res))
         {
-            mono_threads_detach_coop(prev_domain, &attach_cookie);
             return res;
         }
     }
@@ -384,10 +409,9 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
 
     if (setup)
     {
-        res = RuntimeHost_GetObjectForIUnknown(This, setup, (MonoObject **)&args[2]);
+        res = RuntimeHost_GetObjectForIUnknown(This, domain, setup, (MonoObject **)&args[2]);
         if (FAILED(res))
         {
-            mono_threads_detach_coop(prev_domain, &attach_cookie);
             return res;
         }
     }
@@ -396,12 +420,11 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
         args[2] = NULL;
     }
 
-    res = RuntimeHost_Invoke(This, NULL, "System", "AppDomain", "CreateDomain",
+    res = RuntimeHost_Invoke(This, domain, NULL, "System", "AppDomain", "CreateDomain",
         NULL, args, 3, &new_domain);
 
     if (FAILED(res))
     {
-        mono_threads_detach_coop(prev_domain, &attach_cookie);
         return res;
     }
 
@@ -411,12 +434,11 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
      * Instead, do a vcall.
      */
 
-    res = RuntimeHost_VirtualInvoke(This, NULL, "System", "AppDomain", "get_Id",
+    res = RuntimeHost_VirtualInvoke(This, domain, NULL, "System", "AppDomain", "get_Id",
         new_domain, NULL, 0, &id);
 
     if (FAILED(res))
     {
-        mono_threads_detach_coop(prev_domain, &attach_cookie);
         return res;
     }
 
@@ -424,22 +446,16 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
 
     *result = mono_domain_get_by_id(*(int *)mono_object_unbox(id));
 
-    mono_threads_detach_coop(prev_domain, &attach_cookie);
-
     return S_OK;
 }
 
 static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *domain, IUnknown **punk)
 {
     HRESULT hr;
-    MonoDomain *prev_domain;
     MonoObject *appdomain_object;
     IUnknown *unk;
-    void *attach_cookie;
 
-    prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
-
-    hr = RuntimeHost_Invoke(This, NULL, "System", "AppDomain", "get_CurrentDomain",
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System", "AppDomain", "get_CurrentDomain",
         NULL, NULL, 0, &appdomain_object);
 
     if (SUCCEEDED(hr))
@@ -452,8 +468,6 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
         IUnknown_Release(unk);
     }
 
-    mono_threads_detach_coop(prev_domain, &attach_cookie);
-
     return hr;
 }
 
@@ -461,9 +475,8 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
 {
     HRESULT hr;
     void *args[2];
-    MonoDomain *domain, *prev_domain;
+    MonoDomain *domain;
     MonoObject *dummy;
-    void *attach_cookie;
 
     hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
     if (FAILED(hr))
@@ -472,16 +485,12 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
         return;
     }
 
-    prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
-
     args[0] = &exitcode;
     args[1] = NULL;
-    RuntimeHost_Invoke(This, NULL, "System", "Environment", "Exit",
+    RuntimeHost_Invoke(This, domain, NULL, "System", "Environment", "Exit",
         NULL, args, 1, &dummy);
 
     ERR("Process should have exited\n");
-
-    mono_threads_detach_coop(prev_domain, &attach_cookie);
 }
 
 static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
@@ -701,11 +710,19 @@ static HRESULT WINAPI corruntimehost_CreateDomainSetup(
 {
     RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
     HRESULT hr;
+    MonoDomain *domain;
+    MonoObject *obj;
     static const WCHAR classnameW[] = {'S','y','s','t','e','m','.','A','p','p','D','o','m','a','i','n','S','e','t','u','p',',','m','s','c','o','r','l','i','b',0};
 
     TRACE("(%p)\n", iface);
 
-    hr = RuntimeHost_CreateManagedInstance(This, classnameW, appDomainSetup);
+    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_CreateManagedInstance(This, classnameW, domain, &obj);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_GetIUnknownForObject(This, obj, appDomainSetup);
 
     return hr;
 }
@@ -815,7 +832,7 @@ static HRESULT WINAPI CLRRuntimeHost_SetHostControl(ICLRRuntimeHost* iface,
     IHostControl *pHostControl)
 {
     FIXME("(%p,%p)\n", iface, pHostControl);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI CLRRuntimeHost_GetCLRControl(ICLRRuntimeHost* iface,
@@ -863,7 +880,6 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     MonoDomain *domain, *prev_domain;
     MonoObject *result;
     MonoString *str;
-    void *attach_cookie;
     char *filenameA = NULL, *classA = NULL, *methodA = NULL;
     char *argsA = NULL, *ns;
 
@@ -875,7 +891,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     if (FAILED(hr))
         return hr;
 
-    prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
+    prev_domain = domain_attach(domain);
 
     if (SUCCEEDED(hr))
     {
@@ -921,14 +937,14 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
 
     if (SUCCEEDED(hr))
     {
-        hr = RuntimeHost_Invoke(This, filenameA, classA, ns+1, methodA,
+        hr = RuntimeHost_Invoke(This, domain, filenameA, classA, ns+1, methodA,
             NULL, (void**)&str, 1, &result);
     }
 
     if (SUCCEEDED(hr))
         *pReturnValue = *(DWORD*)mono_object_unbox(result);
 
-    mono_threads_detach_coop(prev_domain, &attach_cookie);
+    domain_restore(prev_domain);
 
     free(filenameA);
     free(classA);
@@ -955,28 +971,32 @@ static const struct ICLRRuntimeHostVtbl CLRHostVtbl =
 };
 
 /* Create an instance of a type given its name, by calling its constructor with
- * no arguments. */
-HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name, IUnknown **result)
+ * no arguments. Note that result MUST be in the stack, or the garbage
+ * collector may free it prematurely. */
+HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
+    MonoDomain *domain, MonoObject **result)
 {
     HRESULT hr=S_OK;
     char *nameA=NULL;
     MonoType *type;
     MonoClass *klass;
     MonoObject *obj;
-    MonoDomain *domain, *prev_domain;
-    void *attach_cookie;
+    MonoDomain *prev_domain;
 
-    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
+    if (!domain)
+        hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
+
     if (FAILED(hr))
-    {
         return hr;
+
+    prev_domain = domain_attach(domain);
+
+    if (SUCCEEDED(hr))
+    {
+        nameA = WtoA(name);
+        if (!nameA)
+            hr = E_OUTOFMEMORY;
     }
-
-    nameA = WtoA(name);
-    if (!nameA)
-        hr = E_OUTOFMEMORY;
-
-    prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
 
     if (SUCCEEDED(hr))
     {
@@ -1012,12 +1032,10 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name, IUnkn
     {
         /* FIXME: Detect exceptions from the constructor? */
         mono_runtime_object_init(obj);
+        *result = obj;
     }
 
-    if (SUCCEEDED(hr))
-        hr = RuntimeHost_GetIUnknownForObject(This, obj, result);
-
-    mono_threads_detach_coop(prev_domain, &attach_cookie);
+    domain_restore(prev_domain);
 
     free(nameA);
 
@@ -1035,10 +1053,13 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name, IUnkn
 HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
     IUnknown **ppUnk)
 {
+    MonoDomain *domain;
     MonoObject *result;
     HRESULT hr;
 
-    hr = RuntimeHost_Invoke(This, NULL, "System.Runtime.InteropServices", "Marshal", "GetIUnknownForObject",
+    domain = mono_object_get_domain(obj);
+
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System.Runtime.InteropServices", "Marshal", "GetIUnknownForObject",
         NULL, (void**)&obj, 1, &result);
 
     if (SUCCEEDED(hr))
@@ -1082,7 +1103,7 @@ static void get_utf8_args(int *argc, char ***argv)
 
 # define CAN_FIXUP_VTABLE 1
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct vtable_fixup_thunk
 {
@@ -1121,13 +1142,13 @@ static const struct vtable_fixup_thunk thunk_template = {
     NULL
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #elif __x86_64__ /* !__i386__ */
 
 # define CAN_FIXUP_VTABLE 1
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 
 struct vtable_fixup_thunk
 {
@@ -1189,7 +1210,7 @@ static const struct vtable_fixup_thunk thunk_template = {
     {0x48,0x8B,0x00,0xFF,0xE0}
 };
 
-#pragma pack(pop)
+#include "poppack.h"
 
 #else /* !__i386__ && !__x86_64__ */
 
@@ -1245,7 +1266,6 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
     MonoAssembly *assembly=NULL;
     MonoImageOpenStatus status=0;
     MonoDomain *domain;
-    void *attach_cookie;
 
     if (fixup->done) return;
 
@@ -1273,7 +1293,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
     {
         MonoDomain *prev_domain;
 
-        prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
+        prev_domain = domain_attach(domain);
 
         assembly = mono_assembly_open(filenameA, &status);
 
@@ -1302,7 +1322,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
             fixup->done = TRUE;
         }
 
-        mono_threads_detach_coop(prev_domain, &attach_cookie);
+        domain_restore(prev_domain);
     }
 
     if (info != NULL)
@@ -1407,11 +1427,10 @@ __int32 WINAPI _CorExeMain(void)
     int exit_code;
     int argc;
     char **argv;
-    MonoDomain *domain=NULL, *prev_domain=NULL;
+    MonoDomain *domain=NULL;
     MonoImage *image;
     MonoImageOpenStatus status;
     MonoAssembly *assembly=NULL;
-    void *attach_cookie;
     WCHAR filename[MAX_PATH], config_file[MAX_PATH], *temp, **priv_path;
     SIZE_T config_file_dir_size;
     char *filenameA;
@@ -1471,14 +1490,10 @@ __int32 WINAPI _CorExeMain(void)
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
 
         if (SUCCEEDED(hr))
-        {
             hr = RuntimeHost_GetDefaultDomain(host, config_file, &domain);
-        }
 
         if (SUCCEEDED(hr))
         {
-            prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
-
             image = mono_image_open_from_module_handle(GetModuleHandleW(NULL),
                 filenameA, 1, &status);
 
@@ -1496,8 +1511,6 @@ __int32 WINAPI _CorExeMain(void)
                 ERR("couldn't load %s, status=%d\n", debugstr_w(filename), status);
                 exit_code = -1;
             }
-
-            mono_threads_detach_coop(prev_domain, &attach_cookie);
         }
         else
             exit_code = -1;
@@ -1895,13 +1908,12 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             MonoDomain *prev_domain;
             MonoImageOpenStatus status;
             IUnknown *unk = NULL;
-            void *attach_cookie;
             char *filenameA, *ns;
             char *classA;
 
             hr = CLASS_E_CLASSNOTAVAILABLE;
 
-            prev_domain = mono_threads_attach_coop(domain, &attach_cookie);
+            prev_domain = domain_attach(domain);
 
             filenameA = WtoA(filename);
             assembly = mono_assembly_open(filenameA, &status);
@@ -1909,7 +1921,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             if (!assembly)
             {
                 ERR("Cannot open assembly %s, status=%i\n", debugstr_w(filename), status);
-                mono_threads_detach_coop(prev_domain, &attach_cookie);
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1917,7 +1929,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             if (!image)
             {
                 ERR("Couldn't get assembly image\n");
-                mono_threads_detach_coop(prev_domain, &attach_cookie);
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1930,7 +1942,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             if (!klass)
             {
                 ERR("Couldn't get class from image\n");
-                mono_threads_detach_coop(prev_domain, &attach_cookie);
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1950,7 +1962,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             else
                 hr = CLASS_E_CLASSNOTAVAILABLE;
 
-            mono_threads_detach_coop(prev_domain, &attach_cookie);
+            domain_restore(prev_domain);
         }
         else
             hr = CLASS_E_CLASSNOTAVAILABLE;

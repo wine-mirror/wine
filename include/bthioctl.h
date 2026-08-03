@@ -26,7 +26,7 @@
 #define IOCTL_BTH_GET_DEVICE_INFO   CTL_CODE(FILE_DEVICE_BLUETOOTH, 0x02, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_BTH_DISCONNECT_DEVICE CTL_CODE(FILE_DEVICE_BLUETOOTH, 0x03, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 typedef struct _BTH_RADIO_INFO
 {
@@ -51,6 +51,6 @@ typedef struct _BTH_DEVICE_INFO_LIST
     BTH_DEVICE_INFO deviceList[1];
 } BTH_DEVICE_INFO_LIST, *PBTH_DEVICE_INFO_LIST;
 
-#pragma pack(pop)
+#include <poppack.h>
 
 #endif /* __BTHIOCTL_H__ */

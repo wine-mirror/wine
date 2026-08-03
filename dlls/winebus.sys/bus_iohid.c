@@ -86,6 +86,7 @@
 #include <pthread.h>
 
 #include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -105,7 +106,7 @@ static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
-static const struct bus_options *options;
+static struct iohid_bus_options options;
 
 struct iohid_device
 {
@@ -286,13 +287,8 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     desc.uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
     if ((str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDTransportKey))))
-    {
-        if (!CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
-                            !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0))
-            desc.bus_type = BUS_TYPE_BLUETOOTH;
-        else if (!CFStringCompare(str, CFSTR(kIOHIDTransportUSBValue), 0))
-            desc.bus_type = BUS_TYPE_USB;
-    }
+        desc.is_bluetooth = !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
+                            !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0);
 
     if (usages.UsagePage != HID_USAGE_PAGE_GENERIC ||
         !(usages.Usage == HID_USAGE_GENERIC_JOYSTICK || usages.Usage == HID_USAGE_GENERIC_GAMEPAD))
@@ -301,7 +297,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
          * opening keyboards, mice, or the Touch Bar on older MacBooks triggers
          * a permissions dialog for input monitoring.
          */
-        WARN("Ignoring HID device %p (vid %04x, pid %04x): not a joystick or gamepad\n", IOHIDDevice, desc.vid, desc.pid);
+        ERR("Ignoring HID device %p (vid %04x, pid %04x): not a joystick or gamepad\n", IOHIDDevice, desc.vid, desc.pid);
         return;
     }
 
@@ -356,7 +352,7 @@ NTSTATUS iohid_bus_init(void *args)
 {
     TRACE("args %p\n", args);
 
-    options = args;
+    options = *(struct iohid_bus_options *)args;
 
     if (!(hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L)))
     {

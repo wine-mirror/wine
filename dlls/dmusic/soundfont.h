@@ -24,7 +24,7 @@
 
 #include "wine/debug.h"
 
-#pragma pack(push,1)
+#include <pshpack1.h>
 
 /* SoundFont 2.04 data structures, from http://www.synthfont.com/sfspec24.pdf */
 
@@ -277,14 +277,6 @@ static inline const char *debugstr_sf_gen(struct sf_gen *gen)
     }
 }
 
-enum
-{
-    SF_UNLOOPED = 0,
-    SF_LOOP_DURING_RELEASE = 1,
-    SF_NOTUSED = 2,
-    SF_LOOP_UNTIL_RELEASE = 3
-};
-
 struct sf_instrument /* <inst-rec> */
 {
     char name[20];
@@ -309,7 +301,7 @@ struct sf_sample /* <shdr-rec> */
 
 C_ASSERT(sizeof(struct sf_sample) == 46);
 
-#pragma pack(pop)
+#include <poppack.h>
 
 struct soundfont
 {

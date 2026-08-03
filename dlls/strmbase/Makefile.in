@@ -1,0 +1,20 @@
+MODULE    = libstrmbase.a
+
+C_SRCS = \
+	audio.c \
+	dispatch.c \
+	dllfunc.c \
+	enumpins.c \
+	filter.c \
+	mediatype.c \
+	outputqueue.c \
+	pin.c \
+	pospass.c \
+	qualitycontrol.c \
+	renderer.c \
+	seeking.c \
+	transform.c \
+	video.c \
+	window.c
+
+@MAKE_IMPLIB_RULES@

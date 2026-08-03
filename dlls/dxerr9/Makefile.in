@@ -1,0 +1,6 @@
+MODULE    = libdxerr9.a
+
+C_SRCS = \
+	dxerr9.c
+
+@MAKE_IMPLIB_RULES@

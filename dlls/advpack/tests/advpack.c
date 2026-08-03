@@ -160,10 +160,6 @@ static void delnode_test(void)
     hr = pDelNode(lstrcatA(currDir, "\\DelNodeTestDir"), 0);
     ok (hr == S_OK, "DelNode failed deleting an empty directory\n");
     currDir[currDirLen] = '\0';
-    CreateDirectoryA("DelNodeTestDir", NULL);
-    hr = pDelNode(lstrcatA(currDir, "\\DelNodeTestDir"), ADN_DEL_IF_EMPTY);
-    ok (hr == S_OK, "DelNode ADN_DEL_IF_EMPTY failed deleting an empty directory\n");
-    currDir[currDirLen] = '\0';
 
     /* Test deletion of a directory containing one file. */
     CreateDirectoryA("DelNodeTestDir", NULL);
@@ -171,10 +167,7 @@ static void delnode_test(void)
         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     assert(hn != INVALID_HANDLE_VALUE);
     CloseHandle(hn);
-    lstrcatA(currDir, "\\DelNodeTestDir");
-    hr = pDelNode(currDir, ADN_DEL_IF_EMPTY);
-    ok (hr == E_FAIL, "DelNode ADN_DEL_IF_EMPTY should not delete non-empty\n");
-    hr = pDelNode(currDir, 0);
+    hr = pDelNode(lstrcatA(currDir, "\\DelNodeTestDir"), 0);
     ok (hr == S_OK, "DelNode failed deleting a directory containing one file\n");
     currDir[currDirLen] = '\0';
 

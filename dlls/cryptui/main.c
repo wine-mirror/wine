@@ -1504,7 +1504,7 @@ static INT_PTR CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             SendMessageW(GetDlgItem(hwnd, IDC_STORE_TEXT), WM_SETTEXT, 0,
              (LPARAM)selectInfo->info->pwszText);
         if (!(selectInfo->info->dwFlags & CRYPTUI_ENABLE_SHOW_PHYSICAL_STORE))
-            ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), SW_HIDE);
+            ShowWindow(GetDlgItem(hwnd, IDC_SHOW_PHYSICAL_STORES), FALSE);
         enumerate_stores(hwnd, selectInfo->info->pEnumData);
         break;
     }
@@ -2468,26 +2468,16 @@ static INT_PTR CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         page = (PROPSHEETPAGEW *)lp;
         pCertViewInfo = (PCCRYPTUI_VIEWCERTIFICATE_STRUCTW)page->lParam;
         if (pCertViewInfo->dwFlags & CRYPTUI_DISABLE_ADDTOSTORE)
-            ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), SW_HIDE);
+            ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), FALSE);
         EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), FALSE);
         set_general_info(hwnd, pCertViewInfo);
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)pCertViewInfo->pCertContext);
         break;
     case WM_COMMAND:
         switch (wp)
         {
         case IDC_ADDTOSTORE:
-        {
-            CRYPTUI_WIZ_IMPORT_SRC_INFO info;
-
-            info.dwSize = sizeof(info);
-            info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT;
-            info.pCertContext = (PCCERT_CONTEXT)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-            info.dwFlags = 0;
-            info.pwszPassword = L"";
-            CryptUIWizImport(0, hwnd, NULL, &info, NULL);
+            CryptUIWizImport(0, hwnd, NULL, NULL, NULL);
             break;
-        }
         case IDC_ISSUERSTATEMENT:
         {
             struct IssuerStatement *issuerStatement =
@@ -4229,7 +4219,7 @@ static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
         GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
         MapWindowPoints( 0, hwnd, (POINT *)&rc, 2 );
         /* hide the cancel button.. */
-        ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
+        ShowWindow(GetDlgItem(hwnd, IDCANCEL), FALSE);
         /* and move the OK button to the cancel button's original position. */
         SetWindowPos(GetDlgItem(hwnd, IDOK), 0, rc.left, rc.top, 0, 0,
                      SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
@@ -5072,10 +5062,9 @@ static INT_PTR CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         {
             SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_AUTO_STORE), BM_CLICK,
              0, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), TRUE);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), TRUE);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE),
-             !(data->dwFlags & CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE));
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE), FALSE);
         }
         else
         {
@@ -5352,16 +5341,15 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
-    data.fileName = NULL;
     if (pImportSrc)
     {
         memcpy(&data.importSrc, pImportSrc, sizeof(data.importSrc));
-        if (pImportSrc->dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
-            data.fileName = (LPWSTR)pImportSrc->pwszFileName;
+        data.fileName = (LPWSTR)pImportSrc->pwszFileName;
     }
     else
     {
         memset(&data.importSrc, 0, sizeof(data.importSrc));
+        data.fileName = NULL;
     }
     data.freeSource = FALSE;
     data.hDestCertStore = hDestCertStore;

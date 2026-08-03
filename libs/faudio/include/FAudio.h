@@ -341,8 +341,6 @@ typedef struct FAudioXMA2WaveFormatEx
 
 /* Constants */
 
-#define FAUDIO_OK			0x0
-#define FAUDIO_E_FAIL			0x80004005
 #define FAUDIO_E_OUT_OF_MEMORY		0x8007000e
 #define FAUDIO_E_INVALID_ARG		0x80070057
 #define FAUDIO_E_UNSUPPORTED_FORMAT	0x88890008
@@ -495,8 +493,8 @@ extern FAudioGUID DATAFORMAT_SUBTYPE_IEEE_FLOAT;
 #define FAUDIO_TARGET_VERSION 8 /* Targeting compatibility with XAudio 2.8 */
 
 #define FAUDIO_ABI_VERSION	 0
-#define FAUDIO_MAJOR_VERSION	26
-#define FAUDIO_MINOR_VERSION	 6
+#define FAUDIO_MAJOR_VERSION	25
+#define FAUDIO_MINOR_VERSION	 2
 #define FAUDIO_PATCH_VERSION	 0
 
 #define FAUDIO_COMPILED_VERSION ( \
@@ -513,7 +511,7 @@ FAUDIOAPI uint32_t FAudioLinkedVersion(void);
 /* This should be your first FAudio call.
  *
  * ppFAudio:		Filled with the FAudio core context.
- * Flags:		Can be 0 or a combination of FAUDIO_DEBUG_ENGINE and FAUDIO_1024_QUANTUM.
+ * Flags:		Can be 0 or FAUDIO_DEBUG_ENGINE.
  * XAudio2Processor:	Set this to FAUDIO_DEFAULT_PROCESSOR.
  *
  * Returns 0 on success.

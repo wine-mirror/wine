@@ -1,3 +1,4 @@
 MODULE    = vga.dll
 
-VER_PRODUCTVERSION = 6,1,7600,16385
+SOURCES = \
+	version.rc

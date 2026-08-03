@@ -198,13 +198,9 @@ static HRESULT DSPROPERTY_DescriptionW(
     IPropertyStore *ps;
     PROPVARIANT pv;
     HRESULT hr;
-    WCHAR *id;
 
     TRACE("pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
           pPropData,cbPropData,pcbReturned);
-
-    if (cbPropData < sizeof(*ppd))
-        return E_INVALIDARG;
 
     TRACE("DeviceId=%s\n",debugstr_guid(&ppd->DeviceId));
     if ( IsEqualGUID( &ppd->DeviceId , &GUID_NULL) ) {
@@ -249,11 +245,9 @@ static HRESULT DSPROPERTY_DescriptionW(
     }
 
     ppd->Description = wcsdup(pv.pwszVal);
-    hr = IMMDevice_GetId(mmdevice, &id);
-    ppd->Module = wcsdup(id);
-    CoTaskMemFree(id);
+    ppd->Module = wcsdup(wine_vxd_drv);
     ppd->Interface = wcsdup(wInterface);
-    ppd->Type = DIRECTSOUNDDEVICE_TYPE_WDM;
+    ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
 
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
@@ -267,16 +261,11 @@ static HRESULT DSPROPERTY_DescriptionW(
     return S_OK;
 }
 
-struct enum_callback_ctx
+static
+BOOL CALLBACK enum_callback(GUID *guid, const WCHAR *desc, const WCHAR *module,
+        void *user)
 {
-    DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA *pd;
-    EDataFlow flow;
-    unsigned int id;
-};
-
-static BOOL CALLBACK enum_callback(GUID *guid, const WCHAR *desc, const WCHAR *module, void *user)
-{
-    struct enum_callback_ctx *ctx = user;
+    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA ppd = user;
     DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA data;
     DWORD len;
     BOOL ret;
@@ -287,19 +276,19 @@ static BOOL CALLBACK enum_callback(GUID *guid, const WCHAR *desc, const WCHAR *m
     if(!guid)
         return TRUE;
 
-    data.Type = DIRECTSOUNDDEVICE_TYPE_WDM;
-    data.DataFlow = ctx->flow == eRender ? DIRECTSOUNDDEVICE_DATAFLOW_RENDER : DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
     data.DeviceId = *guid;
-    len = lstrlenW(desc) + 1;
-    data.Description = malloc(len * sizeof(WCHAR));
-    memcpy(data.Description, desc, len * sizeof(WCHAR));
+
     len = lstrlenW(module) + 1;
     data.Module = malloc(len * sizeof(WCHAR));
     memcpy(data.Module, module, len * sizeof(WCHAR));
-    data.Interface = wInterface;
-    data.WaveDeviceId = ctx->id++;
 
-    ret = ctx->pd->Callback(&data, ctx->pd->Context);
+    len = lstrlenW(desc) + 1;
+    data.Description = malloc(len * sizeof(WCHAR));
+    memcpy(data.Description, desc, len * sizeof(WCHAR));
+
+    data.Interface = wInterface;
+
+    ret = ppd->Callback(&data, ppd->Context);
 
     free(data.Module);
     free(data.Description);
@@ -307,34 +296,32 @@ static BOOL CALLBACK enum_callback(GUID *guid, const WCHAR *desc, const WCHAR *m
     return ret;
 }
 
-static HRESULT DSPROPERTY_EnumerateW(LPVOID pd, ULONG size, PULONG out_size)
+static HRESULT DSPROPERTY_EnumerateW(
+    LPVOID pPropData,
+    ULONG cbPropData,
+    PULONG pcbReturned )
 {
-    struct enum_callback_ctx ctx = {pd};
+    PDSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA ppd = pPropData;
     HRESULT hr;
 
-    TRACE("pd %p, size %lu, out_size %p\n", pd, size, out_size);
+    TRACE("(pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
+          pPropData,cbPropData,pcbReturned);
 
-    if (out_size)
-        *out_size = sizeof(*ctx.pd);
+    if (pcbReturned)
+        *pcbReturned = 0;
 
-    if (!pd || !ctx.pd->Callback)
+    if (!ppd || !ppd->Callback)
     {
-        WARN("Invalid pd %p\n", pd);
+        WARN("Invalid ppd %p\n", ppd);
         return E_PROP_ID_UNSUPPORTED;
     }
 
-    if (size < sizeof(ctx.pd))
-        return E_INVALIDARG;
+    hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids,
+            enum_callback, ppd);
 
-    ctx.flow = eRender;
-    hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids, enum_callback, &ctx);
-
-    if (hr == S_OK)
-    {
-        ctx.flow = eCapture;
-        ctx.id = 0;
-        hr = enumerate_mmdevices(eCapture, DSOUND_capture_guids, enum_callback, &ctx);
-    }
+    if(hr == S_OK)
+        hr = enumerate_mmdevices(eCapture, DSOUND_capture_guids,
+                enum_callback, ppd);
 
     return SUCCEEDED(hr) ? DS_OK : hr;
 }
@@ -388,8 +375,6 @@ static BOOL CALLBACK DSPROPERTY_enumWtoA(DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTIO
     DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA *ppd = data;
     BOOL ret;
 
-    TRACE("descW %p, data %p\n", descW, data);
-
     ret = DSPROPERTY_descWtoA(descW, &descA);
     if (!ret)
         return FALSE;
@@ -406,8 +391,6 @@ static HRESULT DSPROPERTY_EnumerateA(
 {
     DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_A_DATA *ppd = pPropData;
     DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE_W_DATA data;
-
-    TRACE("pPropData %p, cbPropData %lu, pcbReturned %p\n", pPropData, cbPropData, pcbReturned);
 
     if (!ppd || !ppd->Callback)
     {
@@ -492,8 +475,6 @@ static HRESULT DSPROPERTY_Description1(
         *pcbReturned = sizeof(*ppd);
     if (!pPropData)
         return S_OK;
-    if (cbPropData < sizeof(*ppd))
-        return E_INVALIDARG;
 
     data.DeviceId = ppd->DeviceId;
     data.DataFlow = ppd->DataFlow;

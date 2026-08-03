@@ -29,7 +29,6 @@ struct download_entry
     struct list entry;
     IDirectMusicDownload *download;
     HANDLE handle;
-    BOOL can_free;
     DWORD id;
 };
 
@@ -43,7 +42,6 @@ struct synth_port {
     IDirectSound *dsound;
     IDirectSoundBuffer *dsbuffer;
     IDirectMusicSynth *synth;
-    IKsControl *synth_control;
     IDirectMusicSynthSink *synth_sink;
     BOOL active;
     DMUS_PORTPARAMS params;
@@ -131,7 +129,6 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
         IDirectMusicSynthSink_Release(This->synth_sink);
         IDirectMusicSynth_Activate(This->synth, FALSE);
         IDirectMusicSynth_Close(This->synth);
-        IKsControl_Release(This->synth_control);
         IDirectMusicSynth_Release(This->synth);
         if (This->dsbuffer)
            IDirectSoundBuffer_Release(This->dsbuffer);
@@ -523,7 +520,6 @@ static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *ifa
         IDirectMusicDownload_AddRef(download);
         entry->id = info->dwDLId;
         entry->handle = handle;
-        entry->can_free = can_free;
         list_add_tail(&This->downloads, &entry->entry);
     }
 
@@ -531,19 +527,11 @@ static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *ifa
     return hr;
 }
 
-static HRESULT CALLBACK unload_callback(HANDLE handle, HANDLE user_data)
-{
-    IDirectMusicDownload *download = (IDirectMusicDownload *)user_data;
-    IDirectMusicDownload_Release(download);
-    return S_OK;
-}
-
 static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface, IDirectMusicDownload *download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
     struct download_entry *entry;
     HANDLE handle = 0;
-    BOOL can_free;
 
     TRACE("(%p/%p)->(%p)\n", iface, This, download);
 
@@ -554,21 +542,15 @@ static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface
         if (entry->download == download)
         {
             list_remove(&entry->entry);
+            IDirectMusicDownload_Release(entry->download);
             handle = entry->handle;
-            can_free = entry->can_free;
             free(entry);
             break;
         }
     }
 
     if (!handle) return S_OK;
-
-    if (can_free)
-    {
-        IDirectMusicDownload_Release(download);
-        return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
-    }
-    return IDirectMusicSynth_Unload(This->synth, handle, unload_callback, download);
+    return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
 }
 
 static const IDirectMusicPortDownloadVtbl synth_port_download_vtbl = {
@@ -657,50 +639,13 @@ static ULONG WINAPI IKsControlImpl_Release(IKsControl *iface)
 static HRESULT WINAPI IKsControlImpl_KsProperty(IKsControl *iface, KSPROPERTY *prop,
         ULONG prop_len, void *data, ULONG data_len, ULONG *ret_len)
 {
-    struct synth_port *This = synth_from_IKsControl(iface);
-
     TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, prop, prop_len, data, data_len, ret_len);
     TRACE("prop = %s - %lu - %lu\n", debugstr_guid(&prop->Set), prop->Id, prop->Flags);
-
-    if (prop->Flags == KSPROPERTY_TYPE_SET)
-    {
-        if (data_len < sizeof(LONG))
-            return E_NOT_SUFFICIENT_BUFFER;
-
-        if (IsEqualGUID(&prop->Set, &GUID_DMUS_PROP_Volume))
-        {
-            KSPROPERTY volume_prop;
-            DWORD volume_size;
-
-            if (prop->Id != 0)
-                return DMUS_E_UNKNOWN_PROPERTY;
-
-            volume_prop.Set = GUID_DMUS_PROP_Volume;
-            volume_prop.Id = 1;
-            volume_prop.Flags = KSPROPERTY_TYPE_SET;
-
-            return IKsControl_KsProperty(This->synth_control, &volume_prop, sizeof(volume_prop),
-                    data, data_len, &volume_size);
-        }
-        else
-        {
-            FIXME("Unknown property %s\n", debugstr_guid(&prop->Set));
-        }
-
-        return S_OK;
-    }
 
     if (prop->Flags != KSPROPERTY_TYPE_GET)
     {
         FIXME("prop flags %lu not yet supported\n", prop->Flags);
         return S_FALSE;
-    }
-
-    if (IsEqualGUID(&prop->Set, &GUID_DMUS_PROP_Volume))
-    {
-        if (prop->Id != 0)
-            return DMUS_E_UNKNOWN_PROPERTY;
-        return DMUS_E_GET_UNSUPPORTED;
     }
 
     if (data_len <  sizeof(DWORD))
@@ -767,9 +712,6 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
             (void **)&obj->synth);
 
     if (SUCCEEDED(hr))
-        hr = IDirectMusicSynth_QueryInterface(obj->synth, &IID_IKsControl, (void **)&obj->synth_control);
-
-    if (SUCCEEDED(hr))
         hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (void**)&obj->synth_sink);
 
     if (SUCCEEDED(hr))
@@ -783,29 +725,6 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
 
     if (SUCCEEDED(hr))
         hr = IDirectMusicSynth_Open(obj->synth, port_params);
-
-    if (SUCCEEDED(hr))
-    {
-        KSPROPERTY volume_prop;
-        DWORD volume_size;
-        LONG volume = 0;
-
-        volume = -600;
-        volume_prop.Set = GUID_DMUS_PROP_Volume;
-        volume_prop.Id = 0;
-        volume_prop.Flags = KSPROPERTY_TYPE_SET;
-
-        IKsControl_KsProperty(obj->synth_control, &volume_prop, sizeof(volume_prop), &volume,
-                sizeof(volume), &volume_size);
-
-        volume = 0;
-        volume_prop.Set = GUID_DMUS_PROP_Volume;
-        volume_prop.Id = 1;
-        volume_prop.Flags = KSPROPERTY_TYPE_SET;
-
-        IKsControl_KsProperty(obj->synth_control, &volume_prop, sizeof(volume_prop), &volume,
-                sizeof(volume), &volume_size);
-    }
 
     if (0)
     {
@@ -839,8 +758,6 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
         return S_OK;
     }
 
-    if (obj->synth_control)
-        IKsControl_Release(obj->synth_control);
     if (obj->synth)
         IDirectMusicSynth_Release(obj->synth);
     if (obj->synth_sink)

@@ -100,7 +100,7 @@ static HRESULT WINAPI factory_GetTrustLevel(IActivationFactory *iface, TrustLeve
 {
     struct factory *impl = impl_from_IActivationFactory(iface);
 
-    TRACE("iface %p, trust_level %p.\n", iface, trust_level);
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
 
     if (!impl->trusted) return E_NOTIMPL;
 
@@ -132,6 +132,7 @@ static struct factory trusted_factory = {{&factory_vtbl}, 0, TRUE};
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
+    FIXME("stub!\n");
     return S_OK;
 }
 
@@ -139,7 +140,7 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
 {
     const WCHAR *buffer = WindowsGetStringRawBuffer(classid, NULL);
 
-    TRACE("class %s, factory %p.\n", debugstr_w(buffer), factory);
+    FIXME("class %s, factory %p stub!\n", debugstr_w(buffer), factory);
 
     if (!wcscmp(buffer, L"Wine.Test.Class"))
     {

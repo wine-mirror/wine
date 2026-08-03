@@ -20,7 +20,6 @@
 
 #include "dmime_private.h"
 #include "dmusic_midi.h"
-#include "dmksctrl.h"
 #include "wine/rbtree.h"
 #include <math.h>
 
@@ -448,8 +447,7 @@ static ULONG WINAPI performance_Release(IDirectMusicPerformance8 *iface)
   TRACE("(%p): ref=%ld\n", This, ref);
   
   if (ref == 0) {
-    if (This->channel_blocks.root)
-      WARN("(%p): CloseDown was not called on this performance.\n", This);
+    wine_rb_destroy(&This->channel_blocks, channel_block_free, NULL);
     This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
     free(This);
@@ -1139,25 +1137,6 @@ static void performance_update_latency_time(struct performance *This, IDirectMus
     if (FAILED(hr)) ERR("Failed to update performance %p latency, hr %#lx\n", This, hr);
 }
 
-static void set_port_volume(IDirectMusicPort *port, LONG volume)
-{
-    KSPROPERTY volume_prop;
-    IKsControl *control;
-    DWORD volume_size;
-
-    if (FAILED(IDirectMusicPort_QueryInterface(port, &IID_IKsControl, (void **)&control)))
-        return;
-
-    volume_prop.Set = GUID_DMUS_PROP_Volume;
-    volume_prop.Id = 0;
-    volume_prop.Flags = KSPROPERTY_TYPE_SET;
-
-    IKsControl_KsProperty(control, &volume_prop, sizeof(volume_prop), &volume, sizeof(volume),
-            &volume_size);
-
-    IKsControl_Release(control);
-}
-
 static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *params)
 {
     IDirectMusicPort *port;
@@ -1187,7 +1166,6 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     }
 
     performance_update_latency_time(perf, port, NULL);
-    set_port_volume(port, perf->lMasterVolume);
     IDirectMusicPort_Release(port);
     return S_OK;
 }
@@ -1218,7 +1196,6 @@ static HRESULT WINAPI performance_AddPort(IDirectMusicPerformance8 *iface, IDire
      */
 
     performance_update_latency_time(This, port, NULL);
-    set_port_volume(port, This->lMasterVolume);
     return S_OK;
 }
 
@@ -1379,8 +1356,6 @@ static HRESULT WINAPI performance_SetGlobalParam(IDirectMusicPerformance8 *iface
         void *pParam, DWORD dwSize)
 {
         struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-        struct channel_block *block;
-        int i;
 
 	TRACE("(%p, %s, %p, %ld)\n", This, debugstr_dmguid(rguidType), pParam, dwSize);
 
@@ -1398,11 +1373,6 @@ static HRESULT WINAPI performance_SetGlobalParam(IDirectMusicPerformance8 *iface
 	}
 	if (IsEqualGUID (rguidType, &GUID_PerfMasterVolume)) {
 		memcpy(&This->lMasterVolume, pParam, dwSize);
-		RB_FOR_EACH_ENTRY(block, &This->channel_blocks, struct channel_block, entry)
-		{
-			for (i = 0; i < ARRAYSIZE(block->channels); ++i)
-				set_port_volume(block->channels[i].port, This->lMasterVolume);
-		}
 		TRACE("=> MasterVolume set to %li\n", This->lMasterVolume);
 	}
 
@@ -1484,7 +1454,6 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
 
     performance_set_primary_segment(This, NULL);
     performance_set_control_segment(This, NULL);
-    wine_rb_destroy(&This->channel_blocks, channel_block_free, NULL);
 
     if (This->master_clock)
     {

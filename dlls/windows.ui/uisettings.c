@@ -18,8 +18,6 @@
  */
 
 #include "private.h"
-#include "initguid.h"
-#include "weakref.h"
 
 #include "wine/debug.h"
 
@@ -32,9 +30,7 @@ struct uisettings
     IUISettings IUISettings_iface;
     IUISettings2 IUISettings2_iface;
     IUISettings3 IUISettings3_iface;
-    IUISettings4 IUISettings4_iface;
-    IUISettings5 IUISettings5_iface;
-    struct weak_reference_source weak_reference_source;
+    LONG ref;
 };
 
 static inline struct uisettings *impl_from_IUISettings( IUISettings *iface )
@@ -65,18 +61,6 @@ static HRESULT WINAPI uisettings_QueryInterface( IUISettings *iface, REFIID iid,
     {
         *out = &impl->IUISettings3_iface;
     }
-    else if (IsEqualGUID( iid, &IID_IUISettings4 ))
-    {
-        *out = &impl->IUISettings4_iface;
-    }
-    else if (IsEqualGUID( iid, &IID_IUISettings5 ))
-    {
-        *out = &impl->IUISettings5_iface;
-    }
-    else if (IsEqualGUID( iid, &IID_IWeakReferenceSource ))
-    {
-        *out = &impl->weak_reference_source.IWeakReferenceSource_iface;
-    }
 
     if (!*out)
     {
@@ -91,7 +75,7 @@ static HRESULT WINAPI uisettings_QueryInterface( IUISettings *iface, REFIID iid,
 static ULONG WINAPI uisettings_AddRef( IUISettings *iface )
 {
     struct uisettings *impl = impl_from_IUISettings( iface );
-    ULONG ref = weak_reference_strong_add_ref( &impl->weak_reference_source );
+    ULONG ref = InterlockedIncrement( &impl->ref );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
     return ref;
 }
@@ -99,7 +83,7 @@ static ULONG WINAPI uisettings_AddRef( IUISettings *iface )
 static ULONG WINAPI uisettings_Release( IUISettings *iface )
 {
     struct uisettings *impl = impl_from_IUISettings( iface );
-    ULONG ref = weak_reference_strong_release( &impl->weak_reference_source );
+    ULONG ref = InterlockedDecrement( &impl->ref );
 
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
@@ -163,15 +147,8 @@ static HRESULT WINAPI uisettings_get_MessageDuration( IUISettings *iface, UINT32
 
 static HRESULT WINAPI uisettings_get_AnimationsEnabled( IUISettings *iface, boolean *value )
 {
-    BOOL enabled, ret;
-
-    TRACE( "iface %p, value %p.\n", iface, value );
-
-    ret = SystemParametersInfoW( SPI_GETCLIENTAREAANIMATION, 0, &enabled, 0 );
-    if (!ret) return E_FAIL;
-
-    *value = !!enabled;
-    return S_OK;
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI uisettings_get_CaretBrowsingEnabled( IUISettings *iface, boolean *value )
@@ -204,46 +181,10 @@ static HRESULT WINAPI uisettings_get_MouseHoverTime( IUISettings *iface, UINT32 
     return E_NOTIMPL;
 }
 
-static void colorref_to_winui_color( COLORREF colorref, Color *color )
-{
-    color->A = 255;
-    color->R = GetRValue( colorref );
-    color->G = GetGValue( colorref );
-    color->B = GetBValue( colorref );
-}
-
 static HRESULT WINAPI uisettings_UIElementColor( IUISettings *iface, enum UIElementType element, struct Color *value )
 {
-    TRACE( "iface %p, element %d value %p.\n", iface, element, value );
-
-    switch (element)
-    {
-#define X( element_type, syscolor_index )                                \
-    case element_type:                                                   \
-        colorref_to_winui_color( GetSysColor( syscolor_index ), value ); \
-        break;
-
-    X( UIElementType_ActiveCaption, COLOR_ACTIVECAPTION )
-    X( UIElementType_Background, COLOR_BACKGROUND )
-    X( UIElementType_ButtonFace, COLOR_BTNFACE )
-    X( UIElementType_ButtonText, COLOR_BTNTEXT )
-    X( UIElementType_CaptionText, COLOR_CAPTIONTEXT )
-    X( UIElementType_GrayText, COLOR_GRAYTEXT )
-    X( UIElementType_Highlight, COLOR_HIGHLIGHT )
-    X( UIElementType_HighlightText, COLOR_HIGHLIGHTTEXT )
-    X( UIElementType_Hotlight, COLOR_HOTLIGHT )
-    X( UIElementType_InactiveCaption, COLOR_INACTIVECAPTION )
-    X( UIElementType_InactiveCaptionText, COLOR_INACTIVECAPTIONTEXT )
-    X( UIElementType_Window, COLOR_WINDOW )
-    X( UIElementType_WindowText, COLOR_WINDOWTEXT )
-
-#undef X
-    default:
-        memset( value, 0, sizeof(*value) );
-        break;
-    }
-
-    return S_OK;
+    FIXME( "iface %p, element %d value %p stub!\n", iface, element, value );
+    return E_NOTIMPL;
 }
 
 static const struct IUISettingsVtbl uisettings_vtbl =
@@ -278,16 +219,14 @@ DEFINE_IINSPECTABLE( uisettings2, IUISettings2, struct uisettings, IUISettings_i
 static HRESULT WINAPI uisettings2_get_TextScaleFactor( IUISettings2 *iface, DOUBLE *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    *value = 1.0;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI uisettings2_add_TextScaleFactorChanged( IUISettings2 *iface, ITypedEventHandler_UISettings_IInspectable *handler,
         EventRegistrationToken *cookie )
 {
     FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    *cookie = dummy_cookie;
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI uisettings2_remove_TextScaleFactorChanged( IUISettings2 *iface, EventRegistrationToken cookie )
@@ -445,81 +384,6 @@ static const struct IUISettings3Vtbl uisettings3_vtbl =
     uisettings3_remove_ColorValuesChanged,
 };
 
-DEFINE_IINSPECTABLE( uisettings4, IUISettings4, struct uisettings, IUISettings_iface );
-
-static HRESULT WINAPI uisettings4_get_AdvancedEffectsEnabled( IUISettings4 *iface, boolean *value )
-{
-    FIXME( "iface %p, value %p stub!.\n", iface, value );
-    *value = TRUE;
-    return S_OK;
-}
-
-static HRESULT WINAPI uisettings4_add_AdvancedEffectsEnabledChanged( IUISettings4 *iface, ITypedEventHandler_UISettings_IInspectable *handler, EventRegistrationToken *cookie )
-{
-    FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    *cookie = dummy_cookie;
-    return S_OK;
-}
-
-static HRESULT WINAPI uisettings4_remove_AdvancedEffectsEnabledChanged( IUISettings4 *iface, EventRegistrationToken cookie )
-{
-    FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return S_OK;
-}
-
-static const struct IUISettings4Vtbl uisettings4_vtbl =
-{
-    uisettings4_QueryInterface,
-    uisettings4_AddRef,
-    uisettings4_Release,
-    /* IInspectable methods */
-    uisettings4_GetIids,
-    uisettings4_GetRuntimeClassName,
-    uisettings4_GetTrustLevel,
-    /* IUISettings4 methods */
-    uisettings4_get_AdvancedEffectsEnabled,
-    uisettings4_add_AdvancedEffectsEnabledChanged,
-    uisettings4_remove_AdvancedEffectsEnabledChanged,
-};
-
-DEFINE_IINSPECTABLE( uisettings5, IUISettings5, struct uisettings, IUISettings_iface );
-
-static HRESULT WINAPI uisettings5_get_AutoHideScrollBars( IUISettings5 *iface, boolean *value )
-{
-    FIXME( "iface %p, value %p stub!.\n", iface, value );
-    *value = FALSE;
-    return S_OK;
-}
-
-static HRESULT WINAPI uisettings5_add_AutoHideScrollBarsChanged( IUISettings5 *iface, ITypedEventHandler_UISettings_UISettingsAutoHideScrollBarsChangedEventArgs *handler,
-                                                                 EventRegistrationToken *cookie )
-{
-    FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    *cookie = dummy_cookie;
-    return S_OK;
-}
-
-static HRESULT WINAPI uisettings5_remove_AutoHideScrollBarsChanged( IUISettings5 *iface, EventRegistrationToken cookie )
-{
-    FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return S_OK;
-}
-
-static const struct IUISettings5Vtbl uisettings5_vtbl =
-{
-    uisettings5_QueryInterface,
-    uisettings5_AddRef,
-    uisettings5_Release,
-    /* IInspectable methods */
-    uisettings5_GetIids,
-    uisettings5_GetRuntimeClassName,
-    uisettings5_GetTrustLevel,
-    /* IUISettings5 methods */
-    uisettings5_get_AutoHideScrollBars,
-    uisettings5_add_AutoHideScrollBarsChanged,
-    uisettings5_remove_AutoHideScrollBarsChanged,
-};
-
 struct uisettings_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -588,7 +452,6 @@ static HRESULT WINAPI factory_GetTrustLevel( IActivationFactory *iface, TrustLev
 static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
     struct uisettings *impl;
-    HRESULT hr;
 
     TRACE( "iface %p, instance %p.\n", iface, instance );
 
@@ -601,18 +464,9 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     impl->IUISettings_iface.lpVtbl = &uisettings_vtbl;
     impl->IUISettings2_iface.lpVtbl = &uisettings2_vtbl;
     impl->IUISettings3_iface.lpVtbl = &uisettings3_vtbl;
-    impl->IUISettings4_iface.lpVtbl = &uisettings4_vtbl;
-    impl->IUISettings5_iface.lpVtbl = &uisettings5_vtbl;
+    impl->ref = 1;
 
-    if (FAILED(hr = weak_reference_source_init( &impl->weak_reference_source,
-                                                (IUnknown *)&impl->IUISettings_iface )))
-    {
-        *instance = NULL;
-        free( impl );
-        return hr;
-    }
-
-    *instance = (IInspectable *)&impl->IUISettings5_iface;
+    *instance = (IInspectable *)&impl->IUISettings3_iface;
     return S_OK;
 }
 

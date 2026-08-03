@@ -82,7 +82,8 @@ DWORD	                dbg_curr_pid = 0;
 dbg_ctx_t               dbg_context;
 BOOL    	        dbg_interactiveP = FALSE;
 HANDLE                  dbg_houtput = 0;
-struct list             dbg_process_list = LIST_INIT(dbg_process_list);
+
+static struct list      dbg_process_list = LIST_INIT(dbg_process_list);
 
 struct dbg_internal_var         dbg_internal_vars[DBG_IV_LAST];
 
@@ -510,23 +511,6 @@ void dbg_del_thread(struct dbg_thread* t)
     list_remove(&t->entry);
     if (t == dbg_curr_thread) dbg_curr_thread = NULL;
     free(t);
-}
-
-WCHAR* dbg_fetch_thread_name(const struct dbg_thread *thread)
-{
-    WCHAR *descr;
-
-    if (thread->process->process_io->fetch_thread_name &&
-        thread->process->process_io->fetch_thread_name(thread, &descr))
-        return descr;
-    if (*thread->name)
-    {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, thread->name, -1, NULL, 0);
-        if ((descr = malloc(len * sizeof(WCHAR))))
-            MultiByteToWideChar(CP_ACP, 0, thread->name, -1, descr, len);
-        return descr;
-    }
-    return NULL;
 }
 
 void dbg_set_option(const char* option, const char* val)

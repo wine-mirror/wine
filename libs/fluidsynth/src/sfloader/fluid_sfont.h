@@ -24,9 +24,6 @@
 
 #include "fluidsynth.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 int fluid_sample_validate(fluid_sample_t *sample, unsigned int max_end);
 int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 
@@ -189,7 +186,4 @@ struct _fluid_sample_t
 };
 
 
-#ifdef __cplusplus
-}
-#endif
 #endif /* _PRIV_FLUID_SFONT_H */

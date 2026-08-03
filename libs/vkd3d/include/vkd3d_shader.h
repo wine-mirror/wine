@@ -58,11 +58,6 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_13,
     VKD3D_SHADER_API_VERSION_1_14,
     VKD3D_SHADER_API_VERSION_1_15,
-    VKD3D_SHADER_API_VERSION_1_16,
-    VKD3D_SHADER_API_VERSION_1_17,
-    VKD3D_SHADER_API_VERSION_1_18,
-    VKD3D_SHADER_API_VERSION_1_19,
-    VKD3D_SHADER_API_VERSION_2_0,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -123,21 +118,6 @@ enum vkd3d_shader_structure_type
      * \since 1.15
      */
     VKD3D_SHADER_STRUCTURE_TYPE_SCAN_HULL_SHADER_TESSELLATION_INFO,
-    /**
-     * The structure is a vkd3d_shader_scan_thread_group_size_info structure.
-     * \since 1.18
-     */
-    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_THREAD_GROUP_SIZE_INFO,
-    /**
-     * The structure is a vkd3d_shader_d3dbc_source_info structure.
-     * \since 1.18
-     */
-    VKD3D_SHADER_STRUCTURE_TYPE_D3DBC_SOURCE_INFO,
-    /**
-     * The structure is a vkd3d_shader_scan_denormal_mode_info structure.
-     * \since 2.0
-     */
-    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DENORMAL_MODE_INFO,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_STRUCTURE_TYPE),
 };
@@ -214,9 +194,7 @@ enum vkd3d_shader_compile_option_backward_compatibility
      *  - POSITION to SV_Position for vertex shader outputs, pixel shader inputs,
      *    and geometry shader inputs and outputs;
      *  - COLORN to SV_TargetN for pixel shader outputs;
-     *  - DEPTH to SV_Depth for pixel shader outputs;
-     *  - VFACE to SV_IsFrontFace for pixel shader inputs;
-     *  - VPOS to SV_Position for pixel shader inputs.
+     *  - DEPTH to SV_Depth for pixel shader outputs.
      */
     VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_MAP_SEMANTIC_NAMES = 0x00000001,
     /**
@@ -230,16 +208,6 @@ enum vkd3d_shader_compile_option_backward_compatibility
      *  \since 1.14
      */
     VKD3D_SHADER_COMPILE_OPTION_DOUBLE_AS_FLOAT_ALIAS = 0x00000002,
-    /**
-     *  Causes all uniform variables in global scope to be const.
-     *  This includes variables declared without either 'uniform' or 'static',
-     *  but does not include uniforms declared as arguments to the entry point.
-     *
-     *  This option is disabled by default.
-     *
-     *  \since 2.0
-     */
-    VKD3D_SHADER_COMPILE_OPTION_CONST_GLOBAL_UNIFORMS = 0x00000004,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY),
 };
@@ -281,10 +249,6 @@ enum vkd3d_shader_compile_option_feature_flags
      *       QUAD bits set.
      * - supportedStages include COMPUTE and FRAGMENT. \since 1.12 */
     VKD3D_SHADER_COMPILE_OPTION_FEATURE_WAVE_OPS      = 0x00000004,
-    /** The SPIR-V target environment supports zero-initializing workgroup
-     * memory. This corresponds to the "shaderZeroInitializeWorkgroupMemory"
-     * Vulkan feature. \since 1.16 */
-    VKD3D_SHADER_COMPILE_OPTION_FEATURE_ZERO_INITIALIZE_WORKGROUP_MEMORY = 0x00000008,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_FEATURE_FLAGS),
 };
@@ -400,27 +364,6 @@ enum vkd3d_shader_compile_option_name
      * \since 1.12
      */
     VKD3D_SHADER_COMPILE_OPTION_INCLUDE_EMPTY_BUFFERS_IN_EFFECTS = 0x0000000d,
-    /**
-     * Override the denormal mode for f16 (half) numbers. \a value is a member
-     * of enum vkd3d_shader_denormal_mode.
-     *
-     * \since 2.0
-     */
-    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F16 = 0x0000000e,
-    /**
-     * Override the denormal mode for f32 (float) numbers. \a value is a member
-     * of enum vkd3d_shader_denormal_mode.
-     *
-     * \since 2.0
-     */
-    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F32 = 0x0000000f,
-    /**
-     * Override the denormal mode for f64 (double) numbers. \a value is a member
-     * of enum vkd3d_shader_denormal_mode.
-     *
-     * \since 2.0
-     */
-    VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F64 = 0x00000010,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
@@ -468,17 +411,10 @@ struct vkd3d_shader_code
 {
     /**
      * Pointer to the code. Note that textual formats are not null-terminated.
-     * Therefore \a size should not include a null terminator when this
-     * structure is passed as input to a vkd3d-shader function, and \a size
-     * will not include a null terminator when this structure is used as
-     * output.
-     *
-     * For convenience, vkd3d_shader_preprocess() and vkd3d_shader_compile()
-     * will append a null terminator past the end of their output when
-     * outputting textual formats like VKD3D_SHADER_TARGET_D3D_ASM. This makes
-     * it safe to call functions like strlen() on \a code for such output,
-     * although doing so will obviously not account for any embedded null
-     * characters that may be present.
+     * Therefore \a size should not include a null terminator, when this
+     * structure is passed as input to a vkd3d-shader function, and the
+     * allocated string will not include a null terminator when this structure
+     * is used as output.
      */
     const void *code;
     /** Size of \a code, in bytes. */
@@ -1002,102 +938,6 @@ enum vkd3d_shader_parameter_name
      * \since 1.15
      */
     VKD3D_SHADER_PARAMETER_NAME_FOG_SOURCE,
-    /**
-     * Bump-mapping matrix. This parameter is used in the evaluation of the
-     * Shader Model 1.x instructions BEM, TEXBEM, and TEXBEML.
-     *
-     * This parameter specifies a 2x2 matrix, packed into a vector in the order
-     * [00, 01, 10, 11], where "01" specifies the component at column 0 and row
-     * 1. These coordinates correspond to the Direct3D notation.
-     *
-     * To use this parameter to implement Direct3D bump mapping, pass the values
-     * of the texture stage states D3DTSS_BUMPENVMAT00, D3DTSS_BUMPENVMAT01,
-     * D3DTSS_BUMPENVMAT10, and D3DTSS_BUMPENVMAT11, in that order.
-     *
-     * These enum values are contiguous and arithmetic may safely be performed
-     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_[n] is
-     * VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_0 plus n.
-     *
-     * The data type for each parameter must be
-     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4.
-     *
-     * The default value for each parameter is the zero matrix [0, 0; 0, 0].
-     *
-     * \since 1.18
-     */
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_0,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_1,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_2,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_3,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_4,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_5,
-    /**
-     * Bump-mapping luminance scale factor. This parameter is used in the
-     * evaluation of the Shader Model 1.x instruction TEXBEML.
-     *
-     * To use this parameter to implement Direct3D bump mapping, pass the value
-     * of the texture stage state D3DTSS_BUMPENVLSCALE.
-     *
-     * These enum values are contiguous and arithmetic may safely be performed
-     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_[n] is
-     * VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_0 plus n.
-     *
-     * The data type for each parameter must be
-     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
-     *
-     * The default value for each parameter is 0.0.
-     *
-     * \since 1.18
-     */
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_0,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_1,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_2,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_3,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_4,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_5,
-    /**
-     * Bump-mapping luminance offset. This parameter is used in the
-     * evaluation of the Shader Model 1.x instruction TEXBEML.
-     *
-     * To use this parameter to implement Direct3D bump mapping, pass the value
-     * of the texture stage state D3DTSS_BUMPENVLOFFSET.
-     *
-     * These enum values are contiguous and arithmetic may safely be performed
-     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_[n] is
-     * VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_0 plus n.
-     *
-     * The data type for each parameter must be
-     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
-     *
-     * The default value for each parameter is 0.0.
-     *
-     * \since 1.18
-     */
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_0,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_1,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_2,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_3,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_4,
-    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_5,
-    /**
-     * A mask of projected textures.
-     *
-     * When this parameter is provided to a shader model 1.0-1.3 pixel shader,
-     * for each nonzero bit of this mask, the corresponding texture will be
-     * projected. That is, it will have its coordinates divided by their W
-     * component before sampling.
-     *
-     * The default value is zero, i.e. no textures are projected.
-     *
-     * The data type for this parameter must be
-     * VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32.
-     *
-     * Only VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT is supported in this
-     * version of vkd3d-shader.
-     *
-     * \since 1.19
-     */
-    VKD3D_SHADER_PARAMETER_NAME_PROJECTED_TEXTURE_MASK,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARAMETER_NAME),
 };
@@ -1586,11 +1426,6 @@ enum vkd3d_shader_source_type
      * Input is a raw FX section without container. \since 1.14
      */
     VKD3D_SHADER_SOURCE_FX,
-    /**
-     * A D3DX texture shader. This is the format used for the 'tx_1_0' HLSL
-     * target profile. \since 1.17
-     */
-    VKD3D_SHADER_SOURCE_TX,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SOURCE_TYPE),
 };
@@ -1728,8 +1563,6 @@ enum vkd3d_shader_spirv_extension
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_VIEWPORT_INDEX_LAYER,
     /** \since 1.12 */
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_FRAGMENT_SHADER_INTERLOCK,
-    /** \since 2.0 */
-    VKD3D_SHADER_SPIRV_EXTENSION_KHR_FLOAT_CONTROLS,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SPIRV_EXTENSION),
 };
@@ -2239,11 +2072,6 @@ enum vkd3d_shader_resource_type
  */
 enum vkd3d_shader_resource_data_type
 {
-    /**
-     * The descriptor has no relevant data type. This value is returned for
-     * samplers. \since 1.16
-     */
-    VKD3D_SHADER_RESOURCE_DATA_NONE      = 0x0,
     /** Unsigned normalized integer. */
     VKD3D_SHADER_RESOURCE_DATA_UNORM     = 0x1,
     /** Signed normalized integer. */
@@ -2439,119 +2267,6 @@ struct vkd3d_shader_scan_hull_shader_tessellation_info
 };
 
 /**
- * A chained structure describing the thread group size in a compute shader.
- *
- * This structure extends vkd3d_shader_compile_info.
- *
- * \since 1.18
- */
-struct vkd3d_shader_scan_thread_group_size_info
-{
-    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_THREAD_GROUP_SIZE_INFO. */
-    enum vkd3d_shader_structure_type type;
-    /** Optional pointer to a structure containing further parameters. */
-    const void *next;
-
-    /** The thread group size in the x/y/z direction. */
-    unsigned int x, y, z;
-};
-
-/**
- * Specifies how denormal floating-point numbers should be treated.
- *
- * \since 2.0
- */
-enum vkd3d_shader_denormal_mode
-{
-    /** No particular denormal mode is requested. */
-    VKD3D_SHADER_DENORMAL_MODE_ANY = 0,
-    /** Denormal values should be preserved. */
-    VKD3D_SHADER_DENORMAL_MODE_PRESERVE = 1,
-    /** Denormal values should be flushed to zero. */
-    VKD3D_SHADER_DENORMAL_MODE_FLUSH_TO_ZERO = 2,
-
-    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_DENORMAL_MODE),
-};
-
-/**
- * A chained structure describing how a shader expects denormal floating-point
- * values to be handled.
- *
- * This structure extends vkd3d_shader_compile_info.
- *
- * \since 2.0
- */
-struct vkd3d_shader_scan_denormal_mode_info
-{
-    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_DENORMAL_MODE_INFO. */
-    enum vkd3d_shader_structure_type type;
-    /** Optional pointer to a structure containing further parameters. */
-    const void *next;
-
-    /** The denormal mode for f16 (half) numbers. */
-    enum vkd3d_shader_denormal_mode f16_denormal_mode;
-    /** The denormal mode for f32 (float) numbers. */
-    enum vkd3d_shader_denormal_mode f32_denormal_mode;
-    /** The denormal mode for f64 (double) numbers. */
-    enum vkd3d_shader_denormal_mode f64_denormal_mode;
-};
-
-/**
- * A chained structure containing legacy Direct3D bytecode compilation parameters.
- * This structure specifies some information about the source environment that
- * is not specified in the source shader format, but may be necessary for the
- * target format.
- *
- * This structure is optional.
- *
- * This structure extends vkd3d_shader_compile_info.
- *
- * This structure contains only input parameters.
- *
- * \since 1.18
- */
-struct vkd3d_shader_d3dbc_source_info
-{
-    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_D3DBC_SOURCE_INFO. */
-    enum vkd3d_shader_structure_type type;
-    /** Optional pointer to a structure containing further parameters. */
-    const void *next;
-
-    /**
-     * The dimension of each texture bound to the shader.
-     *
-     * If this structure is not specified, the dimension for all textures will
-     * be VKD3D_SHADER_RESOURCE_TEXTURE_2D.
-     *
-     * The dimension of textures in this array not used by the shader will be
-     * ignored.
-     *
-     * This field is ignored for shader models 2 and higher.
-     */
-    enum vkd3d_shader_resource_type texture_dimensions[6];
-
-    /**
-     * A mask indicating which samplers should be shadow (i.e. comparison-mode)
-     * samplers. When legacy Direct3D shaders are used with the Direct3D 8 and 9
-     * APIs, this is implied by the format of the sampled resource; e.g. a
-     * D3DFMT_D24S8 texture implies shadow sampling, while a D3DFMT_A8R8G8B8
-     * or D3DFMT_INTZ texture does not.
-     * This information is necessary when converting to other formats
-     * (e.g. SPIR-V, GLSL) which specify this in the shader.
-     *
-     * For example, if bit 1 is set (so the value is 0x2), this indicates that
-     * the sampler at bind point 1 (and no others) should be a shadow sampler.
-     *
-     * Bits in this mask corresponding to textures not used by the shader will
-     * be ignored.
-     *
-     * If this structure is not specified, no samplers will be considered to
-     * be shadow samplers.
-     */
-    uint32_t shadow_samplers;
-};
-
-/**
  * Data type of a shader varying, returned as part of struct
  * vkd3d_shader_signature_element.
  */
@@ -2571,14 +2286,6 @@ enum vkd3d_shader_component_type
     VKD3D_SHADER_COMPONENT_DOUBLE   = 0x5,
     /** 64-bit unsigned integer. \since 1.11 */
     VKD3D_SHADER_COMPONENT_UINT64   = 0x6,
-    /** 64-bit signed integer. \since 1.16 */
-    VKD3D_SHADER_COMPONENT_INT64    = 0x7,
-    /** 16-bit IEEE floating-point. \since 1.16 */
-    VKD3D_SHADER_COMPONENT_FLOAT16  = 0x8,
-    /** 16-bit unsigned integer. \since 1.16 */
-    VKD3D_SHADER_COMPONENT_UINT16   = 0x9,
-    /** 16-bit signed integer. \since 1.16 */
-    VKD3D_SHADER_COMPONENT_INT16    = 0xa,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPONENT_TYPE),
 };
@@ -3016,10 +2723,6 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * source code or byte code.
  *
  * This version of vkd3d-shader supports the following transformations:
- * - VKD3D_SHADER_SOURCE_DXBC_DXIL to VKD3D_SHADER_TARGET_SPIRV_BINARY
- * - VKD3D_SHADER_SOURCE_DXBC_DXIL to VKD3D_SHADER_TARGET_SPIRV_TEXT
- *   (if vkd3d was compiled with SPIRV-Tools)
- * - VKD3D_SHADER_SOURCE_DXBC_DXIL to VKD3D_SHADER_TARGET_D3D_ASM
  * - VKD3D_SHADER_SOURCE_DXBC_TPF to VKD3D_SHADER_TARGET_SPIRV_BINARY
  * - VKD3D_SHADER_SOURCE_DXBC_TPF to VKD3D_SHADER_TARGET_SPIRV_TEXT
  *   (if vkd3d was compiled with SPIRV-Tools)
@@ -3036,7 +2739,6 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_DXBC_TPF
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_FX
  * - VKD3D_SHADER_SOURCE_FX to VKD3D_SHADER_TARGET_D3D_ASM
- * - VKD3D_SHADER_SOURCE_TX to VKD3D_SHADER_TARGET_D3D_ASM
  *
  * Supported transformations can also be detected at runtime with the functions
  * vkd3d_shader_get_supported_source_types() and
@@ -3044,18 +2746,15 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  *
  * Depending on the source and target types, this function may support the
  * following chained structures:
- * - vkd3d_shader_d3dbc_source_info
  * - vkd3d_shader_descriptor_offset_info
  * - vkd3d_shader_hlsl_source_info
  * - vkd3d_shader_interface_info
  * - vkd3d_shader_parameter_info
  * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
- * - vkd3d_shader_scan_denormal_mode_info
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
- * - vkd3d_shader_scan_thread_group_size_info
  * - vkd3d_shader_spirv_domain_shader_target_info
  * - vkd3d_shader_spirv_target_info
  * - vkd3d_shader_transform_feedback_info
@@ -3236,30 +2935,16 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  * VKD3D_SHADER_RESOURCE_DATA_FLOAT.)
  *
  * Currently this function supports the following code types:
- * - VKD3D_SHADER_SOURCE_DXBC_DXIL
  * - VKD3D_SHADER_SOURCE_DXBC_TPF
  * - VKD3D_SHADER_SOURCE_D3D_BYTECODE
- * - VKD3D_SHADER_SOURCE_HLSL
  *
  * \param compile_info A chained structure containing scan parameters.
  * \n
  * The scanner supports the following chained structures:
- * - vkd3d_shader_d3dbc_source_info
- * - vkd3d_shader_descriptor_offset_info
- * - vkd3d_shader_hlsl_source_info
- * - vkd3d_shader_interface_info
- * - vkd3d_shader_parameter_info
- * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
- * - vkd3d_shader_scan_denormal_mode_info
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
- * - vkd3d_shader_scan_thread_group_size_info
- * - vkd3d_shader_spirv_domain_shader_target_info
- * - vkd3d_shader_spirv_target_info
- * - vkd3d_shader_transform_feedback_info
- * - vkd3d_shader_varying_map_info
  * \n
  * Although the \a compile_info parameter is read-only, chained structures
  * passed to this function need not be, and may serve as output parameters,
@@ -3306,8 +2991,7 @@ VKD3D_SHADER_API void vkd3d_shader_free_scan_descriptor_info(
  * signature. To retrieve signatures from other shader types, or other signature
  * types, use vkd3d_shader_scan() and struct vkd3d_shader_scan_signature_info.
  * This function returns the same input signature that is returned in
- * struct vkd3d_shader_scan_signature_info for dxbc-tpf shaders, but may return
- * different information for dxbc-dxil shaders.
+ * struct vkd3d_shader_scan_signature_info.
  *
  * \param dxbc Compiled byte code, in DXBC format.
  *

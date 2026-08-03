@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#define WIN32_NO_STATUS
 #include "ddk/wdm.h"
 #include "excpt.h"
 #include "wine/debug.h"
@@ -50,20 +51,25 @@ enum instr_op
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-#pragma pack(push,1)
+#include "pshpack1.h"
 struct idtr
 {
     WORD  limit;
     BYTE *base;
 };
-#pragma pack(pop)
+#include "poppack.h"
 
 static LDT_ENTRY idt[256];
 
 static inline struct idtr get_idtr(void)
 {
     struct idtr ret;
+#ifdef __GNUC__
     __asm__( "sidtl %0" : "=m" (ret) );
+#else
+    ret.base = (BYTE *)idt;
+    ret.limit = sizeof(idt) - 1;
+#endif
     return ret;
 }
 

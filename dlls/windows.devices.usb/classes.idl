@@ -19,10 +19,5 @@
  */
 
 #pragma makedep register
-#pragma winrt ns_prefix
 
-import "windows.devices.usb.idl";
-
-namespace Windows.Devices.Usb {
-    runtimeclass UsbDevice;
-}
+#include "windows.devices.usb.idl"
