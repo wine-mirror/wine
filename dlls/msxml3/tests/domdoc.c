@@ -18708,6 +18708,29 @@ static void test_document_stream(void)
     ok(!memcmp(buffer, "e></e>\r\n", 8), "%s\n", debugstr_an(buffer, 3));
 
     IStream_Release(stream);
+
+    /* Serialization happens on first read. */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<f></f>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<g></g>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 9, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<g></g>\r\n", 9), "%s\n", debugstr_an(buffer, 9));
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<h></h>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0, sizeof(buffer));
+    hr = IStream_Read(stream, buffer, 9, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!memcmp(buffer, "<g></g>\r\n", 9), "%s\n", debugstr_an(buffer, 9));
+    IStream_Release(stream);
+
     IPersistStreamInit_Release(streaminit);
     IXMLDOMDocument_Release(doc);
 }
