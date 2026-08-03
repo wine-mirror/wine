@@ -4278,7 +4278,7 @@ static void test_ConvertStringSecurityDescriptor(void)
        "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %lu\n", GetLastError());
     acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
     ok(acl->AclSize == sizeof(*acl) * 12 /* 96 */, "got %u\n", acl->AclSize);
-    ok(acl->AceCount = 4, "got %u\n", acl->AceCount);
+    ok(acl->AceCount == 4, "got %u\n", acl->AceCount);
     if (ret) LocalFree(pSD);
 
     /* empty DACL */
