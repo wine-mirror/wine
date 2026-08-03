@@ -4678,6 +4678,10 @@ HRESULT node_save(struct domnode *doc, IStream *stream)
 
     node_dump_context_init(&context, codepage, stream);
 
+    /* UTF-16 BE BOM */
+    if (codepage == ~0u)
+        node_dump_append(&context, L"\xfeff", 1);
+
     LIST_FOR_EACH_ENTRY(node, &doc->children, struct domnode, entry)
     {
         node_dump(node, &context);

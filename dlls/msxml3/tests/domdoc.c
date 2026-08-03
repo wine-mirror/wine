@@ -6687,7 +6687,6 @@ static void test_save(void)
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ptr = GlobalLock(global);
-    todo_wine
     ok(!memcmp(ptr, "\xff\xfe<\x00", 4), "Unexpected content %s.\n", debugstr_an(ptr, 4));
     GlobalUnlock(global);
     IStream_Release(stream);
