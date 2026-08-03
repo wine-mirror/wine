@@ -117,7 +117,7 @@ static LONG WINAPI device_property_sheets(PROPSHEETUI_INFO *info, LPARAM lparam)
 
     ok(info->cbSize == sizeof(*info), "info->cbSize = %hd\n", info->cbSize);
     ok(info->Version == PROPSHEETUI_INFO_VERSION, "info->Version = %hd\n", info->Version);
-    ok(info->Flags == info->lParamInit ? PSUIINFO_UNICODE : 0, "info->Flags = %hd\n", info->Flags);
+    ok(info->Flags == (info->lParamInit ? PSUIINFO_UNICODE : 0), "info->Flags = %hd\n", info->Flags);
     ok(info->Reason == PROPSHEETUI_REASON_INIT || info->Reason == PROPSHEETUI_REASON_DESTROY,
             "info->Reason = %hx\n", info->Reason);
     ok(info->hComPropSheet != NULL, "info->hComPropSheet = NULL\n");
