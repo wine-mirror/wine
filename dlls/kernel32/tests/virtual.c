@@ -4282,7 +4282,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
                 ok(info.AllocationProtect == info.Protect, "%ld: (%04lx) got %#lx, expected %#lx\n",
                    j, view[j].access, info.AllocationProtect, info.Protect);
             ok(info.State == MEM_COMMIT, "%ld: (%04lx) got %#lx, expected MEM_COMMIT\n", j, view[j].access, info.State);
-            ok(info.Type == (sec_flags & SEC_IMAGE) ? SEC_IMAGE : MEM_MAPPED,
+            ok(info.Type == ((sec_flags & SEC_IMAGE) ? SEC_IMAGE : MEM_MAPPED),
                "%ld: (%04lx) got %#lx, expected MEM_MAPPED\n", j, view[j].access, info.Type);
 
             if (nt_base && base)

@@ -5521,7 +5521,7 @@ static void test_IdnToNameprepUnicode(void)
             test_data[1].in_len, NULL, 0);
     err = GetLastError();
     ok(ret == test_data[1].ret, "ret = %ld\n", ret);
-    ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "err = %ld\n", err);
+    ok(err == (ret ? 0xdeadbeef : ERROR_INVALID_NAME), "err = %ld\n", err);
 
     SetLastError(0xdeadbeef);
     ret = pIdnToNameprepUnicode(0, test_data[0].in, -1, buf, ARRAY_SIZE(buf));
@@ -5570,7 +5570,7 @@ static void test_IdnToNameprepUnicode(void)
 
         if (ret == test_data[i].ret)
         {
-            ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%ld: err = %ld\n", i, err);
+            ok(err == (ret ? 0xdeadbeef : ERROR_INVALID_NAME), "%ld: err = %ld\n", i, err);
             ok(!wcsncmp(test_data[i].out, buf, ret), "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
         }
         if (pRtlNormalizeString)
@@ -5629,7 +5629,7 @@ static void test_IdnToAscii(void)
         ret = pIdnToAscii(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%ld: ret = %ld\n", i, ret);
-        ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%ld: err = %ld\n", i, err);
+        ok(err == (ret ? 0xdeadbeef : ERROR_INVALID_NAME), "%ld: err = %ld\n", i, err);
         ok(!wcsnicmp(test_data[i].out, buf, ret), "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
@@ -5677,7 +5677,7 @@ static void test_IdnToUnicode(void)
         ret = pIdnToUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%ld: ret = %ld\n", i, ret);
-        ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%ld: err = %ld\n", i, err);
+        ok(err == (ret ? 0xdeadbeef : ERROR_INVALID_NAME), "%ld: err = %ld\n", i, err);
         ok(!wcsncmp(test_data[i].out, buf, ret), "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
