@@ -3156,7 +3156,7 @@ static void test_media_types(void)
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s.\n",
             hr, wine_dbgstr_guid(rejected_subtypes[i].guid));
         hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
-        ok(hr == (i < 4) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx on ReceiveConnection for subtype %s.\n", hr,
+        ok(hr == ((i < 4) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#lx on ReceiveConnection for subtype %s.\n", hr,
                 wine_dbgstr_guid(rejected_subtypes[i].guid));
 
         if (hr == S_OK)
