@@ -4467,7 +4467,7 @@ static void stretchrect_test(void)
         hr = IDirect3DDevice9_StretchRect(device, surfaces[test->src], test->src_rect,
                 surfaces[test->dst], test->dst_rect, test->filter);
         todo_wine_if(test->todo)
-            ok(hr == test->allowed ? D3D_OK : D3DERR_INVALIDCALL, "Test %u, got unexpected hr %#lx.\n", i, hr);
+            ok(hr == (test->allowed ? D3D_OK : D3DERR_INVALIDCALL), "Test %u, got unexpected hr %#lx.\n", i, hr);
     }
 
     for (i = 0; i < ARRAY_SIZE(surfaces); ++i)
