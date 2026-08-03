@@ -4,3 +4,4 @@
 4 cdecl -ordinal CreateFX(ptr ptr ptr long)
 5 cdecl -ordinal X3DAudioCalculate(ptr ptr ptr long ptr)
 6 cdecl -ordinal X3DAudioInitialize(long float ptr)
+@ stdcall CreateXAudio2Object(ptr long long ptr)

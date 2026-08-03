@@ -1,0 +1,6 @@
+MODULE    = pixevt.dll
+IMPORTS   = kernel32
+
+SOURCES = \
+	pixevt_main.c \
+	version.rc

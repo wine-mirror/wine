@@ -1,0 +1,7 @@
+@ stdcall -private DllMain(long long ptr)
+@ stdcall PIXBeginCapture(long ptr)
+@ stdcall PIXEndCapture(long)
+@ stdcall PIXEventsReplaceBlock(long)
+@ stdcall PIXGetCaptureState()
+@ stdcall PIXReportCounter(wstr float)
+@ stdcall ConfigurePMCs(long long long long)

@@ -1,0 +1,6 @@
+@ stdcall -private DllMain(long long ptr)
+@ stdcall EtxEventWrite(ptr ptr int64 long ptr)
+@ stdcall EtxRegister(ptr ptr)
+@ stdcall EtxResumeUploading()
+@ stdcall EtxSuspendUploading()
+@ stdcall EtxUnregister(int64)

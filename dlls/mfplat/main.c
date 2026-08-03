@@ -9501,3 +9501,15 @@ HRESULT WINAPI MFCreatePathFromURL(const WCHAR *url, WCHAR **ret_path)
     memcpy(*ret_path, path, (length + 1) * sizeof(*path));
     return S_OK;
 }
+
+/***********************************************************************
+ *   MFResetDXGIDeviceManagerX  (mfplat.@)
+ *
+ * Xbox One ERA variant — resets the DXGI device manager.
+ * On Wine, we just return success (no Xbox-specific state to reset).
+ */
+HRESULT WINAPI MFResetDXGIDeviceManagerX(void)
+{
+    FIXME("stub!\n");
+    return S_OK;
+}

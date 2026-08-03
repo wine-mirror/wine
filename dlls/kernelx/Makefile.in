@@ -1,0 +1,6 @@
+MODULE    = kernelx.dll
+IMPORTS   = kernel32 kernelbase ntdll
+
+SOURCES = \
+	kernelx_main.c \
+	version.rc

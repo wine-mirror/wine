@@ -15793,6 +15793,8 @@ wine_fn_config_test dlls/d3d10/tests d3d10_test
 wine_fn_config_dll d3d10core enable_d3d10core implib
 wine_fn_config_test dlls/d3d10core/tests d3d10core_test
 wine_fn_config_dll d3d11 enable_d3d11
+wine_fn_config_dll d3d11_x enable_d3d11_x
+wine_fn_config_dll d3d12_x enable_d3d12_x
 wine_fn_config_dll d3d8 enable_d3d8 implib
 wine_fn_config_test dlls/d3d8/tests d3d8_test
 wine_fn_config_dll d3d9 enable_d3d9 implib
@@ -15907,6 +15909,7 @@ wine_fn_config_lib dxerr9
 wine_fn_config_dll dxgi enable_dxgi implib
 wine_fn_config_test dlls/dxgi/tests dxgi_test
 wine_fn_config_lib dxguid
+wine_fn_config_dll etwplus enable_etwplus
 wine_fn_config_dll explorerframe enable_explorerframe
 wine_fn_config_test dlls/explorerframe/tests explorerframe_test
 wine_fn_config_dll faultrep enable_faultrep implib
@@ -15964,6 +15967,7 @@ wine_fn_config_test dlls/jscript/tests jscript_test
 wine_fn_config_dll kernel32 enable_kernel32 implib,mc
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
+wine_fn_config_dll kernelx enable_kernelx
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
 wine_fn_config_dll ktmw32 enable_ktmw32
 wine_fn_config_dll loadperf enable_loadperf implib
@@ -16119,6 +16123,7 @@ wine_fn_config_dll pdh enable_pdh implib
 wine_fn_config_test dlls/pdh/tests pdh_test
 wine_fn_config_dll photometadatahandler enable_photometadatahandler
 wine_fn_config_dll pidgen enable_pidgen
+wine_fn_config_dll pixevt enable_pixevt
 wine_fn_config_dll powrprof enable_powrprof implib
 wine_fn_config_dll printui enable_printui
 wine_fn_config_dll propsys enable_propsys implib
@@ -16205,6 +16210,7 @@ wine_fn_config_dll system.drv16 enable_win16
 wine_fn_config_dll t2embed enable_t2embed
 wine_fn_config_dll tapi32 enable_tapi32 implib
 wine_fn_config_dll toolhelp.dll16 enable_win16
+wine_fn_config_dll toolhelpx enable_toolhelpx
 wine_fn_config_dll traffic enable_traffic
 wine_fn_config_dll twain.dll16 enable_win16
 wine_fn_config_dll twain_32 enable_twain_32
@@ -16258,6 +16264,7 @@ wine_fn_config_dll windowscodecs enable_windowscodecs implib
 wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll windowscodecsext enable_windowscodecsext implib
 wine_fn_config_test dlls/windowscodecsext/tests windowscodecsext_test
+wine_fn_config_dll windows.xbox enable_windows_xbox
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0

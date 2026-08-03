@@ -1,0 +1,6 @@
+MODULE    = etwplus.dll
+IMPORTS   = kernel32
+
+SOURCES = \
+	etwplus_main.c \
+	version.rc

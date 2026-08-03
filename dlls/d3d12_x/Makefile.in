@@ -1,0 +1,6 @@
+MODULE    = d3d12_x.dll
+IMPORTS   = d3d12 dxgi kernel32
+
+SOURCES = \
+	d3d12_x_main.c \
+	version.rc

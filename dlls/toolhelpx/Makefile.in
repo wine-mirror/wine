@@ -1,0 +1,6 @@
+MODULE    = toolhelpx.dll
+IMPORTS   = kernel32 advapi32
+
+SOURCES = \
+	toolhelpx_main.c \
+	version.rc

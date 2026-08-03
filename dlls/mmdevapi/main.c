@@ -635,3 +635,15 @@ HRESULT WINAPI ActivateAudioInterfaceAsync(const WCHAR *path, REFIID riid,
 
     return S_OK;
 }
+
+/***********************************************************************
+ *   SetWasapiThreadAffinityMask  (mmdevapi.@)
+ *
+ * Xbox One ERA — sets thread affinity for WASAPI audio threads.
+ * On Wine/PC just return the mask unchanged.
+ */
+DWORD_PTR WINAPI SetWasapiThreadAffinityMask(DWORD_PTR dwThreadAffinityMask)
+{
+    FIXME("mask %Ix stub!\n", dwThreadAffinityMask);
+    return dwThreadAffinityMask;
+}

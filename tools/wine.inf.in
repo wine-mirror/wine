@@ -47,7 +47,8 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
-    Timezones
+    Timezones,\
+    XboxWinRT
 
 [DefaultInstall.NT]
 RegisterDlls=RegisterDllsSection
@@ -71,7 +72,8 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     Timezones,\
-    VersionInfo
+    VersionInfo,\
+    XboxWinRT
 
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
@@ -97,7 +99,8 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     Timezones,\
-    VersionInfo
+    VersionInfo,\
+    XboxWinRT
 
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
@@ -601,6 +604,18 @@ HKLM,%MciExtStr%,"wmp",,"MPEGVideo"
 HKLM,%MciExtStr%,"wmv",,"MPEGVideo"
 HKLM,%MciExtStr%,"wmx",,"MPEGVideo"
 HKLM,%MciExtStr%,"wvx",,"MPEGVideo"
+
+[XboxWinRT]
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.Input.Controller,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.Input.Gamepad,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.Input.NavigationController,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.Input.BodyController,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.System.User,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.System.UserDisplayInfo,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.System.AudioDeviceInfo,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.ApplicationModel.Package,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.ApplicationModel.Package.Current,"DllPath",,"windows.xbox.dll"
+HKLM,Software\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Xbox.UI.SystemUI,"DllPath",,"windows.xbox.dll"
 
 [Misc]
 HKLM,Software\Borland\Database Engine\Settings\SYSTEM\INIT,SHAREDMEMLOCATION,,9000

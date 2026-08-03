@@ -27,3 +27,10 @@
 @ stdcall -private auxMessage(long long long long long)
 @ stdcall -private midMessage(long long long long long)
 @ stdcall -private modMessage(long long long long long)
+
+# Xbox One ERA extensions (WinDurango reference)
+@ stub DisableBitstreamOut
+@ stub EnableSpatialAudio
+@ stub RefreshWasapiDeviceList
+@ stub RestoreBitstreamOut
+@ stdcall SetWasapiThreadAffinityMask(long)

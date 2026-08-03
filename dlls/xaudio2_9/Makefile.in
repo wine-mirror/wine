@@ -11,4 +11,5 @@ SOURCES = \
 	xapofx.c \
 	xaudio_allocator.c \
 	xaudio_classes.idl \
-	xaudio_dll.c
+	xaudio_dll.c \
+	xbox_xa2.c

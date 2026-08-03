@@ -181,3 +181,10 @@
 @ stdcall -ret64 MFllMulDiv(int64 int64 int64 int64)
 @ stub PropVariantFromStream
 @ stub PropVariantToStream
+
+# Xbox One ERA extensions (WinDurango reference)
+@ stub MFCreateDXGISurfaceBufferX
+@ stub MFCreateDxvaSampleRendererX
+@ stub MFCreateNV12ToRGB32ConverterX
+@ stub MFCreateRGB32ToNV12ConverterX
+@ stdcall MFResetDXGIDeviceManagerX()

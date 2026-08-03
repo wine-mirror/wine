@@ -1,0 +1,29 @@
+#include "winver.h"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    10,0,0,1
+PRODUCTVERSION 10,0,0,1
+FILEFLAGSMASK  0x3fL
+FILEFLAGS      0
+FILEOS         VOS_NT_WINDOWS32
+FILETYPE       VFT_DLL
+FILESUBTYPE    VFT2_UNKNOWN
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904b0"
+        {
+            VALUE "CompanyName",      "Microsoft Corporation"
+            VALUE "FileDescription",  "Xbox ETW+ Telemetry DLL"
+            VALUE "FileVersion",      "10.0.10586.1000"
+            VALUE "InternalName",     "etwplus"
+            VALUE "OriginalFilename", "etwplus.dll"
+            VALUE "ProductName",      "Microsoft Xbox One System Software"
+            VALUE "ProductVersion",   "10.0.10586.1000"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x409, 1200
+    }
+}
