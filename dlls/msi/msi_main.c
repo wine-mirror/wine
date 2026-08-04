@@ -86,6 +86,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         msi_free_handle_table();
         free( gszLogFile );
         release_typelib();
+        if (rpc_handle) RpcBindingFree( &rpc_handle );
         break;
     }
     return TRUE;

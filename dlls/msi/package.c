@@ -338,10 +338,9 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     msiobj_release( &package->db->hdr );
     free_package_structures(package);
     CloseHandle( package->log_file );
+
     if (package->rpc_server_started)
         RpcServerUnregisterIf(s_IWineMsiRemote_v0_0_s_ifspec, NULL, FALSE);
-    if (rpc_handle)
-        RpcBindingFree(&rpc_handle);
     if (package->custom_server_32_process)
         custom_stop_server(package->custom_server_32_process, package->custom_server_32_pipe);
     if (package->custom_server_64_process)
