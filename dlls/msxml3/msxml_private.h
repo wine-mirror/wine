@@ -409,6 +409,7 @@ extern HRESULT node_substring_data(struct domnode *, LONG, LONG, BSTR *);
 extern HRESULT node_get_data_length(struct domnode *, LONG *);
 extern HRESULT node_insert_data(struct domnode *, LONG, BSTR);
 extern HRESULT node_replace_data(struct domnode *, LONG, LONG, BSTR);
+extern void node_unlink_children(struct domnode *);
 
 extern UINT get_codepage_for_encoding(const WCHAR *encoding);
 

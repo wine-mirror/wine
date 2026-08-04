@@ -17613,12 +17613,12 @@ static void test_interfaces(void)
     check_interface(doc, &IID_IPersistStream, TRUE);
     check_interface(doc, &IID_ISequentialStream, FALSE);
     check_interface(doc, &IID_IPersist, FALSE);
+    check_interface(doc, &IID_IStream, TRUE);
 todo_wine
 {
     check_interface(doc, &IID_IOleCommandTarget, TRUE);
     check_interface(doc, &IID_IPersistMoniker, TRUE);
     check_interface(doc, &IID_IProvideClassInfo, TRUE);
-    check_interface(doc, &IID_IStream, TRUE);
 }
     IXMLDOMDocument_Release(doc);
 }
@@ -18393,13 +18393,7 @@ static void test_document_stream(void)
     doc = create_document(&IID_IXMLDOMDocument);
 
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IXMLDOMDocument_Release(doc);
-        return;
-    }
 
     check_interface(stream, &IID_IUnknown, TRUE);
     check_interface(stream, &IID_ISequentialStream, TRUE);
@@ -18482,6 +18476,7 @@ static void test_document_stream(void)
     IXMLDOMNode_Release(node);
 
     hr = IPersistStreamInit_IsDirty(streaminit);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
@@ -18522,6 +18517,7 @@ static void test_document_stream(void)
     ok(!memcmp(buffer, "/a>", 3), "%s\n", debugstr_an(buffer, 3));
 
     hr = IPersistStreamInit_IsDirty(streaminit);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
@@ -18536,6 +18532,7 @@ static void test_document_stream(void)
     hr = IPersistStreamInit_Save(streaminit, stream2, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IPersistStreamInit_IsDirty(streaminit);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     off.QuadPart = 0;
     hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);

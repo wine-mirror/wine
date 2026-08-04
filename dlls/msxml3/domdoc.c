@@ -74,6 +74,31 @@ typedef enum {
     EVENTID_LAST
 } eventid_t;
 
+enum docstream_state
+{
+    DOCSTREAM_STATE_INITIAL = 0,
+    DOCSTREAM_STATE_READING,
+    DOCSTREAM_STATE_WRITING,
+};
+
+struct docstream
+{
+    IStream IStream_iface;
+    LONG refcount;
+
+    enum docstream_state state;
+    IStream *stream;
+    struct domdoc *doc;
+    GUID id;
+};
+
+static HRESULT create_docstream(struct domdoc *doc, REFIID riid, void **obj);
+
+static inline struct docstream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct docstream, IStream_iface);
+}
+
 struct domdoc
 {
     DispatchEx dispex;
@@ -104,6 +129,8 @@ struct domdoc
 
     /* events */
     IDispatch *events[EVENTID_LAST];
+
+    GUID stream_id;
 
     IXMLDOMSchemaCollection2 *namespaces;
 };
@@ -360,6 +387,10 @@ static HRESULT WINAPI domdoc_QueryInterface(IXMLDOMDocument3 *iface, REFIID riid
              IsEqualGUID(&IID_IPersistStreamInit, riid))
     {
         *obj = &doc->IPersistStreamInit_iface;
+    }
+    else if (IsEqualGUID(&IID_IStream, riid))
+    {
+        return create_docstream(doc, riid, obj);
     }
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
@@ -2470,4 +2501,254 @@ HRESULT create_domdoc(struct domnode *node, IUnknown **obj)
     *obj = (IUnknown *)&object->IXMLDOMDocument3_iface;
 
     return S_OK;
+}
+
+static HRESULT WINAPI docstream_QueryInterface(IStream *iface, REFIID riid, void **obj)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualGUID(riid, &IID_ISequentialStream) ||
+            IsEqualGUID(riid, &IID_IStream))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IUnknown))
+    {
+        return IXMLDOMDocument3_QueryInterface(&stream->doc->IXMLDOMDocument3_iface, riid, obj);
+    }
+    else
+    {
+        TRACE("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+
+    return S_OK;
+}
+
+static ULONG WINAPI docstream_AddRef(IStream *iface)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedIncrement(&stream->refcount);
+
+    TRACE("%p, refcount %ld.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI docstream_Release(IStream *iface)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+    LARGE_INTEGER offset;
+    HRESULT hr;
+
+    TRACE("%p, refcount %ld.\n", iface, refcount);
+
+    if (!refcount)
+    {
+         if (stream->state == DOCSTREAM_STATE_WRITING && IsEqualGUID(&stream->id, &stream->doc->stream_id))
+         {
+             offset.QuadPart = 0;
+             IStream_Seek(stream->stream, offset, STREAM_SEEK_SET, NULL);
+             if (FAILED(hr = domdoc_load_from_stream(stream->doc, (ISequentialStream *)stream->stream)))
+                 WARN("Failed to parse stream, hr %#lx.\n", hr);
+         }
+
+         IXMLDOMDocument3_Release(&stream->doc->IXMLDOMDocument3_iface);
+         IStream_Release(stream->stream);
+         free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT docstream_save(struct docstream *stream)
+{
+    LARGE_INTEGER offset;
+    HRESULT hr = S_OK;
+
+    /* Capture document contents once, and rewind. */
+    if (stream->state == DOCSTREAM_STATE_INITIAL
+            && !list_empty(&stream->doc->node->children))
+    {
+        hr = node_save(stream->doc->node, stream->stream);
+
+        offset.QuadPart = 0;
+        IStream_Seek(stream->stream, offset, STREAM_SEEK_SET, NULL);
+
+        stream->state = DOCSTREAM_STATE_READING;
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI docstream_Read(IStream *iface, void *buffer, ULONG size, ULONG *read_size)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p, %lu, %p.\n", iface, buffer, size, read_size);
+
+    hr = docstream_save(stream);
+    if (hr == S_OK && stream->state == DOCSTREAM_STATE_READING)
+        return IStream_Read(stream->stream, buffer, size, read_size);
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI docstream_Write(IStream *iface, const void *data, ULONG size, ULONG *written)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+
+    TRACE("%p, %p, %lu, %p.\n", iface, data, size, written);
+
+    if (stream->state == DOCSTREAM_STATE_INITIAL)
+    {
+        node_unlink_children(stream->doc->node);
+        stream->state = DOCSTREAM_STATE_WRITING;
+    }
+
+    if (stream->state == DOCSTREAM_STATE_WRITING)
+        return IStream_Write(stream->stream, data, size, written);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI docstream_Seek(IStream *iface, LARGE_INTEGER offset, DWORD origin, ULARGE_INTEGER *pos)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+
+    TRACE("%p, %s, %lu, %p.\n", iface, wine_dbgstr_longlong(offset.QuadPart), origin, pos);
+
+    if (stream->state == DOCSTREAM_STATE_WRITING)
+    {
+        if (offset.QuadPart && origin == STREAM_SEEK_SET)
+            return E_NOTIMPL;
+        return S_OK;
+    }
+
+    return IStream_Seek(stream->stream, offset, origin, pos);
+}
+
+static HRESULT WINAPI docstream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(size.QuadPart));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size, ULARGE_INTEGER *count,
+        ULARGE_INTEGER *written)
+{
+    FIXME("%p, %p, %s, %p, %p stub\n", iface, dest, wine_dbgstr_longlong(size.QuadPart), count, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_Commit(IStream *iface, DWORD flags)
+{
+    FIXME("%p, %#lx stub\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_Revert(IStream *iface)
+{
+    FIXME("%p stub\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_LockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD lock_type)
+{
+    FIXME("%p, %s, %s, %#lx stub\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD lock_type)
+{
+    FIXME("%p, %s, %s, %#lx stub\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+            wine_dbgstr_longlong(size.QuadPart), lock_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI docstream_Stat(IStream *iface, STATSTG *stat, DWORD flags)
+{
+    struct docstream *stream = impl_from_IStream(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p, %#lx.\n", iface, stat, flags);
+
+    if (!stat)
+        return STG_E_INVALIDPOINTER;
+
+    hr = docstream_save(stream);
+    if (hr == S_OK && stream->state == DOCSTREAM_STATE_READING)
+        return IStream_Stat(stream->stream, stat, flags);
+
+    memset(stat, 0, sizeof(*stat));
+    stat->type = STGTY_STREAM;
+    return hr;
+}
+
+static HRESULT WINAPI docstream_Clone(IStream *iface, IStream **ppstm)
+{
+    TRACE("%p, %p.\n", iface, ppstm);
+
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl docstream_vtbl =
+{
+    docstream_QueryInterface,
+    docstream_AddRef,
+    docstream_Release,
+    docstream_Read,
+    docstream_Write,
+    docstream_Seek,
+    docstream_SetSize,
+    docstream_CopyTo,
+    docstream_Commit,
+    docstream_Revert,
+    docstream_LockRegion,
+    docstream_UnlockRegion,
+    docstream_Stat,
+    docstream_Clone,
+};
+
+static HRESULT create_docstream(struct domdoc *doc, REFIID riid, void **obj)
+{
+    struct docstream *object;
+    HRESULT hr;
+
+    *obj = NULL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IStream_iface.lpVtbl = &docstream_vtbl;
+    object->refcount = 1;
+    if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &object->stream)))
+    {
+        free(object);
+        return hr;
+    }
+    object->doc = doc;
+    IXMLDOMDocument3_AddRef(&doc->IXMLDOMDocument3_iface);
+    CoCreateGuid(&object->id);
+    doc->stream_id = object->id;
+
+    hr = IStream_QueryInterface(&object->IStream_iface, riid, obj);
+    IStream_Release(&object->IStream_iface);
+
+    return hr;
 }

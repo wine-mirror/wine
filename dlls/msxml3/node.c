@@ -690,7 +690,7 @@ HRESULT node_replace_child(struct domnode *node, IXMLDOMNode *newChild, IXMLDOMN
     return node_remove_child(node, oldChild, ret);
 }
 
-static void domnode_unlink_children(struct domnode *node)
+void node_unlink_children(struct domnode *node)
 {
     struct domnode *child, *next;
 
@@ -749,7 +749,7 @@ HRESULT node_put_data(struct domnode *node, const WCHAR *data)
     {
         case NODE_ATTRIBUTE:
         case NODE_ELEMENT:
-            domnode_unlink_children(node);
+            node_unlink_children(node);
 
             /* TODO: error handling */
             domnode_create(NODE_TEXT, NULL, 0, NULL, 0, node->owner, &child);
@@ -4915,7 +4915,7 @@ void node_move_children(struct domnode *dest, struct domnode *src)
 {
     struct domnode *child, *next;
 
-    domnode_unlink_children(dest);
+    node_unlink_children(dest);
 
     LIST_FOR_EACH_ENTRY_SAFE(child, next, &src->children, struct domnode, entry)
     {

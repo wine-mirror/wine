@@ -1027,12 +1027,12 @@ static void test_interfaces(void)
     check_interface(doc, &IID_IPersistStream, TRUE);
     check_interface(doc, &IID_ISequentialStream, FALSE);
     check_interface(doc, &IID_IPersist, FALSE);
+    check_interface(doc, &IID_IStream, TRUE);
 todo_wine
 {
     check_interface(doc, &IID_IOleCommandTarget, TRUE);
     check_interface(doc, &IID_IPersistMoniker, TRUE);
     check_interface(doc, &IID_IProvideClassInfo, TRUE);
-    check_interface(doc, &IID_IStream, TRUE);
 }
     IXMLDOMDocument_Release(doc);
 }
