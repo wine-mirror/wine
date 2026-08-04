@@ -18377,10 +18377,10 @@ static void test_document_stream(void)
 {
     IStream *stream, *stream2, *cloned_stream;
     IPersistStreamInit *streaminit;
+    ULARGE_INTEGER pos, size;
     IUnknown *unk, *unk2;
     IXMLDOMDocument *doc;
     IXMLDOMElement *root;
-    ULARGE_INTEGER pos;
     IXMLDOMNode *node;
     LARGE_INTEGER off;
     char buffer[64];
@@ -18432,6 +18432,9 @@ static void test_document_stream(void)
 
     hr = IStream_Clone(stream, &cloned_stream);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    size.QuadPart = 10;
+    hr = IStream_SetSize(stream, size);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
 
     hr = IStream_Stat(stream, &stat, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -18439,12 +18442,12 @@ static void test_document_stream(void)
     ok(stat.type == STGTY_STREAM, "Unexpected type %#lx.\n", stat.type);
     ok(!stat.cbSize.QuadPart, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
 
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a ></a  >"), NULL);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a >t</a  >"), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IStream_Stat(stream, &stat, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(stat.cbSize.QuadPart == 9, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
+    ok(stat.cbSize.QuadPart == 10, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
 
     off.QuadPart = 0;
     hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
@@ -18457,7 +18460,12 @@ static void test_document_stream(void)
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 4, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<a><", 4), "%s\n", debugstr_an(buffer, 4));
+    ok(!memcmp(buffer, "<a>t", 4), "%s\n", debugstr_an(buffer, 4));
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_CUR, &pos);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(pos.QuadPart == 4, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
 
     /* Tree modifications are not reflected in the stream content. */
     V_VT(&v) = VT_I1;
@@ -18478,18 +18486,18 @@ static void test_document_stream(void)
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"<a><e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    ok(!wcscmp(str, L"<a>t<e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 4, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "/a>\r", 4), "%s\n", debugstr_an(buffer, 4));
+    ok(!memcmp(buffer, "</a>", 4), "%s\n", debugstr_an(buffer, 4));
 
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 1, NULL);
+    hr = IStream_Read(stream, buffer, 2, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "\n", 1), "%s\n", debugstr_an(buffer, 1));
+    ok(!memcmp(buffer, "\r\n", 2), "%s\n", debugstr_an(buffer, 2));
 
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 1, &length);
@@ -18502,7 +18510,7 @@ static void test_document_stream(void)
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 4, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "a></", 4), "%s\n", debugstr_an(buffer, 4));
+    ok(!memcmp(buffer, "a>t<", 4), "%s\n", debugstr_an(buffer, 4));
 
     /* InitNew */
     hr = IPersistStreamInit_InitNew(streaminit);
@@ -18511,14 +18519,14 @@ static void test_document_stream(void)
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 3, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "a>\r", 3), "%s\n", debugstr_an(buffer, 3));
+    ok(!memcmp(buffer, "/a>", 3), "%s\n", debugstr_an(buffer, 3));
 
     hr = IPersistStreamInit_IsDirty(streaminit);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"<a><e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    ok(!wcscmp(str, L"<a>t<e/></a>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     /* Clear dirty state */
@@ -18547,9 +18555,9 @@ static void test_document_stream(void)
     hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 7, NULL);
+    hr = IStream_Read(stream, buffer, 8, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<a></a>", 7), "%s\n", debugstr_an(buffer, 7));
+    ok(!memcmp(buffer, "<a>t</a>", 8), "%s\n", debugstr_an(buffer, 8));
 
     IStream_Release(stream2);
 
@@ -18578,6 +18586,11 @@ static void test_document_stream(void)
     /* Releasing the stream triggers document parsing. */
     hr = IStream_Write(stream, "<a>text</a>", 11, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Stat(stream, NULL, 0);
+    ok(hr == STG_E_INVALIDPOINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Stat(stream, &stat, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!stat.cbSize.QuadPart, "Unexpected size %s.\n", wine_dbgstr_longlong(stat.cbSize.QuadPart));
     hr = IPersistStreamInit_IsDirty(streaminit);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMDocument_get_xml(doc, &str);
@@ -18639,13 +18652,13 @@ static void test_document_stream(void)
     off.QuadPart = 0;
     hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IStream_Write(stream, "</c></b>", 8, &length);
+    hr = IStream_Write(stream, "t</c></b>", 9, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IStream_Release(stream);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"<b><c></c></b>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    ok(!wcscmp(str, L"<b><c>t</c></b>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     /* Open two streams for writing. */
@@ -18660,7 +18673,7 @@ static void test_document_stream(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(str, L""), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
-    hr = IStream_Write(stream2, "<e></e>", 7, NULL);
+    hr = IStream_Write(stream2, "<e>t</e>", 8, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IStream_Write(stream, "\r", 1, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -18674,7 +18687,7 @@ static void test_document_stream(void)
     IStream_Release(stream2);
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"<e></e>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    ok(!wcscmp(str, L"<e>t</e>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     /* One stream for reading one for writing. */
@@ -18684,56 +18697,56 @@ static void test_document_stream(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 9, NULL);
+    hr = IStream_Read(stream, buffer, 10, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<e></e>\r\n", 9), "%s\n", debugstr_an(buffer, 3));
+    ok(!memcmp(buffer, "<e>t</e>\r\n", 10), "%s\n", debugstr_an(buffer, 10));
 
-    hr = IStream_Write(stream2, "<f></f>", 7, NULL);
+    hr = IStream_Write(stream2, "<f>t</f>", 8, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IStream_Release(stream2);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"<f></f>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
+    ok(!wcscmp(str, L"<f>t</f>\r\n"), "Unexpected content %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     off.QuadPart = 0;
     hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 9, NULL);
+    hr = IStream_Read(stream, buffer, 10, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<e></e>\r\n", 9), "%s\n", debugstr_an(buffer, 3));
+    ok(!memcmp(buffer, "<e>t</e>\r\n", 10), "%s\n", debugstr_an(buffer, 10));
     off.QuadPart = 1;
     hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(buffer, 0, sizeof(buffer));
     hr = IStream_Read(stream, buffer, 9, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "e></e>\r\n", 8), "%s\n", debugstr_an(buffer, 3));
+    ok(!memcmp(buffer, "e>t</e>\r\n", 9), "%s\n", debugstr_an(buffer, 9));
 
     IStream_Release(stream);
 
     /* Serialization happens on first read. */
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<f></f>"), NULL);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<f>t</f>"), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_IStream, (void **)&stream);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<g></g>"), NULL);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<g>t</g>"), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 9, NULL);
+    hr = IStream_Read(stream, buffer, 10, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<g></g>\r\n", 9), "%s\n", debugstr_an(buffer, 9));
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<h></h>"), NULL);
+    ok(!memcmp(buffer, "<g>t</g>\r\n", 10), "%s\n", debugstr_an(buffer, 10));
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<h>t</h>"), NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     off.QuadPart = 0;
     hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     memset(buffer, 0, sizeof(buffer));
-    hr = IStream_Read(stream, buffer, 9, NULL);
+    hr = IStream_Read(stream, buffer, 10, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(buffer, "<g></g>\r\n", 9), "%s\n", debugstr_an(buffer, 9));
+    ok(!memcmp(buffer, "<g>t</g>\r\n", 10), "%s\n", debugstr_an(buffer, 10));
     IStream_Release(stream);
 
     IPersistStreamInit_Release(streaminit);
