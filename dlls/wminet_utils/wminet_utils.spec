@@ -30,7 +30,7 @@
 @ stub GetPropertyHandle
 @ stub GetPropertyInfoByHandle
 @ stub GetPropertyOrigin
-@ stub GetPropertyQualifierSet
+@ stdcall GetPropertyQualifierSet(long ptr wstr ptr)
 @ stub GetQualifierSet
 @ stub InheritsFrom
 @ stdcall Initialize(long)

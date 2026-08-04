@@ -172,3 +172,10 @@ HRESULT WINAPI QualifierSet_Get(int vFunc, IWbemQualifierSet* ptr, LPCWSTR wszNa
 
     return IWbemQualifierSet_Get(ptr, wszName, lFlags, pVal, plFlavor);
 }
+
+HRESULT WINAPI GetPropertyQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR wszProperty, IWbemQualifierSet **ppQualSet)
+{
+    TRACE("%i %p %s %p\n", vFunc, ptr, debugstr_w(wszProperty), ppQualSet);
+
+    return IWbemClassObject_GetPropertyQualifierSet(ptr, wszProperty, ppQualSet);
+}
