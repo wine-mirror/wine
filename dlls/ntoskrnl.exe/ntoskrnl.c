@@ -4797,6 +4797,12 @@ void WINAPI KeLowerIrql(KIRQL new)
     FIXME("new %u: stub.\n", new);
 }
 
+KIRQL WINAPI KeGetCurrentIrql(void)
+{
+    FIXME("stub.\n");
+    return 0;
+}
+
 #endif
 
 typedef void (WINAPI *PETW_CLASSIC_CALLBACK)(
