@@ -640,20 +640,16 @@ static void testInitializeSecurityContextFlags(void)
         ctxt_attr = 0xffffffff;
         sec_status = InitializeSecurityContextA(NULL, &client.ctxt, NULL, 0, 0, SECURITY_NETWORK_DREP,
                 server.out_buf, 0, &client.ctxt, client.out_buf, &ctxt_attr, &ttl);
-        todo_wine_if(sec_status == SEC_E_INVALID_TOKEN)
-            ok(sec_status == SEC_E_OK, "InitializeSecurityContext returned %s\n", getSecError(sec_status));
-        if (sec_status == SEC_E_OK)
-        {
-            todo_wine_if(test_data[i].req_attr & ISC_REQ_MUTUAL_AUTH)
+        ok(sec_status == SEC_E_OK, "InitializeSecurityContext returned %s\n", getSecError(sec_status));
+        todo_wine_if(test_data[i].req_attr & ISC_REQ_MUTUAL_AUTH)
             ok(ctxt_attr == test_data[i].ctxt_attr_auth, "ctxt_attr = %lx (negotiated flags: %x)\n",
                     ctxt_attr, challenge->negotiate_flags);
 
-            ctxt_attr = 0xffffffff;
-            sec_status = AcceptSecurityContext(&server.cred, &server.ctxt, client.out_buf, 0,
-                    SECURITY_NETWORK_DREP, &server.ctxt, NULL, &ctxt_attr, &ttl);
-            ok(sec_status == SEC_E_OK, "AcceptSecurityContext returned %s\n", getSecError(sec_status));
-            ok(ctxt_attr == test_data[i].ctxt_attr_serv, "ctxt_attr = %lx\n", ctxt_attr);
-        }
+        ctxt_attr = 0xffffffff;
+        sec_status = AcceptSecurityContext(&server.cred, &server.ctxt, client.out_buf, 0,
+                SECURITY_NETWORK_DREP, &server.ctxt, NULL, &ctxt_attr, &ttl);
+        ok(sec_status == SEC_E_OK, "AcceptSecurityContext returned %s\n", getSecError(sec_status));
+        ok(ctxt_attr == test_data[i].ctxt_attr_serv, "ctxt_attr = %lx\n", ctxt_attr);
 
         DeleteSecurityContext(&client.ctxt);
         DeleteSecurityContext(&server.ctxt);
@@ -733,7 +729,6 @@ static void testAuth(ULONG data_rep, BOOL fake)
     {
         client_stat = runClient(&client, first, data_rep);
 
-        todo_wine_if(!fake && client_stat != SEC_I_CONTINUE_NEEDED)
         ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the client returned %s, more tests will fail.\n",
                 getSecError(client_stat));
@@ -1099,7 +1094,6 @@ static void test_Encrypt(void)
     {
         client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
 
-        todo_wine_if(client_stat != SEC_I_CONTINUE_NEEDED)
         ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the client returned %s, more tests will fail.\n",
                 getSecError(client_stat));

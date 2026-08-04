@@ -57,6 +57,20 @@ struct arc4_info
 
 typedef UINT64 com_buf_ptr;
 
+struct md5_ctx
+{
+    unsigned int i[2];
+    unsigned int buf[4];
+    unsigned char in[64];
+    unsigned char digest[16];
+};
+
+struct hmac_md5_ctx
+{
+    struct md5_ctx ctx;
+    char outer_padding[64];
+};
+
 struct ntlm_ctx
 {
     enum mode    mode;
@@ -67,6 +81,11 @@ struct ntlm_ctx
     char         session_key[16];
     unsigned int flags;
     com_buf_ptr  com_buf;
+    BYTE         server_challenge[8];
+    size_t       negotiate_len;
+    char        *negotiate;
+    HANDLE       token; /* local authentication token */
+    struct hmac_md5_ctx mic; /* local authentication MIC */
     struct
     {
         struct
