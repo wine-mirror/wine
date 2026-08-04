@@ -1404,18 +1404,12 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 
 static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
 {
-    UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
     const RECT *old_rect = &data->pending_state.rect;
     BOOL old_above = data->pending_state.above;
     XWindowChanges changes;
     RECT *new_rect = &rect;
+    UINT mask = 0;
 
-    /* resizing a managed maximized window is not allowed */
-    if ((style & WS_MAXIMIZE) && data->managed)
-    {
-        new_rect->right = new_rect->left + old_rect->right - old_rect->left;
-        new_rect->bottom = new_rect->top + old_rect->bottom - old_rect->top;
-    }
     /* only the size is allowed to change for the desktop window or systray docked windows */
     if (data->whole_window == root_window || data->embedded)
     {
