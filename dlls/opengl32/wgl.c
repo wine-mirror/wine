@@ -661,7 +661,7 @@ BOOL alloc_context_objects( enum object_type type, UINT n, const GLuint *handles
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = get_current_context())) return TRUE;
+    if (!handles || !(ctx = get_current_context())) return TRUE;
     if (!(table = get_object_table( ctx, type, FALSE ))) return TRUE;
 
     /* only allow explicit allocation in some cases, use host allocated ids directly in that case */
@@ -707,7 +707,7 @@ GLuint *del_context_objects( enum object_type type, UINT n, GLuint *handles )
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = get_current_context())) return handles;
+    if (!handles || !(ctx = get_current_context())) return handles;
     if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
 
     AcquireSRWLockExclusive( &table->lock );
@@ -722,7 +722,7 @@ GLuint *map_context_objects( enum object_type type, UINT n, GLuint *handles )
     struct object_table *table;
     struct context *ctx;
 
-    if (!(ctx = get_current_context())) return handles;
+    if (!handles || !(ctx = get_current_context())) return handles;
     if (!(table = get_object_table( ctx, type, FALSE ))) return handles;
 
     AcquireSRWLockShared( &table->lock );

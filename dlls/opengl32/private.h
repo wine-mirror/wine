@@ -67,7 +67,7 @@ enum object_type
 static inline GLuint *memdup_objects( UINT n, const GLuint *handles, GLuint *buf, UINT max )
 {
     GLuint *tmp = buf;
-    if (n > max && !(tmp = malloc( n * sizeof(*handles) ))) return NULL;
+    if (!handles || (n > max && !(tmp = malloc( n * sizeof(*handles) )))) return NULL;
     memcpy( tmp, handles, n * sizeof(*handles) );
     return tmp;
 }
