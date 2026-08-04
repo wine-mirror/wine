@@ -9717,7 +9717,7 @@ todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     /* it seems processor grabs 2 references */
-    todo_wine EXPECT_REF(stream, 3);
+    EXPECT_REF(stream, 3);
 
     V_VT(&v) = VT_EMPTY;
     hr = IXSLProcessor_get_output(processor, &v);
@@ -9725,7 +9725,7 @@ todo_wine {
     ok(V_VT(&v) == VT_UNKNOWN, "got type %d\n", V_VT(&v));
     ok(V_UNKNOWN(&v) == (IUnknown*)stream, "got %p\n", V_UNKNOWN(&v));
 
-    todo_wine EXPECT_REF(stream, 4);
+    EXPECT_REF(stream, 4);
     VariantClear(&v);
 
     hr = IXSLProcessor_transform(processor, NULL);
