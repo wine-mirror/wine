@@ -3037,9 +3037,19 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateTransformedImageSource
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSpriteBatch(ID2D1DeviceContext6 *iface,
         ID2D1SpriteBatch **sprite_batch)
 {
-    FIXME("iface %p, sprite_batch %p stub!\n", iface, sprite_batch);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_sprite_batch *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, sprite_batch %p.\n", iface, sprite_batch);
+
+    if (!sprite_batch)
+        return E_INVALIDARG;
+
+    if (SUCCEEDED(hr = d2d_sprite_batch_create(context->factory, &object)))
+        *sprite_batch = &object->ID2D1SpriteBatch_iface;
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawSpriteBatch(ID2D1DeviceContext6 *iface,

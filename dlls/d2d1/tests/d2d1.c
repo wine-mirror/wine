@@ -18021,13 +18021,7 @@ static void test_sprite_batch(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DeviceContext3_CreateSpriteBatch(context, &sprite_batch);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (!sprite_batch)
-    {
-        ID2D1DeviceContext3_Release(context);
-        release_test_context(&ctx);
-        return;
-    }
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_interface(sprite_batch, &IID_IUnknown, TRUE);
     check_interface(sprite_batch, &IID_ID2D1Resource, TRUE);

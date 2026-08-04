@@ -460,6 +460,27 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(struct d2d_device_context *context, IW
 unsigned int d2d_get_bitmap_options_for_surface(IDXGISurface *surface);
 struct d2d_bitmap *unsafe_impl_from_ID2D1Bitmap(ID2D1Bitmap *iface);
 
+struct d2d_sprite
+{
+    D2D1_RECT_F dest;
+    D2D1_RECT_U source;
+    D2D1_COLOR_F color;
+    D2D1_MATRIX_3X2_F transform;
+};
+
+struct d2d_sprite_batch
+{
+    ID2D1SpriteBatch ID2D1SpriteBatch_iface;
+    LONG refcount;
+
+    ID2D1Factory *factory;
+    size_t sprites_size;
+    size_t sprite_count;
+    struct d2d_sprite *sprites;
+};
+
+HRESULT d2d_sprite_batch_create(ID2D1Factory *factory, struct d2d_sprite_batch **batch);
+
 struct d2d_state_block
 {
     ID2D1DrawingStateBlock1 ID2D1DrawingStateBlock1_iface;
@@ -929,6 +950,9 @@ void d2d_command_list_draw_glyph_run(struct d2d_command_list *command_list,
 void d2d_command_list_draw_bitmap(struct d2d_command_list *command_list, ID2D1Bitmap *bitmap,
         const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
         const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform);
+void d2d_command_list_draw_sprite_batch(struct d2d_command_list *command_list, ID2D1SpriteBatch *sprite_batch,
+        UINT32 start_index, UINT32 sprite_count, ID2D1Bitmap *bitmap, D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
+        D2D1_SPRITE_OPTIONS sprite_options);
 void d2d_command_list_draw_image(struct d2d_command_list *command_list, ID2D1Image *image,
         const D2D1_POINT_2F *target_offset, const D2D1_RECT_F *image_rect, D2D1_INTERPOLATION_MODE interpolation_mode,
         D2D1_COMPOSITE_MODE composite_mode);
