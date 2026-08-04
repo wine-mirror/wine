@@ -786,4 +786,22 @@ m = re.exec("abc");
 ok(m.input === "abc", "m.input = " + m.input);
 ok(m[0] === "", "m[0] = " + m[0]);
 
+// lastIndex is still increased after 0-length match
+re = new RegExp("");
+ok(re.lastIndex === 0, "re.lastIndex = " + re.lastIndex);
+
+"abc".match(re);
+ok(re.lastIndex === 1, "re.lastIndex = " + re.lastIndex);
+
+re = new RegExp("^", "gm");
+
+tmp = []
+while (re.test("A\nB\nC")) {
+    tmp.push(re.lastIndex);
+}
+
+ok(tmp[0] === 1, "tmp[0] = " + tmp[0]);
+ok(tmp[1] === 3, "tmp[1] = " + tmp[1]);
+ok(tmp[2] === 5, "tmp[2] = " + tmp[2]);
+
 reportSuccess();
