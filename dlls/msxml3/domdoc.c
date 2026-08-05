@@ -1556,58 +1556,36 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
     switch (V_VT(&dest))
     {
         case VT_UNKNOWN:
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void **)&stream);
+            if (hr == S_OK)
             {
-                IUnknown *unk = V_UNKNOWN(&dest);
-                IXMLDOMDocument3 *document;
-
-                hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMDocument3, (void **)&document);
-                if (hr == S_OK)
-                {
-                    VARIANT_BOOL success;
-                    BSTR xml;
-
-                    hr = IXMLDOMDocument3_get_xml(iface, &xml);
-                    if (hr == S_OK)
-                    {
-                        hr = IXMLDOMDocument3_loadXML(document, xml, &success);
-                        SysFreeString(xml);
-                    }
-
-                    IXMLDOMDocument3_Release(document);
-                    return hr;
-                }
-
-                hr = IUnknown_QueryInterface(unk, &IID_IStream, (void **)&stream);
-                if (hr == S_OK)
-                {
-                    hr = node_save(doc->node, stream);
-                    IStream_Release(stream);
-                }
+                hr = node_save(doc->node, stream);
+                IStream_Release(stream);
             }
             break;
 
-    case VT_BSTR:
-    case VT_BSTR | VT_BYREF:
-        {
-            const WCHAR *path;
-
-            path = V_VT(&dest) & VT_BYREF ? *V_BSTRREF(&dest) : V_BSTR(&dest);
-
-            hr = SHCreateStreamOnFileEx(path, STGM_CREATE | STGM_WRITE, FILE_ATTRIBUTE_NORMAL, TRUE, NULL, &stream);
-            if (FAILED(hr))
+        case VT_BSTR:
+        case VT_BSTR | VT_BYREF:
             {
-                WARN("Failed to create a file stream, hr %#lx.\n", hr);
-                return hr;
+                const WCHAR *path;
+
+                path = V_VT(&dest) & VT_BYREF ? *V_BSTRREF(&dest) : V_BSTR(&dest);
+
+                hr = SHCreateStreamOnFileEx(path, STGM_CREATE | STGM_WRITE, FILE_ATTRIBUTE_NORMAL, TRUE, NULL, &stream);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to create a file stream, hr %#lx.\n", hr);
+                    return hr;
+                }
+
+                hr = node_save(doc->node, stream);
+                IStream_Release(stream);
             }
+            break;
 
-            hr = node_save(doc->node, stream);
-            IStream_Release(stream);
-        }
-        break;
-
-    default:
-        FIXME("Unhandled destination type %s.\n", debugstr_variant(&dest));
-        return S_FALSE;
+        default:
+            FIXME("Unhandled destination type %s.\n", debugstr_variant(&dest));
+            return S_FALSE;
     }
 
     return hr;
