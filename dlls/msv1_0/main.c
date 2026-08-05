@@ -1236,9 +1236,8 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
             if (!strncmp( buf, "BH", 2 )) TRACE( "no key negotiated\n" );
             else if (!strncmp( buf, "GK ", 3 ))
             {
-                bin_len = decode_base64( buf + 3, len - 3, bin );
                 TRACE( "session key is %s\n", debugstr_a(buf + 3) );
-                memcpy( ctx->session_key, bin, bin_len );
+                decode_base64( buf + 3, len - 3, ctx->session_key );
             }
         }
 
