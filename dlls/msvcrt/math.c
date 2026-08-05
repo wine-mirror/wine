@@ -390,6 +390,12 @@ double CDECL MSVCRT_exp( double x )
     if (isnan( x )) return math_error(_DOMAIN, "exp", x, 0, 1.0 + x);
     return exp( x );
 }
+#elif defined(_UCRT)
+double CDECL MSVCRT_exp( double x )
+{
+    if (isnan( x )) return x;
+    return exp( x );
+}
 #endif
 
 extern short CDECL _dclass(double x);

@@ -1824,11 +1824,9 @@ static void test_exp(void)
         ok(signbit(r) == signbit(tests[i].exp), "expected sign %x, got %x for %d\n",
             signbit(tests[i].exp), signbit(r), i);
 
-        todo_wine_if(isnan(tests[i].x))
         ok(e == (tests[i].e ? tests[i].e : -1),
             "expected errno %d, but got %d for %d\n", tests[i].e, e, i);
 
-        todo_wine_if(isnan(tests[i].x))
         ok(exception.type == (tests[i].type ? tests[i].type : -1),
             "expected %d, got %d for %d\n", tests[i].type, exception.type, i);
     }
