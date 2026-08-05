@@ -1548,6 +1548,7 @@ static HRESULT WINAPI domdoc_loadXML(IXMLDOMDocument3 *iface, BSTR data, VARIANT
 static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
+    ISequentialStream *sequential_stream;
     IStream *stream;
     HRESULT hr;
 
@@ -1556,11 +1557,20 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
     switch (V_VT(&dest))
     {
         case VT_UNKNOWN:
-            hr = IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void **)&stream);
-            if (hr == S_OK)
+            if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void **)&stream) == S_OK)
             {
                 hr = node_save(doc->node, (ISequentialStream *)stream);
                 IStream_Release(stream);
+            }
+            else if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_ISequentialStream, (void **)&sequential_stream) == S_OK)
+            {
+                hr = node_save(doc->node, sequential_stream);
+                ISequentialStream_Release(sequential_stream);
+            }
+            else
+            {
+                WARN("Unsupported destination type.\n");
+                hr = E_INVALIDARG;
             }
             break;
 
