@@ -21,7 +21,7 @@
 @ stdcall Get(long ptr wstr long ptr ptr ptr)
 @ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
-@ stub GetErrorInfo
+@ stdcall GetErrorInfo() wminet_utils_GetErrorInfo
 @ stdcall GetMethod(long ptr wstr long ptr ptr)
 @ stub GetMethodOrigin
 @ stdcall GetMethodQualifierSet(long ptr wstr ptr)

@@ -179,3 +179,17 @@ HRESULT WINAPI GetPropertyQualifierSet(int vFunc, IWbemClassObject *ptr, LPCWSTR
 
     return IWbemClassObject_GetPropertyQualifierSet(ptr, wszProperty, ppQualSet);
 }
+
+IErrorInfo* WINAPI wminet_utils_GetErrorInfo(void)
+{
+    IErrorInfo *error_info = NULL;
+    HRESULT hr;
+
+    hr = GetErrorInfo(0, &error_info);
+    TRACE("returning %p, hr %#lx\n", error_info, hr);
+
+    if (FAILED(hr))
+        return NULL;
+
+    return error_info;
+}
