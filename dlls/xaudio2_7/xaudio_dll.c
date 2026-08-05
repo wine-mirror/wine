@@ -1655,7 +1655,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
             src->effect_chain);
     free_voice_sends(faudio_sends);
     if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
+        LeaveCriticalSection(&src->lock);
         free_effect_chain(src->effect_chain);
         return hr;
     }
