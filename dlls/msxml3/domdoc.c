@@ -38,6 +38,7 @@
 #include "shlwapi.h"
 #include "ocidl.h"
 #include "objsafe.h"
+#include "asptlb.h"
 
 #include "wine/debug.h"
 
@@ -1550,6 +1551,7 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
     ISequentialStream *sequential_stream;
     IStream *stream;
+    IUnknown *unk;
     HRESULT hr;
 
     TRACE("%p, %s.\n", iface, debugstr_variant(&dest));
@@ -1566,6 +1568,24 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
             {
                 hr = node_save(doc->node, sequential_stream);
                 ISequentialStream_Release(sequential_stream);
+            }
+            else if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IPersistStream, (void **)&unk) == S_OK)
+            {
+                FIXME("Saving to IPersistStream is not implemented.\n");
+                IUnknown_Release(unk);
+                hr = E_NOTIMPL;
+            }
+            else if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IPersistStreamInit, (void **)&unk) == S_OK)
+            {
+                FIXME("Saving to IPersistStreamInit is not implemented.\n");
+                IUnknown_Release(unk);
+                hr = E_NOTIMPL;
+            }
+            else if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IResponse, (void **)&unk) == S_OK)
+            {
+                FIXME("Saving to IResponse is not implemented.\n");
+                IUnknown_Release(unk);
+                hr = E_NOTIMPL;
             }
             else
             {
