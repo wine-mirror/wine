@@ -304,6 +304,79 @@ void WINAPI DnsServiceFreeInstance( PDNS_SERVICE_INSTANCE instance )
 }
 
 /******************************************************************************
+ * DnsServiceRegister                       [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceRegister( PDNS_SERVICE_REGISTER_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p, %p) stub\n", request, cancel );
+
+    if (!request) return ERROR_INVALID_PARAMETER;
+
+    /* Registration needs mDNS support, which is not implemented. Fail
+     * synchronously: the completion callback must only run when this returns
+     * DNS_REQUEST_PENDING, and calling it inline would re-enter the caller
+     * while it still believes the operation is outstanding. */
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * DnsServiceDeRegister                     [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceDeRegister( PDNS_SERVICE_REGISTER_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p, %p) stub\n", request, cancel );
+
+    if (!request) return ERROR_INVALID_PARAMETER;
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * DnsServiceRegisterCancel                 [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceRegisterCancel( PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p) stub\n", cancel );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * DnsServiceResolve                        [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceResolve( PDNS_SERVICE_RESOLVE_REQUEST request, PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p, %p) stub\n", request, cancel );
+
+    if (!request) return ERROR_INVALID_PARAMETER;
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * DnsServiceResolveCancel                  [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceResolveCancel( PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p) stub\n", cancel );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * DnsServiceBrowseCancel                   [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceBrowseCancel( PDNS_SERVICE_CANCEL cancel )
+{
+    FIXME( "(%p) stub\n", cancel );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * DnsStartMulticastQuery                  [DNSAPI.@]
  *
  */

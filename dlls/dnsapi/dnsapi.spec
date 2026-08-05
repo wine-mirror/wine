@@ -104,7 +104,9 @@
 @ stdcall DnsReplaceRecordSetW(ptr long ptr ptr ptr)
 @ stub DnsReplaceRecordSet_W
 @ stdcall DnsServiceBrowse(ptr ptr)
+@ stdcall DnsServiceBrowseCancel(ptr)
 @ stdcall DnsServiceConstructInstance(wstr wstr ptr ptr long long long long ptr ptr)
+@ stdcall DnsServiceDeRegister(ptr ptr)
 @ stdcall DnsServiceFreeInstance(ptr)
 @ stub DnsServiceNotificationDeregister_A
 @ stub DnsServiceNotificationDeregister_UTF8
@@ -112,6 +114,10 @@
 @ stub DnsServiceNotificationRegister_A
 @ stub DnsServiceNotificationRegister_UTF8
 @ stub DnsServiceNotificationRegister_W
+@ stdcall DnsServiceRegister(ptr ptr)
+@ stdcall DnsServiceRegisterCancel(ptr)
+@ stdcall DnsServiceResolve(ptr ptr)
+@ stdcall DnsServiceResolveCancel(ptr)
 @ stub DnsSetMaxNumberOfAddressesToRegister
 @ stub DnsStatusString
 @ stdcall DnsStartMulticastQuery(ptr ptr)
