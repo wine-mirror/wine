@@ -423,6 +423,10 @@ WinRT Devices
 P:	Vibhav Pant <vibhavp@gmail.com> @vibhavp
 F:	dlls/windows.devices.enumeration/
 
+WinRT Metadata
+P:      Vibhav Pant <vibhavp@gmail.com> @vibhavp
+F:      dlls/rometadata/
+
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org> @julliard
 P:	Rémi Bernon <rbernon@codeweavers.com> @rbernon
