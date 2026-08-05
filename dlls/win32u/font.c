@@ -3589,7 +3589,8 @@ const NLS_LOCALE_DATA *get_locale_data( LCID lcid )
         else if (lcid > lcids_index[pos].id) min = pos + 1;
         else
         {
-            ULONG offset = locale_table->locales_offset + pos * locale_table->locale_size;
+            const NLS_LOCALE_LCID_INDEX *entry = &lcids_index[pos];
+            ULONG offset = locale_table->locales_offset + entry->idx * locale_table->locale_size;
             return (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
         }
     }
