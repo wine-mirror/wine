@@ -194,6 +194,31 @@ static bool is_topmost( struct window *win )
     return win->ex_style & WS_EX_TOPMOST;
 }
 
+static bool is_visible( const struct window *win )
+{
+    return win && (win->style & WS_VISIBLE);
+}
+
+static bool is_minimized( const struct window *win )
+{
+    return win && (win->style & WS_MINIMIZE);
+}
+
+static bool is_disabled( const struct window *win )
+{
+    return win->style & WS_DISABLED;
+}
+
+static bool is_child( const struct window *win )
+{
+    return (win->style & (WS_POPUP | WS_CHILD)) == WS_CHILD;
+}
+
+static bool is_clickable( const struct window *win )
+{
+    return !is_minimized( win ) && !is_disabled( win );
+}
+
 /* get next window in Z-order list */
 static inline struct window *get_next_window( struct window *win )
 {
@@ -803,8 +828,7 @@ struct thread *make_window_foreground( struct desktop *desktop, user_handle_t wi
 {
     struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
 
-    if (!win || !win->thread || win->desktop != desktop) return NULL;
-    if ((win->style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return NULL;
+    if (!win || !win->thread || win->desktop != desktop || is_child( win )) return NULL;
     *is_desktop = win == win->desktop->top_window;
     *set_foreground = win->set_foreground;
     win->set_foreground = 1;
@@ -887,24 +911,17 @@ static void screen_to_client( struct window *win, int *x, int *y, struct ratio d
 }
 
 /* check if window and all its ancestors are visible */
-static int is_visible( const struct window *win )
-{
-    while (win)
-    {
-        if (!(win->style & WS_VISIBLE)) return 0;
-        win = win->parent;
-        /* if parent is minimized children are not visible */
-        if (win && (win->style & WS_MINIMIZE)) return 0;
-    }
-    return 1;
-}
-
-/* same as is_visible but takes a window handle */
 int is_window_visible( user_handle_t window )
 {
     struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
-    if (!win) return 0;
-    return is_visible( win );
+    for (;;)
+    {
+        if (!is_visible( win )) return 0;
+        win = win->parent;
+        /* if parent is minimized children are not visible */
+        if (is_minimized( win )) return 0;
+    }
+    return 1;
 }
 
 int is_window_transparent( user_handle_t window )
@@ -914,9 +931,9 @@ int is_window_transparent( user_handle_t window )
     return (win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT);
 }
 
-static int is_window_using_parent_dc( struct window *win )
+static bool is_window_using_parent_dc( struct window *win )
 {
-    return (win->style & (WS_POPUP|WS_CHILD)) == WS_CHILD && (get_class_style( win->class ) & CS_PARENTDC) != 0;
+    return is_child( win ) && !!(get_class_style( win->class ) & CS_PARENTDC);
 }
 
 static int is_window_composited( struct window *win )
@@ -932,9 +949,8 @@ static int is_parent_composited( struct window *win )
 /* check if point is inside the window, and map to window dpi */
 static int is_point_in_window( struct window *win, int *x, int *y, struct ratio dpi )
 {
-    if (!(win->style & WS_VISIBLE)) return 0; /* not visible */
-    if ((win->style & (WS_POPUP|WS_CHILD|WS_DISABLED)) == (WS_CHILD|WS_DISABLED))
-        return 0;  /* disabled child */
+    if (!is_visible( win )) return 0;
+    if (is_disabled( win ) && is_child( win )) return 0;
     if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
         return 0;  /* transparent */
     map_dpi_point( win, x, y, dpi, get_window_dpi( win ) );
@@ -1009,7 +1025,7 @@ static struct window *child_window_from_point( struct window *parent, int x, int
         if (!is_point_in_window( ptr, &x_child, &y_child, get_window_dpi( parent ) )) continue;  /* skip it */
 
         /* if window is minimized or disabled, return at once */
-        if (ptr->style & (WS_MINIMIZE|WS_DISABLED)) return ptr;
+        if (!is_clickable( ptr )) return ptr;
 
         /* if point is not in client area, return at once */
         if (!point_in_rect( &ptr->client_rect, x_child, y_child )) return ptr;
@@ -1033,7 +1049,7 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
         if (!is_point_in_window( ptr, &x_child, &y_child, get_window_dpi( parent ) )) continue;  /* skip it */
 
         /* if point is in client area, and window is not minimized or disabled, check children */
-        if (!(ptr->style & (WS_MINIMIZE|WS_DISABLED)) && point_in_rect( &ptr->client_rect, x_child, y_child ))
+        if (is_clickable( ptr ) && point_in_rect( &ptr->client_rect, x_child, y_child ))
         {
             if (!get_window_children_from_point( ptr, x_child - ptr->client_rect.left,
                                                  y_child - ptr->client_rect.top, array ))
@@ -1092,7 +1108,7 @@ static int all_windows_from_point( struct window *top, int x, int y, struct rati
 
     if (!is_point_in_window( top, &x, &y, dpi )) return 1;
     /* if point is in client area, and window is not minimized or disabled, check children */
-    if (!(top->style & (WS_MINIMIZE|WS_DISABLED)) && point_in_rect( &top->client_rect, x, y ))
+    if (is_clickable( top ) && point_in_rect( &top->client_rect, x, y ))
     {
         if (!is_desktop_window(top))
         {
@@ -1130,10 +1146,10 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
 
     LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
     {
-        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (!is_visible( ptr )) continue;
         if (ptr->thread == thread && win_needs_repaint( ptr ))
             ret = ptr;
-        else if (!(ptr->style & WS_MINIMIZE)) /* explore its children */
+        else if (!is_minimized( ptr )) /* explore its children */
             ret = find_child_to_repaint( ptr, thread );
         if (ret) break;
     }
@@ -1143,7 +1159,7 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
         /* transparent window, check for non-transparent sibling to paint first */
         for (ptr = get_next_window(ret); ptr; ptr = get_next_window(ptr))
         {
-            if (!(ptr->style & WS_VISIBLE)) continue;
+            if (!is_visible( ptr )) continue;
             if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
             if (ptr->thread != thread) continue;
             if (win_needs_repaint( ptr )) return ptr;
@@ -1220,7 +1236,7 @@ static struct region *clip_children( struct window *parent, struct window *last,
     LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
     {
         if (ptr == last) break;
-        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (!is_visible( ptr )) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         set_region_rect( tmp, &ptr->visible_rect );
         if (ptr->win_region && !intersect_window_region( tmp, ptr ))
@@ -1358,7 +1374,7 @@ static struct region *clip_pixel_format_children( struct window *parent, struct 
 
     LIST_FOR_EACH_ENTRY_REV( ptr, &parent->children, struct window, entry )
     {
-        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (!is_visible( ptr )) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
 
         /* add the visible rect */
@@ -1442,13 +1458,13 @@ static int get_window_visible_rect( struct window *win, struct rectangle *rect, 
 
     *rect = frame ? win->window_rect : win->client_rect;
 
-    if (!(win->style & WS_VISIBLE)) return 0;
+    if (!is_visible( win )) return 0;
     if (is_desktop_window( win )) return 1;
 
     while (!is_desktop_window( win->parent ))
     {
         win = win->parent;
-        if (!(win->style & WS_VISIBLE) || win->style & WS_MINIMIZE) return 0;
+        if (!is_visible( win ) || is_minimized( win )) return 0;
         offset_x += win->client_rect.left;
         offset_y += win->client_rect.top;
         offset_rect( rect, win->client_rect.left, win->client_rect.top );
@@ -1537,7 +1553,7 @@ static void crop_children_update_region( struct window *win, struct rectangle *r
 
     LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
     {
-        if (!(child->style & WS_VISIBLE)) continue;
+        if (!is_visible( child )) continue;
         if (!rect)  /* crop everything out */
         {
             crop_children_update_region( child, NULL );
@@ -1613,7 +1629,7 @@ static void validate_children( struct window *win )
 
     LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
     {
-        if (!(child->style & WS_VISIBLE)) continue;
+        if (!is_visible( child )) continue;
         validate_children(child);
         validate_whole_window(child);
     }
@@ -1711,7 +1727,7 @@ static void redraw_window( struct window *win, struct region *region, unsigned i
     /* now process children recursively */
 
     if (flags & RDW_NOCHILDREN) return;
-    if (win->style & WS_MINIMIZE) return;
+    if (is_minimized( win )) return;
     if ((win->style & WS_CLIPCHILDREN) && !(flags & RDW_ALLCHILDREN)) return;
 
     if (!(tmp = crop_region_to_win_rect( win, region, 0 ))) return;
@@ -1724,7 +1740,7 @@ static void redraw_window( struct window *win, struct region *region, unsigned i
 
     LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
     {
-        if (!(child->style & WS_VISIBLE)) continue;
+        if (!is_visible( child )) continue;
         if (!(child_rgn = create_empty_region())) continue;
         if (copy_region( child_rgn, tmp ))
         {
@@ -1784,7 +1800,7 @@ static unsigned int get_child_update_flags( struct window *win, struct window *f
 
     /* first make sure we want to iterate children at all */
 
-    if (win->style & WS_MINIMIZE) return 0;
+    if (is_minimized( win )) return 0;
 
     /* note: the WS_CLIPCHILDREN test is the opposite of the invalidation case,
      * here we only want to repaint children of windows that clip them, others
@@ -1799,7 +1815,7 @@ static unsigned int get_child_update_flags( struct window *win, struct window *f
             if (ptr == from_child) from_child = NULL;
             continue;
         }
-        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (!is_visible( ptr )) continue;
         if ((ret = get_update_flags( ptr, flags )) != 0)
         {
             *child = ptr;
@@ -1822,7 +1838,7 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
     if (!is_visible( win )) return 0;
     for (ptr = from_child; ptr; ptr = ptr->parent)
     {
-        if (!(ptr->style & WS_VISIBLE) || (ptr->style & WS_MINIMIZE)) from_sibling = ptr;
+        if (!is_visible( ptr ) || is_minimized( ptr )) from_sibling = ptr;
         if (ptr == win) break;
     }
 
@@ -1950,10 +1966,11 @@ static void set_window_pos( struct window *win, struct window *previous,
     const struct rectangle old_client_rect = win->client_rect;
     struct rectangle rect;
     int client_changed, frame_changed;
-    int visible = (win->style & WS_VISIBLE) || (swp_flags & SWP_SHOWWINDOW);
     int zorder_changed = 0;
+    bool visible;
 
-    if (win->parent && !is_visible( win->parent )) visible = 0;
+    if (win->parent && !is_visible( win->parent )) visible = false;
+    else visible = is_visible( win ) || (swp_flags & SWP_SHOWWINDOW);
 
     if (visible && !(old_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return;
 
@@ -1997,7 +2014,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     if (!(swp_flags & SWP_NOREDRAW))
         exposed_rgn = expose_window( win, &old_window_rect, old_vis_rgn, zorder_changed );
 
-    if (!(win->style & WS_VISIBLE))
+    if (!is_visible( win ))
     {
         /* clear the update region since the window is no longer visible */
         validate_whole_window( win );
@@ -2259,7 +2276,7 @@ DECL_HANDLER(create_window)
             return;
         }
         else /* owner must be a top-level window */
-            while ((owner->style & (WS_POPUP|WS_CHILD)) == WS_CHILD && !is_desktop_window(owner->parent))
+            while (is_child( owner ) && !is_desktop_window( owner->parent ))
                 owner = owner->parent;
     }
 
@@ -2708,7 +2725,7 @@ DECL_HANDLER(set_window_pos)
     const struct rectangle *extra_rects = get_req_data();
     struct window *previous = NULL;
     struct window *top, *win = get_window( req->handle );
-    unsigned int flags = req->swp_flags, old_style;
+    unsigned int flags = req->swp_flags, old_visible;
 
     if (!win) return;
     if (!win->parent) flags |= SWP_NOZORDER;  /* no Z order for the desktop */
@@ -2772,12 +2789,12 @@ DECL_HANDLER(set_window_pos)
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
-    old_style = win->style;
+    old_visible = is_visible( win );
     old_window = win->window_rect;
     old_client = win->client_rect;
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
-    if ((win->style & old_style & WS_VISIBLE) && (memcmp( &old_client, &win->client_rect, sizeof(old_client) )
+    if (old_visible != is_visible( win ) && (memcmp( &old_client, &win->client_rect, sizeof(old_client) )
         || memcmp( &old_window, &win->window_rect, sizeof(old_window) )))
         update_cursor_pos( win->desktop );
 
@@ -3098,7 +3115,7 @@ void set_window_rect_visible( user_handle_t window, struct rectangle rect )
     LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
     {
         if (ptr == win) break;
-        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (!is_visible( ptr )) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         if (ptr->is_layered && (ptr->layered_flags & LWA_COLORKEY)) continue;
         tmp = rect;
