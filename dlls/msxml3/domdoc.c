@@ -327,7 +327,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream 
 
     TRACE("%p, %p, %d.\n", iface, stream, clr_dirty);
 
-    return node_save(doc->node, stream);
+    return node_save(doc->node, (ISequentialStream *)stream);
 }
 
 static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface, ULARGE_INTEGER *size)
@@ -1559,7 +1559,7 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
             hr = IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void **)&stream);
             if (hr == S_OK)
             {
-                hr = node_save(doc->node, stream);
+                hr = node_save(doc->node, (ISequentialStream *)stream);
                 IStream_Release(stream);
             }
             break;
@@ -1578,7 +1578,7 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
                     return hr;
                 }
 
-                hr = node_save(doc->node, stream);
+                hr = node_save(doc->node, (ISequentialStream *)stream);
                 IStream_Release(stream);
             }
             break;
@@ -2555,7 +2555,7 @@ static HRESULT docstream_save(struct docstream *stream)
     if (stream->state == DOCSTREAM_STATE_INITIAL
             && !list_empty(&stream->doc->node->children))
     {
-        hr = node_save(stream->doc->node, stream->stream);
+        hr = node_save(stream->doc->node, (ISequentialStream *)stream->stream);
 
         offset.QuadPart = 0;
         IStream_Seek(stream->stream, offset, STREAM_SEEK_SET, NULL);

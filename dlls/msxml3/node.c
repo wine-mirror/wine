@@ -789,7 +789,7 @@ struct node_dump_context
 
     bool only_utf16_encoding_decl;
 
-    IStream *stream;
+    ISequentialStream *stream;
     UINT codepage;
     HRESULT status;
 };
@@ -844,7 +844,7 @@ static void node_dump_append(struct node_dump_context *context, const WCHAR *tex
     {
         if (context->codepage == ~0u)
         {
-            context->status = IStream_Write(context->stream, text, length * sizeof(WCHAR), &written);
+            context->status = ISequentialStream_Write(context->stream, text, length * sizeof(WCHAR), &written);
         }
         else
         {
@@ -860,7 +860,7 @@ static void node_dump_append(struct node_dump_context *context, const WCHAR *tex
             }
 
             WideCharToMultiByte(context->codepage, 0, text, length, context->scratch.data, required, NULL, NULL);
-            context->status = IStream_Write(context->stream, context->scratch.data, required, &written);
+            context->status = ISequentialStream_Write(context->stream, context->scratch.data, required, &written);
         }
     }
     else
@@ -2110,7 +2110,7 @@ static void node_dump(struct domnode *node, struct node_dump_context *context)
     }
 }
 
-static void node_dump_context_init(struct node_dump_context *context, UINT codepage, IStream *stream)
+static void node_dump_context_init(struct node_dump_context *context, UINT codepage, ISequentialStream *stream)
 {
     memset(context, 0, sizeof(*context));
     string_buffer_init(&context->buffer);
@@ -4643,7 +4643,7 @@ xmlDocPtr create_xmldoc_from_domdoc(struct domnode *node, xmlNodePtr *xmlnode)
     return xmldoc;
 }
 
-HRESULT node_save(struct domnode *doc, IStream *stream)
+HRESULT node_save(struct domnode *doc, ISequentialStream *stream)
 {
     struct node_dump_context context = { 0 };
     struct domnode *child, *attr, *node;
