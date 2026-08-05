@@ -516,14 +516,38 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         if (dbg_curr_thread == NULL)
         {
             WINE_ERR("Unknown thread\n");
-            break;
         }
+        else if (de->u.DebugString.nDebugStringLength >= 2)
+        {
+            void *buffer;
+            SIZE_T sz, buf_len = de->u.DebugString.nDebugStringLength * (de->u.DebugString.fUnicode ? sizeof(WCHAR) : sizeof(char));
 
-        memory_get_string(dbg_curr_process,
-                          de->u.DebugString.lpDebugStringData, TRUE,
-                          de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
-        WINE_TRACE("%04lx:%04lx: output debug string (%s)\n",
-                   de->dwProcessId, de->dwThreadId, u.bufferA);
+            if (de->u.DebugString.nDebugStringLength <= sizeof(u.bufferA))
+                buffer = u.bufferA;
+            else
+                buffer = malloc(buf_len);
+            if (buffer &&
+                dbg_curr_process->process_io->read(dbg_curr_process->handle,
+                                                   de->u.DebugString.lpDebugStringData,
+                                                   buffer, buf_len, &sz))
+            {
+                /* FIXME: nDebugStringLength can be cropped (as WORD) in DEBUG_EVENT, so force 0 termination
+                 * proper implem shall grow the buffer and retry until it's 0 terminated
+                 */
+                if (de->u.DebugString.fUnicode)
+                {
+                    ((WCHAR*)buffer)[de->u.DebugString.nDebugStringLength - 1] = L'\0';
+                    dbg_printf("OutputDebugString: %ls\n", (WCHAR*)buffer);
+                }
+                else
+                {
+                    ((char*)buffer)[de->u.DebugString.nDebugStringLength - 1] = '\0';
+                    dbg_printf("OutputDebugString: %s\n", (char*)buffer);
+                }
+            }
+            if (buffer != u.bufferA) free(buffer);
+        }
+        else dbg_printf("OutputDebugString:\n");
         break;
 
     case RIP_EVENT:
