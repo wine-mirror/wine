@@ -6591,8 +6591,12 @@ static void test_save(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     V_VT(&dest) = VT_UNKNOWN;
-    V_UNKNOWN(&dest) = (IUnknown*)doc2;
+    V_UNKNOWN(&dest) = NULL;
 
+    hr = IXMLDOMDocument_save(doc, dest);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    V_UNKNOWN(&dest) = (IUnknown*)doc2;
     hr = IXMLDOMDocument_save(doc, dest);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 

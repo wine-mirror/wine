@@ -1559,6 +1559,10 @@ static HRESULT WINAPI domdoc_save(IXMLDOMDocument3 *iface, VARIANT dest)
     switch (V_VT(&dest))
     {
         case VT_UNKNOWN:
+
+            if (!V_UNKNOWN(&dest))
+                return E_INVALIDARG;
+
             if (IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void **)&stream) == S_OK)
             {
                 hr = node_save(doc->node, (ISequentialStream *)stream);
