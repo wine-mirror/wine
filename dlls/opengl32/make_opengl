@@ -1830,6 +1830,7 @@ print OUT "{\n";
 print OUT "    unix_process_attach,\n";
 print OUT "    unix_thread_attach,\n";
 print OUT "    unix_process_detach,\n";
+print OUT "    unix_thread_detach,\n";
 print OUT "    unix_set_root_context,\n";
 print OUT "    unix_get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
@@ -2080,6 +2081,7 @@ print OUT "{\n";
 print OUT "    process_attach,\n";
 print OUT "    thread_attach,\n";
 print OUT "    process_detach,\n";
+print OUT "    thread_detach,\n";
 print OUT "    set_root_context,\n";
 print OUT "    get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
@@ -2104,6 +2106,7 @@ print OUT "C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);\n\n";
 print OUT "#ifdef _WIN64\n\n";
 print OUT "extern NTSTATUS wow64_thread_attach( void *args );\n";
 print OUT "extern NTSTATUS wow64_process_detach( void *args );\n";
+print OUT "extern NTSTATUS wow64_thread_detach( void *args );\n";
 print OUT "extern NTSTATUS wow64_set_root_context( void *args );\n\n";
 print OUT "extern NTSTATUS wow64_get_pixel_formats( void *args );\n\n";
 
@@ -2129,6 +2132,7 @@ print OUT "{\n";
 print OUT "    process_attach,\n";
 print OUT "    wow64_thread_attach,\n";
 print OUT "    wow64_process_detach,\n";
+print OUT "    wow64_thread_detach,\n";
 print OUT "    wow64_set_root_context,\n";
 print OUT "    wow64_get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
