@@ -11472,14 +11472,15 @@ static void url_forward_slash(char *url)
 static void test_load(void)
 {
     char path[MAX_PATH], path2[MAX_PATH];
+    IXMLDOMDocument *doc, *doc2;
     IXMLDOMNodeList *list;
-    IXMLDOMDocument *doc;
     BSTR bstr1, bstr2;
     IStream *stream;
     VARIANT_BOOL b;
     VARIANT src;
     HRESULT hr;
     void* ptr;
+    BSTR str;
     int n;
     struct encoding_test
     {
@@ -11738,6 +11739,26 @@ static void test_load(void)
     SysFreeString(bstr1);
     DeleteFileA(path);
     IXMLDOMDocument_Release(doc);
+
+    /* Loading from a document */
+    doc = create_document(&IID_IXMLDOMDocument);
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>t</a>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&src) = VT_UNKNOWN;
+    V_UNKNOWN(&src) = (IUnknown *)doc;
+    hr = IXMLDOMDocument_load(doc2, src, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<a>t</a>\r\n"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMDocument_Release(doc2);
 
     free_bstrs();
 }
