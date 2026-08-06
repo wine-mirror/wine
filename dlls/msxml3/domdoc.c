@@ -1323,35 +1323,8 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
         }
         break;
     case VT_UNKNOWN:
-    {
-        IXMLDOMDocument3 *newdoc = NULL;
 
         if (!V_UNKNOWN(&source)) return E_INVALIDARG;
-
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IXMLDOMDocument3, (void **)&newdoc);
-        if (hr == S_OK)
-        {
-            if (newdoc)
-            {
-                struct domnode *node = get_node_obj((IXMLDOMNode *)newdoc);
-                struct domnode *cloned;
-
-                hr = node_clone_domnode(node, true, &cloned);
-                IXMLDOMDocument3_Release(newdoc);
-
-                if (FAILED(hr))
-                {
-                    WARN("Failed to clone a document, hr %#lx.\n", hr);
-                    return hr;
-                }
-
-                attach_doc_node(doc, cloned);
-                if (SUCCEEDED(hr))
-                    *result = VARIANT_TRUE;
-
-                return hr;
-            }
-        }
 
         hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IStream, (void**)&stream);
         if (FAILED(hr))
@@ -1368,7 +1341,7 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
 
         FIXME("unsupported IUnknown type (%#lx) (%p)\n", hr, V_UNKNOWN(&source)->lpVtbl);
         break;
-    }
+
     default:
         FIXME("VT type not supported (%d)\n", V_VT(&source));
     }
