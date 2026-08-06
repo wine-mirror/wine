@@ -86,15 +86,35 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
  */
 void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 {
-    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+    SEC_WINNT_AUTH_IDENTITY_EXW *idex = (SEC_WINNT_AUTH_IDENTITY_EXW *)opaque_id;
+    ULONG char_size;
 
     TRACE( "%p\n", opaque_id );
 
-    if (!id) return;
-    if (id->User) memset( id->User, 0, id->UserLength * sizeof(WCHAR) );
-    if (id->Domain) memset( id->Domain, 0, id->DomainLength * sizeof(WCHAR) );
-    if (id->Password) memset( id->Password, 0, id->PasswordLength * sizeof(WCHAR) );
-    memset( id, 0, sizeof(*id) );
+    if (!idex) return;
+
+    if (idex->Version >= 0x10000)
+    {
+        SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+        char_size = id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? sizeof(char) : sizeof(WCHAR);
+        memset( id->Password, 0, id->PasswordLength * char_size );
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        char_size = idex->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? sizeof(char) : sizeof(WCHAR);
+        memset( idex->Password, 0, idex->PasswordLength * char_size );
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+    {
+        SEC_WINNT_AUTH_IDENTITY_EX2 *id = (SEC_WINNT_AUTH_IDENTITY_EX2 *)opaque_id;
+
+        memset( (char *)id + id->PackedCredentialsOffset, 0, id->PackedCredentialsLength );
+    }
+    else
+    {
+        FIXME( "auth identity format not handled: %lu\n", idex->Version );
+    }
 }
 
 /***********************************************************************

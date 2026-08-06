@@ -339,12 +339,21 @@ static void test_SspiEncodeStringsAsAuthIdentity(void)
     ok( !lstrcmpW( username, username_ptr ), "wrong username\n" );
     ok( !lstrcmpW( domainname, domainname_ptr ), "wrong domainname\n" );
     ok( !lstrcmpW( password, password_ptr ), "wrong password\n" );
-
-    pSspiZeroAuthIdentity( id );
-
     pSspiLocalFree( (void *)username_ptr );
     pSspiLocalFree( (void *)domainname_ptr );
     pSspiLocalFree( (void *)password_ptr );
+
+    pSspiZeroAuthIdentity( id );
+    status = pSspiEncodeAuthIdentityAsStrings( id, &username_ptr, &domainname_ptr, &password_ptr );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    ok( !lstrcmpW( username, username_ptr ), "wrong username\n" );
+    ok( !lstrcmpW( domainname, domainname_ptr ), "wrong domainname\n" );
+    ok( password_ptr != NULL, "password_ptr = NULL\n" );
+    ok( !lstrcmpW( L"", password_ptr ), "wrong password\n" );
+    pSspiLocalFree( (void *)username_ptr );
+    pSspiLocalFree( (void *)domainname_ptr );
+    pSspiLocalFree( (void *)password_ptr );
+
     pSspiFreeAuthIdentity( id );
 
     id = NULL;
