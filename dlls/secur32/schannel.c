@@ -1295,6 +1295,40 @@ done:
     return status;
 }
 
+static BCRYPT_ALG_HANDLE get_hash_alg( const char *oid, DWORD *size )
+{
+    if (!strcmp( oid, szOID_RSA_SHA1RSA ))
+    {
+        *size = 20;
+        return BCRYPT_SHA1_ALG_HANDLE;
+    }
+    if (!strcmp( oid, szOID_RSA_SHA256RSA ) || !strcmp( oid, szOID_ECDSA_SHA256 ))
+    {
+        *size = 32;
+        return BCRYPT_SHA256_ALG_HANDLE;
+    }
+    if (!strcmp( oid, szOID_RSA_SHA384RSA ) || !strcmp( oid, szOID_ECDSA_SHA384 ))
+    {
+        *size = 48;
+        return BCRYPT_SHA384_ALG_HANDLE;
+    }
+    if (!strcmp( oid, szOID_RSA_SHA512RSA ) || !strcmp( oid, szOID_ECDSA_SHA512 ))
+    {
+        *size = 64;
+        return BCRYPT_SHA512_ALG_HANDLE;
+    }
+    FIXME( "unhandled oid %s\n", debugstr_a(oid) );
+    return NULL;
+}
+
+static SECURITY_STATUS hash_certificate( const CERT_CONTEXT *cert, BYTE *hash, DWORD *hash_size )
+{
+    BCRYPT_ALG_HANDLE alg = get_hash_alg( cert->pCertInfo->SignatureAlgorithm.pszObjId, hash_size );
+
+    if (!alg) return SEC_E_INTERNAL_ERROR;
+    return BCryptHash( alg, NULL, 0, cert->pbCertEncoded, cert->cbCertEncoded, hash, *hash_size );
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
 {
@@ -1369,22 +1403,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
     {
         static const char prefix[] = "tls-server-end-point:";
         SecPkgContext_Bindings *bindings = buffer;
-        CCRYPT_OID_INFO *info;
-        ALG_ID hash_alg = CALG_SHA_256;
-        BYTE hash[1024];
+        BYTE hash[64];
         DWORD hash_size;
         char *p;
-        BOOL ret;
 
-        if ((status = ensure_remote_cert(ctx)) != SEC_E_OK) return status;
-
-        /* RFC 5929 */
-        info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ctx->cert->pCertInfo->SignatureAlgorithm.pszObjId, 0);
-        if (info && info->Algid != CALG_SHA1 && info->Algid != CALG_MD5) hash_alg = info->Algid;
-
-        hash_size = sizeof(hash);
-        ret = CryptHashCertificate(0, hash_alg, 0, ctx->cert->pbCertEncoded, ctx->cert->cbCertEncoded, hash, &hash_size);
-        if (!ret) return GetLastError();
+        if ((status = ensure_remote_cert(ctx)) != SEC_E_OK ||
+            (status = hash_certificate(ctx->cert, hash, &hash_size)) != SEC_E_OK) return status;
 
         bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix) - 1 + hash_size;
         /* freed with FreeContextBuffer */

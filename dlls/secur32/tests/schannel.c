@@ -1202,7 +1202,6 @@ static void test_communication(void)
         test_remote_cert(cert);
 
         status = QueryContextAttributesA(&context, SECPKG_ATTR_ENDPOINT_BINDINGS, &bindings);
-        todo_wine
         ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_ENDPOINT_BINDINGS) failed: %08lx\n", status);
         if (status == SEC_E_OK)
         {
