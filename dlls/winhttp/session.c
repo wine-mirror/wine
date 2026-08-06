@@ -364,6 +364,12 @@ static BOOL session_set_option( struct object_header *hdr, DWORD option, void *b
         FIXME( "WINHTTP_OPTION_ASSURED_NON_BLOCKING_CALLBACKS: %d\n", *(BOOL *)buffer );
         return TRUE;
 
+    case WINHTTP_OPTION_ENABLE_HTTP2_PLUS_CLIENT_CERT:
+    {
+        FIXME( "WINHTTP_OPTION_ENABLE_HTTP2_PLUS_CLIENT_CERT: %d\n", *(BOOL *)buffer );
+        return TRUE;
+    }
+
     default:
         FIXME( "unimplemented option %lu\n", option );
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
