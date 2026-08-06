@@ -980,6 +980,28 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         info->cbSize = sizeof(*info);
         return TRUE;
     }
+    case WINHTTP_OPTION_SERVER_CBT:
+    {
+        SecPkgContext_Bindings cbt;
+        SECURITY_STATUS status;
+        DWORD size;
+
+        status = QueryContextAttributesW( &request->netconn->ssl_ctx, SECPKG_ATTR_ENDPOINT_BINDINGS, (void *)&cbt );
+        if (status != SEC_E_OK) return FALSE;
+
+        size = sizeof(cbt) + cbt.BindingsLength;
+        if (!validate_buffer( buffer, buflen, size ))
+        {
+            FreeContextBuffer( cbt.Bindings );
+            return FALSE;
+        }
+        memcpy( buffer, &cbt, sizeof(cbt) );
+        memcpy( (char *)buffer + sizeof(cbt), cbt.Bindings, cbt.BindingsLength );
+        *buflen = size;
+
+        FreeContextBuffer( cbt.Bindings );
+        return TRUE;
+    }
     case WINHTTP_OPTION_RESOLVE_TIMEOUT:
         if (!validate_buffer( buffer, buflen, sizeof(DWORD) )) return FALSE;
 
