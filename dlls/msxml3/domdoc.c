@@ -1254,6 +1254,7 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
     LPWSTR filename = NULL;
     HRESULT hr = S_FALSE;
     struct domnode *node;
+    IUnknown *unk;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_variant(&source), result);
 
@@ -1326,20 +1327,38 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
 
         if (!V_UNKNOWN(&source)) return E_INVALIDARG;
 
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IStream, (void**)&stream);
-        if (FAILED(hr))
-            hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_ISequentialStream, (void**)&stream);
-
-        if (hr == S_OK)
+        if (IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IStream, (void **)&stream) == S_OK
+            || IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_ISequentialStream, (void **)&stream) == S_OK)
         {
             hr = doc->error = domdoc_load_from_stream(doc, stream);
-            if (hr == S_OK)
+            if (SUCCEEDED(hr))
                 *result = VARIANT_TRUE;
             ISequentialStream_Release(stream);
             return hr;
         }
-
-        FIXME("unsupported IUnknown type (%#lx) (%p)\n", hr, V_UNKNOWN(&source)->lpVtbl);
+        else if (IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IPersistStream, (void **)&unk) == S_OK)
+        {
+            FIXME("Loading from IPersistStream is not implemented.\n");
+            IUnknown_Release(unk);
+            hr = E_NOTIMPL;
+        }
+        else if (IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IPersistStreamInit, (void **)&unk) == S_OK)
+        {
+            FIXME("Loading from IPersistStreamInit is not implemented.\n");
+            IUnknown_Release(unk);
+            hr = E_NOTIMPL;
+        }
+        else if (IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IRequest, (void **)&unk) == S_OK)
+        {
+            FIXME("Loading from IRequest is not implemented.\n");
+            IUnknown_Release(unk);
+            hr = E_NOTIMPL;
+        }
+        else
+        {
+            WARN("Unsupported destination type.\n");
+            hr = E_INVALIDARG;
+        }
         break;
 
     default:
