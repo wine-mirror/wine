@@ -839,9 +839,11 @@ not_found:
 /***********************************************************************
  *           GetNumaProximityNode (KERNEL32.@)
  */
-BOOL WINAPI GetNumaProximityNode(ULONG  proximity_id, PUCHAR node_number)
+BOOL WINAPI GetNumaProximityNode( ULONG proximity_id, UCHAR *node_number )
 {
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FIXME( "proximity_id %lu, node_number %p stub.\n", proximity_id, node_number );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
 
