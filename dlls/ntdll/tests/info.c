@@ -3781,6 +3781,8 @@ static void test_query_numa_map(void)
     SYSTEM_NUMA_INFORMATION *info = (SYSTEM_NUMA_INFORMATION *)buffer;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info, *p;
     PROCESSOR_NUMBER proc_num;
+    GROUP_AFFINITY mask;
+    ULONGLONG mask64;
     NTSTATUS status;
     unsigned int i;
     USHORT node;
@@ -3904,6 +3906,18 @@ static void test_query_numa_map(void)
                 ok( node == n->NodeNumber, "i %u, got %u, expected %lu.\n", i, node, n->NodeNumber );
             }
         }
+        memset( &mask, 0xcc, sizeof(mask) );
+        bret = GetNumaNodeProcessorMaskEx( n->NodeNumber, &mask );
+        ok( bret, "got error %lu.\n", GetLastError() );
+        ok( mask.Group == n->GroupMask.Group, "got %u, %u.\n", mask.Group, n->GroupMask.Group );
+        ok( mask.Mask == n->GroupMask.Mask, "got %#Ix, %#Ix.\n", mask.Mask, n->GroupMask.Mask );
+        p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)p + p->Size);
+
+        memset( &mask64, 0xcc, sizeof(mask64) );
+        bret = GetNumaNodeProcessorMask( n->NodeNumber, &mask64 );
+        ok( bret, "got error %lu.\n", GetLastError() );
+        ok( mask64 == n->GroupMask.Mask, "got %#I64x, %#Ix.\n", mask64, n->GroupMask.Mask );
+
         p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)p + p->Size);
         winetest_pop_context();
         ++proc_info_node_count;
@@ -3930,6 +3944,17 @@ static void test_query_numa_map(void)
     bret = GetNumaProcessorNodeEx( &proc_num, &node );
     ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
     ok( node == 0xffff, "got %#x.\n", node );
+
+    memset( &mask, 0xcc, sizeof(mask) );
+    bret = GetNumaNodeProcessorMaskEx( 1024, &mask );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( mask.Group == 0xcccc, "got %u.\n", mask.Group );
+    ok( mask.Mask == (ULONG_PTR)0xcccccccccccccccc, "got %#Ix.\n", mask.Mask );
+
+    memset( &mask64, 0xcc, sizeof(mask64) );
+    bret = GetNumaNodeProcessorMask( 255, &mask64 );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( mask64 == 0xcccccccccccccccc, "got %#I64x.\n", mask64 );
 
     free( proc_info );
 }

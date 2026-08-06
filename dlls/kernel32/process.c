@@ -760,11 +760,23 @@ BOOL WINAPI GetFirmwareType(FIRMWARE_TYPE *type)
 /**********************************************************************
  *           GetNumaNodeProcessorMask     (KERNEL32.@)
  */
-BOOL WINAPI GetNumaNodeProcessorMask(UCHAR node, PULONGLONG mask)
+BOOL WINAPI GetNumaNodeProcessorMask( UCHAR node, ULONGLONG *mask )
 {
-    FIXME("(%c %p): stub\n", node, mask);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    SYSTEM_NUMA_INFORMATION info;
+    NTSTATUS status;
+
+    TRACE( "node %u, mask %p.\n", node, mask );
+
+    if ((status = NtQuerySystemInformation( SystemNumaProcessorMap, &info, sizeof(info), NULL )))
+        return set_ntstatus( status );
+
+    if (node > info.HighestNodeNumber || info.ActiveProcessorsGroupAffinity[node].Group)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    *mask = info.ActiveProcessorsGroupAffinity[node].Mask;
+    return TRUE;
 }
 
 /**********************************************************************
