@@ -2653,6 +2653,8 @@ enum message_type
     unsigned int   style;       /* window style */
     unsigned int   ex_style;    /* window extended style */
     unsigned int   ansi;        /* window created as ansi */
+    struct ratio   dpi;         /* initial monitor DPI */
+    struct ratio   raw_dpi;     /* initial monitor raw DPI */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */

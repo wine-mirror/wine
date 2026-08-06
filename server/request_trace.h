@@ -1696,6 +1696,8 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
     fprintf( stderr, ", ansi=%08x", req->ansi );
+    dump_ratio( ", dpi=", &req->dpi );
+    dump_ratio( ", raw_dpi=", &req->raw_dpi );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
 

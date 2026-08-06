@@ -5629,24 +5629,31 @@ void destroy_thread_windows(void)
  * Create a window handle with the server.
  */
 static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name, HINSTANCE class_instance,
-                                  HINSTANCE instance, BOOL ansi, DWORD style, DWORD ex_style )
+                                  const CREATESTRUCTW *cs, BOOL ansi, DWORD style, DWORD ex_style )
 {
+    RECT rect = { cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy };
     UINT dpi_context = get_thread_dpi_awareness_context();
     HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
+    struct ratio dpi, raw_dpi;
     WND *win;
+
+    if (parent && parent != get_desktop_window()) dpi = get_win_monitor_dpi( parent, &raw_dpi );
+    else dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
 
     SERVER_START_REQ( create_window )
     {
         req->parent          = wine_server_user_handle( parent );
         req->owner           = wine_server_user_handle( owner );
         req->class_instance  = wine_server_client_ptr( class_instance );
-        req->instance        = wine_server_client_ptr( instance );
+        req->instance        = wine_server_client_ptr( cs->hInstance );
         req->dpi_context     = dpi_context;
         req->style           = style;
         req->ex_style        = ex_style;
         req->ansi            = ansi;
         req->atom            = wine_server_add_atom( req, name );
+        req->dpi             = dpi;
+        req->raw_dpi         = raw_dpi;
         if (!wine_server_call_err( req ))
         {
             handle      = wine_server_ptr_handle( reply->handle );
@@ -5866,7 +5873,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     style = cs.style & ~WS_VISIBLE;
     ex_style = cs.dwExStyle & ~WS_EX_LAYERED;
     if (!(win = create_window_handle( parent, owner, class_name, class_instance,
-                                      cs.hInstance, ansi, style, ex_style )))
+                                      &cs, ansi, style, ex_style )))
         return 0;
     hwnd = win->handle;
 

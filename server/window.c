@@ -604,7 +604,8 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 
 /* create a new window structure (note: the window is not linked in the window tree) */
 static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
-                                     mod_handle_t class_instance, bool ansi )
+                                     mod_handle_t class_instance, bool ansi, struct ratio dpi,
+                                     struct ratio raw_dpi )
 {
     data_size_t extra_size, private_size;
     struct window *win = NULL;
@@ -677,10 +678,8 @@ static struct window *create_window( struct window *parent, struct window *owner
         shared->dpi_context     = NTUSER_DPI_PER_MONITOR_AWARE;
         shared->fnid            = fnid;
         shared->private_size    = private_size;
-        shared->dpi.num         = USER_DEFAULT_SCREEN_DPI;
-        shared->dpi.den         = 1;
-        shared->raw_dpi.num     = USER_DEFAULT_SCREEN_DPI;
-        shared->raw_dpi.den     = 1;
+        shared->dpi             = dpi;
+        shared->raw_dpi         = raw_dpi;
         shared->extra_size      = extra_size;
         memset( (void *)&shared->info, 0, sizeof(shared->info) );
         memset( (void *)shared->extra, 0, extra_size );
@@ -2242,7 +2241,7 @@ DECL_HANDLER(create_window)
 
     if (!atom) atom = find_atom( table, cls_name );
 
-    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi ))) return;
+    if (!(win = create_window( parent, owner, atom, req->class_instance, !!req->ansi, req->dpi, req->raw_dpi ))) return;
 
     /* FIXME: NTUSER_DPI_PER_MONITOR_AWARE_V2 isn't implemented */
     if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( dpi_context )) dpi_context = NTUSER_DPI_PER_MONITOR_AWARE;
@@ -2336,13 +2335,18 @@ DECL_HANDLER(destroy_window)
 /* retrieve the desktop window for the current thread */
 DECL_HANDLER(get_desktop_window)
 {
+    static const struct monitor_info default_info = { .dpi = { USER_DEFAULT_SCREEN_DPI, 1 }, .raw_dpi = { USER_DEFAULT_SCREEN_DPI, 1 } };
+    static const struct rectangle desktop_rect = { 0, 0, 1, 1 };
+    const struct monitor_info *info = NULL;
+
     struct desktop *desktop = get_thread_desktop( current, 0 );
 
     if (!desktop) return;
 
     if (!desktop->top_window && req->force)  /* create it */
     {
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false )))
+        if (!(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, false, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2355,7 +2359,9 @@ DECL_HANDLER(get_desktop_window)
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         struct atom_table *table = get_user_atom_table();
         atom_t atom = add_atom( table, name );
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false )))
+
+        if (!info && !(info = get_monitor_from_rect( desktop->winstation, &desktop_rect, false ))) info = &default_info;
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, false, info->dpi, info->raw_dpi )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
