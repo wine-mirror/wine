@@ -790,27 +790,49 @@ BOOL WINAPI GetNumaAvailableMemoryNodeEx(USHORT node, PULONGLONG available_bytes
 /***********************************************************************
  *           GetNumaProcessorNode (KERNEL32.@)
  */
-BOOL WINAPI GetNumaProcessorNode(UCHAR processor, PUCHAR node)
+BOOL WINAPI GetNumaProcessorNode( UCHAR processor, UCHAR *ret_node )
 {
-    TRACE("(%d, %p)\n", processor, node);
+    PROCESSOR_NUMBER proc = { .Number = processor };
+    USHORT node;
+    BOOL ret;
 
-    if (processor < system_info.NumberOfProcessors)
-    {
-        *node = 0;
-        return TRUE;
-    }
+    TRACE(" processor %u, ret_node %p.\n", processor, ret_node );
 
-    *node = 0xFF;
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return FALSE;
+    ret = GetNumaProcessorNodeEx( &proc, &node );
+    *ret_node = node;
+    return ret;
 }
 
 /***********************************************************************
  *           GetNumaProcessorNodeEx (KERNEL32.@)
  */
-BOOL WINAPI GetNumaProcessorNodeEx(PPROCESSOR_NUMBER processor, PUSHORT node_number)
+BOOL WINAPI GetNumaProcessorNodeEx( PROCESSOR_NUMBER *processor, USHORT *node_number )
 {
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SYSTEM_NUMA_INFORMATION info;
+    NTSTATUS status;
+    unsigned int i;
+    GROUP_AFFINITY *a;
+
+    TRACE( "processor %p, node_number %p.\n", processor, node_number );
+
+    if ((status = NtQuerySystemInformation( SystemNumaProcessorMap, &info, sizeof(info), NULL )))
+        return set_ntstatus( status );
+
+    if (processor->Reserved || processor->Number >= sizeof(a->Mask) * 8) goto not_found;
+
+    for (i = 0; i <= info.HighestNodeNumber; ++i)
+    {
+        a = &info.ActiveProcessorsGroupAffinity[i];
+        if (a->Group == processor->Group && (a->Mask & ((ULONG_PTR)1 << processor->Number)))
+        {
+            *node_number = i;
+            return TRUE;
+        }
+    }
+
+not_found:
+    *node_number = 0xffff;
+    SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 

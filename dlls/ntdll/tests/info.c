@@ -3780,7 +3780,10 @@ static void test_query_numa_map(void)
     char buffer[sizeof(SYSTEM_NUMA_INFORMATION) + 32];
     SYSTEM_NUMA_INFORMATION *info = (SYSTEM_NUMA_INFORMATION *)buffer;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info, *p;
+    PROCESSOR_NUMBER proc_num;
     NTSTATUS status;
+    unsigned int i;
+    USHORT node;
     BOOL bret;
 
     group_count = GetActiveProcessorGroupCount();
@@ -3854,6 +3857,12 @@ static void test_query_numa_map(void)
     }
     ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
 
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, sizeof(*info), NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( info->HighestNodeNumber == node_count - 1, "got %lu.\n", info->HighestNodeNumber );
+    ok( info->Reserved == 0xcccccccc, "got %#lx.\n", info->Reserved );
+
     len = 0xdeadbeef;
     memset( buffer, 0xcc, sizeof(buffer) );
     status = pNtQuerySystemInformation( SystemNumaProcessorMap, info, sizeof(*info), &len );
@@ -3873,6 +3882,7 @@ static void test_query_numa_map(void)
     ok( info->Reserved == 0xcccccccc, "got %lu.\n", info->Reserved );
     p = proc_info;
     proc_info_node_count = 0;
+    memset( &proc_num, 0, sizeof(proc_num) );
     while ((BYTE *)p - (BYTE *)proc_info < len)
     {
         NUMA_NODE_RELATIONSHIP *n = &p->NumaNode;
@@ -3882,11 +3892,44 @@ static void test_query_numa_map(void)
         ok( p->Relationship == RelationNumaNode, "got %d.\n", p->Relationship );
         ok( !a->Group, "got %u.\n", a->Group );
         ok( a->Mask == n->GroupMask.Mask, "got %#Ix, %#Ix.\n", a->Mask, n->GroupMask.Mask );
+        ok( a->Mask, "got 0.\n" );
+        for (i = 0; i < sizeof(ULONG_PTR) * 8; ++i)
+        {
+            if (a->Mask & ((ULONG_PTR)1 << i))
+            {
+                proc_num.Group = 0;
+                proc_num.Number = i;
+                bret = GetNumaProcessorNodeEx( &proc_num, &node );
+                ok( bret, "got error %lu.\n", GetLastError() );
+                ok( node == n->NodeNumber, "i %u, got %u, expected %lu.\n", i, node, n->NodeNumber );
+            }
+        }
         p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)p + p->Size);
         winetest_pop_context();
         ++proc_info_node_count;
     }
     ok( proc_info_node_count == node_count, "got %lu, node_count %lu.\n", proc_info_node_count, node_count );
+
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNode( 255, (UCHAR *)&node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xff, "got %#x.\n", node );
+
+    proc_num.Number = 255;
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNodeEx( &proc_num, &node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xffff, "got %#x.\n", node );
+
+    proc_num.Number = 0;
+    proc_num.Reserved = 1;
+    SetLastError( 0xdeadbeef );
+    node = 0;
+    bret = GetNumaProcessorNodeEx( &proc_num, &node );
+    ok( !bret && GetLastError() == ERROR_INVALID_PARAMETER, "got bret %d, error %lu.\n", bret, GetLastError() );
+    ok( node == 0xffff, "got %#x.\n", node );
 
     free( proc_info );
 }
