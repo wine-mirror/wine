@@ -1081,6 +1081,14 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
             TRACE("CDM_SETCONTROLTEXT:\n");
 	    if ( lParam )
             {
+                if (wParam == edt1)
+                {
+                    if (fodInfos->unicode)
+                        SendMessageW(fodInfos->DlgInfos.hwndFileName, WM_SETTEXT, 0, lParam);
+                    else
+                        SendMessageA(fodInfos->DlgInfos.hwndFileName, WM_SETTEXT, 0, lParam);
+                }
+
                 if( fodInfos->unicode )
 	            SetDlgItemTextW( hwnd, (UINT) wParam, (LPWSTR) lParam );
                 else

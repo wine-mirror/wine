@@ -1345,7 +1345,6 @@ static UINT_PTR CALLBACK cdm_setcontroltext_hook_proc(HWND hDlg, UINT msg, WPARA
 
         buffer[0] = 0;
         GetDlgItemTextA(hwnd, cmb13, buffer, 64);
-        todo_wine
         ok(!strcmp(buffer, "test-edt1"), "Unexpected text %s.\n", debugstr_a(buffer));
 
         PostMessageA(hwnd, WM_COMMAND, IDCANCEL, FALSE);
