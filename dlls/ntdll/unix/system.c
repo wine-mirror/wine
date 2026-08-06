@@ -315,6 +315,7 @@ static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
 static unsigned int logical_proc_info_len, logical_proc_info_alloc_len;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *logical_proc_info_ex;
 static unsigned int logical_proc_info_ex_size, logical_proc_info_ex_alloc_size;
+static SYSTEM_NUMA_INFORMATION numa_info;
 static ULONG_PTR system_cpu_mask;
 
 static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1643,6 +1644,8 @@ static pthread_once_t logical_proc_init_once = PTHREAD_ONCE_INIT;
 
 static void init_logical_proc_info(void)
 {
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p;
+    unsigned numa_node_count = 0;
     NTSTATUS status;
 
     if ((status = create_logical_proc_info()))
@@ -1664,6 +1667,27 @@ static void init_logical_proc_info(void)
         logical_proc_info_ex_alloc_size = logical_proc_info_ex_size;
     }
     init_tsc_frequency();
+
+    if (logical_proc_info_ex)
+    {
+        p = logical_proc_info_ex;
+        while ((char *)p - (char *)logical_proc_info_ex < logical_proc_info_ex_size)
+        {
+            if (p->Relationship == RelationNumaNode || p->Relationship == RelationNumaNodeEx)
+            {
+                numa_info.ActiveProcessorsGroupAffinity[p->NumaNode.NodeNumber] = p->NumaNode.GroupMask;
+                ++numa_node_count;
+            }
+            p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size);
+        }
+    }
+    if (!numa_node_count)
+    {
+        numa_node_count = 1;
+        numa_info.ActiveProcessorsGroupAffinity[0].Group = 0;
+        numa_info.ActiveProcessorsGroupAffinity[0].Mask = system_cpu_mask;
+    }
+    numa_info.HighestNodeNumber = numa_node_count - 1;
 }
 
 static void read_dev_urandom( void *buf, ULONG len )
@@ -3720,6 +3744,28 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             else memcpy( info, &tz, len);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemNumaProcessorMap:  /* 55 */
+    {
+        SYSTEM_NUMA_INFORMATION *ret_info = info;
+        ULONG data_size;
+
+        pthread_once( &logical_proc_init_once, init_logical_proc_info );
+
+        len = sizeof(ULONG);
+        if (size < len)
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+        ret_info->HighestNodeNumber = numa_info.HighestNodeNumber;
+        data_size = offsetof(SYSTEM_NUMA_INFORMATION, ActiveProcessorsGroupAffinity[numa_info.HighestNodeNumber + 1]);
+        if (size < data_size) break;
+        len = data_size;
+        memcpy( ret_info->ActiveProcessorsGroupAffinity, numa_info.ActiveProcessorsGroupAffinity,
+                sizeof (*numa_info.ActiveProcessorsGroupAffinity) * (numa_info.HighestNodeNumber + 1) );
         break;
     }
 

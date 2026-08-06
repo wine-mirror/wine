@@ -497,6 +497,35 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
         if (retlen) *retlen = sizeof(SYSTEM_REGISTRY_QUOTA_INFORMATION32);
         return status;
 
+    case SystemNumaProcessorMap:
+    {
+        SYSTEM_NUMA_INFORMATION info;
+        SYSTEM_NUMA_INFORMATION32 *info32 = ptr;
+        static const unsigned int max_node_number = ARRAY_SIZE(info32->ActiveProcessorsGroupAffinity) - 1;
+        unsigned int i;
+
+        if (len < sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (len < sizeof(*info32))
+        {
+            if ((status = NtQuerySystemInformation( class, info32, sizeof(ULONG), retlen ))) return status;
+            info32->HighestNodeNumber = min( info32->HighestNodeNumber, max_node_number );
+            return STATUS_SUCCESS;
+        }
+        if (len < sizeof(*info32)) return STATUS_SUCCESS;
+        if ((status = NtQuerySystemInformation( class, &info, sizeof(info), NULL ))) return status;
+        info32->HighestNodeNumber = min( info.HighestNodeNumber, max_node_number );
+        if (retlen)
+            *retlen = offsetof(SYSTEM_NUMA_INFORMATION32, ActiveProcessorsGroupAffinity[info32->HighestNodeNumber + 1]);
+        for (i = 0; i <= info32->HighestNodeNumber; ++i)
+        {
+            info32->ActiveProcessorsGroupAffinity[i].Group = info.ActiveProcessorsGroupAffinity[i].Group;
+            info32->ActiveProcessorsGroupAffinity[i].Mask = info.ActiveProcessorsGroupAffinity[i].Mask;
+            memcpy( info32->ActiveProcessorsGroupAffinity[i].Reserved, info.ActiveProcessorsGroupAffinity[i].Reserved,
+                    sizeof( info32->ActiveProcessorsGroupAffinity[i].Reserved ));
+        }
+        return STATUS_SUCCESS;
+    }
+
     case SystemExtendedHandleInformation:  /* SYSTEM_HANDLE_INFORMATION_EX */
         if (len >= sizeof(SYSTEM_HANDLE_INFORMATION_EX32))
         {

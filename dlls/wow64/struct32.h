@@ -705,6 +705,17 @@ typedef struct
 
 typedef struct
 {
+    ULONG HighestNodeNumber;
+    ULONG Reserved;
+    union {
+        GROUP_AFFINITY32 ActiveProcessorsGroupAffinity[16];
+        ULONGLONG AvailableMemory[16];
+        ULONGLONG Pad[16 * 2];
+    };
+} SYSTEM_NUMA_INFORMATION32;
+
+typedef struct
+{
     ULONG VirtualAddress;
     ULONG NumberOfBytes;
 } MEMORY_RANGE_ENTRY32;
