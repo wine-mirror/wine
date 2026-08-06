@@ -1613,6 +1613,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetNumaNodeProcessorMaskEx( USHORT node, GROUP_AFF
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetNumaProximityNodeEx( ULONG proximity_id, USHORT *node )
 {
+    FIXME( "proximity_id %lu, node %p stub.\n", proximity_id, node );
+
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
