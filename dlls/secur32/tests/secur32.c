@@ -44,6 +44,8 @@ static void (SEC_ENTRY *pSspiFreeAuthIdentity)
     (PSEC_WINNT_AUTH_IDENTITY_OPAQUE);
 static void (SEC_ENTRY *pSspiLocalFree)
     (void *);
+static SECURITY_STATUS (SEC_ENTRY *pSspiMarshalAuthIdentity)
+    (PSEC_WINNT_AUTH_IDENTITY_OPAQUE, ULONG *, char **);
 static SECURITY_STATUS (SEC_ENTRY *pSspiPrepareForCredWrite)
     (PSEC_WINNT_AUTH_IDENTITY_OPAQUE, PCWSTR, PULONG, PCWSTR *, PCWSTR *, PUCHAR *, PULONG);
 static void (SEC_ENTRY *pSspiZeroAuthIdentity)
@@ -415,6 +417,134 @@ static void test_SspiPrepareForCredWrite(void)
     pSspiFreeAuthIdentity( id );
 }
 
+static void test_SspiMarshalAuthIdentity(void)
+{
+    struct
+    {
+        ULONG version;
+        ULONG length;
+        ULONG user_off;
+        ULONG user_len;
+        ULONG domain_off;
+        ULONG domain_len;
+        ULONG password_off;
+        ULONG password_len;
+        ULONG flags;
+        ULONG package_list_off;
+        ULONG package_list_len;
+    } *data;
+
+    PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id;
+    SEC_WINNT_AUTH_IDENTITY_EX2 idex2;
+    SEC_WINNT_AUTH_IDENTITY_EXW idex;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    SECURITY_STATUS status;
+    ULONG len;
+
+    if (!pSspiMarshalAuthIdentity)
+    {
+        todo_wine win_skip( "SspiMarshalAuthIdentity not available\n" );
+        return;
+    }
+
+    status = pSspiEncodeStringsAsAuthIdentity( L"user", L"domain", L"password", &opaque_id );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    status = pSspiMarshalAuthIdentity( opaque_id, &len, (char **)&data );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    ok( len == sizeof(*data) + sizeof(L"userdomainpassword") - sizeof(WCHAR) + sizeof(DWORD), "len = %lu\n", len );
+    ok( data->version == SEC_WINNT_AUTH_IDENTITY_VERSION, "data->version = %lu\n", data->version );
+    ok( data->length == sizeof(*data), "data->length = %lu\n", data->length );
+    ok( data->user_off == sizeof(*data), "data->user_off = %lu\n", data->user_off );
+    ok( data->user_len == wcslen(L"user"), "data->user_len = %lu\n", data->user_len );
+    ok( data->domain_off == data->user_off + data->user_len * sizeof(WCHAR),
+            "data->domain_off = %lu\n", data->domain_off );
+    ok( data->domain_len == wcslen(L"domain"), "data->domain_len = %lu\n", data->domain_len );
+    ok( data->password_off == data->domain_off + data->domain_len * sizeof(WCHAR),
+            "data->password_off = %lu\n", data->password_off );
+    ok( data->password_len == wcslen(L"password"), "data->password_len = %lu\n", data->password_len );
+    ok( data->flags == (SEC_WINNT_AUTH_IDENTITY_UNICODE | SEC_WINNT_AUTH_IDENTITY_MARSHALLED),
+            "data->flags = %lx\n", data->flags );
+    ok( data->package_list_off == 0, "data->package_list_off = %lu\n", data->package_list_off );
+    ok( data->package_list_len == 0, "data->package_list_len = %lu\n", data->package_list_len );
+    ok( !memcmp((BYTE *)data + data->user_off, L"user", data->user_len * sizeof(WCHAR)),
+            "user = %s\n", wine_dbgstr_wn((WCHAR *)((BYTE *)data + data->user_off), data->user_len) );
+    ok( !memcmp((BYTE *)data + data->domain_off, L"domain", data->domain_len * sizeof(WCHAR)),
+            "domain = %s\n", wine_dbgstr_wn((WCHAR *)((BYTE *)data + data->domain_off), data->domain_len) );
+    ok( !memcmp((BYTE *)data + data->password_off, L"password", data->password_len * sizeof(WCHAR)),
+            "password = %s\n", wine_dbgstr_wn((WCHAR *)((BYTE *)data + data->password_off), data->password_len) );
+    pSspiLocalFree( data );
+    pSspiFreeAuthIdentity( opaque_id );
+
+    /* use SEC_WINNT_AUTH_IDENTITY_A as opaque auth identity */
+    memset( &id, 0, sizeof(id) );
+    id.User = (unsigned char *)"user";
+    id.UserLength = strlen( (char *)id.User );
+    id.Domain = (unsigned char *)"domain";
+    id.DomainLength = strlen( (char *)id.Domain );
+    id.Password = (unsigned char*)"password";
+    id.PasswordLength = strlen( (char *)id.Password );
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    status = pSspiMarshalAuthIdentity( &id, &len, (char **)&data );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    ok( len == sizeof(*data) + sizeof("userdomainpassword") - sizeof(char) + sizeof(DWORD), "len = %lu\n", len );
+    ok( data->version == SEC_WINNT_AUTH_IDENTITY_VERSION, "data->version = %lu\n", data->version );
+    ok( data->length == sizeof(*data), "data->length = %lu\n", data->length );
+    ok( data->user_off == sizeof(*data), "data->user_off = %lu\n", data->user_off );
+    ok( data->user_len == wcslen(L"user"), "data->user_len = %lu\n", data->user_len );
+    ok( data->domain_off == data->user_off + data->user_len,
+            "data->domain_off = %lu\n", data->domain_off );
+    ok( data->domain_len == wcslen(L"domain"), "data->domain_len = %lu\n", data->domain_len );
+    ok( data->password_off == data->domain_off + data->domain_len,
+            "data->password_off = %lu\n", data->password_off );
+    ok( data->password_len == wcslen(L"password"), "data->password_len = %lu\n", data->password_len );
+    ok( data->flags == SEC_WINNT_AUTH_IDENTITY_ANSI, "data->flags = %lx\n", data->flags );
+    ok( data->package_list_off == 0, "data->package_list_off = %lu\n", data->package_list_off );
+    ok( data->package_list_len == 0, "data->package_list_len = %lu\n", data->package_list_len );
+    ok( !memcmp((BYTE *)data + data->user_off, "user", data->user_len),
+            "user = %s\n", wine_dbgstr_an((char *)data + data->user_off, data->user_len) );
+    ok( !memcmp((BYTE *)data + data->domain_off, "domain", data->domain_len),
+            "domain = %s\n", wine_dbgstr_an((char *)data + data->domain_off, data->domain_len) );
+    ok( !memcmp((BYTE *)data + data->password_off, "password", data->password_len),
+            "password = %s\n", wine_dbgstr_an((char *)data + data->password_off, data->password_len) );
+    pSspiLocalFree( data );
+
+    /* use SEC_WINNT_AUTH_IDENTITY_EXW as opaque auth identity */
+    memset( &idex, 0, sizeof(idex) );
+    idex.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+    idex.Length = sizeof(idex);
+    idex.User = (WCHAR *)L"user";
+    idex.UserLength = wcslen( L"user" );
+    idex.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+    status = pSspiMarshalAuthIdentity( &idex, &len, (char **)&data );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    ok( len == sizeof(*data) + sizeof(L"user") - sizeof(WCHAR) + sizeof(DWORD), "len = %lu\n", len );
+    ok( data->version == SEC_WINNT_AUTH_IDENTITY_VERSION, "data->version = %lu\n", data->version );
+    ok( data->length == sizeof(*data), "data->length = %lu\n", data->length );
+    ok( data->user_off == sizeof(*data), "data->user_off = %lu\n", data->user_off );
+    ok( data->user_len == wcslen(L"user"), "data->user_len = %lu\n", data->user_len );
+    ok( data->domain_off == 0, "data->domain_off = %lu\n", data->domain_off );
+    ok( data->domain_len == 0, "data->domain_len = %lu\n", data->domain_len );
+    ok( data->password_off == 0, "data->password_off = %lu\n", data->password_off );
+    ok( data->password_len == 0, "data->password_len = %lu\n", data->password_len );
+    ok( data->flags == SEC_WINNT_AUTH_IDENTITY_UNICODE, "data->flags = %lx\n", data->flags );
+    ok( data->package_list_off == 0, "data->package_list_off = %lu\n", data->package_list_off );
+    ok( data->package_list_len == 0, "data->package_list_len = %lu\n", data->package_list_len );
+    ok( !memcmp((BYTE *)data + data->user_off, L"user", data->user_len * sizeof(WCHAR)),
+            "user = %s\n", wine_dbgstr_wn((WCHAR *)((BYTE *)data + data->user_off), data->user_len) );
+    pSspiLocalFree( data );
+
+    /* use SEC_WINNT_AUTH_IDENTITY_EX2 as opaque auth identity */
+    memset( &idex2, 0, sizeof(idex2) );
+    idex2.Version = SEC_WINNT_AUTH_IDENTITY_VERSION_2;
+    idex2.cbHeaderLength = sizeof(idex2);
+    idex2.cbStructureLength = sizeof(idex2);
+    status = pSspiMarshalAuthIdentity( &idex2, &len, (char **)&data );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+    ok( len == sizeof(idex2) + 2 * sizeof(DWORD), "len = %lu\n", len );
+    ok( !memcmp(&idex2, data, sizeof(idex2)), "data differs\n" );
+    pSspiLocalFree( data );
+}
+
 static void test_kerberos(void)
 {
     SecPkgInfoA *info;
@@ -514,6 +644,7 @@ START_TEST(secur32)
         pSspiEncodeStringsAsAuthIdentity = (void *)GetProcAddress(secdll, "SspiEncodeStringsAsAuthIdentity");
         pSspiFreeAuthIdentity = (void *)GetProcAddress(secdll, "SspiFreeAuthIdentity");
         pSspiLocalFree = (void *)GetProcAddress(secdll, "SspiLocalFree");
+        pSspiMarshalAuthIdentity = (void *)GetProcAddress(secdll, "SspiMarshalAuthIdentity");
         pSspiPrepareForCredWrite = (void *)GetProcAddress(secdll, "SspiPrepareForCredWrite");
         pSspiZeroAuthIdentity = (void *)GetProcAddress(secdll, "SspiZeroAuthIdentity");
         pGetComputerObjectNameA = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameA");
@@ -546,6 +677,7 @@ START_TEST(secur32)
         test_InitSecurityInterface();
         test_SspiEncodeStringsAsAuthIdentity();
         test_SspiPrepareForCredWrite();
+        test_SspiMarshalAuthIdentity();
 
         FreeLibrary(secdll);
     }
