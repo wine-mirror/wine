@@ -288,6 +288,7 @@ static void test_SspiEncodeStringsAsAuthIdentity(void)
     static const WCHAR password[] = {'p','a','s','s','w','o','r','d',0};
     const WCHAR *username_ptr, *domainname_ptr, *password_ptr;
     PSEC_WINNT_AUTH_IDENTITY_OPAQUE id;
+    SEC_WINNT_AUTH_IDENTITY_EXW *idex;
     SECURITY_STATUS status;
 
     if (!pSspiEncodeStringsAsAuthIdentity)
@@ -308,6 +309,20 @@ static void test_SspiEncodeStringsAsAuthIdentity(void)
     status = pSspiEncodeStringsAsAuthIdentity( NULL, NULL, password, &id );
     ok( status == SEC_E_OK, "got %08lx\n", status );
     ok( id != NULL, "id not set\n" );
+
+    idex = id;
+    ok( idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION, "Version = %lx\n", idex->Version );
+    ok( idex->Length == sizeof(*idex), "Length = %lu\n", idex->Length );
+    ok( !idex->User, "User = %p\n", idex->User );
+    ok( !idex->UserLength, "UserLength = %lu\n", idex->UserLength );
+    ok( !idex->Domain, "Domain = %p\n", idex->Domain );
+    ok( !idex->DomainLength, "DomainLength = %lu\n", idex->DomainLength );
+    ok( idex->Password == (USHORT *)(idex + 1), "Password = %p, idex = %p\n", idex->Password, idex );
+    ok( idex->PasswordLength == wcslen(password), "PasswordLength = %lu\n", idex->PasswordLength );
+    ok( idex->Flags == (SEC_WINNT_AUTH_IDENTITY_UNICODE | SEC_WINNT_AUTH_IDENTITY_MARSHALLED),
+            "Flags = %lx\n", idex->Flags );
+    ok( !idex->PackageList, "PackageList = %p\n", idex->PackageList );
+    ok( !idex->PackageListLength, "PackageListLength = %lu\n", idex->PackageListLength );
     pSspiFreeAuthIdentity( id );
 
     id = NULL;

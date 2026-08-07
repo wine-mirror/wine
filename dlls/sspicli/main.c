@@ -36,11 +36,11 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
     const WCHAR *username, const WCHAR *domainname, const WCHAR *creds,
     PSEC_WINNT_AUTH_IDENTITY_OPAQUE *opaque_id )
 {
-    SEC_WINNT_AUTH_IDENTITY_W *id;
+    SEC_WINNT_AUTH_IDENTITY_EXW *id;
     DWORD len_username = 0, len_domainname = 0, len_password = 0, size;
     WCHAR *ptr;
 
-    FIXME( "%s %s %s %p\n", debugstr_w(username), debugstr_w(domainname),
+    TRACE( "%s %s %s %p\n", debugstr_w(username), debugstr_w(domainname),
            debugstr_w(creds), opaque_id );
 
     if (!username && !domainname && !creds) return SEC_E_INVALID_TOKEN;
@@ -49,30 +49,30 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
     if (domainname) len_domainname = lstrlenW( domainname );
     if (creds) len_password = lstrlenW( creds );
 
-    size = sizeof(*id);
-    if (username) size += (len_username + 1) * sizeof(WCHAR);
-    if (domainname) size += (len_domainname + 1) * sizeof(WCHAR);
-    if (creds) size += (len_password + 1) * sizeof(WCHAR);
+    size = sizeof(*id) + (len_username + len_domainname + len_password) * sizeof(WCHAR) + sizeof(DWORD);
     if (!(id = calloc( 1, size ))) return ERROR_OUTOFMEMORY;
     ptr = (WCHAR *)(id + 1);
 
+    id->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+    id->Length = sizeof(*id);
+    id->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE | SEC_WINNT_AUTH_IDENTITY_MARSHALLED;
     if (username)
     {
-        memcpy( ptr, username, (len_username + 1) * sizeof(WCHAR) );
+        memcpy( ptr, username, len_username * sizeof(WCHAR) );
         id->User       = ptr;
         id->UserLength = len_username;
-        ptr += len_username + 1;
+        ptr += len_username;
     }
     if (domainname)
     {
-        memcpy( ptr, domainname, (len_domainname + 1) * sizeof(WCHAR) );
+        memcpy( ptr, domainname, len_domainname * sizeof(WCHAR) );
         id->Domain       = ptr;
         id->DomainLength = len_domainname;
-        ptr += len_domainname + 1;
+        ptr += len_domainname;
     }
     if (creds)
     {
-        memcpy( ptr, creds, (len_password + 1) * sizeof(WCHAR) );
+        memcpy( ptr, creds, len_password * sizeof(WCHAR) );
         id->Password       = ptr;
         id->PasswordLength = len_password;
     }
