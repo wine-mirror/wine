@@ -29,6 +29,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sspicli);
 
+struct auth_identity_marshalled
+{
+    ULONG version;
+    ULONG length;
+    ULONG user_off;
+    ULONG user_len;
+    ULONG domain_off;
+    ULONG domain_len;
+    ULONG password_off;
+    ULONG password_len;
+    ULONG flags;
+    ULONG package_list_off;
+    ULONG package_list_len;
+};
+
 /***********************************************************************
  *		SspiEncodeStringsAsAuthIdentity (SECUR32.0)
  */
@@ -277,4 +292,205 @@ err:
     SspiLocalFree( (void *)password );
     SspiLocalFree( (void *)str );
     return SEC_E_INSUFFICIENT_MEMORY;
+}
+
+/***********************************************************************
+ *		SspiMarshalAuthIdentity
+ */
+SECURITY_STATUS SEC_ENTRY SspiMarshalAuthIdentity(
+        PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id, ULONG *len, char **byte_array )
+{
+    SEC_WINNT_AUTH_IDENTITY_EXW *idex = opaque_id;
+    struct auth_identity_marshalled *marshalled;
+    ULONG size, char_size;
+    BYTE *data;
+
+    TRACE( "%p %p %p\n", opaque_id, len, byte_array );
+
+    if (idex->Version >= 0x10000)
+    {
+        SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+        char_size = id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? sizeof(char) : sizeof(WCHAR);
+        size = id->UserLength + id->DomainLength + id->PasswordLength;
+        size = sizeof(*marshalled) + size * char_size + sizeof(DWORD);
+
+        marshalled = LocalAlloc( LMEM_FIXED, size );
+        if (!marshalled) return SEC_E_INSUFFICIENT_MEMORY;
+        memset( marshalled, 0, sizeof(*marshalled) );
+        data = (BYTE *)(marshalled + 1);
+
+        marshalled->version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+        marshalled->length = sizeof(*marshalled);
+        if (id->User)
+        {
+            marshalled->user_off = data - (BYTE *)marshalled;
+            memcpy( data, id->User, id->UserLength * char_size );
+            data += id->UserLength * char_size;
+        }
+        marshalled->user_len = id->UserLength;
+        if (id->Domain)
+        {
+            marshalled->domain_off = data - (BYTE *)marshalled;
+            memcpy( data, id->Domain, id->DomainLength * char_size );
+            data += id->DomainLength * char_size;
+        }
+        marshalled->domain_len = id->DomainLength;
+        if (id->Password)
+        {
+            marshalled->password_off = data - (BYTE *)marshalled;
+            memcpy( data, id->Password, id->PasswordLength * char_size );
+            data += id->PasswordLength * char_size;
+        }
+        marshalled->password_len = id->PasswordLength;
+        marshalled->flags = id->Flags;
+
+        *len = size;
+        *byte_array = (char *)marshalled;
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        char_size = idex->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? sizeof(char) : sizeof(WCHAR);
+        size = idex->UserLength + idex->DomainLength + idex->PasswordLength + idex->PackageListLength;
+        size = sizeof(*marshalled) + size * char_size + sizeof(DWORD);
+
+        marshalled = LocalAlloc( LMEM_FIXED, size );
+        if (!marshalled) return SEC_E_INSUFFICIENT_MEMORY;
+        memset( marshalled, 0, sizeof(*marshalled) );
+        data = (BYTE *)(marshalled + 1);
+
+        marshalled->version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+        marshalled->length = sizeof(*marshalled);
+        if (idex->User)
+        {
+            marshalled->user_off = data - (BYTE *)marshalled;
+            memcpy( data, idex->User, idex->UserLength * char_size );
+            data += idex->UserLength * char_size;
+        }
+        marshalled->user_len = idex->UserLength;
+        if (idex->Domain)
+        {
+            marshalled->domain_off = data - (BYTE *)marshalled;
+            memcpy( data, idex->Domain, idex->DomainLength * char_size );
+            data += idex->DomainLength * char_size;
+        }
+        marshalled->domain_len = idex->DomainLength;
+        if (idex->Password)
+        {
+            marshalled->password_off = data - (BYTE *)marshalled;
+            memcpy( data, idex->Password, idex->PasswordLength * char_size );
+            data += idex->PasswordLength * char_size;
+        }
+        marshalled->password_len = idex->PasswordLength;
+        marshalled->flags = idex->Flags;
+        if (idex->PackageList)
+        {
+            marshalled->package_list_off = data - (BYTE *)marshalled;
+            memcpy( data, idex->PackageList, idex->PackageListLength * char_size );
+            data += idex->PackageListLength * char_size;
+        }
+        marshalled->package_list_len = idex->PackageListLength;
+
+        *len = size;
+        *byte_array = (char *)marshalled;
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+    {
+        SEC_WINNT_AUTH_IDENTITY_EX2 *id = (SEC_WINNT_AUTH_IDENTITY_EX2 *)opaque_id;
+
+        *byte_array = LocalAlloc( LMEM_FIXED, id->cbStructureLength );
+        if (!*byte_array) return SEC_E_INSUFFICIENT_MEMORY;
+        memcpy( *byte_array, id, id->cbStructureLength );
+
+        *len = id->cbStructureLength;
+    }
+    else
+    {
+        FIXME( "auth identity format not handled: %lu\n", idex->Version );
+        return SEC_E_INTERNAL_ERROR;
+    }
+
+    return SEC_E_OK;
+}
+
+/***********************************************************************
+ *		SspiUnmarshalAuthIdentity
+ */
+SECURITY_STATUS SEC_ENTRY SspiUnmarshalAuthIdentity(
+        ULONG len, char *byte_array, PSEC_WINNT_AUTH_IDENTITY_OPAQUE *opaque_id )
+{
+    struct auth_identity_marshalled *marshalled = (struct auth_identity_marshalled *)byte_array;
+
+    TRACE( "%lu %p %p\n", len, byte_array, opaque_id );
+
+    if (len < sizeof(*marshalled)) return SEC_E_INVALID_TOKEN;
+
+    if (marshalled->version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        SEC_WINNT_AUTH_IDENTITY_EXW *ret;
+        ULONG size, char_size;
+        BYTE *data;
+
+        if (marshalled->length != sizeof(*marshalled)) return SEC_E_INVALID_TOKEN;
+
+        char_size = marshalled->flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? sizeof(char) : sizeof(WCHAR);
+        size = marshalled->user_len + marshalled->domain_len +
+            marshalled->password_len + marshalled->package_list_len;
+        size = sizeof(*ret) + size * char_size;
+        ret = LocalAlloc( LMEM_FIXED, size );
+        if (!ret) return SEC_E_INSUFFICIENT_MEMORY;
+        memset( ret, 0, size );
+
+        data = (BYTE *)(ret + 1);
+        ret->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+        ret->Length = sizeof(*ret);
+        if (marshalled->user_off)
+        {
+            ret->User = (WCHAR *)data;
+            memcpy( data, (BYTE *)marshalled + marshalled->user_off, marshalled->user_len * char_size );
+            data += marshalled->user_len * char_size;
+        }
+        ret->UserLength = marshalled->user_len;
+        if (marshalled->domain_off)
+        {
+            ret->Domain = (WCHAR *)data;
+            memcpy( data, (BYTE *)marshalled + marshalled->domain_off, marshalled->domain_len * char_size );
+            data += marshalled->domain_len * char_size;
+        }
+        ret->DomainLength = marshalled->domain_len;
+        if (marshalled->password_off)
+        {
+            ret->Password = (WCHAR *)data;
+            memcpy( data, (BYTE *)marshalled + marshalled->password_off, marshalled->password_len * char_size );
+            data += marshalled->password_len * char_size;
+        }
+        ret->PasswordLength = marshalled->password_len;
+        ret->Flags = marshalled->flags | SEC_WINNT_AUTH_IDENTITY_MARSHALLED;
+        if (marshalled->package_list_off)
+        {
+            ret->PackageList = (WCHAR *)data;
+            memcpy( data, (BYTE *)marshalled + marshalled->package_list_off,
+                    marshalled->package_list_len * char_size );
+            data += marshalled->package_list_len * char_size;
+        }
+        ret->PackageListLength = marshalled->package_list_len;
+
+        *opaque_id = ret;
+        return SEC_E_OK;
+    }
+    else if (marshalled->version == SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+    {
+        SEC_WINNT_AUTH_IDENTITY_EX2 *id, *ret;
+
+        id = (SEC_WINNT_AUTH_IDENTITY_EX2 *)marshalled;
+        if (id->cbStructureLength > len) return SEC_E_INVALID_TOKEN;
+        ret = LocalAlloc( LMEM_FIXED, sizeof(*ret) );
+        if (!ret) return SEC_E_INSUFFICIENT_MEMORY;
+        memcpy( ret, id, id->cbStructureLength );
+
+        *opaque_id = ret;
+        return SEC_E_OK;
+    }
+
+    return SEC_E_INVALID_TOKEN;
 }

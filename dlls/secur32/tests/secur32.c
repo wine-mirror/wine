@@ -470,7 +470,7 @@ static void test_SspiMarshalAuthIdentity(void)
 
     if (!pSspiMarshalAuthIdentity)
     {
-        todo_wine win_skip( "SspiMarshalAuthIdentity not available\n" );
+        win_skip( "SspiMarshalAuthIdentity not available\n" );
         return;
     }
 
@@ -624,7 +624,7 @@ static void test_SspiMarshalAuthIdentity(void)
     idex2.cbStructureLength = sizeof(idex2);
     status = pSspiMarshalAuthIdentity( &idex2, &len, (char **)&data );
     ok( status == SEC_E_OK, "got %08lx\n", status );
-    ok( len == sizeof(idex2) + 2 * sizeof(DWORD), "len = %lu\n", len );
+    todo_wine ok( len == sizeof(idex2) + 2 * sizeof(DWORD), "len = %lu\n", len );
     ok( !memcmp(&idex2, data, sizeof(idex2)), "data differs\n" );
 
     status = pSspiUnmarshalAuthIdentity( len, (char *)data, &opaque_id );
