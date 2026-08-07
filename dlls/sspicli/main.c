@@ -117,6 +117,30 @@ void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
     }
 }
 
+static WCHAR *dup_auth_str( void *data, ULONG len, ULONG flags )
+{
+    ULONG ret_len;
+    WCHAR *ret;
+
+    if (!len) return NULL;
+
+    if (flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+    {
+        ret_len = MultiByteToWideChar( CP_ACP, 0, data, len, NULL, 0 );
+        ret = malloc( (ret_len + 1) * sizeof(WCHAR) );
+        if (!ret) return ret;
+        MultiByteToWideChar( CP_ACP, 0, data, len, ret, ret_len );
+        ret[ret_len] = 0;
+        return ret;
+    }
+
+    ret = malloc( (len + 1) * sizeof(WCHAR) );
+    if (!ret) return ret;
+    memcpy( ret, data, len * sizeof(WCHAR) );
+    ret[len] = 0;
+    return ret;
+}
+
 /***********************************************************************
  *		SspiEncodeAuthIdentityAsStrings (SECUR32.0)
  */
@@ -124,13 +148,30 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
     PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id, PCWSTR *username,
     PCWSTR *domainname, PCWSTR *creds )
 {
-    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+    SEC_WINNT_AUTH_IDENTITY_EXW *idex = (SEC_WINNT_AUTH_IDENTITY_EXW *)opaque_id;
 
-    FIXME("%p %p %p %p\n", opaque_id, username, domainname, creds);
+    TRACE("%p %p %p %p\n", opaque_id, username, domainname, creds);
 
-    *username = wcsdup( id->User );
-    *domainname = wcsdup( id->Domain );
-    *creds = wcsdup( id->Password );
+    if (idex->Version >= 0x10000)
+    {
+        SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+        *username = dup_auth_str( id->User, id->UserLength, id->Flags );
+        *domainname = dup_auth_str( id->Domain, id->DomainLength, id->Flags );
+        *creds = dup_auth_str( id->Password, id->PasswordLength, id->Flags );
+
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        *username = dup_auth_str( idex->User, idex->UserLength, idex->Flags );
+        *domainname = dup_auth_str( idex->Domain, idex->DomainLength, idex->Flags );
+        *creds = dup_auth_str( idex->Password, idex->PasswordLength, idex->Flags );
+    }
+    else
+    {
+        FIXME( "auth identity format not handled: %lu\n", idex->Version );
+        return SEC_E_INTERNAL_ERROR;
+    }
 
     return SEC_E_OK;
 }
