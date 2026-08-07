@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
+static const LSA_SECPKG_FUNCTION_TABLE *lsa_secpkg_table;
+
 enum message_type
 {
     NTLM_NEGOTIATE      = 1,
@@ -341,6 +343,7 @@ static NTSTATUS NTAPI ntlm_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS
                                          LSA_SECPKG_FUNCTION_TABLE *lsa_function_table )
 {
     TRACE( "%#Ix, %p, %p\n", package_id, params, lsa_function_table );
+    lsa_secpkg_table = lsa_function_table;
     return STATUS_SUCCESS;
 }
 
@@ -516,11 +519,19 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
         }
         else
         {
-            if (!OpenThreadToken( GetCurrentThread(), TOKEN_QUERY | TOKEN_DUPLICATE, TRUE, &cred->token ))
+            SECPKG_CLIENT_INFO info;
+            HANDLE h;
+
+            lsa_secpkg_table->GetClientInfo( &info );
+            h = OpenThread( THREAD_QUERY_INFORMATION, FALSE, info.ThreadID );
+            if (!h || !OpenThreadToken( h, TOKEN_QUERY | TOKEN_DUPLICATE, TRUE, &cred->token ))
             {
-                if (!OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &cred->token ))
+                CloseHandle( h );
+                h = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, info.ProcessID );
+                if (!h || !OpenProcessToken( h, TOKEN_QUERY | TOKEN_DUPLICATE, &cred->token ))
                     WARN("failed to get user token (%ld)\n", GetLastError());
             }
+            CloseHandle( h );
         }
 
         *handle = (LSA_SEC_HANDLE)cred;
