@@ -938,6 +938,61 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* SetContextAttributesA */
 };
 
+static NTSTATUS NTAPI lsa_GetClientInfo( SECPKG_CLIENT_INFO *info )
+{
+    FIXME( "%p\n", info );
+
+    memset( info, 0, sizeof(*info) );
+    info->ProcessID = GetCurrentProcessId();
+    info->ThreadID = GetCurrentThreadId();
+    return SEC_E_OK;
+}
+
+static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
+{
+    NULL, /* CreateLogonSession */
+    NULL, /* DeleteLogonSession */
+    NULL, /* AddCredential */
+    NULL, /* GetCredentials */
+    NULL, /* DeleteCredential */
+    NULL, /* AllocateLsaHeap */
+    NULL, /* FreeLsaHeap */
+    NULL, /* AllocateClientBuffer */
+    NULL, /* FreeClientBuffer */
+    NULL, /* CopyToClientBuffer */
+    NULL, /* CopyFromClientBuffer */
+    NULL, /* ImpersonateClient */
+    NULL, /* UnloadPackage */
+    NULL, /* DuplicateHandle */
+    NULL, /* SaveSupplementalCredentials */
+    NULL, /* CreateThread */
+    lsa_GetClientInfo,
+    NULL, /* RegisterNotification */
+    NULL, /* CancelNotification */
+    NULL, /* MapBuffer */
+    NULL, /* CreateToken */
+    NULL, /* AuditLogon */
+    NULL, /* CallPackage */
+    NULL, /* FreeReturnBuffer */
+    NULL, /* GetCallInfo */
+    NULL, /* CallPackageEx */
+    NULL, /* CreateSharedMemory */
+    NULL, /* AllocateSharedMemory */
+    NULL, /* FreeSharedMemory */
+    NULL, /* DeleteSharedMemory */
+    NULL, /* OpenSamUser */
+    NULL, /* GetUserCredentials */
+    NULL, /* GetUserAuthData */
+    NULL, /* CloseSamUser */
+    NULL, /* ConvertAuthDataToToken */
+    NULL, /* ClientCallback */
+    NULL, /* UpdateCredentials */
+    NULL, /* GetAuthDataForUser */
+    NULL, /* CrackSingleName */
+    NULL, /* AuditAccountLogon */
+    NULL, /* CallPackagePassthrough */
+};
+
 static void add_package(struct lsa_package *package)
 {
     struct lsa_package *new_loaded_packages;
@@ -974,7 +1029,8 @@ static BOOL initialize_package(struct lsa_package *package,
                   debugstr_an(package->name->Buffer, package->name->Length),
                   package->lsa_api_version, package->lsa_api, package->lsa_table_count);
 
-            status = package->lsa_api->Initialize(package->package_id, NULL /* FIXME: params */, NULL);
+            status = package->lsa_api->Initialize(package->package_id, NULL /* FIXME: params */,
+                    (LSA_SECPKG_FUNCTION_TABLE *)&lsa_secpkg_table);
             if (status == STATUS_SUCCESS)
             {
                 status = pSpUserModeInitialize(SECPKG_INTERFACE_VERSION, &package->user_api_version, &package->user_api, &package->user_table_count);
