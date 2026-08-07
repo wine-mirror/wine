@@ -1387,7 +1387,6 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
 
         if (SUCCEEDED(hr))
         {
-            //get_doc(doc)->name = (char *)xmlchar_from_wcharn(filename, -1, TRUE);
             doc->node->properties->uri = uri;
             hr = doc->error = S_OK;
             *result = VARIANT_TRUE;
