@@ -200,52 +200,52 @@ void SEC_ENTRY SspiLocalFree( void *ptr )
 SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id,
     PCWSTR target, PULONG type, PCWSTR *targetname, PCWSTR *username, PUCHAR *blob, PULONG size )
 {
-    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+    const WCHAR *user, *domain, *password;
+    SECURITY_STATUS status;
     WCHAR *str, *str2;
-    UCHAR *password;
     ULONG len;
 
     FIXME( "%p %s %p %p %p %p %p\n", opaque_id, debugstr_w(target), type, targetname, username,
            blob, size );
 
-    if (id->DomainLength)
+    status = SspiEncodeAuthIdentityAsStrings( opaque_id, &user, &domain, &password );
+    if (status) return status;
+
+    if (domain)
     {
-        len = (id->DomainLength + id->UserLength + 2) * sizeof(WCHAR);
-        if (!(str = malloc( len ))) return SEC_E_INSUFFICIENT_MEMORY;
-        memcpy( str, id->Domain, id->DomainLength * sizeof(WCHAR) );
-        str[id->DomainLength] = '\\';
-        memcpy( str + id->DomainLength + 1, id->User, id->UserLength * sizeof(WCHAR) );
-        str[id->DomainLength + 1 + id->UserLength] = 0;
+        len = (wcslen( user ) + wcslen( domain ) + 2) * sizeof(WCHAR);
+        if (!(str = malloc( len ))) goto err;
+        wcscpy( str, domain );
+        wcscat( str, L"\\" );
+        wcscat( str, user );
     }
     else
     {
-        len = (id->UserLength + 1) * sizeof(WCHAR);
-        if (!(str = malloc( len ))) return SEC_E_INSUFFICIENT_MEMORY;
-        memcpy( str, id->User, id->UserLength * sizeof(WCHAR) );
-        str[id->UserLength] = 0;
+        len = (wcslen( user ) + 1) * sizeof(WCHAR);
+        if (!(str = malloc( len ))) goto err;
+        wcscpy( str, user );
     }
 
+    str2 = malloc( target ? (wcslen( target ) + 1) * sizeof(WCHAR) : len );
     str2 = target ? wcsdup( target ) : wcsdup( str );
-    if (!str2)
-    {
-        free( str );
-        return SEC_E_INSUFFICIENT_MEMORY;
-    }
+    if (!str2) goto err;
+    wcscpy( str2, target ? target : str );
 
-    len = id->PasswordLength * sizeof(WCHAR);
-    if (!(password = malloc( len )))
-    {
-        free( str );
-        free( str2 );
-        return SEC_E_INSUFFICIENT_MEMORY;
-    }
-    memcpy( password, id->Password, len );
+    SspiLocalFree( (void *)user );
+    SspiLocalFree( (void *)domain );
 
     *type = CRED_TYPE_DOMAIN_PASSWORD;
     *username = str;
     *targetname = str2;
-    *blob = password;
-    *size = len;
-
+    *blob = (UCHAR *)password;
+    *size = wcslen( password ) * sizeof(WCHAR);
     return SEC_E_OK;
+
+err:
+    SspiLocalFree( (void *)user );
+    SspiLocalFree( (void *)domain );
+    if (password) SecureZeroMemory( (void *)password, wcslen(password) * sizeof(WCHAR) );
+    SspiLocalFree( (void *)password );
+    SspiLocalFree( (void *)str );
+    return SEC_E_INSUFFICIENT_MEMORY;
 }
