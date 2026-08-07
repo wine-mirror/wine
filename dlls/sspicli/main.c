@@ -181,7 +181,36 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
  */
 void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 {
+    SEC_WINNT_AUTH_IDENTITY_EXW *idex = (SEC_WINNT_AUTH_IDENTITY_EXW *)opaque_id;
+
     TRACE( "%p\n", opaque_id );
+
+    SspiZeroAuthIdentity( opaque_id );
+
+    if (idex->Version >= 0x10000)
+    {
+        SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+        if (!(id->Flags & SEC_WINNT_AUTH_IDENTITY_MARSHALLED))
+        {
+            SspiLocalFree( id->User );
+            SspiLocalFree( id->Domain );
+            SspiLocalFree( id->Password );
+        }
+    }
+    else if (idex->Version == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        if (!(idex->Flags & SEC_WINNT_AUTH_IDENTITY_MARSHALLED))
+        {
+            SspiLocalFree( idex->User );
+            SspiLocalFree( idex->Domain );
+            SspiLocalFree( idex->Password );
+        }
+    }
+    else if (idex->Version != SEC_WINNT_AUTH_IDENTITY_VERSION_2)
+    {
+        FIXME( "auth identity format not handled: %lu\n", idex->Version );
+    }
     SspiLocalFree( opaque_id );
 }
 
