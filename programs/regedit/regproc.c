@@ -28,6 +28,9 @@
 #include <commctrl.h>
 
 #include "main.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 #define REG_VAL_BUF_SIZE        4096
 
@@ -1441,7 +1444,7 @@ static HKEY open_export_key(HKEY key_class, WCHAR *subkey, WCHAR *path)
     if (!RegOpenKeyExW(key_class, subkey, 0, KEY_READ, &key))
         return key;
 
-    output_message(STRING_OPEN_KEY_FAILED, path);
+    TRACE("Failed to open key %s\n", debugstr_w(path));
     return NULL;
 }
 
