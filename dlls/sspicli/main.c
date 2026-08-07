@@ -127,14 +127,14 @@ static WCHAR *dup_auth_str( void *data, ULONG len, ULONG flags )
     if (flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
     {
         ret_len = MultiByteToWideChar( CP_ACP, 0, data, len, NULL, 0 );
-        ret = malloc( (ret_len + 1) * sizeof(WCHAR) );
+        ret = LocalAlloc( LMEM_FIXED, (ret_len + 1) * sizeof(WCHAR) );
         if (!ret) return ret;
         MultiByteToWideChar( CP_ACP, 0, data, len, ret, ret_len );
         ret[ret_len] = 0;
         return ret;
     }
 
-    ret = malloc( (len + 1) * sizeof(WCHAR) );
+    ret = LocalAlloc( LMEM_FIXED, (len + 1) * sizeof(WCHAR) );
     if (!ret) return ret;
     memcpy( ret, data, len * sizeof(WCHAR) );
     ret[len] = 0;
@@ -182,7 +182,7 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
 void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 {
     TRACE( "%p\n", opaque_id );
-    free( opaque_id );
+    SspiLocalFree( opaque_id );
 }
 
 /***********************************************************************
@@ -191,7 +191,7 @@ void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 void SEC_ENTRY SspiLocalFree( void *ptr )
 {
     TRACE( "%p\n", ptr );
-    free( ptr );
+    LocalFree( ptr );
 }
 
 /***********************************************************************
@@ -214,7 +214,7 @@ SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQ
     if (domain)
     {
         len = (wcslen( user ) + wcslen( domain ) + 2) * sizeof(WCHAR);
-        if (!(str = malloc( len ))) goto err;
+        if (!(str = LocalAlloc( LMEM_FIXED, len ))) goto err;
         wcscpy( str, domain );
         wcscat( str, L"\\" );
         wcscat( str, user );
@@ -222,11 +222,11 @@ SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQ
     else
     {
         len = (wcslen( user ) + 1) * sizeof(WCHAR);
-        if (!(str = malloc( len ))) goto err;
+        if (!(str = LocalAlloc( LMEM_FIXED, len ))) goto err;
         wcscpy( str, user );
     }
 
-    str2 = malloc( target ? (wcslen( target ) + 1) * sizeof(WCHAR) : len );
+    str2 = LocalAlloc( LMEM_FIXED, target ? (wcslen( target ) + 1) * sizeof(WCHAR) : len );
     str2 = target ? wcsdup( target ) : wcsdup( str );
     if (!str2) goto err;
     wcscpy( str2, target ? target : str );
