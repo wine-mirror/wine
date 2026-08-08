@@ -41,6 +41,7 @@ enum d2d_command_type
     D2D_COMMAND_DRAW_RECTANGLE,
     D2D_COMMAND_DRAW_BITMAP,
     D2D_COMMAND_DRAW_IMAGE,
+    D2D_COMMAND_DRAW_SPRITE_BATCH,
     D2D_COMMAND_FILL_MESH,
     D2D_COMMAND_FILL_OPACITY_MASK,
     D2D_COMMAND_FILL_GEOMETRY,
@@ -205,6 +206,17 @@ struct d2d_command_draw_image
     D2D1_COMPOSITE_MODE composite_mode;
     D2D1_POINT_2F *target_offset;
     D2D1_RECT_F *image_rect;
+};
+
+struct d2d_command_draw_sprite_batch
+{
+    struct d2d_command c;
+    ID2D1SpriteBatch *sprite_batch;
+    ID2D1Bitmap *bitmap;
+    UINT32 start_index;
+    UINT32 sprite_count;
+    D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
+    D2D1_SPRITE_OPTIONS sprite_options;
 };
 
 static inline struct d2d_command_list *impl_from_ID2D1CommandList(ID2D1CommandList *iface)
@@ -411,6 +423,24 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
                 const struct d2d_command_draw_image *c = data;
                 hr = ID2D1CommandSink_DrawImage(sink, c->image, c->target_offset, c->image_rect,
                         c->interpolation_mode, c->composite_mode);
+                break;
+            }
+            case D2D_COMMAND_DRAW_SPRITE_BATCH:
+            {
+                const struct d2d_command_draw_sprite_batch *c = data;
+                ID2D1CommandSink3 *sink3;
+
+                if (SUCCEEDED(ID2D1CommandSink_QueryInterface(sink, &IID_ID2D1CommandSink3, (void **)&sink3)))
+                {
+                    hr = ID2D1CommandSink3_DrawSpriteBatch(sink3, c->sprite_batch, c->start_index,
+                            c->sprite_count, c->bitmap, c->interpolation_mode, c->sprite_options);
+                    ID2D1CommandSink3_Release(sink3);
+                }
+                else
+                {
+                    FIXME("DrawSpriteBatch() fallback is not implemented.\n");
+                    hr = E_NOTIMPL;
+                }
                 break;
             }
             case D2D_COMMAND_FILL_MESH:
@@ -1046,6 +1076,28 @@ void d2d_command_list_draw_image(struct d2d_command_list *command_list, ID2D1Ima
 
     d2d_command_list_write_field(&data, &command->target_offset, target_offset, sizeof(*target_offset));
     d2d_command_list_write_field(&data, &command->image_rect, image_rect, sizeof(*image_rect));
+}
+
+void d2d_command_list_draw_sprite_batch(struct d2d_command_list *command_list, ID2D1SpriteBatch *sprite_batch,
+    UINT32 start_index, UINT32 sprite_count, ID2D1Bitmap *bitmap, D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
+    D2D1_SPRITE_OPTIONS sprite_options)
+{
+    struct d2d_command_draw_sprite_batch *command;
+    size_t size;
+
+    size = sizeof(*command);
+
+    d2d_command_list_reference_object(command_list, sprite_batch);
+    d2d_command_list_reference_object(command_list, bitmap);
+
+    command = d2d_command_list_require_space(command_list, size);
+    command->c.op = D2D_COMMAND_DRAW_SPRITE_BATCH;
+    command->sprite_batch = sprite_batch;
+    command->bitmap = bitmap;
+    command->start_index = start_index;
+    command->sprite_count = sprite_count;
+    command->interpolation_mode = interpolation_mode;
+    command->sprite_options = sprite_options;
 }
 
 void d2d_command_list_fill_mesh(struct d2d_command_list *command_list, const struct d2d_device_context *context,

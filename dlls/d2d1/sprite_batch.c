@@ -272,3 +272,11 @@ HRESULT d2d_sprite_batch_create(ID2D1Factory *factory, struct d2d_sprite_batch *
 
     return S_OK;
 }
+
+struct d2d_sprite_batch *unsafe_impl_from_ID2D1SpriteBatch(ID2D1SpriteBatch *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d2d_sprite_batch_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_sprite_batch, ID2D1SpriteBatch_iface);
+}

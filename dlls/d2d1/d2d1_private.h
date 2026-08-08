@@ -480,6 +480,7 @@ struct d2d_sprite_batch
 };
 
 HRESULT d2d_sprite_batch_create(ID2D1Factory *factory, struct d2d_sprite_batch **batch);
+struct d2d_sprite_batch *unsafe_impl_from_ID2D1SpriteBatch(ID2D1SpriteBatch *iface);
 
 struct d2d_state_block
 {
