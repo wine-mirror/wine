@@ -2325,6 +2325,7 @@ static void testCreateSelfSignCert(void)
     ok(!ret_info->dwFlags, "got %#lx.\n", ret_info->dwFlags);
     ok(ret_info->pwszContainerName && *ret_info->pwszContainerName, "got %s.\n",
             debugstr_w(ret_info->pwszContainerName));
+    ok(!wcscmp(ret_info->pwszProvName, MS_STRONG_PROV_W), "got %s.\n", debugstr_w(ret_info->pwszProvName));
     ret = CryptAcquireContextW(&csp, ret_info->pwszContainerName, ret_info->pwszProvName, ret_info->dwProvType, 0);
     ok(ret, "failed, error %#lx.\n", GetLastError());
     ret = CryptGetUserKey(csp, AT_SIGNATURE, &key);

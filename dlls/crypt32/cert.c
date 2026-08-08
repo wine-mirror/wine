@@ -3783,7 +3783,7 @@ static HCRYPTPROV CRYPT_CreateKeyProv(void)
 
     if (!container) return 0;
 
-    if (CryptAcquireContextW( &hProv, container, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET ))
+    if (CryptAcquireContextW( &hProv, container, MS_STRONG_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET ))
     {
         HCRYPTKEY key;
         if (CryptGenKey( hProv, AT_SIGNATURE, 0, &key ))
