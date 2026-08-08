@@ -997,7 +997,7 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
     }
     case WINHTTP_OPTION_SERVER_CBT:
     {
-        SecPkgContext_Bindings cbt;
+        SecPkgContext_Bindings cbt, *cbt_dest;
         SECURITY_STATUS status;
         DWORD size;
 
@@ -1010,8 +1010,10 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
             FreeContextBuffer( cbt.Bindings );
             return FALSE;
         }
-        memcpy( buffer, &cbt, sizeof(cbt) );
-        memcpy( (char *)buffer + sizeof(cbt), cbt.Bindings, cbt.BindingsLength );
+        cbt_dest = (SecPkgContext_Bindings *)buffer;
+        memcpy( cbt_dest, &cbt, sizeof(cbt) );
+        cbt_dest->Bindings = (SEC_CHANNEL_BINDINGS *)(cbt_dest + 1);
+        memcpy( cbt_dest->Bindings, cbt.Bindings, cbt.BindingsLength );
         *buflen = size;
 
         FreeContextBuffer( cbt.Bindings );
