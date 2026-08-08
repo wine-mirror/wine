@@ -18400,11 +18400,11 @@ static void test_element_setNamedItem(void)
 
 static void test_document_stream(void)
 {
+    IPersistStreamInit *streaminit, *streaminit2;
     IStream *stream, *stream2, *cloned_stream;
-    IPersistStreamInit *streaminit;
+    IXMLDOMDocument *doc, *doc2;
     ULARGE_INTEGER pos, size;
     IUnknown *unk, *unk2;
-    IXMLDOMDocument *doc;
     IXMLDOMElement *root;
     IXMLDOMNode *node;
     LARGE_INTEGER off;
@@ -18497,12 +18497,25 @@ static void test_document_stream(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMElement_appendChild(root, node, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IXMLDOMElement_Release(root);
     IXMLDOMNode_Release(node);
 
     hr = IPersistStreamInit_IsDirty(streaminit);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Check if separate document instance reflects same dirty state. */
+    hr = IXMLDOMElement_get_ownerDocument(root, &doc2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(doc2 != doc, "Unexpected instance.\n");
+    hr = IXMLDOMDocument_QueryInterface(doc2, &IID_IPersistStreamInit, (void **)&streaminit2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_IsDirty(streaminit2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IPersistStreamInit_Release(streaminit2);
+    IXMLDOMDocument_Release(doc2);
+
+    IXMLDOMElement_Release(root);
 
     hr = IXMLDOMDocument_get_xml(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
