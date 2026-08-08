@@ -2598,7 +2598,9 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CERT_ROOT_PROGRAM_CERT_POLICIES_PROP_ID    83
 #define CERT_ROOT_PROGRAM_NAME_CONSTRAINTS_PROP_ID 84
 
-#define CERT_FIRST_RESERVED_PROP_ID                85
+#define CERT_SIGN_HASH_CNG_ALG_PROP_ID             89
+
+#define CERT_FIRST_RESERVED_PROP_ID                130
 #define CERT_LAST_RESERVED_PROP_ID                 0x00007fff
 #define CERT_FIRST_USER_PROP_ID                    0x00008000
 #define CERT_LAST_USER_PROP_ID                     0x0000ffff

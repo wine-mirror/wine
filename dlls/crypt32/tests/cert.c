@@ -372,6 +372,7 @@ static void testCertProperties(void)
     CRYPT_DATA_BLOB blob;
     CERT_KEY_CONTEXT keyContext;
     unsigned int value;
+    WCHAR *cng_alg;
 
     ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n", GetLastError());
 
@@ -693,6 +694,16 @@ static void testCertProperties(void)
     if (ret)
         ok(!memcmp(hashProperty, selfSignedSignatureHash, size),
          "unexpected value\n");
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = CertGetCertificateContextProperty(context, CERT_SIGN_HASH_CNG_ALG_PROP_ID, NULL, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    cng_alg = malloc(size);
+    ret = CertGetCertificateContextProperty(context, CERT_SIGN_HASH_CNG_ALG_PROP_ID, cng_alg, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(!wcscmp(cng_alg, L"RSA/SHA1"), "got %s\n", wine_dbgstr_w(cng_alg));
+    free(cng_alg);
     CertFreeCertificateContext(context);
 }
 
