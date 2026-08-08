@@ -549,11 +549,10 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
     if (wmemchr(firstModifier, 's', modifierLen) != NULL) {
       if (finaloutput[0] != 0x00) lstrcatW(finaloutput, L" ");
 
-      /* GetShortPathNameW converts each existing path component to its
-         short form and leaves non-existing components as-is. If it fails
-         (e.g. the drive doesn't exist), fall back to converting just the
-         directory portion and appending the filename unchanged.          */
-      if (!GetShortPathNameW(fullfilename, fullfilename, ARRAY_SIZE(fullfilename)) && filepart) {
+      /* Convert fullfilename's path to a short path - Save filename away as
+         only path is valid, name may not exist which causes GetShortPathName
+         to fail if it is provided                                            */
+      if (filepart) {
         lstrcpyW(thisoutput, filepart);
         *filepart = 0x00;
         GetShortPathNameW(fullfilename, fullfilename, ARRAY_SIZE(fullfilename));
