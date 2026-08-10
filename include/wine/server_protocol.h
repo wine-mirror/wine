@@ -4017,12 +4017,10 @@ struct get_window_properties_reply
 struct create_winstation_request
 {
     struct request_header __header;
-    unsigned int flags;
     unsigned int access;
-    unsigned int attributes;
-    obj_handle_t rootdir;
-    /* VARARG(name,unicode_str); */
-    char __pad_28[4];
+    unsigned int flags;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
 };
 struct create_winstation_reply
 {
@@ -4120,10 +4118,10 @@ struct enum_winstation_reply
 struct create_desktop_request
 {
     struct request_header __header;
-    unsigned int flags;
     unsigned int access;
-    unsigned int attributes;
-    /* VARARG(name,unicode_str); */
+    unsigned int flags;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
 };
 struct create_desktop_reply
 {
@@ -7179,6 +7177,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 958
+#define SERVER_PROTOCOL_VERSION 959
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

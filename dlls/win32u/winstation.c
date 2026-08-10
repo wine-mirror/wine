@@ -364,24 +364,31 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK a
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 )
 {
     HANDLE ret;
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len )))
+    {
+        RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
+        return 0;
+    }
 
     SERVER_START_REQ( create_winstation )
     {
-        req->flags      = 0;
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        req->access = access;
+        req->flags  = 0;
+        wine_server_add_data( req, objattr, len );
         wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+    free( objattr );
     return ret;
 }
 
@@ -462,6 +469,9 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 {
     WCHAR buffer[MAX_PATH];
     HANDLE ret;
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if ((device && device->Length) || (devmode && !(flags & DF_WINE_VIRTUAL_DESKTOP)))
     {
@@ -473,16 +483,21 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len )))
+    {
+        RtlSetLastWin32Error( RtlNtStatusToDosError(status) );
+        return 0;
+    }
     SERVER_START_REQ( create_desktop )
     {
-        req->flags      = flags;
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        req->access = access;
+        req->flags  = flags;
+        wine_server_add_data( req, objattr, len );
         wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+    free( objattr );
     if (!devmode) return ret;
 
     lstrcpynW( buffer, attr->ObjectName->Buffer, attr->ObjectName->Length / sizeof(WCHAR) + 1 );

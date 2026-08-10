@@ -2032,11 +2032,9 @@ static void dump_get_window_properties_reply( const struct get_window_properties
 
 static void dump_create_winstation_request( const struct create_winstation_request *req )
 {
-    fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
-    dump_varargs_unicode_str( ", name=", cur_size );
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", flags=%08x", req->flags );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_winstation_reply( const struct create_winstation_reply *req )
@@ -2101,10 +2099,9 @@ static void dump_enum_winstation_reply( const struct enum_winstation_reply *req 
 
 static void dump_create_desktop_request( const struct create_desktop_request *req )
 {
-    fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    dump_varargs_unicode_str( ", name=", cur_size );
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", flags=%08x", req->flags );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_desktop_reply( const struct create_desktop_reply *req )

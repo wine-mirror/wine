@@ -2973,11 +2973,9 @@ enum coords_relative
 
 /* Create a window station */
 @REQ(create_winstation)
-    unsigned int flags;           /* window station flags */
     unsigned int access;          /* wanted access rights */
-    unsigned int attributes;      /* object attributes */
-    obj_handle_t rootdir;         /* root directory */
-    VARARG(name,unicode_str);     /* object name */
+    unsigned int flags;           /* window station flags */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;          /* handle to the window station */
 @END
@@ -3034,10 +3032,9 @@ enum coords_relative
 
 /* Create a desktop */
 @REQ(create_desktop)
-    unsigned int flags;           /* desktop flags */
     unsigned int access;          /* wanted access rights */
-    unsigned int attributes;      /* object attributes */
-    VARARG(name,unicode_str);     /* object name */
+    unsigned int flags;           /* desktop flags */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;          /* handle to the desktop */
 @END

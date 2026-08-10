@@ -565,19 +565,11 @@ void release_thread_desktop( struct thread *thread, int close )
 /* create a window station */
 DECL_HANDLER(create_winstation)
 {
-    struct winstation *winstation;
     struct winstation_init_data data = { .flags = req->flags };
-    struct object_params params = { .ops = &winstation_ops, .name = get_req_unicode_str(),
-                                    .attr = req->attributes, .init_data = &data };
+    struct object_params params = { .ops = &winstation_ops, .access = req->access, .init_data = &data };
 
-    if (req->rootdir && !(params.root = get_directory_obj( current->process, req->rootdir ))) return;
-
-    if ((winstation = create_named_object( &params )))
-    {
-        clear_error();
-        reply->handle = alloc_handle( current->process, winstation, req->access, req->attributes );
-        release_object( winstation );
-    }
+    if (!get_req_object_attributes( &params )) return;
+    if ((reply->handle = create_named_obj_handle( current->process, &params ))) clear_error();
     if (params.root) release_object( params.root );
 }
 
@@ -665,8 +657,10 @@ DECL_HANDLER(create_desktop)
 {
     struct desktop *desktop;
     struct desktop_init_data data = { .flags = req->flags };
-    struct object_params params = { .ops = &desktop_ops, .name = get_req_unicode_str(),
-                                    .attr = req->attributes, .init_data = &data };
+    struct object_params params = { .ops = &desktop_ops, .init_data = &data };
+
+    if (!get_req_object_attributes( &params )) return;
+    if (params.root) release_object( params.root );
 
     if (!params.name.len)
     {
@@ -689,7 +683,7 @@ DECL_HANDLER(create_desktop)
             }
 
             if (!data.winstation->input_desktop) set_input_desktop( data.winstation, desktop );
-            reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, desktop, req->access, params.attr );
             release_object( desktop );
         }
         release_object( data.winstation );
