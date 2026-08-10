@@ -1910,6 +1910,10 @@ static void test_FreeThreadedXMLHTTP60(void)
         return;
     }
 
+    check_interface(xhr, &IID_IUnknown, TRUE);
+    check_interface(xhr, &IID_IXMLHTTPRequest2, TRUE);
+    check_interface(xhr, &IID_IXMLHTTPRequest3, TRUE);
+
     event = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback = xhr_create_callback(event);
     hr = IXMLHTTPRequest2_Open(xhr, L"GET", L"http://test.winehq.org/data/", callback, NULL, NULL, NULL, NULL);
