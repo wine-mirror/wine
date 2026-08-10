@@ -4031,6 +4031,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemProcessorBrandString:  /* 105 */
+#if !defined(__i386__) && !defined(__x86_64__)
+        return STATUS_NOT_SUPPORTED;
+#endif
         if (!cpu_name[0]) return STATUS_NOT_SUPPORTED;
         if ((ULONG_PTR)info & 3) return STATUS_DATATYPE_MISALIGNMENT;
         len = sizeof(cpu_name);
