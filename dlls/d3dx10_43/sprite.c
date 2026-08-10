@@ -25,6 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 #define D3DERR_INVALIDCALL 0x8876086c
+#define D3DX10_SPRITE_READY 0x10000000
 
 struct d3dx10_sprite
 {
@@ -33,6 +34,7 @@ struct d3dx10_sprite
 
     D3DXMATRIX projection;
     ID3D10Device *device;
+    unsigned int flags;
 };
 
 static inline struct d3dx10_sprite *impl_from_ID3DX10Sprite(ID3DX10Sprite *iface)
@@ -86,22 +88,39 @@ static ULONG WINAPI d3dx10_sprite_Release(ID3DX10Sprite *iface)
 
 static HRESULT WINAPI d3dx10_sprite_Begin(ID3DX10Sprite *iface, UINT flags)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    if (sprite->flags & D3DX10_SPRITE_READY)
+        return E_FAIL;
+
+    sprite->flags = flags | D3DX10_SPRITE_READY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx10_sprite_DrawSpritesBuffered(ID3DX10Sprite *iface,
         D3DX10_SPRITE *sprites, UINT count)
 {
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
+
     FIXME("iface %p, sprites %p, count %u stub!\n", iface, sprites, count);
+
+    if (!(sprite->flags & D3DX10_SPRITE_READY))
+        return E_FAIL;
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3dx10_sprite_Flush(ID3DX10Sprite *iface)
 {
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
+
     FIXME("iface %p stub!\n", iface);
+
+    if (!(sprite->flags & D3DX10_SPRITE_READY))
+        return E_FAIL;
 
     return E_NOTIMPL;
 }
@@ -109,17 +128,29 @@ static HRESULT WINAPI d3dx10_sprite_Flush(ID3DX10Sprite *iface)
 static HRESULT WINAPI d3dx10_sprite_DrawSpritesImmediate(ID3DX10Sprite *iface,
         D3DX10_SPRITE *sprites, UINT count, UINT size, UINT flags)
 {
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
+
     FIXME("iface %p, sprites %p, count %u, size %u, flags %#x stub!\n",
             iface, sprites, count, size, flags);
+
+    if (!(sprite->flags & D3DX10_SPRITE_READY))
+        return E_FAIL;
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3dx10_sprite_End(ID3DX10Sprite *iface)
 {
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
+
     FIXME("iface %p stub!\n", iface);
 
-    return E_NOTIMPL;
+    if (!(sprite->flags & D3DX10_SPRITE_READY))
+        return E_FAIL;
+
+    sprite->flags = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx10_sprite_GetViewTransform(ID3DX10Sprite *iface, D3DXMATRIX *transform)
