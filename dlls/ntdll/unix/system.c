@@ -692,6 +692,13 @@ static void init_cpu_model(void)
         }
         fclose( f );
     }
+#elif defined(__APPLE__)
+    size_t size = sizeof(cpu_name);
+
+    if (sysctlbyname( "machdep.cpu.brand_string", cpu_name, &size, NULL, 0 ))
+        cpu_name[sizeof(cpu_name) - 1] = '\0';
+
+    implementer = 0x61;
 #endif
     cpu_level = part;
     cpu_revision = (variant << 8) | revision;
@@ -707,6 +714,7 @@ static void init_cpu_model(void)
     case 0x51: strcpy( cpu_vendor, "Qualcomm" ); break;
     case 0x53: strcpy( cpu_vendor, "Samsung" ); break;
     case 0x56: strcpy( cpu_vendor, "Marvell" ); break;
+    case 0x61: strcpy( cpu_vendor, "Apple" ); break;
     case 0x66: strcpy( cpu_vendor, "Faraday" ); break;
     case 0x69: strcpy( cpu_vendor, "Intel" ); break;
     }
