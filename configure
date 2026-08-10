@@ -6525,14 +6525,6 @@ case $build_os in
 esac
 
 case $host_os in
-  mingw32*)
-    enable_archs=${enable_archs:-$HOST_ARCH}
-    eval "${HOST_ARCH}_CC=\$CC"
-    with_mingw=${with_mingw:-no}
-    ;;
-esac
-
-case $host_os in
   mingw32*|cygwin*)
         enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
@@ -7328,10 +7320,23 @@ then :
          esac
      done
 else case e in #(
-  e) if test "x$with_mingw" != xno
-     then
-         test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
-     fi ;;
+  e) cross_archs=$HOST_ARCH
+     case $HOST_ARCH-$host_os in
+       unknown-*) PE_ARCHS=none ;;
+       *-mingw32*) eval "${HOST_ARCH}_CC=\$CC" ;;
+       x86_64-darwin*|arm-*|aarch64-*|*-cygwin*) if test "x$with_mingw" = xno
+then :
+  as_fn_error $? "The --without-mingw option is not supported on $HOST_ARCH-$host_os." "$LINENO" 5
+fi ;;
+       *) if test "x$with_mingw" = xno
+then :
+  cross_archs=""
+else case e in #(
+  e) mingw_notice="
+Use the --without-mingw option if you really want a non-PE build." ;;
+esac
+fi ;;
+     esac ;;
 esac
 fi
 
@@ -7355,6 +7360,8 @@ do
     x86_64) extra_arch="" ;;
   esac
 done
+
+
 
 for wine_arch in $cross_archs $extra_arch
 do
@@ -7834,14 +7841,19 @@ fi
     fi
 
     if test -z "$target"
-    then
-        if test ${enable_archs+y}
 then :
-  as_fn_error $? "$wine_arch PE cross-compiler not found.
+  if test ${enable_archs+y}
+then :
+  as_fn_error $? "$wine_arch PE compiler not found.
+Please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw.
 This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+else case e in #(
+  e) as_fn_error $? "$wine_arch PE compiler not found.
+Please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw.$mingw_notice" "$LINENO" 5 ;;
+esac
 fi
-        continue
-    fi
+     continue
+fi
 
     eval "${wine_arch}_TARGET=\$target"
     eval "${wine_arch}_STRIP=\$target_strip"
@@ -7887,18 +7899,23 @@ fi
       x) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
 printf '%s\n' "none needed" >&6; } ;;
       xno) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
-printf '%s\n' "unsupported" >&6; }
-           if test ${enable_archs+y}
-then :
-  as_fn_error $? "$wine_arch PE cross-compiler supporting C99 not found.
-This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
-fi
-           continue
-           ;;
+printf '%s\n' "unsupported" >&6; } ;;
       x*) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $res" >&5
 printf '%s\n' "$res" >&6; }
           as_fn_append ${wine_arch}_CC " $res" ;;
     esac
+    if test "x$res" = xno
+then :
+  if test ${enable_archs+y}
+then :
+  as_fn_error $? "The $wine_arch PE compiler doesn't support C99.
+This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+else case e in #(
+  e) as_fn_error $? "The $wine_arch PE compiler doesn't support C99.$mingw_notice" "$LINENO" 5 ;;
+esac
+fi
+     continue
+fi
 
     if test "x$wine_arch" = xi386
 then :
@@ -7938,17 +7955,17 @@ eval ac_res=\$$as_wine_cv_seh_support
 printf '%s\n' "$ac_res" >&6; }
                eval res=\$$as_wine_cv_seh_support
 
-               if test "x$res" = xyes
+               if test "x$res" != xyes
 then :
-
-else case e in #(
-  e) if test ${enable_archs+y}
+  if test ${enable_archs+y}
 then :
-  as_fn_error $? "The $wine_arch PE cross-compiler doesn't support SEH directives.
+  as_fn_error $? "The $wine_arch PE compiler doesn't support SEH directives.
 This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
-fi
-                          continue ;;
+else case e in #(
+  e) as_fn_error $? "The $wine_arch PE compiler doesn't support SEH directives.$mingw_notice" "$LINENO" 5 ;;
 esac
+fi
+     continue
 fi ;;
 esac
 fi
@@ -8766,7 +8783,7 @@ printf '%s\n' "none needed" >&6; }
          enable_cplusplus="$enable_cplusplus,$wine_arch" ;;
       xno) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
 printf '%s\n' "unsupported" >&6; }
-           as_fn_append wine_warnings "|$wine_arch PE cross-compiler supporting C++17 not found, some modules won't be built." ;;
+           as_fn_append wine_warnings "|$wine_arch PE compiler supporting C++17 not found, some modules won't be built." ;;
       x*) { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $res" >&5
 printf '%s\n' "$res" >&6; }
           as_fn_append ${wine_arch}_CXX " $res"
@@ -10480,22 +10497,11 @@ CXXFLAGS=$saved_CXXFLAGS
 LDFLAGS=$saved_LDFLAGS
 
 case $HOST_ARCH-$host_os in
-  x86_64-darwin*|arm-*|aarch64-*|*-cygwin*)
-    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $host, please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+  x86_64-darwin*|arm-*|aarch64-*|*-cygwin*|*-mingw32*)
     DLLEXT="" ;;
   *)
     DLLEXT=".so"
-
-    if test "x$PE_ARCHS" = "x"
-then :
-  case "x$with_mingw" in
-  x)   as_fn_append wine_warnings "|Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw." ;;
-  xno) ;;
-  *)   as_fn_error $? "Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw.
-This is an error since --with-mingw was requested." "$LINENO" 5 ;;
-esac
-
-fi ;;
+ ;;
 esac
 
 
@@ -12358,7 +12364,6 @@ wine_fn_config_makefile ()
 case $host_os in
   cygwin*|mingw32*)
     LIBEXT="dll"
-    DLLEXT=""
     ;;
 
   darwin*)
