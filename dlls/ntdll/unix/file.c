@@ -4634,7 +4634,7 @@ NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK acce
     unsigned int status;
     data_size_t len;
 
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     SERVER_START_REQ( create_file )
     {
@@ -4785,7 +4785,7 @@ NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRI
 
     *handle = 0;
     if (!attr) return STATUS_INVALID_PARAMETER;
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     SERVER_START_REQ( create_mailslot )
     {
@@ -4827,7 +4827,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
     /* assume we only get relative timeout */
     if (timeout && timeout->QuadPart > 0) FIXME( "Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart) );
 
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     SERVER_START_REQ( create_named_pipe )
     {

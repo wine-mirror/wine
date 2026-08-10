@@ -81,7 +81,7 @@ NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
     *key = 0;
     if (attr->Length != sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
     if (!attr->ObjectName->Length && !attr->RootDirectory) return STATUS_OBJECT_PATH_SYNTAX_BAD;
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+    if ((ret = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return ret;
     objattr->attributes |= OBJ_OPENIF | OBJ_CASE_INSENSITIVE;
 
     TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
@@ -742,7 +742,7 @@ NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *f
 
     if (ret) return ret;
 
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+    if ((ret = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return ret;
     objattr->attributes |= OBJ_OPENIF | OBJ_CASE_INSENSITIVE;
 
     SERVER_START_REQ( load_registry )

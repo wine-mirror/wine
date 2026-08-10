@@ -780,7 +780,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         goto done;
     env_size = get_env_size( params, &winedebug );
 
-    if ((status = alloc_object_attributes( process_attr, &objattr, &attr_len ))) goto done;
+    if ((status = wine_server_alloc_object_attributes( process_attr, &objattr, &attr_len ))) goto done;
 
     if ((status = alloc_handle_list( handles_attr, &handles, &handles_size )))
     {
@@ -862,7 +862,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         goto done;
     }
 
-    if ((status = alloc_object_attributes( thread_attr, &objattr, &attr_len ))) goto done;
+    if ((status = wine_server_alloc_object_attributes( thread_attr, &objattr, &attr_len ))) goto done;
 
     SERVER_START_REQ( new_thread )
     {

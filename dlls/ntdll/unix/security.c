@@ -63,7 +63,7 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
             type, token_id, expire, user, groups, privs, owner, group, dacl, source );
 
     *handle = 0;
-    if ((status = alloc_object_attributes( attr, &objattr, &objattr_size ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &objattr_size ))) return status;
 
     if (attr->SecurityQualityOfService)
     {
@@ -231,7 +231,7 @@ NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRI
         FIXME( "ignoring effective-only flag\n" );
 
     *handle = 0;
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     if (attr && attr->SecurityQualityOfService)
     {
@@ -903,7 +903,7 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
 
     /* reuse the object attribute SD marshalling */
     InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
-    if ((status = alloc_object_attributes( &attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( &attr, &objattr, &len ))) return status;
 
     SERVER_START_REQ( access_check )
     {
@@ -1060,7 +1060,7 @@ NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, P
 
     /* reuse the object attribute SD marshalling */
     InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
-    if ((status = alloc_object_attributes( &attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( &attr, &objattr, &len ))) return status;
     sd = (struct security_descriptor *)(objattr + 1);
     if (info & OWNER_SECURITY_INFORMATION && !sd->owner_len)
     {

@@ -1256,7 +1256,7 @@ static NTSTATUS create_server_thread( HANDLE *handle, struct thread_data **data_
     DWORD tid = 0;
     NTSTATUS status;
 
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+    if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     if (server_pipe( request_pipe ) == -1)
     {

@@ -1827,7 +1827,7 @@ NTSTATUS WINAPI NtAllocateReserveObject( HANDLE *handle, const OBJECT_ATTRIBUTES
     TRACE("(%p, %p, %d)\n", handle, attr, type);
 
     *handle = 0;
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+    if ((ret = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     SERVER_START_REQ( allocate_reserve_object )
     {

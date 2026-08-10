@@ -79,7 +79,7 @@ NTSTATUS WINAPI NtAlpcCreatePort( HANDLE *port_handle, OBJECT_ATTRIBUTES *attr, 
     if (attr)
     {
         if (attr->ObjectName) TRACE( "name %s.\n", debugstr_us( attr->ObjectName ) );
-        if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+        if ((status = wine_server_alloc_object_attributes( attr, &objattr, &len ))) return status;
     }
 
     SERVER_START_REQ( alpc_create_port )

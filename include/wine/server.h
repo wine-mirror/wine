@@ -49,10 +49,15 @@ struct __server_request_info
     struct __server_iovec data[__SERVER_MAX_DATA];  /* request variable size data */
 };
 
-NTSYSAPI void CDECL wine_server_send_fd( int fd );
 NTSYSAPI unsigned int CDECL wine_server_call( void *req_ptr );
 NTSYSAPI NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle );
 NTSYSAPI NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd, unsigned int *options );
+
+#if defined(__WINESRC__) && defined(WINE_UNIX_LIB)
+NTSYSAPI void wine_server_send_fd( int fd );
+NTSYSAPI unsigned int wine_server_alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
+                                                           data_size_t *ret_len );
+#endif
 
 /* do a server call and set the last error code */
 static inline unsigned int wine_server_call_err( void *req_ptr )
