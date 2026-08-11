@@ -376,26 +376,34 @@ static void assign_thread_input( struct msg_queue *queue, struct thread_input *n
 {
     struct thread_input *old_input = queue->input;
 
+    if (old_input == new_input) return;
+
     SHARED_WRITE_BEGIN( old_input->shared, input_shm_t )
     {
-        shared->cursor_count -= queue->cursor_count;
+        input_shm_t *old_shared = shared;
+
+        SHARED_WRITE_BEGIN( new_input->shared, input_shm_t )
+        {
+            input_shm_t *new_shared = shared;
+
+            new_shared->cursor_count += queue->cursor_count;
+            old_shared->cursor_count -= queue->cursor_count;
+        }
+        SHARED_WRITE_END;
     }
     SHARED_WRITE_END;
 
-    if (queue->keystate_lock) unlock_input_keystate( old_input );
+    if (queue->keystate_lock)
+    {
+        unlock_input_keystate( old_input );
+        lock_input_keystate( new_input );
+    }
 
     /* invalidate the old object to force clients to refresh their cached thread input */
     invalidate_shared_object( old_input->shared );
     release_object( old_input );
 
     queue->input = (struct thread_input *)grab_object( new_input );
-    if (queue->keystate_lock) lock_input_keystate( new_input );
-
-    SHARED_WRITE_BEGIN( new_input->shared, input_shm_t )
-    {
-        shared->cursor_count += queue->cursor_count;
-    }
-    SHARED_WRITE_END;
 }
 
 /* allocate a hardware message and its data */
