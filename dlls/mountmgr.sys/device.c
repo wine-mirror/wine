@@ -1984,6 +1984,32 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = MOUNTMGR_CALL( dismount, &params );
         break;
     }
+    case FSCTL_GET_RETRIEVAL_POINTERS:
+    {
+        RETRIEVAL_POINTERS_BUFFER *buffer = (RETRIEVAL_POINTERS_BUFFER *)irp->UserBuffer;
+
+        FIXME("FSCTL_GET_RETRIEVAL_POINTERS stub\n");
+
+        if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(RETRIEVAL_POINTERS_BUFFER))
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+
+        buffer->ExtentCount = 1;
+        buffer->StartingVcn.QuadPart = 1;
+        buffer->Extents[0].NextVcn.QuadPart = 0;
+        buffer->Extents[0].Lcn.QuadPart = 0;
+        irp->IoStatus.Information = sizeof(RETRIEVAL_POINTERS_BUFFER);
+        status = STATUS_SUCCESS;
+        break;
+    }
+    case FSCTL_IS_VOLUME_MOUNTED:
+    case FSCTL_LOCK_VOLUME:
+    case FSCTL_UNLOCK_VOLUME:
+        FIXME("unsupported ioctl %#lx, returning success\n", irpsp->Parameters.DeviceIoControl.IoControlCode);
+        status = STATUS_SUCCESS;
+        break;
     default:
     {
         ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
