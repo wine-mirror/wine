@@ -187,6 +187,7 @@ static bool fake_module;
 static bool large_address_aware;
 static bool wine_builtin;
 static bool unwind_tables;
+static bool safeseh;
 static bool strip;
 static bool compile_only;
 static bool skip_link;
@@ -606,8 +607,11 @@ static struct strarray get_link_args( const char *output_name )
         if (nostartfiles) strarray_add( &flags, "-nostartfiles" );
         if (image_base) strarray_add( &flags, strmake("-Wl,-base:%s", image_base ));
 
-        if (large_address_aware && target.cpu == CPU_i386)
-            strarray_add( &flags, "-Wl,-largeaddressaware" );
+        if (target.cpu == CPU_i386)
+        {
+            if (large_address_aware) strarray_add( &flags, "-Wl,-largeaddressaware" );
+            if (!safeseh) strarray_add( &flags, "-Wl,-safeseh:no" );
+        }
 
         if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
 
@@ -1107,9 +1111,6 @@ static void build_spec_obj( const char *spec_file, const char *output_file,
     strarray_add( &spec_args, subsystem );
 
     if (!is_shared && large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
-
-    if (target.platform == PLATFORM_WINDOWS && target.cpu == CPU_i386)
-        strarray_add(&spec_args, "--safeseh");
 
     if (entry_point)
     {
@@ -1911,6 +1912,7 @@ int main(int argc, char **argv)
                             if (!strcmp(arg, "--data-only")) data_only = true;
                             if (!strcmp(arg, "--fake-module")) fake_module = true;
                             else strarray_add( &winebuild_args, arg );
+                            if (!strcmp(arg, "--safeseh")) safeseh = true;
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
