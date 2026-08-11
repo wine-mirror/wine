@@ -20,6 +20,20 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
+static ID3D10Device *create_device(void)
+{
+    ID3D10Device *device;
+
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+
+    return NULL;
+}
+
 static void test_create_device(void)
 {
     ID3D10Device *device;
@@ -200,8 +214,103 @@ static void test_stateblock_mask(void)
     ok(!ret, "Got unexpected ret %#x.\n", ret);
 }
 
+static void test_stateblock(void)
+{
+#if 0
+float4 main(float4 pos : POSITION) : POSITION
+{
+    return pos;
+}
+#endif
+    static const DWORD simple_vs[] =
+    {
+        0x43425844, 0x66689e7c, 0x643f0971, 0xb7f67ff4, 0xabc48688, 0x00000001, 0x000000d4, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x49534f50, 0x4e4f4954, 0xababab00, 0x52444853, 0x00000038, 0x00010040,
+        0x0000000e, 0x0300005f, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+
+    ID3D10Buffer *index_buffer, *buffer;
+    ID3D10VertexShader *vs, *tmp_vs;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10StateBlock *state_block;
+    D3D10_STATE_BLOCK_MASK mask;
+    float blend_factor[4];
+    ID3D10Device *device;
+    DXGI_FORMAT format;
+    UINT offset;
+    HRESULT hr;
+
+    device = create_device();
+
+    hr = ID3D10Device_CreateVertexShader(device, simple_vs, sizeof(simple_vs), &vs);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    buffer_desc.ByteWidth = 64;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &index_buffer);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3D10StateBlockMaskEnableAll(&mask);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = D3D10StateBlockMaskDisableCapture(&mask, D3D10_DST_OM_BLEND_STATE, 0, 1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = D3D10StateBlockMaskDisableCapture(&mask, D3D10_DST_VS, 0, 1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = D3D10StateBlockMaskDisableCapture(&mask, D3D10_DST_IA_INDEX_BUFFER, 0, 1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    memset(&blend_factor, 0, sizeof(blend_factor));
+    blend_factor[0] = 0.1f;
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    ID3D10Device_VSSetShader(device, vs);
+    ID3D10Device_IASetIndexBuffer(device, index_buffer, DXGI_FORMAT_R16_UINT, 0);
+
+    hr = D3D10CreateStateBlock(device, &mask, &state_block);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = state_block->lpVtbl->Capture(state_block);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    memset(&blend_factor, 0, sizeof(blend_factor));
+    blend_factor[0] = 0.2f;
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    ID3D10Device_VSSetShader(device, NULL);
+    ID3D10Device_IASetIndexBuffer(device, NULL, 0, 0);
+
+    hr = state_block->lpVtbl->Apply(state_block);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    memset(&blend_factor, 0, sizeof(blend_factor));
+    ID3D10Device_OMGetBlendState(device, NULL, blend_factor, NULL);
+    todo_wine
+    ok(blend_factor[0] == 0.2f, "Unexpected factor %.8e.\n", blend_factor[0]);
+    ID3D10Device_VSGetShader(device, &tmp_vs);
+    todo_wine
+    ok(!tmp_vs, "Unexpected object %p.\n", tmp_vs);
+    if (tmp_vs)
+        ID3D10VertexShader_Release(tmp_vs);
+    ID3D10Device_IAGetIndexBuffer(device, &buffer, &format, &offset);
+    todo_wine
+    ok(!buffer, "Unexpected object %p.\n", buffer);
+    if (buffer)
+        ID3D10Buffer_Release(buffer);
+
+    ID3D10Buffer_Release(index_buffer);
+    ID3D10StateBlock_Release(state_block);
+    ID3D10VertexShader_Release(vs);
+    ID3D10Device_Release(device);
+}
+
 START_TEST(device)
 {
     test_create_device();
     test_stateblock_mask();
+    test_stateblock();
 }
