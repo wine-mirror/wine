@@ -6409,14 +6409,6 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
     case FILE_DEVICE_NETWORK:
         status = sock_ioctl( handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
         break;
-    case FILE_DEVICE_DISK:
-    case FILE_DEVICE_CD_ROM:
-    case FILE_DEVICE_DVD:
-    case FILE_DEVICE_CONTROLLER:
-    case FILE_DEVICE_MASS_STORAGE:
-        status = cdrom_DeviceIoControl( handle, event, apc, apc_context, io, code,
-                                        in_buffer, in_size, out_buffer, out_size );
-        break;
     case FILE_DEVICE_SERIAL_PORT:
         status = serial_DeviceIoControl( handle, event, apc, apc_context, io, code,
                                          in_buffer, in_size, out_buffer, out_size );
