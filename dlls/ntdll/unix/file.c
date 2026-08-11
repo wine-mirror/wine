@@ -253,7 +253,6 @@ static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
 static const BOOL is_case_sensitive = FALSE;
 
 static pthread_mutex_t dir_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* check if a given Unicode char is OK in a DOS short name */
 static inline BOOL is_invalid_dos_char( WCHAR ch )
@@ -261,17 +260,6 @@ static inline BOOL is_invalid_dos_char( WCHAR ch )
     static const WCHAR invalid_chars[] = { INVALID_DOS_CHARS,'~','.',0 };
     if (ch > 0x7f) return TRUE;
     return wcschr( invalid_chars, ch ) != NULL;
-}
-
-/* check if the device can be a mounted volume */
-static inline BOOL is_valid_mounted_device( const struct stat *st )
-{
-#if defined(linux) || defined(__sun__)
-    return S_ISBLK( st->st_mode );
-#else
-    /* disks are char devices on *BSD */
-    return S_ISCHR( st->st_mode );
-#endif
 }
 
 static inline void ignore_file( const char *name )
@@ -629,6 +617,9 @@ static void flush_dir_queue( struct list *queue )
 }
 
 
+#if defined(HAVE_GETATTRLIST) && defined(ATTR_VOL_CAPABILITIES) && \
+    defined(VOL_CAPABILITIES_FORMAT) && defined(VOL_CAP_FMT_CASE_SENSITIVE)
+
 #ifdef __ANDROID__
 
 static char *unescape_field( char *str )
@@ -731,6 +722,8 @@ static struct mntent *getmntent_replacement( FILE *f )
 #define getmntent getmntent_replacement
 #endif
 
+static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /***********************************************************************
  *           get_device_mount_point
  *
@@ -815,10 +808,6 @@ static char *get_device_mount_point( dev_t dev )
 #endif
     return ret;
 }
-
-
-#if defined(HAVE_GETATTRLIST) && defined(ATTR_VOL_CAPABILITIES) && \
-    defined(VOL_CAPABILITIES_FORMAT) && defined(VOL_CAP_FMT_CASE_SENSITIVE)
 
 static pthread_mutex_t fs_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -4303,30 +4292,6 @@ NTSTATUS ntdll_unmount_device( int fd, char *mount_point )
 }
 
 
-/***********************************************************************
- *           unmount_device
- *
- * Unmount the specified device.
- */
-static NTSTATUS unmount_device( HANDLE handle )
-{
-    NTSTATUS status;
-    int unix_fd, needs_close;
-
-    if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
-    {
-        struct stat st;
-
-        if (fstat( unix_fd, &st ) == -1 || !is_valid_mounted_device( &st ))
-            status = STATUS_INVALID_PARAMETER;
-        else
-            status = ntdll_unmount_device( unix_fd, get_device_mount_point( st.st_rdev ));
-        if (needs_close) close( unix_fd );
-    }
-    return status;
-}
-
-
 /******************************************************************************
  *              open_unix_file
  *
@@ -6489,17 +6454,12 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
 
     switch (code)
     {
-    case FSCTL_DISMOUNT_VOLUME:
-        return unmount_device( handle );
-
     case FSCTL_PIPE_IMPERSONATE:
         FIXME("FSCTL_PIPE_IMPERSONATE: impersonating self\n");
         return server_ioctl_file( handle, event, apc, apc_context, io, code,
                                   in_buffer, in_size, out_buffer, out_size );
 
     case FSCTL_IS_VOLUME_MOUNTED:
-    case FSCTL_LOCK_VOLUME:
-    case FSCTL_UNLOCK_VOLUME:
         FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         status = STATUS_SUCCESS;
