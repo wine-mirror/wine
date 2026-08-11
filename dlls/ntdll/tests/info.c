@@ -3911,7 +3911,6 @@ static void test_query_numa_map(void)
         ok( bret, "got error %lu.\n", GetLastError() );
         ok( mask.Group == n->GroupMask.Group, "got %u, %u.\n", mask.Group, n->GroupMask.Group );
         ok( mask.Mask == n->GroupMask.Mask, "got %#Ix, %#Ix.\n", mask.Mask, n->GroupMask.Mask );
-        p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)p + p->Size);
 
         memset( &mask64, 0xcc, sizeof(mask64) );
         bret = GetNumaNodeProcessorMask( n->NodeNumber, &mask64 );
