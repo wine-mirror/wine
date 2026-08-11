@@ -3522,7 +3522,6 @@ raw_secret_end:
     buf = malloc(size);
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params_prepended, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    todo_wine
     ok(!(memcmp(t->hashed_secret_prepended, buf, size)), "wrong data\n");
     free(buf);
 
@@ -4077,7 +4076,6 @@ static void test_DH(void)
     buf = calloc(1, size);
     status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &dh_hash_params_prepended, buf, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
-    todo_wine
     ok(!memcmp(dh_hashed_secret_prepended, buf, size), "wrong data\n");
     ok(size == 20, "got %lu\n", size);
 

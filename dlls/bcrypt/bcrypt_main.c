@@ -4168,6 +4168,7 @@ static const struct algorithm *get_hash_from_desc( const BCryptBufferDesc *desc 
                 return NULL;
             }
         }
+        else if (desc->pBuffers[i].BufferType == KDF_SECRET_PREPEND) continue;
         else FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
     }
     return alg;
@@ -4176,6 +4177,9 @@ static const struct algorithm *get_hash_from_desc( const BCryptBufferDesc *desc 
 static NTSTATUS derive_key_hash( const struct secret *secret, const BCryptBufferDesc *desc, UCHAR *output,
                                  ULONG output_len, ULONG *ret_len )
 {
+    ULONG derived_key_len = secret->derived_key_len, secret_len = 0;
+    ULONG i, buffer_count = desc ? desc->cBuffers : 0;
+    UCHAR *derived_key = secret->derived_key;
     const struct algorithm *alg;
     ULONG len;
     UCHAR hash[MAX_HASH_OUTPUT_BYTES];
@@ -4190,7 +4194,28 @@ static NTSTATUS derive_key_hash( const struct secret *secret, const BCryptBuffer
         return STATUS_SUCCESS;
     }
 
-    if ((status = hash_single( alg, NULL, 0, secret->derived_key, secret->derived_key_len, hash ))) return status;
+    for (i = 0; i < buffer_count; i++)
+        if (desc->pBuffers[i].BufferType == KDF_SECRET_PREPEND) secret_len += desc->pBuffers[i].cbBuffer;
+
+    if (secret_len)
+    {
+        if (!(derived_key = malloc( secret_len + derived_key_len ))) return STATUS_NO_MEMORY;
+
+        derived_key_len = 0;
+        for (i = 0; i < buffer_count; i++)
+        {
+            if (desc->pBuffers[i].BufferType != KDF_SECRET_PREPEND) continue;
+            memcpy( derived_key + derived_key_len, desc->pBuffers[i].pvBuffer, desc->pBuffers[i].cbBuffer );
+            derived_key_len += desc->pBuffers[i].cbBuffer;
+        }
+
+        memcpy( derived_key + derived_key_len, secret->derived_key, secret->derived_key_len );
+        derived_key_len += secret->derived_key_len;
+    }
+
+    status = hash_single( alg, NULL, 0, derived_key, derived_key_len, hash );
+    if (derived_key != secret->derived_key) free( derived_key );
+    if (status) return status;
 
     len = min( len, output_len );
     memcpy( output, hash, len );
