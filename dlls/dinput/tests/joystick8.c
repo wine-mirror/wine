@@ -1012,6 +1012,27 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
             .uAppData = 11,
         },
     };
+    DIACTIONW filled_actions_3[] =
+    {
+        {
+            .dwSemantic = DIMOUSE_BUTTON0,
+            .lptszActionName = L"Button 0",
+            .guidInstance = GUID_SysMouse,
+            .dwObjID = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 ),
+            .dwFlags = DIA_APPMAPPED | DIA_APPFIXED,
+            .dwHow = DIAH_DEFAULT,
+            .uAppData = 1,
+        },
+        {
+            .dwSemantic = DIKEYBOARD_2,
+            .lptszActionName = L"Key",
+            .guidInstance = GUID_SysKeyboard,
+            .dwObjID = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 ),
+            .dwFlags = DIA_APPMAPPED | DIA_APPFIXED,
+            .dwHow = DIAH_DEFAULT,
+            .uAppData = 2,
+        }
+    };
     DIACTIONFORMATW action_format_2_filled =
     {
         .dwSize = sizeof(DIACTIONFORMATW),
@@ -1024,6 +1045,18 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
         .dwBufferSize = 32,
         .lAxisMin = -128,
         .lAxisMax = +128,
+        .tszActionMap = L"Action Map Filled",
+    };
+    DIACTIONFORMATW action_format_3_filled =
+    {
+        .dwSize = sizeof(DIACTIONFORMATW),
+        .dwActionSize = sizeof(*default_actions),
+        .dwNumActions = ARRAY_SIZE(filled_actions_3),
+        .dwDataSize = 4 * ARRAY_SIZE(filled_actions_3),
+        .rgoAction = filled_actions_3,
+        .dwGenre = DIVIRTUAL_DRIVING_RACE,
+        .guidActionMap = GUID_action_mapping_2,
+        .dwBufferSize = 32,
         .tszActionMap = L"Action Map Filled",
     };
     DIPROPRANGE prop_range =
@@ -1455,6 +1488,29 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     hr = IDirectInputDevice8_BuildActionMap( device, &action_format, L"username", DIDBAM_PRESERVE );
     ok( hr == DI_OK, "BuildActionMap returned %#lx\n", hr );
     check_diactionformatw( &action_format, &expect_action_format_4 );
+
+    /* Test setting two actions with the same control identifier/dwObjID */
+    hr = IDirectInputDevice8_SetActionMap( mouse, &action_format_3_filled, L"username", DIDSAM_DEFAULT );
+    todo_wine
+    ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetActionMap( keyboard, &action_format_3_filled, L"username", DIDSAM_DEFAULT );
+    todo_wine
+    ok( hr == DI_SETTINGSNOTSAVED, "SetActionMap returned %#lx\n", hr );
+
+    prop_pointer.diph.dwHow = DIPH_BYID;
+    prop_pointer.diph.dwObj = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    prop_pointer.uData = 0;
+    hr = IDirectInputDevice8_GetProperty( mouse, DIPROP_APPDATA, &prop_pointer.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    todo_wine
+    ok( prop_pointer.uData == 1, "got uData %#Ix\n", prop_pointer.uData );
+
+    prop_pointer.diph.dwHow = DIPH_BYID;
+    prop_pointer.diph.dwObj = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    prop_pointer.uData = 0;
+    hr = IDirectInputDevice8_GetProperty( keyboard, DIPROP_APPDATA, &prop_pointer.diph );
+    ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
+    ok( prop_pointer.uData == 2, "got uData %#Ix\n", prop_pointer.uData );
 
     IDirectInputDevice8_Release( keyboard );
     IDirectInputDevice8_Release( mouse );
