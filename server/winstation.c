@@ -680,10 +680,14 @@ DECL_HANDLER(create_desktop)
                 }
                 SHARED_WRITE_END;
                 clear_error();
+                reply->handle = alloc_handle( current->process, desktop, req->access, params.attr );
             }
-
+            else
+            {
+                reply->handle = alloc_handle_no_access_check( current->process, desktop,
+                                                              req->access, params.attr );
+            }
             if (!data.winstation->input_desktop) set_input_desktop( data.winstation, desktop );
-            reply->handle = alloc_handle( current->process, desktop, req->access, params.attr );
             release_object( desktop );
         }
         release_object( data.winstation );
