@@ -206,21 +206,17 @@ static void set_caret_window( struct thread_input *input, input_shm_t *shared, u
 }
 
 /* create a thread input object */
-static struct thread_input *create_thread_input( struct thread *thread )
+static struct thread_input *create_thread_input( struct desktop *desktop )
 {
     struct thread_input *input;
 
     if ((input = alloc_object( &thread_input_ops )))
     {
+        input->desktop = (struct desktop *)grab_object( desktop );
         list_init( &input->msg_list );
         input->user_time = 0;
         input->shared = NULL;
 
-        if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
-        {
-            release_object( input );
-            return NULL;
-        }
         memcpy( input->desktop_keystate, (const void *)input->desktop->shared->keystate,
                 sizeof(input->desktop_keystate) );
 
@@ -258,9 +254,11 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     struct desktop *desktop;
     int i;
 
+    if (!(desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ ))) return NULL;
+
     if (!input)
     {
-        if (!(new_input = create_thread_input( thread ))) return NULL;
+        if (!(new_input = create_thread_input( desktop ))) return NULL;
         input = new_input;
     }
 
@@ -304,14 +302,11 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         SHARED_WRITE_END;
 
         thread->queue = queue;
-
-        if ((desktop = get_thread_desktop( thread, 0 )))
-        {
-            add_desktop_hook_count( desktop, thread, 1 );
-            release_object( desktop );
-        }
+        add_desktop_hook_count( desktop, thread, 1 );
     }
+
     if (new_input) release_object( new_input );
+    release_object( desktop );
     return queue;
 
 error:
@@ -1429,12 +1424,12 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 }
 
 /* detach two thread input data structures */
-void detach_thread_input( struct thread *thread_from )
+void detach_thread_input( struct thread *thread_from, struct desktop *desktop )
 {
     struct thread *thread;
     struct thread_input *input, *old_input = thread_from->queue->input;
 
-    if ((input = create_thread_input( thread_from )))
+    if ((input = create_thread_input( desktop )))
     {
         input_shm_t *old_input_shm, *input_shm;
         old_input_shm = old_input->shared;
@@ -3704,7 +3699,7 @@ DECL_HANDLER(attach_thread_input)
         {
             if (thread_from->queue && thread_to->queue &&
                 thread_from->queue->input == thread_to->queue->input)
-                detach_thread_input( thread_from );
+                detach_thread_input( thread_from, desktop_from );
             else
                 set_error( STATUS_ACCESS_DENIED );
         }
