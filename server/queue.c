@@ -1392,21 +1392,11 @@ int init_thread_queue( struct thread *thread )
 /* attach two thread input data structures */
 int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 {
-    struct desktop *desktop;
     struct thread_input *input, *old_input;
     int ret;
 
     if (!thread_to->queue && !(thread_to->queue = create_msg_queue( thread_to, NULL ))) return 0;
-    if (!(desktop = get_thread_desktop( thread_from, 0 ))) return 0;
     input = (struct thread_input *)grab_object( thread_to->queue->input );
-    if (input->desktop != desktop)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        release_object( input );
-        release_object( desktop );
-        return 0;
-    }
-    release_object( desktop );
 
     if (thread_from->queue)
     {
@@ -3687,6 +3677,7 @@ DECL_HANDLER(attach_thread_input)
 {
     struct thread *thread_from = get_thread_from_id( req->tid_from );
     struct thread *thread_to = get_thread_from_id( req->tid_to );
+    struct desktop *desktop_from = NULL, *desktop_to = NULL;
 
     if (!thread_from || !thread_to)
     {
@@ -3694,7 +3685,12 @@ DECL_HANDLER(attach_thread_input)
         if (thread_to) release_object( thread_to );
         return;
     }
-    if (thread_from != thread_to)
+    if (!(desktop_from = get_thread_desktop( thread_from, 0 ))) goto failed;
+    if (!(desktop_to = get_thread_desktop( thread_to, 0 ))) goto failed;
+
+    if (desktop_from != desktop_to) set_error( STATUS_INVALID_PARAMETER );
+    else if (thread_from == thread_to) set_error( STATUS_ACCESS_DENIED );
+    else
     {
         if (req->attach)
         {
@@ -3713,7 +3709,10 @@ DECL_HANDLER(attach_thread_input)
                 set_error( STATUS_ACCESS_DENIED );
         }
     }
-    else set_error( STATUS_ACCESS_DENIED );
+
+failed:
+    if (desktop_to) release_object( desktop_to );
+    if (desktop_from) release_object( desktop_from );
     release_object( thread_from );
     release_object( thread_to );
 }
