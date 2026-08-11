@@ -289,18 +289,11 @@ float4 main(float4 pos : POSITION) : POSITION
 
     memset(&blend_factor, 0, sizeof(blend_factor));
     ID3D10Device_OMGetBlendState(device, NULL, blend_factor, NULL);
-    todo_wine
     ok(blend_factor[0] == 0.2f, "Unexpected factor %.8e.\n", blend_factor[0]);
     ID3D10Device_VSGetShader(device, &tmp_vs);
-    todo_wine
     ok(!tmp_vs, "Unexpected object %p.\n", tmp_vs);
-    if (tmp_vs)
-        ID3D10VertexShader_Release(tmp_vs);
     ID3D10Device_IAGetIndexBuffer(device, &buffer, &format, &offset);
-    todo_wine
     ok(!buffer, "Unexpected object %p.\n", buffer);
-    if (buffer)
-        ID3D10Buffer_Release(buffer);
 
     ID3D10Buffer_Release(index_buffer);
     ID3D10StateBlock_Release(state_block);

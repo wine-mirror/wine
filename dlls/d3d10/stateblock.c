@@ -316,6 +316,14 @@ static ULONG STDMETHODCALLTYPE d3d10_stateblock_Release(ID3D10StateBlock *iface)
     return refcount;
 }
 
+static BOOL stateblock_mask_get_bit(BYTE *field, UINT field_size, UINT idx)
+{
+    if (idx >= field_size)
+        return FALSE;
+
+    return field[idx >> 3] & (1 << (idx & 7));
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *iface)
 {
     unsigned int vp_count = D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
@@ -326,7 +334,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *ifac
 
     stateblock_cleanup(stateblock);
 
-    if (stateblock->mask.VS)
+    if (stateblock_mask_get_bit(&stateblock->mask.VS, 1, 0))
         ID3D10Device_VSGetShader(stateblock->device, &stateblock->vs);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -344,7 +352,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *ifac
             ID3D10Device_VSGetConstantBuffers(stateblock->device, i, 1, &stateblock->vs_cbs[i]);
     }
 
-    if (stateblock->mask.GS)
+    if (stateblock_mask_get_bit(&stateblock->mask.GS, 1, 0))
         ID3D10Device_GSGetShader(stateblock->device, &stateblock->gs);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -362,7 +370,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *ifac
             ID3D10Device_GSGetConstantBuffers(stateblock->device, i, 1, &stateblock->gs_cbs[i]);
     }
 
-    if (stateblock->mask.PS)
+    if (stateblock_mask_get_bit(&stateblock->mask.PS, 1, 0))
         ID3D10Device_PSGetShader(stateblock->device, &stateblock->ps);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -386,35 +394,35 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *ifac
             ID3D10Device_IAGetVertexBuffers(stateblock->device, i, 1, &stateblock->vbs[i],
                     &stateblock->vb_strides[i], &stateblock->vb_offsets[i]);
     }
-    if (stateblock->mask.IAIndexBuffer)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAIndexBuffer, 1, 0))
         ID3D10Device_IAGetIndexBuffer(stateblock->device, &stateblock->ib,
                 &stateblock->ib_format, &stateblock->ib_offset);
-    if (stateblock->mask.IAInputLayout)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAInputLayout, 1, 0))
         ID3D10Device_IAGetInputLayout(stateblock->device, &stateblock->il);
-    if (stateblock->mask.IAPrimitiveTopology)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAPrimitiveTopology, 1, 0))
         ID3D10Device_IAGetPrimitiveTopology(stateblock->device, &stateblock->topology);
 
-    if (stateblock->mask.OMRenderTargets)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMRenderTargets, 1, 0))
         ID3D10Device_OMGetRenderTargets(stateblock->device, D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT,
                 stateblock->rtvs, &stateblock->dsv);
-    if (stateblock->mask.OMDepthStencilState)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMDepthStencilState, 1, 0))
         ID3D10Device_OMGetDepthStencilState(stateblock->device, &stateblock->dss, &stateblock->stencil_ref);
-    if (stateblock->mask.OMBlendState)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMBlendState, 1, 0))
         ID3D10Device_OMGetBlendState(stateblock->device, &stateblock->bs,
                 stateblock->blend_factor, &stateblock->sample_mask);
 
-    if (stateblock->mask.RSViewports)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSViewports, 1, 0))
         ID3D10Device_RSGetViewports(stateblock->device, &vp_count, stateblock->vps);
-    if (stateblock->mask.RSScissorRects)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSScissorRects, 1, 0))
         ID3D10Device_RSGetScissorRects(stateblock->device, &vp_count, stateblock->scissor_rects);
-    if (stateblock->mask.RSRasterizerState)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSRasterizerState, 1, 0))
         ID3D10Device_RSGetState(stateblock->device, &stateblock->rs);
 
-    if (stateblock->mask.SOBuffers)
+    if (stateblock_mask_get_bit(&stateblock->mask.SOBuffers, 1, 0))
         ID3D10Device_SOGetTargets(stateblock->device, D3D10_SO_BUFFER_SLOT_COUNT,
                 stateblock->so_buffers, stateblock->so_offsets);
 
-    if (stateblock->mask.Predication)
+    if (stateblock_mask_get_bit(&stateblock->mask.Predication, 1, 0))
         ID3D10Device_GetPredication(stateblock->device, &stateblock->predicate, &stateblock->predicate_value);
 
     return S_OK;
@@ -427,7 +435,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
 
     TRACE("iface %p.\n", iface);
 
-    if (stateblock->mask.VS)
+    if (stateblock_mask_get_bit(&stateblock->mask.VS, 1, 0))
         ID3D10Device_VSSetShader(stateblock->device, stateblock->vs);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -445,7 +453,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
             ID3D10Device_VSSetConstantBuffers(stateblock->device, i, 1, &stateblock->vs_cbs[i]);
     }
 
-    if (stateblock->mask.GS)
+    if (stateblock_mask_get_bit(&stateblock->mask.GS, 1, 0))
         ID3D10Device_GSSetShader(stateblock->device, stateblock->gs);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -463,7 +471,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
             ID3D10Device_GSSetConstantBuffers(stateblock->device, i, 1, &stateblock->gs_cbs[i]);
     }
 
-    if (stateblock->mask.PS)
+    if (stateblock_mask_get_bit(&stateblock->mask.PS, 1, 0))
         ID3D10Device_PSSetShader(stateblock->device, stateblock->ps);
     for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
     {
@@ -487,37 +495,37 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
             ID3D10Device_IASetVertexBuffers(stateblock->device, i, 1, &stateblock->vbs[i],
                     &stateblock->vb_strides[i], &stateblock->vb_offsets[i]);
     }
-    if (stateblock->mask.IAIndexBuffer)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAIndexBuffer, 1, 0))
         ID3D10Device_IASetIndexBuffer(stateblock->device, stateblock->ib,
                 stateblock->ib_format, stateblock->ib_offset);
-    if (stateblock->mask.IAInputLayout)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAInputLayout, 1, 0))
         ID3D10Device_IASetInputLayout(stateblock->device, stateblock->il);
-    if (stateblock->mask.IAPrimitiveTopology)
+    if (stateblock_mask_get_bit(&stateblock->mask.IAPrimitiveTopology, 1, 0))
         ID3D10Device_IASetPrimitiveTopology(stateblock->device, stateblock->topology);
 
-    if (stateblock->mask.OMRenderTargets)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMRenderTargets, 1, 0))
         ID3D10Device_OMSetRenderTargets(stateblock->device, D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT,
                 stateblock->rtvs, stateblock->dsv);
-    if (stateblock->mask.OMDepthStencilState)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMDepthStencilState, 1, 0))
         ID3D10Device_OMSetDepthStencilState(stateblock->device, stateblock->dss, stateblock->stencil_ref);
-    if (stateblock->mask.OMBlendState)
+    if (stateblock_mask_get_bit(&stateblock->mask.OMBlendState, 1, 0))
         ID3D10Device_OMSetBlendState(stateblock->device, stateblock->bs,
                 stateblock->blend_factor, stateblock->sample_mask);
 
-    if (stateblock->mask.RSViewports)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSViewports, 1, 0))
         ID3D10Device_RSSetViewports(stateblock->device, D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
                 stateblock->vps);
-    if (stateblock->mask.RSScissorRects)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSScissorRects, 1, 0))
         ID3D10Device_RSSetScissorRects(stateblock->device, D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
                 stateblock->scissor_rects);
-    if (stateblock->mask.RSRasterizerState)
+    if (stateblock_mask_get_bit(&stateblock->mask.RSRasterizerState, 1, 0))
         ID3D10Device_RSSetState(stateblock->device, stateblock->rs);
 
-    if (stateblock->mask.SOBuffers)
+    if (stateblock_mask_get_bit(&stateblock->mask.SOBuffers, 1, 0))
         ID3D10Device_SOSetTargets(stateblock->device, D3D10_SO_BUFFER_SLOT_COUNT,
                 stateblock->so_buffers, stateblock->so_offsets);
 
-    if (stateblock->mask.Predication)
+    if (stateblock_mask_get_bit(&stateblock->mask.Predication, 1, 0))
         ID3D10Device_SetPredication(stateblock->device, stateblock->predicate, stateblock->predicate_value);
 
     return S_OK;
@@ -574,14 +582,6 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
     *stateblock = &object->ID3D10StateBlock_iface;
 
     return S_OK;
-}
-
-static BOOL stateblock_mask_get_bit(BYTE *field, UINT field_size, UINT idx)
-{
-    if (idx >= field_size)
-        return FALSE;
-
-    return field[idx >> 3] & (1 << (idx & 7));
 }
 
 static HRESULT stateblock_mask_set_bits(BYTE *field, UINT field_size, UINT start_bit, UINT count)
