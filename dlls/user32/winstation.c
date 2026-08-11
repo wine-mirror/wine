@@ -21,6 +21,7 @@
 #include "ntstatus.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -29,11 +30,7 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
-#include "wine/debug.h"
 #include "user_private.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(winstation);
-
 
 /* callback for enumeration functions */
 struct enum_proc_lparam
@@ -380,15 +377,10 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
 BOOL WINAPI GetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
                                    PSECURITY_DESCRIPTOR sid, DWORD len, LPDWORD needed )
 {
-    FIXME( "(%p %p %p len=%ld %p),stub!\n", handle, info, sid, len, needed );
-    if (needed)
-        *needed = sizeof(SECURITY_DESCRIPTOR);
-    if (len < sizeof(SECURITY_DESCRIPTOR))
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-    return InitializeSecurityDescriptor(sid, SECURITY_DESCRIPTOR_REVISION);
+    NTSTATUS status = NtQuerySecurityObject( handle, *info, sid, len, needed );
+
+    if (status) SetLastError( RtlNtStatusToDosError( status ) );
+    return !status;
 }
 
 /***********************************************************************
@@ -397,6 +389,8 @@ BOOL WINAPI GetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
 BOOL WINAPI SetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
                                    PSECURITY_DESCRIPTOR sid )
 {
-    FIXME( "(%p,%p,%p),stub!\n", handle, info, sid );
-    return TRUE;
+    NTSTATUS status = NtSetSecurityObject( handle, *info, sid );
+
+    if (status) SetLastError( RtlNtStatusToDosError( status ) );
+    return !status;
 }
