@@ -19,6 +19,7 @@
 
 #define COBJMACROS
 #include "d3dx10.h"
+#include <stdbool.h>
 
 #include "wine/debug.h"
 
@@ -32,11 +33,63 @@ struct d3dx10_sprite
     ID3DX10Sprite ID3DX10Sprite_iface;
     LONG refcount;
 
+    struct
+    {
+        D3DX10_SPRITE *sprites;
+        size_t count;
+        size_t capacity;
+    } buffer;
     D3DXMATRIX projection;
     ID3D10Device *device;
     ID3D10StateBlock *state_block;
     unsigned int flags;
 };
+
+static bool d3dx_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return true;
+
+    max_capacity = ~(size_t)0 / size;
+    if (count > max_capacity)
+        return false;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
+        return false;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return true;
+}
+
+static void d3dx10_sprite_clear_batch(struct d3dx10_sprite *sprite)
+{
+    if (sprite->flags & D3DX10_SPRITE_ADDREF_TEXTURES)
+    {
+        for (size_t i = 0; i < sprite->buffer.count; ++i)
+        {
+            if (sprite->buffer.sprites[i].pTexture)
+                ID3D10ShaderResourceView_Release(sprite->buffer.sprites[i].pTexture);
+        }
+    }
+
+    sprite->buffer.count = 0;
+}
+
+static void d3dx10_sprite_flush(struct d3dx10_sprite *sprite)
+{
+    /* TODO: draw batched sprites */
+    d3dx10_sprite_clear_batch(sprite);
+}
 
 static inline struct d3dx10_sprite *impl_from_ID3DX10Sprite(ID3DX10Sprite *iface)
 {
@@ -83,6 +136,8 @@ static ULONG WINAPI d3dx10_sprite_Release(ID3DX10Sprite *iface)
         ID3D10Device_Release(sprite->device);
         if (sprite->state_block)
             IUnknown_Release(sprite->state_block);
+        d3dx10_sprite_clear_batch(sprite);
+        free(sprite->buffer.sprites);
         free(sprite);
     }
 
@@ -110,12 +165,25 @@ static HRESULT WINAPI d3dx10_sprite_DrawSpritesBuffered(ID3DX10Sprite *iface,
 {
     struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
 
-    FIXME("iface %p, sprites %p, count %u stub!\n", iface, sprites, count);
+    TRACE("iface %p, sprites %p, count %u.\n", iface, sprites, count);
 
     if (!(sprite->flags & D3DX10_SPRITE_READY))
         return E_FAIL;
 
-    return E_NOTIMPL;
+    if (!d3dx_array_reserve((void **)&sprite->buffer.sprites, &sprite->buffer.capacity,
+            sprite->buffer.count + count, sizeof(*sprite->buffer.sprites)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        sprite->buffer.sprites[sprite->buffer.count++] = sprites[i];
+        if (sprite->flags & D3DX10_SPRITE_ADDREF_TEXTURES)
+            ID3D10ShaderResourceView_AddRef(sprites[i].pTexture);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx10_sprite_Flush(ID3DX10Sprite *iface)
@@ -126,6 +194,8 @@ static HRESULT WINAPI d3dx10_sprite_Flush(ID3DX10Sprite *iface)
 
     if (!(sprite->flags & D3DX10_SPRITE_READY))
         return E_FAIL;
+
+    d3dx10_sprite_flush(sprite);
 
     return E_NOTIMPL;
 }
@@ -152,6 +222,8 @@ static HRESULT WINAPI d3dx10_sprite_End(ID3DX10Sprite *iface)
 
     if (!(sprite->flags & D3DX10_SPRITE_READY))
         return E_FAIL;
+
+    d3dx10_sprite_flush(sprite);
 
     if (sprite->flags & D3DX10_SPRITE_SAVE_STATE)
         sprite->state_block->lpVtbl->Apply(sprite->state_block);

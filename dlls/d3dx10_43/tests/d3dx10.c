@@ -7770,12 +7770,10 @@ static void test_sprite(void)
 
     memset(&sprite_desc, 0, sizeof(sprite_desc));
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     sprite_desc.pTexture = srv1;
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ID3DX10Sprite_Flush(sprite);
@@ -7798,10 +7796,8 @@ static void test_sprite(void)
 
     refcount = get_refcount(srv1);
     hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(get_refcount(srv1) > refcount, "Unexpected refcount.\n");
-}
 
     hr = ID3DX10Sprite_Flush(sprite);
     todo_wine
