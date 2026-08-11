@@ -158,7 +158,7 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD flags, ACCESS_MASK acce
     if (!str.Length) RtlInitUnicodeString( &str, get_winstation_default_name() );
 
     InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE,
-                                get_winstations_dir_handle(), sa );
+                                get_winstations_dir_handle(), sa ? sa->lpSecurityDescriptor : NULL );
     if (!(flags & CWF_CREATE_ONLY)) attr.Attributes |= OBJ_OPENIF;
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
@@ -266,7 +266,7 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
 
     RtlInitUnicodeString( &str, name );
     InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-                                get_winstations_dir_handle(), NULL );
+                                get_winstations_dir_handle(), sa ? sa->lpSecurityDescriptor : NULL );
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
     return NtUserCreateDesktopEx( &attr, NULL, devmode, flags, access, 0 );
 }
