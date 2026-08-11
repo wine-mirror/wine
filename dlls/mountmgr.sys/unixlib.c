@@ -29,12 +29,21 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
 #ifdef HAVE_SYS_STATVFS_H
 # include <sys/statvfs.h>
+#endif
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS)
+#include <sys/sysmacros.h>
+#endif
+#ifdef HAVE_LINUX_MAJOR_H
+# include <linux/major.h>
 #endif
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
@@ -495,6 +504,21 @@ static NTSTATUS check_device_access( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS dismount( void *args )
+{
+    const struct dismount_params *params = args;
+    NTSTATUS status;
+    int fd;
+
+    if ((fd = open( params->unix_device, O_RDONLY )) < 0)
+        return errno_to_status( errno );
+
+    status = ntdll_unmount_device( fd, params->unix_mount );
+
+    close( fd );
+    return status;
+}
+
 static NTSTATUS detect_serial_ports( void *args )
 {
     const struct detect_ports_params *params = args;
@@ -625,6 +649,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     cdrom_open,
     cdrom_close,
     cdrom_ioctl,
+    dismount,
     detect_serial_ports,
     detect_parallel_ports,
     set_shell_folder,

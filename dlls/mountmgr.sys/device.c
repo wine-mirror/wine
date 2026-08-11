@@ -1967,6 +1967,23 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_STORAGE_QUERY_PROPERTY:
         status = query_property( dev, irp );
         break;
+    case FSCTL_DISMOUNT_VOLUME:
+    {
+        struct dismount_params params = {0};
+
+        if (!dev->volume || !dev->volume->unix_mount)
+        {
+            /* FSCTL_DISMOUNT_VOLUME on a whole drive or an unmounted volume
+             * apparently succeeds and does nothing on Windows */
+            status = STATUS_SUCCESS;
+            break;
+        }
+
+        params.unix_device = dev->unix_device;
+        params.unix_mount = dev->volume->unix_mount;
+        status = MOUNTMGR_CALL( dismount, &params );
+        break;
+    }
     default:
     {
         ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
@@ -2049,6 +2066,7 @@ NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->MajorFunction[IRP_MJ_CREATE] = disk_create;
     driver->MajorFunction[IRP_MJ_CLOSE] = disk_close;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = disk_ioctl;
+    driver->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL] = disk_ioctl;
     driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = disk_query_volume;
 
     /* create a harddisk0 device that isn't assigned to any drive */
