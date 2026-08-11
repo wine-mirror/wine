@@ -459,6 +459,11 @@ static void test_BcryptHash(void)
     format_hash( md5, sizeof(md5), str );
     ok(!strcmp(str, expected), "got %s\n", str);
 
+    /* With a secret but without BCRYPT_ALG_HANDLE_HMAC_FLAG */
+    ret = pBCryptHash(alg, (UCHAR *)"key", sizeof("key"), (UCHAR *)"test", sizeof("test"), md5, sizeof(md5));
+    todo_wine
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
