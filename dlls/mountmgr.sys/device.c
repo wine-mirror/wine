@@ -114,7 +114,7 @@ struct dos_drive
 static struct list drives_list = LIST_INIT(drives_list);
 static struct list volumes_list = LIST_INIT(volumes_list);
 
-static DRIVER_OBJECT *harddisk_driver;
+static DRIVER_OBJECT *disk_driver;
 static DRIVER_OBJECT *serial_driver;
 static DRIVER_OBJECT *parallel_driver;
 
@@ -663,7 +663,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     {
         swprintf( name.Buffer, name.MaximumLength / sizeof(WCHAR), format, i );
         name.Length = lstrlenW(name.Buffer) * sizeof(WCHAR);
-        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, nt_type, characteristics, FALSE, &dev_obj );
+        status = IoCreateDevice( disk_driver, sizeof(*device), &name, nt_type, characteristics, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
     if (!status)
@@ -1679,7 +1679,7 @@ static NTSTATUS query_property( struct disk_device *device, IRP *irp )
     return status;
 }
 
-static NTSTATUS WINAPI harddisk_query_volume( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS WINAPI disk_query_volume( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     int info_class = irpsp->Parameters.QueryVolume.FsInformationClass;
@@ -1867,8 +1867,7 @@ done:
     return status;
 }
 
-/* handler for ioctls on the harddisk device */
-static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct disk_device *dev = device->DeviceExtension;
@@ -1988,13 +1987,13 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 }
 
 /* driver entry point for the harddisk driver */
-NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
+NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     struct disk_device *device;
 
-    harddisk_driver = driver;
-    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
-    driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = harddisk_query_volume;
+    disk_driver = driver;
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = disk_ioctl;
+    driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = disk_query_volume;
 
     /* create a harddisk0 device that isn't assigned to any drive */
     create_disk_device( DEVICE_HARDDISK, &device, NULL );

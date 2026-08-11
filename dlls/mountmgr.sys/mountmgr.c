@@ -603,7 +603,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
                           KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
         RegCloseKey( devicemap_key );
 
-    status = IoCreateDriver( &driver_harddisk, harddisk_driver_entry );
+    status = IoCreateDriver( &driver_harddisk, disk_driver_entry );
 
     thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
     CloseHandle( CreateThread( NULL, 0, run_loop_thread, thread, 0, NULL ));
