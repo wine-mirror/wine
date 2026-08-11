@@ -372,43 +372,30 @@ static void unlock_input_keystate( struct thread_input *input )
 }
 
 /* change the thread input data of a given thread */
-static int assign_thread_input( struct thread *thread, struct thread_input *new_input )
+static void assign_thread_input( struct msg_queue *queue, struct thread_input *new_input )
 {
-    struct msg_queue *queue = thread->queue;
-    input_shm_t *input_shm;
+    struct thread_input *old_input = queue->input;
 
-    if (!queue)
+    SHARED_WRITE_BEGIN( old_input->shared, input_shm_t )
     {
-        thread->queue = create_msg_queue( thread, new_input );
-        return thread->queue != NULL;
+        shared->cursor_count -= queue->cursor_count;
     }
-    if (queue->input)
-    {
-        input_shm = queue->input->shared;
+    SHARED_WRITE_END;
 
-        SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-        {
-            shared->cursor_count -= queue->cursor_count;
-        }
-        SHARED_WRITE_END;
+    if (queue->keystate_lock) unlock_input_keystate( old_input );
 
-        if (queue->keystate_lock) unlock_input_keystate( queue->input );
+    /* invalidate the old object to force clients to refresh their cached thread input */
+    invalidate_shared_object( old_input->shared );
+    release_object( old_input );
 
-        /* invalidate the old object to force clients to refresh their cached thread input */
-        invalidate_shared_object( queue->input->shared );
-        release_object( queue->input );
-    }
     queue->input = (struct thread_input *)grab_object( new_input );
-    if (queue->keystate_lock) lock_input_keystate( queue->input );
+    if (queue->keystate_lock) lock_input_keystate( new_input );
 
-    input_shm = new_input->shared;
-    SHARED_WRITE_BEGIN( input_shm, input_shm_t )
+    SHARED_WRITE_BEGIN( new_input->shared, input_shm_t )
     {
         shared->cursor_count += queue->cursor_count;
     }
     SHARED_WRITE_END;
-
-    return 1;
 }
 
 /* allocate a hardware message and its data */
@@ -1385,49 +1372,41 @@ int init_thread_queue( struct thread *thread )
 }
 
 /* attach two thread input data structures */
-int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
+void attach_thread_input( struct msg_queue *queue_from, struct msg_queue *queue_to )
 {
     struct thread_input *input, *old_input;
-    int ret;
+    input_shm_t *old_input_shm, *input_shm;
 
-    if (!thread_to->queue && !(thread_to->queue = create_msg_queue( thread_to, NULL ))) return 0;
-    input = (struct thread_input *)grab_object( thread_to->queue->input );
+    input = (struct thread_input *)grab_object( queue_to->input );
 
-    if (thread_from->queue)
+    old_input = queue_from->input;
+    old_input_shm = old_input->shared;
+    input_shm = input->shared;
+
+    SHARED_WRITE_BEGIN( input_shm, input_shm_t )
     {
-        input_shm_t *old_input_shm, *input_shm;
-        old_input = thread_from->queue->input;
-        old_input_shm = old_input->shared;
-        input_shm = input->shared;
-
-        SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-        {
-            if (!shared->active) shared->active = old_input_shm->active;
-            if (!shared->focus) shared->focus = old_input_shm->focus;
-        }
-        SHARED_WRITE_END;
+        if (!shared->active) shared->active = old_input_shm->active;
+        if (!shared->focus) shared->focus = old_input_shm->focus;
     }
+    SHARED_WRITE_END;
 
-    ret = assign_thread_input( thread_from, input );
-    if (ret)
+    assign_thread_input( queue_from, input );
+
+    SHARED_WRITE_BEGIN( input->shared, input_shm_t )
     {
-        input_shm_t *input_shm = input->shared;
-        SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-        {
-            memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
-            shared->keystate_serial = 1;
-        }
-        SHARED_WRITE_END;
+        memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
+        shared->keystate_serial = 1;
     }
+    SHARED_WRITE_END;
+
     release_object( input );
-    return ret;
 }
 
 /* detach two thread input data structures */
-void detach_thread_input( struct thread *thread_from, struct desktop *desktop )
+void detach_thread_input( struct msg_queue *queue_from, struct desktop *desktop )
 {
     struct thread *thread;
-    struct thread_input *input, *old_input = thread_from->queue->input;
+    struct thread_input *input, *old_input = queue_from->input;
 
     if ((input = create_thread_input( desktop )))
     {
@@ -1437,7 +1416,7 @@ void detach_thread_input( struct thread *thread_from, struct desktop *desktop )
 
         if (old_input_shm->focus && (thread = get_window_thread( old_input_shm->focus )))
         {
-            if (thread == thread_from)
+            if (thread->queue == queue_from)
             {
                 SHARED_WRITE_BEGIN( old_input_shm, input_shm_t )
                 {
@@ -1455,7 +1434,7 @@ void detach_thread_input( struct thread *thread_from, struct desktop *desktop )
         }
         if (old_input_shm->active && (thread = get_window_thread( old_input_shm->active )))
         {
-            if (thread == thread_from)
+            if (thread->queue == queue_from)
             {
                 SHARED_WRITE_BEGIN( old_input_shm, input_shm_t )
                 {
@@ -1471,7 +1450,7 @@ void detach_thread_input( struct thread *thread_from, struct desktop *desktop )
             }
             release_object( thread );
         }
-        assign_thread_input( thread_from, input );
+        assign_thread_input( queue_from, input );
         release_object( input );
     }
 }
@@ -3683,26 +3662,21 @@ DECL_HANDLER(attach_thread_input)
     if (!(desktop_from = get_thread_desktop( thread_from, 0 ))) goto failed;
     if (!(desktop_to = get_thread_desktop( thread_to, 0 ))) goto failed;
 
+    if ((thread_to == current || thread_from == current) &&
+        !current->queue && !init_thread_queue( current ))
+        goto failed;
+
     if (desktop_from != desktop_to) set_error( STATUS_INVALID_PARAMETER );
+    else if (!thread_to->queue || !thread_from->queue) set_error( STATUS_INVALID_PARAMETER );
     else if (thread_from == thread_to) set_error( STATUS_ACCESS_DENIED );
     else
     {
         if (req->attach)
-        {
-            if ((thread_to->queue || thread_to == current) &&
-                (thread_from->queue || thread_from == current))
-                attach_thread_input( thread_from, thread_to );
-            else
-                set_error( STATUS_INVALID_PARAMETER );
-        }
+            attach_thread_input( thread_from->queue, thread_to->queue );
+        else if (thread_from->queue->input == thread_to->queue->input)
+            detach_thread_input( thread_from->queue, desktop_from );
         else
-        {
-            if (thread_from->queue && thread_to->queue &&
-                thread_from->queue->input == thread_to->queue->input)
-                detach_thread_input( thread_from, desktop_from );
-            else
-                set_error( STATUS_ACCESS_DENIED );
-        }
+            set_error( STATUS_ACCESS_DENIED );
     }
 
 failed:

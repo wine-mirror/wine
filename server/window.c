@@ -423,7 +423,7 @@ static int set_parent_window( struct window *win, struct window *parent )
         /* if parent belongs to a different thread and the window isn't */
         /* top-level, attach the two threads */
         if (parent->thread && parent->thread != win->thread && !is_desktop_window(parent))
-            attach_thread_input( win->thread, parent->thread );
+            attach_thread_input( win->thread->queue, parent->thread->queue );
 
         if (win->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD))
             update_pixel_format_flags( win );
@@ -691,16 +691,12 @@ static struct window *create_window( struct window *parent, struct window *owner
     if (!(win->handle = alloc_user_handle( win, win->shared, NTUSER_OBJ_WINDOW ))) goto failed;
     win->last_active = win->handle;
 
-    /* if parent belongs to a different thread and the window isn't */
-    /* top-level, attach the two threads */
-    if (parent && parent->thread && parent->thread != current && !is_desktop_window(parent))
-    {
-        if (!attach_thread_input( current, parent->thread )) goto failed;
-    }
-    else  /* otherwise just make sure that the thread has a message queue */
-    {
-        if (!current->queue && !init_thread_queue( current )) goto failed;
-    }
+    /* make sure that the thread has a message queue */
+    if (!current->queue && !init_thread_queue( current )) goto failed;
+
+    /* if parent belongs to a different thread and the window isn't top-level, attach the two threads */
+    if (parent && parent->thread && parent->thread != current && !is_desktop_window( parent ))
+        attach_thread_input( current->queue, parent->thread->queue );
 
     /* put it on parent unlinked list */
     if (parent) list_add_head( &parent->unlinked, &win->entry );

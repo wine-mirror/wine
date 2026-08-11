@@ -119,8 +119,8 @@ extern void add_queue_hook_count( struct thread *thread, unsigned int index, int
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int init_thread_queue( struct thread *thread );
-extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
-extern void detach_thread_input( struct thread *thread_from, struct desktop *desktop );
+extern void attach_thread_input( struct msg_queue *queue_from, struct msg_queue *queue_to );
+extern void detach_thread_input( struct msg_queue *queue_from, struct desktop *desktop );
 extern void set_clip_rectangle( struct desktop *desktop, const struct rectangle *rect,
                                 unsigned int flags, int reset );
 extern void update_cursor_pos( struct desktop *desktop );
