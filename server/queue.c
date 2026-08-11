@@ -388,6 +388,9 @@ static void assign_thread_input( struct msg_queue *queue, struct thread_input *n
 
             new_shared->cursor_count += queue->cursor_count;
             old_shared->cursor_count -= queue->cursor_count;
+
+            memset( (void *)new_shared->keystate, 0, sizeof(new_shared->keystate) );
+            new_shared->keystate_serial = 1;
         }
         SHARED_WRITE_END;
     }
@@ -1399,13 +1402,6 @@ void attach_thread_input( struct msg_queue *queue_from, struct msg_queue *queue_
     SHARED_WRITE_END;
 
     assign_thread_input( queue_from, input );
-
-    SHARED_WRITE_BEGIN( input->shared, input_shm_t )
-    {
-        memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
-        shared->keystate_serial = 1;
-    }
-    SHARED_WRITE_END;
 
     release_object( input );
 }
