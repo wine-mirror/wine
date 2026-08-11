@@ -3238,12 +3238,6 @@ static void check_test_resource_data_(unsigned int line, ID3D10Resource *resourc
     }
 }
 
-static void test_D3DX10UnsetAllDeviceObjects(void)
-{
-    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
-    };
 #if 0
 float4 main(float4 pos : POSITION) : POSITION
 {
@@ -3259,6 +3253,13 @@ float4 main(float4 pos : POSITION) : POSITION
         0x00000000, 0x0000000f, 0x49534f50, 0x4e4f4954, 0xababab00, 0x52444853, 0x00000038, 0x00010040,
         0x0000000e, 0x0300005f, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
         0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+
+static void test_D3DX10UnsetAllDeviceObjects(void)
+{
+    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
 
 #if 0
@@ -7815,7 +7816,74 @@ todo_wine {
     ID3D10Texture2D_Release(texture2);
     ID3D10ShaderResourceView_Release(srv1);
     ID3D10ShaderResourceView_Release(srv2);
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Unexpected refcount.\n");
+}
 
+static void test_sprite_save_state(void)
+{
+    ID3D10VertexShader *vs, *vs2, *tmp_vs;
+    D3D10_PRIMITIVE_TOPOLOGY topology;
+    ID3DX10Sprite *sprite;
+    float blend_factor[4];
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_CreateVertexShader(device, simple_vs, sizeof(simple_vs), &vs);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D10Device_CreateVertexShader(device, simple_vs, sizeof(simple_vs), &vs2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DX10CreateSprite(device, 0, &sprite);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* State restore behavior. */
+    blend_factor[0] = 0.1f;
+    blend_factor[1] = 0.2f;
+    blend_factor[2] = 0.3f;
+    blend_factor[3] = 0.4f;
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_POINTLIST);
+    ID3D10Device_VSSetShader(device, vs);
+
+    hr = ID3DX10Sprite_Begin(sprite, D3DX10_SPRITE_SAVE_STATE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    blend_factor[0] = 0.5f;
+    blend_factor[1] = 0.6f;
+    blend_factor[2] = 0.7f;
+    blend_factor[3] = 0.8f;
+    ID3D10Device_OMSetBlendState(device, NULL, blend_factor, 0);
+    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+    ID3D10Device_VSSetShader(device, vs2);
+
+    hr = ID3DX10Sprite_End(sprite);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, NULL, blend_factor, NULL);
+    ok(blend_factor[0] == 0.5f && blend_factor[1] == 0.6f
+            && blend_factor[2] == 0.7f && blend_factor[3] == 0.8f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    ID3D10Device_IAGetPrimitiveTopology(device, &topology);
+    todo_wine
+    ok(topology == D3D10_PRIMITIVE_TOPOLOGY_POINTLIST, "Unexpected topology %d.\n", topology);
+    ID3D10Device_VSGetShader(device, &tmp_vs);
+    todo_wine
+    ok(vs == tmp_vs, "Unexpected shader.\n");
+    ID3D10VertexShader_Release(tmp_vs);
+
+    ID3DX10Sprite_Release(sprite);
+
+    ID3D10VertexShader_Release(vs2);
+    ID3D10VertexShader_Release(vs);
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Unexpected refcount.\n");
 }
@@ -8173,6 +8241,7 @@ START_TEST(d3dx10)
     test_create_texture();
     test_font();
     test_sprite();
+    test_sprite_save_state();
     test_create_effect_from_memory();
     test_create_effect_from_file();
     test_create_effect_from_resource();
