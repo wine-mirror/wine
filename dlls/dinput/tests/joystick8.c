@@ -1502,7 +1502,6 @@ static void test_action_map( IDirectInputDevice8W *device, HANDLE file, HANDLE e
     prop_pointer.uData = 0;
     hr = IDirectInputDevice8_GetProperty( mouse, DIPROP_APPDATA, &prop_pointer.diph );
     ok( hr == DI_OK, "GetProperty returned %#lx\n", hr );
-    todo_wine
     ok( prop_pointer.uData == 1, "got uData %#Ix\n", prop_pointer.uData );
 
     prop_pointer.diph.dwHow = DIPH_BYID;

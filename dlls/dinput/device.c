@@ -1966,6 +1966,7 @@ static BOOL init_object_app_data( struct dinput_device *device, UINT index, stru
     while (action-- > format->rgoAction)
     {
         if (action->dwObjID != instance->dwType) continue;
+        if (!IsEqualGUID( &action->guidInstance, &device->guid )) continue;
         properties->app_data = action->uAppData;
         break;
     }
