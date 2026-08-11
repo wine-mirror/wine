@@ -34,6 +34,7 @@ struct d3dx10_sprite
 
     D3DXMATRIX projection;
     ID3D10Device *device;
+    ID3D10StateBlock *state_block;
     unsigned int flags;
 };
 
@@ -80,6 +81,8 @@ static ULONG WINAPI d3dx10_sprite_Release(ID3DX10Sprite *iface)
     if (!refcount)
     {
         ID3D10Device_Release(sprite->device);
+        if (sprite->state_block)
+            IUnknown_Release(sprite->state_block);
         free(sprite);
     }
 
@@ -96,6 +99,8 @@ static HRESULT WINAPI d3dx10_sprite_Begin(ID3DX10Sprite *iface, UINT flags)
         return E_FAIL;
 
     sprite->flags = flags | D3DX10_SPRITE_READY;
+    if (sprite->flags & D3DX10_SPRITE_SAVE_STATE)
+        sprite->state_block->lpVtbl->Capture(sprite->state_block);
 
     return S_OK;
 }
@@ -148,6 +153,8 @@ static HRESULT WINAPI d3dx10_sprite_End(ID3DX10Sprite *iface)
     if (!(sprite->flags & D3DX10_SPRITE_READY))
         return E_FAIL;
 
+    if (sprite->flags & D3DX10_SPRITE_SAVE_STATE)
+        sprite->state_block->lpVtbl->Apply(sprite->state_block);
     sprite->flags = 0;
 
     return S_OK;
@@ -231,6 +238,8 @@ static const ID3DX10SpriteVtbl d3dx10_sprite_vtbl =
 HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite **sprite)
 {
     struct d3dx10_sprite *object;
+    D3D10_STATE_BLOCK_MASK mask;
+    HRESULT hr;
 
     TRACE("device %p, size %u, sprite %p.\n", device, size, sprite);
 
@@ -250,6 +259,14 @@ HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite
     object->projection._22 = 1.0f;
     object->projection._33 = 1.0f;
     object->projection._44 = 1.0f;
+
+    /* TODO: we shouldn't be capturing entire state */
+    D3D10StateBlockMaskEnableAll(&mask);
+    if (FAILED(hr = D3D10CreateStateBlock(device, &mask, &object->state_block)))
+    {
+        ID3DX10Sprite_Release(&object->ID3DX10Sprite_iface);
+        return hr;
+    }
 
     *sprite = &object->ID3DX10Sprite_iface;
 

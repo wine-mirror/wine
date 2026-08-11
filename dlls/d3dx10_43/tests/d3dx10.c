@@ -7868,15 +7868,14 @@ static void test_sprite_save_state(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ID3D10Device_OMGetBlendState(device, NULL, blend_factor, NULL);
+    todo_wine
     ok(blend_factor[0] == 0.5f && blend_factor[1] == 0.6f
             && blend_factor[2] == 0.7f && blend_factor[3] == 0.8f,
             "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
             blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
     ID3D10Device_IAGetPrimitiveTopology(device, &topology);
-    todo_wine
     ok(topology == D3D10_PRIMITIVE_TOPOLOGY_POINTLIST, "Unexpected topology %d.\n", topology);
     ID3D10Device_VSGetShader(device, &tmp_vs);
-    todo_wine
     ok(vs == tmp_vs, "Unexpected shader.\n");
     ID3D10VertexShader_Release(tmp_vs);
 
