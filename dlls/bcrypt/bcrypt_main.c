@@ -1385,6 +1385,8 @@ static NTSTATUS create_hash( const struct algorithm *alg, UCHAR *secret, ULONG s
     struct hash *hash;
     const SYMCRYPT_HASH *desc = get_hash_from_alg( alg->id );
 
+    if (secret && !(alg->flags & BCRYPT_ALG_HANDLE_HMAC_FLAG)) return STATUS_INVALID_PARAMETER;
+
     if (!desc) return STATUS_NOT_IMPLEMENTED;
     if (!(hash = calloc( 1, sizeof(*hash) ))) return STATUS_NO_MEMORY;
     hash->hdr.magic = MAGIC_HASH;
