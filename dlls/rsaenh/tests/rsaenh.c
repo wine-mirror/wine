@@ -1044,6 +1044,49 @@ static void test_3des(void)
     ok(result, "%08lx\n", GetLastError());
 }
 
+static void test_aes_duplicate_key(int keylen)
+{
+    static const BYTE aes_plain[32] = { "AES Test With 2 Blocks Of Data." };
+    HCRYPTKEY hKey, hDup;
+    BYTE orig[48], dup[48];
+    DWORD len_orig, len_dup;
+    ALG_ID algid;
+    BOOL result;
+
+    switch (keylen)
+    {
+        case 256: algid = CALG_AES_256; break;
+        case 192: algid = CALG_AES_192; break;
+        default:  algid = CALG_AES_128; break;
+    }
+
+    if (!derive_key(algid, &hKey, 0)) return;
+
+    result = CryptDuplicateKey(hKey, NULL, 0, &hDup);
+    ok(result, "CryptDuplicateKey failed, got last error %ld\n", GetLastError());
+    if (!result)
+    {
+        CryptDestroyKey(hKey);
+        return;
+    }
+
+    len_orig = sizeof(aes_plain);
+    memcpy(orig, aes_plain, len_orig);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, orig, &len_orig, sizeof(orig));
+    ok(result, "CryptEncrypt failed, got last error %ld\n", GetLastError());
+
+    len_dup = sizeof(aes_plain);
+    memcpy(dup, aes_plain, len_dup);
+    result = CryptEncrypt(hDup, 0, TRUE, 0, dup, &len_dup, sizeof(dup));
+    ok(result, "CryptEncrypt on duplicated key failed, got last error %ld\n", GetLastError());
+
+    ok(len_orig == len_dup && !memcmp(orig, dup, len_orig),
+       "AES-%d: duplicated key produced different ciphertext\n", keylen);
+
+    CryptDestroyKey(hDup);
+    CryptDestroyKey(hKey);
+}
+
 static void test_aes(int keylen)
 {
     HCRYPTKEY hKey;
@@ -4327,6 +4370,9 @@ START_TEST(rsaenh)
     test_aes(128);
     test_aes(192);
     test_aes(256);
+    test_aes_duplicate_key(128);
+    test_aes_duplicate_key(192);
+    test_aes_duplicate_key(256);
     test_sha2();
     test_key_derivation("AES");
     test_rc2_import();
