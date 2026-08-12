@@ -405,7 +405,7 @@ static void attach_parent_thread( struct window *win, bool attach )
 
     /* if parent belongs to a different thread and the window isn't top-level, attach / detach the two threads */
     if (attach) attach_thread_input( thread->queue, parent->queue );
-    else detach_thread_input( thread->queue, win->desktop );
+    else detach_thread_input( thread->queue, parent->queue, win->desktop );
 }
 
 /* change the parent of a window (or unlink the window if the new parent is NULL) */
