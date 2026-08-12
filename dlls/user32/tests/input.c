@@ -4676,7 +4676,9 @@ struct test_AttachThreadInput_params
     HANDLE start_event;
     DWORD attach_from;
     DWORD attach_to;
+    DWORD attach_count;
     BOOL activate;
+    HWND active_hwnd;
 };
 
 static DWORD WINAPI test_AttachThreadInput_thread(void *param)
@@ -4690,8 +4692,11 @@ static DWORD WINAPI test_AttachThreadInput_thread(void *param)
         CloseHandle( args->wait_event );
     }
 
-    if (args->attach_from) ok_ret( 1, AttachThreadInput( args->attach_from, GetCurrentThreadId(), TRUE ) );
-    if (args->attach_to) ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), args->attach_to, TRUE ) );
+    for (UINT i = 0; i < max( 1, args->attach_count ); i++)
+    {
+        if (args->attach_from) ok_ret( 1, AttachThreadInput( args->attach_from, GetCurrentThreadId(), TRUE ) );
+        if (args->attach_to) ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), args->attach_to, TRUE ) );
+    }
 
     args->hwnd = CreateWindowExA( 0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
                                        100, 100, 200, 200, 0, 0, 0, NULL );
@@ -4701,6 +4706,13 @@ static DWORD WINAPI test_AttachThreadInput_thread(void *param)
     {
         SetFocus( args->hwnd );
         SetActiveWindow( args->hwnd );
+    }
+    else if (args->active_hwnd)
+    {
+        SetFocus( args->active_hwnd );
+        SetActiveWindow( args->active_hwnd );
+        ok_ptr( GetActiveWindow(), ==, args->active_hwnd );
+        ok_ptr( GetFocus(), ==, args->active_hwnd );
     }
 
     SetEvent( args->start_event );
@@ -4716,10 +4728,10 @@ static DWORD WINAPI test_AttachThreadInput_thread(void *param)
 
 static void test_AttachThreadInput(void)
 {
-    HANDLE thread1;
+    HANDLE thread1, thread2, thread3;
     HWND hwnd, hwnd2;
-    DWORD tid1;
-    struct test_AttachThreadInput_params args1;
+    DWORD tid1, tid2, tid3;
+    struct test_AttachThreadInput_params args1, args2, args3;
     const WNDCLASSA cls =
     {
         .lpfnWndProc = MsgCheckProcA,
@@ -4901,6 +4913,217 @@ static void test_AttachThreadInput(void)
     ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
     ok_ret( 0, WaitForSingleObject( thread1, 1000 ) );
     CloseHandle( thread1 );
+
+
+    /* thread input attachments are refcounted */
+    memset( &args1, 0, sizeof(args1) );
+    args1.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args1.attach_from = GetCurrentThreadId();
+
+    thread1 = CreateThread(  NULL, 0, test_AttachThreadInput_thread, &args1, 0, &tid1  );
+    ok_ptr( thread1, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args1.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args1.start_event ) );
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
+
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
+
+    /* from / to parameters order don't really matter wrt. refcounting */
+    for (UINT i = 0; i < 1; i++)
+    {
+        todo_wine_if(i) ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, FALSE ) );
+        todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
+
+    for (UINT i = 0; i < 3; i++)
+    {
+        todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+        todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
+
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
+
+
+    /* attaching from/to another thread while attached shares the thread input between every thread */
+
+    /* attach main -> thread1 once */
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    /* attach main -> thread2 two times */
+    args2.attach_from = GetCurrentThreadId();
+    args2.attach_count = 2;
+    args2.active_hwnd = args1.hwnd;
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
+
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    ok_ptr( GetFocus(), ==, args2.hwnd );
+
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
+
+    /* thread2 destruction releases all its references on the thread input, we only have one left */
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
+
+
+    /* attach thread1 -> main two times */
+    for (UINT i = 0; i < 2; i++)
+    {
+        ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
+        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        ok_ptr( GetFocus(), ==, args1.hwnd );
+    }
+
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    /* attach thread2 -> main two times */
+    args2.attach_to = GetCurrentThreadId();
+    args2.attach_count = 2;
+    args2.active_hwnd = args1.hwnd;
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
+
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    ok_ptr( GetFocus(), ==, args2.hwnd );
+
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
+
+    /* need to detach thread1 -> main two times */
+    ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    todo_wine ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), FALSE ) );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
+
+
+    /* test cyclic and complex attachment graph */
+
+    memset( &args2, 0, sizeof(args2) );
+    args2.start_event = CreateEventW( NULL, 0, 0, NULL );
+    thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
+    ok_ptr( thread2, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args2.start_event ) );
+
+    memset( &args3, 0, sizeof(args3) );
+    args3.start_event = CreateEventW( NULL, 0, 0, NULL );
+    args3.attach_from = tid2; /* attach thread2 -> thread3 */
+    args3.activate = TRUE;
+    thread3 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args3, 0, &tid3 );
+    ok_ptr( thread3, !=, NULL );
+    ok_ret( 0, WaitForSingleObject( args3.start_event, 5000 ) );
+    ok_ret( 1, CloseHandle( args3.start_event ) );
+
+    /* attach main -> thread1 */
+    ok_ret( 1, AttachThreadInput( GetCurrentThreadId(), tid1, TRUE ) );
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    /* attach thread1 -> thread2 */
+    ok_ret( 1, AttachThreadInput( tid1, tid2, TRUE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
+
+    /* attach thread3 -> thread1 */
+    ok_ret( 1, AttachThreadInput( tid3, tid1, TRUE ) );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
+
+    /* all threads are attached */
+    SetFocus( args1.hwnd );
+    SetActiveWindow( args1.hwnd );
+    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    ok_ptr( GetFocus(), ==, args1.hwnd );
+
+    SetFocus( args2.hwnd );
+    SetActiveWindow( args2.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args2.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args2.hwnd );
+
+    SetFocus( args3.hwnd );
+    SetActiveWindow( args3.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
+
+    ok_ret( 1, PostMessageA( args2.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread2, 5000 ) );
+    ok_ret( 1, CloseHandle( thread2 ) );
+
+    /* we are still attached to thread3 from its attachment to thread1 */
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
+
+    /* we are not attached to thread3 directly and cannot detach */
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( tid3, GetCurrentThreadId(), FALSE ) );
+    todo_wine ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, AttachThreadInput( GetCurrentThreadId(), tid3, FALSE ) );
+    todo_wine ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
+
+    todo_wine ok_ptr( GetActiveWindow(), ==, args3.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args3.hwnd );
+
+    /* we lose our attachment to thread3 after thread1 exits */
+    ok_ret( 1, PostMessageA( args1.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread1, 5000 ) );
+    ok_ret( 1, CloseHandle( thread1 ) );
+
+    todo_wine ok_ptr( GetActiveWindow(), ==, NULL );
+    todo_wine ok_ptr( GetFocus(), ==, NULL );
+
+    ok_ret( 1, PostMessageA( args3.hwnd, WM_QUIT, 0, 0 ) );
+    ok_ret( 0, WaitForSingleObject( thread3, 5000 ) );
+    ok_ret( 1, CloseHandle( thread3 ) );
+
 
     DestroyWindow( hwnd );
     DestroyWindow( hwnd2 );
