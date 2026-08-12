@@ -82,7 +82,6 @@ extern void set_native_thread_name( DWORD tid, const char *name );
 /* init routines */
 extern void loader_init( CONTEXT *context, void **entry );
 extern void version_init(void);
-extern void debug_init(void);
 extern void actctx_init(void);
 extern void locale_init(void);
 extern void init_user_process_params(void);
