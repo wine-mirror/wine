@@ -107,7 +107,7 @@ static void test_reflection_references(void)
     ok(!count, "Got unexpected count %lu.\n", count);
 
     /* check invalid cases */
-    if (D3D_COMPILER_VERSION >= 46)
+    if (D3D_COMPILER_VERSION >= 47)
         expected = E_INVALIDARG;
     else
         expected = E_NOINTERFACE;
@@ -173,10 +173,11 @@ static void test_reflection_interfaces(void)
     IUnknown *iface, *iunk;
     ULONG count;
 
-    expected_hr = D3D_COMPILER_VERSION < 46 ? E_NOINTERFACE : D3D_COMPILER_VERSION == 46 ? E_INVALIDARG : S_OK;
+    expected_hr = D3D_COMPILER_VERSION < 47 ? E_NOINTERFACE : S_OK;
     hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D12ShaderReflection, (void **)&ref12);
     /* Broken with older d3dcompiler_46, d3dcompiler_47. */
-    ok(hr == expected_hr || broken(hr == E_NOINTERFACE),
+    ok(hr == expected_hr || broken(D3D_COMPILER_VERSION == 47 && hr == E_NOINTERFACE)
+            || broken(D3D_COMPILER_VERSION == 46 && hr == E_INVALIDARG),
             "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
 
     if (hr != S_OK)

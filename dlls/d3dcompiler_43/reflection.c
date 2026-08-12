@@ -1721,7 +1721,7 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
             && (D3D_COMPILER_VERSION < 47 || !IsEqualGUID(riid, &IID_ID3D12ShaderReflection)))
     {
         WARN("Wrong riid %s, accept only %s!\n", debugstr_guid(riid), debugstr_guid(&IID_ID3D11ShaderReflection));
-#if D3D_COMPILER_VERSION >= 46
+#if D3D_COMPILER_VERSION >= 47
         return E_INVALIDARG;
 #else
         return E_NOINTERFACE;
