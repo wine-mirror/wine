@@ -38,6 +38,7 @@ static int mailslot_test(void)
     unsigned char buffer[16];
     DWORD count, dwMax, dwNext, dwMsgCount, dwTimeout;
     FILE_MAILSLOT_QUERY_INFORMATION info;
+    FILE_MAILSLOT_SET_INFORMATION set_info;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     BOOL ret;
@@ -368,6 +369,17 @@ static int mailslot_test(void)
         ok( info.MessagesAvailable == 1, "got message count %lu\n", info.MessagesAvailable );
         ok( !info.ReadTimeout.QuadPart, "got timeout %I64u\n", info.ReadTimeout.QuadPart );
     }
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    set_info.ReadTimeout.QuadPart = 0;
+    ret = NtSetInformationFile( hSlot, &io, &set_info, sizeof(set_info), FileMailslotSetInformation );
+    ok( ret == STATUS_SUCCESS, "got %#x\n", ret );
+    ok( io.Status == STATUS_SUCCESS, "got status %#lx\n", io.Status );
+    ok( !io.Information, "got size %Iu\n", io.Information );
+
+    ret = NtSetInformationFile( hWriter, &io, &set_info, sizeof(set_info), FileMailslotSetInformation );
+    todo_wine ok( ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret );
 
     /* finally close the mailslot and its client */
     ok( CloseHandle( hWriter2 ), "closing 2nd client\n");
