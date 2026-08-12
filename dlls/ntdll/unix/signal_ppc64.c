@@ -165,6 +165,31 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
 
 
 /***********************************************************************
+ *           unwind_builtin_dll
+ *
+ * STUB. The x86_64 version walks the DWARF FDE for the current PC with a
+ * hand-written dwarf_virtual_unwind() that only knows x86_64 register numbers.
+ * A ppc64 equivalent (DWARF register numbering: 0-31 GPR, 32-63 FPR, 65 LR,
+ * 68-71 CR, 1156-1187 VR) still has to be written; that is part of the
+ * signal/unwind work in wine-fork 6a4af726c3.
+ */
+NTSTATUS unwind_builtin_dll( void *args )
+{
+    return STATUS_UNSUCCESSFUL;
+}
+
+
+/***********************************************************************
+ *           KeUserModeCallback
+ */
+NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
+{
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           NtCallbackReturn  (NTDLL.@)
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )

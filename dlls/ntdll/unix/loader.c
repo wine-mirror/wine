@@ -91,7 +91,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
-#if defined __i386__ || (defined __x86_64__ && !defined __APPLE__)
+#if defined __i386__ || (defined __x86_64__ && !defined __APPLE__) || defined __powerpc64__
 #define SO_DLLS_SUPPORTED
 #endif
 
