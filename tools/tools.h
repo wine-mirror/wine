@@ -99,7 +99,7 @@ extern char **environ;
 
 struct target
 {
-    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64, CPU_ARM64EC } cpu;
+    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64, CPU_ARM64EC, CPU_POWERPC64 } cpu;
 
     enum
     {
@@ -556,6 +556,8 @@ static inline struct target get_default_target(void)
     target.cpu = CPU_ARM;
 #elif defined(__aarch64__)
     target.cpu = CPU_ARM64;
+#elif defined(__powerpc64__)
+    target.cpu = CPU_POWERPC64;
 #else
 #error Unsupported CPU
 #endif
@@ -591,6 +593,7 @@ static inline unsigned int get_target_ptr_size( struct target target )
         [CPU_ARM]       = 4,
         [CPU_ARM64]     = 8,
         [CPU_ARM64EC]   = 8,
+        [CPU_POWERPC64] = 8,
     };
     return sizes[target.cpu];
 }
