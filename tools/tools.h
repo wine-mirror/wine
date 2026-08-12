@@ -654,6 +654,8 @@ static inline int get_cpu_from_name( const char *name )
         { "arm64ec",   CPU_ARM64EC },
         { "arm64",     CPU_ARM64 },
         { "arm",       CPU_ARM },
+        { "ppc64",     CPU_POWERPC64 },
+        { "powerpc64", CPU_POWERPC64 },
     };
     unsigned int i;
 

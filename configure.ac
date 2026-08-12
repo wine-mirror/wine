@@ -166,8 +166,9 @@ case "$host_cpu" in
   arm*)            HOST_ARCH=arm ;;
   i[[3456789]]86*) HOST_ARCH=i386 ;;
   x86_64)          HOST_ARCH=x86_64 ;;
+  powerpc64*)      HOST_ARCH=ppc64 ;;
 esac
-m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,x86_64],
+m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,ppc64,x86_64],
                                 [m4_foreach([var],[CC,CXX,CFLAGS,CXXFLAGS,EXTRACFLAGS,EXTRACXXFLAGS,LDFLAGS,DEBUG,TARGET,STRIP,DELAYLOADFLAG,DISABLED_SUBDIRS],[,cpu[_]var])]))
 
 dnl Some special cases for the Windows platform
@@ -2038,6 +2039,11 @@ then
     then
       dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
       WINE_TRY_CFLAGS([-fno-omit-frame-pointer],[MSVCRTFLAGS="$MSVCRTFLAGS -fno-omit-frame-pointer"])
+    elif test "$HOST_ARCH" = ppc64
+    then
+      dnl No Microsoft ABI has ever been defined for PowerPC64, so the builtin
+      dnl modules use the native ELFv2 ABI and there is nothing to switch to.
+      :
     else
       dnl Default to ms_abi on 64-bit
       AC_CACHE_CHECK([for working -mabi=ms], ac_cv_mabi_ms,

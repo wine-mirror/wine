@@ -817,6 +817,18 @@ x86_64_CXXFLAGS
 x86_64_CFLAGS
 x86_64_CXX
 x86_64_CC
+ppc64_DISABLED_SUBDIRS
+ppc64_DELAYLOADFLAG
+ppc64_STRIP
+ppc64_TARGET
+ppc64_DEBUG
+ppc64_LDFLAGS
+ppc64_EXTRACXXFLAGS
+ppc64_EXTRACFLAGS
+ppc64_CXXFLAGS
+ppc64_CFLAGS
+ppc64_CXX
+ppc64_CC
 i386_DISABLED_SUBDIRS
 i386_DELAYLOADFLAG
 i386_STRIP
@@ -6513,6 +6525,7 @@ case "$host_cpu" in
   arm*)            HOST_ARCH=arm ;;
   i[3456789]86*) HOST_ARCH=i386 ;;
   x86_64)          HOST_ARCH=x86_64 ;;
+  powerpc64*)      HOST_ARCH=ppc64 ;;
 esac
 
 
@@ -21020,6 +21033,9 @@ if test "x$ac_cv_cflags__fno_omit_frame_pointer" = xyes
 then :
   MSVCRTFLAGS="$MSVCRTFLAGS -fno-omit-frame-pointer"
 fi
+    elif test "$HOST_ARCH" = ppc64
+    then
+                  :
     else
             { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
 printf %s "checking for working -mabi=ms... " >&6; }
@@ -24478,6 +24494,18 @@ i386_TARGET = $i386_TARGET
 i386_STRIP = $i386_STRIP
 i386_DELAYLOADFLAG = $i386_DELAYLOADFLAG
 i386_DISABLED_SUBDIRS = $i386_DISABLED_SUBDIRS
+ppc64_CC = $ppc64_CC
+ppc64_CXX = $ppc64_CXX
+ppc64_CFLAGS = $ppc64_CFLAGS
+ppc64_CXXFLAGS = $ppc64_CXXFLAGS
+ppc64_EXTRACFLAGS = $ppc64_EXTRACFLAGS
+ppc64_EXTRACXXFLAGS = $ppc64_EXTRACXXFLAGS
+ppc64_LDFLAGS = $ppc64_LDFLAGS
+ppc64_DEBUG = $ppc64_DEBUG
+ppc64_TARGET = $ppc64_TARGET
+ppc64_STRIP = $ppc64_STRIP
+ppc64_DELAYLOADFLAG = $ppc64_DELAYLOADFLAG
+ppc64_DISABLED_SUBDIRS = $ppc64_DISABLED_SUBDIRS
 x86_64_CC = $x86_64_CC
 x86_64_CXX = $x86_64_CXX
 x86_64_CFLAGS = $x86_64_CFLAGS
