@@ -276,13 +276,16 @@ static LRESULT TAB_SetCurFocus (TAB_INFO *infoPtr, INT iItem)
   TRACE("(%p %d)\n", infoPtr, iItem);
 
   if (iItem < 0) {
-      infoPtr->uFocus = -1;
-      if (infoPtr->iSelected != -1) {
-          infoPtr->iSelected = -1;
-          TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
-          TAB_InvalidateTabArea(infoPtr);
-          if (!(infoPtr->dwStyle & TCS_BUTTONS))
-            NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, 0);
+      if (!(infoPtr->dwStyle & TCS_BUTTONS))
+      {
+          infoPtr->uFocus = -1;
+          if (infoPtr->iSelected != -1) {
+              infoPtr->iSelected = -1;
+              TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
+              TAB_InvalidateTabArea(infoPtr);
+              if (!(infoPtr->dwStyle & TCS_BUTTONS))
+                NotifyWinEvent(EVENT_OBJECT_SELECTION, infoPtr->hwnd, OBJID_CLIENT, 0);
+          }
       }
   }
   else if (iItem < infoPtr->uNumItem) {

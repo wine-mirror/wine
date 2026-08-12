@@ -830,12 +830,10 @@ static void test_curfocus(void)
     ret = SendMessageA(hTab, TCM_SETCURFOCUS, -10, 0);
     ok(ret == 0, "Unexpected ret value %d.\n", ret);
     ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
-    todo_wine
     ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
 
     /* Testing CurFocus with value larger than number of tabs */
     ret = SendMessageA(hTab, TCM_SETCURSEL, 1, 0);
-    todo_wine
     ok(ret == 0, "Unexpected focus index %d.\n", ret);
 
     ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs + 1, 0);
@@ -845,7 +843,7 @@ static void test_curfocus(void)
     ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
 
     ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_buttons_seq, "TCS_BUTTONS: set focused tab sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, setfocus_parent_seq, "TCS_BUTTONS: set focused tab parent sequence", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, setfocus_parent_seq, "TCS_BUTTONS: set focused tab parent sequence", FALSE);
 
     /* TCS_BUTTONS: item state changes on focus change. */
     ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
