@@ -69,7 +69,7 @@ static const SecPkgInfoW infoW =
     kerberos_comment_W
 };
 
-static LSA_DISPATCH_TABLE lsa_dispatch;
+static LSA_SECPKG_FUNCTION_TABLE *lsa_funcs;
 
 struct cred_handle
 {
@@ -134,17 +134,15 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
             ERR( "no Kerberos support, expect problems\n" );
     }
 
-    lsa_dispatch = *dispatch;
-
-    kerberos_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
+    kerberos_name = dispatch->AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
     if (!kerberos_name) return STATUS_NO_MEMORY;
 
     memcpy(kerberos_name, MICROSOFT_KERBEROS_NAME_A, sizeof(MICROSOFT_KERBEROS_NAME_A));
 
-    *package_name = lsa_dispatch.AllocateLsaHeap(sizeof(**package_name));
+    *package_name = dispatch->AllocateLsaHeap(sizeof(**package_name));
     if (!*package_name)
     {
-        lsa_dispatch.FreeLsaHeap(kerberos_name);
+        dispatch->FreeLsaHeap(kerberos_name);
         return STATUS_NO_MEMORY;
     }
 
@@ -161,11 +159,11 @@ static NTSTATUS copy_to_client( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_CACH
     char *client_str;
     KERB_QUERY_TKT_CACHE_RESPONSE *client_resp;
 
-    status = lsa_dispatch.AllocateClientBuffer( lsa_req, size, out );
+    status = lsa_funcs->AllocateClientBuffer( lsa_req, size, out );
     if (status != STATUS_SUCCESS) return status;
 
     client_resp = *out;
-    status = lsa_dispatch.CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets),
+    status = lsa_funcs->CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets),
                                              client_resp, resp);
     if (status != STATUS_SUCCESS) goto fail;
 
@@ -187,25 +185,25 @@ static NTSTATUS copy_to_client( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_CACH
         RtlSecondsSince1970ToTime( resp->Tickets[i].EndTime.QuadPart, &ticket.EndTime );
         RtlSecondsSince1970ToTime( resp->Tickets[i].RenewTime.QuadPart, &ticket.RenewTime );
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.RealmName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.RealmName.MaximumLength,
                                                  client_str, ticket.RealmName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.RealmName.Buffer = (WCHAR *)client_str;
         client_str += ticket.RealmName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
                                                  client_str, ticket.ServerName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
         if (status != STATUS_SUCCESS) goto fail;
     }
     return STATUS_SUCCESS;
 
 fail:
-    lsa_dispatch.FreeClientBuffer(lsa_req, client_resp);
+    lsa_funcs->FreeClientBuffer(lsa_req, client_resp);
     return status;
 }
 
@@ -217,11 +215,11 @@ static NTSTATUS copy_to_client_ex( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_C
     char *client_str;
     KERB_QUERY_TKT_CACHE_EX_RESPONSE *client_resp;
 
-    status = lsa_dispatch.AllocateClientBuffer( lsa_req, size, out );
+    status = lsa_funcs->AllocateClientBuffer( lsa_req, size, out );
     if (status != STATUS_SUCCESS) return status;
 
     client_resp = *out;
-    status = lsa_dispatch.CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_EX_RESPONSE, Tickets),
+    status = lsa_funcs->CopyToClientBuffer(lsa_req, offsetof(KERB_QUERY_TKT_CACHE_EX_RESPONSE, Tickets),
                                              client_resp, resp);
     if (status != STATUS_SUCCESS) goto fail;
 
@@ -235,37 +233,37 @@ static NTSTATUS copy_to_client_ex( PLSA_CLIENT_REQUEST lsa_req, KERB_QUERY_TKT_C
         RtlSecondsSince1970ToTime( resp->Tickets[i].EndTime.QuadPart, &ticket.EndTime );
         RtlSecondsSince1970ToTime( resp->Tickets[i].RenewTime.QuadPart, &ticket.RenewTime );
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ClientRealm.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ClientRealm.MaximumLength,
                                                  client_str, ticket.ClientRealm.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ClientRealm.Buffer = (WCHAR *)client_str;
         client_str += ticket.ClientRealm.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ClientName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ClientName.MaximumLength,
                                                  client_str, ticket.ClientName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ClientName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ClientName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerRealm.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerRealm.MaximumLength,
                                                  client_str, ticket.ServerRealm.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerRealm.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerRealm.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, ticket.ServerName.MaximumLength,
                                                  client_str, ticket.ServerName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         ticket.ServerName.Buffer = (WCHAR *)client_str;
         client_str += ticket.ServerName.MaximumLength;
 
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
+        status = lsa_funcs->CopyToClientBuffer(lsa_req, sizeof(ticket), &client_resp->Tickets[i], &ticket);
         if (status != STATUS_SUCCESS) goto fail;
     }
     return STATUS_SUCCESS;
 
 fail:
-    lsa_dispatch.FreeClientBuffer(lsa_req, client_resp);
+    lsa_funcs->FreeClientBuffer(lsa_req, client_resp);
     return status;
 }
 
@@ -738,6 +736,8 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
     TRACE("%Iu, %p, %p\n", package_id, params, lsa_function_table);
+
+    lsa_funcs = lsa_function_table;
 
     if (!__wine_unixlib_handle)
     {
