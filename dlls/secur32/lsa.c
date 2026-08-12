@@ -910,14 +910,13 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* SetContextAttributesA */
 };
 
-static NTSTATUS NTAPI lsa_GetClientInfo( SECPKG_CLIENT_INFO *info )
+static BOOLEAN NTAPI lsa_GetCallInfo( SECPKG_CALL_INFO *info )
 {
-    FIXME( "%p\n", info );
-
     memset( info, 0, sizeof(*info) );
-    info->ProcessID = GetCurrentProcessId();
-    info->ThreadID = GetCurrentThreadId();
-    return SEC_E_OK;
+    info->ProcessId = GetCurrentProcessId();
+    info->ThreadId = GetCurrentThreadId();
+    info->Attributes = SECPKG_CALL_IN_PROC;
+    return TRUE;
 }
 
 static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
@@ -938,7 +937,7 @@ static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
     NULL, /* DuplicateHandle */
     NULL, /* SaveSupplementalCredentials */
     NULL, /* CreateThread */
-    lsa_GetClientInfo,
+    NULL, /* GetClientInfo */
     NULL, /* RegisterNotification */
     NULL, /* CancelNotification */
     NULL, /* MapBuffer */
@@ -946,7 +945,7 @@ static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
     NULL, /* AuditLogon */
     NULL, /* CallPackage */
     NULL, /* FreeReturnBuffer */
-    NULL, /* GetCallInfo */
+    lsa_GetCallInfo,
     NULL, /* CallPackageEx */
     NULL, /* CreateSharedMemory */
     NULL, /* AllocateSharedMemory */

@@ -519,15 +519,15 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
         }
         else
         {
-            SECPKG_CLIENT_INFO info;
+            SECPKG_CALL_INFO info;
             HANDLE h;
 
-            lsa_secpkg_table->GetClientInfo( &info );
-            h = OpenThread( THREAD_QUERY_INFORMATION, FALSE, info.ThreadID );
+            lsa_secpkg_table->GetCallInfo( &info );
+            h = OpenThread( THREAD_QUERY_INFORMATION, FALSE, info.ThreadId );
             if (!h || !OpenThreadToken( h, TOKEN_QUERY | TOKEN_DUPLICATE, TRUE, &cred->token ))
             {
                 CloseHandle( h );
-                h = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, info.ProcessID );
+                h = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, info.ProcessId );
                 if (!h || !OpenProcessToken( h, TOKEN_QUERY | TOKEN_DUPLICATE, &cred->token ))
                     WARN("failed to get user token (%ld)\n", GetLastError());
             }
