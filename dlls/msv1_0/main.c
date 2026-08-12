@@ -1663,22 +1663,47 @@ static NTSTATUS NTAPI ntlm_SpDeleteContext( LSA_SEC_HANDLE handle )
     return SEC_E_OK;
 }
 
-static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
+static NTSTATUS build_package_info( const SecPkgInfoW *info, SecPkgInfoW **ret,
+        const SECPKG_CALL_INFO *call_info )
 {
-    SecPkgInfoW *ret;
     DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
     DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
+    SecPkgInfoW pkg_info;
+    NTSTATUS status;
 
-    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
-    ret->fCapabilities = info->fCapabilities;
-    ret->wVersion      = info->wVersion;
-    ret->wRPCID        = info->wRPCID;
-    ret->cbMaxToken    = info->cbMaxToken;
-    ret->Name          = (SEC_WCHAR *)(ret + 1);
-    memcpy( ret->Name, info->Name, size_name );
-    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
-    memcpy( ret->Comment, info->Comment, size_comment );
-    return ret;
+    pkg_info = *info;
+    status = lsa_secpkg_table->AllocateClientBuffer( NULL,
+            sizeof(pkg_info) + size_name + size_comment, (void **)ret );
+    if (status) return status;
+
+    pkg_info.Name = (SEC_WCHAR *)((*ret) + 1);
+    pkg_info.Comment = (SEC_WCHAR *)((char *)pkg_info.Name + size_name);
+    lsa_secpkg_table->CopyToClientBuffer( NULL, size_name, pkg_info.Name, info->Name );
+    lsa_secpkg_table->CopyToClientBuffer( NULL, size_comment, pkg_info.Comment, info->Comment );
+
+    if (call_info->Attributes & SECPKG_CALL_WOWCLIENT)
+    {
+        struct
+        {
+            ULONG fCapabilities;
+            USHORT wVersion;
+            USHORT wRPCID;
+            ULONG cbMaxToken;
+            ULONG Name;
+            ULONG Comment;
+        } pkg_info32 =
+        {
+            pkg_info.fCapabilities,
+            pkg_info.wVersion,
+            pkg_info.wRPCID,
+            pkg_info.cbMaxToken,
+            (ULONG_PTR)pkg_info.Name,
+            (ULONG_PTR)pkg_info.Comment
+        };
+
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(pkg_info32), *ret, &pkg_info32 );
+    }
+    return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(pkg_info), *ret, &pkg_info );
 }
 
 static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULONG attr, void *buf )
@@ -1702,49 +1727,88 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
     X(SECPKG_ATTR_TARGET_INFORMATION);
     case SECPKG_ATTR_FLAGS:
     {
-        SecPkgContext_Flags *flags = (SecPkgContext_Flags *)buf;
+        SecPkgContext_Flags flags;
         struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
 
-        flags->Flags = 0;
-        if (ctx->flags & NTLMSSP_NEGOTIATE_SIGN) flags->Flags |= ISC_RET_INTEGRITY;
-        if (ctx->flags & NTLMSSP_NEGOTIATE_SEAL) flags->Flags |= ISC_RET_CONFIDENTIALITY;
-        return SEC_E_OK;
+        flags.Flags = 0;
+        if (ctx->flags & NTLMSSP_NEGOTIATE_SIGN) flags.Flags |= ISC_RET_INTEGRITY;
+        if (ctx->flags & NTLMSSP_NEGOTIATE_SEAL) flags.Flags |= ISC_RET_CONFIDENTIALITY;
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(flags), buf, &flags );
     }
     case SECPKG_ATTR_SIZES:
     {
-        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buf;
-        sizes->cbMaxToken        = NTLM_MAX_BUF;
-        sizes->cbMaxSignature    = 16;
-        sizes->cbBlockSize       = 0;
-        sizes->cbSecurityTrailer = 16;
-        return SEC_E_OK;
+        SecPkgContext_Sizes sizes;
+
+        sizes.cbMaxToken        = NTLM_MAX_BUF;
+        sizes.cbMaxSignature    = 16;
+        sizes.cbBlockSize       = 0;
+        sizes.cbSecurityTrailer = 16;
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(sizes), buf, &sizes );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {
-        SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buf;
-        if (!(info->PackageInfo = build_package_info( &ntlm_package_info ))) return SEC_E_INSUFFICIENT_MEMORY;
-        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
-        return SEC_E_OK;
+        SecPkgContext_NegotiationInfoW info;
+        SECPKG_CALL_INFO call_info;
+        NTSTATUS status;
+
+        lsa_secpkg_table->GetCallInfo( &call_info );
+        status = build_package_info( &ntlm_package_info, &info.PackageInfo, &call_info );
+        if (status) return status;
+        info.NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+
+        if (call_info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG PackageInfo;
+                ULONG NegotiationState;
+            } info32 =
+            {
+                (ULONG_PTR)info.PackageInfo,
+                info.NegotiationState
+            };
+
+            return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(info32), buf, &info32 );
+        }
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(info), buf, &info );
     }
     case SECPKG_ATTR_SESSION_KEY:
     {
         struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
-        SecPkgContext_SessionKey *key = (SecPkgContext_SessionKey *)buf;
-        unsigned char *session_key;
+        SecPkgContext_SessionKey key;
+        SECPKG_CALL_INFO info;
+        NTSTATUS status;
 
-        if (!(session_key = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(ctx->session_key) )))
-            return SEC_E_INSUFFICIENT_MEMORY;
-        memcpy( session_key, ctx->session_key, sizeof(ctx->session_key) );
-        key->SessionKey = session_key;
-        key->SessionKeyLength = sizeof(ctx->session_key);
-        return SEC_E_OK;
+        key.SessionKeyLength = sizeof(ctx->session_key);
+        status = lsa_secpkg_table->AllocateClientBuffer( NULL, key.SessionKeyLength, (void **)&key.SessionKey );
+        if (status) return status;
+        lsa_secpkg_table->CopyToClientBuffer( NULL, key.SessionKeyLength, key.SessionKey, ctx->session_key );
+
+        lsa_secpkg_table->GetCallInfo( &info );
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG SessionKeyLength;
+                ULONG SessionKey;
+            } key32 =
+            {
+                key.SessionKeyLength,
+                (ULONG_PTR)key.SessionKey
+            };
+
+            return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(key32), buf, &key32 );
+        }
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(key), buf, &key );
     }
     case SECPKG_ATTR_KEY_INFO:
     {
         struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
-        SecPkgContext_KeyInfoW *info = (SecPkgContext_KeyInfoW *)buf;
+        SecPkgContext_KeyInfoW info;
         SEC_WCHAR *signature_alg;
         ULONG signature_size, signature_algid;
+        SECPKG_CALL_INFO call_info;
+        NTSTATUS status;
 
         if (ctx->flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
         {
@@ -1759,21 +1823,48 @@ static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULON
             signature_algid = 0xffffff7c;
         }
 
-        if (!(info->sSignatureAlgorithmName = RtlAllocateHeap( GetProcessHeap(), 0, signature_size )))
-            return SEC_E_INSUFFICIENT_MEMORY;
-        wcscpy( info->sSignatureAlgorithmName, signature_alg );
+        status = lsa_secpkg_table->AllocateClientBuffer( NULL, signature_size,
+                (void **)&info.sSignatureAlgorithmName );
+        if (status) return status;
+        lsa_secpkg_table->CopyToClientBuffer( NULL, signature_size,
+                info.sSignatureAlgorithmName, signature_alg );
 
-        if (!(info->sEncryptAlgorithmName = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(L"RSADSI RC4") )))
+        status = lsa_secpkg_table->AllocateClientBuffer( NULL, sizeof(L"RSADSI RC4"),
+                (void **)&info.sEncryptAlgorithmName );
+        if (status)
         {
-            RtlFreeHeap( GetProcessHeap(), 0, info->sSignatureAlgorithmName );
-            return SEC_E_INSUFFICIENT_MEMORY;
+            lsa_secpkg_table->FreeClientBuffer( NULL, info.sSignatureAlgorithmName );
+            return status;
         }
-        wcscpy( info->sEncryptAlgorithmName, L"RSADSI RC4" );
+        lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(L"RSADSI RC4"),
+                info.sEncryptAlgorithmName, (void *)L"RSADSI RC4" );
 
-        info->KeySize = sizeof(ctx->session_key) * 8;
-        info->SignatureAlgorithm = signature_algid;
-        info->EncryptAlgorithm = CALG_RC4;
-        return SEC_E_OK;
+        info.KeySize = sizeof(ctx->session_key) * 8;
+        info.SignatureAlgorithm = signature_algid;
+        info.EncryptAlgorithm = CALG_RC4;
+
+        lsa_secpkg_table->GetCallInfo( &call_info );
+        if (call_info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG sSignatureAlgorithmName;
+                ULONG sEncryptAlgorithmName;
+                ULONG KeySize;
+                ULONG SignatureAlgorithm;
+                ULONG EncryptAlgorithm;
+            } info32 =
+            {
+                (ULONG_PTR)info.sSignatureAlgorithmName,
+                (ULONG_PTR)info.sEncryptAlgorithmName,
+                info.KeySize,
+                info.SignatureAlgorithm,
+                info.EncryptAlgorithm
+            };
+
+            return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(info32), buf, &info32 );
+        }
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(info), buf, &info );
     }
 #undef X
     default:
