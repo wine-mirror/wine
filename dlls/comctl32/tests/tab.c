@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 #define TAB_PADDING_X 6
@@ -403,8 +404,7 @@ static BOOL registerParentWindowClass(void)
 
 static HWND createParentWindow(void)
 {
-    if (!registerParentWindowClass())
-        return NULL;
+    registerParentWindowClass();
 
     return CreateWindowExA(0, "Tab test parent class", "Tab test parent window",
             WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE, 0, 0, 100, 100,
@@ -743,6 +743,7 @@ static void test_setitemsize(void)
 static void test_curfocus(void)
 {
     const INT nTabs = 5;
+    TCITEMA item;
     INT ret;
     HWND hTab;
 
@@ -774,6 +775,50 @@ static void test_curfocus(void)
 
     ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "Set focused tab sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set focused tab parent sequence", TRUE);
+
+    /* Item state changes on focus change. */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    todo_wine
+    ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 1, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
+
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 1, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    todo_wine
+    ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
 
     DestroyWindow(hTab);
 
@@ -809,6 +854,49 @@ static void test_curfocus(void)
 
     ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_buttons_seq, "TCS_BUTTONS: set focused tab sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, setfocus_parent_seq, "TCS_BUTTONS: set focused tab parent sequence", TRUE);
+
+    /* TCS_BUTTONS: item state changes on focus change. */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    todo_wine
+    ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 0, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(!(item.dwState & TCIS_BUTTONPRESSED), "Unexpected state %#x.\n", item.dwState);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 1, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
+
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+    memset(&item, 0, sizeof(item));
+    item.mask = TCIF_STATE;
+    item.dwStateMask = TCIS_BUTTONPRESSED;
+    ret = SendMessageA(hTab, TCM_GETITEMA, 1, (LPARAM)&item);
+    ok(ret == 1, "Unexpected ret value %d.\n", ret);
+    ok(item.dwState & TCIS_BUTTONPRESSED, "Unexpected state %#x.\n", item.dwState);
 
     DestroyWindow(hTab);
 }
@@ -1650,6 +1738,8 @@ static void test_TCM_GETROWCOUNT(void)
 
 START_TEST(tab)
 {
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
     LOGFONTA logfont;
 
     lstrcpyA(logfont.lfFaceName, "Arial");
@@ -1689,6 +1779,18 @@ START_TEST(tab)
     test_TCM_GETROWCOUNT();
 
     uninit_winevent_hook();
+
+    DestroyWindow(parent_wnd);
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+        return;
+
+    parent_wnd = createParentWindow();
+    ok(!!parent_wnd, "Failed to create parent window!\n");
+
+    test_curfocus();
+
+    unload_v6_module(ctx_cookie, hCtx);
 
     DestroyWindow(parent_wnd);
 }
