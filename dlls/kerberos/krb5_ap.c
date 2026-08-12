@@ -654,22 +654,47 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
     return status;
 }
 
-static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
+static NTSTATUS build_package_info( const SecPkgInfoW *info, SecPkgInfoW **ret,
+        const SECPKG_CALL_INFO *call_info )
 {
-    SecPkgInfoW *ret;
     DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
     DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
+    SecPkgInfoW pkg_info;
+    NTSTATUS status;
 
-    if (!(ret = malloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
-    ret->fCapabilities = info->fCapabilities;
-    ret->wVersion      = info->wVersion;
-    ret->wRPCID        = info->wRPCID;
-    ret->cbMaxToken    = info->cbMaxToken;
-    ret->Name          = (SEC_WCHAR *)(ret + 1);
-    memcpy( ret->Name, info->Name, size_name );
-    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
-    memcpy( ret->Comment, info->Comment, size_comment );
-    return ret;
+    pkg_info = *info;
+    status = lsa_funcs->AllocateClientBuffer( NULL,
+            sizeof(pkg_info) + size_name + size_comment, (void **)ret );
+    if (status) return status;
+
+    pkg_info.Name = (SEC_WCHAR *)((*ret) + 1);
+    pkg_info.Comment = (SEC_WCHAR *)((char *)pkg_info.Name + size_name);
+    lsa_funcs->CopyToClientBuffer( NULL, size_name, pkg_info.Name, info->Name );
+    lsa_funcs->CopyToClientBuffer( NULL, size_comment, pkg_info.Comment, info->Comment );
+
+    if (call_info->Attributes & SECPKG_CALL_WOWCLIENT)
+    {
+        struct
+        {
+            ULONG fCapabilities;
+            USHORT wVersion;
+            USHORT wRPCID;
+            ULONG cbMaxToken;
+            ULONG Name;
+            ULONG Comment;
+        } pkg_info32 =
+        {
+            pkg_info.fCapabilities,
+            pkg_info.wVersion,
+            pkg_info.wRPCID,
+            pkg_info.cbMaxToken,
+            (ULONG_PTR)pkg_info.Name,
+            (ULONG_PTR)pkg_info.Comment
+        };
+
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(pkg_info32), *ret, &pkg_info32 );
+    }
+    return lsa_funcs->CopyToClientBuffer( NULL, sizeof(pkg_info), *ret, &pkg_info );
 }
 
 static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
@@ -697,32 +722,72 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
 #undef X
     case SECPKG_ATTR_SESSION_KEY:
     {
-        SecPkgContext_SessionKey key = { 128 };
+        unsigned char tmp[128];
+        SecPkgContext_SessionKey key = { 128, tmp };
         struct query_context_attributes_params params = { context_handle->handle, attribute, &key };
+        SECPKG_CALL_INFO info;
         NTSTATUS status;
 
-        if (!(key.SessionKey = RtlAllocateHeap( GetProcessHeap(), 0, key.SessionKeyLength ))) return STATUS_NO_MEMORY;
-
         if ((status = KRB5_CALL( query_context_attributes, &params )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, key.SessionKey );
             return status;
-        }
 
-        *(SecPkgContext_SessionKey *)buffer = key;
-        return SEC_E_OK;
+        status = lsa_funcs->AllocateClientBuffer( NULL, key.SessionKeyLength, (void **)&key.SessionKey );
+        if (status) return status;
+        lsa_funcs->CopyToClientBuffer( NULL, key.SessionKeyLength, key.SessionKey, tmp );
+
+        lsa_funcs->GetCallInfo( &info );
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG SessionKeyLength;
+                ULONG SessionKey;
+            } key32 =
+            {
+                key.SessionKeyLength,
+                (ULONG_PTR)key.SessionKey
+            };
+
+            return lsa_funcs->CopyToClientBuffer( NULL, sizeof(key32), buffer, &key32 );
+        }
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(key), buffer, &key );
     }
     case SECPKG_ATTR_SIZES:
     {
-        struct query_context_attributes_params params = { context_handle->handle, attribute, buffer };
-        return KRB5_CALL( query_context_attributes, &params );
+        SecPkgContext_Sizes sizes;
+        struct query_context_attributes_params params = { context_handle->handle, attribute, &sizes };
+        NTSTATUS status;
+
+        status = KRB5_CALL( query_context_attributes, &params );
+        if (status) return status;
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(sizes), buffer, &sizes );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {
-        SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buffer;
-        if (!(info->PackageInfo = build_package_info( &infoW ))) return SEC_E_INSUFFICIENT_MEMORY;
-        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
-        return SEC_E_OK;
+        SecPkgContext_NegotiationInfoW info;
+        SECPKG_CALL_INFO call_info;
+        NTSTATUS status;
+
+        lsa_funcs->GetCallInfo( &call_info );
+        status = build_package_info( &infoW, &info.PackageInfo, &call_info );
+        if (status) return status;
+        info.NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+
+        if (call_info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct
+            {
+                ULONG PackageInfo;
+                ULONG NegotiationState;
+            } info32 =
+            {
+                (ULONG_PTR)info.PackageInfo,
+                info.NegotiationState
+            };
+
+            return lsa_funcs->CopyToClientBuffer( NULL, sizeof(info32), buffer, &info32 );
+        }
+        return lsa_funcs->CopyToClientBuffer( NULL, sizeof(info), buffer, &info );
     }
     default:
         FIXME( "unknown attribute %lu\n", attribute );
