@@ -843,6 +843,13 @@ static struct strarray get_compat_defines( int gcc_defs )
             break;
         case CPU_ARM64EC:
             break;
+        case CPU_POWERPC64:
+            /* no Microsoft ABI exists for PowerPC64: the calling convention
+             * attributes are all no-ops and the native ELFv2 ABI is used. */
+            strarray_add(&args, "-D__stdcall=");
+            strarray_add(&args, "-D__cdecl=");
+            strarray_add(&args, "-D__fastcall=");
+            break;
         }
         strarray_add(&args, "-D_stdcall=__stdcall");
         strarray_add(&args, "-D_cdecl=__cdecl");
@@ -2007,7 +2014,7 @@ int main(int argc, char **argv)
 
     if (!file_align) file_align = section_align;
 
-    if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64)
+    if (!is_pe && target.cpu != CPU_i386 && target.cpu != CPU_x86_64 && target.cpu != CPU_POWERPC64)
         error( "Non-PE builds are not supported on this platform. You need to use something like '--target=%s-windows'.\n",
                target.cpu == CPU_ARM ? "arm" : "aarch64" );
 
