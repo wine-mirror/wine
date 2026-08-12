@@ -921,17 +921,17 @@ static BOOLEAN NTAPI lsa_GetCallInfo( SECPKG_CALL_INFO *info )
 
 static const LSA_SECPKG_FUNCTION_TABLE lsa_secpkg_table =
 {
-    NULL, /* CreateLogonSession */
-    NULL, /* DeleteLogonSession */
-    NULL, /* AddCredential */
-    NULL, /* GetCredentials */
-    NULL, /* DeleteCredential */
-    NULL, /* AllocateLsaHeap */
-    NULL, /* FreeLsaHeap */
-    NULL, /* AllocateClientBuffer */
-    NULL, /* FreeClientBuffer */
-    NULL, /* CopyToClientBuffer */
-    NULL, /* CopyFromClientBuffer */
+    lsa_CreateLogonSession,
+    lsa_DeleteLogonSession,
+    lsa_AddCredential,
+    lsa_GetCredentials,
+    lsa_DeleteCredential,
+    lsa_AllocateLsaHeap,
+    lsa_FreeLsaHeap,
+    lsa_AllocateClientBuffer,
+    lsa_FreeClientBuffer,
+    lsa_CopyToClientBuffer,
+    lsa_CopyFromClientBuffer,
     NULL, /* ImpersonateClient */
     NULL, /* UnloadPackage */
     NULL, /* DuplicateHandle */

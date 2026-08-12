@@ -556,9 +556,12 @@ done:
 
 static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, ULONG attr, void *buf)
 {
-    WCHAR domain_buf[DNLEN + 1], username_buf[UNLEN + 1], *domain, *username;
+    WCHAR domain[DNLEN + 2], username_buf[UNLEN + 1], *username;
     struct ntlm_cred *cred = (struct ntlm_cred *)handle;
-    SecPkgCredentials_NamesW *names = buf;
+    SecPkgCredentials_NamesW names;
+    SECPKG_CALL_INFO info;
+    DWORD domain_len;
+    NTSTATUS status;
     size_t len;
 
     TRACE( "%#Ix, %lu, %p\n", handle, attr, buf );
@@ -575,12 +578,10 @@ static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    username = cred->usernameW;
-    domain = cred->domainW;
 
     if (cred->token)
     {
-        DWORD username_len = sizeof(username_buf), domain_len = sizeof(domain_buf);
+        DWORD username_len = sizeof(username_buf);
         char tmp[256];
         TOKEN_USER *token_user = (TOKEN_USER *)tmp;
         DWORD size = sizeof(tmp);
@@ -601,28 +602,56 @@ static NTSTATUS NTAPI ntlm_SpQueryCredentialsAttributes( LSA_SEC_HANDLE handle, 
                 return SEC_E_INTERNAL_ERROR;
             }
         }
+        domain_len = sizeof(domain) - sizeof(WCHAR);
         r = LookupAccountSidW( NULL, token_user->User.Sid, username_buf, &username_len,
-                domain_buf, &domain_len, &use);
+                domain, &domain_len, &use);
         if (token_user != (TOKEN_USER *)tmp) free( token_user );
         if (!r) return SEC_E_INTERNAL_ERROR;
 
         username = username_buf;
-        domain = domain_buf;
+    }
+    else
+    {
+        username = cred->usernameW;
+        domain_len = cred->domainW ? wcslen(cred->domainW) : 0;
+        memcpy( domain, cred->domainW, domain_len * sizeof(WCHAR) );
     }
 
-    len = 1;
-    if (domain && domain[0]) len += wcslen( domain ) + 1;
-    if (username) len += wcslen( username );
-    names->sUserName = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    if (!names->sUserName) return SEC_E_INSUFFICIENT_MEMORY;
-    names->sUserName[0] = 0;
-    if (domain && domain[0])
+    if (domain_len)
     {
-        wcscpy( names->sUserName, domain );
-        wcscat( names->sUserName, L"\\" );
+        domain[domain_len++] = '\\';
+        domain[domain_len] = 0;
     }
-    if (username) wcscat( names->sUserName, username );
-    return SEC_E_OK;
+
+    len = domain_len + 1;
+    if (username) len += wcslen( username );
+    status = lsa_secpkg_table->AllocateClientBuffer( NULL, len * sizeof(WCHAR), (void **)&names.sUserName );
+    if (status) return status;
+    if (domain_len)
+    {
+        lsa_secpkg_table->CopyToClientBuffer( NULL, (domain_len + 1) * sizeof(WCHAR),
+                names.sUserName, domain );
+    }
+    if (username)
+    {
+        lsa_secpkg_table->CopyToClientBuffer( NULL, (wcslen(username) + 1) * sizeof(WCHAR),
+                names.sUserName + domain_len, username );
+    }
+
+    lsa_secpkg_table->GetCallInfo( &info );
+    if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+    {
+        struct
+        {
+            ULONG sUserName;
+        } names32 =
+        {
+            (ULONG_PTR)names.sUserName
+        };
+
+        return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(names32), buf, &names32 );
+    }
+    return lsa_secpkg_table->CopyToClientBuffer( NULL, sizeof(names), buf, &names );
 }
 
 static NTSTATUS NTAPI ntlm_SpFreeCredentialsHandle( LSA_SEC_HANDLE handle )
