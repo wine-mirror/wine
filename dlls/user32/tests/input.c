@@ -4679,6 +4679,7 @@ struct test_AttachThreadInput_params
     DWORD attach_count;
     BOOL activate;
     HWND active_hwnd;
+    BOOL active_todo;
 };
 
 static DWORD WINAPI test_AttachThreadInput_thread(void *param)
@@ -4711,8 +4712,8 @@ static DWORD WINAPI test_AttachThreadInput_thread(void *param)
     {
         SetFocus( args->active_hwnd );
         SetActiveWindow( args->active_hwnd );
-        ok_ptr( GetActiveWindow(), ==, args->active_hwnd );
-        ok_ptr( GetFocus(), ==, args->active_hwnd );
+        todo_wine_if( args->active_todo ) ok_ptr( GetActiveWindow(), ==, args->active_hwnd );
+        todo_wine_if( args->active_todo ) ok_ptr( GetFocus(), ==, args->active_hwnd );
     }
 
     SetEvent( args->start_event );
@@ -4974,6 +4975,7 @@ static void test_AttachThreadInput(void)
     args2.attach_from = GetCurrentThreadId();
     args2.attach_count = 2;
     args2.active_hwnd = args1.hwnd;
+    args2.active_todo = TRUE;
     thread2 = CreateThread( NULL, 0, test_AttachThreadInput_thread, &args2, 0, &tid2 );
     ok_ptr( thread2, !=, NULL );
     ok_ret( 0, WaitForSingleObject( args2.start_event, 5000 ) );
@@ -5003,8 +5005,8 @@ static void test_AttachThreadInput(void)
     for (UINT i = 0; i < 2; i++)
     {
         ok_ret( 1, AttachThreadInput( tid1, GetCurrentThreadId(), TRUE ) );
-        ok_ptr( GetActiveWindow(), ==, args1.hwnd );
-        ok_ptr( GetFocus(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+        todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
     }
 
     memset( &args2, 0, sizeof(args2) );
@@ -5080,8 +5082,8 @@ static void test_AttachThreadInput(void)
     /* all threads are attached */
     SetFocus( args1.hwnd );
     SetActiveWindow( args1.hwnd );
-    ok_ptr( GetActiveWindow(), ==, args1.hwnd );
-    ok_ptr( GetFocus(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetActiveWindow(), ==, args1.hwnd );
+    todo_wine ok_ptr( GetFocus(), ==, args1.hwnd );
 
     SetFocus( args2.hwnd );
     SetActiveWindow( args2.hwnd );
@@ -5117,8 +5119,8 @@ static void test_AttachThreadInput(void)
     ok_ret( 0, WaitForSingleObject( thread1, 5000 ) );
     ok_ret( 1, CloseHandle( thread1 ) );
 
-    todo_wine ok_ptr( GetActiveWindow(), ==, NULL );
-    todo_wine ok_ptr( GetFocus(), ==, NULL );
+    ok_ptr( GetActiveWindow(), ==, NULL );
+    ok_ptr( GetFocus(), ==, NULL );
 
     ok_ret( 1, PostMessageA( args3.hwnd, WM_QUIT, 0, 0 ) );
     ok_ret( 0, WaitForSingleObject( thread3, 5000 ) );

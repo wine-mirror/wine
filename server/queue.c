@@ -375,8 +375,21 @@ static void unlock_input_keystate( struct thread_input *input )
 static void assign_thread_input( struct msg_queue *queue, struct thread_input *new_input )
 {
     struct thread_input *old_input = queue->input;
+    user_handle_t new_focus = 0, new_active = 0;
+    struct thread *owner;
 
     if (old_input == new_input) return;
+
+    if (old_input->shared->focus && (owner = get_window_thread( old_input->shared->focus )))
+    {
+        new_focus = owner->queue == queue ? old_input->shared->focus : 0;
+        release_object( owner );
+    }
+    if (old_input->shared->active && (owner = get_window_thread( old_input->shared->active )))
+    {
+        new_active = owner->queue == queue ? old_input->shared->active : 0;
+        release_object( owner );
+    }
 
     SHARED_WRITE_BEGIN( old_input->shared, input_shm_t )
     {
@@ -385,6 +398,11 @@ static void assign_thread_input( struct msg_queue *queue, struct thread_input *n
         SHARED_WRITE_BEGIN( new_input->shared, input_shm_t )
         {
             input_shm_t *new_shared = shared;
+
+            if (!new_shared->focus) new_shared->focus = new_focus;
+            if (new_focus) old_shared->focus = 0;
+            if (!new_shared->active) new_shared->active = new_active;
+            if (new_active) old_shared->active = 0;
 
             new_shared->cursor_count += queue->cursor_count;
             old_shared->cursor_count -= queue->cursor_count;
@@ -1385,78 +1403,17 @@ int init_thread_queue( struct thread *thread )
 /* attach two thread input data structures */
 void attach_thread_input( struct msg_queue *queue_from, struct msg_queue *queue_to )
 {
-    struct thread_input *input, *old_input;
-    input_shm_t *old_input_shm, *input_shm;
-
-    input = (struct thread_input *)grab_object( queue_to->input );
-
-    old_input = queue_from->input;
-    old_input_shm = old_input->shared;
-    input_shm = input->shared;
-
-    SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-    {
-        if (!shared->active) shared->active = old_input_shm->active;
-        if (!shared->focus) shared->focus = old_input_shm->focus;
-    }
-    SHARED_WRITE_END;
-
-    assign_thread_input( queue_from, input );
-
-    release_object( input );
+    assign_thread_input( queue_from, queue_to->input );
 }
 
 /* detach two thread input data structures */
 void detach_thread_input( struct msg_queue *queue_from, struct desktop *desktop )
 {
-    struct thread *thread;
-    struct thread_input *input, *old_input = queue_from->input;
+    struct thread_input *input;
 
-    if ((input = create_thread_input( desktop )))
-    {
-        input_shm_t *old_input_shm, *input_shm;
-        old_input_shm = old_input->shared;
-        input_shm = input->shared;
-
-        if (old_input_shm->focus && (thread = get_window_thread( old_input_shm->focus )))
-        {
-            if (thread->queue == queue_from)
-            {
-                SHARED_WRITE_BEGIN( old_input_shm, input_shm_t )
-                {
-                    input_shm_t *old_shared = shared;
-                    SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-                    {
-                        shared->focus = old_shared->focus;
-                        old_shared->focus = 0;
-                    }
-                    SHARED_WRITE_END;
-                }
-                SHARED_WRITE_END;
-            }
-            release_object( thread );
-        }
-        if (old_input_shm->active && (thread = get_window_thread( old_input_shm->active )))
-        {
-            if (thread->queue == queue_from)
-            {
-                SHARED_WRITE_BEGIN( old_input_shm, input_shm_t )
-                {
-                    input_shm_t *old_shared = shared;
-                    SHARED_WRITE_BEGIN( input_shm, input_shm_t )
-                    {
-                        shared->active = old_shared->active;
-                        old_shared->active = 0;
-                    }
-                    SHARED_WRITE_END;
-                }
-                SHARED_WRITE_END;
-            }
-            release_object( thread );
-        }
-        assign_thread_input( queue_from, input );
-        release_object( input );
-    }
+    if (!(input = create_thread_input( desktop ))) return;
+    assign_thread_input( queue_from, input );
+    release_object( input );
 }
 
 
