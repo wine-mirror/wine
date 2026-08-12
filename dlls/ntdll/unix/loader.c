@@ -1466,12 +1466,18 @@ NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **mod
     enum loadorder loadorder = get_load_order( nt_name, is_system_dir, NULL );
 
     status = open_main_image( nt_name, module, &main_image_info, loadorder, load_machine );
-    if (status != STATUS_DLL_NOT_FOUND) return status;
 
-    /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
-    if (loadorder != LO_NATIVE && is_prefix_bootstrap && is_system_dir)
-        status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0,
-                                   search_machine, load_machine, FALSE, 0 );
+    switch (status)
+    {
+    case STATUS_DLL_NOT_FOUND:
+    case STATUS_INVALID_IMAGE_FORMAT:
+    case STATUS_NOT_SUPPORTED:
+        /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
+        if (loadorder != LO_NATIVE && is_prefix_bootstrap && is_system_dir)
+            status = find_builtin_dll( nt_name, NULL, module, &size, &main_image_info, 0, 0,
+                                       search_machine, load_machine, FALSE, 0 );
+        break;
+    }
     return status;
 }
 

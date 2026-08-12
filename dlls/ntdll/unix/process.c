@@ -273,15 +273,7 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
                                  FILE_SHARE_READ | FILE_SHARE_DELETE,
                                  FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     }
-    if (status)
-    {
-        if (is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
-        {
-            TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
-            return STATUS_SUCCESS;
-        }
-        return status;
-    }
+    if (status) goto done;
 
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                                     SECTION_MAP_READ | SECTION_MAP_EXECUTE,
@@ -307,6 +299,13 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
             status = get_non_pe_file_info( unix_fd, info );
             if (needs_close) close( unix_fd );
         }
+    }
+
+ done:
+    if (status && is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
+    {
+        TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
+        return STATUS_SUCCESS;
     }
     return status;
 }

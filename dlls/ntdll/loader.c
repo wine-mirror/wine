@@ -3316,8 +3316,16 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     if (RtlDetermineDosPathNameType_U( libname ) == RtlPathTypeRelative)
     {
         status = search_dll_file( load_path, libname, nt_name, pwm, mapping, image_info, id );
-        if (status == STATUS_DLL_NOT_FOUND)
+        switch (status)
+        {
+        case STATUS_NOT_SUPPORTED:
+        case STATUS_INVALID_IMAGE_FORMAT:
+            if (!is_prefix_bootstrap) break;
+            /* fall through */
+        case STATUS_DLL_NOT_FOUND:
             status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
+            break;
+        }
     }
     else if (!(status = RtlDosPathNameToNtPathName_U_WithStatus( libname, nt_name, NULL, NULL )))
         status = open_dll_file( nt_name, pwm, mapping, image_info, id );
