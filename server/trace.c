@@ -911,6 +911,16 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         {
             for (i = 0; i < 32; i++) fprintf( stderr, ",fpr%u=%g", i, ctx.fp.powerpc64_regs.fpr[i] );
             dump_uint64( ",fpscr=", &ctx.fp.powerpc64_regs.fpscr );
+            /* the VMX state shares the fp union, so it travels with
+             * SERVER_CTX_FLOATING_POINT rather than having its own flag */
+            for (i = 0; i < 32; i++)
+            {
+                fprintf( stderr, ",vr%u=", i );
+                dump_uint64( "", &ctx.fp.powerpc64_regs.vr[i].high );
+                dump_uint64( "", &ctx.fp.powerpc64_regs.vr[i].low );
+            }
+            fprintf( stderr, ",vscr=%08x,vrsave=%08x",
+                     ctx.fp.powerpc64_regs.vscr, ctx.fp.powerpc64_regs.vrsave );
         }
         break;
     default:

@@ -155,7 +155,9 @@ struct context_data
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
         struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
-        struct { double fpr[32]; unsigned __int64 fpscr; } powerpc64_regs;
+        struct { double fpr[32]; unsigned __int64 fpscr;
+                 struct { unsigned __int64 low, high; } vr[32];
+                 unsigned int vscr, vrsave; } powerpc64_regs;
     } fp;
     union
     {
@@ -7181,6 +7183,6 @@ union generic_reply
     struct alpc_create_port_reply alpc_create_port_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 960
+#define SERVER_PROTOCOL_VERSION 961
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

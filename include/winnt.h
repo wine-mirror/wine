@@ -2039,8 +2039,23 @@ typedef ARM64_NT_CONTEXT CONTEXT, *PCONTEXT;
 #define CONTEXT_PPC64_INTEGER         (CONTEXT_PPC64 | 0x00000002)
 #define CONTEXT_PPC64_FLOATING_POINT  (CONTEXT_PPC64 | 0x00000004)
 #define CONTEXT_PPC64_DEBUG_REGISTERS (CONTEXT_PPC64 | 0x00000008)
-#define CONTEXT_PPC64_FULL (CONTEXT_PPC64_CONTROL | CONTEXT_PPC64_INTEGER | CONTEXT_PPC64_FLOATING_POINT)
+#define CONTEXT_PPC64_VECTOR          (CONTEXT_PPC64 | 0x00000010)
+#define CONTEXT_PPC64_FULL (CONTEXT_PPC64_CONTROL | CONTEXT_PPC64_INTEGER | \
+                            CONTEXT_PPC64_FLOATING_POINT | CONTEXT_PPC64_VECTOR)
 #define CONTEXT_PPC64_ALL  (CONTEXT_PPC64_FULL | CONTEXT_PPC64_DEBUG_REGISTERS)
+
+typedef union _PPC64_NT_VECTOR128
+{
+    struct
+    {
+        ULONGLONG Low;
+        LONGLONG High;
+    } DUMMYSTRUCTNAME;
+    double D[2];
+    float  S[4];
+    WORD   H[8];
+    BYTE   B[16];
+} PPC64_NT_VECTOR128, *PPPC64_NT_VECTOR128;
 
 typedef struct DECLSPEC_ALIGN(16) _PPC64_NT_CONTEXT
 {
@@ -2136,7 +2151,22 @@ typedef struct DECLSPEC_ALIGN(16) _PPC64_NT_CONTEXT
     DWORD64 Dr4;
     DWORD64 Dr5;
     DWORD64 Dr6;
-    DWORD64 Dr7;
+    DWORD64 Dr7;                    /* 290 */
+
+    /* These are selected by CONTEXT_VECTOR.
+     *
+     * Not present in the 2020 PPC64_NT_CONTEXT this struct derives from, but
+     * v20-v31 are non-volatile in the ELFv2 ABI, so a CONTEXT without them
+     * cannot round-trip a thread. Appended at the end so the offsets of every
+     * pre-existing field are unchanged.
+     *
+     * Note this covers the VMX/AltiVec register file only. VSX aliases the
+     * 32 FPRs onto the high halves of vs0-vs31 and the 32 VRs onto vs32-vs63;
+     * the low halves of vs0-vs31 are volatile in ELFv2 and so are deliberately
+     * not represented here. */
+    DWORD Vscr;                     /* 298 */
+    DWORD Vrsave;                   /* 29c */
+    PPC64_NT_VECTOR128 Vr[32];      /* 2a0 */
 } PPC64_NT_CONTEXT, *PPPC64_NT_CONTEXT;
 
 /* No PE unwind format is defined for PowerPC64; this mirrors the classic
@@ -2178,9 +2208,11 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS_PPC64
 #define CONTEXT_INTEGER CONTEXT_PPC64_INTEGER
 #define CONTEXT_FLOATING_POINT CONTEXT_PPC64_FLOATING_POINT
 #define CONTEXT_DEBUG_REGISTERS CONTEXT_PPC64_DEBUG_REGISTERS
+#define CONTEXT_VECTOR CONTEXT_PPC64_VECTOR
 #define CONTEXT_FULL CONTEXT_PPC64_FULL
 #define CONTEXT_ALL CONTEXT_PPC64_ALL
 
+typedef PPC64_NT_VECTOR128 VECTOR128, *PVECTOR128;
 typedef PPC64_NT_CONTEXT CONTEXT, *PCONTEXT;
 typedef IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
 typedef SCOPE_TABLE_PPC64 SCOPE_TABLE, *PSCOPE_TABLE;
