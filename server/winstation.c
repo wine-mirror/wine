@@ -50,7 +50,6 @@ struct winstation_init_data
 
 struct desktop_init_data
 {
-    struct winstation     *winstation;
     unsigned int           flags;
 };
 
@@ -678,38 +677,36 @@ DECL_HANDLER(create_desktop)
     struct object_params params = { .ops = &desktop_ops, .init_data = &data };
 
     if (!get_req_object_attributes( &params )) return;
-    if (params.root) release_object( params.root );
 
     if (!params.name.len)
     {
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if ((data.winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
+
+    if ((desktop = create_named_object( &params )))
     {
-        params.root = &data.winstation->obj;
-        if ((desktop = create_named_object( &params )))
+        struct winstation *winstation = (struct winstation *)desktop->obj.name->parent;
+
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         {
-            if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
             {
-                SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
-                {
-                    shared->flags |= data.flags & (DF_WINE_VIRTUAL_DESKTOP | DF_WINE_ROOT_DESKTOP);
-                }
-                SHARED_WRITE_END;
-                clear_error();
-                reply->handle = alloc_handle( current->process, desktop, req->access, params.attr );
+                shared->flags |= data.flags & (DF_WINE_VIRTUAL_DESKTOP | DF_WINE_ROOT_DESKTOP);
             }
-            else
-            {
-                reply->handle = alloc_handle_no_access_check( current->process, desktop,
-                                                              req->access, params.attr );
-            }
-            if (!data.winstation->input_desktop) set_input_desktop( data.winstation, desktop );
-            release_object( desktop );
+            SHARED_WRITE_END;
+            clear_error();
+            reply->handle = alloc_handle( current->process, desktop, req->access, params.attr );
         }
-        release_object( data.winstation );
+        else
+        {
+            reply->handle = alloc_handle_no_access_check( current->process, desktop,
+                                                          req->access, params.attr );
+        }
+        if (!winstation->input_desktop) set_input_desktop( winstation, desktop );
+        release_object( desktop );
     }
+    if (params.root) release_object( params.root );
 }
 
 /* open a handle to a desktop */

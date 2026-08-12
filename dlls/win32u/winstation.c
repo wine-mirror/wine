@@ -1005,7 +1005,7 @@ void winstation_init(void)
     }
 
     /* set winstation if explicitly specified, or if we don't have one yet */
-    if (buffer || !NtUserGetProcessWindowStation())
+    if (buffer || !(handle = NtUserGetProcessWindowStation()))
     {
         str.Buffer = (WCHAR *)(winstation ? winstation : winsta0);
         str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
@@ -1033,9 +1033,7 @@ void winstation_init(void)
         char buffer[4096];
         str.Buffer = (WCHAR *)(desktop ? desktop : get_default_desktop( buffer, sizeof(buffer) ));
         str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
-        if (!dir) dir = get_winstations_dir_handle();
-        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-                                    dir, NULL );
+        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, handle, NULL );
 
         handle = NtUserCreateDesktopEx( &attr, NULL, NULL, 0, STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS, 0 );
         if (handle) NtUserSetThreadDesktop( handle );

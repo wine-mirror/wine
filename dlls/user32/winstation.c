@@ -263,7 +263,7 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
 
     RtlInitUnicodeString( &str, name );
     InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-                                get_winstations_dir_handle(), sa ? sa->lpSecurityDescriptor : NULL );
+                                NtUserGetProcessWindowStation(), sa ? sa->lpSecurityDescriptor : NULL );
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
     return NtUserCreateDesktopEx( &attr, NULL, devmode, flags, access, 0 );
 }
