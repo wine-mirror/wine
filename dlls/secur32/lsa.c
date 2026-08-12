@@ -453,8 +453,6 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
 {
     SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
     SEC_WCHAR *principalW = NULL, *packageW = NULL;
-    SEC_WINNT_AUTH_IDENTITY_A *id = auth_data;
-    SEC_WINNT_AUTH_IDENTITY_W idW = {};
 
     TRACE("%s %s %#lx %p %p %p %p %p\n", debugstr_a(principal), debugstr_a(package),
           credentials_use, auth_data, get_key_fn, get_key_arg, credential, ts_expiry);
@@ -471,38 +469,12 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
         if (!(packageW = malloc( len * sizeof(SEC_WCHAR) ))) goto done;
         MultiByteToWideChar( CP_ACP, 0, package, -1, packageW, len );
     }
-    if (id && (id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI))
-    {
-        if (id->UserLength)
-        {
-            idW.UserLength = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
-            if (!(idW.User = malloc( idW.UserLength * sizeof(SEC_WCHAR) ))) goto done;
-            MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, idW.User, idW.UserLength );
-        }
-        if (id->DomainLength)
-        {
-            idW.DomainLength = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
-            if (!(idW.Domain = malloc( idW.DomainLength * sizeof(SEC_WCHAR) ))) goto done;
-            MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, idW.Domain, idW.DomainLength );
-        }
-        if (id->PasswordLength)
-        {
-            idW.PasswordLength = MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, NULL, 0 );
-            if (!(idW.Password = malloc( idW.PasswordLength * sizeof(SEC_WCHAR) ))) goto done;
-            MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, idW.Password, idW.PasswordLength );
-        }
-        idW.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-        auth_data = &idW;
-    }
 
     status = lsa_AcquireCredentialsHandleW( principalW, packageW, credentials_use, logon_id, auth_data, get_key_fn,
                                             get_key_arg, credential, ts_expiry );
 done:
     free( packageW );
     free( principalW );
-    free( idW.User );
-    free( idW.Domain );
-    free( idW.Password );
     return status;
 }
 

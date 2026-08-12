@@ -1222,6 +1222,7 @@ static void testAcquireCredentialsHandle(void)
     TimeStamp ttl;
     SECURITY_STATUS ret;
     SEC_WINNT_AUTH_IDENTITY_A id;
+    SEC_WINNT_AUTH_IDENTITY_EXA idex;
     PSecPkgInfoA pkg_info = NULL;
 
     if(QuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
@@ -1241,6 +1242,24 @@ static void testAcquireCredentialsHandle(void)
 
     ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
+            getSecError(ret));
+    FreeCredentialsHandle(&cred);
+
+    idex.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+    idex.Length = sizeof(idex);
+    idex.User = id.User;
+    idex.UserLength = id.UserLength;
+    idex.Domain = id.Domain;
+    idex.DomainLength = id.DomainLength;
+    idex.Password = id.Password;
+    idex.PasswordLength = id.PasswordLength;
+    idex.Flags = id.Flags;
+    idex.PackageList = NULL;
+    idex.PackageListLength = 0;
+
+    ret = AcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
+            NULL, &idex, NULL, NULL, &cred, &ttl);
     ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     FreeCredentialsHandle(&cred);
