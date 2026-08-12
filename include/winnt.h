@@ -2848,6 +2848,13 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return (struct _TEB *)(ULONG_PTR)_MoveFromCoprocessor(15, 0, 13, 0, 2);
 }
+#elif defined(__powerpc64__)
+/* PowerPC64 has no register the Wine ABI can reserve for the TEB: r13 is the
+ * ELF thread pointer and belongs to glibc, and r2 is the TOC.  So NtCurrentTeb
+ * is an out-of-line ntdll export here, as it was in the 2021 ppc64le fork
+ * (which relied on the "#else extern ... NtCurrentTeb(void);" fallback that
+ * current Wine replaced with the #error below). */
+NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void);
 #elif !defined(RC_INVOKED)
 # error You must define NtCurrentTeb() for your architecture
 #endif
