@@ -91,6 +91,7 @@ struct message
     unsigned int           data_size; /* size of message data */
     unsigned int           unique_id; /* unique id for nested hw message waits */
     struct message_result *result;    /* result in sender queue */
+    bool                   mergeable; /* message can be coalesced if eligible for that */
 };
 
 struct timer
@@ -860,12 +861,14 @@ static int merge_mousemove( struct thread_input *input, const struct message *ms
     struct message *prev;
 
     if (!(prev = find_mouse_message( input, msg ))) return 0;
+    if (!prev->mergeable) return 0;
 
     prev->wparam  = msg->wparam;
     prev->lparam  = msg->lparam;
     prev->x       = msg->x;
     prev->y       = msg->y;
     prev->time    = msg->time;
+    prev->mergeable = msg->mergeable;
     if (msg->type == MSG_HARDWARE && prev->data && msg->data)
     {
         struct hardware_msg_data *prev_data = prev->data;
@@ -2277,6 +2280,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         msg->lparam    = 0;
         msg->x         = x;
         msg->y         = y;
+        msg->mergeable = !(flags & MOUSEEVENTF_MOVE_NOCOALESCE);
         if (origin == IMO_INJECTED) msg_data->flags = LLMHF_INJECTED;
 
         /* specify a sender only when sending the last message */
