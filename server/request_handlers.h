@@ -649,7 +649,7 @@ C_ASSERT( sizeof(process_id_t) == 4 );
 C_ASSERT( sizeof(short int) == 2 );
 C_ASSERT( sizeof(struct async_data) == 40 );
 C_ASSERT( sizeof(struct class_info) == 56 );
-C_ASSERT( sizeof(struct context_data) == 1720 );
+C_ASSERT( sizeof(struct context_data) == 1776 );
 C_ASSERT( sizeof(struct cursor_pos) == 24 );
 C_ASSERT( sizeof(struct filesystem_event) == 12 );
 C_ASSERT( sizeof(struct generic_map) == 16 );

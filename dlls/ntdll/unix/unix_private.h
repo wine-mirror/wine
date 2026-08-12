@@ -49,6 +49,8 @@ static const WORD current_machine = IMAGE_FILE_MACHINE_AMD64;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
+#elif defined(__powerpc64__)
+static const WORD current_machine = IMAGE_FILE_MACHINE_POWERPC64;
 #endif
 extern WORD native_machine;
 
@@ -59,7 +61,8 @@ static const ULONG_PTR limit_4g = (ULONG_PTR)((ULONGLONG)1 << 32);
 
 static inline BOOL is_machine_64bit( WORD machine )
 {
-    return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
+    return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64 ||
+            machine == IMAGE_FILE_MACHINE_POWERPC64);
 }
 
 #ifdef _WIN64

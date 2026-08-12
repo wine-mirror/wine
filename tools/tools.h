@@ -616,6 +616,8 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
     case CPU_ARM64EC:
         if (size == 4) target->cpu = CPU_ARM;
         break;
+    case CPU_POWERPC64:
+        break;  /* no 32-bit counterpart is supported */
     }
 }
 

@@ -877,6 +877,42 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             fprintf( stderr, ",fpcr=%08x,fpsr=%08x", ctx.fp.arm64_regs.fpcr, ctx.fp.arm64_regs.fpsr );
         }
         break;
+    case IMAGE_FILE_MACHINE_POWERPC64:
+        fprintf( stderr, "%s{machine=ppc64", prefix );
+        if (ctx.flags & SERVER_CTX_CONTROL)
+        {
+            dump_uint64( ",iar=", &ctx.ctl.powerpc64_regs.iar );
+            dump_uint64( ",msr=", &ctx.ctl.powerpc64_regs.msr );
+            dump_uint64( ",ctr=", &ctx.ctl.powerpc64_regs.ctr );
+            dump_uint64( ",lr=", &ctx.ctl.powerpc64_regs.lr );
+            dump_uint64( ",dar=", &ctx.ctl.powerpc64_regs.dar );
+            dump_uint64( ",dsisr=", &ctx.ctl.powerpc64_regs.dsisr );
+            dump_uint64( ",trap=", &ctx.ctl.powerpc64_regs.trap );
+        }
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            for (i = 0; i < 32; i++)
+            {
+                fprintf( stderr, ",gpr%u=", i );
+                dump_uint64( "", &ctx.integer.powerpc64_regs.gpr[i] );
+            }
+            dump_uint64( ",cr=", &ctx.integer.powerpc64_regs.cr );
+            dump_uint64( ",xer=", &ctx.integer.powerpc64_regs.xer );
+        }
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            for (i = 0; i < 8; i++)
+            {
+                fprintf( stderr, ",dr%u=", i );
+                dump_uint64( "", &ctx.debug.powerpc64_regs.dr[i] );
+            }
+        }
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 32; i++) fprintf( stderr, ",fpr%u=%g", i, ctx.fp.powerpc64_regs.fpr[i] );
+            dump_uint64( ",fpscr=", &ctx.fp.powerpc64_regs.fpscr );
+        }
+        break;
     default:
         fprintf( stderr, "%s{machine=%04x", prefix, ctx.machine );
         break;

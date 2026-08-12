@@ -32,8 +32,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_ASM_TERMBITS_H
-# include <asm/termbits.h>
+/* Some architectures (PowerPC, Alpha, SPARC, MIPS) have <asm/termbits.h> but no
+ * termios2 support, so the header alone isn't enough; check for TCGETS2 too. */
 # include <asm/ioctls.h>
+# ifndef TCGETS2
+#  undef HAVE_ASM_TERMBITS_H
+# endif
+#endif
+#ifdef HAVE_ASM_TERMBITS_H
+# include <asm/termbits.h>
 #else
 # include <termios.h>
 #endif

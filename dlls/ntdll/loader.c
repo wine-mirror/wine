@@ -57,6 +57,8 @@ static const WCHAR pe_dir[] = L"\\x86_64-windows";
 static const WCHAR pe_dir[] = L"\\arm-windows";
 #elif defined __aarch64__
 static const WCHAR pe_dir[] = L"\\aarch64-windows";
+#elif defined __powerpc64__
+static const WCHAR pe_dir[] = L"\\ppc64-windows";
 #else
 static const WCHAR pe_dir[] = L"";
 #endif

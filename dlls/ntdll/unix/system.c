@@ -812,6 +812,66 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 #endif
 }
 
+#elif defined(__powerpc64__)
+
+/* Derived from wine-fork c44544d702 (ntdll: Add proper reporting of CPU
+ * information for PPC64 systems), adapted to the current init_cpu_model /
+ * get_cpu_features split. */
+static void init_cpu_model(void)
+{
+    unsigned int level = 0, revision = 0;
+#ifdef linux
+    char line[512];
+    char *s, *value;
+    FILE *f = fopen( "/proc/cpuinfo", "r" );
+    if (f)
+    {
+        while (fgets( line, sizeof(line), f ))
+        {
+            /* NOTE: the ':' is the only character we can rely on */
+            if (!(value = strchr( line, ':' ))) continue;
+            /* terminate the valuename */
+            s = value - 1;
+            while ((s >= line) && (*s == ' ' || *s == '\t')) s--;
+            s[1] = 0;
+            /* and strip leading spaces from value */
+            value += 1;
+            while (*value == ' ' || *value == '\t') value++;
+            if ((s = strchr( value, '\n' ))) *s = 0;
+            /* e.g. "cpu : POWER9 (architected), altivec supported" */
+            if (!strcmp( line, "cpu" ))
+            {
+                if (!strncmp( value, "POWER", 5 ) && value[5] >= '0' && value[5] <= '9')
+                    level = strtoul( value + 5, NULL, 10 );
+            }
+            /* e.g. "revision : 2.2 (pvr 004e 1202)" */
+            else if (!strcmp( line, "revision" ))
+            {
+                double rev = strtod( value, NULL );
+                revision = (unsigned int)(rev * 100);
+            }
+        }
+        fclose( f );
+    }
+#endif
+    cpu_level = max( level, 8 );  /* default to POWER8 if the CPU series can't be detected */
+    cpu_revision = revision;
+}
+
+static ULONGLONG get_cpu_features(void)
+{
+    return 0;  /* FIXME */
+}
+
+void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
+{
+    BOOLEAN *features = data->ProcessorFeatures;
+
+    features[PF_FASTFAIL_AVAILABLE]      = TRUE;
+    features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+    features[PF_NX_ENABLED]              = TRUE;
+}
+
 #endif /* End architecture specific feature detection for CPUs */
 
 static BOOL grow_logical_proc_buf(void)
@@ -1773,6 +1833,8 @@ static SYSTEM_CPU_INFORMATION get_cpuinfo(void)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL,
 #elif defined(__x86_64__)
         .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64,
+#elif defined(__powerpc64__)
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_PPC64,
 #endif
     };
 

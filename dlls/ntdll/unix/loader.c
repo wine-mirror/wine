@@ -263,6 +263,7 @@ static const char *get_so_dir( WORD machine )
     case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-unix";
     case IMAGE_FILE_MACHINE_ARMNT: return "/arm-unix";
     case IMAGE_FILE_MACHINE_ARM64: return "/aarch64-unix";
+    case IMAGE_FILE_MACHINE_POWERPC64: return "/ppc64-unix";
     default: return "";
     }
 }
@@ -275,6 +276,7 @@ static const char *get_pe_dir( WORD machine )
     case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-windows";
     case IMAGE_FILE_MACHINE_ARMNT: return "/arm-windows";
     case IMAGE_FILE_MACHINE_ARM64: return "/aarch64-windows";
+    case IMAGE_FILE_MACHINE_POWERPC64: return "/ppc64-windows";
     default: return "";
     }
 }
