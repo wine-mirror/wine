@@ -402,12 +402,49 @@ static char *get_password_unixcp( const WCHAR *passwd, ULONG passwd_len )
     return ret;
 }
 
+static void map_auth_data( const void *auth_data, SEC_WINNT_AUTH_IDENTITY_W *id )
+{
+    const SEC_WINNT_AUTH_IDENTITY_EXA *exA = auth_data;
+    const SEC_WINNT_AUTH_IDENTITY_EXW *exW = auth_data;
+
+    if (exW->Version != SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        *id = *(SEC_WINNT_AUTH_IDENTITY_W *)auth_data;
+    }
+    else if (exW->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+    {
+        id->User           = exW->User;
+        id->UserLength     = exW->UserLength;
+        id->Domain         = exW->Domain;
+        id->DomainLength   = exW->DomainLength;
+        id->Password       = exW->Password;
+        id->PasswordLength = exW->PasswordLength;
+        id->Flags          = exW->Flags;
+        if (exW->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_wn(exW->PackageList, exW->PackageListLength) );
+    }
+    else
+    {
+        SEC_WINNT_AUTH_IDENTITY_A *idA = (SEC_WINNT_AUTH_IDENTITY_A *)id;
+
+        idA->User           = exA->User;
+        idA->UserLength     = exA->UserLength;
+        idA->Domain         = exA->Domain;
+        idA->DomainLength   = exA->DomainLength;
+        idA->Password       = exA->Password;
+        idA->PasswordLength = exA->PasswordLength;
+        idA->Flags          = exA->Flags;
+        if (exA->PackageList)
+            FIXME( "ignoring package list %s\n", debugstr_an((const char *)exA->PackageList, exA->PackageListLength) );
+    }
+}
+
 static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
     void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
     char *principal = NULL, *username = NULL,  *password = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W *id = auth_data;
+    SEC_WINNT_AUTH_IDENTITY_W id;
     NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
     struct cred_handle *cred_handle;
     ULONG exptime;
@@ -416,16 +453,18 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
     if (principal_us && !(principal = get_str_unixcp( principal_us ))) return SEC_E_INSUFFICIENT_MEMORY;
-    if (id)
+    if (auth_data)
     {
-        if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+        map_auth_data( auth_data, &id );
+
+        if (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
         {
             FIXME( "ANSI identity not supported\n" );
             status = SEC_E_UNSUPPORTED_FUNCTION;
             goto done;
         }
-        if (!(username = get_username_unixcp( id->User, id->UserLength, id->Domain, id->DomainLength ))) goto done;
-        if (!(password = get_password_unixcp( id->Password, id->PasswordLength ))) goto done;
+        if (!(username = get_username_unixcp( id.User, id.UserLength, id.Domain, id.DomainLength ))) goto done;
+        if (!(password = get_password_unixcp( id.Password, id.PasswordLength ))) goto done;
     }
 
     if (!(cred_handle = calloc( 1, sizeof(*cred_handle) )))
