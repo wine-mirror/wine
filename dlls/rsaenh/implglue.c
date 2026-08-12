@@ -189,11 +189,15 @@ BOOL duplicate_key_impl( ALG_ID algid, const KEY_CONTEXT *src, KEY_CONTEXT *dst 
     case CALG_3DES:
     case CALG_3DES_112:
     case CALG_DES:
+        *dst = *src;
+        break;
     case CALG_AES:
     case CALG_AES_128:
     case CALG_AES_192:
     case CALG_AES_256:
-        *dst = *src;
+        /* SYMCRYPT_AES_EXPANDED_KEY contains pointers into its own RoundKey
+         * array, so it cannot be copied by assignment. */
+        SymCryptAesKeyCopy( &src->aes, &dst->aes );
         break;
     case CALG_RSA_KEYX:
     case CALG_RSA_SIGN:
