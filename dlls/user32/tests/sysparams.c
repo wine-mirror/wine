@@ -4596,8 +4596,8 @@ static void test_dpi_window(void)
             if (i == j) ok( !!ret, "SetParent failed err %lu\n", GetLastError() );
             else
             {
-                todo_wine ok( !ret, "SetParent succeeded\n" );
-                todo_wine ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
+                ok( !ret, "SetParent succeeded\n" );
+                ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
             }
             context = pGetWindowDpiAwarenessContext( child );
             awareness = pGetAwarenessFromDpiAwarenessContext( context );

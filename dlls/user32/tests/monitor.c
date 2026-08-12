@@ -3575,28 +3575,26 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         else if (!tests[i]) ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
         else
         {
-            todo_wine ok( hwnd == NULL, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
-            todo_wine ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
+            ok( hwnd == NULL, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
+            ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
         }
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
         flush_events();
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
 
         ctx = pGetWindowDpiAwarenessContext( child );
-        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
         ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
         ret = pGetDpiForWindow( child );
         ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
 
         hwnd = SetParent( child, NULL );
         if (system_aware && !monitor_aware) ok( hwnd == aware_hwnd, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
-        else todo_wine ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
+        else ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
         flush_events();
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
 
         ctx = pGetWindowDpiAwarenessContext( child );
-        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
         ok( ctx == system_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
         ret = pGetDpiForWindow( child );
         ok( ret == system_dpi, "GetDpiForWindow returned %u\n", ret );
@@ -3649,15 +3647,15 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         else if (!tests[i]) ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
         else
         {
-            todo_wine ok( hwnd == NULL, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
-            todo_wine ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
+            ok( hwnd == NULL, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
+            ok( GetLastError() == ERROR_INVALID_STATE, "SetParent failed err %lu\n", GetLastError() );
         }
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
         flush_events();
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
 
         ctx = pGetWindowDpiAwarenessContext( child );
-        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        todo_wine_if( tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 )
         ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
         ret = pGetDpiForWindow( child );
         if (monitor_aware && same_monitor) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
@@ -3667,13 +3665,13 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
          * reparenting makes the window toplevel and changes its monitor */
         hwnd = SetParent( child, NULL );
         if (system_aware && !monitor_aware) ok( hwnd == unaware_hwnd, "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
-        else todo_wine ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
+        else ok( hwnd == GetDesktopWindow(), "SetParent returned %p, error %lu\n", hwnd, GetLastError() );
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
         flush_events();
         ok( dpichanged_count == 0, "got dpichanged_count %u\n", dpichanged_count );
 
         ctx = pGetWindowDpiAwarenessContext( child );
-        todo_wine_if( tests[i] && tests[i] != DPI_AWARENESS_CONTEXT_SYSTEM_AWARE && tests[i] != (DPI_AWARENESS_CONTEXT)0x7811 )
+        todo_wine_if( tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 )
         ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
         ret = pGetDpiForWindow( child );
         if (monitor_aware && same_monitor) ok( ret == MulDiv( system_dpi, scale, 100 ), "GetDpiForWindow returned %u\n", ret );

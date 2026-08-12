@@ -2114,6 +2114,13 @@ static void set_window_region( struct window *win, struct region *region, int re
     clear_error();  /* we ignore out of memory errors since the region has been set */
 }
 
+/* check if DPI awareness contexts are compatible */
+static bool is_dpi_awareness_compatible( struct window *win, struct window *other )
+{
+    unsigned int awareness = NTUSER_DPI_CONTEXT_GET_AWARENESS( win->shared->dpi_context );
+    return awareness == NTUSER_DPI_CONTEXT_GET_AWARENESS( other->shared->dpi_context );
+}
+
 
 /* destroy a window */
 void free_window_handle( struct window *win )
@@ -2298,6 +2305,10 @@ DECL_HANDLER(set_parent)
 
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
+
+    /* reparenting to a window with a different DPI awareness isn't allowed */
+    if (parent && !is_desktop_window( parent ) && !is_dpi_awareness_compatible( win, parent ))
+        return set_error( STATUS_INVALID_STATE_TRANSITION );
 
     if (is_desktop_window(win) || is_orphan_window( win ) || (parent && is_orphan_window( parent )))
     {
