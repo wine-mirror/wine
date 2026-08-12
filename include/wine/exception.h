@@ -105,6 +105,9 @@ typedef struct { DECLSPEC_ALIGN(16) struct { unsigned __int64 Part[2]; } reg[16]
 typedef struct { int reg[28]; } __wine_jmp_buf;
 #elif defined(__aarch64__)
 typedef struct { __int64 reg[24]; } __wine_jmp_buf;
+#elif defined(__powerpc64__)
+/* must be 16-byte aligned: stvx/lvx ignore the low 4 bits of the address */
+typedef struct { DECLSPEC_ALIGN(16) __int64 reg[72]; } __wine_jmp_buf;
 #else
 typedef struct { int reg; } __wine_jmp_buf;
 #endif

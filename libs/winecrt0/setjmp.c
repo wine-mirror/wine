@@ -240,6 +240,163 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "mov x0, x1\n\t"                /* retval */
                    "ret" )
 
+#elif defined(__powerpc64__)
+
+/* Derived from wine-fork e0223ba462 (winecrt0: Implement setjmp for PPC64),
+ * extended to also save v20-v31, which the ELFv2 ABI makes non-volatile and
+ * which the 2020 original did not save at all.
+ *
+ * jmp_buf layout (offsets in bytes):
+ *   0x000  Frame (r4)
+ *   0x008  r14-r31
+ *   0x098  r1 (SP)
+ *   0x0a0  r2 (TOC)
+ *   0x0a8  CR (32 bits)
+ *   0x0b0  LR
+ *   0x0b8  f14-f31
+ *   0x150  v20-v31 (16-byte aligned) */
+
+__ASM_GLOBAL_FUNC( __wine_setjmpex,
+                   "std  4, 0(3)\n\t"       /* Frame */
+                   "std 14, 8(3)\n\t"       /* GPR14 */
+                   "std 15, 16(3)\n\t"
+                   "std 16, 24(3)\n\t"
+                   "std 17, 32(3)\n\t"
+                   "std 18, 40(3)\n\t"
+                   "std 19, 48(3)\n\t"
+                   "std 20, 56(3)\n\t"
+                   "std 21, 64(3)\n\t"
+                   "std 22, 72(3)\n\t"
+                   "std 23, 80(3)\n\t"
+                   "std 24, 88(3)\n\t"
+                   "std 25, 96(3)\n\t"
+                   "std 26, 104(3)\n\t"
+                   "std 27, 112(3)\n\t"
+                   "std 28, 120(3)\n\t"
+                   "std 29, 128(3)\n\t"
+                   "std 30, 136(3)\n\t"
+                   "std 31, 144(3)\n\t"     /* GPR31 */
+                   "std  1, 152(3)\n\t"     /* SP */
+                   "std  2, 160(3)\n\t"     /* TOC */
+                   "mfcr 0\n\t"
+                   "stw  0, 168(3)\n\t"     /* CR (32-bit) */
+                   "mflr 0\n\t"
+                   "std  0, 176(3)\n\t"     /* LR */
+                   "stfd 14, 184(3)\n\t"    /* FP14 */
+                   "stfd 15, 192(3)\n\t"
+                   "stfd 16, 200(3)\n\t"
+                   "stfd 17, 208(3)\n\t"
+                   "stfd 18, 216(3)\n\t"
+                   "stfd 19, 224(3)\n\t"
+                   "stfd 20, 232(3)\n\t"
+                   "stfd 21, 240(3)\n\t"
+                   "stfd 22, 248(3)\n\t"
+                   "stfd 23, 256(3)\n\t"
+                   "stfd 24, 264(3)\n\t"
+                   "stfd 25, 272(3)\n\t"
+                   "stfd 26, 280(3)\n\t"
+                   "stfd 27, 288(3)\n\t"
+                   "stfd 28, 296(3)\n\t"
+                   "stfd 29, 304(3)\n\t"
+                   "stfd 30, 312(3)\n\t"
+                   "stfd 31, 320(3)\n\t"    /* FP31 */
+                   "li   0, 336\n\t"        /* v20-v31, non-volatile in ELFv2 */
+                   "stvx 20, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 21, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 22, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 23, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 24, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 25, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 26, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 27, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 28, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 29, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 30, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "stvx 31, 3, 0\n\t"
+                   "li 3, 0\n\t"            /* return 0 */
+                   "blr" )
+
+__ASM_GLOBAL_FUNC( __wine_longjmp,
+                   "ld 14, 8(3)\n\t"        /* GPR14 */
+                   "ld 15, 16(3)\n\t"
+                   "ld 16, 24(3)\n\t"
+                   "ld 17, 32(3)\n\t"
+                   "ld 18, 40(3)\n\t"
+                   "ld 19, 48(3)\n\t"
+                   "ld 20, 56(3)\n\t"
+                   "ld 21, 64(3)\n\t"
+                   "ld 22, 72(3)\n\t"
+                   "ld 23, 80(3)\n\t"
+                   "ld 24, 88(3)\n\t"
+                   "ld 25, 96(3)\n\t"
+                   "ld 26, 104(3)\n\t"
+                   "ld 27, 112(3)\n\t"
+                   "ld 28, 120(3)\n\t"
+                   "ld 29, 128(3)\n\t"
+                   "ld 30, 136(3)\n\t"
+                   "ld 31, 144(3)\n\t"      /* GPR31 */
+                   "ld  1, 152(3)\n\t"      /* SP */
+                   "ld  2, 160(3)\n\t"      /* TOC */
+                   "lwz  0, 168(3)\n\t"     /* CR (32-bit) */
+                   "mtcr 0\n\t"
+                   "ld  0, 176(3)\n\t"      /* LR */
+                   "mtlr 0\n\t"
+                   "lfd 14, 184(3)\n\t"     /* FP14 */
+                   "lfd 15, 192(3)\n\t"
+                   "lfd 16, 200(3)\n\t"
+                   "lfd 17, 208(3)\n\t"
+                   "lfd 18, 216(3)\n\t"
+                   "lfd 19, 224(3)\n\t"
+                   "lfd 20, 232(3)\n\t"
+                   "lfd 21, 240(3)\n\t"
+                   "lfd 22, 248(3)\n\t"
+                   "lfd 23, 256(3)\n\t"
+                   "lfd 24, 264(3)\n\t"
+                   "lfd 25, 272(3)\n\t"
+                   "lfd 26, 280(3)\n\t"
+                   "lfd 27, 288(3)\n\t"
+                   "lfd 28, 296(3)\n\t"
+                   "lfd 29, 304(3)\n\t"
+                   "lfd 30, 312(3)\n\t"
+                   "lfd 31, 320(3)\n\t"     /* FP31 */
+                   "li   0, 336\n\t"        /* v20-v31 */
+                   "lvx 20, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 21, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 22, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 23, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 24, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 25, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 26, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 27, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 28, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 29, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 30, 3, 0\n\t"
+                   "addi 0, 0, 16\n\t"
+                   "lvx 31, 3, 0\n\t"
+                   "mr 3, 4\n\t"            /* return retval */
+                   "blr" )
+
 #else
 
 int __cdecl __wine_setjmpex( __wine_jmp_buf *buf, EXCEPTION_REGISTRATION_RECORD *frame )
