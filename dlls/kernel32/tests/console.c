@@ -2328,6 +2328,166 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
 }
 
+static void test_PeekConsoleInputW(HANDLE input_handle)
+{
+    DWORD no_of_events = 0;
+    INPUT_RECORD buffer[4] = {};
+    INPUT_RECORD rand_buffer[4] =
+        {
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'A', 0x41, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'B', 0x42, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'C', 0x43, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'D', 0x44, {0} } },
+        };
+    const size_t buf_len = 4;
+    BOOL ret = FALSE;
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInout to return TRUE, got %d\n", ret);
+
+    ret = PeekConsoleInputW(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == 0, "Expected number of events read to be 0, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected PeekConsoleInputW to return TRUE, got %d\n", ret);
+
+    ret = WriteConsoleInputW(input_handle, rand_buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
+
+    ret = PeekConsoleInputW(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected PeekConsoleInputW to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+
+    ret = ReadConsoleInputW(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected ReadConsoleInputW to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+}
+
+static void test_PeekConsoleInputA(HANDLE input_handle)
+{
+    DWORD no_of_events = 0;
+    INPUT_RECORD buffer[4] = {};
+    INPUT_RECORD rand_buffer[4] =
+        {
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'A', 0x41, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'B', 0x42, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'C', 0x43, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'D', 0x44, {0} } },
+        };
+    const size_t buf_len = 4;
+    BOOL ret = FALSE;
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInout to return TRUE, got %d\n", ret);
+
+    ret = PeekConsoleInputA(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == 0, "Expected number of events read to be 0, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected PeekConsoleInputA to return TRUE, got %d\n", ret);
+
+    ret = WriteConsoleInputA(input_handle, rand_buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+
+    ret = PeekConsoleInputA(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected PeekConsoleInputA to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+
+    ret = ReadConsoleInputA(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected ReadConsoleInputA to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+}
+
+static void test_ReadConsoleInputW(HANDLE input_handle)
+{
+    DWORD no_of_events = 0;
+    INPUT_RECORD buffer[4] = {};
+    INPUT_RECORD rand_buffer[4] =
+        {
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'A', 0x41, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'B', 0x42, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'C', 0x43, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'D', 0x44, {0} } },
+        };
+    const size_t buf_len = 4;
+    BOOL ret = FALSE;
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInout to return TRUE, got %d\n", ret);
+
+    ret = WriteConsoleInputW(input_handle, rand_buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
+
+    ret = ReadConsoleInputW(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected ReadConsoleInputW to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &no_of_events);
+    ok(no_of_events == 0, "Expected number of events read to be 0, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+}
+
+static void test_ReadConsoleInputA(HANDLE input_handle)
+{
+    DWORD no_of_events = 0;
+    INPUT_RECORD buffer[4] = {};
+    INPUT_RECORD rand_buffer[4] =
+        {
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'A', 0x41, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'B', 0x42, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'C', 0x43, {0} } },
+            { .EventType = KEY_EVENT,
+              .Event.KeyEvent = { TRUE, 1, 'D', 0x44, {0} } },
+        };
+    const size_t buf_len = 4;
+    BOOL ret = FALSE;
+
+    ret = FlushConsoleInputBuffer(input_handle);
+    ok(ret == TRUE, "Expected FlushConsoleInout to return TRUE, got %d\n", ret);
+
+    ret = WriteConsoleInputA(input_handle, rand_buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected WriteConsoleInputA to return TRUE, got %d\n", ret);
+
+    ret = ReadConsoleInputA(input_handle, buffer, buf_len, &no_of_events);
+    ok(no_of_events == buf_len, "Expected number of events read to be 4, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected ReadConsoleInputA to return TRUE, got %d\n", ret);
+    ok(memcmp(rand_buffer, buffer, sizeof(buffer)) == 0, "Expected values of memory written and then read to be same");
+
+    ret = GetNumberOfConsoleInputEvents(input_handle, &no_of_events);
+    ok(no_of_events == 0, "Expected number of events read to be 0, got %lu", no_of_events);
+    ok(ret == TRUE, "Expected GetNumberOfConsoleInputEvents to return TRUE, got %d\n", ret);
+}
+
 static void test_ReadConsoleInputExW(HANDLE input_handle)
 {
 
@@ -6142,6 +6302,10 @@ START_TEST(console)
     test_GetNumberOfConsoleInputEvents(hConIn);
     test_WriteConsoleInputA(hConIn);
     test_WriteConsoleInputW(hConIn);
+    test_PeekConsoleInputW(hConIn);
+    test_PeekConsoleInputA(hConIn);
+    test_ReadConsoleInputW(hConIn);
+    test_ReadConsoleInputA(hConIn);
     test_ReadConsoleInputExW(hConIn);
     test_ReadConsoleInputExA(hConIn);
     test_FlushConsoleInputBuffer(hConIn, hConOut);
