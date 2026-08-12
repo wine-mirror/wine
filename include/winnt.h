@@ -703,6 +703,7 @@ typedef DWORD FLONG;
 #define PROCESSOR_ARCHITECTURE_ARM64            12
 #define PROCESSOR_ARCHITECTURE_ARM32_ON_WIN64   13
 #define PROCESSOR_ARCHITECTURE_IA32_ON_ARM64    14
+#define PROCESSOR_ARCHITECTURE_PPC64            200 /* Wine extension */
 #define PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
 
 /* dwProcessorType */
@@ -2031,6 +2032,162 @@ typedef ARM64_NT_CONTEXT CONTEXT, *PCONTEXT;
 
 #endif /* __aarch64__ */
 
+/* PowerPC64 (Wine extension, no Microsoft ABI exists for this architecture) */
+
+#define CONTEXT_PPC64                 0x00800000
+#define CONTEXT_PPC64_CONTROL         (CONTEXT_PPC64 | 0x00000001)
+#define CONTEXT_PPC64_INTEGER         (CONTEXT_PPC64 | 0x00000002)
+#define CONTEXT_PPC64_FLOATING_POINT  (CONTEXT_PPC64 | 0x00000004)
+#define CONTEXT_PPC64_DEBUG_REGISTERS (CONTEXT_PPC64 | 0x00000008)
+#define CONTEXT_PPC64_FULL (CONTEXT_PPC64_CONTROL | CONTEXT_PPC64_INTEGER | CONTEXT_PPC64_FLOATING_POINT)
+#define CONTEXT_PPC64_ALL  (CONTEXT_PPC64_FULL | CONTEXT_PPC64_DEBUG_REGISTERS)
+
+typedef struct DECLSPEC_ALIGN(16) _PPC64_NT_CONTEXT
+{
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    double Fpr0;
+    double Fpr1;
+    double Fpr2;
+    double Fpr3;
+    double Fpr4;
+    double Fpr5;
+    double Fpr6;
+    double Fpr7;
+    double Fpr8;
+    double Fpr9;
+    double Fpr10;
+    double Fpr11;
+    double Fpr12;
+    double Fpr13;
+    double Fpr14;
+    double Fpr15;
+    double Fpr16;
+    double Fpr17;
+    double Fpr18;
+    double Fpr19;
+    double Fpr20;
+    double Fpr21;
+    double Fpr22;
+    double Fpr23;
+    double Fpr24;
+    double Fpr25;
+    double Fpr26;
+    double Fpr27;
+    double Fpr28;
+    double Fpr29;
+    double Fpr30;
+    double Fpr31;
+    double Fpscr;
+
+    /* These are selected by CONTEXT_INTEGER */
+    DWORD64 Gpr0;
+    DWORD64 Gpr1;
+    DWORD64 Gpr2;
+    DWORD64 Gpr3;
+    DWORD64 Gpr4;
+    DWORD64 Gpr5;
+    DWORD64 Gpr6;
+    DWORD64 Gpr7;
+    DWORD64 Gpr8;
+    DWORD64 Gpr9;
+    DWORD64 Gpr10;
+    DWORD64 Gpr11;
+    DWORD64 Gpr12;
+    DWORD64 Gpr13;
+    DWORD64 Gpr14;
+    DWORD64 Gpr15;
+    DWORD64 Gpr16;
+    DWORD64 Gpr17;
+    DWORD64 Gpr18;
+    DWORD64 Gpr19;
+    DWORD64 Gpr20;
+    DWORD64 Gpr21;
+    DWORD64 Gpr22;
+    DWORD64 Gpr23;
+    DWORD64 Gpr24;
+    DWORD64 Gpr25;
+    DWORD64 Gpr26;
+    DWORD64 Gpr27;
+    DWORD64 Gpr28;
+    DWORD64 Gpr29;
+    DWORD64 Gpr30;
+    DWORD64 Gpr31;
+
+    DWORD64 Cr;
+    DWORD64 Xer;
+
+    /* These are selected by CONTEXT_CONTROL */
+    DWORD64 Msr;
+    DWORD64 Iar; /* Instruction Address Register, aka PC */
+    DWORD64 Lr;
+    DWORD64 Ctr;
+
+    DWORD64 ContextFlags;
+
+    DWORD64 Dar;   /* Fault registers for coredump */
+    DWORD64 Dsisr;
+    DWORD64 Trap;  /* number of powerpc exception taken */
+
+    /* These are selected by CONTEXT_DEBUG_REGISTERS */
+    DWORD64 Dr0;
+    DWORD64 Dr1;
+    DWORD64 Dr2;
+    DWORD64 Dr3;
+    DWORD64 Dr4;
+    DWORD64 Dr5;
+    DWORD64 Dr6;
+    DWORD64 Dr7;
+} PPC64_NT_CONTEXT, *PPPC64_NT_CONTEXT;
+
+/* No PE unwind format is defined for PowerPC64; this mirrors the classic
+ * PowerPC/MIPS PE .pdata entry layout so that the generic RUNTIME_FUNCTION
+ * based interfaces can be declared. */
+typedef struct _IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY
+{
+    DWORD BeginAddress;
+    DWORD EndAddress;
+    DWORD ExceptionHandler;
+    DWORD HandlerData;
+    DWORD PrologEndAddress;
+} IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY, *PIMAGE_PPC64_RUNTIME_FUNCTION_ENTRY;
+
+typedef struct _SCOPE_TABLE_PPC64
+{
+    DWORD Count;
+    struct
+    {
+        DWORD BeginAddress;
+        DWORD EndAddress;
+        DWORD HandlerAddress;
+        DWORD JumpTarget;
+    } ScopeRecord[1];
+} SCOPE_TABLE_PPC64, *PSCOPE_TABLE_PPC64;
+
+/* r14-r31 and f14-f31 are non-volatile in the ELFv2 ABI */
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS_PPC64
+{
+    PULONG64 Gpr[32];
+    PULONG64 Fpr[32];
+    PULONG64 Cr;
+    PULONG64 Lr;
+} KNONVOLATILE_CONTEXT_POINTERS_PPC64, *PKNONVOLATILE_CONTEXT_POINTERS_PPC64;
+
+#ifdef __powerpc64__
+
+#define CONTEXT_CONTROL CONTEXT_PPC64_CONTROL
+#define CONTEXT_INTEGER CONTEXT_PPC64_INTEGER
+#define CONTEXT_FLOATING_POINT CONTEXT_PPC64_FLOATING_POINT
+#define CONTEXT_DEBUG_REGISTERS CONTEXT_PPC64_DEBUG_REGISTERS
+#define CONTEXT_FULL CONTEXT_PPC64_FULL
+#define CONTEXT_ALL CONTEXT_PPC64_ALL
+
+typedef PPC64_NT_CONTEXT CONTEXT, *PCONTEXT;
+typedef IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
+typedef SCOPE_TABLE_PPC64 SCOPE_TABLE, *PSCOPE_TABLE;
+typedef KNONVOLATILE_CONTEXT_POINTERS_PPC64 KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
+
+#endif /* __powerpc64__ */
+
 #if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
 #error You need to define a CONTEXT for your CPU
 #endif
@@ -2180,6 +2337,31 @@ typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD);
 
 #undef _DISPATCHER_CONTEXT_ARM64
 typedef DISPATCHER_CONTEXT_ARM64 DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
+typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,DWORD64);
+typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
+
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
+
+#elif defined(__powerpc64__)
+
+typedef struct _DISPATCHER_CONTEXT
+{
+    ULONG64                       ControlPc;
+    ULONG64                       ImageBase;
+    PRUNTIME_FUNCTION             FunctionEntry;
+    ULONG64                       EstablisherFrame;
+    ULONG64                       TargetPc;
+    PCONTEXT                      ContextRecord;
+    PEXCEPTION_ROUTINE            LanguageHandler;
+    PVOID                         HandlerData;
+    struct _UNWIND_HISTORY_TABLE *HistoryTable;
+    DWORD                         ScopeIndex;
+    BOOLEAN                       ControlPcIsUnwound;
+    PBYTE                         NonVolatileRegisters;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
 
 typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,DWORD64);
 typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
@@ -2879,6 +3061,7 @@ typedef struct _IMAGE_VXD_HEADER {
 #define IMAGE_FILE_MACHINE_AM33         0x01d3
 #define IMAGE_FILE_MACHINE_POWERPC      0x01f0
 #define IMAGE_FILE_MACHINE_POWERPCFP    0x01f1
+#define IMAGE_FILE_MACHINE_POWERPC64    0x01f2 /* Wine extension */
 #define IMAGE_FILE_MACHINE_IA64         0x0200
 #define IMAGE_FILE_MACHINE_MIPS16       0x0266
 #define IMAGE_FILE_MACHINE_ALPHA64      0x0284
