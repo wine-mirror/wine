@@ -647,6 +647,8 @@ static void SECUR32_freeProviders(void)
  */
 SECURITY_STATUS WINAPI FreeContextBuffer( void *pv )
 {
+    if (!RtlValidateHeap( GetProcessHeap(), 0, pv ))
+        return LsaFreeReturnBuffer( pv );
     RtlFreeHeap( GetProcessHeap(), 0, pv );
     return SEC_E_OK;
 }
