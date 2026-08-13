@@ -31,12 +31,13 @@
 
 #include "build.h"
 
-#define IMAGE_FILE_MACHINE_UNKNOWN 0
-#define IMAGE_FILE_MACHINE_I386    0x014c
-#define IMAGE_FILE_MACHINE_POWERPC 0x01f0
-#define IMAGE_FILE_MACHINE_AMD64   0x8664
-#define IMAGE_FILE_MACHINE_ARMNT   0x01c4
-#define IMAGE_FILE_MACHINE_ARM64   0xaa64
+#define IMAGE_FILE_MACHINE_UNKNOWN   0
+#define IMAGE_FILE_MACHINE_I386      0x014c
+#define IMAGE_FILE_MACHINE_POWERPC   0x01f0
+#define IMAGE_FILE_MACHINE_POWERPC64 0x01f2  /* Wine extension, see include/winnt.h */
+#define IMAGE_FILE_MACHINE_AMD64     0x8664
+#define IMAGE_FILE_MACHINE_ARMNT     0x01c4
+#define IMAGE_FILE_MACHINE_ARM64     0xaa64
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
 #define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 240
@@ -387,6 +388,80 @@ static void output_relay_debug( struct exports *exports )
             output( "\tret\n" );
             output_seh( ".seh_endproc" );
             break;
+
+        case CPU_POWERPC64:
+        {
+            /* ELFv2.  A relay thunk stands in for an exported function, so it is only ever
+             * reached through an indirect call: r12 holds the thunk address on entry, and the
+             * caller has already saved its own TOC at 24(r1) and reloads it from there on
+             * return.  We therefore use the standard global entry point prologue.
+             *
+             * The thunk builds the flat argument array that relay_call() expects, with the
+             * return address in args[-1], and calls descr->relay_call( descr, idx, args ).
+             */
+            int j, fpr = 0, nb_args = odp->u.func.nb_args;
+            /* 32 linkage area + 64 parameter save area + 8 for args[-1] */
+            int args_off = 104;
+            int frame_size = (args_off + 8 * nb_args + 15) & ~15;
+
+            /* every displacement below is a multiple of 8, so the DS-form rule (multiple of 4)
+             * is satisfied; the largest one is frame_size + 32 + 8 * (MAX_ARGUMENTS - 1), well
+             * inside the 14-bit scaled field */
+            assert( nb_args <= MAX_ARGUMENTS );
+
+            output( "\t.balign 4\n" );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
+            output_cfi( ".cfi_startproc" );
+            output( ".L__wine_spec_relay_gep_%d:\n", i );
+            output( "\taddis 2,12,.TOC.-.L__wine_spec_relay_gep_%d@ha\n", i );
+            output( "\taddi 2,2,.TOC.-.L__wine_spec_relay_gep_%d@l\n", i );
+            output( "\tmflr 0\n" );
+            output( "\tstd 0,16(1)\n" );  /* return address goes in the caller's LR save slot */
+            output( "\tstdu 1,-%d(1)\n", frame_size );
+            output_cfi( ".cfi_def_cfa_offset %d", frame_size );
+            output_cfi( ".cfi_offset 65,16" );
+            output( "\tstd 0,%d(1)\n", args_off - 8 );  /* args[-1] = return address */
+
+            for (j = 0; j < nb_args; j++)
+            {
+                int off = args_off + 8 * j;
+
+                if (is_float_arg( odp, j ) && fpr < 13)
+                {
+                    /* floating point arguments go in f1-f13, and skip their GPR */
+                    output( "\tstfd %d,%d(1)\n", ++fpr, off );
+                }
+                else if (j < 8)
+                {
+                    output( "\tstd %d,%d(1)\n", 3 + j, off );
+                }
+                else
+                {
+                    /* arguments past the 8th are in the caller's parameter save area */
+                    output( "\tld 0,%d(1)\n", frame_size + 32 + 8 * j );
+                    output( "\tstd 0,%d(1)\n", off );
+                }
+            }
+
+            output( "\taddis 3,2,.L__wine_spec_relay_descr@toc@ha\n" );
+            output( "\taddi 3,3,.L__wine_spec_relay_descr@toc@l\n" );
+            output( "\tlis 4,%u\n", ((odp->u.func.args_str_offset << 16) | (i - exports->base)) >> 16 );
+            output( "\tori 4,4,%u\n", (i - exports->base) & 0xffff );
+            output( "\trldicl 4,4,0,32\n" );  /* idx is an unsigned int, clear the high half */
+            output( "\taddi 5,1,%d\n", args_off );
+            output( "\tld 12,8(3)\n" );  /* descr->relay_call */
+            output( "\tstd 2,24(1)\n" );
+            output( "\tmtctr 12\n" );
+            output( "\tbctrl\n" );
+            output( "\tld 2,24(1)\n" );  /* r2 restore marker, also read by the unwinder */
+            output( "\taddi 1,1,%d\n", frame_size );
+            output_cfi( ".cfi_def_cfa_offset 0" );
+            output( "\tld 0,16(1)\n" );
+            output( "\tmtlr 0\n" );
+            output( "\tblr\n" );
+            output_cfi( ".cfi_endproc" );
+            break;
+        }
 
         default:
             assert(0);
@@ -766,7 +841,7 @@ void output_module( DLLSPEC *spec )
         break;
     default:
         output( "\n\t.section \".init\",\"ax\"\n" );
-        output( "\tjmp 1f\n" );
+        output( "\t%s 1f\n", target.cpu == CPU_POWERPC64 ? "b" : "jmp" );
         output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
         output( "1:\n" );
@@ -784,11 +859,12 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0x4550\n" );         /* Signature */
     switch (target.cpu)
     {
-    case CPU_i386:    machine = IMAGE_FILE_MACHINE_I386; break;
+    case CPU_i386:      machine = IMAGE_FILE_MACHINE_I386; break;
     case CPU_ARM64EC:
-    case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
-    case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
-    case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case CPU_x86_64:    machine = IMAGE_FILE_MACHINE_AMD64; break;
+    case CPU_ARM:       machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    case CPU_ARM64:     machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case CPU_POWERPC64: machine = IMAGE_FILE_MACHINE_POWERPC64; break;
     }
     output( "\t.short 0x%04x\n",          /* Machine */
              machine );
@@ -1203,11 +1279,12 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     put_dword( 0x4550 );                             /* Signature */
     switch (target.cpu)
     {
-    case CPU_i386:    put_word( IMAGE_FILE_MACHINE_I386 ); break;
+    case CPU_i386:      put_word( IMAGE_FILE_MACHINE_I386 ); break;
     case CPU_ARM64EC:
-    case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
-    case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
-    case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
+    case CPU_x86_64:    put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
+    case CPU_ARM:       put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
+    case CPU_ARM64:     put_word( IMAGE_FILE_MACHINE_ARM64 ); break;
+    case CPU_POWERPC64: put_word( IMAGE_FILE_MACHINE_POWERPC64 ); break;
     }
     put_word( pe.sec_count );                        /* NumberOfSections */
     put_dword( hash_filename(spec->file_name) );     /* TimeDateStamp */
