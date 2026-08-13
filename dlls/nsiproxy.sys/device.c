@@ -508,6 +508,13 @@ static DWORD WINAPI notification_thread_proc( void *arg )
     return 0;
 }
 
+static NTSTATUS WINAPI nsi_create( DEVICE_OBJECT *device, IRP *irp )
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     NTSTATUS status;
@@ -518,6 +525,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     status = __wine_init_unix_call();
     if (status) return status;
 
+    driver->MajorFunction[IRP_MJ_CREATE] = nsi_create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = nsi_ioctl;
 
     add_device( driver );
