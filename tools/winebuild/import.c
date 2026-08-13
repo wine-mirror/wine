@@ -1132,6 +1132,44 @@ void output_stubs( DLLSPEC *spec )
             output( "\tb %s\n", arm64_name("__wine_spec_unimplemented_stub") );
             output( "\t.seh_endproc\n" );
             break;
+        case CPU_POWERPC64:
+            /* ELFv2.  A stub replaces an exported function and is reached through an indirect
+             * call, so r12 holds its address on entry and we can use the standard global entry
+             * point prologue to get at our own TOC. */
+            output_cfi( ".cfi_startproc" );
+            output( ".L%s_gep:\n", name );
+            output( "\taddis 2,12,.TOC.-.L%s_gep@ha\n", name );
+            output( "\taddi 2,2,.TOC.-.L%s_gep@l\n", name );
+            output( "\tmflr 0\n" );
+            output( "\tstd 0,16(1)\n" );
+            output( "\tstdu 1,-96(1)\n" );  /* 32 linkage area + 64 parameter save area */
+            output_cfi( ".cfi_def_cfa_offset 96" );
+            output_cfi( ".cfi_offset 65,16" );
+            output( "\taddis 3,2,.L__wine_spec_file_name@toc@ha\n" );
+            output( "\taddi 3,3,.L__wine_spec_file_name@toc@l\n" );
+            if (exp_name)
+            {
+                output( "\taddis 4,2,.L%s_string@toc@ha\n", name );
+                output( "\taddi 4,4,.L%s_string@toc@l\n", name );
+            }
+            else
+            {
+                /* ori takes an unsigned 16-bit immediate, li a signed one */
+                output( "\tli 4,0\n" );
+                output( "\tori 4,4,%u\n", odp->ordinal );
+            }
+            /* __wine_spec_unimplemented_stub() may live in another module, so unlike on ARM
+             * this cannot be a tail call: the PLT stub would save r2 into our caller's frame.
+             * The nop after the bl is what the linker rewrites into ld 2,24(1). */
+            output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tnop\n" );
+            output( "\taddi 1,1,96\n" );
+            output_cfi( ".cfi_def_cfa_offset 0" );
+            output( "\tld 0,16(1)\n" );
+            output( "\tmtlr 0\n" );
+            output( "\tblr\n" );
+            output_cfi( ".cfi_endproc" );
+            break;
         }
         output_function_size( name );
     }
