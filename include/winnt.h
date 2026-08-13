@@ -2169,16 +2169,31 @@ typedef struct DECLSPEC_ALIGN(16) _PPC64_NT_CONTEXT
     PPC64_NT_VECTOR128 Vr[32];      /* 2a0 */
 } PPC64_NT_CONTEXT, *PPPC64_NT_CONTEXT;
 
-/* No PE unwind format is defined for PowerPC64; this mirrors the classic
- * PowerPC/MIPS PE .pdata entry layout so that the generic RUNTIME_FUNCTION
- * based interfaces can be declared. */
+/* No PE unwind format is defined for PowerPC64 and nothing produces one: every
+ * module on this port is an ELF shared object, RtlLookupFunctionEntry() always
+ * returns NULL, and unwinding goes through the ELFv2 back chain instead.  What
+ * this declaration has to be is therefore not an ABI but a *shape*: the one the
+ * architecture-independent parts of ntdll and of the conformance tests assume a
+ * RUNTIME_FUNCTION has - BeginAddress plus a UnwindData word that aliases a
+ * Flag/FunctionLength pair, exactly as on ARM64.  The earlier layout here
+ * (EndAddress/ExceptionHandler/HandlerData/PrologEndAddress, copied from the
+ * classic PowerPC/MIPS .pdata entry) had none of those members, so
+ * RtlAddFunctionTable() and dlls/ntdll/tests/unwind.c could not compile.
+ *
+ * The bitfield split is ours; there is no authority to match.  FunctionLength
+ * counts instructions, as on ARM64. */
 typedef struct _IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY
 {
     DWORD BeginAddress;
-    DWORD EndAddress;
-    DWORD ExceptionHandler;
-    DWORD HandlerData;
-    DWORD PrologEndAddress;
+    union
+    {
+        DWORD UnwindData;
+        struct
+        {
+            DWORD Flag : 2;
+            DWORD FunctionLength : 30;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
 } IMAGE_PPC64_RUNTIME_FUNCTION_ENTRY, *PIMAGE_PPC64_RUNTIME_FUNCTION_ENTRY;
 
 typedef struct _SCOPE_TABLE_PPC64

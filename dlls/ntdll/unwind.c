@@ -1122,7 +1122,13 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_P
     ULONG_PTR end = base;
     void *ret;
 
-    if (count) end += table[count - 1].EndAddress;
+    if (count)
+    {
+        RUNTIME_FUNCTION *func = table + count - 1;
+        /* Only the packed form carries a length; there is no xdata format to
+         * fall back on, so an unpacked entry contributes nothing to the end. */
+        end += func->BeginAddress + 4 * (func->Flag ? func->FunctionLength : 0);
+    }
     return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
 }
 

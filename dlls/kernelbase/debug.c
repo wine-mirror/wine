@@ -127,6 +127,12 @@ void __attribute__((naked)) WINAPI DebugBreak(void) { asm( "brk #0xf000; ret" );
 __ASM_GLOBAL_FUNC( DebugBreak, "jmp " __ASM_NAME("DbgBreakPoint") )
 #elif defined(__arm__)
 __ASM_GLOBAL_FUNC( DebugBreak, "udf #0xfe; bx lr" )
+#elif defined(__powerpc64__)
+/* Inlined rather than branching to DbgBreakPoint: a tail branch to an imported
+ * function on ELFv2 goes through a linker PLT stub whose "std r2,24(r1)" would
+ * overwrite the *caller's* TOC save slot, since a tail branch leaves r1 on the
+ * caller's frame.  "trap" is the unconditional form of tw, i.e. tw 31,r0,r0. */
+__ASM_GLOBAL_FUNC( DebugBreak, "trap\n\tblr" )
 #endif
 
 
