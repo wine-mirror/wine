@@ -60,6 +60,8 @@ static const WCHAR NtPlatformExtension[] = L".NTamd64";
 static const WCHAR NtPlatformExtension[] = L".NTarm";
 #elif defined(__aarch64__)
 static const WCHAR NtPlatformExtension[] = L".NTarm64";
+#elif defined(__powerpc64__)
+static const WCHAR NtPlatformExtension[] = L".NTppc64";
 #endif
 
 /* Registry key names */
