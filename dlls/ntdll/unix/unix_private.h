@@ -154,7 +154,6 @@ struct async_fileio
 {
     async_callback_t    *callback;
     struct async_fileio *next;
-    HANDLE               handle;
 };
 
 struct pe_mapping_info
@@ -376,7 +375,7 @@ extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTI
                                       IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
                                       UINT in_size, void *out_buffer, UINT out_size );
 
-extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle );
+extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback );
 extern void release_fileio( struct async_fileio *io );
 extern NTSTATUS errno_to_status( int err );
 extern NTSTATUS get_nt_and_unix_names( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nt_name,

@@ -964,6 +964,7 @@ typedef struct serial_irq_info
 typedef struct async_commio
 {
     struct async_fileio io;
+    HANDLE              handle;
     DWORD*              events;
     UINT                evtmask;
     UINT                mstat;
@@ -1075,13 +1076,13 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
         return TRUE;
     }
 
-    if (!server_get_unix_fd( commio->io.handle, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
+    if (!server_get_unix_fd( commio->handle, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
         UINT new_mstat, dummy;
 
         TRACE( "device=%p fd=0x%08x mask=0x%08x buffer=%p irq_info=%p\n",
-               commio->io.handle, fd, commio->evtmask, commio->events, &commio->irq_info );
+               commio->handle, fd, commio->evtmask, commio->events, &commio->irq_info );
 
         /*
          * FIXME:
@@ -1109,7 +1110,7 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
             }
             else
             {
-                get_wait_mask( commio->io.handle, &dummy, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
+                get_wait_mask( commio->handle, &dummy, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
                 if (needs_close) close( fd );
                 return FALSE;
             }
@@ -1129,9 +1130,10 @@ static NTSTATUS wait_on( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE ap
     HANDLE wait_handle;
     ULONG options;
 
-    if (!(commio = (async_commio *)alloc_fileio( sizeof(*commio), async_wait_proc, handle )))
+    if (!(commio = (async_commio *)alloc_fileio( sizeof(*commio), async_wait_proc )))
         return STATUS_NO_MEMORY;
 
+    commio->handle = handle;
     commio->events = out_buffer;
     commio->pending_write = 0;
     status = get_wait_mask( handle, &commio->evtmask, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
