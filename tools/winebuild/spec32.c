@@ -408,6 +408,7 @@ static void output_relay_debug( struct exports *exports )
              * is satisfied; the largest one is frame_size + 32 + 8 * (MAX_ARGUMENTS - 1), well
              * inside the 14-bit scaled field */
             assert( nb_args <= MAX_ARGUMENTS );
+            assert( !is_pe() );  /* there is no PE ABI for PowerPC64 */
 
             output( "\t.balign 4\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );

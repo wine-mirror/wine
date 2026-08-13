@@ -1136,6 +1136,7 @@ void output_stubs( DLLSPEC *spec )
             /* ELFv2.  A stub replaces an exported function and is reached through an indirect
              * call, so r12 holds its address on entry and we can use the standard global entry
              * point prologue to get at our own TOC. */
+            assert( !is_pe() );  /* there is no PE ABI for PowerPC64 */
             output_cfi( ".cfi_startproc" );
             output( ".L%s_gep:\n", name );
             output( "\taddis 2,12,.TOC.-.L%s_gep@ha\n", name );
