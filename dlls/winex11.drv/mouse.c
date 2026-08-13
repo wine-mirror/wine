@@ -247,6 +247,8 @@ static void update_relative_valuators( XIAnyClassInfo **classes, int num_classes
 
     thread_data->x_valuator.value = 0;
     thread_data->y_valuator.value = 0;
+    thread_data->raw_x = 0;
+    thread_data->raw_y = 0;
 }
 
 
@@ -1616,13 +1618,17 @@ static POINT map_raw_event_coords( XIRawEvent *event, POINT *raw )
         if (!XIMaskIsSet( event->valuators.mask, i )) continue;
         if (i == x->number)
         {
-            raw->x = *raw_values;
+            thread_data->raw_x += *raw_values;
+            raw->x = round( thread_data->raw_x );
+            thread_data->raw_x -= raw->x;
             x_value = *values;
             x->value += x_value * x_scale;
         }
         if (i == y->number)
         {
-            raw->y = *raw_values;
+            thread_data->raw_y += *raw_values;
+            raw->y = round( thread_data->raw_y );
+            thread_data->raw_y -= raw->y;
             y_value = *values;
             y->value += y_value * y_scale;
         }
