@@ -584,6 +584,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
          * unwind from the callback will re-walk frames it has already unwound. */
         context->Iar = (ULONG64)consolidate( rec );
         context->Lr  = context->Iar;
+        context->Gpr12 = context->Iar;   /* see RtlUnwindEx: ELFv2 global entry needs r12 */
     }
 
     /* hack: remove no longer accessible TEB frames */
@@ -728,6 +729,18 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     {
         context->Iar = (ULONG64)target_ip;
         context->Lr  = (ULONG64)target_ip;
+        /* An ELFv2 global entry point begins "addis r2,r12,.TOC.-f@ha; addi
+         * r2,r2,.TOC.-f@l", so resuming at the entry of a function reached
+         * through a function pointer - which is what winecrt0's unwind_target
+         * is - only computes the right TOC if r12 holds that entry address.
+         * Nothing else on this path sets it: virtual_unwind() walks the back
+         * chain and recovers Iar, Lr and Gpr1 only, so Gpr12 would otherwise
+         * still be RtlUnwindEx's own.  Measured: leaving it produced a garbage
+         * r2, a garbage indirect branch out of unwind_target, and an endless
+         * fault loop during kernel32's PROCESS_ATTACH.
+         * r12 is volatile, so writing it is harmless when target_ip is an
+         * ordinary label inside a function rather than an entry point. */
+        context->Gpr12 = (ULONG64)target_ip;
     }
 
     context->Gpr3 = (ULONG64)retval;
