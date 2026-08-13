@@ -163,6 +163,8 @@ static struct list *device_file_get_kernel_obj_list( struct object *obj );
 static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
+static void device_file_create( struct fd *fd, struct async *async, unsigned int access,
+                                unsigned int sharing, unsigned int options );
 static void device_file_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void device_file_write( struct fd *fd, struct async *async, file_pos_t pos );
 static void device_file_flush( struct fd *fd, struct async *async );
@@ -186,6 +188,7 @@ static const struct object_ops device_file_ops =
 static const struct fd_ops device_file_fd_ops =
 {
     .get_fd_type     = device_file_get_fd_type,
+    .create          = device_file_create,
     .read            = device_file_read,
     .write           = device_file_write,
     .flush           = device_file_flush,
@@ -421,25 +424,6 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
     }
 
     allow_fd_caching( file->fd );
-
-    if (device->manager)
-    {
-        struct irp_call *irp;
-        union irp_params params;
-
-        memset( &params, 0, sizeof(params) );
-        params.create.type    = IRP_CALL_CREATE;
-        params.create.access  = access;
-        params.create.sharing = sharing;
-        params.create.options = options;
-        params.create.device  = get_kernel_object_ptr( device->manager, &device->obj );
-
-        if ((irp = create_irp( file, &params, NULL )))
-        {
-            add_irp_to_queue( device->manager, irp, current );
-            release_object( irp );
-        }
-    }
     return &file->obj;
 }
 
@@ -592,6 +576,23 @@ static void device_file_get_volume_info( struct fd *fd, struct async *async, uns
     memset( &params, 0, sizeof(params) );
     params.volume.type = IRP_CALL_VOLUME;
     params.volume.info_class = info_class;
+    queue_irp( file, &params, async );
+}
+
+static void device_file_create( struct fd *fd, struct async *async, unsigned int access,
+                                unsigned int sharing, unsigned int options )
+{
+    struct device_file *file = get_fd_user( fd );
+    union irp_params params;
+
+    if (!file->device->manager) return;
+
+    memset( &params, 0, sizeof(params) );
+    params.create.type = IRP_CALL_CREATE;
+    params.create.access = access;
+    params.create.sharing = sharing;
+    params.create.options = options;
+    params.create.device = get_kernel_object_ptr( file->device->manager, &file->device->obj );
     queue_irp( file, &params, async );
 }
 

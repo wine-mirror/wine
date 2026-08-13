@@ -1418,10 +1418,8 @@ static void test_create_params(void)
     HANDLE file;
 
     file = CreateFileA("\\\\.\\WineTestDriver", 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
-    todo_wine ok(file == INVALID_HANDLE_VALUE, "got %p\n", file);
-    todo_wine ok(GetLastError() == ERROR_NOT_READY, "got error %lu\n", GetLastError());
-    if (file != INVALID_HANDLE_VALUE)
-        CloseHandle(file);
+    ok(file == INVALID_HANDLE_VALUE, "got %p\n", file);
+    ok(GetLastError() == ERROR_NOT_READY, "got error %lu\n", GetLastError());
 }
 
 static void test_driver3(struct testsign_context *ctx)
