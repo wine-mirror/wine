@@ -104,6 +104,9 @@ void *pKiUserEmulationDispatcher = NULL;
 void *pLdrInitializeThunk = NULL;
 void *pRtlUserThreadStart = NULL;
 void *p__wine_ctrl_routine = NULL;
+#ifdef __powerpc64__
+void *p__wine_init_teb = NULL;
+#endif
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 #ifdef __GNUC__
@@ -1577,6 +1580,13 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( LdrSystemDllInitBlock );
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
+#ifdef __powerpc64__
+    /* PowerPC64 has no spare register for the TEB: r13 is glibc's thread
+     * pointer and r2 is the TOC.  The PE side keeps it in an initial-exec
+     * thread-local that only it can write, so the unix side has to hand the
+     * TEB over once per thread.  See dlls/ntdll/signal_ppc64.c. */
+    GET_FUNC( __wine_init_teb );
+#endif
     GET_FUNC( __wine_syscall_dispatcher );
     GET_FUNC( __wine_unix_call_dispatcher );
     GET_FUNC( __wine_unixlib_handle );
