@@ -185,10 +185,18 @@ static void create_network_devices(DRIVER_OBJECT *driver)
     FreeMibTable( table );
 }
 
+static NTSTATUS WINAPI ndis_create(DEVICE_OBJECT *device, IRP *irp)
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
     TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
 
+    driver->MajorFunction[IRP_MJ_CREATE] = ndis_create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = ndis_ioctl;
 
     create_network_devices( driver );
