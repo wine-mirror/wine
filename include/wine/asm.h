@@ -309,9 +309,13 @@
  * __wine_syscall_dispatcher with:
  *
  *      r11 = syscall id
- *      r0  = TEB, read from ntdll's initial-exec TLS via the cached r13
- *            displacement in ppc64_teb_offset (see dlls/ntdll/signal_ppc64.c);
- *            this spares the unix-side dispatcher from doing TLS in assembly
+ *      r0  = TEB, read straight out of ntdll's initial-exec thread-local
+ *            ppc64_current_teb (see dlls/ntdll/signal_ppc64.c).  Reading it
+ *            here spares the unix-side dispatcher from doing TLS in assembly,
+ *            and doing it with the real @got@tprel/@tls relocations rather than
+ *            a cached r13 displacement means there is nothing to initialise:
+ *            an uninitialised cache would have made every thunk read a "TEB"
+ *            out of glibc's own TCB at 0(r13) and carry on with garbage.
  *      r12 = the dispatcher's address, as an ELFv2 global entry point requires
  *      LR  = the PE caller's return address: the thunk branches, never calls
  *
@@ -329,9 +333,10 @@
                        "addi 2, 2, .TOC.-" __ASM_NAME(#name) "@l\n\t" \
                        ".localentry " __ASM_NAME(#name) ", .-" __ASM_NAME(#name) "\n\t" \
                        "li 11, " #id "\n\t" \
-                       "addis 12, 2, ppc64_teb_offset@toc@ha\n\t" \
-                       "ld 12, ppc64_teb_offset@toc@l(12)\n\t" \
-                       "ldx 0, 13, 12\n\t" \
+                       "addis 12, 2, ppc64_current_teb@got@tprel@ha\n\t" \
+                       "ld 12, ppc64_current_teb@got@tprel@l(12)\n\t" \
+                       "add 12, 12, ppc64_current_teb@tls\n\t" \
+                       "ld 0, 0(12)\n\t" \
                        "addis 12, 2, __wine_syscall_dispatcher@toc@ha\n\t" \
                        "ld 12, __wine_syscall_dispatcher@toc@l(12)\n\t" \
                        "mtctr 12\n\t" \

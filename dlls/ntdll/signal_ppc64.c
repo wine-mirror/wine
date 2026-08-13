@@ -105,6 +105,22 @@ C_ASSERT( offsetof(CONTEXT,Vrsave)       == CTX_Vrsave );
 C_ASSERT( offsetof(CONTEXT,Vr)           == CTX_Vr0 );
 C_ASSERT( sizeof(CONTEXT)                == CTX_SIZE );
 
+/* _JUMP_BUFFER must stay byte-identical to the __wine_jmp_buf that
+ * libs/winecrt0/setjmp.c writes; both are hand-written assembly against literal
+ * offsets, so pin every one of them here rather than trusting an eyeball match.
+ * The numbers on the right are the offsets that appear in winecrt0's
+ * __wine_setjmpex. */
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Frame) ==   0 );
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Gpr)   ==   8 );   /* r14-r31 */
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Sp)    == 152 );
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Toc)   == 160 );
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Cr)    == 168 );
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Lr)    == 176 );
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Fpr)   == 184 );   /* f14-f31 */
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Vr)    == 336 );   /* v20-v31 */
+C_ASSERT( offsetof(struct _JUMP_BUFFER,Vr) % 16 == 0 );   /* stvx force-aligns */
+C_ASSERT( sizeof(struct _JUMP_BUFFER)         <= sizeof(__wine_jmp_buf) );
+
 /* CONTEXT_FULL, spelled out for the assembly that builds it with lis/ori. */
 C_ASSERT( CONTEXT_FULL == 0x800017 );
 
@@ -119,14 +135,18 @@ C_ASSERT( CONTEXT_FULL == 0x800017 );
  * compiles to "ld rN,off(r2); add rN,rN,r13" - no __tls_get_addr, no libc
  * dependency, which matters because ntdll.dll.so is linked -nodefaultlibs.
  *
- * ppc64_teb_offset caches the (thread-invariant) displacement of the variable
- * from r13 so that hand-written assembly - the syscall thunk helper below - can
- * reach the TEB with two instructions and without emitting TLS relocations.
+ * The syscall thunks in include/wine/asm.h read this same variable directly,
+ * with the ordinary @got@tprel/@tls relocations, so there is no cached offset
+ * anywhere and nothing to initialise before the first syscall.  A cache was
+ * tried and rejected: it would have to be filled by a constructor, and Wine
+ * renames DT_INIT_ARRAY to a private dynamic tag in these modules so that it
+ * can run constructors itself at DLL_PROCESS_ATTACH - far too late.  Measured:
+ * a constructor added here was present in .init_array and still never ran.
+ * An unfilled cache would have made every thunk read a "TEB" out of glibc's
+ * TCB at 0(r13) and continue with garbage.
  */
 __attribute__((visibility("hidden"))) __thread TEB *ppc64_current_teb
     __attribute__((tls_model("initial-exec")));
-
-__attribute__((visibility("hidden"))) LONG_PTR ppc64_teb_offset;
 
 TEB * WINAPI NtCurrentTeb(void)
 {
@@ -142,10 +162,7 @@ TEB * WINAPI NtCurrentTeb(void)
  */
 void CDECL __wine_init_teb( TEB *teb )
 {
-    register void *tp __asm__("r13");
-
     ppc64_current_teb = teb;
-    ppc64_teb_offset = (char *)&ppc64_current_teb - (char *)tp;
 }
 
 
@@ -559,6 +576,12 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     {
         PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
         TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
+        /* STUB: the other architectures run the callback on a synthesised frame
+         * (consolidate_callback/invoke_callback) so that an RtlUnwindEx issued
+         * from inside it - which C++ handlers do - skips the frames already
+         * processed.  That trick needs a resumable CONTEXT, and the back-chain
+         * unwinder cannot produce one.  Called directly instead: a nested
+         * unwind from the callback will re-walk frames it has already unwound. */
         context->Iar = (ULONG64)consolidate( rec );
         context->Lr  = context->Iar;
     }
@@ -804,7 +827,7 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "addi 4, 1, 0x20\n\t"         /* context */
                    "ld 3, 0x4d8(1)\n\t"          /* rec, from the red-zone stash */
                    "addi 5, 1, 0x4e0\n\t"
-                   "std 5, 0x130(4)\n\t"         /* context->Gpr1 = caller's sp */
+                   "std 5, 0x110(4)\n\t"         /* context->Gpr1 = caller's sp */
                    "std 3, 0x120(4)\n\t"         /* context->Gpr3 = rec */
                    "ld 0, 0x4f0(1)\n\t"          /* caller's LR save slot */
                    "std 0, 0x220(4)\n\t"         /* context->Iar */
