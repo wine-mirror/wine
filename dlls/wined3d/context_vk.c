@@ -2673,8 +2673,11 @@ static void wined3d_context_vk_set_dynamic_blend_state(const struct wined3d_cont
         static const VkColorComponentFlags default_write_mask[WINED3D_MAX_RENDER_TARGETS] = {X, X, X, X, X, X, X, X};
 #undef X
 
-        VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, default_enable));
-        VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, default_write_mask));
+        if (rt_count)
+        {
+            VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, default_enable));
+            VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, default_write_mask));
+        }
         return;
     }
 
@@ -2692,9 +2695,12 @@ static void wined3d_context_vk_set_dynamic_blend_state(const struct wined3d_cont
         blend_equation_from_wined3d(context_vk, &equations[i], rt, state->fb.render_targets[i]);
     }
 
-    VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, enable));
-    VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, write_mask));
-    VK_CALL(vkCmdSetColorBlendEquationEXT(vk_command_buffer, 0, rt_count, equations));
+    if (rt_count)
+    {
+        VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, enable));
+        VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, write_mask));
+        VK_CALL(vkCmdSetColorBlendEquationEXT(vk_command_buffer, 0, rt_count, equations));
+    }
 }
 
 static VkFormat vk_format_from_component_type(enum wined3d_component_type component_type)
