@@ -566,7 +566,7 @@ static void check_target(void)
 {
     if (is_pe()) return;
     if (target.cpu == CPU_i386 || target.cpu == CPU_x86_64) return;
-    if (target.cpu == CPU_POWERPC64) return;  /* PROBE: see how far the ELF builtin path gets */
+    if (target.cpu == CPU_POWERPC64) return;
     fatal_error( "Non-PE builds are not supported on this platform.\n" );
 }
 

@@ -442,6 +442,10 @@ void output_standard_file_header(void)
     else
         output( "/* File generated automatically; do not edit! */\n" );
     output( "/* This file can be copied, modified and distributed without restriction. */\n\n" );
+    /* all PowerPC64 code we generate follows the ELFv2 ABI; say so explicitly so that an
+     * assembler defaulting to ELFv1 (which uses function descriptors) fails loudly instead of
+     * silently producing something that cannot work */
+    if (target.cpu == CPU_POWERPC64 && !is_pe()) output( "\t.abiversion 2\n\n" );
     if (safe_seh)
     {
         output( "\t.def    @feat.00\n\t.scl 3\n\t.type 0\n\t.endef\n" );
