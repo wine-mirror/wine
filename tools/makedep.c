@@ -3673,7 +3673,15 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     {
         if (!unix_lib_supported) return;
     }
-    else if (source->file->flags & (FLAG_C_CXX | FLAG_C_ASM))
+    else if (source->file->flags & FLAG_C_CXX)
+    {
+        /* with a PE architecture present the C++ sources of a module belong to
+         * that architecture; on a single-arch (ELF builtin) build the native
+         * architecture is the module architecture, so they have to be built
+         * here or they are silently dropped from the module */
+        if (archs.count > 1) return;
+    }
+    else if (source->file->flags & FLAG_C_ASM)
     {
         return;
     }
