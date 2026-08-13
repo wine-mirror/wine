@@ -400,41 +400,124 @@ static char *get_password_unixcp( const WCHAR *passwd, ULONG passwd_len )
     return ret;
 }
 
-static void map_auth_data( const void *auth_data, SEC_WINNT_AUTH_IDENTITY_W *id )
+static NTSTATUS map_auth_data( void *auth_data, SEC_WINNT_AUTH_IDENTITY_W **ret )
 {
-    const SEC_WINNT_AUTH_IDENTITY_EXA *exA = auth_data;
-    const SEC_WINNT_AUTH_IDENTITY_EXW *exW = auth_data;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    SECPKG_CALL_INFO info;
+    ULONG size, char_size;
+    NTSTATUS status;
+    BYTE *p;
 
-    if (exW->Version != SEC_WINNT_AUTH_IDENTITY_VERSION)
+    if (!auth_data)
     {
-        *id = *(SEC_WINNT_AUTH_IDENTITY_W *)auth_data;
+        *ret = NULL;
+        return SEC_E_OK;
     }
-    else if (exW->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+
+    lsa_funcs->GetCallInfo( &info );
+    if (info.Attributes & SECPKG_CALL_WOWCLIENT)
     {
-        id->User           = exW->User;
-        id->UserLength     = exW->UserLength;
-        id->Domain         = exW->Domain;
-        id->DomainLength   = exW->DomainLength;
-        id->Password       = exW->Password;
-        id->PasswordLength = exW->PasswordLength;
-        id->Flags          = exW->Flags;
-        if (exW->PackageList)
-            FIXME( "ignoring package list %s\n", debugstr_wn(exW->PackageList, exW->PackageListLength) );
+        struct {
+            ULONG User;
+            ULONG UserLength;
+            ULONG Domain;
+            ULONG DomainLength;
+            ULONG Password;
+            ULONG PasswordLength;
+            ULONG Flags;
+        } id32;
+
+        status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(id32), &id32, auth_data );
+        if (status) return status;
+
+        id.User = (void *)(ULONG_PTR)id32.User;
+        id.UserLength = id32.UserLength;
+        id.Domain = (void *)(ULONG_PTR)id32.Domain;
+        id.DomainLength = id32.DomainLength;
+        id.Password = (void *)(ULONG_PTR)id32.Password;
+        id.PasswordLength = id32.PasswordLength;
+        id.Flags = id32.Flags;
     }
     else
     {
-        SEC_WINNT_AUTH_IDENTITY_A *idA = (SEC_WINNT_AUTH_IDENTITY_A *)id;
-
-        idA->User           = exA->User;
-        idA->UserLength     = exA->UserLength;
-        idA->Domain         = exA->Domain;
-        idA->DomainLength   = exA->DomainLength;
-        idA->Password       = exA->Password;
-        idA->PasswordLength = exA->PasswordLength;
-        idA->Flags          = exA->Flags;
-        if (exA->PackageList)
-            FIXME( "ignoring package list %s\n", debugstr_an((const char *)exA->PackageList, exA->PackageListLength) );
+        status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(id), &id, auth_data );
+        if (status) return status;
     }
+
+    if (*((ULONG *)&id) == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct {
+                ULONG Version;
+                ULONG Length;
+                ULONG User;
+                ULONG UserLength;
+                ULONG Domain;
+                ULONG DomainLength;
+                ULONG Password;
+                ULONG PasswordLength;
+                ULONG Flags;
+                ULONG PackageList;
+                ULONG PackageListLength;
+            } idex32;
+
+            status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(idex32), &idex32, auth_data );
+            if (status) return status;
+            if (idex32.PackageList) FIXME( "ignoring package list\n" );
+            id.User = (void *)(ULONG_PTR)idex32.User;
+            id.UserLength = idex32.UserLength;
+            id.Domain = (void *)(ULONG_PTR)idex32.Domain;
+            id.DomainLength = idex32.DomainLength;
+            id.Password = (void *)(ULONG_PTR)idex32.Password;
+            id.PasswordLength = idex32.PasswordLength;
+            id.Flags = idex32.Flags;
+        }
+        else
+        {
+            SEC_WINNT_AUTH_IDENTITY_EXA idex;
+
+            status = lsa_funcs->CopyFromClientBuffer( NULL, sizeof(idex), &idex, auth_data );
+            if (status) return status;
+            if (idex.PackageList) FIXME( "ignoring package list\n" );
+            id.User = idex.User;
+            id.UserLength = idex.UserLength;
+            id.Domain = idex.Domain;
+            id.DomainLength = idex.DomainLength;
+            id.Password = idex.Password;
+            id.PasswordLength = idex.PasswordLength;
+            id.Flags = idex.Flags;
+        }
+    }
+
+    char_size = (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? 1 : 2);
+    size = sizeof(id) + (id.UserLength + id.DomainLength + id.PasswordLength) * char_size;
+    *ret = malloc( size );
+    if (!*ret) return SEC_E_INSUFFICIENT_MEMORY;
+
+    p = (BYTE *)(*ret + 1);
+    if (id.UserLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.UserLength * char_size, p, id.User );
+        id.User = p;
+        p += id.UserLength * char_size;
+    }
+    if (!status && id.DomainLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.DomainLength * char_size, p, id.Domain );
+        id.Domain = p;
+        p += id.DomainLength * char_size;
+    }
+    if (!status && id.PasswordLength)
+    {
+        status = lsa_funcs->CopyFromClientBuffer( NULL, id.PasswordLength * char_size, p, id.Password );
+        id.Password = p;
+        p += id.PasswordLength * char_size;
+    }
+    memcpy( *ret, &id, sizeof(id) );
+
+    if (status) free( *ret );
+    return status;
 }
 
 static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
@@ -442,8 +525,8 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
     char *principal = NULL, *username = NULL,  *password = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W id;
-    NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    SEC_WINNT_AUTH_IDENTITY_W *id = NULL;
+    NTSTATUS status;
     struct cred_handle *cred_handle;
     ULONG exptime;
 
@@ -451,18 +534,17 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
            logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
     if (principal_us && !(principal = get_str_unixcp( principal_us ))) return SEC_E_INSUFFICIENT_MEMORY;
-    if (auth_data)
+    if ((status = map_auth_data( auth_data, &id ))) goto done;
+    if (id)
     {
-        map_auth_data( auth_data, &id );
-
-        if (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+        if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
         {
             FIXME( "ANSI identity not supported\n" );
             status = SEC_E_UNSUPPORTED_FUNCTION;
             goto done;
         }
-        if (!(username = get_username_unixcp( id.User, id.UserLength, id.Domain, id.DomainLength ))) goto done;
-        if (!(password = get_password_unixcp( id.Password, id.PasswordLength ))) goto done;
+        if (!(username = get_username_unixcp( id->User, id->UserLength, id->Domain, id->DomainLength ))) goto done;
+        if (!(password = get_password_unixcp( id->Password, id->PasswordLength ))) goto done;
     }
 
     if (!(cred_handle = calloc( 1, sizeof(*cred_handle) )))
@@ -483,6 +565,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
 
 done:
     free( principal );
+    free( id );
     free( username );
     free( password );
     return status;
