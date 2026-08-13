@@ -45,6 +45,8 @@ static const USHORT current_machine = IMAGE_FILE_MACHINE_AMD64;
 static const USHORT current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
 static const USHORT current_machine = IMAGE_FILE_MACHINE_ARM64;
+#elif defined(__powerpc64__)
+static const USHORT current_machine = IMAGE_FILE_MACHINE_POWERPC64;
 #else
 static const USHORT current_machine = IMAGE_FILE_MACHINE_UNKNOWN;
 #endif

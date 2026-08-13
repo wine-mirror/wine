@@ -983,6 +983,153 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_P
 
 
 /***********************************************************************
+ * PowerPC64 support
+ *
+ * There is no PE unwind information format for PowerPC64 and nothing produces
+ * one: on this port every module is an ELF shared object (PE_ARCHS is empty),
+ * so the exception directory is always absent and RtlLookupFunctionEntry()
+ * always returns NULL.  Unwinding therefore uses the ELFv2 stack back chain,
+ * which every conforming function maintains:
+ *
+ *      0(r1)          back chain -> caller's r1
+ *      16(caller_r1)  the LR save slot the callee wrote its return address into
+ *
+ * This recovers Iar, Lr and Gpr1 for every frame.  It does NOT recover
+ * non-volatile registers, and it cannot: that information only exists in DWARF
+ * .eh_frame, which lives on the unix side of the split.  So this is enough to
+ * walk a stack (RtlWalkFrameChain, backtraces, deciding which TEB exception
+ * frames are still live) and not enough to resume execution in an outer frame.
+ * The builtin __TRY/__EXCEPT machinery resumes with __wine_longjmp, which
+ * restores the non-volatile registers itself, so this is sufficient in
+ * practice - but it is a real limitation and not a temporary one.
+ *
+ * Leaf functions that never touch r1 are transparent to this walk: the frame
+ * they return into is the same one the walk already sees, so a leaf frame is
+ * silently skipped rather than reported.  Recorded, not fixed.
+ */
+#ifdef __powerpc64__
+
+/**********************************************************************
+ *              RtlVirtualUnwind2   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
+                                   RUNTIME_FUNCTION *func, CONTEXT *context,
+                                   BOOLEAN *mach_frame_unwound, void **handler_data,
+                                   ULONG_PTR *frame_ret, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr,
+                                   ULONG_PTR *limit_low, ULONG_PTR *limit_high,
+                                   PEXCEPTION_ROUTINE *handler_ret, ULONG flags )
+{
+    ULONG_PTR sp = context->Gpr1, next_sp;
+
+    TRACE( "type %lx base %Ix pc %Ix sp %Ix\n", type, base, pc, sp );
+    if (limit_low || limit_high) FIXME( "limits not supported\n" );
+
+    if (handler_ret) *handler_ret = NULL;
+    if (handler_data) *handler_data = NULL;
+
+    if (!sp || (sp & 0xf)) return STATUS_BAD_FUNCTION_TABLE;
+
+    __TRY
+    {
+        next_sp = *(ULONG_PTR *)sp;
+        if (next_sp <= sp || (next_sp & 0xf))
+        {
+            next_sp = 0;
+        }
+        else
+        {
+            context->Lr  = *(ULONG_PTR *)(next_sp + 16);
+            context->Iar = context->Lr;
+            context->Gpr1 = next_sp;
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN( "Access violation walking the back chain at %Ix.\n", sp );
+        return STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
+
+    if (!next_sp)
+    {
+        /* end of the chain */
+        context->Iar = 0;
+        *frame_ret = 0;
+        return STATUS_SUCCESS;
+    }
+
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    *frame_ret = next_sp;
+    TRACE( "ret: pc=%I64x lr=%I64x sp=%I64x\n", context->Iar, context->Lr, context->Gpr1 );
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlVirtualUnwind   (NTDLL.@)
+ */
+PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
+                                            RUNTIME_FUNCTION *func, CONTEXT *context,
+                                            PVOID *handler_data, ULONG_PTR *frame_ret,
+                                            KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+{
+    PEXCEPTION_ROUTINE handler;
+
+    if (!RtlVirtualUnwind2( type, base, pc, func, context, NULL, handler_data,
+                            frame_ret, ctx_ptr, NULL, NULL, &handler, 0 ))
+        return handler;
+
+    context->Iar = 0;
+    return NULL;
+}
+
+
+/**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ *
+ * Always NULL: see the block comment above.  Dynamic function tables added
+ * through RtlAddFunctionTable() are equally unusable, because there is no
+ * unwind-info encoding for their entries to point at, so they are not
+ * consulted either.
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    *base = 0;
+    return NULL;
+}
+
+
+/*******************************************************************
+ *		__C_specific_handler (NTDLL.@)
+ *
+ * Unreachable: it is only ever installed as a language handler by PE unwind
+ * data, and there is none.  Defined so that ntdll.spec links.
+ */
+EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                   CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+{
+    FIXME( "not supported on PowerPC64\n" );
+    return ExceptionContinueSearch;
+}
+
+
+/**********************************************************************
+ *              RtlAddFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR base )
+{
+    ULONG_PTR end = base;
+    void *ret;
+
+    if (count) end += table[count - 1].EndAddress;
+    return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
+}
+
+#endif  /* __powerpc64__ */
+
+
+/***********************************************************************
  * ARM support
  */
 #ifdef __arm__

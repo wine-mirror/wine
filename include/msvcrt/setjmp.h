@@ -132,6 +132,29 @@ typedef struct _JUMP_BUFFER
 #define _JBLEN  24
 #define _JBTYPE unsigned __int64
 
+#elif defined(__powerpc64__)
+
+/* Layout deliberately identical to the __wine_jmp_buf used by
+ * libs/winecrt0/setjmp.c, so that the two never drift apart:
+ *   0x000 Frame, 0x008 r14-r31, 0x098 r1, 0x0a0 r2, 0x0a8 CR, 0x0b0 LR,
+ *   0x0b8 f14-f31, 0x150 v20-v31.  r14-r31/f14-f31/v20-v31 are exactly the
+ *   ELFv2 non-volatile sets. */
+typedef _CRT_ALIGN(16) struct _JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Gpr[18];       /* r14-r31 */
+    unsigned __int64 Sp;
+    unsigned __int64 Toc;
+    unsigned __int64 Cr;
+    unsigned __int64 Lr;
+    double           Fpr[18];       /* f14-f31 */
+    unsigned __int64 Reserved;      /* pad Vr to a 16-byte boundary */
+    unsigned __int64 Vr[24];        /* v20-v31 */
+} _JUMP_BUFFER;
+
+#define _JBLEN  66
+#define _JBTYPE unsigned __int64
+
 #else
 
 #define _JBLEN 1

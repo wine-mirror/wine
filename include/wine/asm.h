@@ -302,6 +302,40 @@
                        ".byte 0xff,0x14,0x25\n\t" /* 18: callq *(0x7ffe1000) */ \
                        ".long 0x7ffe1000\n\t" \
                        ".byte 0xc3" )             /* 1f: ret */
+#elif defined __powerpc64__
+/* PowerPC64 has no Windows syscall instruction and no PE format.  Each thunk
+ * sets up its own TOC through the ELFv2 global entry prologue (a cross-module
+ * caller only guarantees r12 = entry address), then tail-jumps to
+ * __wine_syscall_dispatcher with:
+ *
+ *      r11 = syscall id
+ *      r0  = TEB, read from ntdll's initial-exec TLS via the cached r13
+ *            displacement in ppc64_teb_offset (see dlls/ntdll/signal_ppc64.c);
+ *            this spares the unix-side dispatcher from doing TLS in assembly
+ *      r12 = the dispatcher's address, as an ELFv2 global entry point requires
+ *      LR  = the PE caller's return address: the thunk branches, never calls
+ *
+ * The sequence is inlined into every thunk rather than shared through a helper
+ * on purpose.  A branch to a helper marked ".localentry sym,1" makes the linker
+ * interpose a "std r2,24(r1); b sym" stub, and by then r2 is ntdll's TOC while
+ * r1 is still the *caller's* frame - so the stub overwrites the caller's TOC
+ * save slot, and the caller's "ld r2,24(r1)" after the call silently restores
+ * ntdll's TOC instead of its own.  Observed in a disassembly of ntdll.dll.so.
+ * Nothing here may write 24(r1); the dispatcher must push its own frame first.
+ */
+# define __ASM_SYSCALL_FUNC(id,name) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "addis 2, 12, .TOC.-" __ASM_NAME(#name) "@ha\n\t" \
+                       "addi 2, 2, .TOC.-" __ASM_NAME(#name) "@l\n\t" \
+                       ".localentry " __ASM_NAME(#name) ", .-" __ASM_NAME(#name) "\n\t" \
+                       "li 11, " #id "\n\t" \
+                       "addis 12, 2, ppc64_teb_offset@toc@ha\n\t" \
+                       "ld 12, ppc64_teb_offset@toc@l(12)\n\t" \
+                       "ldx 0, 13, 12\n\t" \
+                       "addis 12, 2, __wine_syscall_dispatcher@toc@ha\n\t" \
+                       "ld 12, __wine_syscall_dispatcher@toc@l(12)\n\t" \
+                       "mtctr 12\n\t" \
+                       "bctr" )
 #elif defined __arm__
 # define __ASM_SYSCALL_FUNC(id,name,args) \
     __ASM_GLOBAL_FUNC( name, \
