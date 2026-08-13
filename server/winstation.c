@@ -318,6 +318,7 @@ static WCHAR *desktop_get_full_name( struct object *obj, data_size_t max, data_s
     if (!(ret = malloc( *ret_len ))) return NULL;
     ret[0] = '\\';
     memcpy( ret + 1, name->name, name->len );
+    if (*ret_len > max) set_error( STATUS_INFO_LENGTH_MISMATCH );
     return ret;
 }
 
