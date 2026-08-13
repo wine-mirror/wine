@@ -2989,6 +2989,8 @@ DECL_HANDLER(open_file_object)
 {
     struct object *obj, *result;
     struct object_params params = { .name = get_req_unicode_str(), .attr = req->attributes };
+    struct fd *fd;
+    struct async *async;
 
     if (req->rootdir && !(params.root = get_handle_obj( current->process, req->rootdir, 0, NULL ))) return;
 
@@ -2999,7 +3001,22 @@ DECL_HANDLER(open_file_object)
     if (!obj->ops->open_file) set_error( STATUS_OBJECT_TYPE_MISMATCH );
     else if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
     {
+        struct async_data async_data = {.user = req->async_user};
+
         reply->handle = alloc_handle( current->process, result, req->access, req->attributes );
+        async_data.handle = reply->handle;
+
+        if (reply->handle && (fd = get_obj_fd( result )))
+        {
+            if (fd->fd_ops->create && (async = create_request_async( fd, &async_data, 1 )))
+            {
+                fd->fd_ops->create( fd, async, req->access, req->sharing, req->options );
+                reply->wait = async_handoff( async, NULL, 1 );
+                release_object( async );
+            }
+            release_object( fd );
+        }
+
         release_object( result );
     }
     release_object( obj );

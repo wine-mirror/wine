@@ -2297,25 +2297,8 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
 }
 
 
-static unsigned int server_open_file_object( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                             ULONG sharing, ULONG options )
-{
-    unsigned int status;
-
-    SERVER_START_REQ( open_file_object )
-    {
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        req->sharing    = sharing;
-        req->options    = options;
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        status = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return status;
-}
+static unsigned int server_open_file_object( HANDLE *ret_handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                             ULONG sharing, ULONG options );
 
 
 /* retrieve device/inode number for all the drives */
@@ -5735,6 +5718,39 @@ static void set_sync_iosb( IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR info,
         io->Information = info;
     }
 }
+
+
+static unsigned int server_open_file_object( HANDLE *ret_handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                             ULONG sharing, ULONG options )
+{
+    HANDLE handle, wait_handle;
+    struct async_irp *async;
+    unsigned int status;
+
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion )))
+        return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( open_file_object )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        req->sharing    = sharing;
+        req->options    = options;
+        req->async_user = wine_server_client_ptr( &async->io );
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        handle = wine_server_ptr_handle( reply->handle );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+    }
+    SERVER_END_REQ;
+
+    if (wait_handle) status = wait_async( wait_handle, FALSE );
+    if (status) NtClose( handle );
+    else *ret_handle = handle;
+    return status;
+}
+
 
 /* do a read call through the server */
 static unsigned int server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,

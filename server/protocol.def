@@ -1648,9 +1648,11 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     obj_handle_t rootdir;       /* root directory */
     unsigned int sharing;       /* sharing flags */
     unsigned int options;       /* file options */
+    client_ptr_t async_user;    /* async user ptr, same as async_data.user */
     VARARG(filename,unicode_str); /* file name */
 @REPLY
     obj_handle_t handle;        /* handle to the file */
+    obj_handle_t wait;          /* handle to wait on for blocking create */
 @END
 
 

@@ -57,6 +57,8 @@ struct fd_ops
     void (*poll_event)(struct fd *,int event);
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
+    /* perform an asynchronous create */
+    void (*create)( struct fd *, struct async *, unsigned int access, unsigned int sharing, unsigned int options );
     /* perform a read on the file */
     void (*read)(struct fd *, struct async *, file_pos_t );
     /* perform a write on the file */

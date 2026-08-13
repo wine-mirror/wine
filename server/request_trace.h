@@ -647,12 +647,14 @@ static void dump_open_file_object_request( const struct open_file_object_request
     fprintf( stderr, ", rootdir=%04x", req->rootdir );
     fprintf( stderr, ", sharing=%08x", req->sharing );
     fprintf( stderr, ", options=%08x", req->options );
+    dump_uint64( ", async_user=", &req->async_user );
     dump_varargs_unicode_str( ", filename=", cur_size );
 }
 
 static void dump_open_file_object_reply( const struct open_file_object_reply *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", wait=%04x", req->wait );
 }
 
 static void dump_alloc_file_handle_request( const struct alloc_file_handle_request *req )
