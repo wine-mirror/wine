@@ -436,6 +436,13 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS WINAPI driver_create( DEVICE_OBJECT *device, IRP *irp )
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS WINAPI add_device( DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_device )
 {
     struct device *impl;
@@ -468,6 +475,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     TRACE( "driver %p, path %s.\n", driver, debugstr_w(path->Buffer) );
 
+    driver->MajorFunction[IRP_MJ_CREATE] = driver_create;
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = driver_ioctl;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver_ioctl;
     driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
