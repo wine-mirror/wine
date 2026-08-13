@@ -1273,31 +1273,43 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 /***********************************************************************
  *           __wine_syscall_dispatcher
  *
- * Entered by a tail branch from a syscall thunk in the PE ntdll (see
- * include/wine/asm.h), never by a call, with:
+ * Entered by a tail branch from a syscall thunk in the PE ntdll or in win32u
+ * (see include/wine/asm.h), never by a call, with:
  *
- *      r0  = TEB          r11 = syscall id
+ *      r11 = syscall id
  *      r12 = this function's address (so that we can derive our own TOC)
  *      LR  = the PE caller's return address
  *      r1  = the PE caller's frame; r3-r10 and the parameter save area at
  *            32(r1) hold the arguments
  *
+ * The TEB comes from this module's own initial-exec thread-local, not from the
+ * thunk: the thunk is emitted into every module with a syscall table and could
+ * not reach a thread-local defined in ntdll.
+ *
  * Nothing here may write 24(r1) before a new frame is pushed: that word is
  * the caller's own TOC save slot and the caller reloads r2 from it after the
- * call.  The 288-byte red zone below r1 is scratch and is used to free up two
- * registers before the TEB is known to be reachable.
+ * call.  The 288-byte red zone below r1 is scratch - legal because a function
+ * that calls us is not a leaf and keeps nothing live there - and is used to
+ * free up the registers we need before the TEB is reachable.
  *
  * There is no .localentry directive, i.e. st_other is 0: this function never
  * requires the caller to set up r2, it derives r2 from r12 itself.  That is
  * also what keeps the linker from interposing a "std r2,24(r1)" stub.
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   "std 2, -24(1)\n\t"              /* red zone: the caller's TOC */
+                   "addis 2, 12, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@ha\n\t"
+                   "addi 2, 2, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@l\n\t"
                    "std 30, -8(1)\n\t"
                    "std 31, -16(1)\n\t"
-                   "mr 30, 0\n\t"                   /* r30 = TEB */
+                   "addis 30, 2, ppc64_unix_teb@got@tprel@ha\n\t"
+                   "ld 30, ppc64_unix_teb@got@tprel@l(30)\n\t"
+                   "add 30, 30, ppc64_unix_teb@tls\n\t"
+                   "ld 30, 0(30)\n\t"               /* r30 = TEB */
                    "ld 31, 0x378(30)\n\t"           /* r31 = frame */
                    "std 1, 0x008(31)\n\t"           /* user sp */
-                   "std 2, 0x010(31)\n\t"           /* user TOC */
+                   "ld 0, -24(1)\n\t"
+                   "std 0, 0x010(31)\n\t"           /* user TOC */
                    "std 13, 0x068(31)\n\t"
                    "std 14, 0x070(31)\n\t"
                    "std 15, 0x078(31)\n\t"
@@ -1379,9 +1391,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "stvx 30, 31, 11\n\t"
                    "addi 11, 11, 16\n\t"
                    "stvx 31, 31, 11\n\t"
-                   /* derive our own TOC from r12, which still holds our entry point */
-                   "addis 2, 12, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@ha\n\t"
-                   "addi 2, 2, .TOC.-" __ASM_NAME("__wine_syscall_dispatcher") "@l\n\t"
                    /* switch to the kernel stack: the frame sits at the top of it */
                    "ld 0, 0x008(31)\n\t"
                    "addi 1, 31, -0x60\n\t"
@@ -1579,29 +1588,40 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "bctr\n"
 
                    __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
-                   /* spill the register arguments into the parameter save area so
-                    * that trace_syscall sees one contiguous argument list */
-                   "std 3, 32(1)\n\t"
-                   "std 4, 40(1)\n\t"
-                   "std 5, 48(1)\n\t"
-                   "std 6, 56(1)\n\t"
-                   "std 7, 64(1)\n\t"
-                   "std 8, 72(1)\n\t"
-                   "std 9, 80(1)\n\t"
-                   "std 10, 88(1)\n\t"
+                   /* Spill the register arguments into frame->gpr[3..10], which
+                    * gives trace_syscall a contiguous list and leaves them
+                    * somewhere it cannot touch.  Not the parameter save area at
+                    * 32(1): ELFv2 lets a callee use its caller's parameter save
+                    * area as scratch, so trace_syscall would be entitled to
+                    * clobber the very arguments we are about to reload. */
+                   "std 3, 0x018(31)\n\t"
+                   "std 4, 0x020(31)\n\t"
+                   "std 5, 0x028(31)\n\t"
+                   "std 6, 0x030(31)\n\t"
+                   "std 7, 0x038(31)\n\t"
+                   "std 8, 0x040(31)\n\t"
+                   "std 9, 0x048(31)\n\t"
+                   "std 10, 0x050(31)\n\t"
                    "lwz 3, 0x134(31)\n\t"           /* frame->syscall_id */
-                   "addi 4, 1, 32\n\t"              /* args */
-                   "mr 5, 22\n\t"                   /* len */
-                   "bl " __ASM_NAME("trace_syscall") "\n\t"
+                   "addi 4, 31, 0x018\n\t"          /* args */
+                   /* clamp to the eight register arguments: the ninth onwards
+                    * live in the parameter save area and are not contiguous
+                    * with these, so +syscall silently omits them */
+                   "cmpldi 22, 64\n\t"
+                   "bgt 8f\n\t"
+                   "mr 5, 22\n\t"
+                   "b 9f\n"
+                   "8:\tli 5, 64\n"
+                   "9:\tbl " __ASM_NAME("trace_syscall") "\n\t"
                    "ld 2, 24(1)\n\t"
-                   "ld 3, 32(1)\n\t"
-                   "ld 4, 40(1)\n\t"
-                   "ld 5, 48(1)\n\t"
-                   "ld 6, 56(1)\n\t"
-                   "ld 7, 64(1)\n\t"
-                   "ld 8, 72(1)\n\t"
-                   "ld 9, 80(1)\n\t"
-                   "ld 10, 88(1)\n\t"
+                   "ld 3, 0x018(31)\n\t"
+                   "ld 4, 0x020(31)\n\t"
+                   "ld 5, 0x028(31)\n\t"
+                   "ld 6, 0x030(31)\n\t"
+                   "ld 7, 0x038(31)\n\t"
+                   "ld 8, 0x040(31)\n\t"
+                   "ld 9, 0x048(31)\n\t"
+                   "ld 10, 0x050(31)\n\t"
                    "mr 12, 20\n\t"
                    "mtctr 12\n\t"
                    "bctrl\n\t"

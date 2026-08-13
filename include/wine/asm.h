@@ -309,22 +309,23 @@
  * __wine_syscall_dispatcher with:
  *
  *      r11 = syscall id
- *      r0  = TEB, read straight out of ntdll's initial-exec thread-local
- *            ppc64_current_teb (see dlls/ntdll/signal_ppc64.c).  Reading it
- *            here spares the unix-side dispatcher from doing TLS in assembly,
- *            and doing it with the real @got@tprel/@tls relocations rather than
- *            a cached r13 displacement means there is nothing to initialise:
- *            an uninitialised cache would have made every thunk read a "TEB"
- *            out of glibc's own TCB at 0(r13) and carry on with garbage.
  *      r12 = the dispatcher's address, as an ELFv2 global entry point requires
  *      LR  = the PE caller's return address: the thunk branches, never calls
+ *      r1  = the caller's frame, with the parameter save area untouched
+ *
+ * The TEB is deliberately NOT passed.  An earlier version read it here out of
+ * ntdll's initial-exec thread-local ppc64_current_teb and handed it over in r0,
+ * to spare the dispatcher from doing TLS in assembly.  That only ever worked
+ * inside ntdll: win32u emits this same macro for its own syscall table, and
+ * ppc64_current_teb is hidden in another module, so win32u.dll.so failed to
+ * link.  The dispatcher reads its own module's thread-local instead.
  *
  * The sequence is inlined into every thunk rather than shared through a helper
  * on purpose.  A branch to a helper marked ".localentry sym,1" makes the linker
- * interpose a "std r2,24(r1); b sym" stub, and by then r2 is ntdll's TOC while
- * r1 is still the *caller's* frame - so the stub overwrites the caller's TOC
- * save slot, and the caller's "ld r2,24(r1)" after the call silently restores
- * ntdll's TOC instead of its own.  Observed in a disassembly of ntdll.dll.so.
+ * interpose a "std r2,24(r1); b sym" stub, and by then r2 is this module's TOC
+ * while r1 is still the *caller's* frame - so the stub overwrites the caller's
+ * TOC save slot, and the caller's "ld r2,24(r1)" after the call silently
+ * restores the wrong TOC.  Observed in a disassembly of ntdll.dll.so.
  * Nothing here may write 24(r1); the dispatcher must push its own frame first.
  */
 # define __ASM_SYSCALL_FUNC(id,name) \
@@ -333,10 +334,6 @@
                        "addi 2, 2, .TOC.-" __ASM_NAME(#name) "@l\n\t" \
                        ".localentry " __ASM_NAME(#name) ", .-" __ASM_NAME(#name) "\n\t" \
                        "li 11, " #id "\n\t" \
-                       "addis 12, 2, ppc64_current_teb@got@tprel@ha\n\t" \
-                       "ld 12, ppc64_current_teb@got@tprel@l(12)\n\t" \
-                       "add 12, 12, ppc64_current_teb@tls\n\t" \
-                       "ld 0, 0(12)\n\t" \
                        "addis 12, 2, __wine_syscall_dispatcher@toc@ha\n\t" \
                        "ld 12, __wine_syscall_dispatcher@toc@l(12)\n\t" \
                        "mtctr 12\n\t" \
