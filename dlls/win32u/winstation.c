@@ -833,11 +833,13 @@ HWND get_desktop_window(void)
         static const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
             's','y','s','t','e','m','3','2','\\',0};
         RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
-        PS_ATTRIBUTE_LIST ps_attr;
+        ULONG_PTR attr_buffer[offsetof(PS_ATTRIBUTE_LIST,Attributes[2]) / sizeof(ULONG_PTR)];
+        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
+        PS_ATTRIBUTE_LIST *ps_attr = (PS_ATTRIBUTE_LIST *)attr_buffer;
         PS_CREATE_INFO create_info;
         WCHAR desktop[MAX_PATH];
         PEB *peb = RtlGetCurrentPeb();
-        HANDLE process, thread;
+        HANDLE process = 0, thread;
         unsigned int status;
 
         SERVER_START_REQ( set_user_object_info )
@@ -866,24 +868,28 @@ HWND get_desktop_window(void)
         RtlInitUnicodeString( &params.WindowTitle, appnameW + 4 );
         RtlInitUnicodeString( &params.Desktop, desktop );
 
-        ps_attr.TotalLength = sizeof(ps_attr);
-        ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
-        ps_attr.Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
-        ps_attr.Attributes[0].ValuePtr     = (WCHAR *)appnameW;
-        ps_attr.Attributes[0].ReturnLength = NULL;
+        NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                    machines, sizeof(machines), NULL );
+        ps_attr->TotalLength = sizeof(attr_buffer);
+        ps_attr->Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+        ps_attr->Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
+        ps_attr->Attributes[0].ValuePtr     = (WCHAR *)appnameW;
+        ps_attr->Attributes[0].ReturnLength = NULL;
+        ps_attr->Attributes[1].Attribute    = PS_ATTRIBUTE_MACHINE_TYPE;
+        ps_attr->Attributes[1].Value        = machines[0].Machine;
 
         if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
         {
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, &ps_attr );
+                                          &create_info, ps_attr );
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
         }
         else
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, &ps_attr );
+                                          &create_info, ps_attr );
         if (!status)
         {
             NtResumeThread( thread, NULL );
