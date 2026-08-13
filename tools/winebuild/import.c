@@ -1223,33 +1223,6 @@ void output_stubs( DLLSPEC *spec )
             output( "\tb %s\n", arm64_name("__wine_spec_unimplemented_stub") );
             output( "\t.seh_endproc\n" );
             break;
-        case CPU_POWERPC64:
-            /* Tail branch, like ARM/ARM64: __wine_spec_unimplemented_stub does
-             * not return, and keeping the caller's frame means the exception it
-             * raises is reported against the real caller.  It comes from
-             * winecrt0, which is linked into every module, so the branch is
-             * intra-module and needs no r2 handling. */
-            output_cfi( ".cfi_startproc" );
-            output( "\taddis 2,12,.TOC.-%s@ha\n", asm_name( name ) );
-            output( "\taddi 2,2,.TOC.-%s@l\n", asm_name( name ) );
-            output( "\t.localentry %s,.-%s\n", asm_name( name ), asm_name( name ) );
-            output( "\taddis 3,2,.L__wine_spec_file_name@toc@ha\n" );
-            output( "\taddi 3,3,.L__wine_spec_file_name@toc@l\n" );
-            if (exp_name)
-            {
-                output( "\taddis 4,2,.L%s_string@toc@ha\n", name );
-                output( "\taddi 4,4,.L%s_string@toc@l\n", name );
-            }
-            else
-            {
-                /* ori is D-form with an unsigned immediate, which covers the
-                 * whole 0..65535 ordinal range; li alone would not. */
-                output( "\tli 4,0\n" );
-                output( "\tori 4,4,%u\n", odp->ordinal );
-            }
-            output( "\tb %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output_cfi( ".cfi_endproc" );
-            break;
         }
         output_function_size( name );
     }
