@@ -2349,6 +2349,13 @@ static NTSTATUS WINAPI bluetooth_pnp( DEVICE_OBJECT *device, IRP *irp )
     }
 }
 
+static NTSTATUS WINAPI bluetooth_create( DEVICE_OBJECT *device, IRP *irp )
+{
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS WINAPI driver_add_device( DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo )
 {
     NTSTATUS ret;
@@ -2385,6 +2392,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
+    driver->MajorFunction[IRP_MJ_CREATE] = bluetooth_create;
     driver->MajorFunction[IRP_MJ_PNP] = bluetooth_pnp;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = dispatch_bluetooth;
 
