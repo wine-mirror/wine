@@ -1038,10 +1038,15 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                  * IAT entry initially points here), so r2 already holds this
                  * module's TOC.  r11 is volatile and is not an argument
                  * register in ELFv2, so it can carry the IAT entry address.
-                 * addi/addis are D-form: no alignment constraint. */
+                 * addi/addis are D-form: no alignment constraint.
+                 * The stub is frameless and leaves the return address in the
+                 * link register, so the CIE's default rules describe it
+                 * exactly; it just needs an FDE to exist at all. */
+                output_cfi( ".cfi_startproc" );
                 output( "\taddis 11,2,.L__wine_delay_IAT+%d@toc@ha\n", iat_pos );
                 output( "\taddi 11,11,.L__wine_delay_IAT+%d@toc@l\n", iat_pos );
                 output( "\tb %s\n", asm_name(module_func) );
+                output_cfi( ".cfi_endproc" );
                 break;
             default:
                 assert( 0 );
