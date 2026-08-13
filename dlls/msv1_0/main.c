@@ -396,43 +396,124 @@ static char *get_domain_arg( const WCHAR *domain, int domain_len )
 }
 
 
-static NTSTATUS map_auth_data( const void *auth_data, SEC_WINNT_AUTH_IDENTITY_W *id )
+static NTSTATUS map_auth_data( void *auth_data, SEC_WINNT_AUTH_IDENTITY_W **ret )
 {
-    const SEC_WINNT_AUTH_IDENTITY_EXA *exA = auth_data;
-    const SEC_WINNT_AUTH_IDENTITY_EXW *exW = auth_data;
+    SEC_WINNT_AUTH_IDENTITY_A id;
+    SECPKG_CALL_INFO info;
+    ULONG size, char_size;
+    NTSTATUS status;
+    BYTE *p;
 
-    if (exW->Version != SEC_WINNT_AUTH_IDENTITY_VERSION)
+    if (!auth_data)
     {
-        *id = *(SEC_WINNT_AUTH_IDENTITY_W *)auth_data;
+        *ret = NULL;
         return SEC_E_OK;
     }
-    if (exW->Flags == SEC_WINNT_AUTH_IDENTITY_UNICODE)
+
+    lsa_secpkg_table->GetCallInfo( &info );
+    if (info.Attributes & SECPKG_CALL_WOWCLIENT)
     {
-        id->User           = exW->User;
-        id->UserLength     = exW->UserLength;
-        id->Domain         = exW->Domain;
-        id->DomainLength   = exW->DomainLength;
-        id->Password       = exW->Password;
-        id->PasswordLength = exW->PasswordLength;
-        id->Flags          = exW->Flags;
-        if (exW->PackageList)
-            FIXME( "ignoring package list %s\n", debugstr_wn(exW->PackageList, exW->PackageListLength) );
+        struct {
+            ULONG User;
+            ULONG UserLength;
+            ULONG Domain;
+            ULONG DomainLength;
+            ULONG Password;
+            ULONG PasswordLength;
+            ULONG Flags;
+        } id32;
+
+        status = lsa_secpkg_table->CopyFromClientBuffer( NULL, sizeof(id32), &id32, auth_data );
+        if (status) return status;
+
+        id.User = (void *)(ULONG_PTR)id32.User;
+        id.UserLength = id32.UserLength;
+        id.Domain = (void *)(ULONG_PTR)id32.Domain;
+        id.DomainLength = id32.DomainLength;
+        id.Password = (void *)(ULONG_PTR)id32.Password;
+        id.PasswordLength = id32.PasswordLength;
+        id.Flags = id32.Flags;
     }
     else
     {
-        SEC_WINNT_AUTH_IDENTITY_A *idA = (SEC_WINNT_AUTH_IDENTITY_A *)id;
-
-        idA->User           = exA->User;
-        idA->UserLength     = exA->UserLength;
-        idA->Domain         = exA->Domain;
-        idA->DomainLength   = exA->DomainLength;
-        idA->Password       = exA->Password;
-        idA->PasswordLength = exA->PasswordLength;
-        idA->Flags          = exA->Flags;
-        if (exA->PackageList)
-            FIXME( "ignoring package list %s\n", debugstr_an((const char *)exA->PackageList, exA->PackageListLength) );
+        status = lsa_secpkg_table->CopyFromClientBuffer( NULL, sizeof(id), &id, auth_data );
+        if (status) return status;
     }
-    return SEC_E_OK;
+
+    if (*((ULONG *)&id) == SEC_WINNT_AUTH_IDENTITY_VERSION)
+    {
+        if (info.Attributes & SECPKG_CALL_WOWCLIENT)
+        {
+            struct {
+                ULONG Version;
+                ULONG Length;
+                ULONG User;
+                ULONG UserLength;
+                ULONG Domain;
+                ULONG DomainLength;
+                ULONG Password;
+                ULONG PasswordLength;
+                ULONG Flags;
+                ULONG PackageList;
+                ULONG PackageListLength;
+            } idex32;
+
+            status = lsa_secpkg_table->CopyFromClientBuffer( NULL, sizeof(idex32), &idex32, auth_data );
+            if (status) return status;
+            if (idex32.PackageList) FIXME( "ignoring package list\n" );
+            id.User = (void *)(ULONG_PTR)idex32.User;
+            id.UserLength = idex32.UserLength;
+            id.Domain = (void *)(ULONG_PTR)idex32.Domain;
+            id.DomainLength = idex32.DomainLength;
+            id.Password = (void *)(ULONG_PTR)idex32.Password;
+            id.PasswordLength = idex32.PasswordLength;
+            id.Flags = idex32.Flags;
+        }
+        else
+        {
+            SEC_WINNT_AUTH_IDENTITY_EXA idex;
+
+            status = lsa_secpkg_table->CopyFromClientBuffer( NULL, sizeof(idex), &idex, auth_data );
+            if (status) return status;
+            if (idex.PackageList) FIXME( "ignoring package list\n" );
+            id.User = idex.User;
+            id.UserLength = idex.UserLength;
+            id.Domain = idex.Domain;
+            id.DomainLength = idex.DomainLength;
+            id.Password = idex.Password;
+            id.PasswordLength = idex.PasswordLength;
+            id.Flags = idex.Flags;
+        }
+    }
+
+    char_size = (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI ? 1 : 2);
+    size = sizeof(id) + (id.UserLength + id.DomainLength + id.PasswordLength) * char_size;
+    *ret = malloc( size );
+    if (!*ret) return SEC_E_INSUFFICIENT_MEMORY;
+
+    p = (BYTE *)(*ret + 1);
+    if (id.UserLength)
+    {
+        status = lsa_secpkg_table->CopyFromClientBuffer( NULL, id.UserLength * char_size, p, id.User );
+        id.User = p;
+        p += id.UserLength * char_size;
+    }
+    if (!status && id.DomainLength)
+    {
+        status = lsa_secpkg_table->CopyFromClientBuffer( NULL, id.DomainLength * char_size, p, id.Domain );
+        id.Domain = p;
+        p += id.DomainLength * char_size;
+    }
+    if (!status && id.PasswordLength)
+    {
+        status = lsa_secpkg_table->CopyFromClientBuffer( NULL, id.PasswordLength * char_size, p, id.Password );
+        id.Password = p;
+        p += id.PasswordLength * char_size;
+    }
+    memcpy( *ret, &id, sizeof(id) );
+
+    if (status) free( *ret );
+    return status;
 }
 
 #define WINE_NO_CACHED_CREDENTIALS 0x10000000
@@ -443,13 +524,17 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
     SECURITY_STATUS status;
     struct ntlm_cred *cred = NULL;
     WCHAR *domain = NULL, *user = NULL, *password = NULL;
-    SEC_WINNT_AUTH_IDENTITY_W id = {0};
+    SEC_WINNT_AUTH_IDENTITY_W *id;
 
     TRACE( "%s, %#lx, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal), cred_use, logon_id, auth_data,
            get_key_fn, get_key_arg, cred, expiry );
 
-    if (auth_data && (status = map_auth_data( auth_data, &id ))) return status;
-    if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if ((status = map_auth_data( auth_data, &id ))) return status;
+    if (!(cred = calloc( 1, sizeof(*cred) )))
+    {
+        free( id );
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
 
     cred_use &= ~SECPKG_CRED_RESERVED;
     switch (cred_use)
@@ -467,38 +552,38 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
         cred->mode = cred_use == SECPKG_CRED_OUTBOUND ? MODE_CLIENT : MODE_BOTH;
         cred->no_cached_credentials = (cred_use & WINE_NO_CACHED_CREDENTIALS);
 
-        if (auth_data)
+        if (id)
         {
             int domain_len = 0, user_len = 0, password_len = 0;
-            if (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+            if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
             {
-                if (id.DomainLength)
+                if (id->DomainLength)
                 {
-                    domain_len = MultiByteToWideChar( CP_ACP, 0, (char *)id.Domain, id.DomainLength, NULL, 0 );
+                    domain_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
                     if (!(domain = malloc( sizeof(WCHAR) * domain_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id.Domain, id.DomainLength, domain, domain_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, domain, domain_len );
                 }
-                if (id.UserLength)
+                if (id->UserLength)
                {
-                    user_len = MultiByteToWideChar( CP_ACP, 0, (char *)id.User, id.UserLength, NULL, 0 );
+                    user_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
                     if (!(user = malloc( sizeof(WCHAR) * user_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id.User, id.UserLength, user, user_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, user, user_len );
                 }
-                if (id.PasswordLength)
+                if (id->PasswordLength)
                 {
-                    password_len = MultiByteToWideChar( CP_ACP, 0,(char *)id.Password, id.PasswordLength, NULL, 0 );
+                    password_len = MultiByteToWideChar( CP_ACP, 0,(char *)id->Password, id->PasswordLength, NULL, 0 );
                     if (!(password = malloc( sizeof(WCHAR) * password_len ))) goto done;
-                    MultiByteToWideChar( CP_ACP, 0, (char *)id.Password, id.PasswordLength, password, password_len );
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, password, password_len );
                 }
             }
             else
             {
-                domain = id.Domain;
-                domain_len = id.DomainLength;
-                user = id.User;
-                user_len = id.UserLength;
-                password = id.Password;
-                password_len = id.PasswordLength;
+                domain = id->Domain;
+                domain_len = id->DomainLength;
+                user = id->User;
+                user_len = id->UserLength;
+                password = id->Password;
+                password_len = id->PasswordLength;
             }
 
             TRACE( "username is %s\n", debugstr_wn(user, user_len) );
@@ -544,13 +629,17 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
     }
 
 done:
-    if (auth_data && (id.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
+    if (id && (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
     {
         free( domain );
         free( user );
         free( password );
     }
-    if (status != SEC_E_OK) free( cred );
+    if (status != SEC_E_OK)
+    {
+        free( id );
+        free( cred );
+    }
     return status;
 }
 
