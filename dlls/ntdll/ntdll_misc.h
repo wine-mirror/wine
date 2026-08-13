@@ -158,6 +158,19 @@ extern void heap_thread_detach(void);
     TRACE( "x24=%016I64x x25=%016I64x x26=%016I64x x27=%016I64x\n", (c)->X24, (c)->X25, (c)->X26, (c)->X27 ); \
     TRACE( "x28=%016I64x cpsr=%08lx fpcr=%08lx fpsr=%08lx\n", (c)->X28, (c)->Cpsr, (c)->Fpcr, (c)->Fpsr ); \
     } while(0)
+#elif defined(__powerpc64__)
+# define TRACE_CONTEXT(c) do { \
+    TRACE( "iar=%016I64x  r1=%016I64x  lr=%016I64x ctr=%016I64x\n", (c)->Iar, (c)->Gpr1, (c)->Lr, (c)->Ctr ); \
+    TRACE( " cr=%016I64x xer=%016I64x msr=%016I64x  r2=%016I64x\n", (c)->Cr, (c)->Xer, (c)->Msr, (c)->Gpr2 ); \
+    TRACE( " r0=%016I64x  r3=%016I64x  r4=%016I64x  r5=%016I64x\n", (c)->Gpr0, (c)->Gpr3, (c)->Gpr4, (c)->Gpr5 ); \
+    TRACE( " r6=%016I64x  r7=%016I64x  r8=%016I64x  r9=%016I64x\n", (c)->Gpr6, (c)->Gpr7, (c)->Gpr8, (c)->Gpr9 ); \
+    TRACE( "r10=%016I64x r11=%016I64x r12=%016I64x r13=%016I64x\n", (c)->Gpr10, (c)->Gpr11, (c)->Gpr12, (c)->Gpr13 ); \
+    TRACE( "r14=%016I64x r15=%016I64x r16=%016I64x r17=%016I64x\n", (c)->Gpr14, (c)->Gpr15, (c)->Gpr16, (c)->Gpr17 ); \
+    TRACE( "r18=%016I64x r19=%016I64x r20=%016I64x r21=%016I64x\n", (c)->Gpr18, (c)->Gpr19, (c)->Gpr20, (c)->Gpr21 ); \
+    TRACE( "r22=%016I64x r23=%016I64x r24=%016I64x r25=%016I64x\n", (c)->Gpr22, (c)->Gpr23, (c)->Gpr24, (c)->Gpr25 ); \
+    TRACE( "r26=%016I64x r27=%016I64x r28=%016I64x r29=%016I64x\n", (c)->Gpr26, (c)->Gpr27, (c)->Gpr28, (c)->Gpr29 ); \
+    TRACE( "r30=%016I64x r31=%016I64x\n", (c)->Gpr30, (c)->Gpr31 ); \
+    } while(0)
 #endif
 
 #ifdef __arm64ec__
