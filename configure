@@ -782,6 +782,7 @@ TOP_INSTALL_DEV
 TOP_INSTALL_LIB
 UNIXLDFLAGS
 UNIXDLLFLAGS
+EXTRACXXFLAGS
 EXTRACFLAGS
 LDEXECFLAGS
 LDDLLFLAGS
@@ -12072,6 +12073,8 @@ LDEXECFLAGS=""
 
 EXTRACFLAGS=""
 
+EXTRACXXFLAGS=""
+
 UNIXDLLFLAGS="-fPIC"
 
 UNIXLDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"
@@ -20198,6 +20201,80 @@ then :
   EXTRACFLAGS="$EXTRACFLAGS -mno-pltseq"
 fi
 fi
+
+                        { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports -mlongcall -mno-pltseq" >&5
+printf %s "checking whether $CXX supports -mlongcall -mno-pltseq... " >&6; }
+if test ${wine_cv_cxx_longcall+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"
+then :
+  ac_wine_try_cxxflags_saved=$CXXFLAGS
+              CXXFLAGS="$CXXFLAGS -mlongcall -mno-pltseq -Werror"
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"
+then :
+  wine_cv_cxx_longcall=yes
+else case e in #(
+  e) wine_cv_cxx_longcall=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+              CXXFLAGS=$ac_wine_try_cxxflags_saved
+else case e in #(
+  e) wine_cv_cxx_longcall="no C++ compiler" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+         ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ ;;
+esac
+fi
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $wine_cv_cxx_longcall" >&5
+printf '%s\n' "$wine_cv_cxx_longcall" >&6; }
+    case $wine_cv_cxx_longcall in #(
+  yes) :
+    EXTRACXXFLAGS="$EXTRACXXFLAGS -mlongcall -mno-pltseq" ;; #(
+  no) :
+    as_fn_error $? "The C++ compiler doesn't support -mlongcall -mno-pltseq.
+Without them every call a C++ module makes through a winebuild import thunk returns
+with the wrong TOC pointer in r2, silently.  Use gcc, or configure with --disable-tests
+and remove the C++ modules from the build." "$LINENO" 5 ;; #(
+  *) :
+     ;;
+esac
   fi
 
       saved_CFLAGS=$CFLAGS
@@ -24605,6 +24682,7 @@ DLLFLAGS = $DLLFLAGS
 LDDLLFLAGS = $LDDLLFLAGS
 LDEXECFLAGS = $LDEXECFLAGS
 EXTRACFLAGS = $EXTRACFLAGS
+EXTRACXXFLAGS = $EXTRACXXFLAGS
 UNIXDLLFLAGS = $UNIXDLLFLAGS
 UNIXLDFLAGS = $UNIXLDFLAGS
 TOP_INSTALL_LIB = $TOP_INSTALL_LIB

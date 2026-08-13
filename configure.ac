@@ -950,6 +950,10 @@ AC_SUBST(DLLFLAGS,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDEXECFLAGS,"")
 AC_SUBST(EXTRACFLAGS,"")
+dnl Native-arch counterpart of the per-PE-arch ${arch}_EXTRACXXFLAGS.  makedep
+dnl reads EXTRACXXFLAGS for the native arch too, but nothing ever defined it,
+dnl so native C++ sources were compiled with no extra flags at all.
+AC_SUBST(EXTRACXXFLAGS,"")
 AC_SUBST(UNIXDLLFLAGS,"-fPIC")
 AC_SUBST(UNIXLDFLAGS,["-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"])
 AC_SUBST(TOP_INSTALL_LIB,"")
@@ -1977,6 +1981,28 @@ then
     dnl returns with a poisoned r2 and the caller reads garbage.
     WINE_TRY_CFLAGS([-mlongcall],[EXTRACFLAGS="$EXTRACFLAGS -mlongcall"
       WINE_TRY_CFLAGS([-mno-pltseq],[EXTRACFLAGS="$EXTRACFLAGS -mno-pltseq"])])
+
+    dnl C++ sources never see EXTRACFLAGS: makedep compiles them with $(CXX)
+    dnl and EXTRACXXFLAGS.  dlls/vcruntime140 and dlls/icu* are C++ and do call
+    dnl imported functions (vcruntime140's operator new loops on ::malloc), so
+    dnl they need exactly the same treatment.  Test with the C++ compiler, not
+    dnl the C one: they may be different compilers.
+    AC_CACHE_CHECK([whether $CXX supports -mlongcall -mno-pltseq], wine_cv_cxx_longcall,
+        [AC_LANG_PUSH([C++])
+         AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+             [ac_wine_try_cxxflags_saved=$CXXFLAGS
+              CXXFLAGS="$CXXFLAGS -mlongcall -mno-pltseq -Werror"
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+                                [wine_cv_cxx_longcall=yes],[wine_cv_cxx_longcall=no])
+              CXXFLAGS=$ac_wine_try_cxxflags_saved],
+             [wine_cv_cxx_longcall="no C++ compiler"])
+         AC_LANG_POP([C++])])
+    AS_CASE([$wine_cv_cxx_longcall],
+      [yes],[EXTRACXXFLAGS="$EXTRACXXFLAGS -mlongcall -mno-pltseq"],
+      [no],[AC_MSG_ERROR([The C++ compiler doesn't support -mlongcall -mno-pltseq.
+Without them every call a C++ module makes through a winebuild import thunk returns
+with the wrong TOC pointer in r2, silently.  Use gcc, or configure with --disable-tests
+and remove the C++ modules from the build.])])
   fi
 
   dnl Check for some compiler flags
