@@ -411,11 +411,16 @@ static void output_relay_debug( struct exports *exports )
             assert( !is_pe() );  /* there is no PE ABI for PowerPC64 */
 
             output( "\t.balign 4\n" );
+            output( "\t.type __wine_spec_relay_entry_point_%d,@function\n", i );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             output( ".L__wine_spec_relay_gep_%d:\n", i );
             output( "\taddis 2,12,.TOC.-.L__wine_spec_relay_gep_%d@ha\n", i );
             output( "\taddi 2,2,.TOC.-.L__wine_spec_relay_gep_%d@l\n", i );
+            /* the two instructions above are the global entry point; tell the linker where the
+             * local one starts, or it will assume this function does not set up r2 and may
+             * redirect a direct branch here past the prologue that does */
+            output( "\t.localentry __wine_spec_relay_entry_point_%d,.-__wine_spec_relay_entry_point_%d\n", i, i );
             output( "\tmflr 0\n" );
             output( "\tstd 0,16(1)\n" );  /* return address goes in the caller's LR save slot */
             output( "\tstdu 1,-%d(1)\n", frame_size );
@@ -461,6 +466,7 @@ static void output_relay_debug( struct exports *exports )
             output( "\tmtlr 0\n" );
             output( "\tblr\n" );
             output_cfi( ".cfi_endproc" );
+            output( "\t.size __wine_spec_relay_entry_point_%d, .-__wine_spec_relay_entry_point_%d\n", i, i );
             break;
         }
 

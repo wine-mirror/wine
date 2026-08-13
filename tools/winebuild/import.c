@@ -1232,6 +1232,10 @@ void output_stubs( DLLSPEC *spec )
             output( ".L%s_gep:\n", name );
             output( "\taddis 2,12,.TOC.-.L%s_gep@ha\n", name );
             output( "\taddi 2,2,.TOC.-.L%s_gep@l\n", name );
+            /* the two instructions above are the global entry point; tell the linker where the
+             * local one starts, or it will assume this function does not set up r2 and may
+             * redirect a direct branch here past the prologue that does */
+            output( "\t.localentry %s,.-%s\n", asm_name( name ), asm_name( name ) );
             output( "\tmflr 0\n" );
             output( "\tstd 0,16(1)\n" );
             output( "\tstdu 1,-96(1)\n" );  /* 32 linkage area + 64 parameter save area */
