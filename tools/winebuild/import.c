@@ -647,6 +647,37 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_x86_64:
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
+    case CPU_POWERPC64:
+        /* ELFv2.  The thunk is a normal function with two entry points: the
+         * global one derives this module's TOC from r12 (the state the ABI
+         * guarantees when the thunk is reached through a PLT or TOC-adjusting
+         * stub), the local one is used by direct intra-module branches, where
+         * r2 is already correct.  r12 must hold the callee's address on entry
+         * to *its* global entry point, so the pointer read out of the table
+         * goes there and the branch is mtctr/bctr.
+         *
+         * This is a tail branch: r1 is not touched, so stack-passed arguments
+         * still live in the original caller's parameter save area and the
+         * imported function returns straight to the original caller.  A frame
+         * here would break both.  Consequently the thunk cannot restore r2 for
+         * the caller after the imported function (in another module, with
+         * another TOC) returns - that is the caller's job, and requires the
+         * caller to carry the `ld 2,24(1)' marker.  See
+         * docs/winebuild-ppc64-imports.md.
+         *
+         * `ld ...@toc@l(12)' is DS-form, so the table entry must be 8-byte
+         * aligned; every caller of this function emits the table with
+         * `.balign get_ptr_size()' and steps pos by get_ptr_size(). */
+        output_cfi( ".cfi_startproc" );
+        output( "\taddis 2,12,.TOC.-%s@ha\n", asm_name( name ) );
+        output( "\taddi 2,2,.TOC.-%s@l\n", asm_name( name ) );
+        output( "\t.localentry %s,.-%s\n", asm_name( name ), asm_name( name ) );
+        output( "\taddis 12,2,%s+%d@toc@ha\n", table, pos );
+        output( "\tld 12,%s+%d@toc@l(12)\n", table, pos );
+        output( "\tmtctr 12\n" );
+        output( "\tbctr\n" );
+        output_cfi( ".cfi_endproc" );
+        break;
     default:
         assert( 0 );
         break;
@@ -928,6 +959,51 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset -0x98" );
             output( "\tjmp *%%rax\n" );
             break;
+        case CPU_POWERPC64:
+        {
+            /* Reached by a tail branch from __wine_delay_imp_*, with r11 =
+             * address of the IAT entry to fill in and r2 = this module's TOC
+             * (both stubs are hidden and only ever reached from inside this
+             * module, so no global entry point is needed here).
+             *
+             * ELFv2 frame, 272 bytes (16-byte aligned):
+             *     0 back chain   8 CR    16 LR    24 TOC save
+             *    32 parameter save area (8 doublewords)
+             *    96 r3..r10 (volatile argument GPRs)
+             *   160 f1..f13 (volatile argument FPRs)
+             *   264 padding
+             * Every std/ld displacement below is a multiple of 8, as DS-form
+             * requires, and far inside the +-32KB field; stfd/lfd are D-form. */
+            int i;
+            output( "\tmflr 0\n" );
+            output( "\tstd 0,16(1)\n" );   /* return address, in the caller's frame */
+            output_cfi( ".cfi_offset 65,16" );
+            output( "\tstdu 1,-272(1)\n" );
+            output_cfi( ".cfi_def_cfa_offset 272" );
+            output( "\tstd 2,24(1)\n" );   /* our own frame's TOC save slot */
+            for (i = 3; i <= 10; i++) output( "\tstd %d,%d(1)\n", i, 96 + (i - 3) * 8 );
+            for (i = 1; i <= 13; i++) output( "\tstfd %d,%d(1)\n", i, 160 + (i - 1) * 8 );
+            output( "\tmr 4,11\n" );       /* arg 2: address of the IAT entry */
+            output( "\taddis 3,2,.L__wine_spec_delay_imports+%d@toc@ha\n", pos );
+            output( "\taddi 3,3,.L__wine_spec_delay_imports+%d@toc@l\n", pos );
+            output( "\tbl %s\n", asm_name("__delayLoadHelper2") );
+            output( "\tnop\n" );           /* mandatory: the linker rewrites this
+                                            * into `ld 2,24(1)' if it routes the
+                                            * call through a stub */
+            output( "\tld 2,24(1)\n" );    /* and restore r2 unconditionally anyway */
+            output( "\tmr 12,3\n" );       /* r12 = resolved address, for its global entry */
+            output( "\tmtctr 12\n" );
+            for (i = 3; i <= 10; i++) output( "\tld %d,%d(1)\n", i, 96 + (i - 3) * 8 );
+            for (i = 1; i <= 13; i++) output( "\tlfd %d,%d(1)\n", i, 160 + (i - 1) * 8 );
+            output( "\taddi 1,1,272\n" );  /* drop the frame before the tail branch, so
+                                            * that stack arguments are where the imported
+                                            * function expects them */
+            output_cfi( ".cfi_def_cfa_offset 0" );
+            output( "\tld 0,16(1)\n" );
+            output( "\tmtlr 0\n" );
+            output( "\tbctr\n" );
+            break;
+        }
         default:
             assert( 0 );
             break;
@@ -956,6 +1032,21 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             case CPU_x86_64:
                 output( "\tleaq .L__wine_delay_IAT+%d(%%rip),%%rax\n", iat_pos );
                 output( "\tjmp %s\n", asm_name(module_func) );
+                break;
+            case CPU_POWERPC64:
+                /* Reached through the module's own delayed import thunk (the
+                 * IAT entry initially points here), so r2 already holds this
+                 * module's TOC.  r11 is volatile and is not an argument
+                 * register in ELFv2, so it can carry the IAT entry address.
+                 * addi/addis are D-form: no alignment constraint.
+                 * The stub is frameless and leaves the return address in the
+                 * link register, so the CIE's default rules describe it
+                 * exactly; it just needs an FDE to exist at all. */
+                output_cfi( ".cfi_startproc" );
+                output( "\taddis 11,2,.L__wine_delay_IAT+%d@toc@ha\n", iat_pos );
+                output( "\taddi 11,11,.L__wine_delay_IAT+%d@toc@l\n", iat_pos );
+                output( "\tb %s\n", asm_name(module_func) );
+                output_cfi( ".cfi_endproc" );
                 break;
             default:
                 assert( 0 );
@@ -1450,7 +1541,8 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\t.seh_endproc\n" );
             break;
         case CPU_ARM64EC:
-            assert( 0 );
+        case CPU_POWERPC64:
+            assert( 0 );  /* there is no PE format for PowerPC64 */
             break;
         }
         output_function_size( delay_load );
@@ -1596,7 +1688,8 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 }
                 break;
             case CPU_ARM64EC:
-                assert( 0 );
+            case CPU_POWERPC64:
+                assert( 0 );  /* there is no PE format for PowerPC64 */
                 break;
             }
 

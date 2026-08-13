@@ -20136,6 +20136,70 @@ if test "x${GCC}" = "xyes"
 then
   EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
 
+  if test "$HOST_ARCH" = ppc64
+  then
+                                                { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -mlongcall" >&5
+printf %s "checking whether the compiler supports -mlongcall... " >&6; }
+if test ${ac_cv_cflags__mlongcall+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -mlongcall"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__mlongcall=yes
+else case e in #(
+  e) ac_cv_cflags__mlongcall=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved ;;
+esac
+fi
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__mlongcall" >&5
+printf '%s\n' "$ac_cv_cflags__mlongcall" >&6; }
+if test "x$ac_cv_cflags__mlongcall" = xyes
+then :
+  EXTRACFLAGS="$EXTRACFLAGS -mlongcall"
+      { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -mno-pltseq" >&5
+printf %s "checking whether the compiler supports -mno-pltseq... " >&6; }
+if test ${ac_cv_cflags__mno_pltseq+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -mno-pltseq"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__mno_pltseq=yes
+else case e in #(
+  e) ac_cv_cflags__mno_pltseq=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved ;;
+esac
+fi
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__mno_pltseq" >&5
+printf '%s\n' "$ac_cv_cflags__mno_pltseq" >&6; }
+if test "x$ac_cv_cflags__mno_pltseq" = xyes
+then :
+  EXTRACFLAGS="$EXTRACFLAGS -mno-pltseq"
+fi
+fi
+  fi
+
       saved_CFLAGS=$CFLAGS
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
 printf %s "checking whether the compiler supports -Werror=unknown-warning-option... " >&6; }

@@ -1962,6 +1962,23 @@ if test "x${GCC}" = "xyes"
 then
   EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
 
+  if test "$HOST_ARCH" = ppc64
+  then
+    dnl winebuild's import thunks are tail branches: the imported function
+    dnl returns straight to the caller, with the other module's TOC still in
+    dnl r2.  On ELFv2 only the caller can put that right, and it only does so
+    dnl when it carries the `ld 2,24(1)' marker after the call.  The linker
+    dnl emits that marker only for calls routed through a PLT stub, and the
+    dnl calls into these thunks are neither preemptible (DECLSPEC_IMPORT is
+    dnl visibility("hidden")) nor interposable (-Wl,-Bsymbolic), so it never
+    dnl does.  -mlongcall makes gcc save and restore r2 around every call
+    dnl itself; -mno-pltseq stops the linker relaxing that back out again.
+    dnl Measured on POWER9: without these, a call through an import thunk
+    dnl returns with a poisoned r2 and the caller reads garbage.
+    WINE_TRY_CFLAGS([-mlongcall],[EXTRACFLAGS="$EXTRACFLAGS -mlongcall"
+      WINE_TRY_CFLAGS([-mno-pltseq],[EXTRACFLAGS="$EXTRACFLAGS -mno-pltseq"])])
+  fi
+
   dnl Check for some compiler flags
   dnl clang needs to be told to fail on unknown options
   saved_CFLAGS=$CFLAGS
