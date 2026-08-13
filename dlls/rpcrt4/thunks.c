@@ -229,6 +229,23 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
     "b.w call_stubless_func\n" \
     "1:\t.long "#num"\n\t"
 
+#elif defined __powerpc64__
+
+/* STUB.  A working thunk would have to spill r3-r10 and f1-f13 into a frame and
+ * hand it to ndr_stubless_client_call(), and the register-map encoding that
+ * ndr_typelib.c writes and args_regs_to_stack() reads would have to be defined
+ * for the ELFv2 argument registers; neither is done.  Stubless COM proxies
+ * therefore do not work on PowerPC64.  These entry points exist so that
+ * rpcrt4 links and so that cproxy.c can measure a uniform entry size (12
+ * bytes here) when it builds a proxy vtable. */
+#define T(num) \
+    ".globl ObjectStublessClient" #num "\n" \
+    ".type ObjectStublessClient" #num ",@function\n" \
+    "ObjectStublessClient" #num ":\n\t" \
+    "li 3, 0x4001\n\t" \
+    "oris 3, 3, 0x8000\n\t"  /* E_NOTIMPL */ \
+    "blr\n\t"
+
 #endif  /* __i386__ */
 
 __ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
@@ -285,6 +302,24 @@ __ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
     "ldr r0, [r0, #0x10]\n\t" \
     "ldr ip, [r0]\n\t" \
     "ldr pc, [ip, #(4*"#num")]\n\t"
+
+#elif defined __powerpc64__
+
+/* A tail branch: r3 is replaced by This->stub_buffer.pvServerObject and control
+ * goes to entry #num of its vtable with every argument register untouched.
+ * ELFv2 wants r12 to hold the callee's address at a global entry point, which
+ * is what mtctr/bctr sets up here.  Nothing is pushed, so 24(r1) - the caller's
+ * own TOC save slot - is left alone. */
+#define T(num) \
+    ".balign 4\n\t" \
+    ".globl NdrProxyForwardingFunction" #num "\n" \
+    ".type NdrProxyForwardingFunction" #num ",@function\n" \
+    "NdrProxyForwardingFunction" #num ":\n\t" \
+    "ld 3, 0x20(3)\n\t" \
+    "ld 12, 0(3)\n\t" \
+    "ld 12, 8*"#num"(12)\n\t" \
+    "mtctr 12\n\t" \
+    "bctr\n\t"
 
 #endif  /* __i386__ */
 
@@ -513,4 +548,58 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "ldp x19, x20, [sp, #0x10]\n\t"
                    "ldp x29, x30, [sp], #0x20\n\t"
                    "ret" )
+#elif defined __powerpc64__
+/* Copy the marshalled argument block into a fresh ELFv2 parameter save area and
+ * load r3-r10 from its first eight doublewords.  Floating-point arguments are
+ * NOT placed in f1-f13: arm/arm64 do that from the register map in the proc
+ * header extension, and that map is not defined for this architecture (see the
+ * ObjectStublessClient stub above).  A server routine taking a float or double
+ * parameter will therefore receive garbage.
+ *
+ * r31 is the only non-volatile used, and 24(r1) is written only after our own
+ * frame has been pushed. */
+__ASM_GLOBAL_FUNC( call_server_func,
+                   /* r3 = func, r4 = args, r5 = stack_size, r6 = header */
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"
+                   "stdu 1, -0x70(1)\n\t"
+                   "std 31, 0x60(1)\n\t"
+                   "mr 31, 1\n\t"
+                   "addi 7, 5, 15\n\t"
+                   "rldicr 7, 7, 0, 59\n\t"    /* round the argument block up to 16 */
+                   "cmpldi 7, 64\n\t"
+                   "bge 1f\n\t"
+                   "li 7, 64\n"                 /* always leave room for r3-r10 */
+                   "1:\taddi 7, 7, 32\n\t"     /* plus the linkage area */
+                   "neg 7, 7\n\t"
+                   "stdux 1, 1, 7\n\t"
+                   "addi 8, 5, 7\n\t"
+                   "srdi 8, 8, 3\n\t"
+                   "cmpdi 8, 0\n\t"
+                   "beq 3f\n\t"
+                   "mtctr 8\n\t"
+                   "addi 9, 4, -8\n\t"
+                   "addi 10, 1, 24\n"
+                   "2:\tldu 0, 8(9)\n\t"
+                   "stdu 0, 8(10)\n\t"
+                   "bdnz 2b\n"
+                   "3:\tmr 12, 3\n\t"
+                   "ld 3, 32(1)\n\t"
+                   "ld 4, 40(1)\n\t"
+                   "ld 5, 48(1)\n\t"
+                   "ld 6, 56(1)\n\t"
+                   "ld 7, 64(1)\n\t"
+                   "ld 8, 72(1)\n\t"
+                   "ld 9, 80(1)\n\t"
+                   "ld 10, 88(1)\n\t"
+                   "std 2, 24(1)\n\t"
+                   "mtctr 12\n\t"
+                   "bctrl\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "mr 1, 31\n\t"
+                   "ld 31, 0x60(1)\n\t"
+                   "addi 1, 1, 0x70\n\t"
+                   "ld 0, 16(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
 #endif

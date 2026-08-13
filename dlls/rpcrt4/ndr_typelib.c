@@ -1115,7 +1115,7 @@ static HRESULT write_param_fs(ITypeInfo *typeinfo, unsigned char *type,
     return hr;
 }
 
-#if defined __arm__ || defined __aarch64__
+#if defined __arm__ || defined __aarch64__ || defined __powerpc64__
 
 /* replace consecutive params code by a repeat sequence: 0x9d code<1> repeat_count<2> */
 static unsigned int compress_params_array( unsigned char *params, unsigned int count )

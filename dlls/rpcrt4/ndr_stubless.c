@@ -984,7 +984,35 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
     return RetVal;
 }
 
-#ifdef __aarch64__
+#ifdef __powerpc64__
+/* ELFv2 requires the caller of a variadic function to allocate the full
+ * parameter save area in its own frame, so spilling r3-r10 into 32(r1)..88(r1)
+ * before pushing our own frame makes the whole argument list contiguous from
+ * there on, with any ninth-and-later argument already in place.  24(r1) is the
+ * caller's own TOC save slot and is left alone; 16(r1) is the LR save slot,
+ * which is ours to write. */
+__ASM_GLOBAL_FUNC( NdrClientCall2,
+                   "std 3, 32(1)\n\t"
+                   "std 4, 40(1)\n\t"
+                   "std 5, 48(1)\n\t"
+                   "std 6, 56(1)\n\t"
+                   "std 7, 64(1)\n\t"
+                   "std 8, 72(1)\n\t"
+                   "std 9, 80(1)\n\t"
+                   "std 10, 88(1)\n\t"
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"
+                   "stdu 1, -0x60(1)\n\t"
+                   "addi 5, 1, 0x90\n\t"    /* stack: &args[2] */
+                   "li 6, 0\n\t"            /* fpu_stack */
+                   "std 2, 24(1)\n\t"
+                   "bl " __ASM_NAME("NdrpClientCall2") "\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "addi 1, 1, 0x60\n\t"
+                   "ld 0, 16(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
+#elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "stp x29, x30, [sp, #-0x40]!\n\t"
                    ".seh_save_fplr_x 0x40\n\t"
@@ -1057,7 +1085,7 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "ret" )
 #endif
 
-#if defined(__aarch64__) || defined(__arm__)
+#if defined(__aarch64__) || defined(__arm__) || defined(__powerpc64__)
 static void **args_regs_to_stack( void **regs, void **fpu_regs, const NDR_PROC_PARTIAL_OIF_HEADER *header )
 {
     static const unsigned int nb_gpregs = sizeof(void *); /* 4 gpregs on arm32, 8 on arm64 */
@@ -1818,7 +1846,29 @@ cleanup:
     return status;
 }
 
-#ifdef __aarch64__
+#ifdef __powerpc64__
+__ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   "std 3, 32(1)\n\t"
+                   "std 4, 40(1)\n\t"
+                   "std 5, 48(1)\n\t"
+                   "std 6, 56(1)\n\t"
+                   "std 7, 64(1)\n\t"
+                   "std 8, 72(1)\n\t"
+                   "std 9, 80(1)\n\t"
+                   "std 10, 88(1)\n\t"
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"
+                   "stdu 1, -0x60(1)\n\t"
+                   "addi 5, 1, 0x90\n\t"    /* stack: &args[2] */
+                   "li 6, 0\n\t"            /* fpu_stack */
+                   "std 2, 24(1)\n\t"
+                   "bl " __ASM_NAME("ndr_async_client_call") "\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "addi 1, 1, 0x60\n\t"
+                   "ld 0, 16(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
+#elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
                    "stp x29, x30, [sp, #-0x40]!\n\t"
                    ".seh_save_fplr_x 0x40\n\t"
@@ -2197,7 +2247,28 @@ LONG_PTR CDECL ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
     return 0;
 }
 
-#ifdef __aarch64__
+#ifdef __powerpc64__
+__ASM_GLOBAL_FUNC( NdrClientCall3,
+                   "std 3, 32(1)\n\t"
+                   "std 4, 40(1)\n\t"
+                   "std 5, 48(1)\n\t"
+                   "std 6, 56(1)\n\t"
+                   "std 7, 64(1)\n\t"
+                   "std 8, 72(1)\n\t"
+                   "std 9, 80(1)\n\t"
+                   "std 10, 88(1)\n\t"
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"
+                   "stdu 1, -0x60(1)\n\t"
+                   "addi 6, 1, 0x98\n\t"    /* stack: &args[3] */
+                   "std 2, 24(1)\n\t"
+                   "bl " __ASM_NAME("ndr64_client_call") "\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "addi 1, 1, 0x60\n\t"
+                   "ld 0, 16(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
+#elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( NdrClientCall3,
                    "stp x29, x30, [sp, #-0x40]!\n\t"
                    ".seh_save_fplr_x 0x40\n\t"
@@ -2266,7 +2337,29 @@ LONG_PTR CDECL ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
     return 0;
 }
 
-#ifdef __aarch64__
+#ifdef __powerpc64__
+__ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
+                   "std 3, 32(1)\n\t"
+                   "std 4, 40(1)\n\t"
+                   "std 5, 48(1)\n\t"
+                   "std 6, 56(1)\n\t"
+                   "std 7, 64(1)\n\t"
+                   "std 8, 72(1)\n\t"
+                   "std 9, 80(1)\n\t"
+                   "std 10, 88(1)\n\t"
+                   "mflr 0\n\t"
+                   "std 0, 16(1)\n\t"
+                   "stdu 1, -0x60(1)\n\t"
+                   "addi 6, 1, 0x98\n\t"    /* stack: &args[3] */
+                   "li 7, 0\n\t"            /* fpu_stack */
+                   "std 2, 24(1)\n\t"
+                   "bl " __ASM_NAME("ndr64_async_client_call") "\n\t"
+                   "ld 2, 24(1)\n\t"
+                   "addi 1, 1, 0x60\n\t"
+                   "ld 0, 16(1)\n\t"
+                   "mtlr 0\n\t"
+                   "blr" )
+#elif defined(__aarch64__)
 __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
                    "stp x29, x30, [sp, #-0x40]!\n\t"
                    ".seh_save_fplr_x 0x40\n\t"
