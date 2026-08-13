@@ -1546,7 +1546,8 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
         's','y','s','t','e','m','3','2','\\','w','i','n','e','b','o','o','t','.','e','x','e','"',
         ' ','-','-','i','n','i','t',0};
     RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
-    PS_ATTRIBUTE_LIST ps_attr;
+    ULONG_PTR attr_buffer[offsetof(PS_ATTRIBUTE_LIST,Attributes[2]) / sizeof(ULONG_PTR)];
+    PS_ATTRIBUTE_LIST *ps_attr = (PS_ATTRIBUTE_LIST *)attr_buffer;
     PS_CREATE_INFO create_info;
     HANDLE process, thread, handles[2];
     UNICODE_STRING nameW;
@@ -1576,17 +1577,19 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
     init_unicode_string( &params.WindowTitle, appnameW + 4 );
     init_unicode_string( &nameW, appnameW );
 
-    ps_attr.TotalLength = sizeof(ps_attr);
-    ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
-    ps_attr.Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
-    ps_attr.Attributes[0].ValuePtr     = (WCHAR *)appnameW;
-    ps_attr.Attributes[0].ReturnLength = NULL;
+    ps_attr->TotalLength = sizeof(attr_buffer);
+    ps_attr->Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+    ps_attr->Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
+    ps_attr->Attributes[0].ValuePtr     = (WCHAR *)appnameW;
+    ps_attr->Attributes[0].ReturnLength = NULL;
+    ps_attr->Attributes[1].Attribute    = PS_ATTRIBUTE_MACHINE_TYPE;
+    ps_attr->Attributes[1].Value        = native_machine;
 
     wine_server_fd_to_handle( 2, GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
 
     status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                   NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                  &create_info, &ps_attr );
+                                  &create_info, ps_attr );
     NtClose( params.hStdError );
 
     if (status)
