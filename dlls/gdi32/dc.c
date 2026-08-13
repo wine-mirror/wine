@@ -204,6 +204,10 @@ static const WCHAR printer_env[] = L"x64";
 static const WCHAR printer_env[] = L"arm";
 #elif defined __aarch64__
 static const WCHAR printer_env[] = L"arm64";
+#elif defined __powerpc64__
+/* no Windows printer driver has ever been built for this architecture; the
+ * name only ever selects a spool\drivers subdirectory that does not exist */
+static const WCHAR printer_env[] = L"ppc64";
 #else
 #error not defined for this cpu
 #endif
