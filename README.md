@@ -1,3 +1,84 @@
+# Wine on ppc64le (POWER8/POWER9)
+
+**A fork of [Wine](https://www.winehq.org/) adding a native ppc64le host port.**
+Upstream Wine has no PowerPC support; 32-bit PowerPC was removed years ago and
+64-bit never existed. This branch adds it.
+
+## Why
+
+To run Windows software on POWER with **only the guest binary emulated**. Today,
+a Windows game on a POWER9 workstation emulates every layer — the game, Wine,
+and the graphics translation beneath it. A native Wine means the x86-64
+emulator ([fastppcx86](https://github.com/daedalao/fastppcx86)) only has to
+handle the application itself.
+
+That matters more on POWER than elsewhere: guest x86-64 is total-store-ordered
+and POWER is weakly ordered, so every emulated memory operation pays a barrier
+tax that native code does not.
+
+## Status
+
+Honest, and in progress.
+
+| | |
+|---|---|
+| `configure` and the build system | works |
+| winebuild PowerPC64 codegen | **done** — import, delayed-import, relay and stub thunks, ELFv2 |
+| Unix-side libraries | 33 unixlib `.so` build; `wineserver` and the loader run |
+| Windows-side modules | **597 `.dll.so`, 792 `.exe.so`** link, including `kernel32`, `oleaut32`, `vcruntime140`, and `mshtml` at 27 MB |
+| PE-side `ntdll.dll` | builds |
+| `wineboot -u` | **not yet** — unix-side signal support is being written |
+| Wine's own test suite | not yet |
+
+Nothing here is stubbed silently: anything incomplete is recorded as incomplete
+in the design notes.
+
+## The interesting part: r2 across unwound frames
+
+On ppc64le ELFv2, **r2 holds the TOC pointer and every module has its own**, so
+any unwind across a module boundary must restore it — and **GCC emits no CFI
+rule for r2**. Get it wrong and execution continues silently against the wrong
+module's data.
+
+The mechanism, verified over 84 unwind steps against independent ground truth:
+the ELFv2 CFA *is* the caller's r1, so the restored frame's TOC save slot is at
+`*(cfa + 24)`; whether that slot is live is decided by reading one instruction
+at the frame's **resume address** — `ld r2,24(r1)` (`0xE8410018`) means load it,
+anything else means leave r2 alone. This is what libgcc, nongnu libunwind and
+LLVM libunwind already do, and Wine bundles the LLVM version.
+
+The trap: ppc64's return-address register is **65, which maps to `Lr`, not
+`Iar`**. On x86-64 a naive implementation works by accident because the
+return-address register *is* the pc register. Reading the pc field gets the
+marker from the wrong frame and silently loads stack garbage into r2.
+
+## Building
+
+```
+./configure --enable-win64
+make -j 4
+```
+
+Use a modest `-j`. Also note `ninja` — used by some subprojects — does **not**
+read `MAKEFLAGS`, so pass `-j` to it explicitly or it will spawn roughly
+core-count+2 jobs.
+
+## Design notes
+
+Measured results, adversarial reviews, and the reasoning behind each decision
+live outside this tree in the project handbook — including the r2/TOC analysis,
+the winebuild codegen record, and a wall-by-wall build log.
+
+## Licence
+
+**Unchanged: LGPL 2.1 or later**, exactly as upstream. See `LICENSE` and
+`COPYING.LIB`. This is a fork rather than a re-publication precisely so the
+provenance and the modified-source obligation are self-evident.
+
+---
+
+*Upstream Wine's README follows.*
+
 ## INTRODUCTION
 
 Wine is a program which allows running Microsoft Windows programs
