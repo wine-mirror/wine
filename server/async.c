@@ -837,7 +837,7 @@ static struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_
 
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
-struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const struct async_data *data, int is_system )
+struct async *create_request_async( struct fd *fd, const struct async_data *data, int is_system )
 {
     struct async *async;
     struct iosb *iosb;
@@ -857,7 +857,7 @@ struct async *create_request_async( struct fd *fd, unsigned int comp_flags, cons
         async->pending       = 0;
         async->direct_result = 1;
         async->is_system     = !!is_system;
-        async->comp_flags    = comp_flags;
+        async->comp_flags    = get_fd_comp_flags( fd );
     }
     return async;
 }

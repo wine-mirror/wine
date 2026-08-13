@@ -3970,7 +3970,7 @@ DECL_HANDLER(recv_socket)
     sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
     sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
 
-    if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         set_error( status );
 
@@ -4080,8 +4080,7 @@ DECL_HANDLER(send_socket)
     if (status == STATUS_PENDING && !force_async && sock->nonblocking)
         status = STATUS_DEVICE_NOT_READY;
 
-    if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async,
-                                       req->flags & SERVER_SOCKET_IO_SYSTEM )))
+    if ((async = create_request_async( fd, &req->async, req->flags & SERVER_SOCKET_IO_SYSTEM )))
     {
         struct send_req *send_req;
         struct iosb *iosb = async_get_iosb( async );

@@ -2943,7 +2943,7 @@ DECL_HANDLER(flush)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         if (fd->fd_ops->flush) fd->fd_ops->flush( fd, async );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -2974,7 +2974,7 @@ DECL_HANDLER(get_volume_info)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         if (fd->fd_ops->get_volume_info) fd->fd_ops->get_volume_info( fd, async, req->info_class );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -3052,7 +3052,7 @@ DECL_HANDLER(read)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         if (fd->fd_ops->read) fd->fd_ops->read( fd, async, req->pos );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -3071,7 +3071,7 @@ DECL_HANDLER(write)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         if (fd->fd_ops->write) fd->fd_ops->write( fd, async, req->pos );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
@@ -3091,7 +3091,7 @@ DECL_HANDLER(ioctl)
 
     if (!fd) return;
 
-    if ((async = create_request_async( fd, fd->comp_flags, &req->async, 0 )))
+    if ((async = create_request_async( fd, &req->async, 0 )))
     {
         if (fd->fd_ops->ioctl) fd->fd_ops->ioctl( fd, req->code, async );
         else set_error( STATUS_OBJECT_TYPE_MISMATCH );
