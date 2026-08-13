@@ -2933,6 +2933,13 @@ static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct file_context *context = ExAllocatePool(PagedPool, sizeof(*context));
 
+    if (irpsp->Parameters.Create.ShareAccess & FILE_SHARE_DELETE)
+    {
+        irp->IoStatus.Status = STATUS_DEVICE_NOT_READY;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DEVICE_NOT_READY;
+    }
+
     if (!context)
     {
         irp->IoStatus.Status = STATUS_NO_MEMORY;

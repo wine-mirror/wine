@@ -1375,7 +1375,7 @@ static void test_blocking_irp(void)
     NTSTATUS status;
     HANDLE file;
 
-    file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileA("\\\\.\\WineTestDriver\\", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     memset(&io, 0xcc, sizeof(io));
@@ -1395,7 +1395,7 @@ static void test_blocking_irp(void)
 
     CloseHandle(file);
 
-    file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    file = CreateFileA("\\\\.\\WineTestDriver\\", 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     ok(file != INVALID_HANDLE_VALUE, "failed to open device: %lu\n", GetLastError());
 
     memset(&io, 0xcc, sizeof(io));
@@ -1411,6 +1411,17 @@ static void test_blocking_irp(void)
     ok(!io.Information, "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
+}
+
+static void test_create_params(void)
+{
+    HANDLE file;
+
+    file = CreateFileA("\\\\.\\WineTestDriver", 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+    todo_wine ok(file == INVALID_HANDLE_VALUE, "got %p\n", file);
+    todo_wine ok(GetLastError() == ERROR_NOT_READY, "got error %lu\n", GetLastError());
+    if (file != INVALID_HANDLE_VALUE)
+        CloseHandle(file);
 }
 
 static void test_driver3(struct testsign_context *ctx)
@@ -3467,6 +3478,7 @@ START_TEST(ntoskrnl)
     test_return_status();
     test_object_info();
     test_blocking_irp();
+    test_create_params();
 
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
