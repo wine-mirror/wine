@@ -434,8 +434,24 @@ static void output_relay_debug( struct exports *exports )
 
                 if (is_float_arg( odp, j ) && fpr < 13)
                 {
-                    /* floating point arguments go in f1-f13, and skip their GPR */
-                    output( "\tstfd %d,%d(1)\n", ++fpr, off );
+                    /* floating point arguments go in f1-f13, and skip their GPR.
+                     *
+                     * An FPR always holds a double, but relay_trace_entry() reads an 'f'
+                     * slot as *(const float *)&stack[i], and ELFv2 itself stores a float
+                     * that overflows f13 into the parameter save area as a single (so the
+                     * memory path below already produces single bits).  Store singles for
+                     * 'f' and doubles for 'd' to agree with both.  frsp is redundant for a
+                     * genuine float argument -- the FPR then holds an exactly representable
+                     * single, and frsp/stfs/lfs round-trips it bit for bit -- but it makes
+                     * a spec that declares 'f' for a real double round rather than store an
+                     * undefined value. */
+                    ++fpr;
+                    if (odp->u.func.args[j] == ARG_FLOAT)
+                    {
+                        output( "\tfrsp 0,%d\n", fpr );
+                        output( "\tstfs 0,%d(1)\n", off );
+                    }
+                    else output( "\tstfd %d,%d(1)\n", fpr, off );
                 }
                 else if (j < 8)
                 {
