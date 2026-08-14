@@ -355,6 +355,7 @@ static BOOL is_ignored_env_var( const char *var )
             STARTS_WITH( var, "SDL_AUDIO_DRIVER=" ) ||
             STARTS_WITH( var, "SDL_VIDEODRIVER=" ) ||
             STARTS_WITH( var, "SDL_VIDEO_DRIVER=" ) ||
+            STARTS_WITH( var, "WAYLAND_DISPLAY=" ) ||
             STARTS_WITH( var, "VK_" ));
 }
 
