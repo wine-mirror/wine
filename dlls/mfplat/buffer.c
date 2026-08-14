@@ -1754,7 +1754,11 @@ static HRESULT WINAPI d3d12_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DB
 
 static HRESULT WINAPI d3d12_surface_buffer_GetResource(IMFDXGIBuffer *iface, REFIID riid, void **obj)
 {
-    return E_NOTIMPL;
+    struct buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    return ID3D12Resource_QueryInterface(buffer->d3d12_surface.resource, riid, obj);
 }
 
 static const IMFMediaBufferVtbl d3d12_surface_1d_buffer_vtbl =

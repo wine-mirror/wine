@@ -11808,14 +11808,6 @@ static void test_d3d12_surface_buffer(void)
     }
     ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
-    if (winetest_platform_is_wine)
-    {
-        skip("Skipping D3D12 resource buffer tests.\n");
-        IMFMediaBuffer_Release(buffer);
-        ID3D12Resource_Release(resource);
-        goto notsupported;
-    }
-
 if (SUCCEEDED(hr))
 {
     check_interface(buffer, &IID_IMF2DBuffer, TRUE);
