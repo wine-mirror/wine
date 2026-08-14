@@ -2142,10 +2142,13 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     static const POINT empty_raw = {0};
 
     desktop_shm_t *desktop_shm = desktop->shared;
+    unsigned char state = desktop_shm->keystate[VK_LBUTTON] | desktop_shm->keystate[VK_MBUTTON] |
+                          desktop_shm->keystate[VK_RBUTTON] | desktop_shm->keystate[VK_XBUTTON1] |
+                          desktop_shm->keystate[VK_XBUTTON2];
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
     struct message *msg;
-    struct thread *foreground;
+    struct thread *foreground, *thread;
     unsigned int i, time = get_tick_count(), flags;
     struct hw_msg_source source = { IMDT_MOUSE, origin };
     lparam_t wparam = input->mouse.data << 16;
@@ -2186,14 +2189,13 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     time  = input->mouse.time;
     if (!time) time = desktop_shm->cursor.last_change;
 
-    if (win && origin == IMO_HARDWARE && flags == (MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE))
+    if (win && origin == IMO_HARDWARE && flags == (MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE) &&
+        !(state & 0x80) && (thread = get_window_thread( win )))
     {
         struct rectangle rect = { input->mouse.x, input->mouse.y, input->mouse.x + 1, input->mouse.y + 1 };
-        unsigned char state = (desktop_shm->keystate[VK_LBUTTON] | desktop_shm->keystate[VK_MBUTTON] |
-                               desktop_shm->keystate[VK_RBUTTON] | desktop_shm->keystate[VK_XBUTTON1] |
-                               desktop_shm->keystate[VK_XBUTTON2]) & 0x80;
-        input_shm_t *input_shm = sender && sender->input ? sender->input->shared : NULL;
-        if (!state && input_shm && !input_shm->capture) set_window_rect_visible( win, rect );
+        struct thread_input *input = thread->queue->input;
+        if (!input->shared->capture) set_window_rect_visible( win, rect );
+        release_object( thread );
     }
 
     if (flags & MOUSEEVENTF_MOVE)
