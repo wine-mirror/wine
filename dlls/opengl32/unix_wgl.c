@@ -521,7 +521,7 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
 
 static BOOL initialize_vk_device( TEB *teb, struct opengl_client_context *client )
 {
-    struct opengl_funcs *funcs = teb->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     VkPhysicalDevice *vk_physical_devices = NULL;
     struct vk_device *vk_device = NULL;
     GLint uuid_count = 0, i, j;
@@ -725,9 +725,10 @@ static void init_enabled_extensions(void)
     free( disabled );
 }
 
-static void init_client_context( TEB *teb, const struct opengl_funcs *funcs, struct opengl_client_context *client )
+static void init_client_context( TEB *teb, struct opengl_client_context *client )
 {
     const char *vendor, *device, *version, *rest = "";
+    const struct opengl_funcs *funcs = teb->glTable;
     size_t count = 0, i, len;
 
     static pthread_once_t once = PTHREAD_ONCE_INIT;
@@ -985,10 +986,10 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
         if (!(client = opengl_client_context_from_client( client_context ))) return FALSE;
         if (!(ctx = context_from_client_context( client_context ))) return FALSE;
         if (!funcs->p_make_current( draw_hdc, read_hdc, ctx )) return FALSE;
-        if (!client->major_version) init_client_context( teb, funcs, client );
         teb->glReserved1[0] = draw_hdc;
         teb->glReserved1[1] = read_hdc;
         teb->glTable = (void *)funcs;
+        if (!client->major_version) init_client_context( teb, client );
         pop_default_fbo( teb );
     }
     else
@@ -1664,7 +1665,7 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
         .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
         .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT,
     };
-    struct opengl_funcs *funcs = teb->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     GLuint buffer_name = name ? name : get_target_name( teb, target );
     uint32_t type_mask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     struct opengl_client_context *client;
