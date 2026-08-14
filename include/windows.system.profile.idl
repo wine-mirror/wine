@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -28,7 +27,6 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.storage.streams.idl";
 import "windows.system.idl";
-#endif
 
 namespace Windows.System.Profile {
     typedef enum SystemIdentificationSource SystemIdentificationSource;
@@ -97,7 +95,6 @@ namespace Windows.System.Profile {
         HRESULT GetSystemIdForUser([in] Windows.System.User *user, [out, retval] Windows.System.Profile.SystemIdentificationInfo **result);
     }
 
-#ifndef _WINDOWS_SYSTEM_PROFILE_SYSTEM_ID
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -106,22 +103,20 @@ namespace Windows.System.Profile {
     runtimeclass AnalyticsVersionInfo
     {
         [default] interface Windows.System.Profile.IAnalyticsVersionInfo;
-        [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.System.Profile.IAnalyticsVersionInfo2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.System.Profile.IAnalyticsVersionInfo2; */
     }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.System.Profile.IAnalyticsInfoStatics, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.System.Profile.IAnalyticsInfoStatics2, Windows.Foundation.UniversalApiContract, 6.0),
+        /* static(Windows.System.Profile.IAnalyticsInfoStatics2, Windows.Foundation.UniversalApiContract, 6.0), */
         threading(both)
     ]
     runtimeclass AnalyticsInfo
     {
     }
-#endif
 
-#ifndef _TWINAPI_APPCORE
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
         marshaling_behavior(agile),
@@ -141,5 +136,4 @@ namespace Windows.System.Profile {
     {
         [default] interface Windows.System.Profile.ISystemIdentificationInfo;
     }
-#endif
 }

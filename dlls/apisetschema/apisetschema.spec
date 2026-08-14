@@ -45,7 +45,6 @@ apiset api-ms-win-core-file-fromapp-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-file-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-file-l1-2-2 = kernelbase.dll
 apiset api-ms-win-core-file-l2-1-2 = kernelbase.dll
-apiset api-ms-win-core-file-fromapp-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-firmware-l1-1-0 = kernel32.dll
 apiset api-ms-win-core-guard-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-handle-l1-1-0 = kernelbase.dll

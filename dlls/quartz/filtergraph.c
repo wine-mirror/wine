@@ -36,7 +36,6 @@
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "evcode.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 
@@ -223,7 +222,7 @@ static ULONG WINAPI EnumFilters_Release(IEnumFilters *iface)
     if (!ref)
     {
         IUnknown_Release(enum_filters->graph->outer_unk);
-        heap_free(enum_filters);
+        free(enum_filters);
     }
 
     return ref;
@@ -317,7 +316,7 @@ static HRESULT create_enum_filters(struct filter_graph *graph, struct list *curs
 {
     struct enum_filters *enum_filters;
 
-    if (!(enum_filters = heap_alloc(sizeof(*enum_filters))))
+    if (!(enum_filters = malloc(sizeof(*enum_filters))))
         return E_OUTOFMEMORY;
 
     enum_filters->IEnumFilters_iface.lpVtbl = &EnumFilters_vtbl;
@@ -491,6 +490,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
 
         flush_media_events(This);
         CloseHandle(This->media_event_handle);
+        CloseHandle(This->hEventCompletion);
 
         EnterCriticalSection(&message_cs);
         if (This->threaded && !--message_thread_refcount)
@@ -635,12 +635,12 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
     if (!filter)
         return E_POINTER;
 
-    if (!(entry = heap_alloc(sizeof(*entry))))
+    if (!(entry = malloc(sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     if (!(entry->name = CoTaskMemAlloc((name ? wcslen(name) + 6 : 5) * sizeof(WCHAR))))
     {
-        heap_free(entry);
+        free(entry);
         return E_OUTOFMEMORY;
     }
 
@@ -665,7 +665,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
         if (i == 10000)
         {
             CoTaskMemFree(entry->name);
-            heap_free(entry);
+            free(entry);
             return VFW_E_DUPLICATE_NAME;
         }
     }
@@ -676,7 +676,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
             (IFilterGraph *)&graph->IFilterGraph2_iface, entry->name)))
     {
         CoTaskMemFree(entry->name);
-        heap_free(entry);
+        free(entry);
         return hr;
     }
 
@@ -758,7 +758,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                     IMediaSeeking_Release(entry->seeking);
                 list_remove(&entry->entry);
                 CoTaskMemFree(entry->name);
-                heap_free(entry);
+                free(entry);
                 This->version++;
                 /* Invalidate interfaces in the cache */
                 for (i = 0; i < This->nItfCacheEntries; i++)
@@ -1809,6 +1809,7 @@ static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_sta
     }
     if (list_empty(&graph->media_events))
         ResetEvent(graph->media_event_handle);
+    ResetEvent(graph->hEventCompletion);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
@@ -2336,8 +2337,7 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *d
 
     LeaveCriticalSection(&graph->cs);
 
-    TRACE("Returning hr %#lx, duration %s (%s seconds).\n", hr,
-            wine_dbgstr_longlong(*duration), debugstr_time(*duration));
+    TRACE("Returning hr %#lx, duration %I64d (%s seconds).\n", hr, *duration, debugstr_time(*duration));
     return hr;
 }
 
@@ -2378,7 +2378,7 @@ static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLON
 
     LeaveCriticalSection(&graph->cs);
 
-    TRACE("Returning %s (%s seconds).\n", wine_dbgstr_longlong(*stop), debugstr_time(*stop));
+    TRACE("Returning %I64d (%s seconds).\n", *stop, debugstr_time(*stop));
     return hr;
 }
 
@@ -2399,12 +2399,16 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
         REFERENCE_TIME time;
         IReferenceClock_GetTime(graph->refClock, &time);
         if (time)
+        {
             ret += time - graph->stream_start;
+            if (ret > graph->stream_stop)
+                ret = graph->stream_stop;
+        }
     }
 
     LeaveCriticalSection(&graph->cs);
 
-    TRACE("Returning %s (%s seconds).\n", wine_dbgstr_longlong(ret), debugstr_time(ret));
+    TRACE("Returning %I64d (%s seconds).\n", ret, debugstr_time(ret));
     *current = ret;
 
     return S_OK;
@@ -2415,8 +2419,8 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGL
 {
     struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
-    TRACE("(%p/%p)->(%p, %s, 0x%s, %s)\n", This, iface, pTarget,
-        debugstr_guid(pTargetFormat), wine_dbgstr_longlong(Source), debugstr_guid(pSourceFormat));
+    TRACE("graph %p, target %p, target_format %s, source %I64d, source_format %s.\n",
+            This, pTarget, debugstr_guid(pTargetFormat), Source, debugstr_guid(pSourceFormat));
 
     if (!pSourceFormat)
         pSourceFormat = &This->timeformatseek;
@@ -2440,15 +2444,12 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     struct filter *filter;
     FILTER_STATE state;
 
-    TRACE("graph %p, current %s, current_flags %#lx, stop %s, stop_flags %#lx.\n", graph,
-            current_ptr ? wine_dbgstr_longlong(*current_ptr) : "<null>", current_flags,
-            stop_ptr ? wine_dbgstr_longlong(*stop_ptr): "<null>", stop_flags);
+    TRACE("graph %p, current %p, current_flags %#lx, stop %p, stop_flags %#lx.\n",
+            graph, current_ptr, current_flags, stop_ptr, stop_flags);
     if (current_ptr)
-        TRACE("Setting current position to %s (%s seconds).\n",
-                wine_dbgstr_longlong(*current_ptr), debugstr_time(*current_ptr));
+        TRACE("Setting current position to %I64d (%s seconds).\n", *current_ptr, debugstr_time(*current_ptr));
     if (stop_ptr)
-        TRACE("Setting stop position to %s (%s seconds).\n",
-                wine_dbgstr_longlong(*stop_ptr), debugstr_time(*stop_ptr));
+        TRACE("Setting stop position to %I64d (%s seconds).\n", *stop_ptr, debugstr_time(*stop_ptr));
 
     if ((current_flags & 0x7) != AM_SEEKING_AbsolutePositioning
             && (current_flags & 0x7) != AM_SEEKING_NoPositioning)
@@ -5352,6 +5353,17 @@ static HRESULT WINAPI MediaFilter_GetClassID(IMediaFilter *iface, CLSID * pClass
     return E_NOTIMPL;
 }
 
+static void graph_update_positions(struct filter_graph *graph)
+{
+    if (graph->state == State_Running && !graph->needs_async_run && graph->refClock)
+    {
+        REFERENCE_TIME time;
+        IReferenceClock_GetTime(graph->refClock, &time);
+        graph->stream_elapsed += time - graph->stream_start;
+        graph->current_pos += graph->stream_elapsed;
+    }
+}
+
 static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
 {
     struct filter_graph *graph = impl_from_IMediaFilter(iface);
@@ -5370,6 +5382,8 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     }
 
     sort_filters(graph);
+
+    graph_update_positions(graph);
 
     if (graph->state == State_Running)
     {
@@ -5430,13 +5444,7 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
 
-    if (graph->state == State_Running && !graph->needs_async_run && graph->refClock)
-    {
-        REFERENCE_TIME time;
-        IReferenceClock_GetTime(graph->refClock, &time);
-        graph->stream_elapsed += time - graph->stream_start;
-        graph->current_pos += graph->stream_elapsed;
-    }
+    graph_update_positions(graph);
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
@@ -5680,16 +5688,27 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG code,
 
     EnterCriticalSection(&graph->event_cs);
 
-    if (code == EC_COMPLETE && graph->HandleEcComplete)
+    if (code == EC_COMPLETE)
     {
-        if (++graph->EcCompleteCount == graph->nRenderers)
+        if (!graph->HandleEcComplete ||
+            ++graph->EcCompleteCount == graph->nRenderers)
         {
+            if (graph->HandleEcComplete)
+            {
+                param1 = S_OK;
+                param2 = 0;
+                graph->current_pos = graph->stream_stop;
+            }
             if (graph->media_events_disabled)
+            {
                 SetEvent(graph->media_event_handle);
+                graph->CompletionStatus = 0;
+            }
             else
-                queue_media_event(graph, EC_COMPLETE, S_OK, 0);
-            graph->CompletionStatus = EC_COMPLETE;
-            graph->current_pos = graph->stream_stop;
+            {
+                queue_media_event(graph, EC_COMPLETE, param1, param2);
+                graph->CompletionStatus = EC_COMPLETE;
+            }
             SetEvent(graph->hEventCompletion);
         }
     }

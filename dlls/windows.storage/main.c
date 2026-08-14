@@ -36,14 +36,10 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     *factory = NULL;
 
-    if (!wcscmp( buffer, RuntimeClass_Windows_Storage_ApplicationData ))
-        IActivationFactory_QueryInterface( application_data_factory, &IID_IActivationFactory, (void **)factory );
-
-    if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_DataReader ))
-        IActivationFactory_QueryInterface( datareader_factory, &IID_IActivationFactory, (void **)factory );
-
     if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_RandomAccessStreamReference ))
         IActivationFactory_QueryInterface( random_access_stream_reference_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream ))
+        IActivationFactory_QueryInterface( memory_stream_activation_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;

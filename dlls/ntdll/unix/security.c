@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "unix_private.h"
@@ -60,7 +59,7 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     SID *sid;
     int primary_group = -1;
 
-    TRACE( "(%p,0x%08x,%p,%d,%p,%p,%p,%p,%p,%p,%p,%p,%p)\n", handle, (int)access, attr,
+    TRACE( "(%p,0x%08x,%p,%d,%p,%p,%p,%p,%p,%p,%p,%p,%p)\n", handle, access, attr,
             type, token_id, expire, user, groups, privs, owner, group, dacl, source );
 
     *handle = 0;
@@ -70,7 +69,7 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     {
         SECURITY_QUALITY_OF_SERVICE *qos = attr->SecurityQualityOfService;
         TRACE( "ObjectAttributes->SecurityQualityOfService = {%d, %d, %d, %s}\n",
-               (int)qos->Length, qos->ImpersonationLevel, qos->ContextTrackingMode,
+               qos->Length, qos->ImpersonationLevel, qos->ContextTrackingMode,
                qos->EffectiveOnly ? "TRUE" : "FALSE");
         level = qos->ImpersonationLevel;
     }
@@ -163,7 +162,7 @@ NTSTATUS WINAPI NtOpenProcessTokenEx( HANDLE process, DWORD access, DWORD attrib
 {
     unsigned int ret;
 
-    TRACE( "(%p,0x%08x,0x%08x,%p)\n", process, (int)access, (int)attributes, handle );
+    TRACE( "(%p,0x%08x,0x%08x,%p)\n", process, access, attributes, handle );
 
     *handle = 0;
 
@@ -198,7 +197,7 @@ NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN self, 
 {
     unsigned int ret;
 
-    TRACE( "(%p,0x%08x,%u,0x%08x,%p)\n", thread, (int)access, self, (int)attributes, handle );
+    TRACE( "(%p,0x%08x,%u,0x%08x,%p)\n", thread, access, self, attributes, handle );
 
     *handle = 0;
 
@@ -238,7 +237,7 @@ NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRI
     {
         SECURITY_QUALITY_OF_SERVICE *qos = attr->SecurityQualityOfService;
         TRACE( "ObjectAttributes->SecurityQualityOfService = {%d, %d, %d, %s}\n",
-               (int)qos->Length, qos->ImpersonationLevel, qos->ContextTrackingMode,
+               qos->Length, qos->ImpersonationLevel, qos->ContextTrackingMode,
                qos->EffectiveOnly ? "TRUE" : "FALSE");
         level = qos->ImpersonationLevel;
     }
@@ -373,7 +372,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
     ULONG len = 0;
     unsigned int status = STATUS_SUCCESS;
 
-    TRACE( "(%p,%s,%p,%d,%p)\n", token, debugstr_TokenInformationClass(class), info, (int)length, retlen );
+    TRACE( "(%p,%s,%p,%d,%p)\n", token, debugstr_TokenInformationClass(class), info, length, retlen );
 
     if (class < MaxTokenInfoClass) len = info_len[class];
     if (retlen) *retlen = len;
@@ -575,7 +574,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
 
             req->handle = wine_server_obj_handle( token );
             status = wine_server_call( req );
-            if (!status) *type = reply->elevation;
+            if (!status) *type = reply->elevation_type;
         }
         SERVER_END_REQ;
         break;
@@ -587,7 +586,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
 
             req->handle = wine_server_obj_handle( token );
             status = wine_server_call( req );
-            if (!status) elevation->TokenIsElevated = (reply->elevation == TokenElevationTypeFull);
+            if (!status) elevation->TokenIsElevated = reply->is_elevated;
         }
         SERVER_END_REQ;
         break;
@@ -672,7 +671,7 @@ NTSTATUS WINAPI NtSetInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS cla
 {
     unsigned int ret = STATUS_NOT_IMPLEMENTED;
 
-    TRACE( "%p %d %p %u\n", token, class, info, (int)length );
+    TRACE( "%p %d %p %u\n", token, class, info, length );
 
     switch (class)
     {
@@ -737,8 +736,7 @@ NTSTATUS WINAPI NtCreateLowBoxToken( HANDLE *token_handle, HANDLE token, ACCESS_
                                      SID_AND_ATTRIBUTES *capabilities, ULONG handle_count, HANDLE *handle )
 {
     FIXME("(%p, %p, %x, %p, %p, %u, %p, %u, %p): stub\n",
-          token_handle, token, (int)access, attr, sid,
-          (int)count, capabilities, (int)handle_count, handle );
+          token_handle, token, access, attr, sid, count, capabilities, handle_count, handle );
 
     /* we need to return a NULL handle since later it will be passed to NtClose and that must not fail */
     *token_handle = NULL;
@@ -752,7 +750,7 @@ NTSTATUS WINAPI NtCreateLowBoxToken( HANDLE *token_handle, HANDLE token, ACCESS_
 NTSTATUS WINAPI NtAdjustGroupsToken( HANDLE token, BOOLEAN reset, TOKEN_GROUPS *groups,
                                      ULONG length, TOKEN_GROUPS *prev, ULONG *retlen )
 {
-    FIXME( "%p %d %p %u %p %p\n", token, reset, groups, (int)length, prev, retlen );
+    FIXME( "%p %d %p %u %p %p\n", token, reset, groups, length, prev, retlen );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -765,7 +763,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken( HANDLE token, BOOLEAN disable, TOKEN_PR
 {
     unsigned int ret;
 
-    TRACE( "(%p,0x%08x,%p,0x%08x,%p,%p)\n", token, disable, privs, (int)length, prev, retlen );
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p,%p)\n", token, disable, privs, length, prev, retlen );
 
     SERVER_START_REQ( adjust_token_privileges )
     {
@@ -801,11 +799,11 @@ NTSTATUS WINAPI NtFilterToken( HANDLE token, ULONG flags, TOKEN_GROUPS *disable_
     SID *sids = NULL;
     unsigned int status;
 
-    TRACE( "%p %#x %p %p %p %p\n", token, (int)flags, disable_sids, privileges,
+    TRACE( "%p %#x %p %p %p %p\n", token, flags, disable_sids, privileges,
            restrict_sids, new_token );
 
     if (flags)
-        FIXME( "flags %#x unsupported\n", (int)flags );
+        FIXME( "flags %#x unsupported\n", flags );
 
     if (restrict_sids)
         FIXME( "support for restricting sids not yet implemented\n" );
@@ -898,7 +896,7 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
     ULONG priv_len;
 
     TRACE( "(%p, %p, %08x, %p, %p, %p, %p, %p)\n",
-           descr, token, (int)access, mapping, privs, retlen, access_granted, access_status );
+           descr, token, access, mapping, privs, retlen, access_granted, access_status );
 
     if (!privs || !retlen) return STATUS_ACCESS_VIOLATION;
     priv_len = *retlen;
@@ -945,12 +943,42 @@ NTSTATUS WINAPI NtAccessCheckAndAuditAlarm( UNICODE_STRING *subsystem, HANDLE ha
                                             UNICODE_STRING *typename, UNICODE_STRING *objectname,
                                             PSECURITY_DESCRIPTOR descr, ACCESS_MASK access,
                                             GENERIC_MAPPING *mapping, BOOLEAN creation,
-                                            ACCESS_MASK *access_granted, BOOLEAN *access_status,
+                                            ACCESS_MASK *access_granted, NTSTATUS *access_status,
                                             BOOLEAN *onclose )
 {
     FIXME( "(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n",
-           debugstr_us(subsystem), handle, debugstr_us(typename), descr, (int)access,
+           debugstr_us(subsystem), handle, debugstr_us(typename), descr, access,
            mapping, creation, access_granted, access_status, onclose );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtAccessCheckByTypeAndAuditAlarm  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAccessCheckByTypeAndAuditAlarm( UNICODE_STRING *subsystem, HANDLE handle,
+                                                  UNICODE_STRING *typename, UNICODE_STRING *objectname,
+                                                  PSECURITY_DESCRIPTOR descr, PSID sid, ACCESS_MASK access,
+                                                  AUDIT_EVENT_TYPE audit_type, ULONG flags,
+                                                  OBJECT_TYPE_LIST *obj_list, ULONG list_len,
+                                                  GENERIC_MAPPING *mapping, BOOLEAN creation,
+                                                  ACCESS_MASK *access_granted, NTSTATUS *access_status,
+                                                  BOOLEAN *onclose )
+{
+    FIXME( "(%s, %p, %s, %s, %p, 0x%08x, %u, %x, %p, %u, %p, %d, %p, %p, %p), stub\n",
+           debugstr_us(subsystem), handle, debugstr_us(typename), debugstr_us(objectname),
+           descr, access, audit_type, flags, obj_list, list_len,
+           mapping, creation, access_granted, access_status, onclose );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtCloseObjectAuditAlarm  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCloseObjectAuditAlarm( UNICODE_STRING *subsystem, HANDLE handle, BOOLEAN onclose )
+{
+    FIXME( "%s %p %u: stub\n", debugstr_us(subsystem), handle, onclose );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -966,7 +994,7 @@ NTSTATUS WINAPI NtQuerySecurityObject( HANDLE handle, SECURITY_INFORMATION info,
     void *buffer;
     unsigned int buffer_size = 512;
 
-    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, (int)info, descr, (int)length, retlen );
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, info, descr, length, retlen );
 
     for (;;)
     {
@@ -1026,7 +1054,7 @@ NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, P
     OBJECT_ATTRIBUTES attr;
     unsigned int status;
 
-    TRACE( "%p 0x%08x %p\n", handle, (int)info, descr );
+    TRACE( "%p 0x%08x %p\n", handle, info, descr );
 
     if (!descr) return STATUS_ACCESS_VIOLATION;
 

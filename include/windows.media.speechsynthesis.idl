@@ -226,7 +226,7 @@ namespace Windows.Media.SpeechSynthesis
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.Media.SpeechSynthesis.IInstalledVoicesStatic, Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Media.SpeechSynthesis.IInstalledVoicesStatic2, Windows.Foundation.UniversalApiContract, 5.0)
+        /* static(Windows.Media.SpeechSynthesis.IInstalledVoicesStatic2, Windows.Foundation.UniversalApiContract, 5.0) */
     ]
     runtimeclass SpeechSynthesizer
     {

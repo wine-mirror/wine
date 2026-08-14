@@ -95,7 +95,6 @@ namespace Windows.Networking.Connectivity
         interface Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.ConnectivityInterval*>*>;
-        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Networking.Connectivity.ConnectionProfile*>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Networking.Connectivity.NetworkUsage*>*>;
     }
 
@@ -432,7 +431,7 @@ namespace Windows.Networking.Connectivity
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Networking.Connectivity.NetworkInformation),
+        exclusiveto(Windows.Networking.Connectivity.NetworkItem),
         uuid(01bc4d39-f5e0-4567-a28c-42080c831b2b),
     ]
     interface INetworkItem : IInspectable
@@ -454,7 +453,7 @@ namespace Windows.Networking.Connectivity
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Networking.Connectivity.NetworkSecuritySettings),
+        exclusiveto(Windows.Networking.Connectivity.ProxyConfiguration),
         uuid(ef3a60b4-9004-4dd6-b7d8-b3e502f4aad0),
     ]
     interface IProxyConfiguration : IInspectable
@@ -516,7 +515,7 @@ namespace Windows.Networking.Connectivity
     runtimeclass ConnectionCost
     {
         [default] interface Windows.Networking.Connectivity.IConnectionCost;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionCost2;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionCost2; */
     }
 
     [
@@ -527,9 +526,9 @@ namespace Windows.Networking.Connectivity
     {
         [default] interface Windows.Networking.Connectivity.IConnectionProfile;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile2;
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile3;
-        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Networking.Connectivity.IConnectionProfile4;
-        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Networking.Connectivity.IConnectionProfile5;
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Networking.Connectivity.IConnectionProfile3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Networking.Connectivity.IConnectionProfile4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.Networking.Connectivity.IConnectionProfile5; */
     }
 
     [
@@ -638,7 +637,7 @@ namespace Windows.Networking.Connectivity
     runtimeclass WwanConnectionProfileDetails
     {
         [default] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails;
-        [contract(Windows.Networking.Connectivity.WwanContract, 2.0)] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails2;
+        /* [contract(Windows.Networking.Connectivity.WwanContract, 2.0)] interface Windows.Networking.Connectivity.IWwanConnectionProfileDetails2; */
     }
 
     [

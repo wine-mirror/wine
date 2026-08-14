@@ -19,15 +19,14 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
 import "inspectable.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.gaming.ui.idl";
 
-#define DO_NO_IMPORTS
-#include "windows.gaming.ui.idl"
+namespace Windows.Gaming.UI {
+    runtimeclass GameBar;
+}

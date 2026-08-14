@@ -271,11 +271,8 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
 {
     const struct mountmgr_shell_folder *input = in_buff;
     const char *link = NULL;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name;
     NTSTATUS status;
-    ULONG size = 256;
-    char *buffer = NULL, *backup = NULL;
+    WCHAR *folder;
     struct set_shell_folder_params params;
 
     if (input->folder_offset >= insize || input->folder_size > insize - input->folder_offset ||
@@ -290,43 +287,15 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
         if (!link[0]) link = NULL;
     }
 
-    name.Buffer = (WCHAR *)((char *)in_buff + input->folder_offset);
-    name.Length = input->folder_size;
-    InitializeObjectAttributes( &attr, &name, 0, 0, NULL );
+    if (!(folder = malloc( input->folder_size + sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+    memcpy( folder, (char *)in_buff + input->folder_offset, input->folder_size );
+    folder[input->folder_size / sizeof(WCHAR)] = 0;
 
-    for (;;)
-    {
-        if (!(buffer = malloc( size )))
-        {
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
-        if (status == STATUS_NO_SUCH_FILE) status = STATUS_SUCCESS;
-        if (status == STATUS_SUCCESS) break;
-        if (status != STATUS_BUFFER_TOO_SMALL) goto done;
-        free( buffer );
-    }
-
-    if (input->create_backup)
-    {
-        if (!(backup = malloc( strlen(buffer) + sizeof(".backup" ) )))
-        {
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-        strcpy( backup, buffer );
-        strcat( backup, ".backup" );
-    }
-
-    params.folder = buffer;
-    params.backup = backup;
+    params.folder = folder;
     params.link = link;
+    params.create_backup = input->create_backup;
     status = MOUNTMGR_CALL( set_shell_folder, &params );
-
-done:
-    free( buffer );
-    free( backup );
+    free( folder );
     return status;
 }
 
@@ -334,32 +303,18 @@ done:
 static NTSTATUS query_shell_folder( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
 {
     char *output = buff;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name;
     NTSTATUS status;
-    ULONG size = 256;
-    char *buffer;
+    WCHAR *folder;
+    struct get_shell_folder_params params = { .buffer = output, .size = outsize };
 
-    name.Buffer = buff;
-    name.Length = insize;
-    InitializeObjectAttributes( &attr, &name, 0, 0, NULL );
+    if (!(folder = malloc( insize + sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+    memcpy( folder, (char *)buff, insize );
+    folder[insize / sizeof(WCHAR)] = 0;
 
-    for (;;)
-    {
-        if (!(buffer = malloc( size ))) return STATUS_NO_MEMORY;
-        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN );
-        if (!status)
-        {
-            struct get_shell_folder_params params = { buffer, output, outsize };
-            status = MOUNTMGR_CALL( get_shell_folder, &params );
-            if (!status) iosb->Information = strlen(output) + 1;
-            break;
-        }
-        if (status != STATUS_BUFFER_TOO_SMALL) break;
-        free( buffer );
-    }
-
-    free( buffer );
+    params.folder = folder;
+    status = MOUNTMGR_CALL( get_shell_folder, &params );
+    if (!status) iosb->Information = strlen(output) + 1;
+    free( folder );
     return status;
 }
 

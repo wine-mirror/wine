@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -29,7 +28,6 @@ import "windows.foundation.idl";
 import "windows.devices.input.idl";
 import "windows.system.idl";
 import "windows.ui.core.idl";
-#endif
 
 namespace Windows.UI.Input {
     typedef enum PointerUpdateKind PointerUpdateKind;
@@ -39,12 +37,9 @@ namespace Windows.UI.Input {
     interface IPointerPointProperties2;
     interface IPointerPointStatics;
     interface IPointerPointTransform;
-    interface IPointerVisualizationSettings;
-    interface IPointerVisualizationSettingsStatics;
 
     runtimeclass PointerPoint;
     runtimeclass PointerPointProperties;
-    runtimeclass PointerVisualizationSettings;
 
     declare {
         interface Windows.Foundation.Collections.IVectorView<Windows.UI.Input.PointerPoint *>;
@@ -151,39 +146,6 @@ namespace Windows.UI.Input {
         [propget] HRESULT Inverse([out, retval] Windows.UI.Input.IPointerPointTransform **value);
         HRESULT TryTransform([in] Windows.Foundation.Point in_point, [out] Windows.Foundation.Point *out_point, [out, retval] boolean *value);
         HRESULT TransformBounds([in] Windows.Foundation.Rect rect, [out, retval] Windows.Foundation.Rect *value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.UI.Input.PointerVisualizationSettings),
-        uuid(4D1E6461-84F7-499D-BD91-2A36E2B7AAA2)
-    ]
-    interface IPointerVisualizationSettings : IInspectable
-    {
-        [propput] HRESULT IsContactFeedbackEnabled([in] boolean value);
-        [propget] HRESULT IsContactFeedbackEnabled([out] [retval] boolean* value);
-        [propput] HRESULT IsBarrelButtonFeedbackEnabled([in] boolean value);
-        [propget] HRESULT IsBarrelButtonFeedbackEnabled([out] [retval] boolean* value);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.UI.Input.PointerVisualizationSettings),
-        uuid(68870EDB-165B-4214-B4F3-584ECA8C8A69)
-    ]
-    interface IPointerVisualizationSettingsStatics : IInspectable
-    {
-        HRESULT GetForCurrentView([out] [retval] Windows.UI.Input.PointerVisualizationSettings** visualizationSettings);
-    }
-
-    [
-        contract(Windows.Foundation.UniversalApiContract, 1.0),
-        marshaling_behavior(agile),
-        static(Windows.UI.Input.IPointerVisualizationSettingsStatics, Windows.Foundation.UniversalApiContract, 1.0)
-    ]
-    runtimeclass PointerVisualizationSettings
-    {
-        [default] interface Windows.UI.Input.IPointerVisualizationSettings;
     }
 
     [

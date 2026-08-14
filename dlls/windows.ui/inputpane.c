@@ -107,25 +107,25 @@ static HRESULT WINAPI inputpane_GetTrustLevel( IInputPane *iface, TrustLevel *tr
 static HRESULT WINAPI inputpane_add_Showing( IInputPane *iface, ITypedEventHandler_InputPane_InputPaneVisibilityEventArgs *handler, EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI inputpane_remove_Showing( IInputPane *iface, EventRegistrationToken token )
 {
     FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI inputpane_add_Hiding( IInputPane *iface, ITypedEventHandler_InputPane_InputPaneVisibilityEventArgs *handler, EventRegistrationToken *token )
 {
     FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI inputpane_remove_Hiding( IInputPane *iface, EventRegistrationToken token )
 {
     FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI inputpane_OccludedRect( IInputPane *iface, Rect *value )
@@ -215,12 +215,6 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     else if (IsEqualGUID( iid, &IID_IInputPaneInterop ))
     {
         *out = &impl->IInputPaneInterop_iface;
-        IInspectable_AddRef( *out );
-        return S_OK;
-    } 
-    else if (IsEqualGUID( iid, &IID_IInputPaneStatics )) 
-    {
-        *out = &impl->IInputPaneStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }

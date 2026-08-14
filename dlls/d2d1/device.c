@@ -199,6 +199,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
 
 static void d2d_device_context_set_error(struct d2d_device_context *context, HRESULT code)
 {
+    WARN("code %#lx.\n", code);
     context->error.code = code;
     context->error.tag1 = context->drawing_state.tag1;
     context->error.tag2 = context->drawing_state.tag2;
@@ -586,6 +587,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext6 *i
     TRACE("iface %p, p0 %s, p1 %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, debug_d2d_point_2f(&p0), debug_d2d_point_2f(&p1), brush, stroke_width, stroke_style);
 
+    if (FAILED(context->error.code))
+        return;
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_line(context->target.command_list, context, p0, p1, brush, stroke_width, stroke_style);
@@ -626,6 +630,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawRectangle(ID2D1DeviceContex
     TRACE("iface %p, rect %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, debug_d2d_rect_f(rect), brush, stroke_width, stroke_style);
 
+    if (FAILED(context->error.code))
+        return;
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_rectangle(context->target.command_list, context, rect, brush, stroke_width, stroke_style);
@@ -650,6 +657,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRectangle(ID2D1DeviceContex
     HRESULT hr;
 
     TRACE("iface %p, rect %s, brush %p.\n", iface, debug_d2d_rect_f(rect), brush);
+
+    if (FAILED(context->error.code))
+        return;
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
@@ -677,6 +687,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawRoundedRectangle(ID2D1Devic
     TRACE("iface %p, rect %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, rect, brush, stroke_width, stroke_style);
 
+    if (FAILED(render_target->error.code))
+        return;
+
     if (FAILED(hr = ID2D1Factory_CreateRoundedRectangleGeometry(render_target->factory, rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#lx.\n", hr);
@@ -695,6 +708,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRoundedRectangle(ID2D1Devic
     HRESULT hr;
 
     TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
+
+    if (FAILED(render_target->error.code))
+        return;
 
     if (FAILED(hr = ID2D1Factory_CreateRoundedRectangleGeometry(render_target->factory, rect, &geometry)))
     {
@@ -716,6 +732,9 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawEllipse(ID2D1DeviceContext6
     TRACE("iface %p, ellipse %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, ellipse, brush, stroke_width, stroke_style);
 
+    if (FAILED(render_target->error.code))
+        return;
+
     if (FAILED(hr = ID2D1Factory_CreateEllipseGeometry(render_target->factory, ellipse, &geometry)))
     {
         ERR("Failed to create geometry, hr %#lx.\n", hr);
@@ -734,6 +753,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillEllipse(ID2D1DeviceContext6
     HRESULT hr;
 
     TRACE("iface %p, ellipse %p, brush %p.\n", iface, ellipse, brush);
+
+    if (FAILED(render_target->error.code))
+        return;
 
     if (FAILED(hr = ID2D1Factory_CreateEllipseGeometry(render_target->factory, ellipse, &geometry)))
     {
@@ -961,6 +983,15 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext
     TRACE("iface %p, geometry %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, geometry, brush, stroke_width, stroke_style);
 
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_geometry(context->target.command_list, context, geometry, brush,
@@ -1087,6 +1118,12 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
 
     if (FAILED(context->error.code))
         return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
 
     if (opacity_brush && brush_impl->type != D2D_BRUSH_TYPE_BITMAP)
     {
@@ -1216,6 +1253,15 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext6 
     TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, src_rect %s.\n",
             iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode, debug_d2d_rect_f(src_rect));
 
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
             && interpolation_mode != D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
     {
@@ -1305,26 +1351,22 @@ static D2D1_ANTIALIAS_MODE d2d_device_context_set_aa_mode_from_text_aa_mode(stru
     return prev_antialias_mode;
 }
 
-static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context *render_target,
-        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush)
+static HRESULT d2d_device_context_get_glyph_run_geometry(struct d2d_device_context *context,
+        const DWRITE_GLYPH_RUN *glyph_run, ID2D1PathGeometry **result)
 {
-    D2D1_MATRIX_3X2_F *transform, prev_transform;
-    D2D1_ANTIALIAS_MODE prev_antialias_mode;
     ID2D1PathGeometry *geometry;
     ID2D1GeometrySink *sink;
     HRESULT hr;
 
-    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
-    {
-        ERR("Failed to create geometry, hr %#lx.\n", hr);
-        return;
-    }
+    *result = NULL;
+
+    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(context->factory, &geometry)))
+        return hr;
 
     if (FAILED(hr = ID2D1PathGeometry_Open(geometry, &sink)))
     {
-        ERR("Failed to open geometry sink, hr %#lx.\n", hr);
         ID2D1PathGeometry_Release(geometry);
-        return;
+        return hr;
     }
 
     if (FAILED(hr = IDWriteFontFace_GetGlyphRunOutline(glyph_run->fontFace, glyph_run->fontEmSize,
@@ -1334,24 +1376,100 @@ static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context 
         ERR("Failed to get glyph run outline, hr %#lx.\n", hr);
         ID2D1GeometrySink_Release(sink);
         ID2D1PathGeometry_Release(geometry);
-        return;
+        return hr;
     }
 
     if (FAILED(hr = ID2D1GeometrySink_Close(sink)))
         ERR("Failed to close geometry sink, hr %#lx.\n", hr);
     ID2D1GeometrySink_Release(sink);
 
-    transform = &render_target->drawing_state.transform;
+    if (hr == S_OK)
+        *result = geometry;
+    else
+        ID2D1PathGeometry_Release(geometry);
+
+    return hr;
+}
+
+static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context *context,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush)
+{
+    D2D1_MATRIX_3X2_F *transform, prev_transform;
+    D2D1_ANTIALIAS_MODE prev_antialias_mode;
+    ID2D1PathGeometry *geometry;
+    HRESULT hr;
+
+    if (FAILED(hr = d2d_device_context_get_glyph_run_geometry(context, glyph_run, &geometry)))
+    {
+        ERR("Failed to create geometry, hr %#lx.\n", hr);
+        return;
+    }
+
+    transform = &context->drawing_state.transform;
     prev_transform = *transform;
     transform->_31 += baseline_origin.x * transform->_11 + baseline_origin.y * transform->_21;
     transform->_32 += baseline_origin.x * transform->_12 + baseline_origin.y * transform->_22;
-    prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(render_target);
-    d2d_device_context_fill_geometry(render_target, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
+    prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(context);
+    d2d_device_context_fill_geometry(context, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
             unsafe_impl_from_ID2D1Brush(brush), NULL);
-    render_target->drawing_state.antialiasMode = prev_antialias_mode;
+    context->drawing_state.antialiasMode = prev_antialias_mode;
     *transform = prev_transform;
 
     ID2D1PathGeometry_Release(geometry);
+}
+
+static HRESULT d2d_device_context_get_glyph_run_analysis(struct d2d_device_context *context,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
+        DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE antialias_mode, DWRITE_TEXTURE_TYPE *texture_type,
+        IDWriteGlyphRunAnalysis **result)
+{
+    IDWriteGlyphRunAnalysis *analysis;
+    IDWriteFactory2 *dwrite_factory;
+    D2D1_MATRIX_3X2_F *transform;
+    float scale_x, scale_y;
+    DWRITE_MATRIX m;
+    HRESULT hr;
+
+    *result = NULL;
+
+    if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory2,
+            (IUnknown **)&dwrite_factory)))
+    {
+        ERR("Failed to create dwrite factory, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    transform = &context->drawing_state.transform;
+
+    scale_x = context->desc.dpiX / 96.0f;
+    m.m11 = transform->_11 * scale_x;
+    m.m21 = transform->_21 * scale_x;
+    m.dx  = transform->_31 * scale_x;
+
+    scale_y = context->desc.dpiY / 96.0f;
+    m.m12 = transform->_12 * scale_y;
+    m.m22 = transform->_22 * scale_y;
+    m.dy  = transform->_32 * scale_y;
+
+    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, &m, rendering_mode,
+            measuring_mode, DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode, baseline_origin.x,
+            baseline_origin.y, &analysis);
+    IDWriteFactory2_Release(dwrite_factory);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create glyph run analysis, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED || antialias_mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
+        *texture_type = DWRITE_TEXTURE_ALIASED_1x1;
+    else
+        *texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
+
+    *result = analysis;
+
+    return S_OK;
 }
 
 static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *context,
@@ -1366,7 +1484,6 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     IDWriteGlyphRunAnalysis *analysis;
     DWRITE_TEXTURE_TYPE texture_type;
     D2D1_BRUSH_PROPERTIES brush_desc;
-    IDWriteFactory2 *dwrite_factory;
     D2D1_MATRIX_3X2_F *transform, m;
     void *opacity_values = NULL;
     size_t opacity_values_size;
@@ -1376,39 +1493,13 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     RECT bounds;
     HRESULT hr;
 
-    if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-            &IID_IDWriteFactory2, (IUnknown **)&dwrite_factory)))
-    {
-        ERR("Failed to create dwrite factory, hr %#lx.\n", hr);
-        return;
-    }
-
-    transform = &context->drawing_state.transform;
-
-    scale_x = context->desc.dpiX / 96.0f;
-    m._11 = transform->_11 * scale_x;
-    m._21 = transform->_21 * scale_x;
-    m._31 = transform->_31 * scale_x;
-
-    scale_y = context->desc.dpiY / 96.0f;
-    m._12 = transform->_12 * scale_y;
-    m._22 = transform->_22 * scale_y;
-    m._32 = transform->_32 * scale_y;
-
-    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, (DWRITE_MATRIX *)&m,
-            rendering_mode, measuring_mode, DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode,
-            baseline_origin.x, baseline_origin.y, &analysis);
-    IDWriteFactory2_Release(dwrite_factory);
+    hr = d2d_device_context_get_glyph_run_analysis(context, baseline_origin, glyph_run,
+            rendering_mode, measuring_mode, antialias_mode, &texture_type, &analysis);
     if (FAILED(hr))
     {
         ERR("Failed to create glyph run analysis, hr %#lx.\n", hr);
         return;
     }
-
-    if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED || antialias_mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
-        texture_type = DWRITE_TEXTURE_ALIASED_1x1;
-    else
-        texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 
     if (FAILED(hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, texture_type, &bounds)))
     {
@@ -1452,6 +1543,8 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
         goto done;
     }
 
+    scale_x = context->desc.dpiX / 96.0f;
+    scale_y = context->desc.dpiY / 96.0f;
     d2d_rect_set(&run_rect, bounds.left / scale_x, bounds.top / scale_y,
             bounds.right / scale_x, bounds.bottom / scale_y);
 
@@ -1475,6 +1568,7 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
         goto done;
     }
 
+    transform = &context->drawing_state.transform;
     m = *transform;
     *transform = identity;
     d2d_device_context_fill_geometry(context, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
@@ -1492,17 +1586,98 @@ done:
     IDWriteGlyphRunAnalysis_Release(analysis);
 }
 
+static HRESULT d2d_device_context_get_text_rendering_mode(struct d2d_device_context *context,
+        const DWRITE_GLYPH_RUN *glyph_run, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE *antialias_mode, DWRITE_RENDERING_MODE *rendering_mode)
+{
+    IDWriteRenderingParams *rendering_params;
+    HRESULT hr = S_OK;
+
+    rendering_params = context->text_rendering_params ? context->text_rendering_params
+            : context->default_text_rendering_params;
+
+    *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
+    *rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
+
+    switch (context->drawing_state.textAntialiasMode)
+    {
+        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
+            {
+                return E_INVALIDARG;
+            }
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_ALIASED
+                    || *rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
+            {
+                return E_INVALIDARG;
+            }
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
+                return E_INVALIDARG;
+            break;
+
+        default:
+            break;
+    }
+
+    *rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
+    switch (context->drawing_state.textAntialiasMode)
+    {
+        case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
+            if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
+                *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+            *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+            *rendering_mode = DWRITE_RENDERING_MODE_ALIASED;
+            break;
+
+        default:
+            break;
+    }
+
+    if (*rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
+    {
+        if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
+                max(context->desc.dpiX, context->desc.dpiY) / 96.0f,
+                measuring_mode, rendering_params, rendering_mode)))
+        {
+            ERR("Failed to get recommended rendering mode, hr %#lx.\n", hr);
+            *rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
+        }
+    }
+
+    return hr;
+}
+
 static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, ID2D1Brush *brush, DWRITE_MEASURING_MODE measuring_mode)
 {
-    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
-    IDWriteRenderingParams *rendering_params;
+    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode;
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
 
     if (FAILED(context->error.code))
         return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
@@ -1511,68 +1686,11 @@ static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context
         return;
     }
 
-    rendering_params = context->text_rendering_params ? context->text_rendering_params
-            : context->default_text_rendering_params;
-
-    rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
-
-    switch (context->drawing_state.textAntialiasMode)
+    if (FAILED(hr = d2d_device_context_get_text_rendering_mode(context, glyph_run, measuring_mode,
+            &antialias_mode, &rendering_mode)))
     {
-        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
-            if (rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
-            if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED
-                    || rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
-            if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        default:
-            break;
-    }
-
-    if (FAILED(context->error.code))
+        d2d_device_context_set_error(context, hr);
         return;
-
-    rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
-    switch (context->drawing_state.textAntialiasMode)
-    {
-        case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
-            if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
-                antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
-            antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
-            rendering_mode = DWRITE_RENDERING_MODE_ALIASED;
-            break;
-
-        default:
-            break;
-    }
-
-    if (rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
-    {
-        if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
-                max(context->desc.dpiX, context->desc.dpiY) / 96.0f,
-                measuring_mode, rendering_params, &rendering_mode)))
-        {
-            ERR("Failed to get recommended rendering mode, hr %#lx.\n", hr);
-            rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
-        }
     }
 
     if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
@@ -1725,7 +1843,7 @@ static void STDMETHODCALLTYPE d2d_device_context_PushLayer(ID2D1DeviceContext6 *
 
         memcpy(&parameters, layer_parameters, sizeof(*layer_parameters));
         parameters.layerOptions = D2D1_LAYER_OPTIONS1_NONE;
-        d2d_command_list_push_layer(context->target.command_list, context, &parameters, layer);
+        d2d_command_list_push_layer(context->target.command_list, context, &parameters);
     }
 }
 
@@ -1748,7 +1866,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext6 *i
     if (context->ops && context->ops->device_context_present)
         context->ops->device_context_present(context->outer_unknown);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_SaveDrawingState(ID2D1DeviceContext6 *iface,
@@ -1857,6 +1975,15 @@ static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext6 *ifac
     HRESULT hr;
 
     TRACE("iface %p, colour %p.\n", iface, colour);
+
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
@@ -2349,10 +2476,57 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetGlyphRunWorldBounds(ID2D1
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         DWRITE_MEASURING_MODE measuring_mode, D2D1_RECT_F *bounds)
 {
-    FIXME("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode;
+    DWRITE_RENDERING_MODE rendering_mode;
+    IDWriteGlyphRunAnalysis *analysis;
+    DWRITE_TEXTURE_TYPE texture_type;
+    ID2D1PathGeometry *geometry;
+    D2D1_MATRIX_3X2_F transform;
+    float scale_x, scale_y;
+    HRESULT hr;
+    RECT rect;
+
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, measuring_mode, bounds);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = d2d_device_context_get_text_rendering_mode(context, glyph_run, measuring_mode,
+            &antialias_mode, &rendering_mode)))
+    {
+        return hr;
+    }
+
+    if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
+    {
+        if (FAILED(hr = d2d_device_context_get_glyph_run_geometry(context, glyph_run, &geometry)))
+            return hr;
+
+        transform = context->drawing_state.transform;
+        transform._31 += baseline_origin.x * transform._11 + baseline_origin.y * transform._21;
+        transform._32 += baseline_origin.x * transform._12 + baseline_origin.y * transform._22;
+        hr = ID2D1PathGeometry_GetBounds(geometry, &transform, bounds);
+        ID2D1PathGeometry_Release(geometry);
+    }
+    else
+    {
+        if (FAILED(hr = d2d_device_context_get_glyph_run_analysis(context, baseline_origin,
+                glyph_run, rendering_mode, measuring_mode, antialias_mode, &texture_type, &analysis)))
+        {
+            return hr;
+        }
+
+        if (SUCCEEDED(hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, texture_type, &rect)))
+        {
+            scale_x = context->desc.dpiX / 96.0f;
+            scale_y = context->desc.dpiY / 96.0f;
+            d2d_rect_set(bounds, rect.left / scale_x, rect.top / scale_y,
+                    rect.right / scale_x, rect.bottom / scale_y);
+        }
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+    }
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext6 *iface, ID2D1Device **device)
@@ -2550,6 +2724,15 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext6 *
             iface, image, debug_d2d_point_2f(target_offset), debug_d2d_rect_f(image_rect),
             interpolation_mode, composite_mode);
 
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_image(context->target.command_list, image, target_offset, image_rect,
@@ -2589,6 +2772,15 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
             iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode,
             debug_d2d_rect_f(src_rect), perspective_transform);
 
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_bitmap(context->target.command_list, bitmap, dst_rect, opacity, interpolation_mode,
@@ -2609,7 +2801,7 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID
     FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
 
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
-        d2d_command_list_push_layer(context->target.command_list, context, layer_parameters, layer);
+        d2d_command_list_push_layer(context->target.command_list, context, layer_parameters);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_InvalidateEffectInputRectangle(ID2D1DeviceContext6 *iface,
@@ -2671,26 +2863,82 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityM
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateFilledGeometryRealization(ID2D1DeviceContext6 *iface,
         ID2D1Geometry *geometry, float tolerance, ID2D1GeometryRealization **realization)
 {
-    FIXME("iface %p, geometry %p, tolerance %.8e, realization %p stub!\n", iface, geometry, tolerance,
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *object;
+    HRESULT hr;
+
+    TRACE("iface %p, geometry %p, tolerance %.8e, realization %p.\n", iface, geometry, tolerance,
             realization);
 
-    return E_NOTIMPL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_geometry_realization_init(object, context->factory, geometry)))
+    {
+        WARN("Failed to initialise geometry realization, hr %#lx.\n", hr);
+        free(object);
+        return hr;
+    }
+    object->filled = true;
+
+    TRACE("Created geometry realization %p.\n", object);
+    *realization = &object->ID2D1GeometryRealization_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateStrokedGeometryRealization(
         ID2D1DeviceContext6 *iface, ID2D1Geometry *geometry, float tolerance, float stroke_width,
         ID2D1StrokeStyle *stroke_style, ID2D1GeometryRealization **realization)
 {
-    FIXME("iface %p, geometry %p, tolerance %.8e, stroke_width %.8e, stroke_style %p, realization %p stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *object;
+    HRESULT hr;
+
+    TRACE("iface %p, geometry %p, tolerance %.8e, stroke_width %.8e, stroke_style %p, realization %p.\n",
             iface, geometry, tolerance, stroke_width, stroke_style, realization);
 
-    return E_NOTIMPL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_geometry_realization_init(object, context->factory, geometry)))
+    {
+        WARN("Failed to initialise geometry realization, hr %#lx.\n", hr);
+        free(object);
+        return hr;
+    }
+    object->stroke_width = stroke_width;
+    object->stroke_style = stroke_style;
+    if (object->stroke_style)
+        ID2D1StrokeStyle_AddRef(object->stroke_style);
+
+    TRACE("Created geometry realization %p.\n", object);
+    *realization = &object->ID2D1GeometryRealization_iface;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawGeometryRealization(ID2D1DeviceContext6 *iface,
         ID2D1GeometryRealization *realization, ID2D1Brush *brush)
 {
-    FIXME("iface %p, realization %p, brush %p stub!\n", iface, realization, brush);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_geometry_realization *r = unsafe_impl_from_ID2D1GeometryRealization(realization);
+
+    FIXME("iface %p, realization %p, brush %p semi-stub!\n", iface, realization, brush);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        if (r->filled)
+        {
+            d2d_command_list_fill_geometry(context->target.command_list, context, r->geometry, brush, NULL);
+        }
+        else
+        {
+            d2d_command_list_draw_geometry(context->target.command_list, context, r->geometry, brush,
+                    r->stroke_width, r->stroke_style);
+        }
+        return;
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateInk(ID2D1DeviceContext6 *iface,
@@ -3489,6 +3737,498 @@ static const struct ID2D1GdiInteropRenderTargetVtbl d2d_gdi_interop_render_targe
     d2d_gdi_interop_render_target_ReleaseDC,
 };
 
+
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_outline[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_curve_outline[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_triangle[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_curve[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const char shape_vs_code_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "/* The lines PₚᵣₑᵥP₀ and P₀Pₙₑₓₜ, both offset by ±½w, intersect each other at:\n"
+    " *\n"
+    " *   Pᵢ = P₀ ± w · ½q⃑ᵢ.\n"
+    " *\n"
+    " * Where:\n"
+    " *\n"
+    " *   q⃑ᵢ = q̂ₚᵣₑᵥ⊥ + tan(½θ) · -q̂ₚᵣₑᵥ\n"
+    " *   θ  = ∠PₚᵣₑᵥP₀Pₙₑₓₜ\n"
+    " *   q⃑ₚᵣₑᵥ = P₀ - Pₚᵣₑᵥ */\n"
+    "void main(float2 position : POSITION, float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i;\n"
+    "    float2x2 geom;\n"
+    "    float l;\n"
+    "\n"
+    "    o.stroke_transform = float2x2(transform_rtx.xy, transform_rty.xy) * stroke_width * 0.5f;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    /* tan(½θ) = sin(θ) / (1 + cos(θ))\n"
+    "     *         = (q̂ₚᵣₑᵥ⊥ · q̂ₙₑₓₜ) / (1 + (q̂ₚᵣₑᵥ · q̂ₙₑₓₜ)) */\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "\n"
+    "    o.b = float4(0.0, 0.0, 0.0, 0.0);\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+/*     ⎡p0.x p0.y 1⎤
+ * A = ⎢p1.x p1.y 1⎥
+ *     ⎣p2.x p2.y 1⎦
+ *
+ *     ⎡0 0⎤
+ * B = ⎢½ 0⎥
+ *     ⎣1 1⎦
+ *
+ * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
+ *      ⎣p2.x-p0.x p2.y-p0.y⎦
+ *
+ * B' = ⎡½ 0⎤
+ *      ⎣1 1⎦
+ *
+ * A'T = B'
+ * T = A'⁻¹B'
+ */
+static const char shape_vs_code_bezier_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
+    "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i, p;\n"
+    "    float2x2 geom, rt;\n"
+    "    float l;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
+    "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
+    "\n"
+    "    p = mul(geom, position);\n"
+    "    p0 = mul(geom, p0);\n"
+    "    p1 = mul(geom, p1);\n"
+    "    p2 = mul(geom, p2);\n"
+    "\n"
+    "    p -= p0;\n"
+    "    p1 -= p0;\n"
+    "    p2 -= p0;\n"
+    "\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "    p += 0.5f * stroke_width * q_i;\n"
+    "\n"
+    "    v_p = mul(rt, p2);\n"
+    "    v_p = normalize(float2(-v_p.y, v_p.x));\n"
+    "    if (abs(dot(mul(rt, p1), v_p)) < 1.0f)\n"
+    "    {\n"
+    "        o.b.xzw = float3(0.0f, 0.0f, 0.0f);\n"
+    "        o.b.y = dot(mul(rt, p), v_p);\n"
+    "    }\n"
+    "    else\n"
+    "    {\n"
+    "        o.b.zw = sign(dot(mul(rt, p1), v_p)) * v_p;\n"
+    "        v_p = -float2(-p.y, p.x) / dot(float2(-p1.y, p1.x), p2);\n"
+    "        o.b.x = dot(v_p, p1 - 0.5f * p2);\n"
+    "        o.b.y = dot(v_p, p1);\n"
+    "    }\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+/*     ⎡p0.x p0.y 1⎤
+ * A = ⎢p1.x p1.y 1⎥
+ *     ⎣p2.x p2.y 1⎦
+ *
+ *     ⎡1 0⎤
+ * B = ⎢1 1⎥
+ *     ⎣0 1⎦
+ *
+ * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
+ *      ⎣p2.x-p0.x p2.y-p0.y⎦
+ *
+ * B' = ⎡ 0 1⎤
+ *      ⎣-1 1⎦
+ *
+ * A'T = B'
+ * T = A'⁻¹B' = (B'⁻¹A')⁻¹
+ */
+static const char shape_vs_code_arc_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
+    "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i, p;\n"
+    "    float2x2 geom, rt, p_inv;\n"
+    "    float l;\n"
+    "    float a;\n"
+    "    float2 bc;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
+    "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
+    "\n"
+    "    p = mul(geom, position);\n"
+    "    p0 = mul(geom, p0);\n"
+    "    p1 = mul(geom, p1);\n"
+    "    p2 = mul(geom, p2);\n"
+    "\n"
+    "    p -= p0;\n"
+    "    p1 -= p0;\n"
+    "    p2 -= p0;\n"
+    "\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "    p += 0.5f * stroke_width * q_i;\n"
+    "\n"
+    "    p_inv = float2x2(p1.y, -p1.x, p2.y - p1.y, p1.x - p2.x) / (p1.x * p2.y - p2.x * p1.y);\n"
+    "    o.b.xy = mul(p_inv, p) + float2(1.0f, 0.0f);\n"
+    "    o.b.zw = 0.0f;\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_vs_code_triangle[] =
+    "float3x2 transform_geometry;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, out struct output o)\n"
+    "{\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
+    "    o.b = float4(1.0, 0.0, 1.0, 1.0);\n"
+    "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_vs_code_curve[] =
+    "float3x2 transform_geometry;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float3 texcoord : TEXCOORD0, out struct output o)\n"
+    "{\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
+    "    o.b = float4(texcoord, 1.0);\n"
+    "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_ps_code[] =
+    "#define BRUSH_TYPE_SOLID    0\n"
+    "#define BRUSH_TYPE_LINEAR   1\n"
+    "#define BRUSH_TYPE_RADIAL   2\n"
+    "#define BRUSH_TYPE_BITMAP   3\n"
+    "#define BRUSH_TYPE_COUNT    4\n"
+    "\n"
+    "bool outline;\n"
+    "bool is_arc;\n"
+    "struct brush\n"
+    "{\n"
+    "    uint type;\n"
+    "    float opacity;\n"
+    "    float4 data[3];\n"
+    "} colour_brush, opacity_brush;\n"
+    "\n"
+    "SamplerState s0, s1;\n"
+    "Texture2D t0, t1;\n"
+    "Buffer<float4> b0, b1;\n"
+    "\n"
+    "struct input\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "};\n"
+    "\n"
+    "float4 sample_gradient(Buffer<float4> gradient, uint stop_count, float position)\n"
+    "{\n"
+    "    float4 c_low, c_high;\n"
+    "    float p_low, p_high;\n"
+    "    uint i;\n"
+    "\n"
+    "    p_low = gradient.Load(0).x;\n"
+    "    c_low = gradient.Load(1);\n"
+    "    c_high = c_low;\n"
+    "\n"
+    "    if (position < p_low)\n"
+    "        return c_low;\n"
+    "\n"
+    "    [loop]\n"
+    "    for (i = 1; i < stop_count; ++i)\n"
+    "    {\n"
+    "        p_high = gradient.Load(i * 2).x;\n"
+    "        c_high = gradient.Load(i * 2 + 1);\n"
+    "\n"
+    "        if (position >= p_low && position <= p_high)\n"
+    "            return lerp(c_low, c_high, (position - p_low) / (p_high - p_low));\n"
+    "\n"
+    "        p_low = p_high;\n"
+    "        c_low = c_high;\n"
+    "    }\n"
+    "\n"
+    "    return c_high;\n"
+    "}\n"
+    "\n"
+    "float4 brush_linear(struct brush brush, Buffer<float4> gradient, float2 position)\n"
+    "{\n"
+    "    float2 start, end, v_p, v_q;\n"
+    "    uint stop_count;\n"
+    "    float p;\n"
+    "\n"
+    "    start = brush.data[0].xy;\n"
+    "    end = brush.data[0].zw;\n"
+    "    stop_count = asuint(brush.data[1].x);\n"
+    "\n"
+    "    v_p = position - start;\n"
+    "    v_q = end - start;\n"
+    "    p = dot(v_q, v_p) / dot(v_q, v_q);\n"
+    "\n"
+    "    return sample_gradient(gradient, stop_count, p);\n"
+    "}\n"
+    "\n"
+    "float4 brush_radial(struct brush brush, Buffer<float4> gradient, float2 position)\n"
+    "{\n"
+    "    float2 centre, offset, ra, rb, v_p, v_q, r;\n"
+    "    float b, c, l, t;\n"
+    "    uint stop_count;\n"
+    "\n"
+    "    centre = brush.data[0].xy;\n"
+    "    offset = brush.data[0].zw;\n"
+    "    ra = brush.data[1].xy;\n"
+    "    rb = brush.data[1].zw;\n"
+    "    stop_count = asuint(brush.data[2].x);\n"
+    "\n"
+    "    /* Project onto ra, rb. */\n"
+    "    r = float2(dot(ra, ra), dot(rb, rb));\n"
+    "    v_p = position - (centre + offset);\n"
+    "    v_p = float2(dot(v_p, ra), dot(v_p, rb)) / r;\n"
+    "    v_q = float2(dot(offset, ra), dot(offset, rb)) / r;\n"
+    "\n"
+    "    /* ‖t·p̂ + q⃑‖ = 1\n"
+    "     * (t·p̂ + q⃑) · (t·p̂ + q⃑) = 1\n"
+    "     * t² + 2·(p̂·q⃑)·t + (q⃑·q⃑) = 1\n"
+    "     *\n"
+    "     * b = p̂·q⃑\n"
+    "     * c = q⃑·q⃑ - 1\n"
+    "     * t = -b + √(b² - c) */\n"
+    "    l = length(v_p);\n"
+    "    b = dot(v_p, v_q) / l;\n"
+    "    c = dot(v_q, v_q) - 1.0;\n"
+    "    t = -b + sqrt(b * b - c);\n"
+    "\n"
+    "    return sample_gradient(gradient, stop_count, l / t);\n"
+    "}\n"
+    "\n"
+    "float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)\n"
+    "{\n"
+    "    float3 transform[2];\n"
+    "    bool ignore_alpha;\n"
+    "    float2 texcoord;\n"
+    "    float4 colour;\n"
+    "\n"
+    "    transform[0] = brush.data[0].xyz;\n"
+    "    transform[1] = brush.data[1].xyz;\n"
+    "    ignore_alpha = asuint(brush.data[1].w);\n"
+    "\n"
+    "    texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;\n"
+    "    texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;\n"
+    "    colour = t.Sample(s, texcoord);\n"
+    "    if (ignore_alpha)\n"
+    "        colour.a = 1.0;\n"
+    "    return colour;\n"
+    "}\n"
+    "\n"
+    "float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, Buffer<float4> b, float2 position)\n"
+    "{\n"
+    "    if (brush.type == BRUSH_TYPE_SOLID)\n"
+    "        return brush.data[0] * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_LINEAR)\n"
+    "        return brush_linear(brush, b, position) * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_RADIAL)\n"
+    "        return brush_radial(brush, b, position) * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_BITMAP)\n"
+    "        return brush_bitmap(brush, t, s, position) * brush.opacity;\n"
+    "    return float4(0.0, 0.0, 0.0, brush.opacity);\n"
+    "}\n"
+    "\n"
+    "float4 main(struct input i) : SV_Target\n"
+    "{\n"
+    "    float4 colour;\n"
+    "\n"
+    "    colour = sample_brush(colour_brush, t0, s0, b0, i.p);\n"
+    "    if (opacity_brush.type < BRUSH_TYPE_COUNT)\n"
+    "        colour *= sample_brush(opacity_brush, t1, s1, b1, i.p).a;\n"
+    "\n"
+    "    if (outline)\n"
+    "    {\n"
+    "        float2 du, dv, df;\n"
+    "        float4 uv;\n"
+    "\n"
+    "        /* Evaluate the implicit form of the curve (u² - v = 0\n"
+    "         * for Béziers, u² + v² - 1 = 0 for arcs) in texture\n"
+    "         * space, using the screen-space partial derivatives\n"
+    "         * to convert the calculated distance to object space.\n"
+    "         *\n"
+    "         * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖\n"
+    "         *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)\n"
+    "         *\n"
+    "         * For Béziers:\n"
+    "         * f(x, y) = u(x, y)² - v(x, y)\n"
+    "         * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x\n"
+    "         * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y\n"
+    "         *\n"
+    "         * For arcs:\n"
+    "         * f(x, y) = u(x, y)² + v(x, y)² - 1\n"
+    "         * ∂f/∂x = 2u · ∂u/∂x + 2v · ∂v/∂x\n"
+    "         * ∂f/∂y = 2u · ∂u/∂y + 2v · ∂v/∂y */\n"
+    "        uv = i.b;\n"
+    "        du = float2(ddx(uv.x), ddy(uv.x));\n"
+    "        dv = float2(ddx(uv.y), ddy(uv.y));\n"
+    "\n"
+    "        if (!is_arc)\n"
+    "        {\n"
+    "            df = 2.0f * uv.x * du - dv;\n"
+    "\n"
+    "            clip(dot(df, uv.zw));\n"
+    "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x - uv.y));\n"
+    "        }\n"
+    "        else\n"
+    "        {\n"
+    "            df = 2.0f * uv.x * du + 2.0f * uv.y * dv;\n"
+    "\n"
+    "            clip(dot(df, uv.zw));\n"
+    "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x + uv.y * uv.y - 1.0f));\n"
+    "        }\n"
+    "    }\n"
+    "    else\n"
+    "    {\n"
+    "        /* Evaluate the implicit form of the curve in texture space.\n"
+    "         * \"i.b.z\" determines which side of the curve is shaded. */\n"
+    "        if (!is_arc)\n"
+    "        {\n"
+    "            clip((i.b.x * i.b.x - i.b.y) * i.b.z);\n"
+    "        }\n"
+    "        else\n"
+    "        {\n"
+    "            clip((i.b.x * i.b.x + i.b.y * i.b.y - 1.0) * i.b.z);\n"
+    "        }\n"
+    "    }\n"
+    "\n"
+    "    return colour;\n"
+    "}\n";
+static const struct shape_info
+{
+    enum d2d_shape_type shape_type;
+    const D3D11_INPUT_ELEMENT_DESC *il_desc;
+    unsigned int il_element_count;
+    const char *name;
+    const char *vs_code;
+    size_t vs_code_size;
+}
+shape_info[] =
+{
+    {D2D_SHAPE_TYPE_OUTLINE,        shape_il_desc_outline,        ARRAY_SIZE(shape_il_desc_outline),
+     "outline",                     shape_vs_code_outline,        sizeof(shape_vs_code_outline) - 1},
+    {D2D_SHAPE_TYPE_BEZIER_OUTLINE, shape_il_desc_curve_outline,  ARRAY_SIZE(shape_il_desc_curve_outline),
+     "bezier_outline",              shape_vs_code_bezier_outline, sizeof(shape_vs_code_bezier_outline) - 1},
+    {D2D_SHAPE_TYPE_ARC_OUTLINE,    shape_il_desc_curve_outline,  ARRAY_SIZE(shape_il_desc_curve_outline),
+     "arc_outline",                 shape_vs_code_arc_outline,    sizeof(shape_vs_code_arc_outline) - 1},
+    {D2D_SHAPE_TYPE_TRIANGLE,       shape_il_desc_triangle,       ARRAY_SIZE(shape_il_desc_triangle),
+     "triangle",                    shape_vs_code_triangle,       sizeof(shape_vs_code_triangle) - 1},
+    {D2D_SHAPE_TYPE_CURVE,          shape_il_desc_curve,          ARRAY_SIZE(shape_il_desc_curve),
+     "curve",                       shape_vs_code_curve,          sizeof(shape_vs_code_curve) - 1},
+};
+
 static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         struct d2d_device *device, IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
 {
@@ -3497,500 +4237,10 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     D3D11_RASTERIZER_DESC rs_desc;
     D3D11_BUFFER_DESC buffer_desc;
     struct d2d_factory *factory;
-    ID3D10Blob *compiled;
+    ID3D10Blob *precompiled;
     unsigned int i;
     HRESULT hr;
 
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_outline[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve_outline[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_triangle[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const char vs_code_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "/* The lines PₚᵣₑᵥP₀ and P₀Pₙₑₓₜ, both offset by ±½w, intersect each other at:\n"
-        " *\n"
-        " *   Pᵢ = P₀ ± w · ½q⃑ᵢ.\n"
-        " *\n"
-        " * Where:\n"
-        " *\n"
-        " *   q⃑ᵢ = q̂ₚᵣₑᵥ⊥ + tan(½θ) · -q̂ₚᵣₑᵥ\n"
-        " *   θ  = ∠PₚᵣₑᵥP₀Pₙₑₓₜ\n"
-        " *   q⃑ₚᵣₑᵥ = P₀ - Pₚᵣₑᵥ */\n"
-        "void main(float2 position : POSITION, float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i;\n"
-        "    float2x2 geom;\n"
-        "    float l;\n"
-        "\n"
-        "    o.stroke_transform = float2x2(transform_rtx.xy, transform_rty.xy) * stroke_width * 0.5f;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    /* tan(½θ) = sin(θ) / (1 + cos(θ))\n"
-        "     *         = (q̂ₚᵣₑᵥ⊥ · q̂ₙₑₓₜ) / (1 + (q̂ₚᵣₑᵥ · q̂ₙₑₓₜ)) */\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "\n"
-        "    o.b = float4(0.0, 0.0, 0.0, 0.0);\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    /*     ⎡p0.x p0.y 1⎤
-     * A = ⎢p1.x p1.y 1⎥
-     *     ⎣p2.x p2.y 1⎦
-     *
-     *     ⎡0 0⎤
-     * B = ⎢½ 0⎥
-     *     ⎣1 1⎦
-     *
-     * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
-     *      ⎣p2.x-p0.x p2.y-p0.y⎦
-     *
-     * B' = ⎡½ 0⎤
-     *      ⎣1 1⎦
-     *
-     * A'T = B'
-     * T = A'⁻¹B'
-     */
-    static const char vs_code_bezier_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
-        "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i, p;\n"
-        "    float2x2 geom, rt;\n"
-        "    float l;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
-        "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
-        "\n"
-        "    p = mul(geom, position);\n"
-        "    p0 = mul(geom, p0);\n"
-        "    p1 = mul(geom, p1);\n"
-        "    p2 = mul(geom, p2);\n"
-        "\n"
-        "    p -= p0;\n"
-        "    p1 -= p0;\n"
-        "    p2 -= p0;\n"
-        "\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "    p += 0.5f * stroke_width * q_i;\n"
-        "\n"
-        "    v_p = mul(rt, p2);\n"
-        "    v_p = normalize(float2(-v_p.y, v_p.x));\n"
-        "    if (abs(dot(mul(rt, p1), v_p)) < 1.0f)\n"
-        "    {\n"
-        "        o.b.xzw = float3(0.0f, 0.0f, 0.0f);\n"
-        "        o.b.y = dot(mul(rt, p), v_p);\n"
-        "    }\n"
-        "    else\n"
-        "    {\n"
-        "        o.b.zw = sign(dot(mul(rt, p1), v_p)) * v_p;\n"
-        "        v_p = -float2(-p.y, p.x) / dot(float2(-p1.y, p1.x), p2);\n"
-        "        o.b.x = dot(v_p, p1 - 0.5f * p2);\n"
-        "        o.b.y = dot(v_p, p1);\n"
-        "    }\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    /*     ⎡p0.x p0.y 1⎤
-     * A = ⎢p1.x p1.y 1⎥
-     *     ⎣p2.x p2.y 1⎦
-     *
-     *     ⎡1 0⎤
-     * B = ⎢1 1⎥
-     *     ⎣0 1⎦
-     *
-     * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
-     *      ⎣p2.x-p0.x p2.y-p0.y⎦
-     *
-     * B' = ⎡ 0 1⎤
-     *      ⎣-1 1⎦
-     *
-     * A'T = B'
-     * T = A'⁻¹B' = (B'⁻¹A')⁻¹
-     */
-    static const char vs_code_arc_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
-        "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i, p;\n"
-        "    float2x2 geom, rt, p_inv;\n"
-        "    float l;\n"
-        "    float a;\n"
-        "    float2 bc;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
-        "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
-        "\n"
-        "    p = mul(geom, position);\n"
-        "    p0 = mul(geom, p0);\n"
-        "    p1 = mul(geom, p1);\n"
-        "    p2 = mul(geom, p2);\n"
-        "\n"
-        "    p -= p0;\n"
-        "    p1 -= p0;\n"
-        "    p2 -= p0;\n"
-        "\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "    p += 0.5f * stroke_width * q_i;\n"
-        "\n"
-        "    p_inv = float2x2(p1.y, -p1.x, p2.y - p1.y, p1.x - p2.x) / (p1.x * p2.y - p2.x * p1.y);\n"
-        "    o.b.xy = mul(p_inv, p) + float2(1.0f, 0.0f);\n"
-        "    o.b.zw = 0.0f;\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char vs_code_triangle[] =
-        "float3x2 transform_geometry;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, out struct output o)\n"
-        "{\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
-        "    o.b = float4(1.0, 0.0, 1.0, 1.0);\n"
-        "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char vs_code_curve[] =
-        "float3x2 transform_geometry;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float3 texcoord : TEXCOORD0, out struct output o)\n"
-        "{\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
-        "    o.b = float4(texcoord, 1.0);\n"
-        "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char ps_code[] =
-        "#define BRUSH_TYPE_SOLID    0\n"
-        "#define BRUSH_TYPE_LINEAR   1\n"
-        "#define BRUSH_TYPE_RADIAL   2\n"
-        "#define BRUSH_TYPE_BITMAP   3\n"
-        "#define BRUSH_TYPE_COUNT    4\n"
-        "\n"
-        "bool outline;\n"
-        "bool is_arc;\n"
-        "struct brush\n"
-        "{\n"
-        "    uint type;\n"
-        "    float opacity;\n"
-        "    float4 data[3];\n"
-        "} colour_brush, opacity_brush;\n"
-        "\n"
-        "SamplerState s0, s1;\n"
-        "Texture2D t0, t1;\n"
-        "Buffer<float4> b0, b1;\n"
-        "\n"
-        "struct input\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "};\n"
-        "\n"
-        "float4 sample_gradient(Buffer<float4> gradient, uint stop_count, float position)\n"
-        "{\n"
-        "    float4 c_low, c_high;\n"
-        "    float p_low, p_high;\n"
-        "    uint i;\n"
-        "\n"
-        "    p_low = gradient.Load(0).x;\n"
-        "    c_low = gradient.Load(1);\n"
-        "    c_high = c_low;\n"
-        "\n"
-        "    if (position < p_low)\n"
-        "        return c_low;\n"
-        "\n"
-        "    [loop]\n"
-        "    for (i = 1; i < stop_count; ++i)\n"
-        "    {\n"
-        "        p_high = gradient.Load(i * 2).x;\n"
-        "        c_high = gradient.Load(i * 2 + 1);\n"
-        "\n"
-        "        if (position >= p_low && position <= p_high)\n"
-        "            return lerp(c_low, c_high, (position - p_low) / (p_high - p_low));\n"
-        "\n"
-        "        p_low = p_high;\n"
-        "        c_low = c_high;\n"
-        "    }\n"
-        "\n"
-        "    return c_high;\n"
-        "}\n"
-        "\n"
-        "float4 brush_linear(struct brush brush, Buffer<float4> gradient, float2 position)\n"
-        "{\n"
-        "    float2 start, end, v_p, v_q;\n"
-        "    uint stop_count;\n"
-        "    float p;\n"
-        "\n"
-        "    start = brush.data[0].xy;\n"
-        "    end = brush.data[0].zw;\n"
-        "    stop_count = asuint(brush.data[1].x);\n"
-        "\n"
-        "    v_p = position - start;\n"
-        "    v_q = end - start;\n"
-        "    p = dot(v_q, v_p) / dot(v_q, v_q);\n"
-        "\n"
-        "    return sample_gradient(gradient, stop_count, p);\n"
-        "}\n"
-        "\n"
-        "float4 brush_radial(struct brush brush, Buffer<float4> gradient, float2 position)\n"
-        "{\n"
-        "    float2 centre, offset, ra, rb, v_p, v_q, r;\n"
-        "    float b, c, l, t;\n"
-        "    uint stop_count;\n"
-        "\n"
-        "    centre = brush.data[0].xy;\n"
-        "    offset = brush.data[0].zw;\n"
-        "    ra = brush.data[1].xy;\n"
-        "    rb = brush.data[1].zw;\n"
-        "    stop_count = asuint(brush.data[2].x);\n"
-        "\n"
-        "    /* Project onto ra, rb. */\n"
-        "    r = float2(dot(ra, ra), dot(rb, rb));\n"
-        "    v_p = position - (centre + offset);\n"
-        "    v_p = float2(dot(v_p, ra), dot(v_p, rb)) / r;\n"
-        "    v_q = float2(dot(offset, ra), dot(offset, rb)) / r;\n"
-        "\n"
-        "    /* ‖t·p̂ + q⃑‖ = 1\n"
-        "     * (t·p̂ + q⃑) · (t·p̂ + q⃑) = 1\n"
-        "     * t² + 2·(p̂·q⃑)·t + (q⃑·q⃑) = 1\n"
-        "     *\n"
-        "     * b = p̂·q⃑\n"
-        "     * c = q⃑·q⃑ - 1\n"
-        "     * t = -b + √(b² - c) */\n"
-        "    l = length(v_p);\n"
-        "    b = dot(v_p, v_q) / l;\n"
-        "    c = dot(v_q, v_q) - 1.0;\n"
-        "    t = -b + sqrt(b * b - c);\n"
-        "\n"
-        "    return sample_gradient(gradient, stop_count, l / t);\n"
-        "}\n"
-        "\n"
-        "float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)\n"
-        "{\n"
-        "    float3 transform[2];\n"
-        "    bool ignore_alpha;\n"
-        "    float2 texcoord;\n"
-        "    float4 colour;\n"
-        "\n"
-        "    transform[0] = brush.data[0].xyz;\n"
-        "    transform[1] = brush.data[1].xyz;\n"
-        "    ignore_alpha = asuint(brush.data[1].w);\n"
-        "\n"
-        "    texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;\n"
-        "    texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;\n"
-        "    colour = t.Sample(s, texcoord);\n"
-        "    if (ignore_alpha)\n"
-        "        colour.a = 1.0;\n"
-        "    return colour;\n"
-        "}\n"
-        "\n"
-        "float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, Buffer<float4> b, float2 position)\n"
-        "{\n"
-        "    if (brush.type == BRUSH_TYPE_SOLID)\n"
-        "        return brush.data[0] * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_LINEAR)\n"
-        "        return brush_linear(brush, b, position) * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_RADIAL)\n"
-        "        return brush_radial(brush, b, position) * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_BITMAP)\n"
-        "        return brush_bitmap(brush, t, s, position) * brush.opacity;\n"
-        "    return float4(0.0, 0.0, 0.0, brush.opacity);\n"
-        "}\n"
-        "\n"
-        "float4 main(struct input i) : SV_Target\n"
-        "{\n"
-        "    float4 colour;\n"
-        "\n"
-        "    colour = sample_brush(colour_brush, t0, s0, b0, i.p);\n"
-        "    if (opacity_brush.type < BRUSH_TYPE_COUNT)\n"
-        "        colour *= sample_brush(opacity_brush, t1, s1, b1, i.p).a;\n"
-        "\n"
-        "    if (outline)\n"
-        "    {\n"
-        "        float2 du, dv, df;\n"
-        "        float4 uv;\n"
-        "\n"
-        "        /* Evaluate the implicit form of the curve (u² - v = 0\n"
-        "         * for Béziers, u² + v² - 1 = 0 for arcs) in texture\n"
-        "         * space, using the screen-space partial derivatives\n"
-        "         * to convert the calculated distance to object space.\n"
-        "         *\n"
-        "         * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖\n"
-        "         *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)\n"
-        "         *\n"
-        "         * For Béziers:\n"
-        "         * f(x, y) = u(x, y)² - v(x, y)\n"
-        "         * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x\n"
-        "         * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y\n"
-        "         *\n"
-        "         * For arcs:\n"
-        "         * f(x, y) = u(x, y)² + v(x, y)² - 1\n"
-        "         * ∂f/∂x = 2u · ∂u/∂x + 2v · ∂v/∂x\n"
-        "         * ∂f/∂y = 2u · ∂u/∂y + 2v · ∂v/∂y */\n"
-        "        uv = i.b;\n"
-        "        du = float2(ddx(uv.x), ddy(uv.x));\n"
-        "        dv = float2(ddx(uv.y), ddy(uv.y));\n"
-        "\n"
-        "        if (!is_arc)\n"
-        "        {\n"
-        "            df = 2.0f * uv.x * du - dv;\n"
-        "\n"
-        "            clip(dot(df, uv.zw));\n"
-        "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x - uv.y));\n"
-        "        }\n"
-        "        else\n"
-        "        {\n"
-        "            df = 2.0f * uv.x * du + 2.0f * uv.y * dv;\n"
-        "\n"
-        "            clip(dot(df, uv.zw));\n"
-        "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x + uv.y * uv.y - 1.0f));\n"
-        "        }\n"
-        "    }\n"
-        "    else\n"
-        "    {\n"
-        "        /* Evaluate the implicit form of the curve in texture space.\n"
-        "         * \"i.b.z\" determines which side of the curve is shaded. */\n"
-        "        if (!is_arc)\n"
-        "        {\n"
-        "            clip((i.b.x * i.b.x - i.b.y) * i.b.z);\n"
-        "        }\n"
-        "        else\n"
-        "        {\n"
-        "            clip((i.b.x * i.b.x + i.b.y * i.b.y - 1.0) * i.b.z);\n"
-        "        }\n"
-        "    }\n"
-        "\n"
-        "    return colour;\n"
-        "}\n";
-    static const struct shape_info
-    {
-        enum d2d_shape_type shape_type;
-        const D3D11_INPUT_ELEMENT_DESC *il_desc;
-        unsigned int il_element_count;
-        const char *name;
-        const char *vs_code;
-        size_t vs_code_size;
-    }
-    shape_info[] =
-    {
-        {D2D_SHAPE_TYPE_OUTLINE,        il_desc_outline,        ARRAY_SIZE(il_desc_outline),
-         "outline",                     vs_code_outline,        sizeof(vs_code_outline) - 1},
-        {D2D_SHAPE_TYPE_BEZIER_OUTLINE, il_desc_curve_outline,  ARRAY_SIZE(il_desc_curve_outline),
-         "bezier_outline",              vs_code_bezier_outline, sizeof(vs_code_bezier_outline) - 1},
-        {D2D_SHAPE_TYPE_ARC_OUTLINE,    il_desc_curve_outline,  ARRAY_SIZE(il_desc_curve_outline),
-         "arc_outline",                 vs_code_arc_outline,    sizeof(vs_code_arc_outline) - 1},
-        {D2D_SHAPE_TYPE_TRIANGLE,       il_desc_triangle,       ARRAY_SIZE(il_desc_triangle),
-         "triangle",                    vs_code_triangle,       sizeof(vs_code_triangle) - 1},
-        {D2D_SHAPE_TYPE_CURVE,          il_desc_curve,          ARRAY_SIZE(il_desc_curve),
-         "curve",                       vs_code_curve,          sizeof(vs_code_curve) - 1},
-    };
     static const struct
     {
         float x, y;
@@ -4040,32 +4290,23 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     {
         const struct shape_info *si = &shape_info[i];
 
-        if (FAILED(hr = D3DCompile(si->vs_code, si->vs_code_size, si->name, NULL, NULL,
-                "main", "vs_4_0", 0, 0, &compiled, NULL)))
-        {
-            WARN("Failed to compile shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            goto err;
-        }
-
+        assert(device->precompiled_shape_vs[i]);
+        precompiled = device->precompiled_shape_vs[i];
         if (FAILED(hr = ID3D11Device1_CreateInputLayout(render_target->d3d_device, si->il_desc, si->il_element_count,
-                ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+                ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
                 &render_target->shape_resources[si->shape_type].il)))
         {
             WARN("Failed to create input layout for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            ID3D10Blob_Release(compiled);
             goto err;
         }
 
         if (FAILED(hr = ID3D11Device1_CreateVertexShader(render_target->d3d_device,
-                ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+                ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
                 NULL, &render_target->shape_resources[si->shape_type].vs)))
         {
             WARN("Failed to create vertex shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            ID3D10Blob_Release(compiled);
             goto err;
         }
-
-        ID3D10Blob_Release(compiled);
     }
 
     buffer_desc.ByteWidth = sizeof(struct d2d_vs_cb);
@@ -4081,22 +4322,15 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         goto err;
     }
 
-    if (FAILED(hr = D3DCompile(ps_code, sizeof(ps_code) - 1, "ps", NULL, NULL, "main", "ps_4_0", 0, 0, &compiled, NULL)))
-    {
-        WARN("Failed to compile the pixel shader, hr %#lx.\n", hr);
-        goto err;
-    }
-
+    assert(device->precompiled_shape_ps);
+    precompiled = device->precompiled_shape_ps;
     if (FAILED(hr = ID3D11Device1_CreatePixelShader(render_target->d3d_device,
-            ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+            ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
             NULL, &render_target->ps)))
     {
         WARN("Failed to create pixel shader, hr %#lx.\n", hr);
-        ID3D10Blob_Release(compiled);
         goto err;
     }
-
-    ID3D10Blob_Release(compiled);
 
     buffer_desc.ByteWidth = sizeof(struct d2d_ps_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -4339,6 +4573,13 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device6 *iface)
         IDXGIDevice_Release(device->dxgi_device);
         ID2D1Factory1_Release(device->factory);
         d2d_device_indexed_objects_clear(&device->shaders);
+        for (unsigned int i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
+        {
+            if (device->precompiled_shape_vs[i])
+                ID3D10Blob_Release(device->precompiled_shape_vs[i]);
+        }
+        if (device->precompiled_shape_ps)
+            ID3D10Blob_Release(device->precompiled_shape_ps);
         free(device);
     }
 
@@ -4563,9 +4804,12 @@ struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
     return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device6_iface);
 }
 
-void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+HRESULT d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
     bool allow_get_dxgi_device)
 {
+    HRESULT hr;
+    ID3D10Blob *compiled;
+
     device->ID2D1Device6_iface.lpVtbl = &d2d_device_vtbl;
     device->refcount = 1;
     device->factory = factory;
@@ -4573,6 +4817,29 @@ void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDev
     device->dxgi_device = dxgi_device;
     IDXGIDevice_AddRef(device->dxgi_device);
     device->allow_get_dxgi_device = allow_get_dxgi_device;
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(shape_info); ++i)
+    {
+        const struct shape_info *si = &shape_info[i];
+
+        if (FAILED(hr = D3DCompile(si->vs_code, si->vs_code_size, si->name, NULL, NULL,
+                "main", "vs_4_0", 0, 0, &compiled, NULL)))
+        {
+            WARN("Failed to compile shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
+            return hr;
+        }
+        device->precompiled_shape_vs[i] = compiled;
+    }
+
+    if (FAILED(hr = D3DCompile(shape_ps_code, sizeof(shape_ps_code) - 1, "ps", NULL, NULL,
+            "main", "ps_4_0", 0, 0, &compiled, NULL)))
+    {
+        WARN("Failed to compile the pixel shader, hr %#lx.\n", hr);
+        return hr;
+    }
+    device->precompiled_shape_ps = compiled;
+
+    return S_OK;
 }
 
 HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects,

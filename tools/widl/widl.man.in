@@ -107,6 +107,12 @@ binary resource file containing the script is generated instead.
 Regenerate the dlldata file from scratch using the specified proxy
 names. The default output filename is \fBdlldata.c\fR.
 .PP
+.B Metadata file options:
+.IP "\fB--winmd\fR"
+Generate a Windows Runtime Metadata file. This implies the
+\fB--winrt\fR mode. The default output filename is
+\fIinfile\fB.winmd\fR.
+.PP
 .B Preprocessor options:
 .IP "\fB-I \fIpath\fR"
 Add a directory to the include search path. Multiple include

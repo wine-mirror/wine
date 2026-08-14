@@ -19,10 +19,7 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
 import "inspectable.idl";
 import "asyncinfo.idl";
@@ -30,8 +27,14 @@ import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.system.idl";
+import "windows.globalization.idl";
+import "windows.system.userprofile.idl";
 
-#define DO_NO_IMPORTS
-#define _WINDOWS_GLOBALIZATION
-#include "windows.globalization.idl"
-#include "windows.system.userprofile.idl"
+namespace Windows.System.UserProfile {
+    runtimeclass GlobalizationPreferences;
+}
+namespace Windows.Globalization {
+    runtimeclass Language;
+    runtimeclass GeographicRegion;
+    runtimeclass ApplicationLanguages;
+}

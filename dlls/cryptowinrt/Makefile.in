@@ -1,10 +1,10 @@
 MODULE = cryptowinrt.dll
 IMPORTS = combase bcrypt uuid
+DELAYIMPORTS = crypt32
 
 SOURCES = \
 	async.c \
-	buffer.c \
+	async_private.idl \
 	classes.idl \
 	credentials.c \
-	main.c \
-	provider.idl
+	main.c

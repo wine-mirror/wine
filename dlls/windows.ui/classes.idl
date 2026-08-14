@@ -19,10 +19,7 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
 import "inspectable.idl";
 import "asyncinfo.idl";
@@ -33,9 +30,18 @@ import "windows.system.idl";
 import "windows.devices.enumeration.idl";
 import "windows.ui.idl";
 import "windows.devices.input.idl";
+import "windows.ui.core.idl";
+import "windows.ui.input.idl";
+import "windows.ui.windowmanagement.idl";
+import "windows.ui.viewmanagement.idl";
 
-#define DO_NO_IMPORTS
-#include "windows.ui.core.idl"
-#include "windows.ui.input.idl"
-#include "windows.ui.viewmanagement.idl"
-#include "windows.ui.startscreen.idl"
+namespace Windows.UI.Core {
+    runtimeclass CoreWindow;
+}
+
+namespace Windows.UI.ViewManagement {
+    runtimeclass AccessibilitySettings;
+    runtimeclass UISettings;
+    runtimeclass UIViewSettings;
+    runtimeclass InputPane;
+}

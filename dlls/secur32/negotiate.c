@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "sspi.h"
@@ -143,7 +142,7 @@ static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
     UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
     void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
-    NTSTATUS ret = SEC_E_NO_CREDENTIALS;
+    NTSTATUS ret;
     struct sec_handle *cred;
     SECPKG_FUNCTION_TABLE *package;
     SECPKG_USER_FUNCTION_TABLE *user;
@@ -153,6 +152,7 @@ static NTSTATUS NTAPI nego_SpAcquireCredentialsHandle(
 
     if (!(cred = calloc( 1, sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
 
+    ret = SEC_E_NO_CREDENTIALS;
     if ((package = lsa_find_package( "Kerberos", &user )))
     {
         ret = package->SpAcquireCredentialsHandle( principal_us, credential_use, logon_id, auth_data,
@@ -238,8 +238,14 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
+            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+        else
+        {
+            ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
         }
     }
 
@@ -251,6 +257,7 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
@@ -294,8 +301,14 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
+            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+        else
+        {
+            ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
         }
     }
 
@@ -308,6 +321,7 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }

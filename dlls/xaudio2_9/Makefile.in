@@ -4,12 +4,12 @@ IMPORTS   = $(FAUDIO_PE_LIBS) advapi32 ole32 user32 uuid
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 PARENTSRC = ../xaudio2_7
 
+VER_PRODUCTVERSION = 10,0,19041,1
+
 SOURCES = \
-	version.rc \
 	x3daudio.c \
 	xapo.c \
 	xapofx.c \
 	xaudio_allocator.c \
 	xaudio_classes.idl \
-	xaudio_dll.c \
-	xbox_xa2.c
+	xaudio_dll.c

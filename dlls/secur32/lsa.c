@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -799,6 +798,20 @@ static SECURITY_STATUS WINAPI lsa_VerifySignature(CtxtHandle *context, SecBuffer
     return lsa_ctx->package->user_api->VerifySignature(lsa_ctx->handle, message, message_seq_no, quality_of_protection);
 }
 
+static SECURITY_STATUS WINAPI lsa_QuerySecurityContextToken(CtxtHandle *context, HANDLE *token)
+{
+    HANDLE primary;
+    BOOL r;
+
+    FIXME("%p %p): stub\n", context, token);
+
+    if (!OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &primary))
+        return GetLastError();
+    r = DuplicateToken(primary, SecurityImpersonation, token);
+    CloseHandle(primary);
+    return r ? SEC_E_OK : GetLastError();
+}
+
 static SECURITY_STATUS WINAPI lsa_EncryptMessage(CtxtHandle *context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no)
 {
@@ -859,7 +872,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     NULL, /* ImportSecurityContextW */
     NULL, /* AddCredentialsW */
     NULL, /* Reserved8 */
-    NULL, /* QuerySecurityContextToken */
+    lsa_QuerySecurityContextToken,
     lsa_EncryptMessage,
     lsa_DecryptMessage,
     NULL, /* SetContextAttributesW */

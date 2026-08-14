@@ -25,7 +25,6 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -123,7 +122,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH DiscardVirtualMemory( void *addr, SIZE_T size )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
 {
-    NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, 0 );
+    NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, NULL );
 
     if (status == STATUS_NOT_MAPPED_DATA) status = STATUS_SUCCESS;
     return set_ntstatus( status );
@@ -164,8 +163,8 @@ static void fill_system_info( SYSTEM_INFO *si, const SYSTEM_BASIC_INFORMATION *b
     si->lpMinimumApplicationAddress = basic_info->LowestUserAddress;
     si->lpMaximumApplicationAddress = basic_info->HighestUserAddress;
     si->dwActiveProcessorMask       = basic_info->ActiveProcessorsAffinityMask;
-    si->dwNumberOfProcessors        = basic_info->NumberOfProcessors;
     si->dwAllocationGranularity     = basic_info->AllocationGranularity;
+    si->dwNumberOfProcessors        = cpu_info->MaximumProcessors;
     si->wProcessorLevel             = cpu_info->ProcessorLevel;
     si->wProcessorRevision          = cpu_info->ProcessorRevision;
 
@@ -209,18 +208,16 @@ void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
 {
     SYSTEM_BASIC_INFORMATION basic_info;
     SYSTEM_CPU_INFORMATION cpu_info;
+    USHORT current_machine, native_machine;
 
-    if (is_wow64)
+    RtlWow64GetProcessMachines( 0, &current_machine, &native_machine );
+
+    if (!is_wow64 || native_machine != IMAGE_FILE_MACHINE_AMD64)
     {
-        USHORT current_machine, native_machine;
-
-        RtlWow64GetProcessMachines( 0, &current_machine, &native_machine );
-        if (native_machine != IMAGE_FILE_MACHINE_AMD64)
-        {
-            GetSystemInfo( si );
+        GetSystemInfo( si );
+        if (is_wow64 && native_machine != IMAGE_FILE_MACHINE_AMD64)
             si->wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
-            return;
-        }
+        return;
     }
 
     if (!set_ntstatus( RtlGetNativeSystemInformation( SystemBasicInformation,
@@ -575,35 +572,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH VirtualProtectEx( HANDLE process, void *addr, SIZE
 /***********************************************************************
  *             VirtualProtectFromApp   (kernelbase.@)
  */
- BOOL WINAPI DECLSPEC_HOTPATCH VirtualProtectFromApp( void *addr, SIZE_T size,
-    ULONG new_prot, ULONG *old_prot )
+BOOL WINAPI VirtualProtectFromApp( void *addr, SIZE_T size,
+                                   ULONG new_prot, ULONG *old_prot )
 {
-    DWORD old_prot_dw;
-    BOOL success;
-
-    /* This must be non-null */
-    if (!old_prot)
-    {
-        ERR("VirtualProtectFromApp called with null old_prot, failing\n");
-        set_ntstatus(STATUS_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* These are not allowed */
-    if (new_prot & PAGE_EXECUTE_READWRITE || new_prot & PAGE_EXECUTE_WRITECOPY)
-    {
-        ERR("VirtualProtectFromApp called with invalid new_prot, failing\n");
-        set_ntstatus(STATUS_INVALID_PARAMETER);
-        return FALSE;
-    }
-        
-    
-    success = VirtualProtect(addr, size, new_prot, &old_prot_dw);
-    *old_prot = old_prot_dw;
-
-    return success;
+    /* Contrary to the documentation, VirtualProtectFromApp allows write+execute on desktop. */
+    return VirtualProtect( addr, size, new_prot, old_prot );
 }
-
 
 /***********************************************************************
  *             VirtualQuery   (kernelbase.@)
@@ -806,6 +780,58 @@ BOOL WINAPI HeapQueryInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class
 BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size )
 {
     return set_ntstatus( RtlSetHeapInformation( heap, infoclass, info, size ));
+}
+
+
+/***********************************************************************
+ *           HeapSummary   (kernelbase.@)
+ */
+BOOL WINAPI HeapSummary( HANDLE heap, DWORD flags, LPHEAP_SUMMARY heap_summary )
+{
+    SIZE_T allocated = 0;
+    SIZE_T committed = 0;
+    SIZE_T uncommitted = 0;
+    PROCESS_HEAP_ENTRY entry;
+
+    if (heap_summary->cb != sizeof(*heap_summary))
+    {
+        /* needs to be set to the exact size by the caller */
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    memset( &entry, 0, sizeof(entry) );
+
+    if (!HeapLock( heap ))
+        return FALSE;
+
+    while (HeapWalk( heap, &entry ))
+    {
+        if (entry.wFlags & PROCESS_HEAP_ENTRY_BUSY)
+        {
+            allocated += entry.cbData;
+        }
+        else if (entry.wFlags & PROCESS_HEAP_REGION)
+        {
+            committed += entry.Region.dwCommittedSize;
+            uncommitted += entry.Region.dwUnCommittedSize;
+        }
+    }
+
+    if (GetLastError() != ERROR_NO_MORE_ITEMS)
+    {
+        /* HeapWalk unsuccessful */
+        HeapUnlock( heap );
+        return FALSE;
+    }
+
+    HeapUnlock( heap );
+    heap_summary->cbAllocated = allocated;
+    heap_summary->cbCommitted = committed;
+    heap_summary->cbReserved = committed + uncommitted;
+    heap_summary->cbMaxReserve = heap_summary->cbReserved;
+
+    return TRUE;
 }
 
 

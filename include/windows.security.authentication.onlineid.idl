@@ -37,6 +37,7 @@ namespace Windows.Security.Authentication.OnlineId {
     interface IOnlineIdSystemIdentity;
     interface IOnlineIdSystemTicketResult;
 
+    runtimeclass OnlineIdServiceTicket;
     runtimeclass OnlineIdServiceTicketRequest;
     runtimeclass OnlineIdSystemAuthenticator;
     runtimeclass OnlineIdSystemAuthenticatorForUser;
@@ -59,6 +60,18 @@ namespace Windows.Security.Authentication.OnlineId {
         Error                  = 1,
         ServiceConnectionError = 2,
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdServiceTicket),
+        uuid(c95c547f-d781-4a94-acb8-c59874238c26)
+    ]
+    interface IOnlineIdServiceTicket : IInspectable
+    {
+        [propget] HRESULT Value([out, retval] HSTRING *value);
+        [propget] HRESULT Request([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest **value);
+        [propget] HRESULT ErrorCode([out, retval] INT32 *value);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -117,6 +130,17 @@ namespace Windows.Security.Authentication.OnlineId {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdSystemIdentity),
+        uuid(743cd20d-b6ca-434d-8124-53ea12685307)
+    ]
+    interface IOnlineIdSystemIdentity : IInspectable
+    {
+        [propget] HRESULT Ticket([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdServiceTicket **value);
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
         exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketResult),
         uuid(db0a5ff8-b098-4acd-9d13-9e640652b5b6)
     ]
@@ -125,6 +149,15 @@ namespace Windows.Security.Authentication.OnlineId {
         [propget] HRESULT Identity([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemIdentity **value);
         [propget] HRESULT Status([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketStatus *value);
         [propget] HRESULT ExtendedError([out, retval] HRESULT *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass OnlineIdServiceTicket
+    {
+        [default] interface Windows.Security.Authentication.OnlineId.IOnlineIdServiceTicket;
     }
 
     [

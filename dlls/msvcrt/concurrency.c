@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef exception cexception;
 CREATE_EXCEPTION_OBJECT(cexception)
-DEFINE_CXX_TYPE_INFO(cexception)
+DEFINE_CXX_TYPE(cexception, cexception_dtor)
 
 static LONG context_id = -1;
 static LONG scheduler_id = -1;
@@ -702,36 +702,36 @@ HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
     return this->hr;
 }
 
-DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
-        ".?AVimproper_lock@Concurrency@@")
-DEFINE_RTTI_DATA1(improper_scheduler_attach, 0, &cexception_rtti_base_descriptor,
-        ".?AVimproper_scheduler_attach@Concurrency@@")
-DEFINE_RTTI_DATA1(improper_scheduler_detach, 0, &cexception_rtti_base_descriptor,
-        ".?AVimproper_scheduler_detach@Concurrency@@")
-DEFINE_RTTI_DATA1(invalid_multiple_scheduling, 0, &cexception_rtti_base_descriptor,
-        ".?AVinvalid_multiple_scheduling@Concurrency@@")
-DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
-        ".?AVinvalid_scheduler_policy_key@Concurrency@@")
-DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &cexception_rtti_base_descriptor,
-        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@")
-DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &cexception_rtti_base_descriptor,
-        ".?AVinvalid_scheduler_policy_value@Concurrency@@")
-DEFINE_RTTI_DATA1(missing_wait, 0, &cexception_rtti_base_descriptor,
-        ".?AVmissing_wait@Concurrency@@")
-DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
-        ".?AVscheduler_resource_allocation_error@Concurrency@@")
+DEFINE_RTTI_DATA(improper_lock, 0,
+        ".?AVimproper_lock@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(improper_scheduler_attach, 0,
+        ".?AVimproper_scheduler_attach@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(improper_scheduler_detach, 0,
+        ".?AVimproper_scheduler_detach@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(invalid_multiple_scheduling, 0,
+        ".?AVinvalid_multiple_scheduling@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(invalid_scheduler_policy_key, 0,
+        ".?AVinvalid_scheduler_policy_key@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(invalid_scheduler_policy_thread_specification, 0,
+        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(invalid_scheduler_policy_value, 0,
+        ".?AVinvalid_scheduler_policy_value@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(missing_wait, 0,
+        ".?AVmissing_wait@Concurrency@@", cexception_rtti_base_descriptor)
+DEFINE_RTTI_DATA(scheduler_resource_allocation_error, 0,
+        ".?AVscheduler_resource_allocation_error@Concurrency@@", cexception_rtti_base_descriptor)
 
-DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(improper_scheduler_attach, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(improper_scheduler_detach, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_multiple_scheduling, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
-DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(improper_lock, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_attach, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(improper_scheduler_detach, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_multiple_scheduling, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_key, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_thread_specification, cexception_dtor, cexception_cxx_type_info)
+DEFINE_CXX_TYPE(invalid_scheduler_policy_value, cexception_dtor, cexception_cxx_type_info)
 #if _MSVCR_VER >= 120
-DEFINE_CXX_DATA1(missing_wait, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(missing_wait, cexception_dtor, cexception_cxx_type_info)
 #endif
-DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_TYPE(scheduler_resource_allocation_error, cexception_dtor, cexception_cxx_type_info)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,
@@ -3726,15 +3726,15 @@ DEFINE_VTBL_WRAPPER(48);
 
 #endif
 
-DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
-DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")
-DEFINE_RTTI_DATA2(ExternalContextBase, 0, &ContextBase_rtti_base_descriptor,
-        &Context_rtti_base_descriptor, ".?AVExternalContextBase@details@Concurrency@@")
-DEFINE_RTTI_DATA0(Scheduler, 0, ".?AVScheduler@Concurrency@@")
-DEFINE_RTTI_DATA1(SchedulerBase, 0, &Scheduler_rtti_base_descriptor, ".?AVSchedulerBase@details@Concurrency@@")
-DEFINE_RTTI_DATA2(ThreadScheduler, 0, &SchedulerBase_rtti_base_descriptor,
-        &Scheduler_rtti_base_descriptor, ".?AVThreadScheduler@details@Concurrency@@")
-DEFINE_RTTI_DATA0(_Timer, 0, ".?AV_Timer@details@Concurrency@@");
+DEFINE_RTTI_DATA(Context, 0, ".?AVContext@Concurrency@@")
+DEFINE_RTTI_DATA(ContextBase, 0, ".?AVContextBase@details@Concurrency@@", Context_rtti_base_descriptor)
+DEFINE_RTTI_DATA(ExternalContextBase, 0, ".?AVExternalContextBase@details@Concurrency@@",
+        ContextBase_rtti_base_descriptor, Context_rtti_base_descriptor)
+DEFINE_RTTI_DATA(Scheduler, 0, ".?AVScheduler@Concurrency@@")
+DEFINE_RTTI_DATA(SchedulerBase, 0, ".?AVSchedulerBase@details@Concurrency@@", Scheduler_rtti_base_descriptor)
+DEFINE_RTTI_DATA(ThreadScheduler, 0, ".?AVThreadScheduler@details@Concurrency@@",
+        SchedulerBase_rtti_base_descriptor, Scheduler_rtti_base_descriptor)
+DEFINE_RTTI_DATA(_Timer, 0, ".?AV_Timer@details@Concurrency@@");
 
 __ASM_BLOCK_BEGIN(concurrency_vtables)
     __ASM_VTABLE(ExternalContextBase,
@@ -3783,38 +3783,36 @@ __ASM_BLOCK_END
 
 void msvcrt_init_concurrency(void *base)
 {
-#ifdef RTTI_USE_RVA
-    init_cexception_rtti(base);
-    init_improper_lock_rtti(base);
-    init_improper_scheduler_attach_rtti(base);
-    init_improper_scheduler_detach_rtti(base);
-    init_invalid_multiple_scheduling_rtti(base);
-    init_invalid_scheduler_policy_key_rtti(base);
-    init_invalid_scheduler_policy_thread_specification_rtti(base);
-    init_invalid_scheduler_policy_value_rtti(base);
-    init_missing_wait_rtti(base);
-    init_scheduler_resource_allocation_error_rtti(base);
-    init_Context_rtti(base);
-    init_ContextBase_rtti(base);
-    init_ExternalContextBase_rtti(base);
-    init_Scheduler_rtti(base);
-    init_SchedulerBase_rtti(base);
-    init_ThreadScheduler_rtti(base);
-    init__Timer_rtti(base);
+    INIT_RTTI(cexception, base);
+    INIT_RTTI(improper_lock, base);
+    INIT_RTTI(improper_scheduler_attach, base);
+    INIT_RTTI(improper_scheduler_detach, base);
+    INIT_RTTI(invalid_multiple_scheduling, base);
+    INIT_RTTI(invalid_scheduler_policy_key, base);
+    INIT_RTTI(invalid_scheduler_policy_thread_specification, base);
+    INIT_RTTI(invalid_scheduler_policy_value, base);
+    INIT_RTTI(missing_wait, base);
+    INIT_RTTI(scheduler_resource_allocation_error, base);
+    INIT_RTTI(Context, base);
+    INIT_RTTI(ContextBase, base);
+    INIT_RTTI(ExternalContextBase, base);
+    INIT_RTTI(Scheduler, base);
+    INIT_RTTI(SchedulerBase, base);
+    INIT_RTTI(ThreadScheduler, base);
+    INIT_RTTI(_Timer, base);
 
-    init_cexception_cxx_type_info(base);
-    init_improper_lock_cxx(base);
-    init_improper_scheduler_attach_cxx(base);
-    init_improper_scheduler_detach_cxx(base);
-    init_invalid_multiple_scheduling_cxx(base);
-    init_invalid_scheduler_policy_key_cxx(base);
-    init_invalid_scheduler_policy_thread_specification_cxx(base);
-    init_invalid_scheduler_policy_value_cxx(base);
+    INIT_CXX_TYPE(cexception, base);
+    INIT_CXX_TYPE(improper_lock, base);
+    INIT_CXX_TYPE(improper_scheduler_attach, base);
+    INIT_CXX_TYPE(improper_scheduler_detach, base);
+    INIT_CXX_TYPE(invalid_multiple_scheduling, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_key, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_thread_specification, base);
+    INIT_CXX_TYPE(invalid_scheduler_policy_value, base);
 #if _MSVCR_VER >= 120
-    init_missing_wait_cxx(base);
+    INIT_CXX_TYPE(missing_wait, base);
 #endif
-    init_scheduler_resource_allocation_error_cxx(base);
-#endif
+    INIT_CXX_TYPE(scheduler_resource_allocation_error, base);
 }
 
 void msvcrt_free_concurrency(void)

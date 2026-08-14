@@ -136,7 +136,10 @@ static int token_uuid( const char *str, YYSTYPE *yylval )
 
 static int token_str( int token, const char *str, YYSTYPE *yylval )
 {
-    char *tmp = xstrdup( str );
+    int len = strlen( str );
+    char *tmp = xmalloc( len + 1 );
+
+    strcpy( tmp, str );
 
     if (token == aWSTRING || token == aSTRING || token == aSQSTRING)
     {
@@ -148,6 +151,14 @@ static int token_str( int token, const char *str, YYSTYPE *yylval )
             *dst++ = *src++;
         }
         dst[-1] = 0; /* strip last quote */
+    }
+    else if (token == aIDENTIFIER)
+    {
+        if (len > 255)
+        {
+            warning( "truncating identifier that exceeds 255 character limit\n" );
+            tmp[255] = 0;
+        }
     }
 
     yylval->str = tmp;
@@ -174,11 +185,9 @@ static int token_winrt( int token, const char *str, YYSTYPE *yylval )
     return token_ident( str, yylval );
 }
 
-static void winrt_enable( int ns_prefix )
+static void winrt_enable(void)
 {
     if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode.\n" );
-
-    use_abi_namespace = ns_prefix;
     winrt_mode = TRUE;
 }
 
@@ -199,12 +208,14 @@ static void winrt_enable( int ns_prefix )
     winrt{ws}+ns_prefix[^\n]*                   {
                                                     yy_pop_state();
                                                     yylloc->first_line -= 1;
-                                                    winrt_enable( TRUE );
+                                                    winrt_enable();
+                                                    if (list_empty( &import_stack )) use_abi_namespace = TRUE;
+
                                                 }
     winrt[^\n]*                                 {
                                                     yy_pop_state();
                                                     yylloc->first_line -= 1;
-                                                    winrt_enable( FALSE );
+                                                    winrt_enable();
                                                 }
     [^\n]*                                      {
                                                     yy_pop_state();

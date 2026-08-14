@@ -31,26 +31,18 @@
 
 #define WIDL_using_Windows_Foundation
 #include "windows.foundation.h"
-#define WIDL_using_Windows_UI_StartScreen
-#define WIDL_using_Windows_UI_Input
 #define WIDL_using_Windows_UI
-#include "windows.ui.input.h"
 #include "windows.ui.h"
-#include "windows.ui.startscreen.h"
+#define WIDL_using_Windows_UI_Core
+#include "windows.ui.core.h"
 #define WIDL_using_Windows_UI_ViewManagement
 #include "windows.ui.viewmanagement.h"
 
+extern IActivationFactory *accessibilitysettings_factory;
 extern IActivationFactory *uisettings_factory;
 extern IActivationFactory *uiviewsettings_factory;
 extern IActivationFactory *inputpane_factory;
-extern IActivationFactory *jumplist_factory;
-
-typedef HRESULT (*async_action_callback)( IInspectable *invoker );
-typedef HRESULT (*async_operation_inspectable_callback)( IInspectable *invoker, IInspectable **result );
-
-HRESULT async_action_create( IInspectable *invoker, async_action_callback callback, IAsyncAction **out );
-HRESULT async_operation_inspectable_create( const GUID *iid, IInspectable *invoker, async_operation_inspectable_callback callback,
-                                            IAsyncOperation_IInspectable **out );                                                       
+extern IActivationFactory *corewindow_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

@@ -355,30 +355,72 @@ static NTSTATUS create_nt_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUT
 }
 
 
+/* Windows builds of DOSBox forks, tried (in this order) as a legacy fallback
+ * when winevdm.exe isn't installed in the prefix. Every listed fork accepts
+ * a target program path as a plain argument and auto-mounts/runs it. */
+static const WCHAR *const dosbox_candidates[] =
+{
+    L"C:\\Program Files\\DOSBox-staging\\dosbox.exe",
+    L"C:\\Program Files (x86)\\DOSBox-staging\\dosbox.exe",
+    L"C:\\Program Files\\DOSBox-X\\dosbox-x.exe",
+    L"C:\\Program Files (x86)\\DOSBox-X\\dosbox-x.exe",
+    L"C:\\Program Files\\DOSBox\\dosbox.exe",
+    L"C:\\Program Files (x86)\\DOSBox\\dosbox.exe",
+};
+
+static const WCHAR *find_legacy_dosbox(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(dosbox_candidates); i++)
+    {
+        DWORD attr = GetFileAttributesW( dosbox_candidates[i] );
+        if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY))
+            return dosbox_candidates[i];
+    }
+    return NULL;
+}
+
 /***********************************************************************
  *           create_vdm_process
  */
 static NTSTATUS create_vdm_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
                                     SECURITY_ATTRIBUTES *tsa, DWORD flags,
                                     RTL_USER_PROCESS_PARAMETERS *params,
-                                    RTL_USER_PROCESS_INFORMATION *info )
+                                    RTL_USER_PROCESS_INFORMATION *info, BOOL is_dos )
 {
     const WCHAR *winevdm = (is_win64 || is_wow64 ?
                             L"C:\\windows\\syswow64\\winevdm.exe" :
                             L"C:\\windows\\system32\\winevdm.exe");
+    const WCHAR *vdm = winevdm;
+    const WCHAR *dosbox;
     WCHAR *newcmdline;
     NTSTATUS status;
     UINT len;
+    BOOL use_dosbox = FALSE;
+
+    /* DOSBox forks only emulate real-mode DOS, not the Win16/NE GUI subsystem,
+     * so the fallback only ever applies to plain DOS executables. */
+    if (is_dos && GetFileAttributesW( winevdm ) == INVALID_FILE_ATTRIBUTES &&
+        (dosbox = find_legacy_dosbox()))
+    {
+        TRACE( "winevdm.exe not found, falling back to legacy DOSBox at %s\n", debugstr_w(dosbox) );
+        vdm = dosbox;
+        use_dosbox = TRUE;
+    }
 
     len = (lstrlenW(params->ImagePathName.Buffer) + lstrlenW(params->CommandLine.Buffer) +
-           lstrlenW(winevdm) + 16);
+           lstrlenW(vdm) + 16);
 
     if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
-    swprintf( newcmdline, len, L"%s --app-name \"%s\" %s",
-              winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-    RtlInitUnicodeString( &params->ImagePathName, winevdm );
+    if (use_dosbox)
+        swprintf( newcmdline, len, L"%s \"%s\" -exit", vdm, params->ImagePathName.Buffer );
+    else
+        swprintf( newcmdline, len, L"%s --app-name \"%s\" %s",
+                  vdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+    RtlInitUnicodeString( &params->ImagePathName, vdm );
     RtlInitUnicodeString( &params->CommandLine, newcmdline );
     status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
     HeapFree( GetProcessHeap(), 0, newcmdline );
@@ -654,7 +696,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     case STATUS_INVALID_IMAGE_PROTECT:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(app_name) );
         status = create_vdm_process( token, debug, process_attr, thread_attr,
-                                     nt_flags, params, &rtl_info );
+                                     nt_flags, params, &rtl_info, FALSE );
         break;
     case STATUS_INVALID_IMAGE_NOT_MZ:
         /* check for .com or .bat extension */
@@ -663,7 +705,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         {
             TRACE( "starting %s as DOS binary\n", debugstr_w(app_name) );
             status = create_vdm_process( token, debug, process_attr, thread_attr,
-                                         nt_flags, params, &rtl_info );
+                                         nt_flags, params, &rtl_info, TRUE );
         }
         else if (!wcsicmp( p, L".bat" ) || !wcsicmp( p, L".cmd" ))
         {

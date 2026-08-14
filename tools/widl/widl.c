@@ -76,6 +76,7 @@ static const char usage[] =
 "   -V                 Print version and exit\n"
 "   -W                 Enable pedantic warnings\n"
 "   --win32, --win64   Set the target architecture (Win32 or Win64)\n"
+"   --winmd            Generate metadata (implies --winrt)\n"
 "   --winrt            Enable Windows Runtime mode\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
 "    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -105,6 +106,7 @@ int do_server = 0;
 int do_regscript = 0;
 int do_idfile = 0;
 int do_dlldata = 0;
+int do_metadata = 0;
 static int no_preprocess = 0;
 int old_names = 0;
 int old_typelib = 0;
@@ -120,6 +122,7 @@ char *header_name;
 char *local_stubs_name;
 char *header_token;
 char *typelib_name;
+char *metadata_name;
 char *dlldata_name;
 char *proxy_name;
 char *proxy_token;
@@ -168,6 +171,7 @@ enum {
     SYSROOT_OPTION,
     WIN32_OPTION,
     WIN64_OPTION,
+    WINMD_OPTION,
 };
 
 static const char short_options[] =
@@ -195,6 +199,7 @@ static const struct long_option long_options[] = {
     { "winrt", 0, RT_OPTION },
     { "win32", 0, WIN32_OPTION },
     { "win64", 0, WIN64_OPTION },
+    { "winmd", 0, WINMD_OPTION },
     { NULL }
 };
 
@@ -263,6 +268,7 @@ static void set_everything(int x)
   do_regscript = x;
   do_idfile = x;
   do_dlldata = x;
+  do_metadata = x;
 }
 
 void start_cplusplus_guard(FILE *fp)
@@ -282,7 +288,6 @@ void end_cplusplus_guard(FILE *fp)
 static void write_dlldata_list( struct strarray filenames, int define_proxy_delegation)
 {
   FILE *dlldata;
-  unsigned int i;
 
   dlldata = fopen(dlldata_name, "w");
   if (!dlldata)
@@ -296,13 +301,11 @@ static void write_dlldata_list( struct strarray filenames, int define_proxy_dele
   fprintf(dlldata, "#include <rpcproxy.h>\n\n");
   start_cplusplus_guard(dlldata);
 
-  for (i = 0; i < filenames.count; i++)
-    fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", filenames.str[i]);
+  STRARRAY_FOR_EACH( file, &filenames ) fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", file);
 
   fprintf(dlldata, "\nPROXYFILE_LIST_START\n");
   fprintf(dlldata, "/* Start of list */\n");
-  for (i = 0; i < filenames.count; i++)
-    fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", filenames.str[i]);
+  STRARRAY_FOR_EACH( file, &filenames ) fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", file);
   fprintf(dlldata, "/* End of list */\n");
   fprintf(dlldata, "PROXYFILE_LIST_END\n\n");
 
@@ -519,6 +522,11 @@ static void option_callback( int optc, char *optarg )
     case WIN64_OPTION:
       pointer_size = 8;
       break;
+    case WINMD_OPTION:
+      do_everything = 0;
+      winrt_mode = 1;
+      do_metadata = 1;
+      break;
     case PACKING_OPTION:
       packing = strtol(optarg, NULL, 0);
       if(packing != 2 && packing != 4 && packing != 8)
@@ -646,19 +654,19 @@ int open_typelib( const char *name )
         if ((fd = open( file, O_RDONLY | O_BINARY )) != -1) return fd; \
         free( file ); } while(0)
 
-    for (i = 0; i < dlldirs.count; i++)
+    STRARRAY_FOR_EACH( dir, &dlldirs )
     {
-        if (strendswith( dlldirs.str[i], "/*" ))  /* special case for wine build tree */
+        if (strendswith( dir, "/*" ))  /* special case for wine build tree */
         {
             int namelen = strlen( name );
             if (strendswith( name, ".dll" )) namelen -= 4;
-            TRYOPEN( strmake( "%.*s/%.*s%s/%s", (int)strlen(dlldirs.str[i]) - 2, dlldirs.str[i],
+            TRYOPEN( strmake( "%.*s/%.*s%s/%s", (int)strlen(dir) - 2, dir,
                               namelen, name, pe_dir, name ));
         }
         else
         {
-            TRYOPEN( strmake( "%s%s/%s", dlldirs.str[i], pe_dir, name ));
-            TRYOPEN( strmake( "%s/%s", dlldirs.str[i], name ));
+            TRYOPEN( strmake( "%s%s/%s", dir, pe_dir, name ));
+            TRYOPEN( strmake( "%s/%s", dir, name ));
         }
     }
 
@@ -719,11 +727,16 @@ int main(int argc,char *argv[])
 
   /* if nothing specified, try to guess output type from the output file name */
   if (output_name && do_everything && !do_header && !do_typelib && !do_proxies &&
-      !do_client && !do_server && !do_regscript && !do_idfile && !do_dlldata)
+      !do_client && !do_server && !do_regscript && !do_idfile && !do_dlldata && !do_metadata)
   {
       do_everything = 0;
       if (strendswith( output_name, ".h" )) do_header = 1;
       else if (strendswith( output_name, ".tlb" )) do_typelib = 1;
+      else if (strendswith( output_name, ".winmd" ))
+      {
+          winrt_mode = 1;
+          do_metadata = 1;
+      }
       else if (strendswith( output_name, "_p.c" )) do_proxies = 1;
       else if (strendswith( output_name, "_c.c" )) do_client = 1;
       else if (strendswith( output_name, "_s.c" )) do_server = 1;
@@ -740,10 +753,11 @@ int main(int argc,char *argv[])
   }
 
   if (do_header + do_typelib + do_proxies + do_client +
-      do_server + do_regscript + do_idfile + do_dlldata == 1 && output_name)
+      do_server + do_regscript + do_idfile + do_dlldata + do_metadata == 1 && output_name)
   {
       if (do_header && !header_name) header_name = output_name;
       else if (do_typelib && !typelib_name) typelib_name = output_name;
+      else if (do_metadata && !metadata_name) metadata_name = output_name;
       else if (do_proxies && !proxy_name) proxy_name = output_name;
       else if (do_client && !client_name) client_name = output_name;
       else if (do_server && !server_name) server_name = output_name;
@@ -758,8 +772,8 @@ int main(int argc,char *argv[])
   if (files.count) {
     if (do_dlldata && !do_everything) {
       struct strarray filenames = empty_strarray;
-      for (i = 0; i < files.count; i++)
-          strarray_add(&filenames, replace_extension( get_basename( files.str[i] ), ".idl", "" ));
+      STRARRAY_FOR_EACH( file, &files )
+          strarray_add(&filenames, replace_extension( get_basename( file ), ".idl", "" ));
 
       write_dlldata_list(filenames, 0 /* FIXME */ );
       return 0;
@@ -813,6 +827,9 @@ int main(int argc,char *argv[])
   if (!idfile_name && do_idfile)
       idfile_name = replace_extension( get_basename(input_name), ".idl", "_i.c" );
 
+  if (!metadata_name && do_metadata)
+      metadata_name = replace_extension( get_basename(input_name), ".idl", ".winmd" );
+
   if (do_proxies) proxy_token = dup_basename_token(proxy_name,"_p.c");
   if (do_client) client_token = dup_basename_token(client_name,"_c.c");
   if (do_server) server_token = dup_basename_token(server_name,"_s.c");
@@ -857,6 +874,8 @@ static void rm_tempfile(void)
     unlink(proxy_name);
   if (do_typelib)
     unlink(typelib_name);
+  if (do_metadata)
+    unlink(metadata_name);
   remove_temp_files();
 }
 

@@ -272,14 +272,45 @@ static void test_Scan0(void)
     ok( !bm, "expected null bitmap\n" );
 }
 
+#define check_bitmap_bits(bitmap, width, height, stride, format, scan0, todo_scan0) \
+    check_bitmap_bits_(bitmap, width, height, stride, format, scan0, todo_scan0, __FILE__, __LINE__);
+
+static void check_bitmap_bits_(GpBitmap *bitmap, UINT width, UINT height, int stride,
+    PixelFormat format, void* scan0, BOOL todo_scan0, const char* file, int line)
+{
+    GpStatus stat;
+    PixelFormat actual_format;
+    BitmapData lock;
+
+    stat = GdipGetImagePixelFormat((GpImage*)bitmap, &actual_format);
+    ok_(file, line)(stat == Ok, "GdipGetImagePixelFormat failed, status=%i\n", stat);
+    ok_(file, line)(format == actual_format, "GdipGetImagePixelFormat returned format %x, expected %x\n", actual_format, format);
+
+    stat = GdipBitmapLockBits(bitmap, NULL, 0, actual_format, &lock);
+    ok_(file, line)(stat == Ok, "GdipBitmapLockBits failed, status=%i\n", stat);
+    ok_(file, line)(width == lock.Width, "BitmapData.Width == %d, expected %d\n", lock.Width, width);
+    ok_(file, line)(height == lock.Height, "BitmapData.Height == %d, expected %d\n", lock.Height, height);
+    ok_(file, line)(stride == lock.Stride, "BitmapData.Stride == %i, expected %i\n", lock.Stride, stride);
+    ok_(file, line)(format == lock.PixelFormat, "BitmapData.PixelFormat == %x, expected %x\n", lock.PixelFormat, format);
+    if (scan0)
+    {
+        ok_(file, line)(scan0 == lock.Scan0, "BitmapData.Scan0 == %p, expected %p\n", lock.Scan0, scan0);
+    }
+    ok_(file, line)(lock.Reserved == 0, "BitmapData.Reserved == %p, expected 0\n", (void*)lock.Reserved);
+
+    stat = GdipBitmapUnlockBits(bitmap, &lock);
+    ok_(file, line)(stat == Ok, "GdipBitmapUnlockBits failed, status=%i\n", stat);
+}
+
 static void test_FromGdiDib(void)
 {
     GpBitmap *bm;
     GpStatus stat;
-    BYTE buff[400];
-    BYTE rbmi[sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD)];
+    BYTE buff[600];
+    BYTE rbmi[sizeof(BITMAPV5HEADER)+256*sizeof(RGBQUAD)];
     BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
-    PixelFormat format;
+    BITMAPV4HEADER *bm4h = (BITMAPV4HEADER*)rbmi;
+    BITMAPCOREINFO *bmci = (BITMAPCOREINFO*)rbmi;
 
     bm = NULL;
 
@@ -287,7 +318,7 @@ static void test_FromGdiDib(void)
 
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth = 10;
-    bmi->bmiHeader.biHeight = 10;
+    bmi->bmiHeader.biHeight = -10;
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biBitCount = 32;
     bmi->bmiHeader.biCompression = BI_RGB;
@@ -306,12 +337,26 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat32bppRGB, format);
+        check_bitmap_bits(bm, 10, 10, 40, PixelFormat32bppRGB, buff, TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
+
+    bmi->bmiHeader.biHeight = 10;
+
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -40, PixelFormat32bppRGB, &buff[40*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biBitCount = 48;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat);
 
     bmi->bmiHeader.biBitCount = 24;
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
@@ -319,9 +364,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat24bppRGB, format);
+        check_bitmap_bits(bm, 10, 10, -32, PixelFormat24bppRGB, &buff[32*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -332,9 +375,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat16bppRGB555, format);
+        check_bitmap_bits(bm, 10, 10, -20, PixelFormat16bppRGB555, &buff[20*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -345,9 +386,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat8bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -12, PixelFormat8bppIndexed, &buff[12*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -358,9 +397,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat4bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -8, PixelFormat4bppIndexed, &buff[8*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -371,14 +408,79 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat1bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
 
+    bmi->bmiHeader.biSize = sizeof(BITMAPV5HEADER);
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER);
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+#if 0
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER)+4;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat); // Native sometimes fails and sometimes succeeds
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bm);
+#endif
+
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER);
     bmi->bmiHeader.biBitCount = 0;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat);
+
+    bm4h->bV4BitCount = 16;
+    bm4h->bV4V4Compression = BI_BITFIELDS;
+    bm4h->bV4RedMask = 0x7c00;
+    bm4h->bV4GreenMask = 0x3e0;
+    bm4h->bV4BlueMask = 0x1f;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -20, PixelFormat16bppRGB555, &buff[20*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bm4h->bV4RedMask = 0xf800;
+    bm4h->bV4GreenMask = 0x7e0;
+    bm4h->bV4BlueMask = 0x1f;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -20, PixelFormat16bppRGB565, &buff[20*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmci->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
+    bmci->bmciHeader.bcWidth = 10;
+    bmci->bmciHeader.bcHeight = 10;
+    bmci->bmciHeader.bcPlanes = 1;
+    bmci->bmciHeader.bcBitCount = 1;
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
     expect(InvalidParameter, stat);
 }
@@ -901,6 +1003,48 @@ static void test_LockBits(void)
     stat = GdipBitmapSetPixel(bm, 2, 8, 0xff480000);
     expect(Ok, stat);
 
+    /* no read/write flags, no conversion */
+    stat = GdipBitmapLockBits(bm, &rect, 0, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        expect(0xc3, ((BYTE*)bd.Scan0)[2]);
+        expect(0x48, ((BYTE*)bd.Scan0)[2 + bd.Stride * 5]);
+
+        ((char*)bd.Scan0)[2] = 0xfd;
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xfffd0000, color);
+
+    stat = GdipBitmapSetPixel(bm, 2, 3, 0xffc30000);
+    expect(Ok, stat);
+
+    /* no read/write flags, conversion */
+    stat = GdipBitmapLockBits(bm, &rect, 0, PixelFormat32bppARGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        /* bits appear to be uninitialized */
+
+        ((char*)bd.Scan0)[2] = 0xfe;
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* writes do not work if there was a conversion */
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xffc30000, color);
+
+    stat = GdipBitmapSetPixel(bm, 2, 3, 0xffc30000);
+    expect(Ok, stat);
+
     /* read-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
     expect(Ok, stat);
@@ -1141,6 +1285,24 @@ static void test_LockBits_UserBuf(void)
     bd.PixelFormat = PixelFormat32bppARGB;
     bd.Scan0 = &bits[2+3*WIDTH];
     bd.Reserved = 0xaaaaaaaa;
+
+    /* no read/write flags */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
+    expect(Ok, stat);
+
+    expect(0xaaaaaaaa, bits[0]);
+    expect(0xaaaaaaaa, bits[2+3*WIDTH]);
+
+    bits[2+3*WIDTH] = 0xdeadbeef;
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0, color);
 
     /* read-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
@@ -1866,6 +2028,25 @@ static const unsigned char wmfimage[180] = {
 0x00,0x00,0xf0,0x01,0x00,0x00,0x04,0x00,0x00,0x00,0xf0,0x01,0x01,0x00,0x03,0x00,
 0x00,0x00,0x00,0x00
 };
+/* 16x16 raw WMF with no drawing records, only used to verify background color. */
+static const unsigned char empty_wmf[44] = {
+0x01,0x00,0x09,0x00,0x00,0x03,0x16,0x00,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,
+0x00,0x00,0x05,0x00,0x00,0x00,0x0b,0x02,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,
+0x0c,0x02,0x10,0x00,0x10,0x00,0x03,0x00,0x00,0x00,0x00,0x00
+};
+/* 158-byte raw WMF (same content as wmfimage, but without the placeable header) */
+static const unsigned char raw_wmfimage[158] = {
+0x01,0x00,0x09,0x00,0x00,0x03,0x4f,0x00,0x00,0x00,0x0f,0x00,0x08,0x00,0x00,0x00,
+0x00,0x00,0x05,0x00,0x00,0x00,0x0b,0x02,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,
+0x0c,0x02,0x40,0x01,0x40,0x01,0x04,0x00,0x00,0x00,0x02,0x01,0x01,0x00,0x04,0x00,
+0x00,0x00,0x04,0x01,0x0d,0x00,0x08,0x00,0x00,0x00,0xfa,0x02,0x05,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x2d,0x01,0x00,0x00,0x07,0x00,
+0x00,0x00,0xfc,0x02,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,
+0x2d,0x01,0x01,0x00,0x07,0x00,0x00,0x00,0xfc,0x02,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x04,0x00,0x00,0x00,0x2d,0x01,0x02,0x00,0x07,0x00,0x00,0x00,0x1b,0x04,
+0x40,0x01,0x40,0x01,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0xf0,0x01,0x00,0x00,
+0x04,0x00,0x00,0x00,0xf0,0x01,0x01,0x00,0x03,0x00,0x00,0x00,0x00,0x00
+};
 static void test_getrawformat(void)
 {
     test_bufferrawformat((void*)pngimage, sizeof(pngimage), &ImageFormatPNG,  __LINE__, FALSE);
@@ -2018,6 +2199,358 @@ static void test_createfromwmf_noplaceable(void)
     stat = GdipCreateMetafileFromWmf(hwmf, TRUE, NULL, (GpMetafile**)&img);
     expect(Ok, stat);
 
+    GdipDisposeImage(img);
+}
+
+static void test_loadwmf_noplaceable(void)
+{
+    LPSTREAM stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpImage *img;
+    GUID format;
+
+    hglob = GlobalAlloc(0, sizeof(raw_wmfimage));
+    data = GlobalLock(hglob);
+    memcpy(data, raw_wmfimage, sizeof(raw_wmfimage));
+    GlobalUnlock(hglob);
+    data = NULL;
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if (hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    ok(stat == Ok, "GdipLoadImageFromStream failed, status %d\n", stat);
+    IStream_Release(stream);
+    if (stat != Ok) return;
+
+    stat = GdipGetImageRawFormat(img, &format);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        /* Windows reports raw (non-placeable) WMF streams as EMF. */
+        ok(IsEqualGUID(&format, &ImageFormatEMF), "Expected EMF format\n");
+    }
+
+    GdipDisposeImage(img);
+}
+
+static void test_drawwmf(void)
+{
+    LPSTREAM stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpImage *img;
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+
+    hglob = GlobalAlloc(0, sizeof(raw_wmfimage));
+    data = GlobalLock(hglob);
+    memcpy(data, raw_wmfimage, sizeof(raw_wmfimage));
+    GlobalUnlock(hglob);
+    data = NULL;
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if (hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    IStream_Release(stream);
+    ok(stat == Ok, "GdipLoadImageFromStream failed, status %d\n", stat);
+    if (stat != Ok) return;
+
+    stat = GdipCreateBitmapFromScan0(64, 64, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+        expect(Ok, stat);
+        if (stat == Ok)
+        {
+            stat = GdipDrawImageRect(graphics, img, 0.0, 0.0, 64.0, 64.0);
+            expect(Ok, stat);
+            GdipDeleteGraphics(graphics);
+        }
+        GdipDisposeImage((GpImage*)bitmap);
+    }
+
+    GdipDisposeImage(img);
+}
+
+struct enumwmf_state
+{
+    GpMetafile *metafile;
+    unsigned int count;
+    unsigned int wmf_records;
+};
+
+static BOOL CALLBACK enumwmf_callback(EmfPlusRecordType record_type, unsigned int flags,
+    unsigned int dataSize, const unsigned char *pStr, void *userdata)
+{
+    struct enumwmf_state *state = (struct enumwmf_state*)userdata;
+    GpStatus stat;
+
+    state->count++;
+
+    if (record_type & GDIP_WMF_RECORD_BASE)
+        state->wmf_records++;
+
+    stat = GdipPlayMetafileRecord(state->metafile, record_type, flags, dataSize, pStr);
+    ok(stat == Ok, "record %u: GdipPlayMetafileRecord failed with stat %d (type 0x%x)\n",
+        state->count, stat, record_type);
+
+    return TRUE;
+}
+
+static void test_enumwmf(void)
+{
+    LPSTREAM stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpImage *img;
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+    GpPointF dst_points[3] = {{0.0, 0.0}, {64.0, 0.0}, {0.0, 64.0}};
+    GpRectF src_rect = {0.0, 0.0, 64.0, 64.0};
+    struct enumwmf_state state = {0};
+
+    hglob = GlobalAlloc(0, sizeof(raw_wmfimage));
+    data = GlobalLock(hglob);
+    memcpy(data, raw_wmfimage, sizeof(raw_wmfimage));
+    GlobalUnlock(hglob);
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if (hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    IStream_Release(stream);
+    ok(stat == Ok, "GdipLoadImageFromStream failed, status %d\n", stat);
+    if (stat != Ok) return;
+
+    stat = GdipCreateBitmapFromScan0(64, 64, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+        expect(Ok, stat);
+        if (stat == Ok)
+        {
+            state.metafile = (GpMetafile*)img;
+
+            stat = GdipEnumerateMetafileSrcRectDestPoints(graphics, (GpMetafile*)img,
+                dst_points, 3, &src_rect, UnitPixel, enumwmf_callback, &state, NULL);
+            expect(Ok, stat);
+
+            /* Although the EmfPlusRecordType enum reserves a range of values
+             * for WMF record types (the GDIP_WMF_RECORD_BASE bit), Windows
+             * internally converts WMF metafiles to EMF before enumeration and
+             * reports every record using plain EMF record types. */
+            ok(state.count > 0, "Expected callback to be invoked at least once\n");
+            ok(state.wmf_records == 0,
+                "Expected no WMF-typed records, got %u of %u\n",
+                state.wmf_records, state.count);
+
+            GdipDeleteGraphics(graphics);
+        }
+        GdipDisposeImage((GpImage*)bitmap);
+    }
+
+    GdipDisposeImage(img);
+}
+
+static void test_savemetafile(void)
+{
+    static const CLSID CLSID_PngEncoder =
+        { 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e } };
+    LPSTREAM stream, out_stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpImage *img;
+    STATSTG statstg;
+
+    hglob = GlobalAlloc(0, sizeof(raw_wmfimage));
+    data = GlobalLock(hglob);
+    memcpy(data, raw_wmfimage, sizeof(raw_wmfimage));
+    GlobalUnlock(hglob);
+    data = NULL;
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if (hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    IStream_Release(stream);
+    ok(stat == Ok, "GdipLoadImageFromStream failed, status %d\n", stat);
+    if (stat != Ok) return;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &out_stream);
+    ok(hres == S_OK, "Failed to create output stream\n");
+    if (hres != S_OK)
+    {
+        GdipDisposeImage(img);
+        return;
+    }
+
+    stat = GdipSaveImageToStream(img, out_stream, &CLSID_PngEncoder, NULL);
+    ok(stat == Ok, "GdipSaveImageToStream failed, status %d\n", stat);
+
+    if (stat == Ok)
+    {
+        GpImage *loaded;
+        LARGE_INTEGER zero = {{0}};
+
+        memset(&statstg, 0, sizeof(statstg));
+        hres = IStream_Stat(out_stream, &statstg, STATFLAG_NONAME);
+        ok(hres == S_OK, "IStream_Stat failed\n");
+        ok(statstg.cbSize.QuadPart > 0, "saved PNG is empty\n");
+
+        /* Load the saved PNG back and inspect the result. */
+        IStream_Seek(out_stream, zero, STREAM_SEEK_SET, NULL);
+        stat = GdipLoadImageFromStream(out_stream, &loaded);
+        ok(stat == Ok, "Failed to load saved PNG, status %d\n", stat);
+
+        if (stat == Ok)
+        {
+            GUID format_guid;
+            PixelFormat pixel_format;
+            UINT width = 0, height = 0;
+            ARGB pixel = 0;
+
+            stat = GdipGetImageRawFormat(loaded, &format_guid);
+            expect(Ok, stat);
+            ok(IsEqualGUID(&format_guid, &ImageFormatPNG),
+                "Expected PNG format for the saved image\n");
+
+            stat = GdipGetImagePixelFormat(loaded, &pixel_format);
+            expect(Ok, stat);
+            ok(pixel_format == PixelFormat32bppARGB,
+                "Expected PixelFormat32bppARGB for the saved PNG, got %#x\n", pixel_format);
+
+            stat = GdipGetImageWidth(loaded, &width);
+            expect(Ok, stat);
+            stat = GdipGetImageHeight(loaded, &height);
+            expect(Ok, stat);
+            ok(width > 0 && height > 0,
+                "Saved PNG has invalid dimensions %ux%u\n", width, height);
+
+            /* The raw_wmfimage WMF draws a single solid black rectangle covering
+             * its entire window, so every pixel of the rasterized image should be
+             * opaque black. This both verifies that the metafile actually played
+             * back during the save (a pure-white pixel would indicate the WMF
+             * was never drawn over the rasterizer's implicit white background)
+             * and that the rasterizer doesn't lose opacity along the way. */
+            if (width > 0 && height > 0)
+            {
+                stat = GdipBitmapGetPixel((GpBitmap*)loaded, width / 2, height / 2, &pixel);
+                expect(Ok, stat);
+                ok(pixel == 0xff000000,
+                    "Expected opaque black at center, got %.8lx\n", pixel);
+            }
+
+            GdipDisposeImage(loaded);
+        }
+    }
+
+    IStream_Release(out_stream);
+    GdipDisposeImage(img);
+}
+
+static void test_savemetafile_background(void)
+{
+    static const CLSID CLSID_PngEncoder =
+        { 0x557cf406, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e } };
+    LPSTREAM stream, out_stream;
+    HGLOBAL hglob;
+    LPBYTE data;
+    HRESULT hres;
+    GpStatus stat;
+    GpImage *img, *loaded;
+    LARGE_INTEGER zero = {{0}};
+    PixelFormat pixel_format;
+    UINT width = 0, height = 0, x, y;
+    ARGB pixel;
+
+    hglob = GlobalAlloc(0, sizeof(empty_wmf));
+    data = GlobalLock(hglob);
+    memcpy(data, empty_wmf, sizeof(empty_wmf));
+    GlobalUnlock(hglob);
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+    if (hres != S_OK) return;
+
+    stat = GdipLoadImageFromStream(stream, &img);
+    IStream_Release(stream);
+    ok(stat == Ok, "GdipLoadImageFromStream failed, status %d\n", stat);
+    if (stat != Ok) return;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &out_stream);
+    ok(hres == S_OK, "Failed to create output stream\n");
+    if (hres != S_OK)
+    {
+        GdipDisposeImage(img);
+        return;
+    }
+
+    stat = GdipSaveImageToStream(img, out_stream, &CLSID_PngEncoder, NULL);
+    ok(stat == Ok, "GdipSaveImageToStream failed, status %d\n", stat);
+    if (stat != Ok)
+    {
+        IStream_Release(out_stream);
+        GdipDisposeImage(img);
+        return;
+    }
+
+    /* Load the saved PNG back. */
+    IStream_Seek(out_stream, zero, STREAM_SEEK_SET, NULL);
+    stat = GdipLoadImageFromStream(out_stream, &loaded);
+    ok(stat == Ok, "Failed to load saved PNG, status %d\n", stat);
+
+    if (stat == Ok)
+    {
+        stat = GdipGetImagePixelFormat(loaded, &pixel_format);
+        expect(Ok, stat);
+        ok(pixel_format == PixelFormat32bppARGB,
+            "Expected PixelFormat32bppARGB for the saved PNG, got %#x\n", pixel_format);
+
+        stat = GdipGetImageWidth(loaded, &width);
+        expect(Ok, stat);
+        stat = GdipGetImageHeight(loaded, &height);
+        expect(Ok, stat);
+        ok(width > 0 && height > 0,
+            "Saved PNG has invalid dimensions %ux%u\n", width, height);
+
+        /* The empty WMF performs no drawing, so every pixel of the rasterized
+         * output should be the rasterizer's implicit background color, which
+         * native gdiplus leaves as the zero-initialized transparent black. */
+        for (y = 0; y < height; y++)
+        {
+            for (x = 0; x < width; x++)
+            {
+                pixel = 0xdeadbeef;
+                stat = GdipBitmapGetPixel((GpBitmap*)loaded, x, y, &pixel);
+                expect(Ok, stat);
+                ok(pixel == 0x00000000,
+                    "Expected transparent background at (%u,%u), got %.8lx\n",
+                    x, y, pixel);
+                if (pixel != 0x00000000) goto done;
+            }
+        }
+done:
+        GdipDisposeImage(loaded);
+    }
+
+    IStream_Release(out_stream);
     GdipDisposeImage(img);
 }
 
@@ -2777,6 +3310,10 @@ static void test_colormatrix(void)
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
         TRUE, &colormatrix, &graymatrix, 3);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, &graymatrix, (ColorMatrixFlags)-1);
     expect(InvalidParameter, stat);
 
     stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeCount,
@@ -4301,7 +4838,7 @@ static void test_image_properties(void)
 #define IFD_FLOAT     11
 #define IFD_DOUBLE    12
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct IFD_entry
 {
     SHORT id;
@@ -4393,7 +4930,7 @@ static const struct tiff_data
     { { 0x01020304, 0x05060708 }, { 0x10203040, 0x50607080 }, { 0x11223344, 0x55667788 } },
     { 0x11, 0x22, 0x33, 0 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_tiff_properties(void)
 {
@@ -5465,9 +6002,9 @@ static void test_CloneBitmapArea(void)
     0xff,0xff,0xff,0x00, 0x80,0x80,0x80,0x00, 0x00,0x00,0x00,0x00
     };
     static BYTE bmp_3x3_data_24bpp_rgb[] = {
-    0xff,0x00,0x00, 0x00,0xff,0x00, 0x00,0x00,0xff,
-    0xff,0xff,0x00, 0x00,0xff,0xff, 0xff,0x00,0xff,
-    0xff,0xff,0xff, 0x80,0x80,0x80, 0x00,0x00,0x00
+    0xff,0x00,0x00, 0x00,0xff,0x00, 0x00,0x00,0xff, 0x00,0x00,0x00,
+    0xff,0xff,0x00, 0x00,0xff,0xff, 0xff,0x00,0xff, 0x00,0x00,0x00,
+    0xff,0xff,0xff, 0x80,0x80,0x80, 0x00,0x00,0x00, 0x00,0x00,0x00
     };
 
     static const struct test_data {
@@ -6434,6 +6971,7 @@ static void test_png_histogram_property(void)
 
 static void test_GdipLoadImageFromStream(void)
 {
+    ULARGE_INTEGER li = { 0 };
     IStream *stream;
     GpStatus status;
     GpImage *image;
@@ -6448,6 +6986,17 @@ static void test_GdipLoadImageFromStream(void)
     status = GdipLoadImageFromStream(NULL, &image);
     ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
     ok(image == (void *)0xdeadbeef, "Unexpected image pointer.\n");
+
+    hglob = GlobalAlloc(0, 0);
+    hr = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream.\n");
+    hr = IStream_SetSize(stream, li);
+    ok(hr == S_OK, "SetSize failed\n");
+
+    status = GdipLoadImageFromStream(stream, &image);
+    ok(status == InvalidParameter, "Unexpected return value %d.\n", status);
+
+    IStream_Release(stream);
 
     hglob = GlobalAlloc(0, sizeof(pngimage));
     data = GlobalLock (hglob);
@@ -6513,87 +7062,111 @@ static void test_GdipInitializePalette(void)
 
     palette = GdipAlloc(sizeof(*palette) + sizeof(ARGB) * 255);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 15;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, bitmap);
     expect(GenericError, status);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, NULL);
     expect(InvalidParameter, status);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeCustom, 16, FALSE, NULL);
     expect(Ok, status);
-    expect(0, palette->Flags);
+    expect(9999, palette->Flags);
     expect(256, palette->Count);
     expect(0x11111111, palette->Entries[0]);
     expect(0x11111111, palette->Entries[128]);
     expect(0x11111111, palette->Entries[255]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedBW, 0, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x200, palette->Flags);
     expect(2, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xffffffff, palette->Entries[1]);
 
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, NULL);
     expect(Ok, status);
-    todo_wine
     expect(0x300, palette->Flags);
     expect(16, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xffc0c0c0, palette->Entries[8]);
     expect(0xff008080, palette->Entries[15]);
 
+    /* With bitmap */
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x300, palette->Flags);
     expect(16, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xffc0c0c0, palette->Entries[8]);
     expect(0xff008080, palette->Entries[15]);
 
+    /* With transparent color and bitmap */
     memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
-    palette->Flags = 0;
+    palette->Flags = 9999;
+    palette->Count = 256;
+    status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone8, 1, TRUE, bitmap);
+    expect(Ok, status);
+    expect(0x300, palette->Flags);
+    expect(17, palette->Count);
+    expect(0xff000000, palette->Entries[0]);
+    expect(0xffc0c0c0, palette->Entries[8]);
+    expect(0xff008080, palette->Entries[15]);
+    expect(0x00000000, palette->Entries[16]);
+
+    memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
+    palette->Flags = 9999;
+    palette->Count = 256;
+    status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone64, 1, TRUE, bitmap);
+    expect(Ok, status);
+    expect(0x500, palette->Flags);
+    expect(73, palette->Count);
+    expect(0xff000000, palette->Entries[0]);
+    expect(0xff00aa00, palette->Entries[8]);
+    expect(0xff00ffff, palette->Entries[15]);
+    expect(0xffaa0000, palette->Entries[32]);
+    expect(0xff008080, palette->Entries[71]);
+    expect(0x00000000, palette->Entries[72]);
+
+    memset(palette->Entries, 0x11, sizeof(ARGB) * 256);
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeFixedHalftone252, 1, FALSE, bitmap);
     expect(Ok, status);
-    todo_wine
     expect(0x800, palette->Flags);
     expect(252, palette->Count);
     expect(0xff000000, palette->Entries[0]);
     expect(0xff990066, palette->Entries[128]);
     expect(0xffffffff, palette->Entries[251]);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 1, FALSE, bitmap);
     expect(InvalidParameter, status);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 2, FALSE, bitmap);
     expect(Ok, status);
     expect(0, palette->Flags);
     expect(2, palette->Count);
 
-    palette->Flags = 0;
+    palette->Flags = 9999;
     palette->Count = 256;
     status = pGdipInitializePalette(palette, PaletteTypeOptimal, 16, FALSE, bitmap);
     expect(Ok, status);
@@ -6649,7 +7222,7 @@ static void test_graphics_clear(void)
     GdipDisposeImage((GpImage *)bitmap);
 }
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 static const struct tiff_1x1_data
 {
     USHORT byte_order;
@@ -6692,7 +7265,7 @@ static const struct tiff_1x1_data
     { 8,8,8,0 },
     { 1,0,2,3,4,5,6,7,8,9,0,1,2,3,4,5 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_tiff_color_formats(void)
 {
@@ -6718,7 +7291,9 @@ static void test_tiff_color_formats(void)
         { 2, 4, 8, PixelFormat32bppARGB },
         { 2, 4, 16, PixelFormat48bppRGB },
         { 2, 4, 24, 0 },
+#if 0 /* FIXME */
         { 2, 4, 32, 0 },
+#endif
         /* 1 - BlackIsZero (Bilevel) */
         { 1, 1, 1, PixelFormat1bppIndexed },
 #if 0 /* FIXME: PNG vs TIFF mismatch */
@@ -6895,6 +7470,11 @@ START_TEST(image)
     test_loadwmf();
     test_createfromwmf();
     test_createfromwmf_noplaceable();
+    test_loadwmf_noplaceable();
+    test_drawwmf();
+    test_enumwmf();
+    test_savemetafile();
+    test_savemetafile_background();
     test_resolution();
     test_createhbitmap();
     test_getthumbnail();

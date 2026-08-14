@@ -1,7 +1,0 @@
-MODULE  = windows.system.profile.hardwareid.dll
-IMPORTS = combase oleaut32 bcrypt
-
-SOURCES = \
-	buffer.c \
-	classes.idl \
-	main.c

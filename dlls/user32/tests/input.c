@@ -437,6 +437,9 @@ static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
 static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static HKL (WINAPI *pLoadKeyboardLayoutEx)(HKL, const WCHAR *, UINT);
+static INT (WINAPI *pScheduleDispatchNotification)(HWND);
+static UINT_PTR (WINAPI *pDelegateInput)(void *, void *, void *, void *, void *, void *);
+static void (WINAPI *pUndelegateInput)(void *, void *);
 
 /**********************adapted from input.c **********************************/
 
@@ -446,10 +449,13 @@ static void init_function_pointers(void)
 {
     HMODULE hdll = GetModuleHandleA("user32");
 
+    pScheduleDispatchNotification = (void *)GetProcAddress(hdll, (LPCSTR)2582);
+
 #define GET_PROC(func) \
     if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
       trace("GetProcAddress(%s) failed\n", #func)
 
+    GET_PROC(DelegateInput);
     GET_PROC(EnableMouseInPointer);
     GET_PROC(IsMouseInPointerEnabled);
     GET_PROC(GetCurrentInputMessageSource);
@@ -463,6 +469,7 @@ static void init_function_pointers(void)
     GET_PROC(GetRawInputDeviceInfoW);
     GET_PROC(GetRawInputDeviceInfoA);
     GET_PROC(LoadKeyboardLayoutEx);
+    GET_PROC(UndelegateInput);
 
     hdll = GetModuleHandleA("kernel32");
     GET_PROC(IsWow64Process);
@@ -485,9 +492,7 @@ static void run_in_process_( const char *file, int line, char **argv, const char
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 }
 
 #define run_in_desktop( a, b, c ) run_in_desktop_( __FILE__, __LINE__, a, b, c )
@@ -517,9 +522,7 @@ static void run_in_desktop_( const char *file, int line, char **argv,
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 
     if (input)
     {
@@ -569,7 +572,7 @@ static inline BOOL is_mouse_message( UINT message )
 }
 
 #define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
-HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
+static HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
 {
     for (;;)
     {
@@ -1317,6 +1320,27 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_keyboard_test pause_scan[] =
+    {
+        {.scan = 0x21d, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0x21d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_LCONTROL] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_LCONTROL] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
+         .expect = {KEY_HOOK_(WM_KEYDOWN, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0x11d, VK_CONTROL), {0}}},
+        {.scan = 0xe11d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, .expect_state = {[VK_CONTROL] = 0x01, [VK_RCONTROL] = 0x01},
+         .expect = {KEY_HOOK_(WM_KEYUP, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0x11d, VK_CONTROL), {0}}},
+        {.vkey = VK_PAUSE, .expect_state = {[VK_PAUSE] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x7, VK_PAUSE), KEY_MSG(WM_KEYDOWN, 0x7, VK_PAUSE), {0}}},
+        {.vkey = VK_PAUSE, .flags = KEYEVENTF_KEYUP, .expect_state = {[VK_PAUSE] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x8, VK_PAUSE), KEY_MSG(WM_KEYUP, 0x8, VK_PAUSE), {0}}},
+        {0},
+    };
+
 #undef WIN_MSG
 #undef KBD_HOOK
 #undef KEY_HOOK_
@@ -1401,6 +1425,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode_vkey_packet, TRUE );
     check_send_input_keyboard_test( numpad_scan, TRUE );
     check_send_input_keyboard_test( numpad_scan_numlock, TRUE );
+    check_send_input_keyboard_test( pause_scan, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -1448,6 +1473,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode_vkey_packet, FALSE );
     check_send_input_keyboard_test( numpad_scan, FALSE );
     check_send_input_keyboard_test( numpad_scan_numlock, FALSE );
+    check_send_input_keyboard_test( pause_scan, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
@@ -1460,6 +1486,36 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 
 static void test_keynames(void)
 {
+    static const struct
+    {
+        LONG lparam;
+        const char *expected_name;
+        BOOL todo;
+        BOOL todo_value;
+    } tests[] =
+    {
+        {0x00370000, "Num *", .todo_value = TRUE},
+        {0x01370000, "Prnt Scrn", .todo_value = TRUE},
+        {0x02370000, "Num *", .todo_value = TRUE},
+        {0xe0370000, "Num *", .todo_value = TRUE},
+        {0xe1370000, "Prnt Scrn", .todo_value = TRUE},
+        {0x00450000, "Pause", .todo_value = TRUE},
+        {0x01450000, "Num Lock"},
+        {0x02450000, "Pause", .todo_value = TRUE},
+        {0xe0450000, "Pause", .todo_value = TRUE},
+        {0xe1450000, "Num Lock"},
+        {0x00460000, "Scroll Lock", .todo_value = TRUE},
+        {0x01460000, "Break", .todo_value = TRUE},
+        {0xe0460000, "Scroll Lock", .todo_value = TRUE},
+        {0xe1460000, "Break", .todo_value = TRUE},
+        {0x01480000, "Up"},
+        {0x001d0000, "Ctrl", .todo_value = TRUE},
+        {0x011d0000, "Right Ctrl", .todo_value = TRUE},
+        {0x021d0000, "Ctrl", .todo_value = TRUE},
+        {0xe01d0000, "Ctrl", .todo_value = TRUE},
+        {0xe11d0000, "Right Ctrl", .todo_value = TRUE},
+    };
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
     int i, len;
     char buff[256];
 
@@ -1468,6 +1524,18 @@ static void test_keynames(void)
         strcpy(buff, "----");
         len = GetKeyNameTextA(i << 16, buff, sizeof(buff));
         ok(len || !buff[0], "%d: Buffer is not zeroed\n", i);
+    }
+
+    if (!us_kbd) skip("skipping test with inconsistent results on non-us keyboard\n");
+    else for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("scancode %04x", (unsigned int)tests[i].lparam >> 16);
+        len = GetKeyNameTextA(tests[i].lparam, buff, sizeof(buff));
+        todo_wine_if(tests[i].todo) ok(len, "No key name\n");
+        todo_wine_if(tests[i].todo_value)
+        ok(!strcmp(buff, tests[i].expected_name), "Unexpected key name %s\n", debugstr_a(buff));
+        trace("name %s\n", debugstr_a(buff));
+        winetest_pop_context();
     }
 }
 
@@ -3166,9 +3234,7 @@ static void test_rawinput(const char* argv0)
     }
 
     SetEvent(process_ready);
-    winetest_wait_child_process(process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    winetest_wait_child_process(&process_info);
     CloseHandle(process_done);
     CloseHandle(process_start);
     CloseHandle(process_ready);
@@ -3202,10 +3268,65 @@ static void test_DefRawInputProc(void)
     ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
 }
 
+static const char *debug_map_type(UINT map_type)
+{
+#define MAP_TO_STR(x) case x: return #x
+    switch (map_type)
+    {
+        MAP_TO_STR(MAPVK_VK_TO_VSC);
+        MAP_TO_STR(MAPVK_VSC_TO_VK);
+        MAP_TO_STR(MAPVK_VK_TO_CHAR);
+        MAP_TO_STR(MAPVK_VSC_TO_VK_EX);
+        MAP_TO_STR(MAPVK_VK_TO_VSC_EX);
+    default:
+        return "<unknown>";
+    }
+#undef MAP_TO_STR
+}
+
 static void test_key_map(void)
 {
+    static const struct
+    {
+        UINT input;
+        UINT map_type;
+        UINT expected;
+        BOOL todo;
+    } tests[] =
+    {
+        {0x136, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe036, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe136, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x37, MAPVK_VSC_TO_VK_EX, VK_MULTIPLY, TRUE},
+        {0x137, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x237, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe037, MAPVK_VSC_TO_VK_EX, VK_SNAPSHOT},
+        {0xe137, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x45, MAPVK_VSC_TO_VK_EX, VK_NUMLOCK},
+        {0x145, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe045, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe145, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x1d, MAPVK_VSC_TO_VK_EX, VK_LCONTROL},
+        {0x011d, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0x021d, MAPVK_VSC_TO_VK_EX, 0, TRUE},
+        {0xe01d, MAPVK_VSC_TO_VK_EX, VK_RCONTROL, TRUE},
+        {0xe11d, MAPVK_VSC_TO_VK_EX, VK_PAUSE, TRUE},
+        {0x46, MAPVK_VSC_TO_VK_EX, VK_SCROLL},
+        {0xe046, MAPVK_VSC_TO_VK_EX, VK_CANCEL, TRUE},
+
+        {VK_RSHIFT, MAPVK_VK_TO_VSC_EX, 0x36},
+        {VK_MULTIPLY, MAPVK_VK_TO_VSC_EX, 0x37},
+        {VK_NUMLOCK, MAPVK_VK_TO_VSC_EX, 0x45},
+        {VK_UP, MAPVK_VK_TO_VSC_EX, 0x48},
+        {VK_LCONTROL, MAPVK_VK_TO_VSC_EX, 0x1d},
+        {VK_RCONTROL, MAPVK_VK_TO_VSC_EX, 0xe01d},
+        {VK_PAUSE, MAPVK_VK_TO_VSC_EX, 0xe11d, TRUE},
+        {VK_SCROLL, MAPVK_VK_TO_VSC_EX, 0x46},
+        {VK_CANCEL, MAPVK_VK_TO_VSC_EX, 0xe046, TRUE},
+        {VK_SNAPSHOT, MAPVK_VK_TO_VSC_EX, 0x54},
+    };
     HKL kl = GetKeyboardLayout(0);
-    UINT kL, kR, s, sL;
+    UINT kL, kR, s, sL, r;
     int i;
     static const UINT numpad_collisions[][2] = {
         { VK_NUMPAD0, VK_INSERT },
@@ -3262,6 +3383,13 @@ static void test_key_map(void)
     ok(s >> 8 == 0xE0 || broken(s == 0), "Scan code prefix for VK_RMENU should be 0xE0 when MAPVK_VK_TO_VSC_EX is set, was %#1x\n", s >> 8);
     s = MapVirtualKeyExA(VK_RSHIFT, MAPVK_VK_TO_VSC_EX, kl);
     ok(s >> 8 == 0x00 || broken(s == 0), "The scan code shouldn't have a prefix, got %#1x\n", s >> 8);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = MapVirtualKeyExA(tests[i].input, tests[i].map_type, kl);
+        todo_wine_if(tests[i].todo) ok(r == tests[i].expected, "Unexpected %s %x -> %x\n",
+                                       debug_map_type(tests[i].map_type), tests[i].input, r);
+    }
 }
 
 #define shift 1
@@ -4320,8 +4448,8 @@ static void test_SendInput_mouse_messages(void)
 
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
-    button_down_hwnd_todo[1].message.hwnd = hwnd;
-    ok_seq( button_down_hwnd_todo );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
     mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
     button_up_hwnd[1].message.hwnd = hwnd;
@@ -5331,24 +5459,87 @@ static LRESULT WINAPI msg_source_proc( HWND hwnd, UINT message, WPARAM wp, LPARA
         ok( source.originId == expect_src.originId ||
             (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
             "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        ok( !PeekMessageW( &msg, hwnd, WM_USER, WM_USER, PM_REMOVE ), "got pending WM_USER\n" );
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
         break;
     default:
         ok( source.deviceType == IMDT_UNAVAILABLE, "%x: wrong deviceType %x\n",
             message, source.deviceType );
-        ok( source.originId == 0, "%x: wrong originId %x\n", message, source.originId );
+        ok( source.originId == IMO_UNAVAILABLE, "%x: wrong originId %x\n", message, source.originId );
         break;
     }
 
     return DefWindowProcA( hwnd, message, wp, lp );
 }
 
+static LRESULT WINAPI get_message_hook( int code, WPARAM wp, LPARAM lp )
+{
+    INPUT_MESSAGE_SOURCE source;
+    MSG *msg = (MSG *)lp;
+    UINT message = msg->message;
+
+    if (code < 0) return CallNextHookEx( 0, code, wp, lp );
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    switch (message)
+    {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        ok( source.deviceType == expect_src.deviceType || /* also accept system-generated WM_MOUSEMOVE */
+            (message == WM_MOUSEMOVE && source.deviceType == IMDT_UNAVAILABLE),
+            "%x: wrong deviceType %x/%x\n", message, source.deviceType, expect_src.deviceType );
+        ok( source.originId == expect_src.originId ||
+            (message == WM_MOUSEMOVE && source.originId == IMO_SYSTEM),
+            "%x: wrong originId %x/%x\n", message, source.originId, expect_src.originId );
+        break;
+    default:
+        ok( source.deviceType == IMDT_UNAVAILABLE, "%x: wrong deviceType %x\n",
+            message, source.deviceType );
+        ok( source.originId == IMO_UNAVAILABLE, "%x: wrong originId %x\n",
+            message, source.originId );
+        break;
+    }
+    return CallNextHookEx( 0, code, wp, lp );
+}
+
+static LRESULT WINAPI keyboard_hook( int code, WPARAM wp, LPARAM lp )
+{
+    INPUT_MESSAGE_SOURCE source;
+
+    if (code < 0) return CallNextHookEx( 0, code, wp, lp );
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == expect_src.deviceType ||
+        broken( source.deviceType == IMDT_UNAVAILABLE ), /* <= win10 1507 */
+        "wrong deviceType %x/%x\n", source.deviceType, expect_src.deviceType );
+    ok( source.originId == expect_src.originId ||
+        broken( source.originId == IMO_UNAVAILABLE), /* <= win10 1507 */
+        "wrong originId %x/%x\n", source.originId, expect_src.originId );
+
+    return CallNextHookEx( 0, code, wp, lp );
+}
+
 static void test_input_message_source(void)
 {
+    INPUT_MESSAGE_SOURCE source;
     WNDCLASSA cls;
     INPUT inputs[2];
     HWND hwnd;
     RECT rc;
     MSG msg;
+    HHOOK msg_hook, kbd_hook;
 
     cls.style = 0;
     cls.lpfnWndProc = msg_source_proc;
@@ -5368,6 +5559,11 @@ static void test_input_message_source(void)
     SetForegroundWindow( hwnd );
     SetFocus( hwnd );
 
+    msg_hook = SetWindowsHookExW( WH_GETMESSAGE, get_message_hook, NULL, GetCurrentThreadId() );
+    ok( msg_hook != NULL, "SetWindowsHookEx failed\n" );
+    kbd_hook = SetWindowsHookExW( WH_KEYBOARD, keyboard_hook, NULL, GetCurrentThreadId() );
+    ok( kbd_hook != NULL, "SetWindowsHookEx failed\n" );
+
     inputs[0].type = INPUT_KEYBOARD;
     inputs[0].ki.dwExtraInfo = 0;
     inputs[0].ki.time = 0;
@@ -5382,24 +5578,28 @@ static void test_input_message_source(void)
     SendMessageA( hwnd, WM_KEYDOWN, 0, 0 );
     SendMessageA( hwnd, WM_MOUSEMOVE, 0, 0 );
 
+    expect_src.deviceType = IMDT_KEYBOARD;
+    expect_src.originId = IMO_INJECTED;
     SendInput( 2, inputs, sizeof(INPUT) );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
-        expect_src.deviceType = IMDT_KEYBOARD;
-        expect_src.originId = IMO_INJECTED;
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
     GetWindowRect( hwnd, &rc );
     simulate_click( TRUE, (rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2 );
     simulate_click( FALSE, (rc.left + rc.right) / 2 + 1, (rc.top + rc.bottom) / 2 + 1 );
+    expect_src.deviceType = IMDT_MOUSE;
+    expect_src.originId = IMO_INJECTED;
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
-        expect_src.deviceType = IMDT_MOUSE;
-        expect_src.originId = IMO_INJECTED;
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
+
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
 
     expect_src.deviceType = IMDT_UNAVAILABLE;
     expect_src.originId = IMO_UNAVAILABLE;
@@ -5413,6 +5613,10 @@ static void test_input_message_source(void)
         DispatchMessageW( &msg );
     }
 
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
+
     expect_src.deviceType = IMDT_UNAVAILABLE;
     expect_src.originId = IMO_SYSTEM;
     SetCursorPos( (rc.left + rc.right) / 2 - 1, (rc.top + rc.bottom) / 2 - 1 );
@@ -5422,14 +5626,38 @@ static void test_input_message_source(void)
         DispatchMessageW( &msg );
     }
 
+    ok( pGetCurrentInputMessageSource( &source ), "GetCurrentInputMessageSource failed\n" );
+    ok( source.deviceType == IMDT_UNAVAILABLE, "wrong type %x\n", source.deviceType );
+    ok( source.originId == IMO_UNAVAILABLE, "wrong origin %x\n", source.originId );
+
     DestroyWindow( hwnd );
     UnregisterClassA( cls.lpszClassName, GetModuleHandleA(0) );
+    UnhookWindowsHookEx( msg_hook );
+    UnhookWindowsHookEx( kbd_hook );
 }
 
 static void test_UnregisterDeviceNotification(void)
 {
-    BOOL ret = UnregisterDeviceNotification(NULL);
-    ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
+    const char *not_a_devnotify = "this is a valid but garbage pointer";
+    BOOL ret;
+
+    /* NULL gives ERROR_INVALID_HANDLE */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( NULL );
+    ok( ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret );
+    ok_ret( ERROR_INVALID_HANDLE, GetLastError() );
+
+    /* A valid pointer that isn't an HDEVNOTIFY gives ERROR_INVALID_HANDLE */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( (HDEVNOTIFY)not_a_devnotify );
+    ok( ret == FALSE, "Unregistering invalid HDEVNOTIFY returned: %d\n", ret );
+    ok_ret( ERROR_INVALID_HANDLE, GetLastError() );
+
+    /* A non-null faulting pointer gives ERROR_SERVICE_SPECIFIC_ERROR */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( (HDEVNOTIFY)0xdeadbeef );
+    ok( ret == FALSE, "Unregistering invalid HDEVNOTIFY returned: %d\n", ret );
+    ok_ret( ERROR_SERVICE_SPECIFIC_ERROR, GetLastError() );
 }
 
 static void test_SendInput( WORD vkey, WCHAR wch, HKL hkl )
@@ -5590,6 +5818,7 @@ static DWORD CALLBACK test_GetPointerInfo_thread( void *arg )
 
     hwnd = CreateWindowW( L"test", L"test name", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200,
                           200, 0, 0, NULL, 0 );
+    empty_message_queue();
 
     memset( &pointer_info, 0xcd, sizeof(pointer_info) );
     ret = pGetPointerInfo( 1, &pointer_info );
@@ -5601,8 +5830,77 @@ static DWORD CALLBACK test_GetPointerInfo_thread( void *arg )
     return 0;
 }
 
+static BOOL accept_pointer_messages( UINT msg )
+{
+    if (is_mouse_message( msg )) return TRUE;
+    return msg >= WM_TOUCH && msg <= WM_POINTERROUTEDRELEASED;
+}
+
 static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
 {
+#define WIN_MSG(m, h, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .hwnd = h, .wparam = w, .lparam = l}, ## __VA_ARGS__}
+    UINT down_flags = POINTER_MESSAGE_FLAG_FIRSTBUTTON|POINTER_MESSAGE_FLAG_INCONTACT;
+    struct user_call button_down_seq[] =
+    {
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        {0},
+    };
+    struct user_call pointer_down_seq[] =
+    {
+        WIN_MSG(WM_POINTERDOWN, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_PRIMARY|POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        {0},
+    };
+    struct user_call button_up_seq[] =
+    {
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call pointer_up_seq[] =
+    {
+        WIN_MSG(WM_POINTERUP, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call mouse_move_seq[] =
+    {
+        WIN_MSG(WM_MOUSEMOVE, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call pointer_move_seq[] =
+    {
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_PRIMARY|POINTER_MESSAGE_FLAG_INRANGE), 0/*abs*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call mouse_drag_seq[] =
+    {
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_RBUTTONDOWN, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_RBUTTONUP, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call pointer_drag_seq[] =
+    {
+        WIN_MSG(WM_POINTERDOWN, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_PRIMARY|POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|POINTER_MESSAGE_FLAG_SECONDBUTTON|down_flags), 0/*abs*/),
+        WIN_MSG(WM_RBUTTONDOWN, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|POINTER_MESSAGE_FLAG_SECONDBUTTON|down_flags), 0/*abs*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_RBUTTONUP, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUP, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
+#undef WIN_MSG
+
     POINTER_INFO pointer_info[4], expect_pointer;
     void *invalid_ptr = (void *)0xdeadbeef;
     UINT32 entry_count, pointer_count;
@@ -5614,10 +5912,12 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
         .hbrBackground = GetStockObject( WHITE_BRUSH ),
         .lpszClassName = L"test",
     };
+    LONG_PTR old_proc;
     HANDLE thread;
     ATOM class;
     DWORD res;
     HWND hwnd;
+    POINT pt[3];
     BOOL ret;
 
     if (!pGetPointerType)
@@ -5633,9 +5933,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pGetPointerType( 0xdead, &type );
-    todo_wine
     ok( !ret, "GetPointerType succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
     ret = pGetPointerType( 1, &type );
     ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
@@ -5665,7 +5963,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
 
     SetCursorPos( 500, 500 );  /* avoid generating mouse message on window creation */
 
-    hwnd = CreateWindowW( L"test", L"test name", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200,
+    hwnd = CreateWindowW( L"test", L"test name", WS_POPUP | WS_VISIBLE, 100, 100, 200,
                           200, 0, 0, NULL, 0 );
     empty_message_queue();
 
@@ -5675,13 +5973,84 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
 
     SetCursorPos( 200, 200 );
-    empty_message_queue();
+    wait_messages( 100, FALSE );
+    ok_seq( empty_sequence );
+
+    old_proc = SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_proc, LONG_PTR, "%#Ix" );
+    p_accept_message = accept_pointer_messages;
+
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
-    empty_message_queue();
+    wait_messages( 100, FALSE );
+
+    /* fixup flaky windows mouse position */
+    GetCursorPos( pt );
+    button_down_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_down_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_down_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+
+    if (mouse_in_pointer_enabled) ok_seq( pointer_down_seq );
+    else ok_seq( button_down_seq );
+
     mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
-    empty_message_queue();
-    mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
-    empty_message_queue();
+    wait_messages( 100, FALSE );
+
+    /* fixup flaky windows mouse position */
+    GetCursorPos( pt );
+    button_up_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_up_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_up_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+
+    if (mouse_in_pointer_enabled) ok_seq( pointer_up_seq );
+    else ok_seq( button_up_seq );
+
+    mouse_event( MOUSEEVENTF_MOVE, 20, 20, 0, 0 );
+    wait_messages( 100, FALSE );
+
+    /* fixup flaky windows mouse position */
+    GetCursorPos( pt );
+    mouse_move_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_move_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_move_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+
+    if (mouse_in_pointer_enabled) ok_seq( pointer_move_seq );
+    else ok_seq( mouse_move_seq );
+
+    GetCursorPos( pt );
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_MOVE, 20, 20, 0, 0 );
+    GetCursorPos( pt + 1 );
+    mouse_event( MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_MOVE, -10, -10, 0, 0 );
+    GetCursorPos( pt + 2 );
+    mouse_event( MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 100, FALSE );
+
+    /* fixup flaky windows mouse position */
+    mouse_drag_seq[0].message.lparam = MAKELONG(pt[0].x - 100, pt[0].y - 100);
+    mouse_drag_seq[1].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    mouse_drag_seq[2].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    mouse_drag_seq[3].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    mouse_drag_seq[4].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    mouse_drag_seq[5].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[0].message.lparam = MAKELONG(pt[0].x, pt[0].y);
+    pointer_drag_seq[1].message.lparam = MAKELONG(pt[0].x - 100, pt[0].y - 100);
+    pointer_drag_seq[2].message.lparam = MAKELONG(pt[1].x, pt[1].y);
+    pointer_drag_seq[3].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    pointer_drag_seq[4].message.lparam = MAKELONG(pt[1].x, pt[1].y);
+    pointer_drag_seq[5].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    pointer_drag_seq[6].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[7].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[8].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[9].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[10].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[11].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+
+    if (mouse_in_pointer_enabled) ok_seq( pointer_drag_seq );
+    else ok_seq( mouse_drag_seq );
+
+    p_accept_message = NULL;
 
     memset( pointer_info, 0xcd, sizeof(pointer_info) );
     ret = pGetPointerInfo( 0xdead, pointer_info );
@@ -5690,7 +6059,6 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
 
     memset( pointer_info, 0xcd, sizeof(pointer_info) );
     ret = pGetPointerInfo( 1, pointer_info );
-    todo_wine_if(mouse_in_pointer_enabled)
     ok( ret == mouse_in_pointer_enabled, "GetPointerInfo failed, error %lu\n", GetLastError() );
     if (!mouse_in_pointer_enabled)
     {
@@ -5698,18 +6066,13 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
         return;
     }
 
-    todo_wine
     ok( pointer_info[0].pointerType == PT_MOUSE, "got pointerType %lu\n", pointer_info[0].pointerType );
-    todo_wine
     ok( pointer_info[0].pointerId == 1, "got pointerId %u\n", pointer_info[0].pointerId );
     ok( !!pointer_info[0].frameId, "got frameId %u\n", pointer_info[0].frameId );
-    todo_wine
-    ok( pointer_info[0].pointerFlags == (0x20000 | POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_PRIMARY),
+    ok( pointer_info[0].pointerFlags == (0x40000 | POINTER_MESSAGE_FLAG_INRANGE),
         "got pointerFlags %#x\n", pointer_info[0].pointerFlags );
-    todo_wine
     ok( pointer_info[0].sourceDevice == INVALID_HANDLE_VALUE || broken(!!pointer_info[0].sourceDevice) /* < w10 & 32bit */,
         "got sourceDevice %p\n", pointer_info[0].sourceDevice );
-    todo_wine
     ok( pointer_info[0].hwndTarget == hwnd, "got hwndTarget %p\n", pointer_info[0].hwndTarget );
     ok( !!pointer_info[0].ptPixelLocation.x, "got ptPixelLocation %s\n", wine_dbgstr_point( &pointer_info[0].ptPixelLocation ) );
     ok( !!pointer_info[0].ptPixelLocation.y, "got ptPixelLocation %s\n", wine_dbgstr_point( &pointer_info[0].ptPixelLocation ) );
@@ -5720,15 +6083,11 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( !!pointer_info[0].ptHimetricLocationRaw.x, "got ptHimetricLocationRaw %s\n", wine_dbgstr_point( &pointer_info[0].ptHimetricLocationRaw ) );
     ok( !!pointer_info[0].ptHimetricLocationRaw.y, "got ptHimetricLocationRaw %s\n", wine_dbgstr_point( &pointer_info[0].ptHimetricLocationRaw ) );
     ok( !!pointer_info[0].dwTime, "got dwTime %lu\n", pointer_info[0].dwTime );
-    todo_wine
     ok( pointer_info[0].historyCount == 1, "got historyCount %u\n", pointer_info[0].historyCount );
-    todo_wine
     ok( pointer_info[0].InputData == 0, "got InputData %u\n", pointer_info[0].InputData );
-    todo_wine
     ok( pointer_info[0].dwKeyStates == 0, "got dwKeyStates %lu\n", pointer_info[0].dwKeyStates );
     ok( !!pointer_info[0].PerformanceCount, "got PerformanceCount %I64u\n", pointer_info[0].PerformanceCount );
-    todo_wine
-    ok( pointer_info[0].ButtonChangeType == 0, "got ButtonChangeType %u\n", pointer_info[0].ButtonChangeType );
+    ok( pointer_info[0].ButtonChangeType == POINTER_CHANGE_FIRSTBUTTON_UP, "got ButtonChangeType %u\n", pointer_info[0].ButtonChangeType );
 
     thread = CreateThread( NULL, 0, test_GetPointerInfo_thread, NULL, 0, NULL );
     res = WaitForSingleObject( thread, 5000 );
@@ -5783,23 +6142,18 @@ static void test_EnableMouseInPointer( const char *arg )
     winetest_push_context( "enable %lu", enable );
 
     ret = pEnableMouseInPointer( enable );
-    todo_wine
     ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     ret = pEnableMouseInPointer( !enable );
     ok( !ret, "EnableMouseInPointer succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
     ret = pIsMouseInPointerEnabled();
-    todo_wine_if(enable)
     ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     ret = pEnableMouseInPointer( enable );
-    todo_wine
     ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
     ret = pIsMouseInPointerEnabled();
-    todo_wine_if(enable)
     ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     test_GetPointerInfo( enable );
@@ -6321,20 +6675,26 @@ static void test_keyboard_layout(void)
     /* Test that the high word of the keyboard layout in CJK locale is the same as the low word,
      * even when IME is on */
     lang_id = PRIMARYLANGID(GetUserDefaultLCID());
-    if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
+    switch (lang_id)
     {
-        hkl = GetKeyboardLayout(0);
-        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
-
-        if (lang_id == LANG_CHINESE)
-            layout_name = "00000804";
-        else if (lang_id == LANG_JAPANESE)
-            layout_name = "00000411";
-        else if (lang_id == LANG_KOREAN)
-            layout_name = "00000412";
-        hkl = LoadKeyboardLayoutA(layout_name, 0);
-        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+    case LANG_CHINESE:
+        layout_name = "00000804";
+        break;
+    case LANG_JAPANESE:
+        layout_name = "00000411";
+        break;
+    case LANG_KOREAN:
+        layout_name = "00000412";
+        break;
+    default:
+        return;
     }
+
+    hkl = GetKeyboardLayout(0);
+    ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+
+    hkl = LoadKeyboardLayoutA(layout_name, 0);
+    ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
 }
 
 static void test_system_messages_with_rawinput_nolegacy(void)
@@ -6488,6 +6848,46 @@ static void test_SetFocus_process(void)
     DestroyWindow( hwnd );
 }
 
+static void test_ScheduleDispatchNotification(void)
+{
+    HWND hwnd;
+    INT ret;
+
+    if (!pScheduleDispatchNotification)
+    {
+        win_skip("ScheduleDispatchNotification is unavailable.\n");
+        return;
+    }
+
+    hwnd = CreateWindowW(L"static", NULL, WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, NULL, NULL,
+                         NULL, NULL);
+
+    ret = pScheduleDispatchNotification(NULL);
+    ok(!ret, "Got unexpected %d.\n", ret);
+
+    ret = pScheduleDispatchNotification(hwnd);
+    ok(ret == 2, "Got unexpected %d.\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_DelegateInput(void)
+{
+    UINT_PTR ret;
+
+    if (!pDelegateInput || !pUndelegateInput)
+    {
+        win_skip("DelegateInput or UndelegateInput is unavailable.\n");
+        return;
+    }
+
+    ret = pDelegateInput(0, 0, 0, 0, 0, 0);
+    todo_wine
+    ok(ret == 0, "Got unexpected ret %Ix.\n", ret);
+
+    pUndelegateInput(0, 0);
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -6532,6 +6932,8 @@ START_TEST(input)
     test_OemKeyScan();
     test_rawinput(argv[0]);
     test_DefRawInputProc();
+    test_ScheduleDispatchNotification();
+    test_DelegateInput();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx( argv );

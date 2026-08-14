@@ -20,13 +20,11 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
-#endif
 
 namespace Windows.Devices.Geolocation {
 
@@ -208,6 +206,7 @@ namespace Windows.Devices.Geolocation {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
     runtimeclass StatusChangedEventArgs

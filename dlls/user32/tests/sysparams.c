@@ -187,9 +187,7 @@ static void run_in_process_( const char *file, int line, char **argv, const char
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 }
 
 static BOOL get_reg_dword(HKEY base, const char *key_name, const char *value_name, DWORD *value)
@@ -2574,6 +2572,38 @@ static void test_WM_DISPLAYCHANGE(void)
     displaychange_test_active = FALSE;
 }
 
+static void test_SPI_SETKEYBOARDCUES( void )           /* 0x100B */
+{
+    BOOL ret, values[2], result;
+    unsigned int i;
+
+    trace( "testing SPI_{GET,SET}KEYBOARDCUES\n" );
+    SetLastError( 0xdeadbeef );
+    ret = SystemParametersInfoA( SPI_GETKEYBOARDCUES, 0, &result, 0 );
+    if (!test_error_msg( ret, "SPI_{GET,SET}KEYBOARDCUES" ))
+        return;
+    ok( result == FALSE, "Expected keyboard cues disabled by default.\n" );
+    values[1] = result;
+    values[0] = !result;
+
+    for (i = 0; i < ARRAY_SIZE( values ); i++)
+    {
+        ret = SystemParametersInfoA( SPI_SETKEYBOARDCUES, 0, IntToPtr(values[i]), SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        if (!test_error_msg( ret, "SPI_SETKEYBOARDCUES" ))
+            break;
+        ok( ret, "%d: ret=%d err=%ld\n", i, ret, GetLastError() );
+        test_change_message( SPI_SETKEYBOARDCUES, 1 );
+
+        ret = SystemParametersInfoA( SPI_GETKEYBOARDCUES, 0, &result, 0 );
+        ok( ret, "%d: ret=%d err=%ld\n", i, ret, GetLastError() );
+        eq( result, values[i], "SPI_GETKEYBOARDCUES", "%d" );
+    }
+
+    ret = SystemParametersInfoA( SPI_SETKEYBOARDCUES, 0, IntToPtr(values[1]), SPIF_UPDATEINIFILE );
+    ok( ret, "***warning*** failed to restore the original value: ret=%d err=%ld\n", ret, GetLastError());
+    flush_change_messages();
+}
+
 /*
  * Registry entries for the system parameters.
  * Names are created by 'SET' flags names.
@@ -2625,6 +2655,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETMENUSHOWDELAY();                /*    107 */
     test_SPI_SETWHEELSCROLLCHARS();             /*    108 */
     test_SPI_SETWALLPAPER();                    /*    115 */
+    test_SPI_SETKEYBOARDCUES();                 /* 0x100B */
 
 
     SendMessageA( ghTestWnd, WM_DESTROY, 0, 0 );
@@ -3174,6 +3205,7 @@ static void test_EnumDisplaySettings(void)
     BOOL attached, ret;
     DISPLAY_DEVICEA dd;
     DEVMODEA dm, dm2;
+    unsigned int i;
     DEVMODEW dmW;
     HDC hdc;
 
@@ -3234,6 +3266,58 @@ static void test_EnumDisplaySettings(void)
             FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
     ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dmW.dmFields);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
+            setting_fields, dmW.dmFields);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, 0, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dm, 0xcc, sizeof(dm));
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
+    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
+            setting_fields, dm.dmFields);
+    for (i = dm.dmSize; i < sizeof(DEVMODEA); ++i)
+    {
+        if (((BYTE *)&dm)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEA), "data modified at offset %u.\n", i);
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = sizeof(dmW);
@@ -4278,6 +4362,7 @@ static void test_dpi_context(void)
     DPI_AWARENESS_CONTEXT context;
     BOOL ret;
     UINT dpi;
+    HANDLE process;
     HDC hdc = GetDC( 0 );
 
     context = pGetThreadDpiAwarenessContext();
@@ -4324,6 +4409,12 @@ static void test_dpi_context(void)
     ret = pGetProcessDpiAwarenessInternal( GetCurrentProcess(), &awareness );
     ok( ret, "got %d\n", ret );
     ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong value %d\n", awareness );
+    process = OpenProcess( PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId() );
+    ret = pGetProcessDpiAwarenessInternal( process, &awareness );
+    ok( ret, "got %d\n", ret );
+    ok( awareness == DPI_AWARENESS_SYSTEM_AWARE, "wrong value %d\n", awareness );
+    CloseHandle(process);
+
     SetLastError(0xdeadbeef);
     ret = pGetProcessDpiAwarenessInternal( (HANDLE)0xdeadbeef, &awareness );
     todo_wine

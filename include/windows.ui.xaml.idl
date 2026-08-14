@@ -17,6 +17,7 @@
  */
 
 #ifdef __WIDL__
+#pragma makedep header install winmd
 #pragma winrt ns_prefix
 #endif
 

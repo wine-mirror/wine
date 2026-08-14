@@ -32,6 +32,7 @@
 #define TIMER_WAIT_MS 50 /* Should be long enough for slow systems */
 
 static const char new_folder_name[] = "foo";
+static const WCHAR new_folder_name_w[] = L"foo";
 static LPITEMIDLIST selected_folder_pidl;
 
 /*
@@ -294,7 +295,7 @@ static int CALLBACK selection_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 
         ret = SendMessageA(hwnd, BFFM_SETSELECTIONA, 1, (LPARAM)new_folder_name);
         ok(!ret, "SendMessage returned: %lu\n", ret);
-        ret = SendMessageW(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)new_folder_name);
+        ret = SendMessageW(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)new_folder_name_w);
         ok(!ret, "SendMessage returned: %lu\n", ret);
 
         SendMessageA(hwnd, WM_COMMAND, IDOK, 0);

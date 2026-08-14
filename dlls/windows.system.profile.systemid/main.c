@@ -119,6 +119,7 @@ struct system_identification_info
     ISystemIdentificationInfo ISystemIdentificationInfo_iface;
     LONG ref;
 
+    IBuffer *system_id;
     SystemIdentificationSource system_id_source;
 };
 
@@ -162,7 +163,11 @@ static ULONG WINAPI system_identification_info_Release( ISystemIdentificationInf
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        IBuffer_Release( impl->system_id );
+        free( impl );
+    }
     return ref;
 }
 
@@ -186,8 +191,15 @@ static HRESULT WINAPI system_identification_info_GetTrustLevel( ISystemIdentific
 
 static HRESULT WINAPI system_identification_info_get_Id( ISystemIdentificationInfo *iface, IBuffer **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct system_identification_info *impl = impl_from_ISystemIdentificationInfo( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_INVALIDARG;
+
+    *value = impl->system_id;
+    IBuffer_AddRef( *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI system_identification_info_get_Source( ISystemIdentificationInfo *iface, SystemIdentificationSource *value )
@@ -218,9 +230,31 @@ static const struct ISystemIdentificationInfoVtbl system_identification_info_vtb
 
 DEFINE_IINSPECTABLE( system_id_statics, ISystemIdentificationStatics, struct system_id_statics, IActivationFactory_iface )
 
+static HRESULT get_system_id( IBuffer **system_id, SystemIdentificationSource *system_id_source )
+{
+    static const WCHAR *buffer_statics_name = L"Windows.Storage.Streams.Buffer";
+    IBufferFactory *buffer_factory = NULL;
+    IActivationFactory *factory = NULL;
+    HSTRING str = NULL;
+    HRESULT hr = WindowsCreateString( buffer_statics_name, wcslen( buffer_statics_name ), &str );
+
+    FIXME( "returning empty ID.\n" );
+
+    if (SUCCEEDED(hr)) hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    if (SUCCEEDED(hr)) hr = IActivationFactory_QueryInterface( factory, &IID_IBufferFactory, (void **)&buffer_factory );
+    if (SUCCEEDED(hr)) hr = IBufferFactory_Create( buffer_factory, 0, system_id );
+    if (SUCCEEDED(hr)) *system_id_source = SystemIdentificationSource_None;
+
+    if (buffer_factory) IBufferFactory_Release( buffer_factory );
+    if (factory) IActivationFactory_Release( factory );
+    WindowsDeleteString( str );
+    return hr;
+}
+
 static HRESULT WINAPI system_id_statics_GetSystemIdForPublisher( ISystemIdentificationStatics *iface, ISystemIdentificationInfo **result )
 {
     struct system_identification_info *impl;
+    HRESULT hr;
 
     FIXME( "iface %p, result %p semi-stub!\n", iface, result );
 
@@ -228,8 +262,12 @@ static HRESULT WINAPI system_id_statics_GetSystemIdForPublisher( ISystemIdentifi
     if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
 
     impl->ISystemIdentificationInfo_iface.lpVtbl = &system_identification_info_vtbl;
-    impl->system_id_source = SystemIdentificationSource_None;
     impl->ref = 1;
+    if (FAILED(hr = get_system_id( &impl->system_id, &impl->system_id_source )))
+    {
+        free( impl );
+        return hr;
+    }
 
     *result = &impl->ISystemIdentificationInfo_iface;
     TRACE( "created ISystemIdentificationInfo %p.\n", *result );

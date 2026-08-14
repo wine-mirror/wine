@@ -24,7 +24,6 @@
 
 import "propidl.idl";
 import "inspectable.idl";
-import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
@@ -45,9 +44,6 @@ namespace Windows.Gaming.Input.Custom {
     typedef union WineForceFeedbackEffectParameters WineForceFeedbackEffectParameters;
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
-
-    /* type-pruning version of AsyncOperationCompletedHandler<T> */
-    delegate HRESULT WineAsyncOperationCompletedHandler([in] IInspectable *async, [in] AsyncStatus status);
 
     enum WineGameControllerType
     {
@@ -173,6 +169,9 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineGameControllerProvider : IInspectable
         requires Windows.Gaming.Input.Custom.IGameControllerProvider
     {
+        [propget] HRESULT NonRoamableId([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+
         [propget] HRESULT Type([out, retval] WineGameControllerType *value);
         [propget] HRESULT AxisCount([out, retval] INT32 *value);
         [propget] HRESULT ButtonCount([out, retval] INT32 *value);
@@ -191,22 +190,12 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineForceFeedbackEffectImpl : IUnknown
         requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
     {
-        [propput] HRESULT Parameters([in] WineForceFeedbackEffectParameters parameters,
-                                     [in, optional] WineForceFeedbackEffectEnvelope *envelope);
+        HRESULT SetParameters([in] WineForceFeedbackEffectParameters parameters,
+                              [in, optional] WineForceFeedbackEffectEnvelope *envelope);
     }
 
     [
-        uuid(83f377ee-c799-11ec-9d64-0242ac120002)
-    ]
-    interface IWineAsyncInfoImpl : IUnknown
-    {
-        [propput] HRESULT Completed([in] WineAsyncOperationCompletedHandler *handler);
-        [propget] HRESULT Completed([out, retval] WineAsyncOperationCompletedHandler **handler);
-        [propget] HRESULT Result([out, retval] PROPVARIANT *result);
-        HRESULT Start();
-    }
-
-    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         threading(both)
     ]

@@ -6351,7 +6351,7 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
     if (SUCCEEDED(hr))
         return hr;
 
-    if (!(flags & MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE))
+    if (url_ext && !(flags & MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE))
         return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
 
     if (FAILED(hr = resolver_get_bytestream_url_hint(stream, &url_ext)))
@@ -6421,13 +6421,20 @@ static HRESULT resolver_create_scheme_handler(const WCHAR *scheme, DWORD flags, 
     return hr;
 }
 
-static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+/* Also in kernelbase */
+static BOOL is_escaped_drive_spec(const WCHAR *str)
 {
-    static const WCHAR fileschemeW[] = L"file:";
+    return isalpha(str[0]) && (str[1] == ':' || str[1] == '|');
+}
+
+static BOOL resolver_find_scheme(const WCHAR *url, unsigned int *len)
+{
     const WCHAR *ptr = url;
-    unsigned int len;
-    WCHAR *scheme;
-    HRESULT hr;
+
+    *len = 0;
+
+    if (is_escaped_drive_spec(url))
+        return FALSE;
 
     /* RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
     while (*ptr)
@@ -6449,14 +6456,22 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
         ptr++;
     }
 
-    /* Schemes must end with a ':', if not found try "file:" */
+    /* Schemes must end with a ':' */
     if (ptr == url || *ptr != ':')
-    {
-        url = fileschemeW;
-        len = ARRAY_SIZE(fileschemeW) - 1;
-    }
-    else
-        len = ptr - url + 1;
+        return FALSE;
+
+    *len = ptr - url + 1;
+    return TRUE;
+}
+
+static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+{
+    unsigned int len;
+    WCHAR *scheme;
+    HRESULT hr;
+
+    if (!resolver_find_scheme(url, &len))
+        return MF_E_UNSUPPORTED_SCHEME;
 
     scheme = malloc((len + 1) * sizeof(WCHAR));
     if (!scheme)
@@ -6466,8 +6481,6 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
     scheme[len] = 0;
 
     hr = resolver_create_scheme_handler(scheme, flags, handler);
-    if (FAILED(hr) && url != fileschemeW)
-        hr = resolver_create_scheme_handler(fileschemeW, flags, handler);
 
     free(scheme);
 
@@ -6571,10 +6584,49 @@ static ULONG WINAPI source_resolver_Release(IMFSourceResolver *iface)
     return refcount;
 }
 
+static WCHAR *resolver_normalise_url(const WCHAR *url)
+{
+    static const WCHAR filescheme[] = L"file:", filescheme_dblslash[] = L"file://";
+    unsigned int len = 0, slash_count;
+    WCHAR *normalised_url;
+    const WCHAR *scheme;
+
+    if (resolver_find_scheme(url, &len))
+        return wcsdup(url);
+
+    /* If not found try "file:"
+     * Native allows leading slashes in file paths. If "file:" is missing, native prepends
+     * it before calling BeginCreateObject(), and includes two or three slashes if any were
+     * present. The rules don't seem to follow much of a pattern, and may have been designed
+     * to get the desired result from PathCreateFromUrlW(). */
+    while (url[len] == L'/')
+        ++len;
+    if (!len)
+        slash_count = 0;
+    else if (is_escaped_drive_spec(&url[len]))
+        slash_count = 1 - (len == 5 || len == 6);
+    else if (len < 5)
+        slash_count = len & 1;
+    else
+        slash_count = len > 6;
+    url += len - slash_count;
+
+    scheme = len ? filescheme_dblslash : filescheme;
+    len = wcslen(url);
+    if (!(normalised_url = malloc((wcslen(scheme) + len + 1) * sizeof(WCHAR))))
+        return NULL;
+
+    wcscpy(normalised_url, scheme);
+    wcscat(normalised_url, url);
+
+    return normalised_url;
+}
+
 static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
         DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
+    WCHAR *normalised_url = NULL;
     IMFSchemeHandler *handler;
     IRtwqAsyncResult *result;
     RTWQASYNCRESULT *data;
@@ -6585,23 +6637,26 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     if (!url || !obj_type || !object)
         return E_POINTER;
 
-    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
-        return hr;
+    if (!(normalised_url = resolver_normalise_url(url)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = resolver_get_scheme_handler(normalised_url, flags, &handler)))
+        goto done;
 
     hr = RtwqCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
-        return hr;
+        goto done;
 
     data = (RTWQASYNCRESULT *)result;
     data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, (IMFAsyncCallback *)&resolver->url_callback,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, normalised_url, flags, props, NULL, (IMFAsyncCallback *)&resolver->url_callback,
             (IUnknown *)result);
     if (FAILED(hr))
     {
         IRtwqAsyncResult_Release(result);
-        return hr;
+        goto done;
     }
 
     WaitForSingleObject(data->hEvent, INFINITE);
@@ -6609,6 +6664,8 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     hr = resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
     IRtwqAsyncResult_Release(result);
 
+done:
+    free(normalised_url);
     return hr;
 }
 
@@ -6660,12 +6717,16 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     IMFSchemeHandler *handler;
     IUnknown *inner_cookie = NULL;
     IRtwqAsyncResult *result;
+    WCHAR *normalised_url;
     HRESULT hr;
 
     TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
 
-    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
-        return hr;
+    if (!(normalised_url = resolver_normalise_url(url)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = resolver_get_scheme_handler(normalised_url, flags, &handler)))
+        goto done;
 
     if (cancel_cookie)
         *cancel_cookie = NULL;
@@ -6673,9 +6734,9 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     hr = RtwqCreateAsyncResult((IUnknown *)handler, (IRtwqAsyncCallback *)callback, state, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
-        return hr;
+        goto done;
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, cancel_cookie ? &inner_cookie : NULL,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, normalised_url, flags, props, cancel_cookie ? &inner_cookie : NULL,
             (IMFAsyncCallback *)&resolver->url_callback, (IUnknown *)result);
 
     if (SUCCEEDED(hr) && inner_cookie)
@@ -6686,6 +6747,8 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
 
     IRtwqAsyncResult_Release(result);
 
+done:
+    free(normalised_url);
     return hr;
 }
 
@@ -8849,6 +8912,405 @@ HRESULT WINAPI CreatePropertyStore(IPropertyStore **store)
     return S_OK;
 }
 
+struct d3d12_sync_object_release
+{
+    struct list entry;
+    ID3D12Fence *fence;
+    HANDLE event;
+};
+
+struct d3d12_sync_object
+{
+    IMFD3D12SynchronizationObject IMFD3D12SynchronizationObject_iface;
+    IMFD3D12SynchronizationObjectCommands IMFD3D12SynchronizationObjectCommands_iface;
+    IRtwqAsyncCallback async_release_iface;
+    LONG refcount;
+    CRITICAL_SECTION cs;
+    ID3D12Device *device;
+    ID3D12Fence *ready_fence;
+    UINT64 generation;
+    unsigned int release_wait;
+    HANDLE final_release_event;
+    struct list release_freelist;
+    struct list *release_freelist_cursor;
+};
+
+static struct d3d12_sync_object *impl_from_IMFD3D12SynchronizationObject(IMFD3D12SynchronizationObject *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_sync_object, IMFD3D12SynchronizationObject_iface);
+}
+
+static struct d3d12_sync_object *impl_from_IMFD3D12SynchronizationObjectCommands(IMFD3D12SynchronizationObjectCommands *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_sync_object, IMFD3D12SynchronizationObjectCommands_iface);
+}
+
+static struct d3d12_sync_object *d3d12_sync_object_from_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_sync_object, async_release_iface);
+}
+
+static HRESULT WINAPI d3d12_sync_object_QueryInterface(IMFD3D12SynchronizationObject *iface, REFIID riid, void **obj)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObject(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFD3D12SynchronizationObject) || IsEqualIID(riid, &IID_IUnknown))
+        *obj = &syncobj->IMFD3D12SynchronizationObject_iface;
+    else if (IsEqualIID(riid, &IID_IMFD3D12SynchronizationObjectCommands))
+        *obj = &syncobj->IMFD3D12SynchronizationObjectCommands_iface;
+    else
+    {
+        *obj = NULL;
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IMFD3D12SynchronizationObject_AddRef(&syncobj->IMFD3D12SynchronizationObject_iface);
+    return S_OK;
+}
+
+static ULONG WINAPI d3d12_sync_object_AddRef(IMFD3D12SynchronizationObject *iface)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObject(iface);
+    ULONG refcount = InterlockedIncrement(&syncobj->refcount);
+
+    TRACE("%p, refcount %ld.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI d3d12_sync_object_Release(IMFD3D12SynchronizationObject *iface)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObject(iface);
+    ULONG refcount = InterlockedDecrement(&syncobj->refcount);
+
+    TRACE("%p, refcount %ld.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        struct d3d12_sync_object_release *cursor, *cursor2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &syncobj->release_freelist,
+                struct d3d12_sync_object_release, entry)
+        {
+            if (cursor->fence)
+                ID3D12Fence_Release(cursor->fence);
+            CloseHandle(cursor->event);
+            free(cursor);
+        }
+
+        ID3D12Device_Release(syncobj->device);
+        ID3D12Fence_Release(syncobj->ready_fence);
+        DeleteCriticalSection(&syncobj->cs);
+        free(syncobj);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI d3d12_sync_object_SignalEventOnFinalResourceRelease(IMFD3D12SynchronizationObject *iface, HANDLE event)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObject(iface);
+
+    TRACE("%p, %p.\n", iface, event);
+
+    if (!event)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&syncobj->cs);
+    if (syncobj->release_wait)
+        syncobj->final_release_event = event;
+    else
+        SetEvent(event);
+    LeaveCriticalSection(&syncobj->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI d3d12_sync_object_Reset(IMFD3D12SynchronizationObject *iface)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObject(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&syncobj->cs);
+    if (syncobj->release_wait)
+        hr = MF_E_UNEXPECTED;
+    else
+    {
+        ++syncobj->generation;
+        syncobj->release_freelist_cursor = &syncobj->release_freelist;
+    }
+    LeaveCriticalSection(&syncobj->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI d3d12_sync_object_commands_QueryInterface(IMFD3D12SynchronizationObjectCommands *iface, REFIID riid, void **obj)
+{
+    return d3d12_sync_object_QueryInterface(&impl_from_IMFD3D12SynchronizationObjectCommands(iface)->IMFD3D12SynchronizationObject_iface, riid, obj);
+}
+
+static ULONG WINAPI d3d12_sync_object_commands_AddRef(IMFD3D12SynchronizationObjectCommands *iface)
+{
+    return d3d12_sync_object_AddRef(&impl_from_IMFD3D12SynchronizationObjectCommands(iface)->IMFD3D12SynchronizationObject_iface);
+}
+
+static ULONG WINAPI d3d12_sync_object_commands_Release(IMFD3D12SynchronizationObjectCommands *iface)
+{
+    return d3d12_sync_object_Release(&impl_from_IMFD3D12SynchronizationObjectCommands(iface)->IMFD3D12SynchronizationObject_iface);
+}
+
+static HRESULT WINAPI d3d12_sync_object_commands_EnqueueResourceReady(IMFD3D12SynchronizationObjectCommands *iface, ID3D12CommandQueue *producer_queue)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObjectCommands(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, producer_queue);
+
+    if (!producer_queue)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&syncobj->cs);
+    hr = ID3D12CommandQueue_Signal(producer_queue, syncobj->ready_fence, syncobj->generation);
+    LeaveCriticalSection(&syncobj->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI d3d12_sync_object_commands_EnqueueResourceReadyWait(IMFD3D12SynchronizationObjectCommands *iface, ID3D12CommandQueue *consumer_queue)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObjectCommands(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, consumer_queue);
+
+    if (!consumer_queue)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&syncobj->cs);
+    hr = ID3D12CommandQueue_Wait(consumer_queue, syncobj->ready_fence, syncobj->generation);
+    LeaveCriticalSection(&syncobj->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI d3d12_sync_object_commands_SignalEventOnResourceReady(IMFD3D12SynchronizationObjectCommands *iface, HANDLE event)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObjectCommands(iface);
+    HRESULT hr;
+    UINT64 generation;
+
+    TRACE("%p, %p.\n", iface, event);
+
+    EnterCriticalSection(&syncobj->cs);
+    generation = syncobj->generation;
+    LeaveCriticalSection(&syncobj->cs);
+
+    hr = ID3D12Fence_SetEventOnCompletion(syncobj->ready_fence, generation, event);
+    return hr;
+}
+
+static HRESULT d3d12_sync_object_create_release(struct d3d12_sync_object *syncobj, struct d3d12_sync_object_release **out)
+{
+    struct list *next;
+    struct d3d12_sync_object_release *relobj;
+    HRESULT hr;
+
+    next = list_next(&syncobj->release_freelist, syncobj->release_freelist_cursor);
+    if (next)
+    {
+        relobj = LIST_ENTRY(next, struct d3d12_sync_object_release, entry);
+    }
+    else
+    {
+        relobj = calloc(1, sizeof(*relobj));
+        if (!relobj)
+            return E_OUTOFMEMORY;
+        relobj->event = CreateEventA(NULL, FALSE, FALSE, NULL);
+        list_add_after(syncobj->release_freelist_cursor, &relobj->entry);
+    }
+
+    if (!relobj->fence)
+    {
+        hr = ID3D12Device_CreateFence(syncobj->device, 0, D3D12_FENCE_FLAG_SHARED, &IID_ID3D12Fence, (void **) &relobj->fence);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    *out = relobj;
+    return S_OK;
+}
+
+static HRESULT WINAPI d3d12_sync_object_commands_EnqueueResourceRelease(IMFD3D12SynchronizationObjectCommands *iface, ID3D12CommandQueue *consumer_queue)
+{
+    struct d3d12_sync_object *syncobj = impl_from_IMFD3D12SynchronizationObjectCommands(iface);
+    struct d3d12_sync_object_release *relobj;
+    IRtwqAsyncResult *result;
+    RTWQWORKITEM_KEY key;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, consumer_queue);
+
+    if (!consumer_queue)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&syncobj->cs);
+    hr = d3d12_sync_object_create_release(syncobj, &relobj);
+    if (FAILED(hr))
+        goto end;
+
+    hr = RtwqCreateAsyncResult(NULL, &syncobj->async_release_iface, NULL, &result);
+    if (FAILED(hr))
+        goto end;
+
+    hr = RtwqPutWaitingWorkItem(relobj->event, 0, result, &key);
+    IRtwqAsyncResult_Release(result);
+    if (FAILED(hr))
+        goto end;
+
+    hr = ID3D12CommandQueue_Signal(consumer_queue, relobj->fence, syncobj->generation);
+    if (FAILED(hr))
+    {
+        RtwqCancelWorkItem(key);
+        goto end;
+    }
+
+    hr = ID3D12Fence_SetEventOnCompletion(relobj->fence, syncobj->generation, relobj->event);
+    if (FAILED(hr))
+    {
+        RtwqCancelWorkItem(key);
+        /* can't re-use fence since queue might signal it */
+        ID3D12Fence_Release(relobj->fence);
+        relobj->fence = NULL;
+        goto end;
+    }
+
+    ++syncobj->release_wait;
+    syncobj->release_freelist_cursor = &relobj->entry;
+
+end:
+    LeaveCriticalSection(&syncobj->cs);
+    return hr;
+}
+
+static HRESULT WINAPI d3d12_sync_object_async_release_QueryInterface(IRtwqAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IRtwqAsyncCallback))
+    {
+        *obj = iface;
+        IRtwqAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI d3d12_sync_object_async_release_AddRef(IRtwqAsyncCallback *iface)
+{
+    return d3d12_sync_object_AddRef(&d3d12_sync_object_from_IRtwqAsyncCallback(iface)->IMFD3D12SynchronizationObject_iface);
+}
+
+static ULONG WINAPI d3d12_sync_object_async_release_Release(IRtwqAsyncCallback *iface)
+{
+    return d3d12_sync_object_Release(&d3d12_sync_object_from_IRtwqAsyncCallback(iface)->IMFD3D12SynchronizationObject_iface);
+}
+
+static HRESULT WINAPI d3d12_sync_object_async_release_GetParameters(IRtwqAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d12_sync_object_async_release_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
+{
+    struct d3d12_sync_object *syncobj = d3d12_sync_object_from_IRtwqAsyncCallback(iface);
+
+    TRACE("%p, %p.\n", iface, result);
+
+    EnterCriticalSection(&syncobj->cs);
+    if (!--syncobj->release_wait && syncobj->final_release_event)
+    {
+        SetEvent(syncobj->final_release_event);
+        syncobj->final_release_event = NULL;
+    }
+    LeaveCriticalSection(&syncobj->cs);
+    return S_OK;
+}
+
+static const IMFD3D12SynchronizationObjectVtbl d3d12_sync_object_vtbl =
+{
+    d3d12_sync_object_QueryInterface,
+    d3d12_sync_object_AddRef,
+    d3d12_sync_object_Release,
+    d3d12_sync_object_SignalEventOnFinalResourceRelease,
+    d3d12_sync_object_Reset,
+};
+
+static const IMFD3D12SynchronizationObjectCommandsVtbl d3d12_sync_object_commands_vtbl =
+{
+    d3d12_sync_object_commands_QueryInterface,
+    d3d12_sync_object_commands_AddRef,
+    d3d12_sync_object_commands_Release,
+    d3d12_sync_object_commands_EnqueueResourceReady,
+    d3d12_sync_object_commands_EnqueueResourceReadyWait,
+    d3d12_sync_object_commands_SignalEventOnResourceReady,
+    d3d12_sync_object_commands_EnqueueResourceRelease,
+};
+
+static const IRtwqAsyncCallbackVtbl d3d12_sync_object_async_release_vtbl =
+{
+    d3d12_sync_object_async_release_QueryInterface,
+    d3d12_sync_object_async_release_AddRef,
+    d3d12_sync_object_async_release_Release,
+    d3d12_sync_object_async_release_GetParameters,
+    d3d12_sync_object_async_release_Invoke,
+};
+
+/***********************************************************************
+ *      MFCreateD3D12SynchronizationObject (mfplat.@)
+ */
+
+HRESULT WINAPI MFCreateD3D12SynchronizationObject(ID3D12Device *device, REFIID riid, void **obj)
+{
+    HRESULT hr;
+    struct d3d12_sync_object *syncobj;
+
+    if (!obj)
+        return E_INVALIDARG;
+
+    syncobj = calloc(1, sizeof(*syncobj));
+    if (!syncobj)
+        return E_OUTOFMEMORY;
+
+    hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_SHARED, &IID_ID3D12Fence, (void **) &syncobj->ready_fence);
+    if (FAILED(hr))
+    {
+        free(syncobj);
+        return hr;
+    }
+
+    syncobj->refcount = 1;
+    syncobj->IMFD3D12SynchronizationObject_iface.lpVtbl = &d3d12_sync_object_vtbl;
+    syncobj->IMFD3D12SynchronizationObjectCommands_iface.lpVtbl = &d3d12_sync_object_commands_vtbl;
+    syncobj->async_release_iface.lpVtbl = &d3d12_sync_object_async_release_vtbl;
+    InitializeCriticalSection(&syncobj->cs);
+    ID3D12Device_AddRef(device);
+    syncobj->device = device;
+    syncobj->generation = 1;
+    list_init(&syncobj->release_freelist);
+    syncobj->release_freelist_cursor = &syncobj->release_freelist;
+
+    hr = IMFD3D12SynchronizationObject_QueryInterface(&syncobj->IMFD3D12SynchronizationObject_iface, riid, obj);
+    IMFD3D12SynchronizationObject_Release(&syncobj->IMFD3D12SynchronizationObject_iface);
+
+    return hr;
+}
+
 struct shared_dxgi_manager
 {
     IMFDXGIDeviceManager *manager;
@@ -9503,13 +9965,19 @@ HRESULT WINAPI MFCreatePathFromURL(const WCHAR *url, WCHAR **ret_path)
 }
 
 /***********************************************************************
- *   MFResetDXGIDeviceManagerX  (mfplat.@)
- *
- * Xbox One ERA variant — resets the DXGI device manager.
- * On Wine, we just return success (no Xbox-specific state to reset).
+ *      MFSerializeAttributesToStream (mfplat.@)
  */
-HRESULT WINAPI MFResetDXGIDeviceManagerX(void)
+HRESULT WINAPI MFSerializeAttributesToStream(IMFAttributes *attr, DWORD options, IStream *stream)
 {
-    FIXME("stub!\n");
-    return S_OK;
+    FIXME("%p %lx %p: stub!\n", attr, options, stream);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFDeserializeAttributesFromStream (mfplat.@)
+ */
+HRESULT WINAPI MFDeserializeAttributesFromStream(IMFAttributes *attr, DWORD options, IStream *stream)
+{
+    FIXME("%p %lx %p: stub!\n", attr, options, stream);
+    return E_NOTIMPL;
 }

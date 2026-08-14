@@ -20,11 +20,9 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "eventtoken.idl";
 import "windows.foundation.idl";
-#endif
 
 namespace Windows.Security.ExchangeActiveSyncProvisioning {
     interface IEasClientDeviceInformation;

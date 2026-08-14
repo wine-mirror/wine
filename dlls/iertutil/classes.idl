@@ -19,10 +19,10 @@
  */
 
 #pragma makedep register
-
-#ifdef __WIDL__
 #pragma winrt ns_prefix
-#endif
 
-#define DO_NO_IMPORTS
-#include "windows.foundation.idl"
+import "windows.foundation.idl";
+
+namespace Windows.Foundation {
+    runtimeclass Uri;
+}

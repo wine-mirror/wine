@@ -685,8 +685,8 @@
 @ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) __ExceptionPtrDestroy
 @ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) __ExceptionPtrRethrow
 @ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) __ExceptionPtrRethrow
-@ stub -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z
-@ stub -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z
+@ cdecl -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z(ptr ptr) __ExceptionPtrSwap
+@ cdecl -arch=win64 ?__ExceptionPtrSwap@@YAXPEAX0@Z(ptr ptr) __ExceptionPtrSwap
 @ cdecl -arch=win32 ?__ExceptionPtrToBool@@YA_NPBX@Z(ptr) __ExceptionPtrToBool
 @ cdecl -arch=win64 ?__ExceptionPtrToBool@@YA_NPEBX@Z(ptr) __ExceptionPtrToBool
 @ cdecl __uncaught_exception()
@@ -857,7 +857,7 @@
 @ cdecl __AdjustPointer(ptr ptr)
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
-@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
 @ cdecl __CppXcptFilter(long ptr)
 @ cdecl __CxxDetectRethrow(ptr)
 @ cdecl __CxxExceptionFilter(ptr ptr long ptr)
@@ -1850,7 +1850,7 @@
 @ cdecl _vswprintf_p(ptr long wstr ptr)
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr)
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr)
-@ stub _vwprintf_l
+@ cdecl _vwprintf_l(wstr ptr ptr)
 @ stub _vwprintf_p
 @ stub _vwprintf_p_l
 @ stub _vwprintf_s_l
@@ -1892,7 +1892,7 @@
 @ cdecl _wcstof_l(wstr ptr ptr)
 @ cdecl -ret64 _wcstoi64(wstr ptr long)
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr)
-@ stub _wcstoimax_l
+@ cdecl -ret64 _wcstoimax_l(wstr ptr long ptr) _wcstoi64_l
 @ cdecl _wcstol_l(wstr ptr long ptr)
 @ cdecl _wcstold_l(wstr ptr ptr) _wcstod_l
 @ cdecl -ret64 _wcstoll_l(wstr ptr long ptr) _wcstoi64_l
@@ -1902,7 +1902,7 @@
 @ cdecl -ret64 _wcstoui64_l(wstr ptr long ptr)
 @ cdecl _wcstoul_l(wstr ptr long ptr)
 @ cdecl -ret64 _wcstoull_l(wstr ptr long ptr) _wcstoui64_l
-@ stub _wcstoumax_l
+@ cdecl -ret64 _wcstoumax_l(wstr ptr long ptr) _wcstoui64_l
 @ cdecl _wcsupr(wstr)
 @ cdecl _wcsupr_l(wstr ptr)
 @ cdecl _wcsupr_s(wstr long)
@@ -1953,7 +1953,7 @@
 @ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen(wstr wstr)
-@ stub _wprintf_l
+@ varargs _wprintf_l(wstr ptr)
 @ stub _wprintf_p
 @ stub _wprintf_p_l
 @ stub _wprintf_s_l
@@ -2047,8 +2047,8 @@
 @ stub cacoshl
 @ stub cacosl
 @ cdecl calloc(long long)
-@ stub carg
-@ stub cargf
+@ cdecl carg(int128)
+@ cdecl cargf(int64)
 @ stub cargl
 @ stub casin
 @ stub casinf
@@ -2073,7 +2073,7 @@
 @ stub ccosl
 @ cdecl ceil(double)
 @ cdecl -arch=!i386 ceilf(float)
-@ stub cexp
+@ cdecl -norelay cexp(int128)
 @ stub cexpf
 @ stub cexpl
 @ cdecl cimag(int128)
@@ -2334,9 +2334,9 @@
 @ cdecl remquol(double double ptr) remquo
 @ cdecl rename(str str)
 @ cdecl rewind(ptr)
-@ cdecl rint(double) MSVCRT_rint
+@ cdecl rint(double)
 @ cdecl rintf(float)
-@ cdecl rintl(double) MSVCRT_rint
+@ cdecl rintl(double) rint
 @ cdecl round(double)
 @ cdecl roundf(float)
 @ cdecl roundl(double) round
@@ -2472,7 +2472,7 @@
 @ cdecl wcsstr(wstr wstr)
 @ cdecl wcstod(wstr ptr)
 @ cdecl wcstof(ptr ptr)
-@ stub wcstoimax
+@ cdecl -ret64 wcstoimax(wstr ptr long) _wcstoi64
 @ cdecl wcstok(wstr wstr)
 @ cdecl wcstok_s(ptr wstr ptr)
 @ cdecl wcstol(wstr ptr long)
@@ -2482,7 +2482,7 @@
 @ cdecl wcstombs_s(ptr ptr long wstr long)
 @ cdecl wcstoul(wstr ptr long)
 @ cdecl -ret64 wcstoull(wstr ptr long) _wcstoui64
-@ stub wcstoumax
+@ cdecl -ret64 wcstoumax(wstr ptr long) _wcstoui64
 @ cdecl wcsxfrm(ptr wstr long)
 @ cdecl wctob(long)
 @ cdecl wctomb(ptr long)

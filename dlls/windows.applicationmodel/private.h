@@ -29,59 +29,15 @@
 
 #include "activation.h"
 
-#define WIDL_using_Windows_System
-#define WIDL_using_Windows_UI_Core
-#define WIDL_using_Windows_UI_Input
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
-#include "windows.ui.core.h"
-#include "windows.system.h"
 #include "windows.foundation.h"
 #define WIDL_using_Windows_ApplicationModel
-#define WIDL_using_Windows_ApplicationModel_Core
 #define WIDL_using_Windows_Storage
-#include "windows.applicationmodel.core.h"
 #include "windows.applicationmodel.h"
 
-#include "wine/list.h"
-
-struct corewindow_impl {
-    ICoreWindow ICoreWindow_iface;
-    ICoreWindow4 ICoreWindow4_iface;
-    ICoreWindowInterop ICoreWindowInterop_iface;
-    HWND window_handle;
-    IFrameworkView *current_view;
-    struct dispatcher_impl *dispatcher;
-    LONG ref;
-};
-
-struct dispatcher_impl {
-    ICoreDispatcher ICoreDispatcher_iface;
-    struct corewindow_impl *for_window;
-    struct list queued_tasks;
-    LONG ref;
-};
-
-struct corewindow_tls {
-    struct corewindow_impl *window;
-};
-
-extern struct corewindow_impl *create_corewindow(IFrameworkView *for_view, char *identity_name, char *display_name);
-extern struct dispatcher_impl *create_dispatcher(struct corewindow_impl *for_window, char *identity_name, char *display_name);
-extern ICoreCursor *create_cursor(UINT32 id, CoreCursorType type);    
-
-typedef HRESULT (*dispatcher_func)( IInspectable *invoker );
-
-extern void *dispatcher_run_and_wait(dispatcher_func func);
-extern void dispatcher_add_queue(dispatcher_func func);
-
-extern DWORD corewindow_tls;
 extern IActivationFactory *package_factory;
-extern IActivationFactory *coreapplication_factory;
-extern IActivationFactory *corewindow_factory;
-extern IActivationFactory *sysnav_factory;
-extern IActivationFactory *cursor_factory;
-extern IActivationFactory *ptrvissettings_factory;
+extern IActivationFactory *design_mode_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
@@ -120,24 +76,5 @@ extern IActivationFactory *ptrvissettings_factory;
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
-
-#define DECLARE_EVENT(pfx, evt)                              \
-    pfx##_add_##evt,                                         \
-    pfx##_remove_##evt
-
-#define DEFINE_EVENT_STUB(type, pfx, evt, event_args)                                                                                       \
-static HRESULT WINAPI pfx##_add_##evt( I##type *iface, ITypedEventHandler_##type##_##event_args *handler, EventRegistrationToken *token )                                  \
-{                                                                                                                                           \
-    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );                                                                                \
-    return S_OK;                                                                                                                            \
-}                                                                                                                                           \
-                                                                                                                                            \
-static HRESULT WINAPI pfx##_remove_##evt( I##type *iface, EventRegistrationToken cookie)                                                    \
-{                                                                                                                                           \
-    FIXME( "iface %p token %#I64x stub!\n", iface, cookie.value );                                                                          \
-    return E_NOTIMPL;                                                                                                                       \
-}
-
-#define IPropertySet __x_ABI_CWindows_CFoundation_CCollections_CIPropertySet
 
 #endif

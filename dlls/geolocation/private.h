@@ -28,7 +28,6 @@
 #include "winstring.h"
 
 #include "activation.h"
-#include "weakreference.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections

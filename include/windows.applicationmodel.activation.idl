@@ -20,7 +20,6 @@
 #pragma winrt ns_prefix
 #endif
 
-#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -30,7 +29,6 @@ import "windows.applicationmodel.background.idl";
 import "windows.applicationmodel.core.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
-#endif
 
 namespace Windows.ApplicationModel.Background {
     interface IBackgroundTaskInstance;
