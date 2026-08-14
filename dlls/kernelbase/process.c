@@ -407,6 +407,32 @@ static const WCHAR *find_xbox_emulator(void)
     return NULL;
 }
 
+/* Xbox 360 (.xex) executables get the same external-emulator handoff, this
+ * time to Xenia (a real, actively developed Xbox 360 HLE/JIT emulator).
+ * PowerPC recompilation is not something Wine's x86 API-translation model
+ * can do itself, so - like Cxbx-Reloaded above - this is strictly a handoff
+ * to an already-working external tool, not an in-tree implementation. */
+static const WCHAR *const xenia_candidates[] =
+{
+    L"C:\\Program Files\\Xenia\\xenia.exe",
+    L"C:\\Program Files (x86)\\Xenia\\xenia.exe",
+    L"C:\\Program Files\\Xenia Canary\\xenia_canary.exe",
+    L"C:\\Program Files (x86)\\Xenia Canary\\xenia_canary.exe",
+};
+
+static const WCHAR *find_xbox360_emulator(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(xenia_candidates); i++)
+    {
+        DWORD attr = GetFileAttributesW( xenia_candidates[i] );
+        if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY))
+            return xenia_candidates[i];
+    }
+    return NULL;
+}
+
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
 /* HKCU\Software\Wine\DOSBox "Legacy"=y forces every DOS program through
@@ -534,35 +560,54 @@ static NTSTATUS create_cmd_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBU
  * cannot run Xbox kernel-mode/x86 code paths itself, this is strictly
  * an external-emulator handoff (the same role DOSBox plays for DOS).
  */
-static NTSTATUS create_xbe_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
-                                    SECURITY_ATTRIBUTES *tsa, DWORD flags,
-                                    RTL_USER_PROCESS_PARAMETERS *params,
-                                    RTL_USER_PROCESS_INFORMATION *info )
+static NTSTATUS launch_external_emulator( const WCHAR *emu, const WCHAR *load_flag, const WCHAR *name,
+                                          HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
+                                          DWORD flags, RTL_USER_PROCESS_PARAMETERS *params, RTL_USER_PROCESS_INFORMATION *info )
 {
-    const WCHAR *cxbx = find_xbox_emulator();
     const WCHAR *orig_path = params->ImagePathName.Buffer;
     WCHAR *newcmdline;
     NTSTATUS status;
     UINT len;
 
-    if (!cxbx)
+    if (!emu)
     {
-        WARN( "no Cxbx-Reloaded install found, cannot run Xbox executable %s\n", debugstr_w(orig_path) );
+        WARN( "no %s install found, cannot run %s\n", debugstr_w(name), debugstr_w(orig_path) );
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
-    len = lstrlenW(cxbx) + lstrlenW(orig_path) + 12;
+    len = lstrlenW(emu) + lstrlenW(orig_path) + lstrlenW(load_flag) + 8;
     if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
-    swprintf( newcmdline, len, L"%s /load \"%s\"", cxbx, orig_path );
-    TRACE( "starting %s via Cxbx-Reloaded at %s\n", debugstr_w(orig_path), debugstr_w(cxbx) );
+    if (load_flag[0])
+        swprintf( newcmdline, len, L"%s %s \"%s\"", emu, load_flag, orig_path );
+    else
+        swprintf( newcmdline, len, L"%s \"%s\"", emu, orig_path );
+    TRACE( "starting %s via %s at %s\n", debugstr_w(orig_path), debugstr_w(name), debugstr_w(emu) );
 
-    RtlInitUnicodeString( &params->ImagePathName, cxbx );
+    RtlInitUnicodeString( &params->ImagePathName, emu );
     RtlInitUnicodeString( &params->CommandLine, newcmdline );
     status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, newcmdline );
     return status;
+}
+
+static NTSTATUS create_xbe_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
+                                    SECURITY_ATTRIBUTES *tsa, DWORD flags,
+                                    RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info )
+{
+    return launch_external_emulator( find_xbox_emulator(), L"/load", L"Cxbx-Reloaded",
+                                     token, debug, psa, tsa, flags, params, info );
+}
+
+static NTSTATUS create_xex_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
+                                    SECURITY_ATTRIBUTES *tsa, DWORD flags,
+                                    RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info )
+{
+    return launch_external_emulator( find_xbox360_emulator(), L"", L"Xenia",
+                                     token, debug, psa, tsa, flags, params, info );
 }
 
 
@@ -826,6 +871,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         {
             TRACE( "starting %s as original Xbox binary\n", debugstr_w(app_name) );
             status = create_xbe_process( token, debug, process_attr, thread_attr,
+                                         nt_flags, params, &rtl_info );
+        }
+        else if (!wcsicmp( p, L".xex" ))
+        {
+            TRACE( "starting %s as Xbox 360 binary\n", debugstr_w(app_name) );
+            status = create_xex_process( token, debug, process_attr, thread_attr,
                                          nt_flags, params, &rtl_info );
         }
         break;
