@@ -1,10 +1,14 @@
-/* WinRT Windows.Xbox.* namespace stubs
+/* WinRT Windows.Xbox.* namespace implementation
  *
- * Provides stub activation factories for Xbox One ERA WinRT namespaces.
+ * Windows.Xbox.Input.Gamepad is a real, working implementation backed by
+ * Windows.Gaming.Input.Gamepad (see gamepad.c / wgi_backend.c). The rest of
+ * Windows.Xbox.Input.* (Controller, RacingWheel, ...) and the other Xbox One
+ * ERA WinRT namespaces below remain stub activation factories.
  * Based on interface definitions from WinDurango (MIT).
  *
  * Namespaces covered:
- *   Windows.Xbox.Input
+ *   Windows.Xbox.Input.Gamepad (real)
+ *   Windows.Xbox.Input.* (stub)
  *   Windows.Xbox.System
  *   Windows.Xbox.ApplicationModel
  *   Windows.Xbox.UI
@@ -16,18 +20,8 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-#include <stdarg.h>
-#define COBJMACROS
-#include "windef.h"
-#include "winbase.h"
-#include "objbase.h"
-#include "winstring.h"
-
 #include "initguid.h"
-#define WIDL_using_Windows_Foundation
-#include "activation.h"
-
-#include "wine/debug.h"
+#include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xbox);
 
@@ -85,6 +79,14 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
     TRACE( "class %s, factory %p\n", debugstr_hstring(classid), factory );
 
     *factory = NULL;
+
+    if (!wcscmp( name, RuntimeClass_Windows_Xbox_Input_Gamepad ))
+    {
+        TRACE( "Windows.Xbox.Input.Gamepad\n" );
+        *factory = xbox_gamepad_factory;
+        IActivationFactory_AddRef(*factory);
+        return S_OK;
+    }
 
     if (!wcsncmp( name, L"Windows.Xbox.Input.", 19 ))
     {

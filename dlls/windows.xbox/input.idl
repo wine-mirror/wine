@@ -1,0 +1,165 @@
+/* Windows.Xbox.Input.Gamepad WinRT implementation
+ *
+ * Interface/struct/enum definitions for the Xbox One ERA
+ * Windows.Xbox.Input.Gamepad runtime class.
+ *
+ * GUIDs and struct/enum layouts are taken from the reverse engineered
+ * Xbox One ERA WinMD metadata published by the WinDurango project
+ * (idl/Windows.Xbox.Input.idl, MIT licensed), converted to widl syntax.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+#pragma makedep register
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Xbox.Input {
+    typedef enum GamepadButtons GamepadButtons;
+    typedef struct RawGamepadReading RawGamepadReading;
+    typedef struct GamepadVibration GamepadVibration;
+    interface IGamepad;
+    interface IGamepadReading;
+    interface IGamepadStatics;
+    runtimeclass Gamepad;
+    runtimeclass GamepadReading;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterator<Windows.Xbox.Input.IGamepad *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Xbox.Input.IGamepad *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Xbox.Input.IGamepad *>;
+    }
+
+    [flags]
+    enum GamepadButtons
+    {
+        None = 0x0,
+        Menu = 0x4,
+        View = 0x8,
+        A = 0x10,
+        B = 0x20,
+        X = 0x40,
+        Y = 0x80,
+        DPadUp = 0x100,
+        DPadDown = 0x200,
+        DPadLeft = 0x400,
+        DPadRight = 0x800,
+        LeftShoulder = 0x1000,
+        RightShoulder = 0x2000,
+        LeftThumbstick = 0x4000,
+        RightThumbstick = 0x8000
+    };
+
+    struct RawGamepadReading
+    {
+        UINT64 Timestamp;
+        Windows.Xbox.Input.GamepadButtons Buttons;
+        FLOAT LeftTrigger;
+        FLOAT RightTrigger;
+        FLOAT LeftThumbstickX;
+        FLOAT LeftThumbstickY;
+        FLOAT RightThumbstickX;
+        FLOAT RightThumbstickY;
+    };
+
+    struct GamepadVibration
+    {
+        FLOAT LeftMotorLevel;
+        FLOAT RightMotorLevel;
+        FLOAT LeftTriggerLevel;
+        FLOAT RightTriggerLevel;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Xbox.Input.GamepadReading),
+        uuid(abcaaaab-aaaa-aaba-aaaa-aaaaaddaaaaa)
+    ]
+    interface IGamepadReading : IInspectable
+    {
+        [propget] HRESULT Timestamp([out, retval] Windows.Foundation.DateTime *value);
+        [propget] HRESULT Buttons([out, retval] Windows.Xbox.Input.GamepadButtons *value);
+        [propget] HRESULT IsDPadUpPressed([out, retval] boolean *value);
+        [propget] HRESULT IsDPadDownPressed([out, retval] boolean *value);
+        [propget] HRESULT IsDPadLeftPressed([out, retval] boolean *value);
+        [propget] HRESULT IsDPadRightPressed([out, retval] boolean *value);
+        [propget] HRESULT IsMenuPressed([out, retval] boolean *value);
+        [propget] HRESULT IsViewPressed([out, retval] boolean *value);
+        [propget] HRESULT IsLeftThumbstickPressed([out, retval] boolean *value);
+        [propget] HRESULT IsRightThumbstickPressed([out, retval] boolean *value);
+        [propget] HRESULT IsLeftShoulderPressed([out, retval] boolean *value);
+        [propget] HRESULT IsRightShoulderPressed([out, retval] boolean *value);
+        [propget] HRESULT IsAPressed([out, retval] boolean *value);
+        [propget] HRESULT IsBPressed([out, retval] boolean *value);
+        [propget] HRESULT IsXPressed([out, retval] boolean *value);
+        [propget] HRESULT IsYPressed([out, retval] boolean *value);
+        [propget] HRESULT LeftTrigger([out, retval] FLOAT *value);
+        [propget] HRESULT RightTrigger([out, retval] FLOAT *value);
+        [propget] HRESULT LeftThumbstickX([out, retval] FLOAT *value);
+        [propget] HRESULT LeftThumbstickY([out, retval] FLOAT *value);
+        [propget] HRESULT RightThumbstickX([out, retval] FLOAT *value);
+        [propget] HRESULT RightThumbstickY([out, retval] FLOAT *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Xbox.Input.Gamepad),
+        uuid(082e402c-07df-45e1-a5ab-a3127af197b5)
+    ]
+    interface IGamepad : IInspectable
+    {
+        HRESULT SetVibration([in] Windows.Xbox.Input.GamepadVibration value);
+        HRESULT GetCurrentReading([out, retval] Windows.Xbox.Input.GamepadReading **value);
+        HRESULT GetRawCurrentReading([out, retval] Windows.Xbox.Input.RawGamepadReading *value);
+    }
+
+    [
+        object,
+        uuid(8c4c1bcd-fdab-4bf8-bde9-abb2b1d6fdd3)
+    ]
+    interface IGamepadStatics : IInspectable
+    {
+        [propget] HRESULT Gamepads([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Xbox.Input.IGamepad *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass GamepadReading
+    {
+        [default] interface Windows.Xbox.Input.IGamepadReading;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Xbox.Input.IGamepadStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass Gamepad
+    {
+        [default] interface Windows.Xbox.Input.IGamepad;
+    }
+}

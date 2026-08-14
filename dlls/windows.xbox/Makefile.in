@@ -3,5 +3,9 @@ IMPORTS   = combase uuid
 
 SOURCES = \
 	classes.idl \
+	gamepad.c \
+	input.idl \
 	main.c \
-	version.rc
+	vector.c \
+	version.rc \
+	wgi_backend.c
