@@ -256,6 +256,14 @@ D3DXCOLOR *D3DXColorModulate(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2);
 D3DXCOLOR *D3DXColorScale(D3DXCOLOR *out, D3DXCOLOR c, float s);
 D3DXCOLOR *D3DXColorSubtract(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2);
 D3DX_CPU_OPTIMIZATION WINAPI D3DXCpuOptimizations(BOOL enable);
+D3DXMATRIX *WINAPI D3DXMatrixPerspectiveFovLH(D3DXMATRIX *m, float fovy, float aspect, float zn, float zf);
+D3DXMATRIX *WINAPI D3DXMatrixPerspectiveLH(D3DXMATRIX *m, float w, float h, float zn, float zf);
+D3DXMATRIX *WINAPI D3DXMatrixRotationX(D3DXMATRIX *m, float angle);
+D3DXMATRIX *WINAPI D3DXMatrixRotationY(D3DXMATRIX *m, float angle);
+D3DXMATRIX *WINAPI D3DXMatrixRotationZ(D3DXMATRIX *m, float angle);
+D3DXMATRIX *WINAPI D3DXMatrixTranslation(D3DXMATRIX *m, float x, float y, float z);
+D3DXVECTOR4 *WINAPI D3DXVec2TransformArray(D3DXVECTOR4 *out, UINT outstride, const D3DXVECTOR2 *v,
+        UINT vstride, const D3DXMATRIX *m, UINT n);
 
 #ifdef __cplusplus
 }
