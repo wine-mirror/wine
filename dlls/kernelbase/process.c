@@ -501,6 +501,319 @@ static NTSTATUS create_cmd_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBU
 }
 
 
+/* ---------------------------------------------------------------------
+ * Xbox 360 (.xex) executable recognition.
+ *
+ * The Xbox 360 (Xenon) CPU is a custom tri-core PowerPC design, an
+ * entirely different instruction set from the x86/x86_64 that Wine's
+ * process loader runs guest code on. Wine's whole architecture is built
+ * around translating Windows *API calls* while letting the guest's own
+ * native machine code execute directly on the host CPU - there is no
+ * mechanism here for running PowerPC code on an x86 host, and building
+ * one (full CPU emulation, or a PPC->x86 static/dynamic recompiler of
+ * the kind Xenia and the standalone XenonRecomp project implement) is a
+ * separate, much larger undertaking than this file attempts.
+ *
+ * What follows is real parsing of the XEX2 *container format* - the
+ * part of a .xex file that is architecture-independent, analogous to
+ * reading a PE header without being able to run the x86 code it
+ * describes. The struct layouts and the optional-header-directory
+ * walking algorithm are taken directly from Xenia
+ * (src/xenia/kernel/util/xex2_info.h, struct xex2_header /
+ * xex2_opt_header / xex2_security_info, and the key&0xFF dispatch in
+ * XexModule::GetOptHeader() in src/xenia/cpu/xex_module.cc). This lets
+ * Wine positively identify a .xex file and log its metadata instead of
+ * just failing with a generic "not an MZ image" error; it does not, and
+ * is not intended to, execute the contained PowerPC code.
+ * --------------------------------------------------------------------- */
+
+#define XEX2_MAGIC 0x58455832  /* "XEX2", big-endian in the file */
+#define XEX2_PARSE_BUFFER_SIZE 0x10000  /* generous; real XEX headers are a few KB */
+
+/* All multi-byte fields in a XEX2 header are big-endian (PowerPC-native),
+ * regardless of host byte order. */
+static inline UINT32 xex2_be32( const BYTE *p ) { return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]; }
+static inline UINT16 xex2_be16( const BYTE *p ) { return (p[0] << 8) | p[1]; }
+
+enum xex2_header_keys
+{
+    XEX_HEADER_RESOURCE_INFO                 = 0x000002FF,
+    XEX_HEADER_FILE_FORMAT_INFO              = 0x000003FF,
+    XEX_HEADER_DELTA_PATCH_DESCRIPTOR        = 0x000005FF,
+    XEX_HEADER_BASE_REFERENCE                = 0x00000405,
+    XEX_HEADER_BOUNDING_PATH                 = 0x000080FF,
+    XEX_HEADER_DEVICE_ID                     = 0x00008105,
+    XEX_HEADER_ORIGINAL_BASE_ADDRESS         = 0x00010001,
+    XEX_HEADER_ENTRY_POINT                   = 0x00010100,
+    XEX_HEADER_IMAGE_BASE_ADDRESS            = 0x00010201,
+    XEX_HEADER_IMPORT_LIBRARIES              = 0x000103FF,
+    XEX_HEADER_CHECKSUM_TIMESTAMP            = 0x00018002,
+    XEX_HEADER_ORIGINAL_PE_NAME              = 0x000183FF,
+    XEX_HEADER_STATIC_LIBRARIES              = 0x000200FF,
+    XEX_HEADER_TLS_INFO                      = 0x00020104,
+    XEX_HEADER_DEFAULT_STACK_SIZE            = 0x00020200,
+    XEX_HEADER_DEFAULT_FILESYSTEM_CACHE_SIZE = 0x00020301,
+    XEX_HEADER_DEFAULT_HEAP_SIZE             = 0x00020401,
+    XEX_HEADER_SYSTEM_FLAGS                  = 0x00030000,
+    XEX_HEADER_EXECUTION_INFO                = 0x00040006,
+    XEX_HEADER_TITLE_WORKSPACE_SIZE          = 0x00040201,
+    XEX_HEADER_GAME_RATINGS                  = 0x00040310,
+    XEX_HEADER_LAN_KEY                       = 0x00040404,
+    XEX_HEADER_MULTIDISC_MEDIA_IDS           = 0x000406FF,
+    XEX_HEADER_ALTERNATE_TITLE_IDS           = 0x000407FF,
+    XEX_HEADER_ADDITIONAL_TITLE_MEMORY       = 0x00040801,
+    XEX_HEADER_EXPORTS_BY_NAME               = 0x00E10402,
+};
+
+enum xex2_module_flags
+{
+    XEX_MODULE_TITLE            = 0x00000001,
+    XEX_MODULE_EXPORTS_TO_TITLE = 0x00000002,
+    XEX_MODULE_SYSTEM_DEBUGGER  = 0x00000004,
+    XEX_MODULE_DLL_MODULE       = 0x00000008,
+    XEX_MODULE_MODULE_PATCH     = 0x00000010,
+    XEX_MODULE_PATCH_FULL       = 0x00000020,
+    XEX_MODULE_PATCH_DELTA      = 0x00000040,
+    XEX_MODULE_USER_MODE        = 0x00000080,
+};
+
+/* Walk the string table + import-library array pointed to by a
+ * XEX_HEADER_IMPORT_LIBRARIES optional header, matching the layout of
+ * Xenia's xex2_opt_import_libraries / xex2_import_library and the walk
+ * done in XexModule::LoadContinue(). "base" is the start of the whole
+ * XEX2 header (offsets below are relative to it), "off" is the
+ * XEX_HEADER_IMPORT_LIBRARIES offset, "buf_size" bounds all reads. */
+static void trace_xex2_import_libraries( const BYTE *base, UINT32 off, UINT32 buf_size )
+{
+    const char *string_table[32];
+    UINT32 block_size, st_size, st_count, name_count = 0;
+    UINT32 i, pos, library_off;
+
+    if (off + 12 > buf_size) return;
+    block_size = xex2_be32( base + off );
+    st_size    = xex2_be32( base + off + 4 );
+    st_count   = xex2_be32( base + off + 8 );
+    TRACE( "  import libraries: block size %#x, string table %u bytes / %u entries\n",
+           block_size, st_size, st_count );
+
+    if (off + 0xC + st_size > buf_size) return;
+
+    memset( string_table, 0, sizeof(string_table) );
+    for (i = 0, pos = 0; pos < st_size && i < st_count && i < ARRAY_SIZE(string_table); i++)
+    {
+        const char *str = (const char *)(base + off + 0xC + pos);
+        UINT32 len = 0;
+        while (pos + len < st_size && str[len]) len++;
+        string_table[i] = str;
+        name_count++;
+        pos += len + 1;
+        if (pos % 4) pos += 4 - (pos % 4);
+    }
+
+    library_off = 0xC + st_size;
+    while (off + library_off + 0x28 <= buf_size && library_off < block_size)
+    {
+        const BYTE *lib = base + off + library_off;
+        UINT32 lib_size = xex2_be32( lib );
+        UINT32 id = xex2_be32( lib + 0x18 );
+        UINT32 version = xex2_be32( lib + 0x1C );
+        UINT32 version_min = xex2_be32( lib + 0x20 );
+        UINT16 name_index = xex2_be16( lib + 0x24 ) & 0xFF;
+        UINT16 count = xex2_be16( lib + 0x26 );
+
+        if (!lib_size) break;
+        TRACE( "    import library: %s id %#x version %u.%u.%u.%u min %u.%u.%u.%u, %u imports\n",
+               name_index < name_count ? debugstr_a(string_table[name_index]) : "?",
+               id,
+               (version >> 28) & 0xF, (version >> 24) & 0xF, (version >> 8) & 0xFFFF, version & 0xFF,
+               (version_min >> 28) & 0xF, (version_min >> 24) & 0xF, (version_min >> 8) & 0xFFFF, version_min & 0xFF,
+               count );
+        library_off += lib_size;
+    }
+}
+
+/* Walk the optional header directory of an already-validated, in-memory
+ * XEX2 header (header_count entries of 8 bytes starting at offset 0x18),
+ * logging every entry recognised from xex2_header_keys. Matches the
+ * key&0xFF dispatch in Xenia's XexModule::GetOptHeader(): a low byte of
+ * 0x00 or 0x01 means the second dword *is* the value; anything else means
+ * it is a byte offset (from the start of the header) to the real data. */
+static void parse_xex2_optional_headers( const BYTE *data, UINT32 buf_size, UINT32 header_count )
+{
+    UINT32 i;
+
+    for (i = 0; i < header_count; i++)
+    {
+        UINT32 entry_off = 0x18 + i * 8;
+        UINT32 key, raw;
+
+        if (entry_off + 8 > buf_size) { WARN( "  optional header directory truncated\n" ); break; }
+
+        key = xex2_be32( data + entry_off );
+        raw = xex2_be32( data + entry_off + 4 );
+
+        if ((key & 0xFF) <= 0x01)
+        {
+            /* inline value */
+            switch (key)
+            {
+            case XEX_HEADER_ENTRY_POINT:
+                TRACE( "  entry point RVA: %#x\n", raw ); break;
+            case XEX_HEADER_ORIGINAL_BASE_ADDRESS:
+                TRACE( "  original base address: %#x\n", raw ); break;
+            case XEX_HEADER_IMAGE_BASE_ADDRESS:
+                TRACE( "  image base address: %#x\n", raw ); break;
+            case XEX_HEADER_DEFAULT_STACK_SIZE:
+                TRACE( "  default stack size: %#x\n", raw ); break;
+            case XEX_HEADER_DEFAULT_FILESYSTEM_CACHE_SIZE:
+                TRACE( "  default filesystem cache size: %#x\n", raw ); break;
+            case XEX_HEADER_DEFAULT_HEAP_SIZE:
+                TRACE( "  default heap size: %#x\n", raw ); break;
+            case XEX_HEADER_SYSTEM_FLAGS:
+                TRACE( "  system flags: %#x\n", raw ); break;
+            case XEX_HEADER_TITLE_WORKSPACE_SIZE:
+                TRACE( "  title workspace size: %#x\n", raw ); break;
+            default:
+                TRACE( "  optional header %#x = %#x\n", key, raw ); break;
+            }
+            continue;
+        }
+
+        /* pointer/offset value */
+        switch (key)
+        {
+        case XEX_HEADER_CHECKSUM_TIMESTAMP:
+            if (raw + 8 <= buf_size)
+                TRACE( "  checksum %#x, timestamp %#x\n", xex2_be32(data+raw), xex2_be32(data+raw+4) );
+            break;
+        case XEX_HEADER_EXECUTION_INFO:
+            if (raw + 0x14 <= buf_size)
+                TRACE( "  execution info: media id %#x, version %#x, base version %#x, title id %#x\n",
+                       xex2_be32(data+raw), xex2_be32(data+raw+4), xex2_be32(data+raw+8), xex2_be32(data+raw+0xC) );
+            break;
+        case XEX_HEADER_TLS_INFO:
+            if (raw + 0x10 <= buf_size)
+                TRACE( "  TLS info: %u slot(s), raw data address %#x, data size %#x, raw data size %#x\n",
+                       xex2_be32(data+raw), xex2_be32(data+raw+4), xex2_be32(data+raw+8), xex2_be32(data+raw+0xC) );
+            break;
+        case XEX_HEADER_ORIGINAL_PE_NAME:
+            if (raw + 4 <= buf_size)
+            {
+                UINT32 name_size = xex2_be32( data + raw );
+                UINT32 avail = buf_size - raw - 4;
+                TRACE( "  original PE name: %s\n", debugstr_an( (const char *)(data + raw + 4), min(name_size, avail) ) );
+            }
+            break;
+        case XEX_HEADER_RESOURCE_INFO:
+            if (raw + 4 <= buf_size)
+            {
+                UINT32 size = xex2_be32( data + raw );
+                UINT32 count = size >= 4 ? (size - 4) / 0x10 : 0;
+                UINT32 j;
+                TRACE( "  resource info: %u entries\n", count );
+                for (j = 0; j < count; j++)
+                {
+                    UINT32 res_off = raw + 4 + j * 0x10;
+                    if (res_off + 0x10 > buf_size) break;
+                    TRACE( "    resource[%u]: %s address %#x size %#x\n", j,
+                           debugstr_an( (const char *)(data+res_off), 8 ),
+                           xex2_be32(data+res_off+8), xex2_be32(data+res_off+0xC) );
+                }
+            }
+            break;
+        case XEX_HEADER_IMPORT_LIBRARIES:
+            trace_xex2_import_libraries( data, raw, buf_size );
+            break;
+        default:
+            TRACE( "  optional header %#x -> offset %#x\n", key, raw );
+            break;
+        }
+    }
+}
+
+/* Parse and log the security-info block referenced by xex2_header.security_offset
+ * (struct xex2_security_info in Xenia's xex2_info.h). Only the fixed-size prefix
+ * (up to page_descriptor_count) is read; the page descriptor table that follows
+ * describes memory layout for the (unimplemented) loader and isn't needed here. */
+static void parse_xex2_security_info( const BYTE *data, UINT32 buf_size, UINT32 security_offset )
+{
+    if (security_offset + 0x184 > buf_size)
+    {
+        WARN( "  security info at %#x out of range (buffer %#x bytes)\n", security_offset, buf_size );
+        return;
+    }
+    TRACE( "  security info: header size %#x, image size %#x, image flags %#x, load address %#x\n",
+           xex2_be32(data+security_offset), xex2_be32(data+security_offset+4),
+           xex2_be32(data+security_offset+0x10C), xex2_be32(data+security_offset+0x110) );
+    TRACE( "  region %#x, allowed media types %#x, page descriptor count %u\n",
+           xex2_be32(data+security_offset+0x178), xex2_be32(data+security_offset+0x17C),
+           xex2_be32(data+security_offset+0x180) );
+}
+
+/* Read and validate the XEX2 header of "path", logging everything recognised
+ * via TRACE. Returns TRUE if this is a well-formed enough XEX2 file to be
+ * confidently identified as an Xbox 360 executable (regardless of whether we
+ * can do anything with it), FALSE otherwise (I/O error, bad magic, ...). */
+static BOOL parse_xex2_file( const WCHAR *path )
+{
+    BYTE *data;
+    HANDLE file;
+    DWORD read = 0;
+    UINT32 magic, module_flags, header_size, security_offset, header_count;
+    BOOL ret = FALSE;
+
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        WARN( "can't open %s\n", debugstr_w(path) );
+        return FALSE;
+    }
+
+    if (!(data = RtlAllocateHeap( GetProcessHeap(), 0, XEX2_PARSE_BUFFER_SIZE )))
+    {
+        CloseHandle( file );
+        return FALSE;
+    }
+
+    if (!ReadFile( file, data, XEX2_PARSE_BUFFER_SIZE, &read, NULL ) || read < 0x18)
+    {
+        WARN( "failed to read XEX2 header from %s\n", debugstr_w(path) );
+        goto done;
+    }
+
+    magic = xex2_be32( data );
+    if (magic != XEX2_MAGIC)
+    {
+        WARN( "%s has .xex extension but bad magic %#x (expected XEX2)\n", debugstr_w(path), magic );
+        goto done;
+    }
+
+    module_flags     = xex2_be32( data + 4 );
+    header_size      = xex2_be32( data + 8 );
+    security_offset  = xex2_be32( data + 0x10 );
+    header_count     = xex2_be32( data + 0x14 );
+
+    TRACE( "%s: XEX2 header - module flags %#x, header size %#x, security info offset %#x, %u optional header(s)\n",
+           debugstr_w(path), module_flags, header_size, security_offset, header_count );
+    if (module_flags & XEX_MODULE_TITLE) TRACE( "  module flag: TITLE\n" );
+    if (module_flags & XEX_MODULE_DLL_MODULE) TRACE( "  module flag: DLL_MODULE\n" );
+    if (module_flags & XEX_MODULE_MODULE_PATCH) TRACE( "  module flag: MODULE_PATCH\n" );
+    if (module_flags & XEX_MODULE_SYSTEM_DEBUGGER) TRACE( "  module flag: SYSTEM_DEBUGGER\n" );
+
+    if (header_count > (read - 0x18) / 8) WARN( "  optional header count %u exceeds what was read\n", header_count );
+    else parse_xex2_optional_headers( data, read, header_count );
+
+    parse_xex2_security_info( data, read, security_offset );
+
+    ret = TRUE;
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, data );
+    CloseHandle( file );
+    return ret;
+}
+
+
 /*********************************************************************
  *           CloseHandle   (kernelbase.@)
  */
@@ -756,6 +1069,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
             TRACE( "starting %s as batch binary\n", debugstr_w(app_name) );
             status = create_cmd_process( token, debug, process_attr, thread_attr,
                                          nt_flags, params, &rtl_info );
+        }
+        else if (!wcsicmp( p, L".xex" ))
+        {
+            /* Real XEX2 container parsing (see parse_xex2_file() above), not
+             * execution: the Xbox 360 is PowerPC and Wine has no PPC->x86
+             * recompiler. A recognised XEX2 file fails process creation with
+             * STATUS_IMAGE_MACHINE_TYPE_MISMATCH - the file is a legitimate
+             * executable image, just for a CPU architecture this host can't
+             * run natively, which is exactly what that status describes. */
+            if (parse_xex2_file( app_name ))
+            {
+                WARN( "%s is a recognised Xbox 360 (XEX2) executable; Wine cannot execute "
+                      "PowerPC code, this is header/metadata recognition only\n", debugstr_w(app_name) );
+                status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+            }
+            else
+            {
+                WARN( "%s has a .xex extension but is not a recognisable XEX2 image\n", debugstr_w(app_name) );
+                status = STATUS_INVALID_IMAGE_FORMAT;
+            }
         }
         break;
     }
