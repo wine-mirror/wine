@@ -17,10 +17,9 @@
  */
 
 #include "private.h"
+#include "editcontext.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreinputview);
-
-extern const struct ICoreTextEditContextVtbl core_text_edit_context_vtbl;
 
 struct core_text_services_manager_statics
 {
@@ -208,8 +207,8 @@ static HRESULT WINAPI core_text_services_manager_remove_InputLanguageChanged( IC
 
 static HRESULT WINAPI core_text_services_manager_CreateEditContext( ICoreTextServicesManager *iface, ICoreTextEditContext **value )
 {
-    FIXME( "iface %p out %p created\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p.\n", iface, value );
+    return core_text_edit_context_create( value );
 }
 
 static const struct ICoreTextServicesManagerVtbl core_text_services_manager_vtbl =
