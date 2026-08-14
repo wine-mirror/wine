@@ -1,0 +1,493 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+
+cpp_quote("#if 0")
+typedef struct APP_LOCAL_DEVICE_ID
+{
+    BYTE value[32];
+} APP_LOCAL_DEVICE_ID;
+cpp_quote("#endif")
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XUserAddOptions : UINT32 ")
+cpp_quote("{                                   ")
+cpp_quote("    None                     = 0x00,")
+cpp_quote("    AddDefaultUserSilently   = 0x01,")
+cpp_quote("    AllowGuests              = 0x02,")
+cpp_quote("    AddDefaultUserAllowingUI = 0x04,")
+cpp_quote("};                                  ")
+
+cpp_quote("enum class XUserAgeGroup : UINT32")
+cpp_quote("{                                ")
+cpp_quote("    Unknown,                     ")
+cpp_quote("    Child,                       ")
+cpp_quote("    Teen,                        ")
+cpp_quote("    Adult,                       ")
+cpp_quote("};                               ")
+
+cpp_quote("enum class XUserChangeEvent : UINT32")
+cpp_quote("{                                   ")
+cpp_quote("    SignedInAgain,                  ")
+cpp_quote("    SigningOut,                     ")
+cpp_quote("    SignedOut,                      ")
+cpp_quote("    Gamertag,                       ")
+cpp_quote("    GamerPicture,                   ")
+cpp_quote("    Privileges,                     ")
+cpp_quote("};                                  ")
+
+cpp_quote("enum class XUserDefaultAudioEndpointKind : UINT32")
+cpp_quote("{                                                ")
+cpp_quote("    CommunicationRender,                         ")
+cpp_quote("    CommunicationCapture,                        ")
+cpp_quote("};                                               ")
+
+cpp_quote("enum class XUserGamerPictureSize : UINT32")
+cpp_quote("{                                        ")
+cpp_quote("    Small,                               ")
+cpp_quote("    Medium,                              ")
+cpp_quote("    Large,                               ")
+cpp_quote("    ExtraLarge,                          ")
+cpp_quote("};                                       ")
+
+cpp_quote("enum class XUserGamertagComponent : UINT32")
+cpp_quote("{                                         ")
+cpp_quote("    Classic,                              ")
+cpp_quote("    Modern,                               ")
+cpp_quote("    ModernSuffix,                         ")
+cpp_quote("    UniqueModern,                         ")
+cpp_quote("};                                        ")
+
+cpp_quote("enum class XUserGetMsaTokenSilentlyOptions : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    None,                                          ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XUserGetTokenAndSignatureOptions : UINT32")
+cpp_quote("{                                                   ")
+cpp_quote("    None = 0x00,                                    ")
+cpp_quote("    ForceRefresh = 0x01,                            ")
+cpp_quote("    AllUsers = 0x02,                                ")
+cpp_quote("};                                                  ")
+
+cpp_quote("enum class XUserPlatformOperationResult : UINT32")
+cpp_quote("{                                               ")
+cpp_quote("    Success,                                    ")
+cpp_quote("    Failure,                                    ")
+cpp_quote("    Canceled,                                   ")
+cpp_quote("};                                              ")
+
+cpp_quote("enum class XUserPlatformSpopOperationResult : UINT32")
+cpp_quote("{                                                   ")
+cpp_quote("    SignInHere,                                     ")
+cpp_quote("    SwitchAccount,                                  ")
+cpp_quote("    Failure,                                        ")
+cpp_quote("    Canceled,                                       ")
+cpp_quote("};                                                  ")
+
+cpp_quote("enum class XUserPrivilege : UINT32")
+cpp_quote("{                                 ")
+cpp_quote("    CrossPlay            = 185,   ")
+cpp_quote("    Clubs                = 188,   ")
+cpp_quote("    Sessions             = 189,   ")
+cpp_quote("    Broadcast            = 190,   ")
+cpp_quote("    ManageProfilePrivacy = 196,   ")
+cpp_quote("    GameDvr              = 198,   ")
+cpp_quote("    MultiplayerParties   = 203,   ")
+cpp_quote("    CloudManageSession   = 207,   ")
+cpp_quote("    CloudJoinSession     = 208,   ")
+cpp_quote("    CloudSavedGames      = 209,   ")
+cpp_quote("    SocialNetworkSharing = 220,   ")
+cpp_quote("    UserGeneratedContent = 247,   ")
+cpp_quote("    Communications       = 252,   ")
+cpp_quote("    Multiplayer          = 254,   ")
+cpp_quote("    AddFriends           = 255,   ")
+cpp_quote("};                                ")
+
+cpp_quote("enum class XUserPrivilegeDenyReason : UINT32")
+cpp_quote("{                                           ")
+cpp_quote("    None,                                   ")
+cpp_quote("    PurchaseRequired,                       ")
+cpp_quote("    Restricted,                             ")
+cpp_quote("    Banned,                                 ")
+cpp_quote("    Unknown = 0xFFFFFFFF,                   ")
+cpp_quote("};                                          ")
+
+cpp_quote("enum class XUserPrivilegeOptions : UINT32")
+cpp_quote("{                                        ")
+cpp_quote("    None     = 0x00,                     ")
+cpp_quote("    AllUsers = 0x01,                     ")
+cpp_quote("};                                       ")
+
+cpp_quote("enum class XUserState : UINT32")
+cpp_quote("{                             ")
+cpp_quote("    SignedIn,                 ")
+cpp_quote("    SigningOut,               ")
+cpp_quote("    SignedOut,                ")
+cpp_quote("};                            ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XUserAddOptions
+{
+    XUserAddOptions_None = 0x00,
+    XUserAddOptions_AddDefaultUserSilently = 0x01,
+    XUserAddOptions_AllowGuests = 0x02,
+    XUserAddOptions_AddDefaultUserAllowingUI = 0x04,
+} XUserAddOptions;
+
+typedef enum XUserAgeGroup
+{
+    XUserAgeGroup_Unknown = 0,
+    XUserAgeGroup_Child = 1,
+    XUserAgeGroup_Teen = 2,
+    XUserAgeGroup_Adult = 3,
+} XUserAgeGroup;
+
+typedef enum XUserChangeEvent
+{
+    XUserChangeEvent_SignedInAgain = 0,
+    XUserChangeEvent_SigningOut = 1,
+    XUserChangeEvent_SignedOut = 2,
+    XUserChangeEvent_Gamertag = 3,
+    XUserChangeEvent_GamerPicture = 4,
+    XUserChangeEvent_Privileges = 5,
+} XUserChangeEvent;
+
+typedef enum XUserDefaultAudioEndpointKind
+{
+    XUserDefaultAudioEndpointKind_CommunicationRender = 0,
+    XUserDefaultAudioEndpointKind_CommunicationCapture = 1,
+} XUserDefaultAudioEndpointKind;
+
+typedef enum XUserGamerPictureSize
+{
+    XUserGamerPictureSize_Small = 0,
+    XUserGamerPictureSize_Medium = 1,
+    XUserGamerPictureSize_Large = 2,
+    XUserGamerPictureSize_ExtraLarge = 3,
+} XUserGamerPictureSize;
+
+typedef enum XUserGamertagComponent
+{
+    XUserGamertagComponent_Classic = 0,
+    XUserGamertagComponent_Modern = 1,
+    XUserGamertagComponent_ModernSuffix = 2,
+    XUserGamertagComponent_UniqueModern = 3,
+} XUserGamertagComponent;
+
+typedef enum XUserGetMsaTokenSilentlyOptions
+{
+    XUserGetMsaTokenSilentlyOptions_None = 0,
+} XUserGetMsaTokenSilentlyOptions;
+
+typedef enum XUserGetTokenAndSignatureOptions
+{
+    XUserGetTokenAndSignatureOptions_None = 0x00,
+    XUserGetTokenAndSignatureOptions_ForceRefresh = 0x01,
+    XUserGetTokenAndSignatureOptions_AllUsers = 0x02,
+} XUserGetTokenAndSignatureOptions;
+
+typedef enum XUserPlatformOperationResult
+{
+    XUserPlatformOperationResult_Success = 0,
+    XUserPlatformOperationResult_Failure = 1,
+    XUserPlatformOperationResult_Canceled = 2,
+} XUserPlatformOperationResult;
+
+typedef enum XUserPlatformSpopOperationResult
+{
+    XUserPlatformSpopOperationResult_SignInHere = 0,
+    XUserPlatformSpopOperationResult_SwitchAccount = 1,
+    XUserPlatformSpopOperationResult_Failure = 2,
+    XUserPlatformSpopOperationResult_Canceled = 3,
+} XUserPlatformSpopOperationResult;
+
+typedef enum XUserPrivilege
+{
+    XUserPrivilege_CrossPlay = 185,
+    XUserPrivilege_Clubs = 188,
+    XUserPrivilege_Sessions = 189,
+    XUserPrivilege_Broadcast = 190,
+    XUserPrivilege_ManageProfilePrivacy = 196,
+    XUserPrivilege_GameDvr = 198,
+    XUserPrivilege_MultiplayerParties = 203,
+    XUserPrivilege_CloudManageSession = 207,
+    XUserPrivilege_CloudJoinSession = 208,
+    XUserPrivilege_CloudSavedGames = 209,
+    XUserPrivilege_SocialNetworkSharing = 220,
+    XUserPrivilege_UserGeneratedContent = 247,
+    XUserPrivilege_Communications = 252,
+    XUserPrivilege_Multiplayer = 254,
+    XUserPrivilege_AddFriends = 255,
+} XUserPrivilege;
+
+typedef enum XUserPrivilegeDenyReason
+{
+    XUserPrivilegeDenyReason_None = 0,
+    XUserPrivilegeDenyReason_PurchaseRequired = 1,
+    XUserPrivilegeDenyReason_Restricted = 2,
+    XUserPrivilegeDenyReason_Banned = 3,
+    XUserPrivilegeDenyReason_Unknown = 0xFFFFFFFF,
+} XUserPrivilegeDenyReason;
+
+typedef enum XUserPrivilegeOptions
+{
+    XUserPrivilegeOptions_None = 0x00,
+    XUserPrivilegeOptions_AllUsers = 0x01,
+} XUserPrivilegeOptions;
+
+typedef enum XUserState
+{
+    XUserState_SignedIn = 0,
+    XUserState_SigningOut = 1,
+    XUserState_SignedOut = 2,
+} XUserState;
+
+cpp_quote("#endif")
+
+typedef struct XUser *XUserHandle;
+typedef struct XUserPlatformOperationToken *XUserPlatformOperation;
+typedef struct XUserSignOutDeferral *XUserSignOutDeferralHandle;
+
+typedef struct XUserDeviceAssociationChange XUserDeviceAssociationChange;
+typedef struct XUserGetTokenAndSignatureData XUserGetTokenAndSignatureData;
+typedef struct XUserGetTokenAndSignatureHttpHeader XUserGetTokenAndSignatureHttpHeader;
+typedef struct XUserGetTokenAndSignatureUtf16Data XUserGetTokenAndSignatureUtf16Data;
+typedef struct XUserGetTokenAndSignatureUtf16HttpHeader XUserGetTokenAndSignatureUtf16HttpHeader;
+typedef struct XUserLocalId XUserLocalId;
+typedef struct XUserPlatformRemoteConnectEventHandlers XUserPlatformRemoteConnectEventHandlers;
+
+typedef void __stdcall XUserChangeEventCallback( void *context, XUserLocalId userLocalId, XUserChangeEvent event );
+typedef void __stdcall XUserDefaultAudioEndpointUtf16ChangedCallback( void *context, XUserLocalId user, XUserDefaultAudioEndpointKind defaultAudioEndpointKind, const WCHAR *endpointIdUtf16 );
+typedef void __stdcall XUserDeviceAssociationChangedCallback( void *context, const XUserDeviceAssociationChange *change );
+typedef void __stdcall XUserFindControllerForUserUiCallback( void *context, XUserHandle user );
+typedef void __stdcall XUserPlatformRemoteConnectClosePromptEventHandler( void *context, UINT32 userIdentifier, XUserPlatformOperation operation );
+typedef void __stdcall XUserPlatformRemoteConnectShowPromptEventHandler( void *context, UINT32 userIdentifier, XUserPlatformOperation operation, const char *url, const char *code, SIZE_T qrCodeSize, const void *qrCode );
+typedef void __stdcall XUserPlatformSpopPromptEventHandler( void *context, UINT32 userIdentifier, XUserPlatformOperation operation, const char *modernGamertag, const char *modernGamertagSuffix );
+
+struct XUserLocalId
+{
+    UINT64 value;
+};
+
+struct XUserDeviceAssociationChange
+{
+    APP_LOCAL_DEVICE_ID deviceId;
+    XUserLocalId oldUser;
+    XUserLocalId newUser;
+};
+
+struct XUserGetTokenAndSignatureData
+{
+    SIZE_T tokenSize;
+    SIZE_T signatureSize;
+    const char *token;
+    const char *signature;
+};
+
+struct XUserGetTokenAndSignatureHttpHeader
+{
+    const char *name;
+    const char *value;
+};
+
+struct XUserGetTokenAndSignatureUtf16Data
+{
+    SIZE_T tokenCount;
+    SIZE_T signatureCount;
+    const WCHAR *token;
+    const WCHAR *signature;
+};
+
+struct XUserGetTokenAndSignatureUtf16HttpHeader
+{
+    const WCHAR *name;
+    const WCHAR *value;
+};
+
+struct XUserPlatformRemoteConnectEventHandlers
+{
+    XUserPlatformRemoteConnectShowPromptEventHandler *show;
+    XUserPlatformRemoteConnectClosePromptEventHandler *close;
+    void *context;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(01acd177-91f9-4763-a38e-ccbb55ce32e0)
+]
+interface IXUserImpl : IUnknown
+{
+    HRESULT XUserDuplicateHandle( [in] XUserHandle handle, [out] XUserHandle *duplicatedHandle );
+    void    XUserCloseHandle( [in] XUserHandle user );
+    INT32   XUserCompare( [in, optional] XUserHandle user1, [in, optional] XUserHandle user2 );
+    HRESULT XUserGetMaxUsers( [out] UINT32 *maxUsers );
+    HRESULT XUserAddAsync( [in] XUserAddOptions options, [in, out] XAsyncBlock *async );
+    HRESULT XUserAddResult( [in, out] XAsyncBlock *async, [out] XUserHandle *newUser );
+    HRESULT XUserGetLocalId( [in] XUserHandle user, [out] XUserLocalId *userLocalId );
+    HRESULT XUserFindUserByLocalId( [in] XUserLocalId userLocalId, [out] XUserHandle *handle );
+    HRESULT XUserGetId( [in] XUserHandle user, [out] UINT64 *userId );
+    HRESULT XUserFindUserById( [in] UINT64 userId, [out] XUserHandle *handle );
+    HRESULT XUserGetIsGuest( [in] XUserHandle user, [out] BOOLEAN *isGuest );
+    HRESULT XUserGetState( [in] XUserHandle user, [out] XUserState *state );
+    HRESULT __PADDING__();
+    HRESULT XUserGetGamerPictureAsync( [in] XUserHandle user, [in] XUserGamerPictureSize pictureSize, [in, out] XAsyncBlock *async );
+    HRESULT XUserGetGamerPictureResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *bufferSize );
+    HRESULT XUserGetGamerPictureResult( [in, out] XAsyncBlock *async, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XUserGetAgeGroup( [in] XUserHandle user, [out] XUserAgeGroup *ageGroup );
+    HRESULT XUserCheckPrivilege( [in] XUserHandle user, [in] XUserPrivilegeOptions options, [in] XUserPrivilege privilege, [out] BOOLEAN *hasPrivilege, [out, optional] XUserPrivilegeDenyReason *reason );
+    HRESULT XUserResolvePrivilegeWithUiAsync( [in] XUserHandle user, [in] XUserPrivilegeOptions options, [in] XUserPrivilege privilege, [in, out] XAsyncBlock *async );
+    HRESULT XUserResolvePrivilegeWithUiResult( [in, out] XAsyncBlock *async );
+    HRESULT XUserGetTokenAndSignatureAsync( [in] XUserHandle user, [in] XUserGetTokenAndSignatureOptions options, [in, string] const char *method, [in, string] const char *url, [in] SIZE_T headerCount, [in, optional, length_is(headerCount)] const XUserGetTokenAndSignatureHttpHeader headers[*], [in] SIZE_T bodySize, [in, optional, size_is(bodySize)] const void *bodyBuffer, [in, out] XAsyncBlock *async );
+    HRESULT XUserGetTokenAndSignatureResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *bufferSize );
+    HRESULT XUserGetTokenAndSignatureResult( [in, out] XAsyncBlock *async, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, ptr] XUserGetTokenAndSignatureData **ptrToBuffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XUserGetTokenAndSignatureUtf16Async( [in] XUserHandle user, [in] XUserGetTokenAndSignatureOptions options, [in, string] const WCHAR *method, [in, string] const WCHAR *url, [in] SIZE_T headerCount, [in, optional, length_is(headerCount)] const XUserGetTokenAndSignatureUtf16HttpHeader headers[*], [in] SIZE_T bodySize, [in, optional, size_is(bodySize)] const void *bodyBuffer, [in, out] XAsyncBlock *async );
+    HRESULT XUserGetTokenAndSignatureUtf16ResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *bufferSize );
+    HRESULT XUserGetTokenAndSignatureUtf16Result( [in, out] XAsyncBlock *async, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, ptr] XUserGetTokenAndSignatureUtf16Data **ptrToBuffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XUserResolveIssueWithUiAsync( [in] XUserHandle user, [in, optional, string] const char *url, [in, out] XAsyncBlock *async );
+    HRESULT XUserResolveIssueWithUiResult( [in, out] XAsyncBlock *async );
+    HRESULT XUserResolveIssueWithUiUtf16Async( [in] XUserHandle user, [in, optional, string] const WCHAR *url, [in, out] XAsyncBlock *async );
+    HRESULT XUserResolveIssueWithUiUtf16Result( [in, out] XAsyncBlock *async );
+    HRESULT XUserRegisterForChangeEvent( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XUserChangeEventCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XUserUnregisterForChangeEvent( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XUserGetSignOutDeferral( [out] XUserSignOutDeferralHandle *deferral );
+    void    XUserCloseSignOutDeferralHandle( [in] XUserSignOutDeferralHandle deferral );
+}
+
+[
+    local,
+    object,
+    uuid(eb9bf948-18dc-4d82-bbcc-40e0a809c4c0)
+]
+interface IXUserImpl2 : IXUserImpl
+{
+    HRESULT XUserAddByIdWithUiAsync( [in] UINT64 userId, [in, out] XAsyncBlock *async );
+    HRESULT XUserAddByIdWithUiResult( [in, out] XAsyncBlock *async, [out] XUserHandle *newUser );
+}
+
+[
+    local,
+    object,
+    uuid(1bf2f8c5-d507-4e52-bb05-f726d0e71161)
+]
+interface IXUserImpl3 : IXUserImpl2
+{
+    HRESULT XUserGetMsaTokenSilentlyAsync( [in] XUserHandle user, [in] XUserGetMsaTokenSilentlyOptions options, [in, string] const char *scope, [in, out] XAsyncBlock *async );
+    HRESULT XUserGetMsaTokenSilentlyResult( [in, out] XAsyncBlock *async, [in] SIZE_T resultTokenSize, [out, string, size_is(resultTokenSize)] char *resultToken, [out, optional] SIZE_T *resultTokenUsed );
+    HRESULT XUserGetMsaTokenSilentlyResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *tokenSize );
+}
+
+[
+    local,
+    object,
+    uuid(079415e3-6727-437f-8e9d-8f8f9b2439f7)
+]
+interface IXUserImpl4 : IXUserImpl3
+{
+    BOOLEAN XUserIsStoreUser( [in] XUserHandle user );
+}
+
+[
+    local,
+    object,
+    uuid(26f3c674-a2fe-44fa-b6c4-a323bc94ff53)
+]
+interface IXUserImpl5 : IXUserImpl4
+{
+    HRESULT XUserPlatformRemoteConnectSetEventHandlers( [in, optional] XTaskQueueHandle queue, [in] XUserPlatformRemoteConnectEventHandlers *handlers );
+    HRESULT XUserPlatformRemoteConnectCancelPrompt( [in] XUserPlatformOperation operation );
+    HRESULT XUserPlatformSpopPromptSetEventHandlers( [in, optional] XTaskQueueHandle queue, [in] XUserPlatformSpopPromptEventHandler *handler, [in, optional] void *context );
+    HRESULT XUserPlatformSpopPromptComplete( [in] XUserPlatformOperation operation, [in] XUserPlatformOperationResult result );
+}
+
+[
+    local,
+    object,
+    uuid(5131d685-4394-4ee6-8c18-bfb5d4aef1ff)
+]
+interface IXUserImpl6 : IXUserImpl5
+{
+    BOOLEAN XUserIsSignOutPresent();
+    HRESULT XUserSignOutAsync( [in] XUserHandle user, [in, out] XAsyncBlock *async );
+    HRESULT XUserSignOutResult( [in, out] XAsyncBlock *async );
+}
+
+[
+    local,
+    object,
+    uuid(7d824997-10dc-45ab-86b7-2737767c0bf1)
+]
+interface IXUserDeviceImpl : IUnknown
+{
+    HRESULT XUserFindForDevice( [in] const APP_LOCAL_DEVICE_ID *deviceId, [out] XUserHandle *handle );
+    HRESULT XUserRegisterForDeviceAssociationChanged( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XUserDeviceAssociationChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XUserUnregisterForDeviceAssociationChanged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XUserGetDefaultAudioEndpointUtf16( [in] XUserLocalId user, [in] XUserDefaultAudioEndpointKind defaultAudioEndpointKind, [in] SIZE_T endpointIdUtf16Count, [out, string, length_is(endpointIdUtf16Count)] WCHAR endpointIdUtf16[*], [out, optional] SIZE_T *endpointIdUtf16Used );
+    HRESULT XUserRegisterForDefaultAudioEndpointUtf16Changed( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XUserDefaultAudioEndpointUtf16ChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XUserUnregisterForDefaultAudioEndpointUtf16Changed( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XUserFindControllerForUserWithUiAsync( [in] XUserHandle user, [in, out] XAsyncBlock *async );
+    HRESULT XUserFindControllerForUserWithUiResult( [in, out] XAsyncBlock *async, [out] APP_LOCAL_DEVICE_ID *deviceId );
+}
+
+[
+    local,
+    object,
+    uuid(0cc6a956-e7e1-4fdf-9341-9d5da649ebc8)
+]
+interface IXUserDeviceImpl2 : IXUserDeviceImpl
+{
+    /* Unknown which methods added here, all defined in parent for backwards compatibility */
+}
+
+[
+    local,
+    object,
+    uuid(cef4fac0-7676-4a94-a119-4c43f9eb5b74)
+]
+interface IXUserGamertagImpl : IUnknown
+{
+    HRESULT XUserGetGamertag( [in] XUserHandle user, [in] XUserGamertagComponent gamertagComponent, [in] SIZE_T gamertagSize, [out, string, size_is(gamertagSize)] char *gamertag, [out, optional] SIZE_T *gamertagUsed );
+}
+
+[
+    uuid(01acd177-91f9-4763-a38e-ccbb55ce32e0)
+]
+coclass XUserImpl
+{
+    [default] interface IXUserImpl6;
+    interface IXUserGamertagImpl;
+}
+
+[
+    uuid(7d824997-10dc-45ab-86b7-2737767c0bf1)
+]
+coclass XUserDeviceImpl
+{
+    [default] interface IXUserDeviceImpl2;
+}
+
+cpp_quote("#endif")

@@ -1,0 +1,300 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+import "xuser.idl";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XGameUiMessageDialogButton : UINT32")
+cpp_quote("{                                             ")
+cpp_quote("    First,                                    ")
+cpp_quote("    Second,                                   ")
+cpp_quote("    Third,                                    ")
+cpp_quote("};                                            ")
+
+cpp_quote("enum class XGameUiNotificationPositionHint : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    BottomCenter,                                  ")
+cpp_quote("    BottomLeft,                                    ")
+cpp_quote("    BottomRight,                                   ")
+cpp_quote("    TopCenter,                                     ")
+cpp_quote("    TopLeft,                                       ")
+cpp_quote("    TopRight,                                      ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XGameUiTextEntryChangeTypeFlags : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    None        = 0x00,                            ")
+cpp_quote("    TextChanged = 0x01,                            ")
+cpp_quote("    Dismissed   = 0x02,                            ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XGameUiTextEntryInputScope : UINT32")
+cpp_quote("{                                             ")
+cpp_quote("    Default          =  0,                    ")
+cpp_quote("    Url              =  1,                    ")
+cpp_quote("    EmailSmtpAddress =  5,                    ")
+cpp_quote("    Number           = 29,                    ")
+cpp_quote("    Password         = 31,                    ")
+cpp_quote("    TelephoneNumber  = 32,                    ")
+cpp_quote("    Alphanumeric     = 40,                    ")
+cpp_quote("    Search           = 50,                    ")
+cpp_quote("    ChatWithoutEmoji = 68,                    ")
+cpp_quote("};                                            ")
+
+cpp_quote("enum class XGameUiTextEntryPositionHint : UINT32")
+cpp_quote("{                                               ")
+cpp_quote("    Bottom,                                     ")
+cpp_quote("    Top,                                        ")
+cpp_quote("};                                              ")
+
+cpp_quote("enum class XGameUiTextEntryVisibilityFlags : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    Default            = 0x00,                     ")
+cpp_quote("    OnlyShowCandidates = 0x01,                     ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XGameUiWebAuthenticationOptions : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    None             = 0x00,                       ")
+cpp_quote("    PreferFullscreen = 0x01,                       ")
+cpp_quote("};                                                 ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XGameUiMessageDialogButton
+{
+    XGameUiMessageDialogButton_First,
+    XGameUiMessageDialogButton_Second,
+    XGameUiMessageDialogButton_Third,
+} XGameUiMessageDialogButton;
+
+typedef enum XGameUiNotificationPositionHint
+{
+    XGameUiNotificationPositionHint_BottomCenter,
+    XGameUiNotificationPositionHint_BottomLeft,
+    XGameUiNotificationPositionHint_BottomRight,
+    XGameUiNotificationPositionHint_TopCenter,
+    XGameUiNotificationPositionHint_TopLeft,
+    XGameUiNotificationPositionHint_TopRight,
+} XGameUiNotificationPositionHint;
+
+typedef enum XGameUiTextEntryChangeTypeFlags
+{
+    XGameUiTextEntryChangeTypeFlags_None        = 0x00,
+    XGameUiTextEntryChangeTypeFlags_TextChanged = 0x01,
+    XGameUiTextEntryChangeTypeFlags_Dismissed   = 0x02,
+} XGameUiTextEntryChangeTypeFlags;
+
+typedef enum XGameUiTextEntryInputScope
+{
+    XGameUiTextEntryInputScope_Default          = 0,
+    XGameUiTextEntryInputScope_Url              = 1,
+    XGameUiTextEntryInputScope_EmailSmtpAddress = 5,
+    XGameUiTextEntryInputScope_Number           = 29,
+    XGameUiTextEntryInputScope_Password         = 31,
+    XGameUiTextEntryInputScope_TelephoneNumber  = 32,
+    XGameUiTextEntryInputScope_Alphanumeric     = 40,
+    XGameUiTextEntryInputScope_Search           = 50,
+    XGameUiTextEntryInputScope_ChatWithoutEmoji = 68,
+} XGameUiTextEntryInputScope;
+
+typedef enum XGameUiTextEntryPositionHint
+{
+    XGameUiTextEntryPositionHint_Bottom,
+    XGameUiTextEntryPositionHint_Top,
+} XGameUiTextEntryPositionHint;
+
+typedef enum XGameUiTextEntryVisibilityFlags
+{
+    XGameUiTextEntryVisibilityFlags_Default            = 0x00,
+    XGameUiTextEntryVisibilityFlags_OnlyShowCandidates = 0x01,
+} XGameUiTextEntryVisibilityFlags;
+
+typedef enum XGameUiWebAuthenticationOptions
+{
+    XGameUiWebAuthenticationOptions_None             = 0x00,
+    XGameUiWebAuthenticationOptions_PreferFullscreen = 0x01,
+} XGameUiWebAuthenticationOptions;
+
+cpp_quote("#endif")
+
+typedef struct XGameUiCallbackObject *XGameUiCallbackHandle;
+typedef struct XGameUiTextEntry *XGameUiTextEntryHandle;
+
+typedef struct XGameUiPlayerPickerInfo XGameUiPlayerPickerInfo;
+typedef struct XGameUiTextEntryExtents XGameUiTextEntryExtents;
+typedef struct XGameUiTextEntryOptions XGameUiTextEntryOptions;
+typedef struct XGameUiUiCallbacks XGameUiUiCallbacks;
+typedef struct XGameUiWebAuthenticationResultData XGameUiWebAuthenticationResultData;
+
+typedef void __stdcall XGameUiShowPlayerProfileCardUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, XUserHandle requestingUser, UINT64 targetPlayer, void *context );
+typedef void __stdcall XGameUiShowPlayerPickerUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, XGameUiPlayerPickerInfo *info, void *context );
+typedef void __stdcall XGameUiShowSendGameInviteUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, XUserHandle requestingUser, const char *sessionConfigurationId, const char *sessionTemplateName, const char *sessionId, const char *invitationText, const char *customActivationContext, void *context );
+typedef void __stdcall XGameUiShowAchievementsUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, XUserHandle requestingUser, UINT32 titleId, void *context );
+typedef void __stdcall XGameUiShowMultiplayerActivityGameInviteUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, XUserHandle requestingUser, void *context );
+typedef void __stdcall XGameUiShowMessageDialogUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, const char *titleText, const char *contentText, const char *firstButtonText, const char *secondButtonText, const char *thirdButtonText, XGameUiMessageDialogButton defaultButton, XGameUiMessageDialogButton cancelButton, void *context );
+typedef void __stdcall XGameUiShowErrorDialogUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, HRESULT errorCode, const char *serviceContext, void *context );
+typedef void __stdcall XGameUiShowTextEntryUiCallback( XGameUiCallbackHandle callbackHandle, XTaskQueueHandle queue, const char *titleText, const char *descriptionText, const char *defaultText, XGameUiTextEntryInputScope inputScope, UINT32 maxTextLength, void *context );
+
+struct XGameUiPlayerPickerInfo
+{
+    XUserHandle requestingUser;
+    const char *promptText;
+    UINT32 selectFromPlayersCount;
+    const UINT64 *selectFromPlayers;
+    UINT32 preSelectedPlayersCount;
+    const UINT64 *preSelectedPlayers;
+    UINT32 minSelectionCount;
+    UINT32 maxSelectionCount;
+};
+
+struct XGameUiTextEntryExtents
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+};
+
+struct XGameUiTextEntryOptions
+{
+    XGameUiTextEntryInputScope inputScope;
+    XGameUiTextEntryPositionHint positionHint;
+    XGameUiTextEntryVisibilityFlags visibilityFlags;
+};
+
+struct XGameUiUiCallbacks
+{
+    void *context;
+    XGameUiShowPlayerProfileCardUiCallback *showPlayerProfileCardCallback;
+    XGameUiShowPlayerPickerUiCallback *showPlayerPickerCallback;
+    XGameUiShowSendGameInviteUiCallback *showSendGameInviteCallback;
+    XGameUiShowAchievementsUiCallback *showAchievementsCallback;
+    XGameUiShowMultiplayerActivityGameInviteUiCallback *showMultiplayerActivityGameInviteCallback;
+    XGameUiShowMessageDialogUiCallback *showMessageDialogCallback;
+    XGameUiShowErrorDialogUiCallback *showErrorDialogCallback;
+    XGameUiShowTextEntryUiCallback *showTextEntryCallback;
+};
+
+struct XGameUiWebAuthenticationResultData
+{
+    HRESULT responseStatus;
+    SIZE_T responseCompletionUriSize;
+    const char *responseCompletionUri;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(6eeaa73e-9669-43ad-a2c7-d0da4e1f50a1)
+]
+interface IXGameUiImpl : IUnknown
+{
+    HRESULT XGameUiShowMessageDialogAsync( [in, out] XAsyncBlock *async, [in, string] const char *titleText, [in, string] const char *contentText, [in, optional, string] const char *firstButtonText, [in, optional, string] const char *secondButtonText, [in, optional, string] const char *thirdButtonText, [in] XGameUiMessageDialogButton defaultButton, [in] XGameUiMessageDialogButton cancelButton );
+    HRESULT XGameUiShowMessageDialogResult( [in, out] XAsyncBlock *async, [out] XGameUiMessageDialogButton *resultButton );
+    HRESULT XGameUiShowSendGameInviteAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in, string] const char *sessionConfigurationId, [in, string] const char *sessionTemplateName, [in, string] const char *sessionId, [in, optional, string] const char *invitationText, [in, optional, string] const char *customActivationContext );
+    HRESULT XGameUiShowSendGameInviteResult( [in, out] XAsyncBlock *async );
+    HRESULT XGameUiShowPlayerProfileCardAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in] UINT64 targetPlayer );
+    HRESULT XGameUiShowPlayerProfileCardResult( [in, out] XAsyncBlock *async );
+    HRESULT XGameUiShowAchievementsAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in] UINT32 titleId );
+    HRESULT XGameUiShowAchievementsResult( [in, out] XAsyncBlock *async );
+    HRESULT XGameUiShowPlayerPickerAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in, string] const char *promptText, [in] UINT32 selectFromPlayersCount, [in, length_is(selectFromPlayersCount)] const UINT64 selectFromPlayers[*], [in] UINT32 preSelectedPlayersCount, [in, optional, length_is(preSelectedPlayersCount)] UINT64 preSelectedPlayers[*], [in] UINT32 minSelectionCount, [in] UINT32 maxSelectionCount );
+    HRESULT XGameUiShowPlayerPickerResultCount( [in, out] XAsyncBlock *async, [out] UINT32 *resultPlayersCount );
+    HRESULT XGameUiShowPlayerPickerResult( [in, out] XAsyncBlock *async, [in] UINT32 resultPlayersCount, [out, length_is(resultPlayersCount)] UINT64 resultPlayers[*], [out, optional] UINT32 *resultPlayersUsed );
+    HRESULT XGameUiShowErrorDialogAsync( [in, out] XAsyncBlock *async, [in] HRESULT errorCode, [in, optional, string] const char *context );
+    HRESULT XGameUiShowErrorDialogResult( [in, out] XAsyncBlock *async );
+    HRESULT XGameUiSetNotificationPositionHint( [in] XGameUiNotificationPositionHint position );
+    HRESULT XGameUiShowTextEntryAsync( [in, out] XAsyncBlock *async, [in, optional, string] const char *titleText, [in, optional, string] const char *descriptionText, [in, optional, string] const char *defaultText, [in] XGameUiTextEntryInputScope inputScope, [in] UINT32 maxTextLength );
+    HRESULT XGameUiShowTextEntryResultSize( [in, out] XAsyncBlock *async, [out] UINT32 *resultTextBufferSize );
+    HRESULT XGameUiShowTextEntryResult( [in, out] XAsyncBlock *async, [in] UINT32 resultTextBufferSize, [out, size_is(resultTextBufferSize)] char *resultTextBuffer, [out, optional] UINT32 *resultTextBufferUsed );
+    HRESULT __PADDING__();
+    HRESULT __PADDING_2__();
+    HRESULT __PADDING_3__();
+    HRESULT __PADDING_4__();
+    HRESULT XGameUiShowWebAuthenticationAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in, string] const char *requestUri, [in, string] const char *completionUri );
+    HRESULT XGameUiShowWebAuthenticationResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *bufferSize );
+    HRESULT XGameUiShowWebAuthenticationResult( [in, out] XAsyncBlock *async, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, ptr] XGameUiWebAuthenticationResultData **ptrToBuffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XGameUiShowWebAuthenticationWithOptionsAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in, string] const char *requestUri, [in, string] const char *completionUri, [in] XGameUiWebAuthenticationOptions options );
+    HRESULT __PADDING_5__();
+    HRESULT __PADDING_6__();
+}
+
+[
+    local,
+    object,
+    uuid(36a03122-9ea3-4a3a-a8a4-899cfd85d7db)
+]
+interface IXGameUiImpl2 : IXGameUiImpl
+{
+    HRESULT XGameUiShowMultiplayerActivityGameInviteAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser );
+    HRESULT XGameUiShowMultiplayerActivityGameInviteResult( [in, out] XAsyncBlock *async );
+    HRESULT __PADDING_7__();
+    HRESULT __PADDING_8__();
+    HRESULT XGameUiTextEntryOpen( [in] const XGameUiTextEntryOptions *options, [in] UINT32 maxLength, [in, optional, string] const char *initialText, [in] UINT32 initialCursorIndex, [out] XGameUiTextEntryHandle *handle );
+    HRESULT XGameUiTextEntryClose( [in] XGameUiTextEntryHandle handle );
+    HRESULT XGameUiTextEntryGetState( [in] XGameUiTextEntryHandle handle, [out] XGameUiTextEntryChangeTypeFlags *changeType, [out, optional] UINT32 *cursorIndex, [out, optional] UINT32 *imeClauseStartIndex, [out, optional] UINT32 *imeClauseEndIndex, [in] UINT32 bufferSize, [out, size_is(bufferSize)] char *buffer );
+    HRESULT XGameUiTextEntryGetExtents( [in] XGameUiTextEntryHandle handle, [out] XGameUiTextEntryExtents *extents );
+    HRESULT XGameUiTextEntryUpdatePositionHint( [in] XGameUiTextEntryHandle handle, [in] XGameUiTextEntryPositionHint positionHint );
+    HRESULT XGameUiTextEntryUpdateVisibility( [in] XGameUiTextEntryHandle handle, [in] XGameUiTextEntryVisibilityFlags visibilityFlags );
+}
+
+[
+    local,
+    object,
+    uuid(ade7eba1-2093-42ce-a544-a523a66790e0)
+]
+interface IXGameUiImpl3 : IXGameUiImpl2
+{
+    HRESULT XGameUiShowStateShareAsync( [in, out] XAsyncBlock *async, [in] XUserHandle requestingUser, [in, string] const char *linkToken );
+    HRESULT XGameUiShowStateShareResult( [in, out] XAsyncBlock *async );
+}
+
+[
+    local,
+    object,
+    uuid(eaf669df-5542-4590-99a3-8dc061f837cc)
+]
+interface IXGameUiImpl4 : IXGameUiImpl3
+{
+    HRESULT XGameUiSetUiCallbacks( [in] const XGameUiUiCallbacks *callbacks, [in] BOOLEAN useSystemUiIfAvailable );
+    HRESULT XGameUiSetMessageDialogUiResponse( [in] XGameUiCallbackHandle callbackHandle, [in] XGameUiMessageDialogButton response );
+    HRESULT XGameUiSetPlayerPickerUiResponse( [in] XGameUiCallbackHandle callbackHandle, [in] UINT32 playerCount, [in, length_is(playerCount)] const UINT64 players[*] );
+    HRESULT XGameUiSetTextEntryUiResponse( [in] XGameUiCallbackHandle callbackHandle, [in, string] const char *response );
+    HRESULT XGameUiSetPlayerProfileCardUiResponse( [in] XGameUiCallbackHandle callbackHandle );
+    HRESULT XGameUiSetSendGameInviteUiResponse( [in] XGameUiCallbackHandle callbackHandle );
+    HRESULT XGameUiSetAchievementsUiResponse( [in] XGameUiCallbackHandle callbackHandle );
+    HRESULT XGameUiSetMultiplayerActivityGameInviteUiResponse( [in] XGameUiCallbackHandle callbackHandle );
+    HRESULT XGameUiSetErrorDialogUiResponse( [in] XGameUiCallbackHandle callbackHandle );
+}
+
+[
+    uuid(dfcd4649-4ff8-4043-ba07-35d607df98b0)
+]
+coclass XGameUiImpl
+{
+    [default] interface IXGameUiImpl4;
+}
+
+cpp_quote("#endif")

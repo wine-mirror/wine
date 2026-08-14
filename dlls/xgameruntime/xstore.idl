@@ -1,0 +1,403 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+import "xuser.idl";
+
+cpp_quote("#if 0")
+typedef UINT64 time_t;
+cpp_quote("#endif")
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XStoreCanLicenseStatus : UINT32")
+cpp_quote("{                                         ")
+cpp_quote("    NotLicensableToUser,                  ")
+cpp_quote("    Licensable,                           ")
+cpp_quote("    LicenseActionNotApplicableToProduct,  ")
+cpp_quote("};                                        ")
+
+cpp_quote("enum class XStoreDurationUnit : UINT32")
+cpp_quote("{                                     ")
+cpp_quote("    Minute,                           ")
+cpp_quote("    Hour,                             ")
+cpp_quote("    Day,                              ")
+cpp_quote("    Week,                             ")
+cpp_quote("    Month,                            ")
+cpp_quote("    Year,                             ")
+cpp_quote("};                                    ")
+
+cpp_quote("enum class XStoreProductKind : UINT32")
+cpp_quote("{                                    ")
+cpp_quote("    None = 0x00,                     ")
+cpp_quote("    Consumable = 0x01,               ")
+cpp_quote("    Durable = 0x02,                  ")
+cpp_quote("    Game = 0x04,                     ")
+cpp_quote("    Pass = 0x08,                     ")
+cpp_quote("    UnmanagedConsumable = 0x10,      ")
+cpp_quote("};                                   ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XStoreCanLicenseStatus
+{
+    XStoreCanLicenseStatus_NotLicensableToUser,
+    XStoreCanLicenseStatus_Licensable,
+    XStoreCanLicenseStatus_LicenseActionNotApplicableToProduct,
+} XStoreCanLicenseStatus;
+
+typedef enum XStoreDurationUnit
+{
+    XStoreDurationUnit_Minute,
+    XStoreDurationUnit_Hour,
+    XStoreDurationUnit_Day,
+    XStoreDurationUnit_Week,
+    XStoreDurationUnit_Month,
+    XStoreDurationUnit_Year,
+} XStoreDurationUnit;
+
+typedef enum XStoreProductKind
+{
+    XStoreProductKind_None = 0x00,
+    XStoreProductKind_Consumable = 0x01,
+    XStoreProductKind_Durable = 0x02,
+    XStoreProductKind_Game = 0x04,
+    XStoreProductKind_Pass = 0x08,
+    XStoreProductKind_UnmanagedConsumable = 0x10,
+} XStoreProductKind;
+
+cpp_quote("#endif")
+
+typedef void *XStoreContextHandle;
+typedef void *XStoreLicenseHandle;
+typedef void *XStoreProductQueryHandle;
+
+typedef struct XStoreAddonLicense XStoreAddonLicense;
+typedef struct XStoreAvailability XStoreAvailability;
+typedef struct XStoreCanAcquireLicenseResult XStoreCanAcquireLicenseResult;
+typedef struct XStoreCollectionData XStoreCollectionData;
+typedef struct XStoreConsumableResult XStoreConsumableResult;
+typedef struct XStoreGameLicense XStoreGameLicense;
+typedef struct XStoreImage XStoreImage;
+typedef struct XStorePackageUpdate XStorePackageUpdate;
+typedef struct XStorePrice XStorePrice;
+typedef struct XStoreProduct XStoreProduct;
+typedef struct XStoreRateAndReviewResult XStoreRateAndReviewResult;
+typedef struct XStoreSku XStoreSku;
+typedef struct XStoreSubscriptionInfo XStoreSubscriptionInfo;
+typedef struct XStoreVideo XStoreVideo;
+
+typedef void    __stdcall XStoreGameLicenseChangedCallback( void *context );
+typedef void    __stdcall XStorePackageLicenseLostCallback( void *context );
+typedef BOOLEAN __stdcall XStoreProductQueryCallback( const XStoreProduct *product, void *context );
+
+struct XStoreAddonLicense
+{
+    char skuStoreId[18];
+    char inAppOfferToken[64];
+    BOOLEAN isActive;
+    time_t expirationDate;
+};
+
+struct XStorePrice
+{
+    float basePrice;
+    float price;
+    float recurrencePrice;
+    const char *currencyCode;
+    char formattedBasePrice[16];
+    char formattedPrice[16];
+    char formattedRecurrencePrice[16];
+    BOOLEAN isOnSale;
+    time_t saleEndDate;
+};
+
+struct XStoreAvailability
+{
+    const char *availabilityId;
+    XStorePrice price;
+    time_t endDate;
+};
+
+struct XStoreCanAcquireLicenseResult
+{
+    char licensableSku[5];
+    XStoreCanLicenseStatus status;
+};
+
+struct XStoreCollectionData
+{
+    time_t acquiredDate;
+    time_t startDate;
+    time_t endDate;
+    BOOLEAN isTrial;
+    UINT32 trialTimeRemainingInSeconds;
+    UINT32 quantity;
+    const char *campaignId;
+    const char *developerOfferId;
+};
+
+struct XStoreConsumableResult
+{
+    UINT32 quantity;
+};
+
+struct XStoreGameLicense
+{
+    char skuStoreId[18];
+    BOOLEAN isActive;
+    BOOLEAN isTrialOwnedByThisUser;
+    BOOLEAN isDiscLicense;
+    BOOLEAN isTrial;
+    UINT32 trialTimeRemainingInSeconds;
+    char trialUniqueId[64];
+    time_t expirationDate;
+};
+
+struct XStoreImage
+{
+    const char *uri;
+    UINT32 height;
+    UINT32 width;
+    const char *caption;
+    const char *imagePurposeTag;
+};
+
+struct XStorePackageUpdate
+{
+    char packageIdentifier[33];
+    BOOLEAN isMandatory;
+};
+
+struct XStoreProduct
+{
+    const char *storeId;
+    const char *title;
+    const char *description;
+    const char *language;
+    const char *inAppOfferToken;
+    char *linkUri;
+    XStoreProductKind productKind;
+    XStorePrice price;
+    BOOLEAN hasDigitalDownload;
+    BOOLEAN isInUserCollection;
+    UINT32 keywordsCount;
+    const char **keywords;
+    UINT32 skusCount;
+    XStoreSku *skus;
+    UINT32 imagesCount;
+    XStoreImage *images;
+    UINT32 videosCount;
+    XStoreVideo *videos;
+};
+
+struct XStoreRateAndReviewResult
+{
+    BOOLEAN wasUpdated;
+};
+
+struct XStoreSubscriptionInfo
+{
+    BOOLEAN hasTrialPeriod;
+    XStoreDurationUnit trialPeriodUnit;
+    UINT32 trialPeriod;
+    XStoreDurationUnit billingPeriodUnit;
+    UINT32 billingPeriod;
+};
+
+struct XStoreSku
+{
+    const char *skuId;
+    const char *title;
+    const char *description;
+    const char *language;
+    XStorePrice price;
+    BOOLEAN isTrial;
+    BOOLEAN isInUserCollection;
+    XStoreCollectionData collectionData;
+    BOOLEAN isSubscription;
+    XStoreSubscriptionInfo subscriptionInfo;
+    UINT32 bundledSkusCount;
+    const char **bundledSkus;
+    UINT32 imagesCount;
+    XStoreImage *images;
+    UINT32 videosCount;
+    XStoreVideo *videos;
+    UINT32 availabilitiesCount;
+    XStoreAvailability *availabilities;
+};
+
+struct XStoreVideo
+{
+    const char *uri;
+    UINT32 height;
+    UINT32 width;
+    const char *caption;
+    const char *videoPurposeTag;
+    XStoreImage previewImage;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(0dd112ac-7c24-448c-b92b-3960fb5bd30c)
+]
+interface IXStoreImpl : IUnknown
+{
+    HRESULT XStoreCreateContext( [in, optional] const XUserHandle user, [out] XStoreContextHandle *storeContextHandle );
+    void    XStoreCloseContextHandle( [in] XStoreContextHandle storeContextHandle );
+    HRESULT XStoreQueryAssociatedProductsAsync( [in] const XStoreContextHandle storeContextHandle, [in] XStoreProductKind productKinds, [in] UINT32 maxItemsToRetrievePerPage, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryAssociatedProductsResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreQueryProductsAsync( [in] const XStoreContextHandle storeContextHandle, [in] XStoreProductKind productKinds, [in, string, size_is(storeIdsCount,)] const char **storeIds, [in] SIZE_T storeIdsCount, [in, optional, string, size_is(actionFiltersCount,)] const char **actionFilters, [in] SIZE_T actionFiltersCount, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryProductsResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreQueryEntitledProductsAsync( [in] const XStoreContextHandle storeContextHandle, [in] XStoreProductKind productKinds, [in] UINT32 maxItemsToRetrievePerPage, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryEntitledProductsResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreQueryProductForCurrentGameAsync( [in] const XStoreContextHandle storeContextHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryProductForCurrentGameResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreQueryProductForPackageAsync( [in] const XStoreContextHandle storeContextHandle, [in] XStoreProductKind productKinds, [in, string] const char *packageIdentifier, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryProductForPackageResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreEnumerateProductsQuery( [in] const XStoreProductQueryHandle productQueryHandle, [in, optional] void *context, [in] XStoreProductQueryCallback *callback );
+    BOOLEAN XStoreProductsQueryHasMorePages( [in] const XStoreProductQueryHandle productQueryHandle );
+    HRESULT XStoreProductsQueryNextPageAsync( [in] const XStoreProductQueryHandle productQueryHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreProductsQueryNextPageResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    void    XStoreCloseProductsQueryHandle( [in] XStoreProductQueryHandle productQueryHandle );
+    HRESULT XStoreAcquireLicenseForPackageAsync( [in] const XStoreProductQueryHandle productQueryHandle, [in, string] const char *packageIdentifier, [in, out] XAsyncBlock *async );
+    HRESULT XStoreAcquireLicenseForPackageResult( [in, out] XAsyncBlock *async, [out] XStoreLicenseHandle *storeLicenseHandle );
+    BOOLEAN XStoreIsLicenseValid( [in] const XStoreLicenseHandle storeLicenseHandle );
+    void    XStoreCloseLicenseHandle( [in] XStoreLicenseHandle storeLicenseHandle );
+    HRESULT XStoreCanAcquireLicenseForStoreIdAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeProductId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreCanAcquireLicenseForStoreIdResult( [in, out] XAsyncBlock *async, [out] XStoreCanAcquireLicenseResult *storeCanAcquireLicense );
+    HRESULT XStoreCanAcquireLicenseForPackageAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *packageIdentifier, [in, out] XAsyncBlock *async );
+    HRESULT XStoreCanAcquireLicenseForPackageResult( [in, out] XAsyncBlock *async, [out] XStoreCanAcquireLicenseResult *storeCanAcquireLicense );
+    HRESULT XStoreQueryGameLicenseAsync( [in] const XStoreContextHandle storeContextHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryGameLicenseResult( [in, out] XAsyncBlock *async, [out] XStoreGameLicense *license );
+    HRESULT XStoreQueryAddOnLicensesAsync( [in] const XStoreContextHandle storeContextHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryAddOnLicensesResultCount( [in, out] XAsyncBlock *async, [out] UINT32 *count );
+    HRESULT XStoreQueryAddOnLicensesResult( [in, out] XAsyncBlock *async, [in] UINT32 count, [out, length_is(count)] XStoreAddonLicense addOnLicenses[*] );
+    HRESULT XStoreQueryConsumableBalanceRemainingAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeProductId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryConsumableBalanceRemainingResult( [in, out] XAsyncBlock *async, [out] XStoreConsumableResult *consumableResult );
+    HRESULT XStoreReportConsumableFulfillmentAsync( [in, out] const XStoreContextHandle storeContextHandle, [in, string] const char *storeProductId, [in] UINT32 quantity, [in] GUID trackingId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreReportConsumableFulfillmentResult( [in, out] XAsyncBlock *async, [out] XStoreConsumableResult *consumableResult );
+    HRESULT XStoreGetUserCollectionsIdAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *serviceTicket, [in, string] const char *publisherUserId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreGetUserCollectionsIdResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *size );
+    HRESULT XStoreGetUserCollectionsIdResult( [in, out] XAsyncBlock *async, [in] SIZE_T size, [out, string, size_is(size)] char *result );
+    HRESULT XStoreGetUserPurchaseIdAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *serviceTicket, [in, string] const char *publisherUserId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreGetUserPurchaseIdResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *size );
+    HRESULT XStoreGetUserPurchaseIdResult( [in, out] XAsyncBlock *async, [in] SIZE_T size, [out, string, size_is(size)] char *result );
+    HRESULT XStoreQueryLicenseTokenAsync( [in] const XStoreContextHandle storeContextHandle, [in, string, size_is(productIdsCount,)] const char **productIds, [in] SIZE_T productIdsCount, [in, string] const char *customDeveloperString, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryLicenseTokenResultSize( [in, out] XAsyncBlock *async, [out] SIZE_T *size );
+    HRESULT XStoreQueryLicenseTokenResult( [in, out] XAsyncBlock *async, [in] SIZE_T size, [out, string, size_is(size)] char *result );
+    HRESULT __PADDING__();
+    HRESULT __PADDING_2__();
+    HRESULT __PADDING_3__();
+    HRESULT XStoreShowPurchaseUIAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in, optional, string] const char *name, [in, optional, string] const char *extendedJsonData, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowPurchaseUIResult( [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowRateAndReviewUIAsync( [in] const XStoreContextHandle storeContextHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowRateAndReviewUIResult( [in, out] XAsyncBlock *async, [out] XStoreRateAndReviewResult *result );
+    HRESULT XStoreShowRedeemTokenUIAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *token, [in, string, size_is(allowedStoreIdsCount,)] const char **allowedStoreIds, [in] SIZE_T allowedStoreIdsCount, [in] BOOLEAN disallowCsvRedemption, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowRedeemTokenUIResult( [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryGameAndDlcPackageUpdatesAsync( [in] const XStoreContextHandle storeContextHandle, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryGameAndDlcPackageUpdatesResultCount( [in, out] XAsyncBlock *async, [out] UINT32 *count );
+    HRESULT XStoreQueryGameAndDlcPackageUpdatesResult( [in, out] XAsyncBlock *async, [in] UINT32 count, [out, length_is(count)] XStorePackageUpdate packageUpdates[*] );
+    HRESULT XStoreDownloadPackageUpdatesAsync( [in] const XStoreContextHandle storeContextHandle, [in, string, size_is(packageIdentifiersCount,)] const char **packageIdentifiers, [in] SIZE_T packageIdentifiersCount, [in, out] XAsyncBlock *async );
+    HRESULT XStoreDownloadPackageUpdatesResult( [in, out] XAsyncBlock *async );
+    HRESULT XStoreDownloadAndInstallPackageUpdatesAsync( [in] const XStoreContextHandle storeContextHandle, [in, string, size_is(packageIdentifiersCount,)] const char **packageIdentifiers, [in] SIZE_T packageIdentifiersCount, [in, out] XAsyncBlock *async );
+    HRESULT XStoreDownloadAndInstallPackageUpdatesResult( [in, out] XAsyncBlock *async );
+    HRESULT XStoreDownloadAndInstallPackagesAsync( [in] const XStoreContextHandle storeContextHandle, [in, string, size_is(storeIdsCount,)] const char **storeIds, [in] SIZE_T storeIdsCount, [in, out] XAsyncBlock *async );
+    HRESULT XStoreDownloadAndInstallPackagesResultCount( [in, out] XAsyncBlock *async, [out] UINT32 *count );
+    HRESULT XStoreDownloadAndInstallPackagesResult( [in, out] XAsyncBlock *async, [in] UINT32 count, [out, string, size_is(count,33)] char **packageIdentifiers );
+    HRESULT XStoreQueryPackageIdentifier( [in, string] const char *storeId, [in] SIZE_T size, [out, string, size_is(size)] char *packageIdentifier );
+    HRESULT XStoreRegisterGameLicenseChanged( [in] XStoreContextHandle storeContextHandle, [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XStoreGameLicenseChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XStoreUnregisterGameLicenseChanged( [in] XStoreContextHandle storeContextHandle, [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XStoreRegisterPackageLicenseLost( [in] XStoreLicenseHandle licenseHandle, [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XStorePackageLicenseLostCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XStoreUnregisterPackageLicenseLost( [in] XStoreLicenseHandle licenseHandle, [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+}
+
+[
+    local,
+    object,
+    uuid(60b09f4e-1b85-45b1-826c-169118e230e1)
+]
+interface IXStoreImpl2 : IXStoreImpl
+{
+    BOOLEAN XStoreIsAvailabilityPurchasable( [in] const XStoreAvailability availability );
+}
+
+[
+    local,
+    object,
+    uuid(2d42fea5-e71d-4b76-97cd-c50afbb3ae5d)
+]
+interface IXStoreImpl3 : IXStoreImpl2
+{
+    HRESULT XStoreAcquireLicenseForDurablesAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreAcquireLicenseForDurablesResult( [in, out] XAsyncBlock *async, [out] XStoreLicenseHandle *storeLicenseHandle );
+}
+
+[
+    local,
+    object,
+    uuid(de3dbdd4-0b37-4bdb-a10e-acf3a354d06a)
+]
+interface IXStoreImpl4 : IXStoreImpl3
+{
+    HRESULT XStoreShowAssociatedProductsUIAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in] XStoreProductKind productKinds, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowAssociatedProductsUIResult( [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowProductPageUIAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowProductPageUIResult( [in, out] XAsyncBlock *async );
+}
+
+[
+    local,
+    object,
+    uuid(5c48dedf-0b67-4492-a4b5-6829b8e796e1)
+]
+interface IXStoreImpl5 : IXStoreImpl4
+{
+    HRESULT XStoreQueryAssociatedProductsForStoreIdAsync( [in] const XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in] XStoreProductKind productKinds, [in] UINT32 maxItemsToRetrievePerPage, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryAssociatedProductsForStoreIdResult( [in, out] XAsyncBlock *async, [out] XStoreProductQueryHandle *productQueryHandle );
+    HRESULT XStoreQueryPackageUpdatesAsync( [in] XStoreContextHandle storeContextHandle, [in, string, size_is(packageIdentifiersCount,)] const char **packageIdentifiers, [in] SIZE_T packageIdentifiersCount, [in, out] XAsyncBlock *async );
+    HRESULT XStoreQueryPackageUpdatesResultCount( [in, out] XAsyncBlock *async, [out] UINT32 *count );
+    HRESULT XStoreQueryPackageUpdatesResult( [in, out] XAsyncBlock *async, [in] UINT32 count, [out, length_is(count)] XStorePackageUpdate packageUpdates[*] );
+}
+
+[
+    local,
+    object,
+    uuid(b09d803c-2414-4a05-82c6-66dfdc9e9a44)
+]
+interface IXStoreImpl6 : IXStoreImpl5
+{
+    HRESULT XStoreShowGiftingUIAsync( [in] XStoreContextHandle storeContextHandle, [in, string] const char *storeId, [in, optional, string] const char *name, [in, optional, string] const char *extendedJsonData, [in, out] XAsyncBlock *async );
+    HRESULT XStoreShowGiftingUIResult( [in, out] XAsyncBlock *async );
+}
+
+[
+    uuid(0dd112ac-7c24-448c-b92b-3960fb5bd30c)
+]
+coclass XStoreImpl
+{
+    [default] interface IXStoreImpl6;
+}
+
+cpp_quote("#endif")

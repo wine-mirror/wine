@@ -1,0 +1,108 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xuser.idl";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XDisplayHdrModePreference : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    PreferHdr,                               ")
+cpp_quote("    PreferRefreshRate,                       ")
+cpp_quote("};                                           ")
+
+cpp_quote("enum class XDisplayHdrModeResult : UINT32")
+cpp_quote("{                                        ")
+cpp_quote("    Unknown,                             ")
+cpp_quote("    Enabled,                             ")
+cpp_quote("    Disabled,                            ")
+cpp_quote("};                                       ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XDisplayHdrModePreference
+{
+    XDisplayHdrModePreference_PreferHdr,
+    XDisplayHdrModePreference_PreferRefreshRate,
+} XDisplayHdrModePreference;
+
+typedef enum XDisplayHdrModeResult
+{
+    XDisplayHdrModeResult_Unknown,
+    XDisplayHdrModeResult_Enabled,
+    XDisplayHdrModeResult_Disabled,
+} XDisplayHdrModeResult;
+
+cpp_quote("#endif")
+
+typedef struct XDisplayTimeoutDeferral *XDisplayTimeoutDeferralHandle;
+
+typedef struct XDisplayHdrModeInfo XDisplayHdrModeInfo;
+
+struct XDisplayHdrModeInfo
+{
+    float minToneMapLuminance;
+    float maxToneMapLuminance;
+    float maxFullFrameToneMapLuminance;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(35f07670-706e-4bfb-9476-090798c5ebf3)
+]
+interface IXDisplayImpl : IUnknown
+{
+    HRESULT __PADDING__();
+    XDisplayHdrModeResult XDisplayTryEnableHdrMode( [in] XDisplayHdrModePreference displayModePreference, [out, optional] XDisplayHdrModeInfo *displayHdrModeInfo );
+}
+
+[
+    local,
+    object,
+    uuid(1b339674-328d-4283-a200-3171f18d3639)
+]
+interface IXLauncherImpl : IUnknown
+{
+    HRESULT XLaunchUri( [in, optional] XUserHandle user, [in, string] const char *uri );
+    HRESULT XDisplayAcquireTimeoutDeferral( [out] XDisplayTimeoutDeferralHandle *handle );
+    void    XDisplayCloseTimeoutDeferralHandle( [in] XDisplayTimeoutDeferralHandle handle );
+}
+
+[
+    uuid(03f0fe74-fdd9-4e5c-b630-f9339c47acc5)
+]
+coclass XDisplayImpl
+{
+    [default] interface IXDisplayImpl;
+}
+
+[
+    uuid(1b339674-328d-4283-a200-3171f18d3639)
+]
+coclass XLauncherImpl
+{
+    [default] interface IXLauncherImpl;
+}
+
+cpp_quote("#endif")

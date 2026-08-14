@@ -1,0 +1,271 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xuser.idl";
+
+cpp_quote("#if 0")
+typedef UINT64 time_t;
+cpp_quote("#endif")
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XAppCaptureMetadataPriority : UINT8")
+cpp_quote("{                                             ")
+cpp_quote("    Informational,                            ")
+cpp_quote("    Important,                                ")
+cpp_quote("};                                            ")
+
+cpp_quote("enum class XAppCaptureScreenshotFormatFlag : UINT16")
+cpp_quote("{                                                  ")
+cpp_quote("    SDR = 1,                                       ")
+cpp_quote("    HDR,                                           ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XAppCaptureVideoColorFormat : UINT8")
+cpp_quote("{                                             ")
+cpp_quote("    SDR,                                      ")
+cpp_quote("    HDR,                                      ")
+cpp_quote("};                                            ")
+
+cpp_quote("enum class XAppCaptureVideoEncoding : UINT8")
+cpp_quote("{                                          ")
+cpp_quote("    H264,                                  ")
+cpp_quote("    HEVC,                                  ")
+cpp_quote("};                                         ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XAppCaptureMetadataPriority
+{
+    XAppCaptureMetadataPriority_Informational,
+    XAppCaptureMetadataPriority_Important,
+} XAppCaptureMetadataPriority;
+
+typedef enum XAppCaptureScreenshotFormatFlag
+{
+    XAppCaptureScreenshotFormatFlag_SDR = 1,
+    XAppCaptureScreenshotFormatFlag_HDR,
+} XAppCaptureScreenshotFormatFlag;
+
+typedef enum XAppCaptureVideoColorFormat
+{
+    XAppCaptureVideoColorFormat_SDR,
+    XAppCaptureVideoColorFormat_HDR,
+} XAppCaptureVideoColorFormat;
+
+typedef enum XAppCaptureVideoEncoding
+{
+    XAppCaptureVideoEncoding_H264,
+    XAppCaptureVideoEncoding_HEVC,
+} XAppCaptureVideoEncoding;
+
+cpp_quote("#endif")
+
+typedef struct XAppCaptureLocalStream *XAppCaptureLocalStreamHandle;
+typedef struct XAppCaptureScreenshotStream *XAppCaptureScreenshotStreamHandle;
+
+typedef struct XAppBroadcastStatus XAppBroadcastStatus;
+typedef struct XAppCaptureDiagnosticScreenshotResult XAppCaptureDiagnosticScreenshotResult;
+typedef struct XAppCaptureLocalResult XAppCaptureLocalResult;
+typedef struct XAppCaptureRecordClipResult XAppCaptureRecordClipResult;
+typedef struct XAppCaptureScreenshotFile XAppCaptureScreenshotFile;
+typedef struct XAppCaptureScreenshotStream XAppCaptureScreenshotStream;
+typedef struct XAppCaptureTakeScreenshotResult XAppCaptureTakeScreenshotResult;
+typedef struct XAppCaptureUserRecordingResult XAppCaptureUserRecordingResult;
+typedef struct XAppCaptureVideoCaptureSettings XAppCaptureVideoCaptureSettings;
+
+typedef void __stdcall XAppBroadcastMonitorCallback( void *context );
+typedef void __stdcall XAppCaptureMetadataPurgedCallback( void *context );
+
+struct XAppBroadcastStatus
+{
+    BOOLEAN canStartBroadcast;
+    BOOLEAN isAnyAppBroadcasting;
+    BOOLEAN isCaptureResourceUnavailable;
+    BOOLEAN isGameStreamInProgress;
+    BOOLEAN isGpuConstrained;
+    BOOLEAN isAppInactive;
+    BOOLEAN isBlockedForApp;
+    BOOLEAN isDisabledByUser;
+    BOOLEAN isDisabledBySystem;
+};
+
+struct XAppCaptureScreenshotFile
+{
+    char path[260];
+    SIZE_T fileSize;
+    UINT32 width;
+    UINT32 height;
+};
+
+struct XAppCaptureDiagnosticScreenshotResult
+{
+    SIZE_T fileCount;
+    XAppCaptureScreenshotFile files[10];
+};
+
+struct XAppCaptureLocalResult
+{
+    XAppCaptureLocalStreamHandle clipHandle;
+    SIZE_T fileSizeInBytes;
+    SYSTEMTIME clipStartTimestamp;
+    UINT64 durationInMilliseconds;
+    UINT32 width;
+    UINT32 height;
+    XAppCaptureVideoEncoding encoding;
+    XAppCaptureVideoColorFormat colorFormat;
+};
+
+struct XAppCaptureRecordClipResult
+{
+    char path[260];
+    SIZE_T fileSize;
+    time_t startTime;
+    UINT32 durationInMs;
+    UINT32 width;
+    UINT32 height;
+    XAppCaptureVideoEncoding encoding;
+};
+
+struct XAppCaptureScreenshotStream {};
+
+struct XAppCaptureTakeScreenshotResult
+{
+    char localId[250];
+    XAppCaptureScreenshotFormatFlag availableScreenshotFormats;
+};
+
+struct XAppCaptureUserRecordingResult
+{
+    SIZE_T fileSizeInBytes;
+    SYSTEMTIME clipStartTimestamp;
+    UINT64 durationInMilliseconds;
+    UINT32 width;
+    UINT32 height;
+    XAppCaptureVideoEncoding encoding;
+    XAppCaptureVideoColorFormat colorFormat;
+};
+
+struct XAppCaptureVideoCaptureSettings
+{
+    UINT32 width;
+    UINT32 height;
+    UINT64 maxRecordTimespanDurationInMs;
+    XAppCaptureVideoEncoding encoding;
+    XAppCaptureVideoColorFormat colorFormat;
+    BOOLEAN isCaptureByGamesAllowed;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(186d5592-a72d-45fb-9560-11aed0e6647a)
+]
+interface IXAppCaptureMetadataImpl : IUnknown
+{
+    BOOLEAN XAppBroadcastIsAppBroadcasting();
+    HRESULT XAppBroadcastShowUI( [in] XUserHandle requestingUser );
+    HRESULT XAppBroadcastGetStatus( [in] XUserHandle requestingUser, [out] XAppBroadcastStatus *appBroadcastStatus );
+    HRESULT XAppBroadcastRegisterIsAppBroadcastingChanged( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XAppBroadcastMonitorCallback *appBroadcastMonitorCallback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XAppBroadcastUnregisterIsAppBroadcastingChanged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XAppCaptureMetadataAddStringEvent( [in, string] const char *name, [in, string] const char *value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataAddInt32Event( [in, string] const char *name, [in] INT32 value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataAddDoubleEvent( [in, string] const char *name, [in] double value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataStartStringState( [in, string] const char *name, [in, string] const char *value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataStartInt32State( [in, string] const char *name, [in] INT32 value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataStartDoubleState( [in, string] const char *name, [in] double value, [in] XAppCaptureMetadataPriority priority );
+    HRESULT XAppCaptureMetadataStopState( [in, string] const char *name );
+    HRESULT XAppCaptureMetadataStopAllStates();
+    HRESULT XAppCaptureMetadataRemainingStorageBytesAvailable( [out] UINT64 *value );
+    HRESULT XAppCaptureRegisterMetadataPurged( [in, optional] XTaskQueueHandle queue, [in] void *context, [in] XAppCaptureMetadataPurgedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XAppCaptureUnRegisterMetadataPurged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+}
+
+[
+    local,
+    object,
+    uuid(a4f1aee2-4bf1-4485-b008-a7c26d52ac27)
+]
+interface IXAppCaptureImpl : IUnknown
+{
+    HRESULT XAppCaptureTakeDiagnosticScreenshot( [in] BOOLEAN gamescreenOnly, [in] XAppCaptureScreenshotFormatFlag captureFlags, [in, optional, string] const char *filenamePrefix, [out] XAppCaptureDiagnosticScreenshotResult *result );
+    HRESULT XAppCaptureRecordDiagnosticClip( [in] time_t startTime, [in] UINT32 durationInMs, [in, optional, string] const char *filenamePrefix, [out] XAppCaptureRecordClipResult *result );
+    HRESULT XAppCaptureTakeScreenshot( [in] XUserHandle requestingUser, [out] XAppCaptureTakeScreenshotResult *result );
+    HRESULT XAppCaptureOpenScreenshotStream( [in, string] const char *localId, [in] XAppCaptureScreenshotFormatFlag screenshotFormat, [out] XAppCaptureScreenshotStreamHandle *handle, [out, optional] UINT64 *totalBytes );
+    HRESULT XAppCaptureReadScreenshotStream( [in] XAppCaptureScreenshotStreamHandle handle, [in] UINT64 startPosition, [in] UINT32 bytesToRead, [out, size_is(bytesToRead)] UINT8 *buffer, [out] UINT32 *bytesWritten );
+    HRESULT XAppCaptureCloseScreenshotStream( [in] XAppCaptureScreenshotStreamHandle handle );
+    HRESULT XAppCaptureEnableRecord();
+    HRESULT XAppCaptureDisableRecord();
+}
+
+[
+    local,
+    object,
+    uuid(3a949778-772e-4799-bdea-0a6639e96baa)
+]
+interface IXAppCaptureImpl2 : IXAppCaptureImpl
+{
+    HRESULT XAppCaptureGetVideoCaptureSettings( [out] XAppCaptureVideoCaptureSettings *userCaptureSettings );
+    HRESULT XAppCaptureRecordTimespan( [in, optional] const SYSTEMTIME *startTimestamp, [in] UINT64 durationInMilliseconds, [out] XAppCaptureLocalResult *result );
+    HRESULT XAppCaptureReadLocalStream( [in] XAppCaptureLocalStreamHandle handle, [in] SIZE_T startPosition, [in] UINT32 bytesToRead, [out, size_is(bytesToRead)] UINT8 *buffer, [out] UINT32 *bytesWritten );
+    HRESULT XAppCaptureCloseLocalStream( [in] XAppCaptureLocalStreamHandle handle );
+}
+
+[
+    local,
+    object,
+    uuid(2bbca60a-619c-4fe1-812e-fb5c1dbdcf51)
+]
+interface IXAppCaptureImpl3 : IXAppCaptureImpl2
+{
+    HRESULT XAppCaptureStartUserRecord( [in] XUserHandle requestingUser, [in] UINT32 localIdBufferLength, [out, string, size_is(localIdBufferLength)] char *localIdBuffer );
+    HRESULT XAppCaptureStopUserRecord( [in, string] const char *localId, [out] XAppCaptureUserRecordingResult *result );
+}
+
+[
+    local,
+    object,
+    uuid(22e672d7-b4e3-406c-bd50-8f0d25236f9e)
+]
+interface IXAppCaptureImpl4 : IXAppCaptureImpl3
+{
+    HRESULT XAppCaptureCancelUserRecord( [in, string] const char *localId );
+}
+
+[
+    uuid(186d5592-a72d-45fb-9560-11aed0e6647a)
+]
+coclass XAppCaptureMetadataImpl
+{
+    [default] interface IXAppCaptureMetatdataImpl;
+}
+
+[
+    uuid(a4f1aee2-4bf1-4485-b008-a7c26d52ac27)
+]
+coclass XAppCaptureImpl
+{
+    [default] interface IXAppCaptureImpl4;
+}
+
+cpp_quote("#endif")

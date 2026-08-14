@@ -1,0 +1,201 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XNetworkingConfigurationSetting : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    MaxTitleTcpQueuedReceiveBufferSize,            ")
+cpp_quote("    MaxSystemTcpQueuedReceiveBufferSize,           ")
+cpp_quote("    MaxToolsTcpQueuedReceiveBufferSize,            ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XNetworkingConnectivityCostHint : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    Unknown                                        ")
+cpp_quote("    Unrestricted                                   ")
+cpp_quote("    Fixed                                          ")
+cpp_quote("    Varialbe                                       ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XNetworkingConnectivityLevelHint : UINT32")
+cpp_quote("{                                                   ")
+cpp_quote("    Unknown                                         ")
+cpp_quote("    None                                            ")
+cpp_quote("    LocalAccess                                     ")
+cpp_quote("    InternetAccess                                  ")
+cpp_quote("    ConstrainedInternetAccess                       ")
+cpp_quote("};                                                  ")
+
+cpp_quote("enum class XNetworkingStatisticsType : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    TitleTcpQueuedReceivedBufferUsage        ")
+cpp_quote("    SystemTcpQueuedReceivedBufferUsage       ")
+cpp_quote("    ToolsTcpQueuedReceivedBufferUsage        ")
+cpp_quote("};                                           ")
+
+cpp_quote("enum class XNetworkingThumbprintType : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    Leaf                                     ")
+cpp_quote("    Issuer                                   ")
+cpp_quote("    Root                                     ")
+cpp_quote("};                                           ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XNetworkingConfigurationSetting
+{
+    XNetworkingConfigurationSetting_MaxTitleTcpQueuedReceiveBufferSize,
+    XNetworkingConfigurationSetting_MaxSystemTcpQueuedReceiveBufferSize,
+    XNetworkingConfigurationSetting_MaxToolsTcpQueuedReceiveBufferSize,
+} XNetworkingConfigurationSetting;
+
+typedef enum XNetworkingConnectivityCostHint
+{
+    XNetworkingConnectivityCostHint_Unknown,
+    XNetworkingConnectivityCostHint_Unrestricted,
+    XNetworkingConnectivityCostHint_Fixed,
+    XNetworkingConnectivityCostHint_Varialbe,
+} XNetworkingConnectivityCostHint;
+
+typedef enum XNetworkingConnectivityLevelHint
+{
+    XNetworkingConnectivityLevelHint_Unknown,
+    XNetworkingConnectivityLevelHint_None,
+    XNetworkingConnectivityLevelHint_LocalAccess,
+    XNetworkingConnectivityLevelHint_InternetAccess,
+    XNetworkingConnectivityLevelHint_ConstrainedInternetAccess,
+} XNetworkingConnectivityLevelHint;
+
+typedef enum XNetworkingStatisticsType
+{
+    XNetworkingStatisticsType_TitleTcpQueuedReceivedBufferUsage,
+    XNetworkingStatisticsType_SystemTcpQueuedReceivedBufferUsage,
+    XNetworkingStatisticsType_ToolsTcpQueuedReceivedBufferUsage,
+} XNetworkingStatisticsType;
+
+typedef enum XNetworkingThumbprintType
+{
+    XNetworkingThumbprintType_Leaf,
+    XNetworkingThumbprintType_Issuer,
+    XNetworkingThumbprintType_Root,
+} XNetworkingThumbprintType;
+
+cpp_quote("#endif")
+
+typedef struct XNetworkingConnectivityHint XNetworkingConnectivityHint;
+typedef struct XNetworkingSecurityInformation XNetworkingSecurityInformation;
+typedef struct XNetworkingTcpQueuedReceivedBufferUsageStatistics XNetworkingTcpQueuedReceivedBufferUsageStatistics;
+typedef struct XNetworkingThumbprint XNetworkingThumbprint;
+
+typedef union XNetworkingStatisticsBuffer XNetworkingStatisticsBuffer;
+
+typedef void __stdcall XNetworkingConnectivityHintChangedCallback( void *context, const XNetworkingConnectivityHint *connectivityHint );
+typedef void __stdcall XNetworkingPreferredLocalUdpMultiplayerPortChangedCallback( void *context, UINT64 preferredLocalUdpMultiplayerPort );
+
+struct XNetworkingConnectivityHint
+{
+    XNetworkingConnectivityLevelHint connectivityLevel;
+    XNetworkingConnectivityCostHint connectivityCost;
+    UINT32 ianaInterfaceType;
+    BOOLEAN networkInitialized;
+    BOOLEAN approachingDataLimit;
+    BOOLEAN overDataLimit;
+    BOOLEAN roaming;
+};
+
+struct XNetworkingSecurityInformation
+{
+    UINT32 enabledHttpSecurityProtocolFlags;
+    SIZE_T thumbprintCount;
+    XNetworkingThumbprint *thumbprints;
+};
+
+struct XNetworkingTcpQueuedReceivedBufferUsageStatistics
+{
+    UINT64 numBytesCurrentlyQueued;
+    UINT64 peakNumBytesEverQueued;
+    UINT64 totalNumBytesQueued;
+    UINT64 numBytesDroppedForExceedingConfiguredMax;
+    UINT64 numBytesDroppedDueToAnyFailure;
+};
+
+struct XNetworkingThumbprint
+{
+    XNetworkingThumbprintType thumbprintType;
+    SIZE_T thumbprintBufferByteCount;
+    UINT8 *thumbprintBuffer;
+};
+
+union XNetworkingStatisticsBuffer
+{
+    XNetworkingTcpQueuedReceivedBufferUsageStatistics tcpQueuedReceiveBufferUsage;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(37e56907-2f10-41e8-b72f-36edb185331a)
+]
+interface IXNetworkingImpl : IUnknown
+{
+    HRESULT XNetworkingQueryPreferredLocalUdpMultiplayerPort( [out] UINT16 *preferredLocalUdpMultiplayerPort );
+    HRESULT XNetworkingQueryPreferredLocalUdpMultiplayerPortAsync( [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XNetworkingQueryPreferredLocalUdpMultiplayerPortAsyncResult( [in, out] XAsyncBlock *asyncBlock, [out] UINT16 *preferredLocalUdpMultiplayerPort );
+    HRESULT XNetworkingRegisterPreferredLocalUdpMultiplayerPortChanged( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XNetworkingPreferredLocalUdpMultiplayerPortChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XNetworkingUnregisterPreferredLocalUdpMultiplayerPortChanged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XNetworkingQuerySecurityInformationForUrlAsync( [in, string] const char *url, [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XNetworkingQuerySecurityInformationForUrlAsyncResultSize( [in, out] XAsyncBlock *asyncBlock, [out] SIZE_T *securityInformationBufferByteCount );
+    HRESULT XNetworkingQuerySecurityInformationForUrlAsyncResult( [in, out] XAsyncBlock *asyncBlock, [in] SIZE_T securityInformationBufferByteCount, [out, optional] SIZE_T *securityInformationBufferByteCountUsed, [out] UINT8 *securityInformationBuffer, [out, ptr] XNetworkingSecurityInformation **securityInformation );
+    HRESULT XNetworkingQuerySecurityInformationForUrlUtf16Async( [in, string] const WCHAR *url, [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XNetworkingQuerySecurityInformationForUrlUtf16AsyncResultSize( [in, out] XAsyncBlock *asyncBlock, [out] SIZE_T *securityInformationBufferByteCount );
+    HRESULT XNetworkingQuerySecurityInformationForUrlUtf16AsyncResult( [in, out] XAsyncBlock *asyncBlock, [in] SIZE_T securityInformationBufferByteCount, [out, optional] SIZE_T *securityInformationBufferByteCountUsed, [out] UINT8 *securityInformationBuffer, [out, ptr] XNetworkingSecurityInformation **securityInformation );
+    HRESULT XNetworkingVerifyServerCertificate( [in] void *requestHandle, [in] const XNetworkingSecurityInformation *securityInformation );
+    HRESULT XNetworkingGetConnectivityHint( [out] XNetworkingConnectivityHint *connectivityHint );
+    HRESULT XNetworkingRegisterConnectivityHintChanged( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XNetworkingConnectivityHintChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XNetworkingUnregisterConnectivityHintChanged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+}
+
+[
+    local,
+    object,
+    uuid(bf2346b2-39af-4658-b5ea-44713c7e83b3)
+]
+interface IXNetworkingImpl2 : IXNetworkingImpl
+{
+    HRESULT XNetworkingQueryConfigurationSetting( [in] XNetworkingConfigurationSetting configurationSetting, [out] UINT64 *value );
+    HRESULT XNetworkingSetConfigurationSetting( [in] XNetworkingConfigurationSetting configurationParameter, [in] UINT64 value );
+    HRESULT XNetworkingQueryStatistics( [in] XNetworkingStatisticsType statisticsType, [out] XNetworkingStatisticsBuffer *statisticsBuffer );
+}
+
+[
+    uuid(37e56907-2f10-41e8-b72f-36edb185331a)
+]
+coclass XNetworkingImpl
+{
+    [default] interface IXNetworkingImpl2;
+}
+
+cpp_quote("#endif")

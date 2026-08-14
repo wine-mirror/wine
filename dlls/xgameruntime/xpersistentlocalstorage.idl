@@ -1,0 +1,79 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+import "xpackage.idl";
+
+typedef struct XPersistentLocalStorageSpaceInfo XPersistentLocalStorageSpaceInfo;
+
+struct XPersistentLocalStorageSpaceInfo
+{
+    UINT64 availableFreeBytes;
+    UINT64 totalFreeBytes;
+    UINT64 usedBytes;
+    UINT64 totalBytes;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(f4faf4d4-2d04-4fce-b3e0-474a713a3e84)
+]
+interface IXPersistentLocalStorageImpl : IUnknown
+{
+    HRESULT XPersistentLocalStorageGetPathSize( [out] SIZE_T *pathSize );
+    HRESULT XPersistentLocalStorageGetPath( [in] SIZE_T pathSize, [out, string, size_is(pathSize)] char *path, [out, optional] SIZE_T *pathUsed );
+    HRESULT XPersistentLocalStorageGetSpaceInfo( [out] XPersistentLocalStorageSpaceInfo *info );
+    HRESULT XPersistentLocalStoragePromptUserForSpaceAsync( [in] UINT64 requestedBytes, [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XPersistentLocalStoragePromptUserForSpaceResult( [in, out] XAsyncBlock *asyncBlock );
+}
+
+[
+    local,
+    object,
+    uuid(d29411df-0794-4553-8b27-95fc02d0f75d)
+]
+interface IXPersistentLocalStorageImpl2 : IXPersistentLocalStorageImpl
+{
+    /* Unknown which methods added here, all defined in parent for backwards compatibility */
+}
+
+[
+    local,
+    object,
+    uuid(41a4e10c-5a7e-41d9-8c37-37bde62a07d6)
+]
+interface IXPersistentLocalStorageImpl3 : IXPersistentLocalStorageImpl2
+{
+    HRESULT XPersistentLocalStorageMountForPackage( [in, string] const char *packageIdentifier, [out] XPackageMountHandle *mountHandle );
+}
+
+[
+    uuid(f4faf4d4-2d04-4fce-b3e0-474a713a3e84)
+]
+coclass XPersistentLocalStorageImpl
+{
+    [default] interface IXPersistentLocalStorageImpl3;
+}
+
+cpp_quote("#endif")

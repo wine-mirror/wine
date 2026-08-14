@@ -1,0 +1,186 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xgameruntimetypes.h";
+import "xspeechsynthesizer.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XClosedCaptionFontEdgeAttribute : UINT32")
+cpp_quote("{                                                  ")
+cpp_quote("    Default,                                       ")
+cpp_quote("    NoEdgeAttribute,                               ")
+cpp_quote("    RaisedEdges,                                   ")
+cpp_quote("    DepressedEdges,                                ")
+cpp_quote("    UniformedEdges,                                ")
+cpp_quote("    DropShadowedEdges,                             ")
+cpp_quote("};                                                 ")
+
+cpp_quote("enum class XClosedCaptionFontStyle : UINT32")
+cpp_quote("{                                          ")
+cpp_quote("    Default,                               ")
+cpp_quote("    MonospacedWithSerifs,                  ")
+cpp_quote("    ProportionalWithSerifs,                ")
+cpp_quote("    MonospacedWithoutSerifs,               ")
+cpp_quote("    ProportionalWithoutSerifs,             ")
+cpp_quote("    Casual,                                ")
+cpp_quote("    Cursive,                               ")
+cpp_quote("    SmallCapitals,                         ")
+cpp_quote("};                                         ")
+
+cpp_quote("enum class XHighContrastMode : UINT32")
+cpp_quote("{                                    ")
+cpp_quote("    Off,                             ")
+cpp_quote("    Dark,                            ")
+cpp_quote("    Light,                           ")
+cpp_quote("    Other,                           ")
+cpp_quote("};                                   ")
+
+cpp_quote("enum class XSpeechToTextPositionHint : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    BottomCenter,                            ")
+cpp_quote("    BottomLeft,                              ")
+cpp_quote("    BottomRight,                             ")
+cpp_quote("    MiddleRight,                             ")
+cpp_quote("    MiddleLeft,                              ")
+cpp_quote("    TopCenter,                               ")
+cpp_quote("    TopLeft,                                 ")
+cpp_quote("    TopRight,                                ")
+cpp_quote("};                                           ")
+
+cpp_quote("enum class XSpeechToTextType : UINT32")
+cpp_quote("{                                    ")
+cpp_quote("    Voice,                           ")
+cpp_quote("    Text,                            ")
+cpp_quote("};                                   ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XClosedCaptionFontEdgeAttribute
+{
+    XClosedCaptionFontEdgeAttribute_Default,
+    XClosedCaptionFontEdgeAttribute_NoEdgeAttribute,
+    XClosedCaptionFontEdgeAttribute_RaisedEdges,
+    XClosedCaptionFontEdgeAttribute_DepressedEdges,
+    XClosedCaptionFontEdgeAttribute_UniformedEdges,
+    XClosedCaptionFontEdgeAttribute_DropShadowedEdges,
+} XClosedCaptionFontEdgeAttribute;
+
+typedef enum XClosedCaptionFontStyle
+{
+    XClosedCaptionFontStyle_Default,
+    XClosedCaptionFontStyle_MonospacedWithSerifs,
+    XClosedCaptionFontStyle_ProportionalWithSerifs,
+    XClosedCaptionFontStyle_MonospacedWithoutSerifs,
+    XClosedCaptionFontStyle_ProportionalWithoutSerifs,
+    XClosedCaptionFontStyle_Casual,
+    XClosedCaptionFontStyle_Cursive,
+    XClosedCaptionFontStyle_SmallCapitals,
+} XClosedCaptionFontStyle;
+
+typedef enum XHighContrastMode
+{
+    XHighContrastMode_Off,
+    XHighContrastMode_Dark,
+    XHighContrastMode_Light,
+    XHighContrastMode_Other,
+} XHighContrastMode;
+
+typedef enum XSpeechToTextPositionHint
+{
+    XSpeechToTextPositionHint_BottomCenter,
+    XSpeechToTextPositionHint_BottomLeft,
+    XSpeechToTextPositionHint_BottomRight,
+    XSpeechToTextPositionHint_MiddleRight,
+    XSpeechToTextPositionHint_MiddleLeft,
+    XSpeechToTextPositionHint_TopCenter,
+    XSpeechToTextPositionHint_TopLeft,
+    XSpeechToTextPositionHint_TopRight,
+} XSpeechToTextPositionHint;
+
+typedef enum XSpeechToTextType
+{
+    XSpeechToTextType_Voice,
+    XSpeechToTextType_Text,
+} XSpeechToTextType;
+
+cpp_quote("#endif")
+
+typedef struct XClosedCaptionProperties XClosedCaptionProperties;
+
+struct XClosedCaptionProperties
+{
+    XColor BackgroundColor;
+    XColor FontColor;
+    XColor WindowColor;
+    XClosedCaptionFontEdgeAttribute FontEdgeAttribute;
+    XClosedCaptionFontStyle FontStyle;
+    float FontScale;
+    BOOLEAN Enabled;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(3e241977-6237-41e9-8559-102c2d9983f1)
+]
+interface IXAccessibilityImpl : IUnknown
+{
+    HRESULT XClosedCaptionGetProperties( [out] XClosedCaptionProperties *props );
+    HRESULT XClosedCaptionSetEnabled( [in] BOOLEAN enabled );
+    HRESULT XHighContrastGetMode( [out] XHighContrastMode *mode );
+    HRESULT XSpeechToTextSetPositionHint( [in] XSpeechToTextPositionHint position );
+    HRESULT XSpeechToTextSendString( [in, string] const char *speakerName, [in, string] const char *content, [in] XSpeechToTextType type );
+    HRESULT XSpeechSynthesizerEnumerateInstalledVoices( [in, optional] void *context, [in] XSpeechSynthesizerInstalledVoicesCallback *callback );
+    HRESULT XSpeechSynthesizerCreate( [out] XSpeechSynthesizerHandle *speechSynthesizer );
+    HRESULT XSpeechSynthesizerCloseHandle( [in, optional] XSpeechSynthesizerHandle speechSynthesizer );
+    HRESULT XSpeechSynthesizerSetDefaultVoice( [in] XSpeechSynthesizerHandle speechSynthesizer );
+    HRESULT XSpeechSynthesizerSetCustomVoice( [in] XSpeechSynthesizerHandle speechSynthesizer, [in, string] const char *voiceId );
+    HRESULT XSpeechSynthesizerCreateStreamFromText( [in] XSpeechSynthesizerHandle speechSynthesizer, [in, string] const char *text, [out] XSpeechSynthesizerStreamHandle *speechSynthesisStream );
+    HRESULT XSpeechSynthesizerCloseStreamHandle( [in] XSpeechSynthesizerStreamHandle speechSynthesisStream );
+    HRESULT XSpeechSynthesizerGetStreamDataSize( [in] XSpeechSynthesizerStreamHandle speechSynthesisStream, [out] SIZE_T *bufferSize );
+    HRESULT XSpeechSynthesizerGetStreamData( [in] XSpeechSynthesizerStreamHandle speechSynthesisStream, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XSpeechToTextBeginHypothesisString( [in, string] const char *speakerName, [in, string] const char *content, [in] XSpeechToTextType type, [out] UINT32 *hypothesisId );
+    HRESULT XSpeechToTextUpdateHypothesisString( [in] UINT32 hypothesisId, [in, string] const char *content );
+    HRESULT XSpeechToTextFinalizeHypothesisString( [in] UINT32 hypothesisId, [in, string] const char *content );
+    HRESULT XSpeechToTextCancelHypothesisString( [in] UINT32 hypothesisId );
+    HRESULT XSpeechSynthesizerCreateStreamFromSsml( [in] XSpeechSynthesizerHandle speechSynthesizer, [in, string] const char *ssml, [out] XSpeechSynthesizerStreamHandle *speechSynthesisStream );
+}
+
+[
+    local,
+    object,
+    uuid(d722b373-8c4d-4692-9e51-d6ad9b37aa7d)
+]
+interface IXAccessibilityImpl2 : IXAccessibilityImpl
+{}
+
+[
+    uuid(3e241977-6237-41e9-8559-102c2d9983f1)
+]
+coclass XAccessibilityImpl
+{
+    [default] interface IXAccessibilityImpl2;
+}
+
+cpp_quote("#endif")

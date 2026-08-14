@@ -1,0 +1,322 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xgameruntimetypes.h";
+import "xtaskqueue.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XGameStreamingClientProperty : UINT32")
+cpp_quote("{                                               ")
+cpp_quote("    None,                                       ")
+cpp_quote("    StreamPhysicalDimensions,                   ")
+cpp_quote("    TouchInputEnabled,                          ")
+cpp_quote("    TouchBundleVersion,                         ")
+cpp_quote("    IPAddress,                                  ")
+cpp_quote("    SessionId,                                  ")
+cpp_quote("    DisplayDetails,                             ")
+cpp_quote("};                                              ")
+
+cpp_quote("enum class XGameStreamingConnectionState : UINT32")
+cpp_quote("{                                                ")
+cpp_quote("    Disconnected,                                ")
+cpp_quote("    Connected,                                   ")
+cpp_quote("};                                               ")
+
+cpp_quote("enum class XGameStreamingGamepadPhysicality : UINT64")
+cpp_quote("{                                                   ")
+cpp_quote("    None                     = 0x0000000000000000,  ")
+cpp_quote("    DPadUpPhysical           = 0x0000000000000001,  ")
+cpp_quote("    DPadDownPhysical         = 0x0000000000000002,  ")
+cpp_quote("    DPadLeftPhysical         = 0x0000000000000004,  ")
+cpp_quote("    DPadRightPhysical        = 0x0000000000000008,  ")
+cpp_quote("    MenuPhysical             = 0x0000000000000010,  ")
+cpp_quote("    ViewPhysical             = 0x0000000000000020,  ")
+cpp_quote("    LeftThumbstickPhysical   = 0x0000000000000040,  ")
+cpp_quote("    RightThumbstickPhysical  = 0x0000000000000080,  ")
+cpp_quote("    LeftShoulderPhysical     = 0x0000000000000100,  ")
+cpp_quote("    RightShoulderPhysical    = 0x0000000000000200,  ")
+cpp_quote("    APhysical                = 0x0000000000001000,  ")
+cpp_quote("    BPhysical                = 0x0000000000002000,  ")
+cpp_quote("    XPhysical                = 0x0000000000004000,  ")
+cpp_quote("    YPhysical                = 0x0000000000008000,  ")
+cpp_quote("    LeftTriggerPhysical      = 0x0000000000010000,  ")
+cpp_quote("    RightTriggerPhysical     = 0x0000000000020000,  ")
+cpp_quote("    LeftThumbstickXPhysical  = 0x0000000000040000,  ")
+cpp_quote("    LeftThumbstickYPhysical  = 0x0000000000080000,  ")
+cpp_quote("    RightThumbstickXPhysical = 0x0000000000100000,  ")
+cpp_quote("    RightThumbstickYPhysical = 0x0000000000200000,  ")
+cpp_quote("    ButtonsPhysical          = 0x000000000000F3FF,  ")
+cpp_quote("    AnalogsPhysical          = 0x00000000003F0000,  ")
+cpp_quote("    AllPhysical              = 0x00000000003FF3FF,  ")
+cpp_quote("    DPadUpVirtual            = 0x0000000100000000,  ")
+cpp_quote("    DPadDownVirtual          = 0x0000000200000000,  ")
+cpp_quote("    DPadLeftVirtual          = 0x0000000400000000,  ")
+cpp_quote("    DPadRightVirtual         = 0x0000000800000000,  ")
+cpp_quote("    MenuVirtual              = 0x0000001000000000,  ")
+cpp_quote("    ViewVirtual              = 0x0000002000000000,  ")
+cpp_quote("    LeftThumbstickVirtual    = 0x0000004000000000,  ")
+cpp_quote("    RightThumbstickVirtual   = 0x0000008000000000,  ")
+cpp_quote("    LeftShoulderVirtual      = 0x0000010000000000,  ")
+cpp_quote("    RightShoulderVirtual     = 0x0000020000000000,  ")
+cpp_quote("    AVirtual                 = 0x0000100000000000,  ")
+cpp_quote("    BVirtual                 = 0x0000200000000000,  ")
+cpp_quote("    XVirtual                 = 0x0000400000000000,  ")
+cpp_quote("    YVirtual                 = 0x0000800000000000,  ")
+cpp_quote("    LeftTriggerVirtual       = 0x0001000000000000,  ")
+cpp_quote("    RightTriggerVirtual      = 0x0002000000000000,  ")
+cpp_quote("    LeftThumbstickXVirtual   = 0x0004000000000000,  ")
+cpp_quote("    LeftThumbstickYVirtual   = 0x0008000000000000,  ")
+cpp_quote("    RightThumbstickXVirtual  = 0x0010000000000000,  ")
+cpp_quote("    RightThumbstickYVirtual  = 0x0020000000000000,  ")
+cpp_quote("    ButtonsVirtual           = 0x0000F3FF00000000,  ")
+cpp_quote("    AnalogsVirtual           = 0x003F000000000000,  ")
+cpp_quote("    AllVirtual               = 0x003FF3FF00000000,  ")
+cpp_quote("};                                                  ")
+
+cpp_quote("enum class XGameStreamingTouchControlsStateOperationKind : UINT32")
+cpp_quote("{                                                                ")
+cpp_quote("    Replace,                                                     ")
+cpp_quote("};                                                               ")
+
+cpp_quote("enum class XGameStreamingTouchControlsStateValueKind : UINT32")
+cpp_quote("{                                                            ")
+cpp_quote("    Boolean,                                                 ")
+cpp_quote("    Integer,                                                 ")
+cpp_quote("    Double,                                                  ")
+cpp_quote("    String,                                                  ")
+cpp_quote("};                                                           ")
+
+cpp_quote("enum class XGameStreamingVideoFlags : UINT32")
+cpp_quote("{                                           ")
+cpp_quote("    None                      = 0x00,       ")
+cpp_quote("    SupportsCustomAspectRatio = 0x01,       ")
+cpp_quote("    SupportsPresentScaling    = 0x02,       ")
+cpp_quote("};                                          ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XGameStreamingClientProperty
+{
+    XGameStreamingClientProperty_None,
+    XGameStreamingClientProperty_StreamPhysicalDimensions,
+    XGameStreamingClientProperty_TouchInputEnabled,
+    XGameStreamingClientProperty_TouchBundleVersion,
+    XGameStreamingClientProperty_IPAddress,
+    XGameStreamingClientProperty_SessionId,
+    XGameStreamingClientProperty_DisplayDetails,
+} XGameStreamingClientProperty;
+
+typedef enum XGameStreamingConnectionState
+{
+    XGameStreamingConnectionState_Disconnected,
+    XGameStreamingConnectionState_Connected,
+} XGameStreamingConnectionState;
+
+#ifdef __WIDL__
+typedef UINT64 XGameStreamingGamepadPhysicality;
+#else
+typedef enum XGameStreamingGamepadPhysicality
+{
+    XGameStreamingGamepadPhysicality_None                     = 0x0000000000000000,
+    XGameStreamingGamepadPhysicality_DPadUpPhysical           = 0x0000000000000001,
+    XGameStreamingGamepadPhysicality_DPadDownPhysical         = 0x0000000000000002,
+    XGameStreamingGamepadPhysicality_DPadLeftPhysical         = 0x0000000000000004,
+    XGameStreamingGamepadPhysicality_DPadRightPhysical        = 0x0000000000000008,
+    XGameStreamingGamepadPhysicality_MenuPhysical             = 0x0000000000000010,
+    XGameStreamingGamepadPhysicality_ViewPhysical             = 0x0000000000000020,
+    XGameStreamingGamepadPhysicality_LeftThumbstickPhysical   = 0x0000000000000040,
+    XGameStreamingGamepadPhysicality_RightThumbstickPhysical  = 0x0000000000000080,
+    XGameStreamingGamepadPhysicality_LeftShoulderPhysical     = 0x0000000000000100,
+    XGameStreamingGamepadPhysicality_RightShoulderPhysical    = 0x0000000000000200,
+    XGameStreamingGamepadPhysicality_APhysical                = 0x0000000000001000,
+    XGameStreamingGamepadPhysicality_BPhysical                = 0x0000000000002000,
+    XGameStreamingGamepadPhysicality_XPhysical                = 0x0000000000004000,
+    XGameStreamingGamepadPhysicality_YPhysical                = 0x0000000000008000,
+    XGameStreamingGamepadPhysicality_LeftTriggerPhysical      = 0x0000000000010000,
+    XGameStreamingGamepadPhysicality_RightTriggerPhysical     = 0x0000000000020000,
+    XGameStreamingGamepadPhysicality_LeftThumbstickXPhysical  = 0x0000000000040000,
+    XGameStreamingGamepadPhysicality_LeftThumbstickYPhysical  = 0x0000000000080000,
+    XGameStreamingGamepadPhysicality_RightThumbstickXPhysical = 0x0000000000100000,
+    XGameStreamingGamepadPhysicality_RightThumbstickYPhysical = 0x0000000000200000,
+    XGameStreamingGamepadPhysicality_ButtonsPhysical          = 0x000000000000F3FF,
+    XGameStreamingGamepadPhysicality_AnalogsPhysical          = 0x00000000003F0000,
+    XGameStreamingGamepadPhysicality_AllPhysical              = 0x00000000003FF3FF,
+    XGameStreamingGamepadPhysicality_DPadUpVirtual            = 0x0000000100000000,
+    XGameStreamingGamepadPhysicality_DPadDownVirtual          = 0x0000000200000000,
+    XGameStreamingGamepadPhysicality_DPadLeftVirtual          = 0x0000000400000000,
+    XGameStreamingGamepadPhysicality_DPadRightVirtual         = 0x0000000800000000,
+    XGameStreamingGamepadPhysicality_MenuVirtual              = 0x0000001000000000,
+    XGameStreamingGamepadPhysicality_ViewVirtual              = 0x0000002000000000,
+    XGameStreamingGamepadPhysicality_LeftThumbstickVirtual    = 0x0000004000000000,
+    XGameStreamingGamepadPhysicality_RightThumbstickVirtual   = 0x0000008000000000,
+    XGameStreamingGamepadPhysicality_LeftShoulderVirtual      = 0x0000010000000000,
+    XGameStreamingGamepadPhysicality_RightShoulderVirtual     = 0x0000020000000000,
+    XGameStreamingGamepadPhysicality_AVirtual                 = 0x0000100000000000,
+    XGameStreamingGamepadPhysicality_BVirtual                 = 0x0000200000000000,
+    XGameStreamingGamepadPhysicality_XVirtual                 = 0x0000400000000000,
+    XGameStreamingGamepadPhysicality_YVirtual                 = 0x0000800000000000,
+    XGameStreamingGamepadPhysicality_LeftTriggerVirtual       = 0x0001000000000000,
+    XGameStreamingGamepadPhysicality_RightTriggerVirtual      = 0x0002000000000000,
+    XGameStreamingGamepadPhysicality_LeftThumbstickXVirtual   = 0x0004000000000000,
+    XGameStreamingGamepadPhysicality_LeftThumbstickYVirtual   = 0x0008000000000000,
+    XGameStreamingGamepadPhysicality_RightThumbstickXVirtual  = 0x0010000000000000,
+    XGameStreamingGamepadPhysicality_RightThumbstickYVirtual  = 0x0020000000000000,
+    XGameStreamingGamepadPhysicality_ButtonsVirtual           = 0x0000F3FF00000000,
+    XGameStreamingGamepadPhysicality_AnalogsVirtual           = 0x003F000000000000,
+    XGameStreamingGamepadPhysicality_AllVirtual               = 0x003FF3FF00000000,
+} XGameStreamingGamepadPhysicality;
+#endif
+
+typedef enum XGameStreamingTouchControlsStateOperationKind
+{
+    XGameStreamingTouchControlsStateOperationKind_Replace,
+} XGameStreamingTouchControlsStateOperationKind;
+
+typedef enum XGameStreamingTouchControlsStateValueKind
+{
+    XGameStreamingTouchControlsStateValueKind_Boolean,
+    XGameStreamingTouchControlsStateValueKind_Integer,
+    XGameStreamingTouchControlsStateValueKind_Double,
+    XGameStreamingTouchControlsStateValueKind_String,
+} XGameStreamingTouchControlsStateValueKind;
+
+typedef enum XGameStreamingVideoFlags
+{
+    XGameStreamingVideoFlags_None                      = 0x00,
+    XGameStreamingVideoFlags_SupportsCustomAspectRatio = 0x01,
+    XGameStreamingVideoFlags_SupportsPresentScaling    = 0x02,
+} XGameStreamingVideoFlags;
+
+cpp_quote("#endif")
+
+typedef UINT64 XGameStreamingClientId;
+typedef UINT64 D3D12XBOX_FRAME_PIPELINE_TOKEN;
+
+typedef struct IGameInputReading IGameInputReading;
+
+typedef struct XGameStreamingDisplayDetails XGameStreamingDisplayDetails;
+typedef struct XGameStreamingTouchControlsStateOperation XGameStreamingTouchControlsStateOperation;
+typedef struct XGameStreamingTouchControlsStateValue XGameStreamingTouchControlsStateValue;
+
+typedef void __stdcall XGameStreamingClientPropertiesChangedCallback( void *context, XGameStreamingClientId client, UINT32 updatedPropertiesCount, XGameStreamingClientProperty *updatedProperties );
+typedef void __stdcall XGameStreamingConnectionStateChangedCallback( void *context, XGameStreamingClientId client, XGameStreamingConnectionState state );
+
+struct XGameStreamingDisplayDetails
+{
+    UINT32 preferredWidth;
+    UINT32 preferredHeight;
+    RECT safeArea;
+    UINT32 maxPixels;
+    UINT32 maxWidth;
+    UINT32 maxHeight;
+    XGameStreamingVideoFlags flags;
+};
+
+struct XGameStreamingTouchControlsStateValue
+{
+    XGameStreamingTouchControlsStateValueKind valueKind;
+    union
+    {
+        BOOLEAN booleanValue;
+        INT64 integerValue;
+        double doubleValue;
+        const char *stringValue;
+    };
+};
+
+struct XGameStreamingTouchControlsStateOperation
+{
+    XGameStreamingTouchControlsStateOperationKind operationKind;
+    const char *path;
+    XGameStreamingTouchControlsStateValue value;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(8aff07f5-a1bf-4db8-80a5-31cca0de51b7)
+]
+interface IXGameStreamingImpl : IUnknown
+{
+    HRESULT XGameStreamingInitialize();
+    void    XGameStreamingUninitialize();
+    BOOLEAN XGameStreamingIsStreaming();
+    HRESULT XGameStreamingRegisterClientPropertiesChanged( [in] XGameStreamingClientId client, [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XGameStreamingClientPropertiesChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XGameStreamingUnregisterClientPropertiesChanged( [in] XGameStreamingClientId client, [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XGameStreamingGetStreamPhysicalDimensions( [in] XGameStreamingClientId client, [out] UINT32 *horizontalMm, [out] UINT32 *verticalMm );
+    UINT32  XGameStreamingGetClientCount();
+    HRESULT XGameStreamingGetClients( [in] UINT32 clientCount, [out, length_is(clientCount)] XGameStreamingClientId clients[*], [out, optional] UINT32 *clientsUsed );
+    XGameStreamingConnectionState XGameStreamingGetConnectionState( [in] XGameStreamingClientId client );
+    HRESULT XGameStreamingRegisterConnectionStateChanged( [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XGameStreamingConnectionStateChangedCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XGameStreamingUnregisterConnectionStateChanged( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XGameStreamingGetStreamAddedLatency( [in] XGameStreamingClientId client, [out] UINT32 *averageInputLatencyUs, [out] UINT32 *averageOutputLatencyUs, [out] UINT32 *standardDeviationUs );
+    SIZE_T  XGameStreamingGetServerLocationNameSize();
+    HRESULT XGameStreamingGetServerLocationName( [in] SIZE_T serverLocationNameSize, [out, string, size_is(serverLocationNameSize)] char *serverLocationName );
+    void    XGameStreamingHideTouchControls();
+    void    XGameStreamingShowTouchControlLayout( [in, optional, string] const char *layout );
+    void    XGameStreamingHideTouchControlsOnClient( [in] XGameStreamingClientId client );
+    void    XGameStreamingShowTouchControlLayoutOnClient( [in] XGameStreamingClientId client, [in, optional, string] const char *layout );
+    HRESULT XGameStreamingIsTouchInputEnabled( [in] XGameStreamingClientId client, [out] BOOLEAN *touchInputEnabled );
+    HRESULT XGameStreamingGetLastFrameDisplayed( [in] XGameStreamingClientId client, [out] D3D12XBOX_FRAME_PIPELINE_TOKEN *framePipelineToken );
+    HRESULT XGameStreamingGetAssociatedFrame( [in] IGameInputReading *gamepadReading, [out] D3D12XBOX_FRAME_PIPELINE_TOKEN *framePipelineToken );
+    HRESULT XGameStreamingGetGamepadPhysicality( [in] IGameInputReading *gamepadReading, [out] XGameStreamingGamepadPhysicality *gamepadPhysicality );
+    HRESULT XGameStreamingUpdateTouchControlsState( [in] SIZE_T operationCount, [in, optional, length_is(operationCount)] const XGameStreamingTouchControlsStateOperation operations[*] );
+    HRESULT XGameStreamingUpdateTouchControlsStateOnClient( [in] XGameStreamingClientId client, [in] SIZE_T operationCount, [in, optional, length_is(operationCount)] const XGameStreamingTouchControlsStateOperation operations[*] );
+    HRESULT XGameStreamingShowTouchControlsWithStateUpdate( [in, optional, string] const char *layout, [in] SIZE_T operationCount, [in, optional, length_is(operationCount)] const XGameStreamingTouchControlsStateOperation operations[*] );
+    HRESULT XGameStreamingShowTouchControlsWithStateUpdateOnClient( [in] XGameStreamingClientId client, [in, optional, string] const char *layout, [in] SIZE_T operationCount, [in, optional, length_is(operationCount)] const XGameStreamingTouchControlsStateOperation operations[*] );
+    SIZE_T  XGameStreamingGetTouchBundleVersionNameSize( [in] XGameStreamingClientId client );
+    HRESULT XGameStreamingGetTouchBundleVersion( [in] XGameStreamingClientId client, [out, optional] XVersion *version, [in] SIZE_T versionNameSize, [out, optional, string, size_is(versionNameSize)] char *versionName );
+    HRESULT XGameStreamingGetClientIPAddress( [in] XGameStreamingClientId client, [in] SIZE_T ipAddressSize, [out, string, size_is(ipAddressSize)] char *ipAddress );
+}
+
+[
+    local,
+    object,
+    uuid(5f5e5169-746c-4001-ad1c-da728d01c9eb)
+]
+interface IXGameStreamingImpl2 : IXGameStreamingImpl
+{
+    HRESULT XGameStreamingGetSessionId( [in] XGameStreamingClientId client, [in] SIZE_T sessionIdSize, [out, string, size_is(sessionIdSize)] char *sessionId, [out, optional] SIZE_T *sessionIdUsed );
+}
+
+[
+    local,
+    object,
+    uuid(57786622-6605-46d0-b917-0f22bbcd9c52)
+]
+interface IXGameStreamingImpl3 : IXGameStreamingImpl2
+{
+    HRESULT XGameStreamingGetDisplayDetails( [in] XGameStreamingClientId client, [in] UINT32 maxSupportedPixels, [in] float widestSupportedAspectRatio, [in] float tallestSupportedAspectRatio, [out] XGameStreamingDisplayDetails *displayDetails );
+    HRESULT XGameStreamingSetResolution( [in] UINT32 width, [in] UINT32 height );
+}
+
+[
+    uuid(0a2192aa-b2d5-4d58-83be-383b6d80799e)
+]
+coclass XGameStreamingImpl
+{
+    [default] interface IXGameStreamingImpl3;
+}
+
+cpp_quote("#endif")

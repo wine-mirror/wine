@@ -1,0 +1,129 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+import "xuser.idl";
+
+cpp_quote("#if 0")
+typedef UINT64 time_t;
+cpp_quote("#endif")
+
+typedef struct XGameSaveContainer *XGameSaveContainerHandle;
+typedef struct XGameSaveProvider *XGameSaveProviderHandle;
+typedef struct XGameSaveUpdate *XGameSaveUpdateHandle;
+
+typedef struct XGameSaveBlob XGameSaveBlob;
+typedef struct XGameSaveBlobInfo XGameSaveBlobInfo;
+typedef struct XGameSaveContainerInfo XGameSaveContainerInfo;
+
+typedef BOOLEAN __stdcall XGameSaveBlobInfoCallback( const XGameSaveBlobInfo *info, void *context );
+typedef BOOLEAN __stdcall XGameSaveContainerInfoCallback( const XGameSaveContainerInfo *info, void *context );
+
+struct XGameSaveBlobInfo
+{
+    const char *name;
+    UINT32 size;
+};
+
+struct XGameSaveBlob
+{
+    XGameSaveBlobInfo info;
+    UINT8 *data;
+};
+
+struct XGameSaveContainerInfo
+{
+    const char *name;
+    const char *displayName;
+    UINT32 blobCount;
+    UINT64 totalSize;
+    time_t lastModifiedTime;
+    BOOLEAN needsSync;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(704c3f58-e629-4cc2-b197-30511b996fe2)
+]
+interface IXGameSaveImpl : IUnknown
+{
+    HRESULT XGameSaveInitializeProvider( [in] XUserHandle requestingUser, [in, string] const char *configurationId, [in] BOOLEAN syncOnDemand, [out] XGameSaveProviderHandle *provider );
+    HRESULT XGameSaveInitializeProviderAsync( [in] XUserHandle requestingUser, [in, string] const char *configurationId, [in] BOOLEAN syncOnDemand, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveInitializeProviderResult( [in, out] XAsyncBlock *async, [out] XGameSaveProviderHandle *provider );
+    void    XGameSaveCloseProvider( [in] XGameSaveProviderHandle provider );
+    HRESULT XGameSaveGetRemainingQuota( [in] XGameSaveProviderHandle provider, [out] INT64 *remainingQuota );
+    HRESULT XGameSaveGetRemainingQuotaAsync( [in] XGameSaveProviderHandle provider, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveGetRemainingQuotaResult( [in, out] XAsyncBlock *async, [out] INT64 *remainingQuota );
+    HRESULT XGameSaveDeleteContainer( [in] XGameSaveProviderHandle provider, [in, string] const char *containerName );
+    HRESULT XGameSaveDeleteContainerAsync( [in] XGameSaveProviderHandle provider, [in, string] const char *containerName, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveDeleteContainerResult( [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveGetContainerInfo( [in] XGameSaveProviderHandle provider, [in, string] const char *containerName, [in, optional] void *context, [in] XGameSaveContainerInfoCallback *callback );
+    HRESULT XGameSaveEnumerateContainerInfo( [in] XGameSaveProviderHandle provider, [in, optional] void *context, [in] XGameSaveContainerInfoCallback *callback );
+    HRESULT XGameSaveEnumerateContainerInfoByName( [in] XGameSaveProviderHandle provider, [in, optional, string] const char *containerNamePrefix, [in, optional] void *context, [in] XGameSaveContainerInfoCallback *callback );
+    HRESULT XGameSaveCreateContainer( [in] XGameSaveProviderHandle provider, [in, string] const char *containerName, [out] XGameSaveContainerHandle *containerContext );
+    void    XGameSaveCloseContainer( [in] XGameSaveContainerHandle context );
+    HRESULT XGameSaveEnumerateBlobInfo( [in] XGameSaveContainerHandle container, [in, optional] void *context, [in] XGameSaveBlobInfoCallback *callback );
+    HRESULT XGameSaveEnumerateBlobInfoByName( [in] XGameSaveContainerHandle container, [in, optional, string] const char *blobNamePrefix, [in, optional] void *context, [in] XGameSaveBlobInfoCallback *callback );
+    HRESULT XGameSaveReadBlobData( [in] XGameSaveContainerHandle container, [in, optional, string, size_is(countOfBlobs,)] const char **blobNames, [in, out] UINT32 *countOfBlobs, [in] SIZE_T blobsSize, [out, size_is(blobsSize)] XGameSaveBlob *blobData );
+    HRESULT XGameSaveReadBlobDataAsync( [in] XGameSaveContainerHandle container, [in, optional, string, size_is(countOfBlobs,)] const char **blobNames, [in] UINT32 countOfBlobs, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveReadBlobDataResult( [in, out] XAsyncBlock *async, [in] SIZE_T blobsSize, [out, size_is(blobsSize)] XGameSaveBlob *blobData, [out] UINT32 *countOfBlobs );
+    HRESULT XGameSaveCreateUpdate( [in] XGameSaveContainerHandle container, [in, string] const char *containerDisplayName, [out] XGameSaveUpdateHandle *updateContext );
+    void    XGameSaveCloseUpdate( [in] XGameSaveUpdateHandle context );
+    HRESULT XGameSaveSubmitBlobWrite( [in] XGameSaveUpdateHandle updateContext, [in, string] const char *blobName, [in, size_is(byteCount)] UINT8 *data, [in] SIZE_T byteCount );
+    HRESULT XGameSaveSubmitBlobDelete( [in] XGameSaveUpdateHandle updateContext, [in, string] const char *blobName );
+    HRESULT XGameSaveSubmitUpdate( [in] XGameSaveUpdateHandle updateContext );
+    HRESULT XGameSaveSubmitUpdateAsync( [in] XGameSaveUpdateHandle updateContext, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveSubmitUpdateResult( [in, out] XAsyncBlock *async );
+}
+
+[
+    local,
+    object,
+    uuid(704c3f58-e629-4cc2-b197-30511b996ee2)
+]
+interface IXGameSaveImpl2 : IXGameSaveImpl
+{
+    HRESULT XGameSaveFilesGetFolderWithUiAsync( [in] XUserHandle requestingUser, [in, string] const char *configurationId, [in, out] XAsyncBlock *async );
+    HRESULT XGameSaveFilesGetFolderWithUiResult( [in, out] XAsyncBlock *async, [in] SIZE_T folderSize, [out, size_is(folderSize)] char *folderResult );
+    HRESULT XGameSaveFilesGetRemainingQuota( [in] XUserHandle userContext, [in, string] const char *configurationId, [out] INT64 *remainingQuota );
+}
+
+[
+    local,
+    object,
+    uuid(1bfff3af-f14a-40a3-8e35-9ada906593f9)
+]
+interface IXGameSaveImpl3 : IXGameSaveImpl2
+{
+}
+
+[
+    uuid(704c3f58-e629-4cc2-b197-30511b996fe2)
+]
+coclass XGameSaveImpl
+{
+    [default] interface IXGameSaveImpl3;
+}
+
+cpp_quote("#endif")

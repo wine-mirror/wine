@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XGameRuntimeFeature : UINT32")
+cpp_quote("{                                      ")
+cpp_quote("    XAccessibility,                    ")
+cpp_quote("    XAppCapture,                       ")
+cpp_quote("    XAsync,                            ")
+cpp_quote("    XAsyncProvider,                    ")
+cpp_quote("    XDisplay,                          ")
+cpp_quote("    XGame,                             ")
+cpp_quote("    XGameInvite,                       ")
+cpp_quote("    XGameSave,                         ")
+cpp_quote("    XGameUI,                           ")
+cpp_quote("    XLauncher,                         ")
+cpp_quote("    XNetworking,                       ")
+cpp_quote("    XPackage,                          ")
+cpp_quote("    XPersistentLocalStorage,           ")
+cpp_quote("    XSpeechSynthesizer,                ")
+cpp_quote("    XStore,                            ")
+cpp_quote("    XSystem,                           ")
+cpp_quote("    XTaskQueue,                        ")
+cpp_quote("    XThread,                           ")
+cpp_quote("    XUser,                             ")
+cpp_quote("    XError,                            ")
+cpp_quote("    XGameEvent,                        ")
+cpp_quote("    XGameStreaming,                    ")
+cpp_quote("};                                     ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XGameRuntimeFeature
+{
+    XGameRuntimeFeature_XAccessibility,
+    XGameRuntimeFeature_XAppCapture,
+    XGameRuntimeFeature_XAsync,
+    XGameRuntimeFeature_XAsyncProvider,
+    XGameRuntimeFeature_XDisplay,
+    XGameRuntimeFeature_XGame,
+    XGameRuntimeFeature_XGameInvite,
+    XGameRuntimeFeature_XGameSave,
+    XGameRuntimeFeature_XGameUI,
+    XGameRuntimeFeature_XLauncher,
+    XGameRuntimeFeature_XNetworking,
+    XGameRuntimeFeature_XPackage,
+    XGameRuntimeFeature_XPersistentLocalStorage,
+    XGameRuntimeFeature_XSpeechSynthesizer,
+    XGameRuntimeFeature_XStore,
+    XGameRuntimeFeature_XSystem,
+    XGameRuntimeFeature_XTaskQueue,
+    XGameRuntimeFeature_XThread,
+    XGameRuntimeFeature_XUser,
+    XGameRuntimeFeature_XError,
+    XGameRuntimeFeature_XGameEvent,
+    XGameRuntimeFeature_XGameStreaming,
+} XGameRuntimeFeature;
+
+[
+    local,
+    object,
+    uuid(8836fe87-edb9-4fe3-8dad-05f0d2cd5b40)
+]
+interface IXGameRuntimeFeatureImpl : IUnknown
+{
+    BOOLEAN XGameRuntimeIsFeatureAvailable( [in] XGameRuntimeFeature feature );
+}
+
+[
+    uuid(8836fe87-edb9-4fe3-8dad-05f0d2cd5b40)
+]
+coclass XGameRuntimeFeatureImpl
+{
+    [default] interface IXGameRuntimeFeatureImpl;
+}
+
+cpp_quote("#endif")

@@ -1,0 +1,210 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xgameruntimetypes.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XSystemDeviceType : UINT32")
+cpp_quote("{                                    ")
+cpp_quote("    Unknown,                         ")
+cpp_quote("    Pc,                              ")
+cpp_quote("    XboxOne,                         ")
+cpp_quote("    XboxOneS,                        ")
+cpp_quote("    XboxOneX,                        ")
+cpp_quote("    XboxOneXDevkit,                  ")
+cpp_quote("    XboxScarlettLockhart,            ")
+cpp_quote("    XboxScarlettAnaconda,            ")
+cpp_quote("    XboxScarlettDevkit,              ")
+cpp_quote("};                                   ")
+
+cpp_quote("enum class XSystemHandleCallbackReason : UINT32")
+cpp_quote("{                                              ")
+cpp_quote("    Created,                                   ")
+cpp_quote("    Destroyed,                                 ")
+cpp_quote("};                                             ")
+
+cpp_quote("enum class XSystemHandleType : UINT32")
+cpp_quote("{                                    ")
+cpp_quote("    AppCaptureScreenshotStream,      ")
+cpp_quote("    DisplayTimeoutDeferral,          ")
+cpp_quote("    GameSaveContainer,               ")
+cpp_quote("    GameSaveProvider,                ")
+cpp_quote("    GameSaveUpdate,                  ")
+cpp_quote("    PackageInstallationMonitor,      ")
+cpp_quote("    PackageMount,                    ")
+cpp_quote("    SpeechSynthesizer,               ")
+cpp_quote("    SpeechSynthesizerStream,         ")
+cpp_quote("    StoreContext,                    ")
+cpp_quote("    StoreLicense,                    ")
+cpp_quote("    StoreProductQuery,               ")
+cpp_quote("    TaskQueue,                       ")
+cpp_quote("    User,                            ")
+cpp_quote("    UserSignOutDeferral,             ")
+cpp_quote("    GameUiTextEntry,                 ")
+cpp_quote("};                                   ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XSystemDeviceType
+{
+    XSystemDeviceType_Unknown,
+    XSystemDeviceType_Pc,
+    XSystemDeviceType_XboxOne,
+    XSystemDeviceType_XboxOneS,
+    XSystemDeviceType_XboxOneX,
+    XSystemDeviceType_XboxOneXDevkit,
+    XSystemDeviceType_XboxScarlettLockhart,
+    XSystemDeviceType_XboxScarlettAnaconda,
+    XSystemDeviceType_XboxScarlettDevkit,
+} XSystemDeviceType;
+
+typedef enum XSystemHandleCallbackReason
+{
+    XSystemHandleCallbackReason_Created,
+    XSystemHandleCallbackReason_Destroyed,
+} XSystemHandleCallbackReason;
+
+typedef enum XSystemHandleType
+{
+    XSystemHandleType_AppCaptureScreenshotStream,
+    XSystemHandleType_DisplayTimeoutDeferral,
+    XSystemHandleType_GameSaveContainer,
+    XSystemHandleType_GameSaveProvider,
+    XSystemHandleType_GameSaveUpdate,
+    XSystemHandleType_PackageInstallationMonitor,
+    XSystemHandleType_PackageMount,
+    XSystemHandleType_SpeechSynthesizer,
+    XSystemHandleType_SpeechSynthesizerStream,
+    XSystemHandleType_StoreContext,
+    XSystemHandleType_StoreLicense,
+    XSystemHandleType_StoreProductQuery,
+    XSystemHandleType_TaskQueue,
+    XSystemHandleType_User,
+    XSystemHandleType_UserSignOutDeferral,
+    XSystemHandleType_GameUiTextEntry,
+} XSystemHandleType;
+
+cpp_quote("#endif")
+
+typedef void *XSystemHandle;
+
+typedef struct XSystemAnalyticsInfo XSystemAnalyticsInfo;
+typedef struct XSystemRuntimeInfo XSystemRuntimeInfo;
+
+typedef void __stdcall XSystemHandleCallback( XSystemHandle handle, XSystemHandleType type, XSystemHandleCallbackReason reason, void *context );
+
+struct XSystemAnalyticsInfo
+{
+    XVersion osVersion;
+    XVersion hostingOsVersion;
+    char family[64];
+    char form[64];
+};
+
+struct XSystemRuntimeInfo
+{
+    XVersion runtimeVersion;
+    XVersion availableVersion;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(e349bd1a-fc20-4e40-b99c-4178cc6b409f)
+]
+interface IXSystemImpl : IUnknown
+{
+    HRESULT XSystemGetConsoleId( [in] INT32 consoleIdSize, [out, size_is(consoleIdSize)] char *consoleId, [out, optional] SIZE_T *consoleIdUsed );
+    HRESULT XSystemGetXboxLiveSandboxId( [in] INT32 sandboxIdSize, [out, size_is(sandboxIdSize)] char *sandboxId, [out] SIZE_T *sandboxIdUsed );
+    HRESULT XSystemGetAppSpecificDeviceId( [in] INT32 appSpecificDeviceIdSize, [out, size_is(appSpecificDeviceIdSize)] char *appSpecificDeviceId, [out, optional] SIZE_T *appSpecificDeviceIdUsed );
+}
+
+[
+    local,
+    object,
+    uuid(6fd71f09-7513-49f0-89bc-bfaf5df6f852)
+]
+interface IXSystemImpl2 : IXSystemImpl
+{
+    /* Unknown which methods added here, all defined in parent for backwards compatibility */
+}
+
+[
+    local,
+    object,
+    uuid(67ce4bfc-b1d1-4ac7-bc3a-cb9219a97a85)
+]
+interface IXSystemImpl3 : IXSystemImpl2
+{
+    HRESULT XSystemHandleTrack( [in] XSystemHandleCallback callback, [in, optional] void *context );
+    BOOLEAN XSystemIsHandleValid( [in] XSystemHandle handle );
+}
+
+[
+    local,
+    object,
+    uuid(dadc2895-34b0-4ef5-a83e-45114d629b80)
+]
+interface IXSystemImpl4 : IXSystemImpl3
+{
+    void XSystemAllowFullDownloadBandwidth( [in] BOOLEAN enable );
+}
+
+[
+    local,
+    object,
+    uuid(1861cf2e-e18b-4834-a9f5-b4a4e6efb4cf)
+]
+interface IXSystemImpl5 : IXSystemImpl4
+{
+    /* No known public methods */
+}
+
+[
+    local,
+    object,
+    uuid(b884675d-b738-4a9c-815d-9a9a1e0c6c9b)
+]
+interface IXSystemAnalyticsImpl : IUnknown
+{
+    XSystemAnalyticsInfo XSystemGetAnalyticsInfo();
+}
+
+[
+    uuid(e349bd1a-fc20-4e40-b99c-4178cc6b409f)
+]
+coclass XSystemImpl
+{
+    [default] interface IXSystemImpl5;
+}
+
+[
+    uuid(b884675d-b738-4a9c-815d-9a9a1e0c6c9b)
+]
+coclass XSystemAnalyticsImpl
+{
+    [default] interface IXSystemAnalyticsImpl;
+}
+
+cpp_quote("#endif")

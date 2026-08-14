@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wincontypes.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "processsnapshot.h"
 
@@ -381,6 +382,57 @@ static const WCHAR *find_legacy_dosbox(void)
     return NULL;
 }
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
+/* HKCU\Software\Wine\DOSBox "Legacy"=y forces every DOS program through
+ * DOSBox, skipping winevdm.exe entirely (an explicit legacy mode, as
+ * opposed to the automatic fallback used when winevdm isn't installed or
+ * fails to start). */
+static BOOL dosbox_legacy_mode_enabled(void)
+{
+    WCHAR buffer[16];
+    DWORD size = sizeof(buffer);
+    BOOL enabled = FALSE;
+    HKEY key;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\DOSBox */
+    if (!RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\DOSBox", 0, KEY_READ, &key ))
+    {
+        if (!RegQueryValueExW( key, L"Legacy", NULL, NULL, (BYTE *)buffer, &size ))
+            enabled = IS_OPTION_TRUE( buffer[0] );
+        RegCloseKey( key );
+    }
+    return enabled;
+}
+
+/* Launch either winevdm.exe or a legacy DOSBox fork against the DOS/Win16
+ * program named by orig_path/orig_cmdline (params' own ImagePathName and
+ * CommandLine get overwritten with the launcher's, so the originals must be
+ * passed in separately for a possible second attempt to reuse). */
+static NTSTATUS launch_vdm( const WCHAR *vdm, BOOL use_dosbox, const WCHAR *orig_path, const WCHAR *orig_cmdline,
+                            HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
+                            DWORD flags, RTL_USER_PROCESS_PARAMETERS *params, RTL_USER_PROCESS_INFORMATION *info )
+{
+    WCHAR *newcmdline;
+    NTSTATUS status;
+    UINT len;
+
+    len = lstrlenW(orig_path) + lstrlenW(orig_cmdline) + lstrlenW(vdm) + 16;
+    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    if (use_dosbox)
+        swprintf( newcmdline, len, L"%s \"%s\" -exit", vdm, orig_path );
+    else
+        swprintf( newcmdline, len, L"%s --app-name \"%s\" %s", vdm, orig_path, orig_cmdline );
+
+    RtlInitUnicodeString( &params->ImagePathName, vdm );
+    RtlInitUnicodeString( &params->CommandLine, newcmdline );
+    status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, newcmdline );
+    return status;
+}
+
 /***********************************************************************
  *           create_vdm_process
  */
@@ -392,38 +444,30 @@ static NTSTATUS create_vdm_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBU
     const WCHAR *winevdm = (is_win64 || is_wow64 ?
                             L"C:\\windows\\syswow64\\winevdm.exe" :
                             L"C:\\windows\\system32\\winevdm.exe");
-    const WCHAR *vdm = winevdm;
-    const WCHAR *dosbox;
-    WCHAR *newcmdline;
-    NTSTATUS status;
-    UINT len;
-    BOOL use_dosbox = FALSE;
-
     /* DOSBox forks only emulate real-mode DOS, not the Win16/NE GUI subsystem,
-     * so the fallback only ever applies to plain DOS executables. */
-    if (is_dos && GetFileAttributesW( winevdm ) == INVALID_FILE_ATTRIBUTES &&
-        (dosbox = find_legacy_dosbox()))
+     * so it's only ever a candidate for plain DOS executables. */
+    const WCHAR *dosbox = is_dos ? find_legacy_dosbox() : NULL;
+    const WCHAR *orig_path = params->ImagePathName.Buffer;
+    const WCHAR *orig_cmdline = params->CommandLine.Buffer;
+    BOOL force_legacy = is_dos && dosbox && dosbox_legacy_mode_enabled();
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    if (!force_legacy && GetFileAttributesW( winevdm ) != INVALID_FILE_ATTRIBUTES)
     {
-        TRACE( "winevdm.exe not found, falling back to legacy DOSBox at %s\n", debugstr_w(dosbox) );
-        vdm = dosbox;
-        use_dosbox = TRUE;
+        status = launch_vdm( winevdm, FALSE, orig_path, orig_cmdline,
+                              token, debug, psa, tsa, flags, params, info );
+        if (!status) return status;
+        WARN( "winevdm.exe failed to start %s (%#lx)%s\n", debugstr_w(orig_path), status,
+              dosbox ? ", trying legacy DOSBox fallback" : "" );
     }
 
-    len = (lstrlenW(params->ImagePathName.Buffer) + lstrlenW(params->CommandLine.Buffer) +
-           lstrlenW(vdm) + 16);
-
-    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-        return STATUS_NO_MEMORY;
-
-    if (use_dosbox)
-        swprintf( newcmdline, len, L"%s \"%s\" -exit", vdm, params->ImagePathName.Buffer );
-    else
-        swprintf( newcmdline, len, L"%s --app-name \"%s\" %s",
-                  vdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-    RtlInitUnicodeString( &params->ImagePathName, vdm );
-    RtlInitUnicodeString( &params->CommandLine, newcmdline );
-    status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
-    HeapFree( GetProcessHeap(), 0, newcmdline );
+    if (dosbox)
+    {
+        TRACE( "%s %s via legacy DOSBox at %s\n", force_legacy ? "forcing" : "starting",
+               debugstr_w(orig_path), debugstr_w(dosbox) );
+        status = launch_vdm( dosbox, TRUE, orig_path, orig_cmdline,
+                              token, debug, psa, tsa, flags, params, info );
+    }
     return status;
 }
 

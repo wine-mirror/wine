@@ -1,0 +1,64 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xuser.idl";
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(973a344e-24bf-4d0f-8457-56c534892b29)
+]
+interface IXGameImpl : IUnknown
+{
+    HRESULT XGameGetXboxTitleId( [out] UINT32 *titleId );
+}
+
+[
+    local,
+    object,
+    uuid(50849859-0ad8-4f81-80e4-5bc78626f852)
+]
+interface IXGameImpl2 : IXGameImpl
+{
+    void    XLaunchNewGame( [in] const char *exePath, [in, optional] const char *args, [in, optional] XUserHandle defaultUser );
+}
+
+[
+    local,
+    object,
+    uuid(2549f142-6419-4a06-97b5-931aab7c2f34)
+]
+interface IXGameImpl3 : IXGameImpl2
+{
+    HRESULT XLaunchRestartOnCrash( [in, optional] const char *args, [in] UINT32 reserved );
+}
+
+[
+    uuid(973a344e-24bf-4d0f-8457-56c534892b29)
+]
+coclass XGameImpl
+{
+    [default] interface IXGameImpl3;
+}
+
+cpp_quote("#endif")

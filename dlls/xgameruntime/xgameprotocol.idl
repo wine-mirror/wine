@@ -1,0 +1,47 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xtaskqueue.h";
+
+typedef void __stdcall XGameProtocolActivationCallback( void *context, const char *protocolUri );
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(026b010c-06c3-4cdd-bbcb-43f229db1cff)
+]
+interface IXGameProtocolImpl : IUnknown
+{
+    HRESULT XGameProtocolRegisterForActivation( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XGameProtocolActivationCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XGameProtocolUnregisterForActivation( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+}
+
+[
+    uuid(95fd18d2-74dd-4d7c-aa1b-0b51827665d6)
+]
+coclass XGameProtocolImpl
+{
+    [default] interface IXGameProtocolImpl;
+}
+
+cpp_quote("#endif")

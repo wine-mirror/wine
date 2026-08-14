@@ -1,0 +1,246 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+import "xgameruntimetypes.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XPackageChunkAvailability : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    Ready,                                   ")
+cpp_quote("    Pending,                                 ")
+cpp_quote("    Installable,                             ")
+cpp_quote("    Unavailable,                             ")
+cpp_quote("};                                           ")
+
+cpp_quote("enum class XPackageChunkSelectorType : UINT32")
+cpp_quote("{                                            ")
+cpp_quote("    Language,                                ")
+cpp_quote("    Tag,                                     ")
+cpp_quote("    Chunk,                                   ")
+cpp_quote("    Feature,                                 ")
+cpp_quote("};                                           ")
+
+cpp_quote("enum class XPackageEnumerationScope : UINT32")
+cpp_quote("{                                           ")
+cpp_quote("    ThisOnly,                               ")
+cpp_quote("    ThisAndRelated,                         ")
+cpp_quote("    ThisPublisher,                          ")
+cpp_quote("};                                          ")
+
+cpp_quote("enum class XPackageKind : UINT32")
+cpp_quote("{                               ")
+cpp_quote("    Game,                       ")
+cpp_quote("    Content,                    ")
+cpp_quote("    PublisherContent,           ")
+cpp_quote("};                              ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XPackageChunkAvailability
+{
+    XPackageChunkAvailability_Ready,
+    XPackageChunkAvailability_Pending,
+    XPackageChunkAvailability_Installable,
+    XPackageChunkAvailability_Unavailable,
+} XPackageChunkAvailability;
+
+typedef enum XPackageChunkSelectorType
+{
+    XPackageChunkSelectorType_Language,
+    XPackageChunkSelectorType_Tag,
+    XPackageChunkSelectorType_Chunk,
+    XPackageChunkSelectorType_Feature,
+} XPackageChunkSelectorType;
+
+typedef enum XPackageEnumerationScope
+{
+    XPackageEnumerationScope_ThisOnly,
+    XPackageEnumerationScope_ThisAndRelated,
+    XPackageEnumerationScope_ThisPublisher,
+} XPackageEnumerationScope;
+
+typedef enum XPackageKind
+{
+    XPackageKind_Game,
+    XPackageKind_Content,
+    XPackageKind_PublisherContent,
+} XPackageKind;
+
+cpp_quote("#endif")
+
+typedef struct XPackageInstallationMonitor *XPackageInstallationMonitorHandle;
+typedef struct XPackageMountInstance *XPackageMountHandle;
+
+typedef struct XPackageChunkSelector XPackageChunkSelector;
+typedef struct XPackageDetails XPackageDetails;
+typedef struct XPackageFeature XPackageFeature;
+typedef struct XPackageInstallationProgress XPackageInstallationProgress;
+typedef struct XPackageWriteStats XPackageWriteStats;
+
+typedef BOOLEAN __stdcall XPackageChunkAvailabilityCallback( void *context, const XPackageChunkSelector *selector, XPackageChunkAvailability availability );
+typedef BOOLEAN __stdcall XPackageEnumerationCallback( void *context, const XPackageDetails *details );
+typedef BOOLEAN __stdcall XPackageFeatureEnumerationCallback( void *context, const XPackageFeature *details );
+typedef void    __stdcall XPackageInstallationProgressCallback( void *context, XPackageInstallationMonitorHandle monitor );
+typedef void    __stdcall XPackageInstalledCallback( void *context, const XPackageDetails *details );
+
+struct XPackageChunkSelector
+{
+    XPackageChunkSelectorType type;
+    union
+    {
+        const char *language;
+        const char *tag;
+        const char *feature;
+        UINT32 chunkId;
+    };
+};
+
+struct XPackageDetails
+{
+    const char *packageIdentifier;
+    XVersion version;
+    XPackageKind kind;
+    const char *displayName;
+    const char *description;
+    const char *publisher;
+    const char *storeId;
+    BOOLEAN installing;
+    UINT32 index;
+    UINT32 count;
+    BOOLEAN ageRestricted;
+    const char *titleID;
+};
+
+struct XPackageFeature
+{
+    const char *id;
+    const char *displayName;
+    const char *tags;
+    BOOLEAN hidden;
+    UINT32 storeIdCount;
+    const char **storeIds;
+};
+
+struct XPackageInstallationProgress
+{
+    UINT64 totalBytes;
+    UINT64 installedBytes;
+    UINT64 launchBytes;
+    BOOLEAN launchable;
+    BOOLEAN completed;
+};
+
+struct XPackageWriteStats
+{
+    UINT64 interval;
+    UINT64 budget;
+    UINT64 elapsed;
+    UINT64 bytesWritten;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(3720de07-e8e4-44a3-ad32-b359e8adbe55)
+]
+interface IXPackageImpl : IUnknown
+{
+    HRESULT XPackageGetCurrentProcessPackageIdentifier( [in] SIZE_T bufferSize, [out, size_is(bufferSize)] char *buffer );
+    BOOLEAN XPackageIsPackagedProcess();
+    HRESULT XPackageCreateInstallationMonitor( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, optional, length_is(selectorCount)] XPackageChunkSelector selectors[*], [in] UINT32 minimumUpdateIntervalMs, [in, optional] XTaskQueueHandle queue, [out] XPackageInstallationMonitorHandle *installationMonitor );
+    void    XPackageCloseInstallationMonitorHandle( [in] XPackageInstallationMonitorHandle installationMonitor );
+    void    XPackageGetInstallationProgress( [in] XPackageInstallationMonitorHandle installationMonitor, [out] XPackageInstallationProgress *progress );
+    BOOLEAN XPackageUpdateInstallationMonitor( [in] XPackageInstallationMonitorHandle installationMonitor );
+    HRESULT XPackageRegisterInstallationProgressChanged( [in] XPackageInstallationMonitorHandle installationMonitor, [in, optional] void *context, [in] XPackageInstallationProgressCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XPackageUnregisterInstallationProgressChanged( [in] XPackageInstallationMonitorHandle installationMonitor, [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XPackageGetUserLocale( [in] SIZE_T localeSize, [out, size_is(localSize)] char *locale );
+    HRESULT XPackageFindChunkAvailability( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, optional, length_is(selectorCount)] XPackageChunkSelector selectors[*], [out] XPackageChunkAvailability *availability );
+    HRESULT XPackageEnumerateChunkAvailability( [in, string] const char *packageIdentifier, [in] XPackageChunkSelectorType type, [in] void *context, [in] XPackageChunkAvailabilityCallback *callback );
+    HRESULT XPackageChangeChunkInstallOrder( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, length_is(selectorCount)] XPackageChunkSelector selectors[*] );
+    HRESULT XPackageInstallChunks( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, size_is(selectorCount)] XPackageChunkSelector *selectors, [in] UINT32 minimumUpdateIntervalMs, [in] BOOLEAN suppressUserConfirmation, [in, optional] XTaskQueueHandle queue, [out] XPackageInstallationMonitorHandle *installationMonitor );
+    HRESULT XPackageInstallChunksAsync( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, length_is(selectorCount)] XPackageChunkSelector selectors[*], [in] UINT32 minimumUpdateIntervalMs, [in] BOOLEAN suppressUserConfirmation, [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XPackageInstallChunksResult( [in, out] XAsyncBlock *asyncBlock, [out] XPackageInstallationMonitorHandle *installationMonitor );
+    HRESULT XPackageEstimateDownloadSize( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, length_is(selectorCount)] XPackageChunkSelector selectors[*], [out] UINT64 *downloadSize, [out, optional] BOOLEAN *shouldPresentUserConfirmation );
+    HRESULT XPackageUninstallChunks( [in, string] const char *packageIdentifier, [in] UINT32 selectorCount, [in, length_is(selectorCount)] XPackageChunkSelector selectors[*] );
+    HRESULT __PADDING__();
+    HRESULT __PADDING_2__();
+    BOOLEAN XPackageUnregisterPackageInstalled( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT __PADDING_3__();
+    HRESULT XPackageGetMountPathSize( [in] XPackageMountHandle mount, [out] SIZE_T *pathSize );
+    HRESULT XPackageGetMountPath( [in] XPackageMountHandle mount, [in] SIZE_T pathSize, [out, size_is(pathSize)] char *path );
+    void    XPackageCloseMountHandle( [in] XPackageMountHandle mount );
+    HRESULT __PADDING_4__();
+    HRESULT XPackageEnumeratePackages( [in] XPackageKind kind, [in] XPackageEnumerationScope scope, [in, optional] void *context, [in] XPackageEnumerationCallback *callback );
+    HRESULT XPackageRegisterPackageInstalled( [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XPackageInstalledCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    HRESULT XPackageGetWriteStats( [out] XPackageWriteStats *writeStats );
+    HRESULT __PADDING_5__();
+    HRESULT XPackageUninstallUWPInstance( [in, string] const char *packageName );
+    HRESULT XPackageEnumerateFeatures( [in, string] const char *packageIdentifier, [in, optional] void *context, [in] XPackageFeatureEnumerationCallback *callback );
+    BOOLEAN XPackageUninstallPackage( [in, string] const char *packageIdentifier );
+}
+
+[
+    local,
+    object,
+    uuid(f92d8712-2b27-4d8a-bf01-11a6f8e3eb42)
+]
+interface IXPackageImpl2 : IXPackageImpl
+{
+    HRESULT XPackageEnumeratePackages( [in] XPackageKind kind, [in] XPackageEnumerationScope scope, [in, optional] void *context, [in] XPackageEnumerationCallback *callback );
+    HRESULT XPackageRegisterPackageInstalled( [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XPackageInstalledCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    HRESULT XPackageMountWithUiAsync( [in, string] const char *packageIdentifier, [in, out] XAsyncBlock *async );
+    HRESULT XPackageMountWithUiResult( [in, out] XAsyncBlock *async, [out] XPackageMountHandle *mount );
+}
+
+[
+    local,
+    object,
+    uuid(e2a4734b-2f4a-456d-aa8f-d065e04fb209)
+]
+interface IXPackageImpl3 : IXPackageImpl2
+{
+    HRESULT XPackageEnumeratePackages( [in] XPackageKind kind, [in] XPackageEnumerationScope scope, [in, optional] void *context, [in] XPackageEnumerationCallback *callback );
+    HRESULT XPackageRegisterPackageInstalled( [in] XTaskQueueHandle queue, [in, optional] void *context, [in] XPackageInstalledCallback *callback, [out] XTaskQueueRegistrationToken *token );
+}
+
+[
+    local,
+    object,
+    uuid(0b9d556e-ab70-43f4-baa0-9999ac4cb040)
+]
+interface IXPackageImpl4 : IXPackageImpl3
+{
+    HRESULT XPackageGetKind( [in, string] const char *packageIdentifier, [out] XPackageKind *kind );
+}
+
+[
+    uuid(af406016-e850-4aa8-a88d-2f3dcb9dac7e)
+]
+coclass XPackageImpl
+{
+    [default] interface IXPackageImpl4;
+}
+
+cpp_quote("#endif")

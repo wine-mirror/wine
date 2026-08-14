@@ -1,0 +1,83 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xtaskqueue.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XGameActivationType : UINT32")
+cpp_quote("{                                      ")
+cpp_quote("    Protocol,                          ")
+cpp_quote("    File,                              ")
+cpp_quote("    PendingGameInvite,                 ")
+cpp_quote("    AcceptedGameInvite,                ")
+cpp_quote("};                                     ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XGameActivationType
+{
+    XGameActivationType_Protocol,
+    XGameActivationType_File,
+    XGameActivationType_PendingGameInvite,
+    XGameActivationType_AcceptedGameInvite,
+} XGameActivationType;
+
+cpp_quote("#endif")
+
+typedef struct XGameActivationInfo XGameActivationInfo;
+
+typedef void __stdcall XGameActivationCallback( void *context, const XGameActivationInfo *activationInfo );
+
+struct XGameActivationInfo
+{
+    XGameActivationType type;
+    union
+    {
+        const char *protocolUri;
+        const char *file;
+        const char *inviteUri;
+    };
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(2e4f76fe-0fc7-461e-ab4d-a4499434c3cf)
+]
+interface IXGameActivationImpl : IUnknown
+{
+    HRESULT XGameActivationRegisterForEvent( [in, optional] XTaskQueueHandle queue, [in, optional] void *context, [in] XGameActivationCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    BOOLEAN XGameActivationUnregisterForEvent( [in] XTaskQueueRegistrationToken token, [in] BOOLEAN wait );
+    HRESULT XGameActivationAcceptPendingInvite( [in, string] const char *inviteUri );
+}
+
+[
+    uuid(7f0fe8b8-e075-49ab-9aa7-a1e065489a9e)
+]
+coclass XGameActivationImpl
+{
+    [default] interface IXGameActivationImpl;
+}
+
+cpp_quote("#endif")

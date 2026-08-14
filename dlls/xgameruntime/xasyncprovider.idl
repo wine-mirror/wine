@@ -1,0 +1,107 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "unknwn.idl";
+import "xasync.h";
+
+cpp_quote("#ifdef __cplusplus")
+
+cpp_quote("enum class XAsyncOp : UINT32")
+cpp_quote("{                           ")
+cpp_quote("    Begin,                  ")
+cpp_quote("    DoWork,                 ")
+cpp_quote("    GetResult,              ")
+cpp_quote("    Cancel,                 ")
+cpp_quote("    Cleanup,                ")
+cpp_quote("};                          ")
+
+cpp_quote("#elif defined(__WINESRC__)")
+
+typedef enum XAsyncOp
+{
+    XAsyncOp_Begin,
+    XAsyncOp_DoWork,
+    XAsyncOp_GetResult,
+    XAsyncOp_Cancel,
+    XAsyncOp_Cleanup,
+} XAsyncOp;
+
+cpp_quote("#endif")
+
+typedef struct XAsyncProviderData XAsyncProviderData;
+
+typedef HRESULT __stdcall XAsyncProvider( XAsyncOp op, const XAsyncProviderData *data );
+
+struct XAsyncProviderData
+{
+    XAsyncBlock *async;
+    SIZE_T bufferSize;
+    void *buffer;
+    void *context;
+};
+
+cpp_quote("#ifdef __WINESRC__")
+
+[
+    local,
+    object,
+    uuid(073b7dcb-1fcf-4030-94be-e3c9eb623428)
+]
+interface IXThreadingImpl : IUnknown
+{
+    HRESULT XAsyncGetStatus( [in, out] XAsyncBlock *asyncBlock, [in] BOOLEAN wait );
+    HRESULT XAsyncGetResultSize( [in, out] XAsyncBlock *asyncBlock, [out] SIZE_T *bufferSize );
+    void    XAsyncCancel( [in, out] XAsyncBlock *asyncBlock );
+    HRESULT XAsyncRun( [in, out] XAsyncBlock *asyncBlock, [in] XAsyncWork *work );
+    HRESULT XAsyncBegin( [in, out] XAsyncBlock *asyncBlock, [in, optional] void *context, [in, optional] const void *identity, [in, optional] const char *identityName, [in] XAsyncProvider *provider );
+    HRESULT __PADDING__();
+    HRESULT XAsyncSchedule( [in, out] XAsyncBlock *asyncBlock, [in] UINT32 delayInMs );
+    void    XAsyncComplete( [in, out] XAsyncBlock *asyncBlock, [in] HRESULT result, [in] SIZE_T requiredBufferSize );
+    HRESULT XAsyncGetResult( [in, out] XAsyncBlock *asyncBlock, [in, optional] const void *identity, [in] SIZE_T bufferSize, [out, size_is(bufferSize)] void *buffer, [out, optional] SIZE_T *bufferUsed );
+    HRESULT XTaskQueueCreate( [in] XTaskQueueDispatchMode workDispatchMode, [in] XTaskQueueDispatchMode completionDispatchMode, [out] XTaskQueueHandle *queue );
+    HRESULT XTaskQueueCreateComposite( [in] XTaskQueuePortHandle workPort, [in] XTaskQueuePortHandle completionPort, [out] XTaskQueueHandle *queue );
+    HRESULT XTaskQueueGetPort( [in] XTaskQueueHandle queue, [in] XTaskQueuePort port, [out] XTaskQueuePortHandle *portHandle );
+    HRESULT XTaskQueueDuplicateHandle( [in] XTaskQueueHandle queueHandle, [out] XTaskQueueHandle *duplicatedHandle );
+    BOOLEAN XTaskQueueDispatch( [in] XTaskQueueHandle queue, [in] XTaskQueuePort port, [in] UINT32 timeoutInMs );
+    void    XTaskQueueCloseHandle( [in] XTaskQueueHandle queue );
+    HRESULT XTaskQueueSubmitCallback( [in] XTaskQueueHandle queue, [in] XTaskQueuePort port, [in, optional] void *callbackContext, [in] XTaskQueueCallback *callback );
+    HRESULT XTaskQueueSubmitDelayedCallback( [in] XTaskQueueHandle queue, [in] XTaskQueuePort port, [in] UINT32 delayMs, [in, optional] void *callbackContext, [in] XTaskQueueCallback *callback );
+    HRESULT XTaskQueueRegisterWaiter( [in] XTaskQueueHandle queue, [in] XTaskQueuePort port, [in] HANDLE waitHandle, void *callbackContext, XTaskQueueCallback *callback, XTaskQueueRegistrationToken *token );
+    void    XTaskQueueUnregisterWaiter( [in] XTaskQueueHandle queue, [in] XTaskQueueRegistrationToken token );
+    HRESULT XTaskQueueTerminate( [in] XTaskQueueHandle queue, [in] BOOLEAN wait, [in, optional] void *callbackContext, [in, optional] XTaskQueueTerminatedCallback *callback );
+    HRESULT XTaskQueueRegisterMonitor( [in] XTaskQueueHandle queue, [in, optional] void *callbackContext, [in] XTaskQueueMonitorCallback *callback, [out] XTaskQueueRegistrationToken *token );
+    void    XTaskQueueUnregisterMonitor( [in] XTaskQueueHandle queue, [in] XTaskQueueRegistrationToken token );
+    BOOLEAN XTaskQueueGetCurrentProcessTaskQueue( [out] XTaskQueueHandle *queue );
+    void    XTaskQueueSetCurrentProcessTaskQueue( [in] XTaskQueueHandle queue );
+    HRESULT XThreadSetTimeSensitive( [in] BOOLEAN isTimeSensitiveThread );
+    HRESULT __PADDING_2__();
+    void    XThreadAssertNotTimeSensitive();
+    BOOLEAN XThreadIsTimeSensitive();
+}
+
+[
+    uuid(073b7dcb-1fcf-4030-94be-e3c9eb623428)
+]
+coclass XThreadingImpl
+{
+    [default] interface IXThreadingImpl;
+}
+
+cpp_quote("#endif")
