@@ -25,6 +25,210 @@
 #include <stdint.h>
 #include <assert.h>
 
+#define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
+
+struct swapchain_desc
+{
+    BOOL windowed;
+    unsigned int buffer_count;
+    unsigned int width, height;
+    DXGI_SWAP_EFFECT swap_effect;
+    DWORD flags;
+};
+
+static IDXGISwapChain *create_swapchain(ID3D10Device *device, HWND window,
+        const struct swapchain_desc *swapchain_desc)
+{
+    IDXGISwapChain *swapchain;
+    DXGI_SWAP_CHAIN_DESC dxgi_desc;
+    IDXGIDevice *dxgi_device;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    HRESULT hr;
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(hr == S_OK, "Failed to get DXGI device, hr %#lx.\n", hr);
+    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#lx.\n", hr);
+    IDXGIDevice_Release(dxgi_device);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to get factory, hr %#lx.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    dxgi_desc.BufferDesc.Width = 640;
+    dxgi_desc.BufferDesc.Height = 480;
+    dxgi_desc.BufferDesc.RefreshRate.Numerator = 60;
+    dxgi_desc.BufferDesc.RefreshRate.Denominator = 1;
+    dxgi_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    dxgi_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    dxgi_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    dxgi_desc.SampleDesc.Count = 1;
+    dxgi_desc.SampleDesc.Quality = 0;
+    dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    dxgi_desc.BufferCount = 1;
+    dxgi_desc.OutputWindow = window;
+    dxgi_desc.Windowed = TRUE;
+    dxgi_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    dxgi_desc.Flags = 0;
+
+    if (swapchain_desc)
+    {
+        dxgi_desc.Windowed = swapchain_desc->windowed;
+        dxgi_desc.SwapEffect = swapchain_desc->swap_effect;
+        dxgi_desc.BufferCount = swapchain_desc->buffer_count;
+        if (swapchain_desc->width)
+            dxgi_desc.BufferDesc.Width = swapchain_desc->width;
+        if (swapchain_desc->height)
+            dxgi_desc.BufferDesc.Height = swapchain_desc->height;
+
+        if (swapchain_desc->flags & SWAPCHAIN_FLAG_SHADER_INPUT)
+            dxgi_desc.BufferUsage |= DXGI_USAGE_SHADER_INPUT;
+    }
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &dxgi_desc, &swapchain);
+    ok(hr == S_OK, "Failed to create swapchain, hr %#lx.\n", hr);
+    IDXGIFactory_Release(factory);
+
+    return swapchain;
+}
+
+struct d3d10_test_context
+{
+    ID3D10Device *device;
+    HWND window;
+    IDXGISwapChain *swapchain;
+    ID3D10Texture2D *backbuffer;
+    ID3D10RenderTargetView *backbuffer_rtv;
+
+    ID3D10InputLayout *input_layout;
+    ID3D10VertexShader *vs;
+    const DWORD *vs_code;
+    ID3D10Buffer *vs_cb;
+    ID3D10Buffer *vb;
+
+    ID3D10PixelShader *ps;
+    ID3D10Buffer *ps_cb;
+};
+
+static void set_viewport(ID3D10Device *device, int x, int y,
+        unsigned int width, unsigned int height, float min_depth, float max_depth)
+{
+    D3D10_VIEWPORT vp;
+
+    vp.TopLeftX = x;
+    vp.TopLeftY = y;
+    vp.Width = width;
+    vp.Height = height;
+    vp.MinDepth = min_depth;
+    vp.MaxDepth = max_depth;
+
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+}
+
+static ID3D10Device *create_device(void)
+{
+    ID3D10Device *device;
+    HMODULE d3d10_mod = LoadLibraryA("d3d10.dll");
+    HRESULT (WINAPI *pD3D10CreateDevice)(IDXGIAdapter *, D3D10_DRIVER_TYPE, HMODULE, UINT, UINT, ID3D10Device **);
+
+    if (!d3d10_mod)
+    {
+        win_skip("d3d10.dll not present\n");
+        return NULL;
+    }
+
+    pD3D10CreateDevice = (void *)GetProcAddress(d3d10_mod, "D3D10CreateDevice");
+    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+
+    return NULL;
+}
+
+#define init_test_context(a) init_test_context_(__LINE__, a, NULL)
+#define init_test_context_ext(a, b) init_test_context_(__LINE__, a, b)
+static BOOL init_test_context_(unsigned int line, struct d3d10_test_context *context,
+        const struct swapchain_desc *swapchain_desc)
+{
+    unsigned int rt_width, rt_height;
+    HRESULT hr;
+    RECT rect;
+
+    memset(context, 0, sizeof(*context));
+
+    if (!(context->device = create_device()))
+    {
+        skip_(__FILE__, line)("Failed to create device.\n");
+        return FALSE;
+    }
+
+    rt_width = swapchain_desc && swapchain_desc->width ? swapchain_desc->width : 640;
+    rt_height = swapchain_desc && swapchain_desc->height ? swapchain_desc->height : 480;
+
+    SetRect(&rect, 0, 0, rt_width, rt_height);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+    context->window = CreateWindowA("static", "d3dx10_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    context->swapchain = create_swapchain(context->device, context->window, swapchain_desc);
+    hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D10Texture2D, (void **)&context->backbuffer);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(context->device, (ID3D10Resource *)context->backbuffer,
+            NULL, &context->backbuffer_rtv);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create rendertarget view, hr %#lx.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(context->device, 1, &context->backbuffer_rtv, NULL);
+
+    set_viewport(context->device, 0, 0, rt_width, rt_height, 0.0f, 1.0f);
+
+    return TRUE;
+}
+
+#define release_test_context(c) release_test_context_(__LINE__, c)
+static void release_test_context_(unsigned int line, struct d3d10_test_context *context)
+{
+    ULONG ref;
+
+    if (context->input_layout)
+        ID3D10InputLayout_Release(context->input_layout);
+    if (context->vs)
+        ID3D10VertexShader_Release(context->vs);
+    if (context->vs_cb)
+        ID3D10Buffer_Release(context->vs_cb);
+    if (context->vb)
+        ID3D10Buffer_Release(context->vb);
+    if (context->ps)
+        ID3D10PixelShader_Release(context->ps);
+    if (context->ps_cb)
+        ID3D10Buffer_Release(context->ps_cb);
+
+    ID3D10RenderTargetView_Release(context->backbuffer_rtv);
+    ID3D10Texture2D_Release(context->backbuffer);
+    IDXGISwapChain_Release(context->swapchain);
+    DestroyWindow(context->window);
+
+    ref = ID3D10Device_Release(context->device);
+    ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
+}
+
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
+}
+
 static const char *debug_d3dx10_filter(uint32_t filter_flags)
 {
     static const char *filter_types[] = { "", "D3DX10_FILTER_NONE", "D3DX10_FILTER_POINT", "D3DX10_FILTER_LINEAR",
@@ -2370,13 +2574,6 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
-static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
-{
-    unsigned int diff = x > y ? x - y : y - x;
-
-    return diff <= max_diff;
-}
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -2433,29 +2630,6 @@ static BOOL delete_file(const WCHAR *filename)
     lstrcpyW(path, temp_dir);
     lstrcatW(path, filename);
     return DeleteFileW(path);
-}
-
-static ID3D10Device *create_device(void)
-{
-    ID3D10Device *device;
-    HMODULE d3d10_mod = LoadLibraryA("d3d10.dll");
-    HRESULT (WINAPI *pD3D10CreateDevice)(IDXGIAdapter *, D3D10_DRIVER_TYPE, HMODULE, UINT, UINT, ID3D10Device **);
-
-    if (!d3d10_mod)
-    {
-        win_skip("d3d10.dll not present\n");
-        return NULL;
-    }
-
-    pD3D10CreateDevice = (void *)GetProcAddress(d3d10_mod, "D3D10CreateDevice");
-    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-    if (SUCCEEDED(pD3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-
-    return NULL;
 }
 
 static HMODULE create_resource_module(const WCHAR *filename, const void *data, unsigned int size)
@@ -2824,6 +2998,11 @@ static uint32_t get_readback_u32(struct resource_readback *rb, uint32_t x, uint3
     return *(uint32_t *)get_readback_data(rb, x, y, 0, sizeof(uint32_t));
 }
 
+static uint32_t get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
+{
+    return get_readback_u32(rb, x, y);
+}
+
 static void release_resource_readback(struct resource_readback *rb)
 {
     switch (rb->dimension)
@@ -2845,6 +3024,18 @@ static void release_resource_readback(struct resource_readback *rb)
             break;
     }
     ID3D10Resource_Release(rb->resource);
+}
+
+static uint32_t get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigned int y)
+{
+    struct resource_readback rb;
+    uint32_t color;
+
+    get_texture_readback(texture, 0, &rb);
+    color = get_readback_color(&rb, x, y);
+    release_resource_readback(&rb);
+
+    return color;
 }
 
 static inline BOOL check_readback_pixel_4bpp_rgba(const void *got, const void *expected, uint32_t max_diff)
@@ -7883,6 +8074,128 @@ static void test_sprite_save_state(void)
     ok(!refcount, "Unexpected refcount.\n");
 }
 
+static void test_sprite_render(void)
+{
+    static const DWORD texture_data[] =
+    {
+        0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+        0xff0000ff, 0xff0000ff, 0xffff00ff, 0xffff00ff,
+        0xffff0000, 0xffff0000, 0xff00ffff, 0xff00ffff,
+        0xffff0000, 0xffff0000, 0xff00ffff, 0xff00ffff,
+    };
+
+    struct d3d10_test_context test_context;
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10ShaderResourceView *srv;
+    D3DX10_SPRITE sprite_desc;
+    ID3D10Texture2D *texture;
+    ID3DX10Sprite *sprite;
+    ID3D10Device *device;
+    unsigned int color;
+    float clear[4];
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = texture_data;
+    resource_data.SysMemPitch = 16;
+    resource_data.SysMemSlicePitch = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#lx.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Failed to create srv, hr %#lx.\n", hr);
+
+    hr = D3DX10CreateSprite(device, 0, &sprite);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3DX10Sprite_Begin(sprite, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    clear[0] = clear[1] = clear[2] = clear[3] = 1.0f;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, clear);
+
+    /* Each color to its quadrant. */
+    D3DXMatrixTranslation(&sprite_desc.matWorld, -0.5f, 0.5f, 0.0f);
+    sprite_desc.TexCoord.x = 0.0f;
+    sprite_desc.TexCoord.y = 0.0f;
+    sprite_desc.TexSize.x = 0.25f;
+    sprite_desc.TexSize.y = 0.25f;
+    sprite_desc.ColorModulate.r = 1.0f;
+    sprite_desc.ColorModulate.g = 1.0f;
+    sprite_desc.ColorModulate.b = 1.0f;
+    sprite_desc.ColorModulate.a = 1.0f;
+    sprite_desc.pTexture = srv;
+    sprite_desc.TextureIndex = 0;
+
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    D3DXMatrixTranslation(&sprite_desc.matWorld, 0.5f, 0.5f, 0.0f);
+    sprite_desc.TexCoord.x = 0.7f;
+    sprite_desc.TexCoord.y = 0.0f;
+    sprite_desc.TexSize.x = 0.25f;
+    sprite_desc.TexSize.y = 0.25f;
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    D3DXMatrixTranslation(&sprite_desc.matWorld, -0.5f, -0.5f, 0.0f);
+    sprite_desc.TexCoord.x = 0.0f;
+    sprite_desc.TexCoord.y = 0.6f;
+    sprite_desc.TexSize.x = 0.25f;
+    sprite_desc.TexSize.y = 0.25f;
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    D3DXMatrixTranslation(&sprite_desc.matWorld, 0.5f, -0.5f, 0.0f);
+    sprite_desc.TexCoord.x = 0.7f;
+    sprite_desc.TexCoord.y = 0.7f;
+    sprite_desc.TexSize.x = 0.5f;
+    sprite_desc.TexSize.y = 0.5f;
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3DX10Sprite_Flush(sprite);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3DX10Sprite_End(sprite);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    color = get_texture_color(test_context.backbuffer, 160, 120);
+    todo_wine
+    ok(compare_color(color, 0xff0000ff, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 480, 120);
+    todo_wine
+    ok(compare_color(color, 0xffff00ff, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 160, 360);
+    todo_wine
+    ok(compare_color(color, 0xffff0000, 0), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 480, 360);
+    todo_wine
+    ok(compare_color(color, 0xff00ffff, 0), "Got unexpected color 0x%08x.\n", color);
+
+    ID3DX10Sprite_Release(sprite);
+    ID3D10Texture2D_Release(texture);
+    ID3D10ShaderResourceView_Release(srv);
+    release_test_context(&test_context);
+}
+
 static void test_create_effect_from_memory(void)
 {
     D3D10_EFFECT_DESC desc;
@@ -8237,6 +8550,7 @@ START_TEST(d3dx10)
     test_font();
     test_sprite();
     test_sprite_save_state();
+    test_sprite_render();
     test_create_effect_from_memory();
     test_create_effect_from_file();
     test_create_effect_from_resource();
