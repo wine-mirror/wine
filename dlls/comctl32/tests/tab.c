@@ -539,21 +539,19 @@ static void test_tab(INT nMinTabWidth)
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     hOldFont = SelectObject(hdc, (HFONT)SendMessageA(hwTab, WM_GETFONT, 0, 0));
     GetTextExtentPoint32A(hdc, "Tab 1", strlen("Tab 1"), &size);
-    trace("Tab1 text size: size.cx=%ld size.cy=%ld\n", size.cx, size.cy);
     GetTextMetricsW(hdc, &text_metrics);
     default_min_tab_width = text_metrics.tmAveCharWidth * MIN_CHAR_LENGTH + TAB_PADDING_X * 2;
     SelectObject(hdc, hOldFont);
     ReleaseDC(hwTab, hdc);
 
-    trace ("default_min_tab_width: %d\n", default_min_tab_width);
-    trace ("  TCS_FIXEDWIDTH tabs no icon...\n");
+    /* TCS_FIXEDWIDTH, no icon */
     CHECKSIZE(hwTab, dpi, -1, "default width");
     TABCHECKSETSIZE(hwTab, 50, 20, 50, 20, "set size");
     TABCHECKSETSIZE(hwTab, 0, 1, 0, 1, "min size");
 
     SendMessageA(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
-    trace ("  TCS_FIXEDWIDTH tabs with icon...\n");
+    /* TCS_FIXEDWIDTH, with icon */
     TABCHECKSETSIZE(hwTab, 50, 30, 50, 30, "set size > icon");
     TABCHECKSETSIZE(hwTab, 20, 20, 25, 20, "set size < icon");
     TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "min size");
@@ -566,7 +564,7 @@ static void test_tab(INT nMinTabWidth)
     hdc = GetDC(hwTab);
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hwTab, hdc);
-    trace ("  TCS_FIXEDWIDTH buttons no icon...\n");
+    /* TCS_FIXEDWIDTH buttons, no icon */
     CHECKSIZE(hwTab, dpi, -1, "default width");
     TABCHECKSETSIZE(hwTab, 20, 20, 20, 20, "set size 1");
     TABCHECKSETSIZE(hwTab, 10, 50, 10, 50, "set size 2");
@@ -574,7 +572,7 @@ static void test_tab(INT nMinTabWidth)
 
     SendMessageA(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
-    trace ("  TCS_FIXEDWIDTH buttons with icon...\n");
+    /* TCS_FIXEDWIDTH buttons, with icon */
     TABCHECKSETSIZE(hwTab, 50, 30, 50, 30, "set size > icon");
     TABCHECKSETSIZE(hwTab, 20, 20, 25, 20, "set size < icon");
     TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "min size");
@@ -589,7 +587,7 @@ static void test_tab(INT nMinTabWidth)
     hdc = GetDC(hwTab);
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hwTab, hdc);
-    trace ("  TCS_FIXEDWIDTH | TCS_BOTTOM tabs...\n");
+    /* TCS_FIXEDWIDTH | TCS_BOTTOM */
     CHECKSIZE(hwTab, dpi, -1, "no icon, default width");
 
     TABCHECKSETSIZE(hwTab, 20, 20, 20, 20, "no icon, set size 1");
@@ -609,7 +607,7 @@ static void test_tab(INT nMinTabWidth)
     hwTab = create_tabcontrol(0, TCIF_TEXT|TCIF_IMAGE);
     SendMessageA(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
-    trace ("  non fixed width, with text...\n");
+    /* Without TCS_FIXEDWIDTH, with text */
     exp = max(size.cx +TAB_PADDING_X*2, (nMinTabWidth < 0) ? default_min_tab_width : nMinTabWidth);
     SendMessageA( hwTab, TCM_GETITEMRECT, 0, (LPARAM)&rTab );
     ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == default_min_tab_width),
@@ -643,7 +641,7 @@ static void test_tab(INT nMinTabWidth)
     hwTab = create_tabcontrol(0, TCIF_IMAGE);
     SendMessageA(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
-    trace ("  non fixed width, no text...\n");
+    /* Without TCS_FIXEDWIDTH, no text */
     exp = (nMinTabWidth < 0) ? default_min_tab_width : nMinTabWidth;
     SendMessageA( hwTab, TCM_GETITEMRECT, 0, (LPARAM)&rTab );
     ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == default_min_tab_width),
@@ -697,19 +695,13 @@ static void test_width(void)
     };
 
     for(int i = 0; i < sizeof(fonts)/sizeof(fonts[0]); i++) {
-        trace ("Testing with the '%s' font\n", fonts[i]);
         lstrcpyA(logfont.lfFaceName, fonts[i]);
         hFont = CreateFontIndirectA(&logfont);
 
-        trace ("Testing with default MinWidth\n");
         test_tab(-1);
-        trace ("Testing with MinWidth set to -3\n");
         test_tab(-3);
-        trace ("Testing with MinWidth set to 24\n");
         test_tab(24);
-        trace ("Testing with MinWidth set to 54\n");
         test_tab(54);
-        trace ("Testing with MinWidth set to 94\n");
         test_tab(94);
     }
 
