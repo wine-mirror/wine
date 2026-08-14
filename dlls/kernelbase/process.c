@@ -382,6 +382,31 @@ static const WCHAR *find_legacy_dosbox(void)
     return NULL;
 }
 
+/* Original Xbox (.xbe) executables aren't a PE/NE/MZ format Wine can run
+ * natively, so hand them off to Cxbx-Reloaded (an x86 HLE Xbox emulator that
+ * already lists Wine among its supported hosts) the same way DOS binaries
+ * fall back to DOSBox. */
+static const WCHAR *const cxbx_candidates[] =
+{
+    L"C:\\Program Files\\Cxbx-Reloaded\\cxbxr-ldr.exe",
+    L"C:\\Program Files (x86)\\Cxbx-Reloaded\\cxbxr-ldr.exe",
+    L"C:\\Program Files\\Cxbx-Reloaded\\cxbx.exe",
+    L"C:\\Program Files (x86)\\Cxbx-Reloaded\\cxbx.exe",
+};
+
+static const WCHAR *find_xbox_emulator(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(cxbx_candidates); i++)
+    {
+        DWORD attr = GetFileAttributesW( cxbx_candidates[i] );
+        if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY))
+            return cxbx_candidates[i];
+    }
+    return NULL;
+}
+
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
 /* HKCU\Software\Wine\DOSBox "Legacy"=y forces every DOS program through
@@ -494,6 +519,46 @@ static NTSTATUS create_cmd_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBU
 
     swprintf( newcmdline, len, L"%s /s/c \"%s\"", comspec, params->CommandLine.Buffer );
     RtlInitUnicodeString( &params->ImagePathName, comspec );
+    RtlInitUnicodeString( &params->CommandLine, newcmdline );
+    status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
+    RtlFreeHeap( GetProcessHeap(), 0, newcmdline );
+    return status;
+}
+
+
+/***********************************************************************
+ *           create_xbe_process
+ *
+ * Launch an original Xbox .xbe executable through Cxbx-Reloaded, if a
+ * copy is installed in the prefix. There is no native fallback: Wine
+ * cannot run Xbox kernel-mode/x86 code paths itself, this is strictly
+ * an external-emulator handoff (the same role DOSBox plays for DOS).
+ */
+static NTSTATUS create_xbe_process( HANDLE token, HANDLE debug, SECURITY_ATTRIBUTES *psa,
+                                    SECURITY_ATTRIBUTES *tsa, DWORD flags,
+                                    RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info )
+{
+    const WCHAR *cxbx = find_xbox_emulator();
+    const WCHAR *orig_path = params->ImagePathName.Buffer;
+    WCHAR *newcmdline;
+    NTSTATUS status;
+    UINT len;
+
+    if (!cxbx)
+    {
+        WARN( "no Cxbx-Reloaded install found, cannot run Xbox executable %s\n", debugstr_w(orig_path) );
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+
+    len = lstrlenW(cxbx) + lstrlenW(orig_path) + 12;
+    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    swprintf( newcmdline, len, L"%s /load \"%s\"", cxbx, orig_path );
+    TRACE( "starting %s via Cxbx-Reloaded at %s\n", debugstr_w(orig_path), debugstr_w(cxbx) );
+
+    RtlInitUnicodeString( &params->ImagePathName, cxbx );
     RtlInitUnicodeString( &params->CommandLine, newcmdline );
     status = create_nt_process( token, debug, psa, tsa, flags, params, info, 0, 0, NULL, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, newcmdline );
@@ -755,6 +820,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         {
             TRACE( "starting %s as batch binary\n", debugstr_w(app_name) );
             status = create_cmd_process( token, debug, process_attr, thread_attr,
+                                         nt_flags, params, &rtl_info );
+        }
+        else if (!wcsicmp( p, L".xbe" ))
+        {
+            TRACE( "starting %s as original Xbox binary\n", debugstr_w(app_name) );
+            status = create_xbe_process( token, debug, process_attr, thread_attr,
                                          nt_flags, params, &rtl_info );
         }
         break;
