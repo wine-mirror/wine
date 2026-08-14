@@ -10,3 +10,5 @@ include/stamp-h
 /Makefile
 /loader-wow64
 /wine
+*-windows/
+*-unix/
