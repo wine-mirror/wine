@@ -1616,12 +1616,19 @@ static HRESULT WINAPI d3d12_surface_buffer_Unlock(IMFMediaBuffer *iface)
 
 static HRESULT WINAPI d3d12_surface_buffer_GetCurrentLength(IMFMediaBuffer *iface, DWORD *current_length)
 {
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (!current_length)
+        return E_INVALIDARG;
+
+    *current_length = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD current_length)
 {
-    return E_NOTIMPL;
+    TRACE("%p, %lu.\n", iface, current_length);
+    return S_OK;
 }
 
 static HRESULT WINAPI d3d12_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
