@@ -22495,8 +22495,10 @@ wine_fn_config_makefile dlls/d3d10core enable_d3d10core
 wine_fn_config_makefile dlls/d3d10core/tests enable_tests
 wine_fn_config_makefile dlls/d3d11 enable_d3d11
 wine_fn_config_makefile dlls/d3d11/tests enable_tests
+wine_fn_config_makefile dlls/d3d11_x enable_d3d11_x
 wine_fn_config_makefile dlls/d3d12 enable_d3d12
 wine_fn_config_makefile dlls/d3d12/tests enable_tests
+wine_fn_config_makefile dlls/d3d12_x enable_d3d12_x
 wine_fn_config_makefile dlls/d3d12core enable_d3d12core
 wine_fn_config_makefile dlls/d3d8 enable_d3d8
 wine_fn_config_makefile dlls/d3d8/tests enable_tests
@@ -22666,6 +22668,7 @@ wine_fn_config_makefile dlls/dxtrans enable_dxtrans
 wine_fn_config_makefile dlls/dxva2 enable_dxva2
 wine_fn_config_makefile dlls/dxva2/tests enable_tests
 wine_fn_config_makefile dlls/esent enable_esent
+wine_fn_config_makefile dlls/etwplus enable_etwplus
 wine_fn_config_makefile dlls/evr enable_evr
 wine_fn_config_makefile dlls/evr/tests enable_tests
 wine_fn_config_makefile dlls/explorerframe enable_explorerframe
@@ -22766,6 +22769,7 @@ wine_fn_config_makefile dlls/kernel32 enable_kernel32
 wine_fn_config_makefile dlls/kernel32/tests enable_tests
 wine_fn_config_makefile dlls/kernelbase enable_kernelbase
 wine_fn_config_makefile dlls/kernelbase/tests enable_tests
+wine_fn_config_makefile dlls/kernelx enable_kernelx
 wine_fn_config_makefile dlls/keyboard.drv16 enable_win16
 wine_fn_config_makefile dlls/krnl386.exe16 enable_win16
 wine_fn_config_makefile dlls/ksecdd.sys enable_ksecdd_sys
@@ -23021,6 +23025,7 @@ wine_fn_config_makefile dlls/pdh enable_pdh
 wine_fn_config_makefile dlls/pdh/tests enable_tests
 wine_fn_config_makefile dlls/photometadatahandler enable_photometadatahandler
 wine_fn_config_makefile dlls/pidgen enable_pidgen
+wine_fn_config_makefile dlls/pixevt enable_pixevt
 wine_fn_config_makefile dlls/powrprof enable_powrprof
 wine_fn_config_makefile dlls/printui enable_printui
 wine_fn_config_makefile dlls/prntvpt enable_prntvpt
@@ -23153,6 +23158,7 @@ wine_fn_config_makefile dlls/thumbcache enable_thumbcache
 wine_fn_config_makefile dlls/thumbcache/tests enable_tests
 wine_fn_config_makefile dlls/tiptsf enable_tiptsf
 wine_fn_config_makefile dlls/toolhelp.dll16 enable_win16
+wine_fn_config_makefile dlls/toolhelpx enable_toolhelpx
 wine_fn_config_makefile dlls/traffic enable_traffic
 wine_fn_config_makefile dlls/twain.dll16 enable_win16
 wine_fn_config_makefile dlls/twain_32 enable_twain_32

@@ -18,6 +18,8 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnt.h"
+#include "fileapi.h"
+#include "processthreadsapi.h"
 
 #include "wine/debug.h"
 
