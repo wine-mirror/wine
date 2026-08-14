@@ -347,6 +347,7 @@ enum x11drv_escape_codes
     X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
+    X11DRV_FLUSH_GDI_DISPLAY /* flush the gdi display connection */
 };
 
 struct x11drv_escape_set_drawable

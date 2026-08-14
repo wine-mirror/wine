@@ -563,6 +563,9 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
+            case X11DRV_FLUSH_GDI_DISPLAY:
+                XFlush( gdi_display );
+                return TRUE;
             default:
                 break;
             }
